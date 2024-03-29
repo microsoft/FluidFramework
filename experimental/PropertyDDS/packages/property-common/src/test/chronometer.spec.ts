@@ -9,6 +9,7 @@
 
 import { expect } from "chai";
 import sinon from "sinon";
+
 import { Chronometer } from "../chronometer";
 
 describe("property-common.Chronometer", function () {

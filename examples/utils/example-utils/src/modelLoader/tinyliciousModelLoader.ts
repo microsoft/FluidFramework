@@ -11,6 +11,7 @@ import {
 	InsecureTinyliciousUrlResolver,
 	createTinyliciousCreateNewRequest,
 } from "@fluidframework/tinylicious-driver";
+
 import { IDetachedModel, IModelLoader } from "./interfaces.js";
 import { ModelLoader } from "./modelLoader.js";
 

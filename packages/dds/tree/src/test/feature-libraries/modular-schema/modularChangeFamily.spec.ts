@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import { SessionId } from "@fluidframework/id-compressor";
+
 import { ICodecOptions, makeCodecFamily } from "../../../codec/index.js";
 import {
 	ChangeEncodingContext,
@@ -65,6 +67,7 @@ import {
 	testChangeReceiver,
 	testRevisionTagCodec,
 } from "../../utils.js";
+
 import { ValueChangeset, valueField } from "./basicRebasers.js";
 
 const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {

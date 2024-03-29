@@ -4,6 +4,7 @@
  */
 
 import { resolve } from 'path';
+
 import { LocalServerTestDriver } from '@fluid-private/test-drivers';
 import {
 	AttachState,
@@ -34,6 +35,7 @@ import {
 } from '@fluidframework/test-utils';
 import { expect } from 'chai';
 import { v5 as uuidv5 } from 'uuid';
+
 import { BuildNode, Change, StablePlace } from '../../ChangeTypes.js';
 import { ReplaceRecursive, fail, identity } from '../../Common.js';
 import { OrderedEditSet } from '../../EditLog.js';
@@ -72,8 +74,8 @@ import {
 	WriteFormat,
 	reservedIdCount,
 } from '../../persisted-types/index.js';
+
 import { RefreshingTestTree, SimpleTestTree, TestTree, buildLeaf } from './TestNode.js';
-import { _dirname } from './dirname.cjs';
 
 /** Objects returned by setUpTestSharedTree */
 export interface SharedTreeTestingComponents {
@@ -501,7 +503,7 @@ export function areNodesEquivalent(...nodes: NodeData<unknown>[]): boolean {
 
 // This accounts for this file being executed after compilation. If many tests want to leverage resources, we should unify
 // resource path logic to a single place.
-export const testDocumentsPathBase = resolve(_dirname, '../../../src/test/documents/');
+export const testDocumentsPathBase = resolve(__dirname, '../../../src/test/documents/');
 
 export const versionComparator = (versionA: string, versionB: string): number => {
 	const versionASplit = versionA.split('.');

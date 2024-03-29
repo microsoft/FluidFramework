@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import { BaseSegment, ISegment } from "./mergeTreeNodes.js";
 import { IJSONSegment } from "./ops.js";
 import { PropertySet } from "./properties.js";

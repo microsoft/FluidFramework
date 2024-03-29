@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import { ICodecFamily } from "../../codec/index.js";
 import {
 	ChangeEncodingContext,
@@ -33,6 +34,7 @@ import {
 	relevantRemovedRoots as relevantModularRemovedRoots,
 } from "../modular-schema/index.js";
 import { OptionalChangeset } from "../optional-field/index.js";
+
 import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds.js";
 
 export type DefaultChangeset = ModularChangeset;

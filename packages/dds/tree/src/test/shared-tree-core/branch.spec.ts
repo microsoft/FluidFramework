@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
+
 import {
 	CommitKind,
 	GraphCommit,

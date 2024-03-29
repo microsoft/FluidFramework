@@ -4,6 +4,7 @@
  */
 
 import { ISegment } from "@fluidframework/sequence";
+
 import { getCss } from "../document/index.js";
 import { areStringsEquivalent } from "../util/index.js";
 

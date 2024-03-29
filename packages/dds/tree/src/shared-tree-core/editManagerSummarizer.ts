@@ -12,10 +12,12 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
+
 import { IJsonCodec } from "../codec/index.js";
 import { ChangeFamily, ChangeFamilyEditor } from "../core/index.js";
 import { SchemaAndPolicy } from "../feature-libraries/index.js";
 import { JsonCompatibleReadOnly } from "../util/index.js";
+
 import { EditManager, SummaryData } from "./editManager.js";
 import { EditManagerEncodingContext } from "./editManagerCodecs.js";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "./sharedTreeCore.js";

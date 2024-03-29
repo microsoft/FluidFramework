@@ -19,6 +19,7 @@ import {
 	JsonCompatibleReadOnlySchema,
 	mapIterable,
 } from "../util/index.js";
+
 import { SummaryData } from "./editManager.js";
 import {
 	Commit,

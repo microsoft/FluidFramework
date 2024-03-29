@@ -4,6 +4,7 @@
  */
 
 import { IBubble } from "@fluid-example/bubblebench-common";
+
 import { Bubble } from "./schema.js";
 
 export class BubbleWrapper implements IBubble {

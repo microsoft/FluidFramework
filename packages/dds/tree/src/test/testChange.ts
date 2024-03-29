@@ -4,6 +4,7 @@
  */
 
 import { strict as assert, fail } from "assert";
+
 import { IJsonCodec, makeCodecFamily } from "../codec/index.js";
 import {
 	AnchorSet,
@@ -19,6 +20,7 @@ import {
 	emptyDelta,
 } from "../core/index.js";
 import { JsonCompatibleReadOnly, RecursiveReadonly, brand } from "../util/index.js";
+
 import { deepFreeze } from "./utils.js";
 
 export interface NonEmptyTestChange {

@@ -51,6 +51,7 @@ import {
 import { TreeContent } from "../../../shared-tree/index.js";
 import { brand, capitalize } from "../../../util/index.js";
 import { failCodecFamily, flexTreeViewWithContent, forestWithContent } from "../../utils.js";
+
 import { contextWithContentReadonly } from "./utils.js";
 
 function collectPropertyNames(obj: object): Set<string> {

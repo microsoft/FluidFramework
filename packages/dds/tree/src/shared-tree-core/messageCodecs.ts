@@ -4,6 +4,7 @@
  */
 
 import { TAnySchema, Type } from "@sinclair/typebox";
+
 import {
 	type ICodecFamily,
 	ICodecOptions,
@@ -20,6 +21,7 @@ import {
 } from "../core/index.js";
 import { SchemaAndPolicy } from "../feature-libraries/index.js";
 import { JsonCompatibleReadOnly } from "../util/index.js";
+
 import { Message } from "./messageFormat.js";
 import { DecodedMessage } from "./messageTypes.js";
 

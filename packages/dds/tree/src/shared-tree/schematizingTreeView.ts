@@ -5,6 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
+
 import { AllowedUpdateType, Compatibility, FieldKey, anchorSlot } from "../core/index.js";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
 import {
@@ -24,6 +25,7 @@ import {
 	toFlexConfig,
 } from "../simple-tree/index.js";
 import { disposeSymbol } from "../util/index.js";
+
 import { TreeContent, UpdateType, ensureSchema, evaluateUpdate } from "./schematizeTree.js";
 import { TreeCheckout } from "./treeCheckout.js";
 import { CheckoutFlexTreeView } from "./treeView.js";

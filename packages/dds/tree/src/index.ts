@@ -296,6 +296,7 @@ export {
 	NodeBuilderData,
 	NodeKind,
 	ObjectFromSchemaRecord,
+	TreeObjectNode,
 	TreeNodeFromImplicitAllowedTypes,
 	TreeNodeSchemaClass,
 	TreeNodeSchemaCore,
@@ -306,6 +307,7 @@ export {
 	SchemaFactoryRecursive,
 	ValidateRecursiveSchema,
 	ObjectFromSchemaRecordUnsafe,
+	TreeObjectNodeUnsafe,
 	TreeFieldFromImplicitFieldUnsafe,
 	TreeNodeFromImplicitAllowedTypesUnsafe,
 	FieldSchemaUnsafe,
@@ -329,7 +331,7 @@ export {
 	test_RecursiveObject_base,
 	test_RecursiveObjectPojoMode,
 } from "./simple-tree/index.js";
-export { SharedTree } from "./treeFactory.js";
+export { SharedTree, configuredSharedTree } from "./treeFactory.js";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec/index.js";
 export { noopValidator } from "./codec/index.js";

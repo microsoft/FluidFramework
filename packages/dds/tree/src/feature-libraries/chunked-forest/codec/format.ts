@@ -4,7 +4,9 @@
  */
 
 import { Static, Type } from "@sinclair/typebox";
+
 import { unionOptions } from "../../../codec/index.js";
+
 import { Count, EncodedFieldBatchGeneric, IdentifierOrIndex, ShapeIndex } from "./formatGeneric.js";
 
 export const version = 1;

@@ -4,6 +4,7 @@
  */
 
 import fs from "fs";
+
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import {
@@ -11,11 +12,12 @@ import {
 	ITestObjectProvider,
 	TestObjectProvider,
 } from "@fluidframework/test-utils";
-import { CompatKind, driver, r11sEndpointName, tenantIndex } from "../compatOptions.cjs";
-import { configList } from "./compatConfig.js";
+
 import { testBaseVersion } from "./baseVersion.js";
-import { ITestObjectProviderOptions } from "./describeCompat.js";
+import { configList } from "./compatConfig.js";
+import { CompatKind, driver, r11sEndpointName, tenantIndex } from "./compatOptions.js";
 import { getVersionedTestObjectProviderFromApis } from "./compatUtils.js";
+import { ITestObjectProviderOptions } from "./describeCompat.js";
 import {
 	getDataRuntimeApi,
 	getLoaderApi,
@@ -23,6 +25,7 @@ import {
 	getDriverApi,
 	CompatApis,
 } from "./testApi.js";
+import { getRequestedVersion } from "./versionUtils.js";
 
 /**
  * Types of documents to be used during the performance runs.
@@ -341,18 +344,26 @@ function createE2EDocCompatSuite(
 					let provider: TestObjectProvider;
 					let resetAfterEach: boolean;
 					const dataRuntimeApi = getDataRuntimeApi(
-						testBaseVersion(config.dataRuntime),
-						config.dataRuntime,
+						getRequestedVersion(
+							testBaseVersion(config.dataRuntime),
+							config.dataRuntime,
+						),
 					);
 					const apis: CompatApis = {
 						containerRuntime: getContainerRuntimeApi(
-							testBaseVersion(config.containerRuntime),
-							config.containerRuntime,
+							getRequestedVersion(
+								testBaseVersion(config.containerRuntime),
+								config.containerRuntime,
+							),
 						),
 						dataRuntime: dataRuntimeApi,
 						dds: dataRuntimeApi.dds,
-						driver: getDriverApi(testBaseVersion(config.driver), config.driver),
-						loader: getLoaderApi(testBaseVersion(config.loader), config.loader),
+						driver: getDriverApi(
+							getRequestedVersion(testBaseVersion(config.driver), config.driver),
+						),
+						loader: getLoaderApi(
+							getRequestedVersion(testBaseVersion(config.loader), config.loader),
+						),
 					};
 
 					before(async function () {

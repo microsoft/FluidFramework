@@ -10,6 +10,7 @@ import {
 	RBNodeActions,
 	RedBlackTree,
 } from "@fluidframework/merge-tree";
+
 import { IInterval } from "./intervals/index.js";
 
 export interface AugmentedIntervalNode {

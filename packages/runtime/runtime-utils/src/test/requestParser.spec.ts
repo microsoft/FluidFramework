@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { RequestParser } from "../requestParser.js";
 
 describe("RequestParser", () => {

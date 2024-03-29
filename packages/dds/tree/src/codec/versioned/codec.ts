@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { TSchema } from "@sinclair/typebox";
+
 import { JsonCompatibleReadOnly } from "../../util/index.js";
 import { type ICodecFamily, ICodecOptions, IJsonCodec, withSchemaValidation } from "../codec.js";
 import { Versioned } from "./format.js";
