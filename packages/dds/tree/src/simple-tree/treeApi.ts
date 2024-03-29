@@ -198,8 +198,11 @@ export const treeNodeApi: TreeNodeApi = {
  */
 export interface TreeChangeEvents {
 	/**
-	 * Raised on a node when one or more of its child nodes are replaced, i.e. when the properties of the node are
-	 * assigned to (this includes assigning `undefined` to a property to remove the child node there).
+	 * Emitted by a node when:
+	 * - The content of one or more of the node's properties changes (i.e., the property now contains a new node, or
+	 * nothing if it previously contained a node).
+	 * - For an array node, when an element is added, removed, or moved.
+	 * - For a map node, when a key is added, updated, or removed.
 	 *
 	 * @remarks
 	 * In particular, this event is not raised when:
@@ -218,12 +221,6 @@ export interface TreeChangeEvents {
 	 * When it is raised, the tree is guaranteed to be in-schema.
 	 *
 	 * @privateRemarks
-	 * In terms of the internal implementation of tree, this fires when:
-	 * - The content of one or more of the node's fields changes (i.e., the field now contains a new node, or nothing if it
-	 * previously contained a node)
-	 * - For an array node, when the array is modified (i.e., an element is added, removed, or moved)
-	 * - For a map node, when a key is added, updated, or removed.
-	 *
 	 * This event occurs whenever the apparent contents of the node instance change, regardless of what caused the change.
 	 * For example, it will fire when the local client reassigns a child, when part of a remote edit is applied to the
 	 * node, or when the node has to be updated due to resolution of a merge conflict
@@ -236,6 +233,7 @@ export interface TreeChangeEvents {
 	 *
 	 * @remarks
 	 * This event is not raised when the node itself is moved to a different location in the tree or removed from the tree.
+	 * In that case it is raised on the _parent_ node, not the node itself.
 	 *
 	 * It may fire at a time when the change(s) that triggered it are not yet visible if the listener inspects the tree.
 	 * In that case, it is guaranteed to fire again after the change(s) _are_ visible to the listener.

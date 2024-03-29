@@ -132,25 +132,24 @@ export interface AnchorEvents {
 	subtreeChanging(anchor: AnchorNode): PathVisitor | void;
 
 	/**
-	 * Emitted when exiting the subtree rooted at `anchor` during a delta visit, which means that all effects of that
-	 * visit in that subtree are now visible. HOWEVER, as of 2024-03-27, applying changes to a tree requires two visits
-	 * (the detach and the attach passes) so this event fires twice.
-	 *
-	 * @remarks
-	 * Note that this event naturally bubbles up the tree but in a pattern resembling breadth-first traversal, not
-	 * depth-first traversal, like other events might do.
-	 * For example, if node A is the parent of nodes B and C and a batch of changes affects both B and C, this event will
-	 * fire on B and C first in some order, and only then will it fire on A.
-	 * Additionally, it will fire on A *only once*, not once after it fires on B and again after it fires on C.
+	 * Emitted after the subtree rooted at `anchor` may have been changed.
+	 * While this event is always emitted in the presence of changes to the subtree,
+	 * it may also be emitted even though no changes have been made to the subtree.
+	 * May be emitted multiple times within the application of a single edit or transaction.
 	 *
 	 * @privateremarks
-	 * This currently fires twice during a delta visit to an AnchorSet, once during the detach pass and once during the
-	 * attach pass, which means that consumers see it twice, and depending on the kind of change that's happening, it
-	 * may or may not have happened yet the first time it fires. E.g. replacing a node with a new one only produces a
-	 * visible change during the attach pass, so when this event fires during the detach pass, if the listener looks for
-	 * a change in the tree, it will not find one.
+	 * The implementation details of the delta visit traversal have a big effect on how/when this event is emitted.
+	 * As of 2024-03-27, it is emitted on a node as the delta traversal exits that node, which by design of the current
+	 * traversal algorithm happens after all changes to the node's children have been applied, so this event is only
+	 * emitted by a node after all its children which had changes have emitted theirs.
+	 * It's also emitted twice for any node due to the two-pass algorithm (detach + attach) we use today which causes
+	 * a node to be exited once on each pass, and depending on the kind of change, the change may or may not have happened
+	 * yet the first time the event fires. E.g. replacing a node with a new one only produces a visible change during the
+	 * attach pass, so when this event fires during the detach pass, if the listener looks for a change in the tree, it
+	 * will not find one.
 	 *
-	 * TODO: make it so this event only fires once, at the right time.
+	 * TODO: maybe make it so this event is guaranteed to only fire once, and specifically when changes to the tree
+	 * did happen and are visible to the listener.
 	 */
 	subtreeChanged(anchor: AnchorNode): void;
 
