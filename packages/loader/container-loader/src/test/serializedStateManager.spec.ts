@@ -141,8 +141,7 @@ const getAttributesFromPendingState = (
 };
 
 describe("serializedStateManager", () => {
-	const logger = new MockLogger();
-
+	let logger: MockLogger;
 	function generateSavedOp(seq: number): ISequencedDocumentMessage {
 		return {
 			clientId: "Some client ID",
@@ -151,6 +150,10 @@ describe("serializedStateManager", () => {
 			type: MessageType.Operation,
 		} as any as ISequencedDocumentMessage;
 	}
+
+	beforeEach("setup", () => {
+		logger = new MockLogger();
+	});
 
 	it("can't get pending local state when offline load disabled", async () => {
 		const storageAdapter = new MockStorageAdapter();
