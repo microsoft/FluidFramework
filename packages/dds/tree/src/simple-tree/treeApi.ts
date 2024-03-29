@@ -199,16 +199,21 @@ export const treeNodeApi: TreeNodeApi = {
 export interface TreeChangeEvents {
 	/**
 	 * Emitted by a node when:
+	 *
 	 * - The content of one or more of the node's properties changes (i.e., the property now contains a new node, or
 	 * nothing if it previously contained a node).
+	 *
 	 * - For an array node, when an element is added, removed, or moved.
+	 *
 	 * - For a map node, when a key is added, updated, or removed.
 	 *
 	 * @remarks
 	 * In particular, this event is not raised when:
+	 *
 	 * - Properties of a child node change. Notably, updates to an array node or a map node (like adding or removing
 	 * elements/entries) will raise this event on the array/map node itself, but not on the node that contains the
 	 * array/map node as one of its properties.
+	 *
 	 * - The node is moved to a different location in the tree or removed from the tree.
 	 * In this case the event is raised on the _parent_ node, not the node itself.
 	 *

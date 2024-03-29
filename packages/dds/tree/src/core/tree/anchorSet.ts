@@ -133,6 +133,8 @@ export interface AnchorEvents {
 
 	/**
 	 * Emitted after the subtree rooted at `anchor` may have been changed.
+	 * 
+	 * @remarks
 	 * While this event is always emitted in the presence of changes to the subtree,
 	 * it may also be emitted even though no changes have been made to the subtree.
 	 * May be emitted multiple times within the application of a single edit or transaction.
