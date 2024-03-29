@@ -94,6 +94,17 @@ export interface IDocumentSchemaFeatures {
 	compressionLz4: boolean;
 	idCompressorMode: IdCompressorMode;
 	opGroupingEnabled: boolean;
+
+	/**
+	 * List of disallowed versions of the runtime.
+	 * This option is sticky. Once a version of runtime is added to this list (when supplied to DocumentsSchemaController's constructor)
+	 * it will be added to the list of disallowed versions and stored in document metadata.
+	 * Each runtime checks if its version is in this list on container open. If it is, it immediately exists with error message
+	 * indicating to the user that this version is no longer supported.
+	 * Currently there is no mechanism to remove version fro this list. I.e. If it was once added to the list,
+	 * it gets added to any document metadata (documents that gets open by this runtime) and there is no way to clear it from document's
+	 * metadata.
+	 */
 	disallowedVersions: string[];
 }
 
@@ -508,6 +519,11 @@ export class DocumentsSchemaController {
 		return schema;
 	}
 
+	/**
+	 * Called by Container runtime whenever it is about to send some op.
+	 * It gives opportunity for controller to issue its own ops - we do not want to send ops if there are no local changes in document.
+	 * @param send - delegate that controller can use to send its own op, if it needs to.
+	 */
 	public onMessageSent(send: (content: IDocumentSchemaChangeMessage) => void) {
 		if (this.sendOp && this.futureSchema !== undefined) {
 			assert(
@@ -525,6 +541,7 @@ export class DocumentsSchemaController {
 
 	/**
 	 * Process document schema change message
+	 * Called by ContainerRuntime whenever it sees document schema messages.
 	 * @param content - content of the message
 	 * @param local - whether op is local
 	 * @param sequenceNumber - sequence number of the op

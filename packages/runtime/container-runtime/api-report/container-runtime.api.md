@@ -414,7 +414,6 @@ export class DocumentsSchemaController {
     constructor(existing: boolean, documentMetadataSchema: IDocumentSchema | undefined, features: IDocumentSchemaFeatures, onSchemaChange: (schema: IDocumentSchemaCurrent) => void);
     // (undocumented)
     onDisconnect(): void;
-    // (undocumented)
     onMessageSent(send: (content: IDocumentSchemaChangeMessage) => void): void;
     processDocumentSchemaOp(content: IDocumentSchemaChangeMessage, local: boolean, sequenceNumber: number): boolean;
     // (undocumented)
@@ -769,7 +768,6 @@ export type IDocumentSchemaCurrent = {
 export interface IDocumentSchemaFeatures {
     // (undocumented)
     compressionLz4: boolean;
-    // (undocumented)
     disallowedVersions: string[];
     // (undocumented)
     explicitSchemaControl: boolean;
