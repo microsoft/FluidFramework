@@ -4,17 +4,21 @@
 
 ```ts
 
-import { FluidObject } from '@fluidframework/core-interfaces';
-import { IChannel } from '@fluidframework/datastore-definitions';
-import { IErrorBase } from '@fluidframework/core-interfaces';
-import { IEvent } from '@fluidframework/core-interfaces';
-import { IEventProvider } from '@fluidframework/core-interfaces';
-import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { ISharedObject } from '@fluidframework/shared-object-base';
-import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { ISharedObjectKind } from '@fluidframework/shared-object-base';
+import type { EventEmitter } from 'events_pkg';
+import type { IClient } from '@fluidframework/protocol-definitions';
+import type { IClientConfiguration } from '@fluidframework/protocol-definitions';
+import type { IClientDetails } from '@fluidframework/protocol-definitions';
+import type { IDocumentMessage } from '@fluidframework/protocol-definitions';
+import type { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
+import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import type { IIdCompressor } from '@fluidframework/id-compressor';
+import type { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
+import type { IQuorumClients } from '@fluidframework/protocol-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import type { ISignalMessage } from '@fluidframework/protocol-definitions';
+import type { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import type { ITelemetryContext } from '@fluidframework/runtime-definitions';
+import type { ITokenClaims } from '@fluidframework/protocol-definitions';
 
 // @public
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
@@ -152,18 +156,378 @@ export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 export type FlexListToUnion<TList extends FlexList> = ExtractItemType<ArrayToUnion<TList>>;
 
 // @public
+export type FluidObject<T = unknown> = {
+    [P in FluidObjectProviderKeys<T>]?: T[P];
+};
+
+// @public
+export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
+
+// @public
+export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
+    // (undocumented)
+    readonly errorType: string;
+}
+
+// @public
+export interface IAudience extends EventEmitter {
+    getMember(clientId: string): IClient | undefined;
+    getMembers(): Map<string, IClient>;
+    on(event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): this;
+}
+
+// @public (undocumented)
+export interface IChannel extends IFluidLoadable {
+    // (undocumented)
+    readonly attributes: IChannelAttributes;
+    connect(services: IChannelServices): void;
+    getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+    getGCData(fullGC?: boolean): IGarbageCollectionData;
+    readonly id: string;
+    isAttached(): boolean;
+    summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): Promise<ISummaryTreeWithStats>;
+}
+
+// @public
+export interface IChannelAttributes {
+    readonly packageVersion?: string;
+    readonly snapshotFormatVersion: string;
+    readonly type: string;
+}
+
+// @public
+export interface IChannelFactory<out TChannel = unknown> {
+    readonly attributes: IChannelAttributes;
+    create(runtime: IFluidDataStoreRuntime, id: string): TChannel & IChannel;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<TChannel & IChannel>;
+    readonly type: string;
+}
+
+// @public
+export interface IChannelServices {
+    // (undocumented)
+    deltaConnection: IDeltaConnection;
+    // (undocumented)
+    objectStorage: IChannelStorageService;
+}
+
+// @public
+export interface IChannelStorageService {
+    contains(path: string): Promise<boolean>;
+    list(path: string): Promise<string[]>;
+    readBlob(path: string): Promise<ArrayBufferLike>;
+}
+
+// @public
 export interface IConnection {
     id: string;
     mode: "write" | "read";
 }
 
 // @public
+export interface IConnectionDetails {
+    checkpointSequenceNumber: number | undefined;
+    // (undocumented)
+    claims: ITokenClaims;
+    clientId: string;
+    // (undocumented)
+    serviceConfiguration: IClientConfiguration;
+}
+
+// @public
 export type ICriticalContainerError = IErrorBase;
 
 // @public
+export interface IDeltaConnection {
+    // @deprecated (undocumented)
+    addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
+    attach(handler: IDeltaHandler): void;
+    // (undocumented)
+    connected: boolean;
+    dirty(): void;
+    submit(messageContent: any, localOpMetadata: unknown): void;
+}
+
+// @public
+export interface IDeltaHandler {
+    applyStashedOp(message: any): void;
+    process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => void;
+    reSubmit(message: any, localOpMetadata: unknown): void;
+    rollback?(message: any, localOpMetadata: unknown): void;
+    setConnectionState(connected: boolean): void;
+}
+
+// @public @sealed
+export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
+    readonly active: boolean;
+    readonly clientDetails: IClientDetails;
+    readonly hasCheckpointSequenceNumber: boolean;
+    // @deprecated
+    readonly inbound: IDeltaQueue<T>;
+    readonly inboundSignal: IDeltaQueue<ISignalMessage>;
+    readonly initialSequenceNumber: number;
+    readonly lastKnownSeqNumber: number;
+    readonly lastMessage: ISequencedDocumentMessage | undefined;
+    readonly lastSequenceNumber: number;
+    readonly maxMessageSize: number;
+    readonly minimumSequenceNumber: number;
+    // @deprecated
+    readonly outbound: IDeltaQueue<U[]>;
+    // (undocumented)
+    readonly readOnlyInfo: ReadOnlyInfo;
+    readonly serviceConfiguration: IClientConfiguration | undefined;
+    submitSignal(content: any, targetClientId?: string): void;
+    readonly version: string;
+}
+
+// @public @sealed
+export interface IDeltaManagerEvents extends IEvent {
+    // @deprecated (undocumented)
+    (event: "prepareSend", listener: (messageBuffer: any[]) => void): any;
+    // @deprecated (undocumented)
+    (event: "submitOp", listener: (message: IDocumentMessage) => void): any;
+    (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void): any;
+    (event: "pong", listener: (latency: number) => void): any;
+    (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void): any;
+    (event: "disconnect", listener: (reason: string, error?: IAnyDriverError) => void): any;
+    (event: "readonly", listener: (readonly: boolean, readonlyConnectionReason?: {
+        reason: string;
+        error?: IErrorBase;
+    }) => void): any;
+}
+
+// @public @sealed
+export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, IDisposable {
+    idle: boolean;
+    length: number;
+    pause(): Promise<void>;
+    paused: boolean;
+    peek(): T | undefined;
+    resume(): void;
+    toArray(): T[];
+    waitTillProcessingDone(): Promise<{
+        count: number;
+        duration: number;
+    }>;
+}
+
+// @public @sealed
+export interface IDeltaQueueEvents<T> extends IErrorEvent {
+    (event: "push", listener: (task: T) => void): any;
+    (event: "op", listener: (task: T) => void): any;
+    (event: "idle", listener: (count: number, duration: number) => void): any;
+}
+
+// @public @sealed
+export interface IDeltaSender {
+    flush(): void;
+}
+
+// @public
 export interface IDisposable {
+    dispose(error?: Error): void;
+    readonly disposed: boolean;
+}
+
+// @public
+export interface IDisposableTree {
     [disposeSymbol](): void;
 }
+
+// @public
+export interface IDriverErrorBase {
+    canRetry: boolean;
+    endpointReached?: boolean;
+    readonly errorType: DriverErrorTypes;
+    readonly message: string;
+    online?: string;
+}
+
+// @public
+export interface IErrorBase extends Partial<Error> {
+    readonly errorType: string;
+    getTelemetryProperties?(): ITelemetryBaseProperties;
+    readonly message: string;
+    readonly name?: string;
+    readonly stack?: string;
+}
+
+// @public
+export interface IErrorEvent extends IEvent {
+    // @eventProperty
+    (event: "error", listener: (message: any) => void): any;
+}
+
+// @public
+export interface IEvent {
+    // @eventProperty
+    (event: string, listener: (...args: any[]) => void): any;
+}
+
+// @public
+export interface IEventProvider<TEvent extends IEvent> {
+    readonly off: IEventTransformer<this, TEvent>;
+    readonly on: IEventTransformer<this, TEvent>;
+    readonly once: IEventTransformer<this, TEvent>;
+}
+
+// @public
+export type IEventThisPlaceHolder = {
+    thisPlaceHolder: "thisPlaceHolder";
+};
+
+// @public
+export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: infer E9, listener: (...args: infer A9) => void): any;
+    (event: infer E10, listener: (...args: infer A10) => void): any;
+    (event: infer E11, listener: (...args: infer A11) => void): any;
+    (event: infer E12, listener: (...args: infer A12) => void): any;
+    (event: infer E13, listener: (...args: infer A13) => void): any;
+    (event: infer E14, listener: (...args: infer A14) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> & TransformedEvent<TThis, E9, A9> & TransformedEvent<TThis, E10, A10> & TransformedEvent<TThis, E11, A11> & TransformedEvent<TThis, E12, A12> & TransformedEvent<TThis, E13, A13> & TransformedEvent<TThis, E14, A14> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: infer E9, listener: (...args: infer A9) => void): any;
+    (event: infer E10, listener: (...args: infer A10) => void): any;
+    (event: infer E11, listener: (...args: infer A11) => void): any;
+    (event: infer E12, listener: (...args: infer A12) => void): any;
+    (event: infer E13, listener: (...args: infer A13) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> & TransformedEvent<TThis, E9, A9> & TransformedEvent<TThis, E10, A10> & TransformedEvent<TThis, E11, A11> & TransformedEvent<TThis, E12, A12> & TransformedEvent<TThis, E13, A13> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: infer E9, listener: (...args: infer A9) => void): any;
+    (event: infer E10, listener: (...args: infer A10) => void): any;
+    (event: infer E11, listener: (...args: infer A11) => void): any;
+    (event: infer E12, listener: (...args: infer A12) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> & TransformedEvent<TThis, E9, A9> & TransformedEvent<TThis, E10, A10> & TransformedEvent<TThis, E11, A11> & TransformedEvent<TThis, E12, A12> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: infer E9, listener: (...args: infer A9) => void): any;
+    (event: infer E10, listener: (...args: infer A10) => void): any;
+    (event: infer E11, listener: (...args: infer A11) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> & TransformedEvent<TThis, E9, A9> & TransformedEvent<TThis, E10, A10> & TransformedEvent<TThis, E11, A11> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: infer E9, listener: (...args: infer A9) => void): any;
+    (event: infer E10, listener: (...args: infer A10) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> & TransformedEvent<TThis, E9, A9> & TransformedEvent<TThis, E10, A10> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: infer E9, listener: (...args: infer A9) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> & TransformedEvent<TThis, E9, A9> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> : TransformedEvent<TThis, string, any[]>;
 
 // @public @sealed
 export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IEventProvider<IFluidContainerEvents> {
@@ -186,6 +550,93 @@ export interface IFluidContainerEvents extends IEvent {
     (event: "saved", listener: () => void): void;
     (event: "dirty", listener: () => void): void;
     (event: "disposed", listener: (error?: ICriticalContainerError) => void): any;
+}
+
+// @public
+export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRuntimeEvents>, IDisposable {
+    addChannel(channel: IChannel): void;
+    readonly attachState: AttachState;
+    bindChannel(channel: IChannel): void;
+    // (undocumented)
+    readonly channelsRoutingContext: IFluidHandleContext;
+    // (undocumented)
+    readonly clientId: string | undefined;
+    // (undocumented)
+    readonly connected: boolean;
+    createChannel(id: string | undefined, type: string): IChannel;
+    // (undocumented)
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    ensureNoDataModelChanges<T>(callback: () => T): T;
+    readonly entryPoint: IFluidHandle<FluidObject>;
+    getAudience(): IAudience;
+    getChannel(id: string): Promise<IChannel>;
+    getQuorum(): IQuorumClients;
+    // (undocumented)
+    readonly id: string;
+    // (undocumented)
+    readonly idCompressor?: IIdCompressor;
+    // (undocumented)
+    readonly IFluidHandleContext: IFluidHandleContext;
+    // (undocumented)
+    readonly logger: ITelemetryBaseLogger;
+    // (undocumented)
+    readonly objectsRoutingContext: IFluidHandleContext;
+    // (undocumented)
+    readonly options: Record<string | number, any>;
+    // (undocumented)
+    readonly rootRoutingContext: IFluidHandleContext;
+    submitSignal(type: string, content: any, targetClientId?: string): void;
+    uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
+    waitAttached(): Promise<void>;
+}
+
+// @public
+export interface IFluidDataStoreRuntimeEvents extends IEvent {
+    // (undocumented)
+    (event: "disconnected" | "dispose" | "attaching" | "attached", listener: () => void): any;
+    // (undocumented)
+    (event: "op", listener: (message: ISequencedDocumentMessage) => void): any;
+    // (undocumented)
+    (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
+    // (undocumented)
+    (event: "connected", listener: (clientId: string) => void): any;
+}
+
+// @public (undocumented)
+export const IFluidHandle: keyof IProvideFluidHandle;
+
+// @public
+export interface IFluidHandle<T = FluidObject & IFluidLoadable> extends IProvideFluidHandle {
+    // @deprecated (undocumented)
+    readonly absolutePath: string;
+    // @deprecated (undocumented)
+    attachGraph(): void;
+    // @deprecated (undocumented)
+    bind(handle: IFluidHandle): void;
+    get(): Promise<T>;
+    readonly isAttached: boolean;
+}
+
+// @public (undocumented)
+export const IFluidHandleContext: keyof IProvideFluidHandleContext;
+
+// @public
+export interface IFluidHandleContext extends IProvideFluidHandleContext {
+    readonly absolutePath: string;
+    attachGraph(): void;
+    readonly isAttached: boolean;
+    // (undocumented)
+    resolveHandle(request: IRequest): Promise<IResponse>;
+    readonly routeContext?: IFluidHandleContext;
+}
+
+// @public (undocumented)
+export const IFluidLoadable: keyof IProvideFluidLoadable;
+
+// @public
+export interface IFluidLoadable extends IProvideFluidLoadable {
+    // (undocumented)
+    handle: IFluidHandle;
 }
 
 // @public
@@ -221,6 +672,48 @@ export type InsertableTypedNode<T extends TreeNodeSchema> = (T extends {
     implicitlyConstructable: true;
 } ? NodeBuilderData<T> : never) | Unhydrated<NodeFromSchema<T>>;
 
+// @public (undocumented)
+export interface IProvideFluidHandle {
+    // (undocumented)
+    readonly IFluidHandle: IFluidHandle;
+}
+
+// @public (undocumented)
+export interface IProvideFluidHandleContext {
+    // (undocumented)
+    readonly IFluidHandleContext: IFluidHandleContext;
+}
+
+// @public (undocumented)
+export interface IProvideFluidLoadable {
+    // (undocumented)
+    readonly IFluidLoadable: IFluidLoadable;
+}
+
+// @public (undocumented)
+export interface IRequest {
+    // (undocumented)
+    headers?: IRequestHeader;
+    // (undocumented)
+    url: string;
+}
+
+// @public (undocumented)
+export interface IResponse {
+    // (undocumented)
+    headers?: {
+        [key: string]: any;
+    };
+    // (undocumented)
+    mimeType: string;
+    // (undocumented)
+    stack?: string;
+    // (undocumented)
+    status: number;
+    // (undocumented)
+    value: any;
+}
+
 // @public
 export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents<M>> {
     getMembers(): Map<string, M>;
@@ -253,8 +746,49 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
 }
 
 // @public
+export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends IChannel, IEventProvider<TEvent> {
+    bindToContext(): void;
+    getGCData(fullGC?: boolean): IGarbageCollectionData;
+}
+
+// @public
+export interface ISharedObjectEvents extends IErrorEvent {
+    // @eventProperty
+    (event: "pre-op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    // @eventProperty
+    (event: "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
+}
+
+// @public
+export interface ISharedObjectKind<TSharedObject> {
+    create(runtime: IFluidDataStoreRuntime, id?: string): TSharedObject;
+    getFactory(): IChannelFactory<TSharedObject>;
+}
+
+// @public
 export interface ISubscribable<E extends Events<E>> {
     on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void;
+}
+
+// @public
+export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
+    // (undocumented)
+    category: string;
+    // (undocumented)
+    eventName: string;
+}
+
+// @public
+export interface ITelemetryBaseLogger {
+    // (undocumented)
+    minLogLevel?: LogLevel;
+    // (undocumented)
+    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
+}
+
+// @public
+export interface ITelemetryBaseProperties {
+    [index: string]: TelemetryBaseEventPropertyType | Tagged<TelemetryBaseEventPropertyType>;
 }
 
 // @public
@@ -281,6 +815,16 @@ export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> = ISh
 
 // @public
 export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
+
+// @public
+export const LogLevel: {
+    readonly verbose: 10;
+    readonly default: 20;
+    readonly error: 30;
+};
+
+// @public
+export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
 // @public
 export interface MakeNominal {
@@ -312,6 +856,22 @@ export enum NodeKind {
 export type ObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = {
     -readonly [Property in keyof T]: TreeFieldFromImplicitField<T[Property]>;
 };
+
+// @public (undocumented)
+export type ReadOnlyInfo = {
+    readonly readonly: false | undefined;
+} | {
+    readonly readonly: true;
+    readonly forced: boolean;
+    readonly permissions: boolean | undefined;
+    readonly storageOnly: boolean;
+    readonly storageOnlyReason?: string;
+};
+
+// @public
+export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
+    [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
+} : L;
 
 // @public
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
@@ -369,6 +929,20 @@ export type SharedMap = ISharedMap;
 
 // @public
 export const SharedTree: ISharedObjectKind<ITree>;
+
+// @public
+export interface Tagged<V, T extends string = string> {
+    // (undocumented)
+    tag: T;
+    // (undocumented)
+    value: V;
+}
+
+// @public
+export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
+
+// @public
+export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
 
 // @public
 export const Tree: TreeApi;
@@ -489,7 +1063,7 @@ export enum TreeStatus {
 }
 
 // @public
-export interface TreeView<in out TRoot> extends IDisposable {
+export interface TreeView<in out TRoot> extends IDisposableTree {
     readonly error?: SchemaIncompatible;
     readonly events: ISubscribable<TreeViewEvents>;
     readonly root: TRoot;
