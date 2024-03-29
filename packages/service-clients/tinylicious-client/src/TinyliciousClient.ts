@@ -87,6 +87,7 @@ export class TinyliciousClient {
 		 * See {@link FluidContainer.attach}
 		 */
 		const attach = async (): Promise<string> => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- AB#7608
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state.");
 			}
