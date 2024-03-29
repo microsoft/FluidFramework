@@ -18,6 +18,7 @@ import {
 } from "@fluid-private/stochastic-test-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
+import { IdCompressor } from "../idCompressor.js";
 import {
 	type IIdCompressor,
 	type IIdCompressorCore,
@@ -29,8 +30,7 @@ import {
 	SessionSpaceCompressedId,
 	StableId,
 	createIdCompressor,
-} from "..//index.js";
-import { IdCompressor } from "../idCompressor.js";
+} from "../index.js";
 import { assertIsSessionId, createSessionId } from "../utilities.js";
 
 import {

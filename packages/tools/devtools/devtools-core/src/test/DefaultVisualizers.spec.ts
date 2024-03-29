@@ -9,7 +9,7 @@
 import { SharedCell } from "@fluidframework/cell";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
-import { createIdCompressor } from "@fluidframework/id-compressor";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";

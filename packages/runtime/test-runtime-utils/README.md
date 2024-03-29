@@ -45,7 +45,7 @@ To write a unit test for these scenarios, follow these steps:
 -   We need to connect and attach the DDS to an IDeltaConnection so it can submit and process messages. Create a `MockDeltaConnection` by calling `createDeltaConnection` on the `MockContainerRuntime`.
 -   Use the `MockDeltaConnection` to connect the DDS.
 
-Examples - [sequenceHandler](..//../framework/undo-redo/src/test/sequenceHandler.spec.ts), [snapshotVersion](../sequence/src/test/snapshotVersion.spec.ts).
+Examples - [sequenceHandler](../../framework/undo-redo/src/test/sequenceHandler.spec.ts), [snapshotVersion](../sequence/src/test/snapshotVersion.spec.ts).
 
 ### Reconnection unit tests
 

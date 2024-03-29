@@ -12,7 +12,7 @@ import {
 	SessionId,
 	createIdCompressor,
 	deserializeIdCompressor,
-} from "@fluidframework/id-compressor";
+} from "@fluidframework/id-compressor/internal";
 
 import {
 	Anchor,
