@@ -918,6 +918,7 @@ export class Container
 			detachedBlobStorage,
 			this.mc.logger,
 			pendingLocalState?.snapshotBlobs,
+			pendingLocalState?.loadedGroupIdSnapshots,
 			addProtocolSummaryIfMissing,
 			forceEnableSummarizeProtocolTree,
 		);
@@ -1547,12 +1548,6 @@ export class Container
 		const supportGetSnapshotApi: boolean =
 			this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch") ===
 				true && this.service?.policies?.supportGetSnapshotApi === true;
-
-		// Load the pending local virtualized state
-		if (pendingLocalState?.loadingGroupSnapshots !== undefined) {
-			this.storageAdapter.loadingGroupIds = pendingLocalState?.loadingGroupSnapshots;
-		}
-
 		// Fetch specified snapshot.
 		const { baseSnapshot, version } = await this.serializedStateManager.fetchSnapshot(
 			specifiedVersion,
@@ -1565,11 +1560,8 @@ export class Container
 		);
 
 		// If we saved ops, we will replay them and don't need DeltaManager to fetch them
-		const sequenceNumber =
+		const lastProcessedSequenceNumber =
 			pendingLocalState?.savedOps[pendingLocalState.savedOps.length - 1]?.sequenceNumber;
-		const dmAttributes =
-			sequenceNumber !== undefined ? { ...attributes, sequenceNumber } : attributes;
-
 		let opsBeforeReturnP: Promise<void> | undefined;
 
 		if (loadMode.pauseAfterLoad === true) {
@@ -1582,7 +1574,7 @@ export class Container
 				// Note: It is possible that we think the latest snapshot is newer than the specified sequence number
 				// due to saved ops that may be replayed after the snapshot.
 				// https://dev.azure.com/fluidframework/internal/_workitems/edit/5055
-				if (dmAttributes.sequenceNumber > loadToSequenceNumber) {
+				if (attributes.sequenceNumber > loadToSequenceNumber) {
 					throw new Error(
 						"Cannot satisfy request to pause the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.",
 					);
@@ -1630,16 +1622,18 @@ export class Container
 				// Start prefetch, but not set opsBeforeReturnP - boot is not blocked by it!
 				// eslint-disable-next-line @typescript-eslint/no-floating-promises
 				this.attachDeltaManagerOpHandler(
-					dmAttributes,
+					attributes,
 					loadMode.deltaConnection !== "none" ? "all" : "none",
+					lastProcessedSequenceNumber,
 				);
 				break;
 			case "sequenceNumber":
 			case "cached":
 			case "all":
 				opsBeforeReturnP = this.attachDeltaManagerOpHandler(
-					dmAttributes,
+					attributes,
 					loadMode.opsBeforeReturn,
+					lastProcessedSequenceNumber,
 				);
 				break;
 			default:
@@ -2060,10 +2054,11 @@ export class Container
 	private async attachDeltaManagerOpHandler(
 		attributes: IDocumentAttributes,
 		prefetchType?: "sequenceNumber" | "cached" | "all" | "none",
+		lastProcessedSequenceNumber?: number,
 	) {
 		return this._deltaManager.attachOpHandler(
 			attributes.minimumSequenceNumber,
-			attributes.sequenceNumber,
+			attributes.sequenceNumber, // the sequence number of the snapshot
 			{
 				process: (message) => this.processRemoteMessage(message),
 				processSignal: (message) => {
@@ -2071,6 +2066,7 @@ export class Container
 				},
 			},
 			prefetchType,
+			lastProcessedSequenceNumber, // the sequence number to tell the delta manager of the local ops we've processed
 		);
 	}
 

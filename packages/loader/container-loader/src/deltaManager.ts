@@ -536,18 +536,25 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	/**
 	 * Sets the sequence number from which inbound messages should be returned
+	 * @param snapshotSequenceNumber - The sequence number of the snapshot at which the document loaded from.
+	 * @param lastProcessedSequenceNumber - The last processed sequence number, for offline, it should be greater than the sequence number
 	 */
 	public async attachOpHandler(
 		minSequenceNumber: number,
-		sequenceNumber: number,
+		snapshotSequenceNumber: number,
 		handler: IDeltaHandlerStrategy,
 		prefetchType: "sequenceNumber" | "cached" | "all" | "none" = "none",
+		lastProcessedSequenceNumber: number = snapshotSequenceNumber,
 	) {
-		this.initSequenceNumber = sequenceNumber;
-		this.lastProcessedSequenceNumber = sequenceNumber;
+		assert(
+			lastProcessedSequenceNumber >= snapshotSequenceNumber,
+			"Invalid last processed sequence number",
+		);
+		this.initSequenceNumber = snapshotSequenceNumber;
+		this.lastProcessedSequenceNumber = lastProcessedSequenceNumber;
 		this.minSequenceNumber = minSequenceNumber;
-		this.lastQueuedSequenceNumber = sequenceNumber;
-		this.lastObservedSeqNumber = sequenceNumber;
+		this.lastQueuedSequenceNumber = lastProcessedSequenceNumber;
+		this.lastObservedSeqNumber = lastProcessedSequenceNumber;
 
 		// We will use same check in other places to make sure all the seq number above are set properly.
 		assert(

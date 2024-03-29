@@ -54,7 +54,7 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	 * ops at the same sequence number at which they were made.
 	 */
 	savedOps: ISequencedDocumentMessage[];
-	loadingGroupSnapshots: Record<string, ISnapshot>;
+	loadedGroupIdSnapshots: Record<string, ISnapshot>;
 	url: string;
 	clientId?: string;
 }
@@ -161,7 +161,7 @@ export class SerializedStateManager {
 					pendingRuntimeState,
 					baseSnapshot: this.snapshot.baseSnapshot,
 					snapshotBlobs: this.snapshot.snapshotBlobs,
-					loadingGroupSnapshots: this.storageAdapter.loadingGroupIds,
+					loadedGroupIdSnapshots: this.storageAdapter.loadedGroupIdSnapshots,
 					savedOps: this.processedOps,
 					url: resolvedUrl.url,
 					// no need to save this if there is no pending runtime state
