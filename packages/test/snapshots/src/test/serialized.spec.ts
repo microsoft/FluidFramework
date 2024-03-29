@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import fs from "fs";
+
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { SharedCell } from "@fluidframework/cell";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
@@ -23,6 +24,7 @@ import {
 	TestFluidObject,
 	TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
+
 import { getTestContent, skipOrFailIfTestContentMissing } from "../testContent.js";
 
 describe(`Container Serialization Backwards Compatibility`, () => {

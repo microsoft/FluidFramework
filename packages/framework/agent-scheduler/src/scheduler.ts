@@ -27,6 +27,7 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
+
 import { IAgentScheduler, IAgentSchedulerEvents } from "./agent.js";
 
 // Note: making sure this ID is unique and does not collide with storage provided clientID

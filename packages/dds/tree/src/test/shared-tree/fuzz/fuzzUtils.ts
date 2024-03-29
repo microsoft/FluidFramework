@@ -5,13 +5,15 @@
 
 import { strict as assert } from "assert";
 import { join as pathJoin } from "path";
+
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	SerializedIdCompressorWithNoSession,
 	SessionId,
 	createIdCompressor,
 	deserializeIdCompressor,
-} from "@fluidframework/id-compressor";
+} from "@fluidframework/id-compressor/internal";
+
 import {
 	Anchor,
 	Revertible,
@@ -50,7 +52,7 @@ const builder = new SchemaBuilder({ scope: "treefuzz", libraries: [leaf.library]
  */
 export const fuzzNode = builder.object("node", {
 	optionalChild: FlexFieldSchema.create(FieldKinds.optional, [Any]),
-	requiredChild: Any,
+	requiredChild: FlexFieldSchema.create(FieldKinds.required, [Any]),
 	sequenceChildren: FlexFieldSchema.create(FieldKinds.sequence, [Any]),
 });
 

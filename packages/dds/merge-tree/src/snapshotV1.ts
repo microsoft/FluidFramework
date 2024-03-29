@@ -11,6 +11,7 @@ import { AttributionKey, ISummaryTreeWithStats } from "@fluidframework/runtime-d
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+
 import { IAttributionCollection } from "./attributionCollection.js";
 import { UnassignedSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";

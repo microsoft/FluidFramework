@@ -12,7 +12,9 @@ import {
 	createChildLogger,
 	extractSafePropertiesFromMessage,
 } from "@fluidframework/telemetry-utils";
+
 import { ContainerMessageType, ContainerRuntimeChunkedOpMessage } from "../messageTypes.js";
+
 import { estimateSocketSize } from "./batchManager.js";
 import { BatchMessage, IBatch, IChunkedOp } from "./definitions.js";
 

@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { IIdCompressor } from "@fluidframework/id-compressor";
+
 import { noopValidator } from "../codec/index.js";
 import {
 	Anchor,
@@ -40,6 +41,7 @@ import {
 } from "../feature-libraries/index.js";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core/index.js";
 import { TransactionResult, fail } from "../util/index.js";
+
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";

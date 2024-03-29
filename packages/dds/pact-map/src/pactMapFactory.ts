@@ -9,6 +9,7 @@ import {
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+
 import { type IPactMap } from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";
 import { PactMap } from "./pactMap.js";

@@ -6,12 +6,14 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
+
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
 import { IMergeBlock, MaxNodesInBlock } from "../mergeTreeNodes.js";
 import { TextSegment } from "../textSegment.js";
+
 import {
 	insertSegments,
 	insertText,

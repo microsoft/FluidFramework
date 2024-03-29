@@ -4,6 +4,7 @@
  */
 
 import { type IFluidHandle } from '@fluidframework/core-interfaces';
+
 import { type IShim } from './types.js';
 
 /**

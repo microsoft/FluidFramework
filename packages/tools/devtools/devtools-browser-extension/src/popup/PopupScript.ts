@@ -5,9 +5,11 @@
 
 import React from "react";
 import ReactDOM from "react-dom";
+
 import { BackgroundConnection } from "../BackgroundConnection.js";
 import { browser } from "../Globals.js";
 import { extensionPopupMessageSource } from "../messaging/index.js";
+
 import { PopupView } from "./PopupView.js";
 
 /**

@@ -4,6 +4,7 @@
  */
 
 import { IAppState, makeBubble, randomColor } from "@fluid-example/bubblebench-common";
+
 import { ClientWrapper } from "./client.js";
 import { ClientsField, FlexBubble, FlexClient } from "./schema.js";
 

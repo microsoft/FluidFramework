@@ -10,6 +10,7 @@ import {
 	Serializable,
 } from "@fluidframework/datastore-definitions";
 import { BaseSegment, IJSONSegment, ISegment, PropertySet } from "@fluidframework/merge-tree";
+
 import { SharedSegmentSequence } from "./sequence.js";
 
 const MaxRun = 128;

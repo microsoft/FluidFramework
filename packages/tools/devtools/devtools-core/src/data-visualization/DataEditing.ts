@@ -5,6 +5,7 @@
 
 import { type Serializable } from "@fluidframework/datastore-definitions";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
+
 import { type EditType, type HasFluidObjectId } from "../CommonInterfaces.js";
 
 /**

@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	MockContainerRuntimeFactory,
@@ -11,7 +12,9 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
+
 import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "../index.js";
+
 import { TestConsumer } from "./testconsumer.js";
 import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 import { expectSize, extract } from "./utils.js";

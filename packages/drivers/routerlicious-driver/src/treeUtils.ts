@@ -11,6 +11,7 @@ import {
 	SummaryObject,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
+
 import { INormalizedWholeSnapshot } from "./contracts.js";
 
 /**

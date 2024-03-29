@@ -4,10 +4,12 @@
  */
 
 import { strict as assert } from "assert";
+
 import { PropertySet } from "@fluidframework/merge-tree";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+
 import { createSharedStringWithInterception } from "../sequence/index.js";
 
 describe("Shared String with Interception", () => {

@@ -5,6 +5,7 @@
 
 import { describeStress } from "@fluid-private/stochastic-test-utils";
 import { assert } from "@fluidframework/core-utils";
+
 import {
 	ChangesetLocalId,
 	RevisionInfo,
@@ -28,6 +29,7 @@ import {
 import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js";
 import { TestChange } from "../../testChange.js";
 import { deepFreeze, defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
+
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
 import {
 	DetachedNodeTracker,

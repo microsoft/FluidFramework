@@ -9,6 +9,7 @@ import {
 	SessionSpaceCompressedId,
 } from "@fluidframework/id-compressor";
 import { Type } from "@sinclair/typebox";
+
 import {
 	Brand,
 	NestedMap,

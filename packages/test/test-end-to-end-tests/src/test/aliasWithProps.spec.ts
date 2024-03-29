@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { DataObjectFactory } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
