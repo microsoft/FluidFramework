@@ -1652,7 +1652,6 @@ export class ContainerRuntime
 				applyStashedOp: this.applyStashedOp.bind(this),
 				clientId: () => this.clientId,
 				close: this.closeFn,
-				connected: () => this.connected,
 				reSubmit: (message: IPendingBatchMessage) => {
 					this.reSubmit(message);
 					this.flush();
@@ -2397,6 +2396,29 @@ export class ContainerRuntime
 			this.documentsSchemaController.onDisconnect();
 		}
 
+		if (!connected) {
+			this._perfSignalData.signalsLost = 0;
+			this._perfSignalData.signalTimestamp = 0;
+			this._perfSignalData.trackingSignalSequenceNumber = undefined;
+		} else {
+			assert(
+				this.attachState === AttachState.Attached,
+				0x3cd /* Connection is possible only if container exists in storage */,
+			);
+
+			// We need to flush the ops currently collected by Outbox to preserve original order.
+			// This flush NEEDS to happen before we replay the ops.
+			// We want these ops to get to the PendingStateManager without sending to service and have them return to the Outbox upon calling "replayPendingStates".
+			this.flush();
+		}
+
+		this._connected = connected;
+
+		this.channelCollection.setConnectionState(connected, clientId);
+		this.garbageCollector.setConnectionState(connected, clientId);
+
+		raiseConnectedEvent(this.mc.logger, this, connected, clientId);
+
 		// If there are stashed blobs in the pending state, we need to delay
 		// propagation of the "connected" event until we have uploaded them to
 		// ensure we don't submit ops referencing a blob that has not been uploaded
@@ -2407,13 +2429,23 @@ export class ContainerRuntime
 				0x791 /* Connect event delay must be canceled before subsequent connect event */,
 			);
 			assert(!!clientId, 0x792 /* Must have clientId when connecting */);
+
+			// summarizer should not upload blobs in offline. If it loses connection, it should bail out immidiatly.
+			// In general, summarizer should not modify document.
+			// If, in the future, design changes, where summarizeing means - creating detached blobs, we will need to reconsider this.
+			// Also see assert in submitSummaryMessage()
+			assert(
+				!this.isSummarizerClient,
+				"summarizer should not have attachment blobs to be uploaded",
+			);
+
 			this.delayConnectClientId = clientId;
 			this.blobManager.processStashedChanges().then(
 				() => {
 					// make sure we didn't reconnect before the promise resolved
 					if (this.delayConnectClientId === clientId && !this.disposed) {
 						this.delayConnectClientId = undefined;
-						this.setConnectionStateCore(connected, clientId);
+						this.setConnectionStateCore();
 					}
 				},
 				(error) => this.closeFn(error),
@@ -2421,69 +2453,39 @@ export class ContainerRuntime
 			return;
 		}
 
-		this.setConnectionStateCore(connected, clientId);
+		if (connected) {
+			this.setConnectionStateCore();
+		}
 	}
 
-	private setConnectionStateCore(connected: boolean, clientId?: string) {
+	private setConnectionStateCore() {
 		assert(
 			!this.delayConnectClientId,
 			0x394 /* connect event delay must be cleared before propagating connect event */,
 		);
+		assert(this.connected, "still connected");
 		this.verifyNotClosed();
 
-		// There might be no change of state due to Container calling this API after loading runtime.
-		const changeOfState = this._connected !== connected;
-		const reconnection = changeOfState && !connected;
-
-		// We need to flush the ops currently collected by Outbox to preserve original order.
-		// This flush NEEDS to happen before we set the ContainerRuntime to "connected".
-		// We want these ops to get to the PendingStateManager without sending to service and have them return to the Outbox upon calling "replayPendingStates".
-		if (changeOfState && connected) {
-			this.flush();
-		}
-
-		this._connected = connected;
-
-		if (!connected) {
-			this._perfSignalData.signalsLost = 0;
-			this._perfSignalData.signalTimestamp = 0;
-			this._perfSignalData.trackingSignalSequenceNumber = undefined;
-		} else {
-			assert(
-				this.attachState === AttachState.Attached,
-				0x3cd /* Connection is possible only if container exists in storage */,
-			);
-		}
-
 		// Fail while disconnected
-		if (reconnection) {
-			this.consecutiveReconnects++;
+		this.consecutiveReconnects++;
 
-			if (!this.shouldContinueReconnecting()) {
-				this.closeFn(
-					DataProcessingError.create(
-						"Runtime detected too many reconnects with no progress syncing local ops.",
-						"setConnectionState",
-						undefined,
-						{
-							dataLoss: 1,
-							attempts: this.consecutiveReconnects,
-							pendingMessages: this.pendingMessagesCount,
-						},
-					),
-				);
-				return;
-			}
+		if (!this.shouldContinueReconnecting()) {
+			this.closeFn(
+				DataProcessingError.create(
+					"Runtime detected too many reconnects with no progress syncing local ops.",
+					"setConnectionState",
+					undefined,
+					{
+						dataLoss: 1,
+						attempts: this.consecutiveReconnects,
+						pendingMessages: this.pendingMessagesCount,
+					},
+				),
+			);
+			return;
 		}
 
-		if (changeOfState) {
-			this.replayPendingStates();
-		}
-
-		this.channelCollection.setConnectionState(connected, clientId);
-		this.garbageCollector.setConnectionState(connected, clientId);
-
-		raiseConnectedEvent(this.mc.logger, this, connected, clientId);
+		this.replayPendingStates();
 	}
 
 	public async notifyOpReplay(message: ISequencedDocumentMessage) {
@@ -2907,7 +2909,10 @@ export class ContainerRuntime
 		// Note that the real (non-proxy) delta manager is needed here to get the readonly info. This is because
 		// container runtime's ability to send ops depend on the actual readonly state of the delta manager.
 		return (
-			this.connected && !this.innerDeltaManager.readOnlyInfo.readonly && !this.imminentClosure
+			this.connected &&
+			this.delayConnectClientId === undefined &&
+			!this.innerDeltaManager.readOnlyInfo.readonly &&
+			!this.imminentClosure
 		);
 	}
 
@@ -3975,6 +3980,11 @@ export class ContainerRuntime
 			this.connected,
 			0x133 /* "Container disconnected when trying to submit system message" */,
 		);
+		// summarizer should not upload blobs in offline. If it loses connection, it should bail out immidiatly.
+		// In general, summarizer should not modify document.
+		// If, in the future, design changes, where summarizeing means - creating detached blobs, we will need to reconsider this.
+		// Also see assert in setConnectionState().
+		assert(this.delayConnectClientId === undefined, "No delayed blob upload for summarizer");
 
 		// System message should not be sent in the middle of the batch.
 		assert(this.outbox.isEmpty, 0x3d4 /* System op in the middle of a batch */);

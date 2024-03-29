@@ -40,7 +40,6 @@ export interface IPendingBatchMessage {
 }
 
 export interface IRuntimeStateHandler {
-	connected(): boolean;
 	clientId(): string | undefined;
 	close(error?: ICriticalContainerError): void;
 	applyStashedOp(content: string): Promise<unknown>;
@@ -339,11 +338,6 @@ export class PendingStateManager implements IDisposable {
 	 * ! Note: successfully resubmitting an op that has been successfully sequenced is not possible due to checks in the ConnectionStateHandler (Loader layer)
 	 */
 	public replayPendingStates() {
-		assert(
-			this.stateHandler.connected(),
-			0x172 /* "The connection state is not consistent with the runtime" */,
-		);
-
 		// This assert suggests we are about to send same ops twice, which will result in data loss.
 		assert(
 			this.clientId !== this.stateHandler.clientId(),

@@ -95,7 +95,7 @@ export interface IBlobManagerLoadInfo {
 // the contract explicit and reduces the amount of mocking required for tests.
 export type IBlobManagerRuntime = Pick<
 	IContainerRuntime,
-	"attachState" | "connected" | "logger" | "clientDetails"
+	"attachState" | "logger" | "clientDetails"
 > &
 	TypedEventEmitter<IContainerRuntimeEvents>;
 
