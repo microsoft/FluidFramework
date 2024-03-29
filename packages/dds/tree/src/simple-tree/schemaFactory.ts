@@ -293,7 +293,9 @@ export class SchemaFactory<
 		const Name extends TName,
 		const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 	>(name: Name, fields: T) {
-		// TODO: key validation
+		// Ensure no collisions between final set of view keys, and final set of stored keys (including those
+		// implicitly derived from view keys)
+		SchemaFactory.assertUniqueKeys(name, fields);
 		class schema extends this.nodeSchema(name, NodeKind.Object, fields, true) {
 			public constructor(input: InsertableObjectFromSchemaRecord<T>) {
 				super(input);
@@ -343,6 +345,36 @@ export class SchemaFactory<
 			true,
 			T
 		>;
+	}
+
+	/**
+	 * Ensures that the set of view keys in the schema is unique.
+	 * Also ensure that the final set of stored keys (including those implicitly derived from view keys) is unique.
+	 * @throws Throws a `UsageError` if either of the key uniqueness invariants is violated.
+	 */
+	private static assertUniqueKeys<
+		const Name extends number | string,
+		const Fields extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+	>(schemaName: Name, fields: Fields): void {
+		const viewKeys = new Set<string>();
+		const storedKeys = new Set<string>();
+		for (const [viewKey, schema] of Object.entries(fields)) {
+			if (viewKeys.has(viewKey)) {
+				throw new UsageError(`Duplicate view key "${viewKey}" in schema "${schemaName}".`);
+			} else {
+				viewKeys.add(viewKey);
+			}
+
+			const storedKey =
+				schema instanceof FieldSchema ? schema.props?.key ?? viewKey : viewKey;
+			if (storedKeys.has(storedKey)) {
+				throw new UsageError(
+					`Duplicate stored key "${storedKey}" in schema "${schemaName}". This could be due to an implicit collision with another view key`,
+				);
+			} else {
+				storedKeys.add(storedKey);
+			}
+		}
 	}
 
 	/**
