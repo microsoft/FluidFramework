@@ -187,14 +187,11 @@ export const fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration
 ]);
 
 /**
- * The current configuration for field kinds.
- * Each field kind has an associated format version that will be used for encoding purposes.
- */
-export const fieldKindConfiguration: FieldKindConfiguration =
-	fieldKindConfigurations.get(0) ?? fail("Unknown field kind configuration");
-
-/**
  * All supported field kinds.
+ *
+ * @privateRemarks
+ * Before making a SharedTree format change which impacts which set of field kinds are allowed,
+ * code which uses this should be audited for compatibility considerations.
  */
 export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
 	[required, optional, sequence, nodeKey, forbidden].map((s) => [s.identifier, s]),

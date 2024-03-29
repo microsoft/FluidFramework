@@ -224,7 +224,6 @@ export {
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
 	fieldKinds,
-	fieldKindConfiguration,
 	fieldKindConfigurations,
 	intoDelta,
 	relevantRemovedRoots,

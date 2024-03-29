@@ -110,6 +110,10 @@ export const fieldKindConfiguration: FieldKindConfiguration = new Map<
 	[valueField.identifier, { kind: valueField, formatVersion: 0 }],
 ]);
 
+const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
+	[singleNodeField, valueField].map((field) => [field.identifier, field]),
+);
+
 const codecOptions: ICodecOptions = {
 	jsonValidator: ajvValidator,
 };
@@ -120,7 +124,7 @@ const codec = makeModularChangeCodecFamily(
 	makeFieldBatchCodec(codecOptions),
 	codecOptions,
 );
-const family = new ModularChangeFamily(fieldKindConfiguration, codec);
+const family = new ModularChangeFamily(fieldKinds, codec);
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
@@ -1050,9 +1054,7 @@ describe("ModularChangeFamily", () => {
 			() => false,
 			new Set(),
 		);
-		const mockFieldKinds = new Map([
-			[fieldKind, { kind: hasRemovedRootsRefsField, formatVersion: 0 }],
-		]);
+		const mockFieldKinds = new Map([[fieldKind, hasRemovedRootsRefsField]]);
 
 		function relevantRemovedRoots(
 			input: TaggedChange<ModularChangeset>,

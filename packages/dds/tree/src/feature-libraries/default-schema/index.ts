@@ -11,7 +11,6 @@ export {
 	NodeKeyFieldKind,
 	Forbidden,
 	fieldKinds,
-	fieldKindConfiguration,
 	fieldKindConfigurations,
 } from "./defaultFieldKinds.js";
 

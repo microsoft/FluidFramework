@@ -19,7 +19,7 @@ import {
 	ModularChangeFamily,
 	ModularChangeset,
 	cursorForJsonableTreeNode,
-	fieldKindConfiguration,
+	fieldKinds,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedTreeChangeFamily } from "../../shared-tree/sharedTreeChangeFamily.js";
@@ -35,7 +35,7 @@ const fieldBatchCodec = {
 	decode: () => assert.fail("Unexpected decode"),
 };
 
-const modularFamily = new ModularChangeFamily(fieldKindConfiguration, failCodecFamily);
+const modularFamily = new ModularChangeFamily(fieldKinds, failCodecFamily);
 const defaultEditor = new DefaultEditBuilder(modularFamily, (change) => dataChanges.push(change));
 
 const nodeX = { type: leaf.string.name, value: "X" };

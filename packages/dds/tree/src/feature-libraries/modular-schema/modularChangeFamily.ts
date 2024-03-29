@@ -95,19 +95,10 @@ export class ModularChangeFamily
 {
 	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
 
-	/**
-	 * The configured set of field kinds that should be used in this SharedTree.
-	 * @privateRemarks
-	 * Before making a SharedTree format change which impacts which set of field kinds are allowed,
-	 * code which uses this field needs to be audited for compatibility considerations.
-	 *
-	 * Notably, codecs are currently only factored to support addition of formats for any existing field kind
-	 * or for modular change family itself.
-	 */
-	public readonly fieldKinds: FieldKindConfiguration;
+	public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>;
 
 	public constructor(
-		fieldKinds: FieldKindConfiguration,
+		fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 		public readonly codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
 	) {
 		this.fieldKinds = fieldKinds;
@@ -1002,7 +993,7 @@ function invertBuilds(
  */
 export function* relevantRemovedRoots(
 	{ change, revision }: TaggedChange<ModularChangeset>,
-	fieldKinds: FieldKindConfiguration,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 ): Iterable<DeltaDetachedNodeId> {
 	yield* relevantRemovedRootsFromFields(change.fieldChanges, revision, fieldKinds);
 }
@@ -1010,7 +1001,7 @@ export function* relevantRemovedRoots(
 function* relevantRemovedRootsFromFields(
 	change: FieldChangeMap,
 	revision: RevisionTag | undefined,
-	fieldKinds: FieldKindConfiguration,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 ): Iterable<DeltaDetachedNodeId> {
 	for (const [_, fieldChange] of change) {
 		const fieldRevision = fieldChange.revision ?? revision;
@@ -1074,7 +1065,7 @@ export function updateRefreshers(
  */
 export function intoDelta(
 	taggedChange: TaggedChange<ModularChangeset>,
-	fieldKinds: FieldKindConfiguration,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 ): DeltaRoot {
 	const change = taggedChange.change;
 	// Return an empty delta for changes with constraint violations
@@ -1134,7 +1125,7 @@ function intoDeltaImpl(
 	change: FieldChangeMap,
 	revision: RevisionTag | undefined,
 	idAllocator: MemoizedIdRangeAllocator,
-	fieldKinds: FieldKindConfiguration,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 ): Map<FieldKey, DeltaFieldChanges> {
 	const delta: Map<FieldKey, DeltaFieldChanges> = new Map();
 	for (const [field, fieldChange] of change) {
@@ -1155,7 +1146,7 @@ function intoDeltaImpl(
 function deltaFromNodeChange(
 	{ change, revision }: TaggedChange<NodeChangeset>,
 	idAllocator: MemoizedIdRangeAllocator,
-	fieldKinds: FieldKindConfiguration,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 ): DeltaFieldMap {
 	if (change.fieldChanges !== undefined) {
 		return intoDeltaImpl(change.fieldChanges, revision, idAllocator, fieldKinds);
@@ -1198,7 +1189,7 @@ function isEmptyNodeChangeset(change: NodeChangeset): boolean {
 }
 
 export function getFieldKind(
-	fieldKinds: FieldKindConfiguration,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 	kind: FieldKindIdentifier,
 ): FieldKindWithEditor {
 	if (kind === genericFieldKind.identifier) {
@@ -1206,11 +1197,11 @@ export function getFieldKind(
 	}
 	const fieldKind = fieldKinds.get(kind);
 	assert(fieldKind !== undefined, 0x3ad /* Unknown field kind */);
-	return withEditor(fieldKind.kind);
+	return withEditor(fieldKind);
 }
 
 export function getChangeHandler(
-	fieldKinds: FieldKindConfiguration,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 	kind: FieldKindIdentifier,
 ): FieldChangeHandler<unknown> {
 	return getFieldKind(fieldKinds, kind).changeHandler;

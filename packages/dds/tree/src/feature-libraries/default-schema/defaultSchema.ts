@@ -4,14 +4,12 @@
  */
 
 import { FullSchemaPolicy } from "../modular-schema/index.js";
-import { fieldKindConfiguration } from "./defaultFieldKinds.js";
+import { fieldKinds } from "./defaultFieldKinds.js";
 
 /**
  * FullSchemaPolicy with the default field kinds.
  * @internal
  */
 export const defaultSchemaPolicy: FullSchemaPolicy = {
-	fieldKinds: new Map(
-		Array.from(fieldKindConfiguration.entries(), ([key, value]) => [key, value.kind]),
-	),
+	fieldKinds,
 };

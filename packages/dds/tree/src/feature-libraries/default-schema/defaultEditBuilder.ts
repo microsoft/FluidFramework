@@ -33,12 +33,7 @@ import {
 	relevantRemovedRoots as relevantModularRemovedRoots,
 } from "../modular-schema/index.js";
 import { OptionalChangeset } from "../optional-field/index.js";
-import {
-	fieldKindConfiguration,
-	optional,
-	sequence,
-	required as valueFieldKind,
-} from "./defaultFieldKinds.js";
+import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds.js";
 
 export type DefaultChangeset = ModularChangeset;
 
@@ -51,7 +46,7 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 	private readonly modularFamily: ModularChangeFamily;
 
 	public constructor(codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>) {
-		this.modularFamily = new ModularChangeFamily(fieldKindConfiguration, codecs);
+		this.modularFamily = new ModularChangeFamily(fieldKinds, codecs);
 	}
 
 	public get rebaser(): ChangeRebaser<DefaultChangeset> {
@@ -71,7 +66,7 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
  * @param change - The change to convert into a delta.
  */
 export function intoDelta(taggedChange: TaggedChange<ModularChangeset>): DeltaRoot {
-	return intoModularDelta(taggedChange, fieldKindConfiguration);
+	return intoModularDelta(taggedChange, fieldKinds);
 }
 
 /**
@@ -91,7 +86,7 @@ export function intoDelta(taggedChange: TaggedChange<ModularChangeset>): DeltaRo
 export function relevantRemovedRoots(
 	taggedChange: TaggedChange<ModularChangeset>,
 ): Iterable<DeltaDetachedNodeId> {
-	return relevantModularRemovedRoots(taggedChange, fieldKindConfiguration);
+	return relevantModularRemovedRoots(taggedChange, fieldKinds);
 }
 
 /**
