@@ -152,8 +152,8 @@ export class SerializedStateManager {
 		}
 		const snapshotSequenceNumber = this.latestSnapshot?.snapshotSequenceNumber;
 		if (this.processedOps.length === 0) {
-			// case in which we don't have to do nothing to processedOps
-			// since we don't have any.
+			// can't refresh latest snapshot until we have processed the ops up to it.
+			// Pending state would be behind the latest snapshot.
 			return;
 		}
 		const firstProcessedOpSequenceNumber = this.processedOps[0].sequenceNumber;
@@ -248,7 +248,7 @@ export async function getLatestSnapshotInfo(
 		"getSnapshot" | "getSnapshotTree" | "getVersions" | "readBlob"
 	>,
 	supportGetSnapshotApi: boolean,
-): Promise<SnapshotInfo> {
+): Promise<SnapshotInfo | undefined> {
 	return PerformanceEvent.timedExecAsync(
 		mc.logger,
 		{ eventName: "GetLatestSnapshotInfo" },
@@ -267,7 +267,7 @@ export async function getLatestSnapshotInfo(
 			const snapshotSequenceNumber = attributes.sequenceNumber;
 			return { baseSnapshot, snapshotBlobs, snapshotSequenceNumber };
 		},
-	);
+	).catch(() => undefined);
 }
 
 /**

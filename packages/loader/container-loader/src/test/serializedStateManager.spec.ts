@@ -610,7 +610,7 @@ describe("serializedStateManager", () => {
 		);
 	});
 
-	it.skip("fail to get latest snapshot", async () => {
+	it("fail to get latest snapshot", async () => {
 		const pending: IPendingContainerState = {
 			...pendingLocalState,
 			baseSnapshot: { ...snapshot, id: "fromPending" },
@@ -649,13 +649,8 @@ describe("serializedStateManager", () => {
 		const snapshotSequenceNumber = 11;
 		storageAdapter.uploadSummary(snapshotSequenceNumber);
 
-		try {
-			await serializedStateManager.fetchSnapshot(undefined, false);
-			await getLatestSnapshotInfoP.promise;
-			assert.fail("should fail");
-		} catch (error: any) {
-			assert.strictEqual(error.message, "Requested blob does not exist");
-		}
+		await serializedStateManager.fetchSnapshot(undefined, false);
+		await getLatestSnapshotInfoP.promise;
 
 		const state = await serializedStateManager.getPendingLocalStateCore(
 			{ notifyImminentClosure: false },
