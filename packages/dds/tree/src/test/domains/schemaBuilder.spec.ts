@@ -6,13 +6,9 @@
 import { strict as assert } from "assert";
 
 import { SchemaBuilder, leaf } from "../../domains/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { structuralName } from "../../domains/schemaBuilder.js";
 import {
-	Any,
 	FieldKinds,
 	FlexFieldSchema,
-	FlexTreeNodeSchema,
 	FlexTreeSequenceField,
 	FlexTreeTypedNode,
 	schemaIsFieldNode,
@@ -21,133 +17,21 @@ import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../../uti
 
 describe("domains - SchemaBuilder", () => {
 	describe("list", () => {
-		describe("structural", () => {
-			it("Any", () => {
-				const builder = new SchemaBuilder({ scope: "scope" });
+		it("implicit normalizes", () => {
+			const builder = new SchemaBuilder({ scope: "scope" });
 
-				const listAny = builder.list(Any);
-				assert(schemaIsFieldNode(listAny));
-				assert.equal(listAny.name, "scope.List<Any>");
-				assert(listAny.info.equals(FlexFieldSchema.create(FieldKinds.sequence, [Any])));
-				type ListAny = FlexTreeTypedNode<typeof listAny>["content"];
-				type _check = requireTrue<
-					areSafelyAssignable<ListAny, FlexTreeSequenceField<readonly [Any]>>
-				>;
+			const list = builder.list("Foo", leaf.number);
+			assert(schemaIsFieldNode(list));
+			assert.equal(list.name, `scope.Foo`);
+			assert(list.info.equals(FlexFieldSchema.create(FieldKinds.sequence, [leaf.number])));
+			type List = FlexTreeTypedNode<typeof list>["content"];
+			type _check = requireTrue<
+				areSafelyAssignable<List, FlexTreeSequenceField<readonly [typeof leaf.number]>>
+			>;
 
-				assert.equal(builder.list(Any), listAny);
-			});
-
-			it("implicit", () => {
-				const builder = new SchemaBuilder({ scope: "scope2" });
-
-				const listImplicit = builder.list(leaf.number);
-				assert(schemaIsFieldNode(listImplicit));
-				assert.equal(listImplicit.name, `scope2.List<["${leaf.number.name}"]>`);
-				assert(
-					listImplicit.info.equals(
-						FlexFieldSchema.create(FieldKinds.sequence, [leaf.number]),
-					),
-				);
-				type ListImplicit = FlexTreeTypedNode<typeof listImplicit>["content"];
-				type _check = requireTrue<
-					areSafelyAssignable<
-						ListImplicit,
-						FlexTreeSequenceField<readonly [typeof leaf.number]>
-					>
-				>;
-
-				assert.equal(builder.list(leaf.number), listImplicit);
-			});
-
-			it("implicit normalizes", () => {
-				const builder = new SchemaBuilder({ scope: "scope" });
-
-				const listImplicit = builder.list(leaf.number);
-				const listExplicit = builder.list([leaf.number]);
-
-				assert.equal(listImplicit, listExplicit);
-			});
-
-			it("union", () => {
-				const builder = new SchemaBuilder({ scope: "scope" });
-
-				const listUnion = builder.list([leaf.number, leaf.boolean]);
-				assert(schemaIsFieldNode(listUnion));
-
-				assert.equal(
-					listUnion.name,
-					// Sorted alphabetically
-					`scope.List<["${leaf.boolean.name}","${leaf.number.name}"]>`,
-				);
-				assert(
-					listUnion.info.equals(
-						FlexFieldSchema.create(FieldKinds.sequence, [leaf.number, leaf.boolean]),
-					),
-				);
-				type ListUnion = FlexTreeTypedNode<typeof listUnion>["content"];
-				type _check = requireTrue<
-					areSafelyAssignable<
-						ListUnion,
-						FlexTreeSequenceField<readonly [typeof leaf.number, typeof leaf.boolean]>
-					>
-				>;
-				// TODO: this should compile: ideally FlexTree's use of AllowedTypes would be compile time order independent like it is runtime order independent, but its currently not.
-				type _check2 = requireTrue<
-					// @ts-expect-error Currently not order independent: ideally this would compile
-					areSafelyAssignable<
-						ListUnion,
-						FlexTreeSequenceField<readonly [typeof leaf.boolean, typeof leaf.number]>
-					>
-				>;
-
-				assert.equal(builder.list([leaf.number, leaf.boolean]), listUnion);
-				assert.equal(builder.list([leaf.boolean, leaf.number]), listUnion);
-			});
+			// Creating again errors instead of reuses
+			assert.throws(() => builder.list("Foo", leaf.number));
 		});
-
-		describe("named list", () => {
-			it("implicit normalizes", () => {
-				const builder = new SchemaBuilder({ scope: "scope" });
-
-				const list = builder.list("Foo", leaf.number);
-				assert(schemaIsFieldNode(list));
-				assert.equal(list.name, `scope.Foo`);
-				assert(
-					list.info.equals(FlexFieldSchema.create(FieldKinds.sequence, [leaf.number])),
-				);
-				type List = FlexTreeTypedNode<typeof list>["content"];
-				type _check = requireTrue<
-					areSafelyAssignable<List, FlexTreeSequenceField<readonly [typeof leaf.number]>>
-				>;
-
-				// Not cached for structural use
-				assert((builder.list(leaf.number) as FlexTreeNodeSchema) !== list);
-				// Creating again errors instead or reuses
-				assert.throws(() => builder.list("Foo", leaf.number));
-			});
-		});
-	});
-
-	it("structuralName", () => {
-		assert.equal(structuralName("X", Any), "X<Any>");
-		assert.equal(structuralName("Y", []), "Y<[]>");
-		// implicitly normalizes
-		assert.equal(structuralName("List", leaf.number), structuralName("List", [leaf.number]));
-		// Single item
-		assert.equal(structuralName("List", leaf.number), `List<["${leaf.number.name}"]>`);
-		// Sorted alphabetically
-		assert.equal(
-			structuralName("X", [leaf.number, leaf.boolean]),
-			`X<["${leaf.boolean.name}","${leaf.number.name}"]>`,
-		);
-		// escaped names
-		const builder = new SchemaBuilder({ scope: "scope" });
-		const doubleName = builder.object(`bar","scope.foo`, {});
-		assert.equal(structuralName("X", doubleName), `X<["scope.bar\\",\\"scope.foo"]>`);
-		// This escaping ensures named don't collide:
-		const foo = builder.object("foo", {});
-		const bar = builder.object("bar", {});
-		assert(structuralName("X", [bar, foo]) !== structuralName("X", doubleName));
 	});
 
 	it("object", () => {
