@@ -175,8 +175,44 @@ class FluidImportManager {
 
 		if (!modificationsRequired) return false;
 
+		// Make modifications to existing imports
 		for (const fluidImport of this.fluidImports) {
-			fluidImport.importDeclaration.addNamedImports(fluidImport.declaration.namedImports);
+			// 1. add new import
+			if (fluidImport.declaration.namedImports.length > 0) {
+				fluidImport.importDeclaration.addNamedImports(fluidImport.declaration.namedImports);
+			}
+			//  2. or if not see if there are new imports that would like to take over
+			//     which helps preserve comments and vertical spacing.
+			else if (
+				!fluidImport.originallyUnassigned &&
+				isImportUnassigned(fluidImport.importDeclaration)
+			) {
+				const takeOverProspects = this.missingImports
+					.filter((v) => v.index === fluidImport.index)
+					.sort((a, b) => b.order - a.order);
+				if (takeOverProspects.length > 0) {
+					const replacement = takeOverProspects[0];
+					this.log.verbose(
+						`\tReplacing ${fluidImport.declaration.moduleSpecifier} with ${replacement.declaration.moduleSpecifier}`,
+					);
+					fluidImport.importDeclaration.setModuleSpecifier(
+						replacement.declaration.moduleSpecifier,
+					);
+					fluidImport.importDeclaration.addNamedImports(replacement.declaration.namedImports);
+					fluidImport.importDeclaration.setIsTypeOnly(replacement.declaration.isTypeOnly);
+					// Any other prospects should be inserted after this now.
+					for (const otherProspects of takeOverProspects.slice(1)) {
+						otherProspects.insertAfterIndex = true;
+					}
+					// Remove the missing as it is now in place.
+					this.missingImports.splice(this.missingImports.indexOf(replacement));
+					// We could remove the existing entry now, but that would
+					// alter the array being iterated. No further meaningful use is expected.
+					// The later removal check will skip as it now has imports.
+					// Set originallyUnassigned as an ounce of precaution.
+					fluidImport.originallyUnassigned = true;
+				}
+			}
 		}
 
 		const reverseSortedAdditions = this.missingImports.sort((a, b) => {
@@ -187,6 +223,19 @@ class FluidImportManager {
 		for (const addition of reverseSortedAdditions) {
 			// Note that ts-morph will not preserve blank lines that may have existed
 			// near the insertion point.
+			// When inserting before it is likely desirable to capture any for the
+			// leading trivia (comments included) and "move" them to the inserted
+			// import. Likewise for inserting after the leading trivia of the next
+			// import should be moved to the trailing trivia of the inserted.
+			// ts-morph has some fairly unexpected results with manipulations so
+			// some trial and error may be required to get desired behavior.
+			this.log.verbose(
+				`\tInjecting ${addition.declaration.moduleSpecifier} ${
+					addition.insertAfterIndex ? "after" : "before"
+				} ${this.sourceFile
+					.getImportDeclarations()
+					[addition.index].getModuleSpecifierValue()}`,
+			);
 			this.sourceFile.insertImportDeclaration(
 				addition.index + (addition.insertAfterIndex ? 1 : 0),
 				addition.declaration,
