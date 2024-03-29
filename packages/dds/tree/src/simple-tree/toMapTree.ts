@@ -271,14 +271,24 @@ function objectToMapTree(
 	// Filter keys to only those that are strings - our trees do not support symbol or numeric property keys
 	const keys = Reflect.ownKeys(data).filter((key) => typeof key === "string") as FieldKey[];
 
-	for (const key of keys) {
-		const fieldValue = data[key];
+	for (const viewKey of keys) {
+		const fieldValue = data[viewKey];
 
 		// Omit undefined record entries - an entry with an undefined key is equivalent to no entry
 		if (fieldValue !== undefined) {
-			const fieldSchema = getObjectFieldSchema(schema, key);
+			const fieldSchema = getObjectFieldSchema(schema, viewKey);
 			const mappedChildTree = nodeDataToMapTree(fieldValue, fieldSchema.allowedTypeSet);
-			fields.set(brand(key), [mappedChildTree]);
+
+			// If an explicit stored key was provided, we will use it as the key in the output.
+			// Otherwise, the stored key is derived from the view key.
+			// Note: the flex domain knows nothing of the ephemeral view schema keys, it strictly operates in terms
+			// of the persisted "stored" keys.
+			const flexKey: FieldKey = brand(fieldSchema.props?.key ?? viewKey);
+
+			// Note: SchemaFactory validates this at schema creation time, with a user-friendly error.
+			// So we don't expect to hit this, and if we do it is likely an internal bug.
+			assert(!fields.has(flexKey), "Keys must not be duplicated");
+			fields.set(flexKey, [mappedChildTree]);
 		}
 	}
 
