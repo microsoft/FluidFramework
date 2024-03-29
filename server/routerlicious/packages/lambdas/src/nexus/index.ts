@@ -31,7 +31,13 @@ import {
 	type INexusLambdaConnectionStateTrackers,
 	type INexusLambdaDependencies,
 } from "./interfaces";
-import { ExpirationTimer, isSentSignalMessage, getClientRoomId, getRoomId, hasWriteAccess } from "./utils";
+import {
+	ExpirationTimer,
+	isSentSignalMessage,
+	getClientRoomId,
+	getRoomId,
+	hasWriteAccess,
+} from "./utils";
 import {
 	checkThrottleAndUsage,
 	getSubmitOpThrottleId,
@@ -141,7 +147,7 @@ export function configureWebSocketServices(
 		const scopeMap = new Map<string, string[]>();
 		// Map from client Ids to connection time.
 		const connectionTimeMap = new Map<string, number>();
-        // Map from client Ids to supportedFeatures
+		// Map from client Ids to supportedFeatures
 		const supportedFeaturesMap = new Map<string, Record<string, any>>();
 		// Set of client Ids that have been disconnected from orderer.
 		const disconnectedOrdererConnections = new Set<string>();
@@ -156,9 +162,8 @@ export function configureWebSocketServices(
 			expirationTimer,
 			disconnectedOrdererConnections,
 			disconnectedClients,
-            supportedFeaturesMap
+			supportedFeaturesMap,
 		};
-
 
 		let connectDocumentComplete: boolean = false;
 		let connectDocumentP: Promise<void> | undefined;
@@ -461,7 +466,7 @@ export function configureWebSocketServices(
 						return;
 					}
 
-if (supportedFeaturesMap.get(clientId)?.submit_signals_v2) {
+					if (supportedFeaturesMap.get(clientId)?.submit_signals_v2) {
 						for (const signal of contentBatches) {
 							if (isSentSignalMessage(signal)) {
 								const signalMessage: ISignalMessage = {

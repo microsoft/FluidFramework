@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ConnectionMode } from "@fluidframework/protocol-definitions";
+import type { ConnectionMode, ISentSignalMessage } from "@fluidframework/protocol-definitions";
 import { NetworkError, canSummarize, canWrite } from "@fluidframework/server-services-client";
 import type { ILogger } from "@fluidframework/server-services-core";
 import {
@@ -65,3 +65,18 @@ export const isWriter = (scopes: string[], mode: ConnectionMode) =>
 	hasWriteAccess(scopes) && mode === "write";
 
 export const getRoomId = (room: IRoom) => `${room.tenantId}/${room.documentId}`;
+export const getClientRoomId = (clientId: string) => `client#${clientId}`;
+
+export function isSentSignalMessage(obj: any): obj is ISentSignalMessage {
+	return (
+		typeof obj === "object" &&
+		obj !== null &&
+		"content" in obj &&
+		(typeof obj.type === "string" || obj.type === undefined) &&
+		(typeof obj.clientConnectionNumber === "number" ||
+			obj.clientConnectionNumber === undefined) &&
+		(typeof obj.referenceSequenceNumber === "number" ||
+			obj.referenceSequenceNumber === undefined) &&
+		(typeof obj.targetClientId === "string" || obj.targetClientId === undefined)
+	);
+}
