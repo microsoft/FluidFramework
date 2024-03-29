@@ -277,31 +277,6 @@ export class SchemaBuilder<
 	 * therefore this method is the same as the static version.
 	 */
 	public readonly sequence = SchemaBuilder.sequence;
-
-	/**
-	 * {@link leaf.number}
-	 */
-	public readonly number = leaf.number;
-
-	/**
-	 * {@link leaf.boolean}
-	 */
-	public readonly boolean = leaf.boolean;
-
-	/**
-	 * {@link leaf.string}
-	 */
-	public readonly string = leaf.string;
-
-	/**
-	 * {@link leaf.handle}
-	 */
-	public readonly handle = leaf.handle;
-
-	/**
-	 * {@link leaf.null}
-	 */
-	public readonly null = leaf.null;
 }
 
 /**

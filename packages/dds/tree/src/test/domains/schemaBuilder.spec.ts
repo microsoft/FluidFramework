@@ -41,30 +41,30 @@ describe("domains - SchemaBuilder", () => {
 			it("implicit", () => {
 				const builder = new SchemaBuilder({ scope: "scope2" });
 
-				const listImplicit = builder.list(builder.number);
+				const listImplicit = builder.list(leaf.number);
 				assert(schemaIsFieldNode(listImplicit));
-				assert.equal(listImplicit.name, `scope2.List<["${builder.number.name}"]>`);
+				assert.equal(listImplicit.name, `scope2.List<["${leaf.number.name}"]>`);
 				assert(
 					listImplicit.info.equals(
-						FlexFieldSchema.create(FieldKinds.sequence, [builder.number]),
+						FlexFieldSchema.create(FieldKinds.sequence, [leaf.number]),
 					),
 				);
 				type ListImplicit = FlexTreeTypedNode<typeof listImplicit>["content"];
 				type _check = requireTrue<
 					areSafelyAssignable<
 						ListImplicit,
-						FlexTreeSequenceField<readonly [typeof builder.number]>
+						FlexTreeSequenceField<readonly [typeof leaf.number]>
 					>
 				>;
 
-				assert.equal(builder.list(builder.number), listImplicit);
+				assert.equal(builder.list(leaf.number), listImplicit);
 			});
 
 			it("implicit normalizes", () => {
 				const builder = new SchemaBuilder({ scope: "scope" });
 
-				const listImplicit = builder.list(builder.number);
-				const listExplicit = builder.list([builder.number]);
+				const listImplicit = builder.list(leaf.number);
+				const listExplicit = builder.list([leaf.number]);
 
 				assert.equal(listImplicit, listExplicit);
 			});
@@ -72,29 +72,24 @@ describe("domains - SchemaBuilder", () => {
 			it("union", () => {
 				const builder = new SchemaBuilder({ scope: "scope" });
 
-				const listUnion = builder.list([builder.number, builder.boolean]);
+				const listUnion = builder.list([leaf.number, leaf.boolean]);
 				assert(schemaIsFieldNode(listUnion));
 
 				assert.equal(
 					listUnion.name,
 					// Sorted alphabetically
-					`scope.List<["${builder.boolean.name}","${builder.number.name}"]>`,
+					`scope.List<["${leaf.boolean.name}","${leaf.number.name}"]>`,
 				);
 				assert(
 					listUnion.info.equals(
-						FlexFieldSchema.create(FieldKinds.sequence, [
-							builder.number,
-							builder.boolean,
-						]),
+						FlexFieldSchema.create(FieldKinds.sequence, [leaf.number, leaf.boolean]),
 					),
 				);
 				type ListUnion = FlexTreeTypedNode<typeof listUnion>["content"];
 				type _check = requireTrue<
 					areSafelyAssignable<
 						ListUnion,
-						FlexTreeSequenceField<
-							readonly [typeof builder.number, typeof builder.boolean]
-						>
+						FlexTreeSequenceField<readonly [typeof leaf.number, typeof leaf.boolean]>
 					>
 				>;
 				// TODO: this should compile: ideally FlexTree's use of AllowedTypes would be compile time order independent like it is runtime order independent, but its currently not.
@@ -102,14 +97,12 @@ describe("domains - SchemaBuilder", () => {
 					// @ts-expect-error Currently not order independent: ideally this would compile
 					areSafelyAssignable<
 						ListUnion,
-						FlexTreeSequenceField<
-							readonly [typeof builder.boolean, typeof builder.number]
-						>
+						FlexTreeSequenceField<readonly [typeof leaf.boolean, typeof leaf.number]>
 					>
 				>;
 
-				assert.equal(builder.list([builder.number, builder.boolean]), listUnion);
-				assert.equal(builder.list([builder.boolean, builder.number]), listUnion);
+				assert.equal(builder.list([leaf.number, leaf.boolean]), listUnion);
+				assert.equal(builder.list([leaf.boolean, leaf.number]), listUnion);
 			});
 		});
 
@@ -117,24 +110,21 @@ describe("domains - SchemaBuilder", () => {
 			it("implicit normalizes", () => {
 				const builder = new SchemaBuilder({ scope: "scope" });
 
-				const list = builder.list("Foo", builder.number);
+				const list = builder.list("Foo", leaf.number);
 				assert(schemaIsFieldNode(list));
 				assert.equal(list.name, `scope.Foo`);
 				assert(
-					list.info.equals(FlexFieldSchema.create(FieldKinds.sequence, [builder.number])),
+					list.info.equals(FlexFieldSchema.create(FieldKinds.sequence, [leaf.number])),
 				);
 				type List = FlexTreeTypedNode<typeof list>["content"];
 				type _check = requireTrue<
-					areSafelyAssignable<
-						List,
-						FlexTreeSequenceField<readonly [typeof builder.number]>
-					>
+					areSafelyAssignable<List, FlexTreeSequenceField<readonly [typeof leaf.number]>>
 				>;
 
 				// Not cached for structural use
-				assert((builder.list(builder.number) as FlexTreeNodeSchema) !== list);
+				assert((builder.list(leaf.number) as FlexTreeNodeSchema) !== list);
 				// Creating again errors instead or reuses
-				assert.throws(() => builder.list("Foo", builder.number));
+				assert.throws(() => builder.list("Foo", leaf.number));
 			});
 		});
 	});
@@ -157,12 +147,12 @@ describe("domains - SchemaBuilder", () => {
 				it("implicit normalizes", () => {
 					const builder = new SchemaBuilder({ scope: "scope" });
 
-					const map = builder.map("Foo", builder.number);
+					const map = builder.map("Foo", leaf.number);
 					assert(schemaIsMap(map));
 					assert.equal(map.name, `scope.Foo`);
 					assert(
 						map.mapFields.equals(
-							FlexFieldSchema.create(FieldKinds.optional, [builder.number]),
+							FlexFieldSchema.create(FieldKinds.optional, [leaf.number]),
 						),
 					);
 				});
@@ -212,7 +202,7 @@ describe("domains - SchemaBuilder", () => {
 		const builder = new SchemaBuilder({ scope: "Test Domain" });
 
 		const testObject = builder.object("object", {
-			number: builder.number,
+			number: leaf.number,
 		});
 
 		type _0 = requireFalse<isAny<typeof testObject>>;
@@ -227,7 +217,7 @@ describe("domains - SchemaBuilder", () => {
 
 		const recursiveObject = builder.objectRecursive("object", {
 			recursive: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveObject]),
-			number: SchemaBuilder.required(builder.number),
+			number: SchemaBuilder.required(leaf.number),
 		});
 
 		type _0 = requireFalse<isAny<typeof recursiveObject>>;
