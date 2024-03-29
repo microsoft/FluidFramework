@@ -355,7 +355,7 @@ function createMessageClientAndJoinRoom(
 	room: IRoom,
 	clientId: string,
 	connectedTimestamp: number,
-    supportedFeatures: Record<string, unknown> | undefined,
+	supportedFeatures: Record<string, unknown> | undefined,
 	{
 		connectionTimeMap,
 		scopeMap,
@@ -529,7 +529,7 @@ export async function connectDocument(
 			room,
 			clientId,
 			connectedTimestamp,
-            message.supportedFeatures,
+			message.supportedFeatures,
 			lambdaConnectionStateTrackers,
 		);
 		connectionTrace.stampStage(ConnectDocumentStage.MessageClientCreated);
