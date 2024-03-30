@@ -208,10 +208,8 @@ export function getRepoPath(tenantId: string, documentId?: string, owner?: strin
 		throw new NetworkError(400, `Invalid repo name (documentId) provided: ${documentId}`);
 	}
 
-	const docIdWithTennantPrefix =
-		tenantId.length < 30
-			? tenantId + "--" + documentId
-			: tenantId.substring(0, 8) + "--" + documentId;
+	const tenantPrefix = tenantId.length < 30 ? tenantId : tenantId.substring(0, 8);
+	const docIdWithTennantPrefix = `${tenantPrefix}--${documentId}`;
 	return [owner, docIdWithTennantPrefix, documentId].filter((x) => x !== undefined).join("/");
 }
 
