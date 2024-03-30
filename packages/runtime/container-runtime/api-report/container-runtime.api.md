@@ -412,9 +412,9 @@ export type DocumentSchemaValueType = string | string[] | true | number | undefi
 // @alpha
 export class DocumentsSchemaController {
     constructor(existing: boolean, documentMetadataSchema: IDocumentSchema | undefined, features: IDocumentSchemaFeatures, onSchemaChange: (schema: IDocumentSchemaCurrent) => void);
+    maybeSendSchemaMessage(): IDocumentSchemaChangeMessage | undefined;
     // (undocumented)
     onDisconnect(): void;
-    onMessageSent(send: (content: IDocumentSchemaChangeMessage) => void): void;
     processDocumentSchemaOp(content: IDocumentSchemaChangeMessage, local: boolean, sequenceNumber: number): boolean;
     // (undocumented)
     sessionSchema: IDocumentSchemaCurrent;

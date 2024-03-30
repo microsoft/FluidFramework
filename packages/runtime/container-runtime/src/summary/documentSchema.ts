@@ -99,9 +99,9 @@ export interface IDocumentSchemaFeatures {
 	 * List of disallowed versions of the runtime.
 	 * This option is sticky. Once a version of runtime is added to this list (when supplied to DocumentsSchemaController's constructor)
 	 * it will be added to the list of disallowed versions and stored in document metadata.
-	 * Each runtime checks if its version is in this list on container open. If it is, it immediately exists with error message
+	 * Each runtime checks if its version is in this list on container open. If it is, it immediately exits with error message
 	 * indicating to the user that this version is no longer supported.
-	 * Currently there is no mechanism to remove version fro this list. I.e. If it was once added to the list,
+	 * Currently there is no mechanism to remove version from this list. I.e. If it was once added to the list,
 	 * it gets added to any document metadata (documents that gets open by this runtime) and there is no way to clear it from document's
 	 * metadata.
 	 */
@@ -380,6 +380,18 @@ function arrayToProp(arr: string[]) {
  * clients who do not understand such feature will continue to fail to open such documents, as such documents very
  * likely contain data in a new format.
  *
+ * Controller operates with 4 schemas:
+ * - document schema: whatever we loaded from summary metadata + ops. It follows eventuall consistency rules (i.e. like DDS).
+ * - desired schema - what client is asking for to have (i.e. all the desired settings, based on runtime options / feature gates).
+ * - session schema - current session schema. It's "and" of the above two schemas.
+ * - future schema - "or" of document and desires schemas.
+ *
+ * "or" & "and" operators are defined individually for each property. For Boolean properties it's literally &&, || operators.
+ * But for other properties it's more nuanced.
+ *
+ * Whenver document schema does not match future schema, controller will send an op that attempts to changs documents schema to
+ * future schema.
+ *
  * Users of this class need to use DocumentsSchemaController.sessionSchema to determine what features can be used.
  *
  * There are two modes this class can operate:
@@ -522,19 +534,19 @@ export class DocumentsSchemaController {
 	/**
 	 * Called by Container runtime whenever it is about to send some op.
 	 * It gives opportunity for controller to issue its own ops - we do not want to send ops if there are no local changes in document.
-	 * @param send - delegate that controller can use to send its own op, if it needs to.
+	 * @returns Optional message to send.
 	 */
-	public onMessageSent(send: (content: IDocumentSchemaChangeMessage) => void) {
+	public maybeSendSchemaMessage(): IDocumentSchemaChangeMessage | undefined {
 		if (this.sendOp && this.futureSchema !== undefined) {
 			assert(
 				this.explicitSchemaControl &&
 					this.futureSchema.runtime.explicitSchemaControl === true,
 				"not legacy",
 			);
-			send({
+			return {
 				...this.futureSchema,
 				refSeq: this.documentSchema.refSeq,
-			});
+			};
 		}
 		this.sendOp = false;
 	}
