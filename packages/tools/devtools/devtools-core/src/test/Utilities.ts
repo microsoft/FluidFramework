@@ -8,13 +8,11 @@ import type {
 	IAudience,
 	IContainer,
 	IContainerEvents,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type { IErrorBase, IRequest } from "@fluidframework/core-interfaces";
 import type { IClient } from "@fluidframework/protocol-definitions";
-import { MockAudience } from "@fluidframework/test-runtime-utils/alpha";
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { MockAudience } from "@fluidframework/test-runtime-utils";
 
 /**
  * Mock {@link @fluidframework/container-definitions#IContainer} for use in tests.
@@ -98,4 +96,3 @@ export function removeAudienceMember(container: IContainer, clientId: string): v
 	const audience = container.audience as MockAudience;
 	audience.removeMember(clientId);
 }
-/* eslint-enable @typescript-eslint/no-explicit-any */

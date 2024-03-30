@@ -4,12 +4,7 @@
  */
 
 import { EventEmitter, TypedEventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
-import {
-	AttachState,
-	IAudience,
-	IAudienceEvents,
-	ILoader,
-} from "@fluidframework/container-definitions";
+import { AttachState, IAudience, IAudienceEvents } from "@fluidframework/container-definitions";
 import { ILoader, IAudienceOwner } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import {
