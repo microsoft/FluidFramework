@@ -10,7 +10,7 @@ import {
 	IDocumentStorageService,
 	IResolvedUrl,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 
 /**

@@ -10,7 +10,7 @@ import {
 	IDeltasFetchResult,
 	IDocumentDeltaStorageService,
 	IStream,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	emptyMessageStream,
 	readAndParse,

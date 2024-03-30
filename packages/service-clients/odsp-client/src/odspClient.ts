@@ -3,28 +3,30 @@
  * Licensed under the MIT License.
  */
 
+import { AttachState } from "@fluidframework/container-definitions";
 import {
-	AttachState,
 	IContainer,
 	IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
+} from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
 import {
 	type FluidObject,
 	type IConfigProviderBase,
 	type IRequest,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import {
 	ContainerAttachProps,
 	type ContainerSchema,
 	IFluidContainer,
+} from "@fluidframework/fluid-static";
+import {
 	IRootDataObject,
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
-} from "@fluidframework/fluid-static";
+} from "@fluidframework/fluid-static/internal";
 import {
 	OdspDocumentServiceFactory,
 	OdspDriverUrlResolver,

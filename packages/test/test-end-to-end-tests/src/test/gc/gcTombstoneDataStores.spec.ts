@@ -14,7 +14,7 @@ import {
 	describeCompat,
 	itExpects,
 } from "@fluid-private/test-version-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	AllowTombstoneRequestHeaderKey,
 	ContainerRuntime,
