@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as dirPath from "node:path";
 import { strict as assert } from "node:assert";
+import * as dirPath from "node:path";
+
 import {
 	AsyncGenerator,
 	AsyncReducer,
@@ -14,13 +15,14 @@ import {
 } from "@fluid-private/stochastic-test-utils";
 import {
 	Client,
-	createDDSFuzzSuite,
 	DDSFuzzModel,
 	DDSFuzzTestState,
+	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { DirectoryFactory } from "../../directory.js";
-import { IDirectory } from "../../interfaces.js";
+
+import { DirectoryFactory, IDirectory } from "../../index.js";
+
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 import { _dirname } from "./dirname.cjs";
 

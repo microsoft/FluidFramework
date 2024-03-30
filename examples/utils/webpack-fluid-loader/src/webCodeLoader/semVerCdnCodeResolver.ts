@@ -6,10 +6,11 @@
 import {
 	IFluidCodeResolver,
 	IResolvedFluidCodeDetails,
-	isFluidBrowserPackage,
 	IFluidCodeDetails,
-} from "@fluidframework/container-definitions";
+	isFluidBrowserPackage,
+} from "@fluidframework/container-definitions/internal";
 import fetch from "isomorphic-fetch";
+
 import { extractPackageIdentifierDetails, resolveFluidPackageEnvironment } from "./utils.js";
 
 class FluidPackage {

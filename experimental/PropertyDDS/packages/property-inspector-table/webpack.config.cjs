@@ -43,7 +43,7 @@ module.exports = (env) => {
 						},
 						{
 							loader: "svgo-loader",
-							options: require("./svgo.plugins.js"),
+							options: require("./svgo.plugins.cjs"),
 						},
 					],
 				},

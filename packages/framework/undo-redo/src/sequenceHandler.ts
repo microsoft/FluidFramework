@@ -4,13 +4,14 @@
  */
 
 import {
-	appendToMergeTreeDeltaRevertibles,
-	discardMergeTreeDeltaRevertible,
 	ISegment,
 	MergeTreeDeltaRevertible,
+	appendToMergeTreeDeltaRevertibles,
+	discardMergeTreeDeltaRevertible,
 	revertMergeTreeDeltaRevertibles,
 } from "@fluidframework/merge-tree";
 import { SequenceDeltaEvent, SharedSegmentSequence } from "@fluidframework/sequence";
+
 import { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager.js";
 
 /**

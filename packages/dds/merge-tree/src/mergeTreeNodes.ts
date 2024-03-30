@@ -7,6 +7,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
+
 import { IAttributionCollection } from "./attributionCollection.js";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
 import { LocalReferenceCollection } from "./localReference.js";
@@ -16,8 +17,8 @@ import { IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./o
 import { computeHierarchicalOrdinal } from "./ordinal.js";
 import { PartialSequenceLengths } from "./partialLengths.js";
 // eslint-disable-next-line import/no-deprecated
-import { clone, createMap, MapLike, PropertySet } from "./properties.js";
-import { refTypeIncludesFlag, ReferencePosition, refGetTileLabels } from "./referencePositions.js";
+import { MapLike, PropertySet, clone, createMap } from "./properties.js";
+import { ReferencePosition, refGetTileLabels, refTypeIncludesFlag } from "./referencePositions.js";
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager.js";
 

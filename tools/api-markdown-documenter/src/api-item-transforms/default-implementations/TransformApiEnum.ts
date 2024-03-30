@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
 	type ApiEnum,
 	type ApiEnumMember,
@@ -9,11 +10,11 @@ import {
 	ApiItemKind,
 } from "@microsoft/api-extractor-model";
 
-import { type DocumentationNode, type SectionNode } from "../../documentation-domain";
-import { filterByKind } from "../../utilities";
-import { type ApiItemTransformationConfiguration } from "../configuration";
-import { createMemberTables, wrapInSection } from "../helpers";
-import { filterChildMembers } from "../ApiItemTransformUtilities";
+import { type DocumentationNode, type SectionNode } from "../../documentation-domain/index.js";
+import { filterByKind } from "../../utilities/index.js";
+import { type ApiItemTransformationConfiguration } from "../configuration/index.js";
+import { createMemberTables, wrapInSection } from "../helpers/index.js";
+import { filterChildMembers } from "../ApiItemTransformUtilities.js";
 
 /**
  * Default documentation transform for `Enum` items.

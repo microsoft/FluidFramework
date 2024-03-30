@@ -10,7 +10,7 @@ import { FluidDataStoreRuntime } from '@fluidframework/datastore';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { FluidObjectSymbolProvider } from '@fluidframework/synthesize';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IContainerContext } from '@fluidframework/container-definitions';
+import { IContainerContext } from '@fluidframework/container-definitions/internal';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
 import { IContainerRuntimeOptions } from '@fluidframework/container-runtime';
@@ -29,7 +29,7 @@ import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definiti
 import { IProvideFluidHandle } from '@fluidframework/core-interfaces';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
-import { ISharedDirectory } from '@fluidframework/map';
+import { ISharedDirectory } from '@fluidframework/map/internal';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions';
 import { NamedFluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions';
 import { RuntimeFactoryHelper } from '@fluidframework/runtime-utils';
@@ -93,7 +93,7 @@ export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> ex
 
 // @alpha
 export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TObj, I> {
-    constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects: readonly IChannelFactory<IFluidLoadable>[] | undefined, optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeFactory?: typeof FluidDataStoreRuntime);
+    constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects: readonly IChannelFactory<unknown>[] | undefined, optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeFactory?: typeof FluidDataStoreRuntime);
 }
 
 // @alpha

@@ -4,10 +4,12 @@
  */
 
 import assert from "assert";
+
+import { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
-import { IContainerContext } from "@fluidframework/container-definitions";
-import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
+
 import { ContainerRuntime, getDeviceSpec } from "../containerRuntime.js";
 
 function setNavigator(

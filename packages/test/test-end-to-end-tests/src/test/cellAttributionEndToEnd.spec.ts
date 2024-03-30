@@ -4,24 +4,25 @@
  */
 
 import { strict as assert } from "assert";
-import { AttributionInfo } from "@fluidframework/runtime-definitions";
+
 import {
+	IRuntimeAttributor,
 	createRuntimeAttributor,
 	enableOnNewFileKey,
-	IRuntimeAttributor,
 } from "@fluid-experimental/attributor";
+import { describeCompat, itSkipsFailureOnSpecificDrivers } from "@fluid-private/test-version-utils";
 import type { SharedCell } from "@fluidframework/cell";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { AttributionInfo } from "@fluidframework/runtime-definitions";
 import {
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
 	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
 	ITestFluidObject,
+	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeCompat, itSkipsFailureOnSpecificDrivers } from "@fluid-private/test-version-utils";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 
 function assertAttributionMatches(
 	sharedCell: SharedCell,

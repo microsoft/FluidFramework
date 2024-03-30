@@ -5,11 +5,12 @@
 
 import { ICacheEntry } from "@fluidframework/odsp-driver-definitions";
 import { openDB } from "idb";
+
 import { FluidCache } from "../FluidCache.js";
 import {
-	getFluidCacheIndexedDbInstance,
-	FluidDriverObjectStoreName,
 	FluidDriverCacheDBName,
+	FluidDriverObjectStoreName,
+	getFluidCacheIndexedDbInstance,
 	getKeyForCacheEntry,
 } from "../FluidCacheIndexedDb.js";
 

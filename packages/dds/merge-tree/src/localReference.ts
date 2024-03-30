@@ -5,12 +5,13 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
+
 import { DoublyLinkedList, ListNode, walkList } from "./collections/index.js";
 import { ISegment } from "./mergeTreeNodes.js";
 import { TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking.js";
 import { ReferenceType } from "./ops.js";
 // eslint-disable-next-line import/no-deprecated
-import { addProperties, PropertySet } from "./properties.js";
+import { PropertySet, addProperties } from "./properties.js";
 import { ReferencePosition, refTypeIncludesFlag } from "./referencePositions.js";
 
 /**

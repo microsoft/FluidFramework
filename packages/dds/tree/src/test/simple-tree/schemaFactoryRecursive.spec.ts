@@ -6,8 +6,11 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "node:assert";
-import { createIdCompressor } from "@fluidframework/id-compressor";
+
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+
+import { FlexListToUnion } from "../../feature-libraries/index.js";
 import {
 	ApplyKind,
 	FieldSchema,
@@ -17,9 +20,11 @@ import {
 	TreeNodeFromImplicitAllowedTypes,
 	TreeView,
 } from "../../simple-tree/index.js";
-import { TreeFactory } from "../../treeFactory.js";
-import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
-import { FlexListToUnion } from "../../feature-libraries/index.js";
+import {
+	SchemaFactoryRecursive,
+	ValidateRecursiveSchema,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/schemaFactoryRecursive.js";
 import {
 	FieldSchemaUnsafe,
 	InsertableTreeFieldFromImplicitFieldUnsafe,
@@ -28,11 +33,9 @@ import {
 	TreeNodeFromImplicitAllowedTypesUnsafe,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/typesUnsafe.js";
-import {
-	SchemaFactoryRecursive,
-	ValidateRecursiveSchema,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../simple-tree/schemaFactoryRecursive.js";
+import { TreeFactory } from "../../treeFactory.js";
+import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
+
 import { hydrate } from "./utils.js";
 
 // TODO:

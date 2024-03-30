@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import * as assert from "assert";
 import * as fs from "fs";
 import path from "path";
@@ -18,7 +19,10 @@ interface ITsBuildInfo {
 	program: {
 		fileNames: string[];
 		fileInfos: (string | { version: string; affectsGlobalScope: true })[];
+		affectedFilesPendingEmit?: any[];
+		emitDiagnosticsPerFile?: any[];
 		semanticDiagnosticsPerFile?: any[];
+		changeFileSet?: number[];
 		options: any;
 	};
 	version: string;
@@ -41,6 +45,17 @@ export class TscTask extends LeafTask {
 		return this._tscUtils;
 	}
 
+	protected get executionCommand() {
+		const parsedCommandLine = this.parsedCommandLine;
+		if (parsedCommandLine?.options.build) {
+			// https://github.com/microsoft/TypeScript/issues/57780
+			// `tsc -b` by design doesn't rebuild if dependent packages changed
+			// but not a referenced project. Just force it if we detected the change and
+			// invoke the build.
+			return `${this.command} --force`;
+		}
+		return this.command;
+	}
 	protected get isIncremental() {
 		const config = this.readTsConfig();
 		return config?.options.incremental;
@@ -108,9 +123,14 @@ export class TscTask extends LeafTask {
 			return false;
 		}
 
+		const program = tsBuildInfo.program;
 		// Check previous build errors
-		const diag = tsBuildInfo.program.semanticDiagnosticsPerFile;
-		if (diag?.some((item) => Array.isArray(item))) {
+		if (
+			program.changeFileSet?.length ||
+			(!config.options.noEmit
+				? program.affectedFilesPendingEmit?.length || program.emitDiagnosticsPerFile?.length
+				: program.semanticDiagnosticsPerFile?.some((item) => Array.isArray(item)))
+		) {
 			this.traceTrigger("previous build error");
 			return false;
 		}
@@ -125,8 +145,8 @@ export class TscTask extends LeafTask {
 		);
 
 		// Check dependencies file hashes
-		const fileNames = tsBuildInfo.program.fileNames;
-		const fileInfos = tsBuildInfo.program.fileInfos;
+		const fileNames = program.fileNames;
+		const fileInfos = program.fileInfos;
 		for (let i = 0; i < fileInfos.length; i++) {
 			const fileInfo = fileInfos[i];
 			const fileName = fileNames[i];
@@ -438,8 +458,8 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 		try {
 			const tsBuildInfoFiles: ITsBuildInfo[] = [];
 			const tscTasks = [...this.getDependentLeafTasks()].filter(
-				(task) => task.executable === "tsc",
-			);
+				(task) => task instanceof TscTask,
+			) as TscTask[];
 			const ownTscTasks = tscTasks.filter((task) => task.package == this.package);
 
 			// Take only the tsc task in the same package if possible.
@@ -449,7 +469,7 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 			);
 
 			for (const dep of tasks) {
-				const tsBuildInfo = await (dep as TscTask).readTsBuildInfo();
+				const tsBuildInfo = await dep.readTsBuildInfo();
 				if (tsBuildInfo === undefined) {
 					// If any of the tsc task don't have build info, we can't track
 					return undefined;

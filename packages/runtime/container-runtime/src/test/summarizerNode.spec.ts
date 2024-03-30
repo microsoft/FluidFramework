@@ -12,20 +12,20 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
-	channelsTreeName,
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
 	ISummarizerNode,
 	ISummarizerNodeConfig,
+	channelsTreeName,
 } from "@fluidframework/runtime-definitions";
 import { mergeStats } from "@fluidframework/runtime-utils";
 import { TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils";
 
-import { createRootSummarizerNode, IRootSummarizerNode } from "../summary/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SummarizerNode } from "../summary/summarizerNode/summarizerNode.js";
+import { IRootSummarizerNode, createRootSummarizerNode } from "../summary/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ValidateSummaryResult } from "../summary/summarizerNode/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { SummarizerNode } from "../summary/summarizerNode/summarizerNode.js";
 
 describe("Runtime", () => {
 	describe("Summarization", () => {

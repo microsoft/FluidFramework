@@ -4,15 +4,18 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { MockLogger } from "@fluidframework/telemetry-utils";
+
 import { getFileLink } from "../getFileLink.js";
+
 import {
-	mockFetchSingle,
-	mockFetchMultiple,
-	okResponse,
-	notFound,
-	createResponse,
 	MockResponse,
+	createResponse,
+	mockFetchMultiple,
+	mockFetchSingle,
+	notFound,
+	okResponse,
 } from "./mockFetch.js";
 
 describe("getFileLink", () => {

@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { ChangeAtomId } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import {
@@ -13,8 +14,9 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/utils.js";
 import { brand } from "../../../util/index.js";
-import { deepFreeze, testIdCompressor } from "../../utils.js";
 import { TestChange } from "../../testChange.js";
+import { deepFreeze, testIdCompressor } from "../../utils.js";
+
 import { generatePopulatedMarks } from "./populatedMarks.js";
 import { describeForBothConfigs, withOrderingMethod } from "./utils.js";
 

@@ -3,44 +3,46 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
-import {
-	ITelemetryLoggerExt,
-	mixinMonitoringContext,
-	MonitoringContext,
-	PerformanceEvent,
-	sessionStorageConfigProvider,
-	createChildMonitoringContext,
-	UsageError,
-} from "@fluidframework/telemetry-utils";
-import {
-	ITelemetryBaseLogger,
-	FluidObject,
-	IRequest,
-	IConfigProviderBase,
-} from "@fluidframework/core-interfaces";
 import {
 	IContainer,
+	IFluidCodeDetails,
 	IFluidModule,
 	IHostLoader,
 	ILoader,
 	ILoaderOptions as ILoaderOptions1,
-	LoaderHeader,
 	IProvideFluidCodeDetailsComparer,
-	IFluidCodeDetails,
-} from "@fluidframework/container-definitions";
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
+import {
+	FluidObject,
+	IConfigProviderBase,
+	IRequest,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import {
 	IDocumentServiceFactory,
 	IDocumentStorageService,
 	IResolvedUrl,
 	IUrlResolver,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { IClientDetails } from "@fluidframework/protocol-definitions";
-import { Container, IPendingContainerState } from "./container.js";
-import { tryParseCompatibleResolvedUrl } from "./utils.js";
+import {
+	ITelemetryLoggerExt,
+	MonitoringContext,
+	PerformanceEvent,
+	UsageError,
+	createChildMonitoringContext,
+	mixinMonitoringContext,
+	sessionStorageConfigProvider,
+} from "@fluidframework/telemetry-utils";
+import { v4 as uuid } from "uuid";
+
+import { Container } from "./container.js";
+import { DebugLogger } from "./debugLogger.js";
 import { pkgVersion } from "./packageVersion.js";
 import { ProtocolHandlerBuilder } from "./protocol.js";
-import { DebugLogger } from "./debugLogger.js";
+import type { IPendingContainerState } from "./serializedStateManager.js";
+import { tryParseCompatibleResolvedUrl } from "./utils.js";
 
 function ensureResolvedUrlDefined(
 	resolved: IResolvedUrl | undefined,

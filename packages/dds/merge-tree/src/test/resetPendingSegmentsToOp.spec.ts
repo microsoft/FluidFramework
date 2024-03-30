@@ -2,14 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
+
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+
 import { Marker, SegmentGroup, reservedMarkerIdKey } from "../mergeTreeNodes.js";
 import { IMergeTreeOp, ReferenceType } from "../ops.js";
 import { clone } from "../properties.js";
 import { TextSegment } from "../textSegment.js";
+
 import { TestClient } from "./testClient.js";
 import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger.js";
 

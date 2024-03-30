@@ -5,14 +5,15 @@
 
 import { strict as assert } from "node:assert";
 
-import { createIdCompressor } from "@fluidframework/id-compressor";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+
 import {
-	SchemaFactory,
 	ITree,
+	SchemaFactory,
+	treeNodeApi as Tree,
 	TreeConfiguration,
 	TreeView,
-	Tree,
 } from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
 

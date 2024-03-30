@@ -4,21 +4,22 @@
  */
 
 import assert from "assert";
+
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import {
-	IProvideRuntimeFactory,
-	IFluidModule,
-	IProvideFluidCodeDetailsComparer,
-	IFluidCodeDetails,
 	ICodeDetailsLoader,
+	IFluidCodeDetails,
+	IFluidModule,
 	IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions";
+	IProvideFluidCodeDetailsComparer,
+	IProvideRuntimeFactory,
+} from "@fluidframework/container-definitions/internal";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
 	IProvideFluidDataStoreFactory,
 	IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 import { createDataStoreFactory } from "@fluidframework/runtime-utils";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 
 /**
  * @internal

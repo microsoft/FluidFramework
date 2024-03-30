@@ -5,13 +5,15 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	assertIsStableId,
 	IIdCompressor,
 	SessionSpaceCompressedId,
 	StableId,
-} from "@fluidframework/id-compressor";
+	assertIsStableId,
+} from "@fluidframework/id-compressor/internal";
+
 import { brand, extractFromOpaque } from "../../util/index.js";
-import { StableNodeKey, LocalNodeKey } from "./nodeKey.js";
+
+import { LocalNodeKey, StableNodeKey } from "./nodeKey.js";
 
 /**
  * An object which handles the generation of node keys as well as conversion between their two types ({@link StableNodeKey} and {@link LocalNodeKey}).

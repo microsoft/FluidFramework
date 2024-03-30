@@ -1,5 +1,13 @@
 # @fluid-experimental/ink
 
+## 2.0.0-rc.2.0.0
+
+### Minor Changes
+
+-   @fluidframework/ink package demoted to @fluid-experimental/ink ([#19568](https://github.com/microsoft/FluidFramework/issues/19568)) [0d974d828c](https://github.com/microsoft/FluidFramework/commits/0d974d828cd46061449290caabcaedc7b5f6c1f0)
+
+    The ink package has always been in an experimental state, but this has not been clearly communicated (primarly just through notes in TODO.md). It has now been moved to the @fluid-experimental scope to more clearly indicate its development state.
+
 ## 2.0.0-rc.1.0.0
 
 ### Minor Changes

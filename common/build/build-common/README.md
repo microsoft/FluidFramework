@@ -25,11 +25,6 @@ A variety of configuration files were build and named while dual build pattern w
 
 preferrably for the CommonJS case.
 
-### Legacy Configurations
-
-This package previously exported a series of configurations with differing levels of validation.
-These configurations are now deprecated and have been replaced with the configuration noted above.
-
 ## TypeScript Configurations (`tsconfig.json`)
 
 This package includes several TypeScript project (tsconfig) files that are contain the common configurations used within
@@ -95,7 +90,3 @@ within the repo but is considered deprecated.
 
 And there are a handful of tsconfigs that we thought we'd want but no longer think they have common purpose:
 `tsconfig.cjs.json`, `tsconfig.esm.json`, `tsconfig.esm-only.json`, and `tsconfig.test.json`
-
-## Deprecated Tsc-Multi Configurations (`tsc-multi.*.json`)
-
-Several Tsc-Multi config files remain that use a deprecated style of dual build that emit modified .js extensions. As extension modification means rewriting files the likelihood of error is signficant and this has been superceded by package type override pattern. All uses of `tsc-multi` should be removed/replaced.

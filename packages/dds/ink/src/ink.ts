@@ -4,32 +4,33 @@
  */
 
 import {
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
 	IChannelAttributes,
+	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import { readAndParse } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
 import {
-	createSingleBlobSummary,
 	IFluidSerializer,
 	SharedObject,
+	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
+
 import { InkFactory } from "./inkFactory.js";
 import {
 	IClearOperation,
 	ICreateStrokeOperation,
 	IInk,
+	IInkEvents,
 	IInkOperation,
 	IInkPoint,
 	IInkStroke,
 	IPen,
 	IStylusOperation,
-	IInkEvents,
 } from "./interfaces.js";
-import { InkData, ISerializableInk } from "./snapshot.js";
+import { ISerializableInk, InkData } from "./snapshot.js";
 
 /**
  * Filename where the snapshot is stored.

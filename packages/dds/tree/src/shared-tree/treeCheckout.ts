@@ -2,44 +2,48 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { assert } from "@fluidframework/core-utils";
 import { IIdCompressor } from "@fluidframework/id-compressor";
+
+import { noopValidator } from "../codec/index.js";
 import {
-	AnchorLocator,
-	IForestSubscription,
-	AnchorSetRootEvents,
 	Anchor,
+	AnchorLocator,
 	AnchorNode,
 	AnchorSet,
-	IEditableForest,
-	TreeStoredSchemaRepository,
-	combineVisitors,
-	visitDelta,
-	DetachedFieldIndex,
-	makeDetachedFieldIndex,
-	Revertible,
+	AnchorSetRootEvents,
 	ChangeFamily,
-	tagChange,
-	TreeStoredSchema,
-	TreeStoredSchemaSubscription,
-	JsonableTree,
-	RevisionTagCodec,
+	CommitMetadata,
 	DeltaVisitor,
+	DetachedFieldIndex,
+	IEditableForest,
+	IForestSubscription,
+	JsonableTree,
+	Revertible,
+	RevisionTagCodec,
+	TreeStoredSchema,
+	TreeStoredSchemaRepository,
+	TreeStoredSchemaSubscription,
+	combineVisitors,
+	makeDetachedFieldIndex,
+	tagChange,
+	visitDelta,
 } from "../core/index.js";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
 import {
+	FieldBatchCodec,
+	TreeCompressionStrategy,
 	buildForest,
 	intoDelta,
-	FieldBatchCodec,
 	jsonableTreeFromCursor,
 	makeFieldBatchCodec,
-	TreeCompressionStrategy,
 } from "../feature-libraries/index.js";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core/index.js";
-import { TransactionResult, fail } from "../util/index.js";
-import { noopValidator } from "../codec/index.js";
+import { IDisposable, TransactionResult, disposeSymbol, fail } from "../util/index.js";
+
+import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
-import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
 /**
@@ -49,7 +53,7 @@ import { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilde
 export interface CheckoutEvents {
 	/**
 	 * A batch of changes has finished processing and the view is in a consistent state.
-	 * It is once again safe to access the EditableTree, Forest and AnchorSet.
+	 * It is once again safe to access the FlexTree, Forest and AnchorSet.
 	 *
 	 * @remarks
 	 * This is mainly useful for knowing when to do followup work scheduled during events from Anchors.
@@ -64,7 +68,11 @@ export interface CheckoutEvents {
 	 *
 	 * @param revertible - The revertible that can be used to revert the change.
 	 */
-	newRevertible(revertible: Revertible): void;
+
+	/**
+	 * {@inheritdoc TreeViewEvents.commitApplied}
+	 */
+	commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
 
 	/**
 	 * Fired when a revertible is either reverted or discarded.
@@ -311,7 +319,7 @@ class Transaction implements ITransaction {
  * {@link ITreeCheckout} that has forked off of the main trunk/branch.
  * @internal
  */
-export interface ITreeCheckoutFork extends ITreeCheckout {
+export interface ITreeCheckoutFork extends ITreeCheckout, IDisposable {
 	/**
 	 * Rebase the changes that have been applied to this view over all the new changes in the given view.
 	 * @param view - Either the root view or a view that was created by a call to `fork()`. It is not modified by this operation.
@@ -323,6 +331,8 @@ export interface ITreeCheckoutFork extends ITreeCheckout {
  * An implementation of {@link ITreeCheckoutFork}.
  */
 export class TreeCheckout implements ITreeCheckoutFork {
+	private isDisposed = false;
+
 	public constructor(
 		public readonly transaction: ITransaction,
 		private readonly branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
@@ -354,14 +364,21 @@ export class TreeCheckout implements ITreeCheckoutFork {
 							visitDelta(delta, visitor, this.removedRoots);
 						});
 					} else if (change.type === "schema") {
-						// We purge all removed content because the schema change may render that repair data invalid.
-						// This happens on all peers that receive the schema change.
-						// Note that while the originator of the schema change could theoretically validate/update the
-						// repair data that it has, so that is it guaranteed to be valid with the new schema, we cannot
-						// guarantee that the originator has a superset of the repair data that other clients have.
-						// This means the originator cannot guarantee that the repair data on all peers is valid for
-						// the new schema.
-						this.purgeRemovedRoots();
+						// Schema changes from a current to a new schema are expected to be backwards compatible.
+						// This guarantees that all data in the forest (which is valid before the schema change)
+						// is also valid under the new schema.
+						// Note however, that such schema changes may in some cases be rolled back:
+						// Case 1: A transaction with a schema change may be aborted.
+						// The transaction may have made some data changes that would render some trees invalid
+						// under the old schema, but these changes will also be rolled back, thereby putting the forest
+						// back in the state before the transaction, which is valid under the original (reinstated) schema.
+						// Case 2: A branch with a schema change may be rebased such that the schema change (because
+						// of a constraint) is no longer applied.
+						// Such a branch may contain data changes that would render some trees invalid under the
+						// original schema. These data changes may not necessarily be rolled back.
+						// They will however be rebased over the rollback of the schema change. This rebasing will
+						// ensure that these data changes are muted if they would render some trees invalid under the
+						// original (reinstated) schema.
 						storedSchema.apply(change.innerChange.schema.new);
 					} else {
 						fail("Unknown Shared Tree change type.");
@@ -376,8 +393,14 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				}
 			}
 		});
-		branch.on("newRevertible", (revertible) => {
-			this.events.emit("newRevertible", revertible);
+		branch.on("commitApplied", (data, getRevertible) => {
+			this.events.emit(
+				"commitApplied",
+				data,
+				// Commits that contain schema changes are not revertible.
+				// Allowing a schema change to be reverted could render some of the forest content out-of-schema.
+				hasSchemaChange(branch.getHead().change) ? undefined : getRevertible,
+			);
 		});
 		branch.on("revertibleDisposed", (revertible, revision) => {
 			// We do not expose the revision in this API
@@ -395,17 +418,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		combinedVisitor.free();
 	}
 
-	private purgeRemovedRoots() {
-		// Revertibles are susceptible to use repair data so we purge them.
-		this.branch.purgeRevertibles();
-		this.withCombinedVisitor((visitor) => {
-			for (const { root } of this.removedRoots.entries()) {
-				const field = this.removedRoots.toFieldKey(root);
-				// TODO:AD5509 Handle arbitrary-length fields once the storage of removed roots is no longer atomized.
-				visitor.destroy(field, 1);
-			}
-		});
-		this.removedRoots.purge();
+	private checkNotDisposed(): void {
+		assert(!this.isDisposed, "Invalid operation on a disposed TreeCheckout");
 	}
 
 	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
@@ -413,14 +427,17 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	public get editor(): ISharedTreeEditor {
+		this.checkNotDisposed();
 		return this.branch.editor;
 	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
+		this.checkNotDisposed();
 		return this.forest.anchors.locate(anchor);
 	}
 
 	public fork(): TreeCheckout {
+		this.checkNotDisposed();
 		const anchors = new AnchorSet();
 		const branch = this.branch.fork();
 		const storedSchema = this.storedSchema.clone();
@@ -439,16 +456,19 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	public rebase(view: TreeCheckout): void {
+		this.checkNotDisposed();
 		view.branch.rebaseOnto(this.branch);
 	}
 
 	public rebaseOnto(view: ITreeCheckout): void {
+		this.checkNotDisposed();
 		view.rebase(this);
 	}
 
 	public merge(view: TreeCheckout): void;
 	public merge(view: TreeCheckout, disposeView: boolean): void;
 	public merge(view: TreeCheckout, disposeView = true): void {
+		this.checkNotDisposed();
 		assert(
 			!this.transaction.inProgress() || disposeView,
 			0x710 /* A view that is merged into an in-progress transaction must be disposed */,
@@ -458,19 +478,18 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		}
 		this.branch.merge(view.branch);
 		if (disposeView) {
-			view.dispose();
+			view[disposeSymbol]();
 		}
 	}
 
 	public updateSchema(newSchema: TreeStoredSchema): void {
+		this.checkNotDisposed();
 		this.editor.schema.setStoredSchema(this.storedSchema.clone(), newSchema);
 	}
 
-	/**
-	 * Dispose this view, freezing its state and allowing the SharedTree to release resources required by it.
-	 * Attempts to further mutate or dispose this view will error.
-	 */
-	public dispose(): void {
+	public [disposeSymbol](): void {
+		this.checkNotDisposed();
+		this.isDisposed = true;
 		this.branch.dispose();
 	}
 

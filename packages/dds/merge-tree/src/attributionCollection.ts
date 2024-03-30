@@ -6,9 +6,10 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	AttributionKey,
-	OpAttributionKey,
 	DetachedAttributionKey,
+	OpAttributionKey,
 } from "@fluidframework/runtime-definitions";
+
 import { ISegment } from "./mergeTreeNodes.js";
 
 /**

@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeDetailsLoader, IContainer } from "@fluidframework/container-definitions";
+import { ICodeDetailsLoader, IContainer } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+
 import { IFluidFileConverter } from "../../codeLoaderBundle";
+
 import { SampleCodeLoader } from "./sampleCodeLoader";
 
 async function getCodeLoader(_logger: ITelemetryBaseLogger): Promise<ICodeDetailsLoader> {

@@ -3,41 +3,41 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { ITelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils";
-import { readAndParse } from "@fluidframework/driver-utils";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
-	IChannelServices,
-	IChannelFactory,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import { readAndParse } from "@fluidframework/driver-utils";
+import { RedBlackTree } from "@fluidframework/merge-tree";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
 	IFluidSerializer,
 	SharedObject,
 	ValueType,
 	parseHandles,
 } from "@fluidframework/shared-object-base";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { ITelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils";
 import path from "path-browserify";
-import { RedBlackTree } from "@fluidframework/merge-tree";
+
 import {
 	IDirectory,
 	IDirectoryEvents,
 	IDirectoryValueChanged,
-	// eslint-disable-next-line import/no-deprecated
-	ISerializableValue,
-	ISerializedValue,
 	ISharedDirectory,
 	ISharedDirectoryEvents,
 	IValueChanged,
 } from "./interfaces.js";
+import {
+	// eslint-disable-next-line import/no-deprecated
+	ISerializableValue,
+	ISerializedValue,
+} from "./internalInterfaces.js";
 import { ILocalValue, LocalValueMaker, makeSerializable } from "./localValues.js";
-import { pkgVersion } from "./packageVersion.js";
 
 // We use path-browserify since this code can run safely on the server or the browser.
 // We standardize on using posix slashes everywhere.
@@ -269,67 +269,6 @@ export interface IDirectoryNewStorageFormat {
 }
 
 /**
- * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedDirectory}.
- *
- * @sealed
- * @alpha
- */
-export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
-	 */
-	public static readonly Type = "https://graph.microsoft.com/types/directory";
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
-	 */
-	public static readonly Attributes: IChannelAttributes = {
-		type: DirectoryFactory.Type,
-		snapshotFormatVersion: "0.1",
-		packageVersion: pkgVersion,
-	};
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
-	 */
-	public get type(): string {
-		return DirectoryFactory.Type;
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
-	 */
-	public get attributes(): IChannelAttributes {
-		return DirectoryFactory.Attributes;
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-	 */
-	public async load(
-		runtime: IFluidDataStoreRuntime,
-		id: string,
-		services: IChannelServices,
-		attributes: IChannelAttributes,
-	): Promise<ISharedDirectory> {
-		const directory = new SharedDirectory(id, runtime, attributes);
-		await directory.load(services);
-
-		return directory;
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
-	 */
-	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedDirectory {
-		const directory = new SharedDirectory(id, runtime, DirectoryFactory.Attributes);
-		directory.initializeLocal();
-
-		return directory;
-	}
-}
-
-/**
  * The comparator essentially performs the following procedure to determine the order of subdirectory creation:
  * 1. If subdirectory A has a non-negative 'seq' and subdirectory B has a negative 'seq', subdirectory A is always placed first due to
  * the policy that acknowledged subdirectories precede locally created ones that have not been committed yet.
@@ -460,26 +399,6 @@ export class SharedDirectory
 	extends SharedObject<ISharedDirectoryEvents>
 	implements ISharedDirectory
 {
-	/**
-	 * Create a new shared directory
-	 *
-	 * @param runtime - Data store runtime the new shared directory belongs to
-	 * @param id - Optional name of the shared directory
-	 * @returns Newly create shared directory (but not attached yet)
-	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string): ISharedDirectory {
-		return runtime.createChannel(id, DirectoryFactory.Type) as ISharedDirectory;
-	}
-
-	/**
-	 * Get a factory for SharedDirectory to register with the data store.
-	 *
-	 * @returns A factory that creates and load SharedDirectory
-	 */
-	public static getFactory(): IChannelFactory<ISharedDirectory> {
-		return new DirectoryFactory();
-	}
-
 	/**
 	 * String representation for the class.
 	 */
@@ -1544,7 +1463,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				if (this.index < subdirNames.length) {
 					const subdirName = subdirNames[this.index++];
 					const subdir = this.dirs.get(subdirName);
-					assert(subdir !== undefined, "Could not find expected sub-directory.");
+					assert(
+						subdir !== undefined,
+						0x8ac /* Could not find expected sub-directory. */,
+					);
 					return { value: [subdirName, subdir], done: false };
 				}
 				return { value: undefined, done: true };
@@ -2155,10 +2077,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			}
 		} else if ((op.type === "delete" || op.type === "set") && localOpMetadata.type === "edit") {
 			const key: unknown = op.key;
-			assert(key !== undefined, '"key" property is missing from edit operation.');
+			assert(key !== undefined, 0x8ad /* "key" property is missing from edit operation. */);
 			assert(
 				typeof key === "string",
-				'"key" property in edit operation is misconfigured. Expected a string.',
+				0x8ae /* "key" property in edit operation is misconfigured. Expected a string. */,
 			);
 
 			if (localOpMetadata.previousValue === undefined) {
@@ -2172,11 +2094,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			const subdirName: unknown = op.subdirName;
 			assert(
 				subdirName !== undefined,
-				'"subdirName" property is missing from "createSubDirectory" operation.',
+				0x8af /* "subdirName" property is missing from "createSubDirectory" operation. */,
 			);
 			assert(
 				typeof subdirName === "string",
-				'"subdirName" property in "createSubDirectory" operation is misconfigured. Expected a string.',
+				0x8b0 /* "subdirName" property in "createSubDirectory" operation is misconfigured. Expected a string. */,
 			);
 
 			this.deleteSubDirectoryCore(subdirName, true);
@@ -2185,11 +2107,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			const subdirName: unknown = op.subdirName;
 			assert(
 				subdirName !== undefined,
-				'"subdirName" property is missing from "deleteSubDirectory" operation.',
+				0x8b1 /* "subdirName" property is missing from "deleteSubDirectory" operation. */,
 			);
 			assert(
 				typeof subdirName === "string",
-				'"subdirName" property in "deleteSubDirectory" operation is misconfigured. Expected a string.',
+				0x8b2 /* "subdirName" property in "deleteSubDirectory" operation is misconfigured. Expected a string. */,
 			);
 
 			if (localOpMetadata.subDirectory !== undefined) {

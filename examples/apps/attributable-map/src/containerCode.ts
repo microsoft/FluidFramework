@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IContainer } from "@fluidframework/container-definitions";
+import { getDataStoreEntryPoint } from "@fluid-example/example-utils";
+import { IProvideRuntimeAttributor, IRuntimeAttributor } from "@fluid-experimental/attributor";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { FluidObject } from "@fluidframework/core-interfaces";
-import { IRuntimeAttributor, IProvideRuntimeAttributor } from "@fluid-experimental/attributor";
-import { getDataStoreEntryPoint } from "@fluid-example/example-utils";
-import { ModelContainerRuntimeFactoryWithAttribution } from "./modelContainerRuntimeFactoryWithAttribution.js";
+
 import { HitCounter } from "./dataObject.js";
+import { ModelContainerRuntimeFactoryWithAttribution } from "./modelContainerRuntimeFactoryWithAttribution.js";
 
 export interface IHitCounterAppModel {
 	readonly hitCounter: HitCounter;

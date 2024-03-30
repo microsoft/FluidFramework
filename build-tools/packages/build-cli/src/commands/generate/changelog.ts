@@ -97,7 +97,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 		const packagesToCheck = isReleaseGroup(releaseGroup)
 			? context.packagesInReleaseGroup(releaseGroup)
 			: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			  [context.fullPackageMap.get(releaseGroup)!];
+				[context.fullPackageMap.get(releaseGroup)!];
 
 		const installed = await FluidRepo.ensureInstalled(packagesToCheck);
 

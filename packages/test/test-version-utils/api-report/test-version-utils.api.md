@@ -5,24 +5,26 @@
 ```ts
 
 import * as agentScheduler from '@fluidframework/agent-scheduler';
+import { BaseContainerRuntimeFactory } from '@fluidframework/aqueduct';
 import * as cell from '@fluidframework/cell';
 import { ContainerRuntime } from '@fluidframework/container-runtime';
 import { ContainerRuntimeFactoryWithDefaultDataStore } from '@fluidframework/aqueduct';
 import * as counter from '@fluidframework/counter';
 import { DataObject } from '@fluidframework/aqueduct';
 import { DataObjectFactory } from '@fluidframework/aqueduct';
+import * as datastore from '@fluidframework/datastore';
 import { DriverApi } from '@fluid-private/test-drivers';
 import { FluidTestDriverConfig } from '@fluid-private/test-drivers';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { ISharedDirectory } from '@fluidframework/map';
+import { ISharedDirectory } from '@fluidframework/map/internal';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base';
 import { ITelemetryGenericEventExt } from '@fluidframework/telemetry-utils';
 import { ITestContainerConfig } from '@fluidframework/test-utils';
 import { ITestObjectProvider } from '@fluidframework/test-utils';
-import { Loader } from '@fluidframework/container-loader';
+import { Loader } from '@fluidframework/container-loader/internal';
 import * as map from '@fluidframework/map';
 import * as matrix from '@fluidframework/matrix';
 import * as orderedCollection from '@fluidframework/ordered-collection';
@@ -66,6 +68,7 @@ export interface CompatApis {
 // @internal (undocumented)
 export const ContainerRuntimeApi: {
     version: string;
+    BaseContainerRuntimeFactory: typeof BaseContainerRuntimeFactory;
     ContainerRuntime: typeof ContainerRuntime;
     ContainerRuntimeFactoryWithDefaultDataStore: typeof ContainerRuntimeFactoryWithDefaultDataStore;
 };
@@ -75,15 +78,13 @@ export const DataRuntimeApi: {
     version: string;
     DataObject: typeof DataObject;
     DataObjectFactory: typeof DataObjectFactory;
+    FluidDataStoreRuntime: typeof datastore.FluidDataStoreRuntime;
     TestFluidObjectFactory: typeof TestFluidObjectFactory;
     dds: {
         SharedCell: typeof cell.SharedCell;
         SharedCounter: typeof counter.SharedCounter;
-        SharedDirectory: typeof map.SharedDirectory;
-        SharedMap: {
-            getFactory(): IChannelFactory<map.ISharedMap>;
-            create(runtime: IFluidDataStoreRuntime, id?: string | undefined): map.ISharedMap;
-        };
+        SharedDirectory: ISharedObjectKind<map.ISharedDirectory>;
+        SharedMap: ISharedObjectKind<map.ISharedMap>;
         SharedMatrix: typeof matrix.SharedMatrix;
         ConsensusQueue: typeof orderedCollection.ConsensusQueue;
         ConsensusRegisterCollection: typeof registerCollection.ConsensusRegisterCollection;
@@ -93,6 +94,7 @@ export const DataRuntimeApi: {
     packages: {
         cell: typeof cell;
         counter: typeof counter;
+        datastore: typeof datastore;
         map: typeof map;
         matrix: typeof matrix;
         orderedCollection: typeof orderedCollection;
@@ -222,22 +224,25 @@ export type ExpectedEvents = ITelemetryGenericEventExt[] | Partial<Record<TestDr
 export type ExpectsTest = (name: string, orderedExpectedEvents: ExpectedEvents, test: Mocha.AsyncFunc) => Mocha.Test;
 
 // @internal
-export function getContainerRuntimeApi(baseVersion: string, requested?: number | string, adjustMajorPublic?: boolean): typeof ContainerRuntimeApi;
+export function getContainerRuntimeApi(requestedStr: string): typeof ContainerRuntimeApi;
 
 // @internal (undocumented)
 export const getCurrentBenchmarkType: (currentType: DescribeE2EDocSuite) => BenchmarkType;
 
 // @internal
-export function getDataRuntimeApi(baseVersion: string, requested?: number | string, adjustMajorPublic?: boolean): typeof DataRuntimeApi;
+export function getDataRuntimeApi(requestedStr: string): typeof DataRuntimeApi;
 
 // @internal (undocumented)
 export const getDataStoreFactory: (containerOptions?: ITestContainerConfig) => IFluidDataStoreFactory;
 
 // @internal
-export function getDriverApi(baseVersion: string, requested?: number | string, adjustMajorPublic?: boolean): typeof DriverApi;
+export function getDriverApi(requestedStr: string): typeof DriverApi;
 
 // @internal
-export function getLoaderApi(baseVersion: string, requested?: number | string, adjustMajorPublic?: boolean): typeof LoaderApi;
+export function getLoaderApi(requestedStr: string): typeof LoaderApi;
+
+// @internal
+export function getRequestedVersion(baseVersion: string, requested?: number | string, adjustPublicMajor?: boolean): string;
 
 // @internal (undocumented)
 export function getVersionedTestObjectProvider(baseVersion: string, loaderVersion?: number | string, driverConfig?: {

@@ -29,11 +29,11 @@ export {
 	type TransformApiItemWithoutChildren,
 	transformApiModel,
 	transformTsdocNode,
-} from "./api-item-transforms";
+} from "./api-item-transforms/index.js";
 
 // We want to make sure the entirety of this domain is accessible.
 // eslint-disable-next-line no-restricted-syntax
-export * from "./documentation-domain";
+export * from "./documentation-domain/index.js";
 
 export {
 	DocumentWriter,
@@ -43,25 +43,25 @@ export {
 	type MarkdownRenderContext,
 	type MarkdownRenderers,
 	type MarkdownRenderConfiguration,
-} from "./renderers";
-export type { ConfigurationBase } from "./ConfigurationBase";
-export type { FileSystemConfiguration } from "./FileSystemConfiguration";
-export type { Heading } from "./Heading";
-export type { Link, UrlTarget } from "./Link";
-export { loadModel } from "./LoadModel";
+} from "./renderers/index.js";
+export type { ConfigurationBase } from "./ConfigurationBase.js";
+export type { FileSystemConfiguration } from "./FileSystemConfiguration.js";
+export type { Heading } from "./Heading.js";
+export type { Link, UrlTarget } from "./Link.js";
+export { loadModel } from "./LoadModel.js";
 export {
 	defaultConsoleLogger,
 	type LoggingFunction,
 	type Logger,
 	verboseConsoleLogger,
-} from "./Logging";
+} from "./Logging.js";
 export {
 	type ApiFunctionLike,
 	type ApiMemberKind,
 	type ApiModifier,
 	type ApiModuleLike,
 	type ApiSignatureLike,
-} from "./utilities";
+} from "./utilities/index.js";
 
 // #region Scoped exports
 
@@ -69,14 +69,14 @@ export {
 /* eslint-disable unicorn/prefer-export-from */
 
 // Export `ApiItem`-related utilities
-import * as ApiItemUtilities from "./ApiItemUtilitiesModule";
+import * as ApiItemUtilities from "./ApiItemUtilitiesModule.js";
 
 // Export layout-related utilities (for use in writing custom transformations)
-import * as LayoutUtilities from "./LayoutUtilitiesModule";
+import * as LayoutUtilities from "./LayoutUtilitiesModule.js";
 
 // Export renderers
-import * as HtmlRenderer from "./HtmlRendererModule";
-import * as MarkdownRenderer from "./MarkdownRendererModule";
+import * as HtmlRenderer from "./HtmlRendererModule.js";
+import * as MarkdownRenderer from "./MarkdownRendererModule.js";
 
 export {
 	/**

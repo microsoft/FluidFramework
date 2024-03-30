@@ -4,9 +4,13 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { MakeNominal, RestrictiveReadonlyRecord } from "../util/index.js";
-import { FlexListToUnion, LazyItem } from "../feature-libraries/index.js";
-import { Unhydrated, TreeNode } from "./types.js";
+import { Lazy } from "@fluidframework/core-utils";
+
+import { FlexListToUnion, LazyItem, isLazy } from "../feature-libraries/index.js";
+import { MakeNominal, RestrictiveReadonlyRecord, isReadonlyArray } from "../util/index.js";
+
+import { TreeNode, Unhydrated } from "./types.js";
+import { UsageError } from "@fluidframework/telemetry-utils";
 
 /**
  * Helper used to produce types for object nodes.
@@ -19,11 +23,19 @@ export type ObjectFromSchemaRecord<
 };
 
 /**
- * Helper used to produce types for object nodes.
+ * A {@link TreeNode} which modules a JavaScript object.
+ * @remarks
+ * Object nodes consist of a type which specifies which {@link TreeNodeSchema} they use (see {@link TreeNodeApi.schema}), and a collections of fields, each with a distinct `key` and its own {@link FieldSchema} defining what can be placed under that key.
+ *
+ * All non-empty fields on an object node are exposed as enumerable own properties with string keys.
+ * No other own `own` or `enumerable` properties are included on object nodes unless the user of the node manually adds custom session only state.
+ * This allows a majority of general purpose JavaScript object processing operations (like `for...in`, `Reflect.ownKeys()` and `Object.entries()`) to enumerate all the children.
  * @public
  */
-export type TreeObjectNode<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> =
-	object & TreeNode & ObjectFromSchemaRecord<T>;
+export type TreeObjectNode<
+	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+	TypeName extends string = string,
+> = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName>;
 
 /**
  * Helper used to produce types for:
@@ -215,15 +227,64 @@ export class FieldSchema<
 	 */
 	protected _typeCheck?: MakeNominal;
 
+	private readonly lazyTypes: Lazy<ReadonlySet<TreeNodeSchema>>;
+
 	/**
-	 * @param kind - The [kind](https://en.wikipedia.org/wiki/Kind_(type_theory)) of this field.
-	 * Determine the multiplicity, viewing and editing APIs as well as the merge resolution policy.
-	 * @param allowedTypes - What types of tree nodes are allowed in this field.
+	 * What types of tree nodes are allowed in this field.
+	 * @remarks Counterpart to {@link FieldSchema.allowedTypes}, with any lazy definitions evaluated.
 	 */
+	public get allowedTypeSet(): ReadonlySet<TreeNodeSchema> {
+		return this.lazyTypes.value;
+	}
+
 	public constructor(
+		/**
+		 * The {@link https://en.wikipedia.org/wiki/Kind_(type_theory) | kind } of this field.
+		 * Determines the multiplicity, viewing and editing APIs as well as the merge resolution policy.
+		 */
 		public readonly kind: Kind,
+		/**
+		 * What types of tree nodes are allowed in this field.
+		 */
 		public readonly allowedTypes: Types,
-	) {}
+	) {
+		this.lazyTypes = new Lazy(() => normalizeAllowedTypes(this.allowedTypes));
+	}
+}
+
+/**
+ * Normalizes a {@link ImplicitFieldSchema} to a {@link FieldSchema}.
+ */
+export function normalizeFieldSchema(schema: ImplicitFieldSchema): FieldSchema {
+	return schema instanceof FieldSchema ? schema : new FieldSchema(FieldKind.Required, schema);
+}
+/**
+ * Normalizes a {@link ImplicitAllowedTypes} to a set of {@link TreeNodeSchema}s, by eagerly evaluating any
+ * lazy schema declarations.
+ *
+ * @remarks Note: this must only be called after all required schemas have been declared, otherwise evaluation of
+ * recursive schemas may fail.
+ */
+export function normalizeAllowedTypes(types: ImplicitAllowedTypes): ReadonlySet<TreeNodeSchema> {
+	const normalized = new Set<TreeNodeSchema>();
+	if (isReadonlyArray(types)) {
+		for (const lazyType of types) {
+			normalized.add(evaluateLazySchema(lazyType));
+		}
+	} else {
+		normalized.add(evaluateLazySchema(types));
+	}
+	return normalized;
+}
+
+function evaluateLazySchema(value: LazyItem<TreeNodeSchema>): TreeNodeSchema {
+	const evaluatedSchema = isLazy(value) ? value() : value;
+	if (evaluatedSchema === undefined) {
+		throw new UsageError(
+			`Encountered an undefined schema. This could indicate that some referenced schema has not yet been instantiated.`,
+		);
+	}
+	return evaluatedSchema;
 }
 
 /**

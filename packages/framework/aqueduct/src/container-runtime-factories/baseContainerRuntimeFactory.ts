@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { type IContainerContext } from "@fluidframework/container-definitions";
+import { type IContainerContext } from "@fluidframework/container-definitions/internal";
 import {
-	type IContainerRuntimeOptions,
-	FluidDataStoreRegistry,
 	ContainerRuntime,
+	FluidDataStoreRegistry,
+	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { type FluidObject } from "@fluidframework/core-interfaces";
 // eslint-disable-next-line import/no-deprecated
 import {
 	type RuntimeRequestHandler,
@@ -20,13 +21,12 @@ import {
 	type IProvideFluidDataStoreRegistry,
 	type NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
+import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import {
 	DependencyContainer,
 	type IFluidDependencySynthesizer,
 	type IProvideFluidDependencySynthesizer,
 } from "@fluidframework/synthesize";
-import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
-import { type FluidObject } from "@fluidframework/core-interfaces";
 
 /**
  * {@link BaseContainerRuntimeFactory} construction properties.

@@ -3,57 +3,59 @@
  * Licensed under the MIT License.
  */
 
-import {
-	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
-	type IMockContainerRuntimeOptions,
-	MockFluidDataStoreRuntime,
-} from "@fluidframework/test-runtime-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
-	createChildLogger,
-	raiseConnectedEvent,
-	type ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils";
-import {
-	MessageType,
-	type ISequencedDocumentMessage,
-	type ISummaryContent,
-	SummaryType,
-	type ISummaryNack,
 	type IDocumentMessage,
+	type ISequencedDocumentMessage,
+	type ISummaryAck,
+	type ISummaryContent,
+	type ISummaryNack,
+	MessageType,
+	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { mergeStats } from "@fluidframework/runtime-utils";
+import {
+	type ITelemetryLoggerExt,
+	createChildLogger,
+	raiseConnectedEvent,
+} from "@fluidframework/telemetry-utils";
+import {
+	type IMockContainerRuntimeOptions,
+	MockContainerRuntimeFactoryForReconnection,
+	MockContainerRuntimeForReconnection,
+	MockFluidDataStoreRuntime,
+} from "@fluidframework/test-runtime-utils";
+import { v4 as uuid } from "uuid";
+
 import { type ISummaryConfiguration } from "../../index.js";
 import {
 	IConnectableRuntime,
-	Summarizer,
-	ISummarizerClientElectionEvents,
-	SummaryManager,
-	ISummarizerClientElection,
-	type IConnectedState,
 	type IConnectedEvents,
-	SummaryCollection,
-	type ISummarizerRuntime,
-	type ISummarizerInternalsProvider,
-	type ISubmitSummaryOptions,
-	type SubmitSummaryResult,
-	type IRefreshSummaryAckOptions,
-	RunWhileConnectedCoordinator,
+	type IConnectedState,
 	type IGeneratedSummaryStats,
+	type IRefreshSummaryAckOptions,
+	type ISubmitSummaryOptions,
+	ISummarizerClientElection,
+	ISummarizerClientElectionEvents,
+	type ISummarizerInternalsProvider,
+	type ISummarizerRuntime,
+	RunWhileConnectedCoordinator,
+	type SubmitSummaryResult,
+	Summarizer,
+	SummaryCollection,
+	SummaryManager,
 } from "../../summary/index.js";
 import type { IThrottler } from "../../throttler.js";
 
 export class MockContainerRuntimeFactoryForSummarizer extends MockContainerRuntimeFactoryForReconnection {
 	override createContainerRuntime(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
-		overrides?: { minimumSequenceNumber?: number },
+		_?: { minimumSequenceNumber?: number },
 	): MockContainerRuntimeForSummarizer {
 		const containerRuntime = new MockContainerRuntimeForSummarizer(
 			dataStoreRuntime,
 			this,
 			this.runtimeOptions,
-			overrides,
 		);
 		this.runtimes.add(containerRuntime);
 		return containerRuntime;
@@ -88,9 +90,9 @@ export class MockContainerRuntimeForSummarizer
 		dataStoreRuntime: MockFluidDataStoreRuntime,
 		factory: MockContainerRuntimeFactoryForSummarizer,
 		runtimeOptions: IMockContainerRuntimeForSummarizerOptions = {},
-		overrides?: { minimumSequenceNumber?: number },
 	) {
-		super(dataStoreRuntime, factory, runtimeOptions, overrides);
+		// trackRemoteOps is needed for replaying all ops on creating new ContainerRuntime
+		super(dataStoreRuntime, factory, runtimeOptions, { trackRemoteOps: true });
 
 		this.deltaManager.on("op", (message: ISequencedDocumentMessage) => {
 			this.emit("op", message);
@@ -126,14 +128,10 @@ export class MockContainerRuntimeForSummarizer
 		this.summaryManager.start();
 	}
 
+	private nackScheduled = false;
 	/** Prepare a SummaryNack to be sent by the server */
 	public prepareSummaryNack() {
-		const contents: ISummaryNack = {
-			summaryProposal: {
-				summarySequenceNumber: this.deltaManager.lastSequenceNumber,
-			},
-		};
-		this.deltaManager.prepareInboundResponse(MessageType.SummaryNack, contents);
+		this.nackScheduled = true;
 	}
 
 	/** Call on the Summarizer object to summarize */
@@ -150,28 +148,37 @@ export class MockContainerRuntimeForSummarizer
 	}
 
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
+		const handle = uuid();
 		const summaryMessage: ISummaryContent = {
-			handle: "",
+			handle,
 			head: "",
 			message: "",
 			parents: [],
 		};
+		const clientSequenceNumber = ++this.deltaManager.clientSequenceNumber;
 		const referenceSequenceNumber = this.deltaManager.lastSequenceNumber;
+		const minimumSequenceNumber = this.factory.getMinSeq();
 
 		const summarizeMessage: IDocumentMessage = {
 			type: MessageType.Summarize,
-			clientSequenceNumber: 0,
+			clientSequenceNumber,
 			referenceSequenceNumber,
 			contents: summaryMessage,
 		};
-		this.deltaManager.inbound.push({
-			...summarizeMessage,
-			clientId: this.clientId,
-			sequenceNumber: 0,
-			minimumSequenceNumber: 0,
-			timestamp: 0,
-		});
 		this.deltaManager.outbound.push([summarizeMessage]);
+		this.addPendingMessage(
+			summarizeMessage.contents,
+			summarizeMessage.metadata,
+			summarizeMessage.clientSequenceNumber,
+		);
+
+		this.factory.processAllMessages();
+		this.scheduleAckNack(
+			this.nackScheduled /* isNack */,
+			handle,
+			this.deltaManager.lastSequenceNumber,
+		);
+		this.nackScheduled = false;
 
 		const summaryStats: IGeneratedSummaryStats = {
 			...mergeStats(),
@@ -182,10 +189,10 @@ export class MockContainerRuntimeForSummarizer
 
 		return {
 			stage: "submit",
-			handle: "",
-			clientSequenceNumber: -1,
+			handle,
+			clientSequenceNumber,
 			referenceSequenceNumber,
-			minimumSequenceNumber: -1,
+			minimumSequenceNumber,
 			submitOpDuration: 0,
 			uploadDuration: 0,
 			generateDuration: 0,
@@ -196,6 +203,32 @@ export class MockContainerRuntimeForSummarizer
 			},
 			summaryStats,
 		};
+	}
+
+	private scheduleAckNack(isNack: boolean, handle: string, summarySequenceNumber: number) {
+		// eslint-disable-next-line @typescript-eslint/no-floating-promises
+		Promise.resolve().then(() => {
+			const contents: ISummaryAck | ISummaryNack = {
+				handle,
+				summaryProposal: {
+					summarySequenceNumber,
+				},
+			};
+
+			const summaryAckMessage = {
+				type: isNack ? MessageType.SummaryNack : MessageType.SummaryAck,
+				clientSequenceNumber: ++this.deltaManager.clientSequenceNumber,
+				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+				contents,
+			};
+			this.deltaManager.outbound.push([summaryAckMessage]);
+			this.addPendingMessage(
+				summaryAckMessage.contents,
+				undefined,
+				summaryAckMessage.clientSequenceNumber,
+			);
+			this.factory.processAllMessages();
+		});
 	}
 
 	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void> {

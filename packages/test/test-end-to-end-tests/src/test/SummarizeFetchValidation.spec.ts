@@ -4,29 +4,30 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer } from "@fluidframework/container-definitions";
+
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
-	ISummarizer,
 	ISummarizeResults,
+	ISummarizer,
 } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { ISummaryContext } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { seqFromTree } from "@fluidframework/runtime-utils";
-import {
-	ITestObjectProvider,
-	waitForContainerConnection,
-	summarizeNow,
-	createSummarizerFromFactory,
-	createContainerRuntimeFactoryWithDefaultDataStore,
-} from "@fluidframework/test-utils";
-import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { ISummaryContext } from "@fluidframework/driver-definitions";
 import type { SharedMatrix } from "@fluidframework/matrix";
 import { ISnapshotTree, ISummaryTree, IVersion } from "@fluidframework/protocol-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { seqFromTree } from "@fluidframework/runtime-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils";
+import {
+	ITestObjectProvider,
+	createContainerRuntimeFactoryWithDefaultDataStore,
+	createSummarizerFromFactory,
+	summarizeNow,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils";
 
 // Note GC needs to be disabled.
 const runtimeOptions: IContainerRuntimeOptions = {

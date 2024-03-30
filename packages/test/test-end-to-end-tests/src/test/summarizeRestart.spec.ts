@@ -4,17 +4,18 @@
  */
 
 import { strict as assert } from "assert";
+
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	createTestConfigProvider,
 	createSummarizer,
+	createTestConfigProvider,
 	summarizeNow,
 } from "@fluidframework/test-utils";
-import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 
 describeCompat(
 	"Summarizer closes instead of refreshing",

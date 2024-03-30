@@ -4,10 +4,10 @@
  */
 
 import type { EventEmitter } from "@fluid-example/example-utils";
-import { assert } from "@fluidframework/core-utils";
-import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
+import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
 
 /**
  * IDiceCounter describes the public API surface for our dice counter data object.

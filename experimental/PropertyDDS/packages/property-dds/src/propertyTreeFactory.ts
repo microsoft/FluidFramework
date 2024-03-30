@@ -5,11 +5,12 @@
 
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelServices,
 	IChannelFactory,
+	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { SharedPropertyTree, SharedPropertyTreeOptions } from "./propertyTree";
+
+import { SharedPropertyTree, SharedPropertyTreeOptions } from "./propertyTree.js";
 
 /**
  * The factory that defines the map

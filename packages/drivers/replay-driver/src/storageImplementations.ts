@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
@@ -13,16 +13,17 @@ import {
 	IDocumentServiceFactory,
 	IDocumentStorageService,
 	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import {
 	IClient,
 	ISnapshotTree,
+	ISummaryTree,
 	ITree,
 	IVersion,
-	ISummaryTree,
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService.js";
 import { ReadDocumentStorageServiceBase } from "./replayController.js";
 

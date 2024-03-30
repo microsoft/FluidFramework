@@ -4,16 +4,17 @@
  */
 
 import { describeFuzz, makeRandom } from "@fluid-private/stochastic-test-utils";
+
 import {
-	annotateRange,
-	doOverRange,
 	IConfigRange,
 	IMergeTreeOperationRunnerConfig,
+	TestOperation,
+	annotateRange,
+	doOverRange,
+	generateClientNames,
 	insertAtRefPos,
 	removeRange,
 	runMergeTreeOperationRunner,
-	TestOperation,
-	generateClientNames,
 } from "./mergeTreeOperationRunner.js";
 import { TestClient } from "./testClient.js";
 

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import type { IMigratableModel, MigrationState } from "@fluid-example/example-utils";
 import React, { useEffect, useState } from "react";
 
-import type { IMigratableModel, MigrationState } from "@fluid-example/example-utils";
 import type { IInventoryListAppModel } from "../modelInterfaces.js";
 
 export interface IDebugViewProps {

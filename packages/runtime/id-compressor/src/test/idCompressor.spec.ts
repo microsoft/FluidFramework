@@ -4,31 +4,34 @@
  */
 
 import { strict as assert } from "assert";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { take } from "@fluid-private/stochastic-test-utils";
+
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { take } from "@fluid-private/stochastic-test-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils";
+
+import { IdCompressor, createIdCompressor, deserializeIdCompressor } from "../idCompressor.js";
 import {
 	OpSpaceCompressedId,
 	SerializedIdCompressorWithNoSession,
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
-} from "..//index.js";
-import { IdCompressor, createIdCompressor, deserializeIdCompressor } from "../idCompressor.js";
+} from "../index.js";
 import { createSessionId } from "../utilities.js";
+
 import {
-	performFuzzActions,
-	sessionIds,
-	IdCompressorTestNetwork,
 	Client,
+	CompressorFactory,
 	DestinationClient,
+	IdCompressorTestNetwork,
 	MetaClient,
 	expectSerializes,
-	roundtrip,
 	makeOpGenerator,
-	CompressorFactory,
+	performFuzzActions,
+	roundtrip,
+	sessionIds,
 } from "./idCompressorTestUtilities.js";
-import { LocalCompressedId, incrementStableId, isFinalId, isLocalId, fail } from "./testCommon.js";
+import { LocalCompressedId, fail, incrementStableId, isFinalId, isLocalId } from "./testCommon.js";
 
 describe("IdCompressor", () => {
 	it("reports the proper session ID", () => {

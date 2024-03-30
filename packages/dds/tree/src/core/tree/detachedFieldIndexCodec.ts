@@ -4,8 +4,11 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec/index.js";
 import { EncodedRevisionTag, RevisionTagCodec } from "../rebase/index.js";
+
+import { ForestRootId } from "./detachedFieldIndex.js";
 import {
 	EncodedRootsForRevision,
 	Format,
@@ -13,7 +16,6 @@ import {
 	version,
 } from "./detachedFieldIndexFormat.js";
 import { DetachedFieldSummaryData, Major } from "./detachedFieldIndexTypes.js";
-import { ForestRootId } from "./detachedFieldIndex.js";
 
 class MajorCodec implements IJsonCodec<Major> {
 	public constructor(

@@ -2,9 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { ChildProcess } from "child_process";
-import { delay } from "@fluidframework/core-utils";
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { delay } from "@fluidframework/core-utils";
+
 import {
 	IRunConfig,
 	IRunner,
@@ -60,7 +63,7 @@ export abstract class ScenarioRunner<
 		const numClients = this.scenarioConfig.numClients ?? 1;
 		for (let i = 0; i < numClients; i++) {
 			const childArgs: string[] = [
-				`./dist/scenarioRunnerClient`,
+				`./lib/scenarioRunnerClient`,
 				`${this.constructor.name}`,
 				...convertConfigToScriptParams<ScenarioRunConfig>(
 					this.runCore(config, { clientIndex: i }),

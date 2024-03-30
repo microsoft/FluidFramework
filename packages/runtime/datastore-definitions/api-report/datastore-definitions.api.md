@@ -45,7 +45,7 @@ export interface IChannelAttributes {
 }
 
 // @public
-export interface IChannelFactory<out TChannel extends IFluidLoadable = IFluidLoadable> {
+export interface IChannelFactory<out TChannel = unknown> {
     readonly attributes: IChannelAttributes;
     create(runtime: IFluidDataStoreRuntime, id: string): TChannel & IChannel;
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<TChannel & IChannel>;
@@ -89,6 +89,7 @@ export interface IDeltaHandler {
 
 // @public
 export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRuntimeEvents>, IDisposable {
+    addChannel(channel: IChannel): void;
     readonly attachState: AttachState;
     bindChannel(channel: IChannel): void;
     // (undocumented)

@@ -4,24 +4,26 @@
  */
 
 import { strict as assert } from "assert";
-import { stringToBuffer } from "@fluid-internal/client-utils";
-import { IContainer } from "@fluidframework/container-definitions";
 
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
+// eslint-disable-next-line import/no-internal-modules
+import { BlobManager } from "@fluidframework/container-runtime/test/blobManager";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
-// eslint-disable-next-line import/no-internal-modules
-import { BlobManager } from "@fluidframework/container-runtime/test/blobManager";
+
 import {
+	MockDetachedBlobStorage,
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
-	MockDetachedBlobStorage,
 } from "../mockDetachedBlobStorage.js";
+
 import {
 	getGCStateFromSummary,
 	waitForContainerWriteModeConnectionWrite,

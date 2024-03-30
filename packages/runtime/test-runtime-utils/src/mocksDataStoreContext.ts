@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import { IFluidHandle, IFluidHandleContext, FluidObject } from "@fluidframework/core-interfaces";
-import { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
-
+import { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
+import { FluidObject, IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -22,9 +23,8 @@ import {
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions";
-import { IIdCompressor, IIdCompressorCore } from "@fluidframework/id-compressor";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 
 /**
  * @alpha

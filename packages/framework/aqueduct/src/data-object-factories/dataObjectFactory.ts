@@ -3,17 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { DirectoryFactory, MapFactory, SharedDirectory, SharedMap } from "@fluidframework/map";
-import { type NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
-import { type IChannelFactory } from "@fluidframework/datastore-definitions";
-import { type FluidObjectSymbolProvider } from "@fluidframework/synthesize";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore";
+import { type IChannelFactory } from "@fluidframework/datastore-definitions";
+import { SharedMap } from "@fluidframework/map";
+import { DirectoryFactory, MapFactory, SharedDirectory } from "@fluidframework/map/internal";
+import { type NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
+import { type FluidObjectSymbolProvider } from "@fluidframework/synthesize";
 
 import {
 	type DataObject,
 	type DataObjectTypes,
 	type IDataObjectProps,
 } from "../data-objects/index.js";
+
 import { PureDataObjectFactory } from "./pureDataObjectFactory.js";
 
 /**

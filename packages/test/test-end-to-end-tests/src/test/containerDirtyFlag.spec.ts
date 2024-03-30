@@ -4,20 +4,21 @@
  */
 
 import assert from "assert";
-import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
+
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
+import { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map";
 import {
 	ChannelFactoryRegistry,
-	createAndAttachContainer,
-	ITestFluidObject,
-	ITestContainerConfig,
-	ITestObjectProvider,
 	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	createAndAttachContainer,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { IContainerExperimental } from "@fluidframework/container-loader";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],

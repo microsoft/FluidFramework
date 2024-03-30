@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	DeltaDetachedNodeId,
 	DeltaFieldChanges,
@@ -12,23 +13,32 @@ import {
 	DeltaRoot,
 	FieldKey,
 	FieldKindIdentifier,
+	RevisionTag,
+	UpPath,
 	makeAnonChange,
 	revisionMetadataSourceFromInfo,
-	RevisionTag,
 	tagChange,
 	tagRollbackInverse,
-	UpPath,
 } from "../../core/index.js";
+import { leaf } from "../../domains/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	DefaultEditBuilder,
-	FieldKinds,
 	FieldKindWithEditor,
+	FieldKinds,
 	ModularChangeset,
 	cursorForJsonableTreeNode,
 } from "../../feature-libraries/index.js";
-
-import { brand, IdAllocator, idAllocatorFromMaxId, Mutable } from "../../util/index.js";
+import {
+	ModularChangeFamily,
+	intoDelta,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../feature-libraries/modular-schema/modularChangeFamily.js";
+// eslint-disable-next-line import/no-internal-modules
+import { DetachIdOverrideType } from "../../feature-libraries/sequence-field/index.js";
+import { IdAllocator, Mutable, brand, idAllocatorFromMaxId } from "../../util/index.js";
 import {
 	assertDeltaEqual,
 	defaultRevisionMetadataFromChanges,
@@ -37,16 +47,7 @@ import {
 	testChangeReceiver,
 	testRevisionTagCodec,
 } from "../utils.js";
-import {
-	intoDelta,
-	ModularChangeFamily,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../feature-libraries/modular-schema/modularChangeFamily.js";
-import { leaf } from "../../domains/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
-// eslint-disable-next-line import/no-internal-modules
-import { DetachIdOverrideType } from "../../feature-libraries/sequence-field/index.js";
+
 // eslint-disable-next-line import/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -220,6 +221,7 @@ describe("ModularChangeFamily integration", () => {
 				fieldChanges: new Map([
 					[fieldA, { fieldKind: sequence.identifier, change: brand(fieldAExpected) }],
 				]),
+				maxId: brand(2),
 			};
 
 			assert.deepEqual(rebased, expected);
@@ -631,6 +633,7 @@ describe("ModularChangeFamily integration", () => {
 				fieldChanges: new Map([
 					[fieldA, { fieldKind: sequence.identifier, change: brand(fieldAExpected) }],
 				]),
+				maxId: brand(2),
 			};
 
 			assert.deepEqual(inverse, expected);

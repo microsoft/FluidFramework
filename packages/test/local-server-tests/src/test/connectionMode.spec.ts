@@ -4,24 +4,26 @@
  */
 
 import { strict as assert } from "assert";
+
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { ConnectionState, Loader } from "@fluidframework/container-loader";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader";
+import { Loader } from "@fluidframework/container-loader/internal";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { SharedMap, type ISharedMap } from "@fluidframework/map";
+import { type ISharedMap, SharedMap } from "@fluidframework/map";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import {
-	createAndAttachContainer,
-	waitForContainerConnection,
 	ITestFluidObject,
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	TestFluidObjectFactory,
+	createAndAttachContainer,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { MockLogger } from "@fluidframework/telemetry-utils";
 
 describe("Logging Last Connection Mode ", () => {
 	const documentId = "connectionModeTest";

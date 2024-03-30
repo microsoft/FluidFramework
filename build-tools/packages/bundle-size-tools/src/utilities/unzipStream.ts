@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import * as JSZip from "jszip";
 
 function readStreamAsBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {

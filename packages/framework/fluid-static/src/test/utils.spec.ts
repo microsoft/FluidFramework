@@ -4,11 +4,14 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { MapFactory, SharedMap } from "@fluidframework/map";
+import { SharedMap } from "@fluidframework/map";
+import { MapFactory } from "@fluidframework/map/internal";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
-import { parseDataObjectsFromSharedObjects } from "../utils.js";
+
 import { type ContainerSchema } from "../types.js";
+import { parseDataObjectsFromSharedObjects } from "../utils.js";
 
 class TestDataObject extends DataObject {
 	public static readonly Name = "@fluid-example/test-data-object";

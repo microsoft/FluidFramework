@@ -54,7 +54,7 @@ export function encodeCompactIdToString(idArg: number | string, prefix = "") {
 	// new values have zero overlap with old values.
 	// Also resulting string can't contain "/", as that's disallowed by some users
 	// (data store and DDS IDs can't have "/" in their IDs).
-	assert(Number.isInteger(idArg) && idArg >= 0, "invalid input");
+	assert(Number.isInteger(idArg) && idArg >= 0, 0x900 /* invalid input */);
 	let id = "";
 	let num = idArg;
 	do {

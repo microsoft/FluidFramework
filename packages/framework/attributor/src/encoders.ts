@@ -2,9 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { assert } from "@fluidframework/core-utils";
 import { type IUser } from "@fluidframework/protocol-definitions";
 import { type AttributionInfo } from "@fluidframework/runtime-definitions";
+
 import { type IAttributor } from "./attributor.js";
 import { type InternedStringId, MutableStringInterner } from "./stringInterner.js";
 

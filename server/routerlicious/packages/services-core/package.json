@@ -31,7 +31,7 @@
 	"dependencies": {
 		"@fluidframework/common-utils": "^3.1.0",
 		"@fluidframework/gitresources": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0-237840",
+		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/server-services-client": "workspace:~",
 		"@fluidframework/server-services-telemetry": "workspace:~",
 		"@types/nconf": "^0.10.2",
@@ -79,6 +79,9 @@
 			"InterfaceDeclaration_IServiceConfiguration": {
 				"forwardCompat": false
 			},
+			"InterfaceDeclaration_IScribeServerConfiguration": {
+				"forwardCompat": false
+			},
 			"InterfaceDeclaration_IDeliServerConfiguration": {
 				"forwardCompat": false,
 				"backCompat": true
@@ -96,6 +99,9 @@
 				"backCompat": false
 			},
 			"InterfaceDeclaration_IWebSocketTracker": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IScribe": {
 				"forwardCompat": false
 			}
 		}

@@ -3,18 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { fail, strict as assert } from "assert";
+import { strict as assert, fail } from "assert";
+
 import {
-	RevisionTag,
-	FieldKey,
 	ChangesetLocalId,
-	makeAnonChange,
-	tagChange,
-	emptyFieldChanges,
 	DeltaDetachedNodeId,
 	DeltaFieldChanges,
-	DeltaMark,
 	DeltaFieldMap,
+	DeltaMark,
+	FieldKey,
+	RevisionTag,
+	emptyFieldChanges,
+	makeAnonChange,
+	tagChange,
 } from "../../../core/index.js";
 import {
 	FieldChange,
@@ -25,6 +26,7 @@ import {
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { assertFieldChangesEqual, deepFreeze, mintRevisionTag } from "../../utils.js";
+
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
 import { toDelta } from "./utils.js";
 

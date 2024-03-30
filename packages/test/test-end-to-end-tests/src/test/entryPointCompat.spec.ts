@@ -4,20 +4,24 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
-	describeInstallVersions,
 	describeCompat,
+	describeInstallVersions,
 	getVersionedTestObjectProvider,
 } from "@fluid-private/test-version-utils";
+// TODO:AB#6558: describeInstallVersions doesn't support dynamically providing package APIs.
+// eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
+
 import { pkgVersion } from "../packageVersion.js";
 
 describe("entryPoint compat", () => {

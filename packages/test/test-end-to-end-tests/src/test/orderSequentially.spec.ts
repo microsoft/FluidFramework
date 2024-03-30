@@ -5,21 +5,22 @@
 
 import { strict as assert } from "assert";
 
-import type { SharedString } from "@fluidframework/sequence";
-import {
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	ChannelFactoryRegistry,
-	ITestFluidObject,
-} from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-import type { ISharedMap, IValueChanged, SharedDirectory } from "@fluidframework/map";
 import type { SharedCell } from "@fluidframework/cell";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { Serializable } from "@fluidframework/datastore-definitions";
+import type { ISharedMap, IValueChanged } from "@fluidframework/map";
+import type { SharedDirectory } from "@fluidframework/map/internal";
+import type { SharedString } from "@fluidframework/sequence";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+} from "@fluidframework/test-utils";
 
 const stringId = "sharedStringKey";
 const string2Id = "sharedString2Key";

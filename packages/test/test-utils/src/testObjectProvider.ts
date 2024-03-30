@@ -5,35 +5,36 @@
 
 import {
 	IContainer,
-	IHostLoader,
 	IFluidCodeDetails,
+	IHostLoader,
 	ILoader,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import {
 	ILoaderProps,
 	Loader,
 	waitContainerToCatchUp as waitContainerToCatchUp_original,
-} from "@fluidframework/container-loader";
+} from "@fluidframework/container-loader/internal";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
-	ITelemetryBaseLogger,
-	ITelemetryBaseEvent,
 	IRequestHeader,
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import {
 	IDocumentServiceFactory,
 	IResolvedUrl,
 	IUrlResolver,
-} from "@fluidframework/driver-definitions";
-import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { v4 as uuid } from "uuid";
+} from "@fluidframework/driver-definitions/internal";
 import {
+	type ITelemetryGenericEventExt,
 	createChildLogger,
 	createMultiSinkLogger,
-	type ITelemetryGenericEventExt,
 } from "@fluidframework/telemetry-utils";
+import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { v4 as uuid } from "uuid";
+
 import { LoaderContainerTracker } from "./loaderContainerTracker.js";
-import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader.js";
+import { LocalCodeLoader, fluidEntryPoint } from "./localCodeLoader.js";
 import { createAndAttachContainer } from "./localLoader.js";
 import { ChannelFactoryRegistry } from "./testFluidObject.js";
 
@@ -108,10 +109,13 @@ export interface ITestObjectProvider {
 	 * containerRuntime/dataRuntime used in fluidEntryPoint will be used as is from what is passed in.
 	 *
 	 * @param packageEntries - list of code details and fluidEntryPoint pairs.
+	 * @param loaderProps - Optional loader properties
+	 * @param forceUseCreateVersion - For Cross-Version compat testing, create a loader based on the create version
 	 */
 	createLoader(
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 		loaderProps?: Partial<ILoaderProps>,
+		forceUseCreateVersion?: boolean,
 	): IHostLoader;
 
 	/**
@@ -220,6 +224,9 @@ export interface ITestContainerConfig {
 
 	/** Whether this runtime should be instantiated using a mixed-in attributor class */
 	enableAttribution?: boolean;
+
+	/** For Cross-Version compat testing, load using the create version (e.g. use this to get a Summarizer on the create version) */
+	forceUseCreateVersion?: true;
 
 	/** Loader options for the loader used to create containers */
 	loaderProps?: Partial<ILoaderProps>;
@@ -832,10 +839,14 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	public createLoader(
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 		loaderProps?: Partial<ILoaderProps>,
+		forceUseCreateVersion = false,
 	) {
+		const useCreateVersion = forceUseCreateVersion === true || this.useCreateApi;
 		if (this.useCreateApi) {
 			// After we create the first loader, we can set this.useCreateApi to false.
 			this.useCreateApi = false;
+		}
+		if (useCreateVersion) {
 			return this.createLoaderForCreating(packageEntries, loaderProps);
 		}
 		return this.createLoaderForLoading(packageEntries, loaderProps);
@@ -925,6 +936,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		return this.createLoader(
 			[[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]],
 			testContainerConfig?.loaderProps,
+			testContainerConfig?.forceUseCreateVersion,
 		);
 	}
 

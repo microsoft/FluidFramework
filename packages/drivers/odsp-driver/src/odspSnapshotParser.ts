@@ -5,8 +5,9 @@
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import * as api from "@fluidframework/protocol-definitions";
-import { ISnapshot } from "@fluidframework/driver-definitions";
+
 import { IOdspSnapshot, IOdspSnapshotCommit } from "./contracts.js";
 
 /**

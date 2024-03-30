@@ -11,50 +11,52 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
-import { assert } from "@fluidframework/core-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
+
 import { ICodecOptions, noopValidator } from "../codec/index.js";
 import {
-	TreeStoredSchemaRepository,
 	JsonableTree,
+	RevisionTagCodec,
 	TreeStoredSchema,
+	TreeStoredSchemaRepository,
 	makeDetachedFieldIndex,
 	moveToDetachedField,
-	RevisionTagCodec,
 } from "../core/index.js";
-import { SharedTreeCore } from "../shared-tree-core/index.js";
+import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
 import {
-	defaultSchemaPolicy,
+	DetachedFieldIndexSummarizer,
+	FlexFieldSchema,
 	ForestSummarizer,
 	SchemaSummarizer,
-	buildForest,
-	FlexFieldSchema,
-	buildChunkedForest,
-	makeTreeChunker,
-	DetachedFieldIndexSummarizer,
-	createNodeKeyManager,
-	nodeKeyFieldKey as defaultNodeKeyFieldKey,
-	jsonableTreeFromFieldCursor,
 	TreeCompressionStrategy,
 	ViewSchema,
-	makeMitigatedChangeFamily,
+	buildChunkedForest,
+	buildForest,
+	createNodeKeyManager,
+	nodeKeyFieldKey as defaultNodeKeyFieldKey,
+	defaultSchemaPolicy,
+	jsonableTreeFromFieldCursor,
 	makeFieldBatchCodec,
+	makeMitigatedChangeFamily,
+	makeTreeChunker,
 } from "../feature-libraries/index.js";
-import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
-import { brand } from "../util/index.js";
+import { SharedTreeCore } from "../shared-tree-core/index.js";
 import {
 	ITree,
-	TreeConfiguration,
 	ImplicitFieldSchema,
+	TreeConfiguration,
 	TreeFieldFromImplicitField,
 	TreeView,
 } from "../simple-tree/index.js";
+import { brand } from "../util/index.js";
+
 import { InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
-import { TreeCheckout, CheckoutEvents, createTreeCheckout } from "./treeCheckout.js";
-import { CheckoutFlexTreeView, FlexTreeView } from "./treeView.js";
-import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
-import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
-import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { SchematizingSimpleTreeView, requireSchema } from "./schematizingTreeView.js";
+import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
+import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
+import { CheckoutEvents, TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
+import { CheckoutFlexTreeView, FlexTreeView } from "./treeView.js";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
@@ -134,10 +136,9 @@ export class SharedTree
 		optionsParam: SharedTreeOptions,
 		telemetryContextPrefix: string,
 	) {
-		assert(
-			runtime.idCompressor !== undefined,
-			0x883 /* IdCompressor must be enabled to use SharedTree */,
-		);
+		if (runtime.idCompressor === undefined) {
+			throw new UsageError("IdCompressor must be enabled to use SharedTree");
+		}
 
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };
 		const schema = new TreeStoredSchemaRepository();

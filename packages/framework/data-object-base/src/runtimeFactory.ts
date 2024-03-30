@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type IContainerContext } from "@fluidframework/container-definitions";
+import { type IContainerContext } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { type FluidObject } from "@fluidframework/core-interfaces";
@@ -13,8 +13,8 @@ import {
 	buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import {
-	type NamedFluidDataStoreRegistryEntries,
 	type IFluidDataStoreFactory,
+	type NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 

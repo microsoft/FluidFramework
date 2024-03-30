@@ -6,15 +6,17 @@
 import { assert } from '@fluidframework/core-utils';
 import {
 	type IChannelAttributes,
-	type IFluidDataStoreRuntime,
-	type IChannelServices,
 	type IChannelFactory,
+	type IChannelServices,
+	type IFluidDataStoreRuntime,
 } from '@fluidframework/datastore-definitions';
 import { type ITree } from '@fluidframework/tree';
+
 import {
-	type SharedTreeFactory as LegacySharedTreeFactory,
 	type SharedTree as LegacySharedTree,
+	type SharedTreeFactory as LegacySharedTreeFactory,
 } from '../SharedTree.js';
+
 import { MigrationShim } from './migrationShim.js';
 import { attributesMatch } from './utils.js';
 
