@@ -11,9 +11,11 @@ import { EventEmitter } from '@fluid-internal/client-utils';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { FlushMode } from '@fluidframework/runtime-definitions';
 import { IAudience } from '@fluidframework/container-definitions';
+import { IAudienceOwner } from '@fluidframework/container-definitions/internal';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import type { IClient } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
@@ -26,6 +28,7 @@ import { IDeltaManagerEvents } from '@fluidframework/container-definitions';
 import { IDeltaQueue } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
+import { IEvent } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
@@ -59,6 +62,12 @@ import { ScopeType } from '@fluidframework/protocol-definitions';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import { VisibilityState } from '@fluidframework/runtime-definitions';
 
+// @alpha (undocumented)
+export interface IAudienceEvents extends IEvent {
+    // (undocumented)
+    (event: "addMember" | "removeMember" | "clientIdChanged", listener: (clientId: string, client: IClient) => void): void;
+}
+
 // @internal
 export interface IInsecureUser extends IUser {
     name: string;
@@ -90,6 +99,23 @@ export class InsecureTokenProvider implements ITokenProvider {
     scopes?: ScopeType[] | undefined);
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
+}
+
+// @alpha (undocumented)
+export class MockAudience extends TypedEventEmitter<IAudienceEvents> implements IAudienceOwner {
+    constructor();
+    // (undocumented)
+    addMember(clientId: string, member: IClient): void;
+    // (undocumented)
+    get currentClientId(): string | undefined;
+    // (undocumented)
+    getMember(clientId: string): IClient | undefined;
+    // (undocumented)
+    getMembers(): Map<string, IClient>;
+    // (undocumented)
+    removeMember(clientId: string): boolean;
+    // (undocumented)
+    setCurrentClientId(clientId: string | undefined): void;
 }
 
 // @alpha

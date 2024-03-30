@@ -5,7 +5,7 @@
 
 import { EventEmitter, TypedEventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState, IAudience } from "@fluidframework/container-definitions";
-import { ILoader } from "@fluidframework/container-definitions/internal";
+import { ILoader, IAudienceOwner } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import {
 	FluidObject,
@@ -14,8 +14,10 @@ import {
 	IRequest,
 	IResponse,
 	type ITelemetryBaseLogger,
+	IEvent,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
+import type { IClient } from "@fluidframework/protocol-definitions";
 import {
 	IChannel,
 	IChannelServices,
@@ -679,6 +681,59 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 	}
 	listenerCount(type: string | number): number {
 		throw new Error("Method not implemented.");
+	}
+}
+
+/**
+ * @alpha
+ */
+export interface IAudienceEvents extends IEvent {
+	// eslint-disable-next-line @typescript-eslint/prefer-function-type
+	(
+		event: "addMember" | "removeMember" | "clientIdChanged",
+		listener: (clientId: string, client: IClient) => void,
+	): void;
+}
+
+/**
+ * @alpha
+ */
+export class MockAudience extends TypedEventEmitter<IAudienceEvents> implements IAudienceOwner {
+	private readonly audienceMembers: Map<string, IClient>;
+	private _currentClientId: string | undefined;
+
+	public constructor() {
+		super();
+		this.audienceMembers = new Map<string, IClient>();
+	}
+
+	public addMember(clientId: string, member: IClient): void {
+		this.emit("addMember", clientId, member);
+		this.audienceMembers.set(clientId, member);
+	}
+
+	public removeMember(clientId: string): boolean {
+		const member = this.audienceMembers.get(clientId);
+		this.emit("removeMember", clientId, member);
+		return this.audienceMembers.delete(clientId);
+	}
+
+	public getMembers(): Map<string, IClient> {
+		return new Map<string, IClient>(this.audienceMembers.entries());
+	}
+	public getMember(clientId: string): IClient | undefined {
+		return this.audienceMembers.get(clientId);
+	}
+
+	public get currentClientId(): string | undefined {
+		return this._currentClientId;
+	}
+
+	public setCurrentClientId(clientId: string | undefined): void {
+		if (this._currentClientId !== clientId) {
+			this._currentClientId = clientId;
+			this.emit("clientIdChanged");
+		}
 	}
 }
 
