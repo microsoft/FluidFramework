@@ -268,7 +268,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     generateDocumentUniqueId(): string | (number & {
         readonly SessionUnique: "cea55054-6b82-4cbf-ad19-1fa645ea3b3e";
     } & {
-        readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae";
+        readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae"; /**
+        * Defines the minimum number of Ops, since the last received Ack, that can be allowed
+        * before running the last summary.
+        */
     });
     // (undocumented)
     readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>;
