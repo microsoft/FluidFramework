@@ -511,16 +511,12 @@ async function loadData(dataFile: string): Promise<MapData> {
  */
 function removeFileHeaderComment(sourceFile: SourceFile): string {
 	const firstNode = sourceFile.getChildAtIndex(0);
+	const start = sourceFile.getPos(); // should be 0
+	const end = start + sourceFile.getLeadingTriviaWidth();
 
-	// Joins the comment ranges with double new lines so there is an empty line between each comment. This does mean that
-	// the ranges may be output in a slightly different way than it was ingested. However, there does not appear to be a
-	// way to get the text of multiple ranges, so the spacing information between the nodes seems to be lost.
-	//
-	// This has to be done before the sourceFile is modified, because after that the comment ranges become invalid and
-	// ts-morph throws an exception.
-	const headerComments = firstNode.getLeadingCommentRanges();
-	const headerText = `${headerComments.map((comment) => comment.getText()).join("\n\n")}\n\n`;
-	const [start, end] = [firstNode.getPos(), firstNode.getEnd()];
-	sourceFile.replaceText([start, end], sourceFile.getChildAtIndex(0).getText());
+	// This has to be done before the sourceFile is modified, because after that the ranges
+	// become invalid and ts-morph throws an exception.
+	const headerText = firstNode.getFullText().slice(start, end);
+	sourceFile.removeText(start, end);
 	return headerText;
 }
