@@ -576,18 +576,13 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		return trees;
 	}
 
-	public revertibleCommits(): IterableIterator<RevisionTag> {
-		return this.revertibleCommitBranches.keys();
-	}
-
-	public purgeRevertibles(): void {
+	private purgeRevertibles(): void {
 		for (const revertible of this.revertibles) {
 			revertible.dispose();
 		}
 	}
 
 	private disposeRevertible(revertible: DisposableRevertible, revision: RevisionTag): void {
-		// TODO: delete the repair data from the forest
 		this.revertibleCommitBranches.delete(revision);
 		this.revertibles.delete(revertible);
 		this.events.emit("revertibleDisposed", revertible);
