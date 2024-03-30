@@ -1159,12 +1159,6 @@ export class ContainerRuntime
 
 	private consecutiveReconnects = 0;
 
-	/**
-	 * Used to delay transition to "connected" state while we upload
-	 * attachment blobs that were added while disconnected
-	 */
-	private delayConnectClientId?: string;
-
 	private ensureNoDataModelChangesCalls = 0;
 
 	/**
@@ -1272,6 +1266,8 @@ export class ContainerRuntime
 			? this.summaryConfiguration.initialSummarizerDelayMs
 			: 0;
 	}
+
+	private blobUploadCallbackInFlight: boolean = false;
 
 	private readonly createContainerMetadata: ICreateContainerMetadata;
 	/**
@@ -1848,6 +1844,36 @@ export class ContainerRuntime
 		// If we loaded from pending state, then we need to skip any ops that are already accounted in such
 		// saved state, i.e. all the ops marked by Loader layer sa savedOp === true.
 		this.skipSavedCompressorOps = pendingRuntimeState?.pendingIdCompressorState !== undefined;
+
+		// This code assuems that there is no way to add to the list of pending stashed ops.
+		// I.e. the transition  hasPendingStashedBlobs(): true -> false happens only once in lifetime of container.
+		if (this.blobManager.hasPendingStashedBlobs()) {
+			// summarizer should not upload blobs in offline. If it loses connection, it should bail out immidiatly.
+			// In general, summarizer should not modify document.
+			// If, in the future, design changes, where summarizeing means - creating detached blobs, we will need to reconsider this.
+			// Also see assert in submitSummaryMessage()
+			assert(
+				!this.isSummarizerClient,
+				"summarizer should not have attachment blobs to be uploaded",
+			);
+
+			this.blobUploadCallbackInFlight = true;
+
+			this.blobManager.processStashedChanges().then(
+				() => {
+					// This is broken!!! This assert will fire 100%!
+					// assert(!this.blobManager.hasPendingStashedBlobs(), "consistency check");
+
+					const inFlight = this.blobUploadCallbackInFlight;
+					this.blobUploadCallbackInFlight = false;
+
+					if (!this.disposed && this.connected && inFlight) {
+						this.setConnectionStateCore();
+					}
+				},
+				(error) => this.closeFn(error),
+			);
+		}
 	}
 
 	public onSchemaChange(schema: IDocumentSchemaCurrent) {
@@ -2379,39 +2405,42 @@ export class ContainerRuntime
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string) {
-		if (connected && this.idCompressorMode === "delayed") {
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
-			this.loadIdCompressor();
-		}
-		if (connected === false && this.delayConnectClientId !== undefined) {
-			this.delayConnectClientId = undefined;
-			this.mc.logger.sendTelemetryEvent({
-				eventName: "UnsuccessfulConnectedTransition",
-			});
-			// Don't propagate "disconnected" event because we didn't propagate the previous "connected" event
-			return;
-		}
-
-		if (!connected) {
-			this.documentsSchemaController.onDisconnect();
-		}
+		// This assert will fire!
+		// assert(
+		//	!this.blobManager.hasPendingStashedBlobs() || this.blobUploadCallbackInFlight,
+		//	"consistency",
+		// );
 
 		if (!connected) {
 			this._perfSignalData.signalsLost = 0;
 			this._perfSignalData.signalTimestamp = 0;
 			this._perfSignalData.trackingSignalSequenceNumber = undefined;
+			this.documentsSchemaController.onDisconnect();
+
+			if (this.blobUploadCallbackInFlight) {
+				this.mc.logger.sendTelemetryEvent({
+					eventName: "UnsuccessfulConnectedTransition",
+				});
+			}
 		} else {
 			assert(
 				this.attachState === AttachState.Attached,
 				0x3cd /* Connection is possible only if container exists in storage */,
 			);
+			assert(!!clientId, 0x792 /* Must have clientId when connecting */);
 
 			// We need to flush the ops currently collected by Outbox to preserve original order.
 			// This flush NEEDS to happen before we replay the ops.
 			// We want these ops to get to the PendingStateManager without sending to service and have them return to the Outbox upon calling "replayPendingStates".
 			this.flush();
+
+			if (this.idCompressorMode === "delayed") {
+				// eslint-disable-next-line @typescript-eslint/no-floating-promises
+				this.loadIdCompressor();
+			}
 		}
 
+		const connecting = connected && !this._connected;
 		this._connected = connected;
 
 		this.channelCollection.setConnectionState(connected, clientId);
@@ -2419,50 +2448,18 @@ export class ContainerRuntime
 
 		raiseConnectedEvent(this.mc.logger, this, connected, clientId);
 
-		// If there are stashed blobs in the pending state, we need to delay
-		// propagation of the "connected" event until we have uploaded them to
-		// ensure we don't submit ops referencing a blob that has not been uploaded
-		const connecting = connected && !this._connected;
-		if (connecting && this.blobManager.hasPendingStashedBlobs()) {
-			assert(
-				!this.delayConnectClientId,
-				0x791 /* Connect event delay must be canceled before subsequent connect event */,
-			);
-			assert(!!clientId, 0x792 /* Must have clientId when connecting */);
-
-			// summarizer should not upload blobs in offline. If it loses connection, it should bail out immidiatly.
-			// In general, summarizer should not modify document.
-			// If, in the future, design changes, where summarizeing means - creating detached blobs, we will need to reconsider this.
-			// Also see assert in submitSummaryMessage()
-			assert(
-				!this.isSummarizerClient,
-				"summarizer should not have attachment blobs to be uploaded",
-			);
-
-			this.delayConnectClientId = clientId;
-			this.blobManager.processStashedChanges().then(
-				() => {
-					// make sure we didn't reconnect before the promise resolved
-					if (this.delayConnectClientId === clientId && !this.disposed) {
-						this.delayConnectClientId = undefined;
-						this.setConnectionStateCore();
-					}
-				},
-				(error) => this.closeFn(error),
-			);
-			return;
-		}
-
-		if (connected) {
+		// If there are stashed blobs in the pending state, we need to delay sending ops until we have
+		// uploaded them to ensure we don't submit ops referencing a blob that has not been uploaded
+		// The promise that was created in constructor will call into this.setConnectionStateCore() when
+		// all stashed blobs are uploaded.
+		// Please note that due to a possibility of race condition, we can call this.setConnectionStateCore() twice =
+		// once though here, and once from the promise.
+		if (connecting && !this.blobUploadCallbackInFlight) {
 			this.setConnectionStateCore();
 		}
 	}
 
 	private setConnectionStateCore() {
-		assert(
-			!this.delayConnectClientId,
-			0x394 /* connect event delay must be cleared before propagating connect event */,
-		);
 		assert(this.connected, "still connected");
 		this.verifyNotClosed();
 
@@ -2910,7 +2907,7 @@ export class ContainerRuntime
 		// container runtime's ability to send ops depend on the actual readonly state of the delta manager.
 		return (
 			this.connected &&
-			this.delayConnectClientId === undefined &&
+			!this.blobUploadCallbackInFlight &&
 			!this.innerDeltaManager.readOnlyInfo.readonly &&
 			!this.imminentClosure
 		);
@@ -3984,7 +3981,7 @@ export class ContainerRuntime
 		// In general, summarizer should not modify document.
 		// If, in the future, design changes, where summarizeing means - creating detached blobs, we will need to reconsider this.
 		// Also see assert in setConnectionState().
-		assert(this.delayConnectClientId === undefined, "No delayed blob upload for summarizer");
+		assert(!this.blobUploadCallbackInFlight, "No delayed blob upload for summarizer");
 
 		// System message should not be sent in the middle of the batch.
 		assert(this.outbox.isEmpty, 0x3d4 /* System op in the middle of a batch */);
