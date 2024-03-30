@@ -209,7 +209,7 @@ export function getRepoPath(tenantId: string, documentId?: string, owner?: strin
 	}
 
 	const tenantPrefix = tenantId.length < 30 ? tenantId : tenantId.substring(0, 8);
-	const docIdWithTennantPrefix = `${tenantPrefix}--${documentId}`;
+	const docIdWithTennantPrefix = `${tenantPrefix}-docid-${documentId}`;
 	return [owner, docIdWithTennantPrefix, documentId].filter((x) => x !== undefined).join("/");
 }
 
