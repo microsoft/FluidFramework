@@ -45,24 +45,6 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 		compression: boolean,
 		chunking: boolean,
 	) {
-		const options: ITestContainerConfig = {
-			runtimeOptions: {
-				explicitSchemaControl,
-				compressionOptions: {
-					minimumBatchSizeInBytes: compression ? 1000 : Infinity,
-					compressionAlgorithm: CompressionAlgorithms.lz4,
-				},
-				chunkSizeInBytes: chunking ? 200 : Infinity,
-			},
-		};
-		const container = await provider.makeTestContainer(options);
-		entry = await getentryPoint(container);
-
-		assert(entry);
-		entry.root.set("key", generateStringOfSize(10000));
-
-		await provider.ensureSynchronized();
-
 		let crash = false;
 		let crash2 = false;
 		if (provider.type === "TestObjectProviderWithVersionedLoad") {
@@ -71,8 +53,8 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 			// 1st container is defined by apis.containerRuntime, 2nd and 3rd are defined by apis.containerRuntimeForLoading.
 			// If first container is running 1.3, then it does not understand neither compression or document schema ops,
 			// and thus it will see either of those.
-			const version = apis.containerRuntime?.version;
-			const version2 = apis.containerRuntimeForLoading?.version;
+			const version = apis.containerRuntime.version;
+			const version2 = apis.containerRuntimeForLoading.version;
 
 			// RC2 behaves somewhere in between 1.x and latest 2.x, as not all the work in this area was completed in RC2.
 			// I.e. it will create documents with explicit schema, will not fail on copresssed ops, but will not understand (similar to 1.x)
@@ -127,6 +109,24 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 				}
 			}
 		}
+
+		const options: ITestContainerConfig = {
+			runtimeOptions: {
+				explicitSchemaControl,
+				compressionOptions: {
+					minimumBatchSizeInBytes: compression ? 1000 : Infinity,
+					compressionAlgorithm: CompressionAlgorithms.lz4,
+				},
+				chunkSizeInBytes: chunking ? 200 : Infinity,
+			},
+		};
+		const container = await provider.makeTestContainer(options);
+		entry = await getentryPoint(container);
+
+		assert(entry);
+		entry.root.set("key", generateStringOfSize(10000));
+
+		await provider.ensureSynchronized();
 
 		if (crash2) {
 			await assert.rejects(async () => loadContainer(options));
