@@ -3,14 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { tokens } from "@fluentui/react-components";
+import { Tooltip, tokens } from "@fluentui/react-components";
 import { DocumentEdit20Regular } from "@fluentui/react-icons";
 import React from "react";
 
 import { ThemeContext, ThemeOption } from "../../ThemeHelper.js";
 
-// eslint-disable-next-line import/no-internal-modules
-import { LabelCellLayout } from "../utility-components/LabelCellLayout.js";
 import type { HasLabel } from "./CommonInterfaces.js";
 
 /**
@@ -78,13 +76,24 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 			{tooltipContents === undefined ? (
 				""
 			) : (
-				<LabelCellLayout
-					icon={<DocumentEdit20Regular />}
-					infoTooltipContent={toolTipContentText}
-				>
-					{tooltipContents}
-				</LabelCellLayout>
+				<Tooltip content={JSON.stringify(tooltipContents)} relationship="description">
+					<span
+						style={{
+							color:
+								themeInfo.name === ThemeOption.HighContrast
+									? ""
+									: tokens.colorPalettePlatinumBorderActive,
+							fontStyle: "oblique",
+							fontSize: "10px",
+						}}
+					>
+						<DocumentEdit20Regular />
+					</span>
+				</Tooltip>
 			)}
+
+			{inlineValue === undefined ? "" : ": "}
+			{inlineValue}
 
 			{inlineValue === undefined ? "" : ": "}
 			{inlineValue}

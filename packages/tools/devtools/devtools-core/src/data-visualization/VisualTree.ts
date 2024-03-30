@@ -78,7 +78,7 @@ export interface VisualNodeBase {
 	/**
 	 * Visual Tree data rendered in the tooltip.
 	 */
-	tooltipContents?: string | Record<string | number, string>;
+	tooltipContents?: string | Record<string, string>;
 }
 
 /**

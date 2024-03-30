@@ -141,7 +141,7 @@ function getLeafAllowedTypes(schema: TreeFieldStoredSchema): string {
  */
 function visualizeLeafNodeStoredSchema(
 	tree: JsonableTree,
-	allowedTypes: string | undefined,
+	allowedTypes: string,
 ): SharedTreeLeafNode {
 	return {
 		schema: {
@@ -322,6 +322,7 @@ export function visualizeSharedTreeNodeBySchema(
 	leafAllowedTypes?: string,
 ): VisualSharedTreeNode {
 	if (schema instanceof LeafNodeStoredSchema) {
+		assert(leafAllowedTypes !== undefined, "Leaf node schema should have allowed types.");
 		return visualizeLeafNodeStoredSchema(tree, leafAllowedTypes);
 	} else if (schema instanceof ObjectNodeStoredSchema) {
 		return visualizeObjectNodeStoredSchema(tree, schema, contentSnapshot);

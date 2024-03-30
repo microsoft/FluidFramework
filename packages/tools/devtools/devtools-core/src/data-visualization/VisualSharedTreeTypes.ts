@@ -52,8 +52,10 @@ interface SharedTreeSchemaNode {
 
 	/**
 	 * Types allowed (e.g., string, number, boolean, handle & etc.) inside the node.
+	 * - LeafNode: String.
+	 * - InternalNode: `Record<string, string>`.
 	 */
-	allowedTypes: string | undefined;
+	allowedTypes: string | Record<string, string>;
 }
 
 /**
