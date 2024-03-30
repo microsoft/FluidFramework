@@ -2464,8 +2464,6 @@ export class ContainerRuntime
 		// uploaded them to ensure we don't submit ops referencing a blob that has not been uploaded
 		// The promise that was created in constructor will call into this.setConnectionStateCore() when
 		// all stashed blobs are uploaded.
-		// Please note that due to a possibility of race condition, we can call this.setConnectionStateCore() twice =
-		// once though here, and once from the promise.
 		if (connecting && !this.blobUploadCallbackInFlight) {
 			this.setConnectionStateCore();
 		}
