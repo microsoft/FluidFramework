@@ -208,7 +208,9 @@ export function getRepoPath(tenantId: string, documentId?: string, owner?: strin
 		throw new NetworkError(400, `Invalid repo name (documentId) provided: ${documentId}`);
 	}
 
-	return [owner, tenantId, documentId].filter((x) => x !== undefined).join("/");
+	const tenantPrefix = tenantId.length < 30 ? tenantId : tenantId.substring(0, 8);
+	const docIdWithTennantPrefix = `${tenantPrefix}-docid-${documentId}`;
+	return [owner, docIdWithTennantPrefix, documentId].filter((x) => x !== undefined).join("/");
 }
 
 export function getGitDirectory(repoPath: string, baseDir?: string, suffixPath?: string): string {
