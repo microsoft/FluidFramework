@@ -304,6 +304,9 @@ export const genCrossVersionCompatConfig = (): CompatConfig[] => {
 		configs.push(genCompatConfig(c, currentVersion));
 	}
 
+	// For testing purposes only, not to be checked in
+	configs.push(genCompatConfig(currentVersion, currentVersion));
+
 	return configs;
 };
 
