@@ -31,7 +31,7 @@ import {
  * initializing the Devtools.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IDevtoolsLogger extends ITelemetryBaseLogger {}
@@ -157,7 +157,7 @@ class DevtoolsLogger implements IDevtoolsLogger {
 /**
  * Creates a new {@link IDevtoolsLogger} by wrapping the provided (optional) base logger.
  *
- * @alpha
+ * @beta
  */
 export function createDevtoolsLogger(baseLogger?: ITelemetryBaseLogger): IDevtoolsLogger {
 	return new DevtoolsLogger(baseLogger);

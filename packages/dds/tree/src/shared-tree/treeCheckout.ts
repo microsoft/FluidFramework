@@ -340,8 +340,13 @@ export interface ITreeCheckoutFork extends ITreeCheckout, IDisposable {
  * An implementation of {@link ITreeCheckoutFork}.
  */
 export class TreeCheckout implements ITreeCheckoutFork {
-	// set of revertibles maintained for automatic disposal
+	private isDisposed = false;
+
+	/**
+	 * Set of revertibles maintained for automatic disposal
+	 */
 	private readonly revertibles = new Set<DisposableRevertible>();
+
 	/**
 	 * Each branch's head commit corresponds to a revertible commit.
 	 * Maintaining a whole branch ensures the commit graph is not pruned in a way that would prevent the commit from
@@ -475,19 +480,26 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		combinedVisitor.free();
 	}
 
+	private checkNotDisposed(): void {
+		assert(!this.isDisposed, "Invalid operation on a disposed TreeCheckout");
+	}
+
 	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
 		return this.forest.anchors;
 	}
 
 	public get editor(): ISharedTreeEditor {
+		this.checkNotDisposed();
 		return this.branch.editor;
 	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
+		this.checkNotDisposed();
 		return this.forest.anchors.locate(anchor);
 	}
 
 	public fork(): TreeCheckout {
+		this.checkNotDisposed();
 		const anchors = new AnchorSet();
 		const branch = this.branch.fork();
 		const storedSchema = this.storedSchema.clone();
@@ -507,16 +519,19 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	public rebase(view: TreeCheckout): void {
+		this.checkNotDisposed();
 		view.branch.rebaseOnto(this.branch);
 	}
 
 	public rebaseOnto(view: ITreeCheckout): void {
+		this.checkNotDisposed();
 		view.rebase(this);
 	}
 
 	public merge(view: TreeCheckout): void;
 	public merge(view: TreeCheckout, disposeView: boolean): void;
 	public merge(view: TreeCheckout, disposeView = true): void {
+		this.checkNotDisposed();
 		assert(
 			!this.transaction.inProgress() || disposeView,
 			0x710 /* A view that is merged into an in-progress transaction must be disposed */,
@@ -531,10 +546,13 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	public updateSchema(newSchema: TreeStoredSchema): void {
+		this.checkNotDisposed();
 		this.editor.schema.setStoredSchema(this.storedSchema.clone(), newSchema);
 	}
 
 	public [disposeSymbol](): void {
+		this.checkNotDisposed();
+		this.isDisposed = true;
 		this.purgeRevertibles();
 		this.branch.dispose();
 	}

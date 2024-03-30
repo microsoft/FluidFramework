@@ -8,7 +8,7 @@ import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
 	IDocumentStorageService,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
 	IDocumentAttributes,

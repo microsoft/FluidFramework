@@ -8,6 +8,7 @@ import { createChildLogger, raiseConnectedEvent } from "@fluidframework/telemetr
 import { v4 as uuid } from "uuid";
 
 import {
+	type IMockContainerRuntimeIdAllocationMessage,
 	IMockContainerRuntimeOptions,
 	MockContainerRuntime,
 	MockContainerRuntimeFactory,
@@ -165,7 +166,13 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		const applyStashedOpsAtSeq = async (seq: number) => {
 			const pendingAtSeq = stashedOps.get(seq);
 			for (const message of pendingAtSeq ?? []) {
-				await this.dataStoreRuntime.applyStashedOp(message);
+				// As in production, do not locally apply any stashed ID allocation messages.
+				// Instead, simply resubmit them.
+				if ((message as IMockContainerRuntimeIdAllocationMessage).type === "idAllocation") {
+					this.submit(message, undefined);
+				} else {
+					await this.dataStoreRuntime.applyStashedOp(message);
+				}
 			}
 			stashedOps.delete(seq);
 		};
