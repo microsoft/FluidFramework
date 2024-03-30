@@ -7,16 +7,18 @@ import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	IAudience,
-	IBatchMessage,
-	IContainerContext,
 	ICriticalContainerError,
 	IDeltaManager,
+} from "@fluidframework/container-definitions";
+import {
+	IBatchMessage,
+	IContainerContext,
 	IGetPendingLocalStateProps,
 	ILoader,
 	IRuntime,
 	LoaderHeader,
 	type IAudienceEvents,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
@@ -37,7 +39,7 @@ import {
 	FetchSource,
 	IDocumentStorageService,
 	type ISnapshot,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
@@ -2332,6 +2334,15 @@ export class ContainerRuntime
 			case ContainerMessageType.Alias:
 				return this.channelCollection.applyStashedOp(opContents);
 			case ContainerMessageType.IdAllocation:
+				// IDs allocation ops in stashed state are ignored because the tip state of the compressor
+				// is serialized into the pending state. This is done because generation of new IDs during
+				// stashed op application (or, later, resubmit) must generate new IDs and if the compressor
+				// was loaded from a state serialized at the same time as the summary tree in the stashed state
+				// then it would generate IDs that collide with any in later stashed ops.
+				// In the future, IdCompressor could be extended to have an "applyStashedOp" or similar method
+				// and the runtime could filter out all ID allocation ops from the stashed state and apply them
+				// before applying the rest of the stashed ops. This would accomplish the same thing but with
+				// better performance in future incremental stashed state creation.
 				assert(
 					this.idCompressorMode !== undefined,
 					0x8f1 /* ID compressor should be in use */,
@@ -2383,6 +2394,7 @@ export class ContainerRuntime
 			this._loadIdCompressor = this.createIdCompressor()
 				.then((compressor) => {
 					this._idCompressor = compressor;
+					// Finalize any ranges we received while the compressor was turned off.
 					for (const range of this.pendingIdCompressorOps) {
 						this._idCompressor.finalizeCreationRange(range);
 					}
@@ -2635,6 +2647,8 @@ export class ContainerRuntime
 					)
 				) {
 					const range = messageWithContext.message.contents;
+					// Some other client turned on the id compressor. If we have not turned it on,
+					// put it in a pending queue and delay finalization.
 					if (this._idCompressor === undefined) {
 						this.pendingIdCompressorOps.push(range);
 					} else {
@@ -3062,6 +3076,10 @@ export class ContainerRuntime
 		// We can finalize any allocated IDs since we're the only client
 		const idRange = this._idCompressor?.takeNextCreationRange();
 		if (idRange !== undefined) {
+			assert(
+				idRange.ids === undefined || idRange.ids.firstGenCount === 1,
+				"No other ranges should be taken while container is detached.",
+			);
 			this._idCompressor?.finalizeCreationRange(idRange);
 		}
 

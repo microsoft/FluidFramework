@@ -4,9 +4,9 @@
 
 ```ts
 
-import { IDocumentService } from '@fluidframework/driver-definitions';
-import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
-import { IResolvedUrl } from '@fluidframework/driver-definitions';
+import { IDocumentService } from '@fluidframework/driver-definitions/internal';
+import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
+import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 import { ISession } from '@fluidframework/server-services-client';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { IDocumentStorageServicePolicies } from "@fluidframework/driver-definitions";
+import { IDocumentStorageServicePolicies } from "@fluidframework/driver-definitions/internal";
 import { type NonRetryableError, ThrottlingError } from "@fluidframework/driver-utils";
 import {
 	ICacheEntry,

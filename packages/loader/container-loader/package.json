@@ -15,11 +15,11 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/index.d.ts",
+				"types": "./lib/container-loader-public.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/index.d.ts",
+				"types": "./dist/container-loader-public.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
@@ -71,16 +71,6 @@
 			"require": {
 				"types": "./dist/utils.d.ts",
 				"default": "./dist/utils.js"
-			}
-		},
-		"./public": {
-			"import": {
-				"types": "./lib/container-loader-public.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/container-loader-public.d.ts",
-				"default": "./dist/index.js"
 			}
 		},
 		"./alpha": {

@@ -4,7 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IAudienceEvents, IAudienceOwner } from "@fluidframework/container-definitions";
+import { IAudienceEvents, IAudienceOwner } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils";
 import { IClient } from "@fluidframework/protocol-definitions";
 

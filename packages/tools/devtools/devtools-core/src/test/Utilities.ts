@@ -12,7 +12,7 @@ import type {
 import { ConnectionState } from "@fluidframework/container-loader";
 import type { IErrorBase, IRequest } from "@fluidframework/core-interfaces";
 import type { IClient } from "@fluidframework/protocol-definitions";
-import { MockAudience } from "@fluidframework/test-runtime-utils";
+import { MockAudience } from "@fluidframework/test-runtime-utils/alpha";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 

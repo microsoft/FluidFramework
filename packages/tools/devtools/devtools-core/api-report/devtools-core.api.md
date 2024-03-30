@@ -7,7 +7,7 @@
 import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionState } from '@fluidframework/container-loader';
 import { IClient } from '@fluidframework/protocol-definitions';
-import { IContainer } from '@fluidframework/container-definitions';
+import { IContainer } from '@fluidframework/container-definitions/internal';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
@@ -89,13 +89,13 @@ export namespace ContainerDevtoolsFeatures {
     }
 }
 
-// @internal
+// @beta
 export interface ContainerDevtoolsProps extends HasContainerKey {
     container: IContainer;
     containerData?: Record<string, IFluidLoadable>;
 }
 
-// @alpha
+// @beta
 export type ContainerKey = string;
 
 // @internal
@@ -152,7 +152,7 @@ export interface ContainerStateMetadata extends HasContainerKey {
     userId?: string;
 }
 
-// @alpha
+// @beta
 export function createDevtoolsLogger(baseLogger?: ITelemetryBaseLogger): IDevtoolsLogger;
 
 // @internal
@@ -204,6 +204,8 @@ export namespace DevtoolsFeatures {
     export interface MessageData {
         devtoolsVersion?: string;
         features: DevtoolsFeatureFlags;
+        // (undocumented)
+        unsampledTelemetry?: boolean;
     }
 }
 
@@ -244,7 +246,7 @@ export const EditType: {
 // @internal
 export type EditType = (typeof EditType)[keyof typeof EditType];
 
-// @internal
+// @beta
 export interface FluidDevtoolsProps {
     initialContainers?: ContainerDevtoolsProps[];
     logger?: IDevtoolsLogger;
@@ -365,7 +367,7 @@ export function handleIncomingMessage(message: Partial<ISourcedDevtoolsMessage>,
 // @internal
 export function handleIncomingWindowMessage(event: MessageEvent<Partial<ISourcedDevtoolsMessage>>, handlers: InboundHandlers, loggingOptions?: MessageLoggingOptions): void;
 
-// @alpha
+// @beta
 export interface HasContainerKey {
     containerKey: ContainerKey;
 }
@@ -375,7 +377,7 @@ export interface HasFluidObjectId {
     fluidObjectId: FluidObjectId;
 }
 
-// @alpha @sealed
+// @beta @sealed
 export interface IDevtoolsLogger extends ITelemetryBaseLogger {
 }
 
@@ -385,7 +387,7 @@ export interface IDevtoolsMessage<TData = unknown> {
     type: string;
 }
 
-// @internal
+// @beta
 export interface IFluidDevtools extends IDisposable {
     closeContainerDevtools(containerKey: ContainerKey): void;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
@@ -406,7 +408,7 @@ export interface InboundHandlers {
     [type: string]: (message: ISourcedDevtoolsMessage) => Promise<boolean>;
 }
 
-// @internal
+// @beta
 export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools;
 
 // @internal
@@ -456,6 +458,18 @@ export namespace RootDataVisualizations {
 
 // @internal
 export type RootHandleNode = FluidHandleNode | UnknownObjectNode;
+
+// @internal
+export namespace SetUnsampledTelemetry {
+    const MessageType = "TOGGLE_UNSAMPLED_TELEMETRY";
+    export function createMessage(data: MessageData): Message;
+    export interface Message extends IDevtoolsMessage<MessageData> {
+        type: typeof MessageType;
+    }
+    export interface MessageData {
+        unsampledTelemetry: boolean;
+    }
+}
 
 // @internal
 export interface SharedObjectEdit extends Edit, HasFluidObjectId {

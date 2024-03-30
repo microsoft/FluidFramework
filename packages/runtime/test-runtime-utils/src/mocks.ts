@@ -8,9 +8,9 @@ import {
 	AttachState,
 	IAudience,
 	IAudienceEvents,
-	IAudienceOwner,
 	ILoader,
 } from "@fluidframework/container-definitions";
+import { ILoader, IAudienceOwner } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import {
 	FluidObject,
@@ -118,7 +118,7 @@ type IMockContainerRuntimeSequencedIdAllocationMessage = ISequencedDocumentMessa
 	contents: IMockContainerRuntimeIdAllocationMessage;
 };
 
-interface IMockContainerRuntimeIdAllocationMessage {
+export interface IMockContainerRuntimeIdAllocationMessage {
 	type: "idAllocation";
 	contents: IdCreationRange;
 }
