@@ -6,7 +6,7 @@
 import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { getW3CData } from "@fluidframework/driver-base";
-import { ISnapshot } from "@fluidframework/driver-definitions";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	DriverErrorTelemetryProps,
 	NonRetryableError,
@@ -31,6 +31,7 @@ import {
 	wrapError,
 } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
+
 import {
 	ISnapshotContentsWithProps,
 	currentReadVersion,

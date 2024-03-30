@@ -4,6 +4,7 @@
  */
 
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
+
 import { baseModel, summarizerOperationGenerator } from "./fuzzUtils.js";
 import { createSummarizerFuzzSuite } from "./summarizerFuzzSuite.js";
 

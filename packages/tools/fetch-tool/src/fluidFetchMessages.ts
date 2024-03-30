@@ -4,14 +4,16 @@
  */
 
 import fs from "fs";
+
 import { assert } from "@fluidframework/core-utils";
-import { IDocumentService } from "@fluidframework/driver-definitions";
+import { IDocumentService } from "@fluidframework/driver-definitions/internal";
 import {
 	IClient,
 	ISequencedDocumentMessage,
 	MessageType,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
+
 import { printMessageStats } from "./fluidAnalyzeMessages.js";
 import {
 	connectToWebSocket,

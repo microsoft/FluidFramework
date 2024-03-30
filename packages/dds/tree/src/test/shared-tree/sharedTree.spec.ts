@@ -4,8 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainerExperimental } from "@fluidframework/container-loader";
-import { createIdCompressor } from "@fluidframework/id-compressor";
+
+import { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	MockContainerRuntimeFactory,
@@ -13,6 +14,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils";
+
 import {
 	AllowedUpdateType,
 	CommitKind,
@@ -52,7 +54,6 @@ import {
 	ObjectForest,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/object-forest/objectForest.js";
-import { EditManager } from "../../shared-tree-core/index.js";
 import {
 	CheckoutFlexTreeView,
 	FlexTreeView,
@@ -65,6 +66,7 @@ import {
 } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { requireSchema } from "../../shared-tree/schematizingTreeView.js";
+import { EditManager } from "../../shared-tree-core/index.js";
 import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
 import { brand, disposeSymbol, fail } from "../../util/index.js";
 import {
@@ -1045,7 +1047,7 @@ describe("SharedTree", () => {
 
 		describe("can concurrently restore and edit removed tree", () => {
 			const sb = new SchemaBuilder({ scope: "shared tree undo tests" });
-			const schema = sb.intoSchema(sb.list(sb.list(sb.string)));
+			const schema = sb.intoSchema(sb.list("A", sb.list("B", leaf.string)));
 
 			for (const scenario of ["restore then change", "change then restore"]) {
 				it(`with the ${scenario} sequenced`, () => {
@@ -1336,7 +1338,7 @@ describe("SharedTree", () => {
 	describe("Events", () => {
 		const builder = new SchemaBuilder({ scope: "Events test schema" });
 		const rootTreeNodeSchema = builder.object("root", {
-			x: builder.number,
+			x: leaf.number,
 		});
 		const schema = builder.intoSchema(builder.optional(Any));
 
@@ -1639,7 +1641,9 @@ describe("SharedTree", () => {
 			validateTreeConsistency(provider.trees[0], provider.trees[1]);
 		});
 
-		it("can be undone at the tip", async () => {
+		// Undoing schema changes is not supported because it may render some of the forest contents invalid.
+		// This may be revisited in the future.
+		it.skip("can be undone at the tip", async () => {
 			const provider = await TestTreeProvider.create(2, SummarizeType.disabled);
 
 			const tree = provider.trees[0];

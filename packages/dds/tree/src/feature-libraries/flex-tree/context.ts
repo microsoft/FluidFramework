@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import {
 	FieldKey,
 	ForestEvents,
@@ -17,6 +18,7 @@ import { IDefaultEditBuilder } from "../default-schema/index.js";
 import { FieldGenerator } from "../fieldGenerator.js";
 import { NodeKeyIndex, NodeKeyManager } from "../node-key/index.js";
 import { FlexTreeSchema } from "../typed-schema/index.js";
+
 import { FlexTreeField } from "./flexTreeTypes.js";
 import { LazyEntity, prepareForEditSymbol } from "./lazyEntity.js";
 import { makeField } from "./lazyField.js";

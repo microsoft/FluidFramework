@@ -3,9 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Lazy } from "@fluidframework/core-utils";
 import { fromInternalScheme } from "@fluid-tools/version-tools";
+import { assert, Lazy } from "@fluidframework/core-utils";
 import * as semver from "semver";
+
+import {
+	baseVersion,
+	baseVersionForMinCompat,
+	codeVersion,
+	testBaseVersion,
+} from "./baseVersion.js";
 import {
 	CompatKind,
 	compatKind,
@@ -15,14 +22,8 @@ import {
 	tenantIndex,
 	reinstall,
 } from "./compatOptions.js";
-import { ensurePackageInstalled } from "./testApi.js";
 import { pkgVersion } from "./packageVersion.js";
-import {
-	baseVersion,
-	baseVersionForMinCompat,
-	codeVersion,
-	testBaseVersion,
-} from "./baseVersion.js";
+import { ensurePackageInstalled } from "./testApi.js";
 import { getRequestedVersion, resolveVersion } from "./versionUtils.js";
 
 /**

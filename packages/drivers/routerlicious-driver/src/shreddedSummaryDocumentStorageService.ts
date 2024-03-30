@@ -8,7 +8,7 @@ import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
 import {
 	ICreateBlobResponse,
@@ -23,6 +23,7 @@ import {
 	PerformanceEvent,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
+
 import { ICache, InMemoryCache } from "./cache.js";
 import { ISnapshotTreeVersion } from "./definitions.js";
 import { GitManager } from "./gitManager.js";

@@ -4,10 +4,9 @@
  */
 
 import { SessionId } from "@fluidframework/id-compressor";
+import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 
-// eslint-disable-next-line import/no-internal-modules -- test import
-import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/test/idCompressorTestUtilities";
 import {
 	AllowedUpdateType,
 	FieldKey,
@@ -257,7 +256,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 					scope: "optional-field",
 					libraries: [leaf.library],
 				});
-				const testNode = innerBuilder.map("TestNode", leaf.all);
+				const testNode = innerBuilder.map("TestNode", SchemaBuilder.optional(leaf.all));
 				const docSchema = innerBuilder.intoSchema(SchemaBuilder.optional(testNode));
 
 				const config = {

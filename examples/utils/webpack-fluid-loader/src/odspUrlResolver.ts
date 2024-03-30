@@ -4,7 +4,7 @@
  */
 
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
+import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import {
 	IOdspAuthRequestInfo,
 	getDriveItemByRootFileName,

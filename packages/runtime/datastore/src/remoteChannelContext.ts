@@ -7,7 +7,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils";
 import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	CreateChildSummarizerNodeFn,
@@ -24,6 +24,7 @@ import {
 	ThresholdCounter,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils";
+
 import {
 	ChannelServiceEndpoints,
 	IChannelContext,

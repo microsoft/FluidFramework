@@ -6,7 +6,7 @@
 import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
 
 /**

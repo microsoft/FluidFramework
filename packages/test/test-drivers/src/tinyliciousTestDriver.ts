@@ -4,7 +4,7 @@
  */
 
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import {
 	InsecureTinyliciousTokenProvider,
@@ -12,6 +12,7 @@ import {
 	createTinyliciousCreateNewRequest,
 	defaultTinyliciousPort,
 } from "@fluidframework/tinylicious-driver";
+
 import { RouterliciousDriverApi, RouterliciousDriverApiType } from "./routerliciousDriverApi.js";
 
 /**

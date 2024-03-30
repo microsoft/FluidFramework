@@ -11,7 +11,7 @@ import {
 	IDocumentDeltaConnectionEvents,
 	IDocumentDeltaStorageService,
 	IDocumentService,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	ConnectionMode,
 	IClientConfiguration,
@@ -24,6 +24,7 @@ import {
 	IVersion,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
+
 import { ReplayController } from "./replayController.js";
 
 const ReplayDocumentId = "documentId";

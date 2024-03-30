@@ -6,7 +6,7 @@
 import { performance } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import {
 	IOdspResolvedUrl,
 	IOdspUrlParts,
@@ -17,6 +17,7 @@ import {
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
 import { PerformanceEvent, createChildMonitoringContext } from "@fluidframework/telemetry-utils";
+
 import { IVersionedValueWithEpoch } from "./contracts.js";
 import {
 	ISnapshotRequestAndResponseOptions,

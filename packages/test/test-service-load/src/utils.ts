@@ -5,14 +5,15 @@
 
 import crypto from "crypto";
 import fs from "fs";
+
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	OdspTestDriver,
 	createFluidTestDriver,
 	generateOdspHostStoragePolicy,
 } from "@fluid-private/test-drivers";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader/internal";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
 	ConfigTypes,
@@ -30,6 +31,7 @@ import {
 	TestDriverTypes,
 } from "@fluidframework/test-driver-definitions";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
+
 import { ILoadTest, createFluidExport } from "./loadTestDataStore.js";
 import {
 	generateConfigurations,

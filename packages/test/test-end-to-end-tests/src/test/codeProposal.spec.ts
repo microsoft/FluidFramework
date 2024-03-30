@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import {
 	IContainer,
@@ -11,7 +12,7 @@ import {
 	IFluidCodeDetailsComparer,
 	IFluidPackage,
 	isFluidPackage,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map";
 import {
 	ITestFluidObject,

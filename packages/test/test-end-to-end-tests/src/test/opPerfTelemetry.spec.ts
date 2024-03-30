@@ -4,7 +4,7 @@
  */
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { ILoaderProps } from "@fluidframework/container-loader";
+import { ILoaderProps } from "@fluidframework/container-loader/internal";
 import { type SharedString } from "@fluidframework/sequence";
 import {
 	DataObjectFactoryType,

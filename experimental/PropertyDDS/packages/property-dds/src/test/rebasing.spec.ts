@@ -4,15 +4,26 @@
  */
 
 /* eslint-disable @typescript-eslint/no-unused-expressions */
+
 import { strict as assert } from "assert";
+
 import { DeterministicRandomGenerator } from "@fluid-experimental/property-common";
+import {
+	ArrayProperty,
+	Float64Property,
+	Int32Property,
+	NamedProperty,
+	PropertyFactory,
+	StringArrayProperty,
+	StringProperty,
+} from "@fluid-experimental/property-properties";
 import {
 	IContainer,
 	IFluidCodeDetails,
 	IHostLoader,
 	ILoaderOptions,
-} from "@fluidframework/container-definitions";
-import { IUrlResolver } from "@fluidframework/driver-definitions";
+} from "@fluidframework/container-definitions/internal";
+import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import {
 	ILocalDeltaConnectionServer,
@@ -32,15 +43,6 @@ import { v5 as uuidv5 } from "uuid";
 // 'lodash' import workaround.
 const { range, sortedIndex, isFunction } = lodash;
 
-import {
-	ArrayProperty,
-	Float64Property,
-	Int32Property,
-	NamedProperty,
-	PropertyFactory,
-	StringArrayProperty,
-	StringProperty,
-} from "@fluid-experimental/property-properties";
 import { SharedPropertyTree } from "../propertyTree.js";
 
 // a "namespace" uuid to generate uuidv5 in fuzz tests

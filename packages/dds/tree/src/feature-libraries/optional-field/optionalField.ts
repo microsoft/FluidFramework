@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import {
 	ChangeAtomId,
 	ChangeAtomIdMap,
@@ -39,6 +40,7 @@ import {
 	RelevantRemovedRootsFromChild,
 	ToDelta,
 } from "../modular-schema/index.js";
+
 import {
 	ChildChange,
 	Move,

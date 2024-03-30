@@ -10,7 +10,7 @@ import {
 	IDeltasFetchResult,
 	IDocumentDeltaStorageService,
 	IStream,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	emptyMessageStream,
 	readAndParse,
@@ -19,6 +19,7 @@ import {
 } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
+
 import { DocumentStorageService } from "./documentStorageService.js";
 import { RestWrapper } from "./restWrapperBase.js";
 

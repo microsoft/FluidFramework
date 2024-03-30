@@ -29,6 +29,7 @@ import {
 	LazyItem,
 	LeafNodeSchema,
 } from "../typed-schema/index.js";
+
 import { FlexTreeContext } from "./context.js";
 import { FlexTreeNodeEvents } from "./treeEvents.js";
 
@@ -185,6 +186,11 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
 
 	/**
 	 * The anchor node associated with this node
+	 *
+	 * @remarks
+	 * The ref count keeping this alive is owned by the FlexTreeNode:
+	 * if holding onto this anchor for longer than the FlexTreeNode might be alive,
+	 * a separate Anchor (and thus ref count) must be allocated to keep it alive.
 	 */
 	readonly anchorNode: AnchorNode;
 }

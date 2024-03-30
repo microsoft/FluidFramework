@@ -7,6 +7,7 @@
  * @fileoverview Helper functions and classes to work with ChangeSets with indexed collections (sets and maps)
  */
 
+import { constants, joinPaths } from "@fluid-experimental/property-common";
 import { copy as cloneDeep } from "fastest-json-copy";
 import includes from "lodash/includes.js";
 import isEmpty from "lodash/isEmpty.js";
@@ -15,10 +16,10 @@ import isObject from "lodash/isObject.js";
 import without from "lodash/without.js";
 
 // @ts-ignore
-import { constants, joinPaths } from "@fluid-experimental/property-common";
 import { ApplyChangeSetOptions, ConflictInfo, SerializedChangeSet } from "../changeset.js";
 import { TypeIdHelper } from "../helpers/typeidHelper.js";
 import { PathHelper } from "../pathHelper.js";
+
 import { ConflictType } from "./changesetConflictTypes.js";
 import { isEmptyChangeSet } from "./isEmptyChangeset.js";
 

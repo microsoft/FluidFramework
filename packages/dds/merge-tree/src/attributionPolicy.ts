@@ -6,6 +6,7 @@
 import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
+
 import { AttributionCollection } from "./attributionCollection.js";
 // eslint-disable-next-line import/no-deprecated
 import { Client } from "./client.js";

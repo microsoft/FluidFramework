@@ -4,6 +4,7 @@
  */
 
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+
 import type { ITelemetryPropertiesExt } from "./telemetryTypes.js";
 
 /**

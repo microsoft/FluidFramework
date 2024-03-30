@@ -4,8 +4,12 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { IThrottlingWarning } from "@fluidframework/core-interfaces";
-import { IAuthorizationError, IGenericNetworkError } from "@fluidframework/driver-definitions";
+import {
+	IAuthorizationError,
+	IGenericNetworkError,
+} from "@fluidframework/driver-definitions/internal";
 import { type AuthorizationError, NonRetryableError } from "@fluidframework/driver-utils";
 import {
 	createOdspNetworkError,
@@ -13,10 +17,12 @@ import {
 } from "@fluidframework/odsp-doclib-utils/internal";
 import { OdspError, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
 import { IFluidErrorBase } from "@fluidframework/telemetry-utils";
+
 import { IOdspSocketError } from "../contracts.js";
 import { errorObjectFromSocketError } from "../odspError.js";
 import { fetchAndParseAsJSONHelper, getWithRetryForTokenRefresh } from "../odspUtils.js";
 import { pkgVersion } from "../packageVersion.js";
+
 import { mockFetchError } from "./mockFetch.js";
 
 describe("Odsp Error", () => {

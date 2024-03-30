@@ -4,10 +4,15 @@
  */
 
 import { strict as assert } from "assert";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { PureDataObject } from "@fluidframework/aqueduct";
-import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
-import { ILoaderProps } from "@fluidframework/container-loader";
+import {
+	IContainer,
+	IRuntimeFactory,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
+import { ILoaderProps } from "@fluidframework/container-loader/internal";
 import {
 	ContainerRuntime,
 	IAckedSummary,
@@ -23,7 +28,7 @@ import {
 	DriverHeader,
 	type IDocumentServiceFactory,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import type { SharedMatrix } from "@fluidframework/matrix";
 import {
 	ISequencedDocumentMessage,
@@ -39,6 +44,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
+
 import { wrapObjectAndOverride } from "../mocking.js";
 
 interface ProvideSearchContent {
