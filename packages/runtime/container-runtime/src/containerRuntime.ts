@@ -166,7 +166,6 @@ import {
 	IConnectableRuntime,
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,
-	IDocumentSchemaChangeMessage,
 	type IDocumentSchemaCurrent,
 	IEnqueueSummarizeOptions,
 	IGenerateSummaryTreeResult,
@@ -959,6 +958,7 @@ export class ContainerRuntime
 				compressionLz4,
 				idCompressorMode,
 				opGroupingEnabled,
+				disallowedVersions: [],
 			},
 			(schema) => {
 				runtime.onSchemaChange(schema);
@@ -3885,18 +3885,17 @@ export class ContainerRuntime
 				// Allow document schema controller to send a message if it needs to propose change in document schema.
 				// If it needs to send a message, it will call provided callback with payload of such message and rely
 				// on this callback to do actual sending.
-				this.documentsSchemaController.onMessageSent(
-					(contents: IDocumentSchemaChangeMessage) => {
-						const msg: ContainerRuntimeDocumentSchemaMessage = {
-							type: ContainerMessageType.DocumentSchemaChange,
-							contents,
-						};
-						this.outbox.submit({
-							contents: JSON.stringify(msg),
-							referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-						});
-					},
-				);
+				const contents = this.documentsSchemaController.maybeSendSchemaMessage();
+				if (contents) {
+					const msg: ContainerRuntimeDocumentSchemaMessage = {
+						type: ContainerMessageType.DocumentSchemaChange,
+						contents,
+					};
+					this.outbox.submit({
+						contents: JSON.stringify(msg),
+						referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+					});
+				}
 
 				// If this is attach message for new data store, and we are in a batch, send this op out of order
 				// Is it safe:
