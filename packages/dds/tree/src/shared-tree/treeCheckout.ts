@@ -18,7 +18,6 @@ import {
 	CommitMetadata,
 	DeltaVisitor,
 	DetachedFieldIndex,
-	GraphCommit,
 	IEditableForest,
 	IForestSubscription,
 	JsonableTree,
@@ -30,10 +29,8 @@ import {
 	TreeStoredSchemaRepository,
 	TreeStoredSchemaSubscription,
 	combineVisitors,
-	findCommonAncestor,
 	makeDetachedFieldIndex,
 	rebaseChange,
-	rebaseChangeOverChanges,
 	tagChange,
 	visitDelta,
 } from "../core/index.js";

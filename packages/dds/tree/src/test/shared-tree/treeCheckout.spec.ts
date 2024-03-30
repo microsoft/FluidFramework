@@ -46,7 +46,6 @@ import {
 	stringSequenceRootSchema,
 	validateTreeContent,
 } from "../utils.js";
-import { disposeSymbol } from "../../index.js";
 
 const rootField: FieldUpPath = {
 	parent: undefined,
