@@ -9,7 +9,7 @@ import {
 	IContainerPackageInfo,
 	IResolvedUrl,
 	IUrlResolver,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	IOdspResolvedUrl,
 	IdentityType,

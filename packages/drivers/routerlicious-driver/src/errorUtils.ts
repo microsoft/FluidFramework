@@ -3,11 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-	DriverError,
-	DriverErrorTypes,
-	IDriverErrorBase,
-} from "@fluidframework/driver-definitions";
+import { DriverErrorTypes, IDriverErrorBase } from "@fluidframework/driver-definitions";
+import { DriverError } from "@fluidframework/driver-definitions/internal";
 import {
 	AuthorizationError,
 	GenericNetworkError,
@@ -15,6 +12,7 @@ import {
 	createGenericNetworkError,
 } from "@fluidframework/driver-utils";
 import { IFluidErrorBase } from "@fluidframework/telemetry-utils";
+
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 /**

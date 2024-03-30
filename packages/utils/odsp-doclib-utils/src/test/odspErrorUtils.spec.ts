@@ -5,11 +5,11 @@
 
 import { strict as assert } from "assert";
 
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
-	DriverErrorTypes,
 	IGenericNetworkError,
 	IThrottlingWarning,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { GenericNetworkError, createWriteError } from "@fluidframework/driver-utils";
 import { IOdspError, OdspError, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
 import { isILoggingError } from "@fluidframework/telemetry-utils";
