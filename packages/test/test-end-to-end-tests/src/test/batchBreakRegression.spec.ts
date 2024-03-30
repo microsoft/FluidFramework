@@ -4,6 +4,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-unsafe-return */
+
 import { strict as assert } from "assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
@@ -13,7 +14,7 @@ import { FluidErrorTypes } from "@fluidframework/core-interfaces";
 import {
 	IDocumentDeltaConnectionEvents,
 	IDocumentServiceFactory,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,

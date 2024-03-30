@@ -18,7 +18,7 @@ import {
 } from "@fluidframework/aqueduct";
 import * as cell from "@fluidframework/cell";
 import { SharedCell } from "@fluidframework/cell";
-import { Loader } from "@fluidframework/container-loader";
+import { Loader } from "@fluidframework/container-loader/internal";
 
 // ContainerRuntime API
 import { ContainerRuntime } from "@fluidframework/container-runtime";

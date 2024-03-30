@@ -18,7 +18,7 @@
  * @packageDocumentation
  */
 
-import { type IContainer } from "@fluidframework/container-definitions";
+import { type IContainer } from "@fluidframework/container-definitions/internal";
 import { type IDisposable } from "@fluidframework/core-interfaces";
 import {
 	type ContainerDevtoolsProps as ContainerDevtoolsPropsBase,
@@ -31,7 +31,7 @@ import { type IFluidContainer } from "@fluidframework/fluid-static";
 
 /**
  * Properties for configuring {@link IDevtools}.
- * @alpha
+ * @beta
  */
 export interface DevtoolsProps {
 	/**
@@ -58,7 +58,7 @@ export interface DevtoolsProps {
 
 /**
  * Properties for configuring Devtools for an individual {@link @fluidframework/fluid-static#IFluidContainer}.
- * @alpha
+ * @beta
  */
 export interface ContainerDevtoolsProps extends HasContainerKey {
 	/**
@@ -81,7 +81,7 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
  * The lifetime of the associated singleton is bound by that of the Window (globalThis), and it will be automatically
  * disposed of on Window unload.
  * If you wish to dispose of it earlier, you may call its {@link @fluidframework/core-interfaces#IDisposable.dispose} method.
- * @alpha
+ * @beta
  */
 export interface IDevtools extends IDisposable {
 	/**
@@ -144,7 +144,7 @@ class Devtools implements IDevtools {
  * Initializes the Devtools singleton and returns a handle to it.
  *
  * @see {@link @fluidframework/devtools-core#initializeDevtoolsBase}
- * @alpha
+ * @beta
  */
 export function initializeDevtools(props: DevtoolsProps): IDevtools {
 	const { initialContainers, logger } = props;
