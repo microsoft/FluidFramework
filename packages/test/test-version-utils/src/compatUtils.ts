@@ -333,7 +333,14 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 	assert(versionForLoading !== undefined, "versionForLoading");
 
 	const minVersion =
-		semver.compare(versionForCreating, versionForLoading) < 0
+		// First, check if any of the versions is current version of the package.
+		// Current versions show up in the form of "2.0.0-dev-rc.3.0.0.251800", and semver.compare()
+		// incorrectly compares them with prior minors, like "2.0.0-rc.2.0.1"
+		versionForLoading === pkgVersion
+			? versionForCreating
+			: versionForCreating === pkgVersion
+			? versionForLoading
+			: semver.compare(versionForCreating, versionForLoading) < 0
 			? versionForCreating
 			: versionForLoading;
 
@@ -385,14 +392,5 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		driverForLoading,
 		createContainerFactoryFn,
 		loadContainerFactoryFn,
-		// telemetry props
-		{
-			all : {
-				testType: "TestObjectProviderWithVersionedLoad",
-				testCreateVersion: versionForCreating,
-				testLoadVersion: versionForLoading,
-				testRuntimeOptionsVersion: minVersion,
-			},
-		},
 	);
 }

@@ -29,7 +29,6 @@ import {
 	type ITelemetryGenericEventExt,
 	createChildLogger,
 	createMultiSinkLogger,
-	type ITelemetryLoggerPropertyBags,
 } from "@fluidframework/telemetry-utils";
 import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { v4 as uuid } from "uuid";
@@ -427,7 +426,6 @@ export class TestObjectProvider implements ITestObjectProvider {
 					logger: getTestLogger?.(),
 					properties: {
 						all: {
-							testType: this.type,
 							driverType: this.driver.type,
 							driverEndpointName: this.driver.endpointName,
 							driverTenantName: this.driver.tenantName,
@@ -438,6 +436,10 @@ export class TestObjectProvider implements ITestObjectProvider {
 			);
 		}
 		return this._logger;
+	}
+
+	private set logger(logger: EventAndErrorTrackingLogger) {
+		this._logger = logger;
 	}
 
 	/**
@@ -712,7 +714,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		private readonly createFluidEntryPointForLoading: (
 			testContainerConfig?: ITestContainerConfig,
 		) => fluidEntryPoint,
-		private readonly telemetryProps?: ITelemetryLoggerPropertyBags,
 	) {
 		this._documentIdStrategy = getDocumentIdStrategy(driverForCreating.type);
 	}
@@ -725,7 +726,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 			this._logger = new EventAndErrorTrackingLogger(
 				createChildLogger({
 					logger: getTestLogger?.(),
-					properties: this.telemetryProps,
 				}),
 			);
 		}

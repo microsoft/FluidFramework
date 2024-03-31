@@ -49,7 +49,6 @@ import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryGenericEventExt } from '@fluidframework/telemetry-utils';
-import { ITelemetryLoggerPropertyBags } from '@fluidframework/telemetry-utils';
 import { ITestDriver } from '@fluidframework/test-driver-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
 import { Loader } from '@fluidframework/container-loader/internal';
@@ -350,7 +349,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 
 // @internal
 export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider {
-    constructor(LoaderConstructorForCreating: typeof Loader, LoaderConstructorForLoading: typeof Loader, driverForCreating: ITestDriver, driverForLoading: ITestDriver, createFluidEntryPointForCreating: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint, createFluidEntryPointForLoading: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint, telemetryProps?: ITelemetryLoggerPropertyBags | undefined);
+    constructor(LoaderConstructorForCreating: typeof Loader, LoaderConstructorForLoading: typeof Loader, driverForCreating: ITestDriver, driverForLoading: ITestDriver, createFluidEntryPointForCreating: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint, createFluidEntryPointForLoading: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint);
     attachDetachedContainer(container: IContainer): Promise<void>;
     createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;
     createDetachedContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps> | undefined): Promise<IContainer>;
