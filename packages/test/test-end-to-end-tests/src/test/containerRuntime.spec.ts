@@ -74,7 +74,7 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 			) {
 				crash2 = true;
 				const error = "Summary metadata mismatch";
-				provider.logger?.registerExpectedEvent({
+				provider.tracker.registerExpectedEvent({
 					eventName: "fluid:telemetry:Container:ContainerClose",
 					error,
 					message: error,
@@ -98,7 +98,7 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 					//       and thus fails on empty address property (of compressed op), after unchunking happens.
 					const error =
 						crash && explicitSchemaControl ? "0x122" : chunking ? "0x162" : "0x121";
-					provider.logger?.registerExpectedEvent({
+					provider.tracker.registerExpectedEvent({
 						eventName: "fluid:telemetry:Container:ContainerClose",
 						category: "error",
 						error,
@@ -165,7 +165,7 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 			assert(entry.root.get("key3").length === 15000);
 		}
 
-		provider.logger?.reportAndClearTrackedEvents();
+		provider.tracker.reportAndClearTrackedEvents();
 	}
 
 	const choices = [true, false];

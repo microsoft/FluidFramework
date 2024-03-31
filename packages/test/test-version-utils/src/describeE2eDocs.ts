@@ -412,7 +412,7 @@ function createE2EDocCompatSuite(
 						// then we don't need to check errors
 						// and fail the after each as well
 						if (this.currentTest?.state === "passed") {
-							const logErrors = getUnexpectedLogErrorException(provider.logger);
+							const logErrors = getUnexpectedLogErrorException(provider.tracker);
 							done(logErrors);
 						} else {
 							done();
