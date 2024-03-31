@@ -9,8 +9,8 @@ import {
 	makeBubble,
 	randomColor,
 } from "@fluid-example/bubblebench-common";
-import type { InsertableTypedNode, TreeView } from "@fluidframework/tree/internal";
-import { type App, type Bubble, Client } from "./schema.js";
+import type { TreeView } from "@fluidframework/tree/internal";
+import { type App, Client } from "./schema.js";
 
 export class AppState implements IAppState {
 	readonly localClient: Client;
@@ -21,12 +21,8 @@ export class AppState implements IAppState {
 		public height: number,
 		numBubbles: number,
 	) {
-		this.tree.root.clients.insertAtEnd(
-			this.createInitialClientNode(numBubbles) as unknown as Client,
-		);
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const lastClient = this.tree.root.clients.at(this.tree.root.clients.length - 1)!;
-		this.localClient = lastClient;
+		this.localClient = new Client(this.createInitialClientNode(numBubbles));
+		this.tree.root.clients.insertAtEnd(this.localClient);
 
 		console.log(
 			`created client with id ${this.localClient.clientId} and color ${this.localClient.color}`,
@@ -62,9 +58,7 @@ export class AppState implements IAppState {
 	}
 
 	public increaseBubbles() {
-		this.localClient.bubbles.insertAtEnd(
-			makeBubble(this.width, this.height) as InsertableTypedNode<typeof Bubble>,
-		);
+		this.localClient.bubbles.insertAtEnd(makeBubble(this.width, this.height));
 	}
 
 	public decreaseBubbles() {
