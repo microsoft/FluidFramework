@@ -387,7 +387,7 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		loadContainerFactoryFn,
 		// telemetry props
 		{
-			all : {
+			all: {
 				testType: "TestObjectProviderWithVersionedLoad",
 				testCreateVersion: versionForCreating,
 				testLoadVersion: versionForLoading,

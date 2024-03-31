@@ -30,7 +30,7 @@ export function createExpectsTest(orderedExpectedEvents: ExpectedEvents, test: M
 			: orderedExpectedEvents[provider.driver.type] ?? [];
 
 		try {
-			provider.logger.registerExpectedEvent(...orderedEvents);
+			provider.tracker.registerExpectedEvent(...orderedEvents);
 			await test.bind(this)();
 		} catch (error) {
 			// only use TestException if the event is provided.
@@ -44,7 +44,7 @@ export function createExpectsTest(orderedExpectedEvents: ExpectedEvents, test: M
 				throw error;
 			}
 		}
-		const err = getUnexpectedLogErrorException(provider.logger);
+		const err = getUnexpectedLogErrorException(provider.tracker);
 		if (err !== undefined) {
 			throw err;
 		}

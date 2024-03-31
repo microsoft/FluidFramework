@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils";
 import {
 	IContainer,
 	IFluidCodeDetails,
@@ -81,7 +82,12 @@ export interface ITestObjectProvider {
 	/**
 	 * Logger used to track expected and unexpected events.
 	 */
-	logger: EventAndErrorTrackingLogger | undefined;
+	logger: ITelemetryBaseLogger;
+
+	/**
+	 * Logger used to track expected and unexpected events.
+	 */
+	tracker: EventAndErrorTrackingLogger;
 
 	/**
 	 * Used to create a url for the created container with any data store path given in the relative url.
@@ -309,7 +315,7 @@ export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger {
 		{ eventName: "fluid:telemetry:OpPerf:OpRoundtripTime" },
 	];
 
-	constructor(private readonly baseLogger: ITelemetryBaseLogger) {}
+	constructor(private readonly baseLogger?: ITelemetryBaseLogger) {}
 
 	private readonly expectedEvents: (
 		| { index: number; event: ITelemetryGenericEventExt | undefined }
@@ -366,7 +372,7 @@ export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger {
 			}
 		}
 
-		this.baseLogger.send(event);
+		this.baseLogger?.send(event);
 	}
 
 	public reportAndClearTrackedEvents() {
@@ -391,7 +397,8 @@ export class TestObjectProvider implements ITestObjectProvider {
 	private _loaderContainerTracker = new LoaderContainerTracker();
 	private _documentServiceFactory: IDocumentServiceFactory | undefined;
 	private _urlResolver: IUrlResolver | undefined;
-	private _logger: EventAndErrorTrackingLogger | undefined;
+	private _logger: ITelemetryBaseLogger | undefined;
+	private _tracker: EventAndErrorTrackingLogger | undefined;
 	private readonly _documentIdStrategy: IDocumentIdStrategy;
 	// Since documentId doesn't change we can only create/make one container. Call the load functions instead.
 	private _documentCreated = false;
@@ -420,24 +427,29 @@ export class TestObjectProvider implements ITestObjectProvider {
 	/**
 	 * {@inheritDoc ITestObjectProvider.logger}
 	 */
-	public get logger(): EventAndErrorTrackingLogger {
+	public get logger() {
 		if (this._logger === undefined) {
-			this._logger = new EventAndErrorTrackingLogger(
-				createChildLogger({
-					logger: getTestLogger?.(),
-					properties: {
-						all: {
-							testType: this.type,
-							driverType: this.driver.type,
-							driverEndpointName: this.driver.endpointName,
-							driverTenantName: this.driver.tenantName,
-							driverUserIndex: this.driver.userIndex,
-						},
+			this._tracker = new EventAndErrorTrackingLogger(getTestLogger?.());
+			this._logger = createChildLogger({
+				logger: this._tracker,
+				properties: {
+					all: {
+						testType: this.type,
+						driverType: this.driver.type,
+						driverEndpointName: this.driver.endpointName,
+						driverTenantName: this.driver.tenantName,
+						driverUserIndex: this.driver.userIndex,
 					},
-				}),
-			);
+				},
+			});
 		}
 		return this._logger;
+	}
+
+	public get tracker() {
+		void this.logger;
+		assert(this._tracker !== undefined, "should be initialized");
+		return this._tracker;
 	}
 
 	/**
@@ -632,11 +644,12 @@ export class TestObjectProvider implements ITestObjectProvider {
 		this._documentServiceFactory = undefined;
 		this._urlResolver = undefined;
 		this._documentIdStrategy.reset();
-		const logError = getUnexpectedLogErrorException(this._logger);
+		const logError = getUnexpectedLogErrorException(this._tracker);
 		if (logError) {
 			throw logError;
 		}
 		this._logger = undefined;
+		this._tracker = undefined;
 		this._documentCreated = false;
 	}
 
@@ -686,7 +699,8 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	 */
 	public readonly type = "TestObjectProviderWithVersionedLoad";
 	private _loaderContainerTracker = new LoaderContainerTracker();
-	private _logger: EventAndErrorTrackingLogger | undefined;
+	private _logger: ITelemetryBaseLogger | undefined;
+	private _tracker: EventAndErrorTrackingLogger | undefined;
 	private readonly _documentIdStrategy: IDocumentIdStrategy;
 	private _documentServiceFactory: IDocumentServiceFactory | undefined;
 	private _urlResolver: IUrlResolver | undefined;
@@ -720,16 +734,21 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	/**
 	 * {@inheritDoc ITestObjectProvider.logger}
 	 */
-	public get logger(): EventAndErrorTrackingLogger {
+	public get logger() {
 		if (this._logger === undefined) {
-			this._logger = new EventAndErrorTrackingLogger(
-				createChildLogger({
-					logger: getTestLogger?.(),
-					properties: this.telemetryProps,
-				}),
-			);
+			this._tracker = new EventAndErrorTrackingLogger(getTestLogger?.());
+			this._logger = createChildLogger({
+				logger: this._tracker,
+				properties: this.telemetryProps,
+			});
 		}
 		return this._logger;
+	}
+
+	public get tracker() {
+		void this.logger;
+		assert(this._tracker !== undefined, "should be initialized");
+		return this._tracker;
 	}
 
 	/**
@@ -990,10 +1009,11 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		this.useCreateApi = true;
 		this._loaderContainerTracker.reset();
 		this._logger = undefined;
+		this._tracker = undefined;
 		this._documentServiceFactory = undefined;
 		this._urlResolver = undefined;
 		this._documentIdStrategy.reset();
-		const logError = getUnexpectedLogErrorException(this._logger);
+		const logError = getUnexpectedLogErrorException(this._tracker);
 		if (logError) {
 			throw logError;
 		}
