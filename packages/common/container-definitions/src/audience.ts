@@ -7,7 +7,7 @@ import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 import type { IClient } from "@fluidframework/protocol-definitions";
 /**
  * Manages the state and the members for {@link IAudience}
- * @alpha
+ * @internal
  */
 export interface IAudienceOwner extends IAudience {
 	/**
@@ -23,7 +23,7 @@ export interface IAudienceOwner extends IAudience {
 
 	/**
 	 * Notifies Audience that current clientId has changed.
-	 * See IAudience.currentClientId and IAudienceEvents' "clientIdChanged" event for more details
+	 * See {@link IAudience.currentClientId} and {@link IAudienceEvents}'s "clientIdChanged" event for more details.
 	 */
 	setCurrentClientId(clientId: string | undefined): void;
 }
@@ -75,23 +75,22 @@ export interface IAudience extends IEventProvider<IAudienceEvents> {
 	getMember(clientId: string): IClient | undefined;
 
 	/**
-	 * Returns this client's clientId, if it exists. undefined if this client never connected to ordering service.
-	 * Whenever this property changes, "clientIdChanged" event is fired on this object.
-	 * Wheeever clients loses connection and reconnects, it will raise "connected" event at various API surfaces.
+	 * Returns this client's clientId. undefined if this client has never connected to the ordering service.
+	 * @experimental
+	 * 
+	 * @remarks
+	 * This API is experimental.
 	 *
-	 * It's guranteed that such events and change of current clientId happens at the same time (syncronously, one after another).
-	 * That said, at the moment this is experimental API. It depends on some experimental settings that might change in the future.
-	 * The claim about clientId being changed simulteniously with raising "connected" event and being up-to-date only valid when
-	 * this API is consumed at loader / hosing layer. Container Runtime layer will get these changes delayed, as loader layer changes
-	 * propagate slowly through the system, and thus newer runtimes will continue to observe old (non-synchronized) behavior when paired
-	 * with old loader
+	 * Whenever this property changes, the "clientIdChanged" event is fired on this object.
+	 * It's guaranteed that the "connected" event that fires at various layers, "clientIdChanged" event on this object, and the change of current clientId, all happen at the same time (synchronously, one after another).
+	 * That said, at the moment this is an experimental API. It depends on some experimental settings that might change in the future.
+	 * And application that deploy loader & container runtime bundles independently will see new (synchronized) behavior only when loader changes are deployed.
+	 * Newer runtimes will continue to observe old (non-synchronized) behavior when paired with older loader code.
 	 *
-	 * While it's marked as experimental, this promise could be broken, and consumers  could experience current clientId being changed
+	 * While it's marked as experimental, this promise could be broken, and consumers could experience current clientId being changed
 	 * (and "clientIdChanged" event fired) while (only applicable for "read" kind of connections)
 	 * 1. Such clientId is not present in Audience
 	 * 2. Client is not fully caught up
-	 *
-	 * @experimental
 	 */
 	readonly currentClientId: string | undefined;
 }

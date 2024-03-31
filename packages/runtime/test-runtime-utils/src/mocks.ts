@@ -684,7 +684,7 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export class MockAudience extends TypedEventEmitter<IAudienceEvents> implements IAudienceOwner {
 	private readonly audienceMembers: Map<string, IClient>;

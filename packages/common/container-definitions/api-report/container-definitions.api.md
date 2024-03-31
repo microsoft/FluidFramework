@@ -83,7 +83,7 @@ export interface IAudienceEvents extends IEvent {
     (event: "addMember" | "removeMember" | "clientIdChanged", listener: (clientId: string, client: IClient) => void): void;
 }
 
-// @alpha
+// @internal
 export interface IAudienceOwner extends IAudience {
     addMember(clientId: string, details: IClient): void;
     removeMember(clientId: string): boolean;

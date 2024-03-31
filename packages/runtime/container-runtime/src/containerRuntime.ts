@@ -1713,7 +1713,7 @@ export class ContainerRuntime
 			this.on("connected", () => {
 				const clientId = this.clientId;
 				assert(clientId !== undefined, "can't be undefined");
-				(audience as any as TypedEventEmitter<IAudienceEvents>).emit(
+				(audience as unknown as TypedEventEmitter<IAudienceEvents>).emit(
 					"clientIdChanged",
 					clientId,
 					audience.getMember(clientId),

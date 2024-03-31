@@ -49,12 +49,12 @@ import {
 	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import {
-	MockAudience,
 	MockDeltaManager,
 	MockFluidDataStoreRuntime,
 	MockQuorumClients,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
+import { MockAudience } from "@fluidframework/test-runtime-utils/internal";
 import { SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";
