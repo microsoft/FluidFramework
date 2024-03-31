@@ -199,7 +199,7 @@ class FluidImportManager {
 						otherProspects.insertAfterIndex = true;
 					}
 					// Remove the missing as it is now in place.
-					this.missingImports.splice(this.missingImports.indexOf(replacement));
+					this.missingImports.splice(this.missingImports.indexOf(replacement), 1);
 					// We could remove the existing entry now, but that would
 					// alter the array being iterated. No further meaningful use is expected.
 					// The later removal check will skip as it now has imports.
