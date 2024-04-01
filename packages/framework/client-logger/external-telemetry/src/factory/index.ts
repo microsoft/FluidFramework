@@ -19,7 +19,7 @@ export interface TelemetryConfig {
 	/**
 	 * The container whose events should be monitored, transformed into external telemetry, and send to an {@link ITelemetryConsumer}.
 	 */
-	container: IFluidContainer;
+	container?: IFluidContainer;
 	/**
 	 * Consumers for produced external telemetry.
 	 */
