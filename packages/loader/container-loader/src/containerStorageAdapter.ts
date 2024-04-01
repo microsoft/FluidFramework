@@ -29,6 +29,7 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IDetachedBlobStorage } from "./loader.js";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService.js";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService.js";
+import type { ISerializedStateManagerDocumentStorageService } from "./serializedStateManager.js";
 
 /**
  * Stringified blobs from a summary/snapshot tree.
@@ -42,7 +43,9 @@ export interface ISerializableBlobContents {
  * This class wraps the actual storage and make sure no wrong apis are called according to
  * container attach state.
  */
-export class ContainerStorageAdapter implements IDocumentStorageService, IDisposable {
+export class ContainerStorageAdapter
+	implements ISerializedStateManagerDocumentStorageService, IDisposable
+{
 	private _storageService: IDocumentStorageService & Partial<IDisposable>;
 
 	private _summarizeProtocolTree: boolean | undefined;

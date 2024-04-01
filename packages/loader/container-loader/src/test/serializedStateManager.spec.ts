@@ -13,7 +13,6 @@ import {
 import { Deferred } from "@fluidframework/core-utils";
 import {
 	FetchSource,
-	IDocumentStorageService,
 	IResolvedUrl,
 	ISnapshot,
 	ISnapshotFetchOptions,
@@ -26,13 +25,12 @@ import {
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { type IPendingContainerState, SerializedStateManager } from "../serializedStateManager.js";
-import { failProxy } from "./failProxy.js";
-
-type ISerializedStateManagerDocumentStorageService = Pick<
-	IDocumentStorageService,
-	"getSnapshot" | "getSnapshotTree" | "getVersions" | "readBlob"
->;
+import {
+	type IPendingContainerState,
+	SerializedStateManager,
+	type ISerializedStateManagerDocumentStorageService,
+} from "../serializedStateManager.js";
+import { failSometimeProxy } from "./failProxy.js";
 
 const snapshot = {
 	id: "fromStorage",
@@ -56,6 +54,7 @@ const pendingLocalState: IPendingContainerState = {
 	pendingRuntimeState: {},
 	savedOps: [],
 	url: "fluid",
+	loadedGroupIdSnapshots: {},
 };
 
 class MockStorageAdapter implements ISerializedStateManagerDocumentStorageService {
@@ -68,6 +67,9 @@ class MockStorageAdapter implements ISerializedStateManagerDocumentStorageServic
 			"attributesId",
 			stringToBuffer(`{"minimumSequenceNumber" : 0, "sequenceNumber": 0}`, "utf8"),
 		);
+	}
+	public get loadedGroupIdSnapshots(): Record<string, ISnapshot> {
+		return {};
 	}
 
 	public async getSnapshot(
@@ -188,7 +190,9 @@ describe("serializedStateManager", () => {
 		const serializedStateManager = new SerializedStateManager(
 			undefined,
 			logger.toTelemetryLogger(),
-			failProxy(), // no calls to storage expected
+			failSometimeProxy<ISerializedStateManagerDocumentStorageService>({
+				loadedGroupIdSnapshots: {},
+			}), // no calls to storage expected
 			true,
 		);
 		// equivalent to attach

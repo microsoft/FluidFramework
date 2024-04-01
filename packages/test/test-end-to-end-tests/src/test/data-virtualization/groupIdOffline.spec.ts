@@ -22,9 +22,9 @@ import {
 } from "@fluidframework/test-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
-import type { IContainerExperimental } from "@fluidframework/container-loader";
-import { LoaderHeader } from "@fluidframework/container-definitions";
-import { FetchSource } from "@fluidframework/driver-definitions";
+import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { FetchSource } from "@fluidframework/driver-definitions/internal";
 import {
 	ISequencedDocumentMessage,
 	type IDocumentAttributes,

@@ -27,11 +27,7 @@ import {
 	UsageError,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import {
-	ISerializableBlobContents,
-	getBlobContentsFromTree,
-	type ContainerStorageAdapter,
-} from "./containerStorageAdapter.js";
+import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter.js";
 import { getDocumentAttributes } from "./utils.js";
 
 export interface SnapshotWithBlobs {
@@ -79,6 +75,11 @@ interface SnapshotInfo extends SnapshotWithBlobs {
 	snapshotSequenceNumber: number;
 }
 
+export type ISerializedStateManagerDocumentStorageService = Pick<
+	IDocumentStorageService,
+	"getSnapshot" | "getSnapshotTree" | "getVersions" | "readBlob"
+> & { loadedGroupIdSnapshots: Record<string, ISnapshot> };
+
 export class SerializedStateManager {
 	private readonly processedOps: ISequencedDocumentMessage[] = [];
 	private snapshot: SnapshotWithBlobs | undefined;
@@ -89,7 +90,7 @@ export class SerializedStateManager {
 	constructor(
 		private readonly pendingLocalState: IPendingContainerState | undefined,
 		subLogger: ITelemetryLoggerExt,
-		private readonly storageAdapter: ContainerStorageAdapter,
+		private readonly storageAdapter: ISerializedStateManagerDocumentStorageService,
 		private readonly _offlineLoadEnabled: boolean,
 		private readonly newSnapshotFetched?: () => void,
 	) {
