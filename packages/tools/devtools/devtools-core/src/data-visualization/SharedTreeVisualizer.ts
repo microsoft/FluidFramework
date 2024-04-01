@@ -177,9 +177,6 @@ function visualizeObjectNodeStoredSchema(
 
 	const fields: Record<string | number, VisualSharedTreeNode> = {};
 
-	// If the child node is a leaf node, get the allowed types from the parent schema before entering {@link visualizeSharedTreeNodeBySchema}.
-	let leafAllowedTypes;
-
 	// {@link EmptyKey} indicates an array field (e.g., `schemabuilder.array()`).
 	// Hides level of indirection by omitting the empty key in the visual output.
 	if (
@@ -190,26 +187,30 @@ function visualizeObjectNodeStoredSchema(
 
 		for (let i = 0; i < children.length; i++) {
 			const childSchema = contentSnapshot.schema.nodeSchema.get(children[i].type);
+			// If the child node is a leaf node, get the allowed types from the parent schema before entering {@link visualizeSharedTreeNodeBySchema}.
+			let leafAllowedTypes: string | undefined;
 
 			// If the node within the array is a leaf node, get the allowed types from the parent schema.
 			if (childSchema instanceof LeafNodeStoredSchema) {
-				const parentSchema = schema.objectNodeFields;
+				const leafSchema = schema.objectNodeFields.get(EmptyKey);
 
-				for (const [, leafSchema] of parentSchema) {
-					leafAllowedTypes = getLeafAllowedTypes(leafSchema);
+				if (leafSchema === undefined) {
+					throw new TypeError("Leaf schema should not be undefined.");
 				}
-			}
 
+				leafAllowedTypes = getLeafAllowedTypes(leafSchema);
+			}
 			fields[i] = visualizeSharedTreeNodeBySchema(
 				children[i],
 				childSchema,
 				contentSnapshot,
-				leafAllowedTypes as string,
+				leafAllowedTypes,
 			);
 		}
 	} else {
 		for (const [fieldKey, childField] of Object.entries(treeFields)) {
 			const childSchema = contentSnapshot.schema.nodeSchema.get(childField[0].type);
+			let leafAllowedTypes: string | undefined;
 
 			// If the child field is a leaf node, get the allowed types from the parent schema.
 			if (childSchema instanceof LeafNodeStoredSchema) {
@@ -226,7 +227,7 @@ function visualizeObjectNodeStoredSchema(
 				childField[0],
 				childSchema,
 				contentSnapshot,
-				leafAllowedTypes as string,
+				leafAllowedTypes,
 			);
 		}
 	}
