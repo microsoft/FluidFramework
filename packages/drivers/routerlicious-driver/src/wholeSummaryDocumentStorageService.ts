@@ -4,13 +4,13 @@
  */
 
 import { Uint8ArrayToString, performance, stringToBuffer } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { getW3CData, promiseRaceWithWinner } from "@fluidframework/driver-base";
 import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	ICreateBlobResponse,
 	ISnapshotTree,

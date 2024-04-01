@@ -14,14 +14,14 @@ import {
 	IEventProvider,
 	type ITelemetryBaseEvent,
 	ITelemetryBaseProperties,
-	IThrottlingWarning,
 } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
-	DriverErrorTypes,
 	IDocumentDeltaStorageService,
 	IDocumentService,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { MessageType2, NonRetryableError, isRuntimeMessage } from "@fluidframework/driver-utils";
 import {
 	ConnectionMode,

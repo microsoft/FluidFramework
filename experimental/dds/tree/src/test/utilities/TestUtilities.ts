@@ -6,17 +6,17 @@
 import { resolve } from 'path';
 
 import { LocalServerTestDriver } from '@fluid-private/test-drivers';
+import { AttachState } from '@fluidframework/container-definitions';
 import {
-	AttachState,
 	type IContainer,
 	type IFluidCodeDetails,
 	type IHostLoader,
-} from '@fluidframework/container-definitions';
-import { IContainerExperimental, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
-import { DefaultSummaryConfiguration, SummaryCollection } from '@fluidframework/container-runtime';
+} from '@fluidframework/container-definitions/internal';
+import { IContainerExperimental, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader/internal';
+import { DefaultSummaryConfiguration, SummaryCollection } from '@fluidframework/container-runtime/internal';
 import type { ConfigTypes, IConfigProviderBase, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { assert } from '@fluidframework/core-utils';
+import { assert } from '@fluidframework/core-utils/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { createChildLogger } from '@fluidframework/telemetry-utils';
 import {

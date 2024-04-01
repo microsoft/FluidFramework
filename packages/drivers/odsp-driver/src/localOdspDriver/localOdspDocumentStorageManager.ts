@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	ISnapshot,
 	ISnapshotFetchOptions,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";

@@ -27,8 +27,8 @@ import {
 	createDevtoolsLogger,
 	initializeDevtools,
 } from "@fluidframework/devtools-core";
-import { type SharedMatrix } from "@fluidframework/matrix";
-import { type SharedString } from "@fluidframework/sequence";
+import { type SharedMatrix } from "@fluidframework/matrix/internal";
+import { type SharedString } from "@fluidframework/sequence/internal";
 import React from "react";
 
 import {

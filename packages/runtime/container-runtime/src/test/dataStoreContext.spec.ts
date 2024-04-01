@@ -6,7 +6,8 @@
 import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { AttachState, ContainerErrorTypes } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
+import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IFluidHandleContext,
@@ -14,15 +15,16 @@ import {
 	Tagged,
 	TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
-import { LazyPromise } from "@fluidframework/core-utils";
-import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { LazyPromise } from "@fluidframework/core-utils/internal";
+import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore/internal";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	IBlob,
 	ISnapshotTree,
 	ISummaryBlob,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
 	CreateChildSummarizerNodeFn,
 	CreateSummarizerNodeSource,
@@ -31,11 +33,10 @@ import {
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
 	IFluidParentContext,
-	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 	SummarizeInternalFn,
 	channelsTreeName,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { GCDataBuilder, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
 	MockLogger,

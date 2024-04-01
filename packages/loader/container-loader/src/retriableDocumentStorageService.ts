@@ -4,7 +4,7 @@
  */
 
 import { IDisposable } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	FetchSource,
 	IDocumentStorageService,
@@ -12,7 +12,7 @@ import {
 	ISnapshot,
 	ISnapshotFetchOptions,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { runWithRetry } from "@fluidframework/driver-utils";
 import {
 	ICreateBlobResponse,

@@ -12,15 +12,15 @@ import {
 	gitHashFile,
 } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
+import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
 	IErrorBase,
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
-import { Deferred } from "@fluidframework/core-utils";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { Deferred } from "@fluidframework/core-utils/internal";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	IClientDetails,
 	ISequencedDocumentMessage,

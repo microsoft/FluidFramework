@@ -11,10 +11,10 @@ import {
 	describeCompat,
 	itExpects,
 } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
-import { ContainerRuntime, ISummarizer } from "@fluidframework/container-runtime";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ContainerRuntime, ISummarizer } from "@fluidframework/container-runtime/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { channelsTreeName } from "@fluidframework/runtime-definitions";
+import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestObjectProvider,

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { ISnapshot } from "@fluidframework/driver-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError } from "@fluidframework/driver-utils";
 import {
 	IFileEntry,

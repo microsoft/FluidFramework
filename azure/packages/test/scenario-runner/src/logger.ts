@@ -8,7 +8,7 @@ import fs from "node:fs";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEvent, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
-import { assert, LazyPromise } from "@fluidframework/core-utils";
+import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import { type ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import type { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 

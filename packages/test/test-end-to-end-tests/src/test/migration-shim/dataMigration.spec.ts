@@ -17,8 +17,8 @@ import {
 	type TraitLabel,
 } from "@fluid-experimental/tree";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { LoaderHeader } from "@fluidframework/container-definitions";
-import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { type IChannel } from "@fluidframework/datastore-definitions";
 import {

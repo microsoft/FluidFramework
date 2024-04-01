@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { TAnySchema, Type } from "@sinclair/typebox";
 
 import { DiscriminatedUnionDispatcher, IJsonCodec, makeCodecFamily } from "../../codec/index.js";

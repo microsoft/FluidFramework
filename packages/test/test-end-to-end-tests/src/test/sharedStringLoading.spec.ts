@@ -6,12 +6,12 @@
 import { strict as assert } from "assert";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { Loader } from "@fluidframework/container-loader";
+import { Loader } from "@fluidframework/container-loader/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError, readAndParse } from "@fluidframework/driver-utils";
-import { ReferenceType, TextSegment } from "@fluidframework/merge-tree";
-import type { SharedString } from "@fluidframework/sequence";
+import { ReferenceType, TextSegment } from "@fluidframework/merge-tree/internal";
+import type { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,

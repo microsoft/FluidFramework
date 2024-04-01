@@ -18,7 +18,7 @@ import {
 	SequenceDeltaEvent,
 	SharedString,
 	createEndpointIndex,
-} from "@fluidframework/sequence";
+} from "@fluidframework/sequence/internal";
 
 import { CellRange } from "./cellrange.js";
 import { TableDocumentType } from "./componentTypes.js";

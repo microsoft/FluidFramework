@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IDocumentService, IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IDocumentService, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/driver-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";

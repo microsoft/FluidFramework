@@ -4,7 +4,7 @@
  */
 
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { NonRetryableError, runWithRetry } from "@fluidframework/driver-utils";
 import {
 	IOdspUrlParts,

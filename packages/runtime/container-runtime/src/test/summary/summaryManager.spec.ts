@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import { Deferred } from "@fluidframework/core-utils";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,

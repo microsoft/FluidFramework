@@ -5,15 +5,13 @@
 
 import { strict as assert } from "assert";
 
-import {
-	ContainerErrorTypes,
-	ICriticalContainerError,
-} from "@fluidframework/container-definitions";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import { IErrorBase, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
-import { Timer } from "@fluidframework/core-utils";
+import { Timer } from "@fluidframework/core-utils/internal";
 import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
-	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
 	channelsTreeName,
@@ -21,7 +19,7 @@ import {
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	MockLogger,
 	MonitoringContext,

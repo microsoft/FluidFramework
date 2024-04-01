@@ -10,14 +10,13 @@ import {
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions";
 import {
-	DriverErrorTypes,
-	IAnyDriverError,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 	IDocumentService,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	calculateMaxWaitTime,
 	canRetryOnError,

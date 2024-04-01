@@ -5,7 +5,7 @@
 
 /* eslint-disable import/no-deprecated */
 
-import { Client, RedBlackTree } from "@fluidframework/merge-tree";
+import { Client, RedBlackTree } from "@fluidframework/merge-tree/internal";
 
 import {
 	IIntervalHelpers,

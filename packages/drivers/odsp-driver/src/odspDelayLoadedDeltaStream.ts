@@ -4,13 +4,13 @@
  */
 
 import { performance } from "@fluid-internal/client-utils";
-import { ISignalEnvelope } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentDeltaConnection,
 	IDocumentServicePolicies,
 	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	DeltaStreamConnectionForbiddenError,
 	NonRetryableError,

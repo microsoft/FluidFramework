@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { Deferred } from "@fluidframework/core-utils";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import {
 	IEntry,
 	IOdspResolvedUrl,

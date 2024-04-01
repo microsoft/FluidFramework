@@ -10,10 +10,13 @@ import {
 	TestDataObjectType,
 	describeCompat,
 } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
-import { ISummarizer } from "@fluidframework/container-runtime";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ISummarizer } from "@fluidframework/container-runtime/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { IContainerRuntimeBase, channelsTreeName } from "@fluidframework/runtime-definitions";
+import {
+	IContainerRuntimeBase,
+	channelsTreeName,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestObjectProvider,
 	createSummarizer,

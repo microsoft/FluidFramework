@@ -5,8 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import { IThrottlingWarning } from "@fluidframework/core-interfaces";
-import { IAuthorizationError, IGenericNetworkError } from "@fluidframework/driver-definitions";
+import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
+import {
+	IAuthorizationError,
+	IGenericNetworkError,
+} from "@fluidframework/driver-definitions/internal";
 import { type AuthorizationError, NonRetryableError } from "@fluidframework/driver-utils";
 import {
 	createOdspNetworkError,

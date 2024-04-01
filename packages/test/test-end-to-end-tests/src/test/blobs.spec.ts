@@ -17,17 +17,17 @@ import {
 	CompressionAlgorithms,
 	ContainerMessageType,
 	DefaultSummaryConfiguration,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
 	IErrorBase,
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
-import { Deferred } from "@fluidframework/core-utils";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
-import { ReferenceType } from "@fluidframework/merge-tree";
-import type { SharedString } from "@fluidframework/sequence";
+import { Deferred } from "@fluidframework/core-utils/internal";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import { ReferenceType } from "@fluidframework/merge-tree/internal";
+import type { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ChannelFactoryRegistry,
 	ITestContainerConfig,

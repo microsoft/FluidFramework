@@ -6,27 +6,27 @@
 import { strict as assert } from "assert";
 
 import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
 	DefaultSummaryConfiguration,
 	IContainerRuntimeOptions,
 	ISummaryConfiguration,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import {
 	ISummarizeEventProps,
 	defaultMaxAttemptsForSubmitFailures,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/test/summary";
 import {
-	FluidErrorTypes,
 	IFluidHandle,
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import type { FluidDataStoreRuntime } from "@fluidframework/datastore";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
+import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestObjectProvider,

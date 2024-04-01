@@ -20,11 +20,11 @@ import {
 import { type EditLog } from "@fluid-experimental/tree/test/EditLog";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { LoaderHeader } from "@fluidframework/container-definitions";
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	type ContainerRuntime,
 	type IContainerRuntimeOptions,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { type IChannel } from "@fluidframework/datastore-definitions";
 import {

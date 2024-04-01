@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	FetchSource,
 	FiveDaysMs,
@@ -13,7 +13,7 @@ import {
 	ISnapshotFetchOptions,
 	ISummaryContext,
 	LoaderCachingPolicy,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { maximumCacheDurationMs } from "@fluidframework/odsp-driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 import { IConfigProvider } from "@fluidframework/telemetry-utils";

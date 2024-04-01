@@ -5,10 +5,10 @@
 
 import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IContainer } from "@fluidframework/container-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import { SharedString } from "@fluidframework/sequence";
+import { SharedString } from "@fluidframework/sequence/internal";
 
 export interface ICollaborativeTextAppModel {
 	readonly collaborativeText: CollaborativeText;

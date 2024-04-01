@@ -4,12 +4,12 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { PromiseCache } from "@fluidframework/core-utils";
+import { PromiseCache } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	getDocAttributesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,

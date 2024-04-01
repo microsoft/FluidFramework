@@ -5,9 +5,9 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert, Deferred } from "@fluidframework/core-utils";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
-	DriverErrorTypes,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 	IDocumentDeltaStorageService,
@@ -17,7 +17,7 @@ import {
 	IDocumentStorageService,
 	IResolvedUrl,
 	ISnapshotFetchOptions,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	IClient,
 	IDocumentMessage,

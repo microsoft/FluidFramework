@@ -5,12 +5,12 @@
 
 import { fromBase64ToUtf8 } from "@fluid-internal/client-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IContainerPackageInfo,
 	IResolvedUrl,
 	IUrlResolver,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	OdspDriverUrlResolver,
 	createOdspUrl,

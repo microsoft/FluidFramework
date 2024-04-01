@@ -6,7 +6,7 @@
 
 import { DataObject } from '@fluidframework/aqueduct';
 import { DataObjectFactory } from '@fluidframework/aqueduct';
-import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
+import { IContainerRuntime } from '@fluidframework/container-runtime-definitions/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IUser } from '@fluidframework/protocol-definitions';
 import { SharedSummaryBlock } from '@fluidframework/shared-summary-block';

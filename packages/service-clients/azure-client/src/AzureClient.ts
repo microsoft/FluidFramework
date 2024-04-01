@@ -3,27 +3,26 @@
  * Licensed under the MIT License.
  */
 
+import { AttachState } from "@fluidframework/container-definitions";
 import {
-	AttachState,
 	type IContainer,
 	type IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
+} from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
 import { type FluidObject, type IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type IDocumentServiceFactory,
 	type IUrlResolver,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { applyStorageCompression } from "@fluidframework/driver-utils";
+import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import {
-	type ContainerSchema,
-	type IFluidContainer,
 	type IRootDataObject,
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
-} from "@fluidframework/fluid-static";
+} from "@fluidframework/fluid-static/internal";
 import { type IClient, SummaryType } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils";
@@ -321,6 +320,7 @@ export class AzureClient {
 		 * See {@link FluidContainer.attach}
 		 */
 		const attach = async (): Promise<string> => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- AB#7608
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state");
 			}

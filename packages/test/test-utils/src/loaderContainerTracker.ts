@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IContainer, IDeltaQueue, IHostLoader } from "@fluidframework/container-definitions";
+import { IDeltaQueue } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import {
 	IContainerCreateProps,
 	IContainerLoadProps,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-loader/test/container";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { canBeCoalescedByService } from "@fluidframework/driver-utils";
 import {
 	IDocumentMessage,
