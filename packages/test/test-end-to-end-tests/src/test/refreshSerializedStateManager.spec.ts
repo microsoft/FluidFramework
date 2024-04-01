@@ -71,7 +71,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 
 	it("snapshot was refreshed", async () => {
 		const provider = getTestObjectProvider();
-		const deferred = new Deferred<void>();
+		const getLatestSnapshotInfoP = new Deferred<void>();
 		const testContainerConfig = {
 			fluidDataObjectType: DataObjectFactoryType.Test,
 			registry,
@@ -97,7 +97,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 								event.newFirstProcessedOpSequenceNumber ?? 0 > 1,
 								"processed ops were not refreshed",
 							);
-							deferred.resolve();
+							getLatestSnapshotInfoP.resolve();
 						}
 					},
 				}),
@@ -126,7 +126,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		assert(/sequenceNumber[^\w,}]*0/.test(pendingOps));
 
 		const container1: IContainerExperimental = await loader.resolve({ url }, pendingOps);
-		await deferred.promise;
+		await getLatestSnapshotInfoP.promise;
 		const pendingOps2 = await container1.closeAndGetPendingLocalState?.();
 		const container2: IContainerExperimental = await loader.resolve({ url }, pendingOps2);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
@@ -138,7 +138,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 
 	it("snapshot was not refreshed", async () => {
 		const provider = getTestObjectProvider();
-		const deferred = new Deferred<void>();
+		const getLatestSnapshotInfoP = new Deferred<void>();
 		const testContainerConfig = {
 			fluidDataObjectType: DataObjectFactoryType.Test,
 			registry,
@@ -162,7 +162,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 								1,
 								"first sequenced op was not saved",
 							);
-							deferred.resolve();
+							getLatestSnapshotInfoP.resolve();
 						}
 					},
 				}),
@@ -191,7 +191,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		assert(/sequenceNumber[^\w,}]*0/.test(pendingOps));
 
 		const container1: IContainerExperimental = await loader.resolve({ url }, pendingOps);
-		await deferred.promise;
+		await getLatestSnapshotInfoP.promise;
 		const pendingOps2 = await container1.closeAndGetPendingLocalState?.();
 		const container2: IContainerExperimental = await loader.resolve({ url }, pendingOps2);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
