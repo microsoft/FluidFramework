@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import cloneDeep from "lodash";
+import { cloneDeep } from "lodash";
 
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
