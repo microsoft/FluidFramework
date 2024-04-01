@@ -19,6 +19,7 @@ import {
 	normalizeError,
 	wrapError,
 } from "./errorLogging.js";
+import { ITelemetryPropertiesExt } from "./telemetryTypes.js";
 import { IFluidErrorBase } from "./fluidErrorBase.js";
 
 /**
@@ -124,7 +125,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 		errorMessage: string,
 		dataProcessingCodepath: string,
 		sequencedMessage?: ISequencedDocumentMessage,
-		props: ITelemetryBaseProperties = {},
+		props: ITelemetryPropertiesExt = {},
 	): IFluidErrorBase {
 		const dataProcessingError = DataProcessingError.wrapIfUnrecognized(
 			errorMessage,

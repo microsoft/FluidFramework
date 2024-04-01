@@ -19,7 +19,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
-import { ISharedDirectory } from "@fluidframework/map";
+import { ISharedDirectory } from "@fluidframework/map/internal";
 import {
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
@@ -173,11 +173,15 @@ function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntime
 	function convertRegistry(registry: ChannelFactoryRegistry = []): ChannelFactoryRegistry {
 		const oldRegistry: [string | undefined, IChannelFactory][] = [];
 		for (const [key, factory] of registry) {
-			const oldFactory = registryMapping[factory.type];
-			if (oldFactory === undefined) {
-				throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
+			if (factory.type === "https://graph.microsoft.com/types/tree") {
+				oldRegistry.push([key, factory]);
+			} else {
+				const oldFactory = registryMapping[factory.type];
+				if (oldFactory === undefined) {
+					throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
+				}
+				oldRegistry.push([key, oldFactory]);
 			}
-			oldRegistry.push([key, oldFactory]);
 		}
 
 		return oldRegistry;

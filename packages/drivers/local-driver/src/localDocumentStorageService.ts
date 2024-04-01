@@ -17,7 +17,7 @@ import {
 	type ISnapshot,
 	type ISnapshotFetchOptions,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
 import {
 	ICreateBlobResponse,
