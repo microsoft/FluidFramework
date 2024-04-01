@@ -12,8 +12,13 @@ import {
 	itSkipsFailureOnSpecificDrivers,
 } from "@fluid-private/test-version-utils";
 import type { SharedCell } from "@fluidframework/cell";
-import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
-import { ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
+import {
+	IContainer,
+	IHostLoader,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader";
+import { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import {
 	CompressionAlgorithms,
 	ContainerRuntime,
@@ -28,8 +33,9 @@ import {
 } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils";
 import type { SharedCounter } from "@fluidframework/counter";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
-import type { ISharedDirectory, ISharedMap, SharedDirectory } from "@fluidframework/map";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import type { ISharedMap } from "@fluidframework/map";
+import type { ISharedDirectory, SharedDirectory } from "@fluidframework/map/internal";
 import {
 	ReferenceType,
 	reservedMarkerIdKey,
@@ -51,6 +57,7 @@ import {
 import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
 import { ISharedTree, SharedTreeFactory } from "@fluidframework/tree/internal";
 import { wrapObjectAndOverride } from "../mocking.js";
+
 const mapId = "map";
 const stringId = "sharedStringKey";
 const cellId = "cellKey";

@@ -370,13 +370,8 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 				stashableClientProbability: undefined,
 			},
 			defaultTestCount: 200,
-			// The seeds below fail only when rebaseProbability is non-zero ADO:6044
-			skip: [
-				13, 40, 43, 55, 66, 93, 94, 107, 110, 123, 136, 148, 160, 163, 168, 172, 177, 191,
-				196,
-			],
 			// Uncomment this line to replay a specific seed from its failure file:
-			// replay: 21,
+			// replay: 0,
 			saveFailures: {
 				directory: dirPath.join(_dirname, "../../../src/test/mocha/results/1"),
 			},
@@ -432,8 +427,6 @@ describe("SharedDirectory fuzz", () => {
 				stashableClientProbability: undefined,
 			},
 			defaultTestCount: 200,
-			// The seeds below fail only when rebaseProbability is non-zero ADO:6044
-			skip: [73],
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 0,
 			saveFailures: {

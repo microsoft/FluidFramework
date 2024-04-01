@@ -9,7 +9,7 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { DirectoryFactory } from "@fluidframework/map";
+import { DirectoryFactory } from "@fluidframework/map/internal";
 import { SharedStringFactory } from "@fluidframework/sequence";
 
 export function apisToBundle() {

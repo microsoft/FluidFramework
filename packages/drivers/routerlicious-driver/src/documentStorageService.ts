@@ -7,7 +7,7 @@ import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	LoaderCachingPolicy,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	DocumentStorageServiceProxy,
 	PrefetchDocumentStorageService,
