@@ -1539,6 +1539,116 @@ describe("Editing", () => {
 			expectJsonTree(tree, expectedState);
 		});
 
+		describe("undo semantics", () => {
+			it("undoing [move foo -> bar] returns the content to foo even if it was concurrently moved to baz before that", () => {
+				const fooField: FieldUpPath = { parent: rootNode, field: brand("foo") };
+				const barField: FieldUpPath = { parent: rootNode, field: brand("bar") };
+				const bazField: FieldUpPath = { parent: rootNode, field: brand("baz") };
+
+				const tree1 = makeTreeFromJson([{ foo: "X" }]);
+				const tree2 = tree1.fork();
+
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree1.events);
+				tree1.editor.move(fooField, 0, 1, barField, 0);
+				expectJsonTree(tree1, [{ bar: "X" }]);
+
+				tree2.editor.move(fooField, 0, 1, bazField, 0);
+				expectJsonTree(tree2, [{ baz: "X" }]);
+
+				tree1.merge(tree2, false);
+				tree2.rebaseOnto(tree1);
+				expectJsonTree([tree1, tree2], [{ baz: "X" }]);
+
+				undoStack.pop()?.revert();
+				expectJsonTree(tree1, [{ foo: "X" }]);
+
+				tree1.merge(tree2, false);
+				tree2.rebaseOnto(tree1);
+				expectJsonTree([tree1, tree2], [{ foo: "X" }]);
+				unsubscribe();
+			});
+
+			it("undoing [remove from foo] returns the content to foo even if it was concurrently moved to bar before that", () => {
+				const fooField: FieldUpPath = { parent: rootNode, field: brand("foo") };
+				const barField: FieldUpPath = { parent: rootNode, field: brand("bar") };
+
+				const tree1 = makeTreeFromJson([{ foo: "X" }]);
+				const tree2 = tree1.fork();
+
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree1.events);
+				tree1.editor.sequenceField(fooField).remove(0, 1);
+				expectJsonTree(tree1, [{}]);
+
+				tree2.editor.move(fooField, 0, 1, barField, 0);
+				expectJsonTree(tree2, [{ bar: "X" }]);
+
+				tree1.merge(tree2, false);
+				tree2.rebaseOnto(tree1);
+				expectJsonTree([tree1, tree2], [{ bar: "X" }]);
+
+				undoStack.pop()?.revert();
+				expectJsonTree(tree1, [{ foo: "X" }]);
+
+				tree1.merge(tree2, false);
+				tree2.rebaseOnto(tree1);
+				expectJsonTree([tree1, tree2], [{ foo: "X" }]);
+				unsubscribe();
+			});
+
+			it("undoing [remove from foo] returns the content to foo even if it was concurrently removed before that", () => {
+				const fooField: FieldUpPath = { parent: rootNode, field: brand("foo") };
+
+				const tree1 = makeTreeFromJson([{ foo: "X" }]);
+				const tree2 = tree1.fork();
+
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree1.events);
+				tree1.editor.sequenceField(fooField).remove(0, 1);
+				expectJsonTree(tree1, [{}]);
+
+				tree2.editor.sequenceField(fooField).remove(0, 1);
+				expectJsonTree(tree2, [{}]);
+
+				tree1.merge(tree2, false);
+				tree2.rebaseOnto(tree1);
+				expectJsonTree([tree1, tree2], [{}]);
+
+				undoStack.pop()?.revert();
+				expectJsonTree(tree1, [{ foo: "X" }]);
+
+				tree1.merge(tree2, false);
+				tree2.rebaseOnto(tree1);
+				expectJsonTree([tree1, tree2], [{ foo: "X" }]);
+				unsubscribe();
+			});
+
+			it("undoing [move foo -> bar] returns the content to foo even if it was concurrently removed before that", () => {
+				const fooField: FieldUpPath = { parent: rootNode, field: brand("foo") };
+				const barField: FieldUpPath = { parent: rootNode, field: brand("bar") };
+
+				const tree1 = makeTreeFromJson([{ foo: "X" }]);
+				const tree2 = tree1.fork();
+
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree1.events);
+				tree1.editor.move(fooField, 0, 1, barField, 0);
+				expectJsonTree(tree1, [{ bar: "X" }]);
+
+				tree2.editor.sequenceField(fooField).remove(0, 1);
+				expectJsonTree(tree2, [{}]);
+
+				tree1.merge(tree2, false);
+				tree2.rebaseOnto(tree1);
+				expectJsonTree([tree1, tree2], [{}]);
+
+				undoStack.pop()?.revert();
+				expectJsonTree(tree1, [{ foo: "X" }]);
+
+				tree1.merge(tree2, false);
+				tree2.rebaseOnto(tree1);
+				expectJsonTree([tree1, tree2], [{ foo: "X" }]);
+				unsubscribe();
+			});
+		});
+
 		it("can rebase a move over the deletion of the source parent", () => {
 			const tree = makeTreeFromJson({ src: ["A", "B"], dst: ["C", "D"] });
 			const childBranch = tree.fork();
@@ -2209,7 +2319,75 @@ describe("Editing", () => {
 			expectJsonTree(tree2, [{ foo: "A", bar: "B" }]);
 		});
 
-		it("undo restores the removed node even when that node has been concurrently changed", () => {
+		describe("undo semantics", () => {
+			it("undoing [replace A with B] restores A even if it was concurrently replaced with C before that", () => {
+				const tree1 = makeTreeFromJson(["A"]);
+				const tree2 = tree1.fork();
+
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree1.events);
+				tree1.editor.optionalField(rootField).set(singleJsonCursor("B"), false);
+
+				tree2.editor.optionalField(rootField).set(singleJsonCursor("C"), false);
+
+				tree1.merge(tree2, false);
+				tree2.rebaseOnto(tree1);
+				expectJsonTree([tree1, tree2], ["C"]);
+
+				undoStack.pop()?.revert();
+				expectJsonTree(tree1, ["A"]);
+
+				tree1.merge(tree2, false);
+				tree2.rebaseOnto(tree1);
+				expectJsonTree([tree1, tree2], ["A"]);
+				unsubscribe();
+			});
+
+			it("undoing [clear A] restores A even if it was concurrently replaced with C before that", () => {
+				const tree1 = makeTreeFromJson(["A"]);
+				const tree2 = tree1.fork();
+
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree1.events);
+				tree1.editor.optionalField(rootField).set(undefined, false);
+
+				tree2.editor.optionalField(rootField).set(singleJsonCursor("C"), false);
+
+				tree1.merge(tree2, false);
+				tree2.rebaseOnto(tree1);
+				expectJsonTree([tree1, tree2], ["C"]);
+
+				undoStack.pop()?.revert();
+				expectJsonTree(tree1, ["A"]);
+
+				tree1.merge(tree2, false);
+				tree2.rebaseOnto(tree1);
+				expectJsonTree([tree1, tree2], ["A"]);
+				unsubscribe();
+			});
+
+			it("undoing [replace A with B] restores A even if it was concurrently cleared before that", () => {
+				const tree1 = makeTreeFromJson(["A"]);
+				const tree2 = tree1.fork();
+
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree1.events);
+				tree1.editor.optionalField(rootField).set(singleJsonCursor("B"), false);
+
+				tree2.editor.optionalField(rootField).set(undefined, false);
+
+				tree1.merge(tree2, false);
+				tree2.rebaseOnto(tree1);
+				expectJsonTree([tree1, tree2], []);
+
+				undoStack.pop()?.revert();
+				expectJsonTree(tree1, ["A"]);
+
+				tree1.merge(tree2, false);
+				tree2.rebaseOnto(tree1);
+				expectJsonTree([tree1, tree2], ["A"]);
+				unsubscribe();
+			});
+		});
+
+		it("undo restores the removed node even when that node has been concurrently replaced", () => {
 			const tree = makeTreeFromJson(["42"]);
 			const tree2 = tree.fork();
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2.events);
