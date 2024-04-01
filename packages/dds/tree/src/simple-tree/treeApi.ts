@@ -125,10 +125,9 @@ export const treeNodeApi: TreeNodeApi = {
 				// batching changes to several fields of the node. 'childrenChanged' on the anchor fires on every change to
 				// a field so doesn't allow us to batch.
 				let shouldFireShallowChange = false;
-				const unsubscribeFromChildrenChanged = anchor.on(
-					"childrenChanged",
-					() => (shouldFireShallowChange = true),
-				);
+				const unsubscribeFromChildrenChanged = anchor.on("childrenChanged", () => {
+					shouldFireShallowChange = true;
+				});
 				const unsubscribeFromSubtreeChanged = anchor.on("subtreeChanged", () => {
 					if (shouldFireShallowChange) {
 						listener();
