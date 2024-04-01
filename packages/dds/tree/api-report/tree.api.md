@@ -1097,7 +1097,7 @@ export interface ITreeCheckout extends AnchorLocator {
 }
 
 // @internal
-export interface ITreeCheckoutFork extends ITreeCheckout {
+export interface ITreeCheckoutFork extends ITreeCheckout, IDisposable {
     rebaseOnto(view: ITreeCheckout): void;
 }
 
@@ -1682,12 +1682,24 @@ export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
     readonly type: string;
 }
 
-// @internal (undocumented)
-export interface SharedTreeOptions extends Partial<ICodecOptions> {
-    forest?: ForestType;
-    // (undocumented)
-    treeEncodeType?: TreeCompressionStrategy;
+// @internal
+export interface SharedTreeFormatOptions {
+    formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
+    treeEncodeType: TreeCompressionStrategy;
 }
+
+// @internal
+export const SharedTreeFormatVersion: {
+    readonly v1: 1;
+};
+
+// @internal
+export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
+
+// @internal (undocumented)
+export type SharedTreeOptions = Partial<ICodecOptions> & Partial<SharedTreeFormatOptions> & {
+    forest?: ForestType;
+};
 
 // @internal
 export function singletonSchema<TScope extends string, TName extends string | number>(factory: SchemaFactory<TScope, TName>, name: TName): TreeNodeSchemaClass<ScopedSchemaName<TScope, TName>, NodeKind.Object, object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {

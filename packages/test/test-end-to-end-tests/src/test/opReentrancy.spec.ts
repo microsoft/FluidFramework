@@ -6,9 +6,10 @@
 import { strict as assert } from "assert";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import type { ISharedMap, SharedDirectory } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map";
+import type { SharedDirectory } from "@fluidframework/map/internal";
 import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import type { SharedString } from "@fluidframework/sequence";

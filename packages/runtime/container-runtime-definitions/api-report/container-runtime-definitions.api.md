@@ -12,7 +12,7 @@ import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
 import { IContainerRuntimeBaseEvents } from '@fluidframework/runtime-definitions';
 import type { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import type { IDocumentStorageService } from '@fluidframework/driver-definitions';
+import type { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
 import type { IEventProvider } from '@fluidframework/core-interfaces';
 import type { IFluidHandle } from '@fluidframework/core-interfaces';
 import type { IFluidHandleContext } from '@fluidframework/core-interfaces';

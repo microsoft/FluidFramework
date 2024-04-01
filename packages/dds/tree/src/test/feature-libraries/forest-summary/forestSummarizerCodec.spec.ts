@@ -33,7 +33,7 @@ import { brand } from "../../../util/index.js";
 import { emptySchema } from "../../cursorTestSuite.js";
 
 const codecOptions: ICodecOptions = { jsonValidator: typeboxValidator };
-const fieldBatchCodec = makeFieldBatchCodec(codecOptions);
+const fieldBatchCodec = makeFieldBatchCodec(codecOptions, 1);
 const context = {
 	encodeType: TreeCompressionStrategy.Uncompressed,
 };

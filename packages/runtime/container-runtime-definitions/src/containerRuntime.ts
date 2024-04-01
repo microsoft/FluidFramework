@@ -12,7 +12,7 @@ import type {
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import type { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	type IClientDetails,
 	type IDocumentMessage,

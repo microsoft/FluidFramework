@@ -9,7 +9,7 @@ import type {
 	IEventProvider,
 	IRequest,
 } from "@fluidframework/core-interfaces";
-import type { IResolvedUrl } from "@fluidframework/driver-definitions";
+import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import type {
 	IClient,
 	IClientDetails,

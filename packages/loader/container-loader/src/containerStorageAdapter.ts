@@ -4,7 +4,7 @@
  */
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
+import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import {
@@ -15,7 +15,7 @@ import {
 	ISnapshot,
 	ISnapshotFetchOptions,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/driver-utils";
 import {
 	ICreateBlobResponse,
