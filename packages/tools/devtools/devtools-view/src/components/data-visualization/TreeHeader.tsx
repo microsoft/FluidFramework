@@ -94,9 +94,6 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 
 			{inlineValue === undefined ? "" : ": "}
 			{inlineValue}
-
-			{inlineValue === undefined ? "" : ": "}
-			{inlineValue}
 		</div>
 	);
 }
