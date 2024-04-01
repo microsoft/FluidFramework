@@ -7,6 +7,7 @@ import * as fs from "fs";
 
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { parse } from "json2csv";
+
 import { BaseFileLogger } from "./baseFileLogger.js";
 
 /**

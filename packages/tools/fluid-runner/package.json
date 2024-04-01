@@ -32,16 +32,6 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./beta": {
-			"import": {
-				"types": "./lib/fluid-runner-beta.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/fluid-runner-beta.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
 		"./alpha": {
 			"import": {
 				"types": "./lib/fluid-runner-alpha.d.ts",

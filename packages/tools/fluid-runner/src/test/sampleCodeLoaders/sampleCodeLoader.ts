@@ -10,6 +10,7 @@ import {
 	IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+
 import { IFluidFileConverter } from "../../codeLoaderBundle.js";
 
 // If the test collateral includes code proposals, the code loader must implement IFluidCodeDetailsComparer, or else
