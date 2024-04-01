@@ -86,7 +86,7 @@ const singleNodeEditor: FieldEditor<NodeChangeset> = {
 
 const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	rebaser: singleNodeRebaser,
-	codecsFactory: (childCodec) => makeCodecFamily([[0, childCodec]]),
+	codecsFactory: (childCodec) => makeCodecFamily([[1, childCodec]]),
 	editor: singleNodeEditor,
 	intoDelta: ({ change }, deltaFromChild): DeltaFieldChanges => ({
 		local: [{ count: 1, fields: deltaFromChild(change) }],
@@ -109,8 +109,8 @@ export const fieldKindConfiguration: FieldKindConfiguration = new Map<
 	FieldKindIdentifier,
 	FieldKindConfigurationEntry
 >([
-	[singleNodeField.identifier, { kind: singleNodeField, formatVersion: 0 }],
-	[valueField.identifier, { kind: valueField, formatVersion: 0 }],
+	[singleNodeField.identifier, { kind: singleNodeField, formatVersion: 1 }],
+	[valueField.identifier, { kind: valueField, formatVersion: 1 }],
 ]);
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
@@ -122,7 +122,7 @@ const codecOptions: ICodecOptions = {
 };
 
 const codec = makeModularChangeCodecFamily(
-	new Map([[0, fieldKindConfiguration]]),
+	new Map([[1, fieldKindConfiguration]]),
 	testRevisionTagCodec,
 	makeFieldBatchCodec(codecOptions, 1),
 	codecOptions,

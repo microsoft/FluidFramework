@@ -419,7 +419,7 @@ describe("GenericField", () => {
 				],
 			};
 
-		const leafCodec = valueHandler.codecsFactory().resolve(0).json;
+		const leafCodec = valueHandler.codecsFactory().resolve(1).json;
 		const childCodec: IJsonCodec<
 			NodeChangeset,
 			JsonCompatibleReadOnly,

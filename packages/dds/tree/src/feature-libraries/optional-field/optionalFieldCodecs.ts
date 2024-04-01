@@ -9,8 +9,8 @@ import { JsonCompatibleReadOnly } from "../../util/index.js";
 import type { NodeChangeset } from "../modular-schema/index.js";
 
 import type { OptionalChangeset } from "./optionalFieldChangeTypes.js";
-import { makeOptionalFieldCodec as makeV0Codec } from "./optionalFieldCodecV0.js";
 import { makeOptionalFieldCodec as makeV1Codec } from "./optionalFieldCodecV1.js";
+import { makeOptionalFieldCodec as makeV2Codec } from "./optionalFieldCodecV2.js";
 
 export const makeOptionalFieldCodecFamily = <TChildChange = NodeChangeset>(
 	childCodec: IJsonCodec<
@@ -27,6 +27,6 @@ export const makeOptionalFieldCodecFamily = <TChildChange = NodeChangeset>(
 	>,
 ): ICodecFamily<OptionalChangeset<TChildChange>, ChangeEncodingContext> =>
 	makeCodecFamily([
-		[0, makeV0Codec(childCodec, revisionTagCodec)],
 		[1, makeV1Codec(childCodec, revisionTagCodec)],
+		[2, makeV2Codec(childCodec, revisionTagCodec)],
 	]);

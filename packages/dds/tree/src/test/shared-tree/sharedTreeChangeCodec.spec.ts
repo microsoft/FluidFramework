@@ -57,7 +57,7 @@ describe("sharedTreeChangeCodec", () => {
 		);
 		const sharedTreeChangeCodec = makeSharedTreeChangeCodecFamily(modularChangeCodecs, {
 			jsonValidator: noopValidator,
-		}).resolve(0).json;
+		}).resolve(1).json;
 
 		const dummyTestSchema = new TreeStoredSchemaRepository();
 		const dummyContext = {

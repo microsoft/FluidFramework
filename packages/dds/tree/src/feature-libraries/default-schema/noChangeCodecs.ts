@@ -9,4 +9,4 @@ import { ChangeEncodingContext } from "../../core/index.js";
 export const noChangeCodecFamily: ICodecFamily<0, ChangeEncodingContext> = makeCodecFamily<
 	0,
 	ChangeEncodingContext
->([[0, unitCodec]]);
+>([[1, unitCodec]]);

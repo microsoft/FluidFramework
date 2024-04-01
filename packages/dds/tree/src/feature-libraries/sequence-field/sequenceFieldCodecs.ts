@@ -43,9 +43,9 @@ export const sequenceFieldChangeCodecFactory = <TNodeChange>(
 	>,
 ) =>
 	makeCodecFamily<Changeset<TNodeChange>, ChangeEncodingContext>([
-		[0, makeV0Codec(childCodec, revisionTagCodec)],
+		[1, makeV1Codec(childCodec, revisionTagCodec)],
 	]);
-function makeV0Codec<TNodeChange>(
+function makeV1Codec<TNodeChange>(
 	childCodec: IJsonCodec<
 		TNodeChange,
 		JsonCompatibleReadOnly,

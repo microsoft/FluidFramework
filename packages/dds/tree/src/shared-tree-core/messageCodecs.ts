@@ -62,7 +62,7 @@ export function makeMessageCodecs<TChangeset>(
 	>,
 	options: ICodecOptions,
 ): ICodecFamily<DecodedMessage<TChangeset>, MessageEncodingContext> {
-	const v1Codec = makeV1Codec(changeCodecs.resolve(0).json, revisionTagCodec, options);
+	const v1Codec = makeV1Codec(changeCodecs.resolve(1).json, revisionTagCodec, options);
 	return makeCodecFamily([
 		// Back-compat: messages weren't always written with an explicit version field.
 		[undefined, v1Codec],

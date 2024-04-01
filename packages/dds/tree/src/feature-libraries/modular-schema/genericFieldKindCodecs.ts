@@ -21,10 +21,10 @@ export function makeGenericChangeCodec<TChildChange = NodeChangeset>(
 		ChangeEncodingContext
 	>,
 ): ICodecFamily<GenericChangeset<TChildChange>, ChangeEncodingContext> {
-	return makeCodecFamily([[0, makeV0Codec(childCodec)]]);
+	return makeCodecFamily([[1, makeV1Codec(childCodec)]]);
 }
 
-function makeV0Codec<TChildChange = NodeChangeset>(
+function makeV1Codec<TChildChange = NodeChangeset>(
 	childCodec: IJsonCodec<
 		TChildChange,
 		JsonCompatibleReadOnly,
