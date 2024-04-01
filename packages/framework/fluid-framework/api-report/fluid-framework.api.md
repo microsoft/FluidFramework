@@ -137,7 +137,7 @@ export enum FieldKind {
 
 // @public
 export interface FieldProps {
-    key?: string;
+    readonly key?: string;
 }
 
 // @public @sealed

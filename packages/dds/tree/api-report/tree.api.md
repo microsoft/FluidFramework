@@ -513,7 +513,7 @@ export interface FieldMapObject<TChild> {
 
 // @public
 export interface FieldProps {
-    key?: string;
+    readonly key?: string;
 }
 
 // @public @sealed
