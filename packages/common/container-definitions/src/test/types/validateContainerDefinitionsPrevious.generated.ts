@@ -24,26 +24,26 @@ type TypeOnly<T> = T extends number
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_AttachState": {"forwardCompat": false}
+* "RemovedEnumDeclaration_AttachState": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_AttachState():
     TypeOnly<old.AttachState>;
-declare function use_current_EnumDeclaration_AttachState(
+declare function use_current_RemovedEnumDeclaration_AttachState(
     use: TypeOnly<current.AttachState>): void;
-use_current_EnumDeclaration_AttachState(
+use_current_RemovedEnumDeclaration_AttachState(
     get_old_EnumDeclaration_AttachState());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_AttachState": {"backCompat": false}
+* "RemovedEnumDeclaration_AttachState": {"backCompat": false}
 */
-declare function get_current_EnumDeclaration_AttachState():
+declare function get_current_RemovedEnumDeclaration_AttachState():
     TypeOnly<current.AttachState>;
 declare function use_old_EnumDeclaration_AttachState(
     use: TypeOnly<old.AttachState>): void;
 use_old_EnumDeclaration_AttachState(
-    get_current_EnumDeclaration_AttachState());
+    get_current_RemovedEnumDeclaration_AttachState());
 
 /*
 * Validate forward compat by using old type in place of current type
