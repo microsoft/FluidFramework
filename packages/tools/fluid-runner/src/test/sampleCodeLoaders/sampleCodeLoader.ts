@@ -8,7 +8,7 @@ import {
 	ICodeDetailsLoader,
 	IContainer,
 	IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { IFluidFileConverter } from "../../codeLoaderBundle.js";
 

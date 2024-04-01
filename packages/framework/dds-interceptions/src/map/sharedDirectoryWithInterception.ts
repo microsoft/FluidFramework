@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { IDirectory } from "@fluidframework/map";
+import { IDirectory } from "@fluidframework/map/internal";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 
 /**

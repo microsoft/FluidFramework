@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 
-import { IContainer } from "@fluidframework/container-definitions";
-import { IDetachedBlobStorage } from "@fluidframework/container-loader";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { IDetachedBlobStorage } from "@fluidframework/container-loader/internal";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";

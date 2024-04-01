@@ -5,9 +5,9 @@
 ```ts
 
 import { Deferred } from '@fluidframework/core-utils';
-import { IDocumentService } from '@fluidframework/driver-definitions';
-import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
-import { IDocumentStorageService } from '@fluidframework/driver-definitions';
+import { IDocumentService } from '@fluidframework/driver-definitions/internal';
+import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
+import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';

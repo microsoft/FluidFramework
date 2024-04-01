@@ -10,7 +10,7 @@ import {
 	IDocumentDeltaConnection,
 	IDocumentServicePolicies,
 	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	DeltaStreamConnectionForbiddenError,
 	NonRetryableError,
