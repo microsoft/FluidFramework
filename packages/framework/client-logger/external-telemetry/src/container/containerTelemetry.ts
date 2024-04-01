@@ -83,8 +83,6 @@ export interface IContainerTelemetry extends IExternalTelemetry {
  * The container "connected" telemetry event.
  * It is produced from an internal Fluid container system event {@link @fluidframework/container-definitions#IContainerEvents} which is emitted when the {@link @fluidframework/container-definitions#IContainer} completes connecting to the Fluid service.
  *
- * @remarks Reflects connection state changes against the (delta) service acknowledging ops/edits.
- *
  * @see
  *
  * - {@link @fluidframework/container-definitions#IContainer.connectionState}
@@ -103,7 +101,6 @@ export interface ContainerConnectedTelemetry extends IContainerTelemetry {
  * {@link @fluidframework/container-definitions#IContainerEvents} which is emitted when the {@link @fluidframework/container-definitions#IContainer}
  * becomes disconnected from the Fluid service.
  *
- * @remarks Reflects connection state changes against the (delta) service acknowledging ops/edits.
  *
  * @see
  *
@@ -120,7 +117,7 @@ export interface ContainerDisconnectedTelemetry extends IContainerTelemetry {
 /**
  * The container "closed" telemetry event. This telemetry is produced from an internal Fluid container system event
  * {@link @fluidframework/container-definitions#IContainerEvents} which is emitted when the {@link @fluidframework/container-definitions#IContainer}
- * is closed, which permanently disables the container.
+ * is closed, which means that instance of the container accepts no more changes.
  *
  * @remarks Listener parameters:
  *
@@ -136,9 +133,9 @@ export interface ContainerClosedTelemetry extends IContainerTelemetry {
 }
 
 /**
- * The container "attaching" telemetry event. This telemetry is produced from an internal Fluid container system event
- * {@link @fluidframework/container-definitions#IContainerEvents} which is emitted when the {@link @fluidframework/container-definitions#IContainer}'s
- * {@link @fluidframework/container-definitions#AttachState.Attaching | attaching} process is complete and the container is {@link @fluidframework/container-definitions#AttachState.Attached | attached} to the Fluid service.
+ *  The container "attaching" telemetry event. This telemetry is produced from an internal Fluid container system event
+ * {@link @fluidframework/container-definitions#IContainerEvents} which is emitted when a {@link @fluidframework/container-definitions#AttachState.Detached | detached} container begins the process of
+ * {@link @fluidframework/container-definitions#AttachState.Attaching | attached} to the Fluid service.
  *
  * @see
  *

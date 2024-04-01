@@ -11,13 +11,13 @@ import { AppInsightsTelemetryConsumer, type ITelemetryConsumer } from "../common
 import type { IFluidContainer } from "@fluidframework/fluid-static";
 
 /**
- * Config object forsubscribing to external telemetry covering differents scopes of the Fluid Framework
+ * Configuration object for subscribing to {@link IExternalTelemetry} and consuming said telemetry via one or more {@link ITelemetryConsumer}
  *
  * @beta
  */
 export interface TelemetryConfig {
 	/**
-	 * By providing this attribute, container related external telemetry will be send to any provided ITelemetryConsumer(s)
+	 * The container whose events should be monitored, transformed into external telemetry, and send to an {@link ITelemetryConsumer}.
 	 */
 	container: IFluidContainer;
 	/**
@@ -30,8 +30,7 @@ export interface TelemetryConfig {
  * Creates an external telemetry consumer that will send telemetry to Azure Application Insights
  *
  * @param client - An instance of an Azure Application Insights client {@link @microsoft/applicationinsights-web#ApplicationInsights}
- * The App Insights instance must be initialed before being provided which can be done via {@link @microsoft/applicationinsights-web#ApplicationInsights.loadAppInsights}
- * `applicationInsightsClient.loadAppInsights(); `
+ * The App Insights instance must be initialized before being provided, which can be done via {@link @microsoft/applicationinsights-web#ApplicationInsights.loadAppInsights }
  *
  * @beta
  */
@@ -42,10 +41,12 @@ export const createAppInsightsTelemetryConsumer = (
 };
 
 /**
- * Starts subscribing to external telemetry for one or more areas of the Fluid Framework.
+ * Starts creating {@link IExternalTelemetry} by transforming raw system events emitted by the specified container
+ * into said telemetry and passing it onto to the specified {@link ITelemetryConsumer}
+ *
  * @beta
  */
-export const subscribeToTelemetry = (config: TelemetryConfig): void => {
+export const startTelemetry = (config: TelemetryConfig): void => {
 	if (config.container) {
 		const fluidContainer = config.container as {
 			INTERNAL_CONTAINER_DO_NOT_USE?: () => IContainer;

@@ -1,6 +1,6 @@
 # Description
 
-This package contains code enabling the production and consumption of typed telemetry for Fluid Framework applications. The typed telemetry from this package is used as the backbone for different Fluid Framework cloud offerings such as dashboards and alarms for Fluid applications. People can also use this package as a reference for customizing and creating their own telemetry solution if desired.
+This package contains code enabling the production and consumption of typed telemetry for Fluid Framework applications. The typed telemetry from this package is used as the backbone for different Fluid Framework cloud offerings such as dashboards and alarms for Fluid applications. This package can also be used as a reference for customizing and creating their own telemetry solution if desired.
 
 ### Telemetry Destinations
 
@@ -23,10 +23,10 @@ The core functionality of this package is exposed by the `createTelemetryManager
 
 ```ts
 import { ApplicationInsights } from "@microsoft/applicationinsights-web";
-import { FluidContainer } from "@fluidframework/fluid-static";
-import { TelemetryManagerConfig, startTelemetryManagers, createAppInsightsTelemetryConsumer } from "@fluidframework/external-telemetry"
+import { IFluidContainer } from "@fluidframework/fluid-static";
+import { TelemetryConfig, startTelemetry, createAppInsightsTelemetryConsumer } from "@fluidframework/external-telemetry"
 
-const myAppContainer: FluidContainer = {...your code to create a Fluid Continer}
+const myAppContainer: IFluidContainer = {...your code to create a Fluid Continer}
 
 
 // Create App Insights Client
@@ -41,13 +41,13 @@ const appInsightsClient = new ApplicationInsights({
 appInsightsClient.loadAppInsights();
 
 // Create the telemetry manager config object(s)
-const telemetryManagerConfig: TelemetryManagerConfig = {
+const telemetryConfig: TelemetryConfig = {
 			container: myAppContainer,
 			consumers: [createAppInsightsTelemetryConsumer(appInsightsClient)],
 		};
 
-// Setup telemetry manager(s)
-startTelemetryManagers(telemetryManagerConfig);
+// Start Telemetry
+startTelemetry(telemetryManagerConfig);
 
 // Done!
 ```
