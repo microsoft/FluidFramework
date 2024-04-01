@@ -6,7 +6,7 @@
 
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
-import type { IErrorBase } from '@fluidframework/core-interfaces';
+import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
@@ -137,10 +137,11 @@ export enum FieldKind {
 
 // @public @sealed
 export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types extends ImplicitAllowedTypes = ImplicitAllowedTypes> {
-    constructor(kind: Kind, allowedTypes: Types);
-    // (undocumented)
+    constructor(
+    kind: Kind,
+    allowedTypes: Types);
     readonly allowedTypes: Types;
-    // (undocumented)
+    get allowedTypeSet(): ReadonlySet<TreeNodeSchema>;
     readonly kind: Kind;
     protected _typeCheck?: MakeNominal;
 }

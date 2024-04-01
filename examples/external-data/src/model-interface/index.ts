@@ -4,7 +4,7 @@
  */
 
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { SharedString } from "@fluidframework/sequence";
 
 /**

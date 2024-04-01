@@ -5,8 +5,8 @@
 
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
+import { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
 import {
 	ChannelCollection,
 	ChannelCollectionFactory,
