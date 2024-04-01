@@ -7,14 +7,14 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
 	IErrorBase,
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
-import type { FluidDataStoreRuntime } from "@fluidframework/datastore";
+import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import type { ISharedMap, IValueChanged } from "@fluidframework/map";
 import {
 	ChannelFactoryRegistry,

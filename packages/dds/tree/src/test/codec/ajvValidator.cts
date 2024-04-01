@@ -5,7 +5,7 @@
 
 import { IFluidHandleContext, IRequest } from "@fluidframework/core-interfaces";
 import { create404Response } from "@fluidframework/runtime-utils";
-import { FluidSerializer } from "@fluidframework/shared-object-base";
+import { FluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { MockHandle } from "@fluidframework/test-runtime-utils";
 import type { Static, TSchema } from "@sinclair/typebox";
 import Ajv from "ajv";

@@ -10,7 +10,7 @@ import fs from "fs";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert, Lazy } from "@fluidframework/core-utils";
+import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
 	FileDeltaStorageService,
 	FileDocumentServiceFactory,
@@ -21,7 +21,7 @@ import {
 	ReplayFileDeltaConnection,
 	Replayer,
 } from "@fluidframework/file-driver";
-import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix";
+import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix/internal";
 import {
 	ISequencedDocumentMessage,
 	ISummaryTree,

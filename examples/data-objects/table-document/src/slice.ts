@@ -5,7 +5,7 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { PropertySet } from "@fluidframework/sequence";
+import { PropertySet } from "@fluidframework/sequence/internal";
 
 import { CellRange } from "./cellrange.js";
 import { TableSliceType } from "./componentTypes.js";

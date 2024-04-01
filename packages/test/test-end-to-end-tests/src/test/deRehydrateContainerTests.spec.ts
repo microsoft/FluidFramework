@@ -14,7 +14,7 @@ import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import type { SharedCounter } from "@fluidframework/counter";
 import type { ISharedMap } from "@fluidframework/map";
 import type { SharedDirectory } from "@fluidframework/map/internal";
-import type { SharedMatrix } from "@fluidframework/matrix";
+import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import type { ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
 import {
 	IDocumentAttributes,
@@ -23,8 +23,8 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import type { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import type { SequenceInterval, SharedString } from "@fluidframework/sequence";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
+import type { SequenceInterval, SharedString } from "@fluidframework/sequence/internal";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,

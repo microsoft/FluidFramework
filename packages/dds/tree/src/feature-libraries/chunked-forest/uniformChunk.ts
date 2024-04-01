@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, compareArrays } from "@fluidframework/core-utils";
+import { assert, compareArrays } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,

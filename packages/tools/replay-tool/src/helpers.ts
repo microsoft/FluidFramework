@@ -8,14 +8,17 @@ import fs from "fs";
 
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ILoaderOptions, Loader } from "@fluidframework/container-loader/internal";
-import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import {
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	FluidObject,
 	IConfigProviderBase,
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { IFileSnapshot } from "@fluidframework/replay-driver";
 import { ISnapshotNormalizerConfig, getNormalizedSnapshot } from "@fluidframework/tool-utils";

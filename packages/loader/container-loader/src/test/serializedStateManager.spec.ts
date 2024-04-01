@@ -10,7 +10,7 @@ import {
 	IGetPendingLocalStateProps,
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
-import { Deferred } from "@fluidframework/core-utils";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import {
 	FetchSource,
 	IDocumentStorageService,
@@ -26,7 +26,9 @@ import {
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
+
 import { type IPendingContainerState, SerializedStateManager } from "../serializedStateManager.js";
+
 import { failProxy } from "./failProxy.js";
 
 type ISerializedStateManagerDocumentStorageService = Pick<

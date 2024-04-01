@@ -14,7 +14,7 @@ import {
 	LocalResolver,
 	createLocalResolverCreateNewRequest,
 } from "@fluidframework/local-driver";
-import { SharedString } from "@fluidframework/sequence";
+import { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,

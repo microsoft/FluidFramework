@@ -9,8 +9,8 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { type IRuntimeFactory } from "@fluidframework/container-definitions/internal";
-import { type ContainerRuntime } from "@fluidframework/container-runtime";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { type ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	type FluidObject,
 	type IFluidLoadable,
@@ -18,7 +18,7 @@ import {
 	type IResponse,
 } from "@fluidframework/core-interfaces";
 import { type IDirectory } from "@fluidframework/map/internal";
-import { FlushMode } from "@fluidframework/runtime-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
 

@@ -4,6 +4,9 @@
  */
 
 import assert from "node:assert";
+
+import { validateAssertionError } from "@fluidframework/test-runtime-utils";
+
 import { TreeValue } from "../../core/index.js";
 import { SchemaFactory, SchemaFactoryRecursive, TreeNode } from "../../simple-tree/index.js";
 import {
@@ -19,7 +22,6 @@ import {
 } from "../../simple-tree/schemaTypes.js";
 import { TreeFactory } from "../../treeFactory.js";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 
 const schema = new SchemaFactory("com.example");
 

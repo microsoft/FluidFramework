@@ -10,7 +10,7 @@ import {
 	IPromiseTimer,
 	IPromiseTimerResult,
 	Timer,
-} from "@fluidframework/core-utils";
+} from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";

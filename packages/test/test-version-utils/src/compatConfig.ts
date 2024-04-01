@@ -4,7 +4,7 @@
  */
 
 import { fromInternalScheme } from "@fluid-tools/version-tools";
-import { assert, Lazy } from "@fluidframework/core-utils";
+import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import * as semver from "semver";
 
 import {

@@ -9,15 +9,15 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map";
-import { DetachedReferencePosition, PropertySet } from "@fluidframework/merge-tree";
+import { DetachedReferencePosition, PropertySet } from "@fluidframework/merge-tree/internal";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
-import { FlushMode } from "@fluidframework/runtime-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import type {
 	IIntervalCollection,
 	IOverlappingIntervalsIndex,
 	SequenceInterval,
 	SharedString,
-} from "@fluidframework/sequence";
+} from "@fluidframework/sequence/internal";
 // This is not in sequence's public API, but an e2e test in this file sniffs the summary.
 // eslint-disable-next-line import/no-internal-modules
 import type { ISerializedIntervalCollectionV2 } from "@fluidframework/sequence/test/intervalCollection";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
 import { FluidAppOdspUrlResolver } from "@fluidframework/odsp-urlresolver";
 import { MockLogger } from "@fluidframework/telemetry-utils";
