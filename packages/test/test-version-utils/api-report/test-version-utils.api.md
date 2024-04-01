@@ -19,12 +19,12 @@ import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { ISharedDirectory } from '@fluidframework/map';
+import { ISharedDirectory } from '@fluidframework/map/internal';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base';
 import { ITelemetryGenericEventExt } from '@fluidframework/telemetry-utils';
 import { ITestContainerConfig } from '@fluidframework/test-utils';
 import { ITestObjectProvider } from '@fluidframework/test-utils';
-import { Loader } from '@fluidframework/container-loader';
+import { Loader } from '@fluidframework/container-loader/internal';
 import * as map from '@fluidframework/map';
 import * as matrix from '@fluidframework/matrix';
 import * as orderedCollection from '@fluidframework/ordered-collection';
@@ -83,7 +83,7 @@ export const DataRuntimeApi: {
     dds: {
         SharedCell: typeof cell.SharedCell;
         SharedCounter: typeof counter.SharedCounter;
-        SharedDirectory: typeof map.SharedDirectory;
+        SharedDirectory: ISharedObjectKind<map.ISharedDirectory>;
         SharedMap: ISharedObjectKind<map.ISharedMap>;
         SharedMatrix: typeof matrix.SharedMatrix;
         ConsensusQueue: typeof orderedCollection.ConsensusQueue;

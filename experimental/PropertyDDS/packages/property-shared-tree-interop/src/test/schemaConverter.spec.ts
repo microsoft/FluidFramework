@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
@@ -27,6 +28,7 @@ import {
 	nodePropertyField,
 	nodePropertySchema,
 } from "../schemaConverter.js";
+
 import mockPropertyDDSSchemas from "./mockPropertyDDSSchemas.js";
 
 describe("schema converter", () => {

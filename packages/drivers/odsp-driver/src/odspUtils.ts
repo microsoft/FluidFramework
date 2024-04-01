@@ -6,7 +6,7 @@
 import { performance } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
-import { IResolvedUrl, ISnapshot } from "@fluidframework/driver-definitions";
+import { IResolvedUrl, ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	type AuthorizationError,
 	NetworkErrorBasic,
@@ -42,6 +42,7 @@ import {
 	createChildLogger,
 	wrapError,
 } from "@fluidframework/telemetry-utils";
+
 import { IOdspSnapshot } from "./contracts.js";
 import { fetch } from "./fetch.js";
 // eslint-disable-next-line import/no-deprecated

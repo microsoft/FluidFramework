@@ -12,7 +12,7 @@ import {
 	ISnapshot,
 	ISnapshotFetchOptions,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError, RateLimiter } from "@fluidframework/driver-utils";
 import {
 	IOdspResolvedUrl,
@@ -30,6 +30,7 @@ import {
 	normalizeError,
 	overwriteStack,
 } from "@fluidframework/telemetry-utils";
+
 import {
 	HostStoragePolicyInternal,
 	IDocumentStorageGetVersionsResponse,

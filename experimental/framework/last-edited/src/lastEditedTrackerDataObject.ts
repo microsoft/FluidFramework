@@ -6,6 +6,7 @@
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
+
 import { IProvideFluidLastEditedTracker } from "./interfaces.js";
 import { LastEditedTracker } from "./lastEditedTracker.js";
 

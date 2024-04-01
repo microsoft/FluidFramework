@@ -11,6 +11,7 @@
  */
 
 import { FieldKinds, FlexFieldSchema, SchemaBuilderBase } from "../feature-libraries/index.js";
+
 import { leaf } from "./leafDomain.js";
 
 const builder = new SchemaBuilderBase(FieldKinds.optional, { scope: "Test Recursive Domain" });

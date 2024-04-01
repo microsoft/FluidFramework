@@ -4,6 +4,7 @@
  */
 
 import assert from "assert";
+
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	describeCompat,
@@ -11,8 +12,13 @@ import {
 	itSkipsFailureOnSpecificDrivers,
 } from "@fluid-private/test-version-utils";
 import type { SharedCell } from "@fluidframework/cell";
-import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
-import { ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
+import {
+	IContainer,
+	IHostLoader,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader";
+import { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import {
 	CompressionAlgorithms,
 	ContainerRuntime,
@@ -27,8 +33,9 @@ import {
 } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils";
 import type { SharedCounter } from "@fluidframework/counter";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
-import type { ISharedDirectory, ISharedMap, SharedDirectory } from "@fluidframework/map";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import type { ISharedMap } from "@fluidframework/map";
+import type { ISharedDirectory, SharedDirectory } from "@fluidframework/map/internal";
 import {
 	ReferenceType,
 	reservedMarkerIdKey,
@@ -47,13 +54,17 @@ import {
 	createDocumentId,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
+import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
+import { ISharedTree, SharedTreeFactory } from "@fluidframework/tree/internal";
 import { wrapObjectAndOverride } from "../mocking.js";
+
 const mapId = "map";
 const stringId = "sharedStringKey";
 const cellId = "cellKey";
 const counterId = "counterKey";
 const directoryId = "directoryKey";
 const collectionId = "collectionKey";
+const treeId = "treeKey";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -84,6 +95,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		[cellId, SharedCell.getFactory()],
 		[counterId, SharedCounter.getFactory()],
 		[directoryId, SharedDirectory.getFactory()],
+		[treeId, new SharedTreeFactory()],
 	];
 
 	const testContainerConfig: ITestContainerConfig = {
@@ -220,6 +232,40 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			pendingLocalState ?? (await getPendingOps(testObjectProvider, false)),
 		);
 		return { container, connect: () => p.resolve(undefined) };
+	}
+
+	const sf = new SchemaFactory("stashedTests");
+
+	class Root extends sf.object("Root", {
+		map: sf.map(sf.string),
+	}) {}
+
+	const treeConfig = new TreeConfiguration(Root, () => ({
+		map: new Map<string, string>(),
+	}));
+
+	interface MinimalMap {
+		get(key: string): string | undefined;
+		set(key: string, value: string): void;
+		has(key: string): boolean;
+		delete(key: string): void;
+	}
+
+	async function getMapBackedMap(d: ITestFluidObject): Promise<MinimalMap> {
+		return d.getSharedObject<ISharedMap>(mapId);
+	}
+
+	async function getTreeBackedMap(d: ITestFluidObject): Promise<MinimalMap> {
+		const tree = await d.getSharedObject<ISharedTree>(treeId);
+		const root = tree.schematize(treeConfig);
+		return root.root.map;
+	}
+
+	async function getMapFromProvider(
+		getMap: (t: ITestFluidObject) => Promise<MinimalMap>,
+	): Promise<MinimalMap> {
+		const dataStore = (await container1.getEntryPoint()) as ITestFluidObject;
+		return getMap(dataStore);
 	}
 
 	let provider: ITestObjectProvider;
@@ -433,109 +479,122 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(directory2.get(testKey), testValue);
 	});
 
-	it("doesn't resend successful op", async function () {
-		const pendingOps = await getPendingOps(provider, true, async (c, d) => {
-			const map = await d.getSharedObject<ISharedMap>(mapId);
-			map.set(testKey, "something unimportant");
-			const cell = await d.getSharedObject<SharedCell>(cellId);
-			cell.set("something unimportant");
-			const counter = await d.getSharedObject<SharedCounter>(counterId);
-			counter.increment(3);
-			const directory = await d.getSharedObject<SharedDirectory>(directoryId);
-			directory.set(testKey, "I will be erased");
+	[
+		{ name: "tree map", getMap: getTreeBackedMap },
+		{ name: "map", getMap: getMapBackedMap },
+	].forEach(({ name, getMap }) => {
+		it(`doesn't resend successful op (${name})`, async function () {
+			const map = await getMapFromProvider(getMap);
+			const pendingOps = await getPendingOps(provider, true, async (c, d) => {
+				const mapPre = await getMap(d);
+				mapPre.set(testKey, "something unimportant");
+				const cell = await d.getSharedObject<SharedCell>(cellId);
+				cell.set("something unimportant");
+				const counter = await d.getSharedObject<SharedCounter>(counterId);
+				counter.increment(3);
+				const directory = await d.getSharedObject<SharedDirectory>(directoryId);
+				directory.set(testKey, "I will be erased");
+			});
+
+			map.set(testKey, testValue);
+			cell1.set(testValue);
+			counter1.increment(testIncrementValue);
+			directory1.set(testKey, testValue);
+			await provider.ensureSynchronized();
+
+			// load with pending ops, which it should not resend because they were already sent successfully
+			const container2 = await loader.resolve({ url }, pendingOps);
+			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const map2 = await getMap(dataStore2);
+			const cell2 = await dataStore2.getSharedObject<SharedCell>(cellId);
+			const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
+			const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
+
+			await provider.ensureSynchronized();
+			assert.strictEqual(map.get(testKey), testValue);
+			assert.strictEqual(map2.get(testKey), testValue);
+			assert.strictEqual(cell1.get(), testValue);
+			assert.strictEqual(cell2.get(), testValue);
+			assert.strictEqual(counter1.value, testIncrementValue + 3);
+			assert.strictEqual(counter2.value, testIncrementValue + 3);
+			assert.strictEqual(directory1.get(testKey), testValue);
+			assert.strictEqual(directory2.get(testKey), testValue);
 		});
 
-		map1.set(testKey, testValue);
-		cell1.set(testValue);
-		counter1.increment(testIncrementValue);
-		directory1.set(testKey, testValue);
-		await provider.ensureSynchronized();
+		it(`resends delete op and can set after (${name})`, async function () {
+			const map = await getMapFromProvider(getMap);
+			const pendingOps = await getPendingOps(provider, false, async (c, d) => {
+				const mapPre = await getMap(d);
+				mapPre.delete("clear");
+			});
 
-		// load with pending ops, which it should not resend because they were already sent successfully
-		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
-		const cell2 = await dataStore2.getSharedObject<SharedCell>(cellId);
-		const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
-		const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
-
-		await provider.ensureSynchronized();
-		assert.strictEqual(map1.get(testKey), testValue);
-		assert.strictEqual(map2.get(testKey), testValue);
-		assert.strictEqual(cell1.get(), testValue);
-		assert.strictEqual(cell2.get(), testValue);
-		assert.strictEqual(counter1.value, testIncrementValue + 3);
-		assert.strictEqual(counter2.value, testIncrementValue + 3);
-		assert.strictEqual(directory1.get(testKey), testValue);
-		assert.strictEqual(directory2.get(testKey), testValue);
-	});
-
-	it("resends delete op and can set after", async function () {
-		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
-			const map = await d.getSharedObject<ISharedMap>(mapId);
-			map.delete("clear");
+			// load container with pending ops, which should resend the op not sent by previous container
+			const container2 = await loader.resolve({ url }, pendingOps);
+			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const map2 = await getMap(dataStore2);
+			await waitForContainerConnection(container2);
+			await provider.ensureSynchronized();
+			assert.strictEqual(map.has("clear"), false);
+			assert.strictEqual(map2.has("clear"), false);
+			map.set("clear", "test1");
+			await provider.ensureSynchronized();
+			assert.strictEqual(map.get("clear"), "test1");
+			assert.strictEqual(map2.get("clear"), "test1");
 		});
 
-		// load container with pending ops, which should resend the op not sent by previous container
-		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
-		await waitForContainerConnection(container2);
-		await provider.ensureSynchronized();
-		assert.strictEqual(map1.has("clear"), false);
-		assert.strictEqual(map2.has("clear"), false);
-		map1.set("clear", "test1");
-		await provider.ensureSynchronized();
-		assert.strictEqual(map1.get("clear"), "test1");
-		assert.strictEqual(map2.get("clear"), "test1");
-	});
+		it(`resends a lot of ops (${name})`, async function () {
+			const map = await getMapFromProvider(getMap);
+			const pendingOps = await getPendingOps(provider, false, async (c, d) => {
+				const mapPre = await getMap(d);
+				[...Array(lots).keys()].map((i) => mapPre.set(i.toString(), i.toString()));
+			});
 
-	it("resends a lot of ops", async function () {
-		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
-			const map = await d.getSharedObject<ISharedMap>(mapId);
-			[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
+			// load container with pending ops, which should resend the ops not sent by previous container
+			const container2 = await loader.resolve({ url }, pendingOps);
+			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const map2 = await getMap(dataStore2);
+			await waitForContainerConnection(container2);
+			await provider.ensureSynchronized();
+			[...Array(lots).keys()].map((i) =>
+				assert.strictEqual(
+					map.get(i.toString()),
+					i.toString(),
+					`map 1 ${map.get(i.toString())} !== ${i}`,
+				),
+			);
+			[...Array(lots).keys()].map((i) =>
+				assert.strictEqual(
+					map2.get(i.toString()),
+					i.toString(),
+					`map 2 ${map2.get(i.toString())} !== ${i}`,
+				),
+			);
 		});
 
-		// load container with pending ops, which should resend the ops not sent by previous container
-		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
-		await waitForContainerConnection(container2);
-		await provider.ensureSynchronized();
-		[...Array(lots).keys()].map((i) =>
-			assert.strictEqual(
-				map1.get(i.toString()),
-				i,
-				`map 1 ${map1.get(i.toString())} !== ${i}`,
-			),
-		);
-		[...Array(lots).keys()].map((i) =>
-			assert.strictEqual(
-				map2.get(i.toString()),
-				i,
-				`map 2 ${map2.get(i.toString())} !== ${i}`,
-			),
-		);
-	});
+		it(`doesn't resend a lot of successful ops (${name})`, async function () {
+			const map = await getMapFromProvider(getMap);
+			const pendingOps = await getPendingOps(provider, true, async (c, d) => {
+				const mapPre = await getMap(d);
+				[...Array(lots).keys()].map((i) => map.set(i.toString(), i.toString()));
+			});
 
-	it("doesn't resend a lot of successful ops", async function () {
-		const pendingOps = await getPendingOps(provider, true, async (c, d) => {
-			const map = await d.getSharedObject<ISharedMap>(mapId);
-			[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
+			// send a bunch from first container that should not be overwritten
+			[...Array(lots).keys()].map((i) => map.set(i.toString(), testValue));
+			await provider.ensureSynchronized();
+
+			// load container with pending ops, which should not resend the ops sent by previous container
+			const container2 = await loader.resolve({ url }, pendingOps);
+			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const map2 = await getMap(dataStore2);
+			await waitForContainerConnection(container2);
+			await provider.ensureSynchronized();
+			[...Array(lots).keys()].map((i) =>
+				assert.strictEqual(map.get(i.toString()), testValue),
+			);
+			[...Array(lots).keys()].map((i) =>
+				assert.strictEqual(map2.get(i.toString()), testValue),
+			);
 		});
-
-		// send a bunch from first container that should not be overwritten
-		[...Array(lots).keys()].map((i) => map1.set(i.toString(), testValue));
-		await provider.ensureSynchronized();
-
-		// load container with pending ops, which should not resend the ops sent by previous container
-		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
-		await waitForContainerConnection(container2);
-		await provider.ensureSynchronized();
-		[...Array(lots).keys()].map((i) => assert.strictEqual(map1.get(i.toString()), testValue));
-		[...Array(lots).keys()].map((i) => assert.strictEqual(map2.get(i.toString()), testValue));
 	});
 
 	it("resends all shared directory ops", async function () {

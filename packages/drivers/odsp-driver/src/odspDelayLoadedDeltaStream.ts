@@ -10,7 +10,7 @@ import {
 	IDocumentDeltaConnection,
 	IDocumentServicePolicies,
 	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	DeltaStreamConnectionForbiddenError,
 	NonRetryableError,
@@ -35,6 +35,7 @@ import {
 	MonitoringContext,
 	normalizeError,
 } from "@fluidframework/telemetry-utils";
+
 import { policyLabelsUpdatesSignalType } from "./contracts.js";
 import { EpochTracker } from "./epochTracker.js";
 import { IOdspCache } from "./odspCache.js";

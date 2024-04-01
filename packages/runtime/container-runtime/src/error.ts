@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerErrorTypes } from "@fluidframework/container-definitions";
+import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils";
 
 /**

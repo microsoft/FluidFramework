@@ -4,9 +4,13 @@
  */
 
 import { strict as assert } from "assert";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedCell, SharedCell } from "@fluidframework/cell";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase, IFluidHandle } from "@fluidframework/core-interfaces";
+import { Serializable } from "@fluidframework/datastore-definitions";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -15,10 +19,6 @@ import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-
-import { IContainer } from "@fluidframework/container-definitions";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { Serializable } from "@fluidframework/datastore-definitions";
 
 const cellId = "cellKey";
 

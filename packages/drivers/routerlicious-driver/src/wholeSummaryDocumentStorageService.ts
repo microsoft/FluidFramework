@@ -10,7 +10,7 @@ import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	ICreateBlobResponse,
 	ISnapshotTree,
@@ -24,6 +24,7 @@ import {
 	PerformanceEvent,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
+
 import { ICache, InMemoryCache } from "./cache.js";
 import { INormalizedWholeSnapshot, IWholeFlatSnapshot } from "./contracts.js";
 import { GitManager } from "./gitManager.js";

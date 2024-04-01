@@ -4,9 +4,10 @@
  */
 
 import { strict as assert } from "assert";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IHostLoader } from "@fluidframework/container-definitions";
-import { IContainerExperimental } from "@fluidframework/container-loader";
+import { IHostLoader } from "@fluidframework/container-definitions/internal";
+import { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { IIntervalCollection, SequenceInterval, SharedString } from "@fluidframework/sequence";

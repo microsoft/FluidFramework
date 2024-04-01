@@ -9,7 +9,7 @@ import {
 	generatePairwiseOptions,
 	numberCases,
 } from "@fluid-private/test-pairwise-generator";
-import { ILoaderOptions } from "@fluidframework/container-loader";
+import { ILoaderOptions } from "@fluidframework/container-loader/internal";
 import {
 	CompressionAlgorithms,
 	IContainerRuntimeOptions,
@@ -19,6 +19,7 @@ import {
 import { ConfigTypes } from "@fluidframework/core-interfaces";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+
 import { ILoadTestConfig, OptionOverride } from "./testConfigFile.js";
 
 const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {

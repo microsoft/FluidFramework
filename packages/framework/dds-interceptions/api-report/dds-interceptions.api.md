@@ -4,7 +4,7 @@
 
 ```ts
 
-import { IDirectory } from '@fluidframework/map';
+import { IDirectory } from '@fluidframework/map/internal';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { ISharedMap } from '@fluidframework/map';
 import * as MergeTree from '@fluidframework/merge-tree';

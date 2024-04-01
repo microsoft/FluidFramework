@@ -4,9 +4,13 @@
  */
 
 /* eslint-disable @typescript-eslint/no-unsafe-return */
+
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 /* eslint-disable @typescript-eslint/dot-notation */
+
 import { strict as assert } from "assert";
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
@@ -21,7 +25,7 @@ import {
 	IDocumentStorageServicePolicies,
 	IResolvedUrl,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	IClient,
 	ICreateBlobResponse,
@@ -32,6 +36,7 @@ import {
 	IVersion,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
+
 import {
 	ICompressionStorageConfig,
 	SummaryCompressionAlgorithm,
@@ -39,6 +44,7 @@ import {
 	blobHeadersBlobName,
 } from "../adapters/index.js";
 import { DocumentStorageServiceProxy } from "../documentStorageServiceProxy.js";
+
 import { snapshotTree, summaryTemplate } from "./summaryCompressionData.js";
 
 /**

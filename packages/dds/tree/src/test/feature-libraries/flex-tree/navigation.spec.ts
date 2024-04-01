@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { FieldUpPath, UpPath } from "../../../core/index.js";
 import {
 	Skip,
 	visitBipartiteIterableTreeWithState,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/flex-tree/navigation.js";
-
-import { FieldUpPath, UpPath } from "../../../core/index.js";
 import { FlexTreeField, FlexTreeNode } from "../../../feature-libraries/index.js";
 
 /**
