@@ -185,6 +185,15 @@ export class SerializedStateManager {
 			);
 			this.snapshot = this.latestSnapshot;
 			this.latestSnapshot = undefined;
+			this.mc.logger.sendTelemetryEvent({
+				eventName: "SnapshotRefreshed",
+				snapshotSequenceNumber,
+				firstProcessedOpSequenceNumber,
+				newFirstProcessedOpSequenceNumber:
+					this.processedOps.length === 0
+						? undefined
+						: this.processedOps[0].sequenceNumber,
+			});
 		}
 	}
 
