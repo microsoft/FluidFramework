@@ -81,7 +81,7 @@
 		"copyfiles": "^2.4.1",
 		"cz-conventional-changelog": "^3.3.0",
 		"cz-customizable": "^7.0.0",
-		"eslint": "~8.55.0",
+		"eslint": "~8.57.0",
 		"inquirer": "^8.2.5",
 		"rimraf": "^4.4.1",
 		"run-script-os": "^1.1.6",
