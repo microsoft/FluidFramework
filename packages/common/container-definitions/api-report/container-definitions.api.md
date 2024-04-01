@@ -42,7 +42,7 @@ export const AttachState: {
     readonly Attached: "Attached";
 };
 
-// @public (undocumented)
+// @public
 export type AttachState = (typeof AttachState)[keyof typeof AttachState];
 
 // @public

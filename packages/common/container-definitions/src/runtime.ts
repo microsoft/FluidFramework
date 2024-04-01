@@ -53,6 +53,7 @@ export const AttachState = {
 	Attached: "Attached",
 } as const;
 /**
+ * {@inheritDoc (AttachState:variable)}
  * @public
  */
 export type AttachState = (typeof AttachState)[keyof typeof AttachState];
