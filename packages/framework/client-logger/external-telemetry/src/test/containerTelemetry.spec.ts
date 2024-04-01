@@ -13,8 +13,8 @@ import type {
 } from "@fluidframework/container-definitions";
 import {
 	createAppInsightsTelemetryConsumer,
-	startTelemetryManagers,
-	TelemetryManagerConfig,
+	subscribeToTelemetry,
+	TelemetryConfig,
 } from "../factory/index.js";
 import { ApplicationInsights } from "@microsoft/applicationinsights-web";
 import { ContainerSystemEventNames } from "../container/containerSystemEvents.js";
@@ -29,7 +29,11 @@ import type {
 	ContainerClosedTelemetry,
 	ContainerDisconnectedTelemetry,
 } from "../container/containerTelemetry.js";
-
+import {
+	IFluidContainer,
+	createFluidContainer,
+	type IRootDataObject,
+} from "@fluidframework/fluid-static";
 /**
  * Mock {@link @fluidframework/container-definitions#IContainer} for use in tests.
  */
@@ -76,15 +80,19 @@ class MockContainer
  * Note: the implementation here is incomplete. If a test needs particular functionality, {@link MockContainer}
  * will need to be updated accordingly.
  */
-export function createMockContainer(): IContainer {
-	return new MockContainer() as unknown as IContainer;
+export function createMockFluidContainer(container: IContainer): IFluidContainer {
+	return createFluidContainer({
+		container: container,
+		rootDataObject: {} as IRootDataObject,
+	});
 }
 
 describe("External container telemetry", () => {
 	let mockContainer: IContainer;
+	let mockFluidContainer: IFluidContainer;
 	let appInsightsClient: ApplicationInsights;
 	let trackEventSpy: Sinon.SinonSpy;
-	let telemetryManagerConfig: TelemetryManagerConfig;
+	let telemetryConfig: TelemetryConfig;
 
 	beforeEach(() => {
 		appInsightsClient = new ApplicationInsights({
@@ -95,16 +103,17 @@ describe("External container telemetry", () => {
 			},
 		});
 		trackEventSpy = spy(appInsightsClient, "trackEvent");
-		mockContainer = createMockContainer();
+		mockContainer = new MockContainer() as unknown as IContainer;
+		mockFluidContainer = createMockFluidContainer(mockContainer);
 
-		telemetryManagerConfig = {
-			container: mockContainer,
+		telemetryConfig = {
+			container: mockFluidContainer,
 			consumers: [createAppInsightsTelemetryConsumer(appInsightsClient)],
 		};
 	});
 
 	it("Emitting 'connected' container system event produces expected ContainerConnectedTelemetry", () => {
-		startTelemetryManagers(telemetryManagerConfig);
+		subscribeToTelemetry(telemetryConfig);
 
 		mockContainer.connect();
 
@@ -128,7 +137,7 @@ describe("External container telemetry", () => {
 	});
 
 	it("Emitting 'disconnected' container system event produces expected ContainerDisconnectedTelemetry", () => {
-		startTelemetryManagers(telemetryManagerConfig);
+		subscribeToTelemetry(telemetryConfig);
 
 		mockContainer.disconnect();
 
@@ -152,7 +161,7 @@ describe("External container telemetry", () => {
 	});
 
 	it("Emitting 'closed' system event produces expected ContainerClosedTelemetry", () => {
-		startTelemetryManagers(telemetryManagerConfig);
+		subscribeToTelemetry(telemetryConfig);
 
 		mockContainer.close();
 
@@ -174,7 +183,7 @@ describe("External container telemetry", () => {
 	});
 
 	it("Emitting 'closed' system event with an error produces expected ContainerClosedTelemetry", () => {
-		startTelemetryManagers(telemetryManagerConfig);
+		subscribeToTelemetry(telemetryConfig);
 
 		const containerError: ICriticalContainerError = {
 			errorType: "unknown error",
@@ -202,7 +211,7 @@ describe("External container telemetry", () => {
 	});
 
 	it("Emitting 'attaching' system event produces expected ContainerAttachingTelemetry", () => {
-		startTelemetryManagers(telemetryManagerConfig);
+		subscribeToTelemetry(telemetryConfig);
 
 		mockContainer.attach({ url: "mockUrl" });
 
@@ -224,7 +233,7 @@ describe("External container telemetry", () => {
 	});
 
 	it("Emitting 'attached' system event produces expected ContainerAttachedTelemetry", () => {
-		startTelemetryManagers(telemetryManagerConfig);
+		subscribeToTelemetry(telemetryConfig);
 
 		mockContainer.attach({ url: "mockUrl" });
 
@@ -247,7 +256,7 @@ describe("External container telemetry", () => {
 	});
 
 	it("Emitting multiple events from the same container persists the same containerId in telemetry", () => {
-		startTelemetryManagers(telemetryManagerConfig);
+		subscribeToTelemetry(telemetryConfig);
 
 		mockContainer.connect();
 		mockContainer.disconnect();

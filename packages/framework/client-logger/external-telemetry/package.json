@@ -78,6 +78,7 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
+		"@fluidframework/fluid-static": "workspace:2.0.0-rc.3.0.0",
 		"@microsoft/applicationinsights-web": "^2.8.11",
 		"uuid": "^9.0.0"
 	},

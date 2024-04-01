@@ -7795,6 +7795,7 @@ importers:
       '@fluidframework/build-tools': ^0.34.0
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/driver-definitions': workspace:2.0.0-rc.3.0.0
+      '@fluidframework/fluid-static': workspace:2.0.0-rc.3.0.0
       '@microsoft/api-extractor': ^7.42.3
       '@microsoft/applicationinsights-web': ^2.8.11
       '@types/chai': ^4.0.0
@@ -7809,6 +7810,7 @@ importers:
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
+      '@fluidframework/fluid-static': link:../../fluid-static
       '@microsoft/applicationinsights-web': 2.8.16_tslib@1.14.1
       uuid: 9.0.1
     devDependencies:

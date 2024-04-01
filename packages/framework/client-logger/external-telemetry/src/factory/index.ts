@@ -8,17 +8,18 @@ import { ContainerTelemetryManager } from "../container/index.js";
 import { ContainerEventTelemetryProducer } from "../container/telemetryProducer.js";
 import type { ApplicationInsights } from "@microsoft/applicationinsights-web";
 import { AppInsightsTelemetryConsumer, type ITelemetryConsumer } from "../common/index.js";
+import type { IFluidContainer } from "@fluidframework/fluid-static";
 
 /**
- * Config object for creating one or more telemetry managers covering differents scopes of the Fluid Framework
+ * Config object forsubscribing to external telemetry covering differents scopes of the Fluid Framework
  *
  * @beta
  */
-export interface TelemetryManagerConfig {
+export interface TelemetryConfig {
 	/**
 	 * By providing this attribute, container related external telemetry will be send to any provided ITelemetryConsumer(s)
 	 */
-	container: IContainer;
+	container: IFluidContainer;
 	/**
 	 * Consumers for produced external telemetry.
 	 */
@@ -41,12 +42,23 @@ export const createAppInsightsTelemetryConsumer = (
 };
 
 /**
- * Starts external telemetry managers for one or more areas of the Fluid Framework.
+ * Starts subscribing to external telemetry for one or more areas of the Fluid Framework.
  * @beta
  */
-export const startTelemetryManagers = (config: TelemetryManagerConfig): void => {
+export const subscribeToTelemetry = (config: TelemetryConfig): void => {
 	if (config.container) {
-		const telemetryProducer = new ContainerEventTelemetryProducer(config.container);
-		new ContainerTelemetryManager(config.container, telemetryProducer, config.consumers);
+		const fluidContainer = config.container as {
+			INTERNAL_CONTAINER_DO_NOT_USE?: () => IContainer;
+		};
+
+		if (fluidContainer.INTERNAL_CONTAINER_DO_NOT_USE === undefined) {
+			console.error("Missing Container accessor on FluidContainer.");
+		} else {
+			const innerContainer = fluidContainer.INTERNAL_CONTAINER_DO_NOT_USE();
+			const telemetryProducer = new ContainerEventTelemetryProducer(innerContainer);
+			new ContainerTelemetryManager(innerContainer, telemetryProducer, config.consumers);
+		}
+	} else {
+		throw new Error("A Fluid Container must be provided for telemetry");
 	}
 };

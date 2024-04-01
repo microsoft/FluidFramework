@@ -61,7 +61,7 @@ export type ContainerTelemetryEventName =
  */
 export interface IContainerTelemetry extends IExternalTelemetry {
 	/**
-	 * @inheritdoc IExternalTelemetry.eventName
+	 * {@inheritdoc IExternalTelemetry.eventName}
 	 */
 	eventName: ContainerTelemetryEventName;
 	/**
@@ -69,7 +69,7 @@ export interface IContainerTelemetry extends IExternalTelemetry {
 	 */
 	containerId: string;
 	/**
-	 * { @inheritdoc @fluidframework/container-definitions#IContainer."clientId" }
+	 * {@inheritdoc @fluidframework/container-definitions#IContainer."clientId"}
 	 */
 	clientId?: string;
 	/**

@@ -5,8 +5,8 @@
 ```ts
 
 import type { ApplicationInsights } from '@microsoft/applicationinsights-web';
-import type { IContainer } from '@fluidframework/container-definitions';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
+import type { IFluidContainer } from '@fluidframework/fluid-static';
 
 // @beta
 export interface ContainerAttachedTelemetry extends IContainerTelemetry {
@@ -60,19 +60,14 @@ export type ExternalTelemetryEventName = ContainerTelemetryEventName;
 
 // @beta
 export interface IContainerTelemetry extends IExternalTelemetry {
-    // (undocumented)
     clientId?: string;
-    // (undocumented)
     containerId: string;
-    // (undocumented)
     documentId?: string;
-    // (undocumented)
     eventName: ContainerTelemetryEventName;
 }
 
 // @beta
 export interface IExternalTelemetry {
-    // (undocumented)
     eventName: ExternalTelemetryEventName;
 }
 
@@ -83,12 +78,12 @@ export interface ITelemetryConsumer {
 }
 
 // @beta
-export const startTelemetryManagers: (config: TelemetryManagerConfig) => void;
+export const subscribeToTelemetry: (config: TelemetryConfig) => void;
 
 // @beta
-export interface TelemetryManagerConfig {
+export interface TelemetryConfig {
     consumers: ITelemetryConsumer[];
-    container: IContainer;
+    container: IFluidContainer;
 }
 
 // (No @packageDocumentation comment for this package)
