@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { FluidObject } from "@fluidframework/core-interfaces";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	CreateChildSummarizerNodeFn,
 	CreateSummarizerNodeSource,

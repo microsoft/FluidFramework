@@ -7,12 +7,14 @@ import assert from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { AttachState, IContainer, IHostLoader } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 // eslint-disable-next-line import/no-internal-modules
 import { type IPendingRuntimeState } from "@fluidframework/container-runtime/test/containerRuntime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { ISharedDirectory, ISharedMap, SharedDirectory } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map";
+import type { ISharedDirectory, SharedDirectory } from "@fluidframework/map/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
