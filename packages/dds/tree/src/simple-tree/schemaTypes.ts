@@ -220,8 +220,8 @@ export enum NodeKind {
  * To update the developer-facing API, while maintain backwards compatibility with existing SharedTree data,
  * you can change the property key and specify the previous property key as the stored key.
  *
- * To query a node for its stored key via it property key, use {@link TreeNodeApi.storedKey}.
- * To access an object's field via a stored name instead of its property key, use {@link TreeNodeApi.child}.
+ * To query a node for its stored key via its property key, use {@link TreeNodeApi.storedKey}.
+ * To access an object's child via its stored name instead of its property key, use {@link TreeNodeApi.child}.
  * These APIs can be useful when working with SharedTree data from a different version of the schema.
  *
  * Notes:

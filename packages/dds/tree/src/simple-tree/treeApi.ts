@@ -63,12 +63,12 @@ export interface TreeNodeApi {
 	): value is NodeFromSchema<TSchema>;
 
 	/**
-	 * Gets the child node based on its `stableName`.
-	 * @remarks This method is intended to be used when the developer-facing key for a particular child
-	 * is not known, and only the `stableName` is known.
-	 * @param node - TODO
-	 * @param storedKey - TODO
-	 * @returns TODO
+	 * Gets the child node based on its {@link StoredKey | stored key}, if it exists.
+	 *
+	 * @param node - The node whose child is being queried.
+	 * @param storedKey - The stored key whose associated child will be returned.
+	 *
+	 * @returns The associated child node, if it exists. Otherwise `undefined`.
 	 */
 	child(node: TreeNode, storedKey: StoredKey): TreeNode | TreeValue | undefined;
 
@@ -76,6 +76,7 @@ export interface TreeNodeApi {
 	 * Return the node under which this node resides in the tree (or undefined if this is a root node of the tree).
 	 */
 	parent(node: TreeNode): TreeNode | undefined;
+
 	/**
 	 * The key of the given node under its parent.
 	 * @remarks
@@ -85,9 +86,13 @@ export interface TreeNodeApi {
 	key(node: TreeNode): string | number;
 
 	/**
-	 * TODO
-	 * @param node - TODO
-	 * @returns TODO
+	 * Gets the {@link StoredKey | stored key} of the given node under its parent.
+	 *
+	 * @remarks
+	 * If one was not explicitly specified by the schema of the parent node, this will be the same as the
+	 * object property key.
+	 *
+	 * @param node - The node whose stored key is being queried.
 	 */
 	storedKey(node: TreeNode): StoredKey | number;
 
