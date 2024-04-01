@@ -14,7 +14,7 @@ import {
 	HostStoragePolicy,
 	IPersistedCache,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { v4 as uuid } from "uuid";

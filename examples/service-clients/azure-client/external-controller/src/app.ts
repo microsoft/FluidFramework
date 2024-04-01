@@ -9,7 +9,7 @@ import {
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
-import { createDevtoolsLogger } from "@fluidframework/devtools";
+import { createDevtoolsLogger } from "@fluidframework/devtools/internal";
 import { initializeDevtools } from "@fluidframework/devtools/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";

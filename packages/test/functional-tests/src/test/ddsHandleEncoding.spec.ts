@@ -19,7 +19,7 @@ import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { DirectoryFactory, type ISharedDirectory, MapFactory } from "@fluidframework/map/internal";
 import { SharedMatrixFactory } from "@fluidframework/matrix/internal";
-import { ConsensusQueueFactory } from "@fluidframework/ordered-collection";
+import { ConsensusQueueFactory } from "@fluidframework/ordered-collection/internal";
 import { ConsensusRegisterCollectionFactory } from "@fluidframework/register-collection/internal";
 import { ReferenceType, SharedStringFactory } from "@fluidframework/sequence/internal";
 import {

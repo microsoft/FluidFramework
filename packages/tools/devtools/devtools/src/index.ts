@@ -194,5 +194,9 @@ function mapContainerProps(
 // so consumers don't need to import from this one *and* devtools-core.
 // DevtoolsLogger is necessary for consumers to set up Devtools.
 // ContainerDevtoolsProps extends HasContainerKey, so it needs ContainerKey.
-export { type ContainerKey, type HasContainerKey } from "@fluidframework/devtools-core";
-export { createDevtoolsLogger, type IDevtoolsLogger } from "@fluidframework/devtools-core";
+export {
+	type ContainerKey,
+	type HasContainerKey,
+	createDevtoolsLogger,
+	type IDevtoolsLogger,
+} from "@fluidframework/devtools-core/internal";

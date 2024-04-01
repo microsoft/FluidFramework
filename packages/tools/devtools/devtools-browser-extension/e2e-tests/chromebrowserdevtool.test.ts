@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { retryWithEventualValue } from "@fluidframework/test-utils";
+import { retryWithEventualValue } from "@fluidframework/test-utils/internal";
+
 import { globals } from "../jest.config.cjs";
 
 describe("End to end tests", () => {
