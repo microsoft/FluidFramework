@@ -6,11 +6,6 @@
 import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import {
 	type ContainerRuntime,
 	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
@@ -31,22 +26,25 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 
-// A Test Data Object that exposes some basic functionality.
-class TestDataObject extends DataObject {
-	public get _root() {
-		return this.root;
+describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
+	const { DataObjectFactory, DataObject } = apis.dataRuntime;
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+
+	// A Test Data Object that exposes some basic functionality.
+	class TestDataObject extends DataObject {
+		public get _root() {
+			return this.root;
+		}
+
+		public get containerRuntime() {
+			return this.context.containerRuntime as ContainerRuntime;
+		}
+
+		public get loadingGroupId() {
+			return this.context.loadingGroupId;
+		}
 	}
 
-	public get containerRuntime() {
-		return this.context.containerRuntime as ContainerRuntime;
-	}
-
-	public get loadingGroupId() {
-		return this.context.loadingGroupId;
-	}
-}
-
-describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
