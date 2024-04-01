@@ -25,7 +25,7 @@ import {
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { ReferenceType } from "@fluidframework/merge-tree";
 import type { SharedString } from "@fluidframework/sequence";
 import {

@@ -19,6 +19,7 @@ import type { MockContainerRuntimeForReconnection } from '@fluidframework/test-r
 import type { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
 import type { SaveInfo } from '@fluid-private/stochastic-test-utils';
 import type { SerializedIdCompressorWithNoSession } from '@fluidframework/id-compressor/internal';
+import type { SerializedIdCompressorWithOngoingSession } from '@fluidframework/id-compressor/internal';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @internal (undocumented)
@@ -126,7 +127,7 @@ export interface DDSFuzzSuiteOptions {
     };
     emitter: TypedEventEmitter<DDSFuzzHarnessEvents>;
     handles: boolean;
-    idCompressorFactory?: (summary?: SerializedIdCompressorWithNoSession) => IIdCompressor & IIdCompressorCore;
+    idCompressorFactory?: (summary?: FuzzSerializedIdCompressor) => IIdCompressor & IIdCompressorCore;
     numberOfClients: number;
     only: Iterable<number>;
     // (undocumented)
@@ -175,6 +176,13 @@ export interface HandleCreated {
     // (undocumented)
     type: "handleCreated";
 }
+export type FuzzSerializedIdCompressor = {
+    withSession: false;
+    serializedCompressor: SerializedIdCompressorWithNoSession;
+} | {
+    withSession: true;
+    serializedCompressor: SerializedIdCompressorWithOngoingSession;
+};
 
 // @internal
 export interface IGCTestProvider {

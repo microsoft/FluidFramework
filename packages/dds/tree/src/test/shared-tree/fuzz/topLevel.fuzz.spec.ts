@@ -43,6 +43,8 @@ describe("Fuzz - Top-Level", () => {
 	const opsPerRun = 20;
 	// TODO: Enable other types of ops.
 	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
+		set: 3,
+		clear: 1,
 		insert: 5,
 		remove: 5,
 		move: 5,
@@ -119,7 +121,6 @@ describe("Fuzz - Top-Level", () => {
 			// AB#7162: see comment above.
 			detachedStartOptions: {
 				numOpsBeforeAttach: 5,
-				rehydrateDisabled: true,
 			},
 			saveFailures: {
 				directory: failureDirectory,

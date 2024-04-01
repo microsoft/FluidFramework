@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedCell, SharedCell } from "@fluidframework/cell";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase, IFluidHandle } from "@fluidframework/core-interfaces";
 import { Serializable } from "@fluidframework/datastore-definitions";

@@ -17,11 +17,11 @@ import {
 	IThrottlingWarning,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
-	DriverErrorTypes,
 	IDocumentDeltaStorageService,
 	IDocumentService,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { MessageType2, NonRetryableError, isRuntimeMessage } from "@fluidframework/driver-utils";
 import {
 	ConnectionMode,

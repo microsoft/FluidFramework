@@ -22,4 +22,4 @@ export { DDSFuzzHandle } from "./ddsFuzzHandle.js";
 export type { ISnapshotSuite } from "./ddsSnapshotHarness.js";
 export { createSnapshotSuite } from "./ddsSnapshotHarness.js";
 export type { MinimizationTransform } from "./minification.js";
-export type { Client } from "./clientLoading.js";
+export type { Client, FuzzSerializedIdCompressor } from "./clientLoading.js";

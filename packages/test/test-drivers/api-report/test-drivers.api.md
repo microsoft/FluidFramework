@@ -8,14 +8,14 @@ import { createLocalResolverCreateNewRequest } from '@fluidframework/local-drive
 import { createOdspCreateContainerRequest } from '@fluidframework/odsp-driver';
 import { createOdspUrl } from '@fluidframework/odsp-driver';
 import { HostStoragePolicy } from '@fluidframework/odsp-driver-definitions';
-import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
+import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
 import { ILocalDeltaConnectionServer } from '@fluidframework/server-local-server';
 import { InsecureTinyliciousUrlResolver } from '@fluidframework/tinylicious-driver';
 import { InsecureUrlResolver } from '@fluidframework/driver-utils';
 import { IRequest } from '@fluidframework/core-interfaces';
-import { IResolvedUrl } from '@fluidframework/driver-definitions';
+import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 import { ITestDriver } from '@fluidframework/test-driver-definitions';
-import { IUrlResolver } from '@fluidframework/driver-definitions';
+import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
 import { LocalDeltaConnectionServer } from '@fluidframework/server-local-server';
 import { LocalDocumentServiceFactory } from '@fluidframework/local-driver';
 import { LocalResolver } from '@fluidframework/local-driver';

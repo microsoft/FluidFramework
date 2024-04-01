@@ -18,14 +18,14 @@ import {
 	IContainer,
 	IFluidCodeDetails,
 	LoaderHeader,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader";
 import {
-	ConnectionState,
 	IContainerExperimental,
 	ILoaderProps,
 	Loader,
 	waitContainerToCatchUp,
-} from "@fluidframework/container-loader";
+} from "@fluidframework/container-loader/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import {
 	ConfigTypes,
@@ -35,12 +35,8 @@ import {
 	IRequestHeader,
 } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils";
-import {
-	DriverErrorTypes,
-	FiveDaysMs,
-	IAnyDriverError,
-	IDocumentServiceFactory,
-} from "@fluidframework/driver-definitions";
+import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions";
+import { FiveDaysMs, IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import {
 	DeltaStreamConnectionForbiddenError,
 	NonRetryableError,

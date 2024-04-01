@@ -4,10 +4,10 @@
 
 ```ts
 
-import { IContainerPackageInfo } from '@fluidframework/driver-definitions';
+import { IContainerPackageInfo } from '@fluidframework/driver-definitions/internal';
 import { IRequest } from '@fluidframework/core-interfaces';
-import { IResolvedUrl } from '@fluidframework/driver-definitions';
-import { IUrlResolver } from '@fluidframework/driver-definitions';
+import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
+import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
 
 // @internal
 export class FluidAppOdspUrlResolver implements IUrlResolver {
