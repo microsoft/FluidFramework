@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { AsyncReducer, combineReducers } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-private/test-dds-utils";
-import { unreachableCase } from "@fluidframework/core-utils";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 import { Revertible, ValueSchema } from "../../../core/index.js";
 import {
@@ -22,7 +22,7 @@ import {
 	cursorForJsonableTreeNode,
 	intoStoredSchema,
 } from "../../../feature-libraries/index.js";
-import { ISharedTree, SharedTree, SharedTreeFactory } from "../../../shared-tree/index.js";
+import { ISharedTree, SharedTreeFactory } from "../../../shared-tree/index.js";
 import { brand, fail } from "../../../util/index.js";
 import { validateTreeConsistency } from "../../utils.js";
 
@@ -115,12 +115,12 @@ function generateLeafNodeSchemas(nodeTypes: string[]) {
 	return { leafNodeSchemas, library };
 }
 export function applySchemaOp(state: FuzzTestState, operation: SchemaChange) {
-	const tree = state.client.channel as SharedTree;
 	const nodeTypes = getAllowableNodeTypes(state);
 	nodeTypes.push(brand(operation.operation.type));
 	const { leafNodeSchemas, library } = generateLeafNodeSchemas(nodeTypes);
 	const newSchema = createTreeViewSchema(leafNodeSchemas, library);
-	tree.checkout.updateSchema(intoStoredSchema(newSchema));
+	const view = viewFromState(state, state.client);
+	view.checkout.updateSchema(intoStoredSchema(newSchema));
 }
 
 /**

@@ -9,7 +9,7 @@ import {
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
 import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import React from "react";
 

@@ -12,9 +12,9 @@ import {
 	type IRequest,
 	type IResponse,
 } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { type IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { type IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { create404Response } from "@fluidframework/runtime-utils";
 import { type AsyncFluidObjectProvider } from "@fluidframework/synthesize";
 

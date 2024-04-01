@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { FluidDataStoreRegistry } from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { type FluidObject, type IRequest } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	FluidDataStoreRuntime,
 	type ISharedObjectRegistry,
 	mixinRequestHandler,
-} from "@fluidframework/datastore";
+} from "@fluidframework/datastore/internal";
 import {
 	type IChannelFactory,
 	type IFluidDataStoreRuntime,
@@ -27,7 +27,7 @@ import {
 	type IProvideFluidDataStoreRegistry,
 	type NamedFluidDataStoreRegistryEntries,
 	type NamedFluidDataStoreRegistryEntry,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	type AsyncFluidObjectProvider,
 	type FluidObjectSymbolProvider,

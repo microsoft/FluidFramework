@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { ILoggingError } from "@fluidframework/core-interfaces";
+import { ILoggingError } from "@fluidframework/core-interfaces/internal";
 import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
@@ -17,7 +17,7 @@ import {
 	ISummarizerNode,
 	ISummarizerNodeConfig,
 	channelsTreeName,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils";
 import { TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils";
 

@@ -8,15 +8,16 @@ import fs from "fs";
 
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { SharedCell } from "@fluidframework/cell";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
 import { SharedCounter } from "@fluidframework/counter";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { type ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map";
-import { SharedMatrix } from "@fluidframework/matrix";
+import { type ISharedMap, SharedMap } from "@fluidframework/map";
+import { SharedDirectory } from "@fluidframework/map/internal";
+import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { ConsensusOrderedCollection, ConsensusQueue } from "@fluidframework/ordered-collection";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { SharedString } from "@fluidframework/sequence";
+import { SharedString } from "@fluidframework/sequence/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
 	LoaderContainerTracker,

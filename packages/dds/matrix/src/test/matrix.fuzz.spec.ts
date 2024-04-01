@@ -24,7 +24,7 @@ import {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { FlushMode } from "@fluidframework/runtime-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { SharedMatrix } from "../matrix.js";
 import { MatrixItem } from "../ops.js";

@@ -5,8 +5,8 @@
 
 import { performance } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert, Deferred } from "@fluidframework/core-utils";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import {
 	IOdspResolvedUrl,
 	IOdspUrlParts,

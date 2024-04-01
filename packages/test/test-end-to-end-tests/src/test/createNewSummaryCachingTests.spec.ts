@@ -11,8 +11,8 @@ import {
 	DefaultSummaryConfiguration,
 	IContainerRuntimeOptions,
 	ISummaryConfiguration,
-} from "@fluidframework/container-runtime";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+} from "@fluidframework/container-runtime/internal";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestObjectProvider,

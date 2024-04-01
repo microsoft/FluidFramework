@@ -7,9 +7,8 @@ import { strict as assert } from "assert";
 
 import { MockHandle, validateAssertionError } from "@fluidframework/test-runtime-utils";
 
-import { EmptyKey, type FieldKey, type MapTree } from "../../core/index.js";
-
 import type { ImplicitAllowedTypes } from "../../../dist/index.js";
+import { EmptyKey, type FieldKey, type MapTree } from "../../core/index.js";
 import { leaf } from "../../domains/index.js";
 import { SchemaFactory, SchemaFactoryRecursive } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules

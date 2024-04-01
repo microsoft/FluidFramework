@@ -260,7 +260,7 @@ describe("schemaBasedEncoding", () => {
 					encodeType: TreeCompressionStrategy.Compressed,
 					schema: { schema: storedSchema, policy: defaultSchemaPolicy },
 				};
-				const codec = makeFieldBatchCodec({ jsonValidator: ajvValidator });
+				const codec = makeFieldBatchCodec({ jsonValidator: ajvValidator }, 1);
 				// End to end test
 				const encoded = codec.encode([cursorForJsonableTreeField(tree)], context);
 				const result = codec.decode(encoded, context);

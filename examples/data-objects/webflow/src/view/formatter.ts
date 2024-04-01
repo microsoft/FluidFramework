@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SequenceEvent } from "@fluidframework/sequence";
+import { SequenceEvent } from "@fluidframework/sequence/internal";
 
 import { emptyObject } from "../util/index.js";
 

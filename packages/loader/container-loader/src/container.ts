@@ -6,15 +6,18 @@
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import {
 	AttachState,
-	ContainerWarning,
 	IAudience,
+	ICriticalContainerError,
+	IDeltaManager,
+	ReadOnlyInfo,
+} from "@fluidframework/container-definitions";
+import {
+	ContainerWarning,
 	IBatchMessage,
 	ICodeDetailsLoader,
 	IContainer,
 	IContainerEvents,
 	IContainerLoadMode,
-	ICriticalContainerError,
-	IDeltaManager,
 	IFluidCodeDetails,
 	IFluidCodeDetailsComparer,
 	IFluidModuleWithDetails,
@@ -23,18 +26,17 @@ import {
 	IProvideFluidCodeDetailsComparer,
 	IProvideRuntimeFactory,
 	IRuntime,
-	ReadOnlyInfo,
 	isFluidCodeDetails,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IEvent,
 	IRequest,
-	type ISignalEnvelope,
 	ITelemetryBaseProperties,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
-import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils";
+import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
@@ -43,7 +45,7 @@ import {
 	ISnapshot,
 	IThrottlingWarning,
 	IUrlResolver,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	MessageType2,
 	OnlineStatus,

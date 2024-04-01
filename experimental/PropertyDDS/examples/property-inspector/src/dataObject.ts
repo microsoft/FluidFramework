@@ -8,8 +8,9 @@ import { PropertyTreeFactory, SharedPropertyTree } from "@fluid-experimental/pro
 import { BaseProperty } from "@fluid-experimental/property-properties";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IDirectory, IValueChanged } from "@fluidframework/map";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { IValueChanged } from "@fluidframework/map";
+import { IDirectory } from "@fluidframework/map/internal";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 
 export interface IPropertyTree extends EventEmitter {
 	pset: any;

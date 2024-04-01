@@ -11,7 +11,7 @@ import {
 	ReferenceType,
 	SlidingPreference,
 	reservedRangeLabelsKey,
-} from "@fluidframework/merge-tree";
+} from "@fluidframework/merge-tree/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import {
 	MockContainerRuntimeFactory,

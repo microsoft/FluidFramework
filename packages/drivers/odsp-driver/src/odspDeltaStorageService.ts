@@ -4,13 +4,13 @@
  */
 
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { validateMessages } from "@fluidframework/driver-base";
 import {
 	IDeltasFetchResult,
 	IDocumentDeltaStorageService,
 	type IStream,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { requestOps, streamObserver } from "@fluidframework/driver-utils";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
