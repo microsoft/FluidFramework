@@ -27,7 +27,7 @@ export interface IBubble {
 /**
  * @internal
  */
-export interface IClient<out T extends readonly IBubble[] = IBubble[]> {
+export interface IClient<out T extends readonly IBubble[] = readonly IBubble[]> {
 	clientId: string;
 	color: string;
 	// Make the bubbles read-only, as SharedTree ArrayNodes are not compatible with JavaScript arrays for writing purposes.
@@ -38,7 +38,7 @@ export interface IClient<out T extends readonly IBubble[] = IBubble[]> {
  * @internal
  */
 export interface IAppState {
-	readonly localClient: IClient<readonly IBubble[]>;
+	readonly localClient: IClient;
 	readonly clients: IArrayish<IClient>;
 	readonly width: number;
 	readonly height: number;
@@ -74,7 +74,7 @@ export const makeClient = (
 	stageWidth: number,
 	stageHeight: number,
 	numBubbles: number,
-): IClient => ({
+): IClient<IBubble[]> => ({
 	clientId: "pending",
 	color: randomColor(),
 	bubbles: Array.from({ length: numBubbles }).map(() => makeBubble(stageWidth, stageHeight)),

@@ -13,7 +13,7 @@ import {
 
 export class AppState implements IAppState {
 	public readonly applyEdits = (): void => {};
-	public readonly localClient: IClient;
+	public readonly localClient: IClient<IBubble[]>;
 	public readonly clients: IClient[];
 
 	constructor(

@@ -9,6 +9,7 @@ import {
 	IClient,
 	makeBubble,
 	makeClient,
+	type IBubble,
 } from "@fluid-example/bubblebench-common";
 import { Change, SharedTree } from "@fluid-experimental/tree";
 
@@ -23,7 +24,7 @@ export class AppState implements IAppState {
 	public readonly applyEdits: () => void;
 	private readonly root: IApp;
 
-	public readonly localClient: IClient;
+	public readonly localClient: IClient<IBubble[]>;
 
 	private readonly deferredUpdates = true;
 	private readonly deferredChanges: Change[] = [];
