@@ -261,6 +261,22 @@ const tcs: TestCase[] = [
 		})(),
 		initialTree: { nested: {} },
 	},
+	// Case with explicit stored keys
+	{
+		schema: (() => {
+			const _ = new SchemaFactory("testE");
+			return _.object("object", {
+				foo: _.optional(_.number),
+				bar: _.optional(_.string, { key: "stable-bar" }),
+				baz: _.required([_.boolean, _.null], { key: "stable-baz" }),
+			});
+		})(),
+		initialTree: {
+			foo: 42,
+			bar: "hello world",
+			baz: null,
+		},
+	},
 	{
 		schema: (() => {
 			const _ = new SchemaFactory("testF");
