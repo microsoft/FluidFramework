@@ -4,14 +4,14 @@
  */
 
 import {
+	IFluidCodeResolver,
+	IResolvedFluidCodeDetails,
 	ICodeDetailsLoader,
 	IFluidCodeDetails,
-	IFluidCodeResolver,
 	IFluidModule,
 	IFluidModuleWithDetails,
-	IResolvedFluidCodeDetails,
 	isFluidBrowserPackage,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 
 import { AllowList } from "./allowList.js";
 import { ScriptManager } from "./scriptManager.js";

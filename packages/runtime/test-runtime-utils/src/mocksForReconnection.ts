@@ -8,6 +8,7 @@ import { createChildLogger, raiseConnectedEvent } from "@fluidframework/telemetr
 import { v4 as uuid } from "uuid";
 
 import {
+	type IMockContainerRuntimeIdAllocationMessage,
 	IMockContainerRuntimeOptions,
 	MockContainerRuntime,
 	MockContainerRuntimeFactory,
@@ -60,6 +61,14 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			// On disconnection, clear any outstanding messages for this client because it will be resent.
 			this.factory.clearOutstandingClientMessages(this.clientId);
 			this.factory.quorum.removeMember(this.clientId);
+			for (const message of this.outbox) {
+				this.addPendingMessage(
+					message.content,
+					message.localOpMetadata,
+					++this.deltaManager.clientSequenceNumber,
+				);
+			}
+			this.outbox.length = 0;
 		}
 
 		// Let the DDSes know that the connection state changed.
@@ -165,7 +174,13 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		const applyStashedOpsAtSeq = async (seq: number) => {
 			const pendingAtSeq = stashedOps.get(seq);
 			for (const message of pendingAtSeq ?? []) {
-				await this.dataStoreRuntime.applyStashedOp(message);
+				// As in production, do not locally apply any stashed ID allocation messages.
+				// Instead, simply resubmit them.
+				if ((message as IMockContainerRuntimeIdAllocationMessage).type === "idAllocation") {
+					this.submit(message, undefined);
+				} else {
+					await this.dataStoreRuntime.applyStashedOp(message);
+				}
 			}
 			stashedOps.delete(seq);
 		};

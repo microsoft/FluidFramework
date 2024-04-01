@@ -12,7 +12,7 @@ import {
 	IContainerRuntimeOptions,
 	ISummaryConfiguration,
 } from "@fluidframework/container-runtime";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestObjectProvider,
