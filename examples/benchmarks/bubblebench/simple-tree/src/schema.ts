@@ -24,7 +24,7 @@ export class Client
 		color: sf.string,
 		bubbles: sf.array("Bubbles", Bubble),
 	})
-	implements IClient {}
+	implements IClient<readonly IBubble[]> {}
 
 // Root type
 export class App extends sf.object("App", {

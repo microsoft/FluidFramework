@@ -27,18 +27,18 @@ export interface IBubble {
 /**
  * @internal
  */
-export interface IClient {
+export interface IClient<out T extends readonly IBubble[] = IBubble[]> {
 	clientId: string;
 	color: string;
 	// Make the bubbles read-only, as SharedTree ArrayNodes are not compatible with JavaScript arrays for writing purposes.
-	bubbles: readonly IBubble[];
+	bubbles: T;
 }
 
 /**
  * @internal
  */
 export interface IAppState {
-	readonly localClient: IClient;
+	readonly localClient: IClient<readonly IBubble[]>;
 	readonly clients: IArrayish<IClient>;
 	readonly width: number;
 	readonly height: number;

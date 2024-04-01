@@ -6,7 +6,6 @@
 import {
 	IAppState,
 	IArrayish,
-	type IBubble,
 	IClient,
 	makeBubble,
 	randomColor,
@@ -65,11 +64,11 @@ export class AppState implements IAppState {
 	}
 
 	public increaseBubbles() {
-		(this.localClient.bubbles as IBubble[]).push(this.makeBubble());
+		this.localClient.bubbles.push(this.makeBubble());
 	}
 
 	public decreaseBubbles() {
-		const bubbles = this.localClient.bubbles as IBubble[];
+		const bubbles = this.localClient.bubbles;
 		if (bubbles.length > 1) {
 			bubbles.pop();
 		}

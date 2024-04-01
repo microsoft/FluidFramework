@@ -42,11 +42,11 @@ export class AppState implements IAppState {
 	}
 
 	public increaseBubbles(): void {
-		(this.localClient.bubbles as IBubble[]).push(this.makeBubble());
+		this.localClient.bubbles.push(this.makeBubble());
 	}
 
 	public decreaseBubbles(): void {
-		const bubbles = this.localClient.bubbles as IBubble[];
+		const bubbles = this.localClient.bubbles;
 		if (bubbles.length > 1) {
 			bubbles.pop();
 		}
