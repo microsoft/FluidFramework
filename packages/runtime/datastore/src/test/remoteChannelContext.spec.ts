@@ -11,7 +11,10 @@ import {
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions/internal";
-import { MockFluidDataStoreContext, validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockFluidDataStoreContext,
+	validateAssertionError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime.js";
 import { RemoteChannelContext } from "../remoteChannelContext.js";

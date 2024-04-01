@@ -6,7 +6,10 @@
 import { type ITelemetryGenericEventExt } from "@fluidframework/telemetry-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { getUnexpectedLogErrorException, TestObjectProvider } from "@fluidframework/test-utils/internal";
+import {
+	getUnexpectedLogErrorException,
+	TestObjectProvider,
+} from "@fluidframework/test-utils/internal";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Context } from "mocha";
 

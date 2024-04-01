@@ -12,7 +12,14 @@ import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interface
 import type { ISharedMap } from "@fluidframework/map";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { FlushMode, FlushModeExperimental } from "@fluidframework/runtime-definitions/internal";
-import { ChannelFactoryRegistry, DataObjectFactoryType, ITestContainerConfig, ITestFluidObject, ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils/internal";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;

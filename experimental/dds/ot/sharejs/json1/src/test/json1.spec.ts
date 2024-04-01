@@ -6,7 +6,11 @@
 import { strict as assert } from "assert";
 
 import { Jsonable } from "@fluidframework/datastore-definitions/internal";
-import { MockContainerRuntimeFactory, MockFluidDataStoreRuntime, MockStorage } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { Json1Factory, SharedJson1 } from "../index.js";
 

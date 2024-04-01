@@ -29,7 +29,20 @@ import type { ConsensusRegisterCollection } from "@fluidframework/register-colle
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import { createChildLogger, isFluidError } from "@fluidframework/telemetry-utils/internal";
-import { ChannelFactoryRegistry, DataObjectFactoryType, ITestContainerConfig, ITestFluidObject, ITestObjectProvider, LocalCodeLoader, SupportedExportInterfaces, TestFluidObjectFactory, getContainerEntryPointBackCompat, getDataStoreEntryPointBackCompat, timeoutPromise, waitForContainerConnection } from "@fluidframework/test-utils/internal";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	LocalCodeLoader,
+	SupportedExportInterfaces,
+	TestFluidObjectFactory,
+	getContainerEntryPointBackCompat,
+	getDataStoreEntryPointBackCompat,
+	timeoutPromise,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
 

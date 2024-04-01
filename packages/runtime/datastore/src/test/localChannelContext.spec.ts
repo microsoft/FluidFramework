@@ -8,7 +8,10 @@ import { strict as assert } from "assert";
 import { IChannel } from "@fluidframework/datastore-definitions";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
-import { MockFluidDataStoreContext, validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockFluidDataStoreContext,
+	validateAssertionError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime.js";
 import { LocalChannelContext, RehydratedLocalChannelContext } from "../localChannelContext.js";

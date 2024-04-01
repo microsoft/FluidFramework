@@ -38,8 +38,16 @@ import {
 	channelsTreeName,
 } from "@fluidframework/runtime-definitions/internal";
 import { GCDataBuilder, convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
-import { MockLogger, TelemetryDataTag, createChildLogger, isFluidError } from "@fluidframework/telemetry-utils/internal";
-import { MockFluidDataStoreRuntime, validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockLogger,
+	TelemetryDataTag,
+	createChildLogger,
+	isFluidError,
+} from "@fluidframework/telemetry-utils/internal";
+import {
+	MockFluidDataStoreRuntime,
+	validateAssertionError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { ChannelCollection, wrapContextForInnerChannel } from "../channelCollection.js";
 import { ContainerRuntime } from "../containerRuntime.js";

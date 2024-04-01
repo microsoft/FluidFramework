@@ -5,7 +5,10 @@
 
 import assert from "node:assert";
 
-import { isTokenFromCache, tokenFromResponse } from "@fluidframework/odsp-driver-definitions/internal";
+import {
+	isTokenFromCache,
+	tokenFromResponse,
+} from "@fluidframework/odsp-driver-definitions/internal";
 
 describe("tokenFromResponse", () => {
 	it("returns token verbatim when token value is passed as a string", async () => {

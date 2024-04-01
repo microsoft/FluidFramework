@@ -13,7 +13,12 @@ import {
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map";
-import { ITestObjectProvider, TestFluidObject, getContainerEntryPointBackCompat, getDataStoreEntryPointBackCompat } from "@fluidframework/test-utils/internal";
+import {
+	ITestObjectProvider,
+	TestFluidObject,
+	getContainerEntryPointBackCompat,
+	getDataStoreEntryPointBackCompat,
+} from "@fluidframework/test-utils/internal";
 
 describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;

@@ -6,7 +6,11 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import * as api from "@fluidframework/driver-definitions/internal";
-import { NetworkErrorBasic, RateLimiter, canRetryOnError } from "@fluidframework/driver-utils/internal";
+import {
+	NetworkErrorBasic,
+	RateLimiter,
+	canRetryOnError,
+} from "@fluidframework/driver-utils/internal";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils/internal";

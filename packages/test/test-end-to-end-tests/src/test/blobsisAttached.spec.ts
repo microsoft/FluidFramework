@@ -15,7 +15,14 @@ import { type IPendingRuntimeState } from "@fluidframework/container-runtime/tes
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map";
 import type { ISharedDirectory, SharedDirectory } from "@fluidframework/map/internal";
-import { ChannelFactoryRegistry, DataObjectFactoryType, ITestContainerConfig, ITestFluidObject, ITestObjectProvider, createAndAttachContainer } from "@fluidframework/test-utils/internal";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	createAndAttachContainer,
+} from "@fluidframework/test-utils/internal";
 
 import { MockDetachedBlobStorage, driverSupportsBlobs } from "./mockDetachedBlobStorage.js";
 

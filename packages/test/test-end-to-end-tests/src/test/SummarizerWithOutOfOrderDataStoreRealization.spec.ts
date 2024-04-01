@@ -14,7 +14,13 @@ import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import type { ISharedMap } from "@fluidframework/map";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
-import { ITestObjectProvider, createContainerRuntimeFactoryWithDefaultDataStore, createSummarizerFromFactory, summarizeNow, waitForContainerConnection } from "@fluidframework/test-utils/internal";
+import {
+	ITestObjectProvider,
+	createContainerRuntimeFactoryWithDefaultDataStore,
+	createSummarizerFromFactory,
+	summarizeNow,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 interface ProvideSearchContent {
 	SearchContent: SearchContent;

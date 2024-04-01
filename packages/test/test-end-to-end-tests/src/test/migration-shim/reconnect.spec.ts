@@ -24,7 +24,12 @@ import { type IContainerExperimental } from "@fluidframework/container-loader/in
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { type ConfigTypes, type IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { type IChannel } from "@fluidframework/datastore-definitions";
-import { type ITestObjectProvider, createSummarizerFromFactory, summarizeNow, waitForContainerConnection } from "@fluidframework/test-utils/internal";
+import {
+	type ITestObjectProvider,
+	createSummarizerFromFactory,
+	summarizeNow,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 import {
 	ITree,
 	SchemaFactory,

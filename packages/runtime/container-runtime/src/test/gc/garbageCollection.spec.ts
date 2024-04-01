@@ -20,7 +20,13 @@ import {
 	gcTombstoneBlobKey,
 	gcTreeKey,
 } from "@fluidframework/runtime-definitions/internal";
-import { MockLogger, MonitoringContext, createChildLogger, mixinMonitoringContext, tagCodeArtifacts } from "@fluidframework/telemetry-utils/internal";
+import {
+	MockLogger,
+	MonitoringContext,
+	createChildLogger,
+	mixinMonitoringContext,
+	tagCodeArtifacts,
+} from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, spy, useFakeTimers } from "sinon";
 
 import {

@@ -48,7 +48,16 @@ import type {
 	SharedString,
 } from "@fluidframework/sequence/internal";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
-import { ChannelFactoryRegistry, DataObjectFactoryType, ITestContainerConfig, ITestFluidObject, ITestObjectProvider, createAndAttachContainer, createDocumentId, waitForContainerConnection } from "@fluidframework/test-utils/internal";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	createAndAttachContainer,
+	createDocumentId,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
 import { ISharedTree, SharedTreeFactory } from "@fluidframework/tree/internal";
 

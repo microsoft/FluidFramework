@@ -27,7 +27,13 @@ import { DriverHeader } from "@fluidframework/driver-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils/internal";
-import { ITestContainerConfig, ITestObjectProvider, createSummarizer, summarizeNow, waitForContainerConnection } from "@fluidframework/test-utils/internal";
+import {
+	ITestContainerConfig,
+	ITestObjectProvider,
+	createSummarizer,
+	summarizeNow,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 import {
 	manufactureHandle,

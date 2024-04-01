@@ -16,7 +16,15 @@ import {
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
-import { ITestFluidObject, ITestObjectProvider, TestFluidObjectFactory, createContainerRuntimeFactoryWithDefaultDataStore, createSummarizerFromFactory, summarizeNow, waitForContainerConnection } from "@fluidframework/test-utils/internal";
+import {
+	ITestFluidObject,
+	ITestObjectProvider,
+	TestFluidObjectFactory,
+	createContainerRuntimeFactoryWithDefaultDataStore,
+	createSummarizerFromFactory,
+	summarizeNow,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 // IContainerRuntime type that exposes garbage collector which is a private property.
 type IContainerRuntimeWithPrivates = IContainerRuntime & {

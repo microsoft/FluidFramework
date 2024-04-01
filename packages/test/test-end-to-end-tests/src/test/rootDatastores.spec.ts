@@ -17,7 +17,13 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { IDataStore } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import { DataObjectFactoryType, ITestContainerConfig, ITestFluidObject, ITestObjectProvider, getContainerEntryPointBackCompat } from "@fluidframework/test-utils/internal";
+import {
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	getContainerEntryPointBackCompat,
+} from "@fluidframework/test-utils/internal";
 
 describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;

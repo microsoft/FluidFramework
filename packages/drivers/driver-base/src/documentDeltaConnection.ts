@@ -23,10 +23,15 @@ import {
 	ITokenClaims,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
-	ITelemetryLoggerExt
-} from "@fluidframework/telemetry-utils";
-import { EventEmitterWithErrorHandling, MonitoringContext, createChildMonitoringContext, extractLogSafeErrorProperties, getCircularReplacer, normalizeError } from "@fluidframework/telemetry-utils/internal";
+	EventEmitterWithErrorHandling,
+	MonitoringContext,
+	createChildMonitoringContext,
+	extractLogSafeErrorProperties,
+	getCircularReplacer,
+	normalizeError,
+} from "@fluidframework/telemetry-utils/internal";
 import type { Socket } from "socket.io-client";
 
 // For now, this package is versioned and released in unison with the specific drivers

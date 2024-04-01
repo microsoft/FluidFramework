@@ -25,8 +25,16 @@ import {
 	type AttributionKey,
 	type NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
-import { SummaryTreeBuilder, addSummarizeResultToSummary } from "@fluidframework/runtime-utils/internal";
-import { PerformanceEvent, UsageError, createChildLogger, loggerToMonitoringContext } from "@fluidframework/telemetry-utils/internal";
+import {
+	SummaryTreeBuilder,
+	addSummarizeResultToSummary,
+} from "@fluidframework/runtime-utils/internal";
+import {
+	PerformanceEvent,
+	UsageError,
+	createChildLogger,
+	loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { Attributor, type IAttributor, OpStreamAttributor } from "./attributor.js";
 import { AttributorSerializer, type Encoder, chain, deltaEncoder } from "./encoders.js";

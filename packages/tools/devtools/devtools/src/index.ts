@@ -20,7 +20,13 @@
 
 import { type IContainer } from "@fluidframework/container-definitions/internal";
 import { type IDisposable } from "@fluidframework/core-interfaces";
-import { type ContainerDevtoolsProps as ContainerDevtoolsPropsBase, type HasContainerKey, type IFluidDevtools as IDevtoolsBase, type IDevtoolsLogger, initializeDevtools as initializeDevtoolsBase } from "@fluidframework/devtools-core/internal";
+import {
+	type ContainerDevtoolsProps as ContainerDevtoolsPropsBase,
+	type HasContainerKey,
+	type IFluidDevtools as IDevtoolsBase,
+	type IDevtoolsLogger,
+	initializeDevtools as initializeDevtoolsBase,
+} from "@fluidframework/devtools-core/internal";
 import { type IFluidContainer } from "@fluidframework/fluid-static";
 
 /**

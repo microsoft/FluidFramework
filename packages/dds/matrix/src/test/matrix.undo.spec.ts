@@ -6,7 +6,12 @@
 import { strict as assert } from "assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { MockContainerRuntimeFactory, MockEmptyDeltaConnection, MockFluidDataStoreRuntime, MockStorage } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockContainerRuntimeFactory,
+	MockEmptyDeltaConnection,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "../index.js";
 

@@ -27,7 +27,11 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { type IChannel } from "@fluidframework/datastore-definitions";
-import { type ITestObjectProvider, createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils/internal";
+import {
+	type ITestObjectProvider,
+	createSummarizerFromFactory,
+	summarizeNow,
+} from "@fluidframework/test-utils/internal";
 import {
 	type ITree,
 	SchemaFactory,

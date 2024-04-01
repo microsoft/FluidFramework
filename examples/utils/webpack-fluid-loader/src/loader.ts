@@ -23,7 +23,10 @@ import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-de
 import { InsecureUrlResolver } from "@fluidframework/driver-utils/internal";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver/internal";
-import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-definitions/internal";
+import {
+	HostStoragePolicy,
+	IPersistedCache,
+} from "@fluidframework/odsp-driver-definitions/internal";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";

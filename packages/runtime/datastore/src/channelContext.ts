@@ -24,9 +24,7 @@ import {
 	ISummarizeResult,
 } from "@fluidframework/runtime-definitions/internal";
 import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
-import {
-	ITelemetryLoggerExt
-} from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { DataCorruptionError, tagCodeArtifacts } from "@fluidframework/telemetry-utils/internal";
 import { ChannelDeltaConnection } from "./channelDeltaConnection.js";
 import { ChannelStorageService } from "./channelStorageService.js";

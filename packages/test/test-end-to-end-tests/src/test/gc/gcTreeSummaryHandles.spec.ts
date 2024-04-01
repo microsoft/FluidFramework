@@ -31,7 +31,13 @@ import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions"
 import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import { ITestFluidObject, ITestObjectProvider, TestFluidObjectFactory, createContainerRuntimeFactoryWithDefaultDataStore, waitForContainerConnection } from "@fluidframework/test-utils/internal";
+import {
+	ITestFluidObject,
+	ITestObjectProvider,
+	TestFluidObjectFactory,
+	createContainerRuntimeFactoryWithDefaultDataStore,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 import { wrapObjectAndOverride } from "../../mocking.js";
 

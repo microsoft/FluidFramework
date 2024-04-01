@@ -4,7 +4,16 @@
  */
 
 import assert from "assert";
-import { ChannelFactoryRegistry, ITestFluidObject, DataObjectFactoryType, createAndAttachContainer, createDocumentId, waitForContainerConnection, timeoutPromise, timeoutAwait } from "@fluidframework/test-utils/internal";
+import {
+	ChannelFactoryRegistry,
+	ITestFluidObject,
+	DataObjectFactoryType,
+	createAndAttachContainer,
+	createDocumentId,
+	waitForContainerConnection,
+	timeoutPromise,
+	timeoutAwait,
+} from "@fluidframework/test-utils/internal";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import {

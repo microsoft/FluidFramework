@@ -16,7 +16,14 @@ import {
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
-import { ITestFluidObject, LoaderContainerTracker, LocalCodeLoader, TestFluidObjectFactory, createAndAttachContainer, waitForContainerConnection } from "@fluidframework/test-utils/internal";
+import {
+	ITestFluidObject,
+	LoaderContainerTracker,
+	LocalCodeLoader,
+	TestFluidObjectFactory,
+	createAndAttachContainer,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 describe("Logging Last Connection Mode ", () => {
 	const documentId = "connectionModeTest";

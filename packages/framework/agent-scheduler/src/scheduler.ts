@@ -20,10 +20,12 @@ import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions/internal";
+import { type ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
-	type ITelemetryLoggerExt
-} from "@fluidframework/telemetry-utils";
-import { UsageError, createChildLogger, tagCodeArtifacts } from "@fluidframework/telemetry-utils/internal";
+	UsageError,
+	createChildLogger,
+	tagCodeArtifacts,
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { IAgentScheduler, IAgentSchedulerEvents } from "./agent.js";

@@ -13,7 +13,10 @@ import { chainAsync, done, takeAsync } from "@fluid-private/stochastic-test-util
 // eslint-disable-next-line import/no-internal-modules
 import { Counter } from "@fluid-private/stochastic-test-utils/test/utils";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { MockContainerRuntimeFactoryForReconnection, MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockContainerRuntimeFactoryForReconnection,
+	MockFluidDataStoreRuntime,
+} from "@fluidframework/test-runtime-utils/internal";
 import execa from "execa";
 
 import { type Client, hasStashData } from "../clientLoading.js";

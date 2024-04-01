@@ -19,7 +19,15 @@ import {
 	revertMergeTreeDeltaRevertibles,
 } from "@fluidframework/merge-tree/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { MockContainerRuntimeFactory, MockContainerRuntimeFactoryForReconnection, MockContainerRuntimeForReconnection, MockEmptyDeltaConnection, MockFluidDataStoreRuntime, MockStorage, validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockContainerRuntimeFactory,
+	MockContainerRuntimeFactoryForReconnection,
+	MockContainerRuntimeForReconnection,
+	MockEmptyDeltaConnection,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+	validateAssertionError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { SharedStringFactory } from "../sequenceFactory.js";
 import { SharedString, getTextAndMarkers } from "../sharedString.js";

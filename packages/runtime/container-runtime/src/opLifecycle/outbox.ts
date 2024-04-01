@@ -7,7 +7,12 @@ import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { GenericError, MonitoringContext, UsageError, createChildMonitoringContext } from "@fluidframework/telemetry-utils/internal";
+import {
+	GenericError,
+	MonitoringContext,
+	UsageError,
+	createChildMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
 import { IPendingBatchMessage, PendingStateManager } from "../pendingStateManager.js";

@@ -17,10 +17,12 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
-	ITelemetryLoggerExt
-} from "@fluidframework/telemetry-utils";
-import { MonitoringContext, PerformanceEvent, createChildMonitoringContext } from "@fluidframework/telemetry-utils/internal";
+	MonitoringContext,
+	PerformanceEvent,
+	createChildMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
 import { ICache, InMemoryCache } from "./cache.js";
 import { ISnapshotTreeVersion } from "./definitions.js";
 import { GitManager } from "./gitManager.js";

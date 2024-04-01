@@ -6,7 +6,12 @@
 import { strict as assert } from "assert";
 
 import { IChannelServices } from "@fluidframework/datastore-definitions";
-import { MockContainerRuntimeFactoryForReconnection, MockContainerRuntimeForReconnection, MockFluidDataStoreRuntime, MockStorage } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockContainerRuntimeFactoryForReconnection,
+	MockContainerRuntimeForReconnection,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
 import { Random } from "best-random";
 
 import { SharedDelta } from "./delta.js";

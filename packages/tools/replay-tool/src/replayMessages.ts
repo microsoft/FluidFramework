@@ -34,7 +34,11 @@ import { FileSnapshotReader, IFileSnapshot } from "@fluidframework/replay-driver
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import { MockEmptyDeltaConnection, MockFluidDataStoreRuntime, MockStorage } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockEmptyDeltaConnection,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
 import stringify from "json-stable-stringify";
 
 import {

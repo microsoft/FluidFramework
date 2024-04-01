@@ -17,7 +17,12 @@ import { Deferred, delay } from "@fluidframework/core-utils/internal";
 import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import type { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
-import { type ITestObjectProvider, createSummarizerFromFactory, createTestConfigProvider, summarizeNow } from "@fluidframework/test-utils/internal";
+import {
+	type ITestObjectProvider,
+	createSummarizerFromFactory,
+	createTestConfigProvider,
+	summarizeNow,
+} from "@fluidframework/test-utils/internal";
 
 const interceptResult = <T>(
 	parent: any,

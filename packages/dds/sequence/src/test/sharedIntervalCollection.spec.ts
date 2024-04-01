@@ -6,7 +6,14 @@
 import { strict as assert } from "assert";
 
 import { Client } from "@fluidframework/merge-tree/internal";
-import { MockContainerRuntime, MockContainerRuntimeFactory, MockContainerRuntimeFactoryForReconnection, MockContainerRuntimeForReconnection, MockFluidDataStoreRuntime, MockStorage } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockContainerRuntime,
+	MockContainerRuntimeFactory,
+	MockContainerRuntimeFactoryForReconnection,
+	MockContainerRuntimeForReconnection,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { IIntervalCollection } from "../intervalCollection.js";
 import { IOverlappingIntervalsIndex, OverlappingIntervalsIndex } from "../intervalIndex/index.js";

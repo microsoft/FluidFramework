@@ -9,10 +9,13 @@ import {
 	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
-	ITelemetryLoggerExt
-} from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerPropertyBags, createMultiSinkLogger, eventNamespaceSeparator, formatTick } from "@fluidframework/telemetry-utils/internal";
+	ITelemetryLoggerPropertyBags,
+	createMultiSinkLogger,
+	eventNamespaceSeparator,
+	formatTick,
+} from "@fluidframework/telemetry-utils/internal";
 
 // This import style is necessary to ensure the emitted JS code works in both CJS and ESM.
 import debugPkg from "debug";

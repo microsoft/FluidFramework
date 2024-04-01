@@ -15,7 +15,12 @@ import {
 import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import { ITestObjectProvider, LoaderContainerTracker, LocalCodeLoader, TestFluidObjectFactory } from "@fluidframework/test-utils/internal";
+import {
+	ITestObjectProvider,
+	LoaderContainerTracker,
+	LocalCodeLoader,
+	TestFluidObjectFactory,
+} from "@fluidframework/test-utils/internal";
 import { v4 as uuid } from "uuid";
 
 const codeDetails: IFluidCodeDetails = { package: "test" };

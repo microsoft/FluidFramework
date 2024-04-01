@@ -9,10 +9,13 @@ import { IDeltaManager } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils/internal";
 import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
-	ITelemetryLoggerExt
-} from "@fluidframework/telemetry-utils";
-import { DataCorruptionError, DataProcessingError, createChildLogger, extractSafePropertiesFromMessage } from "@fluidframework/telemetry-utils/internal";
+	DataCorruptionError,
+	DataProcessingError,
+	createChildLogger,
+	extractSafePropertiesFromMessage,
+} from "@fluidframework/telemetry-utils/internal";
 import { DeltaScheduler } from "./deltaScheduler.js";
 import { IBatchMetadata } from "./metadata.js";
 import { pkgVersion } from "./packageVersion.js";

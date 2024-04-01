@@ -14,7 +14,17 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
-import { DataObjectFactoryType, ITestContainerConfig, ITestFluidObject, ITestObjectProvider, LoaderContainerTracker, createAndAttachContainer, createDocumentId, createLoader, createSummarizerFromFactory } from "@fluidframework/test-utils/internal";
+import {
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	LoaderContainerTracker,
+	createAndAttachContainer,
+	createDocumentId,
+	createLoader,
+	createSummarizerFromFactory,
+} from "@fluidframework/test-utils/internal";
 
 const counterKey = "count";
 

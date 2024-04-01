@@ -18,7 +18,14 @@ import {
 	type ISummaryRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ITestFluidObject, ITestObjectProvider, createContainerRuntimeFactoryWithDefaultDataStore, createSummarizerCore, summarizeNow, waitForContainerConnection } from "@fluidframework/test-utils/internal";
+import {
+	ITestFluidObject,
+	ITestObjectProvider,
+	createContainerRuntimeFactoryWithDefaultDataStore,
+	createSummarizerCore,
+	summarizeNow,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 import { getGCFeatureFromSummary, getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 

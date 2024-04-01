@@ -31,7 +31,13 @@ import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
-import { ITestFluidObject, ITestObjectProvider, TestFluidObjectFactory, createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils/internal";
+import {
+	ITestFluidObject,
+	ITestObjectProvider,
+	TestFluidObjectFactory,
+	createSummarizerFromFactory,
+	summarizeNow,
+} from "@fluidframework/test-utils/internal";
 
 import { pkgVersion } from "../packageVersion.js";
 

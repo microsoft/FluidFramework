@@ -4,7 +4,11 @@
  */
 
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { IOdspUrlParts, ISocketStorageDiscovery, InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
+import {
+	IOdspUrlParts,
+	ISocketStorageDiscovery,
+	InstrumentedStorageTokenFetcher,
+} from "@fluidframework/odsp-driver-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";

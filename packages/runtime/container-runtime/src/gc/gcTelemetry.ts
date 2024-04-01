@@ -6,9 +6,13 @@
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
 	type ITelemetryGenericEventExt,
-	ITelemetryLoggerExt
+	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
-import { MonitoringContext, generateStack, tagCodeArtifacts } from "@fluidframework/telemetry-utils/internal";
+import {
+	MonitoringContext,
+	generateStack,
+	tagCodeArtifacts,
+} from "@fluidframework/telemetry-utils/internal";
 import { RuntimeHeaderData } from "../containerRuntime.js";
 import { ICreateContainerMetadata } from "../summary/index.js";
 

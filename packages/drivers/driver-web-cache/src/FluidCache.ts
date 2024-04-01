@@ -5,10 +5,13 @@
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ICacheEntry, IFileEntry, IPersistedCache, maximumCacheDurationMs } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	ITelemetryLoggerExt
-} from "@fluidframework/telemetry-utils";
+	ICacheEntry,
+	IFileEntry,
+	IPersistedCache,
+	maximumCacheDurationMs,
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { UsageError, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { IDBPDatabase } from "idb";
 

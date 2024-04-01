@@ -4,7 +4,16 @@
  */
 
 import { Spinner } from "@fluentui/react-components";
-import { DataVisualization, type FluidObjectNode, GetDataVisualization, type HasContainerKey, type HasFluidObjectId, type ISourcedDevtoolsMessage, type InboundHandlers, handleIncomingMessage } from "@fluidframework/devtools-core/internal";
+import {
+	DataVisualization,
+	type FluidObjectNode,
+	GetDataVisualization,
+	type HasContainerKey,
+	type HasFluidObjectId,
+	type ISourcedDevtoolsMessage,
+	type InboundHandlers,
+	handleIncomingMessage,
+} from "@fluidframework/devtools-core/internal";
 import React from "react";
 
 import { useMessageRelay } from "../../MessageRelayContext.js";

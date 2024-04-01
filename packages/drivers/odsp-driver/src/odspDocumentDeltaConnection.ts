@@ -19,10 +19,11 @@ import {
 	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
-	ITelemetryLoggerExt
-} from "@fluidframework/telemetry-utils";
-import { IFluidErrorBase, loggerToMonitoringContext } from "@fluidframework/telemetry-utils/internal";
+	IFluidErrorBase,
+	loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
 import { Socket } from "socket.io-client";
 import { v4 as uuid } from "uuid";
 

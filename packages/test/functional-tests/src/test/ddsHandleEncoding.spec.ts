@@ -22,7 +22,12 @@ import { SharedMatrixFactory } from "@fluidframework/matrix/internal";
 import { ConsensusQueueFactory } from "@fluidframework/ordered-collection";
 import { ConsensusRegisterCollectionFactory } from "@fluidframework/register-collection/internal";
 import { ReferenceType, SharedStringFactory } from "@fluidframework/sequence/internal";
-import { MockDeltaConnection, MockFluidDataStoreRuntime, MockHandle, MockStorage } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockDeltaConnection,
+	MockFluidDataStoreRuntime,
+	MockHandle,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
 import { ITree, SchemaFactory, SharedTree, TreeConfiguration } from "@fluidframework/tree";
 
 /**

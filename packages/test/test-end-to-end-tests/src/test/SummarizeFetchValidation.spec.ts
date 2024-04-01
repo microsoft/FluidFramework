@@ -21,7 +21,13 @@ import { ISnapshotTree, ISummaryTree, IVersion } from "@fluidframework/protocol-
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { seqFromTree } from "@fluidframework/runtime-utils/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
-import { ITestObjectProvider, createContainerRuntimeFactoryWithDefaultDataStore, createSummarizerFromFactory, summarizeNow, waitForContainerConnection } from "@fluidframework/test-utils/internal";
+import {
+	ITestObjectProvider,
+	createContainerRuntimeFactoryWithDefaultDataStore,
+	createSummarizerFromFactory,
+	summarizeNow,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 // Note GC needs to be disabled.
 const runtimeOptions: IContainerRuntimeOptions = {

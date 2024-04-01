@@ -20,7 +20,11 @@ import {
 	SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions/internal";
 import { unpackChildNodesUsedRoutes } from "@fluidframework/runtime-utils/internal";
-import { LoggingError, TelemetryDataTag, tagCodeArtifacts } from "@fluidframework/telemetry-utils/internal";
+import {
+	LoggingError,
+	TelemetryDataTag,
+	tagCodeArtifacts,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { cloneGCData, unpackChildNodesGCDetails } from "../../gc/index.js";
 

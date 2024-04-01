@@ -26,7 +26,12 @@ import {
 	ISequencedDocumentMessage,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { LoggingError, MonitoringContext, createChildLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
+import {
+	LoggingError,
+	MonitoringContext,
+	createChildLogger,
+	mixinMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager.js";

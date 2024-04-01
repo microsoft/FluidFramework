@@ -17,7 +17,12 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map";
-import { ITestContainerConfig, ITestObjectProvider, createSummarizer, summarizeNow } from "@fluidframework/test-utils/internal";
+import {
+	ITestContainerConfig,
+	ITestObjectProvider,
+	createSummarizer,
+	summarizeNow,
+} from "@fluidframework/test-utils/internal";
 
 // These tests intend to ensure that summarization succeeds in edge case scenarios that rarely happen
 describeCompat("Summarization edge cases", "NoCompat", (getTestObjectProvider, apis) => {

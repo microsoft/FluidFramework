@@ -18,7 +18,15 @@ import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interface
 import type { ISharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
-import { ChannelFactoryRegistry, DataObjectFactoryType, ITestContainerConfig, ITestFluidObject, ITestObjectProvider, getContainerEntryPointBackCompat, timeoutPromise } from "@fluidframework/test-utils/internal";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	getContainerEntryPointBackCompat,
+	timeoutPromise,
+} from "@fluidframework/test-utils/internal";
 
 const map1Id = "map1Key";
 const map2Id = "map2Key";

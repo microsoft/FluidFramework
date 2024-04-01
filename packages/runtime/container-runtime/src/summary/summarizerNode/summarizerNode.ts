@@ -23,11 +23,14 @@ import {
 	SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils/internal";
+import { type ITelemetryErrorEventExt, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
-	type ITelemetryErrorEventExt,
-	ITelemetryLoggerExt
-} from "@fluidframework/telemetry-utils";
-import { LoggingError, PerformanceEvent, TelemetryDataTag, createChildLogger, tagCodeArtifacts } from "@fluidframework/telemetry-utils/internal";
+	LoggingError,
+	PerformanceEvent,
+	TelemetryDataTag,
+	createChildLogger,
+	tagCodeArtifacts,
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	EscapedPath,
 	ICreateChildDetails,

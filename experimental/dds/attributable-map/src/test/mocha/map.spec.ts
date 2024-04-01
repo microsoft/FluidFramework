@@ -8,7 +8,12 @@ import { strict as assert } from "assert";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
-import { MockContainerRuntimeFactory, MockFluidDataStoreRuntime, MockSharedObjectServices, MockStorage } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
+	MockSharedObjectServices,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { ISerializableValue, IValueChanged } from "../../interfaces.js";
 import {

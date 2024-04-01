@@ -10,7 +10,12 @@ import {
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import { IOdspResolvedUrl, IdentityType, OdspResourceTokenFetchOptions, TokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
+import {
+	IOdspResolvedUrl,
+	IdentityType,
+	OdspResourceTokenFetchOptions,
+	TokenFetcher,
+} from "@fluidframework/odsp-driver-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 
 import { OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic.js";

@@ -25,7 +25,15 @@ import {
 import type { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import type { SequenceInterval, SharedString } from "@fluidframework/sequence/internal";
-import { ITestFluidObject, ITestObjectProvider, LoaderContainerTracker, LocalCodeLoader, TestFluidObject, TestFluidObjectFactory, createDocumentId } from "@fluidframework/test-utils/internal";
+import {
+	ITestFluidObject,
+	ITestObjectProvider,
+	LoaderContainerTracker,
+	LocalCodeLoader,
+	TestFluidObject,
+	TestFluidObjectFactory,
+	createDocumentId,
+} from "@fluidframework/test-utils/internal";
 import * as semver from "semver";
 
 // eslint-disable-next-line import/no-internal-modules

@@ -9,7 +9,15 @@ import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
-import { MockContainerRuntimeFactory, MockContainerRuntimeFactoryForReconnection, MockContainerRuntimeForReconnection, MockEmptyDeltaConnection, MockFluidDataStoreRuntime, MockHandle, MockStorage } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockContainerRuntimeFactory,
+	MockContainerRuntimeFactoryForReconnection,
+	MockContainerRuntimeForReconnection,
+	MockEmptyDeltaConnection,
+	MockFluidDataStoreRuntime,
+	MockHandle,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { type ISharedMatrix, MatrixItem, SharedMatrix, SharedMatrixFactory } from "../index.js";
 import type { PermutationVector } from "../permutationvector.js";

@@ -14,7 +14,14 @@ import {
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
-import { ITestContainerConfig, ITestObjectProvider, createSummarizer, createTestConfigProvider, summarizeNow, waitForContainerConnection } from "@fluidframework/test-utils/internal";
+import {
+	ITestContainerConfig,
+	ITestObjectProvider,
+	createSummarizer,
+	createTestConfigProvider,
+	summarizeNow,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 describeCompat(
 	"Summarizer can refresh a snapshot from the server",

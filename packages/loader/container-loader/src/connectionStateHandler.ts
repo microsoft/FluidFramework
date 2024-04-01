@@ -8,11 +8,11 @@ import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert, Timer } from "@fluidframework/core-utils/internal";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { IClient, ISequencedClient } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt, type TelemetryEventCategory } from "@fluidframework/telemetry-utils";
 import {
-	ITelemetryLoggerExt,
-	type TelemetryEventCategory
-} from "@fluidframework/telemetry-utils";
-import { PerformanceEvent, loggerToMonitoringContext } from "@fluidframework/telemetry-utils/internal";
+	PerformanceEvent,
+	loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
 import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor.js";
 import { ConnectionState } from "./connectionState.js";
 import { IConnectionDetailsInternal, IConnectionStateChangeReason } from "./contracts.js";

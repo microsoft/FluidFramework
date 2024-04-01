@@ -4,7 +4,14 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { type IDevtoolsMessage, type IMessageRelay, type IMessageRelayEvents, type ISourcedDevtoolsMessage, devtoolsMessageSource, isDevtoolsMessage } from "@fluidframework/devtools-core/internal";
+import {
+	type IDevtoolsMessage,
+	type IMessageRelay,
+	type IMessageRelayEvents,
+	type ISourcedDevtoolsMessage,
+	devtoolsMessageSource,
+	isDevtoolsMessage,
+} from "@fluidframework/devtools-core/internal";
 
 /**
  * Message relay used by a devtools view rendered in the same page as the application to communicate with the

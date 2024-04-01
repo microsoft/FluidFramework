@@ -6,7 +6,12 @@
 import { strict as assert } from "node:assert";
 
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { IEntry, IOdspResolvedUrl, OdspErrorTypes, snapshotKey } from "@fluidframework/odsp-driver-definitions/internal";
+import {
+	IEntry,
+	IOdspResolvedUrl,
+	OdspErrorTypes,
+	snapshotKey,
+} from "@fluidframework/odsp-driver-definitions/internal";
 import { type IFluidErrorBase, MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { EpochTrackerWithRedemption } from "../epochTracker.js";

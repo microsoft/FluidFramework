@@ -8,7 +8,11 @@ import { strict as assert } from "assert";
 import * as crypto from "crypto";
 
 import { assertDocumentTypeInfo, isDocumentMapInfo } from "@fluid-private/test-version-utils";
-import { ContainerRuntimeFactoryWithDefaultDataStore, DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import {
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	DataObject,
+	DataObjectFactory,
+} from "@fluidframework/aqueduct/internal";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
@@ -24,7 +28,11 @@ import {
 } from "@fluidframework/core-interfaces";
 import { type ISharedMap, SharedMap } from "@fluidframework/map";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ChannelFactoryRegistry, createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils/internal";
+import {
+	ChannelFactoryRegistry,
+	createSummarizerFromFactory,
+	summarizeNow,
+} from "@fluidframework/test-utils/internal";
 
 import {
 	IDocumentLoaderAndSummarizer,

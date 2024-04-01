@@ -22,7 +22,11 @@ import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
 } from "@fluidframework/driver-definitions/internal";
-import { MessageType2, NonRetryableError, isRuntimeMessage } from "@fluidframework/driver-utils/internal";
+import {
+	MessageType2,
+	NonRetryableError,
+	isRuntimeMessage,
+} from "@fluidframework/driver-utils/internal";
 import {
 	ConnectionMode,
 	IDocumentMessage,
@@ -33,9 +37,17 @@ import {
 import {
 	type ITelemetryErrorEventExt,
 	type ITelemetryGenericEventExt,
-	ITelemetryLoggerExt
+	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
-import { DataCorruptionError, DataProcessingError, UsageError, extractSafePropertiesFromMessage, isFluidError, normalizeError, safeRaiseEvent } from "@fluidframework/telemetry-utils/internal";
+import {
+	DataCorruptionError,
+	DataProcessingError,
+	UsageError,
+	extractSafePropertiesFromMessage,
+	isFluidError,
+	normalizeError,
+	safeRaiseEvent,
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import {

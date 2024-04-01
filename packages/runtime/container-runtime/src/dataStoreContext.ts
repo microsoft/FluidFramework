@@ -53,7 +53,17 @@ import {
 	gcDataBlobKey,
 } from "@fluidframework/runtime-definitions/internal";
 import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
-import { DataCorruptionError, DataProcessingError, LoggingError, MonitoringContext, ThresholdCounter, createChildMonitoringContext, extractSafePropertiesFromMessage, generateStack, tagCodeArtifacts } from "@fluidframework/telemetry-utils/internal";
+import {
+	DataCorruptionError,
+	DataProcessingError,
+	LoggingError,
+	MonitoringContext,
+	ThresholdCounter,
+	createChildMonitoringContext,
+	extractSafePropertiesFromMessage,
+	generateStack,
+	tagCodeArtifacts,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { detectOutboundRoutesViaDDSKey, sendGCUnexpectedUsageEvent } from "./gc/index.js";
 import {

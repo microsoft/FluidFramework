@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { BaseContainerRuntimeFactory, DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import {
+	BaseContainerRuntimeFactory,
+	DataObject,
+	DataObjectFactory,
+} from "@fluidframework/aqueduct/internal";
 import { type IRuntimeFactory } from "@fluidframework/container-definitions/internal";
 import { type ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";

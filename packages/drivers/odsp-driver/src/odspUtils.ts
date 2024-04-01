@@ -7,17 +7,41 @@ import { performance } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { IResolvedUrl, ISnapshot } from "@fluidframework/driver-definitions/internal";
-import { type AuthorizationError, NetworkErrorBasic, NonRetryableError, OnlineStatus, RetryableError, isOnline } from "@fluidframework/driver-utils/internal";
+import {
+	type AuthorizationError,
+	NetworkErrorBasic,
+	NonRetryableError,
+	OnlineStatus,
+	RetryableError,
+	isOnline,
+} from "@fluidframework/driver-utils/internal";
 import {
 	fetchIncorrectResponse,
 	getSPOAndGraphRequestIdsFromResponse,
 	throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils/internal";
-import { ICacheEntry, IOdspResolvedUrl, IOdspUrlParts, ISharingLinkKind, InstrumentedStorageTokenFetcher, OdspErrorTypes, OdspResourceTokenFetchOptions, TokenFetchOptions, TokenFetcher, isTokenFromCache, snapshotKey, tokenFromResponse } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	ITelemetryLoggerExt
-} from "@fluidframework/telemetry-utils";
-import { type IFluidErrorBase, PerformanceEvent, TelemetryDataTag, createChildLogger, wrapError } from "@fluidframework/telemetry-utils/internal";
+	ICacheEntry,
+	IOdspResolvedUrl,
+	IOdspUrlParts,
+	ISharingLinkKind,
+	InstrumentedStorageTokenFetcher,
+	OdspErrorTypes,
+	OdspResourceTokenFetchOptions,
+	TokenFetchOptions,
+	TokenFetcher,
+	isTokenFromCache,
+	snapshotKey,
+	tokenFromResponse,
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import {
+	type IFluidErrorBase,
+	PerformanceEvent,
+	TelemetryDataTag,
+	createChildLogger,
+	wrapError,
+} from "@fluidframework/telemetry-utils/internal";
 import { IOdspSnapshot } from "./contracts.js";
 import { fetch } from "./fetch.js";
 // eslint-disable-next-line import/no-deprecated

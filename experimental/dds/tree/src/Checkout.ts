@@ -6,7 +6,7 @@
 import { IDisposable, IErrorEvent, ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils/internal';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { EventEmitterWithErrorHandling, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { EventEmitterWithErrorHandling, createChildLogger } from '@fluidframework/telemetry-utils/internal';
 import { Change } from './ChangeTypes.js';
 import { RestOrArray, assertWithMessage, fail, unwrapRestOrArray } from './Common.js';
 import { newEditId } from './EditUtilities.js';

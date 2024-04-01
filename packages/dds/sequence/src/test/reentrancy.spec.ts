@@ -12,7 +12,11 @@ import {
 	ReferenceType,
 } from "@fluidframework/merge-tree/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
-import { MockContainerRuntimeFactory, MockFluidDataStoreRuntime, MockStorage } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { resetReentrancyLogCounter } from "../sequence.js";
 import { SharedString } from "../sharedString.js";

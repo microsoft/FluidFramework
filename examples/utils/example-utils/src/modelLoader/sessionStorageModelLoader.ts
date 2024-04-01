@@ -5,7 +5,12 @@
 
 import { ICodeDetailsLoader } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { LocalDocumentServiceFactory, LocalResolver, LocalSessionStorageDbFactory, createLocalResolverCreateNewRequest } from "@fluidframework/local-driver/internal";
+import {
+	LocalDocumentServiceFactory,
+	LocalResolver,
+	LocalSessionStorageDbFactory,
+	createLocalResolverCreateNewRequest,
+} from "@fluidframework/local-driver/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,

@@ -15,11 +15,19 @@ import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/loca
 import { type ISharedMap, SharedMap } from "@fluidframework/map";
 import { SharedDirectory } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
-import { ConsensusOrderedCollection, ConsensusQueue } from "@fluidframework/ordered-collection/internal";
+import {
+	ConsensusOrderedCollection,
+	ConsensusQueue,
+} from "@fluidframework/ordered-collection/internal";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { LoaderContainerTracker, LocalCodeLoader, TestFluidObject, TestFluidObjectFactory } from "@fluidframework/test-utils/internal";
+import {
+	LoaderContainerTracker,
+	LocalCodeLoader,
+	TestFluidObject,
+	TestFluidObjectFactory,
+} from "@fluidframework/test-utils/internal";
 
 import { getTestContent, skipOrFailIfTestContentMissing } from "../testContent.js";
 

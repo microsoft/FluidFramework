@@ -10,8 +10,24 @@ import {
 	IDocumentServiceFactory,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
-import { getDocAttributesFromProtocolSummary, isCombinedAppAndProtocolSummary } from "@fluidframework/driver-utils/internal";
-import { HostStoragePolicy, IFileEntry, IOdspUrlParts, IPersistedCache, IRelaySessionAwareDriverFactory, ISharingLinkKind, ISocketStorageDiscovery, OdspResourceTokenFetchOptions, SharingLinkRole, SharingLinkScope, TokenFetchOptions, TokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
+import {
+	getDocAttributesFromProtocolSummary,
+	isCombinedAppAndProtocolSummary,
+} from "@fluidframework/driver-utils/internal";
+import {
+	HostStoragePolicy,
+	IFileEntry,
+	IOdspUrlParts,
+	IPersistedCache,
+	IRelaySessionAwareDriverFactory,
+	ISharingLinkKind,
+	ISocketStorageDiscovery,
+	OdspResourceTokenFetchOptions,
+	SharingLinkRole,
+	SharingLinkScope,
+	TokenFetchOptions,
+	TokenFetcher,
+} from "@fluidframework/odsp-driver-definitions/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";

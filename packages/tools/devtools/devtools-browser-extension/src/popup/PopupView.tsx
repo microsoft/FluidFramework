@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { DevtoolsFeatures, GetDevtoolsFeatures, type ISourcedDevtoolsMessage, type InboundHandlers, handleIncomingMessage } from "@fluidframework/devtools-core/internal";
+import {
+	DevtoolsFeatures,
+	GetDevtoolsFeatures,
+	type ISourcedDevtoolsMessage,
+	type InboundHandlers,
+	handleIncomingMessage,
+} from "@fluidframework/devtools-core/internal";
 import React from "react";
 
 import { type BackgroundConnection } from "../BackgroundConnection.js";

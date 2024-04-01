@@ -10,7 +10,12 @@ import { IErrorBase } from "@fluidframework/core-interfaces";
 import { Timer } from "@fluidframework/core-utils/internal";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import { IGarbageCollectionDetailsBase } from "@fluidframework/runtime-definitions/internal";
-import { MockLogger, MonitoringContext, createChildLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
+import {
+	MockLogger,
+	MonitoringContext,
+	createChildLogger,
+	mixinMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 
 import {
