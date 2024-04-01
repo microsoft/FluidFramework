@@ -14,8 +14,13 @@ import { getFullTypeName, getNodeTypeData, TypeData } from "../typeValidator/typ
 import { PackageJson } from "../common/npmPackage";
 
 /**
+ * The path to the test types directory
+ */
+const typeTestFilePath = "./src/test/types";
+
+/**
  * Checks the package object to verify that the specified dependency exists
- * @param packageObject - package.json object
+ * @param packageObject - the package.json object to check for the dependency
  * @param dependencyName - the dependency to check for in the package object
  * @remarks Information about the previous package from the package.json is not needed,
  * but error if it's missing since it's nice to separate errors for the dep missing here vs not installed.
@@ -33,9 +38,9 @@ export function ensureDevDependencyExists(
 
 /**
  * Fetches the path of the previous package.json or throws an error if not found.
- * @param previousBasePath - A string representing the path to the root of a package
+ * @param previousBasePath - A string representing the path to the root directory of the "previous" package dependency.
  */
-export function getPreviousPackageJsonPath(previousBasePath: string): string {
+export function tryGetPreviousPackageJsonPath(previousBasePath: string): string {
 	const previousPackageJsonPath = path.join(previousBasePath, "package.json");
 	if (!existsSync(previousPackageJsonPath)) {
 		throw new Error(`${previousPackageJsonPath} not found.`);
@@ -89,7 +94,7 @@ export function getTypeRollupPathFromExtractorConfig(
  * Checks both 'import' and 'require' resolution methods to find the appropriate path.
  * If the path is found, it is returned. Otherwise, an error is thrown.
  * @param previousPackageJson - An object representing the previous package json
- * @param previousBasePath - A string representing the path to the root of a package
+ * @param previousBasePath - A string representing the path to the root directory of the "previous" package dependency.
  * @returns A type definition filepath based on the appropriate export, or undefined if it cannot be found.
  */
 export function getTypePathFromExport(
@@ -113,19 +118,17 @@ export function getTypePathFromExport(
 	if (!typeDefinitionFilePath) {
 		// If no valid path is found, throw an error
 		throw new Error(
-			`Type definition file path could not be determined from the 'exports' field of '${getPreviousPackageJsonPath(
-				previousBasePath,
-			)}' using the default export entry '.'`,
+			"Type definition file path could not be determined from the 'exports' field using the default export entry '.'"
 		);
 	}
 	return typeDefinitionFilePath;
 }
 /**
- * Checks the package.json's exports entries and types field for a type definition filepath
+ * Checks the package.json's `exports` entries and `types` field for a type definition file path.
  * @returns string representing type definition file path
  */
 export function getTypeDefinitionFilePath(packageBasePath: string): string | undefined {
-	const previousPackageJsonPath = getPreviousPackageJsonPath(packageBasePath);
+	const previousPackageJsonPath = tryGetPreviousPackageJsonPath(packageBasePath);
 	const packageJson: PackageJson = readJsonSync(previousPackageJsonPath);
 	// Check the exports entries
 	if (packageJson.exports) {
@@ -151,14 +154,14 @@ export function typeDataFromFile(file: SourceFile): Map<string, TypeData> {
 	const exportedDeclarations = file.getExportedDeclarations();
 
 	for (const declarations of exportedDeclarations.values()) {
-		for (const dec of declarations) {
-			getNodeTypeData(dec).forEach((td) => {
-				const fullName = getFullTypeName(td);
+		for (const declaration of declarations) {
+			getNodeTypeData(declaration).forEach((typeDefinition) => {
+				const fullName = getFullTypeName(typeDefinition);
 				if (typeData.has(fullName)) {
 					// This system does not properly handle overloads: instead it only keeps the last signature.
 					console.warn(`skipping overload for ${fullName}`);
 				}
-				typeData.set(fullName, td);
+				typeData.set(fullName, typeDefinition);
 			});
 		}
 	}
@@ -206,7 +209,7 @@ export function initializeProjectsAndLoadFiles(
  * Generates compatibility test cases between the previous type definitions and the current type map.
  * This function constructs test cases to validate forward and backward compatibility of types.
  * @param previousData - array of type data from the previous file
- * @param currentTypeMap - map containing curren type data
+ * @param currentTypeMap - map containing current type data
  * @param packageObject - package.json object containing type validation settings
  * @param testString - array to store generated test strings
  * @returns - string array representing generated compatibility test cases
@@ -276,7 +279,7 @@ export function generateCompatibilityTestCases(
  * @returns type validation file path
  */
 export function prepareFilepathForTests(packageObject): string {
-	const testPath = `./src/test/types`;
+	const testPath = typeTestFilePath;
 	// remove scope if it exists
 	const unscopedName = path.basename(packageObject.name);
 

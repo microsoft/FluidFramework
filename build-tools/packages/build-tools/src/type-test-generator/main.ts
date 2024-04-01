@@ -9,7 +9,7 @@ import path from "node:path";
 import { typeOnly } from "./compatibility";
 import {
 	ensureDevDependencyExists,
-	getPreviousPackageJsonPath,
+	tryGetPreviousPackageJsonPath,
 	getTypeRollupPathFromExtractorConfig,
 	getTypeDefinitionFilePath,
 	typeDataFromFile,
@@ -29,7 +29,7 @@ const previousPackageName = `${packageObject.name}-previous`;
 const previousBasePath = path.join("node_modules", previousPackageName);
 
 ensureDevDependencyExists(packageObject, previousPackageName);
-getPreviousPackageJsonPath(previousBasePath);
+tryGetPreviousPackageJsonPath(previousBasePath);
 
 const filePath = prepareFilepathForTests(packageObject);
 if (packageObject.typeValidation?.disabled) {

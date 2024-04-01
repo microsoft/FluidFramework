@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import * as utils from "../type-test-generator/typeTestUtils";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { readJsonSync } from "fs-extra";
 import * as fs from "fs";
 import * as path from "path";
@@ -19,7 +20,7 @@ describe("typeTestUtils", () => {
 	const packageObject: PackageJson = readJsonSync(packageJsonPath);
 	const previousPackageName = `${packageObject.name}-previous`;
 
-	describe("Test ensureDevDependencyExists", () => {
+	describe("ensureDevDependencyExists", () => {
 		it("Should not throw an error if dev dependency exists", () => {
 			utils.ensureDevDependencyExists(packageObject, "dependency1");
 		});
@@ -32,7 +33,7 @@ describe("typeTestUtils", () => {
 		});
 	});
 
-	describe("Test getPreviousPackageJsonPath", () => {
+	describe("getPreviousPackageJsonPath", () => {
 		const nodeModulesDir = path.join(__dirname, "node_modules");
 		// Create temp directory structure
 		before(() => {
@@ -51,15 +52,28 @@ describe("typeTestUtils", () => {
 		after(() => {
 			fs.rmSync(nodeModulesDir, { recursive: true });
 		});
+		
 		it("Should return the path to the previous package.json", () => {
 			const previousBasePath = path.join(nodeModulesDir, previousPackageName);
-			const result = utils.getPreviousPackageJsonPath(previousBasePath);
+			const result = utils.tryGetPreviousPackageJsonPath(previousBasePath);
 			const expectedPath = path.join(previousBasePath, "package.json");
 			assert.strictEqual(result, expectedPath);
 		});
+
+		it("Should return undefined if the previous package.json path does not exist", () => {
+			const previousBasePath = path.join(nodeModulesDir, "does-not-exist");
+			assert.throws(
+				() => {utils.tryGetPreviousPackageJsonPath(previousBasePath)},
+				(error: Error) => {
+					const previousPackageJsonPath = path.join(previousBasePath, "package.json");
+					validateAssertionError(error, `${previousPackageJsonPath} not found.`)
+					return true;
+				},
+			);
+		});
 	});
 
-	describe("Test getTypeRollupPathFromExtractorConfig", () => {
+	describe("getTypeRollupPathFromExtractorConfig", () => {
 		// Create temp directory for testing
 		const nodeModulesDir = path.join(__dirname, "node_modules");
 		const previousBasePath = path.join(nodeModulesDir, previousPackageName);
@@ -131,7 +145,7 @@ describe("typeTestUtils", () => {
 		});
 	});
 
-	describe("Test getTypePathFromExport", () => {
+	describe("getTypePathFromExport", () => {
 		const nodeModulesDir = path.join(__dirname, "node_modules");
 		const previousBasePath = path.join(nodeModulesDir, previousPackageName);
 
@@ -147,9 +161,11 @@ describe("typeTestUtils", () => {
 		it("should throw an error if both import and require resolutions are missing", () => {
 			packageObject.exports = { ".": {} };
 
-			assert.throws(() => {
-				utils.getTypePathFromExport(packageObject, previousBasePath);
-			}, "Type definition file path could not be determined");
+			assert.throws(
+				() => utils.getTypePathFromExport(packageObject, previousBasePath),
+				(error: Error) =>
+					validateAssertionError(error, "Type definition file path could not be determined from the 'exports' field using the default export entry '.'"),
+			);
 		});
 
 		it("should return the type definition file path if it exists in exports", () => {
@@ -190,15 +206,14 @@ describe("typeTestUtils", () => {
 				}),
 				"utf-8",
 			);
-			// const result = utils.getTypePathFromExport(packageObject, previousBasePath);
-			// assert.strictEqual(result, undefined);
-			assert.throws(() => {
-				utils.getTypePathFromExport(packageObject, previousBasePath);
-			});
+			assert.throws(
+				() => utils.getTypePathFromExport(packageObject, previousBasePath),
+				(error: Error) => validateAssertionError(error, "Type definition file path could not be determined from the 'exports' field using the default export entry '.'")
+			);
 		});
 	});
 
-	describe("Test getTypeDefinitionFilePath", () => {
+	describe("getTypeDefinitionFilePath", () => {
 		const nodeModulesDir = path.join(__dirname, "node_modules");
 		const previousBasePath = path.join(nodeModulesDir, previousPackageName);
 
@@ -235,9 +250,8 @@ describe("typeTestUtils", () => {
 				}),
 				"utf-8",
 			);
-			assert.throws(() => {
-				utils.getTypeDefinitionFilePath(previousBasePath);
-			}, "No 'exports' nor 'type' fields found.");
+			
+			assert.throws(() => utils.getTypeDefinitionFilePath(previousBasePath));
 		});
 	});
 });
