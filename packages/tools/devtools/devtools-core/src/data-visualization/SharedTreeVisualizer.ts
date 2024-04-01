@@ -209,10 +209,6 @@ function visualizeObjectNodeStoredSchema(
 		}
 	} else {
 		for (const [fieldKey, childField] of Object.entries(treeFields)) {
-			assert(
-				childField.length === 1,
-				"Non-array node should not have more than one child field.",
-			);
 			const childSchema = contentSnapshot.schema.nodeSchema.get(childField[0].type);
 
 			// If the child field is a leaf node, get the allowed types from the parent schema.
@@ -271,11 +267,6 @@ function visualizeMapNodeStoredSchema(
 	const fields: Record<string | number, VisualSharedTreeNode> = {};
 
 	for (const [fieldKey, childField] of Object.entries(treeFields)) {
-		assert(
-			childField.length === 1,
-			"Non-array node should not have more than one child field.",
-		);
-
 		const fieldSchema = contentSnapshot.schema.nodeSchema.get(childField[0].type);
 		let result = "";
 
