@@ -13,8 +13,8 @@ import {
 	CompressionAlgorithms,
 	ContainerMessageType,
 } from "@fluidframework/container-runtime/internal";
-import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import { ConfigTypes, IConfigProviderBase, IErrorBase } from "@fluidframework/core-interfaces";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import type { ISharedMap } from "@fluidframework/map";
 import {
 	IDocumentMessage,

@@ -22,6 +22,7 @@ import { v4 as uuid } from "uuid";
 
 import { IDetachedBlobStorage, Loader } from "../loader.js";
 import type { IPendingDetachedContainerState } from "../serializedStateManager.js";
+
 import { failProxy, failSometimeProxy } from "./failProxy.js";
 
 const codeLoader = {

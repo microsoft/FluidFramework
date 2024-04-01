@@ -15,6 +15,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+
 import { ISharedSummaryBlock } from "./interfaces.js";
 import { SharedSummaryBlockFactory } from "./sharedSummaryBlockFactory.js";
 

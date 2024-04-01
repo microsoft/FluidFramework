@@ -12,7 +12,6 @@ import {
 	makeCodecFamily,
 	withSchemaValidation,
 } from "../../codec/index.js";
-
 import { makeSchemaCodec } from "../schema-index/index.js";
 
 import { EncodedSchemaChange } from "./schemaChangeFormat.js";

@@ -17,6 +17,7 @@ import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions"
 import { type AttributionKey } from "@fluidframework/runtime-definitions/internal";
 import { type IFluidSerializer } from "@fluidframework/shared-object-base";
 import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+
 import { CellFactory } from "./cellFactory.js";
 import {
 	type ICellLocalOpMetadata,

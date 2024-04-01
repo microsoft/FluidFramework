@@ -14,6 +14,7 @@ import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory.js";
 import {
 	IConsensusRegisterCollection,

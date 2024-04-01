@@ -15,6 +15,7 @@ import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+
 import { IIntervalCollection, IntervalCollectionValueType } from "./intervalCollection.js";
 import { IMapOperation, IntervalCollectionMap } from "./intervalCollectionMap.js";
 import { IMapMessageLocalMetadata } from "./intervalCollectionMapInterfaces.js";

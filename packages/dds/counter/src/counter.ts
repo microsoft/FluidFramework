@@ -15,6 +15,7 @@ import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/pro
 import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { type IFluidSerializer } from "@fluidframework/shared-object-base";
 import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+
 import { CounterFactory } from "./counterFactory.js";
 import { type ISharedCounter, type ISharedCounterEvents } from "./interfaces.js";
 

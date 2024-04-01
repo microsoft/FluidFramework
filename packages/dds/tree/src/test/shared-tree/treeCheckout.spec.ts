@@ -7,7 +7,6 @@ import { strict as assert, fail } from "assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 
-import { disposeSymbol } from "../../index.js";
 import {
 	AllowedUpdateType,
 	FieldUpPath,
@@ -29,6 +28,7 @@ import {
 	cursorForJsonableTreeField,
 	intoStoredSchema,
 } from "../../feature-libraries/index.js";
+import { disposeSymbol } from "../../index.js";
 import { ITreeCheckout, TreeContent } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,

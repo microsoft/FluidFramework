@@ -17,6 +17,7 @@ import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
+
 import { ISharedMap, ISharedMapEvents } from "./interfaces.js";
 import { AttributableMapKernel, IMapDataObjectSerializable, IMapOperation } from "./mapKernel.js";
 import { pkgVersion } from "./packageVersion.js";

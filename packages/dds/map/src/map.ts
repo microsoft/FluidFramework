@@ -14,6 +14,7 @@ import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtim
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
+
 import { ISharedMap, ISharedMapEvents } from "./interfaces.js";
 import { IMapDataObjectSerializable, IMapOperation, MapKernel } from "./mapKernel.js";
 

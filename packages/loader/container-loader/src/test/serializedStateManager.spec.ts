@@ -26,7 +26,9 @@ import {
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
+
 import { type IPendingContainerState, SerializedStateManager } from "../serializedStateManager.js";
+
 import { failProxy } from "./failProxy.js";
 
 type ISerializedStateManagerDocumentStorageService = Pick<
