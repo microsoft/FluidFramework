@@ -5,12 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+import { MockContainerRuntimeFactoryForReconnection, MockContainerRuntimeForReconnection, MockFluidDataStoreRuntime, MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import { type ISharedDirectory, type ISharedMap, SharedDirectory, SharedMap } from "../../index.js";
 

@@ -7,12 +7,8 @@ import { strict as assert } from "node:assert";
 
 import { delay } from "@fluidframework/core-utils/internal";
 import { ISnapshot } from "@fluidframework/driver-definitions/internal";
-import {
-	ICacheEntry,
-	IOdspResolvedUrl,
-	maximumCacheDurationMs,
-} from "@fluidframework/odsp-driver-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { ICacheEntry, IOdspResolvedUrl, maximumCacheDurationMs } from "@fluidframework/odsp-driver-definitions/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	HostStoragePolicyInternal,

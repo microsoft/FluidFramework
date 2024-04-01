@@ -5,11 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import {
-	MockContainerRuntimeFactoryForReconnection,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+import { MockContainerRuntimeFactoryForReconnection, MockFluidDataStoreRuntime, MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import { SharedMatrix } from "../matrix.js";
 

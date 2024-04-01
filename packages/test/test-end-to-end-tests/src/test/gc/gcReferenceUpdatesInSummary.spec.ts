@@ -16,13 +16,8 @@ import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import type { SharedString } from "@fluidframework/sequence/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import {
-	ITestObjectProvider,
-	createContainerRuntimeFactoryWithDefaultDataStore,
-	getContainerEntryPointBackCompat,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { ITestObjectProvider, createContainerRuntimeFactoryWithDefaultDataStore, getContainerEntryPointBackCompat, waitForContainerConnection } from "@fluidframework/test-utils/internal";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
 
 /**

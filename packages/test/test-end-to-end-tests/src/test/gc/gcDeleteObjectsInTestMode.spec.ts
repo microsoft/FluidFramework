@@ -15,14 +15,8 @@ import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import {
-	ITestContainerConfig,
-	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
-	getDataStoreEntryPointBackCompat,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { ITestContainerConfig, ITestObjectProvider, getContainerEntryPointBackCompat, getDataStoreEntryPointBackCompat, waitForContainerConnection } from "@fluidframework/test-utils/internal";
 
 import { defaultGCConfig } from "./gcTestConfigs.js";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";

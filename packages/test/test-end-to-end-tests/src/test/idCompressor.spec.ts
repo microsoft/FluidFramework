@@ -23,17 +23,7 @@ import type { ISharedMap } from "@fluidframework/map";
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { SharedDirectory } from "@fluidframework/map/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import {
-	DataObjectFactoryType,
-	ITestContainerConfig,
-	ITestFluidObject,
-	ITestObjectProvider,
-	createContainerRuntimeFactoryWithDefaultDataStore,
-	createSummarizer,
-	getContainerEntryPointBackCompat,
-	summarizeNow,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+import { DataObjectFactoryType, ITestContainerConfig, ITestFluidObject, ITestObjectProvider, createContainerRuntimeFactoryWithDefaultDataStore, createSummarizer, getContainerEntryPointBackCompat, summarizeNow, waitForContainerConnection } from "@fluidframework/test-utils/internal";
 
 function getIdCompressor(dds: IChannel): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;

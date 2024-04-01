@@ -7,14 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { type IChannelFactory } from "@fluidframework/datastore-definitions";
-import {
-	MockContainerRuntimeFactory,
-	MockContainerRuntimeFactoryForReconnection,
-	type MockContainerRuntimeForReconnection,
-	MockFluidDataStoreRuntime,
-	MockSharedObjectServices,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+import { MockContainerRuntimeFactory, MockContainerRuntimeFactoryForReconnection, type MockContainerRuntimeForReconnection, MockFluidDataStoreRuntime, MockSharedObjectServices, MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import { CounterFactory } from "../counterFactory.js";
 import { type ISharedCounter, SharedCounter } from "../index.js";

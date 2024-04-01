@@ -9,13 +9,8 @@ import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
-import { UsageError } from "@fluidframework/telemetry-utils";
-import {
-	MockContainerRuntimeFactory,
-	MockFluidDataStoreRuntime,
-	MockSharedObjectServices,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { MockContainerRuntimeFactory, MockFluidDataStoreRuntime, MockSharedObjectServices, MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import { IDirectoryNewStorageFormat } from "../../directory.js";
 import {

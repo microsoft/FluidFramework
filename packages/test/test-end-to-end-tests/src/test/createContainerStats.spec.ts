@@ -14,12 +14,8 @@ import {
 	ISummaryConfiguration,
 	SummaryCollection,
 } from "@fluidframework/container-runtime/internal";
-import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
-import {
-	ITestObjectProvider,
-	createContainerRuntimeFactoryWithDefaultDataStore,
-	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
+import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { ITestObjectProvider, createContainerRuntimeFactoryWithDefaultDataStore, getContainerEntryPointBackCompat } from "@fluidframework/test-utils/internal";
 
 describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, apis) => {
 	const {

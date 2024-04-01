@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import type { PureDataObject } from "@fluidframework/aqueduct";
+import type { PureDataObject } from "@fluidframework/aqueduct/internal";
 import {
 	IContainer,
 	IRuntimeFactory,
@@ -22,7 +22,7 @@ import {
 	neverCancelledSummaryToken,
 } from "@fluidframework/container-runtime/internal";
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
-import type { SharedCounter } from "@fluidframework/counter";
+import type { SharedCounter } from "@fluidframework/counter/internal";
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import {
 	DriverHeader,
@@ -36,13 +36,9 @@ import {
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import {
-	ITestObjectProvider,
-	createSummarizerFromFactory,
-	summarizeNow,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { ITestObjectProvider, createSummarizerFromFactory, summarizeNow, waitForContainerConnection } from "@fluidframework/test-utils/internal";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
 
 import { wrapObjectAndOverride } from "../mocking.js";

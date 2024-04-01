@@ -16,15 +16,7 @@ import {
 	type IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
-import {
-	ITestFluidObject,
-	ITestObjectProvider,
-	LoaderContainerTracker,
-	LocalCodeLoader,
-	TestFluidObject,
-	TestFluidObjectFactory,
-	createDocumentId,
-} from "@fluidframework/test-utils";
+import { ITestFluidObject, ITestObjectProvider, LoaderContainerTracker, LocalCodeLoader, TestFluidObject, TestFluidObjectFactory, createDocumentId } from "@fluidframework/test-utils/internal";
 
 /*
 Context no longer provides observability point to when context changes its attach states

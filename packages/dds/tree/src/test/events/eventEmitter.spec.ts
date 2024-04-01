@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { EventEmitter, ISubscribable, createEmitter } from "../../events/index.js";
 

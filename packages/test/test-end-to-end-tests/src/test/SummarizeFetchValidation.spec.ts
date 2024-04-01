@@ -15,19 +15,13 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryContext } from "@fluidframework/driver-definitions/internal";
-import { readAndParse } from "@fluidframework/driver-utils";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import { ISnapshotTree, ISummaryTree, IVersion } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
-import { seqFromTree } from "@fluidframework/runtime-utils";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import {
-	ITestObjectProvider,
-	createContainerRuntimeFactoryWithDefaultDataStore,
-	createSummarizerFromFactory,
-	summarizeNow,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+import { seqFromTree } from "@fluidframework/runtime-utils/internal";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { ITestObjectProvider, createContainerRuntimeFactoryWithDefaultDataStore, createSummarizerFromFactory, summarizeNow, waitForContainerConnection } from "@fluidframework/test-utils/internal";
 
 // Note GC needs to be disabled.
 const runtimeOptions: IContainerRuntimeOptions = {

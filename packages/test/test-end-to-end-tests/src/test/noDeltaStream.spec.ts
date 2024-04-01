@@ -17,15 +17,8 @@ import {
 	IDocumentServiceFactory,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import {
-	ITestContainerConfig,
-	ITestFluidObject,
-	ITestObjectProvider,
-	createLoader,
-	getContainerEntryPointBackCompat,
-	timeoutPromise,
-} from "@fluidframework/test-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { ITestContainerConfig, ITestFluidObject, ITestObjectProvider, createLoader, getContainerEntryPointBackCompat, timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
 

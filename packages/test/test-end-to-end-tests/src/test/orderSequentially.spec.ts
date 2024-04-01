@@ -14,13 +14,7 @@ import { Serializable } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedMap, IValueChanged } from "@fluidframework/map";
 import type { SharedDirectory } from "@fluidframework/map/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
-import {
-	ChannelFactoryRegistry,
-	DataObjectFactoryType,
-	ITestContainerConfig,
-	ITestFluidObject,
-	ITestObjectProvider,
-} from "@fluidframework/test-utils";
+import { ChannelFactoryRegistry, DataObjectFactoryType, ITestContainerConfig, ITestFluidObject, ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 const stringId = "sharedStringKey";
 const string2Id = "sharedString2Key";

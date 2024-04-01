@@ -17,14 +17,7 @@ import {
 	IContainerRuntimeBase,
 	channelsTreeName,
 } from "@fluidframework/runtime-definitions/internal";
-import {
-	ITestObjectProvider,
-	createSummarizer,
-	getContainerEntryPointBackCompat,
-	getDataStoreEntryPointBackCompat,
-	summarizeNow,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+import { ITestObjectProvider, createSummarizer, getContainerEntryPointBackCompat, getDataStoreEntryPointBackCompat, summarizeNow, waitForContainerConnection } from "@fluidframework/test-utils/internal";
 
 /**
  * Validates that the data store summary is as expected.

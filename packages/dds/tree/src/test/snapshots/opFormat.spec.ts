@@ -5,12 +5,7 @@
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { type SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
-import {
-	type MockContainerRuntime,
-	MockContainerRuntimeFactory,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+import { type MockContainerRuntime, MockContainerRuntimeFactory, MockFluidDataStoreRuntime, MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import { type ITree, SchemaFactory } from "../../index.js";
 import { SharedTree } from "../../treeFactory.js";

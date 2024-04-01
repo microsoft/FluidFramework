@@ -15,13 +15,7 @@ import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
-import {
-	ITestObjectProvider,
-	createSummarizer,
-	createTestConfigProvider,
-	summarizeNow,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+import { ITestObjectProvider, createSummarizer, createTestConfigProvider, summarizeNow, waitForContainerConnection } from "@fluidframework/test-utils/internal";
 
 import { defaultGCConfig } from "./gcTestConfigs.js";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";

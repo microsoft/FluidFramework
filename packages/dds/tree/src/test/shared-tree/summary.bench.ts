@@ -9,12 +9,8 @@ import { IsoBuffer } from "@fluid-internal/client-utils";
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import { ISummaryTree, ITree } from "@fluidframework/protocol-definitions";
-import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
-import {
-	MockDeltaConnection,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
+import { MockDeltaConnection, MockFluidDataStoreRuntime, MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import { AllowedUpdateType } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";

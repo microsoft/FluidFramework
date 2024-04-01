@@ -9,17 +9,10 @@ import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import { NonRetryableError, readAndParse } from "@fluidframework/driver-utils";
+import { NonRetryableError, readAndParse } from "@fluidframework/driver-utils/internal";
 import { ReferenceType, TextSegment } from "@fluidframework/merge-tree/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
-import {
-	ChannelFactoryRegistry,
-	ITestFluidObject,
-	LocalCodeLoader,
-	SupportedExportInterfaces,
-	TestFluidObjectFactory,
-	createDocumentId,
-} from "@fluidframework/test-utils";
+import { ChannelFactoryRegistry, ITestFluidObject, LocalCodeLoader, SupportedExportInterfaces, TestFluidObjectFactory, createDocumentId } from "@fluidframework/test-utils/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
 import { pkgVersion } from "../packageVersion.js";

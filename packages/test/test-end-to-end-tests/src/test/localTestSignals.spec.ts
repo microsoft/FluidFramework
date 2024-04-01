@@ -8,14 +8,7 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
-import {
-	DataObjectFactoryType,
-	ITestContainerConfig,
-	ITestFluidObject,
-	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
-	timeoutPromise,
-} from "@fluidframework/test-utils";
+import { DataObjectFactoryType, ITestContainerConfig, ITestFluidObject, ITestObjectProvider, getContainerEntryPointBackCompat, timeoutPromise } from "@fluidframework/test-utils/internal";
 
 const testContainerConfig: ITestContainerConfig = {
 	fluidDataObjectType: DataObjectFactoryType.Test,

@@ -7,16 +7,9 @@ import { strict as assert } from "assert";
 
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { BlobTreeEntry } from "@fluidframework/driver-utils";
+import { BlobTreeEntry } from "@fluidframework/driver-utils/internal";
 import { ISummaryBlob, ITree } from "@fluidframework/protocol-definitions";
-import {
-	MockContainerRuntimeFactory,
-	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
-	MockEmptyDeltaConnection,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+import { MockContainerRuntimeFactory, MockContainerRuntimeFactoryForReconnection, MockContainerRuntimeForReconnection, MockEmptyDeltaConnection, MockFluidDataStoreRuntime, MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory.js";
 import { IConsensusRegisterCollection } from "../interfaces.js";

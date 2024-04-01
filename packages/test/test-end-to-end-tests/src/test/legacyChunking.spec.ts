@@ -15,14 +15,7 @@ import { IContainer } from "@fluidframework/container-definitions/internal";
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { type ISharedMap, SharedMap } from "@fluidframework/map";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
-import {
-	ChannelFactoryRegistry,
-	DataObjectFactoryType,
-	ITestContainerConfig,
-	ITestFluidObject,
-	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
+import { ChannelFactoryRegistry, DataObjectFactoryType, ITestContainerConfig, ITestFluidObject, ITestObjectProvider, getContainerEntryPointBackCompat } from "@fluidframework/test-utils/internal";
 
 const versionWithChunking = "0.56.0";
 

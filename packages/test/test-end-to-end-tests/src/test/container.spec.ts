@@ -37,23 +37,10 @@ import {
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions";
 import { FiveDaysMs, IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
-import {
-	DeltaStreamConnectionForbiddenError,
-	NonRetryableError,
-} from "@fluidframework/driver-utils";
+import { DeltaStreamConnectionForbiddenError, NonRetryableError } from "@fluidframework/driver-utils/internal";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { DataCorruptionError } from "@fluidframework/telemetry-utils";
-import {
-	ITestContainerConfig,
-	ITestObjectProvider,
-	LoaderContainerTracker,
-	LocalCodeLoader,
-	TestContainerRuntimeFactory,
-	TestFluidObjectFactory,
-	TestObjectProvider,
-	timeoutPromise,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+import { DataCorruptionError } from "@fluidframework/telemetry-utils/internal";
+import { ITestContainerConfig, ITestObjectProvider, LoaderContainerTracker, LocalCodeLoader, TestContainerRuntimeFactory, TestFluidObjectFactory, TestObjectProvider, timeoutPromise, waitForContainerConnection } from "@fluidframework/test-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { wrapObjectAndOverride } from "../mocking.js";

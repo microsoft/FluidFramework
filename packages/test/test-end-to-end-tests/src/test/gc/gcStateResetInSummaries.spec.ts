@@ -18,13 +18,7 @@ import {
 	channelsTreeName,
 	gcTreeKey,
 } from "@fluidframework/runtime-definitions/internal";
-import {
-	ITestContainerConfig,
-	ITestObjectProvider,
-	createSummarizer,
-	createTestConfigProvider,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+import { ITestContainerConfig, ITestObjectProvider, createSummarizer, createTestConfigProvider, waitForContainerConnection } from "@fluidframework/test-utils/internal";
 
 import { defaultGCConfig } from "./gcTestConfigs.js";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";

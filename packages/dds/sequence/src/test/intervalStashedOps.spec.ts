@@ -9,11 +9,7 @@ import { strict as assert } from "assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { IntervalType } from "@fluidframework/sequence-previous";
-import {
-	MockContainerRuntimeFactory,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+import { MockContainerRuntimeFactory, MockFluidDataStoreRuntime, MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import { IIntervalCollection } from "../intervalCollection.js";
 import type { IMapOperation } from "../intervalCollectionMap.js";

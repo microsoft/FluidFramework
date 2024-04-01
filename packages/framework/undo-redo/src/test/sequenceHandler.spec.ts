@@ -6,11 +6,7 @@
 import { strict as assert } from "assert";
 
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence/internal";
-import {
-	MockContainerRuntimeFactory,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+import { MockContainerRuntimeFactory, MockFluidDataStoreRuntime, MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import { SharedSegmentSequenceUndoRedoHandler } from "../sequenceHandler.js";
 import { UndoRedoStackManager } from "../undoRedoStackManager.js";

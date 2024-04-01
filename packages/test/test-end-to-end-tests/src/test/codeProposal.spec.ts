@@ -14,15 +14,7 @@ import {
 	isFluidPackage,
 } from "@fluidframework/container-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map";
-import {
-	ITestFluidObject,
-	ITestObjectProvider,
-	SupportedExportInterfaces,
-	TestFluidObjectFactory,
-	createAndAttachContainer,
-	createDocumentId,
-	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
+import { ITestFluidObject, ITestObjectProvider, SupportedExportInterfaces, TestFluidObjectFactory, createAndAttachContainer, createDocumentId, getContainerEntryPointBackCompat } from "@fluidframework/test-utils/internal";
 
 interface ICodeProposalTestPackage extends IFluidPackage {
 	version: number;

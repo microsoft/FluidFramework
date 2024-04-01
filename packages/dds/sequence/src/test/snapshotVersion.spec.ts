@@ -7,12 +7,8 @@ import { strict as assert } from "assert";
 import fs from "fs";
 import path from "path";
 
-import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
-import {
-	MockContainerRuntimeFactory,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
+import { MockContainerRuntimeFactory, MockFluidDataStoreRuntime, MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import { SharedStringFactory } from "../sequenceFactory.js";
 import { SharedString } from "../sharedString.js";

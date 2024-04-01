@@ -6,10 +6,7 @@
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix/internal";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence/internal";
-import {
-	MockContainerRuntimeFactory,
-	MockFluidDataStoreRuntime,
-} from "@fluidframework/test-runtime-utils";
+import { MockContainerRuntimeFactory, MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { IBenchmarkParameters, benchmarkAll } from "./DocumentCreator.js";
 

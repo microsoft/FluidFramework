@@ -12,11 +12,7 @@ import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { BlobManager } from "@fluidframework/container-runtime/test/blobManager";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import {
-	ITestContainerConfig,
-	ITestObjectProvider,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+import { ITestContainerConfig, ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils/internal";
 
 import {
 	MockDetachedBlobStorage,

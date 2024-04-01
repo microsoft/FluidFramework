@@ -21,13 +21,7 @@ import type {
 // This is not in sequence's public API, but an e2e test in this file sniffs the summary.
 // eslint-disable-next-line import/no-internal-modules
 import type { ISerializedIntervalCollectionV2 } from "@fluidframework/sequence/test/intervalCollection";
-import {
-	ChannelFactoryRegistry,
-	DataObjectFactoryType,
-	ITestContainerConfig,
-	ITestFluidObject,
-	ITestObjectProvider,
-} from "@fluidframework/test-utils";
+import { ChannelFactoryRegistry, DataObjectFactoryType, ITestContainerConfig, ITestFluidObject, ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 const assertSequenceIntervals = (
 	sharedString: SharedString,

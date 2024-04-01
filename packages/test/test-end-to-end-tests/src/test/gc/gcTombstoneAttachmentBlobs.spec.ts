@@ -10,14 +10,7 @@ import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime, IGCRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { delay } from "@fluidframework/core-utils/internal";
-import {
-	ITestContainerConfig,
-	ITestObjectProvider,
-	createSummarizer,
-	createTestConfigProvider,
-	summarizeNow,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+import { ITestContainerConfig, ITestObjectProvider, createSummarizer, createTestConfigProvider, summarizeNow, waitForContainerConnection } from "@fluidframework/test-utils/internal";
 
 import {
 	MockDetachedBlobStorage,

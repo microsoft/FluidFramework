@@ -5,25 +5,18 @@
 
 import { strict as assert } from "assert";
 
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
 import { type ISharedMap, SharedMap } from "@fluidframework/map";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
-import {
-	ITestFluidObject,
-	LoaderContainerTracker,
-	LocalCodeLoader,
-	TestFluidObjectFactory,
-	createAndAttachContainer,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+import { ITestFluidObject, LoaderContainerTracker, LocalCodeLoader, TestFluidObjectFactory, createAndAttachContainer, waitForContainerConnection } from "@fluidframework/test-utils/internal";
 
 describe("Document Dirty", () => {
 	const documentId = "documentDirtyTest";

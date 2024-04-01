@@ -16,12 +16,7 @@ import { ISummarizer } from "@fluidframework/container-runtime/internal";
 import { IGarbageCollectionState } from "@fluidframework/container-runtime/test/gc";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { gcBlobPrefix, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
-import {
-	ITestObjectProvider,
-	createSummarizer,
-	summarizeNow,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+import { ITestObjectProvider, createSummarizer, summarizeNow, waitForContainerConnection } from "@fluidframework/test-utils/internal";
 
 import { defaultGCConfig } from "./gcTestConfigs.js";
 

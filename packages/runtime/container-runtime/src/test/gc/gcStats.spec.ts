@@ -7,12 +7,7 @@ import { strict as assert } from "assert";
 
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
-import {
-	MockLogger,
-	MonitoringContext,
-	createChildLogger,
-	mixinMonitoringContext,
-} from "@fluidframework/telemetry-utils";
+import { MockLogger, MonitoringContext, createChildLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 
 import {

@@ -40,20 +40,8 @@ import {
 	IFluidDataStoreRegistry,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
-import {
-	IFluidErrorBase,
-	MockLogger,
-	createChildLogger,
-	isFluidError,
-	isILoggingError,
-	mixinMonitoringContext,
-} from "@fluidframework/telemetry-utils";
-import {
-	MockDeltaManager,
-	MockFluidDataStoreRuntime,
-	MockQuorumClients,
-	validateAssertionError,
-} from "@fluidframework/test-runtime-utils";
+import { IFluidErrorBase, MockLogger, createChildLogger, isFluidError, isILoggingError, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
+import { MockDeltaManager, MockFluidDataStoreRuntime, MockQuorumClients, validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";

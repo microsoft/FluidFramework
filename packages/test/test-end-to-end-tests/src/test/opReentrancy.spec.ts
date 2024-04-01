@@ -13,14 +13,7 @@ import type { SharedDirectory } from "@fluidframework/map/internal";
 import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
-import {
-	ChannelFactoryRegistry,
-	DataObjectFactoryType,
-	ITestContainerConfig,
-	ITestFluidObject,
-	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
+import { ChannelFactoryRegistry, DataObjectFactoryType, ITestContainerConfig, ITestFluidObject, ITestObjectProvider, getContainerEntryPointBackCompat } from "@fluidframework/test-utils/internal";
 
 describeCompat(
 	"Concurrent op processing via DDS event handlers",

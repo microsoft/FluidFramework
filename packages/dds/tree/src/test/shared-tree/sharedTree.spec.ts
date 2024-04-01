@@ -8,12 +8,8 @@ import { strict as assert } from "assert";
 import { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { SummaryType } from "@fluidframework/protocol-definitions";
-import {
-	MockContainerRuntimeFactory,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils";
+import { MockContainerRuntimeFactory, MockFluidDataStoreRuntime, MockStorage } from "@fluidframework/test-runtime-utils/internal";
+import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils/internal";
 
 import {
 	AllowedUpdateType,

@@ -8,11 +8,7 @@ import { strict as assert } from "assert";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ReferenceType, SlidingPreference } from "@fluidframework/merge-tree/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import {
-	MockContainerRuntimeFactory,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+import { MockContainerRuntimeFactory, MockFluidDataStoreRuntime, MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import { IIntervalCollection, Side, intervalLocatorFromEndpoint } from "../intervalCollection.js";
 import { IntervalStickiness, SequenceInterval } from "../intervals/index.js";

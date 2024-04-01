@@ -4,16 +4,7 @@
  */
 
 import assert from "assert";
-import {
-	ChannelFactoryRegistry,
-	ITestFluidObject,
-	DataObjectFactoryType,
-	createAndAttachContainer,
-	createDocumentId,
-	waitForContainerConnection,
-	timeoutPromise,
-	timeoutAwait,
-} from "@fluidframework/test-utils";
+import { ChannelFactoryRegistry, ITestFluidObject, DataObjectFactoryType, createAndAttachContainer, createDocumentId, waitForContainerConnection, timeoutPromise, timeoutAwait } from "@fluidframework/test-utils/internal";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import {
@@ -25,7 +16,7 @@ import {
 	DefaultSummaryConfiguration,
 	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { Deferred } from "@fluidframework/core-utils";
 import type { ISharedMap } from "@fluidframework/map";
 import { wrapObjectAndOverride } from "../mocking.js";

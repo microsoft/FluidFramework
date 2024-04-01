@@ -6,15 +6,9 @@
 import { strict as assert } from "node:assert";
 
 import { IDocumentStorageServicePolicies } from "@fluidframework/driver-definitions/internal";
-import { type NonRetryableError, ThrottlingError } from "@fluidframework/driver-utils";
-import {
-	ICacheEntry,
-	IEntry,
-	IOdspResolvedUrl,
-	OdspErrorTypes,
-	maximumCacheDurationMs,
-} from "@fluidframework/odsp-driver-definitions";
-import { type IFluidErrorBase, createChildLogger } from "@fluidframework/telemetry-utils";
+import { type NonRetryableError, ThrottlingError } from "@fluidframework/driver-utils/internal";
+import { ICacheEntry, IEntry, IOdspResolvedUrl, OdspErrorTypes, maximumCacheDurationMs } from "@fluidframework/odsp-driver-definitions/internal";
+import { type IFluidErrorBase, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { stub } from "sinon";
 
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts.js";

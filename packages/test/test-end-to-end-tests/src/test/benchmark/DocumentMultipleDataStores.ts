@@ -9,11 +9,7 @@ import {
 	assertDocumentTypeInfo,
 	isDocumentMultipleDataStoresInfo,
 } from "@fluid-private/test-version-utils";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore, DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
@@ -29,7 +25,7 @@ import {
 import { type ISharedMap, SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils";
+import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils/internal";
 
 import {
 	IDocumentLoaderAndSummarizer,

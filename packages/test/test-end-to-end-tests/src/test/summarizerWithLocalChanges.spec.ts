@@ -27,16 +27,8 @@ import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import {
-	ITestObjectProvider,
-	createSummarizer,
-	createSummarizerFromFactory,
-	createTestConfigProvider,
-	summarizeNow,
-	timeoutAwait,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { ITestObjectProvider, createSummarizer, createSummarizerFromFactory, createTestConfigProvider, summarizeNow, timeoutAwait, waitForContainerConnection } from "@fluidframework/test-utils/internal";
 
 const configProvider = createTestConfigProvider();
 

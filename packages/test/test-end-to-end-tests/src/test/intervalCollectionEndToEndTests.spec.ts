@@ -15,15 +15,7 @@ import type {
 	SequenceInterval,
 	SharedString,
 } from "@fluidframework/sequence/internal";
-import {
-	ChannelFactoryRegistry,
-	DataObjectFactoryType,
-	ITestContainerConfig,
-	ITestFluidObject,
-	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+import { ChannelFactoryRegistry, DataObjectFactoryType, ITestContainerConfig, ITestFluidObject, ITestObjectProvider, getContainerEntryPointBackCompat, waitForContainerConnection } from "@fluidframework/test-utils/internal";
 
 const stringId = "sharedStringKey";
 const collectionId = "collectionKey";

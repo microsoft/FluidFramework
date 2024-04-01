@@ -8,11 +8,7 @@ import { strict as assert } from "assert";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import { useStrictPartialLengthChecks } from "@fluidframework/merge-tree/test";
-import {
-	MockContainerRuntimeFactoryForReconnection,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+import { MockContainerRuntimeFactoryForReconnection, MockFluidDataStoreRuntime, MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import { Side } from "../intervalCollection.js";
 import { IntervalStickiness } from "../intervals/index.js";

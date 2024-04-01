@@ -16,12 +16,7 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
-import {
-	MockContainerRuntimeFactory,
-	MockFluidDataStoreRuntime,
-	MockSharedObjectServices,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+import { MockContainerRuntimeFactory, MockFluidDataStoreRuntime, MockSharedObjectServices, MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	AllowedUpdateType,

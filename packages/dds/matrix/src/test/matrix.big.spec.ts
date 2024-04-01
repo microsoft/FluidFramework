@@ -5,12 +5,7 @@
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
-import {
-	MockContainerRuntimeFactory,
-	MockEmptyDeltaConnection,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+import { MockContainerRuntimeFactory, MockEmptyDeltaConnection, MockFluidDataStoreRuntime, MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import { SharedMatrix, SharedMatrixFactory } from "../index.js";
 

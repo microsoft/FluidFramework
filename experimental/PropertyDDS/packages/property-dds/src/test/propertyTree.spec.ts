@@ -16,24 +16,12 @@ import {
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
-import {
-	ChannelFactoryRegistry,
-	ITestFluidObject,
-	ITestObjectProvider,
-	LoaderContainerTracker,
-	TestContainerRuntimeFactory,
-	TestFluidObjectFactory,
-	TestObjectProvider,
-	createAndAttachContainer,
-	createLoader,
-	createSummarizer,
-	summarizeNow,
-} from "@fluidframework/test-utils";
+import { ChannelFactoryRegistry, ITestFluidObject, ITestObjectProvider, LoaderContainerTracker, TestContainerRuntimeFactory, TestFluidObjectFactory, TestObjectProvider, createAndAttachContainer, createLoader, createSummarizer, summarizeNow } from "@fluidframework/test-utils/internal";
 import { expect } from "chai";
 
 import {

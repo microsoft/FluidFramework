@@ -6,13 +6,7 @@
 import { strict as assert } from "assert";
 
 import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/protocol-definitions";
-import {
-	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
-	MockDeltaConnection,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+import { MockContainerRuntimeFactoryForReconnection, MockContainerRuntimeForReconnection, MockDeltaConnection, MockFluidDataStoreRuntime, MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import { SharedMatrix, SharedMatrixFactory } from "../index.js";
 

@@ -32,7 +32,7 @@ import {
 	IRequestHeader,
 } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import type { SharedCounter } from "@fluidframework/counter";
+import type { SharedCounter } from "@fluidframework/counter/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map";
 import type { ISharedDirectory, SharedDirectory } from "@fluidframework/map/internal";
@@ -48,16 +48,7 @@ import type {
 	SharedString,
 } from "@fluidframework/sequence/internal";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
-import {
-	ChannelFactoryRegistry,
-	DataObjectFactoryType,
-	ITestContainerConfig,
-	ITestFluidObject,
-	ITestObjectProvider,
-	createAndAttachContainer,
-	createDocumentId,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+import { ChannelFactoryRegistry, DataObjectFactoryType, ITestContainerConfig, ITestFluidObject, ITestObjectProvider, createAndAttachContainer, createDocumentId, waitForContainerConnection } from "@fluidframework/test-utils/internal";
 import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
 import { ISharedTree, SharedTreeFactory } from "@fluidframework/tree/internal";
 

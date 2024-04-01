@@ -15,12 +15,7 @@ import { ISummarizer } from "@fluidframework/container-runtime/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
-import {
-	ITestObjectProvider,
-	createSummarizer,
-	summarizeNow,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+import { ITestObjectProvider, createSummarizer, summarizeNow, waitForContainerConnection } from "@fluidframework/test-utils/internal";
 
 import { defaultGCConfig } from "./gcTestConfigs.js";
 

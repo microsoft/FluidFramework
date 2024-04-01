@@ -10,15 +10,7 @@ import { IContainer, IHostLoader } from "@fluidframework/container-definitions/i
 import { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map";
-import {
-	ChannelFactoryRegistry,
-	DataObjectFactoryType,
-	ITestContainerConfig,
-	ITestFluidObject,
-	ITestObjectProvider,
-	createAndAttachContainer,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+import { ChannelFactoryRegistry, DataObjectFactoryType, ITestContainerConfig, ITestFluidObject, ITestObjectProvider, createAndAttachContainer, waitForContainerConnection } from "@fluidframework/test-utils/internal";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],

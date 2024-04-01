@@ -11,14 +11,7 @@ import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase, IFluidHandle } from "@fluidframework/core-interfaces";
 import { Serializable } from "@fluidframework/datastore-definitions/internal";
-import {
-	ChannelFactoryRegistry,
-	DataObjectFactoryType,
-	ITestContainerConfig,
-	ITestFluidObject,
-	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
+import { ChannelFactoryRegistry, DataObjectFactoryType, ITestContainerConfig, ITestFluidObject, ITestObjectProvider, getContainerEntryPointBackCompat } from "@fluidframework/test-utils/internal";
 
 const cellId = "cellKey";
 

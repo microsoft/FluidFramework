@@ -6,14 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import {
-	MockContainerRuntimeFactory,
-	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
-	MockFluidDataStoreRuntime,
-	MockSharedObjectServices,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+import { MockContainerRuntimeFactory, MockContainerRuntimeFactoryForReconnection, MockContainerRuntimeForReconnection, MockFluidDataStoreRuntime, MockSharedObjectServices, MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import { Ink } from "../ink.js";
 import { InkFactory } from "../inkFactory.js";

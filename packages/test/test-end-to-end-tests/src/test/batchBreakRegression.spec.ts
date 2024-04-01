@@ -23,8 +23,8 @@ import {
 	ISequencedDocumentMessage,
 	ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
-import { isFluidError, isILoggingError } from "@fluidframework/telemetry-utils";
-import { ITestObjectProvider, TestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
+import { isFluidError, isILoggingError } from "@fluidframework/telemetry-utils/internal";
+import { ITestObjectProvider, TestFluidObject, timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
 

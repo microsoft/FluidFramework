@@ -18,23 +18,8 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
-import {
-	MockContainerRuntimeFactoryForReconnection,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import {
-	ChannelFactoryRegistry,
-	ITestContainerConfig,
-	ITestFluidObject,
-	ITestObjectProvider,
-	SummaryInfo,
-	TestContainerRuntimeFactory,
-	TestFluidObjectFactory,
-	TestObjectProvider,
-	createSummarizer,
-	summarizeNow,
-} from "@fluidframework/test-utils";
+import { MockContainerRuntimeFactoryForReconnection, MockFluidDataStoreRuntime, MockStorage } from "@fluidframework/test-runtime-utils/internal";
+import { ChannelFactoryRegistry, ITestContainerConfig, ITestFluidObject, ITestObjectProvider, SummaryInfo, TestContainerRuntimeFactory, TestFluidObjectFactory, TestObjectProvider, createSummarizer, summarizeNow } from "@fluidframework/test-utils/internal";
 
 import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import {
