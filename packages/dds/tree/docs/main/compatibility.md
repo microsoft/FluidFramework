@@ -186,12 +186,18 @@ flowchart TD
     class FieldBatchCodec,SchemaCodec,ForestCodec,MessageCodec,EditManagerCodec,DetachedNodeToFieldCodec versioned
 ```
 
+In this diagram, large borders represent 'top-level codecs', i.e. codecs which directly define the data format for a summary blob or op.
+Orange codecs provide explicit versions to the data they encode.
+
+> Field kind codecs are actually corecursive with ModularChangeset's codec with respect to the encoded data. That doesn't significantly affect guidance around updating the persisted format.
+
 Entries in this diagram align with the following in code:
 
 | Codec (chart entry)                                                                           | In-memory type                  |
 | --------------------------------------------------------------------------------------------- | ------------------------------- |
 | [RevisionTagCodec](../../src/core/rebase/revisionTagCodec.ts)                                 | RevisionTag                     |
 | [SchemaCodec](../../src/feature-libraries/schema-index/codec.ts)                              | TreeStoredSchema                |
+| [SchemaChangeCodec](../../src/feature-libraries/schema-edits/schemaChangeCodecs.ts)           | SchemaChange                    |
 | [FieldBatchCodec](../../src/feature-libraries/chunked-forest/codec/codecs.ts)                 | FieldBatch                      |
 | [ForestCodec](../../src/feature-libraries/forest-summary/codec.ts)                            | FieldSet                        |
 | [MessageCodec](../../src/shared-tree-core/messageCodecs.ts)                                   | DecodedMessage<TChangeset>      |
@@ -204,14 +210,9 @@ Entries in this diagram align with the following in code:
 | [ForbiddenFieldCodec](../../src/feature-libraries/default-schema/noChangeCodecs.ts)           | N/A                             |
 | [DetachedNodeToFieldCodec](../../src/core/tree/detachedFieldIndexCodec.ts)                    | DetachedFieldSummaryData        |
 
-> Field kind codecs are actually corecursive with ModularChangeset's codec with respect to the encoded data. That doesn't significantly affect guidance around updating the persisted format.
-
-In this diagram, large borders represent 'top-level codecs', i.e. codecs which directly define the data format for a summary blob or op.
-Orange codecs provide explicit versions to the data they encode.
-
 Because all data is versioned at the top level, we can conceptually extend that version to include all other non-explicitly versioned containing data, even if that data isn't explicitly written by the same codec.
 For example, a format change in `SchemaChangeCodec` could be implemented by adding support for a new version on each of its nearest explicitly versioned consumers, i.e. `MessageCodec` and `EditManagerCodec`.
-This new version would use the same code for all bits of `MessageCodec`, `EditManagerCodec`, and `ChangeFamilyCodec`, but pass enough context down to `SchemaChangeCodec` to resolve to the newer format.
+This new version would use the same code for all bits of `MessageCodec`, `EditManagerCodec`, and `SharedTreeChangeFamilyCodec`, but pass enough context down to `SchemaChangeCodec` to resolve to the newer format.
 In this manner, the mapping between explicitly versioned data and implicitly versioned data for composed codecs is managed in code.
 
 ## Current code guidelines
@@ -222,13 +223,13 @@ The write version will ultimately come from the user of SharedTree
 Codecs which do not explicitly version their data should export a codec family.
 This ensures that the consumer of the codec can use their versioning information to resolve the appropriate implicit version.
 
-Using the same example as above, under these guidelines `ChangeFamilyCodec` and `SchemaChangeCodec` should export codec families for composition purposes.
+Using the same example as above, under these guidelines `SharedTreeChangeFamilyCodec` and `SchemaChangeCodec` should export codec families for composition purposes.
 To make a breaking change in `SchemaChangeCodec`,
 
 -   Add support for the new version in `SchemaChangeCodec`, adding it to the exposed codec family
--   Add a new version for `ChangeFamilyCodec` which leverages the new `SchemaChangeCodec`
--   Add a new version for `EditManagerCodec` which leverages the new `ChangeFamilyCodec`
--   Add a new version for `MessageCodec` which leverages the new `ChangeFamilyCodec`
+-   Add a new version for `SharedTreeChangeFamilyCodec` which leverages the new `SchemaChangeCodec`
+-   Add a new version for `EditManagerCodec` which leverages the new `SharedTreeChangeFamilyCodec`
+-   Add a new version for `MessageCodec` which leverages the new `SharedTreeChangeFamilyCodec`
 -   Add an option to `SharedTreeFormatVersion` as a new write version
     -   Make this write version create edit manager & message codecs of the appropriate versions
     -   Be sure to document code saturation requirements which must be met before the new version can be used
