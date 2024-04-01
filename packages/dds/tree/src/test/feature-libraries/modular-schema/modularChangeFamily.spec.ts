@@ -120,7 +120,7 @@ const singleNodeCodec: IJsonCodec<
 
 const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	rebaser: singleNodeRebaser,
-	codecsFactory: (revisionTagCodec) => makeCodecFamily([[0, singleNodeCodec]]),
+	codecsFactory: (revisionTagCodec) => makeCodecFamily([[1, singleNodeCodec]]),
 	editor: singleNodeEditor,
 	intoDelta: ({ change }, deltaFromChild): DeltaFieldChanges => ({
 		local: [{ count: 1, fields: change !== undefined ? deltaFromChild(change) : undefined }],
@@ -143,8 +143,8 @@ export const fieldKindConfiguration: FieldKindConfiguration = new Map<
 	FieldKindIdentifier,
 	FieldKindConfigurationEntry
 >([
-	[singleNodeField.identifier, { kind: singleNodeField, formatVersion: 0 }],
-	[valueField.identifier, { kind: valueField, formatVersion: 0 }],
+	[singleNodeField.identifier, { kind: singleNodeField, formatVersion: 1 }],
+	[valueField.identifier, { kind: valueField, formatVersion: 1 }],
 ]);
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
@@ -156,7 +156,7 @@ const codecOptions: ICodecOptions = {
 };
 
 const codec = makeModularChangeCodecFamily(
-	new Map([[0, fieldKindConfiguration]]),
+	new Map([[1, fieldKindConfiguration]]),
 	testRevisionTagCodec,
 	makeFieldBatchCodec(codecOptions, 1),
 	codecOptions,
