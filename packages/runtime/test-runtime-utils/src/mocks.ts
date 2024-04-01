@@ -151,7 +151,10 @@ const makeContainerRuntimeOptions = (
 	...mockContainerRuntimeOptions,
 });
 
-interface IInternalMockRuntimeMessage {
+/**
+ * @alpha
+ */
+export interface IInternalMockRuntimeMessage {
 	content: any;
 	localOpMetadata?: unknown;
 }
@@ -170,7 +173,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	 */
 	protected readonly deltaConnections: MockDeltaConnection[] = [];
 	protected readonly pendingMessages: IMockContainerRuntimePendingMessage[] = [];
-	private readonly outbox: IInternalMockRuntimeMessage[] = [];
+	protected readonly outbox: IInternalMockRuntimeMessage[] = [];
 	private readonly idAllocationOutbox: IInternalMockRuntimeMessage[] = [];
 	/**
 	 * The runtime options this instance is using. See {@link IMockContainerRuntimeOptions}.

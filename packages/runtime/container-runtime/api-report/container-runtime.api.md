@@ -257,6 +257,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
         compressionLz4?: true | undefined;
         idCompressorMode?: IdCompressorMode;
         opGroupingEnabled?: true | undefined;
+        disallowedVersions?: string[] | undefined;
     };
     // (undocumented)
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
@@ -406,15 +407,14 @@ export function detectOutboundReferences(address: string, contents: unknown, add
 export const disabledCompressionConfig: ICompressionRuntimeOptions;
 
 // @alpha
-export type DocumentSchemaValueType = string | true | number | undefined;
+export type DocumentSchemaValueType = string | string[] | true | number | undefined;
 
 // @alpha
 export class DocumentsSchemaController {
     constructor(existing: boolean, documentMetadataSchema: IDocumentSchema | undefined, features: IDocumentSchemaFeatures, onSchemaChange: (schema: IDocumentSchemaCurrent) => void);
+    maybeSendSchemaMessage(): IDocumentSchemaChangeMessage | undefined;
     // (undocumented)
     onDisconnect(): void;
-    // (undocumented)
-    onMessageSent(send: (content: IDocumentSchemaChangeMessage) => void): void;
     processDocumentSchemaOp(content: IDocumentSchemaChangeMessage, local: boolean, sequenceNumber: number): boolean;
     // (undocumented)
     sessionSchema: IDocumentSchemaCurrent;
@@ -768,6 +768,7 @@ export type IDocumentSchemaCurrent = {
 export interface IDocumentSchemaFeatures {
     // (undocumented)
     compressionLz4: boolean;
+    disallowedVersions: string[];
     // (undocumented)
     explicitSchemaControl: boolean;
     // (undocumented)

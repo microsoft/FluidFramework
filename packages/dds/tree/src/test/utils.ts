@@ -164,6 +164,14 @@ export const failCodec: IJsonCodec<any, any, any, any> = {
 };
 
 /**
+ * A {@link ICodecFamily} implementation which fails to resolve any codec.
+ */
+export const failCodecFamily: ICodecFamily<any, any> = {
+	resolve: () => assert.fail("Unexpected resolve"),
+	getSupportedFormats: () => [],
+};
+
+/**
  * Recursively freezes the given object.
  *
  * WARNING: this function mutates Map and Set instances to override their mutating methods in order to ensure that the
@@ -938,7 +946,7 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 				}
 			});
 
-			const failureCases = encodingTestData.failures?.[version] ?? [];
+			const failureCases = encodingTestData.failures?.[version ?? "undefined"] ?? [];
 			if (failureCases.length > 0) {
 				describe("rejects malformed data", () => {
 					for (const [name, encodedData, context] of failureCases) {
