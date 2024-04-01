@@ -14,7 +14,7 @@ import { describeCompat, itSkipsFailureOnSpecificDrivers } from "@fluid-private/
 import type { SharedCell } from "@fluidframework/cell";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { AttributionInfo } from "@fluidframework/runtime-definitions";
+import { AttributionInfo } from "@fluidframework/runtime-definitions/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,

@@ -4,7 +4,7 @@
 
 ```ts
 
-import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
+import { IContainerRuntime } from '@fluidframework/container-runtime-definitions/internal';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { RequestParser } from '@fluidframework/runtime-utils';

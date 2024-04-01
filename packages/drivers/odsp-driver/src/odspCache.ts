@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PromiseCache } from "@fluidframework/core-utils";
+import { PromiseCache } from "@fluidframework/core-utils/internal";
 import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	ICacheEntry,

@@ -4,7 +4,8 @@
  */
 
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
-import { ITelemetryBaseProperties, IThrottlingWarning } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
 import {
 	IFluidErrorBase,
 	ITelemetryLoggerExt,

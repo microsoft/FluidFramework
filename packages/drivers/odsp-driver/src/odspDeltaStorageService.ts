@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { validateMessages } from "@fluidframework/driver-base";
 import {
 	IDeltasFetchResult,

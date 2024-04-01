@@ -12,13 +12,13 @@ import {
 	IContainerRuntimeOptions,
 	ISummarizeResults,
 	ISummarizer,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryContext } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils";
-import type { SharedMatrix } from "@fluidframework/matrix";
+import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import { ISnapshotTree, ISummaryTree, IVersion } from "@fluidframework/protocol-definitions";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { seqFromTree } from "@fluidframework/runtime-utils";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import {

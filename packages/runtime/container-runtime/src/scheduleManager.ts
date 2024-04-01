@@ -6,7 +6,7 @@
 import type { EventEmitter } from "@fluid-internal/client-utils";
 import { performance } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {

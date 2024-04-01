@@ -5,7 +5,7 @@
 
 import { performance } from "@fluid-internal/client-utils";
 import { LogLevel } from "@fluidframework/core-interfaces";
-import { assert, delay } from "@fluidframework/core-utils";
+import { assert, delay } from "@fluidframework/core-utils/internal";
 import { promiseRaceWithWinner } from "@fluidframework/driver-base";
 import {
 	FetchSource,

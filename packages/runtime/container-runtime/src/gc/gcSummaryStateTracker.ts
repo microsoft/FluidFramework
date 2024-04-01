@@ -4,14 +4,14 @@
  */
 
 import { SummaryType } from "@fluidframework/protocol-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
 	ISummarizeResult,
-	ISummaryTreeWithStats,
 	gcBlobPrefix,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder, mergeStats } from "@fluidframework/runtime-utils";
 
 import { IRefreshSummaryResult } from "../summary/index.js";

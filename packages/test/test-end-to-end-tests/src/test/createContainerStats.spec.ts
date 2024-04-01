@@ -13,7 +13,7 @@ import {
 	IContainerRuntimeOptions,
 	ISummaryConfiguration,
 	SummaryCollection,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestObjectProvider,

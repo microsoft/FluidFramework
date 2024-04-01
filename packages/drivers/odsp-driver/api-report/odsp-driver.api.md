@@ -30,7 +30,7 @@ import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
 import { OdspResourceTokenFetchOptions } from '@fluidframework/odsp-driver-definitions';
-import { PromiseCache } from '@fluidframework/core-utils';
+import { PromiseCache } from '@fluidframework/core-utils/internal';
 import { RateLimiter } from '@fluidframework/driver-utils';
 import { TokenFetcher } from '@fluidframework/odsp-driver-definitions';
 

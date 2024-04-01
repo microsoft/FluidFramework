@@ -8,7 +8,7 @@
 import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { PromiseCache } from "@fluidframework/core-utils";
+import { PromiseCache } from "@fluidframework/core-utils/internal";
 import { FetchSource, ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	ICacheEntry,

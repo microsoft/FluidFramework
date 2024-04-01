@@ -12,7 +12,7 @@ import {
 	IContainerRuntimeOptions,
 	ISummaryConfiguration,
 	SummaryCollection,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider, timeoutAwait } from "@fluidframework/test-utils";

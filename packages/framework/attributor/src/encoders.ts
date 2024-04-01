@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { type IUser } from "@fluidframework/protocol-definitions";
-import { type AttributionInfo } from "@fluidframework/runtime-definitions";
+import { type AttributionInfo } from "@fluidframework/runtime-definitions/internal";
 
 import { type IAttributor } from "./attributor.js";
 import { type InternedStringId, MutableStringInterner } from "./stringInterner.js";
