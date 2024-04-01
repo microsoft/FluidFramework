@@ -6,7 +6,8 @@
 import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { AttachState, ContainerErrorTypes } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
+import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IFluidHandleContext,
@@ -16,7 +17,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import { LazyPromise } from "@fluidframework/core-utils";
 import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	IBlob,
 	ISnapshotTree,

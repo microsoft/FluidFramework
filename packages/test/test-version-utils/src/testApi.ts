@@ -4,20 +4,30 @@
  */
 
 // Driver API
+import * as sequenceDeprecated from "@fluid-experimental/sequence-deprecated";
+import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { DriverApi } from "@fluid-private/test-drivers";
 
 // Loader API
-import { Loader } from "@fluidframework/container-loader";
+import * as agentScheduler from "@fluidframework/agent-scheduler";
+import {
+	BaseContainerRuntimeFactory,
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	DataObject,
+	DataObjectFactory,
+} from "@fluidframework/aqueduct";
+import * as cell from "@fluidframework/cell";
+import { SharedCell } from "@fluidframework/cell";
+import { Loader } from "@fluidframework/container-loader/internal";
 
 // ContainerRuntime API
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 
 // Data Runtime API
-import * as agentScheduler from "@fluidframework/agent-scheduler";
-import * as cell from "@fluidframework/cell";
-import { SharedCell } from "@fluidframework/cell";
 import * as counter from "@fluidframework/counter";
 import { SharedCounter } from "@fluidframework/counter";
+import * as datastore from "@fluidframework/datastore";
+import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import * as map from "@fluidframework/map";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import * as matrix from "@fluidframework/matrix";
@@ -29,20 +39,10 @@ import { ConsensusRegisterCollection } from "@fluidframework/register-collection
 import * as sequence from "@fluidframework/sequence";
 import { SharedString } from "@fluidframework/sequence";
 import { TestFluidObjectFactory } from "@fluidframework/test-utils";
-import * as datastore from "@fluidframework/datastore";
-import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 
 // ContainerRuntime and Data Runtime API
-import {
-	BaseContainerRuntimeFactory,
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import * as sequenceDeprecated from "@fluid-experimental/sequence-deprecated";
-import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
-
 import * as semver from "semver";
+
 import { pkgVersion } from "./packageVersion.js";
 import {
 	checkInstalled,

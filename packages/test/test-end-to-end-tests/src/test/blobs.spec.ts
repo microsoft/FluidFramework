@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	ExpectedEvents,
@@ -24,7 +25,7 @@ import {
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { ReferenceType } from "@fluidframework/merge-tree";
 import type { SharedString } from "@fluidframework/sequence";
 import {
@@ -35,7 +36,9 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { v4 as uuid } from "uuid";
+
 import { wrapObjectAndOverride } from "../mocking.js";
+
 import {
 	MockDetachedBlobStorage,
 	driverSupportsBlobs,

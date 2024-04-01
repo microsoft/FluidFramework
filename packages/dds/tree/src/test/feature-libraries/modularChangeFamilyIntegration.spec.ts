@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	DeltaDetachedNodeId,
 	DeltaFieldChanges,
@@ -19,7 +20,10 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "../../core/index.js";
+import { leaf } from "../../domains/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	DefaultEditBuilder,
 	FieldKindWithEditor,
@@ -27,10 +31,6 @@ import {
 	ModularChangeset,
 	cursorForJsonableTreeNode,
 } from "../../feature-libraries/index.js";
-
-import { leaf } from "../../domains/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	ModularChangeFamily,
 	intoDelta,
@@ -47,6 +47,7 @@ import {
 	testChangeReceiver,
 	testRevisionTagCodec,
 } from "../utils.js";
+
 // eslint-disable-next-line import/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits.js";
 // eslint-disable-next-line import/no-internal-modules

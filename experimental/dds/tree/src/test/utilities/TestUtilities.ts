@@ -4,14 +4,15 @@
  */
 
 import { resolve } from 'path';
+
 import { LocalServerTestDriver } from '@fluid-private/test-drivers';
+import { AttachState } from '@fluidframework/container-definitions';
 import {
-	AttachState,
 	type IContainer,
 	type IFluidCodeDetails,
 	type IHostLoader,
-} from '@fluidframework/container-definitions';
-import { IContainerExperimental, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
+} from '@fluidframework/container-definitions/internal';
+import { IContainerExperimental, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader/internal';
 import { DefaultSummaryConfiguration, SummaryCollection } from '@fluidframework/container-runtime';
 import type { ConfigTypes, IConfigProviderBase, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
@@ -34,6 +35,7 @@ import {
 } from '@fluidframework/test-utils';
 import { expect } from 'chai';
 import { v5 as uuidv5 } from 'uuid';
+
 import { BuildNode, Change, StablePlace } from '../../ChangeTypes.js';
 import { ReplaceRecursive, fail, identity } from '../../Common.js';
 import { OrderedEditSet } from '../../EditLog.js';
@@ -72,6 +74,7 @@ import {
 	WriteFormat,
 	reservedIdCount,
 } from '../../persisted-types/index.js';
+
 import { RefreshingTestTree, SimpleTestTree, TestTree, buildLeaf } from './TestNode.js';
 
 /** Objects returned by setUpTestSharedTree */

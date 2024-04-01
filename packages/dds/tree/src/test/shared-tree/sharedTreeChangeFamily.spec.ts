@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { ICodecOptions } from "../../codec/index.js";
 import {
 	TreeStoredSchema,

@@ -5,11 +5,13 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { TAnySchema, Type } from "@sinclair/typebox";
+
 import { IJsonCodec } from "../../codec/index.js";
 import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
 import { JsonCompatibleReadOnly, Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import type { NodeChangeset } from "../modular-schema/index.js";
+
 import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormatV0.js";
 import type { Move, OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes.js";
 
@@ -74,7 +76,9 @@ export function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
 					]);
 				}
 
-				if (change.valueReplace.isEmpty) {
+				// When the source of the replace is "self", the destination is a reserved ID that will only be used if
+				// the tree in the field is concurrently replaced.
+				if (change.valueReplace.isEmpty || change.valueReplace.src === "self") {
 					encoded.d = registerIdCodec.encode(change.valueReplace.dst, context);
 				} else {
 					encoded.m.push([

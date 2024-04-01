@@ -4,6 +4,7 @@
  */
 
 import { brand } from "../util/index.js";
+
 import { SequenceId } from "./editManagerFormat.js";
 
 export const sequenceIdComparator = (a: SequenceId, b: SequenceId) =>

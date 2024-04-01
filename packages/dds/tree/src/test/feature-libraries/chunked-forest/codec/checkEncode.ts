@@ -4,6 +4,7 @@
  */
 
 import { strict as assert, fail } from "assert";
+
 import { JsonableTree } from "../../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { CounterFilter } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";

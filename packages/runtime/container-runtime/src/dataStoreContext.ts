@@ -12,10 +12,10 @@ import {
 	IRequest,
 	IResponse,
 	ITelemetryBaseProperties,
+	IEvent,
 } from "@fluidframework/core-interfaces";
-import { IEvent } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
@@ -62,6 +62,7 @@ import {
 	generateStack,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
+
 import { detectOutboundRoutesViaDDSKey, sendGCUnexpectedUsageEvent } from "./gc/index.js";
 import {
 	ReadFluidDataStoreAttributes,

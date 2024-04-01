@@ -9,7 +9,7 @@ import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	getDocAttributesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
@@ -31,6 +31,7 @@ import {
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
+
 import { ICacheAndTracker, createOdspCacheAndTracker } from "./epochTracker.js";
 import {
 	INonPersistentCache,

@@ -11,7 +11,9 @@ import {
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
+
 import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils.js";
+
 import { EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
 import { deterministicIdCompressorFactory, failureDirectory, onCreate } from "./fuzzUtils.js";
@@ -41,6 +43,8 @@ describe("Fuzz - Top-Level", () => {
 	const opsPerRun = 20;
 	// TODO: Enable other types of ops.
 	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
+		set: 3,
+		clear: 1,
 		insert: 5,
 		remove: 5,
 		move: 5,
@@ -89,9 +93,6 @@ describe("Fuzz - Top-Level", () => {
 			},
 			reconnectProbability: 0.1,
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
-			skipMinimization: true,
-			// AB#7594: Skipping seed 13 as it hits runs into assert 0x33f (double freeing cursor).
-			skip: [13],
 		};
 		createDDSFuzzSuite(model, options);
 	});
@@ -120,13 +121,11 @@ describe("Fuzz - Top-Level", () => {
 			// AB#7162: see comment above.
 			detachedStartOptions: {
 				numOpsBeforeAttach: 5,
-				rehydrateDisabled: true,
 			},
 			saveFailures: {
 				directory: failureDirectory,
 			},
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
-			skipMinimization: true,
 		};
 
 		createDDSFuzzSuite(model, options);

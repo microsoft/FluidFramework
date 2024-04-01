@@ -6,7 +6,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { EventEmitter } from "@fluid-example/example-utils";
-
 import { IMergeTreeDeltaOp, createGroupOp, createRemoveRangeOp } from "@fluidframework/merge-tree";
 import { Marker, ReferenceType, SharedString, TextSegment } from "@fluidframework/sequence";
 import { exampleSetup } from "prosemirror-example-setup";
@@ -14,6 +13,7 @@ import { DOMSerializer, Schema, Slice } from "prosemirror-model";
 import { addListNodes } from "prosemirror-schema-list";
 import { EditorState, Plugin, Transaction } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
+
 import { IProseMirrorNode, ProseMirrorTransactionBuilder, sliceToGroupOps } from "./fluidBridge.js";
 import { schema } from "./fluidSchema.js";
 import { create as createSelection } from "./selection.js";

@@ -12,6 +12,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { UsageError } from "@fluidframework/telemetry-utils";
+
 import { ICodecOptions, noopValidator } from "../codec/index.js";
 import {
 	JsonableTree,
@@ -48,6 +49,7 @@ import {
 	TreeView,
 } from "../simple-tree/index.js";
 import { brand } from "../util/index.js";
+
 import { InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
 import { SchematizingSimpleTreeView, requireSchema } from "./schematizingTreeView.js";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
