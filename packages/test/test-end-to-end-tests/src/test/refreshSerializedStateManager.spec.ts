@@ -11,6 +11,8 @@ import {
 	createAndAttachContainer,
 	createDocumentId,
 	waitForContainerConnection,
+	timeoutPromise,
+	timeoutAwait,
 } from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainerExperimental } from "@fluidframework/container-loader/internal";
@@ -55,7 +57,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 	};
 
 	const waitForSummary = async (container) => {
-		await new Promise<void>((resolve, reject) => {
+		await timeoutPromise((resolve, reject) => {
 			let summarized = false;
 			container.on("op", (op) => {
 				if (op.type === "summarize") {
@@ -126,7 +128,9 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		assert(/sequenceNumber[^\w,}]*0/.test(pendingOps));
 
 		const container1: IContainerExperimental = await loader.resolve({ url }, pendingOps);
-		await getLatestSnapshotInfoP.promise;
+		await timeoutAwait(getLatestSnapshotInfoP.promise, {
+			errorMsg: "Timeout on waiting for getLatestSnapshotInfo",
+		});
 		const pendingOps2 = await container1.closeAndGetPendingLocalState?.();
 		const container2: IContainerExperimental = await loader.resolve({ url }, pendingOps2);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
@@ -191,7 +195,9 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		assert(/sequenceNumber[^\w,}]*0/.test(pendingOps));
 
 		const container1: IContainerExperimental = await loader.resolve({ url }, pendingOps);
-		await getLatestSnapshotInfoP.promise;
+		await timeoutAwait(getLatestSnapshotInfoP.promise, {
+			errorMsg: "Timeout on waiting for getLatestSnapshotInfo",
+		});
 		const pendingOps2 = await container1.closeAndGetPendingLocalState?.();
 		const container2: IContainerExperimental = await loader.resolve({ url }, pendingOps2);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
