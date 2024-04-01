@@ -47,6 +47,7 @@ import {
 	getJoinSessionCacheKey,
 	getOdspResolvedUrl,
 	isNewFileInfo,
+	toInstrumentedOdspStorageTokenFetcher,
 	toInstrumentedOdspTokenFetcher,
 } from "./odspUtils.js";
 
@@ -167,11 +168,10 @@ export class OdspDocumentServiceFactoryCore
 					this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
 			},
 			async (event) => {
-				const getStorageToken = toInstrumentedOdspTokenFetcher(
+				const getStorageToken = toInstrumentedOdspStorageTokenFetcher(
 					odspLogger,
 					resolvedUrlData,
 					this.getStorageToken,
-					true /* throwOnNullToken */,
 				);
 				// We can delay load this module as this path will not be executed in load flows and create flow
 				// while only happens once in lifetime of a document happens in the background after creation of
@@ -295,11 +295,10 @@ export class OdspDocumentServiceFactoryCore
 				this.hostPolicy,
 			);
 
-		const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
+		const storageTokenFetcher = toInstrumentedOdspStorageTokenFetcher(
 			extLogger,
 			resolvedUrlData,
 			this.getStorageToken,
-			true /* throwOnNullToken */,
 		);
 
 		const webSocketTokenFetcher =

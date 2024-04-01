@@ -26,6 +26,7 @@ import {
 	IOdspUrlParts,
 	ISharingLinkKind,
 	InstrumentedStorageTokenFetcher,
+	InstrumentedTokenFetcher,
 	OdspErrorTypes,
 	OdspResourceTokenFetchOptions,
 	TokenFetchOptions,
@@ -369,12 +370,27 @@ export function evalBlobsAndTrees(snapshot: IOdspSnapshot): {
 	return { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize };
 }
 
+export function toInstrumentedOdspStorageTokenFetcher(
+	logger: ITelemetryLoggerExt,
+	resolvedUrlParts: IOdspUrlParts,
+	tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
+): InstrumentedStorageTokenFetcher {
+	const res = toInstrumentedOdspTokenFetcher(
+		logger,
+		resolvedUrlParts,
+		tokenFetcher,
+		true, // throwOnNullToken,
+	);
+	// Drop undefined from signature - we can do it safely due to throwOnNullToken == true above
+	return res as InstrumentedStorageTokenFetcher;
+}
+
 export function toInstrumentedOdspTokenFetcher(
 	logger: ITelemetryLoggerExt,
 	resolvedUrlParts: IOdspUrlParts,
 	tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
 	throwOnNullToken: boolean,
-): InstrumentedStorageTokenFetcher {
+): InstrumentedTokenFetcher {
 	return async (
 		options: TokenFetchOptions,
 		name: string,
