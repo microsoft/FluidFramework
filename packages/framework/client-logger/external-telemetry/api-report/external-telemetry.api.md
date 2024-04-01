@@ -78,7 +78,7 @@ export interface ITelemetryConsumer {
 }
 
 // @beta
-export const subscribeToTelemetry: (config: TelemetryConfig) => void;
+export const startTelemetry: (config: TelemetryConfig) => void;
 
 // @beta
 export interface TelemetryConfig {

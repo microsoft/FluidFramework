@@ -13,7 +13,7 @@ import type {
 } from "@fluidframework/container-definitions";
 import {
 	createAppInsightsTelemetryConsumer,
-	subscribeToTelemetry,
+	startTelemetry,
 	TelemetryConfig,
 } from "../factory/index.js";
 import { ApplicationInsights } from "@microsoft/applicationinsights-web";
@@ -113,7 +113,7 @@ describe("External container telemetry", () => {
 	});
 
 	it("Emitting 'connected' container system event produces expected ContainerConnectedTelemetry", () => {
-		subscribeToTelemetry(telemetryConfig);
+		startTelemetry(telemetryConfig);
 
 		mockContainer.connect();
 
@@ -137,7 +137,7 @@ describe("External container telemetry", () => {
 	});
 
 	it("Emitting 'disconnected' container system event produces expected ContainerDisconnectedTelemetry", () => {
-		subscribeToTelemetry(telemetryConfig);
+		startTelemetry(telemetryConfig);
 
 		mockContainer.disconnect();
 
@@ -161,7 +161,7 @@ describe("External container telemetry", () => {
 	});
 
 	it("Emitting 'closed' system event produces expected ContainerClosedTelemetry", () => {
-		subscribeToTelemetry(telemetryConfig);
+		startTelemetry(telemetryConfig);
 
 		mockContainer.close();
 
@@ -183,7 +183,7 @@ describe("External container telemetry", () => {
 	});
 
 	it("Emitting 'closed' system event with an error produces expected ContainerClosedTelemetry", () => {
-		subscribeToTelemetry(telemetryConfig);
+		startTelemetry(telemetryConfig);
 
 		const containerError: ICriticalContainerError = {
 			errorType: "unknown error",
@@ -211,7 +211,7 @@ describe("External container telemetry", () => {
 	});
 
 	it("Emitting 'attaching' system event produces expected ContainerAttachingTelemetry", () => {
-		subscribeToTelemetry(telemetryConfig);
+		startTelemetry(telemetryConfig);
 
 		mockContainer.attach({ url: "mockUrl" });
 
@@ -233,7 +233,7 @@ describe("External container telemetry", () => {
 	});
 
 	it("Emitting 'attached' system event produces expected ContainerAttachedTelemetry", () => {
-		subscribeToTelemetry(telemetryConfig);
+		startTelemetry(telemetryConfig);
 
 		mockContainer.attach({ url: "mockUrl" });
 
@@ -256,7 +256,7 @@ describe("External container telemetry", () => {
 	});
 
 	it("Emitting multiple events from the same container persists the same containerId in telemetry", () => {
-		subscribeToTelemetry(telemetryConfig);
+		startTelemetry(telemetryConfig);
 
 		mockContainer.connect();
 		mockContainer.disconnect();
