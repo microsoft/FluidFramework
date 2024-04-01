@@ -7,15 +7,9 @@ import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import {
-	ChannelCollection,
-	ChannelCollectionFactory,
-	IContainerRuntimeOptions,
-	ISummarizer,
-	SummaryCollection,
-} from "@fluidframework/container-runtime";
-import { assert } from "@fluidframework/core-utils";
-import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
+import { ChannelCollection, ChannelCollectionFactory, IContainerRuntimeOptions, ISummarizer, SummaryCollection } from "@fluidframework/container-runtime/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestObjectProvider,

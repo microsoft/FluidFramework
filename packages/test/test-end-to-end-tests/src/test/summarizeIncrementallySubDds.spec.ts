@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { describeCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import {
 	IChannelAttributes,
 	IChannelFactory,
@@ -25,11 +25,12 @@ import {
 import {
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
-	ITelemetryContext,
-	channelsTreeName,
+	ITelemetryContext
 } from "@fluidframework/runtime-definitions";
+import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,

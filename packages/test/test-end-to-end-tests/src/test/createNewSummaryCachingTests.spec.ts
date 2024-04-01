@@ -7,11 +7,7 @@ import assert from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import {
-	DefaultSummaryConfiguration,
-	IContainerRuntimeOptions,
-	ISummaryConfiguration,
-} from "@fluidframework/container-runtime";
+import { DefaultSummaryConfiguration, IContainerRuntimeOptions, ISummaryConfiguration } from "@fluidframework/container-runtime/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import {

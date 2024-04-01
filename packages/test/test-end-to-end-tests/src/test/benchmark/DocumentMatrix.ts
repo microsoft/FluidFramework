@@ -12,19 +12,15 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
-import {
-	ContainerRuntime,
-	IContainerRuntimeOptions,
-	ISummarizer,
-} from "@fluidframework/container-runtime";
+import { ContainerRuntime, IContainerRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
 	IFluidHandle,
 	IRequest,
 } from "@fluidframework/core-interfaces";
-import { SharedMatrix } from "@fluidframework/matrix";
-import { SharedString } from "@fluidframework/sequence";
+import { SharedMatrix } from "@fluidframework/matrix/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils";
 

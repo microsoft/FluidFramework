@@ -13,13 +13,8 @@ import {
 } from "@fluidframework/container-runtime/test/gc";
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import {
-	gcBlobPrefix,
-	gcDeletedBlobKey,
-	gcTombstoneBlobKey,
-	gcTreeKey,
-} from "@fluidframework/runtime-definitions";
-import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
+import { gcBlobPrefix, gcDeletedBlobKey, gcTombstoneBlobKey, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
+import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base/internal";
 
 /**
  * Returns the garbage collection state from the GC tree in the summary.

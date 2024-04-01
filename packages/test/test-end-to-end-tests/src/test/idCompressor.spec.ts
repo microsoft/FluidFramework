@@ -11,11 +11,7 @@ import type { SharedCell } from "@fluidframework/cell";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IContainer, type IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import {
-	ContainerRuntime,
-	IContainerRuntimeOptions,
-	IdCompressorMode,
-} from "@fluidframework/container-runtime";
+import { ContainerRuntime, IContainerRuntimeOptions, IdCompressorMode } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import type { IChannel } from "@fluidframework/datastore-definitions";
 import { IIdCompressor, SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";

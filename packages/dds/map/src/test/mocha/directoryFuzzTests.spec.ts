@@ -19,7 +19,7 @@ import {
 	DDSFuzzTestState,
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { DirectoryFactory, IDirectory } from "../../index.js";
 

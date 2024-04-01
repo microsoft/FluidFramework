@@ -7,11 +7,7 @@ import { strict as assert } from "assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
-import {
-	ReferenceType,
-	SlidingPreference,
-	reservedRangeLabelsKey,
-} from "@fluidframework/merge-tree";
+import { ReferenceType, SlidingPreference, reservedRangeLabelsKey } from "@fluidframework/merge-tree/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import {
 	MockContainerRuntimeFactory,

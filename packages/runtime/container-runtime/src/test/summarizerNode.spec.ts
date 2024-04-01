@@ -5,19 +5,13 @@
 
 import { strict as assert } from "assert";
 
-import { ILoggingError } from "@fluidframework/core-interfaces";
+import { ILoggingError } from "@fluidframework/core-interfaces/internal";
 import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import {
-	CreateChildSummarizerNodeParam,
-	CreateSummarizerNodeSource,
-	ISummarizerNode,
-	ISummarizerNodeConfig,
-	channelsTreeName,
-} from "@fluidframework/runtime-definitions";
+import { CreateChildSummarizerNodeParam, CreateSummarizerNodeSource, ISummarizerNode, ISummarizerNodeConfig, channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils";
 import { TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils";
 

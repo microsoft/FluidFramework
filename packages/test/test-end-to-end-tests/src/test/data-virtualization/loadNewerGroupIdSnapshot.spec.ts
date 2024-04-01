@@ -7,13 +7,9 @@ import { strict as assert } from "assert";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
-import {
-	type ContainerRuntime,
-	type IContainerRuntimeOptions,
-	SummarizerStopReason,
-} from "@fluidframework/container-runtime";
+import { type ContainerRuntime, type IContainerRuntimeOptions, SummarizerStopReason } from "@fluidframework/container-runtime/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { Deferred, delay } from "@fluidframework/core-utils";
+import { Deferred, delay } from "@fluidframework/core-utils/internal";
 import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import type { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";

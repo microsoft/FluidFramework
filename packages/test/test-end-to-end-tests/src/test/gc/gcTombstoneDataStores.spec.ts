@@ -15,28 +15,19 @@ import {
 	itExpects,
 } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
-import {
-	AllowTombstoneRequestHeaderKey,
-	ContainerRuntime,
-	IOnDemandSummarizeOptions,
-	ISummarizer,
-	TombstoneResponseHeaderKey,
-} from "@fluidframework/container-runtime";
+import { AllowTombstoneRequestHeaderKey, ContainerRuntime, IOnDemandSummarizeOptions, ISummarizer, TombstoneResponseHeaderKey } from "@fluidframework/container-runtime/internal";
 import {
 	IErrorBase,
 	IFluidHandle,
 	IRequest,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { delay } from "@fluidframework/core-utils";
+import { delay } from "@fluidframework/core-utils/internal";
 import type { ISharedMap } from "@fluidframework/map";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import {
-	IFluidDataStoreChannel,
-	IGarbageCollectionDetailsBase,
-} from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreChannel, IGarbageCollectionDetailsBase } from "@fluidframework/runtime-definitions/internal";
 import { responseToException } from "@fluidframework/runtime-utils";
-import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
+import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {

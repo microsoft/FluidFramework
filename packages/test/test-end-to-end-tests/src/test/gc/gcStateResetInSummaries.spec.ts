@@ -11,13 +11,9 @@ import {
 	describeCompat,
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ISummarizer } from "@fluidframework/container-runtime";
+import { ISummarizer } from "@fluidframework/container-runtime/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import {
-	IContainerRuntimeBase,
-	channelsTreeName,
-	gcTreeKey,
-} from "@fluidframework/runtime-definitions";
+import { IContainerRuntimeBase, channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,

@@ -15,17 +15,12 @@ import {
 	itExpects,
 } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
-import {
-	AllowInactiveRequestHeaderKey,
-	ContainerRuntime,
-	ISummarizer,
-	InactiveResponseHeaderKey,
-} from "@fluidframework/container-runtime";
+import { AllowInactiveRequestHeaderKey, ContainerRuntime, ISummarizer, InactiveResponseHeaderKey } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { delay } from "@fluidframework/core-utils";
+import { delay } from "@fluidframework/core-utils/internal";
 import { DriverHeader } from "@fluidframework/driver-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import {
 	ITestContainerConfig,

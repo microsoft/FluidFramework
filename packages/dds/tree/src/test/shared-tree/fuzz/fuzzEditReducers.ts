@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { AsyncReducer, combineReducers } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-private/test-dds-utils";
-import { unreachableCase } from "@fluidframework/core-utils";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 import { Revertible, ValueSchema } from "../../../core/index.js";
 import {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Heap, IComparer } from "@fluidframework/core-utils";
+import { Heap, IComparer } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";

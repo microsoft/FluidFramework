@@ -14,7 +14,7 @@ import {
 	StringProperty,
 } from "@fluid-experimental/property-properties";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import {

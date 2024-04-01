@@ -7,16 +7,7 @@ import { strict as assert } from "assert";
 
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import {
-	CreateChildSummarizerNodeFn,
-	CreateSummarizerNodeSource,
-	FluidDataStoreRegistryEntry,
-	IFluidDataStoreContext,
-	IFluidDataStoreFactory,
-	IFluidDataStoreRegistry,
-	NamedFluidDataStoreRegistryEntries,
-	SummarizeInternalFn,
-} from "@fluidframework/runtime-definitions";
+import { CreateChildSummarizerNodeFn, CreateSummarizerNodeSource, FluidDataStoreRegistryEntry, IFluidDataStoreContext, IFluidDataStoreFactory, IFluidDataStoreRegistry, NamedFluidDataStoreRegistryEntries, SummarizeInternalFn } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 

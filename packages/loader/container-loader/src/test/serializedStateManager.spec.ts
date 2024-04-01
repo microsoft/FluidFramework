@@ -10,7 +10,7 @@ import {
 	IGetPendingLocalStateProps,
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
-import { Deferred } from "@fluidframework/core-utils";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import {
 	FetchSource,
 	IDocumentStorageService,

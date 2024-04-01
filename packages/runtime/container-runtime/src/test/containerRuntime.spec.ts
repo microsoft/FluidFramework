@@ -11,7 +11,7 @@ import {
 	ContainerErrorTypes,
 	IContainerContext,
 } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	ConfigTypes,
 	FluidObject,
@@ -31,15 +31,9 @@ import {
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 import {
-	FluidDataStoreRegistryEntry,
-	FlushMode,
-	FlushModeExperimental,
-	IFluidDataStoreContext,
-	IFluidDataStoreFactory,
-	IFluidDataStoreRegistry,
-	ISummaryTreeWithStats,
-	NamedFluidDataStoreRegistryEntries,
+	ISummaryTreeWithStats
 } from "@fluidframework/runtime-definitions";
+import { FluidDataStoreRegistryEntry, FlushMode, FlushModeExperimental, IFluidDataStoreContext, IFluidDataStoreFactory, IFluidDataStoreRegistry, NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
 import {
 	IFluidErrorBase,
 	MockLogger,

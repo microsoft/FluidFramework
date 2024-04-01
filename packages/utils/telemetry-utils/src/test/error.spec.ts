@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { FluidErrorTypes } from "@fluidframework/core-interfaces";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 
 import { DataCorruptionError, DataProcessingError } from "../error.js";
 import { LoggingError, isILoggingError, normalizeError } from "../errorLogging.js";

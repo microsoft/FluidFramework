@@ -7,13 +7,7 @@ import assert from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
-import {
-	DefaultSummaryConfiguration,
-	IAckedSummary,
-	IContainerRuntimeOptions,
-	ISummaryConfiguration,
-	SummaryCollection,
-} from "@fluidframework/container-runtime";
+import { DefaultSummaryConfiguration, IAckedSummary, IContainerRuntimeOptions, ISummaryConfiguration, SummaryCollection } from "@fluidframework/container-runtime/internal";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestObjectProvider,

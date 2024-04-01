@@ -6,14 +6,7 @@
 import { strict as assert } from "assert";
 import { isNullOrUndefined } from "util";
 
-import {
-	IMergeTreeDeltaCallbackArgs,
-	PropertySet,
-	TextSegment,
-	createAnnotateRangeOp,
-	createInsertSegmentOp,
-	createRemoveRangeOp,
-} from "@fluidframework/merge-tree";
+import { IMergeTreeDeltaCallbackArgs, PropertySet, TextSegment, createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } from "@fluidframework/merge-tree/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { TestClient } from "@fluidframework/merge-tree/test";
 

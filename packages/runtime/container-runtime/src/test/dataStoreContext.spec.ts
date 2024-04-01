@@ -15,8 +15,8 @@ import {
 	Tagged,
 	TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
-import { LazyPromise } from "@fluidframework/core-utils";
-import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore";
+import { LazyPromise } from "@fluidframework/core-utils/internal";
+import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	IBlob,
@@ -25,18 +25,9 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
-	CreateChildSummarizerNodeFn,
-	CreateSummarizerNodeSource,
-	IFluidDataStoreChannel,
-	IFluidDataStoreContext,
-	IFluidDataStoreFactory,
-	IFluidDataStoreRegistry,
-	IFluidParentContext,
-	IGarbageCollectionData,
-	IGarbageCollectionDetailsBase,
-	SummarizeInternalFn,
-	channelsTreeName,
+	IGarbageCollectionData
 } from "@fluidframework/runtime-definitions";
+import { CreateChildSummarizerNodeFn, CreateSummarizerNodeSource, IFluidDataStoreChannel, IFluidDataStoreContext, IFluidDataStoreFactory, IFluidDataStoreRegistry, IFluidParentContext, IGarbageCollectionDetailsBase, SummarizeInternalFn, channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import { GCDataBuilder, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
 	MockLogger,

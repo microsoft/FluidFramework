@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { IChannelServices } from "@fluidframework/datastore-definitions";
-import { ReferenceType } from "@fluidframework/merge-tree";
+import { ReferenceType } from "@fluidframework/merge-tree/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	MockContainerRuntimeFactory,

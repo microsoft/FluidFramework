@@ -13,29 +13,22 @@ import {
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import { ILoaderProps } from "@fluidframework/container-loader/internal";
-import {
-	ContainerRuntime,
-	IAckedSummary,
-	IContainerRuntimeOptions,
-	ISummaryNackMessage,
-	SummaryCollection,
-	neverCancelledSummaryToken,
-} from "@fluidframework/container-runtime";
+import { ContainerRuntime, IAckedSummary, IContainerRuntimeOptions, ISummaryNackMessage, SummaryCollection, neverCancelledSummaryToken } from "@fluidframework/container-runtime/internal";
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import type { SharedCounter } from "@fluidframework/counter";
-import type { FluidDataStoreRuntime } from "@fluidframework/datastore";
+import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import {
 	DriverHeader,
 	type IDocumentServiceFactory,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions/internal";
-import type { SharedMatrix } from "@fluidframework/matrix";
+import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import {
 	ISequencedDocumentMessage,
 	ISummaryTree,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestObjectProvider,
