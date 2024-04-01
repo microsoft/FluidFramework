@@ -34,7 +34,7 @@ import {
 import {
 	ExpirationTimer,
 	isSentSignalMessage,
-	getClientRoomId,
+	getClientSpecificRoomId,
 	getRoomId,
 	hasWriteAccess,
 } from "./utils";
@@ -476,7 +476,7 @@ export function configureWebSocketServices(
 
 								const roomId: string =
 									signal.targetClientId !== undefined
-										? getClientRoomId(signal.targetClientId)
+										? getClientSpecificRoomId(signal.targetClientId)
 										: getRoomId(room);
 
 								socket.emitToRoom(roomId, "signal", signalMessage);

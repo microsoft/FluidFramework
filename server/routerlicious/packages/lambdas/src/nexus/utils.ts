@@ -65,7 +65,7 @@ export const isWriter = (scopes: string[], mode: ConnectionMode) =>
 	hasWriteAccess(scopes) && mode === "write";
 
 export const getRoomId = (room: IRoom) => `${room.tenantId}/${room.documentId}`;
-export const getClientRoomId = (clientId: string) => `client#${clientId}`;
+export const getClientSpecificRoomId = (clientId: string) => `client#${clientId}`;
 
 export function isSentSignalMessage(obj: any): obj is ISentSignalMessage {
 	return (
