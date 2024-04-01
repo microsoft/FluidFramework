@@ -32,7 +32,8 @@ import {
 	ReferenceType,
 	SegmentGroup,
 	SlidingPreference,
-	createAnnotateRangeOp, // eslint-disable-next-line import/no-deprecated
+	createAnnotateRangeOp,
+	// eslint-disable-next-line import/no-deprecated
 	createGroupOp,
 	createInsertOp,
 	createObliterateRangeOp,

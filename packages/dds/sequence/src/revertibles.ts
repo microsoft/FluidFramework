@@ -13,7 +13,8 @@ import {
 	MergeTreeDeltaType,
 	PropertySet,
 	ReferenceType,
-	SlidingPreference, // eslint-disable-next-line import/no-deprecated
+	SlidingPreference,
+	// eslint-disable-next-line import/no-deprecated
 	SortedSet,
 	appendToMergeTreeDeltaRevertibles,
 	discardMergeTreeDeltaRevertible,
