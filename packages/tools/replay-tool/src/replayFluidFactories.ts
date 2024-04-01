@@ -30,9 +30,8 @@ import {
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import { SharedIntervalCollection, SharedString } from "@fluidframework/sequence";
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
-
-import { ReplayToolContainerEntryPoint } from "./helpers";
-import { UnknownChannelFactory } from "./unknownChannel";
+import { ReplayToolContainerEntryPoint } from "./helpers.js";
+import { UnknownChannelFactory } from "./unknownChannel.js";
 
 /** Simple runtime factory that creates a container runtime */
 export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
