@@ -5,22 +5,9 @@
 
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
-import {
-	AuthorizationError,
-	DriverErrorTelemetryProps,
-	FluidInvalidSchemaError,
-	NonRetryableError,
-	OnlineStatus,
-	RetryableError,
-	createGenericNetworkError,
-	isOnline,
-} from "@fluidframework/driver-utils";
-import {
-	IOdspErrorAugmentations,
-	OdspError,
-	OdspErrorTypes,
-} from "@fluidframework/odsp-driver-definitions";
-import { IFluidErrorBase, LoggingError, numberFromString } from "@fluidframework/telemetry-utils";
+import { AuthorizationError, DriverErrorTelemetryProps, FluidInvalidSchemaError, NonRetryableError, OnlineStatus, RetryableError, createGenericNetworkError, isOnline } from "@fluidframework/driver-utils/internal";
+import { IOdspErrorAugmentations, OdspError, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
+import { IFluidErrorBase, LoggingError, numberFromString } from "@fluidframework/telemetry-utils/internal";
 
 // odsp-doclib-utils and odsp-driver will always release together and share the same pkgVersion
 import { pkgVersion as driverVersion } from "./packageVersion.js";

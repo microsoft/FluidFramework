@@ -17,15 +17,7 @@ import {
 	IDocumentDeltaConnectionEvents,
 	IDocumentService,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	calculateMaxWaitTime,
-	canRetryOnError,
-	createGenericNetworkError,
-	createWriteError,
-	getRetryDelayFromError,
-	isRuntimeMessage,
-	logNetworkFailure,
-} from "@fluidframework/driver-utils";
+import { calculateMaxWaitTime, canRetryOnError, createGenericNetworkError, createWriteError, getRetryDelayFromError, isRuntimeMessage, logNetworkFailure } from "@fluidframework/driver-utils/internal";
 import {
 	ConnectionMode,
 	IClient,
@@ -43,14 +35,9 @@ import {
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
 import {
-	GenericError,
-	ITelemetryLoggerExt,
-	UsageError,
-	formatTick,
-	isFluidError,
-	normalizeError,
+	ITelemetryLoggerExt
 } from "@fluidframework/telemetry-utils";
-
+import { GenericError, UsageError, formatTick, isFluidError, normalizeError } from "@fluidframework/telemetry-utils/internal";
 import {
 	IConnectionDetailsInternal,
 	IConnectionManager,

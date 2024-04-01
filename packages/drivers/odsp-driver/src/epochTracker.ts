@@ -4,33 +4,12 @@
  */
 
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
+import { LocationRedirectionError, NonRetryableError, RateLimiter, ThrottlingError } from "@fluidframework/driver-utils/internal";
+import { type HostStoragePolicy, ICacheEntry, IEntry, IFileEntry, IOdspError, IOdspErrorAugmentations, IOdspResolvedUrl, IPersistedCache, OdspErrorTypes, maximumCacheDurationMs, snapshotKey } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	LocationRedirectionError,
-	NonRetryableError,
-	RateLimiter,
-	ThrottlingError,
-} from "@fluidframework/driver-utils";
-import {
-	type HostStoragePolicy,
-	ICacheEntry,
-	IEntry,
-	IFileEntry,
-	IOdspError,
-	IOdspErrorAugmentations,
-	IOdspResolvedUrl,
-	IPersistedCache,
-	OdspErrorTypes,
-	maximumCacheDurationMs,
-	snapshotKey,
-} from "@fluidframework/odsp-driver-definitions";
-import {
-	ITelemetryLoggerExt,
-	PerformanceEvent,
-	isFluidError,
-	loggerToMonitoringContext,
-	normalizeError,
-	wrapError,
+	ITelemetryLoggerExt
 } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, isFluidError, loggerToMonitoringContext, normalizeError, wrapError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts.js";

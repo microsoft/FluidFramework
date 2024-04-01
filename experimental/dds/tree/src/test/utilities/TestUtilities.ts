@@ -18,21 +18,9 @@ import type { ConfigTypes, IConfigProviderBase, IFluidHandle, IRequestHeader } f
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { createChildLogger } from '@fluidframework/telemetry-utils';
-import {
-	MockContainerRuntimeFactory,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-} from '@fluidframework/test-runtime-utils';
-import {
-	ChannelFactoryRegistry,
-	ITestFluidObject,
-	ITestObjectProvider,
-	TestContainerRuntimeFactory,
-	TestFluidObjectFactory,
-	TestObjectProvider,
-	createAndAttachContainer,
-} from '@fluidframework/test-utils';
+import { createChildLogger } from '@fluidframework/telemetry-utils/internal';
+import { MockContainerRuntimeFactory, MockFluidDataStoreRuntime, MockStorage } from '@fluidframework/test-runtime-utils/internal';
+import { ChannelFactoryRegistry, ITestFluidObject, ITestObjectProvider, TestContainerRuntimeFactory, TestFluidObjectFactory, TestObjectProvider, createAndAttachContainer } from '@fluidframework/test-utils/internal';
 import { expect } from 'chai';
 import { v5 as uuidv5 } from 'uuid';
 

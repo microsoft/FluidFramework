@@ -4,7 +4,7 @@
  */
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { createChildLogger, raiseConnectedEvent } from "@fluidframework/telemetry-utils";
+import { createChildLogger, raiseConnectedEvent } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import {

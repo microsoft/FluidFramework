@@ -4,12 +4,8 @@
  */
 
 import { ISnapshot } from "@fluidframework/driver-definitions/internal";
-import { UsageError } from "@fluidframework/driver-utils";
-import {
-	IFileEntry,
-	IOdspResolvedUrl,
-	InstrumentedStorageTokenFetcher,
-} from "@fluidframework/odsp-driver-definitions";
+import { UsageError } from "@fluidframework/driver-utils/internal";
+import { IFileEntry, IOdspResolvedUrl, InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 

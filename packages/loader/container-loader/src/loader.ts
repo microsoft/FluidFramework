@@ -27,14 +27,9 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { IClientDetails } from "@fluidframework/protocol-definitions";
 import {
-	ITelemetryLoggerExt,
-	MonitoringContext,
-	PerformanceEvent,
-	UsageError,
-	createChildMonitoringContext,
-	mixinMonitoringContext,
-	sessionStorageConfigProvider,
+	ITelemetryLoggerExt
 } from "@fluidframework/telemetry-utils";
+import { MonitoringContext, PerformanceEvent, UsageError, createChildMonitoringContext, mixinMonitoringContext, sessionStorageConfigProvider } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { Container } from "./container.js";

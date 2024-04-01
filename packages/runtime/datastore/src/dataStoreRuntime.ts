@@ -24,7 +24,7 @@ import {
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeEvents,
 } from "@fluidframework/datastore-definitions";
-import { buildSnapshotTree } from "@fluidframework/driver-utils";
+import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
 import { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	IClientDetails,
@@ -52,32 +52,11 @@ import {
 	VisibilityState,
 	gcDataBlobKey,
 } from "@fluidframework/runtime-definitions/internal";
+import { GCDataBuilder, RequestParser, SummaryTreeBuilder, addBlobToSummary, convertSnapshotTreeToSummaryTree, convertSummaryTreeToITree, create404Response, createResponseError, encodeCompactIdToString, exceptionToResponse, generateHandleContextPath, processAttachMessageGCData, unpackChildNodesUsedRoutes } from "@fluidframework/runtime-utils/internal";
 import {
-	GCDataBuilder,
-	RequestParser,
-	SummaryTreeBuilder,
-	addBlobToSummary,
-	convertSnapshotTreeToSummaryTree,
-	convertSummaryTreeToITree,
-	create404Response,
-	createResponseError,
-	encodeCompactIdToString,
-	exceptionToResponse,
-	generateHandleContextPath,
-	processAttachMessageGCData,
-	unpackChildNodesUsedRoutes,
-} from "@fluidframework/runtime-utils";
-import {
-	DataProcessingError,
-	ITelemetryLoggerExt,
-	LoggingError,
-	MonitoringContext,
-	UsageError,
-	createChildMonitoringContext,
-	generateStack,
-	raiseConnectedEvent,
-	tagCodeArtifacts,
+	ITelemetryLoggerExt
 } from "@fluidframework/telemetry-utils";
+import { DataProcessingError, LoggingError, MonitoringContext, UsageError, createChildMonitoringContext, generateStack, raiseConnectedEvent, tagCodeArtifacts } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { IChannelContext, summarizeChannel } from "./channelContext.js";

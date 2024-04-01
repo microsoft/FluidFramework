@@ -11,11 +11,9 @@ import { IEvent, IEventProvider, ITelemetryBaseLogger } from "@fluidframework/co
 import { assert } from "@fluidframework/core-utils/internal";
 import { IClient, IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";
 import {
-	ITelemetryLoggerExt,
-	UsageError,
-	createChildLogger,
+	ITelemetryLoggerExt
 } from "@fluidframework/telemetry-utils";
-
+import { UsageError, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { summarizerClientType } from "./summarizerClientElection.js";
 
 // helper types for recursive readonly.

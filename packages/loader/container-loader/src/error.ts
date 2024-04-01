@@ -7,11 +7,9 @@ import { ContainerErrorTypes } from "@fluidframework/container-definitions/inter
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
 import {
-	IFluidErrorBase,
-	ITelemetryLoggerExt,
-	LoggingError,
-	wrapErrorAndLog,
+	ITelemetryLoggerExt
 } from "@fluidframework/telemetry-utils";
+import { IFluidErrorBase, LoggingError, wrapErrorAndLog } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Warning emitted when requests to storage are being throttled.

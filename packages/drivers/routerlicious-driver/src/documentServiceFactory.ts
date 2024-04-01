@@ -14,18 +14,13 @@ import {
 	IResolvedUrl,
 	LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	RateLimiter,
-	getDocAttributesFromProtocolSummary,
-	getQuorumValuesFromProtocolSummary,
-	isCombinedAppAndProtocolSummary,
-} from "@fluidframework/driver-utils";
+import { RateLimiter, getDocAttributesFromProtocolSummary, getQuorumValuesFromProtocolSummary, isCombinedAppAndProtocolSummary } from "@fluidframework/driver-utils/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	ISession,
 	convertSummaryTreeToWholeSummaryTree,
 } from "@fluidframework/server-services-client";
-import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { ICache, InMemoryCache, NullCache } from "./cache.js";
 import { INormalizedWholeSnapshot } from "./contracts.js";

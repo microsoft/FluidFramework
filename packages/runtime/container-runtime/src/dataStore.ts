@@ -11,8 +11,8 @@ import {
 	IDataStore,
 	IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions/internal";
-import { ITelemetryLoggerExt, TelemetryDataTag, UsageError } from "@fluidframework/telemetry-utils";
-
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { TelemetryDataTag, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { ChannelCollection } from "./channelCollection.js";
 import { ContainerMessageType } from "./messageTypes.js";
 

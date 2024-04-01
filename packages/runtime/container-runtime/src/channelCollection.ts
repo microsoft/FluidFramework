@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
-import { buildSnapshotTree } from "@fluidframework/driver-utils";
+import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	IGarbageCollectionData,
@@ -38,30 +38,8 @@ import {
 	NamedFluidDataStoreRegistryEntries,
 	channelsTreeName,
 } from "@fluidframework/runtime-definitions/internal";
-import {
-	GCDataBuilder,
-	RequestParser,
-	SummaryTreeBuilder,
-	convertSnapshotTreeToSummaryTree,
-	convertSummaryTreeToITree,
-	create404Response,
-	createResponseError,
-	encodeCompactIdToString,
-	isSerializedHandle,
-	processAttachMessageGCData,
-	responseToException,
-	unpackChildNodesUsedRoutes,
-} from "@fluidframework/runtime-utils";
-import {
-	DataCorruptionError,
-	DataProcessingError,
-	LoggingError,
-	MonitoringContext,
-	createChildLogger,
-	createChildMonitoringContext,
-	extractSafePropertiesFromMessage,
-	tagCodeArtifacts,
-} from "@fluidframework/telemetry-utils";
+import { GCDataBuilder, RequestParser, SummaryTreeBuilder, convertSnapshotTreeToSummaryTree, convertSummaryTreeToITree, create404Response, createResponseError, encodeCompactIdToString, isSerializedHandle, processAttachMessageGCData, responseToException, unpackChildNodesUsedRoutes } from "@fluidframework/runtime-utils/internal";
+import { DataCorruptionError, DataProcessingError, LoggingError, MonitoringContext, createChildLogger, createChildMonitoringContext, extractSafePropertiesFromMessage, tagCodeArtifacts } from "@fluidframework/telemetry-utils/internal";
 
 import { RuntimeHeaderData, defaultRuntimeHeaderData } from "./containerRuntime.js";
 import {

@@ -10,7 +10,7 @@ import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 } from "@fluidframework/driver-definitions/internal";
-import { UsageError, createGenericNetworkError } from "@fluidframework/driver-utils";
+import { UsageError, createGenericNetworkError } from "@fluidframework/driver-utils/internal";
 import {
 	ConnectionMode,
 	IClientConfiguration,
@@ -24,14 +24,9 @@ import {
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
 import {
-	EventEmitterWithErrorHandling,
-	ITelemetryLoggerExt,
-	MonitoringContext,
-	createChildMonitoringContext,
-	extractLogSafeErrorProperties,
-	getCircularReplacer,
-	normalizeError,
+	ITelemetryLoggerExt
 } from "@fluidframework/telemetry-utils";
+import { EventEmitterWithErrorHandling, MonitoringContext, createChildMonitoringContext, extractLogSafeErrorProperties, getCircularReplacer, normalizeError } from "@fluidframework/telemetry-utils/internal";
 import type { Socket } from "socket.io-client";
 
 // For now, this package is versioned and released in unison with the specific drivers

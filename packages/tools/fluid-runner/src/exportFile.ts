@@ -7,9 +7,9 @@ import * as fs from "fs";
 
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
-
+import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 import { IFluidFileConverter } from "./codeLoaderBundle";
 import { FakeUrlResolver } from "./fakeUrlResolver";
 /* eslint-disable import/no-internal-modules */

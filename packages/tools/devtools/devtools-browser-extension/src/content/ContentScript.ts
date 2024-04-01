@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type ISourcedDevtoolsMessage,
-	devtoolsMessageSource,
-	isDevtoolsMessage,
-} from "@fluidframework/devtools-core";
+import { type ISourcedDevtoolsMessage, devtoolsMessageSource, isDevtoolsMessage } from "@fluidframework/devtools-core/internal";
 
 import { browser, window } from "../Globals.js";
 import {

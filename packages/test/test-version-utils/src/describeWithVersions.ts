@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	getUnexpectedLogErrorException,
-	ITestObjectProvider,
-	TestObjectProvider,
-} from "@fluidframework/test-utils";
+import { getUnexpectedLogErrorException, ITestObjectProvider, TestObjectProvider } from "@fluidframework/test-utils/internal";
 
 import { driver, r11sEndpointName, tenantIndex } from "./compatOptions.js";
 import { getVersionedTestObjectProvider } from "./compatUtils.js";

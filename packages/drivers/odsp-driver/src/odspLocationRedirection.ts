@@ -4,7 +4,7 @@
  */
 
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
+import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 
 import { getOdspResolvedUrl } from "./odspUtils.js";
 

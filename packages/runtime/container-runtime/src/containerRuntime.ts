@@ -45,7 +45,7 @@ import {
 	IDocumentStorageService,
 	type ISnapshot,
 } from "@fluidframework/driver-definitions/internal";
-import { readAndParse } from "@fluidframework/driver-utils";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IIdCompressorCore,
@@ -86,38 +86,12 @@ import {
 	channelsTreeName,
 	gcTreeKey,
 } from "@fluidframework/runtime-definitions/internal";
+import { GCDataBuilder, ReadAndParseBlob, RequestParser, TelemetryContext, addBlobToSummary, addSummarizeResultToSummary, calculateStats, create404Response, exceptionToResponse, responseToException, seqFromTree } from "@fluidframework/runtime-utils/internal";
 import {
-	GCDataBuilder,
-	ReadAndParseBlob,
-	RequestParser,
-	TelemetryContext,
-	addBlobToSummary,
-	addSummarizeResultToSummary,
-	calculateStats,
-	create404Response,
-	exceptionToResponse,
-	responseToException,
-	seqFromTree,
-} from "@fluidframework/runtime-utils";
-import {
-	DataCorruptionError,
-	DataProcessingError,
-	GenericError,
-	IEventSampler,
 	type ITelemetryGenericEventExt,
-	ITelemetryLoggerExt,
-	LoggingError,
-	MonitoringContext,
-	PerformanceEvent,
-	TaggedLoggerAdapter,
-	UsageError,
-	createChildLogger,
-	createChildMonitoringContext,
-	createSampledLogger,
-	loggerToMonitoringContext,
-	raiseConnectedEvent,
-	wrapError,
+	ITelemetryLoggerExt
 } from "@fluidframework/telemetry-utils";
+import { DataCorruptionError, DataProcessingError, GenericError, IEventSampler, LoggingError, MonitoringContext, PerformanceEvent, TaggedLoggerAdapter, UsageError, createChildLogger, createChildMonitoringContext, createSampledLogger, loggerToMonitoringContext, raiseConnectedEvent, wrapError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { BindBatchTracker } from "./batchTracker.js";

@@ -7,12 +7,7 @@ import { strict as assert } from 'assert';
 
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage, SummaryType } from '@fluidframework/protocol-definitions';
-import {
-	MockContainerRuntime,
-	MockContainerRuntimeFactory,
-	MockFluidDataStoreRuntime,
-	validateAssertionError,
-} from '@fluidframework/test-runtime-utils';
+import { MockContainerRuntime, MockContainerRuntimeFactory, MockFluidDataStoreRuntime, validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 
 import { BuildNode, Change, ChangeType, StablePlace, StableRange } from '../../ChangeTypes.js';

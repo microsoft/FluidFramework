@@ -28,11 +28,7 @@ import {
 	type NamedFluidDataStoreRegistryEntries,
 	type NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions/internal";
-import {
-	type AsyncFluidObjectProvider,
-	type FluidObjectSymbolProvider,
-	type IFluidDependencySynthesizer,
-} from "@fluidframework/synthesize";
+import { type AsyncFluidObjectProvider, type FluidObjectSymbolProvider, type IFluidDependencySynthesizer } from "@fluidframework/synthesize/internal";
 
 import {
 	type DataObjectTypes,

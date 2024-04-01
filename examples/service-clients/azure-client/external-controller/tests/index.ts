@@ -6,11 +6,7 @@
 /* eslint-disable import/no-internal-modules */
 
 import { type ISharedMap, SharedMap } from "fluid-framework";
-import {
-	LocalDocumentServiceFactory,
-	LocalResolver,
-	LocalSessionStorageDbFactory,
-} from "@fluidframework/local-driver";
+import { LocalDocumentServiceFactory, LocalResolver, LocalSessionStorageDbFactory } from "@fluidframework/local-driver/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,

@@ -4,14 +4,7 @@
  */
 
 import { Divider } from "@fluentui/react-components";
-import {
-	AudienceSummary,
-	GetAudienceSummary,
-	type HasContainerKey,
-	type IDevtoolsMessage,
-	type InboundHandlers,
-	handleIncomingMessage,
-} from "@fluidframework/devtools-core";
+import { AudienceSummary, GetAudienceSummary, type HasContainerKey, type IDevtoolsMessage, type InboundHandlers, handleIncomingMessage } from "@fluidframework/devtools-core/internal";
 import { type IClient } from "@fluidframework/protocol-definitions";
 import React from "react";
 

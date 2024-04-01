@@ -10,11 +10,9 @@ import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { IClient, ISequencedClient } from "@fluidframework/protocol-definitions";
 import {
 	ITelemetryLoggerExt,
-	PerformanceEvent,
-	type TelemetryEventCategory,
-	loggerToMonitoringContext,
+	type TelemetryEventCategory
 } from "@fluidframework/telemetry-utils";
-
+import { PerformanceEvent, loggerToMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor.js";
 import { ConnectionState } from "./connectionState.js";
 import { IConnectionDetailsInternal, IConnectionStateChangeReason } from "./contracts.js";

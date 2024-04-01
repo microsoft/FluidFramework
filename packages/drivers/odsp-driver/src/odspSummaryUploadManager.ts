@@ -6,17 +6,14 @@
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { ISummaryContext } from "@fluidframework/driver-definitions/internal";
-import { isCombinedAppAndProtocolSummary } from "@fluidframework/driver-utils";
-import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
+import { isCombinedAppAndProtocolSummary } from "@fluidframework/driver-utils/internal";
+import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
 import { getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
 import {
-	ITelemetryLoggerExt,
-	MonitoringContext,
-	PerformanceEvent,
-	loggerToMonitoringContext,
+	ITelemetryLoggerExt
 } from "@fluidframework/telemetry-utils";
-
+import { MonitoringContext, PerformanceEvent, loggerToMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 import {
 	IOdspSummaryPayload,
 	IOdspSummaryTree,

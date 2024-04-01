@@ -12,7 +12,7 @@ import {
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 } from "@fluidframework/runtime-definitions/internal";
-import type { IConfigProvider } from "@fluidframework/telemetry-utils";
+import type { IConfigProvider } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	GCFeatureMatrix,

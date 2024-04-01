@@ -11,15 +11,7 @@ import {
 	Subtitle1,
 	makeStyles,
 } from "@fluentui/react-components";
-import {
-	DevtoolsFeatures,
-	GetDevtoolsFeatures,
-	type ISourcedDevtoolsMessage,
-	type InboundHandlers,
-	SetUnsampledTelemetry,
-	TelemetryEvent,
-	handleIncomingMessage,
-} from "@fluidframework/devtools-core";
+import { DevtoolsFeatures, GetDevtoolsFeatures, type ISourcedDevtoolsMessage, type InboundHandlers, SetUnsampledTelemetry, TelemetryEvent, handleIncomingMessage } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
 import { useMessageRelay } from "../MessageRelayContext.js";

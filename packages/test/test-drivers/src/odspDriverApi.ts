@@ -9,18 +9,8 @@ import {
 	generatePairwiseOptions,
 	numberCases,
 } from "@fluid-private/test-pairwise-generator";
-import {
-	OdspDocumentServiceFactory,
-	OdspDriverUrlResolver,
-	createOdspCreateContainerRequest,
-	createOdspUrl,
-} from "@fluidframework/odsp-driver";
-import {
-	HostStoragePolicy,
-	ICollabSessionOptions,
-	IOpsCachingPolicy,
-	ISnapshotOptions,
-} from "@fluidframework/odsp-driver-definitions";
+import { OdspDocumentServiceFactory, OdspDriverUrlResolver, createOdspCreateContainerRequest, createOdspUrl } from "@fluidframework/odsp-driver/internal";
+import { HostStoragePolicy, ICollabSessionOptions, IOpsCachingPolicy, ISnapshotOptions } from "@fluidframework/odsp-driver-definitions/internal";
 
 import { pkgVersion } from "./packageVersion.js";
 

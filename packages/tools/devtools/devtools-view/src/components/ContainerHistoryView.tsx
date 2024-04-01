@@ -4,15 +4,7 @@
  */
 
 import { Divider } from "@fluentui/react-components";
-import {
-	type ConnectionStateChangeLogEntry,
-	ContainerStateHistory,
-	GetContainerState,
-	type HasContainerKey,
-	type ISourcedDevtoolsMessage,
-	type InboundHandlers,
-	handleIncomingMessage,
-} from "@fluidframework/devtools-core";
+import { type ConnectionStateChangeLogEntry, ContainerStateHistory, GetContainerState, type HasContainerKey, type ISourcedDevtoolsMessage, type InboundHandlers, handleIncomingMessage } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
 import { useMessageRelay } from "../MessageRelayContext.js";

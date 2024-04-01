@@ -19,14 +19,9 @@ import { ISummaryTreeWithStats, ITelemetryContext } from '@fluidframework/runtim
 import { IFluidSerializer, ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { SharedObject, createSingleBlobSummary } from '@fluidframework/shared-object-base/internal';
 import {
-	IEventSampler,
-	ITelemetryLoggerExt,
-	ITelemetryLoggerPropertyBags,
-	PerformanceEvent,
-	createChildLogger,
-	createSampledLogger,
+	ITelemetryLoggerExt
 } from '@fluidframework/telemetry-utils';
-
+import { IEventSampler, ITelemetryLoggerPropertyBags, PerformanceEvent, createChildLogger, createSampledLogger } from "@fluidframework/telemetry-utils/internal";
 import { BuildNode, BuildTreeNode, Change, ChangeType } from './ChangeTypes.js';
 import { RestOrArray, copyPropertyIfDefined, fail, unwrapRestOrArray } from './Common.js';
 import { EditHandle, EditLog, OrderedEditSet } from './EditLog.js';

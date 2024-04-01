@@ -8,13 +8,7 @@ import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfac
 import { assert, Deferred, PromiseTimer, delay } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import {
-	MonitoringContext,
-	UsageError,
-	createChildLogger,
-	createChildMonitoringContext,
-	isFluidError,
-} from "@fluidframework/telemetry-utils";
+import { MonitoringContext, UsageError, createChildLogger, createChildMonitoringContext, isFluidError } from "@fluidframework/telemetry-utils/internal";
 
 import { ISummaryConfiguration } from "../containerRuntime.js";
 import { opSize } from "../opProperties.js";

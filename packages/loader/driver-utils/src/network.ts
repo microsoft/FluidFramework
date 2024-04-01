@@ -11,7 +11,7 @@ import {
 	IResolvedUrl,
 	IThrottlingWarning,
 } from "@fluidframework/driver-definitions/internal";
-import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils";
+import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * @internal

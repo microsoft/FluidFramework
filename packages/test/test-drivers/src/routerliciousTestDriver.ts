@@ -7,10 +7,10 @@ import assert from "assert";
 
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import { InsecureUrlResolver } from "@fluidframework/driver-utils";
+import { InsecureUrlResolver } from "@fluidframework/driver-utils/internal";
 import { IRouterliciousDriverPolicies } from "@fluidframework/routerlicious-driver";
 import { ITestDriver, RouterliciousEndpoint } from "@fluidframework/test-driver-definitions";
-import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { RouterliciousDriverApi, RouterliciousDriverApiType } from "./routerliciousDriverApi.js";

@@ -11,30 +11,15 @@ import {
 	IDocumentServicePolicies,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	DeltaStreamConnectionForbiddenError,
-	NonRetryableError,
-} from "@fluidframework/driver-utils";
+import { DeltaStreamConnectionForbiddenError, NonRetryableError } from "@fluidframework/driver-utils/internal";
 import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils/internal";
-import {
-	HostStoragePolicy,
-	type IOdspError,
-	IOdspResolvedUrl,
-	ISocketStorageDiscovery,
-	InstrumentedStorageTokenFetcher,
-	OdspErrorTypes,
-	TokenFetchOptions,
-} from "@fluidframework/odsp-driver-definitions";
+import { HostStoragePolicy, type IOdspError, IOdspResolvedUrl, ISocketStorageDiscovery, InstrumentedStorageTokenFetcher, OdspErrorTypes, TokenFetchOptions } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	IClient,
 	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/protocol-definitions";
-import {
-	IFluidErrorBase,
-	MonitoringContext,
-	normalizeError,
-} from "@fluidframework/telemetry-utils";
+import { IFluidErrorBase, MonitoringContext, normalizeError } from "@fluidframework/telemetry-utils/internal";
 
 import { policyLabelsUpdatesSignalType } from "./contracts.js";
 import { EpochTracker } from "./epochTracker.js";

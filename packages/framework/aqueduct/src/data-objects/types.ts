@@ -6,7 +6,7 @@
 import { type FluidObject, type IEvent } from "@fluidframework/core-interfaces";
 import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { type IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
-import { type AsyncFluidObjectProvider } from "@fluidframework/synthesize";
+import { type AsyncFluidObjectProvider } from "@fluidframework/synthesize/internal";
 
 /**
  * This type is used as the base generic input to DataObject and PureDataObject.

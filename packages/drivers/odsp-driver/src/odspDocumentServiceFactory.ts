@@ -4,12 +4,7 @@
  */
 
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
-import {
-	HostStoragePolicy,
-	IPersistedCache,
-	OdspResourceTokenFetchOptions,
-	TokenFetcher,
-} from "@fluidframework/odsp-driver-definitions";
+import { HostStoragePolicy, IPersistedCache, OdspResourceTokenFetchOptions, TokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
 
 // eslint-disable-next-line import/no-internal-modules
 import { LocalOdspDocumentServiceFactory } from "./localOdspDriver/localOdspDocumentServiceFactory.js";

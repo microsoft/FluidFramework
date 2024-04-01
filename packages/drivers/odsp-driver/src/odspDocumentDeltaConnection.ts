@@ -8,8 +8,8 @@ import { IEvent } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
-import { createGenericNetworkError } from "@fluidframework/driver-utils";
-import { OdspError } from "@fluidframework/odsp-driver-definitions";
+import { createGenericNetworkError } from "@fluidframework/driver-utils/internal";
+import { OdspError } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	IClient,
 	IConnect,
@@ -20,10 +20,9 @@ import {
 	ISignalMessage,
 } from "@fluidframework/protocol-definitions";
 import {
-	IFluidErrorBase,
-	ITelemetryLoggerExt,
-	loggerToMonitoringContext,
+	ITelemetryLoggerExt
 } from "@fluidframework/telemetry-utils";
+import { IFluidErrorBase, loggerToMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 import { Socket } from "socket.io-client";
 import { v4 as uuid } from "uuid";
 

@@ -9,11 +9,7 @@ import {
 	IOdspAuthRequestInfo,
 	getDriveItemByRootFileName,
 } from "@fluidframework/odsp-doclib-utils/internal";
-import {
-	OdspDriverUrlResolver,
-	createOdspCreateContainerRequest,
-	createOdspUrl,
-} from "@fluidframework/odsp-driver";
+import { OdspDriverUrlResolver, createOdspCreateContainerRequest, createOdspUrl } from "@fluidframework/odsp-driver/internal";
 
 export class OdspUrlResolver implements IUrlResolver {
 	private readonly driverUrlResolver = new OdspDriverUrlResolver();

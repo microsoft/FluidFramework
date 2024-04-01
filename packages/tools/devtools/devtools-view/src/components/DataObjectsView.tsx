@@ -4,15 +4,7 @@
  */
 
 import { Tree as FluentTree } from "@fluentui/react-components/unstable";
-import {
-	GetRootDataVisualizations,
-	type HasContainerKey,
-	type ISourcedDevtoolsMessage,
-	type InboundHandlers,
-	RootDataVisualizations,
-	type RootHandleNode,
-	handleIncomingMessage,
-} from "@fluidframework/devtools-core";
+import { GetRootDataVisualizations, type HasContainerKey, type ISourcedDevtoolsMessage, type InboundHandlers, RootDataVisualizations, type RootHandleNode, handleIncomingMessage } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
 import { useMessageRelay } from "../MessageRelayContext.js";

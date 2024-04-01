@@ -41,8 +41,8 @@ import {
 	IFluidDataStoreChannel,
 	VisibilityState,
 } from "@fluidframework/runtime-definitions/internal";
-import { getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { MockDeltaManager } from "./mockDeltas.js";

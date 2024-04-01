@@ -13,10 +13,7 @@ import {
 	getDriveId,
 	getDriveItemByRootFileName,
 } from "@fluidframework/odsp-doclib-utils/internal";
-import type {
-	HostStoragePolicy,
-	OdspResourceTokenFetchOptions,
-} from "@fluidframework/odsp-driver-definitions";
+import type { HostStoragePolicy, OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions/internal";
 import { ITestDriver, OdspEndpoint } from "@fluidframework/test-driver-definitions";
 import {
 	OdspTokenConfig,

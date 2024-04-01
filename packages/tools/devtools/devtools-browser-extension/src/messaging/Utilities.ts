@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type ISourcedDevtoolsMessage,
-	type MessageLoggingOptions,
-} from "@fluidframework/devtools-core";
+import { type ISourcedDevtoolsMessage, type MessageLoggingOptions } from "@fluidframework/devtools-core/internal";
 
 import { type TypedPortConnection } from "./TypedPortConnection.js";
 

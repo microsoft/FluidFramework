@@ -4,11 +4,7 @@
  */
 
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import {
-	getDocAttributesFromProtocolSummary,
-	getQuorumValuesFromProtocolSummary,
-	isCombinedAppAndProtocolSummary,
-} from "@fluidframework/driver-utils";
+import { getDocAttributesFromProtocolSummary, getQuorumValuesFromProtocolSummary, isCombinedAppAndProtocolSummary } from "@fluidframework/driver-utils/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { defaultHash } from "@fluidframework/server-services-client";

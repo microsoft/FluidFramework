@@ -13,19 +13,8 @@ import {
 } from "@fluentui/react-components";
 import { ArrowSync24Regular } from "@fluentui/react-icons";
 import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import {
-	type ContainerKey,
-	ContainerList,
-	type DevtoolsFeatureFlags,
-	DevtoolsFeatures,
-	GetContainerList,
-	GetDevtoolsFeatures,
-	type HasContainerKey,
-	type ISourcedDevtoolsMessage,
-	type InboundHandlers,
-	handleIncomingMessage,
-} from "@fluidframework/devtools-core";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { type ContainerKey, ContainerList, type DevtoolsFeatureFlags, DevtoolsFeatures, GetContainerList, GetDevtoolsFeatures, type HasContainerKey, type ISourcedDevtoolsMessage, type InboundHandlers, handleIncomingMessage } from "@fluidframework/devtools-core/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import React from "react";
 
 import { useMessageRelay } from "./MessageRelayContext.js";

@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	MonitoringContext,
-	UsageError,
-	validatePrecondition,
-} from "@fluidframework/telemetry-utils";
+import { MonitoringContext, UsageError, validatePrecondition } from "@fluidframework/telemetry-utils/internal";
 
 import { IContainerRuntimeMetadata } from "../summary/index.js";
 

@@ -5,10 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import {
-	blobHeadersBlobName as blobNameForBlobHeaders,
-	readAndParse,
-} from "@fluidframework/driver-utils";
+import { blobHeadersBlobName as blobNameForBlobHeaders, readAndParse } from "@fluidframework/driver-utils/internal";
 import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,

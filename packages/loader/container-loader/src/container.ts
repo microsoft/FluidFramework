@@ -46,15 +46,7 @@ import {
 	IThrottlingWarning,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	MessageType2,
-	OnlineStatus,
-	isCombinedAppAndProtocolSummary,
-	isInstanceOfISnapshot,
-	isOnline,
-	readAndParse,
-	runWithRetry,
-} from "@fluidframework/driver-utils";
+import { MessageType2, OnlineStatus, isCombinedAppAndProtocolSummary, isInstanceOfISnapshot, isOnline, readAndParse, runWithRetry } from "@fluidframework/driver-utils/internal";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
 	IClient,
@@ -76,22 +68,10 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
-	EventEmitterWithErrorHandling,
-	GenericError,
-	IFluidErrorBase,
 	ITelemetryLoggerExt,
-	MonitoringContext,
-	PerformanceEvent,
-	type TelemetryEventCategory,
-	UsageError,
-	connectedEventName,
-	createChildLogger,
-	createChildMonitoringContext,
-	formatTick,
-	normalizeError,
-	raiseConnectedEvent,
-	wrapError,
+	type TelemetryEventCategory
 } from "@fluidframework/telemetry-utils";
+import { EventEmitterWithErrorHandling, GenericError, IFluidErrorBase, MonitoringContext, PerformanceEvent, UsageError, connectedEventName, createChildLogger, createChildMonitoringContext, formatTick, normalizeError, raiseConnectedEvent, wrapError } from "@fluidframework/telemetry-utils/internal";
 import structuredClone from "@ungap/structured-clone";
 import { v4 as uuid } from "uuid";
 

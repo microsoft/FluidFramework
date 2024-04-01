@@ -22,11 +22,9 @@ import {
 	ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	ITelemetryLoggerExt,
-	ThresholdCounter,
-	createChildLogger,
+	ITelemetryLoggerExt
 } from "@fluidframework/telemetry-utils";
-
+import { ThresholdCounter, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelServiceEndpoints,
 	IChannelContext,

@@ -23,16 +23,7 @@ import {
 	shorthands,
 	tokens,
 } from "@fluentui/react-components";
-import {
-	DevtoolsDisposed,
-	GetTelemetryHistory,
-	type ISourcedDevtoolsMessage,
-	type ITimestampedTelemetryEvent,
-	type InboundHandlers,
-	TelemetryEvent,
-	TelemetryHistory,
-	handleIncomingMessage,
-} from "@fluidframework/devtools-core";
+import { DevtoolsDisposed, GetTelemetryHistory, type ISourcedDevtoolsMessage, type ITimestampedTelemetryEvent, type InboundHandlers, TelemetryEvent, TelemetryHistory, handleIncomingMessage } from "@fluidframework/devtools-core/internal";
 import React, { useState, useRef } from "react";
 
 import { useMessageRelay } from "../MessageRelayContext.js";

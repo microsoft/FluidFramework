@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	LocalDocumentServiceFactory,
-	LocalResolver,
-	createLocalResolverCreateNewRequest,
-} from "@fluidframework/local-driver";
+import { LocalDocumentServiceFactory, LocalResolver, createLocalResolverCreateNewRequest } from "@fluidframework/local-driver/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
 import { pkgVersion } from "./packageVersion.js";

@@ -5,7 +5,7 @@
 
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { type IResponse } from "@fluidframework/core-interfaces";
-import { type RequestParser } from "@fluidframework/runtime-utils";
+import { type RequestParser } from "@fluidframework/runtime-utils/internal";
 
 /**
  * A request handler for the container runtime. Each handler should handle a specific request, and return undefined

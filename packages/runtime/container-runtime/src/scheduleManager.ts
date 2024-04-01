@@ -7,16 +7,12 @@ import type { EventEmitter } from "@fluid-internal/client-utils";
 import { performance } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils/internal";
-import { isRuntimeMessage } from "@fluidframework/driver-utils";
+import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
-	DataCorruptionError,
-	DataProcessingError,
-	ITelemetryLoggerExt,
-	createChildLogger,
-	extractSafePropertiesFromMessage,
+	ITelemetryLoggerExt
 } from "@fluidframework/telemetry-utils";
-
+import { DataCorruptionError, DataProcessingError, createChildLogger, extractSafePropertiesFromMessage } from "@fluidframework/telemetry-utils/internal";
 import { DeltaScheduler } from "./deltaScheduler.js";
 import { IBatchMetadata } from "./metadata.js";
 import { pkgVersion } from "./packageVersion.js";

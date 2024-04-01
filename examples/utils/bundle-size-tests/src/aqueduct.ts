@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore, DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { DirectoryFactory } from "@fluidframework/map/internal";
 import { SharedStringFactory } from "@fluidframework/sequence/internal";

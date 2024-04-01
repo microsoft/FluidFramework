@@ -27,19 +27,7 @@ import {
 } from "@fluentui/react-icons";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
-import {
-	CloseContainer,
-	ConnectContainer,
-	ContainerStateChange,
-	type ContainerStateMetadata,
-	DisconnectContainer,
-	GetContainerState,
-	type HasContainerKey,
-	type IMessageRelay,
-	type ISourcedDevtoolsMessage,
-	type InboundHandlers,
-	handleIncomingMessage,
-} from "@fluidframework/devtools-core";
+import { CloseContainer, ConnectContainer, ContainerStateChange, type ContainerStateMetadata, DisconnectContainer, GetContainerState, type HasContainerKey, type IMessageRelay, type ISourcedDevtoolsMessage, type InboundHandlers, handleIncomingMessage } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
 import { useMessageRelay } from "../MessageRelayContext.js";

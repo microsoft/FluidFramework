@@ -13,15 +13,7 @@ import {
 	makeStyles,
 	shorthands,
 } from "@fluentui/react-components";
-import {
-	type ContainerDevtoolsFeatureFlags,
-	ContainerDevtoolsFeatures,
-	GetContainerDevtoolsFeatures,
-	type HasContainerKey,
-	type ISourcedDevtoolsMessage,
-	type InboundHandlers,
-	handleIncomingMessage,
-} from "@fluidframework/devtools-core";
+import { type ContainerDevtoolsFeatureFlags, ContainerDevtoolsFeatures, GetContainerDevtoolsFeatures, type HasContainerKey, type ISourcedDevtoolsMessage, type InboundHandlers, handleIncomingMessage } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
 import { ContainerFeatureFlagContext } from "../ContainerFeatureFlagHelper.js";
