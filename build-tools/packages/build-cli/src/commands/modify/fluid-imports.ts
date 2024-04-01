@@ -9,7 +9,7 @@ import { Flags } from "@oclif/core";
 import { existsSync, readFile } from "fs-extra";
 import * as JSON5 from "json5";
 import path from "node:path";
-import { Project, type ImportDeclaration, type SourceFile } from "ts-morph";
+import { Project, type ImportDeclaration, type SourceFile, ModuleKind, Node } from "ts-morph";
 import { BaseCommand } from "../../base";
 import type { CommandLogger } from "../../logging";
 
@@ -36,8 +36,7 @@ const unscopedFFPackages = new Set(["fluid-framework", "tinylicious"]);
 export default class UpdateFluidImportsCommand extends BaseCommand<
 	typeof UpdateFluidImportsCommand
 > {
-	static readonly description =
-		`Rewrite imports for Fluid Framework APIs to use the correct subpath import (/alpha, /beta. etc.)`;
+	static readonly description = `Rewrite imports for Fluid Framework APIs to use the correct subpath import (/alpha, /beta. etc.)`;
 
 	static readonly flags = {
 		tsconfig: Flags.file({
@@ -67,9 +66,11 @@ export default class UpdateFluidImportsCommand extends BaseCommand<
 	}
 }
 
+type PackageName = string;
+
 interface FluidImportDataBase {
 	index: number;
-	packageName: string;
+	packageName: PackageName;
 	level: ApiLevel;
 	/**
 	 * package relative ordinal for levels (alphabetically) ("public" is really "" so first)
@@ -106,7 +107,7 @@ class FluidImportManager {
 
 	constructor(
 		private readonly sourceFile: SourceFile,
-		private readonly mappingData: MapData,
+		private readonly apiMap: ApiLevelReader,
 		private readonly log: CommandLogger,
 	) {
 		this.fluidImports = parseFluidImports(sourceFile, log);
@@ -121,7 +122,7 @@ class FluidImportManager {
 
 		// Collect the existing declarations
 		for (const { importDeclaration, packageName, level } of this.fluidImports) {
-			const data = this.mappingData.get(packageName);
+			const data = this.apiMap.get(packageName);
 
 			// Skip modules with no mapping
 			if (data === undefined) {
@@ -197,7 +198,9 @@ class FluidImportManager {
 					fluidImport.importDeclaration.setModuleSpecifier(
 						replacement.declaration.moduleSpecifier,
 					);
-					fluidImport.importDeclaration.addNamedImports(replacement.declaration.namedImports);
+					fluidImport.importDeclaration.addNamedImports(
+						replacement.declaration.namedImports,
+					);
 					fluidImport.importDeclaration.setIsTypeOnly(replacement.declaration.isTypeOnly);
 					// Any other prospects should be inserted after this now.
 					for (const otherProspects of takeOverProspects.slice(1)) {
@@ -266,7 +269,7 @@ class FluidImportManager {
 		level,
 		isTypeOnly,
 	}: {
-		packageName: string;
+		packageName: PackageName;
 		level: ApiLevel;
 		isTypeOnly: boolean;
 	}): FluidImportData {
@@ -308,7 +311,7 @@ class FluidImportManager {
 	}
 
 	private findInsertionPoint(
-		packageName: string,
+		packageName: PackageName,
 		order: number,
 	): { index: number; after: boolean } {
 		const references = this.fluidImports.filter((v) => v.packageName === packageName);
@@ -351,6 +354,7 @@ async function updateImports(
 	onlyInternal: boolean,
 	log: CommandLogger,
 ): Promise<void> {
+	const apiMap = new ApiLevelReader(log, mappingData);
 	const project = new Project({
 		tsConfigFilePath,
 	});
@@ -375,7 +379,7 @@ async function updateImports(
 		// save. Therefore it's safe to remove the header here even before we know if we need to write the file.
 		const headerText = removeFileHeaderComment(sourceFile);
 
-		const importManager = new FluidImportManager(sourceFile, mappingData, log);
+		const importManager = new FluidImportManager(sourceFile, apiMap, log);
 		if (importManager.process(onlyInternal)) {
 			// Manually re-insert the header at the top of the file
 			sourceFile.insertText(0, headerText);
@@ -449,10 +453,7 @@ function parseImport(
  * @param log - logger.
  * @returns an array of {@link FluidImportDataPresent} metadata objects
  */
-function parseFluidImports(
-	sourceFile: SourceFile,
-	log: CommandLogger,
-): FluidImportDataPresent[] {
+function parseFluidImports(sourceFile: SourceFile, log: CommandLogger): FluidImportDataPresent[] {
 	return sourceFile
 		.getImportDeclarations()
 		.map((importDecl, index) => parseImport(importDecl, index, log))
@@ -461,7 +462,7 @@ function parseFluidImports(
 		) /* no undefined elements remain */ as FluidImportDataPresent[];
 }
 
-function isFluidImport(packageName: string): boolean {
+function isFluidImport(packageName: PackageName): boolean {
 	return packageName.startsWith("@fluid") || unscopedFFPackages.has(packageName);
 }
 
@@ -482,8 +483,98 @@ interface MemberDataRaw {
 type MemberData = Partial<Record<ApiLevel, string[]>>;
 type MapData = Map<string, MemberData>;
 
+class ApiLevelReader {
+	private readonly project = new Project({
+		skipAddingFilesFromTsConfig: true,
+		compilerOptions: {
+			module: ModuleKind.Node16,
+		},
+	});
+
+	private readonly tempSource = this.project.createSourceFile("flub-fluid-importer-temp.ts");
+	private readonly map: Map<PackageName, MemberData | null>;
+
+	constructor(
+		private readonly log: CommandLogger,
+		initialMap?: MapData,
+	) {
+		this.map = new Map<PackageName, MemberData>(initialMap);
+	}
+
+	public get(packageName: PackageName): MemberData | undefined {
+		const memberData = this.map.get(packageName);
+		if (memberData !== undefined) {
+			return memberData ?? undefined;
+		}
+		return this.loadPackageData(packageName);
+	}
+
+	private loadPackageData(packageName: PackageName): MemberData | undefined {
+		const internalImport = this.tempSource.addImportDeclaration({
+			moduleSpecifier: `${packageName}/internal`,
+		});
+		const internalSource = internalImport.getModuleSpecifierSourceFile();
+		if (internalSource === undefined) {
+			this.log.warning(`no /internal export from ${packageName}`);
+			// Set package's entry to null to avoid further load attempts.
+			// eslint-disable-next-line unicorn/no-null
+			this.map.set(packageName, null);
+			return undefined;
+		}
+		this.log.verbose(`\tLoading ${packageName} API data from ${internalSource.getFilePath()}`);
+
+		const exported = internalSource.getExportedDeclarations();
+		const memberData: Required<MemberData> = { public: [], beta: [], alpha: [], internal: [] };
+		for (const [name, exportedDecls] of exported.entries()) {
+			let foundLevel = false;
+			// A single export name may exist as both a type and a value. This is common pattern for enum-like
+			// constructs where an object exists with properties evaluating to values and a type that is union of values.
+			// Assume consistency for these cases.
+			if (exportedDecls.length > 1) {
+				this.log.verbose(
+					`\t\t${packageName} ${name} has ${exportedDecls.length} export declarations. Choosing API level for both from first recognized tag.`,
+				);
+			}
+			for (const exportedDecl of exportedDecls) {
+				const level = getNodeLevel(exportedDecl);
+				if (level !== undefined) {
+					this.log.verbose(`\t\t${packageName} ${name} is ${level}.`);
+					memberData[level].push(name);
+					foundLevel = true;
+					break;
+				}
+			}
+			if (!foundLevel) {
+				this.log.warning(`\t\t${packageName} ${name} API level was not recognized.`);
+			}
+		}
+
+		this.map.set(packageName, memberData);
+		return memberData;
+	}
+}
+
 function isKnownLevel(level: string): level is ApiLevel {
 	return (knownLevels as readonly string[]).includes(level);
+}
+
+/**
+ * Searches given Node's JSDocs for known {@link ApiLevel} tag.
+ *
+ * @returns Recognized {@link ApiLevel} from JSDocs or undefined.
+ */
+function getNodeLevel(node: Node): ApiLevel | undefined {
+	if (Node.isJSDocable(node)) {
+		for (const jsdoc of node.getJsDocs()) {
+			for (const tag of jsdoc.getTags()) {
+				const tagName = tag.getTagName();
+				if (isKnownLevel(tagName)) {
+					return tagName;
+				}
+			}
+		}
+	}
+	return undefined;
 }
 
 function ensureLevel(entry: MemberData, level: keyof MemberData): string[] {
