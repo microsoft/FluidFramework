@@ -8,6 +8,7 @@
 import { EventEmitter } from "@fluid-example/example-utils";
 import {
 	IMergeTreeDeltaOp,
+	// eslint-disable-next-line import/no-deprecated
 	createGroupOp,
 	createRemoveRangeOp,
 } from "@fluidframework/merge-tree/internal";
@@ -262,6 +263,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 						operations = operations.concat(sliceOperations);
 					}
 
+					// eslint-disable-next-line import/no-deprecated
 					const groupOp = createGroupOp(...operations);
 					this.text.groupOperation(groupOp);
 
@@ -326,6 +328,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 						operations = operations.concat(sliceOperations);
 					}
 
+					// eslint-disable-next-line import/no-deprecated
 					const groupOp = createGroupOp(...operations);
 					this.text.groupOperation(groupOp);
 
