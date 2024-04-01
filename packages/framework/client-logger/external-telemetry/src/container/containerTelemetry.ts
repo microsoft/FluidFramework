@@ -65,7 +65,12 @@ export interface IContainerTelemetry extends IExternalTelemetry {
 	 */
 	eventName: ContainerTelemetryEventName;
 	/**
-	 * The client side generated unique id of the container this telemetry came from.
+	 * Unique identifier for the container instance that generated the telemetry.
+	 *
+	 * @remarks This is not a stable identifier for the container across clients/time.
+	 * Every load of the container will result in a different value.
+	 *
+	 * @see {@link IContainerTelemetry.documentId | `documentId` for a more stable identifier}
 	 */
 	containerId: string;
 	/**
@@ -73,8 +78,13 @@ export interface IContainerTelemetry extends IExternalTelemetry {
 	 */
 	clientId?: string;
 	/**
-	 * The id of the container this resolved url is for.
-	 * Will be undefined only when the container is not attached.
+	 * Unique identifier for a container, stable across creation and load.
+	 * I.e. different clients loading the same container (or the same client loading the container two separate times)
+	 * will agree on this value.
+	 *
+	 * remarks This can be undefined for a container that has not been attached.
+	 *
+	 * @see More details about {@link IContainerTelemetry.containerId | `containerId` for an identifier of a particular _instance_ of the container being created/loaded }
 	 */
 	documentId?: string;
 }
@@ -83,12 +93,9 @@ export interface IContainerTelemetry extends IExternalTelemetry {
  * The container "connected" telemetry event.
  * It is produced from an internal Fluid container system event {@link @fluidframework/container-definitions#IContainerEvents} which is emitted when the {@link @fluidframework/container-definitions#IContainer} completes connecting to the Fluid service.
  *
- * @see
- *
- * - {@link @fluidframework/container-definitions#IContainer.connectionState}
- *
- * - {@link @fluidframework/container-definitions#IContainer.connect}
- * @see {@link @fluidframework/container-definitions#IContainer.connectionState}
+ * @see More details about {@link @fluidframework/container-definitions#IContainer.connectionState  | the containers connection state}
+ * @see More details about {@link @fluidframework/container-definitions#IContainer.connect | the function to connect a container }
+ * @see More details about{@link @fluidframework/container-definitions#IContainer.connectionState  | the containers connection state}
  *
  * @beta
  */
@@ -101,12 +108,9 @@ export interface ContainerConnectedTelemetry extends IContainerTelemetry {
  * {@link @fluidframework/container-definitions#IContainerEvents} which is emitted when the {@link @fluidframework/container-definitions#IContainer}
  * becomes disconnected from the Fluid service.
  *
+ * @see More details about{@link @fluidframework/container-definitions#IContainer.connectionState  | the containers connection state}
  *
- * @see
- *
- * - {@link @fluidframework/container-definitions#IContainer.connectionState}
- *
- * - {@link @fluidframework/container-definitions#IContainer.disconnect}
+ * @see More details about{@link @fluidframework/container-definitions#IContainer.disconnect | the function to disconnect a container}
  *
  * @beta
  */
@@ -119,7 +123,7 @@ export interface ContainerDisconnectedTelemetry extends IContainerTelemetry {
  * {@link @fluidframework/container-definitions#IContainerEvents} which is emitted when the {@link @fluidframework/container-definitions#IContainer}
  * is closed, which means that instance of the container accepts no more changes.
  *
- * @see {@link @fluidframework/container-definitions#IContainer.close}
+ * @see More details about {@link @fluidframework/container-definitions#IContainer.close | the containers close state}
  *
  * @beta
  */
@@ -133,11 +137,9 @@ export interface ContainerClosedTelemetry extends IContainerTelemetry {
  * {@link @fluidframework/container-definitions#IContainerEvents} which is emitted when a {@link @fluidframework/container-definitions#AttachState.Detached | detached} container begins the process of
  * {@link @fluidframework/container-definitions#AttachState.Attaching | attached} to the Fluid service.
  *
- * @see
+ * @see More details about {@link @fluidframework/container-definitions#IContainer.attachState | the container's attach state}
  *
- * - {@link @fluidframework/container-definitions#IContainer.attachState}
- *
- * - {@link @fluidframework/container-definitions#IContainer.attach}
+ * @see {@link @fluidframework/container-definitions#IContainer.attach | the function to attach a container}
  *
  * @beta
  */
@@ -150,11 +152,9 @@ export interface ContainerAttachingTelemetry extends IContainerTelemetry {
  * {@link @fluidframework/container-definitions#IContainerEvents} which is emitted when a {@link @fluidframework/container-definitions#AttachState.Detached | detached}
  * container begins the process of {@link @fluidframework/container-definitions#AttachState.Attaching | attached} to the Fluid service.
  *
- * @see
+ * @see More details about {@link @fluidframework/container-definitions#IContainer.attachState | the container's attach state}
  *
- * - {@link @fluidframework/container-definitions#IContainer.attachState}
- *
- * - {@link @fluidframework/container-definitions#IContainer.attach}
+ * @see {@link @fluidframework/container-definitions#IContainer.attach | the function to attach a container}
  *
  * @beta
  */

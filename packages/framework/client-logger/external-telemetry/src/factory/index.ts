@@ -16,7 +16,7 @@ import type { IFluidContainer } from "@fluidframework/fluid-static";
  */
 export interface TelemetryConfig {
 	/**
-	 * The container whose events should be monitored, transformed into external telemetry, and send to an {@link ITelemetryConsumer}.
+	 * The container whose events should be monitored, transformed into external telemetry, and sent to a {@link ITelemetryConsumer}.
 	 */
 	container?: IFluidContainer;
 	/**
