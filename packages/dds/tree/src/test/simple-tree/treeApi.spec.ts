@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "node:assert";
+import { strict as assert } from "node:assert";
 
 import { rootFieldKey } from "../../core/index.js";
 import { TreeStatus } from "../../feature-libraries/index.js";
