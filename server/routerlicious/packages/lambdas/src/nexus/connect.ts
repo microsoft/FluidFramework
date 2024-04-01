@@ -292,7 +292,10 @@ async function joinRoomAndSubscribeToChannel(
 
 	try {
 		// Subscribe to channels.
-		await Promise.all([socket.join(getRoomId(room)), socket.join(getClientSpecificRoomId(clientId))]);
+		await Promise.all([
+			socket.join(getRoomId(room)),
+			socket.join(getClientSpecificRoomId(clientId)),
+		]);
 		return [clientId, room];
 	} catch (err) {
 		const errMsg = `Could not subscribe to channels. Error: ${safeStringify(
