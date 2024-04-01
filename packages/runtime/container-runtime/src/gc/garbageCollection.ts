@@ -5,11 +5,12 @@
 
 import { IRequest } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, Timer } from "@fluidframework/core-utils/internal";
+import { IGarbageCollectionData, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import {
-	IGarbageCollectionData,
-	ITelemetryContext
-} from "@fluidframework/runtime-definitions";
-import { IGarbageCollectionDetailsBase, ISummarizeResult, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
+	IGarbageCollectionDetailsBase,
+	ISummarizeResult,
+	gcTreeKey,
+} from "@fluidframework/runtime-definitions/internal";
 import { createResponseError, responseToException } from "@fluidframework/runtime-utils";
 import {
 	DataProcessingError,

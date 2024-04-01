@@ -4,9 +4,19 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { // eslint-disable-next-line import/no-deprecated
-    	Client, IMergeTreeDeltaCallbackArgs, IMergeTreeDeltaOpArgs, IMergeTreeMaintenanceCallbackArgs, ISegment, MergeTreeDeltaOperationType, MergeTreeDeltaOperationTypes, MergeTreeMaintenanceType, PropertySet, // eslint-disable-next-line import/no-deprecated
-    	SortedSegmentSet } from "@fluidframework/merge-tree/internal";
+import {
+	// eslint-disable-next-line import/no-deprecated
+	Client,
+	IMergeTreeDeltaCallbackArgs,
+	IMergeTreeDeltaOpArgs,
+	IMergeTreeMaintenanceCallbackArgs,
+	ISegment,
+	MergeTreeDeltaOperationType,
+	MergeTreeDeltaOperationTypes,
+	MergeTreeMaintenanceType,
+	PropertySet, // eslint-disable-next-line import/no-deprecated
+	SortedSegmentSet,
+} from "@fluidframework/merge-tree/internal";
 
 /**
  * Base class for SequenceDeltaEvent and SequenceMaintenanceEvent.

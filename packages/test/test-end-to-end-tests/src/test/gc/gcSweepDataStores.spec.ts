@@ -12,7 +12,15 @@ import {
 	itExpects,
 } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
-import { ContainerMessageType, ContainerRuntime, IGCRuntimeOptions, IOnDemandSummarizeOptions, ISummarizeEventProps, ISummarizer, TombstoneResponseHeaderKey } from "@fluidframework/container-runtime/internal";
+import {
+	ContainerMessageType,
+	ContainerRuntime,
+	IGCRuntimeOptions,
+	IOnDemandSummarizeOptions,
+	ISummarizeEventProps,
+	ISummarizer,
+	TombstoneResponseHeaderKey,
+} from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { ISweepMessage } from "@fluidframework/container-runtime/test/gc";
 import {

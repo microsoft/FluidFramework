@@ -10,15 +10,20 @@ import {
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { // eslint-disable-next-line import/no-deprecated
-    	Client, IJSONSegment, IMergeTreeOp, type LocalReferencePosition, MergeTreeDeltaType, ReferenceType, SegmentGroup } from "@fluidframework/merge-tree/internal";
+import {
+	// eslint-disable-next-line import/no-deprecated
+	Client,
+	IJSONSegment,
+	IMergeTreeOp,
+	type LocalReferencePosition,
+	MergeTreeDeltaType,
+	ReferenceType,
+	SegmentGroup,
+} from "@fluidframework/merge-tree/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import {
-	IFluidSerializer,
-	ISharedObjectEvents
-} from "@fluidframework/shared-object-base";
+import { IFluidSerializer, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils";
 import { IMatrixConsumer, IMatrixProducer, IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";

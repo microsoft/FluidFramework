@@ -6,8 +6,22 @@
 /* eslint-disable no-bitwise */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { LocalReferencePosition, MergeTreeDeltaOperationType, MergeTreeDeltaRevertible, MergeTreeDeltaType, PropertySet, ReferenceType, SlidingPreference, // eslint-disable-next-line import/no-deprecated
-    	SortedSet, appendToMergeTreeDeltaRevertibles, discardMergeTreeDeltaRevertible, getSlideToSegoff, isMergeTreeDeltaRevertible, refTypeIncludesFlag, revertMergeTreeDeltaRevertibles } from "@fluidframework/merge-tree/internal";
+import {
+	LocalReferencePosition,
+	MergeTreeDeltaOperationType,
+	MergeTreeDeltaRevertible,
+	MergeTreeDeltaType,
+	PropertySet,
+	ReferenceType,
+	SlidingPreference, // eslint-disable-next-line import/no-deprecated
+	SortedSet,
+	appendToMergeTreeDeltaRevertibles,
+	discardMergeTreeDeltaRevertible,
+	getSlideToSegoff,
+	isMergeTreeDeltaRevertible,
+	refTypeIncludesFlag,
+	revertMergeTreeDeltaRevertibles,
+} from "@fluidframework/merge-tree/internal";
 
 import { InteriorSequencePlace, Side } from "./intervalCollection.js";
 import { IntervalOpType, SequenceInterval } from "./intervals/index.js";

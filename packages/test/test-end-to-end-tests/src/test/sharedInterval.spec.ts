@@ -12,7 +12,12 @@ import type { ISharedMap } from "@fluidframework/map";
 import { DetachedReferencePosition, PropertySet } from "@fluidframework/merge-tree/internal";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
-import type { IIntervalCollection, IOverlappingIntervalsIndex, SequenceInterval, SharedString } from "@fluidframework/sequence/internal";
+import type {
+	IIntervalCollection,
+	IOverlappingIntervalsIndex,
+	SequenceInterval,
+	SharedString,
+} from "@fluidframework/sequence/internal";
 // This is not in sequence's public API, but an e2e test in this file sniffs the summary.
 // eslint-disable-next-line import/no-internal-modules
 import type { ISerializedIntervalCollectionV2 } from "@fluidframework/sequence/test/intervalCollection";

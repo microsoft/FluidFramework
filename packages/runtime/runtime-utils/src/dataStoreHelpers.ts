@@ -5,7 +5,11 @@
 
 import { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IFluidDataStoreFactory, IFluidDataStoreRegistry, IProvideFluidDataStoreRegistry } from "@fluidframework/runtime-definitions/internal";
+import {
+	IFluidDataStoreFactory,
+	IFluidDataStoreRegistry,
+	IProvideFluidDataStoreRegistry,
+} from "@fluidframework/runtime-definitions/internal";
 import { generateErrorWithStack } from "@fluidframework/telemetry-utils";
 
 interface IResponseException extends Error {

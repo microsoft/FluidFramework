@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
-	IErrorBase,
-	ITelemetryBaseProperties
-} from "@fluidframework/core-interfaces";
-import { FluidErrorTypes, IGenericError, IUsageError } from "@fluidframework/core-interfaces/internal";
+	FluidErrorTypes,
+	IGenericError,
+	IUsageError,
+} from "@fluidframework/core-interfaces/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 import {

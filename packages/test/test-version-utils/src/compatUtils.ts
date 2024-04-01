@@ -5,7 +5,12 @@
 
 import { mixinAttributor } from "@fluid-experimental/attributor";
 import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/test-drivers";
-import { IContainerRuntimeOptions, DefaultSummaryConfiguration, CompressionAlgorithms, ICompressionRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import {
+	IContainerRuntimeOptions,
+	DefaultSummaryConfiguration,
+	CompressionAlgorithms,
+	ICompressionRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
 import {
 	FluidObject,
 	IFluidHandleContext,
@@ -15,7 +20,11 @@ import {
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ISharedDirectory } from "@fluidframework/map/internal";
-import { IContainerRuntimeBase, IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
+import {
+	IContainerRuntimeBase,
+	IFluidDataStoreContext,
+	IFluidDataStoreFactory,
+} from "@fluidframework/runtime-definitions/internal";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import {
 	ITestContainerConfig,

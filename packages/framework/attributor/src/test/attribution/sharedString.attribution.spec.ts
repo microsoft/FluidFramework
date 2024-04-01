@@ -25,7 +25,7 @@ import {
 import { type IAudience } from "@fluidframework/container-definitions";
 import {
 	type IChannelServices,
-	type IFluidDataStoreRuntime
+	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { type Jsonable } from "@fluidframework/datastore-definitions/internal";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";

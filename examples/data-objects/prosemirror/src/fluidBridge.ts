@@ -7,7 +7,17 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { IMergeTreeDeltaOp, createInsertSegmentOp } from "@fluidframework/merge-tree/internal";
-import { ISegment, ISequenceDeltaRange, Marker, MergeTreeDeltaType, ReferenceType, SequenceDeltaEvent, SharedString, TextSegment, reservedRangeLabelsKey } from "@fluidframework/sequence/internal";
+import {
+	ISegment,
+	ISequenceDeltaRange,
+	Marker,
+	MergeTreeDeltaType,
+	ReferenceType,
+	SequenceDeltaEvent,
+	SharedString,
+	TextSegment,
+	reservedRangeLabelsKey,
+} from "@fluidframework/sequence/internal";
 import {
 	Fragment,
 	Schema,

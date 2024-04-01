@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ISegment, MergeTreeDeltaRevertible, appendToMergeTreeDeltaRevertibles, discardMergeTreeDeltaRevertible, revertMergeTreeDeltaRevertibles } from "@fluidframework/merge-tree/internal";
+import {
+	ISegment,
+	MergeTreeDeltaRevertible,
+	appendToMergeTreeDeltaRevertibles,
+	discardMergeTreeDeltaRevertible,
+	revertMergeTreeDeltaRevertibles,
+} from "@fluidframework/merge-tree/internal";
 import { SequenceDeltaEvent, SharedSegmentSequence } from "@fluidframework/sequence/internal";
 
 import { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager.js";

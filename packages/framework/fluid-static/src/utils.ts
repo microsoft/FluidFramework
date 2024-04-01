@@ -5,7 +5,10 @@
 
 import { type IFluidLoadable } from "@fluidframework/core-interfaces";
 import { type IChannelFactory } from "@fluidframework/datastore-definitions";
-import { type IFluidDataStoreFactory, type NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions/internal";
+import {
+	type IFluidDataStoreFactory,
+	type NamedFluidDataStoreRegistryEntry,
+} from "@fluidframework/runtime-definitions/internal";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
 import { UsageError } from "@fluidframework/telemetry-utils";
 

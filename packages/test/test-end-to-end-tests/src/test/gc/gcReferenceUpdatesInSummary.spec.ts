@@ -7,7 +7,10 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import {
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree/internal";

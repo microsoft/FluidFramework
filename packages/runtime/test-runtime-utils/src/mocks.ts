@@ -35,11 +35,12 @@ import {
 	MessageType,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
+import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
-	IGarbageCollectionData,
-	ISummaryTreeWithStats
-} from "@fluidframework/runtime-definitions";
-import { FlushMode, IFluidDataStoreChannel, VisibilityState } from "@fluidframework/runtime-definitions/internal";
+	FlushMode,
+	IFluidDataStoreChannel,
+	VisibilityState,
+} from "@fluidframework/runtime-definitions/internal";
 import { getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";

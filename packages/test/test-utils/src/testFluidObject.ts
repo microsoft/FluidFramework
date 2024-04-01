@@ -5,10 +5,18 @@
 
 import { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { FluidDataStoreRuntime, FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore/internal";
+import {
+	FluidDataStoreRuntime,
+	FluidObjectHandle,
+	mixinRequestHandler,
+} from "@fluidframework/datastore/internal";
 import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { IFluidDataStoreChannel, IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
+import {
+	IFluidDataStoreChannel,
+	IFluidDataStoreContext,
+	IFluidDataStoreFactory,
+} from "@fluidframework/runtime-definitions/internal";
 import { create404Response } from "@fluidframework/runtime-utils";
 
 import { ITestFluidObject } from "./interfaces.js";

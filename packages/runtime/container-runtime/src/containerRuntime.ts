@@ -18,7 +18,10 @@ import {
 	IRuntime,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntime, IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
+import {
+	IContainerRuntime,
+	IContainerRuntimeEvents,
+} from "@fluidframework/container-runtime-definitions/internal";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -29,7 +32,13 @@ import {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
-import { assert, Deferred, LazyPromise, PromiseCache, delay } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	Deferred,
+	LazyPromise,
+	PromiseCache,
+	delay,
+} from "@fluidframework/core-utils/internal";
 import {
 	DriverHeader,
 	FetchSource,
@@ -60,9 +69,23 @@ import {
 	IGarbageCollectionData,
 	IInboundSignalMessage,
 	ISummaryTreeWithStats,
-	ITelemetryContext
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { CreateChildSummarizerNodeParam, FlushMode, FlushModeExperimental, IDataStore, IEnvelope, IFluidDataStoreContextDetached, IFluidDataStoreRegistry, ISummarizeInternalResult, InboundAttachMessage, NamedFluidDataStoreRegistryEntries, SummarizeInternalFn, channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
+import {
+	CreateChildSummarizerNodeParam,
+	FlushMode,
+	FlushModeExperimental,
+	IDataStore,
+	IEnvelope,
+	IFluidDataStoreContextDetached,
+	IFluidDataStoreRegistry,
+	ISummarizeInternalResult,
+	InboundAttachMessage,
+	NamedFluidDataStoreRegistryEntries,
+	SummarizeInternalFn,
+	channelsTreeName,
+	gcTreeKey,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
 	ReadAndParseBlob,

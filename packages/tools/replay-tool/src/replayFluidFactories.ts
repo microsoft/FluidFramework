@@ -11,7 +11,10 @@ import {
 } from "@fluid-experimental/sequence-deprecated";
 import { SharedCell } from "@fluidframework/cell";
 import { IContainerContext } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import {
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
@@ -20,7 +23,13 @@ import { SharedDirectory } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { FluidDataStoreRegistryEntry, IFluidDataStoreContext, IFluidDataStoreFactory, IFluidDataStoreRegistry, NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
+import {
+	FluidDataStoreRegistryEntry,
+	IFluidDataStoreContext,
+	IFluidDataStoreFactory,
+	IFluidDataStoreRegistry,
+	NamedFluidDataStoreRegistryEntries,
+} from "@fluidframework/runtime-definitions/internal";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import { SharedIntervalCollection, SharedString } from "@fluidframework/sequence/internal";
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";

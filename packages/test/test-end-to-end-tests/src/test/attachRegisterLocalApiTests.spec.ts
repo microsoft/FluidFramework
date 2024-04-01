@@ -11,7 +11,10 @@ import { IFluidCodeDetails } from "@fluidframework/container-definitions/interna
 import { Loader } from "@fluidframework/container-loader/internal";
 import { IRequest } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map";
-import { IContainerRuntimeBase, type IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import {
+	IContainerRuntimeBase,
+	type IFluidDataStoreContext,
+} from "@fluidframework/runtime-definitions/internal";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	ITestFluidObject,

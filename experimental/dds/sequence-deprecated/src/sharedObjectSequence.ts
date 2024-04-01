@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IChannelAttributes,
-	IFluidDataStoreRuntime
-} from "@fluidframework/datastore-definitions";
+import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { Serializable } from "@fluidframework/datastore-definitions/internal";
 import { SharedObjectSequenceFactory } from "./sequenceFactory.js";
 import { SharedSequence } from "./sharedSequence.js";

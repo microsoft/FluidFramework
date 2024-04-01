@@ -8,7 +8,10 @@ import fs from "fs";
 
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ILoaderOptions, Loader } from "@fluidframework/container-loader/internal";
-import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import {
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	FluidObject,

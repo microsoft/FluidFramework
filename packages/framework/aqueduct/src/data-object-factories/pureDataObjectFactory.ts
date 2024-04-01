@@ -7,12 +7,27 @@ import { FluidDataStoreRegistry } from "@fluidframework/container-runtime/intern
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { type FluidObject, type IRequest } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { FluidDataStoreRuntime, type ISharedObjectRegistry, mixinRequestHandler } from "@fluidframework/datastore/internal";
+import {
+	FluidDataStoreRuntime,
+	type ISharedObjectRegistry,
+	mixinRequestHandler,
+} from "@fluidframework/datastore/internal";
 import {
 	type IChannelFactory,
 	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { type IContainerRuntimeBase, type IDataStore, type IFluidDataStoreChannel, type IFluidDataStoreContext, type IFluidDataStoreContextDetached, type IFluidDataStoreFactory, type IFluidDataStoreRegistry, type IProvideFluidDataStoreRegistry, type NamedFluidDataStoreRegistryEntries, type NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions/internal";
+import {
+	type IContainerRuntimeBase,
+	type IDataStore,
+	type IFluidDataStoreChannel,
+	type IFluidDataStoreContext,
+	type IFluidDataStoreContextDetached,
+	type IFluidDataStoreFactory,
+	type IFluidDataStoreRegistry,
+	type IProvideFluidDataStoreRegistry,
+	type NamedFluidDataStoreRegistryEntries,
+	type NamedFluidDataStoreRegistryEntry,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	type AsyncFluidObjectProvider,
 	type FluidObjectSymbolProvider,

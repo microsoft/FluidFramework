@@ -13,7 +13,10 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { Loader } from "@fluidframework/container-loader/internal";
-import { ContainerMessageType, IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import {
+	ContainerMessageType,
+	IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { type ISharedMap, SharedMap } from "@fluidframework/map";

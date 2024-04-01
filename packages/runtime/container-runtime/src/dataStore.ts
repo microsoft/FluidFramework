@@ -6,7 +6,11 @@
 import { AttachState } from "@fluidframework/container-definitions";
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { AliasResult, IDataStore, IFluidDataStoreChannel } from "@fluidframework/runtime-definitions/internal";
+import {
+	AliasResult,
+	IDataStore,
+	IFluidDataStoreChannel,
+} from "@fluidframework/runtime-definitions/internal";
 import { ITelemetryLoggerExt, TelemetryDataTag, UsageError } from "@fluidframework/telemetry-utils";
 
 import { ChannelCollection } from "./channelCollection.js";

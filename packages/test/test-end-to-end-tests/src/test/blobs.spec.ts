@@ -13,7 +13,11 @@ import {
 	itExpects,
 } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { CompressionAlgorithms, ContainerMessageType, DefaultSummaryConfiguration } from "@fluidframework/container-runtime/internal";
+import {
+	CompressionAlgorithms,
+	ContainerMessageType,
+	DefaultSummaryConfiguration,
+} from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,

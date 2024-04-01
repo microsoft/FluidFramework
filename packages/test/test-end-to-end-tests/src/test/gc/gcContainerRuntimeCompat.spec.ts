@@ -13,7 +13,10 @@ import {
 } from "@fluid-private/test-version-utils";
 import type { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntimeOptions, type ISummaryRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import {
+	IContainerRuntimeOptions,
+	type ISummaryRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	ITestFluidObject,

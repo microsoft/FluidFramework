@@ -5,7 +5,12 @@
 
 /* eslint-disable no-bitwise */
 
-import { Client, PropertiesManager, PropertySet, SlidingPreference } from "@fluidframework/merge-tree/internal";
+import {
+	Client,
+	PropertiesManager,
+	PropertySet,
+	SlidingPreference,
+} from "@fluidframework/merge-tree/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 import { SequencePlace, Side } from "../intervalCollection.js";

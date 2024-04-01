@@ -7,7 +7,17 @@ import { strict as assert } from "assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
-import { Marker, MergeTreeDeltaRevertible, ReferenceType, appendToMergeTreeDeltaRevertibles, matchProperties, reservedMarkerIdKey, reservedMarkerSimpleTypeKey, reservedTileLabelsKey, revertMergeTreeDeltaRevertibles } from "@fluidframework/merge-tree/internal";
+import {
+	Marker,
+	MergeTreeDeltaRevertible,
+	ReferenceType,
+	appendToMergeTreeDeltaRevertibles,
+	matchProperties,
+	reservedMarkerIdKey,
+	reservedMarkerSimpleTypeKey,
+	reservedTileLabelsKey,
+	revertMergeTreeDeltaRevertibles,
+} from "@fluidframework/merge-tree/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	MockContainerRuntimeFactory,

@@ -9,8 +9,15 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
-import { ReferenceType, SharedString, reservedTileLabelsKey } from "@fluidframework/sequence/internal";
+import {
+	IFluidDataStoreContext,
+	IFluidDataStoreFactory,
+} from "@fluidframework/runtime-definitions/internal";
+import {
+	ReferenceType,
+	SharedString,
+	reservedTileLabelsKey,
+} from "@fluidframework/sequence/internal";
 
 // eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import
 import "simplemde/dist/simplemde.min.css";

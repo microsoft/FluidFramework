@@ -9,10 +9,15 @@ import {
 	IChannelAttributes,
 	IChannelFactory,
 	IChannelServices,
-	IFluidDataStoreRuntime
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { Jsonable } from "@fluidframework/datastore-definitions/internal";
-import { BaseSegment, IJSONSegment, ISegment, PropertySet } from "@fluidframework/merge-tree/internal";
+import {
+	BaseSegment,
+	IJSONSegment,
+	ISegment,
+	PropertySet,
+} from "@fluidframework/merge-tree/internal";
 import { SharedSegmentSequence } from "@fluidframework/sequence/internal";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 

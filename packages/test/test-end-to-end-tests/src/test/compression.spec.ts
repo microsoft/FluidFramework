@@ -13,7 +13,10 @@ import {
 	describeInstallVersions,
 	getVersionedTestObjectProvider,
 } from "@fluid-private/test-version-utils";
-import { CompressionAlgorithms, type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import {
+	CompressionAlgorithms,
+	type IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
 // TODO:AB#6558: This should be provided based on the compatibility configuration.
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { ISharedMap, SharedMap } from "@fluidframework/map";

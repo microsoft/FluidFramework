@@ -7,12 +7,23 @@
 
 import { EventEmitter } from "@fluid-example/example-utils";
 import { IFluidHandle, IFluidLoadable, IRequest, IResponse } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore/internal";
+import {
+	FluidDataStoreRuntime,
+	FluidObjectHandle,
+	mixinRequestHandler,
+} from "@fluidframework/datastore/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
+import {
+	IFluidDataStoreContext,
+	IFluidDataStoreFactory,
+} from "@fluidframework/runtime-definitions/internal";
 import { create404Response } from "@fluidframework/runtime-utils";
-import { ReferenceType, SharedString, reservedRangeLabelsKey } from "@fluidframework/sequence/internal";
+import {
+	ReferenceType,
+	SharedString,
+	reservedRangeLabelsKey,
+} from "@fluidframework/sequence/internal";
 import { EditorView } from "prosemirror-view";
 import React, { useEffect, useRef } from "react";
 

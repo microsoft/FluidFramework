@@ -12,7 +12,10 @@ import {
 	type RuntimeRequestHandler,
 	buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
-import { type IFluidDataStoreFactory, type NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
+import {
+	type IFluidDataStoreFactory,
+	type NamedFluidDataStoreRegistryEntries,
+} from "@fluidframework/runtime-definitions/internal";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 const defaultStoreId = "" as const;

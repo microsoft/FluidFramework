@@ -3,7 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { Marker, MergeTreeDeltaType, ReferenceType, SequenceDeltaEvent, SharedString, TextSegment, getTextAndMarkers, reservedTileLabelsKey } from "@fluidframework/sequence/internal";
+import {
+	Marker,
+	MergeTreeDeltaType,
+	ReferenceType,
+	SequenceDeltaEvent,
+	SharedString,
+	TextSegment,
+	getTextAndMarkers,
+	reservedTileLabelsKey,
+} from "@fluidframework/sequence/internal";
 import CodeMirror from "codemirror";
 import React, { useEffect, useRef } from "react";
 

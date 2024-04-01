@@ -8,18 +8,14 @@ import {
 	type IChannelAttributes,
 	type IChannelFactory,
 	type IChannelStorageService,
-	type IFluidDataStoreRuntime
+	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { type Serializable } from "@fluidframework/datastore-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import {
-	type ISummaryTreeWithStats,
-} from "@fluidframework/runtime-definitions";
+import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { type AttributionKey } from "@fluidframework/runtime-definitions/internal";
-import {
-	type IFluidSerializer
-} from "@fluidframework/shared-object-base";
+import { type IFluidSerializer } from "@fluidframework/shared-object-base";
 import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
 import { CellFactory } from "./cellFactory.js";
 import {

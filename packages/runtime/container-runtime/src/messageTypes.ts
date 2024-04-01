@@ -5,7 +5,11 @@
 
 import type { IdCreationRange } from "@fluidframework/id-compressor/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IAttachMessage, IEnvelope, InboundAttachMessage } from "@fluidframework/runtime-definitions/internal";
+import {
+	IAttachMessage,
+	IEnvelope,
+	InboundAttachMessage,
+} from "@fluidframework/runtime-definitions/internal";
 
 import { IDataStoreAliasMessage } from "./dataStore.js";
 import { GarbageCollectionMessage } from "./gc/index.js";

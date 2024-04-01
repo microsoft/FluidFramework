@@ -25,7 +25,7 @@ import {
 import {
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
-	ITelemetryContext
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";

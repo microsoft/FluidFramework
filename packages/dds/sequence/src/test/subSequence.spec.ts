@@ -5,7 +5,11 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { Serializable } from "@fluidframework/datastore-definitions/internal";
-import { PropertySet, createInsertSegmentOp, createRemoveRangeOp } from "@fluidframework/merge-tree/internal";
+import {
+	PropertySet,
+	createInsertSegmentOp,
+	createRemoveRangeOp,
+} from "@fluidframework/merge-tree/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { TestClient } from "@fluidframework/merge-tree/test";
 

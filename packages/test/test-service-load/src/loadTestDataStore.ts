@@ -12,7 +12,11 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { ILoaderOptions } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime, IContainerRuntimeOptions, UnknownContainerRuntimeMessage } from "@fluidframework/container-runtime/internal";
+import {
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+	UnknownContainerRuntimeMessage,
+} from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter";

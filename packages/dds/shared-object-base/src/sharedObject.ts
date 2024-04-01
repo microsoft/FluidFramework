@@ -19,9 +19,12 @@ import {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
-	ITelemetryContext
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { blobCountPropertyName, totalBlobSizePropertyName } from "@fluidframework/runtime-definitions/internal";
+import {
+	blobCountPropertyName,
+	totalBlobSizePropertyName,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	DataProcessingError,
 	EventEmitterWithErrorHandling,

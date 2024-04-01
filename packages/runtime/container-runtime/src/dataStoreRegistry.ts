@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { FluidDataStoreRegistryEntry, IFluidDataStoreRegistry, NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
+import {
+	FluidDataStoreRegistryEntry,
+	IFluidDataStoreRegistry,
+	NamedFluidDataStoreRegistryEntries,
+} from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils";
 
 /**

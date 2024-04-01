@@ -13,7 +13,11 @@ import {
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ISummarizer } from "@fluidframework/container-runtime/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { IContainerRuntimeBase, channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
+import {
+	IContainerRuntimeBase,
+	channelsTreeName,
+	gcTreeKey,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,

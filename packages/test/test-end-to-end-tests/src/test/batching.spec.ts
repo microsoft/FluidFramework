@@ -7,7 +7,12 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { CompressionAlgorithms, ContainerMessageType, IContainerRuntimeOptions, UnknownContainerRuntimeMessage } from "@fluidframework/container-runtime/internal";
+import {
+	CompressionAlgorithms,
+	ContainerMessageType,
+	IContainerRuntimeOptions,
+	UnknownContainerRuntimeMessage,
+} from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map";

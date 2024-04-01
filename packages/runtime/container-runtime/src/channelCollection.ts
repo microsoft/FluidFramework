@@ -20,9 +20,24 @@ import {
 	IGarbageCollectionData,
 	IInboundSignalMessage,
 	ISummaryTreeWithStats,
-	ITelemetryContext
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { AliasResult, CreateSummarizerNodeSource, IAttachMessage, IEnvelope, IFluidDataStoreChannel, IFluidDataStoreContext, IFluidDataStoreContextDetached, IFluidDataStoreFactory, IFluidDataStoreRegistry, IFluidParentContext, ISummarizeResult, InboundAttachMessage, NamedFluidDataStoreRegistryEntries, channelsTreeName } from "@fluidframework/runtime-definitions/internal";
+import {
+	AliasResult,
+	CreateSummarizerNodeSource,
+	IAttachMessage,
+	IEnvelope,
+	IFluidDataStoreChannel,
+	IFluidDataStoreContext,
+	IFluidDataStoreContextDetached,
+	IFluidDataStoreFactory,
+	IFluidDataStoreRegistry,
+	IFluidParentContext,
+	ISummarizeResult,
+	InboundAttachMessage,
+	NamedFluidDataStoreRegistryEntries,
+	channelsTreeName,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
 	RequestParser,

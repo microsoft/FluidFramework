@@ -12,9 +12,16 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
 	IExperimentalIncrementalSummaryContext,
-	ITelemetryContext
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { CreateChildSummarizerNodeParam, CreateSummarizerNodeSource, ISummarizeResult, ISummarizerNode, ISummarizerNodeConfig, SummarizeInternalFn } from "@fluidframework/runtime-definitions/internal";
+import {
+	CreateChildSummarizerNodeParam,
+	CreateSummarizerNodeSource,
+	ISummarizeResult,
+	ISummarizerNode,
+	ISummarizerNodeConfig,
+	SummarizeInternalFn,
+} from "@fluidframework/runtime-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils";
 import {
 	type ITelemetryErrorEventExt,

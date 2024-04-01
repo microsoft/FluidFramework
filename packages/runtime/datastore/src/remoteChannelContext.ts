@@ -14,7 +14,13 @@ import {
 	IGarbageCollectionData,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { CreateChildSummarizerNodeFn, IFluidDataStoreContext, ISummarizeInternalResult, ISummarizeResult, ISummarizerNodeWithGC } from "@fluidframework/runtime-definitions/internal";
+import {
+	CreateChildSummarizerNodeFn,
+	IFluidDataStoreContext,
+	ISummarizeInternalResult,
+	ISummarizeResult,
+	ISummarizerNodeWithGC,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,
 	ThresholdCounter,

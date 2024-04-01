@@ -24,10 +24,19 @@ import {
 	ISummaryBlob,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
-	IGarbageCollectionData
-} from "@fluidframework/runtime-definitions";
-import { CreateChildSummarizerNodeFn, CreateSummarizerNodeSource, IFluidDataStoreChannel, IFluidDataStoreContext, IFluidDataStoreFactory, IFluidDataStoreRegistry, IFluidParentContext, IGarbageCollectionDetailsBase, SummarizeInternalFn, channelsTreeName } from "@fluidframework/runtime-definitions/internal";
+	CreateChildSummarizerNodeFn,
+	CreateSummarizerNodeSource,
+	IFluidDataStoreChannel,
+	IFluidDataStoreContext,
+	IFluidDataStoreFactory,
+	IFluidDataStoreRegistry,
+	IFluidParentContext,
+	IGarbageCollectionDetailsBase,
+	SummarizeInternalFn,
+	channelsTreeName,
+} from "@fluidframework/runtime-definitions/internal";
 import { GCDataBuilder, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
 	MockLogger,

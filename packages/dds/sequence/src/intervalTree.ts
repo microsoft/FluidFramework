@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IRBAugmentation, IRBMatcher, RBNode, RBNodeActions, RedBlackTree } from "@fluidframework/merge-tree/internal";
+import {
+	IRBAugmentation,
+	IRBMatcher,
+	RBNode,
+	RBNodeActions,
+	RedBlackTree,
+} from "@fluidframework/merge-tree/internal";
 
 import { IInterval } from "./intervals/index.js";
 

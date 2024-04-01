@@ -9,13 +9,12 @@ import * as crypto from "crypto";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { CompressionAlgorithms, ContainerMessageType } from "@fluidframework/container-runtime/internal";
-import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import {
-	ConfigTypes,
-	IConfigProviderBase,
-	IErrorBase,
-} from "@fluidframework/core-interfaces";
+	CompressionAlgorithms,
+	ContainerMessageType,
+} from "@fluidframework/container-runtime/internal";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
+import { ConfigTypes, IConfigProviderBase, IErrorBase } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map";
 import {
 	IDocumentMessage,

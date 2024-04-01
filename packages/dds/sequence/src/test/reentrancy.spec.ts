@@ -6,7 +6,11 @@
 import { strict as assert } from "assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { LocalReferenceCollection, MergeTreeDeltaType, ReferenceType } from "@fluidframework/merge-tree/internal";
+import {
+	LocalReferenceCollection,
+	MergeTreeDeltaType,
+	ReferenceType,
+} from "@fluidframework/merge-tree/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import {
 	MockContainerRuntimeFactory,

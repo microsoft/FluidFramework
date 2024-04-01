@@ -8,9 +8,17 @@ import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
-	ITelemetryContext
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { CreateChildSummarizerNodeParam, IGarbageCollectionDetailsBase, ISummarizeInternalResult, ISummarizeResult, ISummarizerNodeConfigWithGC, ISummarizerNodeWithGC, SummarizeInternalFn } from "@fluidframework/runtime-definitions/internal";
+import {
+	CreateChildSummarizerNodeParam,
+	IGarbageCollectionDetailsBase,
+	ISummarizeInternalResult,
+	ISummarizeResult,
+	ISummarizerNodeConfigWithGC,
+	ISummarizerNodeWithGC,
+	SummarizeInternalFn,
+} from "@fluidframework/runtime-definitions/internal";
 import { unpackChildNodesUsedRoutes } from "@fluidframework/runtime-utils";
 import { LoggingError, TelemetryDataTag, tagCodeArtifacts } from "@fluidframework/telemetry-utils";
 

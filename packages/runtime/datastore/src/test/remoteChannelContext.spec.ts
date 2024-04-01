@@ -6,7 +6,11 @@
 import { strict as assert } from "assert";
 
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { CreateChildSummarizerNodeFn, IContainerRuntimeBase, IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import {
+	CreateChildSummarizerNodeFn,
+	IContainerRuntimeBase,
+	IFluidDataStoreContext,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	MockFluidDataStoreContext,
 	validateAssertionError,

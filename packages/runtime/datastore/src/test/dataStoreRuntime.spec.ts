@@ -9,10 +9,11 @@ import { ContainerErrorTypes } from "@fluidframework/container-definitions/inter
 import { FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
 import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { SummaryType } from "@fluidframework/protocol-definitions";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
-	IGarbageCollectionData,
-} from "@fluidframework/runtime-definitions";
-import { IContainerRuntimeBase, IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+	IContainerRuntimeBase,
+	IFluidDataStoreContext,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	MockFluidDataStoreContext,
 	validateAssertionError,

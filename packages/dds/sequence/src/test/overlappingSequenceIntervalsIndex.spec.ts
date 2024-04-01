@@ -8,7 +8,10 @@
 import { strict as assert } from "assert";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { LocalReferencePosition, compareReferencePositions } from "@fluidframework/merge-tree/internal";
+import {
+	LocalReferencePosition,
+	compareReferencePositions,
+} from "@fluidframework/merge-tree/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 
 import {

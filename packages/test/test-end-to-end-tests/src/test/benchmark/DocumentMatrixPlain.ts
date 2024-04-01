@@ -16,7 +16,12 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
-import { CompressionAlgorithms, ContainerRuntime, IContainerRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime/internal";
+import {
+	CompressionAlgorithms,
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+	ISummarizer,
+} from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,

@@ -14,9 +14,7 @@ import {
 import { readAndParse } from "@fluidframework/driver-utils";
 import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import {
-	type IFluidSerializer
-} from "@fluidframework/shared-object-base";
+import { type IFluidSerializer } from "@fluidframework/shared-object-base";
 import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
 import { type IAcceptedPact, type IPactMap, type IPactMapEvents } from "./interfaces.js";
 import { PactMapFactory } from "./pactMapFactory.js";

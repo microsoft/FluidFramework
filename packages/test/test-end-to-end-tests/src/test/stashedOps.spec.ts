@@ -19,7 +19,12 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IContainerExperimental } from "@fluidframework/container-loader/internal";
-import { CompressionAlgorithms, ContainerRuntime, DefaultSummaryConfiguration, type RecentlyAddedContainerRuntimeMessageDetails } from "@fluidframework/container-runtime/internal";
+import {
+	CompressionAlgorithms,
+	ContainerRuntime,
+	DefaultSummaryConfiguration,
+	type RecentlyAddedContainerRuntimeMessageDetails,
+} from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -31,8 +36,17 @@ import type { SharedCounter } from "@fluidframework/counter";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map";
 import type { ISharedDirectory, SharedDirectory } from "@fluidframework/map/internal";
-import { ReferenceType, reservedMarkerIdKey, reservedMarkerSimpleTypeKey, reservedTileLabelsKey } from "@fluidframework/merge-tree/internal";
-import type { IIntervalCollection, SequenceInterval, SharedString } from "@fluidframework/sequence/internal";
+import {
+	ReferenceType,
+	reservedMarkerIdKey,
+	reservedMarkerSimpleTypeKey,
+	reservedTileLabelsKey,
+} from "@fluidframework/merge-tree/internal";
+import type {
+	IIntervalCollection,
+	SequenceInterval,
+	SharedString,
+} from "@fluidframework/sequence/internal";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	ChannelFactoryRegistry,

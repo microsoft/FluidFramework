@@ -13,7 +13,7 @@ import {
 import {
 	IEventProvider,
 	type ITelemetryBaseEvent,
-	ITelemetryBaseProperties
+	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
 import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";

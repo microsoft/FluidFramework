@@ -8,9 +8,7 @@ import { strict as assert } from "assert";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IErrorBase } from "@fluidframework/core-interfaces";
 import { Timer } from "@fluidframework/core-utils/internal";
-import {
-	IGarbageCollectionData
-} from "@fluidframework/runtime-definitions";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import { IGarbageCollectionDetailsBase } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockLogger,

@@ -7,11 +7,19 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { FluidDataStoreRuntime, FluidObjectHandle, ISharedObjectRegistry } from "@fluidframework/datastore/internal";
+import {
+	FluidDataStoreRuntime,
+	FluidObjectHandle,
+	ISharedObjectRegistry,
+} from "@fluidframework/datastore/internal";
 import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { IFluidDataStoreContext, IFluidDataStoreFactory, NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions/internal";
+import {
+	IFluidDataStoreContext,
+	IFluidDataStoreFactory,
+	NamedFluidDataStoreRegistryEntry,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	type ITelemetryLoggerExt,
 	UsageError,

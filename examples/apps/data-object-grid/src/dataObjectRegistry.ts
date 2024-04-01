@@ -11,7 +11,11 @@ import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate
 import { ProseMirror, ProseMirrorFactory, ProseMirrorReactView } from "@fluid-example/prosemirror";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { Serializable } from "@fluidframework/datastore-definitions/internal";
-import { IFluidDataStoreContext, IFluidDataStoreFactory, NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
+import {
+	IFluidDataStoreContext,
+	IFluidDataStoreFactory,
+	NamedFluidDataStoreRegistryEntries,
+} from "@fluidframework/runtime-definitions/internal";
 import * as React from "react";
 
 const codeMirrorFactory = new SmdeFactory();

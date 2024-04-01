@@ -30,10 +30,16 @@ import {
 	ISummaryTree,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
-	ISummaryTreeWithStats
-} from "@fluidframework/runtime-definitions";
-import { FluidDataStoreRegistryEntry, FlushMode, FlushModeExperimental, IFluidDataStoreContext, IFluidDataStoreFactory, IFluidDataStoreRegistry, NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
+	FluidDataStoreRegistryEntry,
+	FlushMode,
+	FlushModeExperimental,
+	IFluidDataStoreContext,
+	IFluidDataStoreFactory,
+	IFluidDataStoreRegistry,
+	NamedFluidDataStoreRegistryEntries,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	IFluidErrorBase,
 	MockLogger,

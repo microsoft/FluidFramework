@@ -6,10 +6,12 @@
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 import { ISerializedHandle } from "@fluidframework/runtime-utils";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import {
-	IFluidSerializer
-} from "@fluidframework/shared-object-base";
-import { ValueType, parseHandles, serializeHandles } from "@fluidframework/shared-object-base/internal";
+	ValueType,
+	parseHandles,
+	serializeHandles,
+} from "@fluidframework/shared-object-base/internal";
 
 // eslint-disable-next-line import/no-deprecated
 import { ISerializableValue, ISerializedValue } from "./interfaces.js";

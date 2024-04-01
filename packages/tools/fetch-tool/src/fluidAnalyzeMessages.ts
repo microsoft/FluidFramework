@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerMessageType, IChunkedOp, unpackRuntimeMessage } from "@fluidframework/container-runtime/internal";
+import {
+	ContainerMessageType,
+	IChunkedOp,
+	unpackRuntimeMessage,
+} from "@fluidframework/container-runtime/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { DataStoreMessageType } from "@fluidframework/datastore/internal";
 import {

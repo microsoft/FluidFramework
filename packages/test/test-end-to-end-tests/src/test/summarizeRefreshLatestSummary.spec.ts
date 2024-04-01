@@ -6,7 +6,11 @@
 import { strict as assert } from "assert";
 
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
-import { DefaultSummaryConfiguration, ISummaryAckMessage, ISummaryConfiguration } from "@fluidframework/container-runtime/internal";
+import {
+	DefaultSummaryConfiguration,
+	ISummaryAckMessage,
+	ISummaryConfiguration,
+} from "@fluidframework/container-runtime/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";

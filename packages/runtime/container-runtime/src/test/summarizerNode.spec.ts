@@ -11,7 +11,13 @@ import {
 	ISnapshotTree,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { CreateChildSummarizerNodeParam, CreateSummarizerNodeSource, ISummarizerNode, ISummarizerNodeConfig, channelsTreeName } from "@fluidframework/runtime-definitions/internal";
+import {
+	CreateChildSummarizerNodeParam,
+	CreateSummarizerNodeSource,
+	ISummarizerNode,
+	ISummarizerNodeConfig,
+	channelsTreeName,
+} from "@fluidframework/runtime-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils";
 import { TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils";
 

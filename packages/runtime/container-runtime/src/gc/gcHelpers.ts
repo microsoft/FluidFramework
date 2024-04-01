@@ -5,10 +5,13 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
-	IGarbageCollectionData
-} from "@fluidframework/runtime-definitions";
-import { IGarbageCollectionDetailsBase, gcBlobPrefix, gcDeletedBlobKey, gcTombstoneBlobKey } from "@fluidframework/runtime-definitions/internal";
+	IGarbageCollectionDetailsBase,
+	gcBlobPrefix,
+	gcDeletedBlobKey,
+	gcTombstoneBlobKey,
+} from "@fluidframework/runtime-definitions/internal";
 import type { IConfigProvider } from "@fluidframework/telemetry-utils";
 
 import {

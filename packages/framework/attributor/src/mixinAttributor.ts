@@ -18,9 +18,13 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
 	type ISummaryTreeWithStats,
-	type ITelemetryContext
+	type ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { type AttributionInfo, type AttributionKey, type NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
+import {
+	type AttributionInfo,
+	type AttributionKey,
+	type NamedFluidDataStoreRegistryEntries,
+} from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder, addSummarizeResultToSummary } from "@fluidframework/runtime-utils";
 import {
 	PerformanceEvent,

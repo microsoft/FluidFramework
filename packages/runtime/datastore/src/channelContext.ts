@@ -19,7 +19,10 @@ import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreContext, ISummarizeResult } from "@fluidframework/runtime-definitions/internal";
+import {
+	IFluidDataStoreContext,
+	ISummarizeResult,
+} from "@fluidframework/runtime-definitions/internal";
 import { addBlobToSummary } from "@fluidframework/runtime-utils";
 import {
 	DataCorruptionError,
