@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert, fail } from "node:assert";
 
 import { rootFieldKey } from "../../core/index.js";
 import { TreeStatus } from "../../feature-libraries/index.js";
@@ -84,13 +84,16 @@ describe("treeApi", () => {
 				y: undefined,
 			} as Child,
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			{ x: {} } as Child,
+			{ x: {}, y: {} } as Child,
 		]);
 		const root = getView(config).root;
 		assert.equal(Tree.key(root), rootFieldKey);
 		assert.equal(Tree.key(root[0]), 0);
+		assert.equal(Tree.key(root[0].x), "x");
 		assert.equal(Tree.key(root[1]), 1);
 		assert.equal(Tree.key(root[1].x), "x");
+		assert(root[1].y !== undefined);
+		assert.equal(Tree.key(root[1].y), "y");
 	});
 
 	it("parent", () => {
