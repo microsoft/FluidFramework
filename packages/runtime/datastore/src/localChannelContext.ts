@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import lodashPkg from "lodash";
-// eslint-disable-next-line @typescript-eslint/unbound-method
-const { cloneDeep } = lodashPkg;
+// eslint-disable-next-line import/no-internal-modules
+import cloneDeep from "lodash/cloneDeep";
 
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
