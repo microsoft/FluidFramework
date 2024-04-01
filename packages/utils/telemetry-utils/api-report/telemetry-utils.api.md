@@ -56,7 +56,7 @@ export class DataCorruptionError extends LoggingError implements IErrorBase, IFl
 export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
     // (undocumented)
     readonly canRetry = false;
-    static create(errorMessage: string, dataProcessingCodepath: string, sequencedMessage?: ISequencedDocumentMessage, props?: ITelemetryBaseProperties): IFluidErrorBase;
+    static create(errorMessage: string, dataProcessingCodepath: string, sequencedMessage?: ISequencedDocumentMessage, props?: ITelemetryPropertiesExt): IFluidErrorBase;
     readonly errorType: "dataProcessingError";
     static wrapIfUnrecognized(originalError: unknown, dataProcessingCodepath: string, messageLike?: Partial<Pick<ISequencedDocumentMessage, "clientId" | "sequenceNumber" | "clientSequenceNumber" | "referenceSequenceNumber" | "minimumSequenceNumber" | "timestamp">>): IFluidErrorBase;
 }
