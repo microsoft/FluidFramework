@@ -55,7 +55,6 @@ function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap): void {
 		const aVal: unknown = a.get(key);
 		const bVal: unknown = b.get(key);
 		if (key === handleKey) {
-			// never actually get into here - add handles to generator??
 			assert.equal(typeof aVal, IFluidHandle, "aVal should be a handle");
 			assert.equal(typeof bVal, IFluidHandle, "bVal should be a handle");
 			assert.equal(
@@ -76,10 +75,8 @@ const reducer = combineReducers<Operation, State>({
 	deleteKey: ({ client }, { key }) => {
 		client.channel.delete(key);
 	},
-	handleCreated: ({ client }, { handles }) => {
-		for (const handle of handles) {
+	handleCreated: ({ client }, { handle }) => {
 			client.channel.set(handleKey, handle);
-		}
 	},
 });
 
@@ -136,6 +133,7 @@ describe.only("Map fuzz tests", () => {
 	createDDSFuzzSuite(model, {
 		defaultTestCount: 100,
 		numberOfClients: 3,
+		handleGenerationDisabled: false,
 		clientJoinOptions: {
 			maxNumberOfClients: 6,
 			clientAddProbability: 0.1,

@@ -113,7 +113,7 @@ export interface StashClient {
  */
 export interface HandleCreated {
 	type: "handleCreated";
-	handles: IFluidHandle[];
+	handle: IFluidHandle;
 }
 
 /**
@@ -382,7 +382,7 @@ export interface DDSFuzzSuiteOptions {
 	/**
 	 * Defines whether or not ops can be submitted with handles.
 	 */
-	handles: boolean;
+	handleGenerationDisabled: boolean;
 
 	/**
 	 * Event emitter which allows hooking into interesting points of DDS harness execution.
@@ -521,7 +521,7 @@ export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	detachedStartOptions: {
 		numOpsBeforeAttach: 5,
 	},
-	handles: false,
+	handleGenerationDisabled: true,
 	emitter: new TypedEventEmitter(),
 	numberOfClients: 3,
 	only: [],
@@ -1149,24 +1149,23 @@ export function mixinHandle<
 	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
 	options: DDSFuzzSuiteOptions,
 ): DDSFuzzModel<TChannelFactory, TOperation | HandleCreated, TState> {
-	if (options.handles === false) {
+	if (options.handleGenerationDisabled === true) {
 		return model as DDSFuzzModel<TChannelFactory, TOperation | HandleCreated, TState>;
 	}
 
 	const generatorFactory: () => AsyncGenerator<TOperation | HandleCreated, TState> = () => {
 		const baseGenerator = model.generatorFactory();
 		return async (state): Promise<TOperation | HandleCreated | typeof done> => {
-			const baseOp = baseGenerator(state);
 			if (state.random.bool(0.5)) {
 				const handle1 = new DDSFuzzHandle(
 					state.client.dataStoreRuntime.IFluidHandleContext,
 				);
 				return {
 					type: "handleCreated",
-					handles: [handle1],
+					handle: handle1,
 				};
 			}
-			return baseOp;
+			return baseGenerator(state);
 		};
 	};
 

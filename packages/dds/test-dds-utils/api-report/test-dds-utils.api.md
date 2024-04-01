@@ -9,7 +9,6 @@ import type { AsyncReducer } from '@fluid-private/stochastic-test-utils';
 import type { BaseFuzzTestState } from '@fluid-private/stochastic-test-utils';
 import type { IChannelFactory } from '@fluidframework/datastore-definitions';
 import type { IFluidHandle } from '@fluidframework/core-interfaces';
-import type { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import type { IIdCompressor } from '@fluidframework/id-compressor';
 import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
 import type { IMockContainerRuntimeOptions } from '@fluidframework/test-runtime-utils';
@@ -75,25 +74,6 @@ export namespace createDDSFuzzSuite {
 export function createSnapshotSuite(snapshotFolderPath: string): ISnapshotSuite;
 
 // @internal (undocumented)
-export class DDSFuzzHandle implements IFluidHandle {
-    constructor(routeContext: IFluidHandleContext, onAttachGraph?: (() => void) | undefined);
-    // (undocumented)
-    readonly absolutePath: string;
-    // (undocumented)
-    attachGraph(): void;
-    // (undocumented)
-    bind(handle: IFluidHandle): void;
-    // (undocumented)
-    get(): Promise<any>;
-    // (undocumented)
-    get IFluidHandle(): IFluidHandle;
-    // (undocumented)
-    get isAttached(): boolean;
-    // (undocumented)
-    readonly routeContext: IFluidHandleContext;
-}
-
-// @internal (undocumented)
 export interface DDSFuzzHarnessEvents {
     (event: "clientCreate", listener: (client: Client<IChannelFactory>) => void): any;
     (event: "testStart", listener: (initialState: DDSFuzzTestState<IChannelFactory>) => void): any;
@@ -126,7 +106,7 @@ export interface DDSFuzzSuiteOptions {
         attachingBeforeRehydrateDisable?: true;
     };
     emitter: TypedEventEmitter<DDSFuzzHarnessEvents>;
-    handles: boolean;
+    handleGenerationDisabled: boolean;
     idCompressorFactory?: (summary?: FuzzSerializedIdCompressor) => IIdCompressor & IIdCompressorCore;
     numberOfClients: number;
     only: Iterable<number>;
@@ -170,12 +150,6 @@ export interface DDSFuzzTestState<TChannelFactory extends IChannelFactory> exten
 export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions;
 
 // @internal (undocumented)
-export interface HandleCreated {
-    // (undocumented)
-    handles: IFluidHandle[];
-    // (undocumented)
-    type: "handleCreated";
-}
 export type FuzzSerializedIdCompressor = {
     withSession: false;
     serializedCompressor: SerializedIdCompressorWithNoSession;
@@ -183,6 +157,14 @@ export type FuzzSerializedIdCompressor = {
     withSession: true;
     serializedCompressor: SerializedIdCompressorWithOngoingSession;
 };
+
+// @internal (undocumented)
+export interface HandleCreated {
+    // (undocumented)
+    handle: IFluidHandle;
+    // (undocumented)
+    type: "handleCreated";
+}
 
 // @internal
 export interface IGCTestProvider {

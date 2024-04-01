@@ -437,13 +437,6 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		return [local, localOpMetadata];
 	}
 
-	/**
-	 * The current reference sequence number observed by this runtime instance.
-	 */
-	protected get referenceSequenceNumber() {
-		return this.deltaManager.lastSequenceNumber;
-	}
-
 	public async resolveHandle(handle: IFluidHandle) {
 		return this.dataStoreRuntime.resolveHandle({ url: handle.absolutePath });
 	}
