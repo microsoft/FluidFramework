@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
-import cloneDeep from "lodash/cloneDeep";
+import cloneDeep from "lodash";
 
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
