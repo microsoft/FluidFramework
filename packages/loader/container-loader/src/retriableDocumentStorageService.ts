@@ -12,7 +12,7 @@ import {
 	ISnapshot,
 	ISnapshotFetchOptions,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { runWithRetry } from "@fluidframework/driver-utils";
 import {
 	ICreateBlobResponse,

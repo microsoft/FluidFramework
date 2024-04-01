@@ -13,7 +13,7 @@ import {
 	IDocumentServicePolicies,
 	IDocumentStorageService,
 	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	HostStoragePolicy,
 	IEntry,

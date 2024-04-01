@@ -6,7 +6,7 @@
 
 import { AliasResult } from '@fluidframework/runtime-definitions';
 import { AttachState } from '@fluidframework/container-definitions';
-import { ContainerWarning } from '@fluidframework/container-definitions';
+import { ContainerWarning } from '@fluidframework/container-definitions/internal';
 import { CreateChildSummarizerNodeFn } from '@fluidframework/runtime-definitions';
 import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions';
 import { FluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions';
@@ -14,7 +14,7 @@ import { FluidObject } from '@fluidframework/core-interfaces';
 import { FlushMode } from '@fluidframework/runtime-definitions';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
-import { IContainerContext } from '@fluidframework/container-definitions';
+import { IContainerContext } from '@fluidframework/container-definitions/internal';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
 import { IContainerRuntimeEvents } from '@fluidframework/container-runtime-definitions';
@@ -23,7 +23,7 @@ import { IDataStore } from '@fluidframework/runtime-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IDocumentStorageService } from '@fluidframework/driver-definitions';
+import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
 import { IEnvelope } from '@fluidframework/runtime-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
@@ -37,15 +37,15 @@ import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidParentContext } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions';
-import { IGetPendingLocalStateProps } from '@fluidframework/container-definitions';
+import { IGetPendingLocalStateProps } from '@fluidframework/container-definitions/internal';
 import type { IIdCompressor } from '@fluidframework/id-compressor';
-import type { IIdCompressorCore } from '@fluidframework/id-compressor';
+import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
-import { IRuntime } from '@fluidframework/container-definitions';
+import { IRuntime } from '@fluidframework/container-definitions/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
@@ -257,6 +257,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
         compressionLz4?: true | undefined;
         idCompressorMode?: IdCompressorMode;
         opGroupingEnabled?: true | undefined;
+        disallowedVersions?: string[] | undefined;
     };
     // (undocumented)
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
@@ -406,15 +407,14 @@ export function detectOutboundReferences(address: string, contents: unknown, add
 export const disabledCompressionConfig: ICompressionRuntimeOptions;
 
 // @alpha
-export type DocumentSchemaValueType = string | true | number | undefined;
+export type DocumentSchemaValueType = string | string[] | true | number | undefined;
 
 // @alpha
 export class DocumentsSchemaController {
     constructor(existing: boolean, documentMetadataSchema: IDocumentSchema | undefined, features: IDocumentSchemaFeatures, onSchemaChange: (schema: IDocumentSchemaCurrent) => void);
+    maybeSendSchemaMessage(): IDocumentSchemaChangeMessage | undefined;
     // (undocumented)
     onDisconnect(): void;
-    // (undocumented)
-    onMessageSent(send: (content: IDocumentSchemaChangeMessage) => void): void;
     processDocumentSchemaOp(content: IDocumentSchemaChangeMessage, local: boolean, sequenceNumber: number): boolean;
     // (undocumented)
     sessionSchema: IDocumentSchemaCurrent;
@@ -768,6 +768,7 @@ export type IDocumentSchemaCurrent = {
 export interface IDocumentSchemaFeatures {
     // (undocumented)
     compressionLz4: boolean;
+    disallowedVersions: string[];
     // (undocumented)
     explicitSchemaControl: boolean;
     // (undocumented)

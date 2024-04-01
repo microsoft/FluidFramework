@@ -10,7 +10,7 @@ import {
 	TestDataObjectType,
 	describeCompat,
 } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ISummarizer } from "@fluidframework/container-runtime";
 // eslint-disable-next-line import/no-internal-modules
 import { IGarbageCollectionState } from "@fluidframework/container-runtime/test/gc";

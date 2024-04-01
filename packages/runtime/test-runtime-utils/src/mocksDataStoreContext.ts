@@ -5,8 +5,9 @@
 
 import { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
 import { FluidObject, IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { IIdCompressor, IIdCompressorCore } from "@fluidframework/id-compressor";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
 import {
 	IClientDetails,
 	IDocumentMessage,
