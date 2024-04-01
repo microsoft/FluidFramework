@@ -234,9 +234,12 @@ export interface TreeChangeEvents {
 	afterShallowChange(): void;
 
 	/**
-	 * Raised on a node when changes happen anywhere in the subtree (including itself) rooted at it.
+	 * Emitted by a node when changes happen anywhere in the subtree rooted at it.
 	 *
 	 * @remarks
+	 * The node itself is part of the subtree, so this event will be emitted even if the only changes are to the properties
+	 * of the node itself.
+	 *
 	 * This event is not raised when the node itself is moved to a different location in the tree or removed from the tree.
 	 * In that case it is raised on the _parent_ node, not the node itself.
 	 *
