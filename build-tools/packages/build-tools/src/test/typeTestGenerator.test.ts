@@ -52,7 +52,7 @@ describe("typeTestUtils", () => {
 		after(() => {
 			fs.rmSync(nodeModulesDir, { recursive: true });
 		});
-		
+
 		it("Should return the path to the previous package.json", () => {
 			const previousBasePath = path.join(nodeModulesDir, previousPackageName);
 			const result = utils.tryGetPreviousPackageJsonPath(previousBasePath);
@@ -63,10 +63,12 @@ describe("typeTestUtils", () => {
 		it("Should return undefined if the previous package.json path does not exist", () => {
 			const previousBasePath = path.join(nodeModulesDir, "does-not-exist");
 			assert.throws(
-				() => {utils.tryGetPreviousPackageJsonPath(previousBasePath)},
+				() => {
+					utils.tryGetPreviousPackageJsonPath(previousBasePath);
+				},
 				(error: Error) => {
 					const previousPackageJsonPath = path.join(previousBasePath, "package.json");
-					validateAssertionError(error, `${previousPackageJsonPath} not found.`)
+					validateAssertionError(error, `${previousPackageJsonPath} not found.`);
 					return true;
 				},
 			);
@@ -164,7 +166,10 @@ describe("typeTestUtils", () => {
 			assert.throws(
 				() => utils.getTypePathFromExport(packageObject, previousBasePath),
 				(error: Error) =>
-					validateAssertionError(error, "Type definition file path could not be determined from the 'exports' field using the default export entry '.'"),
+					validateAssertionError(
+						error,
+						"Type definition file path could not be determined from the 'exports' field using the default export entry '.'",
+					),
 			);
 		});
 
@@ -208,7 +213,11 @@ describe("typeTestUtils", () => {
 			);
 			assert.throws(
 				() => utils.getTypePathFromExport(packageObject, previousBasePath),
-				(error: Error) => validateAssertionError(error, "Type definition file path could not be determined from the 'exports' field using the default export entry '.'")
+				(error: Error) =>
+					validateAssertionError(
+						error,
+						"Type definition file path could not be determined from the 'exports' field using the default export entry '.'",
+					),
 			);
 		});
 	});
@@ -250,7 +259,7 @@ describe("typeTestUtils", () => {
 				}),
 				"utf-8",
 			);
-			
+
 			assert.throws(() => utils.getTypeDefinitionFilePath(previousBasePath));
 		});
 	});

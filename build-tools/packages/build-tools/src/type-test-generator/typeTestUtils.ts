@@ -118,7 +118,7 @@ export function getTypePathFromExport(
 	if (!typeDefinitionFilePath) {
 		// If no valid path is found, throw an error
 		throw new Error(
-			"Type definition file path could not be determined from the 'exports' field using the default export entry '.'"
+			"Type definition file path could not be determined from the 'exports' field using the default export entry '.'",
 		);
 	}
 	return typeDefinitionFilePath;
@@ -239,12 +239,12 @@ export function generateCompatibilityTestCases(
 						...oldTypeData,
 						kind: `Removed${oldTypeData.kind}`,
 						removed: true,
-				  }
+					}
 				: {
 						prefix: "current",
 						...currentTypeData,
 						removed: false,
-				  };
+					};
 
 		// look for settings not under version, then fall back to version for back compat
 		const brokenData = broken?.[getFullTypeName(currentType)];
