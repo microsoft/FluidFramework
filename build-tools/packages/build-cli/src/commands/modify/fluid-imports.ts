@@ -573,6 +573,13 @@ function getNodeLevel(node: Node): ApiLevel | undefined {
 				}
 			}
 		}
+	} else {
+		// Some nodes like `VariableDeclaration`s as not JSDocable, but an ancestor
+		// like `VariableStatement` is and may contain tag.
+		const parent = node.getParent();
+		if (parent !== undefined) {
+			return getNodeLevel(parent);
+		}
 	}
 	return undefined;
 }
