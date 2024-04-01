@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { getUnexpectedLogErrorException, ITestObjectProvider } from "@fluidframework/test-utils";
 

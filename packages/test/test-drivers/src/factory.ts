@@ -5,7 +5,7 @@
 
 import http from "http";
 
-import { unreachableCase } from "@fluidframework/core-utils";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import Agent from "agentkeepalive";
 

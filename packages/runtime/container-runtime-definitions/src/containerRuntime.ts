@@ -18,12 +18,7 @@ import {
 	type IDocumentMessage,
 	type ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import {
-	type FlushMode,
-	type IContainerRuntimeBase,
-	type IContainerRuntimeBaseEvents,
-	type IProvideFluidDataStoreRegistry,
-} from "@fluidframework/runtime-definitions";
+import { type FlushMode, type IContainerRuntimeBase, type IContainerRuntimeBaseEvents, type IProvideFluidDataStoreRegistry } from "@fluidframework/runtime-definitions/internal";
 
 /**
  * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md

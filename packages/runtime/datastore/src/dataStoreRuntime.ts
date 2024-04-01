@@ -12,7 +12,7 @@ import {
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import { assert, Deferred, LazyPromise, unreachableCase } from "@fluidframework/core-utils";
+import { assert, Deferred, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannel,
 	IChannelFactory,
@@ -32,19 +32,12 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
-	CreateChildSummarizerNodeParam,
-	CreateSummarizerNodeSource,
-	IAttachMessage,
-	IEnvelope,
-	IFluidDataStoreChannel,
-	IFluidDataStoreContext,
 	IGarbageCollectionData,
 	IInboundSignalMessage,
 	ISummaryTreeWithStats,
-	ITelemetryContext,
-	VisibilityState,
-	gcDataBlobKey,
+	ITelemetryContext
 } from "@fluidframework/runtime-definitions";
+import { CreateChildSummarizerNodeParam, CreateSummarizerNodeSource, IAttachMessage, IEnvelope, IFluidDataStoreChannel, IFluidDataStoreContext, VisibilityState, gcDataBlobKey } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
 	RequestParser,

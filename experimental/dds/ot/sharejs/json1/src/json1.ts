@@ -6,9 +6,9 @@
 import { SharedOT } from "@fluid-experimental/ot";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	Serializable,
+	IFluidDataStoreRuntime
 } from "@fluidframework/datastore-definitions";
+import { Serializable } from "@fluidframework/datastore-definitions/internal";
 import {
 	Doc,
 	JSONOp,

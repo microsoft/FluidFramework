@@ -6,7 +6,7 @@
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IValueChanged } from "@fluidframework/map";
-import { SharedString } from "@fluidframework/sequence";
+import { SharedString } from "@fluidframework/sequence/internal";
 
 export interface ITodoItemInitialState {
 	startingText: string;

@@ -5,10 +5,9 @@
 
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	Serializable,
+	IFluidDataStoreRuntime
 } from "@fluidframework/datastore-definitions";
-
+import { Serializable } from "@fluidframework/datastore-definitions/internal";
 import { SharedObjectSequenceFactory } from "./sequenceFactory.js";
 import { SharedSequence } from "./sharedSequence.js";
 

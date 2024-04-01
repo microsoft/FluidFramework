@@ -10,13 +10,12 @@ const { cloneDeep } = lodashPkg;
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils";
+import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IFluidDataStoreContext, ISummarizeResult } from "@fluidframework/runtime-definitions/internal";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
-	IFluidDataStoreContext,
 	IGarbageCollectionData,
-	ISummarizeResult,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { DataProcessingError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";

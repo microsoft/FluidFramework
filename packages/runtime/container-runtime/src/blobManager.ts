@@ -5,12 +5,9 @@
 
 import { TypedEventEmitter, bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
-import {
-	IContainerRuntime,
-	IContainerRuntimeEvents,
-} from "@fluidframework/container-runtime-definitions";
+import { IContainerRuntime, IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
-import { assert, Deferred } from "@fluidframework/core-utils";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils";
 import {

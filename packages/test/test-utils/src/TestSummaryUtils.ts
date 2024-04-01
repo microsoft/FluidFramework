@@ -9,24 +9,17 @@ import {
 	IHostLoader,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
-import {
-	IOnDemandSummarizeOptions,
-	ISummarizer,
-	ISummaryRuntimeOptions,
-} from "@fluidframework/container-runtime";
+import { IOnDemandSummarizeOptions, ISummarizer, ISummaryRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import {
 	IConfigProviderBase,
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { DriverHeader } from "@fluidframework/driver-definitions/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import {
-	IFluidDataStoreFactory,
-	NamedFluidDataStoreRegistryEntries,
-} from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory, NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
 
 import { createTestConfigProvider } from "./TestConfigs.js";
 import { waitForContainerConnection } from "./containerUtils.js";

@@ -4,7 +4,7 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { Lazy } from "@fluidframework/core-utils";
+import { Lazy } from "@fluidframework/core-utils/internal";
 
 import { FlexListToUnion, LazyItem, isLazy } from "../feature-libraries/index.js";
 import { MakeNominal, RestrictiveReadonlyRecord, isReadonlyArray } from "../util/index.js";

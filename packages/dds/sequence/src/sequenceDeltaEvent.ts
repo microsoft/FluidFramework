@@ -3,21 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import {
-	// eslint-disable-next-line import/no-deprecated
-	Client,
-	IMergeTreeDeltaCallbackArgs,
-	IMergeTreeDeltaOpArgs,
-	IMergeTreeMaintenanceCallbackArgs,
-	ISegment,
-	MergeTreeDeltaOperationType,
-	MergeTreeDeltaOperationTypes,
-	MergeTreeMaintenanceType,
-	PropertySet,
-	// eslint-disable-next-line import/no-deprecated
-	SortedSegmentSet,
-} from "@fluidframework/merge-tree";
+import { assert } from "@fluidframework/core-utils/internal";
+import { // eslint-disable-next-line import/no-deprecated
+    	Client, IMergeTreeDeltaCallbackArgs, IMergeTreeDeltaOpArgs, IMergeTreeMaintenanceCallbackArgs, ISegment, MergeTreeDeltaOperationType, MergeTreeDeltaOperationTypes, MergeTreeMaintenanceType, PropertySet, // eslint-disable-next-line import/no-deprecated
+    	SortedSegmentSet } from "@fluidframework/merge-tree/internal";
 
 /**
  * Base class for SequenceDeltaEvent and SequenceMaintenanceEvent.

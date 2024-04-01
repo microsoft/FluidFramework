@@ -4,14 +4,11 @@
  */
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
-import {
-	IFluidDataStoreFactory,
-	NamedFluidDataStoreRegistryEntries,
-} from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory, NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
 
 const getDefaultFluidObject = async (runtime: IContainerRuntime) => {
 	const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");

@@ -12,13 +12,7 @@ import {
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import {
-	PropertySet,
-	ReferencePosition,
-	SequenceDeltaEvent,
-	SharedString,
-	createEndpointIndex,
-} from "@fluidframework/sequence";
+import { PropertySet, ReferencePosition, SequenceDeltaEvent, SharedString, createEndpointIndex } from "@fluidframework/sequence/internal";
 
 import { CellRange } from "./cellrange.js";
 import { TableDocumentType } from "./componentTypes.js";

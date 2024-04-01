@@ -4,17 +4,7 @@
  */
 
 import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import {
-	IMergeTreeTextHelper,
-	IRelativePosition,
-	ISegment,
-	ISegmentAction,
-	Marker,
-	PropertySet,
-	ReferenceType,
-	TextSegment,
-	refHasTileLabel,
-} from "@fluidframework/merge-tree";
+import { IMergeTreeTextHelper, IRelativePosition, ISegment, ISegmentAction, Marker, PropertySet, ReferenceType, TextSegment, refHasTileLabel } from "@fluidframework/merge-tree/internal";
 
 import { SharedSegmentSequence } from "./sequence.js";
 import { SharedStringFactory } from "./sequenceFactory.js";

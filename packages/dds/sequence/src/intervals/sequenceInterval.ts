@@ -6,24 +6,8 @@
 /* eslint-disable no-bitwise */
 /* eslint-disable import/no-deprecated */
 
-import { assert } from "@fluidframework/core-utils";
-import {
-	Client,
-	ISegment,
-	LocalReferencePosition,
-	PropertiesManager,
-	PropertySet,
-	ReferenceType,
-	SlidingPreference,
-	compareReferencePositions,
-	createDetachedLocalReferencePosition,
-	createMap,
-	getSlideToSegoff,
-	maxReferencePosition,
-	minReferencePosition,
-	refTypeIncludesFlag,
-	reservedRangeLabelsKey,
-} from "@fluidframework/merge-tree";
+import { assert } from "@fluidframework/core-utils/internal";
+import { Client, ISegment, LocalReferencePosition, PropertiesManager, PropertySet, ReferenceType, SlidingPreference, compareReferencePositions, createDetachedLocalReferencePosition, createMap, getSlideToSegoff, maxReferencePosition, minReferencePosition, refTypeIncludesFlag, reservedRangeLabelsKey } from "@fluidframework/merge-tree/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { UsageError } from "@fluidframework/telemetry-utils";
 

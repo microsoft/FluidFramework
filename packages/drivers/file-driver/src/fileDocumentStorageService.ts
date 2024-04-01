@@ -6,7 +6,7 @@
 import fs from "fs";
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentStorageService,
 	ISummaryContext,

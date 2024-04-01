@@ -14,7 +14,7 @@ import {
 	ITelemetryBaseProperties,
 	IEvent,
 } from "@fluidframework/core-interfaces";
-import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils";
+import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -27,29 +27,12 @@ import {
 	ITreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
-	CreateChildSummarizerNodeFn,
-	CreateChildSummarizerNodeParam,
-	FluidDataStoreRegistryEntry,
-	IContainerRuntimeBase,
-	IDataStore,
-	IFluidDataStoreChannel,
-	IFluidDataStoreContext,
-	IFluidDataStoreContextDetached,
-	IFluidDataStoreRegistry,
-	IFluidParentContext,
 	IGarbageCollectionData,
-	IGarbageCollectionDetailsBase,
 	IInboundSignalMessage,
-	IProvideFluidDataStoreFactory,
-	ISummarizeInternalResult,
-	ISummarizeResult,
-	ISummarizerNodeWithGC,
 	ISummaryTreeWithStats,
-	ITelemetryContext,
-	SummarizeInternalFn,
-	channelsTreeName,
-	gcDataBlobKey,
+	ITelemetryContext
 } from "@fluidframework/runtime-definitions";
+import { CreateChildSummarizerNodeFn, CreateChildSummarizerNodeParam, FluidDataStoreRegistryEntry, IContainerRuntimeBase, IDataStore, IFluidDataStoreChannel, IFluidDataStoreContext, IFluidDataStoreContextDetached, IFluidDataStoreRegistry, IFluidParentContext, IGarbageCollectionDetailsBase, IProvideFluidDataStoreFactory, ISummarizeInternalResult, ISummarizeResult, ISummarizerNodeWithGC, SummarizeInternalFn, channelsTreeName, gcDataBlobKey } from "@fluidframework/runtime-definitions/internal";
 import { addBlobToSummary } from "@fluidframework/runtime-utils";
 import {
 	DataCorruptionError,

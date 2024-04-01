@@ -5,13 +5,7 @@
 
 /* eslint-disable import/no-deprecated */
 
-import {
-	Client,
-	ISegment,
-	ReferenceType,
-	compareReferencePositions,
-	reservedRangeLabelsKey,
-} from "@fluidframework/merge-tree";
+import { Client, ISegment, ReferenceType, compareReferencePositions, reservedRangeLabelsKey } from "@fluidframework/merge-tree/internal";
 
 import {
 	IntervalType,

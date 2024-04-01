@@ -5,20 +5,16 @@
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert, LazyPromise } from "@fluidframework/core-utils";
+import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
-	CreateChildSummarizerNodeFn,
 	IExperimentalIncrementalSummaryContext,
-	IFluidDataStoreContext,
 	IGarbageCollectionData,
-	ISummarizeInternalResult,
-	ISummarizeResult,
-	ISummarizerNodeWithGC,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
+import { CreateChildSummarizerNodeFn, IFluidDataStoreContext, ISummarizeInternalResult, ISummarizeResult, ISummarizerNodeWithGC } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,
 	ThresholdCounter,

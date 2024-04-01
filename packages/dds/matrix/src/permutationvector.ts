@@ -4,23 +4,13 @@
  */
 
 import { IFluidHandle, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import {
-	BaseSegment,
-	// eslint-disable-next-line import/no-deprecated
-	Client,
-	IJSONSegment,
-	IMergeTreeDeltaCallbackArgs,
-	IMergeTreeDeltaOpArgs,
-	IMergeTreeMaintenanceCallbackArgs,
-	ISegment,
-	MergeTreeDeltaType,
-	MergeTreeMaintenanceType,
-} from "@fluidframework/merge-tree";
+import { BaseSegment, // eslint-disable-next-line import/no-deprecated
+    	Client, IJSONSegment, IMergeTreeDeltaCallbackArgs, IMergeTreeDeltaOpArgs, IMergeTreeMaintenanceCallbackArgs, ISegment, MergeTreeDeltaType, MergeTreeMaintenanceType } from "@fluidframework/merge-tree/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";

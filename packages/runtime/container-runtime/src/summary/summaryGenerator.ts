@@ -4,13 +4,7 @@
  */
 
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import {
-	assert,
-	Deferred,
-	IPromiseTimer,
-	IPromiseTimerResult,
-	Timer,
-} from "@fluidframework/core-utils";
+import { assert, Deferred, IPromiseTimer, IPromiseTimerResult, Timer } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";

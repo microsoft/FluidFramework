@@ -15,14 +15,7 @@ import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
-import {
-	CreateChildSummarizerNodeFn,
-	CreateChildSummarizerNodeParam,
-	IContainerRuntimeBase,
-	IFluidDataStoreContext,
-	IFluidDataStoreRegistry,
-	IGarbageCollectionDetailsBase,
-} from "@fluidframework/runtime-definitions";
+import { CreateChildSummarizerNodeFn, CreateChildSummarizerNodeParam, IContainerRuntimeBase, IFluidDataStoreContext, IFluidDataStoreRegistry, IGarbageCollectionDetailsBase } from "@fluidframework/runtime-definitions/internal";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
 

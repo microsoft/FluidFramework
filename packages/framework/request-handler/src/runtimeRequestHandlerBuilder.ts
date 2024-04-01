@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { type IRequest, type IResponse } from "@fluidframework/core-interfaces";
 import { RequestParser, create404Response } from "@fluidframework/runtime-utils";
 

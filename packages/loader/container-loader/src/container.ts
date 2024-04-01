@@ -32,11 +32,11 @@ import {
 	FluidObject,
 	IEvent,
 	IRequest,
-	type ISignalEnvelope,
 	ITelemetryBaseProperties,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
-import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils";
+import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,

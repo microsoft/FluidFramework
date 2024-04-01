@@ -4,7 +4,7 @@
  */
 
 import { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { PromiseCache } from "@fluidframework/core-utils";
+import { PromiseCache } from "@fluidframework/core-utils/internal";
 import {
 	IContainerPackageInfo,
 	IResolvedUrl,

@@ -4,7 +4,7 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IChannelStorageService,
@@ -13,10 +13,9 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
-	IFluidSerializer,
-	SharedObject,
-	createSingleBlobSummary,
+	IFluidSerializer
 } from "@fluidframework/shared-object-base";
+import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
 
 interface ISequencedOpInfo<TOp> {
 	client: string;

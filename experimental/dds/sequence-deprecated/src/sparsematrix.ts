@@ -4,16 +4,16 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IChannelFactory,
 	IChannelServices,
-	IFluidDataStoreRuntime,
-	Jsonable,
+	IFluidDataStoreRuntime
 } from "@fluidframework/datastore-definitions";
-import { BaseSegment, IJSONSegment, ISegment, PropertySet } from "@fluidframework/merge-tree";
-import { SharedSegmentSequence } from "@fluidframework/sequence";
+import { Jsonable } from "@fluidframework/datastore-definitions/internal";
+import { BaseSegment, IJSONSegment, ISegment, PropertySet } from "@fluidframework/merge-tree/internal";
+import { SharedSegmentSequence } from "@fluidframework/sequence/internal";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 
 import { pkgVersion } from "./packageVersion.js";

@@ -3,12 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
-import {
-	AttributionKey,
-	DetachedAttributionKey,
-	OpAttributionKey,
-} from "@fluidframework/runtime-definitions";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { AttributionKey, DetachedAttributionKey, OpAttributionKey } from "@fluidframework/runtime-definitions/internal";
 
 import { ISegment } from "./mergeTreeNodes.js";
 

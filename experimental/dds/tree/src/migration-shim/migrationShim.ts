@@ -6,7 +6,7 @@
 import { type EventEmitterEventType } from '@fluid-internal/client-utils';
 import { AttachState } from '@fluidframework/container-definitions';
 import { type IEvent, type IFluidHandle, type IFluidLoadable } from '@fluidframework/core-interfaces';
-import { assert } from '@fluidframework/core-utils';
+import { assert } from '@fluidframework/core-utils/internal';
 import {
 	type IChannelAttributes,
 	IChannelFactory,

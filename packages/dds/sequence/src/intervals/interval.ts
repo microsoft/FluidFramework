@@ -5,13 +5,8 @@
 
 /* eslint-disable import/no-deprecated */
 
-import { assert } from "@fluidframework/core-utils";
-import {
-	PropertiesManager,
-	PropertySet,
-	createMap,
-	reservedRangeLabelsKey,
-} from "@fluidframework/merge-tree";
+import { assert } from "@fluidframework/core-utils/internal";
+import { PropertiesManager, PropertySet, createMap, reservedRangeLabelsKey } from "@fluidframework/merge-tree/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { UsageError } from "@fluidframework/telemetry-utils";
 

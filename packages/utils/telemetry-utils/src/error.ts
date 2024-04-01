@@ -4,12 +4,10 @@
  */
 
 import {
-	FluidErrorTypes,
 	IErrorBase,
-	IGenericError,
-	ITelemetryBaseProperties,
-	IUsageError,
+	ITelemetryBaseProperties
 } from "@fluidframework/core-interfaces";
+import { FluidErrorTypes, IGenericError, IUsageError } from "@fluidframework/core-interfaces/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 import {

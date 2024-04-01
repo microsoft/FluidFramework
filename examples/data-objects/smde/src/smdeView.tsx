@@ -3,14 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	Marker,
-	MergeTreeDeltaType,
-	ReferenceType,
-	TextSegment,
-	getTextAndMarkers,
-	reservedTileLabelsKey,
-} from "@fluidframework/sequence";
+import { Marker, MergeTreeDeltaType, ReferenceType, TextSegment, getTextAndMarkers, reservedTileLabelsKey } from "@fluidframework/sequence/internal";
 import React, { useEffect, useRef } from "react";
 import SimpleMDE from "simplemde";
 

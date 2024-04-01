@@ -3,18 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import {
-	IMergeTreeDeltaCallbackArgs,
-	ITrackingGroup,
-	MergeTreeDeltaRevertible,
-	MergeTreeDeltaType,
-	MergeTreeRevertibleDriver,
-	TrackingGroup,
-	appendToMergeTreeDeltaRevertibles,
-	discardMergeTreeDeltaRevertible,
-	revertMergeTreeDeltaRevertibles,
-} from "@fluidframework/merge-tree";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IMergeTreeDeltaCallbackArgs, ITrackingGroup, MergeTreeDeltaRevertible, MergeTreeDeltaType, MergeTreeRevertibleDriver, TrackingGroup, appendToMergeTreeDeltaRevertibles, discardMergeTreeDeltaRevertible, revertMergeTreeDeltaRevertibles } from "@fluidframework/merge-tree/internal";
 
 import { Handle, isHandleValid } from "./handletable.js";
 import { SharedMatrix } from "./matrix.js";

@@ -4,18 +4,15 @@
  */
 
 import { type IContainerContext } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { type FluidObject } from "@fluidframework/core-interfaces";
 // eslint-disable-next-line import/no-deprecated
 import {
 	type RuntimeRequestHandler,
 	buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
-import {
-	type IFluidDataStoreFactory,
-	type NamedFluidDataStoreRegistryEntries,
-} from "@fluidframework/runtime-definitions";
+import { type IFluidDataStoreFactory, type NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 const defaultStoreId = "" as const;
