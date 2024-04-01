@@ -10,7 +10,7 @@ import {
 	TestDataObjectType,
 	describeCompat,
 } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
 import { toFluidHandleInternal } from "@fluidframework/core-interfaces";
 import { delay } from "@fluidframework/core-utils";

@@ -21,7 +21,7 @@ import {
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	IClientDetails,
 	ISequencedDocumentMessage,

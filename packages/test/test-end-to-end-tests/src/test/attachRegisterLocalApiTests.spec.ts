@@ -6,8 +6,9 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { AttachState, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
+import { AttachState } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
 import { IRequest, toFluidHandleInternal } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map";
 import {

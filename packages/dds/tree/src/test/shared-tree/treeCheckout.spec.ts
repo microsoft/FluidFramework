@@ -7,6 +7,7 @@ import { strict as assert, fail } from "assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 
+import { disposeSymbol } from "../../index.js";
 import {
 	AllowedUpdateType,
 	FieldUpPath,
@@ -629,6 +630,22 @@ describe("sharedTreeView", () => {
 				"N",
 				"O",
 			]);
+		});
+	});
+
+	describe("disposal", () => {
+		itView("forks can be disposed", (view) => {
+			const fork = view.fork();
+			fork[disposeSymbol]();
+		});
+
+		itView("disposed forks cannot be edited or double-disposed", (view) => {
+			const fork = view.fork();
+			fork[disposeSymbol]();
+
+			assert.throws(() => insertFirstNode(fork, "A"));
+			assert.throws(() => fork.updateSchema(intoStoredSchema(numberSequenceRootSchema)));
+			assert.throws(() => fork[disposeSymbol]());
 		});
 	});
 

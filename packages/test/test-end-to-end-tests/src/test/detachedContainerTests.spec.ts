@@ -8,13 +8,14 @@ import { strict as assert } from "assert";
 import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import type { SharedCell } from "@fluidframework/cell";
+import { AttachState } from "@fluidframework/container-definitions";
 import {
-	AttachState,
 	IContainer,
 	IRuntime,
 	IRuntimeFactory,
-} from "@fluidframework/container-definitions";
-import { ConnectionState, Loader } from "@fluidframework/container-loader";
+} from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader";
+import { Loader } from "@fluidframework/container-loader/internal";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import {
 	FluidObject,
@@ -23,8 +24,9 @@ import {
 	toFluidHandleInternal,
 } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils";
-import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
-import type { ISharedMap, SharedDirectory } from "@fluidframework/map";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import type { ISharedMap } from "@fluidframework/map";
+import type { SharedDirectory } from "@fluidframework/map/internal";
 import type { SharedMatrix } from "@fluidframework/matrix";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
 import type { ConsensusQueue } from "@fluidframework/ordered-collection";

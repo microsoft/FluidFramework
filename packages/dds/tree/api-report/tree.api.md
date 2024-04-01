@@ -503,19 +503,19 @@ export interface FieldMapObject<TChild> {
 
 // @public @sealed
 export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types extends ImplicitAllowedTypes = ImplicitAllowedTypes> {
-    constructor(kind: Kind, allowedTypes: Types);
-    // (undocumented)
+    constructor(
+    kind: Kind,
+    allowedTypes: Types);
     readonly allowedTypes: Types;
-    // (undocumented)
+    get allowedTypeSet(): ReadonlySet<TreeNodeSchema>;
     readonly kind: Kind;
     protected _typeCheck?: MakeNominal;
 }
 
 // @beta
-export interface FieldSchemaUnsafe<out Kind extends FieldKind, out Types extends Unenforced<ImplicitAllowedTypes>> {
-    // (undocumented)
+export interface FieldSchemaUnsafe<out Kind extends FieldKind, out Types extends Unenforced<ImplicitAllowedTypes>> extends FieldSchema<Kind, any> {
     readonly allowedTypes: Types;
-    // (undocumented)
+    readonly allowedTypeSet: ReadonlySet<TreeNodeSchema>;
     readonly kind: Kind;
 }
 
@@ -1087,7 +1087,7 @@ export interface ITreeCheckout extends AnchorLocator {
 }
 
 // @internal
-export interface ITreeCheckoutFork extends ITreeCheckout {
+export interface ITreeCheckoutFork extends ITreeCheckout, IDisposable {
     rebaseOnto(view: ITreeCheckout): void;
 }
 
@@ -1672,12 +1672,24 @@ export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
     readonly type: string;
 }
 
-// @internal (undocumented)
-export interface SharedTreeOptions extends Partial<ICodecOptions> {
-    forest?: ForestType;
-    // (undocumented)
-    treeEncodeType?: TreeCompressionStrategy;
+// @internal
+export interface SharedTreeFormatOptions {
+    formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
+    treeEncodeType: TreeCompressionStrategy;
 }
+
+// @internal
+export const SharedTreeFormatVersion: {
+    readonly v1: 1;
+};
+
+// @internal
+export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
+
+// @internal (undocumented)
+export type SharedTreeOptions = Partial<ICodecOptions> & Partial<SharedTreeFormatOptions> & {
+    forest?: ForestType;
+};
 
 // @internal
 export function singletonSchema<TScope extends string, TName extends string | number>(factory: SchemaFactory<TScope, TName>, name: TName): TreeNodeSchemaClass<ScopedSchemaName<TScope, TName>, NodeKind.Object, object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {

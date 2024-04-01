@@ -17,7 +17,7 @@ import {
 	toFluidHandleErased,
 } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils";
 import {
 	ICreateBlobResponse,

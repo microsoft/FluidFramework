@@ -11,7 +11,7 @@ import type { IClientDetails } from '@fluidframework/protocol-definitions';
 import type { IDeltaManager } from '@fluidframework/container-definitions';
 import type { IDisposable } from '@fluidframework/core-interfaces';
 import type { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import type { IDocumentStorageService } from '@fluidframework/driver-definitions';
+import type { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
 import type { IEvent } from '@fluidframework/core-interfaces';
 import type { IEventProvider } from '@fluidframework/core-interfaces';
 import type { IFluidHandle } from '@fluidframework/core-interfaces';

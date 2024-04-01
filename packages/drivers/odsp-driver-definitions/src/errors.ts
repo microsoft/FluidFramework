@@ -3,11 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-	DriverError,
-	DriverErrorTypes,
-	IDriverErrorBase,
-} from "@fluidframework/driver-definitions";
+import { DriverErrorTypes, IDriverErrorBase } from "@fluidframework/driver-definitions";
+import { DriverError } from "@fluidframework/driver-definitions/internal";
 
 /**
  * ODSP Error types.

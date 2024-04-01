@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime, IGCRuntimeOptions } from "@fluidframework/container-runtime";
 import { toFluidHandleInternal } from "@fluidframework/core-interfaces";
 import { delay } from "@fluidframework/core-utils";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerContext, IRuntime } from "@fluidframework/container-definitions";
+import { IContainerContext, IRuntime } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
 	DefaultSummaryConfiguration,

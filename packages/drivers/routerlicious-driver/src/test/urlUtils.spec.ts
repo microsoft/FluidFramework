@@ -5,7 +5,7 @@
 
 import assert from "assert";
 
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { ISession } from "@fluidframework/server-services-client";
 
 import { getDiscoveredFluidResolvedUrl, replaceDocumentIdInPath } from "../urlUtils.js";
