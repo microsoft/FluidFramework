@@ -81,11 +81,6 @@ export interface IFluidHandleInternal<
 	readonly absolutePath: string;
 
 	/**
-	 * Flag indicating whether or not the entity has services attached.
-	 */
-	readonly isAttached: boolean;
-
-	/**
 	 * Runs through the graph and attach the bounded handles.
 	 */
 	attachGraph(): void;
