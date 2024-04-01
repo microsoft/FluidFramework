@@ -6,8 +6,7 @@
 import type { IContainer } from "@fluidframework/container-definitions";
 import { ContainerTelemetryManager } from "../container/index.js";
 import { ContainerEventTelemetryProducer } from "../container/telemetryProducer.js";
-import type { ApplicationInsights } from "@microsoft/applicationinsights-web";
-import { AppInsightsTelemetryConsumer, type ITelemetryConsumer } from "../common/index.js";
+import { type ITelemetryConsumer } from "../common/index.js";
 import type { IFluidContainer } from "@fluidframework/fluid-static";
 
 /**
@@ -25,20 +24,6 @@ export interface TelemetryConfig {
 	 */
 	consumers: ITelemetryConsumer[];
 }
-
-/**
- * Creates an external telemetry consumer that will send telemetry to Azure Application Insights
- *
- * @param client - An instance of an Azure Application Insights client {@link @microsoft/applicationinsights-web#ApplicationInsights}
- * The App Insights instance must be initialized before being provided, which can be done via {@link @microsoft/applicationinsights-web#ApplicationInsights.loadAppInsights }
- *
- * @beta
- */
-export const createAppInsightsTelemetryConsumer = (
-	client: ApplicationInsights,
-): ITelemetryConsumer => {
-	return new AppInsightsTelemetryConsumer(client);
-};
 
 /**
  * Starts creating {@link IExternalTelemetry} by transforming raw system events emitted by the specified container

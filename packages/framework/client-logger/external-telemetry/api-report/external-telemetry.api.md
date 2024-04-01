@@ -4,7 +4,6 @@
 
 ```ts
 
-import type { ApplicationInsights } from '@microsoft/applicationinsights-web';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import type { IFluidContainer } from '@fluidframework/fluid-static';
 
@@ -53,9 +52,6 @@ export const ContainerTelemetryEventNames: {
 };
 
 // @beta
-export const createAppInsightsTelemetryConsumer: (client: ApplicationInsights) => ITelemetryConsumer;
-
-// @beta
 export type ExternalTelemetryEventName = ContainerTelemetryEventName;
 
 // @beta
@@ -83,7 +79,7 @@ export const startTelemetry: (config: TelemetryConfig) => void;
 // @beta
 export interface TelemetryConfig {
     consumers: ITelemetryConsumer[];
-    container: IFluidContainer;
+    container?: IFluidContainer;
 }
 
 // (No @packageDocumentation comment for this package)

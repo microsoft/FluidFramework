@@ -79,7 +79,6 @@
 	},
 	"dependencies": {
 		"@fluidframework/fluid-static": "workspace:2.0.0-rc.3.0.0",
-		"@microsoft/applicationinsights-web": "^2.8.11",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
@@ -91,6 +90,7 @@
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:2.0.0-rc.3.0.0",
 		"@microsoft/api-extractor": "^7.42.3",
+		"@microsoft/applicationinsights-web": "^2.8.16",
 		"@types/chai": "^4.0.0",
 		"@types/mocha": "^9.1.1",
 		"@types/uuid": "^9.0.2",

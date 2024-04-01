@@ -40,14 +40,25 @@ const appInsightsClient = new ApplicationInsights({
 // Initializes the App Insights client. Without this, logs will not be sent to Azure.
 appInsightsClient.loadAppInsights();
 
+class AppInsightsTelemetryConsumer implements ITelemetryConsumer {
+			constructor(private readonly appInsightsClient: ApplicationInsights) {}
+
+			consume(event: IExternalTelemetry) {
+				this.appInsightsClient.trackEvent({
+					name: event.eventName,
+					properties: event,
+				});
+			}
+		}
+
 // Create the telemetry manager config object(s)
 const telemetryConfig: TelemetryConfig = {
 			container: myAppContainer,
-			consumers: [createAppInsightsTelemetryConsumer(appInsightsClient)],
+			consumers: [new AppInsightsTelemetryConsumer(appInsightsClient)],
 		};
 
 // Start Telemetry
-startTelemetry(telemetryManagerConfig);
+startTelemetry(telemetryConfig);
 
 // Done!
 ```

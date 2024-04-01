@@ -119,10 +119,6 @@ export interface ContainerDisconnectedTelemetry extends IContainerTelemetry {
  * {@link @fluidframework/container-definitions#IContainerEvents} which is emitted when the {@link @fluidframework/container-definitions#IContainer}
  * is closed, which means that instance of the container accepts no more changes.
  *
- * @remarks Listener parameters:
- *
- * - `error`: If the container was closed due to error, this will contain details about the error that caused it.
- *
  * @see {@link @fluidframework/container-definitions#IContainer.close}
  *
  * @beta

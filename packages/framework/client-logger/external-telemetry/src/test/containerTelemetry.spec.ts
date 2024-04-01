@@ -11,11 +11,7 @@ import type {
 	IContainerEvents,
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import {
-	createAppInsightsTelemetryConsumer,
-	startTelemetry,
-	TelemetryConfig,
-} from "../factory/index.js";
+import { startTelemetry, TelemetryConfig } from "../factory/index.js";
 import { ApplicationInsights } from "@microsoft/applicationinsights-web";
 import { ContainerSystemEventNames } from "../container/containerSystemEvents.js";
 import {
@@ -34,6 +30,7 @@ import {
 	createFluidContainer,
 	type IRootDataObject,
 } from "@fluidframework/fluid-static";
+import type { IExternalTelemetry, ITelemetryConsumer } from "../index.js";
 /**
  * Mock {@link @fluidframework/container-definitions#IContainer} for use in tests.
  */
@@ -102,13 +99,25 @@ describe("External container telemetry", () => {
 					"InstrumentationKey=abcdefgh-ijkl-mnop-qrst-uvwxyz6ffd9c;IngestionEndpoint=https://westus2-2.in.applicationinsights.azure.com/;LiveEndpoint=https://westus2.livediagnostics.monitor.azure.com/",
 			},
 		});
+
 		trackEventSpy = spy(appInsightsClient, "trackEvent");
 		mockContainer = new MockContainer() as unknown as IContainer;
 		mockFluidContainer = createMockFluidContainer(mockContainer);
 
+		class AppInsightsTelemetryConsumer implements ITelemetryConsumer {
+			constructor(private readonly appInsightsClient: ApplicationInsights) {}
+
+			consume(event: IExternalTelemetry) {
+				this.appInsightsClient.trackEvent({
+					name: event.eventName,
+					properties: event,
+				});
+			}
+		}
+
 		telemetryConfig = {
 			container: mockFluidContainer,
-			consumers: [createAppInsightsTelemetryConsumer(appInsightsClient)],
+			consumers: [new AppInsightsTelemetryConsumer(appInsightsClient)],
 		};
 	});
 

@@ -18,8 +18,4 @@ export {
 	ContainerAttachingTelemetry,
 	ContainerAttachedTelemetry,
 } from "./container/index.js";
-export {
-	startTelemetry,
-	createAppInsightsTelemetryConsumer,
-	TelemetryConfig,
-} from "./factory/index.js";
+export { startTelemetry, TelemetryConfig } from "./factory/index.js";

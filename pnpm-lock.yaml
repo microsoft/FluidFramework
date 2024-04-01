@@ -7797,7 +7797,7 @@ importers:
       '@fluidframework/driver-definitions': workspace:2.0.0-rc.3.0.0
       '@fluidframework/fluid-static': workspace:2.0.0-rc.3.0.0
       '@microsoft/api-extractor': ^7.42.3
-      '@microsoft/applicationinsights-web': ^2.8.11
+      '@microsoft/applicationinsights-web': ^2.8.16
       '@types/chai': ^4.0.0
       '@types/mocha': ^9.1.1
       '@types/uuid': ^9.0.2
@@ -7811,7 +7811,6 @@ importers:
       uuid: ^9.0.0
     dependencies:
       '@fluidframework/fluid-static': link:../../fluid-static
-      '@microsoft/applicationinsights-web': 2.8.16_tslib@1.14.1
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -7822,6 +7821,7 @@ importers:
       '@fluidframework/container-definitions': link:../../../common/container-definitions
       '@fluidframework/driver-definitions': link:../../../common/driver-definitions
       '@microsoft/api-extractor': 7.42.3
+      '@microsoft/applicationinsights-web': 2.8.16_tslib@1.14.1
       '@types/chai': 4.3.11
       '@types/mocha': 9.1.1
       '@types/uuid': 9.0.7
