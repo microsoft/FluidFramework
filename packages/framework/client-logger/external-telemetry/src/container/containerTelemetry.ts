@@ -4,7 +4,7 @@
  */
 
 import { IExternalTelemetry } from "../common/index.js";
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { type ICriticalContainerError } from "@fluidframework/container-definitions/internal";
 
 /**
  * This file contains the types for container telemetry that can be produced.

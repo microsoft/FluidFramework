@@ -10,7 +10,7 @@ import type {
 	IContainer,
 	IContainerEvents,
 	ICriticalContainerError,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import { startTelemetry, TelemetryConfig } from "../factory/index.js";
 import { ApplicationInsights } from "@microsoft/applicationinsights-web";
 import { ContainerSystemEventNames } from "../container/containerSystemEvents.js";
@@ -18,7 +18,7 @@ import {
 	ContainerTelemetryEventNames,
 	type ContainerConnectedTelemetry,
 } from "../container/index.js";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import type {
 	ContainerAttachedTelemetry,
 	ContainerAttachingTelemetry,
@@ -29,7 +29,7 @@ import {
 	IFluidContainer,
 	createFluidContainer,
 	type IRootDataObject,
-} from "@fluidframework/fluid-static";
+} from "@fluidframework/fluid-static/internal";
 import type { IExternalTelemetry, ITelemetryConsumer } from "../index.js";
 /**
  * Mock {@link @fluidframework/container-definitions#IContainer} for use in tests.

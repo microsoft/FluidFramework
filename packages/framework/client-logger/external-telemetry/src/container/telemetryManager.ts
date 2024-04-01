@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IContainer, type ICriticalContainerError } from "@fluidframework/container-definitions";
+import {
+	type IContainer,
+	type ICriticalContainerError,
+} from "@fluidframework/container-definitions/internal";
 import { IContainerTelemetry } from "./containerTelemetry.js";
 import { ContainerEventTelemetryProducer } from "./telemetryProducer.js";
 import { ITelemetryConsumer } from "../common/index.js";

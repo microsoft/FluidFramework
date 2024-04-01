@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { IContainer } from "@fluidframework/container-definitions";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerTelemetryManager } from "../container/index.js";
 import { ContainerEventTelemetryProducer } from "../container/telemetryProducer.js";
 import { type ITelemetryConsumer } from "../common/index.js";
-import type { IFluidContainer } from "@fluidframework/fluid-static";
+import type { IFluidContainer } from "@fluidframework/fluid-static/internal";
 
 /**
  * Configuration object for subscribing to {@link IExternalTelemetry} and consuming said telemetry via one or more {@link ITelemetryConsumer}

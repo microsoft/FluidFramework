@@ -4,10 +4,10 @@
  */
 
 import {
-	IContainer,
-	IContainerEvents,
+	type IContainer,
+	type IContainerEvents,
 	type ICriticalContainerError,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import {
 	ContainerConnectedTelemetry,
 	ContainerTelemetryEventNames,

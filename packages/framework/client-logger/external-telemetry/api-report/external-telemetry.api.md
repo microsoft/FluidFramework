@@ -4,8 +4,8 @@
 
 ```ts
 
-import { ICriticalContainerError } from '@fluidframework/container-definitions';
-import type { IFluidContainer } from '@fluidframework/fluid-static';
+import { ICriticalContainerError } from '@fluidframework/container-definitions/internal';
+import type { IFluidContainer } from '@fluidframework/fluid-static/internal';
 
 // @beta
 export interface ContainerAttachedTelemetry extends IContainerTelemetry {
