@@ -18,12 +18,7 @@ import type {
 	OdspResourceTokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { ITestDriver, OdspEndpoint } from "@fluidframework/test-driver-definitions";
-import {
-	OdspTokenConfig,
-	OdspTokenManager,
-	getMicrosoftConfiguration,
-	odspTokensCache,
-} from "@fluidframework/tool-utils";
+import { OdspTokenConfig, OdspTokenManager, getMicrosoftConfiguration, odspTokensCache } from "@fluidframework/tool-utils/internal";
 import { compare } from "semver";
 
 import { OdspDriverApi, OdspDriverApiType } from "./odspDriverApi.js";

@@ -7,7 +7,7 @@
 
 /* eslint-disable unicorn/no-null */
 
-import { SharedCell } from "@fluidframework/cell";
+import { SharedCell } from "@fluidframework/cell/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";

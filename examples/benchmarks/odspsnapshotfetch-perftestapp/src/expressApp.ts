@@ -5,12 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { type IOdspTokens, getServer } from "@fluidframework/odsp-doclib-utils/internal";
-import {
-	OdspTokenConfig,
-	OdspTokenManager,
-	getMicrosoftConfiguration,
-	odspTokensCache,
-} from "@fluidframework/tool-utils";
+import { OdspTokenConfig, OdspTokenManager, getMicrosoftConfiguration, odspTokensCache } from "@fluidframework/tool-utils/internal";
 import express, { type Response } from "express";
 import webpack from "webpack";
 import webpackDevMiddleware from "webpack-dev-middleware";
