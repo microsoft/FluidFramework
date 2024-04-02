@@ -147,7 +147,8 @@ export const treeNodeApi: TreeNodeApi = {
 		// To find the associated developer-facing "view key", we need to look up the field associated with
 		// the stored key from the flex-domain, and get view key its simple-domain counterpart was created with.
 		const storedKey = treeNodeApi.storedKey(node);
-		const viewKey = getViewKeyFromStoredKey(parent, storedKey);
+		const parentSchema = treeNodeApi.schema(parent);
+		const viewKey = getViewKeyFromStoredKey(parentSchema, storedKey);
 		return viewKey;
 	},
 	storedKey: (node: TreeNode): StoredKey | number => {
@@ -198,12 +199,14 @@ export const treeNodeApi: TreeNodeApi = {
 };
 
 /**
- * TODO
+ * Given a node schema, gets the view key corresponding with the provided {@link StoredKey | stored key}.
  */
-function getViewKeyFromStoredKey(tree: TreeNode, storedKey: StoredKey | number): string | number {
+function getViewKeyFromStoredKey(
+	schema: TreeNodeSchema,
+	storedKey: StoredKey | number,
+): string | number {
 	// Only object nodes have the concept of a "stored key", differentiated from the developer-facing "view key".
 	// For any other kind of node, the stored key and the view key are the same.
-	const schema = treeNodeApi.schema(tree);
 	if (schema.kind !== NodeKind.Object) {
 		return storedKey;
 	}
