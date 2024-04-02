@@ -40,7 +40,7 @@ interface SharedTreeSchemaNode {
 	/**
 	 * Name of the SharedTree schema.
 	 */
-	name?: string;
+	name: string;
 
 	/**
 	 * A type of schema. Should be one of the following:
@@ -52,10 +52,9 @@ interface SharedTreeSchemaNode {
 
 	/**
 	 * Types allowed (e.g., string, number, boolean, handle & etc.) inside the node.
-	 * - LeafNode: String.
 	 * - InternalNode: `Record<string, string>`.
 	 */
-	allowedTypes: string | Record<string, string>;
+	allowedTypes?: string | Record<string, string>;
 }
 
 /**
