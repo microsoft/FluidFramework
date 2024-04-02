@@ -22,7 +22,7 @@ import { LocalResolver } from '@fluidframework/local-driver/internal';
 import { OdspDocumentServiceFactory } from '@fluidframework/odsp-driver/internal';
 import { OdspDriverUrlResolver } from '@fluidframework/odsp-driver/internal';
 import { OdspEndpoint } from '@fluidframework/test-driver-definitions';
-import { RouterliciousDocumentServiceFactory } from '@fluidframework/routerlicious-driver';
+import { RouterliciousDocumentServiceFactory } from '@fluidframework/routerlicious-driver/internal';
 import { RouterliciousEndpoint } from '@fluidframework/test-driver-definitions';
 import { TestDriverTypes } from '@fluidframework/test-driver-definitions';
 

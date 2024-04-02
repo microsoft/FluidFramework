@@ -4,9 +4,9 @@
 
 ```ts
 
-import * as agentScheduler from '@fluidframework/agent-scheduler';
+import * as agentScheduler from '@fluidframework/agent-scheduler/internal';
 import { BaseContainerRuntimeFactory } from '@fluidframework/aqueduct/internal';
-import * as cell from '@fluidframework/cell';
+import * as cell from '@fluidframework/cell/internal';
 import { ContainerRuntime } from '@fluidframework/container-runtime/internal';
 import { ContainerRuntimeFactoryWithDefaultDataStore } from '@fluidframework/aqueduct/internal';
 import * as counter from '@fluidframework/counter/internal';
