@@ -197,17 +197,17 @@ export const treeNodeApi: TreeNodeApi = {
  */
 export interface TreeChangeEvents {
 	/**
-	 * Emitted by a node when:
+	 * Emitted by a node when a batch of changes is applied to it, where a change is:
 	 *
-	 * - The content of one or more of the node's properties changes (i.e., the property now contains a new node, or
-	 * nothing if it previously contained a node).
+	 * - For an object node, when the value of one of its properties changes (i.e., the property's value is set
+	 * to something else, including `undefined`).
 	 *
 	 * - For an array node, when an element is added, removed, or moved.
 	 *
-	 * - For a map node, when a key is added, updated, or removed.
+	 * - For a map node, when an entry is added, updated, or removed.
 	 *
 	 * @remarks
-	 * In particular, this event is not raised when:
+	 * This event is not raised when:
 	 *
 	 * - Properties of a child node change. Notably, updates to an array node or a map node (like adding or removing
 	 * elements/entries) will raise this event on the array/map node itself, but not on the node that contains the
@@ -215,8 +215,6 @@ export interface TreeChangeEvents {
 	 *
 	 * - The node is moved to a different location in the tree or removed from the tree.
 	 * In this case the event is raised on the _parent_ node, not the node itself.
-	 *
-	 * Also note that value nodes do not have properties (child nodes), so this event is never raised for them.
 	 *
 	 * For remote edits, this event is not guaranteed to occur in the same order or quantity that it did in
 	 * the client that made the original edit.
@@ -244,8 +242,6 @@ export interface TreeChangeEvents {
 	 *
 	 * It may fire at a time when the change(s) that triggered it are not yet visible if the listener inspects the tree.
 	 * In that case, it is guaranteed to fire again after the change(s) _are_ visible to the listener.
-	 *
-	 * Also note that value nodes do not have properties (child nodes), so this event is never raised for them.
 	 *
 	 * For remote edits, this event is not guaranteed to occur in the same order or quantity that it did in
 	 * the client that made the original edit.
