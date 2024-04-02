@@ -260,6 +260,19 @@ export function isCompatVersionBelowMinVersion(minVersion: string, config: Compa
 	return semver.compare(compatVersion, minReqVersion) < 0;
 }
 
+// Helper function for genCrossVersionCompatConfig().
+function genCompatConfig(createVersion: string, loadVersion: string): CompatConfig {
+	return {
+		name: `compat cross version - create with ${createVersion} + load with ${loadVersion}`,
+		kind: CompatKind.CrossVersion,
+		// Note: `compatVersion` is used to determine what versions need to be installed.
+		// By setting it to `resolvedCreateVersion` we ensure both versions will eventually be
+		// installed, since we switch the create/load versions in the test permutations.
+		compatVersion: createVersion,
+		createVersion,
+		loadVersion,
+	};
+}
 /**
  * Generates the cross version compat config permutations.
  * This will resolve to one permutation where `CompatConfig.createVersion` is set to the current version and
@@ -272,41 +285,26 @@ export function isCompatVersionBelowMinVersion(minVersion: string, config: Compa
  * @internal
  */
 export const genCrossVersionCompatConfig = (): CompatConfig[] => {
-	const allDefaultDeltaVersions = defaultCompatVersions.currentVersionDeltas.map((delta) => ({
-		base: pkgVersion,
-		delta,
-	}));
+	const currentVersion = getRequestedVersion(pkgVersion, 0);
 
-	return (
-		allDefaultDeltaVersions
-			.map((createVersion) =>
-				allDefaultDeltaVersions.map((loadVersion) => {
-					const resolvedCreateVersion = getRequestedVersion(
-						createVersion.base,
-						createVersion.delta,
-						/** adjustMajorPublic */ true,
-					);
-					const resolvedLoadVersion = getRequestedVersion(
-						loadVersion.base,
-						loadVersion.delta,
-						/** adjustMajorPublic */ true,
-					);
-					return {
-						name: `compat cross version - create with ${resolvedCreateVersion} + load with ${resolvedLoadVersion}`,
-						kind: CompatKind.CrossVersion,
-						// Note: `compatVersion` is used to determine what versions need to be installed.
-						// By setting it to `resolvedCreateVersion` we ensure both versions will eventually be
-						// installed, since we switch the create/load versions in the test permutations.
-						compatVersion: resolvedCreateVersion,
-						createVersion: resolvedCreateVersion,
-						loadVersion: resolvedLoadVersion,
-					};
-				}),
-			)
-			.reduce((a, b) => a.concat(b))
-			// Filter to ensure we don't create/load with the same version.
-			.filter((config) => config.compatVersion !== config.loadVersion)
-	);
+	// Build a list of all the versions we want to test, except current version.
+	const allDefaultDeltaVersions = defaultCompatVersions.currentVersionDeltas
+		.filter((delta) => delta !== 0) // skip current build
+		.map((delta) => getRequestedVersion(pkgVersion, delta));
+	allDefaultDeltaVersions.push(...defaultCompatVersions.ltsVersions);
+
+	// Build all combos of (current verison, prior version) & (prior version, current version)
+	const configs: CompatConfig[] = [];
+
+	for (const c of allDefaultDeltaVersions) {
+		configs.push(genCompatConfig(currentVersion, c));
+	}
+
+	for (const c of allDefaultDeltaVersions) {
+		configs.push(genCompatConfig(c, currentVersion));
+	}
+
+	return configs;
 };
 
 export const configList = new Lazy<readonly CompatConfig[]>(() => {
