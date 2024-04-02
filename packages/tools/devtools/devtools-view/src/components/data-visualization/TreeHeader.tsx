@@ -20,7 +20,6 @@ export interface TreeHeaderProps extends HasLabel {
 	 */
 	nodeTypeMetadata?: string | undefined;
 
-	// TODO: metadata
 	metadata?: string | undefined;
 
 	/**
