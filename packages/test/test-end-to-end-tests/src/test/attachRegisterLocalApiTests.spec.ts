@@ -35,7 +35,7 @@ If this stops working in the future, I'd advice to get rid of tests that need to
 */
 function onAttachChange(
 	context: IFluidDataStoreContext,
-	stateToNotify: AttachState.Attaching | AttachState.Attached,
+	stateToNotify: typeof AttachState.Attaching | typeof AttachState.Attached,
 	callback: () => void,
 ) {
 	const oldApi = (context as any).setAttachState.bind(context);
@@ -742,8 +742,8 @@ describeCompat(
 
 		it("Attach events on dataStores", async () => {
 			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
-			let dataStoreContextAttachState = AttachState.Detached;
-			let dataStoreRuntimeAttachState = AttachState.Detached;
+			let dataStoreContextAttachState: AttachState = AttachState.Detached;
+			let dataStoreRuntimeAttachState: AttachState = AttachState.Detached;
 			onAttachChange(defaultDataStore.context, AttachState.Attaching, () => {
 				assert.strictEqual(
 					dataStoreContextAttachState,
@@ -826,7 +826,7 @@ describeCompat(
 				defaultDataStore.context.containerRuntime,
 			);
 
-			let dataStore1AttachState = AttachState.Detached;
+			let dataStore1AttachState: AttachState = AttachState.Detached;
 			onAttachChange(dataStore1.context, AttachState.Attaching, () => {
 				assert.strictEqual(
 					dataStore1AttachState,
@@ -891,8 +891,8 @@ describeCompat(
 			const rootMapOfDataStore1 = await dataStore1.getSharedObject<ISharedMap>(mapId1);
 			rootMapOfDataStore1.set("dataStore2", dataStore2.handle);
 
-			let dataStore1AttachState = AttachState.Detached;
-			let dataStore2AttachState = AttachState.Detached;
+			let dataStore1AttachState: AttachState = AttachState.Detached;
+			let dataStore2AttachState: AttachState = AttachState.Detached;
 			onAttachChange(dataStore1.context, AttachState.Attaching, () => {
 				assert.strictEqual(
 					dataStore1AttachState,
