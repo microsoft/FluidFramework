@@ -1189,8 +1189,8 @@ export function mixinHandle<
 				state.client.dataStoreRuntime.IFluidHandleContext,
 			);
 			const useHandle: UseHandle = { ...operation, type: "useHandle", handle };
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-			return model.reducer(state, useHandle as any);
+			// The cast is needed to allow types with handles to be passed through.
+			return model.reducer(state, useHandle as unknown as TOperation);
 		}
 		return model.reducer(state, operation as TOperation);
 	};
