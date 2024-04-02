@@ -20,32 +20,49 @@ export const ContainerTelemetryEventNames = {
 	 * Name for the container telemetry event that is intended to be produced from the IFluidContainer "connected" {@link @fluidframework/fluid-static#IFluidContainerEvents | system event}
 	 *
 	 * @see {@link ContainerConnectedTelemetry}
+	 *
+	 *
+	 * @beta
 	 */
 	CONNECTED: "fluidframework.container.connected",
 	/**
 	 * Name for the container telemetry event that is intended to be produced from the IFluidContainer "disconnected" {@link @fluidframework/fluid-static#IFluidContainerEvents | system event}
 	 *
 	 * @see {@link ContainerDisconnectedTelemetry}
+	 *
+	 *
+	 * @beta
 	 */
 	DISCONNECTED: "fluidframework.container.disconnected",
 	/**
 	 * Name for the container telemetry event that is intended to be produced from the IFluidContainer "saved" {@link @fluidframework/fluid-static#IFluidContainerEvents | system event}
 	 *
 	 * @see {@link ContainerSavedTelemetry}
+	 *
+	 * @beta
 	 */
 	SAVED: "fluidframework.container.saved",
 	/**
 	 * Name for the container telemetry event that is intended to be produced from the IFluidContainer "dirty" {@link @fluidframework/fluid-static#IFluidContainerEvents | system event}
 	 *
 	 * @see {@link ContainerDirtyTelemetry}
+	 *
+	 * @beta
 	 */
 	DIRTY: "fluidframework.container.dirty",
 	/**
 	 * Name for the container telemetry event that is intended to be produced from the IFluidContainer "disposed" {@link @fluidframework/fluid-static#IFluidContainerEvents | system event}
 	 *
 	 * @see {@link ContainerDisposedTelemetry}
+	 *
+	 * @beta
 	 */
 	DISPOSED: "fluidframework.container.disposed",
+	/**
+	 * Synthetic telemetry that is not created from any underlying container system event. It is used to keep a pulse check on a live container
+	 * @internal
+	 */
+	HEARTBEAT: "fluidframework.container.heartbeat",
 } as const;
 
 /**
@@ -145,4 +162,11 @@ export interface ContainerDisposedTelemetry extends IContainerTelemetry {
 	 * {@link @fluidframework/fluid-static#IFluidContainer."dispose"}), this will contain details about the error that caused it.
 	 */
 	error?: ICriticalContainerError;
+}
+
+/**
+ * @internal
+ */
+export interface ContainerHeartbeatTelemetry extends IContainerTelemetry {
+	eventName: "fluidframework.container.heartbeat";
 }

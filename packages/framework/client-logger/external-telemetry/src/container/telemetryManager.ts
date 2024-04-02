@@ -4,7 +4,7 @@
  */
 
 import { type ICriticalContainerError } from "@fluidframework/container-definitions";
-import { IContainerTelemetry } from "./containerTelemetry.js";
+import { IContainerTelemetry, type ContainerHeartbeatTelemetry } from "./containerTelemetry.js";
 import { ContainerEventTelemetryProducer } from "./telemetryProducer.js";
 import { ITelemetryConsumer } from "../common/index.js";
 import {
@@ -20,12 +20,15 @@ import type { IFluidContainer } from "@fluidframework/fluid-static";
  * @internal
  */
 export class ContainerTelemetryManager {
+	private static HEARTBEAT_EMISSION_INTERNAL_MS = 60000;
+
 	constructor(
 		private readonly container: IFluidContainer,
 		private readonly telemetryProducer: ContainerEventTelemetryProducer,
 		private readonly telemetryConsumers: ITelemetryConsumer[],
 	) {
 		this.setupEventHandlers();
+		this.setupHeartbeatTelemetryEmission();
 	}
 
 	/**
@@ -50,6 +53,21 @@ export class ContainerTelemetryManager {
 				this.handleContainerSystemEvent(IFluidContainerSystemEventNames.DISPOSED, {
 					error,
 				}),
+		);
+	}
+
+	/**
+	 * Sets up the synthetic container heartbeat telemetry to be emitted on a given time interval.
+	 */
+	private setupHeartbeatTelemetryEmission() {
+		const createAndConsumeHeartbeatTelemetry = () => {
+			const telemetry: ContainerHeartbeatTelemetry =
+				this.telemetryProducer.produceHeartbeatTelemetry();
+			this.telemetryConsumers.forEach((consumer) => consumer.consume(telemetry));
+		};
+		setInterval(
+			createAndConsumeHeartbeatTelemetry,
+			ContainerTelemetryManager.HEARTBEAT_EMISSION_INTERNAL_MS,
 		);
 	}
 

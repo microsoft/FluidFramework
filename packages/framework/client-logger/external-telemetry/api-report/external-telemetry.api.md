@@ -48,6 +48,7 @@ export const ContainerTelemetryEventNames: {
     readonly SAVED: "fluidframework.container.saved";
     readonly DIRTY: "fluidframework.container.dirty";
     readonly DISPOSED: "fluidframework.container.disposed";
+    readonly HEARTBEAT: "fluidframework.container.heartbeat";
 };
 
 // @beta

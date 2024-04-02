@@ -9,6 +9,7 @@ import {
 	type ContainerTelemetryEventName,
 	type IContainerTelemetry,
 	type ContainerDisposedTelemetry,
+	type ContainerHeartbeatTelemetry,
 } from "./containerTelemetry.js";
 import {
 	type IFluidContainerSystemEventName,
@@ -46,6 +47,13 @@ export class ContainerEventTelemetryProducer {
 				break;
 		}
 	}
+
+	public produceHeartbeatTelemetry = (): ContainerHeartbeatTelemetry => {
+		return {
+			eventName: "fluidframework.container.heartbeat",
+			containerId: this.containerId,
+		};
+	};
 
 	private produceBaseContainerTelemetry = (
 		eventName: ContainerTelemetryEventName,
