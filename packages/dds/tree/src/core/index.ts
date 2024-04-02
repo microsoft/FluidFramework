@@ -123,7 +123,7 @@ export {
 	TreeStoredSchemaSubscription as TreeStoredSchemaSubscription,
 	MutableTreeStoredSchema,
 	FieldKindIdentifier,
-	FieldKindSpecifier,
+	FieldKindData,
 	TreeTypeSet,
 	TreeStoredSchema,
 	TreeStoredSchemaRepository,
@@ -141,6 +141,8 @@ export {
 	encodeFieldSchema,
 	storedSchemaDecodeDispatcher,
 	ErasedTreeNodeSchemaDataFormat,
+	SchemaAndPolicy,
+	Multiplicity,
 } from "./schema-stored/index.js";
 
 export {
