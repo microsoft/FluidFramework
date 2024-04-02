@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert } from "@fluidframework/core-utils";
 import type {
 	FieldMapObject,
 	JsonableTree,
@@ -102,7 +101,9 @@ function getMapAllowedTypes(
 	// Slice the trailing ` | ` from the `fieldAllowedType`.
 	fieldAllowedTypes = fieldAllowedTypes.slice(0, -3);
 
-	assert(fields !== undefined, "MapNodeStoredSchema fields undefined.");
+	if (fields === undefined) {
+		throw new TypeError("Fields should not be undefined.");
+	}
 
 	let result = "";
 	for (const [fieldKey] of Object.entries(fields)) {
@@ -314,7 +315,9 @@ export function visualizeSharedTreeNodeBySchema(
 	leafAllowedTypes?: string,
 ): VisualSharedTreeNode {
 	if (schema instanceof LeafNodeStoredSchema) {
-		assert(leafAllowedTypes !== undefined, "Leaf node schema should have allowed types.");
+		if (leafAllowedTypes === undefined) {
+			throw new TypeError("Leaf allowed types should not be undefined.");
+		}
 		return visualizeLeafNodeStoredSchema(tree, leafAllowedTypes);
 	} else if (schema instanceof ObjectNodeStoredSchema) {
 		return visualizeObjectNodeStoredSchema(tree, schema, contentSnapshot);
