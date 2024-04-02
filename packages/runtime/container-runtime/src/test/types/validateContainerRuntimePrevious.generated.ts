@@ -2033,6 +2033,30 @@ use_old_VariableDeclaration_agentSchedulerId(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_detectOutboundReferences": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_detectOutboundReferences():
+    TypeOnly<typeof old.detectOutboundReferences>;
+declare function use_current_FunctionDeclaration_detectOutboundReferences(
+    use: TypeOnly<typeof current.detectOutboundReferences>): void;
+use_current_FunctionDeclaration_detectOutboundReferences(
+    get_old_FunctionDeclaration_detectOutboundReferences());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_detectOutboundReferences": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_detectOutboundReferences():
+    TypeOnly<typeof current.detectOutboundReferences>;
+declare function use_old_FunctionDeclaration_detectOutboundReferences(
+    use: TypeOnly<typeof old.detectOutboundReferences>): void;
+use_old_FunctionDeclaration_detectOutboundReferences(
+    get_current_FunctionDeclaration_detectOutboundReferences());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_isRuntimeMessage": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_isRuntimeMessage():
