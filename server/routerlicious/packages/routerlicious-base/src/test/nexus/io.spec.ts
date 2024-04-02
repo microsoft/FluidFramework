@@ -9,6 +9,7 @@ import {
 	IClientJoin,
 	IConnect,
 	IConnected,
+	type ISentSignalMessage,
 	ISequencedDocumentSystemMessage,
 	MessageType,
 	ScopeType,
@@ -726,7 +727,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 				});
 
 				describe("signal count", () => {
-					it("Should store the signal count when throttler is invoked", async () => {
+					it("Should store the signal count when throttler is invoked v1", async () => {
 						const socket = webSocketServer.createConnection();
 						const connectMessage = await connectToServer(
 							testId,
@@ -739,6 +740,40 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						let i = 0;
 						const signalCount = 10;
 						const message = "testSignalMessage";
+						for (; i < signalCount; i++) {
+							socket.send("submitSignal", connectMessage.clientId, [message]);
+						}
+						Sinon.clock.tick(minThrottleCheckInterval + 1);
+						socket.send("submitSignal", connectMessage.clientId, [message]);
+						// wait for throttler to be checked
+						await Sinon.clock.nextAsync();
+
+						const usageData =
+							await testThrottleAndUsageStorageManager.getUsageData(
+								signalUsageStorageId,
+							);
+						assert.equal(usageData.value, signalCount + 1);
+						assert.equal(usageData.clientId, connectMessage.clientId);
+						assert.equal(usageData.tenantId, testTenantId);
+						assert.equal(usageData.documentId, testId);
+					});
+
+					it("Should store the signal count when throttler is invoked v2", async () => {
+						const socket = webSocketServer.createConnection();
+						const connectMessage = await connectToServer(
+							testId,
+							testTenantId,
+							"client",
+							testSecret,
+							socket,
+						);
+
+						let i = 0;
+						const signalCount = 10;
+						const message: ISentSignalMessage = {
+							content: "testSignalMessage",
+							targetClientId: connectMessage.clientId,
+						};
 						for (; i < signalCount; i++) {
 							socket.send("submitSignal", connectMessage.clientId, [message]);
 						}
