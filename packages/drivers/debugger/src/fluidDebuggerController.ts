@@ -16,10 +16,11 @@ import {
 	ISnapshotTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { ReadDocumentStorageServiceBase, ReplayController } from "@fluidframework/replay-driver";
 import {
 	FileSnapshotReader,
 	IFileSnapshot,
+	ReadDocumentStorageServiceBase,
+	ReplayController,
 	SnapshotStorage,
 } from "@fluidframework/replay-driver/internal";
 
