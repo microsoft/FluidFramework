@@ -580,6 +580,7 @@ export class IdCompressor {
 					Math.min(currentCluster.count + finalizeCount, currentCluster.capacity) -
 					1) as FinalCompressedId;
 				if (lastAlignedFinalInCluster > lastKnownFinal) {
+					eagerFinalIdCount = lastAlignedFinalInCluster - (lastKnownFinal + 1);
 					this.sessionIdNormalizer.addFinalIds(
 						(lastKnownFinal + 1) as FinalCompressedId,
 						lastAlignedFinalInCluster,
