@@ -15,14 +15,6 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/index.d.ts"
-			},
-			"require": {
-				"types": "./dist/index.d.ts"
-			}
-		},
-		"./public": {
-			"import": {
 				"types": "./lib/datastore-definitions-public.d.ts"
 			},
 			"require": {

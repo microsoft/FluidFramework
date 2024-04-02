@@ -4,18 +4,20 @@
  */
 
 import { strict as assert } from "assert";
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import { Deferred } from "@fluidframework/core-utils";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
+
 import { DefaultSummaryConfiguration } from "../../containerRuntime.js";
 import {
 	IConnectedEvents,

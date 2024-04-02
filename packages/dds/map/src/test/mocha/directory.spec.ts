@@ -6,17 +6,17 @@
 import { strict as assert } from "node:assert";
 
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
-import { UsageError } from "@fluidframework/telemetry-utils";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 
-import { AttachState } from "@fluidframework/container-definitions";
 import { IDirectoryNewStorageFormat } from "../../directory.js";
 import {
 	IDirectory,
@@ -26,6 +26,7 @@ import {
 	SharedDirectory,
 	SharedMap,
 } from "../../index.js";
+
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 
 export function createConnectedDirectory(

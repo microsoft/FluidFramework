@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import { createInsertOnlyAttributionPolicy } from "../attributionPolicy.js";
+
 import { TestClient } from "./testClient.js";
 
 const localUserLongId = "localUser";

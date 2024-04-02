@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+
 import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
@@ -16,6 +17,7 @@ import {
 import { fail } from "../../../util/index.js";
 import { FullSchemaPolicy } from "../../modular-schema/index.js";
 import { Multiplicity } from "../../multiplicity.js";
+
 import {
 	EncoderCache,
 	FieldEncoder,

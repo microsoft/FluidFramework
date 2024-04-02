@@ -4,20 +4,20 @@
  */
 
 import { strict as assert } from "assert";
+
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IErrorBase } from "@fluidframework/core-interfaces";
-import { Timer } from "@fluidframework/core-utils";
-import {
-	IGarbageCollectionData,
-	IGarbageCollectionDetailsBase,
-} from "@fluidframework/runtime-definitions";
+import { Timer } from "@fluidframework/core-utils/internal";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import { IGarbageCollectionDetailsBase } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockLogger,
 	MonitoringContext,
 	createChildLogger,
 	mixinMonitoringContext,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
+
 import {
 	GCNodeType,
 	GCSummaryStateTracker,
@@ -51,6 +51,7 @@ import {
 import { ContainerRuntimeGCMessage } from "../../messageTypes.js";
 import { pkgVersion } from "../../packageVersion.js";
 import { IContainerRuntimeMetadata } from "../../summary/index.js";
+
 import { createTestConfigProvider } from "./gcUnitTestHelpers.js";
 
 type GcWithPrivates = IGarbageCollector & {

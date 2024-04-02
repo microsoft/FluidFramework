@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -13,7 +14,8 @@ import {
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
+
 import { ISharedMap, IValueChanged, MapFactory, SharedMap } from "../../index.js";
 import {
 	IMapClearLocalOpMetadata,

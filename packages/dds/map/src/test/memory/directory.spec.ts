@@ -4,7 +4,8 @@
  */
 
 import { IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+
 import { ISharedDirectory, SharedDirectory } from "../../index.js";
 
 function createLocalDirectory(id: string): ISharedDirectory {

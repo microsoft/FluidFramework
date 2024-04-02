@@ -4,18 +4,19 @@
  */
 
 import assert from "assert";
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	IAudience,
-	IContainer,
-	IContainerEvents,
 	IDeltaManager,
 	IDeltaManagerEvents,
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IContainer, IContainerEvents } from "@fluidframework/container-definitions/internal";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+
 import { ConnectionState } from "../connectionState.js";
 import { waitContainerToCatchUp } from "../container.js";
 

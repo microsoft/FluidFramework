@@ -4,7 +4,9 @@
  */
 
 import { EventEmitter, TypedEventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
-import { AttachState, IAudience, ILoader } from "@fluidframework/container-definitions";
+import { AttachState, IAudience } from "@fluidframework/container-definitions";
+import { ILoader } from "@fluidframework/container-definitions/internal";
+import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -13,11 +15,7 @@ import {
 	IResponse,
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
-import { IIdCompressor, IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-
-import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannel,
 	IChannelServices,
@@ -26,6 +24,8 @@ import {
 	IDeltaHandler,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor/internal";
 import {
 	IQuorumClients,
 	ISequencedClient,
@@ -35,15 +35,19 @@ import {
 	MessageType,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
+import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
 	FlushMode,
 	IFluidDataStoreChannel,
-	IGarbageCollectionData,
-	ISummaryTreeWithStats,
 	VisibilityState,
-} from "@fluidframework/runtime-definitions";
-import { getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
+} from "@fluidframework/runtime-definitions/internal";
+import {
+	getNormalizedObjectStoragePathParts,
+	mergeStats,
+} from "@fluidframework/runtime-utils/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
+
 import { MockDeltaManager } from "./mockDeltas.js";
 import { MockHandle } from "./mockHandle.js";
 
@@ -110,7 +114,7 @@ type IMockContainerRuntimeSequencedIdAllocationMessage = ISequencedDocumentMessa
 	contents: IMockContainerRuntimeIdAllocationMessage;
 };
 
-interface IMockContainerRuntimeIdAllocationMessage {
+export interface IMockContainerRuntimeIdAllocationMessage {
 	type: "idAllocation";
 	contents: IdCreationRange;
 }
@@ -149,7 +153,10 @@ const makeContainerRuntimeOptions = (
 	...mockContainerRuntimeOptions,
 });
 
-interface IInternalMockRuntimeMessage {
+/**
+ * @alpha
+ */
+export interface IInternalMockRuntimeMessage {
 	content: any;
 	localOpMetadata?: unknown;
 }
@@ -168,7 +175,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	 */
 	protected readonly deltaConnections: MockDeltaConnection[] = [];
 	protected readonly pendingMessages: IMockContainerRuntimePendingMessage[] = [];
-	private readonly outbox: IInternalMockRuntimeMessage[] = [];
+	protected readonly outbox: IInternalMockRuntimeMessage[] = [];
 	private readonly idAllocationOutbox: IInternalMockRuntimeMessage[] = [];
 	/**
 	 * The runtime options this instance is using. See {@link IMockContainerRuntimeOptions}.

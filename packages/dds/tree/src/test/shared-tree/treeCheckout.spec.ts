@@ -4,7 +4,9 @@
  */
 
 import { strict as assert, fail } from "assert";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
+
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	AllowedUpdateType,
 	FieldUpPath,
@@ -26,6 +28,7 @@ import {
 	cursorForJsonableTreeField,
 	intoStoredSchema,
 } from "../../feature-libraries/index.js";
+import { disposeSymbol } from "../../index.js";
 import { ITreeCheckout, TreeContent } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
@@ -627,6 +630,22 @@ describe("sharedTreeView", () => {
 				"N",
 				"O",
 			]);
+		});
+	});
+
+	describe("disposal", () => {
+		itView("forks can be disposed", (view) => {
+			const fork = view.fork();
+			fork[disposeSymbol]();
+		});
+
+		itView("disposed forks cannot be edited or double-disposed", (view) => {
+			const fork = view.fork();
+			fork[disposeSymbol]();
+
+			assert.throws(() => insertFirstNode(fork, "A"));
+			assert.throws(() => fork.updateSchema(intoStoredSchema(numberSequenceRootSchema)));
+			assert.throws(() => fork[disposeSymbol]());
 		});
 	});
 
