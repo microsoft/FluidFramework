@@ -9,8 +9,8 @@ import {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { IJSONSegment } from "@fluidframework/merge-tree";
-import { IJSONRunSegment, SubSequence } from "@fluidframework/sequence";
+import { IJSONSegment } from "@fluidframework/merge-tree/internal";
+import { IJSONRunSegment, SubSequence } from "@fluidframework/sequence/internal";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 
 import { pkgVersion } from "./packageVersion.js";

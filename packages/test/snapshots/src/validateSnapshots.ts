@@ -11,8 +11,8 @@ import {
 	loadContainer,
 	uploadSummary,
 } from "@fluid-internal/replay-tool";
-import { IContainer } from "@fluidframework/container-definitions";
-import { assert } from "@fluidframework/core-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { FileStorageDocumentName } from "@fluidframework/file-driver";
 import { ISequencedDocumentMessage, TreeEntry } from "@fluidframework/protocol-definitions";
 import { IFileSnapshot, StaticStorageDocumentServiceFactory } from "@fluidframework/replay-driver";

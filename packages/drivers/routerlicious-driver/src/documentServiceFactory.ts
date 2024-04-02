@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { getW3CData } from "@fluidframework/driver-base";
 import {
 	FiveDaysMs,
@@ -13,19 +13,19 @@ import {
 	IDocumentStorageServicePolicies,
 	IResolvedUrl,
 	LoaderCachingPolicy,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	RateLimiter,
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	ISession,
 	convertSummaryTreeToWholeSummaryTree,
 } from "@fluidframework/server-services-client";
-import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { ICache, InMemoryCache, NullCache } from "./cache.js";
 import { INormalizedWholeSnapshot } from "./contracts.js";

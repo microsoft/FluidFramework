@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeDetailsLoader } from "@fluidframework/container-definitions";
-import type { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { ICodeDetailsLoader } from "@fluidframework/container-definitions/internal";
+import type {
+	IDocumentServiceFactory,
+	IUrlResolver,
+} from "@fluidframework/driver-definitions/internal";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import {
 	InsecureTinyliciousTokenProvider,
 	InsecureTinyliciousUrlResolver,

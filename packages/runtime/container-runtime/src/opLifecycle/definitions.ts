@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IBatchMessage } from "@fluidframework/container-definitions";
+import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 
 import { CompressionAlgorithms } from "../containerRuntime.js";
 

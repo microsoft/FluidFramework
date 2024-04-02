@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
+import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct/internal";
 import {
 	ICodeDetailsLoader,
 	IContainer,
 	IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
 import { IFluidFileConverter } from "../../codeLoaderBundle";

@@ -5,10 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { delay } from "@fluidframework/core-utils";
-import { IStream } from "@fluidframework/driver-definitions";
+import { delay } from "@fluidframework/core-utils/internal";
+import { IStream } from "@fluidframework/driver-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { OdspDeltaStorageWithCache } from "../odspDeltaStorageService.js";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";

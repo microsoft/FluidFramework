@@ -9,10 +9,11 @@
  */
 
 import { SharedCell } from "@fluidframework/cell";
-import { SharedCounter } from "@fluidframework/counter";
-import { type IDirectory, type ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map";
-import { SharedMatrix } from "@fluidframework/matrix";
-import { SharedString } from "@fluidframework/sequence";
+import { SharedCounter } from "@fluidframework/counter/internal";
+import { type ISharedMap, SharedMap } from "@fluidframework/map";
+import { type IDirectory, SharedDirectory } from "@fluidframework/map/internal";
+import { SharedMatrix } from "@fluidframework/matrix/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
 import type { ISharedTree } from "@fluidframework/tree/internal";
 import { SharedTree, encodeTreeSchema } from "@fluidframework/tree/internal";

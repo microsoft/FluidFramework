@@ -7,8 +7,8 @@
 /// <reference types="node" />
 
 import { FluidObject } from '@fluidframework/core-interfaces';
-import { ICodeDetailsLoader } from '@fluidframework/container-definitions';
-import { IContainer } from '@fluidframework/container-definitions';
+import { ICodeDetailsLoader } from '@fluidframework/container-definitions/internal';
+import { IContainer } from '@fluidframework/container-definitions/internal';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 
@@ -82,7 +82,7 @@ export function validateAndParseTelemetryOptions(format?: string, props?: (strin
 
 // Warnings were encountered during analysis:
 //
-// src/logger/loggerUtils.ts:31:35 - (ae-forgotten-export) The symbol "IFileLogger" needs to be exported by the entry point index.d.ts
+// src/logger/loggerUtils.ts:32:35 - (ae-forgotten-export) The symbol "IFileLogger" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 

@@ -10,11 +10,11 @@ import {
 	IFluidCodeDetails,
 	IHostLoader,
 	ILoaderOptions,
-} from "@fluidframework/container-definitions";
-import { IUrlResolver } from "@fluidframework/driver-definitions";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
+} from "@fluidframework/container-definitions/internal";
+import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
 import { MessageType } from "@fluidframework/protocol-definitions";
-import { SharedString } from "@fluidframework/sequence";
+import { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
@@ -25,7 +25,7 @@ import {
 	TestFluidObjectFactory,
 	createAndAttachContainer,
 	createLoader,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 /**
  * Creates a loader with the given package entries and a delta connection server.
