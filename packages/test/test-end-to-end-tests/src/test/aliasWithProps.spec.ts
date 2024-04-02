@@ -4,11 +4,12 @@
  */
 
 import { strict as assert } from "assert";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
-import type { DataObjectFactory } from "@fluidframework/aqueduct";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import type { DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { FluidObject, IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
-import { type ITestObjectProvider } from "@fluidframework/test-utils";
+import { type ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 interface TestDataObjectTypes {
 	/**

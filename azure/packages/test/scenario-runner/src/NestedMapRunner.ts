@@ -7,8 +7,9 @@ import { AzureClient } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { type ISharedMap, SharedMap } from "@fluidframework/map";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { timeoutPromise } from "@fluidframework/test-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { ScenarioRunner } from "./ScenarioRunner.js";
@@ -47,7 +48,7 @@ export class NestedMapRunner extends ScenarioRunner<
 	NestedMapRunConfig,
 	string
 > {
-	protected runnerClientFilePath: string = "./dist/nestedMapRunnerClient.js";
+	protected runnerClientFilePath: string = "./lib/nestedMapRunnerClient.js";
 
 	constructor(scenarioConfig: NestedMapRunnerConfig) {
 		super({

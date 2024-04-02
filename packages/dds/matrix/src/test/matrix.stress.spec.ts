@@ -4,15 +4,18 @@
  */
 
 import { strict as assert } from "assert";
+
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import { Random } from "best-random";
+
 import { SharedMatrix, SharedMatrixFactory } from "../index.js";
+
 import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 import { expectSize, extract } from "./utils.js";
 

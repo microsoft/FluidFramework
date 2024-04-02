@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
-import { ICodecFamily, ICodecOptions, makeCodecFamily } from "../../codec/index.js";
+
+import { ICodecFamily } from "../../codec/index.js";
 import {
 	ChangeAtomIdMap,
 	ChangeEncodingContext,
@@ -28,7 +29,6 @@ import {
 	RevisionInfo,
 	RevisionMetadataSource,
 	RevisionTag,
-	RevisionTagCodec,
 	TaggedChange,
 	UpPath,
 	emptyDelta,
@@ -55,7 +55,6 @@ import {
 	tryGetFromNestedMap,
 } from "../../util/index.js";
 import {
-	FieldBatchCodec,
 	TreeChunk,
 	chunkFieldSingle,
 	chunkTree,
@@ -63,7 +62,7 @@ import {
 } from "../chunked-forest/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
-import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
+
 import {
 	CrossFieldManager,
 	CrossFieldMap,
@@ -76,11 +75,9 @@ import {
 	NodeExistenceState,
 	RebaseRevisionMetadata,
 } from "./fieldChangeHandler.js";
-import { FlexFieldKind } from "./fieldKind.js";
 import { FieldKindWithEditor, withEditor } from "./fieldKindWithEditor.js";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind.js";
 import { GenericChangeset } from "./genericFieldKindTypes.js";
-import { makeV0Codec } from "./modularChangeCodecs.js";
 import {
 	FieldChange,
 	FieldChangeMap,
@@ -98,25 +95,13 @@ export class ModularChangeFamily
 {
 	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
 
-	public readonly latestCodec: ReturnType<typeof makeV0Codec>;
-
-	public readonly codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>;
+	public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>;
 
 	public constructor(
-		public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-		revisionTagCodec: RevisionTagCodec,
-		fieldBatchCodec: FieldBatchCodec,
-		codecOptions: ICodecOptions,
-		chunkCompressionStrategy?: TreeCompressionStrategy,
+		fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+		public readonly codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
 	) {
-		this.latestCodec = makeV0Codec(
-			fieldKinds,
-			revisionTagCodec,
-			fieldBatchCodec,
-			codecOptions,
-			chunkCompressionStrategy,
-		);
-		this.codecs = makeCodecFamily([[0, this.latestCodec]]);
+		this.fieldKinds = fieldKinds;
 	}
 
 	public get rebaser(): ChangeRebaser<ModularChangeset> {
@@ -1229,7 +1214,7 @@ function isEmptyNodeChangeset(change: NodeChangeset): boolean {
 }
 
 export function getFieldKind(
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 	kind: FieldKindIdentifier,
 ): FieldKindWithEditor {
 	if (kind === genericFieldKind.identifier) {
@@ -1241,7 +1226,7 @@ export function getFieldKind(
 }
 
 export function getChangeHandler(
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 	kind: FieldKindIdentifier,
 ): FieldChangeHandler<unknown> {
 	return getFieldKind(fieldKinds, kind).changeHandler;

@@ -7,7 +7,9 @@
 
 import { take } from "@fluid-private/stochastic-test-utils";
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
+import { IdCompressor } from "../idCompressor.js";
 import {
 	IdCreationRange,
 	OpSpaceCompressedId,
@@ -15,9 +17,9 @@ import {
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
-} from "..//index.js";
-import { IdCompressor } from "../idCompressor.js";
+} from "../index.js";
 import { createSessionId } from "../utilities.js";
+
 import {
 	Client,
 	DestinationClient,
@@ -151,6 +153,7 @@ describe("IdCompressor Perf", () => {
 						firstGenCount,
 						count: numIds,
 						requestedClusterSize: initialClusterCapacity,
+						localIdRanges: [], // no need to populate, as session is remote and compressor would ignore in production
 					},
 				};
 

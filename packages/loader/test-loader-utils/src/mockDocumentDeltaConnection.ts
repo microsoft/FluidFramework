@@ -5,11 +5,11 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDisposable } from "@fluidframework/core-interfaces";
+import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import {
-	IAnyDriverError,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	ConnectionMode,
 	IClientConfiguration,

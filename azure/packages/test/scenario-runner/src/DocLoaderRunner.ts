@@ -5,8 +5,8 @@
 
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IFluidContainer } from "@fluidframework/fluid-static";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { timeoutPromise } from "@fluidframework/test-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import { ScenarioRunner } from "./ScenarioRunner.js";
 import { IRunConfig, IScenarioConfig, IScenarioRunConfig } from "./interface.js";
@@ -35,7 +35,7 @@ export class DocLoaderRunner extends ScenarioRunner<
 	void,
 	IFluidContainer
 > {
-	protected runnerClientFilePath: string = "./dist/docLoaderRunnerClient.js";
+	protected runnerClientFilePath: string = "./lib/docLoaderRunnerClient.js";
 
 	constructor(scenarioConfig: DocLoaderRunnerConfig) {
 		super({

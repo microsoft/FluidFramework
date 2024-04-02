@@ -6,11 +6,13 @@
 import { strict as assert } from "assert";
 import * as fs from "fs";
 import path from "path";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 /* eslint-disable import/no-internal-modules */
 import { createContainerAndExecute, exportFile } from "../exportFile";
 import { getSnapshotFileContent } from "../utils";
+
 import { fluidExport as networkFetchFluidExport } from "./sampleCodeLoaders/networkFetchCodeLoader";
 import { executeResult, fluidExport } from "./sampleCodeLoaders/sampleCodeLoader";
 import { fluidExport as timeoutFluidExport } from "./sampleCodeLoaders/timeoutCodeLoader";

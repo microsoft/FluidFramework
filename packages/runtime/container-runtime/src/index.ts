@@ -11,7 +11,6 @@ export {
 	ISummaryConfigurationDisableHeuristics,
 	IContainerRuntimeOptions,
 	isRuntimeMessage,
-	RuntimeMessage,
 	agentSchedulerId,
 	ContainerRuntime,
 	TombstoneResponseHeaderKey,

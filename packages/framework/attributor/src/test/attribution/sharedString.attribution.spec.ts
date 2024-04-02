@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
+
 import {
 	type AcceptanceCondition,
 	type BaseFuzzTestState,
@@ -25,17 +26,23 @@ import { type IAudience } from "@fluidframework/container-definitions";
 import {
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
-	type Jsonable,
 } from "@fluidframework/datastore-definitions";
-import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
-import { type IClient, type ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
+import { type Jsonable } from "@fluidframework/datastore-definitions/internal";
+import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
+import {
+	type IClient,
+	type ISequencedDocumentMessage,
+	type ISummaryTree,
+	SummaryType,
+} from "@fluidframework/protocol-definitions";
+import { SharedString, SharedStringFactory } from "@fluidframework/sequence/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	type MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
+
 import { type IAttributor, OpStreamAttributor } from "../../attributor.js";
 import {
 	AttributorSerializer,
@@ -44,6 +51,7 @@ import {
 	deltaEncoder,
 } from "../../encoders.js";
 import { makeLZ4Encoder } from "../../lz4Encoder.js";
+
 import { _dirname } from "./dirname.cjs";
 
 function makeMockAudience(clientIds: string[]): IAudience {
@@ -509,6 +517,18 @@ function assertSerializableSummary(
 	}
 }
 
+interface ISummaryTreeWithCatchupOps {
+	tree: {
+		content: {
+			tree: {
+				catchupOps: {
+					content: string | ISequencedDocumentMessage[];
+				};
+			};
+		};
+	};
+}
+
 const summaryFromState = async (state: FuzzTestState): Promise<SerializableISummaryTree> => {
 	state.containerRuntimeFactory.processAllMessages();
 	const { sharedString } = state.clients[0];
@@ -695,8 +715,27 @@ describe("SharedString Attribution", () => {
 
 				for (const { filename, factory } of dataGenerators) {
 					it(`snapshot at ${filename}`, async () => {
-						const expected = readJson(path.join(paths.directory, filename));
-						const actual = await summaryFromState(factory(operations));
+						const expected = readJson(
+							path.join(paths.directory, filename),
+						) as ISummaryTreeWithCatchupOps;
+						const actual = (await summaryFromState(
+							factory(operations),
+						)) as unknown as ISummaryTreeWithCatchupOps;
+
+						assert.strictEqual(
+							typeof actual.tree.content?.tree?.catchupOps?.content,
+							"string",
+							"invalid catchupOps in produced summary",
+						);
+
+						// Parse the stringified op array into the actual op array so we can deep compare better
+						actual.tree.content.tree.catchupOps.content = JSON.parse(
+							actual.tree.content.tree.catchupOps.content as string,
+						) as ISequencedDocumentMessage[];
+						expected.tree.content.tree.catchupOps.content = JSON.parse(
+							expected.tree.content.tree.catchupOps.content as string,
+						) as ISequencedDocumentMessage[];
+
 						assert.deepEqual(actual, expected);
 					});
 				}

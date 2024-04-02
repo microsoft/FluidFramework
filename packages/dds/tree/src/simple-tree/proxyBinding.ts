@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { AnchorNode, AnchorSet, UpPath, anchorSlot } from "../core/index.js";
 import {
 	FlexFieldNodeSchema,
@@ -20,6 +21,7 @@ import {
 	schemaIsObjectNode,
 } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
+
 import { RawTreeNode } from "./rawNode.js";
 import { TreeMapNode, TreeObjectNode } from "./schemaTypes.js";
 import { TreeArrayNode } from "./treeArrayNode.js";

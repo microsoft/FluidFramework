@@ -14,17 +14,15 @@ import {
 	ValueProperty,
 } from "@fluid-experimental/property-properties";
 
-import { arrayProxyHandler } from "./arrayProxyHandler";
-import { proxyHandler } from "./proxyHandler";
-
-import { ComponentArray } from "./componentArray";
-import { ComponentMap } from "./componentMap";
-import { ComponentSet } from "./componentSet";
-import { PropertyProxyErrors } from "./errors";
-
-import { IParentAndPathOfReferencedProperty } from "./IParentAndPathOfReferencedProperty";
-import { PropertyTypes, ProxyType, ReferenceType } from "./interfaces";
-import { forceType } from "./utilities";
+import { IParentAndPathOfReferencedProperty } from "./IParentAndPathOfReferencedProperty.js";
+import { arrayProxyHandler } from "./arrayProxyHandler.js";
+import { ComponentArray } from "./componentArray.js";
+import { ComponentMap } from "./componentMap.js";
+import { ComponentSet } from "./componentSet.js";
+import { PropertyProxyErrors } from "./errors.js";
+import { PropertyTypes, ProxyType, ReferenceType } from "./interfaces.js";
+import { proxyHandler } from "./proxyHandler.js";
+import { forceType } from "./utilities.js";
 
 /**
  * This symbol is available on properties proxied via {@link PropertyProxy.proxify}.

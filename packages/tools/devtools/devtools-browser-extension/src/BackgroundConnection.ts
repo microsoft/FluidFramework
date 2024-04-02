@@ -11,9 +11,9 @@ import {
 	type ISourcedDevtoolsMessage,
 	devtoolsMessageSource,
 	isDevtoolsMessage,
-} from "@fluidframework/devtools-core";
+} from "@fluidframework/devtools-core/internal";
 
-import { browser } from "./Globals";
+import { browser } from "./Globals.js";
 import {
 	type DevToolsInitMessage,
 	type TypedPortConnection,
@@ -21,7 +21,7 @@ import {
 	devToolsInitMessageType,
 	extensionPopupMessageSource,
 	extensionViewMessageSource,
-} from "./messaging";
+} from "./messaging/index.js";
 
 /**
  * {@link BackgroundConnection} input parameters.
