@@ -26,7 +26,7 @@ import { ApplicationInsights } from "@microsoft/applicationinsights-web";
 import { IFluidContainer } from "@fluidframework/fluid-static";
 import { TelemetryConfig, startTelemetry, createAppInsightsTelemetryConsumer } from "@fluidframework/external-telemetry"
 
-const myAppContainer: IFluidContainer = {...your code to create a Fluid Continer}
+const myAppContainer: IFluidContainer = {...your code to create/load a Fluid Continer}
 const myAppContainerId = "123-456-12331-23"
 
 // Create App Insights Client
@@ -74,6 +74,4 @@ Telemetry events relating directly to Fluid Containers.
 
 1. `ContainerConnectedTelemetry`
 1. `ContainerDisconnectedTelemetry`
-1. `ContainerDirtyTelemetry`
 1. `ContainerDisposedTelemetry`
-1. `ContainerSavedTelemetry`

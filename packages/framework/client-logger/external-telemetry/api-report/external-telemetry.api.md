@@ -14,12 +14,6 @@ export interface ContainerConnectedTelemetry extends IContainerTelemetry {
 }
 
 // @beta
-export interface ContainerDirtyTelemetry extends IContainerTelemetry {
-    // (undocumented)
-    eventName: "fluidframework.container.dirty";
-}
-
-// @beta
 export interface ContainerDisconnectedTelemetry extends IContainerTelemetry {
     // (undocumented)
     eventName: "fluidframework.container.disconnected";
@@ -33,20 +27,12 @@ export interface ContainerDisposedTelemetry extends IContainerTelemetry {
 }
 
 // @beta
-export interface ContainerSavedTelemetry extends IContainerTelemetry {
-    // (undocumented)
-    eventName: "fluidframework.container.saved";
-}
-
-// @beta
 export type ContainerTelemetryEventName = (typeof ContainerTelemetryEventNames)[keyof typeof ContainerTelemetryEventNames];
 
 // @beta
 export const ContainerTelemetryEventNames: {
     readonly CONNECTED: "fluidframework.container.connected";
     readonly DISCONNECTED: "fluidframework.container.disconnected";
-    readonly SAVED: "fluidframework.container.saved";
-    readonly DIRTY: "fluidframework.container.dirty";
     readonly DISPOSED: "fluidframework.container.disposed";
     readonly HEARTBEAT: "fluidframework.container.heartbeat";
 };
@@ -57,6 +43,7 @@ export type ExternalTelemetryEventName = ContainerTelemetryEventName;
 // @beta
 export interface IContainerTelemetry extends IExternalTelemetry {
     containerId?: string;
+    containerInstanceId: string;
     eventName: ContainerTelemetryEventName;
 }
 

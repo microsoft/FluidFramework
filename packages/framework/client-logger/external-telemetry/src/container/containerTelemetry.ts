@@ -35,22 +35,6 @@ export const ContainerTelemetryEventNames = {
 	 */
 	DISCONNECTED: "fluidframework.container.disconnected",
 	/**
-	 * Name for the container telemetry event that is intended to be produced from the IFluidContainer "saved" {@link @fluidframework/fluid-static#IFluidContainerEvents | system event}
-	 *
-	 * @see {@link ContainerSavedTelemetry}
-	 *
-	 * @beta
-	 */
-	SAVED: "fluidframework.container.saved",
-	/**
-	 * Name for the container telemetry event that is intended to be produced from the IFluidContainer "dirty" {@link @fluidframework/fluid-static#IFluidContainerEvents | system event}
-	 *
-	 * @see {@link ContainerDirtyTelemetry}
-	 *
-	 * @beta
-	 */
-	DIRTY: "fluidframework.container.dirty",
-	/**
 	 * Name for the container telemetry event that is intended to be produced from the IFluidContainer "disposed" {@link @fluidframework/fluid-static#IFluidContainerEvents | system event}
 	 *
 	 * @see {@link ContainerDisposedTelemetry}
@@ -89,6 +73,13 @@ export interface IContainerTelemetry extends IExternalTelemetry {
 	 * @remarks This can be undefined for a container that has not been attached.
 	 */
 	containerId?: string;
+	/**
+	 * Unique identifier for the container instance that generated the telemetry.
+	 * This is not a stable identifier for the container across clients/time.
+	 * Every load of the container will result in a different value.
+	 *
+	 */
+	containerInstanceId: string;
 }
 
 /**
@@ -118,35 +109,6 @@ export interface ContainerConnectedTelemetry extends IContainerTelemetry {
  */
 export interface ContainerDisconnectedTelemetry extends IContainerTelemetry {
 	eventName: "fluidframework.container.disconnected";
-}
-
-/**
- *
- * The Fluid container "saved" telemetry event. This telemetry is produced from the "saved" Fluid container system event
- * {@link @fluidframework/container-definitions#IFluidContainerEvents} which is emitted when all local changes/edits have been acknowledged by the service.
- *
- * @remarks "dirty" event will be emitted when the next local change has been made.
- *
- * @see {@link @fluidframework/fluid-static#IFluidContainer."isDirty"}
- *
- * @beta
- */
-export interface ContainerSavedTelemetry extends IContainerTelemetry {
-	eventName: "fluidframework.container.saved";
-}
-
-/**
- * The Fluid container "saved" telemetry event. This telemetry is produced from the "saved" Fluid container system event
- * {@link @fluidframework/container-definitions#IFluidContainerEvents} which is emitted when the first local change has been made, following a "saved" event.
- *
- * @remarks "saved" event will be emitted once all local changes have been acknowledged by the service.
- *
- * @see {@link @fluidframework/fluid-static#IFluidContainer."isDirty"}
- *
- * @beta
- */
-export interface ContainerDirtyTelemetry extends IContainerTelemetry {
-	eventName: "fluidframework.container.dirty";
 }
 
 /**

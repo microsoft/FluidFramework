@@ -15,6 +15,7 @@ import {
 	type IFluidContainerSystemEventName,
 	IFluidContainerSystemEventNames,
 } from "./containerSystemEvents.js";
+import { v4 as uuid } from "uuid";
 
 /**
  * This class produces {@link IContainerTelemetry} from raw container system events {@link @fluidframework/fluid-static#IFluidContainerEvents}.
@@ -24,9 +25,14 @@ import {
  * @internal
  */
 export class ContainerEventTelemetryProducer {
+	/**
+	 * Unique identifier for the instance of the container that this class is generating telemetry for.
+	 */
+	private readonly containerInstanceId = uuid();
+
 	constructor(private readonly containerId: string) {}
 
-	public produceTelemetry(
+	public produceFromSystemEvent(
 		eventName: IFluidContainerSystemEventName,
 		payload?: any,
 	): IContainerTelemetry | undefined {
@@ -37,10 +43,6 @@ export class ContainerEventTelemetryProducer {
 				return this.produceBaseContainerTelemetry(
 					ContainerTelemetryEventNames.DISCONNECTED,
 				);
-			case IFluidContainerSystemEventNames.DIRTY:
-				return this.produceBaseContainerTelemetry(ContainerTelemetryEventNames.DIRTY);
-			case IFluidContainerSystemEventNames.SAVED:
-				return this.produceBaseContainerTelemetry(ContainerTelemetryEventNames.SAVED);
 			case IFluidContainerSystemEventNames.DISPOSED:
 				return this.produceDiposedTelemetry(payload);
 			default:
@@ -49,10 +51,9 @@ export class ContainerEventTelemetryProducer {
 	}
 
 	public produceHeartbeatTelemetry = (): ContainerHeartbeatTelemetry => {
-		return {
-			eventName: "fluidframework.container.heartbeat",
-			containerId: this.containerId,
-		};
+		return this.produceBaseContainerTelemetry(
+			ContainerTelemetryEventNames.HEARTBEAT,
+		) as ContainerHeartbeatTelemetry;
 	};
 
 	private produceBaseContainerTelemetry = (
@@ -61,6 +62,7 @@ export class ContainerEventTelemetryProducer {
 		return {
 			eventName,
 			containerId: this.containerId,
+			containerInstanceId: this.containerInstanceId,
 		} as IContainerTelemetry;
 	};
 
@@ -70,6 +72,7 @@ export class ContainerEventTelemetryProducer {
 		const telemetry: ContainerDisposedTelemetry = {
 			eventName: ContainerTelemetryEventNames.DISPOSED,
 			containerId: this.containerId,
+			containerInstanceId: this.containerInstanceId,
 		};
 		if (payload?.error !== undefined) {
 			telemetry.error = payload.error;

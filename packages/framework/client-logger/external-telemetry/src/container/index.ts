@@ -9,8 +9,6 @@ export {
 	IContainerTelemetry,
 	ContainerConnectedTelemetry,
 	ContainerDisconnectedTelemetry,
-	ContainerSavedTelemetry,
-	ContainerDirtyTelemetry,
 	ContainerDisposedTelemetry,
 } from "./containerTelemetry.js";
 

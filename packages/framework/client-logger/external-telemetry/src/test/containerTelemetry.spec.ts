@@ -18,14 +18,10 @@ import {
 	ContainerTelemetryEventNames,
 	type ContainerConnectedTelemetry,
 	type ContainerDisconnectedTelemetry,
+	type ContainerDisposedTelemetry,
 	type IExternalTelemetry,
 	type ITelemetryConsumer,
 } from "../index.js";
-import type {
-	ContainerDirtyTelemetry,
-	ContainerDisposedTelemetry,
-	ContainerSavedTelemetry,
-} from "../container/containerTelemetry.js";
 /**
  * Mock {@link @fluidframework/container-definitions#IContainer} for use in tests.
  */
@@ -52,14 +48,6 @@ class MockContainer
 
 	public dispose(error?: ICriticalContainerError): void {
 		this.emit(IFluidContainerSystemEventNames.DISPOSED, error);
-	}
-
-	public dirty() {
-		this.emit(IFluidContainerSystemEventNames.DIRTY);
-	}
-
-	public saved() {
-		this.emit(IFluidContainerSystemEventNames.SAVED);
 	}
 }
 
@@ -135,6 +123,8 @@ describe("External container telemetry", () => {
 		};
 
 		expect(expectedEvent).to.deep.equal(actualTelemetryEvent);
+		// We won't know what the container UUID will be but we can still check that it is defined.
+		expect(actualTelemetryEvent.properties.containerId).to.be.a("string").with.length.above(0);
 	});
 
 	it("Emitting 'disconnected' container system event produces expected ContainerDisconnectedTelemetry", () => {
@@ -155,6 +145,8 @@ describe("External container telemetry", () => {
 		};
 
 		expect(expectedEvent).to.deep.equal(actualTelemetryEvent);
+		// We won't know what the container UUID will be but we can still check that it is defined.
+		expect(actualTelemetryEvent.properties.containerId).to.be.a("string").with.length.above(0);
 	});
 
 	it("Emitting 'disposed' system event produces expected ContainerClosedTelemetry", () => {
@@ -173,46 +165,7 @@ describe("External container telemetry", () => {
 		};
 
 		expect(expectedEvent).to.deep.equal(actualTelemetryEvent);
-	});
-
-	it("Emitting 'saved' system event with an error produces expected ContainerClosedTelemetry", () => {
-		startTelemetry(telemetryConfig);
-
-		const containerError: ICriticalContainerError = {
-			errorType: "unknown error",
-			message: "An unknown error occured",
-			stack: "example stack error at line 52 of Container.ts",
-		};
-
-		mockContainer.close(containerError);
-
-		// Obtain the events from the method that the spy was called with
-		const actualTelemetryEvent = trackEventSpy.getCall(0).args[0];
-		const expectedEvent = {
-			name: ContainerTelemetryEventNames.SAVED,
-			properties: {
-				eventName: ContainerTelemetryEventNames.SAVED,
-				containerId: mockContainerId,
-			} as ContainerSavedTelemetry,
-		};
-		expect(expectedEvent).to.deep.equal(actualTelemetryEvent);
-	});
-
-	it("Emitting 'dirty' system event produces expected ContainerAttachingTelemetry", () => {
-		startTelemetry(telemetryConfig);
-
-		mockContainer.attach({ url: "mockUrl" });
-
-		// Obtain the events from the method that the spy was called with
-		const actualTelemetryEvent = trackEventSpy.getCall(0).args[0];
-		const expectedEvent = {
-			name: ContainerTelemetryEventNames.DIRTY,
-			properties: {
-				eventName: ContainerTelemetryEventNames.DIRTY,
-				containerId: mockContainerId,
-			} as ContainerDirtyTelemetry,
-		};
-
-		expect(expectedEvent).to.deep.equal(actualTelemetryEvent);
+		// We won't know what the container UUID will be but we can still check that it is defined.
+		expect(actualTelemetryEvent.properties.containerId).to.be.a("string").with.length.above(0);
 	});
 });

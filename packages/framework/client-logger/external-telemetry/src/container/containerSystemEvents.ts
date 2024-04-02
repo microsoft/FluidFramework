@@ -13,8 +13,6 @@
 export const IFluidContainerSystemEventNames = {
 	CONNECTED: "connected",
 	DISCONNECTED: "disconnected",
-	SAVED: "saved",
-	DIRTY: "dirty",
 	DISPOSED: "disposed",
 } as const;
 
