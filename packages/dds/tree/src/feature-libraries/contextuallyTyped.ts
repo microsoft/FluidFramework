@@ -11,7 +11,6 @@ import {
 	FieldKey,
 	ITreeCursorSynchronous,
 	MapTree,
-	TreeValue,
 	Value,
 	isCursor,
 } from "../core/index.js";
@@ -43,7 +42,7 @@ import {
 	LeafNodeSchema,
 	allowedTypesSchemaSet,
 } from "./typed-schema/index.js";
-import { allowsValue, isFluidHandle } from "./valueUtilities.js";
+import { allowsValue, isTreeValue } from "./valueUtilities.js";
 
 /**
  * This library defines a tree data format that can infer its types from context.
@@ -96,20 +95,6 @@ export const typeNameSymbol: unique symbol = Symbol(`${scope}:typeName`);
  * @internal
  */
 export const valueSymbol: unique symbol = Symbol(`${scope}:value`);
-
-/**
- * Checks if a value is a {@link TreeValue}.
- */
-export function isTreeValue(nodeValue: unknown): nodeValue is TreeValue {
-	switch (typeof nodeValue) {
-		case "string":
-		case "number":
-		case "boolean":
-			return true;
-		default:
-			return nodeValue === null || isFluidHandle(nodeValue);
-	}
-}
 
 export function getFieldKind(fieldSchema: FlexFieldSchema): FlexFieldKind {
 	// TODO:
