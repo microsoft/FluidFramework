@@ -1047,23 +1047,17 @@ export function updateRefreshers(
 			const major = root.major === revision ? undefined : root.major;
 			const lengthTree = chunkLengths.get(major);
 
-			let minor = root.minor;
 			if (lengthTree !== undefined) {
 				const lengthPair = lengthTree.getPairOrNextLower(root.minor);
 				if (lengthPair !== undefined) {
 					const [firstMinor, length] = lengthPair;
 
-					// check that the root minor is within the length of the minor of the retrieved pair
-					if (minor < firstMinor + length) {
-						minor = firstMinor;
+					// if the root minor is within the length of the minor of the retrieved pair
+					// then there's no need to check for the detached node
+					if (root.minor < firstMinor + length) {
+						continue;
 					}
 				}
-			}
-
-			// if the root exists in the original builds map, it does not need to be added as a refresher
-			const original = tryGetFromNestedMap(change.builds, major, minor);
-			if (original !== undefined) {
-				continue;
 			}
 		}
 
