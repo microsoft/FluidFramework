@@ -132,7 +132,7 @@ export class SharedTree
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
 		optionsParam: SharedTreeOptions,
-		telemetryContextPrefix: string,
+		telemetryContextPrefix: string = "fluid_sharedTree_",
 	) {
 		if (runtime.idCompressor === undefined) {
 			throw new UsageError("IdCompressor must be enabled to use SharedTree");
@@ -325,13 +325,13 @@ export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
 	): Promise<ISharedTree> {
-		const tree = new SharedTree(id, runtime, channelAttributes, this.options, "SharedTree");
+		const tree = new SharedTree(id, runtime, channelAttributes, this.options);
 		await tree.load(services);
 		return tree;
 	}
 
 	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree {
-		const tree = new SharedTree(id, runtime, this.attributes, this.options, "SharedTree");
+		const tree = new SharedTree(id, runtime, this.attributes, this.options);
 		tree.initializeLocal();
 		return tree;
 	}
