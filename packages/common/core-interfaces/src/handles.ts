@@ -94,9 +94,15 @@ export interface IFluidHandleInternal<
 
 /**
  * Symbol which must only be used on {@link FluidObject}, and is used to identify such objects.
+ * @privateRemarks
+ * Normally `Symbol` would be used here instead of `Symbol.for` since just using Symbol (and avoiding the global symbol registry) removes the risk of collision, which is the main point of using a symbol for this in the first place.
+ * In this case however, some users of this library do dynamic code loading, and can end up with multiple versions of packages, and mix data from one version with another.
+ * Using the global symbol registry allows duplicate copies of this library to share a single symbol, though reintroduces the risk of collision, which is mitigated via the use of a UUIDv4 randomly generated when this code was authored:
  * @public
  */
-export const fluidHandleSymbol: unique symbol = Symbol("fluidHandle");
+export const fluidHandleSymbol: unique symbol = Symbol.for(
+	"FluidHandle-3978c7cf-4675-49ba-a20c-bf35efbf43da",
+);
 
 /**
  * Handle to a shared {@link FluidObject}.
