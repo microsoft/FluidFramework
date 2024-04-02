@@ -215,6 +215,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				firstGenCount: this.nextRangeBaseGenCount,
 				count,
 				requestedClusterSize: this.nextRequestedClusterSize,
+				localIdRanges: this.normalizer.getRangesBetween(
+					this.nextRangeBaseGenCount,
+					this.localGenCount,
+				),
 			},
 		};
 		this.nextRangeBaseGenCount = this.localGenCount + 1;

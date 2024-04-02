@@ -331,27 +331,51 @@ describe("IdCompressor", () => {
 				}
 			});
 		});
-	});
 
-	it("does not return the same non-empty range twice", () => {
-		const rangeCompressor = CompressorFactory.createCompressor(Client.Client1);
-		generateCompressedIds(rangeCompressor, 3);
-		const range1 = rangeCompressor.takeNextCreationRange();
-		assert.notEqual(range1.ids, undefined);
-		const range2 = rangeCompressor.takeNextCreationRange();
-		assert.equal(range2.ids, undefined);
-		rangeCompressor.finalizeCreationRange(range1);
-		rangeCompressor.finalizeCreationRange(range2);
+		it("with the correct local ranges", () => {
+			const compressor = CompressorFactory.createCompressor(Client.Client1, 1);
+			const ids1 = generateCompressedIds(compressor, 1);
+			const range1 = compressor.takeNextCreationRange(); // one local
+			assert.deepEqual(ids1, [-1]);
+			assert.deepEqual(range1.ids?.localIdRanges, [[1, 1]]);
+
+			compressor.finalizeCreationRange(range1);
+			const ids2 = generateCompressedIds(compressor, 1);
+			const range2 = compressor.takeNextCreationRange(); // one eager final
+			assert.deepEqual(ids2, [1]);
+			assert.deepEqual(range2.ids?.localIdRanges, []);
+
+			// make new cluster
+			compressor.finalizeCreationRange(range2);
+			compressor.generateCompressedId();
+			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+
+			const ids3 = generateCompressedIds(compressor, 2);
+			const range3 = compressor.takeNextCreationRange(); // one eager final and one local
+			assert.deepEqual(ids3, [3, -5]);
+			assert.deepEqual(range3.ids?.localIdRanges, [[5, 1]]);
+
+			(range3 as any).ids.requestedClusterSize = 4;
+			const ids4 = generateCompressedIds(compressor, 2);
+			compressor.finalizeCreationRange(range3);
+			ids4.push(...generateCompressedIds(compressor, 5));
+			const range4 = compressor.takeNextCreationRange(); // two locals, two eager finals, three locals
+			assert.deepEqual(ids4, [-6, -7, 7, 8, -10, -11, -12]);
+			assert.deepEqual(range4.ids?.localIdRanges, [
+				[6, 2],
+				[10, 3],
+			]);
+		});
 	});
 
 	describe("Finalizing", () => {
 		it("prevents attempts to finalize ranges twice", () => {
-			const rangeCompressor = CompressorFactory.createCompressor(Client.Client1);
-			generateCompressedIds(rangeCompressor, 3);
-			const batchRange = rangeCompressor.takeNextCreationRange();
-			rangeCompressor.finalizeCreationRange(batchRange);
+			const compressor = CompressorFactory.createCompressor(Client.Client1);
+			generateCompressedIds(compressor, 3);
+			const batchRange = compressor.takeNextCreationRange();
+			compressor.finalizeCreationRange(batchRange);
 			assert.throws(
-				() => rangeCompressor.finalizeCreationRange(batchRange),
+				() => compressor.finalizeCreationRange(batchRange),
 				(e: Error) => e.message === "Ranges finalized out of order.",
 			);
 		});
