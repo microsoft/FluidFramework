@@ -11,8 +11,8 @@ import {
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import { NonRetryableError } from "@fluidframework/driver-utils";
-import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
+import { NonRetryableError } from "@fluidframework/driver-utils/internal";
+import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
 
 import { ClpCompliantAppHeader } from "./contractsPublic.js";
 import { createOdspUrl } from "./createOdspUrl.js";

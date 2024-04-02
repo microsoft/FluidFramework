@@ -6,7 +6,7 @@
 
 import { ConfigTypes } from '@fluidframework/core-interfaces';
 import { ContainerRuntime } from '@fluidframework/container-runtime/internal';
-import { ContainerRuntimeFactoryWithDefaultDataStore } from '@fluidframework/aqueduct';
+import { ContainerRuntimeFactoryWithDefaultDataStore } from '@fluidframework/aqueduct/internal';
 import { FluidDataStoreRuntime } from '@fluidframework/datastore/internal';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
@@ -53,7 +53,7 @@ import { ITestDriver } from '@fluidframework/test-driver-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
 import { Loader } from '@fluidframework/container-loader/internal';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions/internal';
-import { RuntimeRequestHandler } from '@fluidframework/request-handler';
+import { RuntimeRequestHandler } from '@fluidframework/request-handler/internal';
 
 // @internal (undocumented)
 export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFactory]>;

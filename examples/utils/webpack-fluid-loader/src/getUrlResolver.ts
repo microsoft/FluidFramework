@@ -4,8 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { InsecureUrlResolver } from "@fluidframework/driver-utils";
-import { LocalResolver } from "@fluidframework/local-driver";
+import { InsecureUrlResolver } from "@fluidframework/driver-utils/internal";
+import { LocalResolver } from "@fluidframework/local-driver/internal";
 
 import { ITinyliciousRouteOptions, RouteOptions } from "./loader.js";
 import { OdspUrlResolver } from "./odspUrlResolver.js";

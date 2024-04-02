@@ -6,18 +6,19 @@
 import { fromUtf8ToBase64, performance } from "@fluid-internal/client-utils";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { GenericNetworkError, NonRetryableError, RateLimiter } from "@fluidframework/driver-utils";
+import {
+	GenericNetworkError,
+	NonRetryableError,
+	RateLimiter,
+} from "@fluidframework/driver-utils/internal";
 import {
 	CorrelationIdHeaderName,
 	DriverVersionHeaderName,
 	RestLessClient,
 	getAuthorizationTokenFromCredentials,
 } from "@fluidframework/server-services-client";
-import {
-	ITelemetryLoggerExt,
-	PerformanceEvent,
-	numberFromString,
-} from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, numberFromString } from "@fluidframework/telemetry-utils/internal";
 import fetch from "cross-fetch";
 import safeStringify from "json-stringify-safe";
 

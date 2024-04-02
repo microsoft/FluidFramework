@@ -4,7 +4,7 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ISerializedHandle } from "@fluidframework/runtime-utils";
+import { ISerializedHandle } from "@fluidframework/runtime-utils/internal";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import {
 	ValueType,

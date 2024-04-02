@@ -12,7 +12,11 @@ import {
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
 import type { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils";
+import {
+	AttachmentTreeEntry,
+	BlobTreeEntry,
+	TreeTreeEntry,
+} from "@fluidframework/driver-utils/internal";
 import {
 	ISummaryBlob,
 	ISummaryTree,
