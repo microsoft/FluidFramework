@@ -128,7 +128,7 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"lodash": "^4.17.21",
+		"@ungap/structured-clone": "^1.2.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
@@ -141,7 +141,6 @@
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.38.3",
-		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"@types/uuid": "^9.0.2",
