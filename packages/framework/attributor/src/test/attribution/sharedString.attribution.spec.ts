@@ -26,17 +26,17 @@ import { type IAudience } from "@fluidframework/container-definitions";
 import {
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
-	type Jsonable,
 } from "@fluidframework/datastore-definitions";
-import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
+import { type Jsonable } from "@fluidframework/datastore-definitions/internal";
+import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
 import { type IClient, type ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
+import { SharedString, SharedStringFactory } from "@fluidframework/sequence/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	type MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { type IAttributor, OpStreamAttributor } from "../../attributor.js";
 import {

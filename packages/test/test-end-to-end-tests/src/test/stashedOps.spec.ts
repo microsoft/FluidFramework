@@ -24,15 +24,15 @@ import {
 	ContainerRuntime,
 	DefaultSummaryConfiguration,
 	type RecentlyAddedContainerRuntimeMessageDetails,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
 	IRequest,
 	IRequestHeader,
 } from "@fluidframework/core-interfaces";
-import { Deferred } from "@fluidframework/core-utils";
-import type { SharedCounter } from "@fluidframework/counter";
+import { Deferred } from "@fluidframework/core-utils/internal";
+import type { SharedCounter } from "@fluidframework/counter/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map";
 import type { ISharedDirectory, SharedDirectory } from "@fluidframework/map/internal";
@@ -41,9 +41,13 @@ import {
 	reservedMarkerIdKey,
 	reservedMarkerSimpleTypeKey,
 	reservedTileLabelsKey,
-} from "@fluidframework/merge-tree";
-import type { IIntervalCollection, SequenceInterval, SharedString } from "@fluidframework/sequence";
-import { SharedObject } from "@fluidframework/shared-object-base";
+} from "@fluidframework/merge-tree/internal";
+import type {
+	IIntervalCollection,
+	SequenceInterval,
+	SharedString,
+} from "@fluidframework/sequence/internal";
+import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -53,9 +57,10 @@ import {
 	createAndAttachContainer,
 	createDocumentId,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
 import { ISharedTree, SharedTreeFactory } from "@fluidframework/tree/internal";
+
 import { wrapObjectAndOverride } from "../mocking.js";
 
 const mapId = "map";

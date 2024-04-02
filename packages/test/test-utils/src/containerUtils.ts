@@ -6,8 +6,8 @@
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IResponse } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
-import { IDataStore } from "@fluidframework/runtime-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IDataStore } from "@fluidframework/runtime-definitions/internal";
 
 import { PromiseExecutor, TimeoutWithError, timeoutPromise } from "./timeoutUtils.js";
 

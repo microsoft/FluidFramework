@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ITestContainerConfig, createTestConfigProvider } from "@fluidframework/test-utils";
+import {
+	ITestContainerConfig,
+	createTestConfigProvider,
+} from "@fluidframework/test-utils/internal";
 
 /**
  * Default test container configs used by GC tests to create / load containers.

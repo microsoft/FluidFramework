@@ -5,7 +5,7 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 
 import type { IAppModel, IAppModelEvents, IBaseDocument } from "../model-interface/index.js";

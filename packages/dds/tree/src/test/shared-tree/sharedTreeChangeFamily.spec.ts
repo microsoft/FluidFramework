@@ -27,7 +27,7 @@ import { SharedTreeChangeFamily } from "../../shared-tree/sharedTreeChangeFamily
 // eslint-disable-next-line import/no-internal-modules
 import { SharedTreeChange } from "../../shared-tree/sharedTreeChangeTypes.js";
 import { ajvValidator } from "../codec/index.js";
-import { testRevisionTagCodec } from "../utils.js";
+import { failCodecFamily, testRevisionTagCodec } from "../utils.js";
 
 const dataChanges: ModularChangeset[] = [];
 const codecOptions: ICodecOptions = { jsonValidator: ajvValidator };
@@ -36,12 +36,7 @@ const fieldBatchCodec = {
 	decode: () => assert.fail("Unexpected decode"),
 };
 
-const modularFamily = new ModularChangeFamily(
-	fieldKinds,
-	testRevisionTagCodec,
-	fieldBatchCodec,
-	codecOptions,
-);
+const modularFamily = new ModularChangeFamily(fieldKinds, failCodecFamily);
 const defaultEditor = new DefaultEditBuilder(modularFamily, (change) => dataChanges.push(change));
 
 const nodeX = { type: leaf.string.name, value: "X" };

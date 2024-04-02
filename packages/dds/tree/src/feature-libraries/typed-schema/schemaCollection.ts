@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import { Adapters, TreeAdapter, TreeNodeSchemaIdentifier, Multiplicity } from "../../core/index.js";
 import { fail, requireAssignableTo } from "../../util/index.js";

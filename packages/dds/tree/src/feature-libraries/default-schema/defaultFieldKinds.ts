@@ -15,6 +15,8 @@ import { fail } from "../../util/index.js";
 import {
 	FieldChangeHandler,
 	FieldEditor,
+	FieldKindConfiguration,
+	FieldKindConfigurationEntry,
 	FieldKindWithEditor,
 	FlexFieldKind,
 	ToDelta,
@@ -23,11 +25,12 @@ import {
 } from "../modular-schema/index.js";
 import {
 	OptionalChangeset,
-	noChangeCodecFamily,
 	optionalChangeHandler,
 	optionalFieldEditor,
 } from "../optional-field/index.js";
 import { sequenceFieldChangeHandler } from "../sequence-field/index.js";
+
+import { noChangeCodecFamily } from "./noChangeCodecs.js";
 
 /**
  * ChangeHandler that only handles no-op / identity changes.
@@ -169,8 +172,25 @@ export const forbidden = new FieldKindWithEditor(
 	new Set(),
 );
 
+export const fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration> = new Map([
+	[
+		0,
+		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
+			[nodeKey.identifier, { kind: nodeKey, formatVersion: 0 }],
+			[required.identifier, { kind: required, formatVersion: 0 }],
+			[optional.identifier, { kind: optional, formatVersion: 0 }],
+			[sequence.identifier, { kind: sequence, formatVersion: 0 }],
+			[forbidden.identifier, { kind: forbidden, formatVersion: 0 }],
+		]),
+	],
+]);
+
 /**
- * Default field kinds by identifier
+ * All supported field kinds.
+ *
+ * @privateRemarks
+ * Before making a SharedTree format change which impacts which set of field kinds are allowed,
+ * code which uses this should be audited for compatibility considerations.
  */
 export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
 	[required, optional, sequence, nodeKey, forbidden].map((s) => [s.identifier, s]),

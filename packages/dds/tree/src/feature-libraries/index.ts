@@ -105,6 +105,7 @@ export {
 	FieldChangeset,
 	ToDelta,
 	ModularChangeset,
+	makeModularChangeCodecFamily,
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
@@ -120,9 +121,10 @@ export {
 	NodeExistenceState,
 	FieldKindWithEditor,
 	ModularChangeFamily,
-	makeV0Codec,
 	RelevantRemovedRootsFromChild,
 	EncodedModularChangeset,
+	FieldKindConfiguration,
+	FieldKindConfigurationEntry,
 } from "./modular-schema/index.js";
 
 export {
@@ -219,6 +221,7 @@ export {
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
 	fieldKinds,
+	fieldKindConfigurations,
 	intoDelta,
 	relevantRemovedRoots,
 } from "./default-schema/index.js";
@@ -296,6 +299,6 @@ export {
 
 export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer.js";
 
-export { SchemaChange, makeSchemaChangeCodec, EncodedSchemaChange } from "./schema-edits/index.js";
+export { SchemaChange, makeSchemaChangeCodecs, EncodedSchemaChange } from "./schema-edits/index.js";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";
