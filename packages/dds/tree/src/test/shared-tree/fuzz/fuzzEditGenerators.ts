@@ -31,17 +31,13 @@ import {
 } from "../../../feature-libraries/index.js";
 import {
 	FlexTreeView,
-	ISharedTree,
 	ITreeViewFork,
-	SharedTreeFactory,
 	TreeContent,
-	brand,
-	fail,
-} from "../../../index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SharedTree } from "../../../shared-tree/sharedTree.js";
-// eslint-disable-next-line import/no-internal-modules
-import { getOrCreate, makeArray } from "../../../util/utils.js";
+	ISharedTree,
+	SharedTree,
+	SharedTreeFactory,
+} from "../../../shared-tree/index.js";
+import { brand, fail, getOrCreate, makeArray } from "../../../util/index.js";
 import { schematizeFlexTree } from "../../utils.js";
 
 import { FuzzNode, FuzzNodeSchema, fuzzSchema, initialFuzzSchema } from "./fuzzUtils.js";

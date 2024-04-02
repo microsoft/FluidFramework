@@ -12,7 +12,7 @@ import {
 	ContainerMessageType,
 	ContainerRuntime,
 	IGCRuntimeOptions,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { ISweepMessage, disableDatastoreSweepKey } from "@fluidframework/container-runtime/test/gc";
 import {
@@ -23,9 +23,9 @@ import {
 	defaultMaxAttemptsForSubmitFailures,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/test/summary";
-import { delay } from "@fluidframework/core-utils";
+import { delay } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { gcTreeKey } from "@fluidframework/runtime-definitions";
+import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -33,7 +33,7 @@ import {
 	createTestConfigProvider,
 	summarizeNow,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 import {
 	MockDetachedBlobStorage,

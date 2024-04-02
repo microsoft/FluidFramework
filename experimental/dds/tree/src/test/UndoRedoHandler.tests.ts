@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { UndoRedoStackManager } from '@fluidframework/undo-redo';
+import { UndoRedoStackManager } from '@fluidframework/undo-redo/internal';
 
 import { EditId } from '../Identifiers.js';
 import { SharedTree } from '../SharedTree.js';

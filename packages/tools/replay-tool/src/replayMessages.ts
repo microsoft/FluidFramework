@@ -10,7 +10,7 @@ import fs from "fs";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert, Lazy } from "@fluidframework/core-utils";
+import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
 	FileDeltaStorageService,
 	FileDocumentServiceFactory,
@@ -20,8 +20,8 @@ import {
 	ISnapshotWriterStorage,
 	ReplayFileDeltaConnection,
 	Replayer,
-} from "@fluidframework/file-driver";
-import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix";
+} from "@fluidframework/file-driver/internal";
+import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix/internal";
 import {
 	ISequencedDocumentMessage,
 	ISummaryTree,
@@ -30,14 +30,15 @@ import {
 	MessageType,
 	TreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { FileSnapshotReader, IFileSnapshot } from "@fluidframework/replay-driver";
-import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+import { FileSnapshotReader, IFileSnapshot } from "@fluidframework/replay-driver/internal";
+import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockEmptyDeltaConnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import stringify from "json-stable-stringify";
 
 import {

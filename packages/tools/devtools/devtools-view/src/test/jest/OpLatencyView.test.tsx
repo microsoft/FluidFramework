@@ -4,8 +4,7 @@
  */
 
 import React from "react";
-
-import { DevtoolsFeatures } from "@fluidframework/devtools-core";
+import { DevtoolsFeatures } from "@fluidframework/devtools-core/internal";
 // eslint-disable-next-line import/no-unassigned-import
 import "@testing-library/jest-dom";
 import { render, screen, within } from "@testing-library/react";

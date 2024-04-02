@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type AudienceClientMetadata } from "@fluidframework/devtools-core";
+import { type AudienceClientMetadata } from "@fluidframework/devtools-core/internal";
 import { type IClient } from "@fluidframework/protocol-definitions";
 
 /**

@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { DocumentDeltaConnection } from "@fluidframework/driver-base";
+import { DocumentDeltaConnection } from "@fluidframework/driver-base/internal";
 import {
 	IClient,
 	IConnect,
@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { LocalWebSocketServer } from "@fluidframework/server-local-server";
 import { IWebSocketServer } from "@fluidframework/server-services-core";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import type { Socket } from "socket.io-client";
 
 const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];

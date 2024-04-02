@@ -12,7 +12,7 @@ import {
 	MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { ITaskManager } from "../interfaces.js";
 import { TaskManager } from "../taskManager.js";

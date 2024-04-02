@@ -15,7 +15,7 @@ import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { Serializable } from '@fluidframework/datastore-definitions';
+import { Serializable } from '@fluidframework/datastore-definitions/internal';
 
 // @internal
 export interface AudienceChangeLogEntry extends LogEntry {
