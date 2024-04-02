@@ -17,9 +17,9 @@ import {
 	IResponse,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-// eslint-disable-next-line import/no-deprecated
 import {
 	RuntimeRequestHandler,
+	// eslint-disable-next-line import/no-deprecated
 	buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler/internal";
 import {
@@ -133,6 +133,7 @@ export const createTestContainerRuntimeFactory = (
 						["default", Promise.resolve(this.dataStoreFactory)],
 						[this.type, Promise.resolve(this.dataStoreFactory)],
 					],
+					// eslint-disable-next-line import/no-deprecated
 					buildRuntimeRequestHandler(
 						backCompat_DefaultRouteRequestHandler("default"),
 						...this.requestHandlers,
@@ -166,6 +167,7 @@ export const createTestContainerRuntimeFactory = (
 					["default", Promise.resolve(this.dataStoreFactory)],
 					[this.type, Promise.resolve(this.dataStoreFactory)],
 				],
+				// eslint-disable-next-line import/no-deprecated
 				requestHandler: buildRuntimeRequestHandler(
 					getDefaultObject,
 					...this.requestHandlers,

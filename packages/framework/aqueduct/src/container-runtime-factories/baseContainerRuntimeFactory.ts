@@ -11,9 +11,9 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { type FluidObject } from "@fluidframework/core-interfaces";
-// eslint-disable-next-line import/no-deprecated
 import {
 	type RuntimeRequestHandler,
+	// eslint-disable-next-line import/no-deprecated
 	buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler/internal";
 import {
