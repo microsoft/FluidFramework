@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
+import * as fs from "node:fs";
+import * as path from "node:path";
 
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 
@@ -44,7 +45,14 @@ export async function parseBundleAndExportFile(
 			logger,
 			{ eventName: "ParseBundleAndExportFile" },
 			async () => {
-				const codeLoaderBundle = await import(codeLoader);
+				// codeLoader is expected to be a file path. On Windows this also requires
+				// explicit file: protocol for absolute paths. Otherwise, path starting with
+				// a driver letter like 'c:" will have drive interpreted as URL protocol.
+				// file:// URLs are always absolute so prepend file:// exactly when absolute.
+				const codeLoaderSpec = `${
+					path.isAbsolute(codeLoader) ? "file://" : ""
+				}${codeLoader}`;
+				const codeLoaderBundle = await import(codeLoaderSpec);
 				if (!isCodeLoaderBundle(codeLoaderBundle)) {
 					const eventName = clientArgsValidationError;
 					const errorMessage = "Code loader bundle is not of type ICodeLoaderBundle";
