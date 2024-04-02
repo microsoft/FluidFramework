@@ -11,8 +11,8 @@ import {
 	IDocumentStorageService,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
-import { UsageError } from "@fluidframework/driver-utils";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
+import { UsageError } from "@fluidframework/driver-utils/internal";
+import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 

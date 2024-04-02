@@ -3,10 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { TreeNodeSchemaIdentifier, TreeValue, ValueSchema } from "../../core/index.js";
+import {
+	TreeNodeSchemaIdentifier,
+	TreeValue,
+	ValueSchema,
+	Multiplicity,
+} from "../../core/index.js";
 import { Assume, FlattenKeys, _InlineTrick } from "../../util/index.js";
 import { ContextuallyTypedNodeData, typeNameSymbol, valueSymbol } from "../contextuallyTyped.js";
-import { Multiplicity } from "../multiplicity.js";
 import {
 	FlexAllowedTypes,
 	FlexFieldNodeSchema,

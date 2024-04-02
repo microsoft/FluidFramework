@@ -14,7 +14,7 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { IsoBuffer } from '@fluid-internal/client-utils';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { NodeProperty } from '@fluid-experimental/property-properties';
-import { SharedObject } from '@fluidframework/shared-object-base';
+import { SharedObject } from '@fluidframework/shared-object-base/internal';
 
 // @internal (undocumented)
 export abstract class CompressedPropertyTreeFactory implements IChannelFactory {

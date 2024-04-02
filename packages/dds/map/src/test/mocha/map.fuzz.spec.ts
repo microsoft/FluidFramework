@@ -19,10 +19,10 @@ import {
 	createDDSFuzzSuite,
 	UseHandle,
 } from "@fluid-private/test-dds-utils";
-import { Jsonable } from "@fluidframework/datastore-definitions";
-import { FlushMode } from "@fluidframework/runtime-definitions";
+import { Jsonable } from "@fluidframework/datastore-definitions/internal";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedMap, MapFactory } from "../../index.js";
 
 import { _dirname } from "./dirname.cjs";
@@ -49,21 +49,31 @@ type Operation = SetKey | DeleteKey | Clear | UseHandle;
 // This type gets used a lot as the state object of the suite; shorthand it here.
 type State = DDSFuzzTestState<MapFactory>;
 
-function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap): void {
+async function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap): Promise<void> {
 	assert.equal(a.size, b.size, `${a.id} and ${b.id} have different number of keys.`);
 	for (const key of a.keys()) {
 		const aVal: unknown = a.get(key);
 		const bVal: unknown = b.get(key);
-		if (key === handleKey) {
-			assert.equal(typeof aVal, IFluidHandle, "aVal should be a handle");
-			assert.equal(typeof bVal, IFluidHandle, "bVal should be a handle");
+		if (
+			aVal !== null &&
+			typeof aVal === "object" &&
+			bVal !== null &&
+			typeof bVal === "object"
+		) {
+			const aObj: FluidObject<IFluidHandle> = aVal;
+			const bObj: FluidObject<IFluidHandle> = bVal;
+			const aHandle = aObj.IFluidHandle ? await aObj.IFluidHandle?.get() : aObj;
+			const bHandle = bObj.IFluidHandle ? await bObj.IFluidHandle?.get() : bObj;
 			assert.equal(
-				(aVal as IFluidHandle).get(),
-				(bVal as IFluidHandle).get(),
-				`${a.id} and ${b.id} differ at ${key}: ${aVal} vs ${bVal}`,
+				aHandle,
+				bHandle,
+				`${a.id} and ${b.id} differ at ${key}: ${JSON.stringify(
+					aHandle,
+				)} vs ${JSON.stringify(bHandle)}`,
 			);
+		} else {
+			assert.equal(aVal, bVal, `${a.id} and ${b.id} differ at ${key}: ${aVal} vs ${bVal}`);
 		}
-		assert.equal(aVal, bVal, `${a.id} and ${b.id} differ at ${key}: ${aVal} vs ${bVal}`);
 	}
 }
 

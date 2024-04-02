@@ -9,7 +9,7 @@ import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import { ISummarizer } from "@fluidframework/container-runtime";
+import { ISummarizer } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
 	IChannelAttributes,
@@ -22,7 +22,7 @@ import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	ITestContainerConfig,
@@ -34,7 +34,7 @@ import {
 	TestObjectProvider,
 	createSummarizer,
 	summarizeNow,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import {
@@ -688,7 +688,7 @@ export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 	},
 ): CheckoutFlexTreeView<TRoot> {
 	const forest = forestWithContent(content);
-	const view = createTreeCheckout(testIdCompressor, testRevisionTagCodec, {
+	const view = createTreeCheckout(testIdCompressor, mintRevisionTag, testRevisionTagCodec, {
 		...args,
 		forest,
 		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
@@ -728,7 +728,7 @@ export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 	},
 ): FlexTreeTypedField<TRoot> {
 	const forest = args?.forest ?? forestWithContent(content);
-	const branch = createTreeCheckout(testIdCompressor, testRevisionTagCodec, {
+	const branch = createTreeCheckout(testIdCompressor, mintRevisionTag, testRevisionTagCodec, {
 		...args,
 		forest,
 		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),

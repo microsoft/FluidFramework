@@ -4,7 +4,7 @@
  */
 
 import { IRequest } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import { IUser } from "@fluidframework/protocol-definitions";
 

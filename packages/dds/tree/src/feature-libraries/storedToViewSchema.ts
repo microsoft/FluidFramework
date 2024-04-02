@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	LeafNodeStoredSchema,
@@ -100,8 +100,7 @@ export function fieldSchemaFromStoredSchema(
 	schema: TreeFieldStoredSchema,
 	map: ReadonlyMap<TreeNodeSchemaIdentifier, FlexTreeNodeSchema>,
 ): FlexFieldSchema {
-	const kind =
-		defaultSchemaPolicy.fieldKinds.get(schema.kind.identifier) ?? fail("missing field kind");
+	const kind = defaultSchemaPolicy.fieldKinds.get(schema.kind) ?? fail("missing field kind");
 	const types: FlexAllowedTypes =
 		schema.types === undefined
 			? [Any]

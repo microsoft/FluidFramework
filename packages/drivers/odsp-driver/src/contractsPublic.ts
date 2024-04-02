@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions";
+import { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions/internal";
 
 /**
  * @alpha

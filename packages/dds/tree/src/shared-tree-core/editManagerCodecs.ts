@@ -12,8 +12,12 @@ import {
 	withSchemaValidation,
 } from "../codec/index.js";
 import { makeVersionDispatchingCodec } from "../codec/index.js";
-import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../core/index.js";
-import { SchemaAndPolicy } from "../feature-libraries/index.js";
+import {
+	ChangeEncodingContext,
+	EncodedRevisionTag,
+	RevisionTag,
+	SchemaAndPolicy,
+} from "../core/index.js";
 import {
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlySchema,

@@ -15,7 +15,7 @@ import {
 	takeAsync as take,
 } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { ITaskManager } from "../interfaces.js";
 import { TaskManagerFactory } from "../taskManagerFactory.js";

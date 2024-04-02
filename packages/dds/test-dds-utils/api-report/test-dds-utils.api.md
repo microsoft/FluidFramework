@@ -11,11 +11,11 @@ import type { IChannelFactory } from '@fluidframework/datastore-definitions';
 import type { IFluidHandle } from '@fluidframework/core-interfaces';
 import type { IIdCompressor } from '@fluidframework/id-compressor';
 import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
-import type { IMockContainerRuntimeOptions } from '@fluidframework/test-runtime-utils';
+import type { IMockContainerRuntimeOptions } from '@fluidframework/test-runtime-utils/internal';
 import type { ISharedObject } from '@fluidframework/shared-object-base';
-import { MockContainerRuntimeFactoryForReconnection } from '@fluidframework/test-runtime-utils';
-import type { MockContainerRuntimeForReconnection } from '@fluidframework/test-runtime-utils';
-import type { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
+import { MockContainerRuntimeFactoryForReconnection } from '@fluidframework/test-runtime-utils/internal';
+import type { MockContainerRuntimeForReconnection } from '@fluidframework/test-runtime-utils/internal';
+import type { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils/internal';
 import type { SaveInfo } from '@fluid-private/stochastic-test-utils';
 import type { SerializedIdCompressorWithNoSession } from '@fluidframework/id-compressor/internal';
 import type { SerializedIdCompressorWithOngoingSession } from '@fluidframework/id-compressor/internal';
@@ -87,7 +87,7 @@ export interface DDSFuzzModel<TChannelFactory extends IChannelFactory, TOperatio
     generatorFactory: () => AsyncGenerator_2<TOperation, TState>;
     minimizationTransforms?: MinimizationTransform<TOperation>[];
     reducer: AsyncReducer<TOperation, TState>;
-    validateConsistency: (channelA: ReturnType<TChannelFactory["create"]>, channelB: ReturnType<TChannelFactory["create"]>) => void;
+    validateConsistency: (channelA: ReturnType<TChannelFactory["create"]>, channelB: ReturnType<TChannelFactory["create"]>) => void | Promise<void>;
     workloadName: string;
 }
 

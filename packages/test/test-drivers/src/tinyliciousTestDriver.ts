@@ -11,7 +11,7 @@ import {
 	InsecureTinyliciousUrlResolver,
 	createTinyliciousCreateNewRequest,
 	defaultTinyliciousPort,
-} from "@fluidframework/tinylicious-driver";
+} from "@fluidframework/tinylicious-driver/internal";
 
 import { RouterliciousDriverApi, RouterliciousDriverApiType } from "./routerliciousDriverApi.js";
 

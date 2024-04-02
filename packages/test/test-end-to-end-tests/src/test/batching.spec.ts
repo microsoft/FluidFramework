@@ -12,12 +12,12 @@ import {
 	ContainerMessageType,
 	IContainerRuntimeOptions,
 	UnknownContainerRuntimeMessage,
-} from "@fluidframework/container-runtime";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+} from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { FlushMode } from "@fluidframework/runtime-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -26,7 +26,7 @@ import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 	timeoutPromise,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 const map1Id = "map1Key";
 const map2Id = "map2Key";

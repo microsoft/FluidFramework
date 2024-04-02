@@ -11,7 +11,7 @@ import {
 	MockEmptyDeltaConnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "../index.js";
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	type ICodecFamily,
@@ -12,7 +12,6 @@ import {
 	makeCodecFamily,
 	withSchemaValidation,
 } from "../../codec/index.js";
-
 import { makeSchemaCodec } from "../schema-index/index.js";
 
 import { EncodedSchemaChange } from "./schemaChangeFormat.js";

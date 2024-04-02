@@ -5,12 +5,12 @@
 
 import { strict as assert } from "assert";
 
-import { TextSegment } from "@fluidframework/merge-tree";
+import { TextSegment } from "@fluidframework/merge-tree/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { IIntervalCollection } from "../intervalCollection.js";
 import { SequenceInterval } from "../intervals/index.js";

@@ -6,16 +6,16 @@
 import {
 	type ContainerRuntime,
 	type IContainerRuntimeOptions,
-} from "@fluidframework/container-runtime";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+} from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { type FluidObject, type IRequest, type IResponse } from "@fluidframework/core-interfaces";
-import { type RuntimeRequestHandler } from "@fluidframework/request-handler";
+import { type RuntimeRequestHandler } from "@fluidframework/request-handler/internal";
 import {
 	type IFluidDataStoreFactory,
 	type NamedFluidDataStoreRegistryEntries,
-} from "@fluidframework/runtime-definitions";
-import { RequestParser } from "@fluidframework/runtime-utils";
-import { type IFluidDependencySynthesizer } from "@fluidframework/synthesize";
+} from "@fluidframework/runtime-definitions/internal";
+import { RequestParser } from "@fluidframework/runtime-utils/internal";
+import { type IFluidDependencySynthesizer } from "@fluidframework/synthesize/internal";
 
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory.js";
 

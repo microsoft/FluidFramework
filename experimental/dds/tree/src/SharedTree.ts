@@ -6,7 +6,7 @@
 import { bufferToString } from '@fluid-internal/client-utils';
 import { AttachState } from '@fluidframework/container-definitions';
 import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
-import { assert } from '@fluidframework/core-utils';
+import { assert } from '@fluidframework/core-utils/internal';
 import {
 	IChannelAttributes,
 	IChannelFactory,
@@ -16,20 +16,16 @@ import {
 } from '@fluidframework/datastore-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats, ITelemetryContext } from '@fluidframework/runtime-definitions';
-import {
-	IFluidSerializer,
-	ISharedObjectEvents,
-	SharedObject,
-	createSingleBlobSummary,
-} from '@fluidframework/shared-object-base';
+import { IFluidSerializer, ISharedObjectEvents } from '@fluidframework/shared-object-base';
+import { SharedObject, createSingleBlobSummary } from '@fluidframework/shared-object-base/internal';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import {
 	IEventSampler,
-	ITelemetryLoggerExt,
 	ITelemetryLoggerPropertyBags,
 	PerformanceEvent,
 	createChildLogger,
 	createSampledLogger,
-} from '@fluidframework/telemetry-utils';
+} from '@fluidframework/telemetry-utils/internal';
 
 import { BuildNode, BuildTreeNode, Change, ChangeType } from './ChangeTypes.js';
 import { RestOrArray, copyPropertyIfDefined, fail, unwrapRestOrArray } from './Common.js';

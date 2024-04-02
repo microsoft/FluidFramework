@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
-import type { SharedCell } from "@fluidframework/cell";
+import type { SharedCell } from "@fluidframework/cell/internal";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IContainer, type IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
@@ -15,7 +15,7 @@ import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 	IdCompressorMode,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import type { IChannel } from "@fluidframework/datastore-definitions";
 import { IIdCompressor, SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
@@ -33,7 +33,7 @@ import {
 	getContainerEntryPointBackCompat,
 	summarizeNow,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 function getIdCompressor(dds: IChannel): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;
