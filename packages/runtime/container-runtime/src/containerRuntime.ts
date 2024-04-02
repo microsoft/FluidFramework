@@ -4312,7 +4312,9 @@ export class ContainerRuntime
 				pending,
 				pendingIdCompressorState,
 				pendingAttachmentBlobs,
-				sessionExpiryTimerStarted: this.garbageCollector.sessionExpiryTimerStarted,
+				sessionExpiryTimerStarted:
+					props?.sessionExpiryTimerStarted ??
+					this.garbageCollector.sessionExpiryTimerStarted,
 			};
 		};
 		const perfEvent = {

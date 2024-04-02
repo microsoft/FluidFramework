@@ -81,6 +81,7 @@ export class SerializedStateManager {
 	private readonly mc: MonitoringContext;
 	private latestSnapshot: SnapshotInfo | undefined;
 	private refreshSnapshot: Promise<void> | undefined;
+	private sessionExpiryTimerStarted: number | undefined;
 
 	constructor(
 		private readonly pendingLocalState: IPendingContainerState | undefined,
@@ -184,6 +185,7 @@ export class SerializedStateManager {
 				snapshotSequenceNumber - firstProcessedOpSequenceNumber + 1,
 			);
 			this.snapshot = this.latestSnapshot;
+			this.sessionExpiryTimerStarted = Date.now();
 			this.latestSnapshot = undefined;
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "SnapshotRefreshed",
@@ -227,7 +229,10 @@ export class SerializedStateManager {
 					);
 				}
 				assert(this.snapshot !== undefined, 0x8e5 /* no base data */);
-				const pendingRuntimeState = await runtime.getPendingLocalState(props);
+				const pendingRuntimeState = await runtime.getPendingLocalState({
+					...props,
+					sessionExpiryTimerStarted: this.sessionExpiryTimerStarted,
+				});
 				const pendingState: IPendingContainerState = {
 					attached: true,
 					pendingRuntimeState,

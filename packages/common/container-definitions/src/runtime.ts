@@ -260,4 +260,10 @@ export interface IGetPendingLocalStateProps {
 	 * be preserved and collected.
 	 */
 	readonly stopBlobAttachingSignal?: AbortSignal;
+
+	/**
+	 * Date to be used as the starting time of a session. This date is updated in case we refresh the
+	 * base snapshot since we won't be referencing ops older than the new snapshot.
+	 */
+	readonly sessionExpiryTimerStarted?: number;
 }
