@@ -12,8 +12,8 @@ import {
 	IResponse,
 	ITelemetryBaseProperties,
 	toFluidHandleInternal,
-} from "@fluidframework/core-interfaces";
-import type { IEvent, IFluidHandleInternal } from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
+import type { IEvent, IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils/internal";

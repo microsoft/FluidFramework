@@ -16,7 +16,7 @@ import {
 	IResponse,
 	type ITelemetryBaseLogger,
 	toFluidHandleInternal,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannel,
