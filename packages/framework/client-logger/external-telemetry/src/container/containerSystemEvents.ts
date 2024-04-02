@@ -4,23 +4,22 @@
  */
 
 /**
- * This object contains a non-exhaustive set of the unique event names of raw events from {@link IContainerEvents} produced by Fluid containers.
+ * This object contains a non-exhaustive set of the unique event names of raw {@link @fluidframework/fluid-static#IFluidContainerEvents | system events } produced by Fluid containers.
  * It's important to note that each actual system events is a function signature such as `(event: "readonly", listener: (readonly: boolean) => void): void;`
- * but this enum only caputres the event name in each function.
+ * but this enum only captures the event name in each function.
  *
  * @privateremarks This should probably exist within IContainer itself instead of being defined here.
  */
-export const ContainerSystemEventNames = {
+export const IFluidContainerSystemEventNames = {
 	CONNECTED: "connected",
 	DISCONNECTED: "disconnected",
-	ATTACHING: "attaching",
-	ATTACHED: "attached",
-	CLOSED: "closed",
-	WARNING: "warning",
+	SAVED: "saved",
+	DIRTY: "dirty",
+	DISPOSED: "disposed",
 } as const;
 
 /**
- * The type for all values within {@link ContainerSystemEventNames}
+ * The type for all values within {@link IFluidContainerSystemEventNames}
  */
-export type ContainerSystemEventName =
-	(typeof ContainerSystemEventNames)[keyof typeof ContainerSystemEventNames];
+export type IFluidContainerSystemEventName =
+	(typeof IFluidContainerSystemEventNames)[keyof typeof IFluidContainerSystemEventNames];

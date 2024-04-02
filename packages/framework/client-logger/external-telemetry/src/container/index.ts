@@ -8,10 +8,10 @@ export {
 	ContainerTelemetryEventNames,
 	IContainerTelemetry,
 	ContainerConnectedTelemetry,
-	ContainerClosedTelemetry,
 	ContainerDisconnectedTelemetry,
-	ContainerAttachingTelemetry,
-	ContainerAttachedTelemetry,
+	ContainerSavedTelemetry,
+	ContainerDirtyTelemetry,
+	ContainerDisposedTelemetry,
 } from "./containerTelemetry.js";
 
 export { ContainerTelemetryManager } from "./telemetryManager.js";

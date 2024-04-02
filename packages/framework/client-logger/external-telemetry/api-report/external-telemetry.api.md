@@ -4,39 +4,38 @@
 
 ```ts
 
-import { ICriticalContainerError } from '@fluidframework/container-definitions/internal';
-import type { IFluidContainer } from '@fluidframework/fluid-static/internal';
-
-// @beta
-export interface ContainerAttachedTelemetry extends IContainerTelemetry {
-    // (undocumented)
-    eventName: "container.attached";
-}
-
-// @beta
-export interface ContainerAttachingTelemetry extends IContainerTelemetry {
-    // (undocumented)
-    eventName: "container.attaching";
-}
-
-// @beta
-export interface ContainerClosedTelemetry extends IContainerTelemetry {
-    // (undocumented)
-    error?: ICriticalContainerError;
-    // (undocumented)
-    eventName: "container.closed";
-}
+import { ICriticalContainerError } from '@fluidframework/container-definitions';
+import type { IFluidContainer } from '@fluidframework/fluid-static';
 
 // @beta
 export interface ContainerConnectedTelemetry extends IContainerTelemetry {
     // (undocumented)
-    eventName: "container.connected";
+    eventName: "fluidframework.container.connected";
+}
+
+// @beta
+export interface ContainerDirtyTelemetry extends IContainerTelemetry {
+    // (undocumented)
+    eventName: "fluidframework.container.dirty";
 }
 
 // @beta
 export interface ContainerDisconnectedTelemetry extends IContainerTelemetry {
     // (undocumented)
-    eventName: "container.disconnected";
+    eventName: "fluidframework.container.disconnected";
+}
+
+// @beta
+export interface ContainerDisposedTelemetry extends IContainerTelemetry {
+    error?: ICriticalContainerError;
+    // (undocumented)
+    eventName: "fluidframework.container.disposed";
+}
+
+// @beta
+export interface ContainerSavedTelemetry extends IContainerTelemetry {
+    // (undocumented)
+    eventName: "fluidframework.container.saved";
 }
 
 // @beta
@@ -44,11 +43,11 @@ export type ContainerTelemetryEventName = (typeof ContainerTelemetryEventNames)[
 
 // @beta
 export const ContainerTelemetryEventNames: {
-    readonly CONNECTED: "container.connected";
-    readonly DISCONNECTED: "container.disconnected";
-    readonly CLOSED: "container.closed";
-    readonly ATTACHING: "container.attaching";
-    readonly ATTACHED: "container.attached";
+    readonly CONNECTED: "fluidframework.container.connected";
+    readonly DISCONNECTED: "fluidframework.container.disconnected";
+    readonly SAVED: "fluidframework.container.saved";
+    readonly DIRTY: "fluidframework.container.dirty";
+    readonly DISPOSED: "fluidframework.container.disposed";
 };
 
 // @beta
@@ -56,9 +55,7 @@ export type ExternalTelemetryEventName = ContainerTelemetryEventName;
 
 // @beta
 export interface IContainerTelemetry extends IExternalTelemetry {
-    clientId?: string;
-    containerId: string;
-    documentId?: string;
+    containerId?: string;
     eventName: ContainerTelemetryEventName;
 }
 
@@ -79,7 +76,8 @@ export const startTelemetry: (config: TelemetryConfig) => void;
 // @beta
 export interface TelemetryConfig {
     consumers: ITelemetryConsumer[];
-    container?: IFluidContainer;
+    container: IFluidContainer;
+    containerId: string;
 }
 
 // (No @packageDocumentation comment for this package)

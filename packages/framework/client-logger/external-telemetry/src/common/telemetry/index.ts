@@ -8,6 +8,8 @@ import type { ContainerTelemetryEventName } from "../../container/index.js";
 /**
  * The base interface extended by all external telemetry
  *
+ * @see {@link @fluidframework/external-telemetry#IContainerTelemetry} for an extension of this interface for all container related telemetry.
+ *
  * @beta
  */
 export interface IExternalTelemetry {

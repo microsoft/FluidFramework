@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type IContainer,
-	type ICriticalContainerError,
-} from "@fluidframework/container-definitions/internal";
+import { type ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IContainerTelemetry } from "./containerTelemetry.js";
 import { ContainerEventTelemetryProducer } from "./telemetryProducer.js";
 import { ITelemetryConsumer } from "../common/index.js";
-import { ContainerSystemEventName, ContainerSystemEventNames } from "./containerSystemEvents.js";
-import { v4 as uuid } from "uuid";
+import {
+	IFluidContainerSystemEventName,
+	IFluidContainerSystemEventNames,
+} from "./containerSystemEvents.js";
+import type { IFluidContainer } from "@fluidframework/fluid-static";
 /**
  * This class manages container telemetry intended for customers to consume.
  * It manages subcribing to the proper raw container system events, sending them to the {@link ContainerEventTelemetryProducer}
@@ -20,35 +20,36 @@ import { v4 as uuid } from "uuid";
  * @internal
  */
 export class ContainerTelemetryManager {
-	private readonly containerId: string;
-
 	constructor(
-		private readonly container: IContainer,
+		private readonly container: IFluidContainer,
 		private readonly telemetryProducer: ContainerEventTelemetryProducer,
 		private readonly telemetryConsumers: ITelemetryConsumer[],
 	) {
 		this.setupEventHandlers();
-		this.containerId = uuid();
 	}
 
 	/**
 	 * Subscribes to the raw container system events and routes them to telemetry producers.
 	 */
 	private setupEventHandlers() {
-		this.container.on(ContainerSystemEventNames.CONNECTED, (clientId) =>
-			this.handleContainerSystemEvent(ContainerSystemEventNames.CONNECTED, { clientId }),
+		this.container.on(IFluidContainerSystemEventNames.CONNECTED, () =>
+			this.handleContainerSystemEvent(IFluidContainerSystemEventNames.CONNECTED),
 		);
-		this.container.on(ContainerSystemEventNames.DISCONNECTED, () =>
-			this.handleContainerSystemEvent(ContainerSystemEventNames.DISCONNECTED),
+		this.container.on(IFluidContainerSystemEventNames.DISCONNECTED, () =>
+			this.handleContainerSystemEvent(IFluidContainerSystemEventNames.DISCONNECTED),
 		);
-		this.container.on(ContainerSystemEventNames.CLOSED, (error?: ICriticalContainerError) =>
-			this.handleContainerSystemEvent(ContainerSystemEventNames.CLOSED, { error }),
+		this.container.on(IFluidContainerSystemEventNames.DIRTY, () =>
+			this.handleContainerSystemEvent(IFluidContainerSystemEventNames.DIRTY),
 		);
-		this.container.on(ContainerSystemEventNames.ATTACHED, () =>
-			this.handleContainerSystemEvent(ContainerSystemEventNames.ATTACHED),
+		this.container.on(IFluidContainerSystemEventNames.SAVED, () =>
+			this.handleContainerSystemEvent(IFluidContainerSystemEventNames.SAVED),
 		);
-		this.container.on(ContainerSystemEventNames.ATTACHING, () =>
-			this.handleContainerSystemEvent(ContainerSystemEventNames.ATTACHING),
+		this.container.on(
+			IFluidContainerSystemEventNames.DISPOSED,
+			(error?: ICriticalContainerError) =>
+				this.handleContainerSystemEvent(IFluidContainerSystemEventNames.DISPOSED, {
+					error,
+				}),
 		);
 	}
 
@@ -56,10 +57,12 @@ export class ContainerTelemetryManager {
 	 * Handles the incoming raw container sysytem event, sending it to the {@link ContainerEventTelemetryProducer} to
 	 * produce {@link IContainerTelemetry} and sending it to the {@link ITelemetryConsumer} to be consumed.
 	 */
-	private handleContainerSystemEvent(eventName: ContainerSystemEventName, payload?: unknown) {
+	private handleContainerSystemEvent(
+		eventName: IFluidContainerSystemEventName,
+		payload?: unknown,
+	) {
 		const telemetry: IContainerTelemetry | undefined = this.telemetryProducer.produceTelemetry(
 			eventName,
-			this.containerId,
 			payload,
 		);
 

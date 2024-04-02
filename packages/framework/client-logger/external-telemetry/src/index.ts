@@ -13,9 +13,9 @@ export {
 	ContainerTelemetryEventName,
 	ContainerTelemetryEventNames,
 	ContainerConnectedTelemetry,
-	ContainerClosedTelemetry,
 	ContainerDisconnectedTelemetry,
-	ContainerAttachingTelemetry,
-	ContainerAttachedTelemetry,
+	ContainerDisposedTelemetry,
+	ContainerSavedTelemetry,
+	ContainerDirtyTelemetry,
 } from "./container/index.js";
 export { startTelemetry, TelemetryConfig } from "./factory/index.js";

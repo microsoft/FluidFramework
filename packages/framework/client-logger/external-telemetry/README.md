@@ -27,7 +27,7 @@ import { IFluidContainer } from "@fluidframework/fluid-static";
 import { TelemetryConfig, startTelemetry, createAppInsightsTelemetryConsumer } from "@fluidframework/external-telemetry"
 
 const myAppContainer: IFluidContainer = {...your code to create a Fluid Continer}
-
+const myAppContainerId = "123-456-12331-23"
 
 // Create App Insights Client
 const appInsightsClient = new ApplicationInsights({
@@ -41,21 +41,22 @@ const appInsightsClient = new ApplicationInsights({
 appInsightsClient.loadAppInsights();
 
 class AppInsightsTelemetryConsumer implements ITelemetryConsumer {
-			constructor(private readonly appInsightsClient: ApplicationInsights) {}
+	constructor(private readonly appInsightsClient: ApplicationInsights) {}
 
-			consume(event: IExternalTelemetry) {
-				this.appInsightsClient.trackEvent({
-					name: event.eventName,
-					properties: event,
-				});
-			}
-		}
+	consume(event: IExternalTelemetry) {
+		this.appInsightsClient.trackEvent({
+			name: event.eventName,
+			properties: event,
+		});
+	}
+}
 
 // Create the telemetry manager config object(s)
 const telemetryConfig: TelemetryConfig = {
-			container: myAppContainer,
-			consumers: [new AppInsightsTelemetryConsumer(appInsightsClient)],
-		};
+	container: myAppContainer,
+	containerId: myAppContainerId,
+	consumers: [new AppInsightsTelemetryConsumer(appInsightsClient)],
+};
 
 // Start Telemetry
 startTelemetry(telemetryConfig);
@@ -73,6 +74,6 @@ Telemetry events relating directly to Fluid Containers.
 
 1. `ContainerConnectedTelemetry`
 1. `ContainerDisconnectedTelemetry`
-1. `ContainerClosedTelemetry`
-1. `ContainerAttachingTelemetry`
-1. `ContainerAttachedTelemetry`
+1. `ContainerDirtyTelemetry`
+1. `ContainerDisposedTelemetry`
+1. `ContainerSavedTelemetry`
