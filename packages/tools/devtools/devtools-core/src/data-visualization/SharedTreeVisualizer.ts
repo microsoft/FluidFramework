@@ -47,7 +47,7 @@ export function toVisualTree(tree: VisualSharedTreeNode): VisualChildNode {
 }
 
 /**
- * Returns the allowed fields & types for the object fields.
+ * Returns the allowed fields & types for the object fields (e.g., `foo : string | number, bar: boolean`)
  */
 function getObjectAllowedTypes(schema: ObjectNodeStoredSchema): string {
 	let result = "";
