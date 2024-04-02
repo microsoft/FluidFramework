@@ -131,6 +131,7 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
 				process.exit(0);
 			},
 		)
+		.help()
 		.demandCommand(1)
 		.parse();
 }

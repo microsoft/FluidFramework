@@ -56,8 +56,7 @@
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"bin": {
-		"fluid-runner": "bin/fluid-runner.mjs",
-		"sample-executables": "bin/sample-executables.mjs"
+		"fluid-runner": "bin/fluid-runner.mjs"
 	},
 	"scripts": {
 		"api": "fluid-build . --task api",
