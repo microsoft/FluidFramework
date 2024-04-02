@@ -85,6 +85,10 @@ describe("SessionSpaceNormalizer", () => {
 			[4, 2],
 		]);
 
+		assert.deepEqual(normalizer.getRangesBetween(4, 4), [[4, 1]]);
+		assert.deepEqual(normalizer.getRangesBetween(5, 5), [[5, 1]]);
+		assert.deepEqual(normalizer.getRangesBetween(6, 6), [[6, 1]]);
+
 		assert.deepEqual(normalizer.getRangesBetween(3, 3), []);
 	});
 });
