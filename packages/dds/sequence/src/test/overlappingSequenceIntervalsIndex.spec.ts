@@ -12,7 +12,7 @@ import {
 	LocalReferencePosition,
 	compareReferencePositions,
 } from "@fluidframework/merge-tree/internal";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	createOverlappingIntervalsIndex,

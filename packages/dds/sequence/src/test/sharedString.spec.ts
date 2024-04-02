@@ -27,7 +27,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 	validateAssertionError,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { SharedStringFactory } from "../sequenceFactory.js";
 import { SharedString, getTextAndMarkers } from "../sharedString.js";

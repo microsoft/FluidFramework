@@ -25,7 +25,7 @@ import {
 	IVersion,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { type IPendingContainerState, SerializedStateManager } from "../serializedStateManager.js";
 

@@ -4,7 +4,7 @@
  */
 
 import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";

@@ -29,7 +29,7 @@ import {
 	createSummarizerFromFactory,
 	summarizeNow,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import {
 	ITree,
 	SchemaFactory,

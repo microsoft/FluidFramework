@@ -8,8 +8,9 @@ import {
 	IOdspUrlParts,
 	ISocketStorageDiscovery,
 	InstrumentedStorageTokenFetcher,
-} from "@fluidframework/odsp-driver-definitions";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { EpochTracker } from "./epochTracker.js";

@@ -14,9 +14,17 @@ import {
 	StringProperty,
 } from "@fluid-experimental/property-properties";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
+import {
+	IContainer,
+	IFluidCodeDetails,
+	IHostLoader,
+	ILoaderOptions,
+} from "@fluidframework/container-definitions/internal";
+import { Loader as ContainerLoader } from "@fluidframework/container-loader/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
+import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
@@ -33,17 +41,9 @@ import {
 	createLoader,
 	createSummarizer,
 	summarizeNow,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import { expect } from "chai";
 
-import {
-	IContainer,
-	IFluidCodeDetails,
-	IHostLoader,
-	ILoaderOptions,
-} from "@fluidframework/container-definitions/internal";
-import { Loader as ContainerLoader } from "@fluidframework/container-loader/internal";
-import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import { SharedPropertyTree } from "../propertyTree.js";
 import { DeflatedPropertyTree, LZ4PropertyTree } from "../propertyTreeExt.js";
 import { PropertyTreeFactory } from "../propertyTreeFactory.js";

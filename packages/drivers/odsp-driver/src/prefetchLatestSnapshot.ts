@@ -15,8 +15,11 @@ import {
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 	getKeyForCacheEntry,
-} from "@fluidframework/odsp-driver-definitions";
-import { PerformanceEvent, createChildMonitoringContext } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/odsp-driver-definitions/internal";
+import {
+	PerformanceEvent,
+	createChildMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { IVersionedValueWithEpoch } from "./contracts.js";
 import {

@@ -12,7 +12,7 @@ import {
 } from "@fluid-experimental/tree";
 // eslint-disable-next-line import/no-internal-modules
 import { EditLog } from "@fluid-experimental/tree/test/EditLog";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ITree, SharedTree } from "@fluidframework/tree";
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
+import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct/internal";
 import {
 	ICodeDetailsLoader,
 	IContainer,

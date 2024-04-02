@@ -17,7 +17,7 @@ import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/inte
 import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
 import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions/internal';
 import { IDriverErrorBase } from '@fluidframework/driver-definitions';
-import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
+import { IFluidErrorBase } from '@fluidframework/telemetry-utils/internal';
 import { ILocationRedirectionError } from '@fluidframework/driver-definitions/internal';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
@@ -39,7 +39,7 @@ import { ITreeEntry } from '@fluidframework/protocol-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
 import { IVersion } from '@fluidframework/protocol-definitions';
 import { LoaderCachingPolicy } from '@fluidframework/driver-definitions/internal';
-import { LoggingError } from '@fluidframework/telemetry-utils';
+import { LoggingError } from '@fluidframework/telemetry-utils/internal';
 
 // @internal
 export function applyStorageCompression(documentServiceFactory: IDocumentServiceFactory, config?: ICompressionStorageConfig | boolean): IDocumentServiceFactory;

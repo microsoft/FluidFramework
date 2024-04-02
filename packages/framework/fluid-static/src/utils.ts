@@ -10,7 +10,7 @@ import {
 	type NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions/internal";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
-import { UsageError } from "@fluidframework/telemetry-utils";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { type ContainerSchema, type DataObjectClass, type LoadableObjectClass } from "./types.js";
 

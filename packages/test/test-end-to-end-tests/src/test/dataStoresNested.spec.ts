@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
 	TestContainerRuntimeFactory,
@@ -25,7 +25,7 @@ import {
 	TestObjectProvider,
 	createSummarizerCore,
 	summarizeNow,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 /**
  * ADO:7302 This needs to be revisited after settling on a set of

@@ -4,7 +4,7 @@
  */
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { createChildLogger, raiseConnectedEvent } from "@fluidframework/telemetry-utils";
+import { createChildLogger, raiseConnectedEvent } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import {
@@ -46,8 +46,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 				this.process(remoteMessage);
 			}
 			this.pendingRemoteMessages.length = 0;
-			// ! TODO AB#7512
-			this.deltaManager.clientSequenceNumber = -1;
+			this.deltaManager.clientSequenceNumber = 0;
 			// We should get a new clientId on reconnection.
 			this.clientId = uuid();
 			// Update the clientId in FluidDataStoreRuntime.
@@ -111,8 +110,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 	public async initializeWithStashedOps(
 		fromContainerRuntime: MockContainerRuntimeForReconnection,
 	) {
-		// ! TODO AB#7512
-		if (this.pendingMessages.length !== 0 || this.deltaManager.clientSequenceNumber !== -1) {
+		if (this.pendingMessages.length !== 0 || this.deltaManager.clientSequenceNumber !== 0) {
 			throw new Error("applyStashedOps must be called first, and once.");
 		}
 

@@ -12,7 +12,7 @@ import {
 	MonitoringContext,
 	UsageError,
 	createChildMonitoringContext,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
 import { IPendingBatchMessage, PendingStateManager } from "../pendingStateManager.js";

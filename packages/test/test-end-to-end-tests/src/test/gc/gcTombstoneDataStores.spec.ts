@@ -35,10 +35,10 @@ import {
 	IFluidDataStoreChannel,
 	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions/internal";
-import { responseToException } from "@fluidframework/runtime-utils";
+import { responseToException } from "@fluidframework/runtime-utils/internal";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base/internal";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -46,7 +46,7 @@ import {
 	createTestConfigProvider,
 	summarizeNow,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils.js";
 

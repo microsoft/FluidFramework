@@ -5,7 +5,7 @@
 
 import assert from "node:assert";
 
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { TreeValue } from "../../core/index.js";
 import { SchemaFactory, SchemaFactoryRecursive, TreeNode } from "../../simple-tree/index.js";
