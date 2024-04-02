@@ -38,14 +38,14 @@ describe("Utils", () => {
 	}
 
 	benchmark({
-		title: `mapIterable-spread`,
+		title: `map from map spread`,
 		benchmarkFn: () => {
 			const m = new Map([...testMap].map(([k, v]) => [k, v] as const));
 		},
 	});
 
 	benchmark({
-		title: `mapIterable`,
+		title: `map from mapIterable`,
 		benchmarkFn: () => {
 			const m = new Map(mapIterable(testMap, ([k, v]) => [k, v] as const));
 		},
