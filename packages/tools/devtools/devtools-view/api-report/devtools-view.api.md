@@ -4,9 +4,10 @@
 
 ```ts
 
-import { IDevtoolsMessage } from '@fluidframework/devtools-core';
+import { IDevtoolsMessage } from '@fluidframework/devtools-core/internal';
 import { IMessageRelay } from '@fluidframework/devtools-core';
-import { IMessageRelayEvents } from '@fluidframework/devtools-core';
+import { IMessageRelay as IMessageRelay_2 } from '@fluidframework/devtools-core/internal';
+import { IMessageRelayEvents } from '@fluidframework/devtools-core/internal';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { default as React_2 } from 'react';
@@ -17,7 +18,7 @@ export function DevtoolsPanel(props: DevtoolsPanelProps): React_2.ReactElement;
 
 // @internal
 export interface DevtoolsPanelProps {
-    messageRelay: IMessageRelay;
+    messageRelay: IMessageRelay_2;
     unloadCallback?: () => void;
     usageTelemetryLogger?: ITelemetryBaseLogger;
 }
@@ -32,7 +33,7 @@ export { ITelemetryBaseEvent }
 export { ITelemetryBaseLogger }
 
 // @internal
-export class WindowMessageRelay extends TypedEventEmitter<IMessageRelayEvents> implements IMessageRelay {
+export class WindowMessageRelay extends TypedEventEmitter<IMessageRelayEvents> implements IMessageRelay_2 {
     constructor(
     messageSource: string);
     postMessage(message: IDevtoolsMessage): void;

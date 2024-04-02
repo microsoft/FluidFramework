@@ -9,8 +9,8 @@ import { FluidObject } from '@fluidframework/core-interfaces';
 import { IContainerContext } from '@fluidframework/container-definitions/internal';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions/internal';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
-import { RuntimeFactoryHelper } from '@fluidframework/runtime-utils';
-import { RuntimeRequestHandler } from '@fluidframework/request-handler';
+import { RuntimeFactoryHelper } from '@fluidframework/runtime-utils/internal';
+import { RuntimeRequestHandler } from '@fluidframework/request-handler/internal';
 
 // @internal (undocumented)
 export class RuntimeFactory extends RuntimeFactoryHelper {

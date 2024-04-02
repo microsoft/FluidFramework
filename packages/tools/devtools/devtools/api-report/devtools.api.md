@@ -7,12 +7,14 @@
 import { ContainerKey } from '@fluidframework/devtools-core';
 import { createDevtoolsLogger } from '@fluidframework/devtools-core';
 import { HasContainerKey } from '@fluidframework/devtools-core';
+import { HasContainerKey as HasContainerKey_2 } from '@fluidframework/devtools-core/internal';
 import { IDevtoolsLogger } from '@fluidframework/devtools-core';
+import { IDevtoolsLogger as IDevtoolsLogger_2 } from '@fluidframework/devtools-core/internal';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 
 // @beta
-export interface ContainerDevtoolsProps extends HasContainerKey {
+export interface ContainerDevtoolsProps extends HasContainerKey_2 {
     container: IFluidContainer;
 }
 
@@ -23,7 +25,7 @@ export { createDevtoolsLogger }
 // @beta
 export interface DevtoolsProps {
     initialContainers?: ContainerDevtoolsProps[];
-    logger?: IDevtoolsLogger;
+    logger?: IDevtoolsLogger_2;
 }
 
 export { HasContainerKey }

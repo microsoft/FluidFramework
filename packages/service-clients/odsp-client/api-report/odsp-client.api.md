@@ -11,14 +11,15 @@ import type { IMember } from '@fluidframework/fluid-static';
 import type { IServiceAudience } from '@fluidframework/fluid-static';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { TokenResponse } from '@fluidframework/odsp-driver-definitions';
+import { TokenResponse as TokenResponse_2 } from '@fluidframework/odsp-driver-definitions/internal';
 
 // @beta
 export type IOdspAudience = IServiceAudience<OdspMember>;
 
 // @beta
 export interface IOdspTokenProvider {
-    fetchStorageToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
-    fetchWebsocketToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
+    fetchStorageToken(siteUrl: string, refresh: boolean): Promise<TokenResponse_2>;
+    fetchWebsocketToken(siteUrl: string, refresh: boolean): Promise<TokenResponse_2>;
 }
 
 // @beta @sealed
