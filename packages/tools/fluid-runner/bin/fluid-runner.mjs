@@ -3,4 +3,5 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-require("../dist/fluidRunner.js").fluidRunner();
+import { fluidRunner } from "../lib/fluidRunner.js";
+fluidRunner();

@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as yargs from "yargs";
+import yargs from "yargs";
+// eslint-disable-next-line import/no-internal-modules
+import { hideBin } from "yargs/helpers";
 
 import { IFluidFileConverter } from "./codeLoaderBundle.js";
 import { exportFile } from "./exportFile.js";
@@ -17,10 +19,8 @@ import { validateCommandLineArgs } from "./utils.js";
  * @internal
  */
 export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
-	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-	yargs
-		.strict()
-		.version(false)
+	// eslint-disable-next-line @typescript-eslint/no-floating-promises
+	yargs(hideBin(process.argv))
 		.command(
 			"exportFile",
 			"Generate an output for a local ODSP snapshot",
@@ -85,7 +85,7 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
 						demandOption: false,
 						default: false,
 					}),
-			// eslint-disable-next-line @typescript-eslint/no-misused-promises
+
 			async (argv) => {
 				const argsError = validateCommandLineArgs(argv.codeLoader, fluidFileConverter);
 				if (argsError) {
@@ -131,6 +131,6 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
 				process.exit(0);
 			},
 		)
-		.help()
-		.demandCommand().argv;
+		.demandCommand(1)
+		.parse();
 }

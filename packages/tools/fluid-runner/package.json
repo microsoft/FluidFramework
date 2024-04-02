@@ -56,8 +56,8 @@
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"bin": {
-		"fluid-runner": "bin/fluid-runner.cjs",
-		"sample-executables": "bin/sample-executables.cjs"
+		"fluid-runner": "bin/fluid-runner.mjs",
+		"sample-executables": "bin/sample-executables.mjs"
 	},
 	"scripts": {
 		"api": "fluid-build . --task api",
@@ -122,7 +122,7 @@
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"json2csv": "^5.0.7",
-		"yargs": "13.2.2"
+		"yargs": "17.7.2"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
@@ -136,7 +136,7 @@
 		"@microsoft/api-extractor": "^7.42.3",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
-		"@types/yargs": "^13",
+		"@types/yargs": "^17.0.32",
 		"c8": "^8.0.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
