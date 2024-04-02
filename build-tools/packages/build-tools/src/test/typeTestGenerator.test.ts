@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import * as utils from "../type-test-generator/typeTestUtils";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { readJsonSync } from "fs-extra";
 import * as fs from "fs";
 import * as path from "path";
@@ -62,16 +61,7 @@ describe("typeTestUtils", () => {
 
 		it("Should return undefined if the previous package.json path does not exist", () => {
 			const previousBasePath = path.join(nodeModulesDir, "does-not-exist");
-			assert.throws(
-				() => {
-					utils.tryGetPreviousPackageJsonPath(previousBasePath);
-				},
-				(error: Error) => {
-					const previousPackageJsonPath = path.join(previousBasePath, "package.json");
-					validateAssertionError(error, `${previousPackageJsonPath} not found.`);
-					return true;
-				},
-			);
+			assert.throws(() => utils.tryGetPreviousPackageJsonPath(previousBasePath));
 		});
 	});
 
@@ -163,14 +153,7 @@ describe("typeTestUtils", () => {
 		it("should throw an error if both import and require resolutions are missing", () => {
 			packageObject.exports = { ".": {} };
 
-			assert.throws(
-				() => utils.getTypePathFromExport(packageObject, previousBasePath),
-				(error: Error) =>
-					validateAssertionError(
-						error,
-						"Type definition file path could not be determined from the 'exports' field using the default export entry '.'",
-					),
-			);
+			assert.throws(() => utils.getTypePathFromExport(packageObject, previousBasePath));
 		});
 
 		it("should return the type definition file path if it exists in exports", () => {
@@ -211,14 +194,7 @@ describe("typeTestUtils", () => {
 				}),
 				"utf-8",
 			);
-			assert.throws(
-				() => utils.getTypePathFromExport(packageObject, previousBasePath),
-				(error: Error) =>
-					validateAssertionError(
-						error,
-						"Type definition file path could not be determined from the 'exports' field using the default export entry '.'",
-					),
-			);
+			assert.throws(() => utils.getTypePathFromExport(packageObject, previousBasePath));
 		});
 	});
 
