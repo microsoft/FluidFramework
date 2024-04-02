@@ -28,7 +28,6 @@ import {
 	cursorForJsonableTreeField,
 	intoStoredSchema,
 } from "../../feature-libraries/index.js";
-import { disposeSymbol } from "../../index.js";
 import { ITreeCheckout, TreeContent } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
@@ -43,6 +42,7 @@ import {
 	stringSequenceRootSchema,
 	validateTreeContent,
 } from "../utils.js";
+import { disposeSymbol } from "../../util/index.js";
 
 const rootField: FieldUpPath = {
 	parent: undefined,

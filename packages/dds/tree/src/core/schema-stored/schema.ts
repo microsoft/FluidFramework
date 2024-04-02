@@ -4,7 +4,6 @@
  */
 
 import { DiscriminatedUnionDispatcher } from "../../codec/index.js";
-import { Multiplicity } from "../../index.js";
 import {
 	Brand,
 	Erased,
@@ -14,7 +13,6 @@ import {
 	fail,
 	invertMap,
 } from "../../util/index.js";
-
 import {
 	FieldKey,
 	FieldKindIdentifier,
@@ -23,6 +21,7 @@ import {
 	TreeNodeSchemaDataFormat,
 	TreeNodeSchemaIdentifier,
 } from "./format.js";
+import { Multiplicity } from "./multiplicity.js";
 
 /**
  * Schema for what {@link TreeValue} is allowed on a Leaf node.
