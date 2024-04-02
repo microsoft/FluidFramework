@@ -107,6 +107,7 @@ export {
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
+	NodeChangePruner,
 	CrossFieldManager,
 	CrossFieldTarget,
 	FlexFieldKind,

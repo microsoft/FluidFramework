@@ -65,7 +65,12 @@ import { DetachedCellMark } from "../../../feature-libraries/sequence-field/help
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { TestNodeId } from "../../testNodeId.js";
+import { ChangesetWrapper } from "../../changesetWrapper.js";
 import { TestChangeset } from "./testEdits.js";
+
+export function assertWrappedChangesetsEqual(actual: WrappedChange, expected: WrappedChange): void {
+	ChangesetWrapper.assertEqual(actual, expected, assertChangesetsEqual);
+}
 
 export function assertChangesetsEqual<T>(actual: SF.Changeset<T>, expected: SF.Changeset<T>): void {
 	const updatedExpected = purgeUnusedCellOrderingInfo(expected);
@@ -144,6 +149,23 @@ export function withOrderingMethod(
 	}
 }
 
+export function composeDeep(
+	changes: TaggedChange<WrappedChange>[],
+	revisionMetadata?: RevisionMetadataSource,
+): WrappedChange {
+	const metadata = revisionMetadata ?? defaultRevisionMetadataFromChanges(changes);
+
+	return changes.reduce(
+		(change1, change2) =>
+			makeAnonChange(
+				ChangesetWrapper.compose(change1, change2, (c1, c2, composeChild) =>
+					composePair(c1, c2, composeChild, metadata, idAllocatorFromMaxId()),
+				),
+			),
+		makeAnonChange(ChangesetWrapper.create([])),
+	).change;
+}
+
 export function composeNoVerify(
 	changes: TaggedChange<TestChangeset>[],
 	revInfos?: RevisionInfo[],
@@ -166,9 +188,13 @@ export function compose(
 	return composeI(changes, childComposer ?? TestNodeId.composeChild, revInfos) as TestChangeset;
 }
 
+export function pruneDeep(change: WrappedChange): WrappedChange {
+	return ChangesetWrapper.prune(change, (c, childPruner) => prune(c, childPruner));
+}
+
 export function prune(
 	change: TestChangeset,
-	childPruner?: (child: NodeId) => TestNodeId | undefined,
+	childPruner?: (child: NodeId) => NodeId | undefined,
 ): TestChangeset {
 	return SF.sequenceFieldChangeRebaser.prune(
 		change,
@@ -321,10 +347,33 @@ export function rebaseOverComposition(
 	return rebase(change, makeAnonChange(base), { metadata });
 }
 
+export type WrappedChange = ChangesetWrapper<SF.Changeset>;
+
+export function rebaseDeepTagged(
+	change: TaggedChange<WrappedChange>,
+	base: TaggedChange<WrappedChange>,
+): TaggedChange<WrappedChange> {
+	return { ...change, change: rebaseDeep(change.change, base) };
+}
+
+export function rebaseDeep(
+	change: WrappedChange,
+	base: TaggedChange<WrappedChange>,
+	metadata?: RebaseRevisionMetadata,
+): WrappedChange {
+	return ChangesetWrapper.rebase(change, base, (c, b, childRebaser) =>
+		rebase(c, b, { childRebaser, metadata }),
+	);
+}
+
 function resetCrossFieldTable(table: SF.CrossFieldTable) {
 	table.isInvalidated = false;
 	table.srcQueries.clear();
 	table.dstQueries.clear();
+}
+
+export function invertDeep(change: TaggedChange<WrappedChange>): WrappedChange {
+	return ChangesetWrapper.invert(change, (c) => invert(c));
 }
 
 export function invert<T>(change: TaggedChange<SF.Changeset<T>>): SF.Changeset<T> {
@@ -390,6 +439,10 @@ export function continuingAllocator(changes: TaggedChange<SF.Changeset<unknown>>
 	return idAllocatorFromMaxId(getMaxIdTagged(changes));
 }
 
+export function withoutLineageDeep(changeset: WrappedChange): WrappedChange {
+	return { ...changeset, fieldChange: withoutLineage(changeset.fieldChange) };
+}
+
 export function withoutLineage<T>(changeset: SF.Changeset<T>): SF.Changeset<T> {
 	const factory = new SF.MarkListFactory<T>();
 	for (const mark of changeset) {
@@ -411,6 +464,10 @@ export function withoutLineage<T>(changeset: SF.Changeset<T>): SF.Changeset<T> {
 	return factory.list;
 }
 
+export function withoutTombstonesDeep(changeset: WrappedChange): WrappedChange {
+	return { ...changeset, fieldChange: withoutTombstones(changeset.fieldChange) };
+}
+
 export function withoutTombstones<T>(changeset: SF.Changeset<T>): SF.Changeset<T> {
 	const factory = new SF.MarkListFactory<T>();
 	for (const mark of changeset) {
@@ -420,6 +477,10 @@ export function withoutTombstones<T>(changeset: SF.Changeset<T>): SF.Changeset<T
 	}
 
 	return factory.list;
+}
+
+export function withNormalizedLineageDeep(changeset: WrappedChange): WrappedChange {
+	return { ...changeset, fieldChange: withNormalizedLineage(changeset.fieldChange) };
 }
 
 export function withNormalizedLineage<T>(changeset: SF.Changeset<T>): SF.Changeset<T> {
