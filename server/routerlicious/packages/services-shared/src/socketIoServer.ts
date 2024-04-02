@@ -5,7 +5,6 @@
 
 import { EventEmitter } from "events";
 import * as http from "http";
-import * as util from "util";
 import * as core from "@fluidframework/server-services-core";
 import {
 	BaseTelemetryProperties,
@@ -196,17 +195,12 @@ class SocketIoServer implements core.IWebSocketServer {
 			}
 		}
 
-		// eslint-disable-next-line @typescript-eslint/promise-function-async
-		const pubClosedP = util.promisify(((callback) =>
-			this.redisClientConnectionManagerForPub.getRedisClient().quit(callback)) as any)();
-		// eslint-disable-next-line @typescript-eslint/promise-function-async
-		const subClosedP = util.promisify(((callback) =>
-			this.redisClientConnectionManagerForSub.getRedisClient().quit(callback)) as any)();
-		const ioClosedP = util.promisify(((callback) => this.io.close(callback)) as any)();
-
-		await ioClosedP;
-		await sleep(2000); // Give time for disconnect handlers to execute before closing Redis resources
-		await Promise.all([pubClosedP, subClosedP]);
+		this.io.close();
+		await sleep(3000); // Give time for any  disconnect handlers to execute before closing Redis resources
+		await Promise.all([
+			this.redisClientConnectionManagerForPub.getRedisClient().quit(),
+			this.redisClientConnectionManagerForSub.getRedisClient().quit(),
+		]);
 	}
 }
 
