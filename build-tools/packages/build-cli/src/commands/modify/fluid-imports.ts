@@ -8,10 +8,11 @@
 import { Flags } from "@oclif/core";
 import { existsSync, readFile } from "fs-extra";
 import * as JSON5 from "json5";
-import path from "node:path";
-import { Project, type ImportDeclaration, type SourceFile, ModuleKind, Node } from "ts-morph";
+import { Project, type ImportDeclaration, SourceFile, ModuleKind, Node } from "ts-morph";
 import { BaseCommand } from "../../base";
 import type { CommandLogger } from "../../logging";
+
+const maxConcurrency = 4;
 
 // These types are very similar to those defined and used in the `release setPackageTypesField` command, but that
 // command is likely to be deprecated soon, so no effort has been made to unify them.
@@ -39,10 +40,11 @@ export default class UpdateFluidImportsCommand extends BaseCommand<
 	static readonly description = `Rewrite imports for Fluid Framework APIs to use the correct subpath import (/alpha, /beta. etc.)`;
 
 	static readonly flags = {
-		tsconfig: Flags.file({
-			description: "Path to a tsconfig file that will be used to load project files.",
-			default: "./tsconfig.json",
-			exists: true,
+		tsconfigs: Flags.file({
+			description:
+				"Tsconfig file paths that will be used to load project files. When multiple are given all must depend on the same version of packages; otherwise results are unstable.",
+			default: ["./tsconfig.json"],
+			multiple: true,
 		}),
 		data: Flags.file({
 			description: "Path to a data file containing raw API level data.",
@@ -55,14 +57,42 @@ export default class UpdateFluidImportsCommand extends BaseCommand<
 	};
 
 	public async run(): Promise<void> {
-		const { tsconfig, data, onlyInternal } = this.flags;
+		const { tsconfigs, data, onlyInternal } = this.flags;
 
-		if (!existsSync(tsconfig)) {
-			this.error(`Can't find config file: ${tsconfig}`, { exit: 0 });
+		const foundConfigs = tsconfigs.filter((file) => {
+			const exists = existsSync(file);
+			if (!exists) {
+				this.warning(`Can't find config file: ${file}`);
+			}
+			return exists;
+		});
+
+		if (foundConfigs.length === 0) {
+			this.error(`No config files found.`, { exit: 1 });
 		}
-		const dataFilePath = data ?? path.join(__dirname, "../../../data/rawApiLevels.jsonc");
-		const apiLevelData = await loadData(dataFilePath);
-		await updateImports(tsconfig, apiLevelData, onlyInternal, this.logger);
+		const apiLevelData = data === undefined ? undefined : await loadData(data);
+		const apiMap = new ApiLevelReader(this.logger, apiLevelData);
+
+		// Note that while there is a queue here it is only really a queue for file saves
+		// which are the only async aspect currently and aren't expected to take so long.
+		// If more aspects are done concurrently, make maxConcurrency an option.
+		const queue: Promise<void>[] = [];
+		for (const { tsConfigFilePath, sources } of getSourceFiles(foundConfigs)) {
+			this.info(
+				`Processing ${tsConfigFilePath} and ${sources.length} source${
+					sources.length === 1 ? "" : "s"
+				}.`,
+			);
+			if (sources.length > 0) {
+				queue.push(updateImports(sources, apiMap, onlyInternal, this.logger));
+				if (queue.length >= maxConcurrency) {
+					// naively wait for the first scheduled to finish
+					// eslint-disable-next-line no-await-in-loop
+					await queue.shift();
+				}
+			}
+		}
+		await Promise.all(queue);
 	}
 }
 
@@ -348,21 +378,61 @@ function getApiLevelForImportName(
 	return defaultValue;
 }
 
+function notDTsFile(sourceFile: SourceFile): boolean {
+	return sourceFile.getExtension() !== ".d.ts";
+}
+
+function* getSourceFiles(
+	tsconfigFilePaths: string[],
+): IterableIterator<{ tsConfigFilePath: string; sources: SourceFile[] }> {
+	if (tsconfigFilePaths.length === 1) {
+		const tsConfigFilePath = tsconfigFilePaths[0];
+		const project = new Project({
+			tsConfigFilePath,
+		});
+		yield {
+			tsConfigFilePath,
+			sources: project
+				.getSourceFiles()
+				// Filter out type files - this may not be correct in projects with manually defined declarations.
+				.filter(notDTsFile),
+		};
+		return;
+	}
+
+	// ts-morph processing will pull sources from references and caller may very well have specified project
+	// files that reference one another. Each source should only be processed once. So build a unique
+	// SourceFile list from full paths.
+	const sources = new Set<string>();
+
+	for (const tsConfigFilePath of tsconfigFilePaths) {
+		const project = new Project({
+			tsConfigFilePath,
+		});
+		yield {
+			tsConfigFilePath,
+			sources: project
+				.getSourceFiles()
+				// Filter out type files - this may not be correct in projects with manually defined declarations.
+				.filter(notDTsFile)
+				.filter((source) => {
+					const fullPath = source.getFilePath();
+					const alreadyVisiting = sources.has(fullPath);
+					if (!alreadyVisiting) {
+						sources.add(fullPath);
+					}
+					return !alreadyVisiting;
+				}),
+		};
+	}
+}
+
 async function updateImports(
-	tsConfigFilePath: string,
-	mappingData: MapData,
+	sourceFiles: SourceFile[],
+	apiMap: ApiLevelReader,
 	onlyInternal: boolean,
 	log: CommandLogger,
 ): Promise<void> {
-	const apiMap = new ApiLevelReader(log, mappingData);
-	const project = new Project({
-		tsConfigFilePath,
-	});
-	const sourceFiles = project
-		.getSourceFiles()
-		// Filter out type files - this may not be correct in projects with manually defined declarations.
-		.filter((sourceFile) => sourceFile.getExtension() !== ".d.ts");
-
 	/**
 	 * List of source file save promises. Used to collect modified source file save promises so we can await them all at
 	 * once.
