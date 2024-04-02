@@ -13,8 +13,7 @@ import type { IClientDetails } from '@fluidframework/protocol-definitions';
 import type { IDisposable } from '@fluidframework/core-interfaces';
 import type { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import type { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
-import { IErrorBase } from '@fluidframework/core-interfaces/internal';
-import type { IErrorBase as IErrorBase_2 } from '@fluidframework/core-interfaces';
+import { IErrorBase } from '@fluidframework/core-interfaces';
 import type { IErrorEvent } from '@fluidframework/core-interfaces';
 import type { IEvent } from '@fluidframework/core-interfaces';
 import type { IEventProvider } from '@fluidframework/core-interfaces';
@@ -68,7 +67,7 @@ export const ContainerErrorTypes: {
 export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
 
 // @alpha
-export interface ContainerWarning extends IErrorBase_2 {
+export interface ContainerWarning extends IErrorBase {
     logged?: boolean;
 }
 
@@ -220,7 +219,7 @@ export interface IContainerLoadMode {
 }
 
 // @public
-export type ICriticalContainerError = IErrorBase_2;
+export type ICriticalContainerError = IErrorBase;
 
 // @public @sealed
 export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
@@ -257,7 +256,7 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "disconnect", listener: (reason: string, error?: IAnyDriverError) => void): any;
     (event: "readonly", listener: (readonly: boolean, readonlyConnectionReason?: {
         reason: string;
-        error?: IErrorBase_2;
+        error?: IErrorBase;
     }) => void): any;
 }
 

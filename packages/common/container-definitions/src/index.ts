@@ -63,6 +63,9 @@ export type {
 	 * @deprecated IErrorBase is being deprecated as a public export is moving to "core-interfaces".
 	 */
 	IErrorBase,
+} from "@fluidframework/core-interfaces";
+
+export type {
 	/**
 	 * @deprecated IGenericError is being deprecated as a public export is moving to "core-interfaces".
 	 */
