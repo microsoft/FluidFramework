@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils";
+import {
+	AttachmentTreeEntry,
+	BlobTreeEntry,
+	TreeTreeEntry,
+} from "@fluidframework/driver-utils/internal";
 import { ITree, ITreeEntry, TreeEntry } from "@fluidframework/protocol-definitions";
 
 /** The name of the metadata blob added to the root of the container runtime. */
@@ -116,8 +120,8 @@ function getNormalizedBlobContent(blobContent: string, blobName: string): string
 			metadata.telemetryDocumentId = "x";
 		}
 		// default was not written before, now it's written in.
-		if (metadata.idCompressorMode === undefined) {
-			metadata.idCompressorMode = "off";
+		if (metadata.documentSchema !== undefined) {
+			metadata.documentSchema = undefined;
 		}
 		content = JSON.stringify(metadata);
 	}

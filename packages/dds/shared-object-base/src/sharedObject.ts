@@ -6,7 +6,7 @@
 import { EventEmitterEventType } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	type IChannelFactory,
@@ -20,20 +20,23 @@ import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+} from "@fluidframework/runtime-definitions";
+import {
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	DataProcessingError,
 	EventEmitterWithErrorHandling,
-	ITelemetryLoggerExt,
 	MonitoringContext,
 	SampledTelemetryHelper,
 	createChildLogger,
 	loggerToMonitoringContext,
 	tagCodeArtifacts,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
+
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, IFluidSerializer } from "./serializer.js";
 import { SummarySerializer } from "./summarySerializer.js";

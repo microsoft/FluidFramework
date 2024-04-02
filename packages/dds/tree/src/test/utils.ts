@@ -4,22 +4,25 @@
  */
 
 import { strict as assert } from "assert";
+
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
-import { IContainer } from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
-import { ISummarizer } from "@fluidframework/container-runtime";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
+import { ISummarizer } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
 	IChannelAttributes,
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
+import { SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	ITestContainerConfig,
@@ -31,10 +34,8 @@ import {
 	TestObjectProvider,
 	createSummarizer,
 	summarizeNow,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
-import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/test";
 import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import {
 	AllowedUpdateType,
@@ -160,6 +161,14 @@ function freezeObjectMethods<T>(object: T, methods: (keyof T)[]): void {
 export const failCodec: IJsonCodec<any, any, any, any> = {
 	encode: () => assert.fail("Unexpected encode"),
 	decode: () => assert.fail("Unexpected decode"),
+};
+
+/**
+ * A {@link ICodecFamily} implementation which fails to resolve any codec.
+ */
+export const failCodecFamily: ICodecFamily<any, any> = {
+	resolve: () => assert.fail("Unexpected resolve"),
+	getSupportedFormats: () => [],
 };
 
 /**
@@ -657,16 +666,9 @@ export function validateSnapshotConsistency(
 	expectSchemaEqual(treeA.schema, treeB.schema, idDifferentiator);
 }
 
-export function checkoutFromConfig(treeConfiguration: TreeConfiguration): TreeCheckout {
-	const forest = buildForest();
-	const flexConfig = toFlexConfig(treeConfiguration, forest);
-	return checkoutWithContent(flexConfig);
-}
-
 export function checkoutWithContent(
 	content: TreeContent,
 	args?: {
-		forest?: IEditableForest;
 		events?: ISubscribable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
@@ -678,7 +680,6 @@ export function checkoutWithContent(
 export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
-		forest?: IEditableForest;
 		events?: ISubscribable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
@@ -686,7 +687,7 @@ export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 		nodeKeyFieldKey?: FieldKey;
 	},
 ): CheckoutFlexTreeView<TRoot> {
-	const forest = args?.forest ?? forestWithContent(content);
+	const forest = forestWithContent(content);
 	const view = createTreeCheckout(testIdCompressor, testRevisionTagCodec, {
 		...args,
 		forest,
@@ -701,10 +702,7 @@ export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 }
 
 export function forestWithContent(content: TreeContent): IEditableForest {
-	return addContentToForest(buildForest(), content);
-}
-
-export function addContentToForest(forest: IEditableForest, content: TreeContent): IEditableForest {
+	const forest = buildForest();
 	const fieldCursor = normalizeNewFieldContent(
 		{ schema: content.schema },
 		content.schema.rootFieldSchema,
@@ -948,7 +946,7 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 				}
 			});
 
-			const failureCases = encodingTestData.failures?.[version] ?? [];
+			const failureCases = encodingTestData.failures?.[version ?? "undefined"] ?? [];
 			if (failureCases.length > 0) {
 				describe("rejects malformed data", () => {
 					for (const [name, encodedData, context] of failureCases) {
@@ -1196,10 +1194,8 @@ export function treeTestFactory(
 export function getView<TSchema extends ImplicitFieldSchema>(
 	config: TreeConfiguration<TSchema>,
 ): SchematizingSimpleTreeView<TSchema> {
-	const forest = buildForest();
-	const flexConfig = toFlexConfig(config, forest);
-	addContentToForest(forest, flexConfig);
-	const checkout = checkoutWithContent(flexConfig, { forest });
+	const flexConfig = toFlexConfig(config);
+	const checkout = checkoutWithContent(flexConfig);
 	return new SchematizingSimpleTreeView<TSchema>(
 		checkout,
 		config,

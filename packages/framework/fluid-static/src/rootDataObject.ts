@@ -7,21 +7,21 @@ import {
 	BaseContainerRuntimeFactory,
 	DataObject,
 	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { type IRuntimeFactory } from "@fluidframework/container-definitions";
-import { type ContainerRuntime } from "@fluidframework/container-runtime";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+} from "@fluidframework/aqueduct/internal";
+import { type IRuntimeFactory } from "@fluidframework/container-definitions/internal";
+import { type ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	type FluidObject,
 	type IFluidLoadable,
 	type IRequest,
 	type IResponse,
 } from "@fluidframework/core-interfaces";
-import { type IDirectory } from "@fluidframework/map";
-import { FlushMode } from "@fluidframework/runtime-definitions";
-import { RequestParser } from "@fluidframework/runtime-utils";
-
+import { type IDirectory } from "@fluidframework/map/internal";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import { RequestParser } from "@fluidframework/runtime-utils/internal";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
+
 import {
 	type ContainerSchema,
 	type IRootDataObject,
@@ -227,12 +227,14 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		super({
 			registryEntries: [rootDataObjectFactory.registryEntry],
 			requestHandlers: [getDefaultObject],
+			// WARNING: These settigs are not compatible with FF 1.3 clients!
 			runtimeOptions: {
 				// temporary workaround to disable message batching until the message batch size issue is resolved
 				// resolution progress is tracked by the Feature 465 work item in AzDO
 				flushMode: FlushMode.Immediate,
 				// The runtime compressor is required to be on to use @fluidframework/tree.
 				enableRuntimeIdCompressor: "on",
+				explicitSchemaControl: true,
 			},
 			provideEntryPoint,
 		});

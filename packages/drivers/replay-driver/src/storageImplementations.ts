@@ -4,7 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
@@ -13,8 +13,8 @@ import {
 	IDocumentServiceFactory,
 	IDocumentStorageService,
 	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
-import { buildSnapshotTree } from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-definitions/internal";
+import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
 import {
 	IClient,
 	ISnapshotTree,
@@ -23,6 +23,7 @@ import {
 	IVersion,
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService.js";
 import { ReadDocumentStorageServiceBase } from "./replayController.js";
 

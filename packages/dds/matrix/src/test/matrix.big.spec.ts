@@ -10,8 +10,10 @@ import {
 	MockEmptyDeltaConnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
+
 import { SharedMatrix, SharedMatrixFactory } from "../index.js";
+
 import { checkCorners, expectSize, setCorners } from "./utils.js";
 
 const enum Const {

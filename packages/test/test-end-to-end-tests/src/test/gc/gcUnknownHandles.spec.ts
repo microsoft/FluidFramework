@@ -4,21 +4,26 @@
  */
 
 import { strict as assert } from "assert";
+
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import {
 	IFluidHandle,
 	IFluidHandleContext,
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import { FluidObjectHandle } from "@fluidframework/datastore";
+// This test doesn't care to test compat of the Fluid handle implementation, it's just used for convenience
+// to simulate an unknown object.
+// eslint-disable-next-line @typescript-eslint/no-restricted-imports
+import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
+
 import { defaultGCConfig } from "./gcTestConfigs.js";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 

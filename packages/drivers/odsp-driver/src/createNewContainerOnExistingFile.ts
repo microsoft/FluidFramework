@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ISnapshot } from "@fluidframework/driver-definitions";
-import { UsageError } from "@fluidframework/driver-utils";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import { UsageError } from "@fluidframework/driver-utils/internal";
 import {
 	IFileEntry,
 	IOdspResolvedUrl,
 	InstrumentedStorageTokenFetcher,
-} from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/odsp-driver-definitions/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+
 import { IWriteSummaryResponse } from "./contracts.js";
 import { ClpCompliantAppHeader } from "./contractsPublic.js";
 import {

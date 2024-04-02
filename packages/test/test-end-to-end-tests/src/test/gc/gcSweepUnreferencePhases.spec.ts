@@ -4,16 +4,17 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	ITestDataObject,
 	TestDataObjectType,
 	describeCompat,
 } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
-import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
-import { delay } from "@fluidframework/core-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { IGCRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { delay } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { gcTreeKey } from "@fluidframework/runtime-definitions";
+import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -21,7 +22,8 @@ import {
 	createTestConfigProvider,
 	summarizeNow,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
+
 import {
 	getGCDeletedStateFromSummary,
 	getGCStateFromSummary,

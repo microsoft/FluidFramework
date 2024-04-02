@@ -7,9 +7,9 @@ import {
 	type ISourcedDevtoolsMessage,
 	devtoolsMessageSource,
 	isDevtoolsMessage,
-} from "@fluidframework/devtools-core";
+} from "@fluidframework/devtools-core/internal";
 
-import { browser } from "../Globals";
+import { browser } from "../Globals.js";
 import {
 	type DevToolsInitAcknowledgement,
 	type DevToolsInitMessage,
@@ -19,11 +19,12 @@ import {
 	extensionViewMessageSource,
 	postMessageToPort,
 	relayMessageToPort,
-} from "../messaging";
+} from "../messaging/index.js";
+
 import {
 	backgroundScriptMessageLoggingOptions,
 	formatBackgroundScriptMessageForLogging,
-} from "./Logging";
+} from "./Logging.js";
 
 type Port = chrome.runtime.Port;
 

@@ -86,8 +86,8 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 			(this.flags.remove
 				? VersionOptions.Clear
 				: this.flags.previous
-				  ? VersionOptions.Previous
-				  : VersionOptions.ClearIfDisabled);
+					? VersionOptions.Previous
+					: VersionOptions.ClearIfDisabled);
 		updatePackageJsonFile(pkg.directory, (json) => {
 			if (this.flags.disable) {
 				json.typeValidation ??= { broken: {} };

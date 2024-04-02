@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { bufferToString } from "@fluid-internal/client-utils";
 import {
 	ITestDataObject,
@@ -11,12 +12,7 @@ import {
 	describeCompat,
 	itExpects,
 } from "@fluid-private/test-version-utils";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
 	DefaultSummaryConfiguration,
@@ -24,17 +20,17 @@ import {
 	ISummarizer,
 	ISummaryRuntimeOptions,
 	SummaryCollection,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ISummaryContext } from "@fluidframework/driver-definitions";
+import { ISummaryContext } from "@fluidframework/driver-definitions/internal";
 import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	FlushMode,
 	IFluidDataStoreFactory,
 	channelsTreeName,
-} from "@fluidframework/runtime-definitions";
-import type { SharedString } from "@fluidframework/sequence";
-import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/runtime-definitions/internal";
+import type { SharedString } from "@fluidframework/sequence/internal";
+import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -47,7 +43,7 @@ import {
 	summarizeNow,
 	timeoutPromise,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
 const testContainerConfig: ITestContainerConfig = {
@@ -108,19 +104,22 @@ function readBlobContent(content: ISummaryBlob["content"]): unknown {
 	return JSON.parse(json);
 }
 
-class TestDataObject1 extends DataObject {
-	protected async initializingFromExisting(): Promise<void> {
-		// This test data object will verify full initialization does not happen for summarizer client.
-		if (this.context.clientDetails.capabilities.interactive === false) {
-			throw Error(
-				"Non interactive/summarizer client's data object should not be initialized",
-			);
-		}
-	}
-}
-
 describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedString } = apis.dds;
+	const { DataObject, DataObjectFactory } = apis.dataRuntime;
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+
+	class TestDataObject1 extends DataObject {
+		protected async initializingFromExisting(): Promise<void> {
+			// This test data object will verify full initialization does not happen for summarizer client.
+			if (this.context.clientDetails.capabilities.interactive === false) {
+				throw Error(
+					"Non interactive/summarizer client's data object should not be initialized",
+				);
+			}
+		}
+	}
+
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();

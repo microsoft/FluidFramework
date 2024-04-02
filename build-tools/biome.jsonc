@@ -2,7 +2,7 @@
 	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
 	"extends": ["../biome.json"],
 	"organizeImports": {
-		"enabled": true
+		"enabled": true,
 	},
 	"formatter": {
 		"enabled": true,

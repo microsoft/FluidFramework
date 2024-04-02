@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
@@ -13,6 +14,7 @@ import {
 	TreeStoredSchema,
 } from "../core/index.js";
 import { fail } from "../util/index.js";
+
 import { defaultSchemaPolicy } from "./default-schema/index.js";
 import {
 	Any,

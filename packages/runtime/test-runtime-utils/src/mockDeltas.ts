@@ -10,7 +10,7 @@ import {
 	IDeltaQueue,
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IClientConfiguration,
 	IClientDetails,
@@ -165,32 +165,38 @@ export class MockDeltaManager
 		this.removeAllListeners();
 	}
 
-	public prepareInboundResponse(type: MessageType, contents: any) {
-		const callback = () => {
-			this.inbound.push({
-				// TODO
-				type,
-				contents,
-				clientId: null,
-				sequenceNumber: 0,
-				minimumSequenceNumber: 0,
-				clientSequenceNumber: 0,
-				referenceSequenceNumber: 0,
-				timestamp: 0,
-			});
-			this.outbound.off("push", callback);
-		};
-		this.outbound.on("push", callback);
+	// ! TODO AB#7512: attribution fuzz tests rely on csn starting at 0 (even though this is not how the normal flow works)
+	public clientSequenceNumber = -1;
+
+	public process(message: ISequencedDocumentMessage): void {
+		assert(message.sequenceNumber !== undefined, "message missing sequenceNumber");
+		assert(
+			message.minimumSequenceNumber !== undefined,
+			"message missing minimumSequenceNumber",
+		);
+		this.lastSequenceNumber = message.sequenceNumber;
+		this.lastMessage = message;
+		this.minimumSequenceNumber = message.minimumSequenceNumber;
+		this.emit("op", message);
 	}
 
-	constructor() {
+	constructor(private readonly getClientId?: () => string) {
 		super();
 
 		this._inbound = new MockDeltaQueue<ISequencedDocumentMessage>();
-		this._inbound.processCallback = (message: ISequencedDocumentMessage) => {
-			this.emit("op", message);
-		};
+
 		this._outbound = new MockDeltaQueue<IDocumentMessage[]>();
+		this._outbound.on("push", (messages: IDocumentMessage[]) => {
+			messages.forEach((message: IDocumentMessage) => {
+				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+				this._inbound.push({
+					// ! TODO AB#7512: attribution fuzz tests rely on this ordering
+					clientId: this.getClientId?.() ?? null,
+					...message,
+					// ! sequenceNumber and minimumSequenceNumber should be added by MockContainerRuntimeFactory
+				} as ISequencedDocumentMessage);
+			});
+		});
 		this._inboundSignal = new MockDeltaQueue<ISignalMessage>();
 	}
 }

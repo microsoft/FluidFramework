@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { MockDocumentDeltaConnection } from "@fluid-private/test-loader-utils";
 import {
 	ITestDataObject,
@@ -17,15 +18,15 @@ import {
 	IContainer,
 	IFluidCodeDetails,
 	LoaderHeader,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader";
 import {
-	ConnectionState,
 	IContainerExperimental,
 	ILoaderProps,
 	Loader,
 	waitContainerToCatchUp,
-} from "@fluidframework/container-loader";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+} from "@fluidframework/container-loader/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -33,19 +34,15 @@ import {
 	IRequest,
 	IRequestHeader,
 } from "@fluidframework/core-interfaces";
-import { Deferred } from "@fluidframework/core-utils";
-import {
-	DriverErrorTypes,
-	FiveDaysMs,
-	IAnyDriverError,
-	IDocumentServiceFactory,
-} from "@fluidframework/driver-definitions";
+import { Deferred } from "@fluidframework/core-utils/internal";
+import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions";
+import { FiveDaysMs, IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import {
 	DeltaStreamConnectionForbiddenError,
 	NonRetryableError,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { DataCorruptionError } from "@fluidframework/telemetry-utils";
+import { DataCorruptionError } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -56,8 +53,9 @@ import {
 	TestObjectProvider,
 	timeoutPromise,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import { v4 as uuid } from "uuid";
+
 import { wrapObjectAndOverride } from "../mocking.js";
 
 const id = "https://localhost/containerTest";

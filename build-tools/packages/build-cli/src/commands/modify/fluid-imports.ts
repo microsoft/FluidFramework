@@ -5,11 +5,11 @@
 
 /* eslint-disable max-depth */
 
+import path from "node:path";
 import { Flags } from "@oclif/core";
 import { existsSync, readFile } from "fs-extra";
 import * as JSON5 from "json5";
-import path from "node:path";
-import { Project, type ImportDeclaration, type SourceFile } from "ts-morph";
+import { type ImportDeclaration, Project, type SourceFile } from "ts-morph";
 import { BaseCommand } from "../../base";
 import type { CommandLogger } from "../../logging";
 
