@@ -4,9 +4,9 @@
  * Licensed under the MIT License.
  */
 
-import { fluidRunner } from "../../index.js";
-
 import { fluidExport } from "./sampleCodeLoader.js";
+
+import { fluidRunner } from "@fluidframework/fluid-runner";
 
 // CommonJS modules may not use await at top level. Catch is best that can be done.
 fluidRunner(fluidExport).catch(process.abort);
