@@ -188,6 +188,8 @@ class SocketIoServer implements core.IWebSocketServer {
 					);
 				} else {
 					metricForTimeTaken.success("Graceful shutdown finished");
+					const reconnections = await this.io.fetchSockets();
+					Lumberjack.info("Graceful shutdown. Closing last reconnected connections", { connectionsCount: reconnections.length });
 				}
 			}
 		}
@@ -199,7 +201,10 @@ class SocketIoServer implements core.IWebSocketServer {
 		const subClosedP = util.promisify(((callback) =>
 			this.redisClientConnectionManagerForSub.getRedisClient().quit(callback)) as any)();
 		const ioClosedP = util.promisify(((callback) => this.io.close(callback)) as any)();
-		await Promise.all([pubClosedP, subClosedP, ioClosedP]);
+
+		await ioClosedP;
+		await sleep(2000); // Give time for disconnect handlers to execute before closing Redis resources
+		await Promise.all([pubClosedP, subClosedP]);
 	}
 }
 
