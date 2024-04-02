@@ -390,9 +390,315 @@ describe("DefaultVisualizers unit tests", () => {
 		expect(result).to.deep.equal(expected);
 	});
 
+	it("SharedTreeOne", async () => {
+		const factory = SharedTree.getFactory();
+		const builder = new SchemaFactory("shared-tree-test");
+
+		const sharedTree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"test",
+		);
+
+		class FooSchema extends builder.object("foo-item", {
+			apple: builder.object("banana-object", {
+				miniBanana: [builder.boolean, builder.string, builder.number],
+			}),
+			banana: builder.optional(builder.number),
+		}) {}
+
+		class RootNodeSchema extends builder.object("root-item", {
+			foo: builder.array(FooSchema),
+		}) {}
+
+		sharedTree.schematize(
+			new TreeConfiguration(
+				RootNodeSchema,
+				() =>
+					new RootNodeSchema({
+						foo: [
+							{
+								apple: {
+									miniBanana: true,
+								},
+								banana: 32,
+							},
+							{
+								apple: {
+									miniBanana: false,
+								},
+								banana: undefined,
+							},
+						],
+					}),
+			),
+		);
+
+		const result = await visualizeSharedTree(
+			sharedTree as unknown as ISharedObject,
+			visualizeChildData,
+		);
+
+		const expected = {
+			fluidObjectId: "test",
+			children: {
+				tree: {
+					children: {
+						foo: {
+							children: {
+								"0": {
+									children: {
+										apple: {
+											children: {
+												miniBanana: {
+													value: "true",
+													nodeKind: "ValueNode",
+													tooltipContents:
+														"com.fluidframework.leaf.boolean | com.fluidframework.leaf.string | com.fluidframework.leaf.number",
+												},
+											},
+											nodeKind: "TreeNode",
+											tooltipContents:
+												"{ miniBanana : com.fluidframework.leaf.boolean | com.fluidframework.leaf.string | com.fluidframework.leaf.number }",
+										},
+										banana: {
+											value: "32",
+											nodeKind: "ValueNode",
+											tooltipContents: "com.fluidframework.leaf.number",
+										},
+									},
+									nodeKind: "TreeNode",
+									tooltipContents:
+										"{ apple : shared-tree-test.banana-object, banana : com.fluidframework.leaf.number }",
+								},
+								"1": {
+									children: {
+										apple: {
+											children: {
+												miniBanana: {
+													value: "false",
+													nodeKind: "ValueNode",
+													tooltipContents:
+														"com.fluidframework.leaf.boolean | com.fluidframework.leaf.string | com.fluidframework.leaf.number",
+												},
+											},
+											nodeKind: "TreeNode",
+											tooltipContents:
+												"{ miniBanana : com.fluidframework.leaf.boolean | com.fluidframework.leaf.string | com.fluidframework.leaf.number }",
+										},
+									},
+									nodeKind: "TreeNode",
+									tooltipContents:
+										"{ apple : shared-tree-test.banana-object, banana : com.fluidframework.leaf.number }",
+								},
+							},
+							nodeKind: "TreeNode",
+							tooltipContents: "{ shared-tree-test.foo-item }",
+						},
+					},
+					nodeKind: "TreeNode",
+					tooltipContents:
+						'{ foo : shared-tree-test.Array<["shared-tree-test.foo-item"]> }',
+				},
+			},
+			typeMetadata: "SharedTree",
+			nodeKind: "FluidTreeNode",
+		};
+
+		expect(result).to.deep.equal(expected);
+	});
+
+	it("SharedTreeTwo", async () => {
+		const factory = SharedTree.getFactory();
+		const builder = new SchemaFactory("shared-tree-test");
+
+		const sharedTree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"test",
+		);
+
+		class RootNodeSchema extends builder.object("root-item", {
+			foo: builder.object("foo-item", {
+				americano: builder.boolean,
+				bubbleTea: builder.string,
+				chaiLatte: builder.object("chai-latte-object", {
+					appleCider: [builder.boolean, builder.string, builder.handle],
+				}),
+				dalgona: builder.array(
+					builder.object("dalgona-object", {
+						avengers: builder.boolean,
+					}),
+				),
+				espresso: builder.array([builder.number, builder.string]),
+			}),
+		}) {}
+
+		sharedTree.schematize(
+			new TreeConfiguration(
+				RootNodeSchema,
+				() =>
+					new RootNodeSchema({
+						foo: {
+							americano: false,
+							bubbleTea: "Taro Bubble Tea",
+							chaiLatte: {
+								appleCider: true,
+							},
+							dalgona: [
+								{
+									avengers: true,
+								},
+							],
+							espresso: [256, "FiveHundredTwelve"],
+						},
+					}),
+			),
+		);
+
+		const result = await visualizeSharedTree(
+			sharedTree as unknown as ISharedObject,
+			visualizeChildData,
+		);
+
+		const expected = {
+			fluidObjectId: "test",
+			children: {
+				tree: {
+					children: {
+						foo: {
+							children: {
+								americano: {
+									value: "false",
+									nodeKind: "ValueNode",
+									tooltipContents: "com.fluidframework.leaf.boolean",
+								},
+								bubbleTea: {
+									value: '"Taro Bubble Tea"',
+									nodeKind: "ValueNode",
+									tooltipContents: "com.fluidframework.leaf.string",
+								},
+								chaiLatte: {
+									children: {
+										appleCider: {
+											value: "true",
+											nodeKind: "ValueNode",
+											tooltipContents:
+												"com.fluidframework.leaf.boolean | com.fluidframework.leaf.string | com.fluidframework.leaf.handle",
+										},
+									},
+									nodeKind: "TreeNode",
+									tooltipContents:
+										"{ appleCider : com.fluidframework.leaf.boolean | com.fluidframework.leaf.string | com.fluidframework.leaf.handle }",
+								},
+								dalgona: {
+									children: {
+										"0": {
+											children: {
+												avengers: {
+													value: "true",
+													nodeKind: "ValueNode",
+													tooltipContents:
+														"com.fluidframework.leaf.boolean",
+												},
+											},
+											nodeKind: "TreeNode",
+											tooltipContents:
+												"{ avengers : com.fluidframework.leaf.boolean }",
+										},
+									},
+									nodeKind: "TreeNode",
+									tooltipContents: "{ shared-tree-test.dalgona-object }",
+								},
+								espresso: {
+									children: {
+										"0": {
+											value: "256",
+											nodeKind: "ValueNode",
+											tooltipContents:
+												"com.fluidframework.leaf.number | com.fluidframework.leaf.string",
+										},
+										"1": {
+											value: '"FiveHundredTwelve"',
+											nodeKind: "ValueNode",
+											tooltipContents:
+												"com.fluidframework.leaf.number | com.fluidframework.leaf.string",
+										},
+									},
+									nodeKind: "TreeNode",
+									tooltipContents:
+										"{ com.fluidframework.leaf.number | com.fluidframework.leaf.string }",
+								},
+							},
+							nodeKind: "TreeNode",
+							tooltipContents:
+								'{ americano : com.fluidframework.leaf.boolean, bubbleTea : com.fluidframework.leaf.string, chaiLatte : shared-tree-test.chai-latte-object, dalgona : shared-tree-test.Array<["shared-tree-test.dalgona-object"]>, espresso : shared-tree-test.Array<["com.fluidframework.leaf.number","com.fluidframework.leaf.string"]> }',
+						},
+					},
+					nodeKind: "TreeNode",
+					tooltipContents: "{ foo : shared-tree-test.foo-item }",
+				},
+			},
+			typeMetadata: "SharedTree",
+			nodeKind: "FluidTreeNode",
+		};
+
+		expect(result).to.deep.equal(expected);
+	});
+
+	it("SharedTreeThree", async () => {
+		const factory = SharedTree.getFactory();
+		const builder = new SchemaFactory("shared-tree-test");
+
+		const sharedTree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"test",
+		);
+
+		class RootNodeSchema extends builder.object("root-item", {
+			foo: [builder.number, builder.string, builder.boolean],
+		}) {}
+
+		sharedTree.schematize(
+			new TreeConfiguration(
+				RootNodeSchema,
+				() =>
+					new RootNodeSchema({
+						foo: 128,
+					}),
+			),
+		);
+
+		const result = await visualizeSharedTree(
+			sharedTree as unknown as ISharedObject,
+			visualizeChildData,
+		);
+
+		const expected = {
+			fluidObjectId: "test",
+			children: {
+				tree: {
+					children: {
+						foo: {
+							value: "128",
+							nodeKind: "ValueNode",
+							tooltipContents:
+								"com.fluidframework.leaf.number | com.fluidframework.leaf.string | com.fluidframework.leaf.boolean",
+						},
+					},
+					nodeKind: "TreeNode",
+					tooltipContents:
+						"{ foo : com.fluidframework.leaf.number | com.fluidframework.leaf.string | com.fluidframework.leaf.boolean }",
+				},
+			},
+			typeMetadata: "SharedTree",
+			nodeKind: "FluidTreeNode",
+		};
+
+		expect(result).to.deep.equal(expected);
+	});
+
 	it("SharedTree", async () => {
 		const factory = SharedTree.getFactory();
-		const builder = new SchemaFactory("DefaultVisualizer_SharedTree_Test");
+		const builder = new SchemaFactory("shared-tree-test");
 
 		const sharedTree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
@@ -532,17 +838,17 @@ describe("DefaultVisualizers unit tests", () => {
 															},
 															nodeKind: "TreeNode",
 															tooltipContents:
-																"{ DefaultVisualizer_SharedTree_Test.broccoli-object-schema }",
+																"{ shared-tree-test.broccoli-object-schema }",
 														},
 													},
 													nodeKind: "TreeNode",
 													tooltipContents:
-														'{ avocado : com.fluidframework.leaf.number | com.fluidframework.leaf.string, broccoli : DefaultVisualizer_SharedTree_Test.Array<["DefaultVisualizer_SharedTree_Test.broccoli-object-schema"]> }',
+														'{ avocado : com.fluidframework.leaf.number | com.fluidframework.leaf.string, broccoli : shared-tree-test.Array<["shared-tree-test.broccoli-object-schema"]> }',
 												},
 											},
 											nodeKind: "TreeNode",
 											tooltipContents:
-												"{ DefaultVisualizer_SharedTree_Test.apple-object-schema }",
+												"{ shared-tree-test.apple-object-schema }",
 										},
 										banana: {
 											children: {
@@ -565,7 +871,7 @@ describe("DefaultVisualizers unit tests", () => {
 									},
 									nodeKind: "TreeNode",
 									tooltipContents:
-										'{ apple : DefaultVisualizer_SharedTree_Test.Array<["DefaultVisualizer_SharedTree_Test.apple-object-schema"]>, banana : DefaultVisualizer_SharedTree_Test.banana-object, cherry : com.fluidframework.leaf.number }',
+										'{ apple : shared-tree-test.Array<["shared-tree-test.apple-object-schema"]>, banana : shared-tree-test.banana-object, cherry : com.fluidframework.leaf.number }',
 								},
 								"1": {
 									children: {
@@ -597,17 +903,17 @@ describe("DefaultVisualizers unit tests", () => {
 															},
 															nodeKind: "TreeNode",
 															tooltipContents:
-																"{ DefaultVisualizer_SharedTree_Test.broccoli-object-schema }",
+																"{ shared-tree-test.broccoli-object-schema }",
 														},
 													},
 													nodeKind: "TreeNode",
 													tooltipContents:
-														'{ avocado : com.fluidframework.leaf.number | com.fluidframework.leaf.string, broccoli : DefaultVisualizer_SharedTree_Test.Array<["DefaultVisualizer_SharedTree_Test.broccoli-object-schema"]> }',
+														'{ avocado : com.fluidframework.leaf.number | com.fluidframework.leaf.string, broccoli : shared-tree-test.Array<["shared-tree-test.broccoli-object-schema"]> }',
 												},
 											},
 											nodeKind: "TreeNode",
 											tooltipContents:
-												"{ DefaultVisualizer_SharedTree_Test.apple-object-schema }",
+												"{ shared-tree-test.apple-object-schema }",
 										},
 										banana: {
 											children: {
@@ -625,11 +931,11 @@ describe("DefaultVisualizers unit tests", () => {
 									},
 									nodeKind: "TreeNode",
 									tooltipContents:
-										'{ apple : DefaultVisualizer_SharedTree_Test.Array<["DefaultVisualizer_SharedTree_Test.apple-object-schema"]>, banana : DefaultVisualizer_SharedTree_Test.banana-object, cherry : com.fluidframework.leaf.number }',
+										'{ apple : shared-tree-test.Array<["shared-tree-test.apple-object-schema"]>, banana : shared-tree-test.banana-object, cherry : com.fluidframework.leaf.number }',
 								},
 							},
 							nodeKind: "TreeNode",
-							tooltipContents: "{ DefaultVisualizer_SharedTree_Test.foo-item }",
+							tooltipContents: "{ shared-tree-test.foo-item }",
 						},
 						bar: {
 							children: {
@@ -673,8 +979,7 @@ describe("DefaultVisualizers unit tests", () => {
 										},
 									},
 									nodeKind: "TreeNode",
-									tooltipContents:
-										"{ DefaultVisualizer_SharedTree_Test.dalgona-object }",
+									tooltipContents: "{ shared-tree-test.dalgona-object }",
 								},
 								espresso: {
 									children: {
@@ -698,7 +1003,7 @@ describe("DefaultVisualizers unit tests", () => {
 							},
 							nodeKind: "TreeNode",
 							tooltipContents:
-								'{ americano : com.fluidframework.leaf.boolean, bubbleTea : com.fluidframework.leaf.string, chaiLatte : DefaultVisualizer_SharedTree_Test.chai-latte-object, dalgona : DefaultVisualizer_SharedTree_Test.Array<["DefaultVisualizer_SharedTree_Test.dalgona-object"]>, espresso : DefaultVisualizer_SharedTree_Test.Array<["com.fluidframework.leaf.number","com.fluidframework.leaf.string"]> }',
+								'{ americano : com.fluidframework.leaf.boolean, bubbleTea : com.fluidframework.leaf.string, chaiLatte : shared-tree-test.chai-latte-object, dalgona : shared-tree-test.Array<["shared-tree-test.dalgona-object"]>, espresso : shared-tree-test.Array<["com.fluidframework.leaf.number","com.fluidframework.leaf.string"]> }',
 						},
 						baz: {
 							value: "128",
@@ -712,35 +1017,34 @@ describe("DefaultVisualizers unit tests", () => {
 									value: "1",
 									nodeKind: "ValueNode",
 									tooltipContents:
-										"com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | DefaultVisualizer_SharedTree_Test.map-object",
+										"com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | shared-tree-test.map-object",
 								},
 								biology: {
 									value: "2",
 									nodeKind: "ValueNode",
 									tooltipContents:
-										"com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | DefaultVisualizer_SharedTree_Test.map-object",
+										"com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | shared-tree-test.map-object",
 								},
 								choreography: {
 									value: "3",
 									nodeKind: "ValueNode",
 									tooltipContents:
-										"com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | DefaultVisualizer_SharedTree_Test.map-object",
+										"com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | shared-tree-test.map-object",
 								},
 							},
 							nodeKind: "TreeNode",
 							tooltipContents:
-								"{ anthropology : com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | DefaultVisualizer_SharedTree_Test.map-object, biology : com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | DefaultVisualizer_SharedTree_Test.map-object, choreography : com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | DefaultVisualizer_SharedTree_Test.map-object }",
+								"{ anthropology : com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | shared-tree-test.map-object, biology : com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | shared-tree-test.map-object, choreography : com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | shared-tree-test.map-object }",
 						},
 					},
 					nodeKind: "TreeNode",
 					tooltipContents:
-						'{ foo : DefaultVisualizer_SharedTree_Test.Array<["DefaultVisualizer_SharedTree_Test.foo-item"]>, bar : DefaultVisualizer_SharedTree_Test.bar-item, baz : com.fluidframework.leaf.number | com.fluidframework.leaf.string | com.fluidframework.leaf.boolean, foobar : DefaultVisualizer_SharedTree_Test.Map<["DefaultVisualizer_SharedTree_Test.map-object","com.fluidframework.leaf.handle","com.fluidframework.leaf.number","com.fluidframework.leaf.string"]> }',
+						'{ foo : shared-tree-test.Array<["shared-tree-test.foo-item"]>, bar : shared-tree-test.bar-item, baz : com.fluidframework.leaf.number | com.fluidframework.leaf.string | com.fluidframework.leaf.boolean, foobar : shared-tree-test.Map<["com.fluidframework.leaf.handle","com.fluidframework.leaf.number","com.fluidframework.leaf.string","shared-tree-test.map-object"]> }',
 				},
 			},
 			typeMetadata: "SharedTree",
 			nodeKind: "FluidTreeNode",
 		};
-
 		expect(result).to.deep.equal(expected);
 	});
 

@@ -140,10 +140,7 @@ function getLeafAllowedTypes(schema: TreeFieldStoredSchema): string {
 /**
  * Returns the schema & leaf value of the node with type {@link LeafNodeStoredSchema}.
  */
-function visualizeLeafNodeStoredSchema(
-	tree: JsonableTree,
-	allowedTypes: string,
-): SharedTreeLeafNode {
+function visualizeLeafNode(tree: JsonableTree, allowedTypes: string): SharedTreeLeafNode {
 	return {
 		schema: {
 			schemaType: SharedTreeSchemaType.LeafNodeStoredSchema,
@@ -157,7 +154,7 @@ function visualizeLeafNodeStoredSchema(
 /**
  * Returns the schema & fields of the node with type {@link ObjectNodeStoredSchema}.
  */
-function visualizeObjectNodeStoredSchema(
+function visualizeObjectNode(
 	tree: JsonableTree,
 	schema: ObjectNodeStoredSchema,
 	contentSnapshot: SharedTreeContentSnapshot,
@@ -248,7 +245,7 @@ function visualizeObjectNodeStoredSchema(
 /**
  * Returns the schema & fields of the node with type {@link MapNodeStoredSchema}.
  */
-function visualizeMapNodeStoredSchema(
+function visualizeMapNode(
 	tree: JsonableTree,
 	schema: MapNodeStoredSchema,
 	contentSnapshot: SharedTreeContentSnapshot,
@@ -319,11 +316,11 @@ export function visualizeSharedTreeNodeBySchema(
 		if (leafAllowedTypes === undefined) {
 			throw new TypeError("Leaf allowed types should not be undefined.");
 		}
-		return visualizeLeafNodeStoredSchema(tree, leafAllowedTypes);
+		return visualizeLeafNode(tree, leafAllowedTypes);
 	} else if (schema instanceof ObjectNodeStoredSchema) {
-		return visualizeObjectNodeStoredSchema(tree, schema, contentSnapshot);
+		return visualizeObjectNode(tree, schema, contentSnapshot);
 	} else if (schema instanceof MapNodeStoredSchema) {
-		return visualizeMapNodeStoredSchema(tree, schema, contentSnapshot);
+		return visualizeMapNode(tree, schema, contentSnapshot);
 	} else {
 		throw new TypeError("Unrecognized schema type.");
 	}
