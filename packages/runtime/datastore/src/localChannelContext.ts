@@ -16,6 +16,7 @@ import {
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
+import structuredClone from "@ungap/structured-clone";
 import {
 	ChannelServiceEndpoints,
 	createChannelServiceEndpoints,
