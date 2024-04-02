@@ -76,7 +76,7 @@ export interface VisualNodeBase {
 	editProps?: { editTypes?: EditType[] };
 
 	/**
-	 * Visual Tree data rendered in the tooltip.
+	 * Data to be rendered in a tooltip associated with this level in the tree.
 	 */
 	tooltipContents?: string | Record<string, string>;
 }
