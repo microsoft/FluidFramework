@@ -16,7 +16,7 @@ import {
 	IFluidDataStoreRegistry,
 	NamedFluidDataStoreRegistryEntries,
 	SummarizeInternalFn,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 

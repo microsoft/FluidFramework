@@ -4,7 +4,7 @@
  */
 
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { ISummaryContext } from "@fluidframework/driver-definitions/internal";
 import { isCombinedAppAndProtocolSummary } from "@fluidframework/driver-utils";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";

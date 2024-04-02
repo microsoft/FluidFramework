@@ -14,7 +14,7 @@ import {
 	Loader,
 	waitContainerToCatchUp as waitContainerToCatchUp_original,
 } from "@fluidframework/container-loader/internal";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import {
 	IRequestHeader,
 	ITelemetryBaseEvent,

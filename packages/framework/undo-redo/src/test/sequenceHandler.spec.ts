@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
+import { SharedString, SharedStringFactory } from "@fluidframework/sequence/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,

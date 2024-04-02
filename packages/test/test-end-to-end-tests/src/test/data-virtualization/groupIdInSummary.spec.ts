@@ -10,11 +10,11 @@ import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	type ContainerRuntime,
 	type IContainerRuntimeOptions,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { type ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
-import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,

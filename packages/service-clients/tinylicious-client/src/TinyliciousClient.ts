@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type IDocumentServiceFactory,
 	type IUrlResolver,

@@ -4,22 +4,24 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
+	IExperimentalIncrementalSummaryContext,
+	ITelemetryContext,
+} from "@fluidframework/runtime-definitions";
+import {
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
-	IExperimentalIncrementalSummaryContext,
 	ISummarizeResult,
 	ISummarizerNode,
 	ISummarizerNodeConfig,
-	ITelemetryContext,
 	SummarizeInternalFn,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils";
 import {
 	type ITelemetryErrorEventExt,

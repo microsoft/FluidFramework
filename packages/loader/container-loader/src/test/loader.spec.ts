@@ -8,7 +8,7 @@ import assert from "assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IRuntime } from "@fluidframework/container-definitions/internal";
-import { FluidErrorTypes } from "@fluidframework/core-interfaces";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
@@ -22,6 +22,7 @@ import { v4 as uuid } from "uuid";
 
 import { IDetachedBlobStorage, Loader } from "../loader.js";
 import type { IPendingDetachedContainerState } from "../serializedStateManager.js";
+
 import { failProxy, failSometimeProxy } from "./failProxy.js";
 
 const codeLoader = {

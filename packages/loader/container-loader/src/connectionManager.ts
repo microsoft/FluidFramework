@@ -10,7 +10,7 @@ import {
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaConnection,

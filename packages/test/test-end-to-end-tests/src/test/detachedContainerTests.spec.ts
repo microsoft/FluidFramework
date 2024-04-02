@@ -16,18 +16,18 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { Loader } from "@fluidframework/container-loader/internal";
-import { ContainerMessageType } from "@fluidframework/container-runtime";
+import { ContainerMessageType } from "@fluidframework/container-runtime/internal";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import { Deferred } from "@fluidframework/core-utils";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map";
 import type { SharedDirectory } from "@fluidframework/map/internal";
-import type { SharedMatrix } from "@fluidframework/matrix";
-import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
+import type { SharedMatrix } from "@fluidframework/matrix/internal";
+import { MergeTreeDeltaType } from "@fluidframework/merge-tree/internal";
 import type { ConsensusQueue } from "@fluidframework/ordered-collection";
 import type { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import type { SharedString } from "@fluidframework/sequence";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import type { SharedString } from "@fluidframework/sequence/internal";
 import { createChildLogger, isFluidError } from "@fluidframework/telemetry-utils";
 import {
 	ChannelFactoryRegistry,

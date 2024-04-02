@@ -26,7 +26,7 @@ import {
 	Loader,
 	waitContainerToCatchUp,
 } from "@fluidframework/container-loader/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -34,7 +34,7 @@ import {
 	IRequest,
 	IRequestHeader,
 } from "@fluidframework/core-interfaces";
-import { Deferred } from "@fluidframework/core-utils";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions";
 import { FiveDaysMs, IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import {

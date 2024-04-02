@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { DataProcessingError } from "@fluidframework/telemetry-utils";
+
 import { pkgVersion } from "../packageVersion.js";
 
 /**

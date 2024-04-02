@@ -21,14 +21,14 @@ import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 	ISummarizer,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
 	IFluidHandle,
 	IRequest,
 } from "@fluidframework/core-interfaces";
-import { SharedMatrix } from "@fluidframework/matrix";
+import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	ChannelFactoryRegistry,

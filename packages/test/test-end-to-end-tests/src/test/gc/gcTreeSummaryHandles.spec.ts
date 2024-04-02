@@ -21,14 +21,14 @@ import {
 	SummarizerStopReason,
 	SummaryCollection,
 	neverCancelledSummaryToken,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import {
 	DriverHeader,
 	IDocumentServiceFactory,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { gcTreeKey } from "@fluidframework/runtime-definitions";
+import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestFluidObject,

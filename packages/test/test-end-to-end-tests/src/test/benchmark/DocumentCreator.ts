@@ -18,7 +18,7 @@ import {
 	benchmarkMemory,
 } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ISummarizer } from "@fluidframework/container-runtime";
+import { ISummarizer } from "@fluidframework/container-runtime/internal";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 

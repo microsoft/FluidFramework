@@ -10,7 +10,7 @@ import fs from "fs";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert, Lazy } from "@fluidframework/core-utils";
+import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
 	FileDeltaStorageService,
 	FileDocumentServiceFactory,
@@ -21,7 +21,7 @@ import {
 	ReplayFileDeltaConnection,
 	Replayer,
 } from "@fluidframework/file-driver";
-import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix";
+import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix/internal";
 import {
 	ISequencedDocumentMessage,
 	ISummaryTree,
@@ -45,8 +45,8 @@ import {
 	getNormalizedFileSnapshot,
 	loadContainer,
 	uploadSummary,
-} from "./helpers";
-import { ReplayArgs } from "./replayArgs";
+} from "./helpers.js";
+import { ReplayArgs } from "./replayArgs.js";
 
 // "worker_threads" does not resolve without --experimental-worker flag on command line
 let threads = { isMainThread: true };

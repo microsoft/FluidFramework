@@ -6,7 +6,7 @@
 import { EventEmitterEventType } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	type IChannelFactory,
@@ -20,9 +20,11 @@ import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+} from "@fluidframework/runtime-definitions";
+import {
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	DataProcessingError,
 	EventEmitterWithErrorHandling,

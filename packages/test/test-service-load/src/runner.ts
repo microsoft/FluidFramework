@@ -8,7 +8,7 @@ import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IContainerExperimental, Loader } from "@fluidframework/container-loader/internal";
 import { IRequestHeader, LogLevel } from "@fluidframework/core-interfaces";
-import { assert, delay } from "@fluidframework/core-utils";
+import { assert, delay } from "@fluidframework/core-utils/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { getRetryDelayFromError } from "@fluidframework/driver-utils";

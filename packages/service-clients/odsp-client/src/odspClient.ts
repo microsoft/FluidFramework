@@ -14,7 +14,7 @@ import {
 	type IConfigProviderBase,
 	type IRequest,
 } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import {
 	ContainerAttachProps,

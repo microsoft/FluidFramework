@@ -5,7 +5,7 @@
 
 import { performance } from "@fluid-internal/client-utils";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { assert, Deferred } from "@fluidframework/core-utils";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
 	IDeltasFetchResult,
 	IStream,

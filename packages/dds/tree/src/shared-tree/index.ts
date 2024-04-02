@@ -10,6 +10,8 @@ export {
 	SharedTree,
 	ForestType,
 	SharedTreeContentSnapshot,
+	SharedTreeFormatOptions,
+	SharedTreeFormatVersion,
 } from "./sharedTree.js";
 
 export {

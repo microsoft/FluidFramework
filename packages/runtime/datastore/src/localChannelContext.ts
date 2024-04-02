@@ -6,17 +6,16 @@
 import { cloneDeep } from "lodash";
 
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils";
+import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { IGarbageCollectionData, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import {
 	IFluidDataStoreContext,
-	IGarbageCollectionData,
 	ISummarizeResult,
-	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { DataProcessingError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 
 import {
