@@ -10,7 +10,7 @@ import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
-} from "@fluidframework/aqueduct";
+} from "@fluidframework/aqueduct/internal";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
@@ -26,7 +26,7 @@ import {
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils";
+import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils/internal";
 
 import {
 	IDocumentLoaderAndSummarizer,

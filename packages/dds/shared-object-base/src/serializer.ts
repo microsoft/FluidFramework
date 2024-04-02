@@ -7,7 +7,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
-import { generateHandleContextPath, isSerializedHandle } from "@fluidframework/runtime-utils";
+import {
+	generateHandleContextPath,
+	isSerializedHandle,
+} from "@fluidframework/runtime-utils/internal";
 
 import { RemoteFluidObjectHandle } from "./remoteObjectHandle.js";
 

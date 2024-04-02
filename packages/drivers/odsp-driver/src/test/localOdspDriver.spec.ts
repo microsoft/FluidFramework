@@ -7,13 +7,13 @@ import { strict as assert } from "node:assert";
 import fs from "node:fs";
 
 import { DriverError, IStream } from "@fluidframework/driver-definitions/internal";
-import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
+import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	IClient,
 	ISequencedDocumentMessage,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 /* eslint-disable import/no-internal-modules */
 import { LocalOdspDocumentService } from "../localOdspDriver/localOdspDocumentService.js";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 

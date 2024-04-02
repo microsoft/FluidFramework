@@ -45,7 +45,7 @@ import {
 	IDocumentStorageService,
 	type ISnapshot,
 } from "@fluidframework/driver-definitions/internal";
-import { readAndParse } from "@fluidframework/driver-utils";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IIdCompressorCore,
@@ -98,17 +98,20 @@ import {
 	exceptionToResponse,
 	responseToException,
 	seqFromTree,
-} from "@fluidframework/runtime-utils";
+} from "@fluidframework/runtime-utils/internal";
+import {
+	type ITelemetryGenericEventExt,
+	ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils";
 import {
 	DataCorruptionError,
 	DataProcessingError,
 	GenericError,
 	IEventSampler,
-	type ITelemetryGenericEventExt,
-	ITelemetryLoggerExt,
 	LoggingError,
 	MonitoringContext,
 	PerformanceEvent,
+	// eslint-disable-next-line import/no-deprecated
 	TaggedLoggerAdapter,
 	UsageError,
 	createChildLogger,
@@ -117,7 +120,7 @@ import {
 	loggerToMonitoringContext,
 	raiseConnectedEvent,
 	wrapError,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { BindBatchTracker } from "./batchTracker.js";
@@ -780,6 +783,7 @@ export class ContainerRuntime
 		const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;
 		const passLogger =
 			backCompatContext.taggedLogger ??
+			// eslint-disable-next-line import/no-deprecated
 			new TaggedLoggerAdapter((backCompatContext as OldContainerContextWithLogger).logger);
 		const logger = createChildLogger({
 			logger: passLogger,

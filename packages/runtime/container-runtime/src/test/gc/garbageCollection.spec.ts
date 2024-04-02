@@ -26,7 +26,7 @@ import {
 	createChildLogger,
 	mixinMonitoringContext,
 	tagCodeArtifacts,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, spy, useFakeTimers } from "sinon";
 
 import {

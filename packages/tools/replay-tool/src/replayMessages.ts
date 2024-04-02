@@ -31,13 +31,14 @@ import {
 	TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import { FileSnapshotReader, IFileSnapshot } from "@fluidframework/replay-driver";
-import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockEmptyDeltaConnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import stringify from "json-stable-stringify";
 
 import {

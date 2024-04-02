@@ -14,11 +14,8 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import {
-	ITelemetryLoggerExt,
-	UsageError,
-	createChildLogger,
-} from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { UsageError, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 // eslint-disable-next-line import/no-deprecated
 import { Client } from "./client.js";

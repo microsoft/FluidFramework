@@ -4,10 +4,10 @@
 
 ```ts
 
-import { BaseContainerRuntimeFactory } from '@fluidframework/aqueduct';
-import { DataObject } from '@fluidframework/aqueduct';
-import { DataObjectFactory } from '@fluidframework/aqueduct';
-import { DataObjectTypes } from '@fluidframework/aqueduct';
+import { BaseContainerRuntimeFactory } from '@fluidframework/aqueduct/internal';
+import { DataObject } from '@fluidframework/aqueduct/internal';
+import { DataObjectFactory } from '@fluidframework/aqueduct/internal';
+import { DataObjectTypes } from '@fluidframework/aqueduct/internal';
 import { EventEmitter } from '@fluid-internal/client-utils';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { ICodeDetailsLoader } from '@fluidframework/container-definitions/internal';

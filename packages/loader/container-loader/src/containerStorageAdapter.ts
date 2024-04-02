@@ -16,7 +16,7 @@ import {
 	ISnapshotFetchOptions,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions/internal";
-import { UsageError } from "@fluidframework/driver-utils";
+import { UsageError } from "@fluidframework/driver-utils/internal";
 import {
 	ICreateBlobResponse,
 	ISnapshotTree,

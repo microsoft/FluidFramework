@@ -4,7 +4,7 @@
  */
 
 import { IFluidRunnable } from "@fluidframework/core-interfaces/internal";
-import { SharedCounter } from "@fluidframework/counter";
+import { SharedCounter } from "@fluidframework/counter/internal";
 
 // Sample agent to run.
 export class ClickerAgent implements IFluidRunnable {

@@ -12,7 +12,7 @@ import type { ISummaryTree } from "@fluidframework/protocol-definitions";
 import type {
 	MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 
 /**
  * @internal

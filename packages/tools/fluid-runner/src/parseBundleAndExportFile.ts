@@ -5,7 +5,7 @@
 
 import * as fs from "fs";
 
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 
 import { isCodeLoaderBundle, isFluidFileConverter } from "./codeLoaderBundle";
 import { IExportFileResponse, createContainerAndExecute } from "./exportFile";

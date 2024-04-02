@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { SharedCell } from "@fluidframework/cell";
 import { type IFluidHandle, type IFluidLoadable } from "@fluidframework/core-interfaces";
-import { SharedCounter } from "@fluidframework/counter";
+import { SharedCounter } from "@fluidframework/counter/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { type ITree, SchemaFactory, SharedTree, TreeConfiguration } from "@fluidframework/tree";

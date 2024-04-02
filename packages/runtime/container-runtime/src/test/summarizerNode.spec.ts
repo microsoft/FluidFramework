@@ -18,8 +18,8 @@ import {
 	ISummarizerNodeConfig,
 	channelsTreeName,
 } from "@fluidframework/runtime-definitions/internal";
-import { mergeStats } from "@fluidframework/runtime-utils";
-import { TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils";
+import { mergeStats } from "@fluidframework/runtime-utils/internal";
+import { TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { IRootSummarizerNode, createRootSummarizerNode } from "../summary/index.js";
 // eslint-disable-next-line import/no-internal-modules

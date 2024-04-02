@@ -41,7 +41,7 @@ import {
 	getDataStoreEntryPointBackCompat,
 	summarizeNow,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 import {
 	getGCDeletedStateFromSummary,

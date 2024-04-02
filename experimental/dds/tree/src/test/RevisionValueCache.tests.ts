@@ -5,7 +5,7 @@
 
 import { strict as assert } from 'assert';
 
-import { validateAssertionError } from '@fluidframework/test-runtime-utils';
+import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 
 import { fail } from '../Common.js';

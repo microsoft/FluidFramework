@@ -61,7 +61,7 @@ import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { MessageType } from '@fluidframework/protocol-definitions';
-import { MonitoringContext } from '@fluidframework/telemetry-utils';
+import { MonitoringContext } from '@fluidframework/telemetry-utils/internal';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions/internal';
 import { SummarizeInternalFn } from '@fluidframework/runtime-definitions/internal';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';

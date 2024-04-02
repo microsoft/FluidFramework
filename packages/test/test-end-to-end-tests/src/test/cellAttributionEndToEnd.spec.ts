@@ -22,7 +22,7 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 function assertAttributionMatches(
 	sharedCell: SharedCell,

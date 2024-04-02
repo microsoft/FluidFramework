@@ -20,13 +20,16 @@ import { Loader } from "@fluidframework/container-loader/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import { InsecureUrlResolver } from "@fluidframework/driver-utils";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
-import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-definitions";
+import { InsecureUrlResolver } from "@fluidframework/driver-utils/internal";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
+import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver/internal";
+import {
+	HostStoragePolicy,
+	IPersistedCache,
+} from "@fluidframework/odsp-driver-definitions/internal";
 import { IUser } from "@fluidframework/protocol-definitions";
-import { RequestParser } from "@fluidframework/runtime-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { RequestParser } from "@fluidframework/runtime-utils/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import sillyname from "sillyname";
 import { v4 as uuid } from "uuid";
 import { Port } from "webpack-dev-server";
