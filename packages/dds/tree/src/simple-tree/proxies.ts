@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, isFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 
 import { EmptyKey, FieldKey, IForestSubscription, TreeValue, UpPath } from "../core/index.js";
@@ -21,7 +21,6 @@ import {
 	FlexTreeRequiredField,
 	FlexTreeSequenceField,
 	FlexTreeTypedField,
-	isFluidHandle,
 	typeNameSymbol,
 } from "../feature-libraries/index.js";
 import { Mutable, brand, fail, isReadonlyArray } from "../util/index.js";

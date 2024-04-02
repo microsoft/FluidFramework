@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fluidHandleSymbol } from '@fluidframework/core-interfaces';
-import type { IFluidHandleInternal } from '@fluidframework/core-interfaces';
+import { isFluidHandle, toFluidHandleInternal } from '@fluidframework/core-interfaces';
 import { compareArrays } from '@fluidframework/core-utils';
 
 import { Payload } from './persisted-types/index.js';
@@ -66,13 +65,13 @@ export function comparePayloads(a: Payload, b: Payload): boolean {
 	}
 
 	// Special case IFluidHandles, comparing them only by their absolutePath
-	if (fluidHandleSymbol in a) {
-		if (fluidHandleSymbol in b) {
-			return (a as IFluidHandleInternal).absolutePath === (b as IFluidHandleInternal).absolutePath;
+	if (isFluidHandle(a)) {
+		if (isFluidHandle(b)) {
+			return toFluidHandleInternal(a).absolutePath === toFluidHandleInternal(b).absolutePath;
 		}
 		return false;
 	}
-	if (fluidHandleSymbol in b) {
+	if (isFluidHandle(b)) {
 		return false;
 	}
 

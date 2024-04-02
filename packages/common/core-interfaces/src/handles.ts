@@ -180,15 +180,21 @@ export function toFluidHandleErased<T>(handle: IFluidHandleInternal<T>): IFluidH
  * @internal
  */
 export function isFluidHandle(value: unknown): value is IFluidHandle {
+	// `in` gives a type error on non-objects and null, so filter them out
 	if (typeof value !== "object" || value === null) {
 		return false;
 	}
 	if (fluidHandleSymbol in value) {
 		return true;
 	}
-	// If enableBackwardsCompatibility, run false positive prone check used by FluidHandles predating use of fluidHandleSymbol.
+	// If enableBackwardsCompatibility, run check for FluidHandles predating use of fluidHandleSymbol.
 	if (enableBackwardsCompatibility && IFluidHandle in value) {
-		return true;
+		// Since this check can have false positives, make it a bit more robust by checking value[IFluidHandle][IFluidHandle]
+		const inner = value[IFluidHandle] as IFluidHandle;
+		if (typeof inner !== "object" || inner === null) {
+			return false;
+		}
+		return IFluidHandle in inner;
 	}
 	return false;
 }

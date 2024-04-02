@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, fluidHandleSymbol } from "@fluidframework/core-interfaces";
+import { IFluidHandle, isFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 
 import { TreeValue, Value, ValueSchema } from "../core/index.js";
@@ -52,10 +52,6 @@ export type FluidSerializableReadOnly =
 	| {
 			readonly [P in string]?: FluidSerializableReadOnly;
 	  };
-
-export function isFluidHandle(value: unknown): value is IFluidHandle {
-	return typeof value === "object" && value !== null && fluidHandleSymbol in value;
-}
 
 export function assertAllowedValue(
 	value: undefined | FluidSerializableReadOnly,

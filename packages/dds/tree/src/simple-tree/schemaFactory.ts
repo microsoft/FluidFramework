@@ -13,7 +13,6 @@ import {
 	FlexObjectNodeSchema,
 	FlexTreeNode,
 	isFlexTreeNode,
-	isFluidHandle,
 	isLazy,
 	markEager,
 	typeNameSymbol,
@@ -57,6 +56,7 @@ import {
 import { getFlexSchema } from "./toFlexSchema.js";
 import { TreeArrayNode } from "./treeArrayNode.js";
 import { TreeNode } from "./types.js";
+import { isFluidHandle } from "@fluidframework/core-interfaces";
 
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.

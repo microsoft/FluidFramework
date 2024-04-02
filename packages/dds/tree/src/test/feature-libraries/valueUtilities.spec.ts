@@ -10,12 +10,13 @@ import { MockHandle } from "@fluidframework/test-runtime-utils";
 import { ValueSchema } from "../../core/index.js";
 import {
 	allowsValue,
-	isFluidHandle,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../feature-libraries/valueUtilities.js";
+import { isFluidHandle } from "@fluidframework/core-interfaces";
 
 describe("valueUtilities", () => {
+	// TODO: @fluidframework/core-interfaces is not setup for unit tests, so these tests are living here for now.
 	it("isFluidHandle", () => {
 		assert(!isFluidHandle(0));
 		assert(!isFluidHandle({}));
@@ -25,12 +26,14 @@ describe("valueUtilities", () => {
 		assert(!isFluidHandle({ get: () => {} }));
 		assert(!isFluidHandle({ IFluidHandle: 5, get: () => {} }));
 		assert(isFluidHandle(new MockHandle(5)));
-		assert(!isFluidHandle({ IFluidHandle: 5 }));
-		assert(!isFluidHandle({ IFluidHandle: {} }));
+
+		// Legacy compatibility for non symbol based handle
 		const loopy = { IFluidHandle: {} };
 		loopy.IFluidHandle = loopy;
-		// isFluidHandle has extra logic to check the handle is valid if it passed the detection via cyclic ref.
-		assert(!isFluidHandle(loopy));
+		assert(isFluidHandle(loopy));
+		assert(!isFluidHandle({ IFluidHandle: 5 }));
+		assert(!isFluidHandle({ IFluidHandle: {} }));
+		assert(!isFluidHandle({ IFluidHandle: null }));
 	});
 
 	it("allowsValue", () => {

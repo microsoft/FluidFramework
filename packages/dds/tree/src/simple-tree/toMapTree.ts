@@ -17,7 +17,6 @@ import {
 	type CursorWithNode,
 	cursorForMapTreeField,
 	cursorForMapTreeNode,
-	isFluidHandle,
 	isTreeValue,
 	typeNameSymbol,
 	valueSchemaAllows,
@@ -36,6 +35,7 @@ import {
 	normalizeAllowedTypes,
 	normalizeFieldSchema,
 } from "./schemaTypes.js";
+import { isFluidHandle } from "@fluidframework/core-interfaces";
 
 /**
  * Module notes:
