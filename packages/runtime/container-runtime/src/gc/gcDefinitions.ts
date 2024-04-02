@@ -6,14 +6,14 @@
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { IGarbageCollectionData, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import {
-	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
-	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
+} from "@fluidframework/runtime-definitions/internal";
+import { ReadAndParseBlob } from "@fluidframework/runtime-utils/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+
 import { RuntimeHeaderData } from "../containerRuntime.js";
 import { ContainerRuntimeGCMessage } from "../messageTypes.js";
 import {

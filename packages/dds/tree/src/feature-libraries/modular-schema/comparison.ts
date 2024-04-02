@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
@@ -16,6 +17,7 @@ import {
 	storedEmptyFieldSchema,
 } from "../../core/index.js";
 import { compareSets, fail } from "../../util/index.js";
+
 import { FullSchemaPolicy } from "./fieldKind.js";
 import { withEditor } from "./fieldKindWithEditor.js";
 import { isNeverTree } from "./isNeverTree.js";

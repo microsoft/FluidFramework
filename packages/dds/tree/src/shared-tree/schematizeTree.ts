@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+
 import {
 	AllowedUpdateType,
 	Compatibility,
@@ -24,6 +25,7 @@ import {
 	normalizeNewFieldContent,
 } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
+
 import { ITreeCheckout } from "./treeCheckout.js";
 
 /**

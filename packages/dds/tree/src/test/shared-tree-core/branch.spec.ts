@@ -4,8 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { noopValidator } from "../../codec/index.js";
+
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	CommitKind,
 	GraphCommit,
@@ -28,16 +29,9 @@ import {
 	onForkTransitive,
 } from "../../shared-tree-core/index.js";
 import { brand, fail } from "../../util/index.js";
-import {
-	createTestUndoRedoStacks,
-	failCodec,
-	mintRevisionTag,
-	testRevisionTagCodec,
-} from "../utils.js";
+import { createTestUndoRedoStacks, failCodecFamily, mintRevisionTag } from "../utils.js";
 
-const defaultChangeFamily = new DefaultChangeFamily(testRevisionTagCodec, failCodec, {
-	jsonValidator: noopValidator,
-});
+const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily);
 
 type DefaultBranch = SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
 

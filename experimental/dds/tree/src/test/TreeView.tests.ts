@@ -4,11 +4,14 @@
  */
 
 import { strict as assert } from 'assert';
-import { validateAssertionError } from '@fluidframework/test-runtime-utils';
+
+import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
+
 import { Definition, TraitLabel } from '../Identifiers.js';
 import { RevisionView } from '../RevisionView.js';
 import { ChangeNode } from '../persisted-types/index.js';
+
 import { expectDefined } from './utilities/TestCommon.js';
 import { TestNode } from './utilities/TestNode.js';
 import { refreshTestTree } from './utilities/TestUtilities.js';

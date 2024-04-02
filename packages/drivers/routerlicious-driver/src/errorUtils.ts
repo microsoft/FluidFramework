@@ -3,18 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import {
-	DriverError,
-	DriverErrorTypes,
-	IDriverErrorBase,
-} from "@fluidframework/driver-definitions";
+import { DriverErrorTypes, IDriverErrorBase } from "@fluidframework/driver-definitions";
+import { DriverError } from "@fluidframework/driver-definitions/internal";
 import {
 	AuthorizationError,
 	GenericNetworkError,
 	NonRetryableError,
 	createGenericNetworkError,
-} from "@fluidframework/driver-utils";
-import { IFluidErrorBase } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/driver-utils/internal";
+import { IFluidErrorBase } from "@fluidframework/telemetry-utils/internal";
+
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 /**

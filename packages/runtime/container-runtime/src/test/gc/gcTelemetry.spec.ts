@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
@@ -13,8 +14,9 @@ import {
 	createChildLogger,
 	mixinMonitoringContext,
 	tagCodeArtifacts,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
+
 import { BlobManager } from "../../blobManager.js";
 import {
 	GCNodeType,

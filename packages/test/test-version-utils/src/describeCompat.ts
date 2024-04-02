@@ -3,21 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { getUnexpectedLogErrorException, ITestObjectProvider } from "@fluidframework/test-utils";
-import { assert } from "@fluidframework/core-utils";
-import { CompatKind, driver, r11sEndpointName, tenantIndex } from "./compatOptions.js";
+import { assert } from "@fluidframework/core-utils/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	getUnexpectedLogErrorException,
+	ITestObjectProvider,
+} from "@fluidframework/test-utils/internal";
+
+import { testBaseVersion } from "./baseVersion.js";
 import {
 	CompatConfig,
 	configList,
 	isCompatVersionBelowMinVersion,
 	mochaGlobalSetup,
 } from "./compatConfig.js";
+import { CompatKind, driver, r11sEndpointName, tenantIndex } from "./compatOptions.js";
 import {
 	getVersionedTestObjectProviderFromApis,
 	getCompatVersionedTestObjectProviderFromApis,
 } from "./compatUtils.js";
-import { testBaseVersion } from "./baseVersion.js";
+import { pkgVersion } from "./packageVersion.js";
 import {
 	getContainerRuntimeApi,
 	getDataRuntimeApi,
@@ -25,7 +30,6 @@ import {
 	CompatApis,
 	getDriverApi,
 } from "./testApi.js";
-import { pkgVersion } from "./packageVersion.js";
 import { getRequestedVersion } from "./versionUtils.js";
 
 // See doc comment on mochaGlobalSetup.

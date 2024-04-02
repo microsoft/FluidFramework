@@ -4,7 +4,9 @@
  */
 
 import { strict as assert, fail } from "assert";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
+
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	AllowedUpdateType,
 	FieldUpPath,
@@ -26,6 +28,7 @@ import {
 	cursorForJsonableTreeField,
 	intoStoredSchema,
 } from "../../feature-libraries/index.js";
+import { disposeSymbol } from "../../index.js";
 import { ITreeCheckout, TreeContent } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
@@ -141,6 +144,62 @@ describe("sharedTreeView", () => {
 				"unsubscribe",
 				"editStart",
 			]);
+		});
+
+		describe("commitApplied", () => {
+			it("is fired for data and schema changes", () => {
+				const provider = new TestTreeProviderLite(1);
+				const checkout = provider.trees[0].checkout;
+
+				const log: string[] = [];
+				const unsubscribe = checkout.events.on("commitApplied", () =>
+					log.push("commitApplied"),
+				);
+
+				assert.equal(log.length, 0);
+
+				checkout.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
+
+				assert.equal(log.length, 1);
+
+				checkout.editor
+					.sequenceField(rootField)
+					.insert(
+						0,
+						cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]),
+					);
+
+				assert.equal(log.length, 2);
+
+				checkout.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+
+				assert.equal(log.length, 3);
+				unsubscribe();
+			});
+
+			it("does not allow schema changes to be reverted", () => {
+				const provider = new TestTreeProviderLite(1);
+				const checkout = provider.trees[0].checkout;
+
+				const log: string[] = [];
+				const unsubscribe = checkout.events.on("commitApplied", (data, getRevertible) =>
+					log.push(getRevertible === undefined ? "not-revertible" : "revertible"),
+				);
+
+				assert.deepEqual(log, []);
+
+				checkout.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
+				checkout.editor
+					.sequenceField(rootField)
+					.insert(
+						0,
+						cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]),
+					);
+				checkout.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+
+				assert.deepEqual(log, ["not-revertible", "revertible", "not-revertible"]);
+				unsubscribe();
+			});
 		});
 	});
 
@@ -574,6 +633,22 @@ describe("sharedTreeView", () => {
 		});
 	});
 
+	describe("disposal", () => {
+		itView("forks can be disposed", (view) => {
+			const fork = view.fork();
+			fork[disposeSymbol]();
+		});
+
+		itView("disposed forks cannot be edited or double-disposed", (view) => {
+			const fork = view.fork();
+			fork[disposeSymbol]();
+
+			assert.throws(() => insertFirstNode(fork, "A"));
+			assert.throws(() => fork.updateSchema(intoStoredSchema(numberSequenceRootSchema)));
+			assert.throws(() => fork[disposeSymbol]());
+		});
+	});
+
 	it("schema edits do not cause clients to purge repair data or revertibles", () => {
 		const provider = new TestTreeProviderLite(2);
 		const checkout1 = provider.trees[0].checkout;
@@ -621,8 +696,8 @@ describe("sharedTreeView", () => {
 
 		checkout1.updateSchema(intoStoredSchema(numberSequenceRootSchema));
 
-		// The undo stack contains both the removal of A and the schema change
-		assert.equal(checkout1Revertibles.undoStack.length, 2);
+		// The undo stack contains the removal of A but not the schema change
+		assert.equal(checkout1Revertibles.undoStack.length, 1);
 		assert.equal(checkout1Revertibles.redoStack.length, 1);
 		assert.deepEqual(checkout1.getRemovedRoots().length, 2);
 

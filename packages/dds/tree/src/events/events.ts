@@ -4,7 +4,8 @@
  */
 
 import type { IEvent } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { fail, getOrCreate } from "../util/index.js";
 
 /**

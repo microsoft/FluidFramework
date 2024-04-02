@@ -4,7 +4,7 @@
  */
 
 import { IsoBuffer, Uint8ArrayToString, gitHashFile } from "@fluid-internal/client-utils";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { ICreateTreeEntry } from "@fluidframework/gitresources";
 import { getGitMode, getGitType } from "@fluidframework/protocol-base";
 import {
@@ -14,6 +14,7 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { IWholeSummaryPayloadType } from "@fluidframework/server-services-client";
+
 import { IGitManager, ISummaryUploadManager } from "./storageContracts.js";
 
 /**
