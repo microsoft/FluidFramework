@@ -178,7 +178,7 @@ function visualizeObjectNodeStoredSchema(
 
 	const fields: Record<string | number, VisualSharedTreeNode> = {};
 
-	// {@link EmptyKey} indicates an array field (e.g., `schemabuilder.array()`).
+	// `EmptyKey` indicates an array field (e.g., `schemabuilder.array()`).
 	// Hides level of indirection by omitting the empty key in the visual output.
 	if (
 		Object.keys(treeFields).length === 1 &&
