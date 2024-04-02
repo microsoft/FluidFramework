@@ -29,7 +29,12 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { type Jsonable } from "@fluidframework/datastore-definitions/internal";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
-import { type IClient, type ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import {
+	type IClient,
+	type ISequencedDocumentMessage,
+	type ISummaryTree,
+	SummaryType,
+} from "@fluidframework/protocol-definitions";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
@@ -512,6 +517,18 @@ function assertSerializableSummary(
 	}
 }
 
+interface ISummaryTreeWithCatchupOps {
+	tree: {
+		content: {
+			tree: {
+				catchupOps: {
+					content: string | ISequencedDocumentMessage[];
+				};
+			};
+		};
+	};
+}
+
 const summaryFromState = async (state: FuzzTestState): Promise<SerializableISummaryTree> => {
 	state.containerRuntimeFactory.processAllMessages();
 	const { sharedString } = state.clients[0];
@@ -698,8 +715,27 @@ describe("SharedString Attribution", () => {
 
 				for (const { filename, factory } of dataGenerators) {
 					it(`snapshot at ${filename}`, async () => {
-						const expected = readJson(path.join(paths.directory, filename));
-						const actual = await summaryFromState(factory(operations));
+						const expected = readJson(
+							path.join(paths.directory, filename),
+						) as ISummaryTreeWithCatchupOps;
+						const actual = (await summaryFromState(
+							factory(operations),
+						)) as unknown as ISummaryTreeWithCatchupOps;
+
+						assert.strictEqual(
+							typeof actual.tree.content?.tree?.catchupOps?.content,
+							"string",
+							"invalid catchupOps in produced summary",
+						);
+
+						// Parse the stringified op array into the actual op array so we can deep compare better
+						actual.tree.content.tree.catchupOps.content = JSON.parse(
+							actual.tree.content.tree.catchupOps.content as string,
+						) as ISequencedDocumentMessage[];
+						expected.tree.content.tree.catchupOps.content = JSON.parse(
+							expected.tree.content.tree.catchupOps.content as string,
+						) as ISequencedDocumentMessage[];
+
 						assert.deepEqual(actual, expected);
 					});
 				}

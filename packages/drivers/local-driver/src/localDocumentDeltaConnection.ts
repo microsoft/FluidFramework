@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { DocumentDeltaConnection } from "@fluidframework/driver-base";
+import { DocumentDeltaConnection } from "@fluidframework/driver-base/internal";
 import {
 	IClient,
 	IConnect,
