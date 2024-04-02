@@ -9,8 +9,8 @@ import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 /**
  * @internal
  */
-export class DDSFuzzHandle implements IFluidHandle {
-	private attached: boolean = false;
+export class DDSFuzzHandle implements IFluidHandle<string> {
+	private readonly attached: boolean = false;
 
 	public get IFluidHandle(): IFluidHandle {
 		return this;
@@ -25,8 +25,6 @@ export class DDSFuzzHandle implements IFluidHandle {
 	constructor(
 		public readonly id: string,
 		public readonly routeContext: IFluidHandleContext,
-		// public get: () => Promise<any>,
-		private readonly onAttachGraph?: () => void,
 	) {
 		this.absolutePath = generateHandleContextPath(id, this.routeContext);
 	}
@@ -37,13 +35,10 @@ export class DDSFuzzHandle implements IFluidHandle {
 	}
 
 	public attachGraph(): void {
-		if (!this.attached) {
-			this.attached = true;
-			this.onAttachGraph?.();
-		}
+		throw new Error("Method not implemented.");
 	}
 
 	public bind(handle: IFluidHandle): void {
-		throw new Error("Cannot bind to blob handle");
+		throw new Error("Method not implemented.");
 	}
 }

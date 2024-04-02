@@ -41,6 +41,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
+import { v4 as uuid } from "uuid";
 import {
 	type Client,
 	type ClientLoadData,
@@ -112,7 +113,7 @@ export interface StashClient {
  * @internal
  */
 export interface HandlePicked {
-	type: "handleCreated";
+	type: "handlePicked";
 	handleId: string;
 }
 
@@ -1168,10 +1169,10 @@ export function mixinHandle<
 		const baseGenerator = model.generatorFactory();
 		return async (state): Promise<TOperation | HandlePicked | UseHandle | typeof done> => {
 			if (state.random.bool(0.5)) {
+				const idValues = Array.from<string>({ length: 5 }).fill(uuid());
 				return {
-					type: "handleCreated",
-					// make this a uuid
-					handleId: Date.now().toString(),
+					type: "handlePicked",
+					handleId: idValues[state.random.integer(0, idValues.length - 1)],
 				};
 			}
 			return baseGenerator(state);
@@ -1182,7 +1183,7 @@ export function mixinHandle<
 		state,
 		operation,
 	) => {
-		if (isOperationType<HandlePicked>("handleCreated", operation)) {
+		if (isOperationType<HandlePicked>("handlePicked", operation)) {
 			const handle = new DDSFuzzHandle(
 				operation.handleId,
 				state.client.dataStoreRuntime.IFluidHandleContext,
