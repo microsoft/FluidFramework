@@ -25,7 +25,7 @@ export function createLogger(filePath: string, options?: ITelemetryOptions): {
 export function exportFile(fluidFileConverter: IFluidFileConverter, inputFile: string, outputFile: string, telemetryFile: string, options?: string, telemetryOptions?: ITelemetryOptions, timeout?: number, disableNetworkFetch?: boolean): Promise<IExportFileResponse>;
 
 // @internal (undocumented)
-export function fluidRunner(fluidFileConverter?: IFluidFileConverter): void;
+export function fluidRunner(fluidFileConverter?: IFluidFileConverter): Promise<void>;
 
 // @internal
 export function getSnapshotFileContent(filePath: string): string | Buffer;

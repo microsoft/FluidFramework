@@ -193,11 +193,13 @@ describe("fluid-runner from command line", () => {
 	});
 });
 
-describe("custom fluidFileConverter provided", () => {
+describe(`custom fluidFileConverter provided (${
+	_dirname.includes("dist") ? "CJS" : "ESM"
+})`, () => {
 	const command = path.join(
 		_dirname,
-		"../../src/test/sampleCodeLoaders",
-		"sample-executable.mjs",
+		"sampleCodeLoaders",
+		_dirname.includes("dist") ? "sample-executable.cjs.js" : "sample-executable.esm.js",
 	);
 
 	describe("exportFile", () => {

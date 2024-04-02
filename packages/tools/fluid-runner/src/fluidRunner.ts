@@ -18,15 +18,13 @@ import { validateCommandLineArgs } from "./utils.js";
  * @param fluidFileConverter - needs to be provided if "codeLoaderBundle" is not and vice versa
  * @internal
  */
-export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
-	// eslint-disable-next-line @typescript-eslint/no-floating-promises
-	yargs(hideBin(process.argv))
+export async function fluidRunner(fluidFileConverter?: IFluidFileConverter): Promise<void> {
+	await yargs(hideBin(process.argv))
 		.command(
 			"exportFile",
 			"Generate an output for a local ODSP snapshot",
-			// eslint-disable-next-line @typescript-eslint/no-shadow
-			(yargs) =>
-				yargs
+			(argv) =>
+				argv
 					.option("codeLoader", {
 						describe:
 							'Path to code loader bundle. Required if this application is being called without modification.\nSee "README.md" for more details.',
