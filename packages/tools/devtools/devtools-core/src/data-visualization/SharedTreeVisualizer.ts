@@ -201,6 +201,7 @@ function visualizeObjectNodeStoredSchema(
 
 				leafAllowedTypes = getLeafAllowedTypes(leafSchema);
 			}
+
 			fields[i] = visualizeSharedTreeNodeBySchema(
 				children[i],
 				childSchema,
