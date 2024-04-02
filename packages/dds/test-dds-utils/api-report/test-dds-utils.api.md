@@ -158,14 +158,6 @@ export type FuzzSerializedIdCompressor = {
     serializedCompressor: SerializedIdCompressorWithOngoingSession;
 };
 
-// @internal (undocumented)
-export interface HandleCreated {
-    // (undocumented)
-    handle: IFluidHandle;
-    // (undocumented)
-    type: "handleCreated";
-}
-
 // @internal
 export interface IGCTestProvider {
     addNestedHandles(): Promise<void>;
@@ -197,6 +189,14 @@ export interface Synchronize {
     clients?: string[];
     // (undocumented)
     type: "synchronize";
+}
+
+// @internal (undocumented)
+export interface UseHandle {
+    // (undocumented)
+    handle: IFluidHandle;
+    // (undocumented)
+    type: "useHandle";
 }
 
 // (No @packageDocumentation comment for this package)

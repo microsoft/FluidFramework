@@ -111,8 +111,16 @@ export interface StashClient {
 /**
  * @internal
  */
-export interface HandleCreated {
+export interface HandlePicked {
 	type: "handleCreated";
+	handleId: string;
+}
+
+/**
+ * @internal
+ */
+export interface UseHandle {
+	type: "useHandle";
 	handle: IFluidHandle;
 }
 
@@ -1148,37 +1156,50 @@ export function mixinHandle<
 >(
 	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
 	options: DDSFuzzSuiteOptions,
-): DDSFuzzModel<TChannelFactory, TOperation | HandleCreated, TState> {
+): DDSFuzzModel<TChannelFactory, TOperation, TState> {
 	if (options.handleGenerationDisabled === true) {
-		return model as DDSFuzzModel<TChannelFactory, TOperation | HandleCreated, TState>;
+		return model;
 	}
 
-	const generatorFactory: () => AsyncGenerator<TOperation | HandleCreated, TState> = () => {
+	const generatorFactory: () => AsyncGenerator<
+		TOperation | HandlePicked | UseHandle,
+		TState
+	> = () => {
 		const baseGenerator = model.generatorFactory();
-		return async (state): Promise<TOperation | HandleCreated | typeof done> => {
+		return async (state): Promise<TOperation | HandlePicked | UseHandle | typeof done> => {
 			if (state.random.bool(0.5)) {
-				const handle1 = new DDSFuzzHandle(
-					state.client.dataStoreRuntime.IFluidHandleContext,
-				);
 				return {
 					type: "handleCreated",
-					handle: handle1,
+					// make this a uuid
+					handleId: Date.now().toString(),
 				};
 			}
 			return baseGenerator(state);
 		};
 	};
 
-	const reducer: AsyncReducer<TOperation | HandleCreated, TState> = async (state, operation) => {
+	const reducer: AsyncReducer<TOperation | HandlePicked | UseHandle, TState> = async (
+		state,
+		operation,
+	) => {
+		if (isOperationType<HandlePicked>("handleCreated", operation)) {
+			const handle = new DDSFuzzHandle(
+				operation.handleId,
+				state.client.dataStoreRuntime.IFluidHandleContext,
+			);
+			const useHandle: UseHandle = { ...operation, type: "useHandle", handle };
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+			return model.reducer(state, useHandle as any);
+		}
 		return model.reducer(state, operation as TOperation);
 	};
 
 	return {
 		...model,
-		generatorFactory,
+		generatorFactory: generatorFactory as () => AsyncGenerator<TOperation, TState>,
 		reducer,
 		minimizationTransforms: model.minimizationTransforms as MinimizationTransform<
-			TOperation | HandleCreated
+			TOperation | HandlePicked | UseHandle
 		>[],
 	};
 }
@@ -1641,7 +1662,6 @@ const getFullModel = <TChannelFactory extends IChannelFactory, TOperation extend
 	| AddClient
 	| Attach
 	| Attaching
-	| HandleCreated
 	| Rehydrate
 	| ChangeConnectionState
 	| TriggerRebase

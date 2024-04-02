@@ -17,7 +17,7 @@ import {
 	DDSFuzzModel,
 	DDSFuzzTestState,
 	createDDSFuzzSuite,
-	HandleCreated,
+	UseHandle,
 } from "@fluid-private/test-dds-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
@@ -44,7 +44,7 @@ interface DeleteKey {
 
 const handleKey = "handleKey";
 
-type Operation = SetKey | DeleteKey | Clear | HandleCreated;
+type Operation = SetKey | DeleteKey | Clear | UseHandle;
 
 // This type gets used a lot as the state object of the suite; shorthand it here.
 type State = DDSFuzzTestState<MapFactory>;
@@ -75,8 +75,8 @@ const reducer = combineReducers<Operation, State>({
 	deleteKey: ({ client }, { key }) => {
 		client.channel.delete(key);
 	},
-	handleCreated: ({ client }, { handle }) => {
-			client.channel.set(handleKey, handle);
+	useHandle: ({ client }, { handle }) => {
+		client.channel.set(handleKey, handle);
 	},
 });
 

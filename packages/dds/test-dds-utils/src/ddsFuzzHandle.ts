@@ -5,7 +5,6 @@
 
 import type { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
-import { v4 as uuid } from "uuid";
 
 /**
  * @internal
@@ -24,14 +23,15 @@ export class DDSFuzzHandle implements IFluidHandle {
 	public readonly absolutePath: string;
 
 	constructor(
-		// public readonly path: string,
+		public readonly id: string,
 		public readonly routeContext: IFluidHandleContext,
 		// public get: () => Promise<any>,
 		private readonly onAttachGraph?: () => void,
 	) {
-		this.absolutePath = generateHandleContextPath(uuid(), this.routeContext);
+		this.absolutePath = generateHandleContextPath(id, this.routeContext);
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public async get(): Promise<any> {
 		return this.absolutePath;
 	}
