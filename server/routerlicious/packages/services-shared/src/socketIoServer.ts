@@ -189,7 +189,9 @@ class SocketIoServer implements core.IWebSocketServer {
 				} else {
 					metricForTimeTaken.success("Graceful shutdown finished");
 					const reconnections = await this.io.fetchSockets();
-					Lumberjack.info("Graceful shutdown. Closing last reconnected connections", { connectionsCount: reconnections.length });
+					Lumberjack.info("Graceful shutdown. Closing last reconnected connections", {
+						connectionsCount: reconnections.length,
+					});
 				}
 			}
 		}
