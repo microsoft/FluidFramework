@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import lodashPkg from "lodash";
-// eslint-disable-next-line @typescript-eslint/unbound-method
-const { cloneDeep } = lodashPkg;
+// eslint-disable-next-line import/no-unresolved
+import cloneDeep from "lodash.clonedeep";
 
 import { DataProcessingError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
