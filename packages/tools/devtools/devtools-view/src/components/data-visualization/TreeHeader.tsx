@@ -34,11 +34,6 @@ export interface TreeHeaderProps extends HasLabel {
 }
 
 /**
- * TODO.
- */
-export const toolTipContentText = "Visual representation of the data structure of the object.";
-
-/**
  * Renders the header of the item.
  */
 export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
