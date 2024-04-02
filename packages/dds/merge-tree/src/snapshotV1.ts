@@ -13,6 +13,7 @@ import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+
 import { IAttributionCollection } from "./attributionCollection.js";
 import { UnassignedSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";

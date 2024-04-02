@@ -14,12 +14,12 @@ import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-defi
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IGarbageCollectionData, ITelemetryContext } from "@fluidframework/runtime-definitions";
-import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 import {
 	IFluidDataStoreContext,
 	ISummarizeResult,
 } from "@fluidframework/runtime-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	ChannelServiceEndpoints,

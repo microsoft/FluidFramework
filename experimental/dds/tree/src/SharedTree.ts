@@ -26,6 +26,7 @@ import {
 	createChildLogger,
 	createSampledLogger,
 } from '@fluidframework/telemetry-utils/internal';
+
 import { BuildNode, BuildTreeNode, Change, ChangeType } from './ChangeTypes.js';
 import { RestOrArray, copyPropertyIfDefined, fail, unwrapRestOrArray } from './Common.js';
 import { EditHandle, EditLog, OrderedEditSet } from './EditLog.js';

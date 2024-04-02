@@ -4,6 +4,21 @@
  */
 
 import assert from "assert";
+
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import {
+	DefaultSummaryConfiguration,
+	type IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	type ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
+import { Deferred } from "@fluidframework/core-utils/internal";
+import type { ISharedMap } from "@fluidframework/map";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
@@ -14,20 +29,7 @@ import {
 	timeoutPromise,
 	timeoutAwait,
 } from "@fluidframework/test-utils/internal";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { IContainerExperimental } from "@fluidframework/container-loader/internal";
-import {
-	ConfigTypes,
-	IConfigProviderBase,
-	type ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
-import {
-	DefaultSummaryConfiguration,
-	type IContainerRuntimeOptions,
-} from "@fluidframework/container-runtime/internal";
-import { MockLogger } from "@fluidframework/telemetry-utils/internal";
-import { Deferred } from "@fluidframework/core-utils/internal";
-import type { ISharedMap } from "@fluidframework/map";
+
 import { wrapObjectAndOverride } from "../mocking.js";
 
 const mapId = "map";

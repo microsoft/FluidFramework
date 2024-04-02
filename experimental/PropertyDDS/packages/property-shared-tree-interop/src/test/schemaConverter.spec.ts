@@ -23,6 +23,7 @@ import {
 	schemaIsFieldNode,
 	schemaIsLeaf,
 } from "@fluidframework/tree/internal";
+
 import {
 	convertPropertyToSharedTreeSchema as convertSchema,
 	nodePropertyField,

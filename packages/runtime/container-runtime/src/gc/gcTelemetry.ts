@@ -13,6 +13,7 @@ import {
 	generateStack,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
+
 import { RuntimeHeaderData } from "../containerRuntime.js";
 import { ICreateContainerMetadata } from "../summary/index.js";
 
