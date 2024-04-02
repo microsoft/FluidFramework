@@ -137,7 +137,7 @@ describe("treeApi", () => {
 			let deepEvent = false;
 			let shallowEvent = false;
 			Tree.on(root, "afterShallowChange", () => (shallowEvent = true));
-			Tree.on(root, "afterDeepChange", () => (deepEvent = true));
+			Tree.on(root, "subtreeInvalidation", () => (deepEvent = true));
 			Tree.runTransaction(root, (r) => {
 				r.content = 43;
 			});
@@ -150,12 +150,12 @@ describe("treeApi", () => {
 			let deepEventCount = 0;
 			let shallowEventCount = 0;
 			Tree.on(root, "afterShallowChange", () => (shallowEventCount += 1));
-			Tree.on(root, "afterDeepChange", () => (deepEventCount += 1));
+			Tree.on(root, "subtreeInvalidation", () => (deepEventCount += 1));
 			Tree.runTransaction(root, (r) => {
 				r.content = 43;
 				return "rollback";
 			});
-			// One firing of events during the initial change and another during rollback, plus 'afterDeepChange' fires twice
+			// One firing of events during the initial change and another during rollback, plus 'subtreeInvalidation' fires twice
 			// each time (detach and attach passes).
 			assert.equal(shallowEventCount, 2);
 			assert.equal(deepEventCount, 4);
@@ -230,9 +230,9 @@ describe("treeApi", () => {
 						myNumber: 2,
 					})),
 			);
-			check("afterDeepChange", (root) => root.rootObject.myNumber++, 2);
+			check("subtreeInvalidation", (root) => root.rootObject.myNumber++, 2);
 
-			it(`change to direct fields triggers both 'afterShallowChange' and 'afterDeepChange'`, () => {
+			it(`change to direct fields triggers both 'afterShallowChange' and 'subtreeInvalidation'`, () => {
 				const { root } = getView(
 					new TreeConfiguration(treeSchema, () => ({
 						rootObject: {
@@ -244,17 +244,17 @@ describe("treeApi", () => {
 				let shallowChanges = 0;
 				let deepChanges = 0;
 				Tree.on(root, "afterShallowChange", (...args: any[]) => shallowChanges++);
-				Tree.on(root, "afterDeepChange", (...args: any[]) => deepChanges++);
+				Tree.on(root, "subtreeInvalidation", (...args: any[]) => deepChanges++);
 
 				root.rootObject = new myObject({
 					myNumber: 2,
 				});
 
 				assert.equal(shallowChanges, 1, `afterShallowChange should fire.`);
-				assert.equal(deepChanges, 2, `afterDeepChange should fire.`); // Fires during both the detach and attach visitor passes
+				assert.equal(deepChanges, 2, `subtreeInvalidation should fire.`); // Fires during both the detach and attach visitor passes
 			});
 
-			it(`change to descendant fields only triggers 'afterDeepChange'`, () => {
+			it(`change to descendant fields only triggers 'subtreeInvalidation'`, () => {
 				const { root } = getView(
 					new TreeConfiguration(treeSchema, () => ({
 						rootObject: {
@@ -266,12 +266,12 @@ describe("treeApi", () => {
 				let shallowChanges = 0;
 				let deepChanges = 0;
 				Tree.on(root, "afterShallowChange", (...args: any[]) => shallowChanges++);
-				Tree.on(root, "afterDeepChange", (...args: any[]) => deepChanges++);
+				Tree.on(root, "subtreeInvalidation", (...args: any[]) => deepChanges++);
 
 				root.rootObject.myNumber++;
 
 				assert.equal(shallowChanges, 0, `afterShallowChange should NOT fire.`);
-				assert.equal(deepChanges, 2, `afterDeepChange should fire.`); // Fires during both the detach and attach visitor passes
+				assert.equal(deepChanges, 2, `subtreeInvalidation should fire.`); // Fires during both the detach and attach visitor passes
 			});
 		});
 
@@ -313,9 +313,9 @@ describe("treeApi", () => {
 			}
 
 			check("afterShallowChange", (root) => root.insertAtEnd({ myNumber: 2 }));
-			check("afterDeepChange", (root) => root[0].myNumber++, 2);
+			check("subtreeInvalidation", (root) => root[0].myNumber++, 2);
 
-			it(`change to direct fields triggers both 'afterShallowChange' and 'afterDeepChange'`, () => {
+			it(`change to direct fields triggers both 'afterShallowChange' and 'subtreeInvalidation'`, () => {
 				const { root } = getView(
 					new TreeConfiguration(treeSchema, () => [
 						{
@@ -327,15 +327,15 @@ describe("treeApi", () => {
 				let shallowChanges = 0;
 				let deepChanges = 0;
 				Tree.on(root, "afterShallowChange", (...args: any[]) => shallowChanges++);
-				Tree.on(root, "afterDeepChange", (...args: any[]) => deepChanges++);
+				Tree.on(root, "subtreeInvalidation", (...args: any[]) => deepChanges++);
 
 				root.insertAtEnd({ myNumber: 2 });
 
 				assert.equal(shallowChanges, 1, `afterShallowChange should NOT fire.`);
-				assert.equal(deepChanges, 2, `afterDeepChange should fire.`); // Fires during both the detach and attach visitor passes
+				assert.equal(deepChanges, 2, `subtreeInvalidation should fire.`); // Fires during both the detach and attach visitor passes
 			});
 
-			it(`change to descendant fields only triggers 'afterDeepChange'`, () => {
+			it(`change to descendant fields only triggers 'subtreeInvalidation'`, () => {
 				const { root } = getView(
 					new TreeConfiguration(treeSchema, () => [
 						{
@@ -347,15 +347,15 @@ describe("treeApi", () => {
 				let shallowChanges = 0;
 				let deepChanges = 0;
 				Tree.on(root, "afterShallowChange", (...args: any[]) => shallowChanges++);
-				Tree.on(root, "afterDeepChange", (...args: any[]) => deepChanges++);
+				Tree.on(root, "subtreeInvalidation", (...args: any[]) => deepChanges++);
 
 				root[0].myNumber++;
 
 				assert.equal(shallowChanges, 0, `afterShallowChange should NOT fire.`);
-				assert.equal(deepChanges, 2, `afterDeepChange should fire.`); // Fires during both the detach and attach visitor passes
+				assert.equal(deepChanges, 2, `subtreeInvalidation should fire.`); // Fires during both the detach and attach visitor passes
 			});
 
-			it(`move between array nodes triggers both 'afterShallowChange' and 'afterDeepChange' the correct number of times on source and target nodes`, () => {
+			it(`move between array nodes triggers both 'afterShallowChange' and 'subtreeInvalidation' the correct number of times on source and target nodes`, () => {
 				const testSchema = sb.object("root", {
 					array1: sb.array(sb.number),
 					array2: sb.array(sb.number),
@@ -372,18 +372,18 @@ describe("treeApi", () => {
 				let a2ShallowChanges = 0;
 				let a2DeepChanges = 0;
 				Tree.on(root.array1, "afterShallowChange", (...args: any[]) => a1ShallowChanges++);
-				Tree.on(root.array1, "afterDeepChange", (...args: any[]) => a1DeepChanges++);
+				Tree.on(root.array1, "subtreeInvalidation", (...args: any[]) => a1DeepChanges++);
 				Tree.on(root.array2, "afterShallowChange", (...args: any[]) => a2ShallowChanges++);
-				Tree.on(root.array2, "afterDeepChange", (...args: any[]) => a2DeepChanges++);
+				Tree.on(root.array2, "subtreeInvalidation", (...args: any[]) => a2DeepChanges++);
 
 				root.array2.moveToEnd(0, root.array1);
 
 				assert.deepEqual(root.array1, []);
 				assert.deepEqual(root.array2, [2, 1]);
 				assert.equal(a1ShallowChanges, 1, `afterShallowChange should fire once.`);
-				assert.equal(a1DeepChanges, 2, `afterDeepChange should fire twice.`); // Fires during both the detach and attach visitor passes
+				assert.equal(a1DeepChanges, 2, `subtreeInvalidation should fire twice.`); // Fires during both the detach and attach visitor passes
 				assert.equal(a2ShallowChanges, 1, `afterShallowChange should fire once.`);
-				assert.equal(a2DeepChanges, 2, `afterDeepChange should fire twice.`); // Fires during both the detach and attach visitor passes
+				assert.equal(a2DeepChanges, 2, `subtreeInvalidation should fire twice.`); // Fires during both the detach and attach visitor passes
 			});
 		});
 
@@ -433,7 +433,7 @@ describe("treeApi", () => {
 
 			check("afterShallowChange", (root) => root.set("a", { myNumber: 2 }));
 			check(
-				"afterDeepChange",
+				"subtreeInvalidation",
 				(root) => {
 					const mapEntry = root.get("a");
 					if (mapEntry === undefined) {
@@ -444,7 +444,7 @@ describe("treeApi", () => {
 				2,
 			);
 
-			it(`change to direct fields triggers both 'afterShallowChange' and 'afterDeepChange'`, () => {
+			it(`change to direct fields triggers both 'afterShallowChange' and 'subtreeInvalidation'`, () => {
 				const { root } = getView(
 					new TreeConfiguration(
 						treeSchema,
@@ -463,15 +463,15 @@ describe("treeApi", () => {
 				let shallowChanges = 0;
 				let deepChanges = 0;
 				Tree.on(root, "afterShallowChange", (...args: any[]) => shallowChanges++);
-				Tree.on(root, "afterDeepChange", (...args: any[]) => deepChanges++);
+				Tree.on(root, "subtreeInvalidation", (...args: any[]) => deepChanges++);
 
 				root.set("a", { myNumber: 2 });
 
 				assert.equal(shallowChanges, 1, `afterShallowChange should fire.`);
-				assert.equal(deepChanges, 2, `afterDeepChange should fire.`); // Fires during both the detach and attach visitor passes
+				assert.equal(deepChanges, 2, `subtreeInvalidation should fire.`); // Fires during both the detach and attach visitor passes
 			});
 
-			it(`change to descendant fields only triggers 'afterDeepChange'`, () => {
+			it(`change to descendant fields only triggers 'subtreeInvalidation'`, () => {
 				const { root } = getView(
 					new TreeConfiguration(
 						treeSchema,
@@ -490,7 +490,7 @@ describe("treeApi", () => {
 				let shallowChanges = 0;
 				let deepChanges = 0;
 				Tree.on(root, "afterShallowChange", (...args: any[]) => shallowChanges++);
-				Tree.on(root, "afterDeepChange", (...args: any[]) => deepChanges++);
+				Tree.on(root, "subtreeInvalidation", (...args: any[]) => deepChanges++);
 
 				const mapEntry = root.get("a");
 				if (mapEntry === undefined) {
@@ -499,16 +499,16 @@ describe("treeApi", () => {
 				mapEntry.myNumber++;
 
 				assert.equal(shallowChanges, 0, `afterShallowChange should NOT fire.`);
-				assert.equal(deepChanges, 2, `afterDeepChange should fire.`); // afterDeepChange fires during both the detach and attach visitor passes
+				assert.equal(deepChanges, 2, `subtreeInvalidation should fire.`); // subtreeInvalidation fires during both the detach and attach visitor passes
 			});
 		});
 
 		// Change events don't apply to leaf nodes since they don't have fields that change, they are themselves replaced
 		// by other leaf nodes.
 
-		it(`all kinds of changes trigger 'afterShallowChange' and 'afterDeepChange' the correct number of times`, () => {
+		it(`all kinds of changes trigger 'afterShallowChange' and 'subtreeInvalidation' the correct number of times`, () => {
 			// This test validates that any kind of change fires the events as expected.
-			// Like noted in other tests, 'afterDeepChange' fires during both the detach and attach visitor passes so it
+			// Like noted in other tests, 'subtreeInvalidation' fires during both the detach and attach visitor passes so it
 			// normally fires twice for any change. 'afterShallowChange' usually fires once, except during moves between
 			// sequences, where it fires when detaching the node from its source, and again while attaching it to the target.
 
@@ -540,7 +540,7 @@ describe("treeApi", () => {
 			let shallowChanges = 0;
 			let deepChanges = 0;
 			// Deep changes subscription on the root
-			Tree.on(root, "afterDeepChange", (...args: any[]) => {
+			Tree.on(root, "subtreeInvalidation", (...args: any[]) => {
 				deepChanges++;
 			});
 			// Shallow changes subscription on the object property of the root
@@ -610,7 +610,7 @@ describe("treeApi", () => {
 			actAndVerify(() => (root.rootObject.arrayProp = undefined), 2, 1);
 		});
 
-		it(`batched changes to several direct fields trigger 'afterShallowChange' and 'afterDeepChange' the correct number of times`, () => {
+		it(`batched changes to several direct fields trigger 'afterShallowChange' and 'subtreeInvalidation' the correct number of times`, () => {
 			const sb = new SchemaFactory("object-node-in-root");
 			const treeSchema = sb.object("root", {
 				prop1: sb.number,
@@ -624,7 +624,7 @@ describe("treeApi", () => {
 			let shallowChanges = 0;
 			let deepChanges = 0;
 			Tree.on(root, "afterShallowChange", (...args: any[]) => shallowChanges++);
-			Tree.on(root, "afterDeepChange", (...args: any[]) => deepChanges++);
+			Tree.on(root, "subtreeInvalidation", (...args: any[]) => deepChanges++);
 
 			const branch = checkout.fork();
 			branch.editor
@@ -639,10 +639,10 @@ describe("treeApi", () => {
 			assert.equal(root.prop1, 2, "'prop2' value did not change as expected");
 			assert.equal(root.prop2, 2, "'prop2' value did not change as expected");
 			// Changes should be batched so we should only get "one" firing of each event type.
-			// In practice this actually means two for afterDeepChange, because it fires once during each visitor pass
+			// In practice this actually means two for subtreeInvalidation, because it fires once during each visitor pass
 			// (detach then attach).
 			// Node replacements only have effects during the attach pass so afterShallowChange only fires once.
-			assert.equal(deepChanges, 2, "'afterDeepChange' should fire twice");
+			assert.equal(deepChanges, 2, "'subtreeInvalidation' should fire twice");
 			assert.equal(shallowChanges, 1, "'afterShallowChange' should only fire once");
 		});
 	});

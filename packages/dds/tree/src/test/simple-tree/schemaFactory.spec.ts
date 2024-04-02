@@ -626,7 +626,7 @@ describe("schemaFactory", () => {
 			});
 
 			// Ensure that the proxies can be read during the change, as well as after
-			// Note: as of 2024-03-28, we can't easily test 'afterDeepChange' because it can fire at a time where the changes
+			// Note: as of 2024-03-28, we can't easily test 'subtreeInvalidation' because it can fire at a time where the changes
 			// to the tree are not visible in the listener. 'afterShallowChange' only fires once we confirmed that a
 			// relevant change was actually applied to the tree so the side effects this test validates already happened.
 			Tree.on(view.root, "afterShallowChange", () => validate(view, nodes));

@@ -140,7 +140,7 @@ export const treeNodeApi: TreeNodeApi = {
 					unsubscribeFromSubtreeChanged();
 				};
 			}
-			case "afterDeepChange":
+			case "subtreeInvalidation":
 				return anchor.on("subtreeChanged", () => listener());
 			default:
 				return unreachableCase(eventName);
@@ -178,18 +178,18 @@ export const treeNodeApi: TreeNodeApi = {
  * A collection of events that can be raised by a {@link TreeNode}.
  *
  * @privateRemarks
- * TODO: add a way to subscribe to a specific field (for afterShallowChange and afterDeepChange).
+ * TODO: add a way to subscribe to a specific field (for afterShallowChange and subtreeInvalidation).
  * Probably have object node and map node specific APIs for this.
  *
  * TODO: ensure that subscription API for fields aligns with API for subscribing to the root.
  *
- * TODO: add more wider area (avoid needing tons of afterShallowChange registration) events for use-cases other than afterDeepChange.
+ * TODO: add more wider area (avoid needing tons of afterShallowChange registration) events for use-cases other than subtreeInvalidation.
  * Some ideas:
  *
- * - afterDeepChange, but with some subtrees/fields/paths excluded
- * - helper to batch several afterShallowChange calls to a afterDeepChange scope
+ * - subtreeInvalidation, but with some subtrees/fields/paths excluded
+ * - helper to batch several afterShallowChange calls to a subtreeInvalidation scope
  * - parent change (ex: registration on the parent field for a specific index: maybe allow it for a range. Ex: node event takes optional field and optional index range?)
- * - new content inserted into subtree. Either provide event for this and/or enough info to afterDeepChange to find and search the new sub-trees.
+ * - new content inserted into subtree. Either provide event for this and/or enough info to subtreeInvalidation to find and search the new sub-trees.
  * Add separate (non event related) API to efficiently scan tree for given set of types (using low level cursor and schema based filtering)
  * to allow efficiently searching for new content (and initial content) of a given type.
  *
@@ -231,17 +231,20 @@ export interface TreeChangeEvents {
 	afterShallowChange(): void;
 
 	/**
-	 * Emitted by a node when changes happen anywhere in the subtree rooted at it.
+	 * Emitted by a node when something _may_ have changed anywhere in the subtree rooted at it.
 	 *
 	 * @remarks
-	 * The node itself is part of the subtree, so this event will be emitted even if the only changes are to the properties
-	 * of the node itself.
+	 * This event is guaranteed to be emitted whenever the subtree _has_ changed.
+	 * However, it might also be emitted when the subtree has no visible changes compared to before the event firing.
+	 *
+	 * Consumers of this event have the guarantee that they won't miss any changes, but should also handle the scenario
+	 * where the event fires with no visible changes as well.
 	 *
 	 * This event is not raised when the node itself is moved to a different location in the tree or removed from the tree.
 	 * In that case it is raised on the _parent_ node, not the node itself.
 	 *
-	 * It may fire at a time when the change(s) that triggered it are not yet visible if the listener inspects the tree.
-	 * In that case, it is guaranteed to fire again after the change(s) _are_ visible to the listener.
+	 * The node itself is part of the subtree, so this event will be emitted even if the only changes are to the properties
+	 * of the node itself.
 	 *
 	 * For remote edits, this event is not guaranteed to occur in the same order or quantity that it did in
 	 * the client that made the original edit.
@@ -249,5 +252,5 @@ export interface TreeChangeEvents {
 	 * how many times this event will be raised during any intermediate states.
 	 * When it is raised, the tree is guaranteed to be in-schema.
 	 */
-	afterDeepChange(): void;
+	subtreeInvalidation(): void;
 }

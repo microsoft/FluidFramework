@@ -163,13 +163,13 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 		// reach in and grab the inventoryItems list.
 		this._inventoryItemList =
 			this.sharedTree.schematize(treeConfiguration).root.inventoryItemList;
-		// afterDeepChange will fire for any change of any type anywhere in the subtree. In this application we expect
+		// subtreeInvalidation will fire for any change of any type anywhere in the subtree. In this application we expect
 		// three types of tree changes that will trigger this handler - add items, delete items, change item quantities.
-		// Since "afterDeepChange" doesn't provide event args, we need to scan the tree and compare it to our InventoryItems
+		// Since "subtreeInvalidation" doesn't provide event args, we need to scan the tree and compare it to our InventoryItems
 		// to find what changed.  We'll intentionally ignore the quantity changes here, which are instead handled by
 		// "changing" listeners on each individual item node.
 		// Tree.on() is the way to register events on the list (the first argument).  AB#6051
-		Tree.on(this.inventoryItemList, "afterDeepChange", () => {
+		Tree.on(this.inventoryItemList, "subtreeInvalidation", () => {
 			for (const inventoryItemNode of this.inventoryItemList) {
 				// If we're not currently tracking some item in the tree, then it must have been
 				// added in this change.

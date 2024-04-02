@@ -18,7 +18,7 @@ export const MainView: React.FC<{ root: Inventory }> = ({ root: inventory }) => 
 	// React effect hook that increments the 'invalidation' counter whenever inventory or any of its children change.
 	React.useEffect(() => {
 		// Returns the cleanup function to be invoked when the component unmounts.
-		return Tree.on(inventory, "afterDeepChange", () => {
+		return Tree.on(inventory, "subtreeInvalidation", () => {
 			setInvalidations((i) => i + 1);
 		});
 	}, [invalidations, inventory]);
