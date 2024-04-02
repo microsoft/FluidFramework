@@ -137,12 +137,12 @@ export interface AnchorEvents {
 	 * @remarks
 	 * While this event is always emitted in the presence of changes to the subtree,
 	 * it may also be emitted even though no changes have been made to the subtree.
-	 * May be emitted multiple times within the application of a single edit or transaction.
+	 * It may be emitted multiple times within the application of a single edit or transaction.
 	 *
-	 * @privateremarks
+	 * @privateRemarks
 	 * The implementation details of the delta visit traversal have a big effect on how/when this event is emitted.
 	 * As of 2024-03-27, it is emitted on a node as the delta traversal exits that node, which by design of the current
-	 * traversal algorithm happens after all changes to the node's children have been applied, so this event is only
+	 * traversal algorithm happens after some changes to the node's children have been applied, so this event is only
 	 * emitted by a node after all its children which had changes have emitted theirs.
 	 * It's also emitted twice for any node due to the two-pass algorithm (detach + attach) we use today which causes
 	 * a node to be exited once on each pass, and depending on the kind of change, the change may or may not have happened

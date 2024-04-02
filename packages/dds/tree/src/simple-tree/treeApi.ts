@@ -66,7 +66,7 @@ export interface TreeNodeApi {
 
 	/**
 	 * Register an event listener on the given node.
-	 * @param node - The node who's events should be subscribed to.
+	 * @param node - The node whose events should be subscribed to.
 	 * @param eventName - Which event to subscribe to.
 	 * @param listener - The callback to trigger for the event. The tree can be read during the callback, but it is invalid to modify the tree during this callback.
 	 * @returns A callback function which will deregister the event.
