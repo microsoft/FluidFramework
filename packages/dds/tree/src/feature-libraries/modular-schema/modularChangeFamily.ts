@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { BTree } from "@tylerbu/sorted-btree-es6";
 import { ICodecFamily, ICodecOptions, makeCodecFamily } from "../../codec/index.js";
 import {
 	ChangeAtomIdMap,
@@ -1045,12 +1046,37 @@ export function updateRefreshers(
 	removedRoots: Iterable<DeltaDetachedNodeId>,
 ): ModularChangeset {
 	const refreshers: ChangeAtomIdMap<TreeChunk> = new Map();
+	const chunkLengths: Map<RevisionTag | undefined, BTree<number, number>> = new Map();
+
+	if (change.builds !== undefined) {
+		for (const [major, buildsMap] of change.builds) {
+			const lengthTree = getOrAddInMap(chunkLengths, major, new BTree());
+			for (const [id, chunk] of buildsMap) {
+				lengthTree.set(id, chunk.topLevelLength);
+			}
+		}
+	}
 
 	for (const root of removedRoots) {
 		if (change.builds !== undefined) {
 			const major = root.major === revision ? undefined : root.major;
+			const lengthTree = chunkLengths.get(major);
+
+			let minor = root.minor;
+			if (lengthTree !== undefined) {
+				const lengthPair = lengthTree.getPairOrNextLower(root.minor);
+				if (lengthPair !== undefined) {
+					const [firstMinor, length] = lengthPair;
+
+					// check that the root minor is within the length of the minor of the retrieved pair
+					if (minor < firstMinor + length) {
+						minor = firstMinor;
+					}
+				}
+			}
+
 			// if the root exists in the original builds map, it does not need to be added as a refresher
-			const original = tryGetFromNestedMap(change.builds, major, root.minor);
+			const original = tryGetFromNestedMap(change.builds, major, minor);
 			if (original !== undefined) {
 				continue;
 			}
