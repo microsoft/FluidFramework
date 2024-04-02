@@ -44,7 +44,7 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { UndoRedoStackManager } from "@fluidframework/undo-redo";
+import { UndoRedoStackManager } from "@fluidframework/undo-redo/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
 
