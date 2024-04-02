@@ -29,8 +29,6 @@
  * }
  * ```
  *
- * See `MakeNominal` for some more details.
- *
  * Do not use this class with `instanceof`: this will always be false at runtime,
  * but the compiler may think it's true in some cases.
  * @privateRemarks
