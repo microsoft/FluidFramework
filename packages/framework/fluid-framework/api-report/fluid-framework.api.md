@@ -214,9 +214,6 @@ export type InitialObjects<T extends ContainerSchema> = {
 };
 
 // @public
-export type _InlineTrick = 0;
-
-// @public
 export type InsertableObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = {
     readonly [Property in keyof T]: InsertableTreeFieldFromImplicitField<T[Property]>;
 };
@@ -452,7 +449,7 @@ export abstract class TreeNode implements WithType {
 
 // @public
 export interface TreeNodeApi {
-    child(node: TreeNode, storedKey: StoredKey): TreeNode | TreeValue | undefined;
+    child(node: TreeNode, storedKey: StoredKey): TreeNode | TreeLeafValue | undefined;
     is<TSchema extends TreeNodeSchema>(value: unknown, schema: TSchema): value is NodeFromSchema<TSchema>;
     key(node: TreeNode): string | number;
     on<K extends keyof TreeNodeEvents>(node: TreeNode, eventName: K, listener: TreeNodeEvents[K]): () => void;
@@ -506,17 +503,6 @@ export enum TreeStatus {
 }
 
 // @public
-export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
-    {
-    [ValueSchema.Number]: number;
-    [ValueSchema.String]: string;
-    [ValueSchema.Boolean]: boolean;
-    [ValueSchema.FluidHandle]: IFluidHandle;
-    [ValueSchema.Null]: null;
-}[TSchema]
-][_InlineTrick];
-
-// @public
 export interface TreeView<in out TRoot> extends IDisposable {
     readonly error?: SchemaIncompatible;
     readonly events: ISubscribable<TreeViewEvents>;
@@ -537,20 +523,6 @@ export const type: unique symbol;
 
 // @public
 export type Unhydrated<T> = T;
-
-// @public
-export enum ValueSchema {
-    // (undocumented)
-    Boolean = 2,
-    // (undocumented)
-    FluidHandle = 3,
-    // (undocumented)
-    Null = 4,
-    // (undocumented)
-    Number = 0,
-    // (undocumented)
-    String = 1
-}
 
 // @public
 export interface WithType<TName extends string = string> {

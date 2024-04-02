@@ -25,7 +25,7 @@ import {
 
 /**
  * Schema for what {@link TreeValue} is allowed on a Leaf node.
- * @public
+ * @internal
  */
 export enum ValueSchema {
 	Number,

@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { TreeValue, rootFieldKey } from "../core/index.js";
+import { rootFieldKey } from "../core/index.js";
 import {
 	FlexTreeNodeEvents,
 	LeafNodeSchema,
@@ -23,7 +23,7 @@ import { schemaFromValue } from "./schemaFactory.js";
 import {
 	NodeFromSchema,
 	NodeKind,
-	TreeLeafValue,
+	type TreeLeafValue,
 	TreeNodeSchema,
 	type StoredKey,
 	type ImplicitFieldSchema,
@@ -70,7 +70,7 @@ export interface TreeNodeApi {
 	 *
 	 * @returns The associated child node, if it exists. Otherwise `undefined`.
 	 */
-	child(node: TreeNode, storedKey: StoredKey): TreeNode | TreeValue | undefined;
+	child(node: TreeNode, storedKey: StoredKey): TreeNode | TreeLeafValue | undefined;
 
 	/**
 	 * Return the node under which this node resides in the tree (or undefined if this is a root node of the tree).
@@ -185,7 +185,9 @@ export const treeNodeApi: TreeNodeApi = {
 		}
 		return tryGetFlexNode(value)?.is(flexSchema) ?? false;
 	},
-	schema<T extends TreeNode | TreeValue>(node: T): TreeNodeSchema<string, NodeKind, unknown, T> {
+	schema<T extends TreeNode | TreeLeafValue>(
+		node: T,
+	): TreeNodeSchema<string, NodeKind, unknown, T> {
 		if (isTreeValue(node)) {
 			return schemaFromValue(node) as TreeNodeSchema<string, NodeKind, unknown, T>;
 		}
