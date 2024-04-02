@@ -10,7 +10,7 @@ import {
 	LocalReferenceCollection,
 	MergeTreeDeltaType,
 	ReferenceType,
-} from "@fluidframework/merge-tree";
+} from "@fluidframework/merge-tree/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import {
 	MockContainerRuntimeFactory,

@@ -14,7 +14,7 @@ import {
 	shorthands,
 	tokens,
 } from "@fluentui/react-components";
-import { type Serializable } from "@fluidframework/datastore-definitions";
+import { type Serializable } from "@fluidframework/datastore-definitions/internal";
 import {
 	DataEdit,
 	type EditData,

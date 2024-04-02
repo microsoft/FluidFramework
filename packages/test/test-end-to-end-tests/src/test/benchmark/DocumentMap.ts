@@ -19,7 +19,7 @@ import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 	ISummarizer,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,

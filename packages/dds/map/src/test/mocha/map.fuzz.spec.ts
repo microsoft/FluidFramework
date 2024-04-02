@@ -14,8 +14,8 @@ import {
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
-import { Jsonable } from "@fluidframework/datastore-definitions";
-import { FlushMode } from "@fluidframework/runtime-definitions";
+import { Jsonable } from "@fluidframework/datastore-definitions/internal";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { ISharedMap, MapFactory } from "../../index.js";
 

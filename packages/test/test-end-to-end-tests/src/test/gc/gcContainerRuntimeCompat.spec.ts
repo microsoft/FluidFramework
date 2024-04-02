@@ -16,7 +16,7 @@ import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	IContainerRuntimeOptions,
 	type ISummaryRuntimeOptions,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	ITestFluidObject,

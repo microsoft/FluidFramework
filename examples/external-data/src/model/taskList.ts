@@ -9,7 +9,7 @@ import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { type ISharedMap, SharedMap } from "@fluidframework/map";
-import { SharedString } from "@fluidframework/sequence";
+import { SharedString } from "@fluidframework/sequence/internal";
 
 import { customerServicePort } from "../mock-customer-service-interface/index.js";
 import { externalDataServicePort } from "../mock-external-data-service-interface/index.js";

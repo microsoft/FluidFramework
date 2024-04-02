@@ -14,9 +14,9 @@ import {
 	IEventProvider,
 	type ITelemetryBaseEvent,
 	ITelemetryBaseProperties,
-	IThrottlingWarning,
 } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaStorageService,

@@ -12,10 +12,10 @@ import {
 	DefaultSummaryConfiguration,
 	IAckedSummary,
 	SummaryCollection,
-} from "@fluidframework/container-runtime";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+} from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { IDataStore } from "@fluidframework/runtime-definitions";
+import { IDataStore } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	DataObjectFactoryType,

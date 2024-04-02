@@ -13,9 +13,9 @@ import {
 	IContainerRuntimeOptions,
 	ISummarizer,
 	SummaryCollection,
-} from "@fluidframework/container-runtime";
-import { assert } from "@fluidframework/core-utils";
-import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
+} from "@fluidframework/container-runtime/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestObjectProvider,

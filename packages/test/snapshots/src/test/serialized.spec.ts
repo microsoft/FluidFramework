@@ -14,10 +14,10 @@ import { SharedCounter } from "@fluidframework/counter";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { type ISharedMap, SharedMap } from "@fluidframework/map";
 import { SharedDirectory } from "@fluidframework/map/internal";
-import { SharedMatrix } from "@fluidframework/matrix";
+import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { ConsensusOrderedCollection, ConsensusQueue } from "@fluidframework/ordered-collection";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { SharedString } from "@fluidframework/sequence";
+import { SharedString } from "@fluidframework/sequence/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
 	LoaderContainerTracker,

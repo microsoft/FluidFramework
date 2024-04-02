@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { IThrottlingWarning } from "@fluidframework/core-interfaces";
+import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
 import {
 	IAuthorizationError,
 	IGenericNetworkError,

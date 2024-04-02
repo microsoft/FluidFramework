@@ -12,10 +12,16 @@ import {
 	IResponse,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils";
-import { FluidObjectHandle } from "@fluidframework/datastore";
+import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
+import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import {
+	IGarbageCollectionData,
+	IInboundSignalMessage,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+} from "@fluidframework/runtime-definitions";
 import {
 	AliasResult,
 	CreateSummarizerNodeSource,
@@ -27,15 +33,11 @@ import {
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
 	IFluidParentContext,
-	IGarbageCollectionData,
-	IInboundSignalMessage,
 	ISummarizeResult,
-	ISummaryTreeWithStats,
-	ITelemetryContext,
 	InboundAttachMessage,
 	NamedFluidDataStoreRegistryEntries,
 	channelsTreeName,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
 	RequestParser,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidRunnable } from "@fluidframework/core-interfaces";
+import { IFluidRunnable } from "@fluidframework/core-interfaces/internal";
 import { SharedCounter } from "@fluidframework/counter";
 
 // Sample agent to run.
