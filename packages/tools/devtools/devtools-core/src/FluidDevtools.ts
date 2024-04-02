@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/telemetry-utils";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { type ContainerKey } from "./CommonInterfaces.js";
 import { ContainerDevtools, type ContainerDevtoolsProps } from "./ContainerDevtools.js";

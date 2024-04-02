@@ -4,9 +4,9 @@
  */
 
 import { IFluidHandle, fluidHandleSymbol } from '@fluidframework/core-interfaces';
-import { assert } from '@fluidframework/core-utils';
-import { FluidSerializer } from '@fluidframework/shared-object-base';
-import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
+import { assert } from '@fluidframework/core-utils/internal';
+import { FluidSerializer } from '@fluidframework/shared-object-base/internal';
+import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 import type { IFluidHandleInternal } from '@fluidframework/core-interfaces';
 

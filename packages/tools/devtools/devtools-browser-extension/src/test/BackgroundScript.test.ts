@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { delay } from "@fluidframework/core-utils";
+import { delay } from "@fluidframework/core-utils/internal";
 import {
 	CloseContainer,
 	TelemetryEvent,
 	devtoolsMessageSource,
-} from "@fluidframework/devtools-core";
+} from "@fluidframework/devtools-core/internal";
 import { expect } from "chai";
 import Proxyquire from "proxyquire";
 import { createSandbox } from "sinon";

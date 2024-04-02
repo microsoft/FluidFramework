@@ -5,13 +5,14 @@
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { FluidObject, type IFluidHandleInternal } from "@fluidframework/core-interfaces";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	AliasResult,
 	IDataStore,
 	IFluidDataStoreChannel,
-} from "@fluidframework/runtime-definitions";
-import { ITelemetryLoggerExt, TelemetryDataTag, UsageError } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/runtime-definitions/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { TelemetryDataTag, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { ChannelCollection } from "./channelCollection.js";
 import { ContainerMessageType } from "./messageTypes.js";

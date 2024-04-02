@@ -14,8 +14,8 @@ import type { ISharedMap } from "@fluidframework/map";
 import {
 	IContainerRuntimeBase,
 	type IFluidDataStoreContext,
-} from "@fluidframework/runtime-definitions";
-import { SharedObject } from "@fluidframework/shared-object-base";
+} from "@fluidframework/runtime-definitions/internal";
+import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
@@ -24,7 +24,7 @@ import {
 	TestFluidObject,
 	TestFluidObjectFactory,
 	createDocumentId,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 /*
 Context no longer provides observability point to when context changes its attach states

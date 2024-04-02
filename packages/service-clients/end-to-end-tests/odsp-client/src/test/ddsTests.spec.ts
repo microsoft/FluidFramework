@@ -10,7 +10,7 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
-import { timeoutPromise } from "@fluidframework/test-utils";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import { IOdspLoginCredentials, createOdspClient } from "./OdspClientFactory.js";
 import { CounterTestDataObject, TestDataObject } from "./TestDataObject.js";

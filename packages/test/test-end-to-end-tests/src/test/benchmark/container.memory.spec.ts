@@ -20,7 +20,7 @@ import {
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	TestFluidObjectFactory,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import { v4 as uuid } from "uuid";
 
 const codeDetails: IFluidCodeDetails = { package: "test" };

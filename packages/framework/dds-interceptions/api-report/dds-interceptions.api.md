@@ -5,10 +5,10 @@
 ```ts
 
 import { IDirectory } from '@fluidframework/map/internal';
-import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
+import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions/internal';
 import { ISharedMap } from '@fluidframework/map';
-import * as MergeTree from '@fluidframework/merge-tree';
-import { SharedString } from '@fluidframework/sequence';
+import * as MergeTree from '@fluidframework/merge-tree/internal';
+import { SharedString } from '@fluidframework/sequence/internal';
 
 // @internal
 export function createDirectoryWithInterception<T extends IDirectory>(baseDirectory: T, context: IFluidDataStoreContext, setInterceptionCallback: (baseDirectory: IDirectory, subDirectory: IDirectory, key: string, value: any) => void): T;

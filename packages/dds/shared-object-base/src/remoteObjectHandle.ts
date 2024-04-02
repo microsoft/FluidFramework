@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { RuntimeHeaders } from "@fluidframework/container-runtime";
+import { RuntimeHeaders } from "@fluidframework/container-runtime/internal";
 import {
 	FluidObject,
 	IFluidHandleContext,
@@ -13,8 +13,8 @@ import {
 	fluidHandleSymbol,
 	toFluidHandleErased,
 } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
-import { responseToException } from "@fluidframework/runtime-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+import { responseToException } from "@fluidframework/runtime-utils/internal";
 
 /**
  * This handle is used to dynamically load a Fluid object on a remote client and is created on parsing a serialized

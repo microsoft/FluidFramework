@@ -12,7 +12,7 @@ import {
 	gitHashFile,
 } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
+import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -20,7 +20,7 @@ import {
 	IFluidHandle,
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces";
-import { Deferred } from "@fluidframework/core-utils";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	IClientDetails,
@@ -32,7 +32,7 @@ import {
 	MonitoringContext,
 	createChildLogger,
 	mixinMonitoringContext,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager.js";

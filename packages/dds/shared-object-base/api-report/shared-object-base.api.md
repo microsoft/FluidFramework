@@ -5,7 +5,7 @@
 ```ts
 
 import { EventEmitterEventType } from '@fluid-internal/client-utils';
-import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
+import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils/internal';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';

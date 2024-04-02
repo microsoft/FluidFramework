@@ -127,8 +127,6 @@ export {
 	FieldKindConfigurationEntry,
 } from "./modular-schema/index.js";
 
-export { Multiplicity } from "./multiplicity.js";
-
 export {
 	FlexTreeNodeSchema,
 	FlexAllowedTypes,
@@ -193,7 +191,6 @@ export {
 	makeTreeChunker,
 	makeFieldBatchCodec,
 	FieldBatchEncodingContext,
-	SchemaAndPolicy,
 } from "./chunked-forest/index.js";
 
 export {

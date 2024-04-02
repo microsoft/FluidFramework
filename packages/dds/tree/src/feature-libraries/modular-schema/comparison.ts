@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	LeafNodeStoredSchema,
@@ -140,7 +140,7 @@ export function allowsFieldSuperset(
 	superset: TreeFieldStoredSchema,
 ): boolean {
 	return withEditor(
-		policy.fieldKinds.get(original.kind.identifier) ?? fail("missing kind"),
+		policy.fieldKinds.get(original.kind) ?? fail("missing kind"),
 	).allowsFieldSuperset(policy, originalData, original.types, superset);
 }
 

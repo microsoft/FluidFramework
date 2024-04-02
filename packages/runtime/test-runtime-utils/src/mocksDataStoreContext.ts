@@ -26,8 +26,9 @@ import {
 	IFluidDataStoreContext,
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
-} from "@fluidframework/runtime-definitions";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/runtime-definitions/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 /**

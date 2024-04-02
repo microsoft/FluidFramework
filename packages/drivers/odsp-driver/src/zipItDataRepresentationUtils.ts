@@ -9,9 +9,9 @@
  */
 
 import { Uint8ArrayToArrayBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
-import { NonRetryableError } from "@fluidframework/driver-utils";
-import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { NonRetryableError } from "@fluidframework/driver-utils/internal";
+import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 
 import { ReadBuffer } from "./ReadBufferUtils.js";

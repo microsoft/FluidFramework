@@ -229,7 +229,7 @@ describe("Schema Evolution Examples", () => {
 			);
 			assert(stored.tryUpdateTreeSchema(text.name, text.stored));
 			assert(stored.tryUpdateTreeSchema(codePoint.name, codePoint.stored));
-			assert(stored.tryUpdateRootFieldSchema(tolerantRoot));
+			assert(stored.tryUpdateRootFieldSchema(tolerantRoot.stored));
 			assert(stored.tryUpdateTreeSchema(leaf.number.name, leaf.number.stored));
 			assert(stored.tryUpdateTreeSchema(leaf.boolean.name, leaf.boolean.stored));
 			assert(stored.tryUpdateTreeSchema(leaf.string.name, leaf.string.stored));

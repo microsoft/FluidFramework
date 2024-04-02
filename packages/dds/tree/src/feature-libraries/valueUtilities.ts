@@ -4,7 +4,7 @@
  */
 
 import { IFluidHandle, isFluidHandle } from "@fluidframework/core-interfaces";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import { TreeValue, Value, ValueSchema } from "../core/index.js";
 

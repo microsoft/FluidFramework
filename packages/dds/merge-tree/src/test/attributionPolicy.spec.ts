@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { AttributionKey } from "@fluidframework/runtime-definitions";
+import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
 import {
 	createInsertOnlyAttributionPolicy,

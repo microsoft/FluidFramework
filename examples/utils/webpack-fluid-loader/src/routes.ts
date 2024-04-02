@@ -7,7 +7,7 @@ import fs from "fs";
 import path from "path";
 
 import { IFluidPackage } from "@fluidframework/container-definitions/internal";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { IOdspTokens, getServer } from "@fluidframework/odsp-doclib-utils/internal";
 import {
 	OdspTokenConfig,

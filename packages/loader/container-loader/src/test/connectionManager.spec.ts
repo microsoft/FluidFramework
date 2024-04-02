@@ -6,12 +6,12 @@
 import { strict as assert } from "assert";
 
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-private/test-loader-utils";
-import { Deferred } from "@fluidframework/core-utils";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions";
 import { IDocumentService } from "@fluidframework/driver-definitions/internal";
-import { NonRetryableError, RetryableError } from "@fluidframework/driver-utils";
+import { NonRetryableError, RetryableError } from "@fluidframework/driver-utils/internal";
 import { IClient, INack, NackErrorType } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { ConnectionManager } from "../connectionManager.js";
 import { IConnectionManagerFactoryArgs } from "../contracts.js";

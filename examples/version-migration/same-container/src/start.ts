@@ -5,7 +5,7 @@
 
 import type { ISameContainerMigratableModel, IVersionedModel } from "@fluid-example/example-utils";
 import { ModelLoader, SameContainerMigrator } from "@fluid-example/example-utils";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import {
 	InsecureTinyliciousTokenProvider,
 	InsecureTinyliciousUrlResolver,

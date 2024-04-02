@@ -4,10 +4,10 @@
 
 ```ts
 
-import { ContainerKey } from '@fluidframework/devtools-core';
-import { createDevtoolsLogger } from '@fluidframework/devtools-core';
-import { HasContainerKey } from '@fluidframework/devtools-core';
-import { IDevtoolsLogger } from '@fluidframework/devtools-core';
+import { ContainerKey } from '@fluidframework/devtools-core/internal';
+import { createDevtoolsLogger } from '@fluidframework/devtools-core/internal';
+import { HasContainerKey } from '@fluidframework/devtools-core/internal';
+import { IDevtoolsLogger } from '@fluidframework/devtools-core/internal';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 

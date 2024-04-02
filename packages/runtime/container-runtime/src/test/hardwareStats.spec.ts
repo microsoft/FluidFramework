@@ -7,8 +7,8 @@ import assert from "assert";
 
 import { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
 
 import { ContainerRuntime, getDeviceSpec } from "../containerRuntime.js";
 

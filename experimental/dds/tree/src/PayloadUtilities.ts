@@ -4,7 +4,7 @@
  */
 
 import { isFluidHandle, toFluidHandleInternal } from '@fluidframework/core-interfaces';
-import { compareArrays } from '@fluidframework/core-utils';
+import { compareArrays } from '@fluidframework/core-utils/internal';
 
 import { Payload } from './persisted-types/index.js';
 

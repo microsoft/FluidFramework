@@ -10,7 +10,7 @@ import {
 	TestDataObjectType,
 	describeCompat,
 } from "@fluid-private/test-version-utils";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { toFluidHandleInternal } from "@fluidframework/core-interfaces";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map";
@@ -19,7 +19,7 @@ import {
 	TestFluidObject,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;

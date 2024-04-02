@@ -8,7 +8,7 @@ import { AttachState, ICriticalContainerError } from "@fluidframework/container-
 import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
-} from "@fluidframework/container-runtime-definitions";
+} from "@fluidframework/container-runtime-definitions/internal";
 import {
 	IFluidHandleContext,
 	type IFluidHandleErased,
@@ -16,9 +16,9 @@ import {
 	fluidHandleSymbol,
 	toFluidHandleErased,
 } from "@fluidframework/core-interfaces";
-import { assert, Deferred } from "@fluidframework/core-utils";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils";
+import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils/internal";
 import {
 	ICreateBlobResponse,
 	ISequencedDocumentMessage,
@@ -34,7 +34,7 @@ import {
 	createResponseError,
 	generateHandleContextPath,
 	responseToException,
-} from "@fluidframework/runtime-utils";
+} from "@fluidframework/runtime-utils/internal";
 import {
 	GenericError,
 	LoggingError,
@@ -42,7 +42,7 @@ import {
 	PerformanceEvent,
 	createChildMonitoringContext,
 	wrapError,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { IBlobMetadata } from "./metadata.js";
