@@ -4,7 +4,7 @@
  */
 
 import { SharedPropertyTree } from "@fluid-experimental/property-dds";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 export async function MockSharedPropertyTree() {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();

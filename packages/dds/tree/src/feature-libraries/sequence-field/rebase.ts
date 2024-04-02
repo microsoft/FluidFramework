@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+
 import {
 	ChangeAtomId,
 	ChangesetLocalId,
@@ -19,6 +20,7 @@ import {
 	RebaseRevisionMetadata,
 	getIntention,
 } from "../modular-schema/index.js";
+
 import { CellOrderingMethod, sequenceConfig } from "./config.js";
 import { DetachIdOverrideType } from "./format.js";
 import { EmptyInputCellMark } from "./helperTypes.js";

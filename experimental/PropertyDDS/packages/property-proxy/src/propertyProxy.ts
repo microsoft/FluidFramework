@@ -14,16 +14,14 @@ import {
 	ValueProperty,
 } from "@fluid-experimental/property-properties";
 
+import { IParentAndPathOfReferencedProperty } from "./IParentAndPathOfReferencedProperty.js";
 import { arrayProxyHandler } from "./arrayProxyHandler.js";
-import { proxyHandler } from "./proxyHandler.js";
-
 import { ComponentArray } from "./componentArray.js";
 import { ComponentMap } from "./componentMap.js";
 import { ComponentSet } from "./componentSet.js";
 import { PropertyProxyErrors } from "./errors.js";
-
-import { IParentAndPathOfReferencedProperty } from "./IParentAndPathOfReferencedProperty.js";
 import { PropertyTypes, ProxyType, ReferenceType } from "./interfaces.js";
+import { proxyHandler } from "./proxyHandler.js";
 import { forceType } from "./utilities.js";
 
 /**

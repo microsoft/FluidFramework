@@ -7,8 +7,9 @@ import {
 	getUnexpectedLogErrorException,
 	ITestObjectProvider,
 	TestObjectProvider,
-} from "@fluidframework/test-utils";
-import { driver, r11sEndpointName, tenantIndex } from "../compatOptions.cjs";
+} from "@fluidframework/test-utils/internal";
+
+import { driver, r11sEndpointName, tenantIndex } from "./compatOptions.js";
 import { getVersionedTestObjectProvider } from "./compatUtils.js";
 import { ITestObjectProviderOptions } from "./describeCompat.js";
 import { pkgVersion } from "./packageVersion.js";

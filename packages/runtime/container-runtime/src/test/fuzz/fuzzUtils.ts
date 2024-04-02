@@ -9,7 +9,8 @@ import {
 	combineReducersAsync,
 	createWeightedAsyncGenerator,
 } from "@fluid-private/stochastic-test-utils";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+
 import type { SummarizerFuzzModel, SummarizerFuzzTestState } from "./summarizerFuzzSuite.js";
 
 interface Reconnect {

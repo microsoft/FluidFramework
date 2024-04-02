@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { ObjectOptions } from "@sinclair/typebox";
+
 import { _InlineTrick, fail, objectToMap } from "../util/index.js";
 
 /**

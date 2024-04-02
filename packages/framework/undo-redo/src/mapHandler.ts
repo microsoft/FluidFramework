@@ -4,6 +4,7 @@
  */
 
 import { ISharedMap, IValueChanged } from "@fluidframework/map";
+
 import { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager.js";
 
 /**

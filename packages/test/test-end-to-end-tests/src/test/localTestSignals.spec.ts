@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
@@ -15,7 +16,7 @@ import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 	timeoutPromise,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 type IContainerRuntimeBaseWithClientId = IContainerRuntimeBase & { clientId?: string | undefined };
 

@@ -1963,30 +1963,6 @@ use_old_VariableDeclaration_agentSchedulerId(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_assertIsStableId": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_assertIsStableId": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_generateStableId": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_generateStableId": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_isRuntimeMessage": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_isRuntimeMessage():
@@ -2007,18 +1983,6 @@ declare function use_old_FunctionDeclaration_isRuntimeMessage(
     use: TypeOnly<typeof old.isRuntimeMessage>): void;
 use_old_FunctionDeclaration_isRuntimeMessage(
     get_current_FunctionDeclaration_isRuntimeMessage());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_isStableId": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_isStableId": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type

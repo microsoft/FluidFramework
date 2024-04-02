@@ -4,14 +4,14 @@
  */
 
 import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { getW3CData } from "@fluidframework/driver-base";
-import { ISnapshot } from "@fluidframework/driver-definitions";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	DriverErrorTelemetryProps,
 	NonRetryableError,
 	isRuntimeMessage,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import {
 	fetchIncorrectResponse,
 	throwOdspNetworkError,
@@ -22,15 +22,16 @@ import {
 	ISnapshotOptions,
 	InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
-} from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/odsp-driver-definitions/internal";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
-	ITelemetryLoggerExt,
 	PerformanceEvent,
 	isFluidError,
 	wrapError,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
+
 import {
 	ISnapshotContentsWithProps,
 	currentReadVersion,

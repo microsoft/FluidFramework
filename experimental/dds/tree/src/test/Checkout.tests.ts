@@ -4,9 +4,11 @@
  */
 
 import { strict as assert } from 'assert';
+
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
-import { validateAssertionError } from '@fluidframework/test-runtime-utils';
+import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
+
 import {
 	Change,
 	Checkout,
@@ -21,6 +23,7 @@ import {
 	areRevisionViewsSemanticallyEqual,
 	setTrait,
 } from '../index.js';
+
 import { TestTree } from './utilities/TestNode.js';
 import { SharedTreeTestingOptions, setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities.js';
 

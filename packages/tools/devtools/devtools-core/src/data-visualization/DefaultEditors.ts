@@ -8,11 +8,11 @@
  * implementations for our DDSs.
  */
 
-import { SharedCounter } from "@fluidframework/counter";
-import { SharedString } from "@fluidframework/sequence";
-
 import { SharedCell } from "@fluidframework/cell";
+import { SharedCounter } from "@fluidframework/counter/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
+
 import { type Edit, type EditSharedObject } from "./DataEditing.js";
 
 /**

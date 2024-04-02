@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { AttachState, ReadOnlyInfo } from "@fluidframework/container-definitions";
 import {
 	MockContainerRuntimeFactory,
@@ -11,7 +12,8 @@ import {
 	MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
+
 import { ITaskManager } from "../interfaces.js";
 import { TaskManager } from "../taskManager.js";
 import { TaskManagerFactory } from "../taskManagerFactory.js";

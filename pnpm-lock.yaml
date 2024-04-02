@@ -1259,16 +1259,15 @@ importers:
       '@fluidframework/odsp-urlresolver': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/tool-utils': workspace:~
-      '@types/express': ^4.11.0
+      '@types/express': ^4.17.21
       '@types/fs-extra': ^9.0.11
       '@types/node': ^18.19.0
-      '@types/webpack-dev-middleware': ^5.3.0
       '@types/webpack-hot-middleware': ^2.25.9
       buffer: ^6.0.3
       c8: ^8.0.1
       css-loader: ^1.0.0
       eslint: ~8.55.0
-      express: ^4.16.3
+      express: ^4.19.2
       fs-extra: ^9.1.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
@@ -1278,7 +1277,7 @@ importers:
       typescript: ~5.1.6
       webpack: ^5.82.0
       webpack-cli: ^4.9.2
-      webpack-dev-middleware: ^5.3.3
+      webpack-dev-middleware: ^7.1.1
       webpack-dev-server: ~4.15.1
       webpack-hot-middleware: ^2.25.3
       webpack-merge: ^5.8.0
@@ -1290,7 +1289,7 @@ importers:
       '@fluidframework/odsp-urlresolver': link:../../../packages/drivers/odsp-urlResolver
       '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
       '@fluidframework/tool-utils': link:../../../packages/utils/tool-utils
-      express: 4.18.2
+      express: 4.19.2
       webpack-dev-server: 4.15.2_xufw7vsm4hgw2efzchq5tzqpge
     devDependencies:
       '@biomejs/biome': 1.6.2
@@ -1301,7 +1300,6 @@ importers:
       '@types/express': 4.17.21
       '@types/fs-extra': 9.0.13
       '@types/node': 18.19.1
-      '@types/webpack-dev-middleware': 5.3.0_webpack@5.89.0
       '@types/webpack-hot-middleware': 2.25.9_webpack-cli@4.10.0
       buffer: 6.0.3
       c8: 8.0.1
@@ -1316,7 +1314,7 @@ importers:
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
       webpack-cli: 4.10.0_4fnl6fxs65yjb57cbmzmmxikci
-      webpack-dev-middleware: 5.3.3_webpack@5.89.0
+      webpack-dev-middleware: 7.1.1_webpack@5.89.0
       webpack-hot-middleware: 2.25.4
       webpack-merge: 5.10.0
 
@@ -2707,7 +2705,7 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tinylicious-driver': workspace:~
       '@types/cors': ^2.8.4
-      '@types/express': ^4.11.0
+      '@types/express': ^4.17.21
       '@types/fs-extra': ^9.0.11
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': workspace:~
@@ -2724,7 +2722,7 @@ importers:
       eslint: ~8.55.0
       eslint-config-prettier: ~9.0.0
       expect-puppeteer: ^9.0.2
-      express: ^4.16.3
+      express: ^4.19.2
       good-fences: ^1.1.1
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
@@ -2775,7 +2773,7 @@ importers:
       '@fluidframework/tinylicious-driver': link:../../packages/drivers/tinylicious-driver
       cors: 2.8.5
       css-loader: 1.0.1_webpack@5.89.0
-      express: 4.18.2
+      express: 4.19.2
       lodash.isequal: 4.5.0
       node-fetch: 2.7.0
       react: 17.0.2
@@ -3171,7 +3169,7 @@ importers:
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/tool-utils': workspace:~
-      '@types/express': ^4.11.0
+      '@types/express': ^4.17.21
       '@types/fs-extra': ^9.0.11
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
@@ -3182,7 +3180,7 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
-      express: ^4.16.3
+      express: ^4.19.2
       fs-extra: ^9.1.0
       isomorphic-fetch: ^3.0.0
       mocha: ^10.2.0
@@ -3221,7 +3219,7 @@ importers:
       '@fluidframework/tool-utils': link:../../../packages/utils/tool-utils
       axios: 1.6.2
       buffer: 6.0.3
-      express: 4.18.2
+      express: 4.19.2
       isomorphic-fetch: 3.0.0
       nconf: 0.12.1
       sillyname: 0.1.0
@@ -9668,6 +9666,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       c8: ^8.0.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
       mocha: ^10.2.0
@@ -9711,6 +9710,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.55.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
@@ -10513,7 +10513,6 @@ importers:
       '@fluidframework/test-utils': workspace:~
       '@microsoft/1ds-core-js': ^3.2.13
       '@microsoft/1ds-post-js': ^3.2.13
-      '@microsoft/api-extractor': ^7.42.3
       '@types/chai': ^4.0.0
       '@types/chrome': 0.0.232
       '@types/jest': 29.5.3
@@ -10532,6 +10531,7 @@ importers:
       chai: ^4.2.0
       concurrently: ^8.2.1
       copy-webpack-plugin: ^11.0.0
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       dotenv-webpack: ^7.0.3
       eslint: ~8.55.0
@@ -10591,7 +10591,6 @@ importers:
       '@fluidframework/runtime-utils': link:../../../runtime/runtime-utils
       '@fluidframework/sequence': link:../../../dds/sequence
       '@fluidframework/test-utils': link:../../../test/test-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
       '@types/chai': 4.3.11
       '@types/chrome': 0.0.232
       '@types/jest': 29.5.3
@@ -10609,6 +10608,7 @@ importers:
       chai: 4.3.10
       concurrently: 8.2.2
       copy-webpack-plugin: 11.0.0_webpack@5.89.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       dotenv-webpack: 7.1.1_webpack@5.89.0
       eslint: 8.55.0
@@ -11126,6 +11126,7 @@ importers:
 
   packages/tools/replay-tool:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@biomejs/biome': ^1.6.2
       '@fluid-experimental/ink': workspace:~
       '@fluid-experimental/sequence-deprecated': workspace:~
@@ -11158,7 +11159,6 @@ importers:
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/tool-utils': workspace:~
-      '@microsoft/api-extractor': ^7.42.3
       '@types/json-stable-stringify': ^1.0.32
       '@types/node': ^18.19.0
       copyfiles: ^2.4.1
@@ -11197,12 +11197,12 @@ importers:
       '@fluidframework/tool-utils': link:../../utils/tool-utils
       json-stable-stringify: 1.1.0
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@biomejs/biome': 1.6.2
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
       '@types/json-stable-stringify': 1.0.36
       '@types/node': 18.19.1
       copyfiles: 2.4.1
@@ -17167,7 +17167,7 @@ packages:
       '@fluidframework/server-services-core': 4.0.0
       '@fluidframework/server-services-telemetry': 4.0.0
       debug: 4.3.4
-      express: 4.18.2
+      express: 4.19.2
       ioredis: 5.3.2
       json-stringify-safe: 5.0.1
       jsonwebtoken: 9.0.2
@@ -19520,7 +19520,7 @@ packages:
       '@previewjs/iframe': 11.0.1
       '@previewjs/properties': 3.0.3
       '@previewjs/vfs': 2.1.0
-      express: 4.18.2
+      express: 4.19.2
       pino: 8.16.2
       pino-pretty: 10.2.3
       playwright: 1.40.0
@@ -19558,7 +19558,7 @@ packages:
       assert-never: 1.2.1
       axios: 1.6.2
       exclusive-promises: 1.0.3
-      express: 4.18.2
+      express: 4.19.2
       fs-extra: 11.1.1
       globby: 13.2.2
       html-escaper: 3.0.3
@@ -20754,7 +20754,7 @@ packages:
       babel-plugin-polyfill-corejs3: 0.1.7_@babel+core@7.23.3
       chalk: 4.1.2
       core-js: 3.33.3
-      express: 4.18.2
+      express: 4.19.2
       file-system-cache: 1.1.0
       find-up: 5.0.0
       fork-ts-checker-webpack-plugin: 6.5.3_7o3cqywej5mmi76p3ri2awalze
@@ -20833,7 +20833,7 @@ packages:
       core-js: 3.33.3
       cpy: 8.1.2
       detect-port: 1.5.1
-      express: 4.18.2
+      express: 4.19.2
       fs-extra: 9.1.0
       global: 4.4.0
       globby: 11.1.0
@@ -20981,7 +20981,7 @@ packages:
       chalk: 4.1.2
       core-js: 3.33.3
       css-loader: 3.6.0_webpack@4.47.0
-      express: 4.18.2
+      express: 4.19.2
       file-loader: 6.2.0_webpack@4.47.0
       find-up: 5.0.0
       fs-extra: 9.1.0
@@ -21038,7 +21038,7 @@ packages:
       chalk: 4.1.2
       core-js: 3.33.3
       css-loader: 5.2.7_webpack@5.89.0
-      express: 4.18.2
+      express: 4.19.2
       find-up: 5.0.0
       fs-extra: 9.1.0
       html-webpack-plugin: 5.5.3_webpack@5.89.0
@@ -22326,15 +22326,6 @@ packages:
     dependencies:
       '@types/expect': 1.20.4
       '@types/node': 18.19.1
-    dev: true
-
-  /@types/webpack-dev-middleware/5.3.0_webpack@5.89.0:
-    resolution: {integrity: sha512-SklLlklFBfTyIXo1iWXxzeytjlysWfj5QfIcRJrCc7MgzuCjnZOHXviQwe81iFGq9ZkCUXAg2fpbZdHhj5lSWA==}
-    deprecated: This is a stub types definition. webpack-dev-middleware provides its own type definitions, so you do not need this installed.
-    dependencies:
-      webpack-dev-middleware: 5.3.3_webpack@5.89.0
-    transitivePeerDependencies:
-      - webpack
     dev: true
 
   /@types/webpack-env/1.18.4:
@@ -26084,6 +26075,10 @@ packages:
     resolution: {integrity: sha512-YZ3GUyn/o8gfKJlnlX7g7xq4gyO6OSuhGPKaaGssGB2qgDUS0gPgtTvoyZLTt9Ab6dC4hfc9dV5arkvc/OCmrw==}
     engines: {node: '>= 0.6'}
 
+  /cookie/0.6.0:
+    resolution: {integrity: sha512-U71cyTamuh1CRNCfpGY6to28lxvNwPG4Guz/EVjgf3Jmzv0vlDp1atT9eS5dDjMYHucpHbWns6Lwf3BKz6svdw==}
+    engines: {node: '>= 0.6'}
+
   /cookiejar/2.1.4:
     resolution: {integrity: sha512-LDx6oHrK+PhzLKJU9j5S7/Y3jM/mUHvD/DeI1WQmJn652iPC5Y4TBzC9l+5OMOXlyTTA+SmVUPm0HQUwpD5Jqw==}
     dev: true
@@ -28787,6 +28782,44 @@ packages:
       content-disposition: 0.5.4
       content-type: 1.0.5
       cookie: 0.5.0
+      cookie-signature: 1.0.6
+      debug: 2.6.9
+      depd: 2.0.0
+      encodeurl: 1.0.2
+      escape-html: 1.0.3
+      etag: 1.8.1
+      finalhandler: 1.2.0
+      fresh: 0.5.2
+      http-errors: 2.0.0
+      merge-descriptors: 1.0.1
+      methods: 1.1.2
+      on-finished: 2.4.1
+      parseurl: 1.3.3
+      path-to-regexp: 0.1.7
+      proxy-addr: 2.0.7
+      qs: 6.11.2
+      range-parser: 1.2.1
+      safe-buffer: 5.2.1
+      send: 0.18.0
+      serve-static: 1.15.0
+      setprototypeof: 1.2.0
+      statuses: 2.0.1
+      type-is: 1.6.18
+      utils-merge: 1.0.1
+      vary: 1.1.2
+    transitivePeerDependencies:
+      - supports-color
+
+  /express/4.19.2:
+    resolution: {integrity: sha512-5T6nhjsT+EOMzuck8JjBHARTHfMht0POzlA60WV2pMD3gyXw2LZnZ+ueGdNxG+0calOJcWKbpFcuzLZ91YWq9Q==}
+    engines: {node: '>= 0.10.0'}
+    dependencies:
+      accepts: 1.3.8
+      array-flatten: 1.1.1
+      body-parser: 1.20.2
+      content-disposition: 0.5.4
+      content-type: 1.0.5
+      cookie: 0.6.0
       cookie-signature: 1.0.6
       debug: 2.6.9
       depd: 2.0.0
@@ -34575,6 +34608,13 @@ packages:
     engines: {node: '>= 4.0.0'}
     dependencies:
       fs-monkey: 1.0.5
+
+  /memfs/4.8.0:
+    resolution: {integrity: sha512-fcs7trFxZlOMadmTw5nyfOwS3il9pr3y+6xzLfXNwmuR/D0i4wz6rJURxArAbcJDGalbpbMvQ/IFI0NojRZgRg==}
+    engines: {node: '>= 4.0.0'}
+    dependencies:
+      tslib: 2.6.2
+    dev: true
 
   /memoize-one/5.2.1:
     resolution: {integrity: sha512-zYiwtZUcYyXKo/np96AGZAckk+FWWsUdJ3cHGGmld7+AhvcWmQyGCYUh1hc4Q/pkOhb65dQR/pqCyK0cOaHz4Q==}
@@ -43329,20 +43369,6 @@ packages:
       webpack: 5.89.0_webpack-cli@4.10.0
     dev: true
 
-  /webpack-dev-middleware/5.3.3_webpack@5.89.0:
-    resolution: {integrity: sha512-hj5CYrY0bZLB+eTO+x/j67Pkrquiy7kWepMHmUMoPsmcUaeEnQJqFzHJOyxgWlq746/wUuA64p9ta34Kyb01pA==}
-    engines: {node: '>= 12.13.0'}
-    peerDependencies:
-      webpack: ^4.0.0 || ^5.0.0 || ^5.82.0
-    dependencies:
-      colorette: 2.0.20
-      memfs: 3.5.3
-      mime-types: 2.1.35
-      range-parser: 1.2.1
-      schema-utils: 4.2.0
-      webpack: 5.89.0_webpack-cli@4.10.0
-    dev: true
-
   /webpack-dev-middleware/5.3.4_webpack@5.89.0:
     resolution: {integrity: sha512-BVdTqhhs+0IfoeAf7EoH5WE+exCmqGerHfDM0IL096Px60Tq2Mn9MAbnaGUe6HiMa41KMCYF19gyzZmBcq/o4Q==}
     engines: {node: '>= 12.13.0'}
@@ -43355,6 +43381,24 @@ packages:
       range-parser: 1.2.1
       schema-utils: 4.2.0
       webpack: 5.89.0_webpack-cli@4.10.0
+
+  /webpack-dev-middleware/7.1.1_webpack@5.89.0:
+    resolution: {integrity: sha512-NmRVq4AvRQs66dFWyDR4GsFDJggtSi2Yn38MXLk0nffgF9n/AIP4TFBg2TQKYaRAN4sHuKOTiz9BnNCENDLEVA==}
+    engines: {node: '>= 18.12.0'}
+    peerDependencies:
+      webpack: ^5.0.0 || ^5.82.0
+    peerDependenciesMeta:
+      webpack:
+        optional: true
+    dependencies:
+      colorette: 2.0.20
+      memfs: 4.8.0
+      mime-types: 2.1.35
+      on-finished: 2.4.1
+      range-parser: 1.2.1
+      schema-utils: 4.2.0
+      webpack: 5.89.0_webpack-cli@4.10.0
+    dev: true
 
   /webpack-dev-server/4.15.2_rd5rsqvehm425nt6upzhjh73je:
     resolution: {integrity: sha512-0XavAZbNJ5sDrCbkpWL8mia0o5WPOd2YGtxrEiZkBK9FjLppIUK2TgxK6qGD2P3hUXTJNNPVibrerKcx5WkR1g==}

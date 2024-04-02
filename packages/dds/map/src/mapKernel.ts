@@ -5,10 +5,11 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { IFluidSerializer, ValueType, bindHandles } from "@fluidframework/shared-object-base";
-// eslint-disable-next-line import/no-deprecated
-import { ISerializableValue, ISerializedValue, ISharedMapEvents } from "./interfaces.js";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { ValueType, bindHandles } from "@fluidframework/shared-object-base/internal";
+
+import { ISharedMapEvents } from "./interfaces.js";
 import {
 	IMapClearLocalOpMetadata,
 	IMapClearOperation,
@@ -16,6 +17,9 @@ import {
 	IMapKeyAddLocalOpMetadata,
 	IMapKeyEditLocalOpMetadata,
 	IMapSetOperation,
+	// eslint-disable-next-line import/no-deprecated
+	ISerializableValue,
+	ISerializedValue,
 } from "./internalInterfaces.js";
 import { ILocalValue, LocalValueMaker, makeSerializable } from "./localValues.js";
 

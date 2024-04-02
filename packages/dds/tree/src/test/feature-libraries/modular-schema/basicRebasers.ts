@@ -4,6 +4,7 @@
  */
 
 import { TUnsafe, Type } from "@sinclair/typebox";
+
 import { makeCodecFamily } from "../../../codec/index.js";
 import {
 	ChangeEncodingContext,

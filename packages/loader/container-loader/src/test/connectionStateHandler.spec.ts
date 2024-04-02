@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
@@ -14,8 +15,10 @@ import {
 	ISequencedClient,
 	ITokenClaims,
 } from "@fluidframework/protocol-definitions";
-import { TelemetryEventCategory, createChildLogger } from "@fluidframework/telemetry-utils";
+import { TelemetryEventCategory } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
+
 import { Audience } from "../audience.js";
 import { ConnectionState } from "../connectionState.js";
 import {

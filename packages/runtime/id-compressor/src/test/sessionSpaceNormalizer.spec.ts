@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import { SessionSpaceNormalizer } from "../sessionSpaceNormalizer.js";
+
 import { makeLocalId } from "./testCommon.js";
 
 describe("SessionSpaceNormalizer", () => {

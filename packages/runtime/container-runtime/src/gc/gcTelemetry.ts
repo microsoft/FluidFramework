@@ -7,12 +7,16 @@ import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
 	type ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils";
+import {
 	MonitoringContext,
 	generateStack,
 	tagCodeArtifacts,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
+
 import { RuntimeHeaderData } from "../containerRuntime.js";
 import { ICreateContainerMetadata } from "../summary/index.js";
+
 import {
 	GCFeatureMatrix,
 	GCNodeType,
@@ -23,6 +27,7 @@ import {
 	throwOnTombstoneLoadOverrideKey,
 	throwOnTombstoneUsageKey,
 } from "./gcDefinitions.js";
+import { getGCVersionInEffect } from "./gcHelpers.js";
 import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker.js";
 
 type NodeUsageType = "Changed" | "Loaded" | "Revived";
@@ -429,6 +434,7 @@ export function sendGCUnexpectedUsageEvent(
 	event.sweepFlags = JSON.stringify({
 		EnableSweepFlag: mc.config.getBoolean(runSweepKey),
 	});
+	event.gcVersion = getGCVersionInEffect(mc.config);
 
 	mc.logger.sendTelemetryEvent(event, error);
 }
