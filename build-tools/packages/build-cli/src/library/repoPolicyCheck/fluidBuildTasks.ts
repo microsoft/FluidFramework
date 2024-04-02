@@ -149,10 +149,7 @@ function findTscMultiScript(json: PackageJson, config: string): string | undefin
  *
  * @remarks
  */
-function findFluidTscScript(
-	json: PackageJson,
-	project: string | undefined,
-): string | undefined {
+function findFluidTscScript(json: PackageJson, project: string | undefined): string | undefined {
 	for (const [script, scriptCommands] of Object.entries(json.scripts)) {
 		if (scriptCommands === undefined) {
 			continue;
@@ -302,18 +299,23 @@ function eslintGetScriptDependencies(
 	}
 
 	projects = Array.isArray(projects) ? projects : [projects];
-	return projects.map((project) => {
-		const found = findTscScripts(json, project);
+	return (
+		projects
+			// Projects with ".lint." in the name are not required to have other associated tasks.
+			.filter((project) => !project.includes(".lint."))
+			.map((project) => {
+				const found = findTscScripts(json, project);
 
-		// The main compile script is build:esnext, point eslint to it
-		if (found === undefined) {
-			throw new Error(
-				`Unable to find script for project ${project} specified in ${eslintConfig}`,
-			);
-		}
+				// The main compile script is build:esnext, point eslint to it
+				if (found === undefined) {
+					throw new Error(
+						`Unable to find script for project ${project} specified in ${eslintConfig}`,
+					);
+				}
 
-		return found;
-	});
+				return found;
+			})
+	);
 }
 
 /**
@@ -392,7 +394,12 @@ function checkTaskDeps(
 	const missingTaskDependencies = taskDeps
 		.filter(
 			(taskDep) =>
-				!hasTaskDependency(root, json, taskName, Array.isArray(taskDep) ? taskDep : [taskDep]),
+				!hasTaskDependency(
+					root,
+					json,
+					taskName,
+					Array.isArray(taskDep) ? taskDep : [taskDep],
+				),
 		)
 		.map((dep) => (Array.isArray(dep) ? dep.join(" or ") : dep));
 
@@ -527,7 +534,9 @@ function getTscCommandDependencies(
 			// that builds the referenced project is listed as a dependency.
 			const referencedScript = findTscScripts(json, refConfigPath);
 			if (referencedScript === undefined) {
-				throw new Error(`Unable to find tsc script for referenced project ${refConfigPath}`);
+				throw new Error(
+					`Unable to find tsc script for referenced project ${refConfigPath}`,
+				);
 			}
 			deps.push(referencedScript);
 		}
@@ -661,7 +670,9 @@ export const handlers: Handler[] = [
 					// If the project has a referenced project, depend on that instead of the default
 					const parsedCommand = TscUtils.parseCommandLine(command);
 					if (!parsedCommand) {
-						throw new Error(`Error parsing tsc command for script '${script}': ${command}`);
+						throw new Error(
+							`Error parsing tsc command for script '${script}': ${command}`,
+						);
 					}
 					const configFile = TscUtils.findConfigFile(packageDir, parsedCommand);
 					const previousUse = projectMap.get(configFile);
