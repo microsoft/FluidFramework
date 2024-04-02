@@ -90,12 +90,12 @@ export interface SchemaAndPolicy {
 }
 
 /**
- * Extras data needed to interpret schema.
+ * Extra data needed to interpret schema.
  */
 export interface SchemaPolicy {
 	/**
 	 * Policy information about FieldKinds:
-	 * This is typically stored as code, not in documents, and defines how to handles fields based on their kind.
+	 * This is typically stored as code, not in documents, and defines how to handle fields based on their kind.
 	 * It is assumed that all users of a document will have exactly the same FieldKind policies,
 	 * though older applications might be missing some,
 	 * and will be unable to process any changes that use those FieldKinds.
