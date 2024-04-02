@@ -13,8 +13,8 @@ import {
 	getTelemetryFileValidationError,
 	validateAndParseTelemetryOptions,
 } from "../logger/loggerUtils.js";
-
 /* eslint-enable import/no-internal-modules */
+
 import { _dirname } from "./dirname.cjs";
 
 describe("logger utils", () => {

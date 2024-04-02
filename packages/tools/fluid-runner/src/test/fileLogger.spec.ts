@@ -11,9 +11,9 @@ import path from "path";
 import { CSVFileLogger } from "../logger/csvFileLogger.js";
 import { IFileLogger } from "../logger/fileLogger.js";
 import { JSONFileLogger } from "../logger/jsonFileLogger.js";
+/* eslint-enable import/no-internal-modules */
 
 import { _dirname } from "./dirname.cjs";
-/* eslint-enable import/no-internal-modules */
 
 describe("fileLogger", () => {
 	const folderRoot = path.join(_dirname, "../../src/test");
