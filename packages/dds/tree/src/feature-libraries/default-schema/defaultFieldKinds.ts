@@ -9,6 +9,7 @@ import {
 	DeltaFieldChanges,
 	FieldKindIdentifier,
 	forbiddenFieldKindIdentifier,
+	Multiplicity,
 } from "../../core/index.js";
 import { fail } from "../../util/index.js";
 import {
@@ -22,7 +23,6 @@ import {
 	allowsTreeSchemaIdentifierSuperset,
 	referenceFreeFieldChangeRebaser,
 } from "../modular-schema/index.js";
-import { Multiplicity } from "../multiplicity.js";
 import {
 	OptionalChangeset,
 	optionalChangeHandler,
@@ -68,8 +68,7 @@ export const optional = new FieldKindWithEditor(
 	Multiplicity.Optional,
 	optionalChangeHandler,
 	(types, other) =>
-		(other.kind.identifier === sequence.identifier ||
-			other.kind.identifier === optionalIdentifier) &&
+		(other.kind === sequence.identifier || other.kind === optionalIdentifier) &&
 		allowsTreeSchemaIdentifierSuperset(types, other.types),
 	new Set([]),
 );
@@ -95,10 +94,10 @@ export const required = new FieldKindWithEditor(
 	Multiplicity.Single,
 	valueChangeHandler,
 	(types, other) =>
-		(other.kind.identifier === sequence.identifier ||
-			other.kind.identifier === requiredIdentifier ||
-			other.kind.identifier === optional.identifier ||
-			other.kind.identifier === nodeKey.identifier) &&
+		(other.kind === sequence.identifier ||
+			other.kind === requiredIdentifier ||
+			other.kind === optional.identifier ||
+			other.kind === nodeKey.identifier) &&
 		allowsTreeSchemaIdentifierSuperset(types, other.types),
 	new Set(),
 );
@@ -113,8 +112,7 @@ export const sequence = new FieldKindWithEditor(
 	Multiplicity.Sequence,
 	sequenceFieldChangeHandler,
 	(types, other) =>
-		other.kind.identifier === sequenceIdentifier &&
-		allowsTreeSchemaIdentifierSuperset(types, other.types),
+		other.kind === sequenceIdentifier && allowsTreeSchemaIdentifierSuperset(types, other.types),
 	// TODO: add normalizer/importers for handling ops from other kinds.
 	new Set([]),
 );
@@ -129,10 +127,10 @@ export const nodeKey = new FieldKindWithEditor(
 	Multiplicity.Single,
 	noChangeHandler,
 	(types, other) =>
-		(other.kind.identifier === sequence.identifier ||
-			other.kind.identifier === requiredIdentifier ||
-			other.kind.identifier === optional.identifier ||
-			other.kind.identifier === nodeKeyIdentifier) &&
+		(other.kind === sequence.identifier ||
+			other.kind === requiredIdentifier ||
+			other.kind === optional.identifier ||
+			other.kind === nodeKeyIdentifier) &&
 		allowsTreeSchemaIdentifierSuperset(types, other.types),
 	new Set(),
 );
@@ -170,7 +168,7 @@ export const forbidden = new FieldKindWithEditor(
 	Multiplicity.Forbidden,
 	noChangeHandler,
 	// All multiplicities other than Value support empty.
-	(types, other) => fieldKinds.get(other.kind.identifier)?.multiplicity !== Multiplicity.Single,
+	(types, other) => fieldKinds.get(other.kind)?.multiplicity !== Multiplicity.Single,
 	new Set(),
 );
 
