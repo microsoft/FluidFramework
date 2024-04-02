@@ -13,6 +13,7 @@ import {
 	MapTree,
 	Value,
 	isCursor,
+	Multiplicity,
 } from "../core/index.js";
 import { fail, isReadonlyArray } from "../util/index.js";
 
@@ -23,7 +24,6 @@ import { fieldKinds } from "./default-schema/index.js";
 import { TreeDataContext } from "./fieldGenerator.js";
 import { cursorForMapTreeField, cursorForMapTreeNode, mapTreeFromCursor } from "./mapTreeCursor.js";
 import { FlexFieldKind } from "./modular-schema/index.js";
-import { Multiplicity } from "./multiplicity.js";
 import {
 	AllowedTypesToFlexInsertableTree,
 	InsertableFlexField,
@@ -473,7 +473,7 @@ function setFieldForKey(
 	const requiredFieldSchema = schema.getFieldSchema(key);
 	const multiplicity = getFieldKind(requiredFieldSchema).multiplicity;
 	if (multiplicity === Multiplicity.Single && context.fieldSource !== undefined) {
-		const fieldGenerator = context.fieldSource(key, requiredFieldSchema);
+		const fieldGenerator = context.fieldSource(key, requiredFieldSchema.stored);
 		if (fieldGenerator !== undefined) {
 			const children = fieldGenerator();
 			fields.set(key, children);
