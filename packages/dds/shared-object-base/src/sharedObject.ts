@@ -25,16 +25,16 @@ import {
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
 } from "@fluidframework/runtime-definitions/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	DataProcessingError,
 	EventEmitterWithErrorHandling,
-	ITelemetryLoggerExt,
 	MonitoringContext,
 	SampledTelemetryHelper,
 	createChildLogger,
 	loggerToMonitoringContext,
 	tagCodeArtifacts,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { SharedObjectHandle } from "./handle.js";

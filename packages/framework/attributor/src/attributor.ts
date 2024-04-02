@@ -10,7 +10,7 @@ import {
 	type ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { type AttributionInfo } from "@fluidframework/runtime-definitions/internal";
-import { UsageError } from "@fluidframework/telemetry-utils";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Provides lookup between attribution keys and their associated attribution information.

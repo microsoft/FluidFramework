@@ -10,7 +10,7 @@ import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { type ITree, SchemaFactory } from "../../index.js";
 import { SharedTree } from "../../treeFactory.js";

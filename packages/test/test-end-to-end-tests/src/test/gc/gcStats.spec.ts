@@ -20,13 +20,13 @@ import {
 import { delay } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
-import { calculateStats, mergeStats } from "@fluidframework/runtime-utils";
+import { calculateStats, mergeStats } from "@fluidframework/runtime-utils/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
 	createTestConfigProvider,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils.js";
 

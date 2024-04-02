@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { UsageError } from "@fluidframework/telemetry-utils";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { leaf } from "../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules

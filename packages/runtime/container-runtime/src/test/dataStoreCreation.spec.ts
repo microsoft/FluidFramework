@@ -17,8 +17,8 @@ import {
 	NamedFluidDataStoreRegistryEntries,
 	SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { wrapContextForInnerChannel } from "../channelCollection.js";
 import { ContainerRuntime } from "../containerRuntime.js";

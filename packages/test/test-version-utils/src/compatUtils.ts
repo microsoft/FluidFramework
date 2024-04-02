@@ -33,7 +33,7 @@ import {
 	createTestContainerRuntimeFactory,
 	TestObjectProvider,
 	TestObjectProviderWithVersionedLoad,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import * as semver from "semver";
 
 import { pkgVersion } from "./packageVersion.js";

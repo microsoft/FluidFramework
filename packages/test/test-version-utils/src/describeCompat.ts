@@ -4,8 +4,11 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { getUnexpectedLogErrorException, ITestObjectProvider } from "@fluidframework/test-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	getUnexpectedLogErrorException,
+	ITestObjectProvider,
+} from "@fluidframework/test-utils/internal";
 
 import { testBaseVersion } from "./baseVersion.js";
 import {

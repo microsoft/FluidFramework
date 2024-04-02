@@ -36,7 +36,7 @@ import {
 	type MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { type IAttributor, OpStreamAttributor } from "../../attributor.js";
 import {

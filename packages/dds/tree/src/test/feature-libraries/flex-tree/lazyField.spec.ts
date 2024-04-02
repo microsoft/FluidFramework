@@ -7,7 +7,7 @@
 
 import { strict as assert } from "assert";
 
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { FieldAnchor, FieldKey, UpPath, rootFieldKey } from "../../../core/index.js";
 import { SchemaBuilder, leaf, leaf as leafDomain } from "../../../domains/index.js";

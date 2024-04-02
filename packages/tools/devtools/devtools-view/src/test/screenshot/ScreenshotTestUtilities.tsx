@@ -4,7 +4,7 @@
  */
 
 import { FluentProvider } from "@fluentui/react-components";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import React from "react";
 
 import { MessageRelayContext } from "../../MessageRelayContext.js";

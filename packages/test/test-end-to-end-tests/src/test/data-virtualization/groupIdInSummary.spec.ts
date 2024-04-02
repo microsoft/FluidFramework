@@ -20,7 +20,7 @@ import {
 	createSummarizerFromFactory,
 	createTestConfigProvider,
 	summarizeNow,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 const interceptResult = <T>(
 	parent: any,

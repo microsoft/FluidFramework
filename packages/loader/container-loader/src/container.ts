@@ -54,7 +54,7 @@ import {
 	isOnline,
 	readAndParse,
 	runWithRetry,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
 	IClient,
@@ -75,14 +75,13 @@ import {
 	MessageType,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt, type TelemetryEventCategory } from "@fluidframework/telemetry-utils";
 import {
 	EventEmitterWithErrorHandling,
 	GenericError,
 	IFluidErrorBase,
-	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
-	type TelemetryEventCategory,
 	UsageError,
 	connectedEventName,
 	createChildLogger,
@@ -91,7 +90,7 @@ import {
 	normalizeError,
 	raiseConnectedEvent,
 	wrapError,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import structuredClone from "@ungap/structured-clone";
 import { v4 as uuid } from "uuid";
 

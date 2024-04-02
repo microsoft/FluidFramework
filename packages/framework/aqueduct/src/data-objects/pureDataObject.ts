@@ -15,8 +15,8 @@ import {
 import { assert } from "@fluidframework/core-utils/internal";
 import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { type IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
-import { create404Response } from "@fluidframework/runtime-utils";
-import { type AsyncFluidObjectProvider } from "@fluidframework/synthesize";
+import { create404Response } from "@fluidframework/runtime-utils/internal";
+import { type AsyncFluidObjectProvider } from "@fluidframework/synthesize/internal";
 
 import { type DataObjectTypes, type IDataObjectProps } from "./types.js";
 
