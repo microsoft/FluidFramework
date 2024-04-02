@@ -15,7 +15,13 @@ import {
 	getDriveItemFromDriveAndItem,
 	getOdspRefreshTokenFn,
 } from "@fluidframework/odsp-doclib-utils/internal";
-import { IOdspTokenManagerCacheKey, OdspTokenConfig, OdspTokenManager, getMicrosoftConfiguration, odspTokensCache } from "@fluidframework/tool-utils/internal";
+import {
+	IOdspTokenManagerCacheKey,
+	OdspTokenConfig,
+	OdspTokenManager,
+	getMicrosoftConfiguration,
+	odspTokensCache,
+} from "@fluidframework/tool-utils/internal";
 
 import { getForceTokenReauth } from "./fluidFetchArgs.js";
 

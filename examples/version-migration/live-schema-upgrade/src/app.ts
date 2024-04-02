@@ -6,7 +6,11 @@
 import { ModelLoader } from "@fluid-example/example-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
-import { InsecureTinyliciousTokenProvider, InsecureTinyliciousUrlResolver, createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-driver/internal";
+import {
+	InsecureTinyliciousTokenProvider,
+	InsecureTinyliciousUrlResolver,
+	createTinyliciousCreateNewRequest,
+} from "@fluidframework/tinylicious-driver/internal";
 
 import { DemoCodeLoader as DemoCodeLoader1 } from "./demoCodeLoader1.js";
 import { DemoCodeLoader as DemoCodeLoader2 } from "./demoCodeLoader2.js";

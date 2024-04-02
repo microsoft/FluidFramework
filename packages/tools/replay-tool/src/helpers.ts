@@ -21,7 +21,10 @@ import {
 import { assert } from "@fluidframework/core-utils/internal";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { IFileSnapshot } from "@fluidframework/replay-driver/internal";
-import { ISnapshotNormalizerConfig, getNormalizedSnapshot } from "@fluidframework/tool-utils/internal";
+import {
+	ISnapshotNormalizerConfig,
+	getNormalizedSnapshot,
+} from "@fluidframework/tool-utils/internal";
 import stringify from "json-stable-stringify";
 
 import {

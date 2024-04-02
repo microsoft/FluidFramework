@@ -11,7 +11,10 @@ import {
 	IOdspResolvedUrl,
 	OdspResourceTokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { FluidAppOdspUrlResolver, OdspUrlResolver } from "@fluidframework/odsp-urlresolver/internal";
+import {
+	FluidAppOdspUrlResolver,
+	OdspUrlResolver,
+} from "@fluidframework/odsp-urlresolver/internal";
 import * as r11s from "@fluidframework/routerlicious-driver/internal";
 import { RouterliciousUrlResolver } from "@fluidframework/routerlicious-urlresolver/internal";
 import { getMicrosoftConfiguration } from "@fluidframework/tool-utils/internal";

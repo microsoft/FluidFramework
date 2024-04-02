@@ -16,11 +16,12 @@ import {
 	ISnapshotTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
+import { ReadDocumentStorageServiceBase, ReplayController } from "@fluidframework/replay-driver";
 import {
-	ReadDocumentStorageServiceBase,
-	ReplayController
-} from "@fluidframework/replay-driver";
-import { FileSnapshotReader, IFileSnapshot, SnapshotStorage } from "@fluidframework/replay-driver/internal";
+	FileSnapshotReader,
+	IFileSnapshot,
+	SnapshotStorage,
+} from "@fluidframework/replay-driver/internal";
 import { IDebuggerController, IDebuggerUI } from "./fluidDebuggerUi.js";
 import { Sanitizer } from "./sanitizer.js";
 

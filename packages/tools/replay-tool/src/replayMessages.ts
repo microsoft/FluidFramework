@@ -11,7 +11,16 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
-import { FileDeltaStorageService, FileDocumentServiceFactory, FileSnapshotWriterClassFactory, FileStorageDocumentName, FluidFetchReaderFileSnapshotWriter, ISnapshotWriterStorage, ReplayFileDeltaConnection, Replayer } from "@fluidframework/file-driver/internal";
+import {
+	FileDeltaStorageService,
+	FileDocumentServiceFactory,
+	FileSnapshotWriterClassFactory,
+	FileStorageDocumentName,
+	FluidFetchReaderFileSnapshotWriter,
+	ISnapshotWriterStorage,
+	ReplayFileDeltaConnection,
+	Replayer,
+} from "@fluidframework/file-driver/internal";
 import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix/internal";
 import {
 	ISequencedDocumentMessage,
