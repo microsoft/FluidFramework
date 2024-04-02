@@ -185,7 +185,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * @param content - Content of the signal.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	submitSignal(type: string, content: unknown, targetClientId?: string): void;
+	submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
 
 	/**
 	 * @deprecated 0.16 Issue #1537, #3631
@@ -455,7 +455,7 @@ export interface IFluidParentContext
 	 * @param content - Content of the signal.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	submitSignal(type: string, content: unknown, targetClientId?: string): void;
+	submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
 
 	/**
 	 * Called to make the data store locally visible in the container. This happens automatically for root data stores
