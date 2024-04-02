@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { IIdCompressor } from "@fluidframework/id-compressor";
 
 import { noopValidator } from "../codec/index.js";
@@ -210,11 +210,13 @@ export function createTreeCheckout(
 	const forest = args?.forest ?? buildForest();
 	const schema = args?.schema ?? new TreeStoredSchemaRepository();
 	const defaultCodecOptions = { jsonValidator: noopValidator };
+	const defaultFieldBatchVersion = 1;
 	const changeFamily =
 		args?.changeFamily ??
 		new SharedTreeChangeFamily(
 			revisionTagCodec,
-			args?.fieldBatchCodec ?? makeFieldBatchCodec(defaultCodecOptions),
+			args?.fieldBatchCodec ??
+				makeFieldBatchCodec(defaultCodecOptions, defaultFieldBatchVersion),
 			{ jsonValidator: noopValidator },
 			args?.chunkCompressionStrategy,
 		);

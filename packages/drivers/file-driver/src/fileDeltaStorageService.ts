@@ -5,9 +5,9 @@
 
 import fs from "fs";
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions/internal";
-import { emptyMessageStream } from "@fluidframework/driver-utils";
+import { emptyMessageStream } from "@fluidframework/driver-utils/internal";
 import * as api from "@fluidframework/protocol-definitions";
 
 /**

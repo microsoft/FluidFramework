@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IMergeTreeRemoveMsg,
 	createDetachedLocalReferencePosition,
 	createRemoveRangeOp,
 	refGetTileLabels,
-} from "@fluidframework/merge-tree";
+} from "@fluidframework/merge-tree/internal";
 import {
 	ISegment,
 	LocalReferencePosition,
@@ -26,7 +26,7 @@ import {
 	SharedStringSegment,
 	TextSegment,
 	reservedTileLabelsKey,
-} from "@fluidframework/sequence";
+} from "@fluidframework/sequence/internal";
 
 import { documentType } from "../package.js";
 import { IHTMLAttributes } from "../util/attr.js";

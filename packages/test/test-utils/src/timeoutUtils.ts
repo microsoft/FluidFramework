@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Deferred } from "@fluidframework/core-utils";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import type * as Mocha from "mocha";
 
 // @deprecated this value is no longer used
