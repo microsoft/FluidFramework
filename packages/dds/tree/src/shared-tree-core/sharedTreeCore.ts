@@ -97,7 +97,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		id: string,
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
-		telemetryContextPrefix: string = "fluid_sharedTreeCore_",
+		telemetryContextPrefix: string,
 		schemaAndPolicy: SchemaAndPolicy,
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
