@@ -94,21 +94,25 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 				getLumberBaseProperties(documentId, tenantId),
 			);
 			isEphemeral = isEphemeralContainer;
-			runWithRetry(
+			await runWithRetry(
 				async () => cache?.set(isEphemeralKey, isEphemeral) /* api */,
 				"utils.createGitService.set" /* callName */,
 				3 /* maxRetries */,
 				1000 /* retryAfterMs */,
 				getLumberBaseProperties(documentId, tenantId) /* telemetryProperties */,
-			).catch((error) => {
-				Lumberjack.error(
-					`Error setting ${isEphemeralKey} in redis`,
-					getLumberBaseProperties(documentId, tenantId),
-					error,
-				);
-			});
+			)
+				.then(() => {
+					Lumberjack.info(`[DHRUV DEBUG] Cache set for ${isEphemeralKey}.`);
+				})
+				.catch((error) => {
+					Lumberjack.error(
+						`Error setting ${isEphemeralKey} in redis`,
+						getLumberBaseProperties(documentId, tenantId),
+						error,
+					);
+				});
 		} else {
-			runWithRetry<boolean>(
+			await runWithRetry<boolean>(
 				async () => cache?.get(isEphemeralKey) /* api */,
 				"utils.createGitService.get" /* callName */,
 				3 /* maxRetries */,
@@ -116,6 +120,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 				getLumberBaseProperties(documentId, tenantId) /* telemetryProperties */,
 			)
 				.then((value) => {
+					Lumberjack.info(`[DHRUV DEBUG], promise resolved: ${value}`);
 					isEphemeral = value;
 				})
 				.catch((error) => {
