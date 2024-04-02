@@ -39,6 +39,7 @@ export {
 	fluidHandleSymbol,
 	toFluidHandleInternal,
 	toFluidHandleErased,
+	isFluidHandle,
 } from "./handles.js";
 
 export type {

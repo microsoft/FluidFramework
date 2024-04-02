@@ -359,6 +359,9 @@ export interface IResponse {
     value: any;
 }
 
+// @internal
+export function isFluidHandle(value: unknown): value is IFluidHandle;
+
 // @internal (undocumented)
 export interface ISignalEnvelope {
     address?: string;

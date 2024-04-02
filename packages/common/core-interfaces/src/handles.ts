@@ -93,6 +93,18 @@ export interface IFluidHandleInternal<
 }
 
 /**
+ * Setting to opt into compatibility with handles from before {@link fluidHandleSymbol} existed.
+ *
+ * Some code which uses this library might dynamically load multiple versions of it,
+ * as well as old or duplicated versions of packages which produce or implement handles.
+ * To correctly interoperate with this old packages and object produced by them, the old in-memory format for handles, without the symbol, are explicitly supported.
+ *
+ * This setting mostly exists as a way to easily find any code that only exists to provide this compatibility and clarify how to remove that compatibility.
+ * At some point this might be removed or turned into an actual configuration option, but for now its really just documentation.
+ */
+const enableBackwardsCompatibility = true;
+
+/**
  * Symbol which must only be used on {@link FluidObject}, and is used to identify such objects.
  * @privateRemarks
  * Normally `Symbol` would be used here instead of `Symbol.for` since just using Symbol (and avoiding the global symbol registry) removes the risk of collision, which is the main point of using a symbol for this in the first place.
@@ -144,6 +156,9 @@ export interface IFluidHandleErased<T> extends ErasedType<readonly ["IFluidHandl
  */
 export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleInternal<T> {
 	if (!(fluidHandleSymbol in handle) || !(fluidHandleSymbol in handle[fluidHandleSymbol])) {
+		if (enableBackwardsCompatibility && IFluidHandle in handle) {
+			return handle[IFluidHandle] as IFluidHandleInternal<T>;
+		}
 		throw new TypeError("Invalid IFluidHandle");
 	}
 
@@ -158,4 +173,22 @@ export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleI
  */
 export function toFluidHandleErased<T>(handle: IFluidHandleInternal<T>): IFluidHandleErased<T> {
 	return handle as unknown as IFluidHandleErased<T>;
+}
+
+/**
+ * Type erase IFluidHandleInternal for use with {@link fluidHandleSymbol}.
+ * @internal
+ */
+export function isFluidHandle(value: unknown): value is IFluidHandle {
+	if (typeof value !== "object" || value === null) {
+		return false;
+	}
+	if (fluidHandleSymbol in value) {
+		return true;
+	}
+	// If enableBackwardsCompatibility, run false positive prone check used by FluidHandles predating use of fluidHandleSymbol.
+	if (enableBackwardsCompatibility && IFluidHandle in value) {
+		return true;
+	}
+	return false;
 }
