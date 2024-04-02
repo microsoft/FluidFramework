@@ -16,9 +16,10 @@ import {
 	readAndParse,
 	requestOps,
 	streamObserver,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 
 import { DocumentStorageService } from "./documentStorageService.js";
 import { RestWrapper } from "./restWrapperBase.js";

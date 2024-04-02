@@ -22,7 +22,7 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	createAndAttachContainer,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 import { MockDetachedBlobStorage, driverSupportsBlobs } from "./mockDetachedBlobStorage.js";
 

@@ -16,7 +16,7 @@ import {
 	ITestContainerConfig,
 	ITestObjectProvider,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 import {
 	MockDetachedBlobStorage,

@@ -17,13 +17,18 @@ import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 
 import { ICodecOptions, IJsonCodec } from "../codec/index.js";
-import { ChangeFamily, ChangeFamilyEditor, GraphCommit, RevisionTagCodec } from "../core/index.js";
-import { SchemaAndPolicy } from "../feature-libraries/index.js";
+import {
+	ChangeFamily,
+	ChangeFamilyEditor,
+	GraphCommit,
+	RevisionTagCodec,
+	SchemaAndPolicy,
+} from "../core/index.js";
 import { JsonCompatibleReadOnly, brand } from "../util/index.js";
 
 import { SharedTreeBranch, getChangeReplaceType } from "./branch.js";

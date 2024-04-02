@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { SchemaFactory, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";

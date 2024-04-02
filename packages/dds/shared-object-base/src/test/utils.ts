@@ -5,7 +5,7 @@
 
 import { IFluidHandleContext, IRequest } from "@fluidframework/core-interfaces";
 import { Serializable } from "@fluidframework/datastore-definitions/internal";
-import { create404Response } from "@fluidframework/runtime-utils";
+import { create404Response } from "@fluidframework/runtime-utils/internal";
 
 export class MockHandleContext implements IFluidHandleContext {
 	public isAttached = false;

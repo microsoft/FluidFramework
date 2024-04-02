@@ -11,16 +11,16 @@ import {
 	ISummarizeResult,
 	gcTreeKey,
 } from "@fluidframework/runtime-definitions/internal";
-import { createResponseError, responseToException } from "@fluidframework/runtime-utils";
+import { createResponseError, responseToException } from "@fluidframework/runtime-utils/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	DataProcessingError,
-	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
 	createChildLogger,
 	createChildMonitoringContext,
 	tagCodeArtifacts,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 
 import { BlobManager } from "../blobManager.js";
 import {

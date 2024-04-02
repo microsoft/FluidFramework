@@ -5,7 +5,7 @@
 
 import { strict as assert, fail } from "assert";
 
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	AllowedUpdateType,
@@ -28,7 +28,6 @@ import {
 	cursorForJsonableTreeField,
 	intoStoredSchema,
 } from "../../feature-libraries/index.js";
-import { disposeSymbol } from "../../index.js";
 import { ITreeCheckout, TreeContent } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
@@ -43,6 +42,7 @@ import {
 	stringSequenceRootSchema,
 	validateTreeContent,
 } from "../utils.js";
+import { disposeSymbol } from "../../util/index.js";
 
 const rootField: FieldUpPath = {
 	parent: undefined,
@@ -423,8 +423,7 @@ describe("sharedTreeView", () => {
 					rootFieldSchema: storedEmptyFieldSchema,
 				};
 				function getSchema(t: ITreeCheckout): "schemaA" | "schemaB" {
-					return t.storedSchema.rootFieldSchema.kind.identifier ===
-						FieldKinds.required.identifier
+					return t.storedSchema.rootFieldSchema.kind === FieldKinds.required.identifier
 						? "schemaA"
 						: "schemaB";
 				}

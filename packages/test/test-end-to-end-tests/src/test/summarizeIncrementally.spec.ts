@@ -24,7 +24,7 @@ import {
 	getDataStoreEntryPointBackCompat,
 	summarizeNow,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 /**
  * Validates that the data store summary is as expected.

@@ -13,20 +13,20 @@ import {
 	IResolvedUrl,
 	ISnapshot,
 } from "@fluidframework/driver-definitions/internal";
-import { isInstanceOfISnapshot } from "@fluidframework/driver-utils";
+import { isInstanceOfISnapshot } from "@fluidframework/driver-utils/internal";
 import {
 	type IDocumentAttributes,
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
-	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
 	UsageError,
 	createChildMonitoringContext,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 
 import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter.js";
 import { getDocumentAttributes } from "./utils.js";
@@ -185,6 +185,15 @@ export class SerializedStateManager {
 			);
 			this.snapshot = this.latestSnapshot;
 			this.latestSnapshot = undefined;
+			this.mc.logger.sendTelemetryEvent({
+				eventName: "SnapshotRefreshed",
+				snapshotSequenceNumber,
+				firstProcessedOpSequenceNumber,
+				newFirstProcessedOpSequenceNumber:
+					this.processedOps.length === 0
+						? undefined
+						: this.processedOps[0].sequenceNumber,
+			});
 		}
 	}
 

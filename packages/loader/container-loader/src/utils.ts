@@ -12,14 +12,14 @@ import {
 	DeltaStreamConnectionForbiddenError,
 	isCombinedAppAndProtocolSummary,
 	readAndParse,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import {
 	IDocumentAttributes,
 	ISnapshotTree,
 	ISummaryTree,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { LoggingError, UsageError } from "@fluidframework/telemetry-utils";
+import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { ISerializableBlobContents } from "./containerStorageAdapter.js";

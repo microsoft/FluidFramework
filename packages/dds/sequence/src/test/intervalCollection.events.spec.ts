@@ -12,7 +12,7 @@ import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { IIntervalCollection } from "../intervalCollection.js";
 import { SequenceInterval } from "../intervals/index.js";

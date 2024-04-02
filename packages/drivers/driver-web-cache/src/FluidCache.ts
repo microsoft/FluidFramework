@@ -10,12 +10,9 @@ import {
 	IFileEntry,
 	IPersistedCache,
 	maximumCacheDurationMs,
-} from "@fluidframework/odsp-driver-definitions";
-import {
-	ITelemetryLoggerExt,
-	UsageError,
-	createChildLogger,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { UsageError, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { IDBPDatabase } from "idb";
 
 import {

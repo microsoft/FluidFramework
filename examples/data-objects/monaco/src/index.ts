@@ -4,7 +4,7 @@
  */
 
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
-import { DataObjectFactory } from "@fluidframework/aqueduct";
+import { DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import * as sequence from "@fluidframework/sequence/internal";
 import React from "react";
 

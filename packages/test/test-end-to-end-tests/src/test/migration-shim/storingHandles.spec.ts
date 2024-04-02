@@ -31,7 +31,7 @@ import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import {
 	type ITree,
 	SchemaFactory,

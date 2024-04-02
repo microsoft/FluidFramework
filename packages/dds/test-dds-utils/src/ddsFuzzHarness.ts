@@ -34,12 +34,12 @@ import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
-import type { IMockContainerRuntimeOptions } from "@fluidframework/test-runtime-utils";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
+import type { IMockContainerRuntimeOptions } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type Client,

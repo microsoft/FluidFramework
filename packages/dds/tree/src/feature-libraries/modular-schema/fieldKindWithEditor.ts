@@ -10,8 +10,8 @@ import {
 	TreeFieldStoredSchema,
 	TreeStoredSchema,
 	TreeTypeSet,
+	Multiplicity,
 } from "../../core/index.js";
-import { Multiplicity } from "../multiplicity.js";
 
 import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler.js";
 import { FlexFieldKind, FullSchemaPolicy } from "./fieldKind.js";
@@ -75,7 +75,7 @@ export class FieldKindWithEditor<
 	): boolean {
 		if (
 			isNeverField(policy, originalData, {
-				kind: this,
+				kind: this.identifier,
 				types: originalTypes,
 			})
 		) {

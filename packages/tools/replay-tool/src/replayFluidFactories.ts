@@ -21,8 +21,8 @@ import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { SharedDirectory } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
-import { ConsensusQueue } from "@fluidframework/ordered-collection";
-import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
+import { ConsensusQueue } from "@fluidframework/ordered-collection/internal";
+import { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import {
 	FluidDataStoreRegistryEntry,
 	IFluidDataStoreContext,
@@ -30,9 +30,10 @@ import {
 	IFluidDataStoreRegistry,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
-import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
 import { SharedIntervalCollection, SharedString } from "@fluidframework/sequence/internal";
-import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
+import { SharedSummaryBlock } from "@fluidframework/shared-summary-block/internal";
+
 import { ReplayToolContainerEntryPoint } from "./helpers.js";
 import { UnknownChannelFactory } from "./unknownChannel.js";
 

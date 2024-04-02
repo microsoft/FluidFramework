@@ -6,7 +6,7 @@
 import { strict as assert, fail } from "assert";
 
 import { compareArrays } from "@fluidframework/core-utils/internal";
-import { MockHandle } from "@fluidframework/test-runtime-utils";
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../../../codec/index.js";
 import { TreeFieldStoredSchema, TreeNodeSchemaIdentifier, Value } from "../../../../core/index.js";
