@@ -585,6 +585,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	private disposeRevertible(revertible: DisposableRevertible, revision: RevisionTag): void {
+		this.revertibleCommitBranches.get(revision)?.dispose();
 		this.revertibleCommitBranches.delete(revision);
 		this.revertibles.delete(revertible);
 		this.events.emit("revertibleDisposed", revertible);

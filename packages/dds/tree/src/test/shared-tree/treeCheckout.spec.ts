@@ -934,7 +934,7 @@ describe("sharedTreeView", () => {
 			unsubscribe();
 		});
 
-		itView("disposing of a branch also disposes of its revertibles", (view) => {
+		itView("disposing of a view also disposes of its revertibles", (view) => {
 			const fork = view.fork();
 			const revertiblesCreated: Revertible[] = [];
 			const unsubscribe1 = fork.events.on("commitApplied", (_, getRevertible) => {
