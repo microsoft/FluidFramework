@@ -187,7 +187,7 @@ export class FlexObjectNodeSchema<
 		// Stricter typing caused Specification to no longer be covariant, so has been removed.
 		public readonly objectNodeFields: ReadonlyMap<FieldKey, FlexFieldSchema>,
 	) {
-		const fields = [...objectNodeFields].map(([k, v]) => [k, v.stored] as const);
+		const fields = mapIterable(objectNodeFields, ([k, v]) => [k, v.stored] as const);
 		super(builder, name, info, new ObjectNodeStoredSchema(new Map(fields)));
 	}
 
