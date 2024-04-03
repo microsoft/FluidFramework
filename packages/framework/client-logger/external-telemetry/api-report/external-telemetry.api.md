@@ -31,7 +31,6 @@ export const ContainerTelemetryEventNames: {
     readonly CONNECTED: "fluidframework.container.connected";
     readonly DISCONNECTED: "fluidframework.container.disconnected";
     readonly DISPOSED: "fluidframework.container.disposed";
-    readonly HEARTBEAT: "fluidframework.container.heartbeat";
 };
 
 // @beta

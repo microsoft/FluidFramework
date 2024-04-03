@@ -4,10 +4,7 @@
  */
 
 import { type ICriticalContainerError } from "@fluidframework/container-definitions";
-import {
-	type IContainerTelemetry,
-	type ContainerHeartbeatTelemetry,
-} from "./containerTelemetry.js";
+import { type IContainerTelemetry } from "./containerTelemetry.js";
 import { ContainerEventTelemetryProducer } from "./telemetryProducer.js";
 import { type ITelemetryConsumer } from "../common/index.js";
 import {
@@ -56,14 +53,13 @@ export class ContainerTelemetryManager {
 	}
 
 	/**
-	 * Sets up the synthetic container heartbeat telemetry to be emitted on a given time interval
-	 * if and only if the container is in a "connected" state
+	 * Sets up the synthetic telemetry event for the container heartbeat telemetry to be emitted on a given time interval
+	 * if and only if the container is in a "connected" state. It is used to keep a pulse check on a live container
 	 */
 	private setupHeartbeatTelemetryEmission() {
 		const createAndConsumeHeartbeatTelemetry = () => {
 			if (this.container.connectionState === ConnectionState.Connected) {
-				const telemetry: ContainerHeartbeatTelemetry =
-					this.telemetryProducer.produceHeartbeatTelemetry();
+				const telemetry = this.telemetryProducer.produceHeartbeatTelemetry();
 				this.telemetryConsumers.forEach((consumer) => consumer.consume(telemetry));
 			}
 		};

@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { ITelemetryConsumer } from "./consumers/index.js";
-export { IExternalTelemetry, ExternalTelemetryEventName } from "./telemetry/index.js";
+export { type ITelemetryConsumer } from "./consumers/index.js";
+export { type IExternalTelemetry, type ExternalTelemetryEventName } from "./telemetry/index.js";
