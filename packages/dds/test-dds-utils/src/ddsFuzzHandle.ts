@@ -4,7 +4,7 @@
  */
 
 import type { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
-import { generateHandleContextPath } from "@fluidframework/runtime-utils";
+import { generateHandleContextPath } from "@fluidframework/runtime-utils/internal";
 
 /**
  * @internal
