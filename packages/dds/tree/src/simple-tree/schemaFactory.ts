@@ -361,9 +361,8 @@ export class SchemaFactory<
 		for (const [viewKey, schema] of Object.entries(fields)) {
 			if (viewKeys.has(viewKey)) {
 				throw new UsageError(`Duplicate view key "${viewKey}" in schema "${schemaName}".`);
-			} else {
-				viewKeys.add(viewKey);
 			}
+			viewKeys.add(viewKey);
 
 			const storedKey =
 				schema instanceof FieldSchema ? schema.props?.key ?? viewKey : viewKey;
@@ -371,9 +370,8 @@ export class SchemaFactory<
 				throw new UsageError(
 					`Duplicate stored key "${storedKey}" in schema "${schemaName}". This could be due to an implicit collision with another view key`,
 				);
-			} else {
-				storedKeys.add(storedKey);
 			}
+			storedKeys.add(storedKey);
 		}
 	}
 
