@@ -930,11 +930,15 @@ export class Container
 			(this.isInteractiveClient &&
 				this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad")) ??
 			options.enableOfflineLoad === true;
+		const supportGetSnapshotApi: boolean =
+			this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch") ===
+				true && this.service?.policies?.supportGetSnapshotApi === true;
 		this.serializedStateManager = new SerializedStateManager(
 			pendingLocalState,
 			this.subLogger,
 			this.storageAdapter,
 			offlineLoadEnabled,
+			supportGetSnapshotApi,
 		);
 
 		const isDomAvailable =
@@ -1548,14 +1552,9 @@ export class Container
 
 		timings.phase2 = performance.now();
 
-		const supportGetSnapshotApi: boolean =
-			this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch") ===
-				true && this.service?.policies?.supportGetSnapshotApi === true;
 		// Fetch specified snapshot.
-		const { baseSnapshot, version } = await this.serializedStateManager.fetchSnapshot(
-			specifiedVersion,
-			supportGetSnapshotApi,
-		);
+		const { baseSnapshot, version } =
+			await this.serializedStateManager.fetchSnapshot(specifiedVersion);
 		this._loadedFromVersion = version;
 		const attributes: IDocumentAttributes = await getDocumentAttributes(
 			this.storageAdapter,
@@ -1673,6 +1672,7 @@ export class Container
 				await this.runtime.notifyOpReplay?.(message);
 			}
 			pendingLocalState.savedOps = [];
+			this.storageAdapter.clearPendingState();
 		}
 
 		// We might have hit some failure that did not manifest itself in exception in this flow,

@@ -19,12 +19,21 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
-import { FetchSource } from "@fluidframework/driver-definitions/internal";
-import {
-	ISequencedDocumentMessage,
-	type IDocumentAttributes,
-} from "@fluidframework/protocol-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
+
+const interceptResult = <T>(
+	parent: any,
+	fn: (...args: any[]) => Promise<T>,
+	intercept: (result: T) => void,
+) => {
+	const interceptFn = async (...args: any[]) => {
+		const val = await fn.apply(parent, args);
+		intercept(val);
+		return val as T;
+	};
+	parent[fn.name] = interceptFn;
+	interceptFn.bind(parent);
+	return fn;
+};
 
 describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 	const { DataObjectFactory, DataObject } = apis.dataRuntime;
@@ -68,9 +77,23 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	let provider: ITestObjectProvider;
+	let callCount = 0;
 
 	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
+		const documentServiceFactory = provider.documentServiceFactory;
+		interceptResult(
+			documentServiceFactory,
+			documentServiceFactory.createDocumentService,
+			(documentService) => {
+				interceptResult(documentService, documentService.connectToStorage, (storage) => {
+					assert(storage.getSnapshot !== undefined, "Test can't run without getSnapshot");
+					interceptResult(storage, storage.getSnapshot, (snapshot) => {
+						callCount++;
+					});
+				});
+			},
+		);
 	});
 
 	const loadingGroupId = "loadingGroupId";
@@ -256,11 +279,9 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		const dataObjectB = (await dataStoreB.entryPoint.get()) as TestDataObject;
 		mainObject._root.set("dataObjectA", dataObjectA.handle);
 		mainObject._root.set("dataObjectB", dataObjectB.handle);
-		dataObjectA._root.set("A", "A");
-		dataObjectB._root.set("B", "B");
 		await provider.ensureSynchronized();
 
-		const { container: summarizingContainer, summarizer } = await createSummarizerFromFactory(
+		const { summarizer } = await createSummarizerFromFactory(
 			provider,
 			container,
 			dataObjectFactory,
@@ -272,53 +293,45 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 
 		await provider.ensureSynchronized();
-		const { summaryVersion, summaryRefSeq } = await summarizeNow(summarizer);
+		const { summaryVersion } = await summarizeNow(summarizer);
+		await provider.ensureSynchronized();
+
+		const container2 = (await provider.loadContainer(
+			runtimeFactory,
+			{ configProvider },
+			{ [LoaderHeader.version]: summaryVersion },
+		)) as IContainerExperimental;
+		await provider.ensureSynchronized();
+		const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
+		const handleA2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
+		const handleB2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectB");
+		const dataObjectA2 = await handleA2?.get();
+		const dataObjectB2 = await handleB2?.get();
+		assert(dataObjectA2 !== undefined, "dataObjectA2 should not be undefined");
+		assert(dataObjectB2 !== undefined, "dataObjectB2 should not be undefined");
+		dataObjectA2._root.set("A", "A");
+		dataObjectB2._root.set("B", "B");
+		await provider.ensureSynchronized();
+
+		const { summaryRefSeq } = await summarizeNow(summarizer);
 		await provider.ensureSynchronized();
 
 		// Refresh snapshot - this to validate that we built a system that would work with refresh
 		// There are two parts to refresh, making the network snapshot call and trimming the ops
 		// Container layer Refresh
 		// Network call refreshing the base snapshot
-		const serializedStateManager = (container as any).serializedStateManager;
-		const { baseSnapshot } = await serializedStateManager.fetchSnapshot(summaryVersion, true);
-		const attributes = await readAndParse<IDocumentAttributes>(
-			containerRuntime.storage,
-			baseSnapshot.trees[".protocol"].blobs.attributes,
-		);
-		assert(
-			attributes.sequenceNumber === summaryRefSeq,
-			"Should have fetched latest base snapshot from service",
-		);
-		// Container op trimming
-		const newProcessedOps: ISequencedDocumentMessage[] = [];
-		for (const op of serializedStateManager.processedOps) {
-			if (op.sequenceNumber > attributes.sequenceNumber) {
-				newProcessedOps.push(op);
-			}
-		}
-		serializedStateManager.processedOps = newProcessedOps;
-		// Runtime Layer Refresh
-		// Runtime op trimming (this is a hack of course, and the actual implementation will need to be more sophisticated)
-		(containerRuntime as any).pendingStateManager.savedOps = [];
-		// Network call refreshing the summary snapshot
-		const snapshot = await containerRuntime.storage.getSnapshot?.({
-			scenarioName: "refresh",
-			cacheSnapshot: false,
-			versionId: summaryVersion,
-			loadingGroupIds: [loadingGroupId],
-			fetchSource: FetchSource.noCache,
-		});
-		assert(snapshot?.sequenceNumber === summaryRefSeq, "Should have fetched latest snapshot");
+		const serializedStateManager = (container2 as any).serializedStateManager;
+		await serializedStateManager.updateSnapshot();
 
 		// Update the latestSequenceNumber so that the reference sequence number is beyond the snapshot
 		await provider.ensureSynchronized();
-		container.disconnect();
-		dataObjectA._root.set("A2", "A2");
-		dataObjectB._root.set("B2", "B2");
+		container2.disconnect();
+		dataObjectA2._root.set("A2", "A2");
+		dataObjectB2._root.set("B2", "B2");
 
 		// Get Pending state and close
-		assert(container.closeAndGetPendingLocalState !== undefined, "Missing method!");
-		const pendingState = await container.closeAndGetPendingLocalState();
+		assert(container2.closeAndGetPendingLocalState !== undefined, "Missing method!");
+		const pendingState = await container2.closeAndGetPendingLocalState();
 
 		// Load from the pending state
 		const container3 = await provider.loadContainer(
@@ -351,11 +364,13 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		assert(handleB3 !== undefined, "handleB3 should not be undefined");
 
 		// loading group call
+		callCount = 0;
 		const dataObjectA3 = await handleA3.get();
 		const dataObjectB3 = await handleB3.get();
 		assert.equal(dataObjectA3._root.get("A"), "A", "A should be set");
 		assert.equal(dataObjectA3._root.get("A2"), "A2", "A2 should be set");
 		assert.equal(dataObjectB3._root.get("B"), "B", "B should be set");
 		assert.equal(dataObjectB3._root.get("B2"), "B2", "B2 should be set");
+		assert(callCount === 0, "Should not have made a network call");
 	});
 });
