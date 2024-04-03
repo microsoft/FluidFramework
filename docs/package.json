@@ -69,25 +69,11 @@
 		"start-server-and-test": "^2.0.3"
 	},
 	"pnpm": {
-		"overrides": {
-			"qs": "^6.11.0"
-		},
 		"peerDependencyRules": {
 			"ignoreMissing": [
 				"eslint",
 				"typescript"
 			]
-		},
-		"updateConfig": {
-			"ignoreDependencies": [
-				"chalk",
-				"cpy",
-				"glob",
-				"node-fetch"
-			]
 		}
-	},
-	"devDependencies": {
-		"ipull": "^3.0.6"
 	}
 }
