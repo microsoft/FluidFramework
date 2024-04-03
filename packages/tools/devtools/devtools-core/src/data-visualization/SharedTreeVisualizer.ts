@@ -84,7 +84,7 @@ function getObjectAllowedTypes(schema: ObjectNodeStoredSchema): string {
 		// Set of allowed tree types `TreeTypeSet`.
 		const fieldTypes = treeFieldStoredSchema.types;
 
-		result += `${concatenateAllowedTypes(fieldKey, fieldTypes, idx === objectSize - 1)}`;
+		result += concatenateAllowedTypes(fieldKey, fieldTypes, idx === objectSize - 1);
 		idx += 1;
 
 		if (fieldKey === EmptyKey) {
