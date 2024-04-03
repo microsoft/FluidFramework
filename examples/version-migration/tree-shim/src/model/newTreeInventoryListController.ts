@@ -85,7 +85,7 @@ class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements
 		// Tree.on() is the way to register events on the inventory item (the first argument).  AB#6051
 		this._unregisterChangingEvent = Tree.on(
 			this._inventoryItemNode,
-			"afterShallowChange",
+			"nodeInvalidated",
 			() => {
 				this.emit("quantityChanged");
 			},
@@ -125,13 +125,13 @@ export class NewTreeInventoryListController extends EventEmitter implements IInv
 		// Then the root2() call applies a typing to the untyped view based on our schema.  After that we can actually
 		// reach in and grab the inventoryItems list.
 		this._inventoryItemList = this._tree.schematize(treeConfiguration).root.inventoryItemList;
-		// subtreeInvalidation will fire for any change of any type anywhere in the subtree.  In this application we expect
+		// subtreeInvalidated will fire for any change of any type anywhere in the subtree.  In this application we expect
 		// three types of tree changes that will trigger this handler - add items, delete items, change item quantities.
-		// Since "subtreeInvalidation" doesn't provide event args, we need to scan the tree and compare it to our InventoryItems
+		// Since "subtreeInvalidated" doesn't provide event args, we need to scan the tree and compare it to our InventoryItems
 		// to find what changed. We'll intentionally ignore the quantity changes here, which are instead handled by
 		// "changing" listeners on each individual item node.
 		// Tree.on() is the way to register events on the list (the first argument).  AB#6051
-		Tree.on(this._inventoryItemList, "subtreeInvalidation", () => {
+		Tree.on(this._inventoryItemList, "subtreeInvalidated", () => {
 			for (const inventoryItemNode of this._inventoryItemList) {
 				// If we're not currently tracking some item in the tree, then it must have been
 				// added in this change.

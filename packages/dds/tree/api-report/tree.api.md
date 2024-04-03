@@ -1814,8 +1814,8 @@ export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAl
 
 // @public
 export interface TreeChangeEvents {
-    afterShallowChange(): void;
-    subtreeInvalidation(): void;
+    nodeInvalidated(): void;
+    subtreeInvalidated(): void;
 }
 
 // @internal

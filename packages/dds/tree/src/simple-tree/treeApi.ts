@@ -120,8 +120,8 @@ export const treeNodeApi: TreeNodeApi = {
 		const anchor = flex.anchorNode;
 
 		switch (eventName) {
-			case "afterShallowChange": {
-				// The funky pattern subscribing to two events from the anchors is so we can fire afterShallowChange once,
+			case "nodeInvalidated": {
+				// The funky pattern subscribing to two events from the anchors is so we can fire nodeInvalidated once,
 				// batching changes to several fields of the node. 'childrenChanged' on the anchor fires on every change to
 				// a field so doesn't allow us to batch.
 				let shouldFireShallowChange = false;
@@ -140,7 +140,7 @@ export const treeNodeApi: TreeNodeApi = {
 					unsubscribeFromSubtreeChanged();
 				};
 			}
-			case "subtreeInvalidation":
+			case "subtreeInvalidated":
 				return anchor.on("subtreeChanged", () => listener());
 			default:
 				return unreachableCase(eventName);
@@ -178,18 +178,18 @@ export const treeNodeApi: TreeNodeApi = {
  * A collection of events that can be raised by a {@link TreeNode}.
  *
  * @privateRemarks
- * TODO: add a way to subscribe to a specific field (for afterShallowChange and subtreeInvalidation).
+ * TODO: add a way to subscribe to a specific field (for nodeInvalidated and subtreeInvalidated).
  * Probably have object node and map node specific APIs for this.
  *
  * TODO: ensure that subscription API for fields aligns with API for subscribing to the root.
  *
- * TODO: add more wider area (avoid needing tons of afterShallowChange registration) events for use-cases other than subtreeInvalidation.
+ * TODO: add more wider area (avoid needing tons of nodeInvalidated registration) events for use-cases other than subtreeInvalidated.
  * Some ideas:
  *
- * - subtreeInvalidation, but with some subtrees/fields/paths excluded
- * - helper to batch several afterShallowChange calls to a subtreeInvalidation scope
+ * - subtreeInvalidated, but with some subtrees/fields/paths excluded
+ * - helper to batch several nodeInvalidated calls to a subtreeInvalidated scope
  * - parent change (ex: registration on the parent field for a specific index: maybe allow it for a range. Ex: node event takes optional field and optional index range?)
- * - new content inserted into subtree. Either provide event for this and/or enough info to subtreeInvalidation to find and search the new sub-trees.
+ * - new content inserted into subtree. Either provide event for this and/or enough info to subtreeInvalidated to find and search the new sub-trees.
  * Add separate (non event related) API to efficiently scan tree for given set of types (using low level cursor and schema based filtering)
  * to allow efficiently searching for new content (and initial content) of a given type.
  *
@@ -228,7 +228,7 @@ export interface TreeChangeEvents {
 	 * node, or when the node has to be updated due to resolution of a merge conflict
 	 * (for example a previously applied local change might be undone, then reapplied differently or not at all).
 	 */
-	afterShallowChange(): void;
+	nodeInvalidated(): void;
 
 	/**
 	 * Emitted by a node when something _may_ have changed anywhere in the subtree rooted at it.
@@ -252,5 +252,5 @@ export interface TreeChangeEvents {
 	 * how many times this event will be raised during any intermediate states.
 	 * When it is raised, the tree is guaranteed to be in-schema.
 	 */
-	subtreeInvalidation(): void;
+	subtreeInvalidated(): void;
 }

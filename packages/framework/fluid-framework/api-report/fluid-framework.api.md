@@ -412,8 +412,8 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends Readonl
 
 // @public
 export interface TreeChangeEvents {
-    afterShallowChange(): void;
-    subtreeInvalidation(): void;
+    nodeInvalidated(): void;
+    subtreeInvalidated(): void;
 }
 
 // @public
