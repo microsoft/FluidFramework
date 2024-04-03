@@ -2,21 +2,21 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { spy, type Sinon } from "sinon";
+import type Sinon from "sinon";
+import { spy } from "sinon";
 import { expect } from "chai";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { ICriticalContainerError } from "@fluidframework/container-definitions/internal";
+import type { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
 	type IContainer,
 	type IContainerEvents,
 } from "@fluidframework/container-definitions/internal";
-import { startTelemetry, type TelemetryConfig } from "../factory/index.js";
-import { ApplicationInsights } from "@microsoft/applicationinsights-web";
-import { IFluidContainerSystemEventNames } from "../container/containerSystemEvents.js";
+import { ApplicationInsights, type IEventTelemetry } from "@microsoft/applicationinsights-web";
 import { type IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import { IFluidContainer } from "@fluidframework/fluid-static";
+import type { IFluidContainer } from "@fluidframework/fluid-static";
 import { createFluidContainer, type IRootDataObject } from "@fluidframework/fluid-static/internal";
+import { startTelemetry, type TelemetryConfig } from "../factory/index.js";
+import { IFluidContainerSystemEventNames, type IContainerTelemetry } from "../container/index.js";
 import {
 	ContainerTelemetryEventNames,
 	type ContainerConnectedTelemetry,
@@ -66,12 +66,13 @@ class MockContainer
  */
 export function createMockFluidContainer(container: IContainer): IFluidContainer {
 	return createFluidContainer({
-		container: container,
+		container,
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		rootDataObject: {} as IRootDataObject,
 	});
 }
 
-describe("External container telemetry", () => {
+describe("container telemetry via", () => {
 	let mockContainer: IContainer;
 	const mockContainerId = "mockContainerId";
 	let mockFluidContainer: IFluidContainer;
@@ -93,10 +94,10 @@ describe("External container telemetry", () => {
 		mockFluidContainer = createMockFluidContainer(mockContainer);
 
 		class AppInsightsTelemetryConsumer implements ITelemetryConsumer {
-			constructor(private readonly appInsightsClient: ApplicationInsights) {}
+			public constructor(private readonly client: ApplicationInsights) {}
 
-			consume(event: IFluidTelemetry) {
-				this.appInsightsClient.trackEvent({
+			public consume(event: IFluidTelemetry): void {
+				this.client.trackEvent({
 					name: event.eventName,
 					properties: event,
 				});
@@ -110,7 +111,7 @@ describe("External container telemetry", () => {
 		};
 	});
 
-	it("Emitting 'connected' container system event produces expected ContainerConnectedTelemetry", () => {
+	it("Emitting 'connected' container system event produces expected ContainerConnectedTelemetry using Azure App Insights", () => {
 		startTelemetry(telemetryConfig);
 
 		mockContainer.connect();
@@ -118,24 +119,25 @@ describe("External container telemetry", () => {
 		expect(trackEventSpy.callCount).to.equal(1);
 
 		// Obtain the events from the method that the spy was called with
-		const actualTelemetryEvent = trackEventSpy.getCall(0).args[0];
-		const expectedEvent = {
+		const actualAppInsightsTelemetry = trackEventSpy.getCall(0).args[0] as IEventTelemetry;
+		const actualContainerTelemetry =
+			actualAppInsightsTelemetry.properties as IContainerTelemetry;
+
+		const expectedAppInsightsTelemetry: IEventTelemetry = {
 			name: ContainerTelemetryEventNames.CONNECTED,
 			properties: {
 				eventName: ContainerTelemetryEventNames.CONNECTED,
 				containerId: mockContainerId,
-				containerInstanceId: actualTelemetryEvent.properties.containerInstanceId,
-			} as ContainerConnectedTelemetry,
+				containerInstanceId: actualContainerTelemetry.containerInstanceId,
+			} satisfies ContainerConnectedTelemetry,
 		};
 
-		expect(expectedEvent).to.deep.equal(actualTelemetryEvent);
+		expect(expectedAppInsightsTelemetry).to.deep.equal(actualAppInsightsTelemetry);
 		// We won't know what the container containerInstanceId will be but we can still check that it is defined.
-		expect(actualTelemetryEvent.properties.containerInstanceId)
-			.to.be.a("string")
-			.with.length.above(0);
+		expect(actualContainerTelemetry.containerInstanceId).to.be.a("string").with.length.above(0);
 	});
 
-	it("Emitting 'disconnected' container system event produces expected ContainerDisconnectedTelemetry", () => {
+	it("Emitting 'disconnected' container system event produces expected ContainerDisconnectedTelemetry using Azure App Insights", () => {
 		startTelemetry(telemetryConfig);
 
 		mockContainer.disconnect();
@@ -143,24 +145,25 @@ describe("External container telemetry", () => {
 		expect(trackEventSpy.callCount).to.equal(1);
 
 		// Obtain the events from the method that the spy was called with
-		const actualTelemetryEvent = trackEventSpy.getCall(0).args[0];
-		const expectedEvent = {
+		const actualAppInsightsTelemetry = trackEventSpy.getCall(0).args[0] as IEventTelemetry;
+		const actualContainerTelemetry =
+			actualAppInsightsTelemetry.properties as IContainerTelemetry;
+
+		const expectedAppInsightsTelemetry: IEventTelemetry = {
 			name: ContainerTelemetryEventNames.DISCONNECTED,
 			properties: {
 				eventName: ContainerTelemetryEventNames.DISCONNECTED,
 				containerId: mockContainerId,
-				containerInstanceId: actualTelemetryEvent.properties.containerInstanceId,
-			} as ContainerDisconnectedTelemetry,
+				containerInstanceId: actualContainerTelemetry.containerInstanceId,
+			} satisfies ContainerDisconnectedTelemetry,
 		};
 
-		expect(expectedEvent).to.deep.equal(actualTelemetryEvent);
+		expect(expectedAppInsightsTelemetry).to.deep.equal(actualAppInsightsTelemetry);
 		// We won't know what the container containerInstanceId will be but we can still check that it is defined.
-		expect(actualTelemetryEvent.properties.containerInstanceId)
-			.to.be.a("string")
-			.with.length.above(0);
+		expect(actualContainerTelemetry.containerInstanceId).to.be.a("string").with.length.above(0);
 	});
 
-	it("Emitting 'disposed' system event produces expected ContainerDisposedTelemetry", () => {
+	it("Emitting 'disposed' system event produces expected ContainerDisposedTelemetry using Azure App Insights", () => {
 		startTelemetry(telemetryConfig);
 
 		mockContainer.dispose();
@@ -168,24 +171,25 @@ describe("External container telemetry", () => {
 		expect(trackEventSpy.callCount).to.equal(1);
 
 		// Obtain the events from the method that the spy was called with
-		const actualTelemetryEvent = trackEventSpy.getCall(0).args[0];
-		const expectedEvent = {
+		const actualAppInsightsTelemetry = trackEventSpy.getCall(0).args[0] as IEventTelemetry;
+		const actualContainerTelemetry =
+			actualAppInsightsTelemetry.properties as IContainerTelemetry;
+
+		const expectedAppInsightsTelemetry: IEventTelemetry = {
 			name: ContainerTelemetryEventNames.DISPOSED,
 			properties: {
 				eventName: ContainerTelemetryEventNames.DISPOSED,
 				containerId: mockContainerId,
-				containerInstanceId: actualTelemetryEvent.properties.containerInstanceId,
-			} as ContainerDisposedTelemetry,
+				containerInstanceId: actualContainerTelemetry.containerInstanceId,
+			} satisfies ContainerDisposedTelemetry,
 		};
 
-		expect(expectedEvent).to.deep.equal(actualTelemetryEvent);
+		expect(expectedAppInsightsTelemetry).to.deep.equal(actualAppInsightsTelemetry);
 		// We won't know what the container containerInstanceId will be but we can still check that it is defined.
-		expect(actualTelemetryEvent.properties.containerInstanceId)
-			.to.be.a("string")
-			.with.length.above(0);
+		expect(actualContainerTelemetry.containerInstanceId).to.be.a("string").with.length.above(0);
 	});
 
-	it("Emitting 'disposed' system event with an error produces expected ContainerDisposedTelemetry", () => {
+	it("Emitting 'disposed' system event with an error produces expected ContainerDisposedTelemetry using Azure App Insights", () => {
 		startTelemetry(telemetryConfig);
 
 		const containerError: ICriticalContainerError = {
@@ -197,22 +201,22 @@ describe("External container telemetry", () => {
 		mockContainer.dispose(containerError);
 
 		// Obtain the events from the method that the spy was called with
-		const actualTelemetryEvent = trackEventSpy.getCall(0).args[0];
+		const actualAppInsightsTelemetry = trackEventSpy.getCall(0).args[0] as IEventTelemetry;
+		const actualContainerTelemetry =
+			actualAppInsightsTelemetry.properties as IContainerTelemetry;
 
-		const expectedEvent = {
+		const expectedAppInsightsTelemetry: IEventTelemetry = {
 			name: ContainerTelemetryEventNames.DISPOSED,
 			properties: {
 				eventName: ContainerTelemetryEventNames.DISPOSED,
 				containerId: mockContainerId,
-				containerInstanceId: actualTelemetryEvent.properties.containerInstanceId,
+				containerInstanceId: actualContainerTelemetry.containerInstanceId,
 				error: containerError,
-			} as ContainerDisposedTelemetry,
+			} satisfies ContainerDisposedTelemetry,
 		};
 
-		expect(expectedEvent).to.deep.equal(actualTelemetryEvent);
+		expect(expectedAppInsightsTelemetry).to.deep.equal(actualAppInsightsTelemetry);
 		// We won't know what the container containerInstanceId will be but we can still check that it is defined.
-		expect(actualTelemetryEvent.properties.containerInstanceId)
-			.to.be.a("string")
-			.with.length.above(0);
+		expect(actualContainerTelemetry.containerInstanceId).to.be.a("string").with.length.above(0);
 	});
 });

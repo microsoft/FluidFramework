@@ -16,4 +16,4 @@ export {
 	type ContainerDisconnectedTelemetry,
 	type ContainerDisposedTelemetry,
 } from "./container/index.js";
-export { startTelemetry, TelemetryConfig } from "./factory/index.js";
+export { startTelemetry, type TelemetryConfig } from "./factory/index.js";

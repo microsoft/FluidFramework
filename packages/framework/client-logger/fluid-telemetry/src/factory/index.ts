@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerTelemetryManager } from "../container/index.js";
-import { ContainerEventTelemetryProducer } from "../container/telemetryProducer.js";
-import { type ITelemetryConsumer } from "../common/index.js";
 import type { IFluidContainer } from "@fluidframework/fluid-static";
+import { ContainerTelemetryManager, ContainerEventTelemetryProducer } from "../container/index.js";
+import { type ITelemetryConsumer } from "../common/index.js";
 
 /**
  * Configuration object for subscribing to {@link @fluidframework/fluid-telemetry#IFluidTelemetry} and consuming said telemetry via one or more {@link ITelemetryConsumer}
@@ -38,10 +37,6 @@ export interface TelemetryConfig {
  * @beta
  */
 export const startTelemetry = (config: TelemetryConfig): void => {
-	if (config.container) {
-		const telemetryProducer = new ContainerEventTelemetryProducer(config.containerId);
-		new ContainerTelemetryManager(config.container, telemetryProducer, config.consumers);
-	} else {
-		throw new Error("A Fluid Container must be provided for telemetry");
-	}
+	const telemetryProducer = new ContainerEventTelemetryProducer(config.containerId);
+	new ContainerTelemetryManager(config.container, telemetryProducer, config.consumers);
 };

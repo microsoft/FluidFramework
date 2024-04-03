@@ -4,6 +4,11 @@
  */
 
 export {
+	IFluidContainerSystemEventNames,
+	type IFluidContainerSystemEventName,
+} from "./containerSystemEvents.js";
+
+export {
 	type ContainerTelemetryEventName,
 	ContainerTelemetryEventNames,
 	type IContainerTelemetry,

@@ -4,6 +4,8 @@
  */
 
 import { type ICriticalContainerError } from "@fluidframework/container-definitions";
+import { v4 as uuid } from "uuid";
+import type { IFluidTelemetry } from "../index.js";
 import {
 	ContainerTelemetryEventNames,
 	type ContainerTelemetryEventName,
@@ -14,8 +16,6 @@ import {
 	type IFluidContainerSystemEventName,
 	IFluidContainerSystemEventNames,
 } from "./containerSystemEvents.js";
-import { v4 as uuid } from "uuid";
-import type { IFluidTelemetry } from "../index.js";
 
 /**
  * This class produces {@link IContainerTelemetry} from raw container system events {@link @fluidframework/fluid-static#IFluidContainerEvents}.
@@ -30,23 +30,28 @@ export class ContainerEventTelemetryProducer {
 	 */
 	private readonly containerInstanceId = uuid();
 
-	constructor(private readonly containerId: string) {}
+	public constructor(private readonly containerId: string) {}
 
 	public produceFromSystemEvent(
 		eventName: IFluidContainerSystemEventName,
-		payload?: any,
+		payload?: unknown,
 	): IContainerTelemetry | undefined {
 		switch (eventName) {
-			case IFluidContainerSystemEventNames.CONNECTED:
+			case IFluidContainerSystemEventNames.CONNECTED: {
 				return this.produceBaseContainerTelemetry(ContainerTelemetryEventNames.CONNECTED);
-			case IFluidContainerSystemEventNames.DISCONNECTED:
+			}
+			case IFluidContainerSystemEventNames.DISCONNECTED: {
 				return this.produceBaseContainerTelemetry(
 					ContainerTelemetryEventNames.DISCONNECTED,
 				);
-			case IFluidContainerSystemEventNames.DISPOSED:
-				return this.produceDiposedTelemetry(payload);
-			default:
+			}
+			case IFluidContainerSystemEventNames.DISPOSED: {
+				const typedPayload = payload as { error?: ICriticalContainerError };
+				return this.produceDiposedTelemetry(typedPayload);
+			}
+			default: {
 				break;
+			}
 		}
 	}
 
@@ -58,17 +63,17 @@ export class ContainerEventTelemetryProducer {
 		} as unknown as IFluidTelemetry;
 	};
 
-	private produceBaseContainerTelemetry = (
+	private readonly produceBaseContainerTelemetry = (
 		eventName: ContainerTelemetryEventName,
 	): IContainerTelemetry => {
 		return {
 			eventName,
 			containerId: this.containerId,
 			containerInstanceId: this.containerInstanceId,
-		} as IContainerTelemetry;
+		} satisfies IContainerTelemetry;
 	};
 
-	private produceDiposedTelemetry = (payload?: {
+	private readonly produceDiposedTelemetry = (payload?: {
 		error?: ICriticalContainerError;
 	}): ContainerDisposedTelemetry => {
 		const telemetry: ContainerDisposedTelemetry = {
