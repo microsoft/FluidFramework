@@ -137,7 +137,7 @@ export enum FieldKind {
 
 // @public
 export interface FieldProps {
-    readonly key?: StoredKey;
+    readonly key?: StoredFieldKey;
 }
 
 // @public @sealed
@@ -380,7 +380,7 @@ export type SharedMap = ISharedMap;
 export const SharedTree: ISharedObjectKind<ITree>;
 
 // @public
-export type StoredKey = string;
+export type StoredFieldKey = string;
 
 // @public
 export const Tree: TreeApi;

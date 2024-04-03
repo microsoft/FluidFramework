@@ -262,7 +262,7 @@ export enum NodeKind {
  *
  * @public
  */
-export type StoredKey = string;
+export type StoredFieldKey = string;
 
 /**
  * Properties associated with a field.
@@ -271,10 +271,10 @@ export type StoredKey = string;
  */
 export interface FieldProps {
 	/**
-	 * {@inheritDoc StoredKey}
+	 * {@inheritDoc StoredFieldKey}
 	 * @defaultValue If not specified, the key that is persisted is the property key that was specified in the schema.
 	 */
-	readonly key?: StoredKey;
+	readonly key?: StoredFieldKey;
 }
 
 /**

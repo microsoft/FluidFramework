@@ -320,7 +320,7 @@ export {
 	NodeBuilderDataUnsafe,
 	NodeFromSchemaUnsafe,
 	type FieldProps,
-	type StoredKey,
+	type StoredFieldKey,
 
 	// experimental @internal APIs:
 	adaptEnum,

@@ -515,7 +515,7 @@ export interface FieldMapObject<TChild> {
 
 // @public
 export interface FieldProps {
-    readonly key?: StoredKey;
+    readonly key?: StoredFieldKey;
 }
 
 // @public @sealed
@@ -1730,7 +1730,7 @@ export function stackTreeFieldCursor<TNode>(adapter: CursorAdapter<TNode>, root:
 export function stackTreeNodeCursor<TNode>(adapter: CursorAdapter<TNode>, root: TNode): CursorWithNode<TNode>;
 
 // @public
-export type StoredKey = string;
+export type StoredFieldKey = string;
 
 // @internal
 export interface StoredSchemaCollection {

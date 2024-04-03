@@ -24,7 +24,7 @@ import {
 	NodeKind,
 	type TreeLeafValue,
 	TreeNodeSchema,
-	type StoredKey,
+	type StoredFieldKey,
 	type ImplicitFieldSchema,
 	FieldSchema,
 } from "./schemaTypes.js";
@@ -163,7 +163,7 @@ export const treeNodeApi: TreeNodeApi = {
 /**
  * Gets the stored key with which the provided node is associated in the parent.
  */
-function getStoredKey(node: TreeNode): StoredKey | number {
+function getStoredKey(node: TreeNode): StoredFieldKey | number {
 	// Note: the flex domain strictly works with "stored keys", and knows nothing about the developer-facing
 	// "view keys".
 	const parentField = getFlexNode(node).parentField;
@@ -177,11 +177,11 @@ function getStoredKey(node: TreeNode): StoredKey | number {
 }
 
 /**
- * Given a node schema, gets the view key corresponding with the provided {@link StoredKey | stored key}.
+ * Given a node schema, gets the view key corresponding with the provided {@link StoredFieldKey | stored key}.
  */
 function getViewKeyFromStoredKey(
 	schema: TreeNodeSchema,
-	storedKey: StoredKey | number,
+	storedKey: StoredFieldKey | number,
 ): string | number {
 	// Only object nodes have the concept of a "stored key", differentiated from the developer-facing "view key".
 	// For any other kind of node, the stored key and the view key are the same.
