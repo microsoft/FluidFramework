@@ -7,12 +7,12 @@ import { strict as assert } from "node:assert";
 import path from "node:path";
 
 import { createSnapshotSuite } from "@fluid-private/test-dds-utils";
-import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
+import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { type ISharedDirectory, SharedDirectory } from "../../index.js";
 

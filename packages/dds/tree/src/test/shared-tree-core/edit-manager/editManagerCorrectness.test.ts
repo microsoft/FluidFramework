@@ -8,11 +8,11 @@ import { strict as assert } from "assert";
 import { describeStress } from "@fluid-private/stochastic-test-utils";
 import { SessionId } from "@fluidframework/id-compressor";
 
-import { ChangeFamily, ChangeFamilyEditor, GraphCommit } from "../../../core/index.js";
+import { ChangeFamily, ChangeFamilyEditor } from "../../../core/index.js";
 import { Commit, EditManager } from "../../../shared-tree-core/index.js";
 import { brand, makeArray } from "../../../util/index.js";
 import { NoOpChangeRebaser, TestChange } from "../../testChange.js";
-import { createTestUndoRedoStacks, mintRevisionTag } from "../../utils.js";
+import { mintRevisionTag } from "../../utils.js";
 
 import { buildScenario, runUnitTestScenario } from "./editManagerScenario.js";
 import { checkChangeList, testChangeEditManagerFactory } from "./editManagerTestUtils.js";
@@ -413,75 +413,6 @@ export function testCorrectness() {
 					checkChangeList(manager, [4, 5, 6, 7, 8]);
 					manager.advanceMinimumSequenceNumber(brand(4));
 					checkChangeList(manager, [6, 7, 8]);
-				});
-
-				it("does not evict commits including and after the oldest revertible commit", () => {
-					const { manager } = testChangeEditManagerFactory({
-						autoDiscardRevertibles: false,
-					});
-					const { unsubscribe } = createTestUndoRedoStacks(manager.localBranch);
-
-					const commit1 = applyLocalCommit(manager, [], 1);
-					const commit2 = applyLocalCommit(manager, [], 1);
-					const commit3 = applyLocalCommit(manager, [], 1);
-					const commit4 = applyLocalCommit(manager, [], 1);
-					manager.addSequencedChange(commit1, brand(1), brand(0));
-					manager.addSequencedChange(commit2, brand(2), brand(0));
-					manager.addSequencedChange(commit3, brand(3), brand(0));
-					manager.addSequencedChange(commit4, brand(4), brand(0));
-					manager.advanceMinimumSequenceNumber(brand(4));
-
-					// check that commits are all still in the trunk
-					let current: GraphCommit<TestChange> | undefined = manager.getTrunkHead();
-					assert.equal(current.revision, commit4.revision);
-					current = current.parent;
-					assert(current !== undefined);
-					assert.equal(current.revision, commit3.revision);
-					current = current.parent;
-					assert(current !== undefined);
-					assert.equal(current.revision, commit2.revision);
-					current = current.parent;
-					assert(current !== undefined);
-					assert.equal(current.revision, commit1.revision);
-
-					unsubscribe();
-				});
-
-				it("advances the oldest revertible commit when that revertible is disposed", () => {
-					const { manager } = testChangeEditManagerFactory({
-						autoDiscardRevertibles: false,
-					});
-					const { undoStack, unsubscribe } = createTestUndoRedoStacks(
-						manager.localBranch,
-					);
-
-					const commit1 = applyLocalCommit(manager, [], 1);
-					const commit2 = applyLocalCommit(manager, [], 1);
-					const commit3 = applyLocalCommit(manager, [], 1);
-					const commit4 = applyLocalCommit(manager, [], 1);
-					manager.addSequencedChange(commit1, brand(1), brand(0));
-					manager.addSequencedChange(commit2, brand(2), brand(0));
-					manager.addSequencedChange(commit3, brand(3), brand(0));
-					manager.addSequencedChange(commit4, brand(4), brand(0));
-
-					// discard the oldest revertible and trim the trunk
-					undoStack[0].release();
-					manager.advanceMinimumSequenceNumber(brand(4));
-
-					// check that all commits except the first are still in the trunk
-					let current: GraphCommit<TestChange> | undefined = manager.getTrunkHead();
-					assert.equal(current.revision, commit4.revision);
-					current = current.parent;
-					assert(current !== undefined);
-					assert.equal(current.revision, commit3.revision);
-					current = current.parent;
-					assert(current !== undefined);
-					assert.equal(current.revision, commit2.revision);
-					current = current.parent;
-					assert(current !== undefined);
-					assert.notEqual(current.revision, commit1.revision);
-
-					unsubscribe();
 				});
 			});
 

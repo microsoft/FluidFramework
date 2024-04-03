@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { runWithRetry } from "@fluidframework/driver-utils";
+import { runWithRetry } from "@fluidframework/driver-utils/internal";
 import type * as git from "@fluidframework/gitresources";
 import {
 	IWholeSummaryPayload,

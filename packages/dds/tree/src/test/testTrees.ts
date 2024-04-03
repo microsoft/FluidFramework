@@ -5,9 +5,9 @@
 
 import { strict as assert } from "assert";
 
-import { MockHandle } from "@fluidframework/test-runtime-utils";
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
-import { ITreeCursorSynchronous, JsonableTree } from "../core/index.js";
+import { ITreeCursorSynchronous, JsonableTree, Multiplicity } from "../core/index.js";
 import { leaf } from "../domains/index.js";
 import {
 	AllowedTypesToFlexInsertableTree,
@@ -18,7 +18,6 @@ import {
 	FlexTreeSchema,
 	FullSchemaPolicy,
 	InsertableFlexField,
-	Multiplicity,
 	SchemaBuilderBase,
 	SchemaLibrary,
 	cursorForJsonableTreeNode,

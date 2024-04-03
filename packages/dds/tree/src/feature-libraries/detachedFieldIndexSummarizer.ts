@@ -10,7 +10,7 @@ import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
+import { createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
 
 import { DetachedFieldIndex } from "../core/index.js";
 import {

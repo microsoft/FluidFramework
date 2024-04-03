@@ -10,13 +10,13 @@ import {
 	LocalReferenceCollection,
 	MergeTreeDeltaType,
 	ReferenceType,
-} from "@fluidframework/merge-tree";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/merge-tree/internal";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { resetReentrancyLogCounter } from "../sequence.js";
 import { SharedString } from "../sharedString.js";

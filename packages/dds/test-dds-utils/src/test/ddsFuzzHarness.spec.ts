@@ -16,7 +16,7 @@ import type { IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import execa from "execa";
 
 import { type Client, hasStashData } from "../clientLoading.js";

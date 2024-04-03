@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 
-import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix/internal";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { UndoRedoStackManager } from "../undoRedoStackManager.js";
 

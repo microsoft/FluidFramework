@@ -316,7 +316,7 @@ describe("chunkTree", () => {
 			const info = tryShapeFromFieldSchema(
 				schema,
 				defaultSchemaPolicy,
-				valueField,
+				valueField.stored,
 				brand("key"),
 				new Map(),
 			);
@@ -326,7 +326,7 @@ describe("chunkTree", () => {
 			const info = tryShapeFromFieldSchema(
 				schema,
 				defaultSchemaPolicy,
-				optionalField,
+				optionalField.stored,
 				brand("key"),
 				new Map(),
 			);
