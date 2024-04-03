@@ -1247,6 +1247,24 @@ describe("ModularChangeFamily", () => {
 			assert.deepEqual(filtered, expected);
 		});
 
+		it("recognizes chunks in the builds array with length longer than one", () => {
+			assert.equal(nodesChunk.topLevelLength, 2);
+			const input: ModularChangeset = {
+				fieldChanges: new Map([]),
+				builds: new Map([[aMajor, new Map([[brand(3), nodesChunk]])]]),
+			};
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map([]),
+				builds: new Map([[aMajor, new Map([[brand(3), nodesChunk]])]]),
+			};
+
+			const withBuilds = updateRefreshers(makeAnonChange(input), getDetachedNode, [
+				{ major: aMajor, minor: 4 },
+			]);
+			assert.deepEqual(withBuilds, expected);
+		});
+
 		describe("attempts to add relevant refreshers that are missing from the input", () => {
 			it("adds the missing refresher if the detached node is available", () => {
 				const input: ModularChangeset = {
