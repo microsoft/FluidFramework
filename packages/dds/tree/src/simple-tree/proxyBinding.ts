@@ -16,14 +16,11 @@ import {
 	FlexTreeObjectNode,
 	assertFlexTreeEntityNotFreed,
 	flexTreeSlot,
-	schemaIsFieldNode,
-	schemaIsMap,
-	schemaIsObjectNode,
 } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
 
 import { RawTreeNode } from "./rawNode.js";
-import { TreeMapNode, TreeObjectNode } from "./schemaTypes.js";
+import { TreeMapNode } from "./schemaTypes.js";
 import { TreeArrayNode } from "./treeArrayNode.js";
 import { TreeNode, TypedNode } from "./types.js";
 
@@ -113,28 +110,32 @@ export function getFlexNode(proxy: TreeNode, allowFreed = false): FlexTreeNode {
  * Walks up from the given anchor node until an anchor node that has an associated flex node is found.
  * Then, walks back down from that flex node so as to cause the original anchor node to generate a flex node.
  * Fails if there is no ancestor of `anchorNode` bound to a flex node.
+ *
+ * TODO:
+ * Its practical to construct the desired flex-tree node without constructing the spine to it.
+ * For example makeTree in lazyNode can do it from a cursor and a context.
+ * flex-tree currently doesn't expose a public API for this, but depending on it being lazy tree could make it possible, or the API could be changed.
+ *
+ * TODO:
+ * Its not clear that there always will be an existing flex-tree node above the desired node.
+ * If the desired node is a root (main document root or a removed root) for example, this would fail.
+ * Avoiding the spine walking (see above) would remove these edge cases and improve performance.
  */
 function demandSpine(node: AnchorNode): FlexTreeNode {
 	const spine = getAnchorNodeSpine(node);
-	for (let i = spine.length - 1; i >= 1; i--) {
-		const parent = spine[i];
-		const child = spine[i - 1];
-		const parentFlexNode =
-			parent.slots.get(flexTreeSlot) ?? fail("Expected flex tree for anchor node");
+	const parentAnchorNode = spine[spine.length - 1];
+	let flexTreeNode =
+		parentAnchorNode.slots.get(flexTreeSlot) ?? fail("Expected flex tree for anchor node");
 
-		const proxy = parent.slots.get(proxySlot) ?? fail("Expected proxy for anchor node");
-		if (schemaIsFieldNode(parentFlexNode.schema)) {
-			const array = proxy as TreeArrayNode;
-			const _ = array[child.parentIndex];
-		} else if (schemaIsMap(parentFlexNode.schema)) {
-			const map = proxy as TreeMapNode;
-			map.get(child.parentField);
-		} else if (schemaIsObjectNode(parentFlexNode.schema)) {
-			const obj = proxy as TreeObjectNode<any>;
-			const _ = obj[child.parentField];
-		} else {
-			fail("Unexpected flex node schema type");
-		}
+	for (let i = spine.length - 2; i >= 0; i--) {
+		const child = spine[i];
+
+		const childField =
+			flexTreeNode.tryGetField(child.parentField) ??
+			fail("Expected child to be under non-empty field");
+
+		flexTreeNode =
+			childField.boxedAt(child.parentIndex) ?? fail("Expected child to be in range");
 	}
 	return spine[0].slots.get(flexTreeSlot) ?? fail("Failed to demand flex node");
 }

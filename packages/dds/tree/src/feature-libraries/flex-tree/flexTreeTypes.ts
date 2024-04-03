@@ -248,6 +248,18 @@ export interface FlexTreeField extends FlexTreeEntity<FlexFieldSchema> {
 	 * Implementing this will require some care to preserve lazy-ness and work efficiently (without leaks) for empty fields, particularly on MapNodes.
 	 */
 	isSameAs(other: FlexTreeField): boolean;
+
+	/**
+	 * Gets a node of this field by its index without unboxing.
+	 * @param index - Zero-based index of the item to retrieve. Negative values are interpreted from the end of the sequence.
+	 *
+	 * @returns The element in the sequence matching the given index. Always returns undefined if index \< -sequence.length
+	 * or index \>= array.length.
+	 *
+	 * @remarks
+	 * Semantics match {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at | Array.at}.
+	 */
+	boxedAt(index: number): FlexTreeNode | undefined;
 }
 
 // #region Node Kinds
@@ -716,14 +728,7 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	at(index: number): FlexTreeUnboxNodeUnion<TTypes> | undefined;
 
 	/**
-	 * Gets a node of this field by its index without unboxing.
-	 * @param index - Zero-based index of the item to retrieve. Negative values are interpreted from the end of the sequence.
-	 *
-	 * @returns The element in the sequence matching the given index. Always returns undefined if index \< -sequence.length
-	 * or index \>= array.length.
-	 *
-	 * @remarks
-	 * Semantics match {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at | Array.at}.
+	 * {@inheritdoc FlexTreeField.boxedAt}
 	 */
 	boxedAt(index: number): FlexTreeTypedNodeUnion<TTypes> | undefined;
 
