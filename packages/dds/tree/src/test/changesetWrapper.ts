@@ -5,12 +5,20 @@
 
 import { strict } from "assert";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ChangeAtomIdMap, TaggedChange, tagChange, taggedOptAtomId } from "../core/index.js";
+import {
+	ChangeAtomIdMap,
+	DeltaFieldChanges,
+	TaggedChange,
+	makeAnonChange,
+	tagChange,
+	taggedOptAtomId,
+} from "../core/index.js";
 import {
 	NodeChangeComposer,
 	NodeChangePruner,
 	NodeChangeRebaser,
 	NodeId,
+	ToDelta,
 } from "../feature-libraries/index.js";
 import {
 	fail,
@@ -32,6 +40,7 @@ export const ChangesetWrapper = {
 	compose,
 	invert,
 	prune,
+	toDelta,
 	assertEqual,
 };
 
@@ -126,9 +135,13 @@ function compose<T>(
 
 function invert<T>(
 	change: TaggedChange<ChangesetWrapper<T>>,
-	invertField: (field: TaggedChange<T>) => T,
+	invertField: (field: TaggedChange<T>, isRollback: boolean) => T,
+	isRollback: boolean = false,
 ): ChangesetWrapper<T> {
-	const invertedField = invertField(tagChange(change.change.fieldChange, change.revision));
+	const invertedField = invertField(
+		tagChange(change.change.fieldChange, change.revision),
+		isRollback,
+	);
 	const invertedNodes: ChangeAtomIdMap<TestChange> = new Map();
 	forEachInNestedMap(change.change.nodes, (testChange, revision, localId) => {
 		setInNestedMap(invertedNodes, revision, localId, TestChange.invert(testChange));
@@ -154,6 +167,19 @@ function prune<T>(
 	};
 
 	return { nodes: prunedNodes, fieldChange: pruneField(change.fieldChange, pruneChild) };
+}
+
+function toDelta<T>(
+	change: ChangesetWrapper<T>,
+	fieldToDelta: (change: T, deltaFromChild: ToDelta) => DeltaFieldChanges,
+): DeltaFieldChanges {
+	const deltaFromChild = (id: NodeId) => {
+		const node = tryGetFromNestedMap(change.nodes, id.revision, id.localId);
+		assert(node !== undefined, "Unknown node ID");
+		return TestChange.toDelta(makeAnonChange(node));
+	};
+
+	return fieldToDelta(change.fieldChange, deltaFromChild);
 }
 
 function assertEqual<T>(
