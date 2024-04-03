@@ -78,13 +78,13 @@ function getObjectAllowedTypes(schema: ObjectNodeStoredSchema): string {
 
 	// Checks if the field is the last field in the map to prevent adding a trailing comma.
 	let idx = 0;
-	const size = schema.objectNodeFields.size;
+	const objectSize = schema.objectNodeFields.size;
 
 	for (const [fieldKey, treeFieldStoredSchema] of schema.objectNodeFields) {
 		// Set of allowed tree types `TreeTypeSet`.
 		const fieldTypes = treeFieldStoredSchema.types;
 
-		result += `${concatenateAllowedTypes(fieldKey, fieldTypes, idx === size - 1)}`;
+		result += `${concatenateAllowedTypes(fieldKey, fieldTypes, idx === objectSize - 1)}`;
 		idx += 1;
 
 		if (fieldKey === EmptyKey) {
@@ -112,10 +112,10 @@ function getMapAllowedTypes(
 
 	// Checks if the field is the last field in the map to prevent adding a trailing comma.
 	let idx = 0;
-	const size = Object.keys(fields).length;
+	const mapSize = Object.keys(fields).length;
 
 	for (const [fieldKey] of Object.entries(fields)) {
-		result += concatenateAllowedTypes(fieldKey, mapFieldAllowedTypes, idx === size - 1);
+		result += concatenateAllowedTypes(fieldKey, mapFieldAllowedTypes, idx === mapSize - 1);
 		idx += 1;
 	}
 
