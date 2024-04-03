@@ -4,7 +4,6 @@
  */
 import {
 	type IAppState,
-	type IArrayish,
 	type IBubble,
 	type IClient,
 	makeBubble,
@@ -50,7 +49,7 @@ export class AppState implements IAppState {
 	}
 
 	public get clients() {
-		return this.tree.root.clients as unknown as IArrayish<IClient>;
+		return this.tree.root.clients;
 	}
 
 	public setSize(width?: number, height?: number) {
