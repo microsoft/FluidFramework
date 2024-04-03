@@ -7,21 +7,22 @@ import {
 	DeltaDetachedNodeId,
 	DeltaFieldChanges,
 	DeltaMark,
-	makeAnonChange,
 	RevisionMetadataSource,
 	TaggedChange,
+	makeAnonChange,
+	Multiplicity,
 } from "../../core/index.js";
-import { fail, IdAllocator } from "../../util/index.js";
-import { Multiplicity } from "../multiplicity.js";
+import { IdAllocator, fail } from "../../util/index.js";
+
 import { CrossFieldManager } from "./crossFieldQueries.js";
 import {
 	FieldChangeHandler,
-	ToDelta,
 	NodeChangeComposer,
 	NodeChangeInverter,
+	NodeChangePruner,
 	NodeChangeRebaser,
 	RelevantRemovedRootsFromChild,
-	NodeChangePruner,
+	ToDelta,
 } from "./fieldChangeHandler.js";
 import { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 import { makeGenericChangeCodec } from "./genericFieldKindCodecs.js";
@@ -72,7 +73,6 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			}
 			return composed;
 		},
-		amendCompose: () => fail("Not implemented"),
 		invert: (
 			{ change }: TaggedChange<GenericChangeset>,
 			invertChild: NodeChangeInverter,

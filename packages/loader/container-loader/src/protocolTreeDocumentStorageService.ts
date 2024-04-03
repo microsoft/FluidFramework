@@ -4,7 +4,10 @@
  */
 
 import { IDisposable } from "@fluidframework/core-interfaces";
-import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import {
+	IDocumentStorageService,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 
 /**
@@ -18,9 +21,6 @@ export class ProtocolTreeStorageService implements IDocumentStorageService, IDis
 	) {}
 	public get policies() {
 		return this.internalStorageService.policies;
-	}
-	public get repositoryUrl() {
-		return this.internalStorageService.repositoryUrl;
 	}
 	public get disposed() {
 		return this.internalStorageService.disposed;

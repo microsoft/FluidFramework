@@ -3,12 +3,9 @@
  * Licensed under the MIT License.
  */
 
-/// <reference types="jest-environment-puppeteer" />
-/// <reference types="puppeteer" />
-/// <reference types="jest" />
+import { retryWithEventualValue } from "@fluidframework/test-utils/internal";
 
-import { globals } from "../jest.config";
-import { retryWithEventualValue } from "@fluidframework/test-utils";
+import { globals } from "../jest.config.cjs";
 
 describe("End to end tests", () => {
 	/**

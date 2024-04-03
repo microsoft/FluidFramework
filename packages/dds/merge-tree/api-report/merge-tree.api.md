@@ -4,7 +4,7 @@
 
 ```ts
 
-import { AttributionKey } from '@fluidframework/runtime-definitions';
+import { AttributionKey } from '@fluidframework/runtime-definitions/internal';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
@@ -104,11 +104,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     // (undocumented)
     applyMsg(msg: ISequencedDocumentMessage, local?: boolean): void;
     // (undocumented)
-    applyStashedOp(op: IMergeTreeDeltaOp): SegmentGroup;
-    // (undocumented)
-    applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
-    // (undocumented)
-    applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
+    applyStashedOp(op: IMergeTreeOp): void;
     createLocalReferencePosition(segment: ISegment | "start" | "end", offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
     // (undocumented)
     createTextHelper(): IMergeTreeTextHelper;
@@ -227,6 +223,12 @@ export function createMap<T>(): MapLike<T>;
 
 // @internal
 export function createObliterateRangeOp(start: number, end: number): IMergeTreeObliterateMsg;
+
+// @internal
+export function createPropertyTrackingAndInsertionAttributionPolicyFactory(...propNames: string[]): () => AttributionPolicy;
+
+// @internal (undocumented)
+export function createPropertyTrackingAttributionPolicyFactory(...propNames: string[]): () => AttributionPolicy;
 
 // @internal
 export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemoveMsg;
@@ -400,7 +402,6 @@ export interface IMergeTreeDeltaOpArgs {
     readonly groupOp?: IMergeTreeGroupMsg;
     readonly op: IMergeTreeOp;
     readonly sequencedMessage?: ISequencedDocumentMessage;
-    readonly stashed?: boolean;
 }
 
 // @alpha @deprecated (undocumented)

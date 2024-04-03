@@ -4,11 +4,12 @@
  */
 
 import { Static, Type } from "@sinclair/typebox";
-import { EncodedSchemaChange, EncodedModularChangeset } from "../feature-libraries/index.js";
+
+import { JsonCompatibleReadOnlySchema } from "../util/index.js";
 
 export const EncodedSharedTreeInnerChange = Type.Object({
-	schema: Type.Optional(EncodedSchemaChange),
-	data: Type.Optional(EncodedModularChangeset),
+	schema: Type.Optional(JsonCompatibleReadOnlySchema),
+	data: Type.Optional(JsonCompatibleReadOnlySchema),
 });
 
 export type EncodedSharedTreeInnerChange = Static<typeof EncodedSharedTreeInnerChange>;

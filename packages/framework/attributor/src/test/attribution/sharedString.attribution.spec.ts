@@ -3,47 +3,56 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "node:path";
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { strict as assert } from "node:assert";
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import * as path from "node:path";
+
 import {
 	type AcceptanceCondition,
 	type BaseFuzzTestState,
+	type Generator,
+	type IRandom,
+	type Reducer,
 	chain,
 	createWeightedGenerator,
 	done,
-	type Generator,
 	generatorFromArray,
 	interleave,
-	type IRandom,
 	makeRandom,
 	performFuzzActions,
-	type Reducer,
 	take,
 } from "@fluid-private/stochastic-test-utils";
-import {
-	MockFluidDataStoreRuntime,
-	MockStorage,
-	MockContainerRuntimeFactoryForReconnection,
-	type MockContainerRuntimeForReconnection,
-} from "@fluidframework/test-runtime-utils";
+import { type IAudience } from "@fluidframework/container-definitions";
 import {
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
-	type Jsonable,
 } from "@fluidframework/datastore-definitions";
-import { type IClient, type ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { type IAudience } from "@fluidframework/container-definitions";
-import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
-import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
-import { type IAttributor, OpStreamAttributor } from "../../attributor";
+import { type Jsonable } from "@fluidframework/datastore-definitions/internal";
+import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
+import {
+	type IClient,
+	type ISequencedDocumentMessage,
+	type ISummaryTree,
+	SummaryType,
+} from "@fluidframework/protocol-definitions";
+import { SharedString, SharedStringFactory } from "@fluidframework/sequence/internal";
+import {
+	MockContainerRuntimeFactoryForReconnection,
+	type MockContainerRuntimeForReconnection,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { type IAttributor, OpStreamAttributor } from "../../attributor.js";
 import {
 	AttributorSerializer,
+	type Encoder,
 	chain as chainEncoders,
 	deltaEncoder,
-	type Encoder,
-} from "../../encoders";
-import { makeLZ4Encoder } from "../../lz4Encoder";
+} from "../../encoders.js";
+import { makeLZ4Encoder } from "../../lz4Encoder.js";
+
+import { _dirname } from "./dirname.cjs";
 
 function makeMockAudience(clientIds: string[]): IAudience {
 	const clients = new Map<string, IClient>();
@@ -324,7 +333,7 @@ function createSharedString(
 	);
 }
 
-const directory = path.join(__dirname, "../../../src/test/attribution/documents");
+const directory = path.join(_dirname, "../../../src/test/attribution/documents");
 
 interface TestPaths {
 	directory: string;
@@ -506,6 +515,18 @@ function assertSerializableSummary(
 			}
 		}
 	}
+}
+
+interface ISummaryTreeWithCatchupOps {
+	tree: {
+		content: {
+			tree: {
+				catchupOps: {
+					content: string | ISequencedDocumentMessage[];
+				};
+			};
+		};
+	};
 }
 
 const summaryFromState = async (state: FuzzTestState): Promise<SerializableISummaryTree> => {
@@ -694,8 +715,27 @@ describe("SharedString Attribution", () => {
 
 				for (const { filename, factory } of dataGenerators) {
 					it(`snapshot at ${filename}`, async () => {
-						const expected = readJson(path.join(paths.directory, filename));
-						const actual = await summaryFromState(factory(operations));
+						const expected = readJson(
+							path.join(paths.directory, filename),
+						) as ISummaryTreeWithCatchupOps;
+						const actual = (await summaryFromState(
+							factory(operations),
+						)) as unknown as ISummaryTreeWithCatchupOps;
+
+						assert.strictEqual(
+							typeof actual.tree.content?.tree?.catchupOps?.content,
+							"string",
+							"invalid catchupOps in produced summary",
+						);
+
+						// Parse the stringified op array into the actual op array so we can deep compare better
+						actual.tree.content.tree.catchupOps.content = JSON.parse(
+							actual.tree.content.tree.catchupOps.content as string,
+						) as ISequencedDocumentMessage[];
+						expected.tree.content.tree.catchupOps.content = JSON.parse(
+							expected.tree.content.tree.catchupOps.content as string,
+						) as ISequencedDocumentMessage[];
+
 						assert.deepEqual(actual, expected);
 					});
 				}

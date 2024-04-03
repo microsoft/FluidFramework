@@ -8,24 +8,28 @@
  * implementations for our DDSs.
  */
 
-import { SharedCell } from "@fluidframework/cell";
-import { SharedCounter } from "@fluidframework/counter";
-import { type IDirectory, SharedDirectory, SharedMap } from "@fluidframework/map";
-import { SharedMatrix } from "@fluidframework/matrix";
-import { SharedString } from "@fluidframework/sequence";
-import { SharedTree, type ISharedTree, encodeTreeSchema } from "@fluidframework/tree";
+import { SharedCell } from "@fluidframework/cell/internal";
+import { SharedCounter } from "@fluidframework/counter/internal";
+import { type ISharedMap, SharedMap } from "@fluidframework/map";
+import { type IDirectory, SharedDirectory } from "@fluidframework/map/internal";
+import { SharedMatrix } from "@fluidframework/matrix/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
-import { EditType } from "../CommonInterfaces";
-import { type VisualizeChildData, type VisualizeSharedObject } from "./DataVisualization";
+import type { ISharedTree } from "@fluidframework/tree/internal";
+import { SharedTree, encodeTreeSchema } from "@fluidframework/tree/internal";
+
+import { EditType } from "../CommonInterfaces.js";
+
+import { type VisualizeChildData, type VisualizeSharedObject } from "./DataVisualization.js";
 import {
 	type FluidObjectNode,
 	type FluidObjectTreeNode,
 	type FluidObjectValueNode,
 	type FluidUnknownObjectNode,
-	VisualNodeKind,
 	type VisualChildNode,
+	VisualNodeKind,
 	type VisualTreeNode,
-} from "./VisualTree";
+} from "./VisualTree.js";
 
 /**
  * Default {@link VisualizeSharedObject} for {@link SharedCell}.
@@ -164,7 +168,7 @@ export const visualizeSharedMap: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectTreeNode> => {
-	const sharedMap = sharedObject as SharedMap;
+	const sharedMap = sharedObject as ISharedMap;
 
 	const children: Record<string, VisualChildNode> = {};
 	for (const [key, value] of sharedMap) {

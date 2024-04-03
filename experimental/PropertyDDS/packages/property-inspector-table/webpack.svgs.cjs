@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-const fluidRoute = require("@fluid-tools/webpack-fluid-loader");
 const path = require("path");
 const { merge } = require("webpack-merge");
 const webpack = require("webpack");
@@ -12,7 +11,7 @@ module.exports = (env) => {
 	return {
 		mode: "production",
 		entry: {
-			main: "./assets/icons/SVGStoreIcons/index.js",
+			main: "./assets/icons/SVGStoreIcons/index.cjs",
 		},
 		resolve: {
 			extensions: [".ts", ".tsx", ".js"],
@@ -27,14 +26,14 @@ module.exports = (env) => {
 						},
 						{
 							loader: require.resolve("svgo-loader"),
-							options: require("./svgo.plugins.js"),
+							options: require("./svgo.plugins.cjs"),
 						},
 					],
 				},
 			],
 		},
 		output: {
-			filename: "./index.js",
+			filename: "./index.cjs",
 			path: path.resolve(__dirname, "dist", "assets", "icons", "SVGStoreIcons"),
 		},
 	};

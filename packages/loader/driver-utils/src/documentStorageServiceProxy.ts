@@ -10,7 +10,7 @@ import {
 	ISnapshot,
 	ISnapshotFetchOptions,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	ICreateBlobResponse,
 	ISnapshotTree,
@@ -18,7 +18,7 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { UsageError } from "@fluidframework/telemetry-utils";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * @internal
@@ -32,10 +32,6 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
 
 	public get policies() {
 		return this._policies ?? this.internalStorageService.policies;
-	}
-
-	public get repositoryUrl(): string {
-		return this.internalStorageService.repositoryUrl;
 	}
 
 	constructor(protected readonly internalStorageService: IDocumentStorageService) {}

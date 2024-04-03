@@ -4,8 +4,8 @@
  */
 
 import {
-	jsonableTreeFromCursor,
 	cursorForJsonableTreeNode,
+	jsonableTreeFromCursor,
 } from "../../feature-libraries/index.js";
 import { testGeneralPurposeTreeCursor } from "../cursorTestSuite.js";
 

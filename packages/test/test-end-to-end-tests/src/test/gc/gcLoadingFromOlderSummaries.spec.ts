@@ -4,25 +4,27 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer } from "@fluidframework/container-definitions";
+
+import {
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+	itExpects,
+} from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
-	createTestConfigProvider,
-	createSummarizer,
 	ITestContainerConfig,
 	ITestObjectProvider,
+	createSummarizer,
+	createTestConfigProvider,
 	summarizeNow,
 	timeoutPromise,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
-import {
-	describeCompat,
-	ITestDataObject,
-	itExpects,
-	TestDataObjectType,
-} from "@fluid-private/test-version-utils";
+} from "@fluidframework/test-utils/internal";
+
 import { defaultGCConfig } from "./gcTestConfigs.js";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
@@ -38,6 +40,7 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 
 	const configProvider = createTestConfigProvider();
 	configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 10);
+	configProvider.set("Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState", false);
 	const testConfig: ITestContainerConfig = {
 		...defaultGCConfig,
 		loaderProps: { configProvider },
@@ -98,7 +101,10 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 
 	itExpects(
 		"disposes the summarizer when loading from an older summary",
-		[{ eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed" }],
+		[
+			{ eventName: "fluid:telemetry:Summarizer:Running:LatestSummaryRefSeqNumMismatch" },
+			{ eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed" },
+		],
 		async () => {
 			const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 

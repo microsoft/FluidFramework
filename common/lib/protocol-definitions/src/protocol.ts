@@ -346,7 +346,7 @@ export interface ISignalMessageBase {
 	type?: string;
 
 	/**
-	 * Counts the number of signals sent by the client
+	 * Counts the number of signals sent by the sending client.
 	 */
 	clientConnectionNumber?: number;
 
@@ -354,6 +354,12 @@ export interface ISignalMessageBase {
 	 * Sequence number that indicates when the signal was created in relation to the delta stream
 	 */
 	referenceSequenceNumber?: number;
+
+	/**
+	 * Client ID of the singular client the signal is being (or has been) sent to.
+	 * May only be specified when IConnect.supportedFeatures['submit_signals_v2'] is true, will throw otherwise.
+	 */
+	targetClientId?: string;
 }
 
 /**
@@ -370,15 +376,10 @@ export interface ISignalMessage extends ISignalMessageBase {
 }
 
 /**
- * Interface for signals sent by clients to the server when submit_signals_v2 is enabled.
+ * Interface for signals sent by clients to the server.
  * @internal
  */
-export interface ISentSignalMessage extends ISignalMessageBase {
-	/**
-	 * When specified, the signal is only sent to the provided client id
-	 */
-	targetClientId?: string;
-}
+export type ISentSignalMessage = ISignalMessageBase;
 
 /**
  * @alpha

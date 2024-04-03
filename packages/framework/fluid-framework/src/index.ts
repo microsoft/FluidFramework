@@ -14,7 +14,8 @@ export type {
 	ConnectionState as ConnectionStateType, // TODO: deduplicate ConnectionState types
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-export { AttachState, ContainerErrorTypes } from "@fluidframework/container-definitions";
+export { AttachState } from "@fluidframework/container-definitions";
+export { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 export { DriverErrorTypes } from "@fluidframework/driver-definitions";
 export { ConnectionState } from "@fluidframework/container-loader";
 export type {
@@ -30,66 +31,15 @@ export type {
 	IServiceAudienceEvents,
 	LoadableObjectClass,
 	LoadableObjectClassRecord,
-	LoadableObjectCtor,
 	MemberChangedListener,
 	Myself,
-	SharedObjectClass,
 } from "@fluidframework/fluid-static";
 export type { ISharedMap, ISharedMapEvents, IValueChanged } from "@fluidframework/map";
 export { SharedMap } from "@fluidframework/map";
 
-export type {
-	AllowedTypes,
-	ApplyKind,
-	ArrayToUnion,
-	Events,
-	ExtractItemType,
-	FlexList,
-	FlexListToUnion,
-	IDisposable,
-	ImplicitAllowedTypes,
-	ImplicitFieldSchema,
-	InsertableObjectFromSchemaRecord,
-	InsertableTreeFieldFromImplicitField,
-	InsertableTreeNodeFromImplicitAllowedTypes,
-	InsertableTypedNode,
-	IsEvent,
-	ISubscribable,
-	ITree,
-	LazyItem,
-	MakeNominal,
-	NodeBuilderData,
-	NodeFromSchema,
-	ObjectFromSchemaRecord,
-	RestrictiveReadonlyRecord,
-	TreeApi,
-	TreeArrayNodeBase,
-	TreeFieldFromImplicitField,
-	TreeLeafValue,
-	TreeMapNode,
-	TreeNodeEvents,
-	TreeNodeFromImplicitAllowedTypes,
-	TreeNodeSchema,
-	TreeNodeSchemaClass,
-	TreeNodeSchemaCore,
-	TreeNodeSchemaNonClass,
-	TreeView,
-	TreeViewEvents,
-	Unhydrated,
-	WithType,
-} from "@fluidframework/tree";
-export {
-	disposeSymbol,
-	FieldKind,
-	FieldSchema,
-	IterableTreeArrayContent,
-	NodeKind,
-	SchemaFactory,
-	SharedTree,
-	Tree,
-	TreeArrayNode,
-	TreeConfiguration,
-	TreeNode,
-	TreeStatus,
-	type,
-} from "@fluidframework/tree";
+// Let the tree package manage its own API surface, we will simply reflect it here.
+// Note: this only surfaces the `@public` API items from the tree package. If the `@beta` and `@alpha` items are
+// desired, they can be added by re-exporting from one of the package's aliased export paths instead (e.g. `tree
+// alpha` to surface everything `@alpha` and higher).
+// eslint-disable-next-line no-restricted-syntax
+export * from "@fluidframework/tree";

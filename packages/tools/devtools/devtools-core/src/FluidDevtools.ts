@@ -3,27 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/telemetry-utils";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { type ContainerDevtoolsProps, ContainerDevtools } from "./ContainerDevtools";
-import { type IContainerDevtools } from "./IContainerDevtools";
+import { type ContainerKey } from "./CommonInterfaces.js";
+import { ContainerDevtools, type ContainerDevtoolsProps } from "./ContainerDevtools.js";
+import { type IDevtoolsLogger } from "./DevtoolsLogger.js";
+import { type DevtoolsFeatureFlags } from "./Features.js";
+import { type IContainerDevtools } from "./IContainerDevtools.js";
+import { type IFluidDevtools } from "./IFluidDevtools.js";
 import {
 	ContainerList,
 	DevtoolsDisposed,
 	DevtoolsFeatures,
 	GetContainerList,
 	GetDevtoolsFeatures,
-	handleIncomingWindowMessage,
-	type InboundHandlers,
 	type ISourcedDevtoolsMessage,
+	type InboundHandlers,
 	type MessageLoggingOptions,
+	SetUnsampledTelemetry,
+	handleIncomingWindowMessage,
 	postMessagesToWindow,
-} from "./messaging";
-import { type IFluidDevtools } from "./IFluidDevtools";
-import { type DevtoolsFeatureFlags } from "./Features";
-import { type IDevtoolsLogger } from "./DevtoolsLogger";
-import { type ContainerKey } from "./CommonInterfaces";
-import { pkgVersion as devtoolsVersion } from "./packageVersion";
+} from "./messaging/index.js";
+import { pkgVersion as devtoolsVersion } from "./packageVersion.js";
 
 /**
  * Message logging options used by the root devtools.
@@ -48,6 +49,11 @@ export const useAfterDisposeErrorText =
 export const accessBeforeInitializeErrorText = "Devtools have not yet been initialized.";
 
 /**
+ * Key for sessionStorage that's used to toggle unsampled telemetry.
+ */
+const unsampledTelemetryKey = "Fluid.Telemetry.DisableSampling";
+
+/**
  * Error text thrown when a user attempts to register a {@link IContainerDevtools} instance for an ID that is already
  * registered with the {@link IFluidDevtools}.
  *
@@ -62,7 +68,7 @@ export function getContainerAlreadyRegisteredErrorText(containerKey: ContainerKe
 
 /**
  * Properties for configuring the Devtools.
- * @internal
+ * @beta
  */
 export interface FluidDevtoolsProps {
 	/**
@@ -100,6 +106,8 @@ export interface FluidDevtoolsProps {
  * - {@link GetDevtoolsFeatures.Message}: When received, {@link DevtoolsFeatures.Message} will be posted in response.
  *
  * - {@link GetContainerList.Message}: When received, {@link ContainerList.Message} will be posted in response.
+ *
+ * -{@link SetUnsampledTelemetry.Message}: When received, the unsampled telemetry flag will be toggled.
  *
  * TODO: Document others as they are added.
  *
@@ -145,6 +153,13 @@ export class FluidDevtools implements IFluidDevtools {
 			this.postContainerList();
 			return true;
 		},
+		[SetUnsampledTelemetry.MessageType]: async (message) => {
+			const newValue = (message as SetUnsampledTelemetry.Message).data.unsampledTelemetry;
+			globalThis.sessionStorage?.setItem(unsampledTelemetryKey, String(newValue));
+			this.postSupportedFeatures();
+			window.location.reload();
+			return true;
+		},
 	};
 
 	/**
@@ -174,11 +189,14 @@ export class FluidDevtools implements IFluidDevtools {
 	 */
 	private readonly postSupportedFeatures = (): void => {
 		const supportedFeatures = this.getSupportedFeatures();
+		const unsampledTelemetry =
+			globalThis.sessionStorage?.getItem(unsampledTelemetryKey) === "true";
 		postMessagesToWindow(
 			devtoolsMessageLoggingOptions,
 			DevtoolsFeatures.createMessage({
 				features: supportedFeatures,
 				devtoolsVersion,
+				unsampledTelemetry,
 			}),
 		);
 	};
@@ -395,7 +413,7 @@ export class FluidDevtools implements IFluidDevtools {
  *
  * It is automatically disposed on webpage unload, but it can be closed earlier by calling `dispose`
  * on the returned handle.
- * @internal
+ * @beta
  */
 export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools {
 	return FluidDevtools.initialize(props);

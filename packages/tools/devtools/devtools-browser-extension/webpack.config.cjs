@@ -44,6 +44,11 @@ module.exports = {
 		publicPath: "",
 	},
 	resolve: {
+		extensionAlias: {
+			".cjs": [".cts", ".cjs"],
+			".js": [".ts", ".tsx", ".js"],
+			".mjs": [".mts", ".mjs"],
+		},
 		extensions: [".js", ".jsx", ".ts", ".tsx"],
 	},
 	module: {
@@ -55,6 +60,8 @@ module.exports = {
 			{
 				test: /\.m?js/,
 				resolve: {
+					// Required until all transitive dependencies are fully ESM.
+					// https://webpack.js.org/configuration/module/#resolvefullyspecified
 					fullySpecified: false,
 				},
 			},
@@ -63,6 +70,8 @@ module.exports = {
 				loader: "ts-loader",
 				exclude: /node_modules/,
 				resolve: {
+					// Required until all transitive dependencies are fully ESM.
+					// https://webpack.js.org/configuration/module/#resolvefullyspecified
 					fullySpecified: false,
 				},
 			},

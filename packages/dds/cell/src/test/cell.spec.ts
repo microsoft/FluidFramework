@@ -4,18 +4,21 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
 	type MockContainerRuntimeForReconnection,
-	MockStorage,
+	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
-} from "@fluidframework/test-runtime-utils";
-import { SharedCell } from "../cell";
-import { CellFactory } from "../cellFactory";
-import { type ISharedCell, type ICellOptions } from "../interfaces";
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { SharedCell } from "../cell.js";
+import { CellFactory } from "../cellFactory.js";
+import { type ICellOptions, type ISharedCell } from "../interfaces.js";
 
 function createConnectedCell(
 	id: string,
@@ -143,7 +146,7 @@ describe("Cell", () => {
 				await cell2.load(services2);
 
 				// Now connect the first SharedCell
-				dataStoreRuntime1.local = false;
+				dataStoreRuntime1.setAttachState(AttachState.Attached);
 
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				const services1 = {

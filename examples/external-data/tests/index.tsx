@@ -8,8 +8,8 @@ import ReactDOM from "react-dom";
 
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
-import { BaseDocumentContainerRuntimeFactory } from "../src/model/index.js";
 import type { IAppModel, ITaskList } from "../src/model-interface/index.js";
+import { BaseDocumentContainerRuntimeFactory } from "../src/model/index.js";
 import { TaskListView } from "../src/view/index.js";
 
 /**

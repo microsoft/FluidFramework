@@ -3,17 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { assert } from "@fluidframework/core-utils";
-import { IFluidLoadable, IFluidHandle } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore";
+import { EventEmitter } from "@fluid-example/example-utils";
+import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
+import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore/internal";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { SharedString, ReferenceType, reservedTileLabelsKey } from "@fluidframework/sequence";
+} from "@fluidframework/runtime-definitions/internal";
+import {
+	ReferenceType,
+	SharedString,
+	reservedTileLabelsKey,
+} from "@fluidframework/sequence/internal";
 
 // eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import
 import "simplemde/dist/simplemde.min.css";

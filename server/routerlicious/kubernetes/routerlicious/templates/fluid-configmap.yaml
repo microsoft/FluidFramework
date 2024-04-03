@@ -95,10 +95,8 @@ data:
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
             "maxMessageSize": "16KB",
-            "maxNumberOfClientsPerDocument": {{ .Values.alfred.maxNumberOfClientsPerDocument }},
             "numberOfMessagesPerTrace": {{ .Values.alfred.numberOfMessagesPerTrace }},
             "sessionStickinessDurationMs": {{ .Values.alfred.sessionStickinessDurationMs }},
-            "enableConnectionCountLogging": {{ .Values.alfred.enableConnectionCountLogging }},
             "ignoreEphemeralFlag": {{ .Values.alfred.ignoreEphemeralFlag }},
             "throttling": {
                 "restCallsPerTenant": {
@@ -111,11 +109,7 @@ data:
                     "createDoc": {{ toJson .Values.alfred.throttling.restCallsPerCluster.createDoc }},
                     "getDeltas": {{ toJson .Values.alfred.throttling.restCallsPerCluster.getDeltas }},
                     "getSession": {{ toJson .Values.alfred.throttling.restCallsPerCluster.getSession }}
-                },
-                "socketConnectionsPerTenant": {{ toJson .Values.alfred.throttling.socketConnectionsPerTenant }},
-                "socketConnectionsPerCluster": {{ toJson .Values.alfred.throttling.socketConnectionsPerCluster }},
-                "submitOps": {{ toJson .Values.alfred.throttling.submitOps }},
-                "submitSignal": {{ toJson .Values.alfred.throttling.submitSignal }}
+                }
             },
             "topic": "{{ .Values.kafka.topics.rawdeltas }}",
             "bucket": "snapshots",
@@ -127,15 +121,36 @@ data:
                 {{ toJson . }}{{- if ne $i $lastIndex -}}, {{ end }}
                 {{- end }}
             ],
-            "socketIoAdapter" : {
-                "enableCustomSocketIoAdapter": {{ .Values.alfred.socketIoAdapter.enableCustomSocketIoAdapter }},
-                "shouldDisableDefaultNamespace": {{ .Values.alfred.socketIoAdapter.shouldDisableDefaultNamespace }}
-            },
             "enforceServerGeneratedDocumentId": {{ .Values.alfred.enforceServerGeneratedDocumentId }},
-            "socketIo" : {
-                "perMessageDeflate": {{ .Values.alfred.socketIo.perMessageDeflate}}
-            },
             "getDeltasRequestMaxOpsRange": {{ .Values.alfred.getDeltasRequestMaxOpsRange }}
+        },
+        "nexus": {
+            "kafkaClientId": "{{ template "nexus.fullname" . }}",
+            "maxMessageSize": "16KB",
+            "maxNumberOfClientsPerDocument": {{ .Values.nexus.maxNumberOfClientsPerDocument }},
+            "numberOfMessagesPerTrace": {{ .Values.nexus.numberOfMessagesPerTrace }},
+            "throttling": {
+                "socketConnectionsPerTenant": {{ toJson .Values.nexus.throttling.socketConnectionsPerTenant }},
+                "socketConnectionsPerCluster": {{ toJson .Values.nexus.throttling.socketConnectionsPerCluster }},
+                "submitOps": {{ toJson .Values.nexus.throttling.submitOps }},
+                "submitSignal": {{ toJson .Values.nexus.throttling.submitSignal }}
+            },
+            "topic": "{{ .Values.kafka.topics.rawdeltas }}",
+            "bucket": "snapshots",
+            "key": "{{ .Values.nexus.key }}",
+            "tenants": [
+                {{- $lastIndex := sub (len .Values.nexus.tenants) 1}}
+                {{- range $i, $tenant := .Values.nexus.tenants }}
+                {{ toJson . }}{{- if ne $i $lastIndex -}}, {{ end }}
+                {{- end }}
+            ],
+            "socketIoAdapter" : {
+                "enableCustomSocketIoAdapter": {{ .Values.nexus.socketIoAdapter.enableCustomSocketIoAdapter }},
+                "shouldDisableDefaultNamespace": {{ .Values.nexus.socketIoAdapter.shouldDisableDefaultNamespace }}
+            },
+            "socketIo" : {
+                "perMessageDeflate": {{ .Values.nexus.socketIo.perMessageDeflate}}
+            }
         },
         "client": {
             "type": "browser",
@@ -171,7 +186,10 @@ data:
             "verifyLastOpPersistence": {{ .Values.scribe.verifyLastOpPersistence }},
             "restartOnCheckpointFailure": {{ .Values.scribe.restartOnCheckpointFailure }},
             "disableTransientTenantFiltering": {{ .Values.scribe.disableTransientTenantFiltering }},
-            "maxLogtailLength": {{ .Values.scribe.maxLogtailLength }}
+            "maxLogtailLength": {{ .Values.scribe.maxLogtailLength }},
+            "scrubUserDataInGlobalCheckpoints": {{ .Values.scribe.scrubUserDataInGlobalCheckpoints }},
+            "scrubUserDataInLocalCheckpoints": {{ .Values.scribe.scrubUserDataInLocalCheckpoints }},
+            "scrubUserDataInSummaries": {{ .Values.scribe.scrubUserDataInSummaries }}
         },
         "system": {
             "httpServer": {
@@ -214,7 +232,9 @@ data:
             "groupId": "{{ template "scriptorium.fullname" . }}",
             "checkpointBatchSize": 1,
             "checkpointTimeIntervalMsec": 1000,
-            "restartOnCheckpointFailure": {{ .Values.scriptorium.restartOnCheckpointFailure }}
+            "restartOnCheckpointFailure": {{ .Values.scriptorium.restartOnCheckpointFailure }},
+            "logSavedOpsTimeIntervalMs": {{ .Values.scriptorium.logSavedOpsTimeIntervalMs }},
+            "opsCountTelemetryEnabled": {{ .Values.scriptorium.opsCountTelemetryEnabled }}
         },
         "riddler": {
             "port": 5000

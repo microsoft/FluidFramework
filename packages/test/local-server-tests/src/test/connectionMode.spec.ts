@@ -4,24 +4,26 @@
  */
 
 import { strict as assert } from "assert";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { ConnectionState, Loader } from "@fluidframework/container-loader";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { SharedMap } from "@fluidframework/map";
+
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader";
+import { Loader } from "@fluidframework/container-loader/internal";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
+import { type ISharedMap, SharedMap } from "@fluidframework/map";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
-	createAndAttachContainer,
-	waitForContainerConnection,
 	ITestFluidObject,
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	TestFluidObjectFactory,
-} from "@fluidframework/test-utils";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+	createAndAttachContainer,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 describe("Logging Last Connection Mode ", () => {
 	const documentId = "connectionModeTest";
@@ -36,7 +38,7 @@ describe("Logging Last Connection Mode ", () => {
 	let loaderContainerTracker: LoaderContainerTracker;
 	let container: IContainer;
 	let dataObject: ITestFluidObject;
-	let sharedMap: SharedMap;
+	let sharedMap: ISharedMap;
 
 	/**
 	 * Waits for the "connected" event from the given container.
@@ -97,7 +99,7 @@ describe("Logging Last Connection Mode ", () => {
 		// Create the first container, component and DDSes.
 		container = await createContainer();
 		dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-		sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
+		sharedMap = await dataObject.getSharedObject<ISharedMap>(mapId);
 
 		// Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
 		// re-sent. Do it here so that the extra events don't mess with rest of the test.

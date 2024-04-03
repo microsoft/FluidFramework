@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-
 import {
 	Button,
 	Dropdown,
@@ -16,18 +14,20 @@ import {
 	shorthands,
 	tokens,
 } from "@fluentui/react-components";
+import { type Serializable } from "@fluidframework/datastore-definitions/internal";
 import {
 	DataEdit,
 	type EditData,
 	EditType,
 	type FluidObjectValueNode,
 	type HasContainerKey,
-} from "@fluidframework/devtools-core";
+} from "@fluidframework/devtools-core/internal";
+import React from "react";
 
-import { type Serializable } from "@fluidframework/datastore-definitions";
-import { useMessageRelay } from "../../MessageRelayContext";
-import { TreeHeader } from "./TreeHeader";
-import { type HasLabel } from "./CommonInterfaces";
+import { useMessageRelay } from "../../MessageRelayContext.js";
+
+import { type HasLabel } from "./CommonInterfaces.js";
+import { TreeHeader } from "./TreeHeader.js";
 
 /**
  * Input to {@link EditableView}

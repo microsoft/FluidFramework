@@ -4,7 +4,10 @@
  */
 
 module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
+	extends: [
+		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
+		"prettier",
+	],
 	parserOptions: {
 		project: ["./tsconfig.json"],
 	},
@@ -22,6 +25,8 @@ module.exports = {
 				caughtErrorsIgnorePattern: "^_",
 			},
 		],
+		// This rule can be removed once the client release group has eslint-config-fluid 5.2.0+
+		"import/order": "off",
 	},
 	overrides: [
 		{

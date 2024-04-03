@@ -4,31 +4,32 @@
  */
 
 import { strict as assert } from "assert";
-import type { IDataObjectProps } from "@fluidframework/aqueduct";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+
+import { type CompatApis, describeCompat } from "@fluid-private/test-version-utils";
+import type { IDataObjectProps } from "@fluidframework/aqueduct/internal";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { IFluidHandle, IRequestHeader } from "@fluidframework/core-interfaces";
-import type { SharedCounter } from "@fluidframework/counter";
+import type { SharedCounter } from "@fluidframework/counter/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import type { ISharedMap } from "@fluidframework/map";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import {
-	createAndAttachContainer,
-	createLoader,
-	createDocumentId,
-	LoaderContainerTracker,
-	ITestObjectProvider,
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
+	ITestObjectProvider,
+	LoaderContainerTracker,
+	createAndAttachContainer,
+	createDocumentId,
+	createLoader,
 	createSummarizerFromFactory,
-} from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import type { SharedMap } from "@fluidframework/map";
+} from "@fluidframework/test-utils/internal";
 
 const counterKey = "count";
 
 // REVIEW: enable compat testing?
-describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis) => {
 	const { SharedCounter } = apis.dds;
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
@@ -338,7 +339,7 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis) => {
 		};
 		const created = await provider.makeTestContainer(testContainerConfig);
 		const do1 = (await created.getEntryPoint()) as ITestFluidObject;
-		const map1 = await do1.getSharedObject<SharedMap>(mapId);
+		const map1 = await do1.getSharedObject<ISharedMap>(mapId);
 
 		const headers: IRequestHeader = {
 			[LoaderHeader.cache]: false,
@@ -353,7 +354,7 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis) => {
 		const do2 = (await loaded.getEntryPoint()) as ITestFluidObject;
 		loaded.connect();
 		loaded.forceReadonly?.(true);
-		const map2 = await do2.getSharedObject<SharedMap>(mapId);
+		const map2 = await do2.getSharedObject<ISharedMap>(mapId);
 		map2.set("key1", "1");
 		map2.set("key2", "2");
 		await provider.ensureSynchronized();

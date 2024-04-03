@@ -4,8 +4,11 @@
  */
 
 import { strict as assert } from "node:assert";
-import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { PromiseCache } from "@fluidframework/core-utils";
+
+import type { SinonFakeTimers } from "sinon";
+import { useFakeTimers } from "sinon";
+
+import { PromiseCache } from "@fluidframework/core-utils/internal";
 
 describe("PromiseCache", () => {
 	describe("Basic Cache Mechanism", () => {

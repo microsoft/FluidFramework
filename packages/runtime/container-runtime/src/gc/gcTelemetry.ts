@@ -3,27 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryGenericEvent } from "@fluidframework/core-interfaces";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
-	generateStack,
+	type ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
-	MonitoringContext,
-	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
-import { RuntimeHeaderData } from "../containerRuntime";
-import { ICreateContainerMetadata } from "../summary";
 import {
-	GCNodeType,
-	UnreferencedState,
-	IGarbageCollectorConfigs,
-	disableTombstoneKey,
-	throwOnTombstoneUsageKey,
-	throwOnTombstoneLoadOverrideKey,
-	runSweepKey,
+	MonitoringContext,
+	generateStack,
+	tagCodeArtifacts,
+} from "@fluidframework/telemetry-utils/internal";
+
+import { RuntimeHeaderData } from "../containerRuntime.js";
+import { ICreateContainerMetadata } from "../summary/index.js";
+
+import {
 	GCFeatureMatrix,
-} from "./gcDefinitions";
-import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
+	GCNodeType,
+	IGarbageCollectorConfigs,
+	UnreferencedState,
+	disableTombstoneKey,
+	runSweepKey,
+	throwOnTombstoneLoadOverrideKey,
+	throwOnTombstoneUsageKey,
+} from "./gcDefinitions.js";
+import { getGCVersionInEffect } from "./gcHelpers.js";
+import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker.js";
 
 type NodeUsageType = "Changed" | "Loaded" | "Revived";
 
@@ -413,7 +418,7 @@ export class GCTelemetryTracker {
  */
 export function sendGCUnexpectedUsageEvent(
 	mc: MonitoringContext,
-	event: ITelemetryGenericEvent & {
+	event: ITelemetryGenericEventExt & {
 		category: "error" | "generic";
 		gcTombstoneEnforcementAllowed: boolean | undefined;
 	},
@@ -429,6 +434,7 @@ export function sendGCUnexpectedUsageEvent(
 	event.sweepFlags = JSON.stringify({
 		EnableSweepFlag: mc.config.getBoolean(runSweepKey),
 	});
+	event.gcVersion = getGCVersionInEffect(mc.config);
 
 	mc.logger.sendTelemetryEvent(event, error);
 }

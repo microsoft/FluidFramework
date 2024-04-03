@@ -4,24 +4,25 @@
  */
 
 import { strict as assert } from "assert";
+
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import {
 	IContainer,
 	IFluidCodeDetails,
 	IFluidCodeDetailsComparer,
 	IFluidPackage,
 	isFluidPackage,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
+import type { ISharedMap } from "@fluidframework/map";
 import {
-	createAndAttachContainer,
-	createDocumentId,
-	getContainerEntryPointBackCompat,
 	ITestFluidObject,
 	ITestObjectProvider,
 	SupportedExportInterfaces,
 	TestFluidObjectFactory,
-} from "@fluidframework/test-utils";
-import type { ISharedMap } from "@fluidframework/map";
-import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
+	createAndAttachContainer,
+	createDocumentId,
+	getContainerEntryPointBackCompat,
+} from "@fluidframework/test-utils/internal";
 
 interface ICodeProposalTestPackage extends IFluidPackage {
 	version: number;

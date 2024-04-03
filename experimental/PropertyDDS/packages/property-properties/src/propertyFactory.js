@@ -427,7 +427,6 @@ class PropertyFactory {
 	 * listener will be notified.
 	 * @param {function} eventListener - The function to call when the "type" of event
 	 * is emitted.
-	 * @public
 	 */
 	addListener(eventName, eventListener) {
 		this._eventEmitter.addListener(eventName, eventListener);
@@ -440,7 +439,6 @@ class PropertyFactory {
 	 * @param {string} eventName - A string representing the type of event on which the
 	 * listener was attached.
 	 * @param {function} eventListener - The function to remove from the list of functions
-	 * @public
 	 */
 	removeListener(eventName, eventListener) {
 		this._eventEmitter.removeListener(eventName, eventListener);
@@ -2225,7 +2223,6 @@ class PropertyFactory {
 
 	/**
 	 * Initializes the schema store.
-	 * @public
 	 * @param {Object} in_options - the store settings.
 	 * @param {getBearerTokenFn} in_options.getBearerToken - Function that accepts a callback.
 	 * Function that should be called with an error or the OAuth2 bearer token representing the user.
@@ -2288,7 +2285,6 @@ class PropertyFactory {
 	/**
 	 * Tries to resolve dependencies after some calls to register() have been made
 	 *
-	 * @public
 	 *
 	 * @returns {Promise} A promise that resolves to an object with the following structure:
 	 *
@@ -2438,7 +2434,6 @@ class PropertyFactory {
 	 * Determines whether the given property is an instance of the property type corresponding to the given native
 	 * property typeid and context.
 	 *
-	 * @public
 	 * @param {property-properties.BaseProperty} in_property - The property to test
 	 * @param {String} in_primitiveTypeid - Native property typeid
 	 * @param {String} in_context - Context of the property

@@ -6,23 +6,23 @@
 import { strict as assert } from "assert";
 
 // Allow importing from this specific file which is being tested:
+
+import { makeCodecFamily } from "../../../codec/index.js";
+import { FieldKindIdentifier, TreeStoredSchema } from "../../../core/index.js";
+import { SchemaBuilder, jsonRoot, jsonSchema, leaf } from "../../../domains/index.js";
+import { typeboxValidator } from "../../../external-utilities/index.js";
+import {
+	allowsRepoSuperset,
+	defaultSchemaPolicy,
+	intoStoredSchema,
+} from "../../../feature-libraries/index.js";
 /* eslint-disable-next-line import/no-internal-modules */
 import { makeSchemaCodec } from "../../../feature-libraries/schema-index/codec.js";
 /* eslint-disable-next-line import/no-internal-modules */
 import { Format } from "../../../feature-libraries/schema-index/format.js";
-
-import { FieldKindIdentifier, TreeStoredSchema } from "../../../core/index.js";
-import { typeboxValidator } from "../../../external-utilities/index.js";
-import { jsonSchema, jsonRoot, SchemaBuilder, leaf } from "../../../domains/index.js";
-import {
-	defaultSchemaPolicy,
-	allowsRepoSuperset,
-	intoStoredSchema,
-} from "../../../feature-libraries/index.js";
-import { makeCodecFamily } from "../../../codec/index.js";
-import { EncodingTestData, makeEncodingTestSuite } from "../../utils.js";
-import { library } from "../../testTrees.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
+import { library } from "../../testTrees.js";
+import { EncodingTestData, makeEncodingTestSuite } from "../../utils.js";
 
 const codec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 

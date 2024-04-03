@@ -3,17 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IBatchMessage } from "@fluidframework/container-definitions";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { CompressionAlgorithms } from "../containerRuntime";
-import { ContainerMessageType } from "../messageTypes";
+import { IBatchMessage } from "@fluidframework/container-definitions/internal";
+
+import { CompressionAlgorithms } from "../containerRuntime.js";
 
 /**
  * Batch message type used internally by the runtime
  */
 export type BatchMessage = IBatchMessage & {
-	localOpMetadata: unknown;
-	type: ContainerMessageType;
+	localOpMetadata?: unknown;
 	referenceSequenceNumber: number;
 	compression?: CompressionAlgorithms;
 };
@@ -59,7 +57,6 @@ export interface IChunkedOp {
 	chunkId: number;
 	totalChunks: number;
 	contents: string;
-	originalType: MessageType | ContainerMessageType;
 	originalMetadata?: Record<string, unknown>;
 	originalCompression?: string;
 }
@@ -72,18 +69,3 @@ export interface IChunkedOp {
  * will make the processor return `Processed`.
  */
 export type ProcessingState = "Processed" | "Skipped" | "Accepted";
-
-/**
- * Return type for functions which process remote messages
- */
-export interface IMessageProcessingResult {
-	/**
-	 * A shallow copy of the input message if processing happened, or
-	 * the original message otherwise
-	 */
-	readonly message: ISequencedDocumentMessage;
-	/**
-	 * Processing result of the input message.
-	 */
-	readonly state: ProcessingState;
-}

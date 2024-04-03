@@ -9,10 +9,10 @@ export type {
 	VisualizeChildData,
 	SharedObjectVisualizers,
 	DataVisualizerEvents,
-} from "./DataVisualization";
-export { DataVisualizerGraph, visualizeChildData, VisualizerNode } from "./DataVisualization";
-export type { Edit, EditData, EditSharedObject, SharedObjectEdit } from "./DataEditing";
-export { defaultEditors } from "./DefaultEditors";
+} from "./DataVisualization.js";
+export { DataVisualizerGraph, visualizeChildData, VisualizerNode } from "./DataVisualization.js";
+export type { Edit, EditData, EditSharedObject, SharedObjectEdit } from "./DataEditing.js";
+export { defaultEditors } from "./DefaultEditors.js";
 export {
 	defaultVisualizers,
 	visualizeSharedCell,
@@ -23,7 +23,7 @@ export {
 	visualizeSharedString,
 	visualizeSharedTree,
 	visualizeUnknownSharedObject,
-} from "./DefaultVisualizers";
+} from "./DefaultVisualizers.js";
 export type {
 	FluidHandleNode,
 	FluidObjectNode,
@@ -41,5 +41,5 @@ export type {
 	VisualTreeNode,
 	VisualValueNode,
 	UnknownObjectNode,
-} from "./VisualTree";
-export { createHandleNode, VisualNodeKind } from "./VisualTree";
+} from "./VisualTree.js";
+export { createHandleNode, VisualNodeKind } from "./VisualTree.js";

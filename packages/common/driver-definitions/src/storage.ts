@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IDisposable,
-	IEventProvider,
 	IErrorEvent,
-	ITelemetryBaseLogger,
 	IEvent,
+	IEventProvider,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import {
+import type {
 	ConnectionMode,
 	IClient,
 	IClientConfiguration,
@@ -26,8 +26,9 @@ import {
 	ITokenClaims,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { IAnyDriverError } from "./driverError";
-import { IResolvedUrl } from "./urlResolver";
+
+import type { IAnyDriverError } from "./driverError.js";
+import type { IResolvedUrl } from "./urlResolver.js";
 
 /**
  * @internal
@@ -144,8 +145,6 @@ export interface IDocumentStorageServicePolicies {
  * @alpha
  */
 export interface IDocumentStorageService extends Partial<IDisposable> {
-	repositoryUrl: string;
-
 	/**
 	 * Policies implemented/instructed by driver.
 	 */
@@ -315,10 +314,11 @@ export interface IDocumentDeltaConnection
 
 	/**
 	 * Submits a new signal to the server
+	 *
+	 * @privateRemarks
+	 * UnknownShouldBe<string> can be string if {@link IDocumentServiceFactory} becomes internal.
 	 */
-	// TODO: Use something other than `any`.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	submitSignal(content: any, targetClientId?: string): void;
+	submitSignal: (content: string, targetClientId?: string) => void;
 }
 
 /**
@@ -509,4 +509,17 @@ export interface ISnapshotFetchOptions {
 	 * container, so specifying version is not necessary for storage services.
 	 */
 	versionId?: string;
+
+	/**
+	 * List of loading groupId of datastores for which the snapshot needs to be fetched. If not provided, content with
+	 * default/missing groupIDs will be requested from the service. It is upto the service, to include snapshot for
+	 * content with groupIds or not. Don't provide anything here for fetching content for initial container boot.
+	 */
+	loadingGroupIds?: string[];
+
+	/**
+	 * Specify if you want default behavior of the driver to fetch the snapshot like lets say simultaneously fetch from
+	 * network and cache or specify FetchSource.noCache to just fetch from network.
+	 */
+	fetchSource?: FetchSource;
 }

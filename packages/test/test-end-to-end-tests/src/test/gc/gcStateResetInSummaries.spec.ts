@@ -4,26 +4,28 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer } from "@fluidframework/container-definitions";
-import { ISummarizer } from "@fluidframework/container-runtime";
+
+import {
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+} from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ISummarizer } from "@fluidframework/container-runtime/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	IContainerRuntimeBase,
 	channelsTreeName,
 	gcTreeKey,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
-	createTestConfigProvider,
 	createSummarizer,
+	createTestConfigProvider,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
-import {
-	describeCompat,
-	ITestDataObject,
-	TestDataObjectType,
-} from "@fluid-private/test-version-utils";
+} from "@fluidframework/test-utils/internal";
+
 import { defaultGCConfig } from "./gcTestConfigs.js";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
@@ -40,6 +42,7 @@ describeCompat("GC state reset in summaries", "NoCompat", (getTestObjectProvider
 
 	const configProvider = createTestConfigProvider();
 	configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 10);
+	configProvider.set("Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState", true);
 
 	/** Creates a new container with the GC enabled / disabled as per gcAllowed param. */
 	const createContainer = async (gcAllowed: boolean): Promise<IContainer> => {

@@ -5,8 +5,12 @@
 
 export {
 	areEqualChangeAtomIds,
+	makeChangeAtomId,
+	asChangeAtomId,
 	mintCommit,
 	GraphCommit,
+	CommitKind,
+	CommitMetadata,
 	RevisionTag,
 	RevisionTagSchema,
 	EncodedRevisionTag,

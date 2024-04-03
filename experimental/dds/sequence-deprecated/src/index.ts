@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export { SharedNumberSequence } from "./sharedNumberSequence";
-export { SharedObjectSequence } from "./sharedObjectSequence";
+export { SharedNumberSequence } from "./sharedNumberSequence.js";
+export { SharedObjectSequence } from "./sharedObjectSequence.js";
 export {
 	MatrixSegment,
 	maxCellPosition,
@@ -19,6 +19,6 @@ export {
 	SparseMatrix,
 	SparseMatrixFactory,
 	SparseMatrixItem,
-} from "./sparsematrix";
-export { IJSONRunSegment, SubSequence, SharedSequence } from "./sharedSequence";
-export { SharedNumberSequenceFactory, SharedObjectSequenceFactory } from "./sequenceFactory";
+} from "./sparsematrix.js";
+export { IJSONRunSegment, SubSequence, SharedSequence } from "./sharedSequence.js";
+export { SharedNumberSequenceFactory, SharedObjectSequenceFactory } from "./sequenceFactory.js";

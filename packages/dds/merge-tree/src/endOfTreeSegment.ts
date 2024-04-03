@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { LocalClientId } from "./constants";
-import { LocalReferenceCollection } from "./localReference";
-import { MergeTree } from "./mergeTree";
-import { IMergeBlock, IRemovalInfo, ISegment, ISegmentLeaf } from "./mergeTreeNodes";
-import { depthFirstNodeWalk, NodeAction } from "./mergeTreeNodeWalk";
+import { assert } from "@fluidframework/core-utils/internal";
+
+import { LocalClientId } from "./constants.js";
+import { LocalReferenceCollection } from "./localReference.js";
+import { MergeTree } from "./mergeTree.js";
+import { NodeAction, depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
+import { IMergeBlock, IRemovalInfo, ISegment, ISegmentLeaf } from "./mergeTreeNodes.js";
 
 /**
  * This is a special segment that is not bound or known by the merge tree itself,

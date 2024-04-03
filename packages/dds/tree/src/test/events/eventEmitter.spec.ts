@@ -4,8 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { createEmitter, EventEmitter, ISubscribable } from "../../events/index.js";
+
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
+import { EventEmitter, ISubscribable, createEmitter } from "../../events/index.js";
 
 interface TestEvents {
 	open: () => void;

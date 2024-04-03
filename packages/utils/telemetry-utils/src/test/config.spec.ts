@@ -4,14 +4,16 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+
 import {
 	CachedConfigProvider,
 	inMemoryConfigProvider,
 	wrapConfigProviderWithDefaults,
-} from "../config";
-import { TelemetryDataTag } from "../logger";
-import { MockLogger } from "../mockLogger";
+} from "../config.js";
+import { TelemetryDataTag } from "../logger.js";
+import { MockLogger } from "../mockLogger.js";
 
 const getMockStore = (settings: Record<string, string>): Storage => {
 	const ops: string[] = [];

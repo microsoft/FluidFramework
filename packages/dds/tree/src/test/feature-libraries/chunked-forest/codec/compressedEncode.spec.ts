@@ -5,17 +5,23 @@
 
 import { strict as assert, fail } from "assert";
 
-import { compareArrays } from "@fluidframework/core-utils";
-import { MockHandle } from "@fluidframework/test-runtime-utils";
+import { compareArrays } from "@fluidframework/core-utils/internal";
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
+
+import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../../../codec/index.js";
+import { TreeFieldStoredSchema, TreeNodeSchemaIdentifier, Value } from "../../../../core/index.js";
+import { typeboxValidator } from "../../../../external-utilities/index.js";
 import {
 	decode,
 	readValue,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 import {
-	NodeShape,
+	BufferFormat,
+	IdentifierToken,
+	handleShapesAndIdentifiers,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/nodeShape.js";
+} from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
 	EncoderCache,
 	FieldEncoder,
@@ -31,9 +37,6 @@ import {
 	encodeValue,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
-import { testTrees as schemalessTestTrees } from "../../../cursorTestSuite.js";
-import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities.js";
-import { TreeFieldStoredSchema, TreeNodeSchemaIdentifier, Value } from "../../../../core/index.js";
 import {
 	EncodedChunkShape,
 	EncodedFieldBatch,
@@ -43,20 +46,19 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
 import {
-	BufferFormat,
-	IdentifierToken,
-	handleShapesAndIdentifiers,
+	NodeShape,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
-import { JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
-import { typeboxValidator } from "../../../../external-utilities/index.js";
-import { cursorForJsonableTreeField } from "../../../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
+} from "../../../../feature-libraries/chunked-forest/codec/nodeShape.js";
 // eslint-disable-next-line import/no-internal-modules
 import { FieldBatch } from "../../../../feature-libraries/chunked-forest/index.js";
-import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../../../codec/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
+import { cursorForJsonableTreeField } from "../../../../feature-libraries/index.js";
+import { JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
+import { testTrees as schemalessTestTrees } from "../../../cursorTestSuite.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";
+import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities.js";
+
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode.js";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);

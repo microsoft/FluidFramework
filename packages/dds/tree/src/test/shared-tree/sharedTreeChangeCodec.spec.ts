@@ -4,35 +4,37 @@
  */
 
 import { strict as assert } from "assert";
+
 import { SessionId } from "@fluidframework/id-compressor";
+
+import { ICodecOptions, noopValidator } from "../../codec/index.js";
+import { TreeStoredSchemaRepository } from "../../core/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { decode } from "../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
+// eslint-disable-next-line import/no-internal-modules
+import { uncompressedEncode } from "../../feature-libraries/chunked-forest/codec/uncompressedEncode.js";
+// eslint-disable-next-line import/no-internal-modules
+import { EncodedFieldBatch } from "../../feature-libraries/chunked-forest/index.js";
+import {
+	fieldKindConfigurations,
+	sequence,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	FieldBatch,
 	FieldBatchEncodingContext,
 	ModularChangeset,
 	SequenceField,
 	defaultSchemaPolicy,
-	fieldKinds,
-	makeV0Codec,
+	makeModularChangeCodecFamily,
 } from "../../feature-libraries/index.js";
-import { RevisionTagCodec, TreeStoredSchemaRepository } from "../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
-import { MockIdCompressor } from "../utils.js";
-import { ICodecOptions, noopValidator } from "../../codec/index.js";
-import { ajvValidator } from "../codec/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { makeSharedTreeChangeCodec } from "../../shared-tree/sharedTreeChangeCodecs.js";
+import { makeSharedTreeChangeCodecFamily } from "../../shared-tree/sharedTreeChangeCodecs.js";
 // eslint-disable-next-line import/no-internal-modules
 import { brand } from "../../util/brand.js";
-// eslint-disable-next-line import/no-internal-modules
-import { EncodedFieldBatch } from "../../feature-libraries/chunked-forest/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { uncompressedEncode } from "../../feature-libraries/chunked-forest/codec/uncompressedEncode.js";
-// eslint-disable-next-line import/no-internal-modules
-import { decode } from "../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
+import { ajvValidator } from "../codec/index.js";
+import { testRevisionTagCodec } from "../utils.js";
 
-const idCompressor = new MockIdCompressor();
-const revisionTagCodec = new RevisionTagCodec(idCompressor);
 const codecOptions: ICodecOptions = { jsonValidator: ajvValidator };
 
 describe("sharedTreeChangeCodec", () => {
@@ -47,15 +49,15 @@ describe("sharedTreeChangeCodec", () => {
 				return decode(data).map((chunk) => chunk.cursor());
 			},
 		};
-		const modularChangeCodec = makeV0Codec(
-			fieldKinds,
-			revisionTagCodec,
+		const modularChangeCodecs = makeModularChangeCodecFamily(
+			fieldKindConfigurations,
+			testRevisionTagCodec,
 			dummyFieldBatchCodec,
 			codecOptions,
 		);
-		const sharedTreeChangeCodec = makeSharedTreeChangeCodec(modularChangeCodec, {
+		const sharedTreeChangeCodec = makeSharedTreeChangeCodecFamily(modularChangeCodecs, {
 			jsonValidator: noopValidator,
-		});
+		}).resolve(0).json;
 
 		const dummyTestSchema = new TreeStoredSchemaRepository();
 		const dummyContext = {

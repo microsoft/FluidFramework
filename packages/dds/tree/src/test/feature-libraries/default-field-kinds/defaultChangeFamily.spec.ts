@@ -4,21 +4,22 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
+	DeltaRoot,
 	FieldKey,
 	IForestSubscription,
-	initializeForest,
 	JsonableTree,
-	mapCursorField,
-	moveToDetachedField,
-	rootFieldKey,
 	TaggedChange,
 	UpPath,
 	applyDelta,
+	initializeForest,
 	makeDetachedFieldIndex,
-	DeltaRoot,
+	mapCursorField,
+	moveToDetachedField,
+	rootFieldKey,
 } from "../../../core/index.js";
-import { leaf, jsonObject } from "../../../domains/index.js";
+import { jsonObject, leaf } from "../../../domains/index.js";
 import {
 	DefaultChangeFamily,
 	DefaultChangeset,
@@ -29,12 +30,14 @@ import {
 	jsonableTreeFromCursor,
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
-import { assertDeltaEqual, failCodec, mintRevisionTag, testRevisionTagCodec } from "../../utils.js";
-import { noopValidator } from "../../../codec/index.js";
+import {
+	assertDeltaEqual,
+	failCodecFamily,
+	mintRevisionTag,
+	testRevisionTagCodec,
+} from "../../utils.js";
 
-const defaultChangeFamily = new DefaultChangeFamily(testRevisionTagCodec, failCodec, {
-	jsonValidator: noopValidator,
-});
+const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily);
 const family = defaultChangeFamily;
 
 const rootKey = rootFieldKey;

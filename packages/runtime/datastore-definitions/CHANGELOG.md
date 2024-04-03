@@ -1,5 +1,21 @@
 # @fluidframework/datastore-definitions
 
+## 2.0.0-rc.2.0.0
+
+### Minor Changes
+
+-   datastore-definitions: Add TChannel type parameter to IChannelFactory. ([#19961](https://github.com/microsoft/FluidFramework/issues/19961)) [e2317bdbd2](https://github.com/microsoft/FluidFramework/commits/e2317bdbd29c40c7888bba2ed657a40a8dd6f45b)
+
+    Add `TChannel` type parameter (which defaults to `IFluidLoadable`) to `IChannelFactory`. When left at its default this preserves the old behavior, however packages exporting `IChannelFactory` will now reference `IFluidLoadable` if not providing a different parameter and thus will implicitly depend on @fluidframework/core-interfaces.
+
+-   datastore-definitions: IFluidDataStoreRuntime.logger is now an ITelemetryBaseLogger ([#19585](https://github.com/microsoft/FluidFramework/issues/19585)) [56f23e1b89](https://github.com/microsoft/FluidFramework/commits/56f23e1b895c59f8ba5a50c707484bfdcdeedd67)
+
+    `IFluidDataStoreRuntime.logger` is now an `ITelemetryBaseLogger` instead of the deprecated `ITelemetryLogger`. The `sendTelemetryEvent()`, `sendErrorEvent()`, or `sendPerformanceEvent()` methods were not intended for users of `IFluidDataStoreRuntime`. You can keep using the logger's `send()` method to generate telemetry.
+
+-   container-definitions: ILoaderOptions no longer accepts arbitrary key/value pairs ([#19306](https://github.com/microsoft/FluidFramework/issues/19306)) [741926e225](https://github.com/microsoft/FluidFramework/commits/741926e2253a161504ecc6a6451d8f15d7ac4ed6)
+
+    ILoaderOptions has been narrowed to the specific set of supported loader options, and may no longer be used to pass arbitrary key/value pairs through to the runtime.
+
 ## 2.0.0-rc.1.0.0
 
 ### Minor Changes

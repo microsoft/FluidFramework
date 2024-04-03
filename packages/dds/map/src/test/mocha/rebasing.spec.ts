@@ -4,16 +4,22 @@
  */
 
 import { strict as assert } from "node:assert";
+
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
-	MockFluidDataStoreRuntime,
-	MockContainerRuntimeFactory,
 	MockContainerRuntime,
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions";
-import { MapFactory, SharedMap } from "../../map";
-import { DirectoryFactory, SharedDirectory } from "../../directory";
-import { IDirectory } from "../../interfaces";
+} from "@fluidframework/test-runtime-utils/internal";
+
+import {
+	IDirectory,
+	type ISharedDirectory,
+	type ISharedMap,
+	SharedDirectory,
+	SharedMap,
+} from "../../index.js";
 
 describe("Rebasing", () => {
 	let containerRuntimeFactory: MockContainerRuntimeFactory;
@@ -36,11 +42,13 @@ describe("Rebasing", () => {
 		},
 	]) {
 		describe(`SharedMap - ${testConfig.name}`, () => {
-			let map1: SharedMap;
-			let map2: SharedMap;
+			let map1: ISharedMap;
+			let map2: ISharedMap;
 
 			beforeEach("createMaps", async () => {
 				containerRuntimeFactory = new MockContainerRuntimeFactory(testConfig.options);
+				const factory = SharedMap.getFactory();
+
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 				containerRuntime1 =
 					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
@@ -48,7 +56,7 @@ describe("Rebasing", () => {
 					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 					objectStorage: new MockStorage(),
 				};
-				map1 = new SharedMap("shared-map-1", dataStoreRuntime1, MapFactory.Attributes);
+				map1 = factory.create(dataStoreRuntime1, "shared-map-1");
 				map1.connect(services1);
 
 				const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
@@ -58,7 +66,7 @@ describe("Rebasing", () => {
 					deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 					objectStorage: new MockStorage(),
 				};
-				map2 = new SharedMap("shared-map-2", dataStoreRuntime2, MapFactory.Attributes);
+				map2 = factory.create(dataStoreRuntime2, "shared-map-2");
 				map2.connect(services2);
 			});
 
@@ -98,11 +106,13 @@ describe("Rebasing", () => {
 		});
 
 		describe(`SharedDirectory - ${testConfig.name}`, () => {
-			let dir1: SharedDirectory;
-			let dir2: SharedDirectory;
+			let dir1: ISharedDirectory;
+			let dir2: ISharedDirectory;
 
 			beforeEach("createDirectories", async () => {
 				containerRuntimeFactory = new MockContainerRuntimeFactory(testConfig.options);
+				const factory = SharedDirectory.getFactory();
+
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 				containerRuntime1 =
 					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
@@ -110,11 +120,7 @@ describe("Rebasing", () => {
 					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 					objectStorage: new MockStorage(),
 				};
-				dir1 = new SharedDirectory(
-					"shared-directory-1",
-					dataStoreRuntime1,
-					DirectoryFactory.Attributes,
-				);
+				dir1 = factory.create(dataStoreRuntime1, "shared-directory-1");
 				dir1.connect(services1);
 
 				// Create the second SharedMap.
@@ -125,11 +131,7 @@ describe("Rebasing", () => {
 					deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 					objectStorage: new MockStorage(),
 				};
-				dir2 = new SharedDirectory(
-					"shared-directory-2",
-					dataStoreRuntime2,
-					DirectoryFactory.Attributes,
-				);
+				dir2 = factory.create(dataStoreRuntime2, "shared-directory-2");
 				dir2.connect(services2);
 			});
 

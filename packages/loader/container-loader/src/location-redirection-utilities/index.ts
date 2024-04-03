@@ -6,4 +6,4 @@
 export {
 	isLocationRedirectionError,
 	resolveWithLocationRedirectionHandling,
-} from "./resolveWithLocationRedirection";
+} from "./resolveWithLocationRedirection.js";

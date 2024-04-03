@@ -3,18 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { fail, strict as assert } from "assert";
-import { PropertySet, toRemovalInfo } from "@fluidframework/merge-tree";
-import {
-	MockFluidDataStoreRuntime,
-	MockContainerRuntimeFactory,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+import { strict as assert, fail } from "assert";
+
+import { AttachState } from "@fluidframework/container-definitions";
+import { PropertySet, toRemovalInfo } from "@fluidframework/merge-tree/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { SharedString } from "../sharedString";
-import { SharedStringFactory } from "../sequenceFactory";
-import { IIntervalCollection } from "../intervalCollection";
-import { SequenceInterval } from "../intervals";
+import {
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { IIntervalCollection } from "../intervalCollection.js";
+import { SequenceInterval } from "../intervals/index.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { SharedString } from "../sharedString.js";
 
 interface IntervalEventInfo {
 	interval: { start: number; end: number };
@@ -40,7 +43,7 @@ describe("SharedString interval collection event spec", () => {
 		containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 		// Connect the first SharedString.
-		dataStoreRuntime1.local = false;
+		dataStoreRuntime1.setAttachState(AttachState.Attached);
 		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		const services1 = {
 			deltaConnection: dataStoreRuntime1.createDeltaConnection(),

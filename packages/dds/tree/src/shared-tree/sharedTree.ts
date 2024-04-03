@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IChannelFactory,
@@ -11,65 +12,52 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
-import { assert } from "@fluidframework/core-utils";
-import { UsageError } from "@fluidframework/telemetry-utils";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import { ICodecOptions, noopValidator } from "../codec/index.js";
 import {
-	Compatibility,
-	FieldKey,
-	TreeStoredSchemaRepository,
 	JsonableTree,
+	RevisionTagCodec,
 	TreeStoredSchema,
+	TreeStoredSchemaRepository,
 	makeDetachedFieldIndex,
 	moveToDetachedField,
-	rootFieldKey,
-	schemaDataIsEmpty,
-	RevisionTagCodec,
 } from "../core/index.js";
-import { SharedTreeCore } from "../shared-tree-core/index.js";
+import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
 import {
-	defaultSchemaPolicy,
+	DetachedFieldIndexSummarizer,
+	FlexFieldSchema,
 	ForestSummarizer,
 	SchemaSummarizer,
-	buildForest,
-	FlexFieldSchema,
-	buildChunkedForest,
-	makeTreeChunker,
-	DetachedFieldIndexSummarizer,
-	createNodeKeyManager,
-	nodeKeyFieldKey as defailtNodeKeyFieldKey,
-	jsonableTreeFromFieldCursor,
 	TreeCompressionStrategy,
-	FlexTreeSchema,
 	ViewSchema,
-	NodeKeyManager,
-	FieldKinds,
-	normalizeNewFieldContent,
-	makeMitigatedChangeFamily,
+	buildChunkedForest,
+	buildForest,
+	createNodeKeyManager,
+	nodeKeyFieldKey as defaultNodeKeyFieldKey,
+	defaultSchemaPolicy,
+	jsonableTreeFromFieldCursor,
 	makeFieldBatchCodec,
+	makeMitigatedChangeFamily,
+	makeTreeChunker,
 } from "../feature-libraries/index.js";
-import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
-import { brand, disposeSymbol, fail } from "../util/index.js";
+import { ExplicitCoreCodecVersions, SharedTreeCore } from "../shared-tree-core/index.js";
 import {
 	ITree,
-	TreeConfiguration,
-	WrapperTreeView,
-	toFlexConfig,
 	ImplicitFieldSchema,
+	TreeConfiguration,
 	TreeFieldFromImplicitField,
 	TreeView,
 } from "../simple-tree/index.js";
-import {
-	InitializeAndSchematizeConfiguration,
-	afterSchemaChanges,
-	initializeContent,
-	schematize,
-} from "./schematizedTree.js";
-import { TreeCheckout, CheckoutEvents, createTreeCheckout } from "./treeCheckout.js";
-import { FlexTreeView, CheckoutFlexTreeView } from "./treeView.js";
-import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import { brand } from "../util/index.js";
+
+import { InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
+import { SchematizingSimpleTreeView, requireSchema } from "./schematizingTreeView.js";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
+import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
+import { CheckoutEvents, TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
+import { CheckoutFlexTreeView, FlexTreeView } from "./treeView.js";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
@@ -115,33 +103,41 @@ export interface ISharedTree extends ISharedObject, ITree {
 
 	/**
 	 * Like {@link ITree.schematize}, but uses the flex-tree schema system and exposes the tree as a flex-tree.
-	 * @privateRemarks
-	 * This has to avoid its name colliding with `schematize`.
-	 * TODO: Either ITree and ISharedTree should be split into separate objects, the methods should be merged or a better convention for resolving such name conflicts should be selected.
+	 *
+	 * Returned view is disposed when the stored schema becomes incompatible with the view schema.
+	 * Undefined is returned if the stored data could not be made compatible with the view schema.
 	 */
-	schematizeInternal<TRoot extends FlexFieldSchema>(
+	schematizeFlexTree<TRoot extends FlexFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
-	): FlexTreeView<TRoot>;
-
-	/**
-	 * Like {@link ISharedTree.schematizeInternal}, but will never modify the document.
-	 *
-	 * @param schema - The view schema to use.
-	 * @param onSchemaIncompatible - A callback.
-	 * Invoked when the returned ISharedTreeView becomes invalid to use due to a change to the stored schema which makes it incompatible with the view schema.
-	 * Called at most once.
-	 * @returns a view compatible with the provided schema, or undefined if the stored schema is not compatible with the provided view schema.
-	 * If this becomes invalid to use due to a change in the stored schema, onSchemaIncompatible will be invoked.
-	 *
-	 * @privateRemarks
-	 * TODO:
-	 * Once views actually have a view schema, onSchemaIncompatible can become an event on the view (which ends its lifetime),
-	 * instead of a separate callback.
-	 */
-	requireSchema<TRoot extends FlexFieldSchema>(
-		schema: FlexTreeSchema<TRoot>,
-		onSchemaIncompatible: () => void,
+		onDispose: () => void,
 	): FlexTreeView<TRoot> | undefined;
+}
+
+/**
+ * Has an entry for each codec which writes an explicit version into its data.
+ *
+ * This is used to map the single API entrypoint controlling the format {@link SharedTreeOptions.formatVersion}
+ * to a list of write versions that for each codec that should be used for that format.
+ *
+ * Note that all explicitly versioned codecs should be using the format version from the data to read encoded data.
+ *
+ * TODO: Plumb these write versions into forest, schema, detached field index codec creation.
+ */
+interface ExplicitCodecVersions extends ExplicitCoreCodecVersions {
+	forest: number;
+	schema: number;
+	detachedFieldIndex: number;
+	fieldBatch: number;
+}
+
+const formatVersionToTopLevelCodecVersions = new Map<number, ExplicitCodecVersions>([
+	[1, { forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 1, message: 1, fieldBatch: 1 }],
+]);
+
+function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
+	const versions = formatVersionToTopLevelCodecVersions.get(formatVersion);
+	assert(versions !== undefined, "Unknown format version");
+	return versions;
 }
 
 /**
@@ -161,16 +157,6 @@ export class SharedTree
 		return this.checkout.storedSchema;
 	}
 
-	/**
-	 * Creating multiple editable tree contexts for the same branch, and thus with the same underlying AnchorSet does not work due to how TreeNode caching works.
-	 * This flag is used to detect if one already exists for the main branch and error if creating a second.
-	 * THis should catch most accidental violations of this restriction but there are still ways to create two conflicting contexts (for example calling constructing one manually).
-	 *
-	 * TODO:
-	 * 1. API docs need to reflect this limitation or the limitation has to be removed.
-	 */
-	private hasView = false;
-
 	public constructor(
 		id: string,
 		runtime: IFluidDataStoreRuntime,
@@ -178,12 +164,12 @@ export class SharedTree
 		optionsParam: SharedTreeOptions,
 		telemetryContextPrefix: string,
 	) {
-		assert(
-			runtime.idCompressor !== undefined,
-			0x883 /* IdCompressor must be enabled to use SharedTree */,
-		);
+		if (runtime.idCompressor === undefined) {
+			throw new UsageError("IdCompressor must be enabled to use SharedTree");
+		}
 
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };
+		const codecVersions = getCodecVersions(options.formatVersion);
 		const schema = new TreeStoredSchemaRepository();
 		const forest =
 			options.forest === ForestType.Optimized
@@ -194,7 +180,7 @@ export class SharedTree
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options, {
 			getCurrentSeq: () => this.runtime.deltaManager.lastSequenceNumber,
 		});
-		const fieldBatchCodec = makeFieldBatchCodec(options);
+		const fieldBatchCodec = makeFieldBatchCodec(options, codecVersions.fieldBatch);
 
 		const encoderContext = {
 			schema: {
@@ -243,6 +229,7 @@ export class SharedTree
 			[schemaSummarizer, forestSummarizer, removedRootsSummarizer],
 			changeFamily,
 			options,
+			codecVersions,
 			id,
 			runtime,
 			attributes,
@@ -251,62 +238,21 @@ export class SharedTree
 		);
 		this._events = createEmitter<CheckoutEvents>();
 		const localBranch = this.getLocalBranch();
-		this.checkout = createTreeCheckout(runtime.idCompressor, revisionTagCodec, {
-			branch: localBranch,
-			changeFamily,
-			schema,
-			forest,
-			fieldBatchCodec,
-			events: this._events,
-			removedRoots,
-			chunkCompressionStrategy: options.treeEncodeType,
-		});
-	}
-
-	public requireSchema<TRoot extends FlexFieldSchema>(
-		schema: FlexTreeSchema<TRoot>,
-		onSchemaIncompatible: () => void,
-		nodeKeyManager?: NodeKeyManager,
-		nodeKeyFieldKey?: FieldKey,
-	): CheckoutFlexTreeView<TRoot> | undefined {
-		assert(this.hasView === false, 0x7f1 /* Cannot create second view from tree. */);
-
-		const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
-		const compatibility = viewSchema.checkCompatibility(this.storedSchema);
-		if (
-			compatibility.write !== Compatibility.Compatible ||
-			compatibility.read !== Compatibility.Compatible
-		) {
-			return undefined;
-		}
-
-		this.hasView = true;
-		const view = new CheckoutFlexTreeView(
-			this.checkout,
-			schema,
-			nodeKeyManager ?? createNodeKeyManager(this.runtime.idCompressor),
-			nodeKeyFieldKey ?? brand(defailtNodeKeyFieldKey),
-			() => {
-				assert(this.hasView, 0x7f2 /* unexpected dispose */);
-				this.hasView = false;
+		this.checkout = createTreeCheckout(
+			runtime.idCompressor,
+			this.mintRevisionTag,
+			revisionTagCodec,
+			{
+				branch: localBranch,
+				changeFamily,
+				schema,
+				forest,
+				fieldBatchCodec,
+				events: this._events,
+				removedRoots,
+				chunkCompressionStrategy: options.treeEncodeType,
 			},
 		);
-		const onSchemaChange = () => {
-			const compatibilityInner = viewSchema.checkCompatibility(this.storedSchema);
-			if (
-				compatibilityInner.write !== Compatibility.Compatible ||
-				compatibilityInner.read !== Compatibility.Compatible
-			) {
-				view[disposeSymbol]();
-				onSchemaIncompatible();
-				return false;
-			} else {
-				return true;
-			}
-		};
-
-		afterSchemaChanges(this._events, this.checkout, onSchemaChange);
-		return view;
 	}
 
 	public contentSnapshot(): SharedTreeContentSnapshot {
@@ -323,72 +269,38 @@ export class SharedTree
 		}
 	}
 
-	public schematizeInternal<TRoot extends FlexFieldSchema>(
+	public schematizeFlexTree<TRoot extends FlexFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
-		nodeKeyManager?: NodeKeyManager,
-		nodeKeyFieldKey?: FieldKey,
-	): CheckoutFlexTreeView<TRoot> {
-		if (this.hasView === true) {
-			throw new UsageError(
-				"Only one view can be constructed from a given tree at a time. Dispose of the first before creating a second.",
-			);
-		}
-		// TODO:
-		// When this becomes a more proper out of schema adapter, editing should be made lazy.
-		// This will improve support for readonly documents, cross version collaboration and attribution.
-
-		// Check for empty.
-		if (this.checkout.forest.isEmpty && schemaDataIsEmpty(this.storedSchema)) {
-			this.checkout.transaction.start();
-			initializeContent(this.checkout, config.schema, () => {
-				const field = { field: rootFieldKey, parent: undefined };
-				const content = normalizeNewFieldContent(
-					{ schema: config.schema },
-					config.schema.rootFieldSchema,
-					config.initialTree,
-				);
-				switch (this.storedSchema.rootFieldSchema.kind.identifier) {
-					case FieldKinds.optional.identifier: {
-						const fieldEditor = this.editor.optionalField(field);
-						assert(
-							content.getFieldLength() <= 1,
-							0x7f4 /* optional field content should normalize at most one item */,
-						);
-						fieldEditor.set(content.getFieldLength() === 0 ? undefined : content, true);
-						break;
-					}
-					case FieldKinds.sequence.identifier: {
-						const fieldEditor = this.editor.sequenceField(field);
-						// TODO: should do an idempotent edit here.
-						fieldEditor.insert(0, content);
-						break;
-					}
-					default: {
-						fail("unexpected root field kind during initialize");
-					}
-				}
-			});
-			this.checkout.transaction.commit();
+		onDispose: () => void,
+	): CheckoutFlexTreeView<TRoot> | undefined {
+		const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, config.schema);
+		if (!ensureSchema(viewSchema, config.allowedSchemaModifications, this.checkout, config)) {
+			return undefined;
 		}
 
-		schematize(this.checkout.events, this.checkout, config);
-
-		return (
-			this.requireSchema(
-				config.schema,
-				() => fail("schema incompatible"),
-				nodeKeyManager,
-				nodeKeyFieldKey,
-			) ?? fail("Schematize failed")
+		return requireSchema(
+			this.checkout,
+			viewSchema,
+			onDispose,
+			createNodeKeyManager(this.runtime.idCompressor),
+			brand(defaultNodeKeyFieldKey),
 		);
 	}
 
 	public schematize<TRoot extends ImplicitFieldSchema>(
 		config: TreeConfiguration<TRoot>,
 	): TreeView<TreeFieldFromImplicitField<TRoot>> {
-		const flexConfig = toFlexConfig(config);
-		const view = this.schematizeInternal(flexConfig);
-		return new WrapperTreeView(view);
+		const view = new SchematizingSimpleTreeView(
+			this.checkout,
+			config,
+			createNodeKeyManager(this.runtime.idCompressor),
+			brand(defaultNodeKeyFieldKey),
+		);
+		// As a subjective API design choice, we initialize the tree here if it is not already initialized.
+		if (view.error?.canInitialize === true) {
+			view.upgradeSchema();
+		}
+		return view;
 	}
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
@@ -398,14 +310,61 @@ export class SharedTree
 }
 
 /**
+ * Format versions supported by SharedTree.
+ *
+ * Each version documents a required minimum version of the \@fluidframework/tree package.
  * @internal
  */
-export interface SharedTreeOptions extends Partial<ICodecOptions> {
+export const SharedTreeFormatVersion = {
 	/**
-	 * The {@link ForestType} indicating which forest type should be created for the SharedTree.
+	 * Requires \@fluidframework/tree \>= 2.0.0.
 	 */
-	forest?: ForestType;
-	treeEncodeType?: TreeCompressionStrategy;
+	v1: 1,
+} as const;
+
+/**
+ * Format versions supported by SharedTree.
+ *
+ * Each version documents a required minimum version of the \@fluidframework/tree package.
+ * @internal
+ * @privateRemarks
+ * See packages/dds/tree/docs/main/compatibility.md for information on how to add support for a new format.
+ */
+export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
+
+/**
+ * @internal
+ */
+export type SharedTreeOptions = Partial<ICodecOptions> &
+	Partial<SharedTreeFormatOptions> & {
+		/**
+		 * The {@link ForestType} indicating which forest type should be created for the SharedTree.
+		 */
+		forest?: ForestType;
+	};
+
+/**
+ * Options for configuring the persisted format SharedTree uses.
+ * @internal
+ */
+export interface SharedTreeFormatOptions {
+	/**
+	 * See {@link TreeCompressionStrategy}.
+	 * default: TreeCompressionStrategy.Compressed
+	 */
+	treeEncodeType: TreeCompressionStrategy;
+	/**
+	 * The format version SharedTree should use to persist documents.
+	 *
+	 * This option has compatibility implications for applications using SharedTree.
+	 * Each version documents a required minimum version of \@fluidframework/tree.
+	 * If this minimum version fails to be met, the SharedTree may fail to load.
+	 * To be safe, application authors should verify that they have saturated this version
+	 * of \@fluidframework/tree in their ecosystem before changing the format version.
+	 *
+	 * This option defaults to SharedTreeFormatVersion.v1.
+	 */
+	formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
 }
 
 /**
@@ -427,13 +386,14 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 	jsonValidator: noopValidator,
 	forest: ForestType.Reference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,
+	formatVersion: SharedTreeFormatVersion.v1,
 };
 
 /**
  * A channel factory that creates {@link ISharedTree}s.
  * @internal
  */
-export class SharedTreeFactory implements IChannelFactory {
+export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
 	public readonly type: string = "https://graph.microsoft.com/types/tree";
 
 	public readonly attributes: IChannelAttributes = {

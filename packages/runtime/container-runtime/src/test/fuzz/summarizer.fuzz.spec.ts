@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { take } from "@fluid-private/stochastic-test-utils";
-import { createSummarizerFuzzSuite, operationGenerator, baseModel } from "./fuzzUtils";
+import { takeAsync } from "@fluid-private/stochastic-test-utils";
+
+import { baseModel, summarizerOperationGenerator } from "./fuzzUtils.js";
+import { createSummarizerFuzzSuite } from "./summarizerFuzzSuite.js";
 
 /**
  * Summarizer fuzz test should test that we eventually recover and send a summary successfully.
@@ -20,17 +22,20 @@ describe("Summarizer fuzz testing", () => {
 		...baseModel,
 		workloadName: "summarizer",
 		generatorFactory: () =>
-			take(
-				1,
-				operationGenerator({
+			takeAsync(
+				1000,
+				summarizerOperationGenerator({
 					weights: {
-						disconnect: 2,
-						summaryNack: 2,
-						submitOp: 2,
+						reconnect: 1,
+						newSummarizer: 1,
+						summaryNack: 1,
+						submitOp: 1,
 					},
 				}),
 			),
 	};
 
-	createSummarizerFuzzSuite(model);
+	createSummarizerFuzzSuite(model, {
+		defaultTestCount: 25,
+	});
 });

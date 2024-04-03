@@ -6,33 +6,35 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
+
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import {
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+	itExpects,
+} from "@fluid-private/test-version-utils";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	AllowInactiveRequestHeaderKey,
 	ContainerRuntime,
-	InactiveResponseHeaderKey,
 	ISummarizer,
-} from "@fluidframework/container-runtime";
+	InactiveResponseHeaderKey,
+} from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { DriverHeader } from "@fluidframework/driver-definitions";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { delay } from "@fluidframework/core-utils/internal";
+import { DriverHeader } from "@fluidframework/driver-definitions/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
+import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
 	createSummarizer,
 	summarizeNow,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
-import {
-	describeCompat,
-	ITestDataObject,
-	itExpects,
-	TestDataObjectType,
-} from "@fluid-private/test-version-utils";
-import { delay } from "@fluidframework/core-utils";
-import type { ISharedDirectory } from "@fluidframework/map";
+} from "@fluidframework/test-utils/internal";
+
 import {
 	manufactureHandle,
 	waitForContainerWriteModeConnectionWrite,
@@ -68,12 +70,8 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 	let provider: ITestObjectProvider;
 	let mockLogger: MockLogger;
 
-	/** Waits for the inactive timeout to expire. */
-	async function waitForInactiveTimeout(): Promise<void> {
-		await new Promise<void>((resolve) => {
-			setTimeout(resolve, inactiveTimeoutMs + 10);
-		});
-	}
+	/** Waits for the inactive timeout to expire (plus some margin) */
+	const waitForInactiveTimeout = async () => delay(inactiveTimeoutMs + 10);
 
 	/** Validates that none of the inactive events have been logged since the last run. */
 	function validateNoInactiveEvents() {
@@ -804,7 +802,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 			const defaultDataObject3 = (await container3.getEntryPoint()) as ITestDataObject;
 
 			// Wait the Inactive Timeout. Timers will fire
-			await delay(inactiveTimeoutMs);
+			await waitForInactiveTimeout();
 
 			// Load A in container2 and ensure InactiveObject_Loaded is logged
 			const handleA_2 = manufactureHandle<ITestDataObject>(
@@ -812,13 +810,16 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 				idA,
 			);
 			await handleA_2.get();
-			mockLogger2.assertMatch([
-				{
-					eventName:
-						"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
-					id: { value: `/${idA}`, tag: "CodeArtifact" },
-				},
-			]);
+			mockLogger2.assertMatch(
+				[
+					{
+						eventName:
+							"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+						id: { value: `/${idA}`, tag: "CodeArtifact" },
+					},
+				],
+				"Expected dataObjectA to be inactive",
+			);
 
 			// Reference A again in container1. Should be revived on container3
 			defaultDataObject1._root.set("A", dataObjectA_1.handle);
@@ -827,23 +828,29 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 			// Since A was directly revived, its unreferenced state was cleared immediately so we shouldn't see InactiveObject logs for it
 			const handleA_3 = defaultDataObject3._root.get<IFluidHandle<ITestDataObject>>("A");
 			const dataObjectA_3 = await handleA_3!.get();
-			mockLogger3.assertMatchNone([
-				{
-					eventName:
-						"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
-				},
-			]);
+			mockLogger3.assertMatchNone(
+				[
+					{
+						eventName:
+							"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+					},
+				],
+				"Expected no InactiveObject_Loaded events due to revival",
+			);
 
 			// Since B wasn't directly revived, it wrongly still thinks it's Inactive. Next GC will clear it up.
 			const handleB_3 = dataObjectA_3?._root.get<IFluidHandle<ITestDataObject>>("B");
 			await handleB_3!.get();
-			mockLogger3.assertMatch([
-				{
-					eventName:
-						"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
-					id: { value: `/${idB}`, tag: "CodeArtifact" },
-				},
-			]);
+			mockLogger3.assertMatch(
+				[
+					{
+						eventName:
+							"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+						id: { value: `/${idB}`, tag: "CodeArtifact" },
+					},
+				],
+				"Expected dataObjectB to be considered inactive still",
+			);
 		});
 
 		const newDDSFn = async (
@@ -905,7 +912,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 						(await container3.getEntryPoint()) as ITestDataObject;
 
 					// Wait the Inactive Timeout. Timers will fire
-					await delay(inactiveTimeoutMs);
+					await waitForInactiveTimeout();
 
 					// Load A in container2 and ensure InactiveObject_Loaded is logged
 					const handleA_2 = manufactureHandle<ITestDataObject>(
@@ -913,13 +920,16 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 						idA,
 					);
 					await handleA_2.get();
-					mockLogger2.assertMatch([
-						{
-							eventName:
-								"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
-							id: { value: `/${idA}`, tag: "CodeArtifact" },
-						},
-					]);
+					mockLogger2.assertMatch(
+						[
+							{
+								eventName:
+									"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+								id: { value: `/${idA}`, tag: "CodeArtifact" },
+							},
+						],
+						"Expected dataObjectA to be inactive",
+					);
 
 					// Reference A again in container3 via DataStore attach op. Should be properly revived in container3 itself
 					const manufacturedHandleA_3 = manufactureHandle<ITestDataObject>(
@@ -935,23 +945,29 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 					// Since A was directly revived, its unreferenced state was cleared immediately so we shouldn't see InactiveObject logs for it
 					const handleA_3 = newDirectory_3.get<IFluidHandle<ITestDataObject>>("A");
 					const dataObjectA_3 = await handleA_3!.get();
-					mockLogger3.assertMatchNone([
-						{
-							eventName:
-								"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
-						},
-					]);
+					mockLogger3.assertMatchNone(
+						[
+							{
+								eventName:
+									"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+							},
+						],
+						"Expected no InactiveObject_Loaded events due to revival",
+					);
 
 					// Since B wasn't directly revived, it wrongly still thinks it's Inactive. Next GC will clear it up.
 					const handleB_3 = dataObjectA_3?._root.get<IFluidHandle<ITestDataObject>>("B");
 					await handleB_3!.get();
-					mockLogger3.assertMatch([
-						{
-							eventName:
-								"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
-							id: { value: `/${idB}`, tag: "CodeArtifact" },
-						},
-					]);
+					mockLogger3.assertMatch(
+						[
+							{
+								eventName:
+									"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+								id: { value: `/${idB}`, tag: "CodeArtifact" },
+							},
+						],
+						"Expected dataObjectB to be inactive still",
+					);
 				});
 			},
 		);

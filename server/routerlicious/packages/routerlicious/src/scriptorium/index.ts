@@ -44,6 +44,10 @@ export async function create(
 	const maxDbBatchSize = config.get("scriptorium:maxDbBatchSize") as number;
 	const restartOnCheckpointFailure =
 		(config.get("scriptorium:restartOnCheckpointFailure") as boolean) ?? true;
+	const logSavedOpsTimeIntervalMs =
+		(config.get("scriptorium:logSavedOpsTimeIntervalMs") as number) ?? 60000;
+	const opsCountTelemetryEnabled =
+		(config.get("scriptorium:opsCountTelemetryEnabled") as boolean) ?? false;
 
 	// Database connection for global db if enabled
 	const factory = await services.getDbFactory(config);
@@ -124,5 +128,7 @@ export async function create(
 		maxDbBatchSize,
 		restartOnCheckpointFailure,
 		shouldLogInitialSuccessVerbose,
+		logSavedOpsTimeIntervalMs,
+		opsCountTelemetryEnabled,
 	});
 }

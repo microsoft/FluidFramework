@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { DocumentDeltaConnection } from "@fluidframework/driver-base";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { DocumentDeltaConnection } from "@fluidframework/driver-base/internal";
 import {
 	IClient,
 	IConnect,
 	IDocumentMessage,
 	NackErrorType,
 } from "@fluidframework/protocol-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { LocalWebSocketServer } from "@fluidframework/server-local-server";
 import { IWebSocketServer } from "@fluidframework/server-services-core";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import type { Socket } from "socket.io-client";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
 const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 
@@ -80,7 +80,7 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 	/**
 	 * Submits a new signal to the server
 	 */
-	public submitSignal(message: any): void {
+	public submitSignal(message: string): void {
 		this.emitMessages("submitSignal", [[message]]);
 	}
 

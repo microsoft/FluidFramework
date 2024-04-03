@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
+import { EventEmitter } from "@fluid-example/example-utils";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { type ISharedMap, SharedMap } from "@fluidframework/map";
+import { SharedString } from "@fluidframework/sequence/internal";
 import { v4 as uuid } from "uuid";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { SharedMap } from "@fluidframework/map";
-import { SharedString } from "@fluidframework/sequence";
 
 import type { IInventoryItem, IInventoryList } from "../modelInterfaces.js";
 
@@ -34,7 +34,7 @@ class InventoryItem extends EventEmitter implements IInventoryItem {
 	public constructor(
 		private readonly _id: string,
 		private readonly _name: SharedString,
-		private readonly _quantity: SharedMap,
+		private readonly _quantity: ISharedMap,
 	) {
 		super();
 		// this._name.on("sequenceDelta", () =>{

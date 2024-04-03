@@ -16,11 +16,11 @@ export {
 	CompressedSerializedInterval,
 	endReferenceSlidingPreference,
 	startReferenceSlidingPreference,
-} from "./intervalUtils";
-export { Interval, createInterval, intervalHelpers } from "./interval";
+} from "./intervalUtils.js";
+export { Interval, createInterval, intervalHelpers } from "./interval.js";
 export {
 	SequenceInterval,
 	createSequenceInterval,
 	createPositionReferenceFromSegoff,
 	sequenceIntervalHelpers,
-} from "./sequenceInterval";
+} from "./sequenceInterval.js";

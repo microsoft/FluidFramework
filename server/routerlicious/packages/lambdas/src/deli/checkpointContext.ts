@@ -54,7 +54,7 @@ export class CheckpointContext {
 		} catch (ex) {
 			// TODO flag context as error / use this.context.error() instead?
 			this.context.log?.error(
-				`Error writing checkpoint to the database: ${JSON.stringify(ex)}`,
+				`Error writing checkpoint to the database: ${JSON.stringify(ex)}, ${ex}`,
 				{
 					messageMetaData: {
 						documentId: this.id,

@@ -5,8 +5,8 @@
 
 import {
 	FileMode,
-	IBlob,
 	IAttachment,
+	IBlob,
 	ITree,
 	TreeEntry,
 } from "@fluidframework/protocol-definitions";

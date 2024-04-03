@@ -119,7 +119,7 @@ export class LocalOrdererConnection implements IOrdererConnection {
 				const operation = message.operation;
 				operation?.traces?.push({
 					action: "start",
-					service: "alfred",
+					service: "nexus",
 					timestamp: performance.now(),
 				});
 			});

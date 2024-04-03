@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Timer } from "@fluidframework/core-utils";
-import { validatePrecondition } from "@fluidframework/telemetry-utils";
-import { UnreferencedState } from "./gcDefinitions";
+import { assert, Timer } from "@fluidframework/core-utils/internal";
+import { validatePrecondition } from "@fluidframework/telemetry-utils/internal";
+
+import { UnreferencedState } from "./gcDefinitions.js";
 
 /** A wrapper around common-utils Timer that requires the timeout when calling start/restart */
 class TimerWithNoDefaultTimeout extends Timer {

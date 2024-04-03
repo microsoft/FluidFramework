@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, IFluidHandleContext, FluidObject } from "@fluidframework/core-interfaces";
-import { generateHandleContextPath } from "@fluidframework/runtime-utils";
+import { FluidObject, IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
+import { generateHandleContextPath } from "@fluidframework/runtime-utils/internal";
 
 /**
  * Handle for a shared {@link @fluidframework/core-interfaces#FluidObject}.

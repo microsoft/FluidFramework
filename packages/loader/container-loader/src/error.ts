@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties, IThrottlingWarning } from "@fluidframework/core-interfaces";
-import { ContainerErrorTypes } from "@fluidframework/container-definitions";
+import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IFluidErrorBase,
-	ITelemetryLoggerExt,
 	LoggingError,
 	wrapErrorAndLog,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Warning emitted when requests to storage are being throttled.
@@ -24,7 +25,7 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
 	private constructor(
 		message: string,
 		readonly retryAfterSeconds: number,
-		props?: ITelemetryProperties,
+		props?: ITelemetryBaseProperties,
 	) {
 		super(message, props);
 	}

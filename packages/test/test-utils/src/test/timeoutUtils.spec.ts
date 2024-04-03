@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { timeoutPromise } from "../timeoutUtils";
+
+import { timeoutPromise } from "../timeoutUtils.js";
 
 describe("TimeoutPromise", () => {
 	beforeEach(async () => {

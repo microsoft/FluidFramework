@@ -4,27 +4,29 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
-	createTestConfigProvider,
-	createSummarizer,
-	ITestContainerConfig,
-	ITestObjectProvider,
-	summarizeNow,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
-import {
-	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
+	describeCompat,
 } from "@fluid-private/test-version-utils";
-import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
-import { delay } from "@fluidframework/core-utils";
-import { gcTreeKey } from "@fluidframework/runtime-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { IGCRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { delay } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { IContainer } from "@fluidframework/container-definitions";
+import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import {
-	getGCStateFromSummary,
+	ITestContainerConfig,
+	ITestObjectProvider,
+	createSummarizer,
+	createTestConfigProvider,
+	summarizeNow,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
+
+import {
 	getGCDeletedStateFromSummary,
+	getGCStateFromSummary,
 	getGCTombstoneStateFromSummary,
 } from "./gcTestSummaryUtils.js";
 
@@ -35,7 +37,7 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 	// Since these tests depend on these timing windows, they should not be run against drivers talking over the network
 	// (see this.skip() call below)
 	const tombstoneTimeoutMs = 200; // Tombstone at 200ms
-	const sweepGracePeriodMs = 100; // Sweep at 300ms
+	const sweepGracePeriodMs = 200; // Sweep at 400ms
 
 	const configProvider = createTestConfigProvider();
 	const gcOptions: IGCRuntimeOptions = {
@@ -85,7 +87,6 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 			this.skip();
 		}
 
-		configProvider.set("Fluid.GarbageCollection.DisableAttachmentBlobSweep", true); // Only sweep DataStores
 		configProvider.set("Fluid.GarbageCollection.ThrowOnTombstoneUsage", true);
 		configProvider.set(
 			"Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs",

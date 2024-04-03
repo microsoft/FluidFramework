@@ -4,40 +4,43 @@
  */
 
 import { strict as assert } from "assert";
+
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerMessageType,
 	ContainerRuntime,
 	IGCRuntimeOptions,
-} from "@fluidframework/container-runtime";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+} from "@fluidframework/container-runtime/internal";
+// eslint-disable-next-line import/no-internal-modules
+import { ISweepMessage, disableDatastoreSweepKey } from "@fluidframework/container-runtime/test/gc";
 import {
-	ITestObjectProvider,
-	createSummarizer,
-	summarizeNow,
-	waitForContainerConnection,
-	ITestContainerConfig,
-	createTestConfigProvider,
-} from "@fluidframework/test-utils";
-import { describeCompat, ITestDataObject, itExpects } from "@fluid-private/test-version-utils";
-import { stringToBuffer } from "@fluid-internal/client-utils";
-import { delay } from "@fluidframework/core-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { gcTreeKey } from "@fluidframework/runtime-definitions";
-import {
-	blobsTreeName,
-	defaultMaxAttemptsForSubmitFailures,
 	ISummarizeEventProps,
 	ISummarizer,
 	RetriableSummaryError,
+	blobsTreeName,
+	defaultMaxAttemptsForSubmitFailures,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/test/summary";
-// eslint-disable-next-line import/no-internal-modules
-import { ISweepMessage } from "@fluidframework/container-runtime/test/gc";
+import { delay } from "@fluidframework/core-utils/internal";
+import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import {
+	ITestContainerConfig,
+	ITestObjectProvider,
+	createSummarizer,
+	createTestConfigProvider,
+	summarizeNow,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
+
+import {
+	MockDetachedBlobStorage,
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
-	MockDetachedBlobStorage,
 } from "../mockDetachedBlobStorage.js";
+
 import {
 	getGCDeletedStateFromSummary,
 	getGCStateFromSummary,
@@ -128,8 +131,11 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 		loaderProps: { configProvider },
 	};
 
-	async function loadContainer(summaryVersion: string) {
-		return provider.loadTestContainer(testContainerConfig, {
+	async function loadContainer(
+		summaryVersion: string,
+		config: ITestContainerConfig = testContainerConfig,
+	) {
+		return provider.loadTestContainer(config, {
 			[LoaderHeader.version]: summaryVersion,
 		});
 	}
@@ -1090,45 +1096,50 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			}
 		});
 
-		it("updates deleted blob state in the summary", async () => {
-			const { dataStore: mainDataStore, summarizer } = await createDataStoreAndSummarizer();
+		[true, undefined].forEach((disableDatastoreSweep) =>
+			it(`updates deleted blob state in the summary [disableDatastoreSweep=${disableDatastoreSweep}]`, async () => {
+				configProvider.set(disableDatastoreSweepKey, disableDatastoreSweep);
 
-			// Upload an attachment blob.
-			const blob1Contents = "Blob contents 1";
-			const blob1Handle = await mainDataStore._runtime.uploadBlob(
-				stringToBuffer(blob1Contents, "utf-8"),
-			);
-			const blob1NodePath = blob1Handle.absolutePath;
+				const { dataStore: mainDataStore, summarizer } =
+					await createDataStoreAndSummarizer();
 
-			// Reference and then unreference the blob so that it's unreferenced in the next summary.
-			mainDataStore._root.set("blob1", blob1Handle);
-			mainDataStore._root.delete("blob1");
+				// Upload an attachment blob.
+				const blob1Contents = "Blob contents 1";
+				const blob1Handle = await mainDataStore._runtime.uploadBlob(
+					stringToBuffer(blob1Contents, "utf-8"),
+				);
+				const blob1NodePath = blob1Handle.absolutePath;
 
-			// Summarize so that blob is marked unreferenced.
-			await provider.ensureSynchronized();
-			await summarizeNow(summarizer);
+				// Reference and then unreference the blob so that it's unreferenced in the next summary.
+				mainDataStore._root.set("blob1", blob1Handle);
+				mainDataStore._root.delete("blob1");
 
-			// Wait for sweep full timeout so that blob is ready to be deleted.
-			await delay(sweepTimeoutMs + 10);
+				// Summarize so that blob is marked unreferenced.
+				await provider.ensureSynchronized();
+				await summarizeNow(summarizer);
 
-			// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
-			mainDataStore._root.set("key", "value");
-			await provider.ensureSynchronized();
+				// Wait for sweep full timeout so that blob is ready to be deleted.
+				await delay(sweepTimeoutMs + 10);
 
-			// Summarize. In this summary, the gc op will be sent with the deleted blob ids. The blobs will be
-			// removed in the subsequent summary.
-			await summarizeNow(summarizer);
+				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
+				mainDataStore._root.set("key", "value");
+				await provider.ensureSynchronized();
 
-			// Summarize again so that the sweep ready blobs are now deleted from the GC data.
-			const summary3 = await summarizeNow(summarizer);
-			// Validate that the deleted blob's state is correct in the summary.
-			validateBlobStateInSummary(
-				summary3.summaryTree,
-				blob1NodePath,
-				true /* expectDelete */,
-				false /* expectGCStateHandle */,
-			);
-		});
+				// Summarize. In this summary, the gc op will be sent with the deleted blob ids. The blobs will be
+				// removed in the subsequent summary.
+				await summarizeNow(summarizer);
+
+				// Summarize again so that the sweep ready blobs are now deleted from the GC data.
+				const summary3 = await summarizeNow(summarizer);
+				// Validate that the deleted blob's state is correct in the summary.
+				validateBlobStateInSummary(
+					summary3.summaryTree,
+					blob1NodePath,
+					true /* expectDelete */,
+					false /* expectGCStateHandle */,
+				);
+			}),
+		);
 	});
 
 	describe("Sweep with summarize failures and retries", () => {
@@ -1341,7 +1352,16 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 
 					// Load a container from the above summary, process all ops (including any GC ops) and validate that
 					// the deleted blob cannot be retrieved.
-					const container2 = await loadContainer(summary.summaryVersion);
+					// We load with GC Disabled to confirm that the GC Op is processed regardless of such settings
+					const config_gcSweepDisabled = JSON.parse(
+						JSON.stringify(testContainerConfig),
+					) as ITestContainerConfig;
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					config_gcSweepDisabled.runtimeOptions!.gcOptions!.enableGCSweep = undefined;
+					const container2 = await loadContainer(
+						summary.summaryVersion,
+						config_gcSweepDisabled,
+					);
 					await waitForContainerConnection(container2);
 
 					await provider.ensureSynchronized();

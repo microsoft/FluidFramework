@@ -3,19 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { getUnexpectedLogErrorException, TestObjectProvider } from "@fluidframework/test-utils";
-import { ITelemetryGenericEvent } from "@fluidframework/core-interfaces";
+import { type ITelemetryGenericEventExt } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import {
+	getUnexpectedLogErrorException,
+	TestObjectProvider,
+} from "@fluidframework/test-utils/internal";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Context } from "mocha";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
 
 /**
  * @internal
  */
 export type ExpectedEvents =
-	| ITelemetryGenericEvent[]
-	| Partial<Record<TestDriverTypes, ITelemetryGenericEvent[]>>;
+	| ITelemetryGenericEventExt[]
+	| Partial<Record<TestDriverTypes, ITelemetryGenericEventExt[]>>;
 
 /**
  * @internal

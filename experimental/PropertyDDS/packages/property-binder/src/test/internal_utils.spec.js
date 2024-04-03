@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { BaseProperty, PropertyFactory } from "@fluid-experimental/property-properties";
 /* globals expect, sinon  */
 import {
@@ -10,8 +11,8 @@ import {
 	visitTypeHierarchy,
 } from "../data_binder/internalUtils";
 import { catchConsoleErrors } from "./catchConsoleError";
-import { PrimitiveChildrenTemplate, AnimalSchema, registerTestTemplates } from "./testTemplates";
 import { MockSharedPropertyTree } from "./mockSharedPropertyTree";
+import { AnimalSchema, PrimitiveChildrenTemplate, registerTestTemplates } from "./testTemplates";
 
 describe("minimalRootPaths", () => {
 	it("should return the same array for exclusive paths", () => {

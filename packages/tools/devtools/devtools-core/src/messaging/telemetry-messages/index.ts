@@ -7,6 +7,6 @@
  * This directory contains {@link IDevtoolsMessage} types listened for and posted by {@link FluidDebuggerLogger}.
  */
 
-export { GetTelemetryHistory } from "./GetTelemetryHistory";
-export { TelemetryEvent } from "./TelemetryEvent";
-export { TelemetryHistory } from "./TelemetryHistory";
+export { GetTelemetryHistory } from "./GetTelemetryHistory.js";
+export { TelemetryEvent } from "./TelemetryEvent.js";
+export { TelemetryHistory } from "./TelemetryHistory.js";

@@ -2,10 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable prefer-template */
 
+import { IFluidContainer, Tree, TreeView } from "fluid-framework";
 import React, { ReactNode, useEffect, useState } from "react";
-import { TreeView, Tree, IFluidContainer } from "fluid-framework";
+
 import { App, Letter } from "./schema.js";
 
 export function Explanation(): JSX.Element {
@@ -139,7 +141,7 @@ export function ReactApp(props: {
 	// For more complex apps, this code can be included
 	// on lower level components.
 	useEffect(() => {
-		const unsubscribe = Tree.on(appRoot, "afterChange", () => {
+		const unsubscribe = Tree.on(appRoot, "treeChanged", () => {
 			setInvalidations(invalidations + Math.random());
 		});
 		return unsubscribe;

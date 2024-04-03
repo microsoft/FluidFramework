@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Checkout } from './Checkout';
-import { RevisionView } from './RevisionView';
-import { EditCommittedEventArguments, SharedTree } from './SharedTree';
+import { Checkout } from './Checkout.js';
+import { RevisionView } from './RevisionView.js';
+import { EditCommittedEventArguments, SharedTree } from './SharedTree.js';
 
 /**
  * Checkout that always stays up to date with the SharedTree.

@@ -4,9 +4,11 @@
  */
 
 import { strict as assert } from "assert";
+
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { runWithRetry } from "../runWithRetry";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+
+import { runWithRetry } from "../runWithRetry.js";
 
 const _setTimeout = global.setTimeout;
 const fastSetTimeout: any = (callback: (...cbArgs: any[]) => void, ms: number, ...args: any[]) =>

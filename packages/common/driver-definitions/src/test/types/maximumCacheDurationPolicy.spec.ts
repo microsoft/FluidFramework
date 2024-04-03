@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageServicePolicies } from "../../storage";
+import type { IDocumentStorageServicePolicies } from "../../storage.js";
 
 /**
  * WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING

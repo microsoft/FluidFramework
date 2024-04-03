@@ -3,32 +3,34 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+
 import {
-	TreeFieldStoredSchema,
-	StoredSchemaCollection,
-	TreeNodeSchemaIdentifier,
-	ValueSchema,
-	ObjectNodeStoredSchema,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
+	ObjectNodeStoredSchema,
+	StoredSchemaCollection,
+	TreeFieldStoredSchema,
+	TreeNodeSchemaIdentifier,
+	ValueSchema,
+	Multiplicity,
 } from "../../../core/index.js";
-import { FullSchemaPolicy } from "../../modular-schema/index.js";
 import { fail } from "../../../util/index.js";
-import { Multiplicity } from "../../multiplicity.js";
-import { EncodedFieldBatch, EncodedValueShape } from "./format.js";
+import { FullSchemaPolicy } from "../../modular-schema/index.js";
+
 import {
 	EncoderCache,
 	FieldEncoder,
-	KeyedFieldEncoder,
 	FieldShaper,
+	KeyedFieldEncoder,
 	TreeShaper,
 	anyNodeEncoder,
 	asFieldEncoder,
 	compressedEncode,
 } from "./compressedEncode.js";
-import { NodeShape } from "./nodeShape.js";
 import { FieldBatch } from "./fieldBatch.js";
+import { EncodedFieldBatch, EncodedValueShape } from "./format.js";
+import { NodeShape } from "./nodeShape.js";
 
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk`.
@@ -63,7 +65,7 @@ export function fieldShaper(
 	field: TreeFieldStoredSchema,
 	cache: EncoderCache,
 ): FieldEncoder {
-	const kind = cache.fieldShapes.get(field.kind.identifier) ?? fail("missing FieldKind");
+	const kind = cache.fieldShapes.get(field.kind) ?? fail("missing FieldKind");
 	const type = oneFromSet(field.types);
 	const nodeEncoder = type !== undefined ? treeHandler.shapeFromTree(type) : anyNodeEncoder;
 	// eslint-disable-next-line unicorn/prefer-ternary

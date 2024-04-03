@@ -4,22 +4,27 @@
  */
 
 import { strict as assert } from "assert";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { IContainerRuntimeBase, channelsTreeName } from "@fluidframework/runtime-definitions";
-import {
-	ITestObjectProvider,
-	createSummarizer,
-	getContainerEntryPointBackCompat,
-	summarizeNow,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+
 import {
 	ITestDataObject,
 	TestDataObjectType,
 	describeCompat,
 } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
-import { ISummarizer } from "@fluidframework/container-runtime";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ISummarizer } from "@fluidframework/container-runtime/internal";
+import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import {
+	IContainerRuntimeBase,
+	channelsTreeName,
+} from "@fluidframework/runtime-definitions/internal";
+import {
+	ITestObjectProvider,
+	createSummarizer,
+	getContainerEntryPointBackCompat,
+	getDataStoreEntryPointBackCompat,
+	summarizeNow,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 /**
  * Validates that the data store summary is as expected.
@@ -98,7 +103,7 @@ function validateDDSStateInSummary(
  */
 describeCompat(
 	"Incremental summaries for data store and DDS",
-	"FullCompat",
+	"1.3.7" /** equivalent to FullCompat. Currently used for testing purposes on ADO pipelines */,
 	(getTestObjectProvider, apis) => {
 		const { SharedDirectory } = apis.dds;
 		let provider: ITestObjectProvider;
@@ -121,13 +126,9 @@ describeCompat(
 		});
 
 		it("can do incremental data store summary", async function () {
-			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
-			if (provider.type === "TestObjectProviderWithVersionedLoad") {
-				this.skip();
-			}
 			const dataStore2 = await containerRuntime.createDataStore(TestDataObjectType);
-			const dataObject2 = (await dataStore2.entryPoint.get()) as ITestDataObject;
-			dataObject1._root.set("dataObject2", dataStore2.entryPoint);
+			const dataObject2 = await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore2);
+			dataObject1._root.set("dataObject2", dataObject2.handle);
 
 			await provider.ensureSynchronized();
 			let summary = await summarizeNow(summarizer);

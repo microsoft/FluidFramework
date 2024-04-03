@@ -2,20 +2,22 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ChildProcess } from "child_process";
-import { ConnectionState } from "@fluidframework/container-loader";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { IFluidContainer } from "@fluidframework/fluid-static";
-import { timeoutPromise } from "@fluidframework/test-utils";
 
-import { IRunConfig, IScenarioConfig, IScenarioRunConfig } from "./interface";
+import { ChildProcess } from "child_process";
+
+import { ConnectionState } from "@fluidframework/container-loader";
+import { IFluidContainer } from "@fluidframework/fluid-static";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
+
+import { ScenarioRunner } from "./ScenarioRunner.js";
+import { IRunConfig, IScenarioConfig, IScenarioRunConfig } from "./interface.js";
+import { getLogger } from "./logger.js";
 import {
 	createAzureClient,
 	getScenarioRunnerTelemetryEventMap,
 	loadInitialObjSchema,
-} from "./utils";
-import { getLogger } from "./logger";
-import { ScenarioRunner } from "./ScenarioRunner";
+} from "./utils.js";
 
 const eventMap = getScenarioRunnerTelemetryEventMap("DocCreator");
 
@@ -31,7 +33,7 @@ export class DocCreatorRunner extends ScenarioRunner<
 	DocCreatorRunConfig,
 	string
 > {
-	protected runnerClientFilePath: string = "./dist/docCreatorRunnerClient.js";
+	protected runnerClientFilePath: string = "./lib/docCreatorRunnerClient.js";
 
 	constructor(scenarioConfig: DocCreatorRunnerConfig) {
 		super({

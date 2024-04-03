@@ -4,13 +4,16 @@
  */
 
 import { strict as assert } from "assert";
-import { AttributionKey } from "@fluidframework/runtime-definitions";
+
+import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
+
 import {
 	createInsertOnlyAttributionPolicy,
 	createPropertyTrackingAndInsertionAttributionPolicyFactory,
 	createPropertyTrackingAttributionPolicyFactory,
-} from "../attributionPolicy";
-import { TestClient } from "./testClient";
+} from "../attributionPolicy.js";
+
+import { TestClient } from "./testClient.js";
 
 const local: AttributionKey = { type: "local" };
 

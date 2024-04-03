@@ -76,19 +76,23 @@ export {
 	UpPathDefault,
 	AnchorEvents,
 	AnchorSetRootEvents,
-	FieldKindSpecifier,
+	FieldKindData,
 	AllowedUpdateType,
 	PathVisitor,
 	Adapters,
 	TreeAdapter,
 	MapTree,
 	Revertible,
-	RevertibleKind,
+	CommitKind,
 	RevertibleStatus,
-	RevertibleResult,
+	CommitMetadata,
 	forbiddenFieldKindIdentifier,
 	StoredSchemaCollection,
 	ErasedTreeNodeSchemaDataFormat,
+	ObjectNodeStoredSchema,
+	MapNodeStoredSchema,
+	LeafNodeStoredSchema,
+	Multiplicity,
 } from "./core/index.js";
 
 export {
@@ -128,7 +132,6 @@ export { leaf } from "./domains/index.js";
 
 export {
 	FlexFieldKind,
-	Multiplicity,
 	isNeverField,
 	FullSchemaPolicy,
 	typeNameSymbol,
@@ -152,7 +155,7 @@ export {
 	stackTreeNodeCursor,
 	CursorAdapter,
 	CursorWithNode,
-	EditableTreeEvents,
+	FlexTreeNodeEvents,
 	ArrayLikeMut,
 	FieldKinds,
 	ContextuallyTypedFieldData,
@@ -253,6 +256,10 @@ export {
 	buildTreeConfiguration,
 	ISharedTreeEditor,
 	ISchemaEditor,
+	SharedTreeFormatOptions,
+	SharedTreeFormatVersion,
+	Tree,
+	TreeApi,
 } from "./shared-tree/index.js";
 
 export {
@@ -267,11 +274,11 @@ export {
 	TreeView,
 	TreeViewEvents,
 	SchemaFactory,
-	Tree,
-	TreeApi,
+	type ScopedSchemaName,
+	TreeNodeApi,
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
-	TreeNodeEvents,
+	TreeChangeEvents,
 	NodeFromSchema,
 	TreeMapNode,
 	InsertableTreeNodeFromImplicitAllowedTypes,
@@ -289,10 +296,29 @@ export {
 	NodeBuilderData,
 	NodeKind,
 	ObjectFromSchemaRecord,
+	TreeObjectNode,
 	TreeNodeFromImplicitAllowedTypes,
 	TreeNodeSchemaClass,
 	TreeNodeSchemaCore,
 	TreeNodeSchemaNonClass,
+	SchemaIncompatible,
+
+	// experimental @beta APIs:
+	SchemaFactoryRecursive,
+	ValidateRecursiveSchema,
+	ObjectFromSchemaRecordUnsafe,
+	TreeObjectNodeUnsafe,
+	TreeFieldFromImplicitFieldUnsafe,
+	TreeNodeFromImplicitAllowedTypesUnsafe,
+	FieldSchemaUnsafe,
+	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
+	TreeArrayNodeUnsafe,
+	TreeMapNodeUnsafe,
+	InsertableObjectFromSchemaRecordUnsafe,
+	InsertableTreeFieldFromImplicitFieldUnsafe,
+	InsertableTypedNodeUnsafe,
+	NodeBuilderDataUnsafe,
+	NodeFromSchemaUnsafe,
 
 	// experimental @internal APIs:
 	adaptEnum,
@@ -303,8 +329,9 @@ export {
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,
+	test_RecursiveObjectPojoMode,
 } from "./simple-tree/index.js";
-export { SharedTree, TreeFactory } from "./treeFactory.js";
+export { SharedTree, configuredSharedTree } from "./treeFactory.js";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec/index.js";
 export { noopValidator } from "./codec/index.js";

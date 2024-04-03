@@ -3,18 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "node:events";
-
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { EventEmitter, TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { IAudience } from "@fluidframework/container-definitions";
 import type {
-	IAudience,
 	IAudienceOwner,
 	IContainer,
 	IContainerEvents,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import type { IClient } from "@fluidframework/protocol-definitions";
 import type { IErrorBase, IRequest } from "@fluidframework/core-interfaces";
+import type { IClient } from "@fluidframework/protocol-definitions";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 

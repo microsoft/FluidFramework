@@ -4,12 +4,14 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
 	SchemaFactory,
 } from "../../simple-tree/index.js";
-import { getRoot, pretty } from "./utils.js";
+
+import { hydrate, pretty } from "./utils.js";
 
 const schemaFactory = new SchemaFactory("Test");
 
@@ -38,7 +40,7 @@ describe("Primitives", () => {
 				`Expected ${pretty(value)} to be preserved by JSON.`,
 			);
 
-			const actual = getRoot(schema, () => value);
+			const actual = hydrate(schema, value);
 			assert.deepEqual(actual, value, "Readback of initialTree must match expected value.");
 		});
 
@@ -82,7 +84,7 @@ describe("Primitives", () => {
 		it(`initialTree(${pretty(
 			value,
 		)}) is coerced to ${typeof coercedValue} ${coercedValue}`, () => {
-			const actual = getRoot(schema, () => value);
+			const actual = hydrate(schema, value);
 			assert.deepEqual(
 				actual,
 				coercedValue,
@@ -114,7 +116,7 @@ describe("Primitives", () => {
 			value,
 		)}) throws when coercion to ${typeof value}' ${coercedValue}' violates schema.`, () => {
 			assert.throws(
-				() => getRoot(schema, () => value),
+				() => hydrate(schema, value),
 				`initialTree(${pretty(
 					value,
 				)}) must throw when coercion to '${coercedValue}' violates schema.`,

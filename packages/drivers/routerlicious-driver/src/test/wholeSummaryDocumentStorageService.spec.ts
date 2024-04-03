@@ -4,15 +4,17 @@
  */
 
 import assert from "assert";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { SummaryType, ISummaryTree } from "@fluidframework/protocol-definitions";
-import { WholeSummaryDocumentStorageService } from "../wholeSummaryDocumentStorageService";
-import { IR11sResponse } from "../restWrapper";
+
+import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	IWholeFlatSnapshot,
 	IWholeFlatSnapshotBlob,
 	IWholeFlatSnapshotTreeEntry,
-} from "../contracts";
+} from "../contracts.js";
+import { IR11sResponse } from "../restWrapper.js";
+import { WholeSummaryDocumentStorageService } from "../wholeSummaryDocumentStorageService.js";
 
 /* Blobs contained within source snapshot tree returned by git manager */
 const summaryBlobs: IWholeFlatSnapshotBlob[] = [
@@ -97,10 +99,12 @@ const expectedSummary: ISummaryTree = {
 							tree: {},
 							type: 1,
 							unreferenced: undefined,
+							groupId: undefined,
 						},
 					},
 					type: 1,
 					unreferenced: undefined,
+					groupId: undefined,
 				},
 				".metadata": {
 					content:
@@ -110,6 +114,7 @@ const expectedSummary: ISummaryTree = {
 			},
 			type: 1,
 			unreferenced: undefined,
+			groupId: undefined,
 		},
 		".protocol": {
 			tree: {
@@ -125,10 +130,12 @@ const expectedSummary: ISummaryTree = {
 			},
 			type: 1,
 			unreferenced: undefined,
+			groupId: undefined,
 		},
 	},
 	type: 1,
 	unreferenced: undefined,
+	groupId: undefined,
 };
 
 class MockGitManager {

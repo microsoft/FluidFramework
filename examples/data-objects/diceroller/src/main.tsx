@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import type { EventEmitter } from "@fluid-example/example-utils";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IValueChanged } from "@fluidframework/map";
 import React from "react";
 

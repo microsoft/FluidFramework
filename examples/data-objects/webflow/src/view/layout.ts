@@ -5,26 +5,29 @@
 
 // eslint-disable-next-line import/no-nodejs-modules
 import assert from "assert";
-import { EventEmitter } from "events";
-import { MergeTreeMaintenanceType } from "@fluidframework/merge-tree";
+
+import { EventEmitter } from "@fluid-example/example-utils";
+import { MergeTreeMaintenanceType } from "@fluidframework/merge-tree/internal";
 import {
-	SequenceEvent,
 	ISegment,
-	ReferencePosition,
 	LocalReferencePosition,
-} from "@fluidframework/sequence";
+	ReferencePosition,
+	SequenceEvent,
+} from "@fluidframework/sequence/internal";
+
 import { FlowDocument } from "../document/index.js";
 import {
-	clamp,
 	Dom,
+	TagName,
+	clamp,
 	done,
 	emptyObject,
 	getSegmentRange,
 	hasTagName,
 	isTextNode,
-	TagName,
 } from "../util/index.js";
 import { extractRef, updateRef } from "../util/localref.js";
+
 import { debug } from "./debug.js";
 import { BootstrapFormatter, Formatter, IFormatterState, RootFormatter } from "./formatter.js";
 

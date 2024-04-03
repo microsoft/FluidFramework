@@ -21,6 +21,7 @@ import { json, urlencoded } from "body-parser";
 import compression from "compression";
 import cookieParser from "cookie-parser";
 import express from "express";
+import shajs from "sha.js";
 import { Provider } from "nconf";
 import { DriverVersionHeaderName, IAlfredTenant } from "@fluidframework/server-services-client";
 import {
@@ -52,6 +53,7 @@ export function create(
 	revokedTokenChecker?: IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: IClusterDrainingChecker,
+	enableClientIPLogging?: boolean,
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
@@ -97,6 +99,41 @@ export function create(
 						[BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
 						[BaseTelemetryProperties.documentId]: getIdFromRequest(req.params),
 					};
+					if (enableClientIPLogging === true) {
+						const hashedClientIP = req.ip
+							? shajs("sha256").update(`${req.ip}`).digest("hex")
+							: "";
+						additionalProperties.hashedClientIPAddress = hashedClientIP;
+
+						const clientIPAddress = req.ip ? req.ip : "";
+						const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
+						const ipv6Regex = /^([\da-f]{1,4}:){7}[\da-f]{1,4}$/i;
+						if (
+							ipv4Regex.test(clientIPAddress) &&
+							clientIPAddress.split(".").every((part) => Number(part) <= 255)
+						) {
+							additionalProperties.clientIPType = "IPv4";
+						} else if (
+							ipv6Regex.test(clientIPAddress) &&
+							clientIPAddress.split(":").every((part) => part.length <= 4)
+						) {
+							additionalProperties.clientIPType = "IPv6";
+						} else {
+							additionalProperties.clientIPType = "";
+						}
+
+						const XAzureClientIP = "x-azure-clientip";
+						const hashedAzureClientIP = req.headers[XAzureClientIP]
+							? shajs("sha256").update(`${req.headers[XAzureClientIP]}`).digest("hex")
+							: "";
+						additionalProperties.hashedAzureClientIPAddress = hashedAzureClientIP;
+
+						const XAzureSocketIP = "x-azure-socketip";
+						const hashedAzureSocketIP = req.headers[XAzureSocketIP]
+							? shajs("sha256").update(`${req.headers[XAzureSocketIP]}`).digest("hex")
+							: "";
+						additionalProperties.hashedAzureSocketIPAddress = hashedAzureSocketIP;
+					}
 					if (req.body?.isEphemeralContainer !== undefined) {
 						additionalProperties.isEphemeralContainer = req.body.isEphemeralContainer;
 					}

@@ -45,6 +45,9 @@ export class ScriptoriumLambda implements IPartitionLambda {
 	private pendingMetric: Lumber<LumberEventName.ScriptoriumProcessBatch> | undefined;
 	private readonly maxDbBatchSize: number;
 	private readonly restartOnCheckpointFailure: boolean;
+	private readonly logSavedOpsTimeIntervalMs: number;
+	private readonly opsCountTelemetryEnabled: boolean;
+	private savedOpsCount: number = 0;
 
 	constructor(
 		private readonly opCollection: ICollection<any>,
@@ -57,9 +60,22 @@ export class ScriptoriumLambda implements IPartitionLambda {
 			this.providerConfig?.shouldLogInitialSuccessVerbose ?? false;
 		this.maxDbBatchSize = this.providerConfig?.maxDbBatchSize ?? 1000;
 		this.restartOnCheckpointFailure = this.providerConfig?.restartOnCheckpointFailure;
+		this.logSavedOpsTimeIntervalMs = this.providerConfig?.logSavedOpsTimeIntervalMs ?? 60000;
+		this.opsCountTelemetryEnabled = this.providerConfig?.opsCountTelemetryEnabled;
 	}
 
 	public handler(message: IQueuedMessage) {
+		if (this.opsCountTelemetryEnabled) {
+			setInterval(() => {
+				if (this.savedOpsCount > 0) {
+					Lumberjack.info("Scriptorium: Ops saved to db.", {
+						savedOpsCount: this.savedOpsCount,
+					});
+					this.savedOpsCount = 0;
+				}
+			}, this.logSavedOpsTimeIntervalMs);
+		}
+
 		const boxcar = extractBoxcar(message);
 
 		for (const baseMessage of boxcar.contents) {
@@ -162,11 +178,15 @@ export class ScriptoriumLambda implements IPartitionLambda {
 					const messagesBatch = messages.slice(startIndex, endIndex);
 					startIndex = endIndex;
 
-					const processP = this.processMongoCore(messagesBatch, metric?.id);
+					const processP = this.processMongoCore(messagesBatch, metric?.id).then(() => {
+						this.savedOpsCount += messagesBatch.length;
+					});
 					allProcessed.push(processP);
 				}
 			} else {
-				const processP = this.processMongoCore(messages, metric?.id);
+				const processP = this.processMongoCore(messages, metric?.id).then(() => {
+					this.savedOpsCount += messages.length;
+				});
 				allProcessed.push(processP);
 			}
 		}

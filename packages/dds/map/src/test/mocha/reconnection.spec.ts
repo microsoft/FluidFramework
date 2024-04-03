@@ -4,26 +4,29 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
+	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { DirectoryFactory, SharedDirectory } from "../../directory";
-import { MapFactory, SharedMap } from "../../map";
-import { assertEquivalentDirectories } from "./directoryEquivalenceUtils";
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { type ISharedDirectory, type ISharedMap, SharedDirectory, SharedMap } from "../../index.js";
+
+import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 
 describe("Reconnection", () => {
 	describe("SharedMap", () => {
 		let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
 		let containerRuntime1: MockContainerRuntimeForReconnection;
 		let containerRuntime2: MockContainerRuntimeForReconnection;
-		let map1: SharedMap;
-		let map2: SharedMap;
+		let map1: ISharedMap;
+		let map2: ISharedMap;
 
 		beforeEach("createMaps", async () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+			const factory = SharedMap.getFactory();
 
 			// Create the first SharedMap.
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
@@ -32,7 +35,7 @@ describe("Reconnection", () => {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
-			map1 = new SharedMap("shared-map-1", dataStoreRuntime1, MapFactory.Attributes);
+			map1 = factory.create(dataStoreRuntime1, "shared-map-1");
 			map1.connect(services1);
 
 			// Create the second SharedMap.
@@ -42,7 +45,7 @@ describe("Reconnection", () => {
 				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
-			map2 = new SharedMap("shared-map-2", dataStoreRuntime2, MapFactory.Attributes);
+			map2 = factory.create(dataStoreRuntime2, "shared-map-2");
 			map2.connect(services2);
 		});
 
@@ -121,11 +124,12 @@ describe("Reconnection", () => {
 		let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
 		let containerRuntime1: MockContainerRuntimeForReconnection;
 		let containerRuntime2: MockContainerRuntimeForReconnection;
-		let directory1: SharedDirectory;
-		let directory2: SharedDirectory;
+		let directory1: ISharedDirectory;
+		let directory2: ISharedDirectory;
 
 		beforeEach("createDirectories", async () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+			const factory = SharedDirectory.getFactory();
 
 			// Create the first SharedDirectory.
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
@@ -134,11 +138,7 @@ describe("Reconnection", () => {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
-			directory1 = new SharedDirectory(
-				"shared-directory-1",
-				dataStoreRuntime1,
-				DirectoryFactory.Attributes,
-			);
+			directory1 = factory.create(dataStoreRuntime1, "shared-directory-1");
 			directory1.connect(services1);
 
 			// Create the second SharedDirectory.
@@ -148,11 +148,7 @@ describe("Reconnection", () => {
 				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
-			directory2 = new SharedDirectory(
-				"shared-directory-2",
-				dataStoreRuntime2,
-				DirectoryFactory.Attributes,
-			);
+			directory2 = factory.create(dataStoreRuntime2, "shared-directory-2");
 			directory2.connect(services2);
 		});
 

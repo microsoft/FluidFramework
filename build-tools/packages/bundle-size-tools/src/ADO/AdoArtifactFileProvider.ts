@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import assert from "assert";
 import { WebApi } from "azure-devops-node-api";
 import JSZip from "jszip";
@@ -28,12 +29,6 @@ export function getBundlePathsFromZipObject(jsZip: JSZip): BundleFileData[] {
  * Downloads an Azure Devops artifacts and parses it with the jszip library.
  * @param adoConnection - A connection to the ADO api.
  * @param buildNumber - The ADO build number that contains the artifact we wish to fetch
- *
- * @remarks
- * This function doesn't work with artifacts created by the new PublishPipelineArtifact task, but works for the
- * old PublishBuildArtifacts task.
- * See https://github.com/microsoft/azure-devops-node-api/issues/432 for details and a potential workaround that we
- * could implement at some point.
  */
 export async function getZipObjectFromArtifact(
 	adoConnection: WebApi,
@@ -43,11 +38,21 @@ export async function getZipObjectFromArtifact(
 ): Promise<JSZip> {
 	const buildApi = await adoConnection.getBuildApi();
 
+	// IMPORTANT
+	// getArtifactContentZip() in the azure-devops-node-api package tries to download pipeline artifacts using an
+	// API version (in the http request's accept header) that isn't supported by the artifact download endpoint.
+	// One way of getting around that is by temporarily removing the API version that the package adds, to force
+	// it to use a supported one.
+	// See https://github.com/microsoft/azure-devops-node-api/issues/432 for more details.
+	const originalCreateAcceptHeader = buildApi.createAcceptHeader;
+	buildApi.createAcceptHeader = (type: string): string => type;
 	const artifactStream = await buildApi.getArtifactContentZip(
 		projectName,
 		buildNumber,
 		bundleAnalysisArtifactName,
 	);
+	// Undo hack from above
+	buildApi.createAcceptHeader = originalCreateAcceptHeader;
 
 	// We want our relative paths to be clean, so navigating JsZip into the top level folder
 	const result = (await unzipStream(artifactStream)).folder(bundleAnalysisArtifactName);
