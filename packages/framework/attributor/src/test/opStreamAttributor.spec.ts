@@ -4,9 +4,12 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
+import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
+
 import { OpStreamAttributor } from "../attributor.js";
+
 import { makeMockAudience } from "./utils.js";
 
 const clientIds = ["A", "B", "C"];

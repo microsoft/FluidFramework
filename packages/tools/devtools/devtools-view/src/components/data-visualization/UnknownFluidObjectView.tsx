@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { FluidUnknownObjectNode } from "@fluidframework/devtools-core/internal";
 import React from "react";
-
-import type { FluidUnknownObjectNode } from "@fluidframework/devtools-core";
 
 import type { DataVisualizationTreeProps } from "./CommonInterfaces.js";
 import { TreeHeader } from "./TreeHeader.js";

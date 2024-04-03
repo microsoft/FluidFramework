@@ -3,18 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { IBatchMessage, ICriticalContainerError } from "@fluidframework/container-definitions";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	GenericError,
 	MonitoringContext,
 	UsageError,
 	createChildMonitoringContext,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
+
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
-import { ContainerMessageType } from "../messageTypes.js";
 import { IPendingBatchMessage, PendingStateManager } from "../pendingStateManager.js";
+
 import {
 	BatchManager,
 	BatchSequenceNumbers,
@@ -187,20 +189,12 @@ export class Outbox {
 	}
 
 	public submit(message: BatchMessage) {
-		assert(
-			message.type !== ContainerMessageType.IdAllocation,
-			0x8f8 /* Allocation message submitted to mainBatch. */,
-		);
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.mainBatch, message);
 	}
 
 	public submitAttach(message: BatchMessage) {
-		assert(
-			message.type === ContainerMessageType.Attach,
-			0x8f9 /* Non attach message submitted to attachFlowBatch. */,
-		);
 		this.maybeFlushPartialBatch();
 
 		if (
@@ -232,10 +226,6 @@ export class Outbox {
 	}
 
 	public submitBlobAttach(message: BatchMessage) {
-		assert(
-			message.type === ContainerMessageType.BlobAttach,
-			0x8fa /* Non blobAttach message submitted to blobAttachBatch. */,
-		);
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.blobAttachBatch, message);
@@ -254,10 +244,6 @@ export class Outbox {
 	}
 
 	public submitIdAllocation(message: BatchMessage) {
-		assert(
-			message.type === ContainerMessageType.IdAllocation,
-			0x8fb /* Non allocation message submitted to idAllocationBatch. */,
-		);
 		this.maybeFlushPartialBatch();
 
 		if (

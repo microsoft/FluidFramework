@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
+
 import { pkgVersion } from "./packageVersion.js";
 
 /**

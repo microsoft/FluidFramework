@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
+
+import { SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
+
 import {
 	ChangesetLocalId,
 	IEditableForest,
@@ -34,9 +36,11 @@ import {
 	buildChunkedForest,
 	createMockNodeKeyManager,
 	defaultSchemaPolicy,
+	fieldKindConfigurations,
 	getTreeContext,
 	intoStoredSchema,
 	makeFieldBatchCodec,
+	makeModularChangeCodecFamily,
 	nodeKeyFieldKey,
 } from "../../../feature-libraries/index.js";
 import { ForestType } from "../../../shared-tree/index.js";
@@ -54,7 +58,7 @@ const context = {
 	schema: { schema: intoStoredSchema(numberSequenceRootSchema), policy: defaultSchemaPolicy },
 };
 
-const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: typeboxValidator });
+const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: typeboxValidator }, 1);
 const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
 const idCompressor = createIdCompressor(sessionId);
 const revisionTagCodec = new RevisionTagCodec(idCompressor);
@@ -84,10 +88,14 @@ describe("End to end chunked encoding", () => {
 			const changeReceiver = (change: ModularChangeset) => {
 				changeLog.push(change);
 			};
+			const codec = makeModularChangeCodecFamily(
+				fieldKindConfigurations,
+				revisionTagCodec,
+				fieldBatchCodec,
+				{ jsonValidator: typeboxValidator },
+			);
 			const dummyEditor = new DefaultEditBuilder(
-				new DefaultChangeFamily(revisionTagCodec, fieldBatchCodec, {
-					jsonValidator: typeboxValidator,
-				}),
+				new DefaultChangeFamily(codec),
 				changeReceiver,
 			);
 			return getTreeContext(

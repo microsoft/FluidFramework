@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
 	FieldKey,
 	ITreeCursorSynchronous,
@@ -11,6 +12,7 @@ import {
 	forEachField,
 } from "../../../core/index.js";
 import { brand, fail } from "../../../util/index.js";
+
 import { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
 import { BufferFormat, IdentifierToken, Shape } from "./chunkEncodingGeneric.js";
 import {

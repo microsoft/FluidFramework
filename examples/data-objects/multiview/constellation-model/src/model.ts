@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IValueChanged } from "@fluidframework/map";
-
 import { IConstellation, ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 import { Coordinate } from "@fluid-example/multiview-coordinate-model";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IValueChanged } from "@fluidframework/map";
 
 const starListKey = "stars";
 const constellationName = "@fluid-example/constellation";

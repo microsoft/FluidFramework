@@ -2,8 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert } from "@fluidframework/core-utils";
-import { DataProcessingError } from "@fluidframework/telemetry-utils";
+
+import { assert } from "@fluidframework/core-utils/internal";
+import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
+
+import { pkgVersion } from "../packageVersion.js";
 
 /**
  * Descripe allowed type for properties in document schema.
@@ -12,7 +15,7 @@ import { DataProcessingError } from "@fluidframework/telemetry-utils";
  * we want them to continue to collaborate alongside clients who support that capability, but such capability is shipping dark for now.
  * @alpha
  */
-export type DocumentSchemaValueType = string | true | number | undefined;
+export type DocumentSchemaValueType = string | string[] | true | number | undefined;
 
 /**
  * ID Compressor mode.
@@ -92,6 +95,18 @@ export interface IDocumentSchemaFeatures {
 	compressionLz4: boolean;
 	idCompressorMode: IdCompressorMode;
 	opGroupingEnabled: boolean;
+
+	/**
+	 * List of disallowed versions of the runtime.
+	 * This option is sticky. Once a version of runtime is added to this list (when supplied to DocumentsSchemaController's constructor)
+	 * it will be added to the list of disallowed versions and stored in document metadata.
+	 * Each runtime checks if its version is in this list on container open. If it is, it immediately exits with error message
+	 * indicating to the user that this version is no longer supported.
+	 * Currently there is no mechanism to remove version from this list. I.e. If it was once added to the list,
+	 * it gets added to any document metadata (documents that gets open by this runtime) and there is no way to clear it from document's
+	 * metadata.
+	 */
+	disallowedVersions: string[];
 }
 
 /**
@@ -181,6 +196,22 @@ class IdCompressorProperty extends MultiChoice {
 	}
 }
 
+class CheckVersions implements IProperty<string[] | undefined> {
+	public or(currentDocSchema: string[] = [], desiredDocSchema: string[] = []) {
+		const set = new Set<string>([...currentDocSchema, ...desiredDocSchema]);
+		return arrayToProp([...set.values()]);
+	}
+
+	// Once version is there, it stays there forever.
+	public and(currentDocSchema: string[] = [], desiredDocSchema: string[] = []) {
+		return this.or(currentDocSchema, desiredDocSchema);
+	}
+
+	public validate(t: unknown) {
+		return t === undefined || (Array.isArray(t) && !t.includes(pkgVersion));
+	}
+}
+
 /**
  * Helper structure to valida if a schema is compatible with existing code.
  */
@@ -189,6 +220,7 @@ const documentSchemaSupportedConfigs = {
 	idCompressorMode: new IdCompressorProperty(["delayed", "on"]),
 	opGroupingEnabled: new TrueOrUndefined(),
 	compressionLz4: new TrueOrUndefined(),
+	disallowedVersions: new CheckVersions(),
 };
 
 /**
@@ -208,7 +240,7 @@ function checkRuntimeCompatibility(documentSchema?: IDocumentSchema) {
 	if (documentSchema.version !== currentDocumentVersionSchema) {
 		throw DataProcessingError.create(
 			msg,
-			"checkRuntimeCompat",
+			"checkRuntimeCompat1",
 			undefined, // message
 			{
 				runtimeSchemaVersion: documentSchema.version,
@@ -238,7 +270,7 @@ function checkRuntimeCompatibility(documentSchema?: IDocumentSchema) {
 		const value = documentSchema[unknownProperty];
 		throw DataProcessingError.create(
 			msg,
-			"checkRuntimeCompat",
+			"checkRuntimeCompat2",
 			undefined, // message
 			{
 				codeVersion: currentDocumentVersionSchema,
@@ -314,6 +346,10 @@ function boolToProp(b: boolean) {
 	return b ? true : undefined;
 }
 
+function arrayToProp(arr: string[]) {
+	return arr.length === 0 ? undefined : arr;
+}
+
 /* eslint-disable jsdoc/check-indentation */
 
 /**
@@ -344,6 +380,18 @@ function boolToProp(b: boolean) {
  * And documents that already list such capability in their schema will continue to do so. Later ensures that old
  * clients who do not understand such feature will continue to fail to open such documents, as such documents very
  * likely contain data in a new format.
+ *
+ * Controller operates with 4 schemas:
+ * - document schema: whatever we loaded from summary metadata + ops. It follows eventuall consistency rules (i.e. like DDS).
+ * - desired schema - what client is asking for to have (i.e. all the desired settings, based on runtime options / feature gates).
+ * - session schema - current session schema. It's "and" of the above two schemas.
+ * - future schema - "or" of document and desires schemas.
+ *
+ * "or" & "and" operators are defined individually for each property. For Boolean properties it's literally &&, || operators.
+ * But for other properties it's more nuanced.
+ *
+ * Whenver document schema does not match future schema, controller will send an op that attempts to changs documents schema to
+ * future schema.
  *
  * Users of this class need to use DocumentsSchemaController.sessionSchema to determine what features can be used.
  *
@@ -392,12 +440,10 @@ export class DocumentsSchemaController {
 
 	/**
 	 * Constructs DocumentsSchemaController that controls current schema and processes around it, including changes in schema.
-	 * @param explicitSchemaControl - Tells if schema changes are done implicitly (without ops - legacy behavior), or go through formal schema change ops process.
 	 * @param existing - Is the document existing document, or a new doc.
 	 * @param documentMetadataSchema - current document's schema, if present.
-	 * @param compressionAlgorithm - desired compression algorith to use
-	 * @param idCompressorModeArg - desired ID compressor mode to use
-	 * @param opGroupingEnabled - true if it's desired to use op grouping.
+	 * @param features - features of the document schema that current session wants to see enabled.
+	 * @param onSchemaChange - callback that is called whenever schema is changed (not called on creation / load, only when processing document schema change ops)
 	 */
 	constructor(
 		existing: boolean,
@@ -406,6 +452,12 @@ export class DocumentsSchemaController {
 		private readonly onSchemaChange: (schema: IDocumentSchemaCurrent) => void,
 	) {
 		checkRuntimeCompatibility(documentMetadataSchema);
+
+		// For simplicity, let's only support new schema features for explicit schema control mode
+		assert(
+			features.disallowedVersions.length === 0 || features.explicitSchemaControl,
+			"not supported",
+		);
 
 		this.documentSchema =
 			(documentMetadataSchema as IDocumentSchemaCurrent) ??
@@ -434,6 +486,7 @@ export class DocumentsSchemaController {
 				compressionLz4: boolToProp(features.compressionLz4),
 				idCompressorMode: features.idCompressorMode,
 				opGroupingEnabled: boolToProp(features.opGroupingEnabled),
+				disallowedVersions: arrayToProp(features.disallowedVersions),
 			},
 		};
 
@@ -460,7 +513,7 @@ export class DocumentsSchemaController {
 		checkRuntimeCompatibility(this.futureSchema);
 	}
 
-	public summarizeDocumentSchema(refSeq: number): IDocumentSchema | undefined {
+	public summarizeDocumentSchema(refSeq: number): IDocumentSchemaCurrent | undefined {
 		// For legacy behavior, we could write nothing (return undefined).
 		// It does not buy us anything, as whatever written in summary does not actually impact clients operating in legacy mode.
 		// But writing current used config (and assuming most of the clients settle on same config over time) will help with transition
@@ -479,23 +532,29 @@ export class DocumentsSchemaController {
 		return schema;
 	}
 
-	public onMessageSent(send: (content: IDocumentSchemaChangeMessage) => void) {
+	/**
+	 * Called by Container runtime whenever it is about to send some op.
+	 * It gives opportunity for controller to issue its own ops - we do not want to send ops if there are no local changes in document.
+	 * @returns Optional message to send.
+	 */
+	public maybeSendSchemaMessage(): IDocumentSchemaChangeMessage | undefined {
 		if (this.sendOp && this.futureSchema !== undefined) {
 			assert(
 				this.explicitSchemaControl &&
 					this.futureSchema.runtime.explicitSchemaControl === true,
 				"not legacy",
 			);
-			send({
+			return {
 				...this.futureSchema,
 				refSeq: this.documentSchema.refSeq,
-			});
+			};
 		}
 		this.sendOp = false;
 	}
 
 	/**
 	 * Process document schema change message
+	 * Called by ContainerRuntime whenever it sees document schema messages.
 	 * @param content - content of the message
 	 * @param local - whether op is local
 	 * @param sequenceNumber - sequence number of the op

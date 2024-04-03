@@ -4,13 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { noopValidator } from "../../codec/index.js";
+
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	CommitKind,
 	GraphCommit,
-	Revertible,
-	RevertibleStatus,
 	RevisionTag,
 	findAncestor,
 	findCommonAncestor,
@@ -28,16 +27,9 @@ import {
 	onForkTransitive,
 } from "../../shared-tree-core/index.js";
 import { brand, fail } from "../../util/index.js";
-import {
-	createTestUndoRedoStacks,
-	failCodec,
-	mintRevisionTag,
-	testRevisionTagCodec,
-} from "../utils.js";
+import { failCodecFamily, mintRevisionTag } from "../utils.js";
 
-const defaultChangeFamily = new DefaultChangeFamily(testRevisionTagCodec, failCodec, {
-	jsonValidator: noopValidator,
-});
+const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily);
 
 type DefaultBranch = SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
 
@@ -171,7 +163,6 @@ describe("Branches", () => {
 		// Create a parent branch and a child fork
 		const parent = create();
 		const child = parent.fork();
-		const stacks = createTestUndoRedoStacks(child);
 		// Apply a change to the parent
 		const tagParent = change(parent);
 		// Apply a change to the child
@@ -185,15 +176,6 @@ describe("Branches", () => {
 		child.rebaseOnto(parent);
 		assertBased(child, parent);
 		assertHistory(child, tagParent, tagChild, tagParent2, tagChild2);
-
-		// It should still be possible to revert the the child branch's revertibles
-		assert.equal(stacks.undoStack.length, 2);
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		stacks.undoStack.pop()!.revert();
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		stacks.undoStack.pop()!.revert();
-
-		stacks.unsubscribe();
 	});
 
 	it("emit a change event after each change", () => {
@@ -621,206 +603,6 @@ describe("Branches", () => {
 			});
 			branch.fork();
 			assert.equal(forkCount, 2);
-		});
-	});
-
-	describe("Revertibles", () => {
-		it("triggers a revertible event for changes made to the local branch", () => {
-			const branch = create();
-
-			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe = branch.on("commitApplied", (_, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				const revertible = getRevertible();
-				assert.equal(revertible.status, RevertibleStatus.Valid);
-				revertiblesCreated.push(revertible);
-			});
-
-			change(branch);
-
-			assert.equal(revertiblesCreated.length, 1);
-
-			change(branch);
-
-			assert.equal(revertiblesCreated.length, 2);
-
-			// Each revert also leads to the creation of a revertible event
-			revertiblesCreated[1].revert();
-
-			assert.equal(revertiblesCreated.length, 3);
-
-			unsubscribe();
-		});
-
-		it("only triggers a revertibleDisposed event for when a revertible is released", () => {
-			const branch = create();
-
-			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe1 = branch.on("commitApplied", (_, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				const revertible = getRevertible();
-				assert.equal(revertible.status, RevertibleStatus.Valid);
-				revertiblesCreated.push(revertible);
-			});
-			const revertiblesDisposed: Revertible[] = [];
-			const unsubscribe2 = branch.on("revertibleDisposed", (revertible) => {
-				assert.equal(revertible.status, RevertibleStatus.Disposed);
-				revertiblesDisposed.push(revertible);
-			});
-
-			change(branch);
-			change(branch);
-
-			assert.equal(revertiblesCreated.length, 2);
-			assert.equal(revertiblesDisposed.length, 0);
-
-			revertiblesCreated[0].release();
-
-			assert.equal(revertiblesDisposed.length, 1);
-			assert.equal(revertiblesDisposed[0], revertiblesCreated[0]);
-
-			// reverting does not release the revertible
-			revertiblesCreated[1].revert();
-			assert.equal(revertiblesDisposed.length, 1);
-
-			unsubscribe1();
-			unsubscribe2();
-		});
-
-		it("revertibles cannot be acquired outside of the commitApplied event callback", () => {
-			const branch = create();
-
-			let acquireRevertible;
-			const unsubscribe = branch.on("commitApplied", (_, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				acquireRevertible = getRevertible;
-			});
-
-			change(branch);
-			assert(acquireRevertible !== undefined);
-			assert.throws(acquireRevertible);
-			unsubscribe();
-		});
-
-		it("revertibles cannot be acquired more than once", () => {
-			const branch = create();
-
-			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe1 = branch.on("commitApplied", (_, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				const revertible = getRevertible();
-				assert.equal(revertible.status, RevertibleStatus.Valid);
-				revertiblesCreated.push(revertible);
-			});
-			const unsubscribe2 = branch.on("commitApplied", (_, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				assert.throws(getRevertible);
-			});
-
-			change(branch);
-			unsubscribe1();
-			unsubscribe2();
-		});
-
-		it("disposed revertibles cannot be released or reverted", () => {
-			const branch = create();
-
-			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe = branch.on("commitApplied", (_, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				const r = getRevertible();
-				assert.equal(r.status, RevertibleStatus.Valid);
-				revertiblesCreated.push(r);
-			});
-
-			change(branch);
-
-			assert.equal(revertiblesCreated.length, 1);
-			const revertible = revertiblesCreated[0];
-
-			revertible.release();
-			assert.equal(revertible.status, RevertibleStatus.Disposed);
-
-			assert.throws(() => revertible.release());
-			assert.throws(() => revertible.revert());
-
-			assert.equal(revertible.status, RevertibleStatus.Disposed);
-			unsubscribe();
-		});
-
-		it("commitApplied events have the correct commit kinds", () => {
-			const branch = create();
-
-			const revertiblesCreated: Revertible[] = [];
-			const commitKinds: CommitKind[] = [];
-			const unsubscribe = branch.on("commitApplied", ({ kind }, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				const revertible = getRevertible();
-				assert.equal(revertible.status, RevertibleStatus.Valid);
-				revertiblesCreated.push(revertible);
-				commitKinds.push(kind);
-			});
-
-			change(branch);
-			revertiblesCreated[0].revert();
-			revertiblesCreated[1].revert();
-
-			assert.deepEqual(commitKinds, [CommitKind.Default, CommitKind.Undo, CommitKind.Redo]);
-
-			unsubscribe();
-		});
-
-		it("disposing of a branch also disposes of its revertibles", () => {
-			const branch = create();
-
-			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe1 = branch.on("commitApplied", (_, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				const r = getRevertible();
-				assert.equal(r.status, RevertibleStatus.Valid);
-				revertiblesCreated.push(r);
-			});
-
-			const revertiblesDisposed: Revertible[] = [];
-			const unsubscribe2 = branch.on("revertibleDisposed", (revertible) => {
-				assert.equal(revertible.status, RevertibleStatus.Disposed);
-				revertiblesDisposed.push(revertible);
-			});
-
-			change(branch);
-
-			assert.equal(revertiblesCreated.length, 1);
-			assert.equal(revertiblesDisposed.length, 0);
-
-			branch.dispose();
-
-			assert.equal(revertiblesCreated.length, 1);
-			assert.equal(revertiblesDisposed.length, 1);
-			assert.equal(revertiblesCreated[0], revertiblesDisposed[0]);
-
-			unsubscribe1();
-			unsubscribe2();
-		});
-
-		it.skip("triggers revertible events for each change merged into the local branch", () => {
-			const parentBranch = create();
-			const childBranch = parentBranch.fork();
-
-			let revertibleCount = 0;
-			const unsubscribe = parentBranch.on("commitApplied", () => {
-				revertibleCount += 1;
-			});
-
-			change(childBranch);
-			change(childBranch);
-
-			assert.equal(revertibleCount, 0);
-
-			parentBranch.merge(childBranch);
-
-			assert.equal(revertibleCount, 2);
-
-			unsubscribe();
 		});
 	});
 

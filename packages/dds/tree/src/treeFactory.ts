@@ -10,6 +10,7 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { ISharedObjectKind } from "@fluidframework/shared-object-base";
+
 import { pkgVersion } from "./packageVersion.js";
 import { SharedTree as SharedTreeImpl, SharedTreeOptions } from "./shared-tree/index.js";
 import { ITree } from "./simple-tree/index.js";
@@ -51,17 +52,44 @@ export class TreeFactory implements IChannelFactory<ITree> {
 /**
  * SharedTree is a hierarchical data structure for collaboratively editing strongly typed JSON-like trees
  * of objects, arrays, and other data types.
- * @privateRemarks
- * Due to the dependency structure and the placement of that interface SharedObjectClass,
- * this interface implementation can not be recorded in the type here.
  * @public
  */
-export const SharedTree: ISharedObjectKind<ITree> = {
-	getFactory(): IChannelFactory<ITree> {
-		return new TreeFactory({});
-	},
+export const SharedTree: ISharedObjectKind<ITree> = configuredSharedTree({});
 
-	create(runtime: IFluidDataStoreRuntime, id?: string): ITree {
-		return runtime.createChannel(id, TreeFactory.type) as ITree;
-	},
-};
+/**
+ * {@link SharedTree} but allowing a non-default configuration.
+ * @remarks
+ * This is useful for debugging and testing to opt into extra validation or see if opting out of some optimizations fixes an issue.
+ * @example
+ * ```typescript
+ * import {
+ * 	ForestType,
+ * 	TreeCompressionStrategy,
+ * 	configuredSharedTree,
+ * 	typeboxValidator,
+ * 	// eslint-disable-next-line import/no-internal-modules
+ * } from "@fluidframework/tree/internal";
+ * const SharedTree = configuredSharedTree({
+ * 	forest: ForestType.Reference,
+ * 	jsonValidator: typeboxValidator,
+ * 	treeEncodeType: TreeCompressionStrategy.Uncompressed,
+ * });
+ * ```
+ * @privateRemarks
+ * TODO:
+ * Expose Ajv validator for better error message quality somehow.
+ * Maybe as part of a test utils or dev-tool package?
+ * @internal
+ */
+export function configuredSharedTree(options: SharedTreeOptions): ISharedObjectKind<ITree> {
+	const factory = new TreeFactory(options);
+	return {
+		getFactory(): IChannelFactory<ITree> {
+			return factory;
+		},
+
+		create(runtime: IFluidDataStoreRuntime, id?: string): ITree {
+			return runtime.createChannel(id, TreeFactory.type) as ITree;
+		},
+	};
+}

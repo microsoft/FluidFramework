@@ -4,8 +4,10 @@
  */
 
 import { strict as assert } from "assert";
+
 import { IRequest } from "@fluidframework/core-interfaces";
-import { DriverHeader } from "@fluidframework/driver-definitions";
+import { DriverHeader } from "@fluidframework/driver-definitions/internal";
+
 import { LocalResolver } from "../localResolver.js";
 
 describe("Local Driver Resolver", () => {

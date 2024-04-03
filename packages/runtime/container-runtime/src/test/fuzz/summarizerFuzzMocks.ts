@@ -13,19 +13,17 @@ import {
 	MessageType,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { mergeStats } from "@fluidframework/runtime-utils";
-import {
-	type ITelemetryLoggerExt,
-	createChildLogger,
-	raiseConnectedEvent,
-} from "@fluidframework/telemetry-utils";
+import { mergeStats } from "@fluidframework/runtime-utils/internal";
+import { type ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { createChildLogger, raiseConnectedEvent } from "@fluidframework/telemetry-utils/internal";
 import {
 	type IMockContainerRuntimeOptions,
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import { v4 as uuid } from "uuid";
+
 import { type ISummaryConfiguration } from "../../index.js";
 import {
 	IConnectableRuntime,

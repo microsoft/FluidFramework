@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
 import { InventoryListContainerRuntimeFactory } from "./model/index.js";
 import type { IInventoryListAppModel } from "./modelInterfaces.js";
 import { DebugView, InventoryListAppView } from "./view/index.js";

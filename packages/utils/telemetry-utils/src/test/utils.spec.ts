@@ -4,11 +4,13 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import {
 	ConfigTypes,
 	IConfigProviderBase,
 	ITelemetryBaseEvent,
 } from "@fluidframework/core-interfaces";
+
 import { mixinMonitoringContext } from "../config.js";
 import { TelemetryDataTag, tagCodeArtifacts, tagData } from "../logger.js";
 import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "../telemetryTypes.js";

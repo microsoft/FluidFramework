@@ -10,6 +10,7 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
+
 import { pkgVersion } from "./packageVersion.js";
 import { SharedSummaryBlock } from "./sharedSummaryBlock.js";
 
