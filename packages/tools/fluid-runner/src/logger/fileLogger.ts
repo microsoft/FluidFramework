@@ -25,7 +25,6 @@ export enum OutputFormat {
 	CSV,
 }
 
-/* eslint-disable tsdoc/syntax */
 /**
  * Options to provide upon creation of IFileLogger
  * @internal
@@ -48,4 +47,3 @@ export interface ITelemetryOptions {
 	/** Number of telemetry events per flush to telemetry file */
 	eventsPerFlush?: number;
 }
-/* eslint-enable tsdoc/syntax */

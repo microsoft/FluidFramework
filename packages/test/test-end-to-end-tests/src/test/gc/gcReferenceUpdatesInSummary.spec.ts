@@ -23,7 +23,7 @@ import {
 	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { UndoRedoStackManager } from "@fluidframework/undo-redo";
+import { UndoRedoStackManager } from "@fluidframework/undo-redo/internal";
 
 /**
  * Validates this scenario: When all references to a data store are deleted, the data store is marked as unreferenced

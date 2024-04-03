@@ -4,7 +4,7 @@
 
 ```ts
 
-import { DocumentDeltaConnection } from '@fluidframework/driver-base';
+import { DocumentDeltaConnection } from '@fluidframework/driver-base/internal';
 import { GitManager } from '@fluidframework/server-services-client';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';

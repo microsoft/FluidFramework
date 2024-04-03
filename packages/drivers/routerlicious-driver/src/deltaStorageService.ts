@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { getW3CData, validateMessages } from "@fluidframework/driver-base";
+import { getW3CData, validateMessages } from "@fluidframework/driver-base/internal";
 import {
 	IDeltaStorageService,
 	IDeltasFetchResult,

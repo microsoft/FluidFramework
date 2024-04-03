@@ -17,7 +17,7 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
 import * as cell from "@fluidframework/cell/internal";
-import { SharedCell } from "@fluidframework/cell";
+import { SharedCell } from "@fluidframework/cell/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 
 // ContainerRuntime API

@@ -20,7 +20,7 @@ import {
 	ISnapshotWriterStorage,
 	ReplayFileDeltaConnection,
 	Replayer,
-} from "@fluidframework/file-driver";
+} from "@fluidframework/file-driver/internal";
 import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix/internal";
 import {
 	ISequencedDocumentMessage,
@@ -30,7 +30,7 @@ import {
 	MessageType,
 	TreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { FileSnapshotReader, IFileSnapshot } from "@fluidframework/replay-driver";
+import { FileSnapshotReader, IFileSnapshot } from "@fluidframework/replay-driver/internal";
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";

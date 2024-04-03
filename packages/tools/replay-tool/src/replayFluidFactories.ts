@@ -9,7 +9,7 @@ import {
 	SharedObjectSequence,
 	SparseMatrix,
 } from "@fluid-experimental/sequence-deprecated";
-import { SharedCell } from "@fluidframework/cell";
+import { SharedCell } from "@fluidframework/cell/internal";
 import { IContainerContext } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
