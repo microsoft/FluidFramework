@@ -265,7 +265,7 @@ export enum NodeKind {
 export type StoredFieldKey = string;
 
 /**
- * Properties associated with a field.
+ * Additional information to provide to a {@link FieldSchema}.
  *
  * @public
  */
