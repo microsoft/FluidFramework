@@ -11,7 +11,7 @@ import {
 	ReferenceType,
 	compareReferencePositions,
 	reservedRangeLabelsKey,
-} from "@fluidframework/merge-tree";
+} from "@fluidframework/merge-tree/internal";
 
 import {
 	IntervalType,

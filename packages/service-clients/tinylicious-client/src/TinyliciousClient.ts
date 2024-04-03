@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type IDocumentServiceFactory,
 	type IUrlResolver,
@@ -24,13 +24,13 @@ import {
 	createServiceAudience,
 } from "@fluidframework/fluid-static/internal";
 import { type IClient } from "@fluidframework/protocol-definitions";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
+import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import {
 	InsecureTinyliciousTokenProvider,
 	InsecureTinyliciousUrlResolver,
 	createTinyliciousCreateNewRequest,
-} from "@fluidframework/tinylicious-driver";
+} from "@fluidframework/tinylicious-driver/internal";
 
 import { createTinyliciousAudienceMember } from "./TinyliciousAudience.js";
 import { type TinyliciousClientProps, type TinyliciousContainerServices } from "./interfaces.js";

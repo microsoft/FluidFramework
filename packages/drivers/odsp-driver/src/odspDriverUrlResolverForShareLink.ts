@@ -4,7 +4,7 @@
  */
 
 import { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { PromiseCache } from "@fluidframework/core-utils";
+import { PromiseCache } from "@fluidframework/core-utils/internal";
 import {
 	IContainerPackageInfo,
 	IResolvedUrl,
@@ -15,7 +15,7 @@ import {
 	IdentityType,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
-} from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/odsp-driver-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 
 import { OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic.js";

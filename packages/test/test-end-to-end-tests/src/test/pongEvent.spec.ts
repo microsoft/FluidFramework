@@ -16,7 +16,7 @@ import {
 	TestFluidObjectFactory,
 	timeoutPromise,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 const codeDetails: IFluidCodeDetails = { package: "test" };
 

@@ -5,7 +5,7 @@
 
 import { performance } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { IResolvedUrl, ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	type AuthorizationError,
@@ -14,7 +14,7 @@ import {
 	OnlineStatus,
 	RetryableError,
 	isOnline,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import {
 	fetchIncorrectResponse,
 	getSPOAndGraphRequestIdsFromResponse,
@@ -34,15 +34,15 @@ import {
 	isTokenFromCache,
 	snapshotKey,
 	tokenFromResponse,
-} from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	type IFluidErrorBase,
-	ITelemetryLoggerExt,
 	PerformanceEvent,
 	TelemetryDataTag,
 	createChildLogger,
 	wrapError,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 
 import { IOdspSnapshot } from "./contracts.js";
 import { fetch } from "./fetch.js";

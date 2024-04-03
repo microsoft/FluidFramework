@@ -6,7 +6,7 @@
 import {
 	type ISourcedDevtoolsMessage,
 	type MessageLoggingOptions,
-} from "@fluidframework/devtools-core";
+} from "@fluidframework/devtools-core/internal";
 
 import { type TypedPortConnection } from "./TypedPortConnection.js";
 

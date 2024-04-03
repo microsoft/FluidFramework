@@ -11,7 +11,7 @@ import {
 	ContainerErrorTypes,
 	IContainerContext,
 } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	ConfigTypes,
 	FluidObject,
@@ -30,6 +30,7 @@ import {
 	ISummaryTree,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
 	FluidDataStoreRegistryEntry,
 	FlushMode,
@@ -37,9 +38,8 @@ import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
-	ISummaryTreeWithStats,
 	NamedFluidDataStoreRegistryEntries,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	IFluidErrorBase,
 	MockLogger,
@@ -47,13 +47,13 @@ import {
 	isFluidError,
 	isILoggingError,
 	mixinMonitoringContext,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	MockDeltaManager,
 	MockFluidDataStoreRuntime,
 	MockQuorumClients,
 	validateAssertionError,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import { SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";
