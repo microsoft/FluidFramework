@@ -123,46 +123,39 @@ export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeVal
 }
 
 /**
- * Stores mappings from simple field keys ("view" keys) to their flex field counterparts ("stored" keys).
- * Mappings are set via {@link cacheFlexKeyMapping}.
- * Simple field keys can be translated via {@link getFlexKeyFromCache}.
+ * Maps from simple field keys ("view" keys) to their flex field counterparts ("stored" keys).
+ *
+ * @remarks
+ * A missing entry for a given view key indicates that the view and stored keys are the same for that field.
  */
-const simpleKeyToFlexKeyCache = new WeakMap<TreeNodeSchema, Map<string, FieldKey>>();
+type SimpleKeyToFlexKeyMap = Map<FieldKey, FieldKey>;
 
 /**
- * Sets the view key to stored key mappings for the provided object field schemas in {@link simpleKeyToFlexKeyCache}.
+ * Caches a {@link SimpleKeyToFlexKeyMap} for a given {@link TreeNodeSchema}.
  */
-function cacheFlexKeyMapping(
+const simpleKeyToFlexKeyCache = new WeakMap<TreeNodeSchema, SimpleKeyToFlexKeyMap>();
+
+/**
+ * Caches the mappings from view keys to stored keys for the provided object field schemas in {@link simpleKeyToFlexKeyCache}.
+ */
+function getOrCreateFlexKeyMapping(
 	nodeSchema: TreeNodeSchema,
 	fields: Record<string, ImplicitFieldSchema>,
-): void {
-	if (simpleKeyToFlexKeyCache.has(nodeSchema)) {
-		return;
-	}
-
-	const keyMap = new Map<string, FieldKey>();
-	for (const [viewKey, fieldSchema] of Object.entries(fields)) {
-		// Only specify mapping if the stored key differs from the view key.
-		// No entry in this map will indicate that the two keys are the same.
-		const storedKey = getStoredKey(viewKey, fieldSchema);
-		if (viewKey !== storedKey) {
-			keyMap.set(viewKey, brand(storedKey));
+): SimpleKeyToFlexKeyMap {
+	let keyMap = simpleKeyToFlexKeyCache.get(nodeSchema);
+	if (keyMap === undefined) {
+		keyMap = new Map<FieldKey, FieldKey>();
+		for (const [viewKey, fieldSchema] of Object.entries(fields)) {
+			// Only specify mapping if the stored key differs from the view key.
+			// No entry in this map will indicate that the two keys are the same.
+			const storedKey = getStoredKey(viewKey, fieldSchema);
+			if (viewKey !== storedKey) {
+				keyMap.set(brand(viewKey), brand(storedKey));
+			}
 		}
+		simpleKeyToFlexKeyCache.set(nodeSchema, keyMap);
 	}
-
-	simpleKeyToFlexKeyCache.set(nodeSchema, keyMap);
-}
-
-/**
- * Gets the flex domain key (i.e. the "stored key") associated with the provided view key in an object schema.
- *
- * If an explicit stored key was specified in the schema, it will be used. Otherwise,
- * the stored key is the same as the view key.
- */
-function getFlexKeyFromCache(viewKey: FieldKey, nodeSchema: TreeNodeSchema): FieldKey {
-	const keyMap = simpleKeyToFlexKeyCache.get(nodeSchema);
-	assert(keyMap !== undefined, "No key mappings were populated for the provided node schema.");
-	return keyMap.get(viewKey) ?? viewKey;
+	return keyMap;
 }
 
 /**
@@ -177,7 +170,14 @@ export function createObjectProxy(
 	targetObject: object = {},
 ): TreeNode {
 	// Performance optimization: cache view key => stored key mapping.
-	cacheFlexKeyMapping(schema, schema.info as Record<string, ImplicitFieldSchema>);
+	const flexKeyMap: SimpleKeyToFlexKeyMap = getOrCreateFlexKeyMapping(
+		schema,
+		schema.info as Record<string, ImplicitFieldSchema>,
+	);
+
+	function getFlexKey(viewKey: FieldKey): FieldKey {
+		return flexKeyMap.get(viewKey) ?? viewKey;
+	}
 
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
 	// prototype as an object literal '{}'.  This is because 'deepEquals' uses 'Object.getPrototypeOf'
@@ -190,7 +190,7 @@ export function createObjectProxy(
 	// a dispatch object to see if it improves performance.
 	const proxy = new Proxy(targetObject, {
 		get(target, viewKey): unknown {
-			const flexKey = getFlexKeyFromCache(viewKey as FieldKey, schema);
+			const flexKey = getFlexKey(viewKey as FieldKey);
 			const field = getFlexNode(proxy).tryGetField(brand(flexKey));
 
 			if (field !== undefined) {
@@ -205,7 +205,7 @@ export function createObjectProxy(
 			const flexNodeSchema = flexNode.schema;
 			assert(flexNodeSchema instanceof FlexObjectNodeSchema, 0x888 /* invalid schema */);
 
-			const flexKey: FieldKey = brand(getFlexKeyFromCache(viewKey as FieldKey, schema));
+			const flexKey: FieldKey = getFlexKey(viewKey as FieldKey);
 			const flexFieldSchema = flexNodeSchema.objectNodeFields.get(flexKey);
 
 			if (flexFieldSchema === undefined) {
@@ -262,7 +262,7 @@ export function createObjectProxy(
 			];
 		},
 		getOwnPropertyDescriptor: (target, viewKey) => {
-			const flexKey = getFlexKeyFromCache(viewKey as FieldKey, schema);
+			const flexKey = getFlexKey(viewKey as FieldKey);
 			const field = getFlexNode(proxy).tryGetField(flexKey);
 
 			if (field === undefined) {
