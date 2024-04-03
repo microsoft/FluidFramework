@@ -105,5 +105,9 @@
 	},
 	"engines": {
 		"node": ">=14.0.0"
-	}
+	},
+  "typeValidation": {
+    "disabled": true,
+    "broken": {}
+  }
 }
