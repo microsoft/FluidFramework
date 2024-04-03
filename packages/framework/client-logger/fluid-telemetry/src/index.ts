@@ -3,6 +3,11 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * This package provides an implementation and types for producing and consuming telemetry for Fluid Framework applications
+ * @packageDocumentation
+ */
+
 export {
 	type IFluidTelemetry,
 	type FluidTelemetryEventName,

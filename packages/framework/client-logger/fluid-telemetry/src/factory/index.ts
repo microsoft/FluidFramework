@@ -24,14 +24,14 @@ export interface TelemetryConfig {
 	 */
 	containerId: string;
 	/**
-	 * Conusmers take incoming produced {@link IFluidTelemetry} and do something of your choice with it.
+	 * Conusmers take incoming produced {@link @fluidframework/fluid-telemetry#IFluidTelemetry} and do something of your choice with it.
 	 * This could be sending the telemetry to a cloud platform or just console logging.
 	 */
 	consumers: ITelemetryConsumer[];
 }
 
 /**
- * Starts creating {@link IFluidTelemetry} by transforming raw system events emitted by the specified container
+ * Starts creating {@link @fluidframework/fluid-telemetry#IFluidTelemetry} by transforming raw system events emitted by the specified container
  * into said telemetry and passing it onto to the specified {@link ITelemetryConsumer}
  *
  * @beta
