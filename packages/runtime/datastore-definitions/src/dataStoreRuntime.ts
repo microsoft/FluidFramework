@@ -119,7 +119,7 @@ export interface IFluidDataStoreRuntime
 	/**
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
-	 * @param content - Content of the signal. Should be a JSON serializable object.
+	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
 	submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
