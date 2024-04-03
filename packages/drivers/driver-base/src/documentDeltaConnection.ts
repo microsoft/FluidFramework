@@ -10,7 +10,7 @@ import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 } from "@fluidframework/driver-definitions/internal";
-import { UsageError, createGenericNetworkError } from "@fluidframework/driver-utils/internal";
+import { createGenericNetworkError } from "@fluidframework/driver-utils/internal";
 import {
 	ConnectionMode,
 	IClientConfiguration,
@@ -341,10 +341,6 @@ export class DocumentDeltaConnection
 	 */
 	public submitSignal(content: string, targetClientId?: string): void {
 		this.checkNotDisposed();
-
-		if (targetClientId && this.details.supportedFeatures?.submit_signals_v2 !== true) {
-			throw new UsageError("Sending signals to specific client ids is not supported.");
-		}
 
 		const signal: ISentSignalMessage = {
 			content,
