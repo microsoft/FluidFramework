@@ -76,6 +76,9 @@ import { FlexTreeNodeEvents, TreeEvent } from "./treeEvents.js";
 import { unboxedField } from "./unboxed.js";
 import { treeStatusFromAnchorCache } from "./utilities.js";
 
+/**
+ * @param cursor - This does not take ownership of this cursor: Node will fork it as needed.
+ */
 export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): LazyTreeNode {
 	const anchor = cursor.buildAnchor();
 	const anchorNode =
