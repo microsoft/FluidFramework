@@ -40,7 +40,7 @@ import {
 	NodeKind,
 	TreeNodeSchema,
 	normalizeFieldSchema,
-	storedKeyFromViewKey,
+	getStoredKey,
 } from "./schemaTypes.js";
 import { cursorFromNodeData } from "./toMapTree.js";
 import { TreeConfiguration } from "./tree.js";
@@ -228,7 +228,7 @@ export function convertNodeSchema(
 				for (const [viewKey, implicitFieldSchema] of Object.entries(info)) {
 					// If a `stored key` was provided, use it as the key in the flex schema.
 					// Otherwise, use the view key.
-					const flexKey = storedKeyFromViewKey(viewKey, implicitFieldSchema);
+					const flexKey = getStoredKey(viewKey, implicitFieldSchema);
 
 					// This code has to be careful to avoid assigning to __proto__ or similar built-in fields.
 					Object.defineProperty(fields, flexKey, {

@@ -54,7 +54,9 @@ import {
 	WithType,
 	type,
 	type FieldProps,
-	storedKeyFromViewKey,
+	type StoredFieldKey,
+	getExplicitStoredKey,
+	getStoredKey,
 } from "./schemaTypes.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { TreeArrayNode } from "./treeArrayNode.js";
@@ -357,21 +359,32 @@ export class SchemaFactory<
 		const Name extends number | string,
 		const Fields extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 	>(schemaName: Name, fields: Fields): void {
-		const viewKeys = new Set<string>();
-		const storedKeys = new Set<string>();
-		for (const [viewKey, schema] of Object.entries(fields)) {
-			if (viewKeys.has(viewKey)) {
-				throw new UsageError(`Duplicate view key "${viewKey}" in schema "${schemaName}".`);
+		// Verify that there are no duplicates among the explicitly specified stored keys.
+		const explicitStoredKeys = new Set<StoredFieldKey>();
+		for (const schema of Object.values(fields)) {
+			const storedKey = getExplicitStoredKey(schema);
+			if (storedKey === undefined) {
+				continue;
 			}
-			viewKeys.add(viewKey);
-
-			const storedKey = storedKeyFromViewKey(viewKey, schema);
-			if (storedKeys.has(storedKey)) {
+			if (explicitStoredKeys.has(storedKey)) {
 				throw new UsageError(
-					`Duplicate stored key "${storedKey}" in schema "${schemaName}". This could be due to an implicit collision with another view key`,
+					`Duplicate stored key "${storedKey}" in schema "${schemaName}". Stored keys must be unique within an object schema.`,
 				);
 			}
-			storedKeys.add(storedKey);
+			explicitStoredKeys.add(storedKey);
+		}
+
+		// Verify that there are no duplicates among the derived
+		// (including those implicitly derived from view keys) stored keys.
+		const derivedStoredKeys = new Set<StoredFieldKey>();
+		for (const [viewKey, schema] of Object.entries(fields)) {
+			const storedKey = getStoredKey(viewKey, schema);
+			if (derivedStoredKeys.has(storedKey)) {
+				throw new UsageError(
+					`Stored key "${storedKey}" in schema "${schemaName}" conflicts with a property key of the same name, which is not overridden by a stored key. The final set of stored keys in an object schema must be unique.`,
+				);
+			}
+			derivedStoredKeys.add(storedKey);
 		}
 	}
 

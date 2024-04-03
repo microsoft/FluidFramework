@@ -40,7 +40,7 @@ import {
 	NodeKind,
 	TreeMapNode,
 	type TreeNodeSchema,
-	storedKeyFromViewKey,
+	getStoredKey,
 } from "./schemaTypes.js";
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree.js";
 import { IterableTreeArrayContent, TreeArrayNode } from "./treeArrayNode.js";
@@ -144,7 +144,7 @@ function cacheFlexKeyMapping(
 	for (const [viewKey, fieldSchema] of Object.entries(fields)) {
 		// Only specify mapping if the stored key differs from the view key.
 		// No entry in this map will indicate that the two keys are the same.
-		const storedKey = storedKeyFromViewKey(viewKey, fieldSchema);
+		const storedKey = getStoredKey(viewKey, fieldSchema);
 		if (viewKey !== storedKey) {
 			keyMap.set(viewKey, brand(storedKey));
 		}

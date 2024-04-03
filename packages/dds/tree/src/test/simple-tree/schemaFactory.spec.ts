@@ -242,7 +242,7 @@ describe("schemaFactory", () => {
 						y: schema.required(schema.number, { key: "foo" }),
 					}),
 				(error: Error) =>
-					validateAssertionError(error, /Duplicate stored key "foo" in schema/),
+					validateAssertionError(error, /Duplicate stored key "foo" in schema "Point"/),
 			);
 		});
 
@@ -255,7 +255,10 @@ describe("schemaFactory", () => {
 						bar: schema.required(schema.string, { key: "foo" }),
 					}),
 				(error: Error) =>
-					validateAssertionError(error, /Duplicate stored key "foo" in schema/),
+					validateAssertionError(
+						error,
+						/Stored key "foo" in schema "Object" conflicts with a property key of the same name/,
+					),
 			);
 		});
 
