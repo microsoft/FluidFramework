@@ -21,7 +21,7 @@ import {
 import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
-} from "@fluidframework/container-runtime-definitions";
+} from "@fluidframework/container-runtime-definitions/internal";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -29,17 +29,23 @@ import {
 	IProvideFluidHandleContext,
 	IRequest,
 	IResponse,
-	ISignalEnvelope,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { assert, Deferred, LazyPromise, PromiseCache, delay } from "@fluidframework/core-utils";
+import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import {
+	assert,
+	Deferred,
+	LazyPromise,
+	PromiseCache,
+	delay,
+} from "@fluidframework/core-utils/internal";
 import {
 	DriverHeader,
 	FetchSource,
 	IDocumentStorageService,
 	type ISnapshot,
 } from "@fluidframework/driver-definitions/internal";
-import { readAndParse } from "@fluidframework/driver-utils";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IIdCompressorCore,
@@ -60,6 +66,12 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
+	IGarbageCollectionData,
+	IInboundSignalMessage,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+} from "@fluidframework/runtime-definitions";
+import {
 	CreateChildSummarizerNodeParam,
 	FlushMode,
 	FlushModeExperimental,
@@ -67,17 +79,13 @@ import {
 	IEnvelope,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreRegistry,
-	IGarbageCollectionData,
-	IInboundSignalMessage,
 	ISummarizeInternalResult,
-	ISummaryTreeWithStats,
-	ITelemetryContext,
 	InboundAttachMessage,
 	NamedFluidDataStoreRegistryEntries,
 	SummarizeInternalFn,
 	channelsTreeName,
 	gcTreeKey,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
 	ReadAndParseBlob,
@@ -90,17 +98,20 @@ import {
 	exceptionToResponse,
 	responseToException,
 	seqFromTree,
-} from "@fluidframework/runtime-utils";
+} from "@fluidframework/runtime-utils/internal";
+import {
+	type ITelemetryGenericEventExt,
+	ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils";
 import {
 	DataCorruptionError,
 	DataProcessingError,
 	GenericError,
 	IEventSampler,
-	type ITelemetryGenericEventExt,
-	ITelemetryLoggerExt,
 	LoggingError,
 	MonitoringContext,
 	PerformanceEvent,
+	// eslint-disable-next-line import/no-deprecated
 	TaggedLoggerAdapter,
 	UsageError,
 	createChildLogger,
@@ -109,7 +120,7 @@ import {
 	loggerToMonitoringContext,
 	raiseConnectedEvent,
 	wrapError,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { BindBatchTracker } from "./batchTracker.js";
@@ -772,6 +783,7 @@ export class ContainerRuntime
 		const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;
 		const passLogger =
 			backCompatContext.taggedLogger ??
+			// eslint-disable-next-line import/no-deprecated
 			new TaggedLoggerAdapter((backCompatContext as OldContainerContextWithLogger).logger);
 		const logger = createChildLogger({
 			logger: passLogger,

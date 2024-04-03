@@ -4,18 +4,17 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
+import { createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
 
 import { IJsonCodec } from "../codec/index.js";
-import { ChangeFamily, ChangeFamilyEditor } from "../core/index.js";
-import { SchemaAndPolicy } from "../feature-libraries/index.js";
+import { ChangeFamily, ChangeFamilyEditor, SchemaAndPolicy } from "../core/index.js";
 import { JsonCompatibleReadOnly } from "../util/index.js";
 
 import { EditManager, SummaryData } from "./editManager.js";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/core-utils';
+import { assert } from '@fluidframework/core-utils/internal';
 import { type IChannelAttributes, type IDeltaHandler } from '@fluidframework/datastore-definitions';
 import { type ISequencedDocumentMessage, MessageType } from '@fluidframework/protocol-definitions';
 

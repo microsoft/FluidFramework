@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+import { BTree } from "@tylerbu/sorted-btree-es6";
 
 import { ICodecFamily } from "../../codec/index.js";
 import {
@@ -1030,14 +1031,33 @@ export function updateRefreshers(
 	removedRoots: Iterable<DeltaDetachedNodeId>,
 ): ModularChangeset {
 	const refreshers: ChangeAtomIdMap<TreeChunk> = new Map();
+	const chunkLengths: Map<RevisionTag | undefined, BTree<number, number>> = new Map();
+
+	if (change.builds !== undefined) {
+		for (const [major, buildsMap] of change.builds) {
+			const lengthTree = getOrAddInMap(chunkLengths, major, new BTree());
+			for (const [id, chunk] of buildsMap) {
+				lengthTree.set(id, chunk.topLevelLength);
+			}
+		}
+	}
 
 	for (const root of removedRoots) {
 		if (change.builds !== undefined) {
 			const major = root.major === revision ? undefined : root.major;
-			// if the root exists in the original builds map, it does not need to be added as a refresher
-			const original = tryGetFromNestedMap(change.builds, major, root.minor);
-			if (original !== undefined) {
-				continue;
+			const lengthTree = chunkLengths.get(major);
+
+			if (lengthTree !== undefined) {
+				const lengthPair = lengthTree.getPairOrNextLower(root.minor);
+				if (lengthPair !== undefined) {
+					const [firstMinor, length] = lengthPair;
+
+					// if the root minor is within the length of the minor of the retrieved pair
+					// then there's no need to check for the detached node
+					if (root.minor < firstMinor + length) {
+						continue;
+					}
+				}
 			}
 		}
 

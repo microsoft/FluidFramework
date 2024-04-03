@@ -4,7 +4,7 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IChannelStorageService,
@@ -12,8 +12,9 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import { v4 as uuid } from "uuid";
 
 import {
