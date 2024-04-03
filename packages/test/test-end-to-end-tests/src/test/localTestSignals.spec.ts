@@ -4,18 +4,27 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainerRuntimeBase, IInboundSignalMessage } from "@fluidframework/runtime-definitions";
-import {
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	ITestFluidObject,
-	timeoutPromise,
-	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { ConnectionState } from "@fluidframework/container-loader";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import {
+	IContainerRuntimeBase,
+	IInboundSignalMessage,
+} from "@fluidframework/runtime-definitions/internal";
+import {
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	getContainerEntryPointBackCompat,
+	timeoutPromise,
+} from "@fluidframework/test-utils/internal";
+
+type IContainerRuntimeBaseWithClientId = IContainerRuntimeBase & { clientId?: string | undefined };
+
+type RuntimeType = IFluidDataStoreRuntime | IContainerRuntimeBaseWithClientId;
 
 const testContainerConfig: ITestContainerConfig = {
 	fluidDataObjectType: DataObjectFactoryType.Test,
@@ -30,10 +39,6 @@ const waitForSignal = async (...signallers: { once(e: "signal", l: () => void): 
 			}),
 		),
 	);
-
-type IContainerRuntimeBaseWithClientId = IContainerRuntimeBase & { clientId?: string | undefined };
-
-type RuntimeType = IFluidDataStoreRuntime | IContainerRuntimeBaseWithClientId;
 
 describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
@@ -196,7 +201,7 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 	});
 });
 
-describeCompat.skip("TargetedSignals", "NoCompat", (getTestObjectProvider) => {
+describeCompat("TargetedSignals", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let dataObject1: ITestFluidObject;
 	let dataObject2: ITestFluidObject;
@@ -306,24 +311,9 @@ describeCompat.skip("TargetedSignals", "NoCompat", (getTestObjectProvider) => {
 			assert.equal(user1SignalReceivedCount, 1, "client 1 did not receive signal");
 		}
 
-		beforeEach("3rd container setup", async function () {
+		beforeEach("driver check", async function () {
 			if (provider.driver.type !== "odsp") {
 				this.skip();
-			}
-
-			user1SignalReceivedCount = 0;
-			user2SignalReceivedCount = 0;
-			user3SignalReceivedCount = 0;
-
-			const container3 = await provider.loadTestContainer(testContainerConfig);
-			dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
-
-			user1ContainerRuntime = dataObject1.context.containerRuntime;
-			user2ContainerRuntime = dataObject2.context.containerRuntime;
-			user3ContainerRuntime = dataObject3.context.containerRuntime;
-
-			if (container3.connectionState !== ConnectionState.Connected) {
-				await new Promise((resolve) => container3.once("connected", resolve));
 			}
 		});
 
@@ -364,25 +354,25 @@ describeCompat.skip("TargetedSignals", "NoCompat", (getTestObjectProvider) => {
 	 * Skipped tests - unsupported behavior is currently undefined
 	 * @see {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/5852}
 	 */
-	describe.skip("Unsupported Targeted Signals", function () {
+	describe.skip("Unsupported Targeted Signals", () => {
 		async function sendAndVerifyBroadcast(
 			localRuntime: RuntimeType,
 			remoteRuntime1: RuntimeType,
 			remoteRuntime2: RuntimeType,
 		) {
-			localRuntime.on("signal", function (message: IInboundSignalMessage, local: boolean) {
+			localRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
 				assert.equal(local, true, "Signal should be local");
 				if (message.type === "TestSignal") {
 					user1SignalReceivedCount += 1;
 				}
 			});
-			remoteRuntime1.on("signal", function (message: IInboundSignalMessage, local: boolean) {
+			remoteRuntime1.on("signal", (message: IInboundSignalMessage, local: boolean) => {
 				assert.equal(local, false, "Signal should be remote");
 				if (message.type === "TestSignal") {
 					user2SignalReceivedCount += 1;
 				}
 			});
-			remoteRuntime2.on("signal", function (message: IInboundSignalMessage, local: boolean) {
+			remoteRuntime2.on("signal", (message: IInboundSignalMessage, local: boolean) => {
 				assert.equal(local, false, "Signal should be remote");
 				if (message.type === "TestSignal") {
 					user3SignalReceivedCount += 1;
@@ -396,24 +386,9 @@ describeCompat.skip("TargetedSignals", "NoCompat", (getTestObjectProvider) => {
 			assert.equal(user3SignalReceivedCount, 1, "client 3 did not receive signal");
 		}
 
-		beforeEach("3rd container setup", async function () {
+		beforeEach("Driver check", async function () {
 			if (provider.driver.type === "odsp") {
 				this.skip();
-			}
-
-			user1SignalReceivedCount = 0;
-			user2SignalReceivedCount = 0;
-			user3SignalReceivedCount = 0;
-
-			const container3 = await provider.loadTestContainer(testContainerConfig);
-			dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
-
-			user1ContainerRuntime = dataObject1.context.containerRuntime;
-			user2ContainerRuntime = dataObject2.context.containerRuntime;
-			user3ContainerRuntime = dataObject3.context.containerRuntime;
-
-			if (container3.connectionState !== ConnectionState.Connected) {
-				await new Promise((resolve) => container3.once("connected", resolve));
 			}
 		});
 
