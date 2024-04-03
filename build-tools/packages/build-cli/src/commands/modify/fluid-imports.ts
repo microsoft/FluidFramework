@@ -37,7 +37,8 @@ const unscopedFFPackages = new Set(["fluid-framework", "tinylicious"]);
 export default class UpdateFluidImportsCommand extends BaseCommand<
 	typeof UpdateFluidImportsCommand
 > {
-	static readonly description = `Rewrite imports for Fluid Framework APIs to use the correct subpath import (/alpha, /beta. etc.)`;
+	static readonly description =
+		`Rewrite imports for Fluid Framework APIs to use the correct subpath import (/alpha, /beta. etc.)`;
 
 	static readonly flags = {
 		tsconfigs: Flags.file({
@@ -46,8 +47,12 @@ export default class UpdateFluidImportsCommand extends BaseCommand<
 			default: ["./tsconfig.json"],
 			multiple: true,
 		}),
+		packageRegex: Flags.string({
+			description: "Regular expression filtering import packages to adjust",
+		}),
 		data: Flags.file({
-			description: "Path to a data file containing raw API level data.",
+			description:
+				"Optional path to a data file containing raw API level data. Overrides API levels extracted from package data.",
 			exists: true,
 		}),
 		onlyInternal: Flags.boolean({
@@ -57,7 +62,7 @@ export default class UpdateFluidImportsCommand extends BaseCommand<
 	};
 
 	public async run(): Promise<void> {
-		const { tsconfigs, data, onlyInternal } = this.flags;
+		const { tsconfigs, packageRegex, data, onlyInternal } = this.flags;
 
 		const foundConfigs = tsconfigs.filter((file) => {
 			const exists = existsSync(file);
@@ -70,8 +75,10 @@ export default class UpdateFluidImportsCommand extends BaseCommand<
 		if (foundConfigs.length === 0) {
 			this.error(`No config files found.`, { exit: 1 });
 		}
+
 		const apiLevelData = data === undefined ? undefined : await loadData(data);
-		const apiMap = new ApiLevelReader(this.logger, apiLevelData);
+		const packagesRegex = new RegExp(packageRegex ?? "");
+		const apiMap = new ApiLevelReader(this.logger, packagesRegex, apiLevelData);
 
 		// Note that while there is a queue here it is only really a queue for file saves
 		// which are the only async aspect currently and aren't expected to take so long.
@@ -228,9 +235,7 @@ class FluidImportManager {
 					fluidImport.importDeclaration.setModuleSpecifier(
 						replacement.declaration.moduleSpecifier,
 					);
-					fluidImport.importDeclaration.addNamedImports(
-						replacement.declaration.namedImports,
-					);
+					fluidImport.importDeclaration.addNamedImports(replacement.declaration.namedImports);
 					fluidImport.importDeclaration.setIsTypeOnly(replacement.declaration.isTypeOnly);
 					// Any other prospects should be inserted after this now.
 					for (const otherProspects of takeOverProspects.slice(1)) {
@@ -523,7 +528,10 @@ function parseImport(
  * @param log - logger.
  * @returns an array of {@link FluidImportDataPresent} metadata objects
  */
-function parseFluidImports(sourceFile: SourceFile, log: CommandLogger): FluidImportDataPresent[] {
+function parseFluidImports(
+	sourceFile: SourceFile,
+	log: CommandLogger,
+): FluidImportDataPresent[] {
 	return sourceFile
 		.getImportDeclarations()
 		.map((importDecl, index) => parseImport(importDecl, index, log))
@@ -562,21 +570,30 @@ class ApiLevelReader {
 	});
 
 	private readonly tempSource = this.project.createSourceFile("flub-fluid-importer-temp.ts");
-	private readonly map: Map<PackageName, MemberData | null>;
+	private readonly map: Map<PackageName, MemberData | undefined>;
 
 	constructor(
 		private readonly log: CommandLogger,
+		private readonly packagesRegex: RegExp,
 		initialMap?: MapData,
 	) {
 		this.map = new Map<PackageName, MemberData>(initialMap);
+		for (const k of this.map.keys()) {
+			if (!this.packagesRegex.test(k)) {
+				this.map.set(k, undefined);
+			}
+		}
 	}
 
 	public get(packageName: PackageName): MemberData | undefined {
-		const memberData = this.map.get(packageName);
-		if (memberData !== undefined) {
-			return memberData ?? undefined;
+		if (this.map.has(packageName)) {
+			return this.map.get(packageName);
 		}
-		return this.loadPackageData(packageName);
+		const loadResult = this.packagesRegex.test(packageName)
+			? this.loadPackageData(packageName)
+			: undefined;
+		this.map.set(packageName, loadResult);
+		return loadResult;
 	}
 
 	private loadPackageData(packageName: PackageName): MemberData | undefined {
@@ -586,9 +603,6 @@ class ApiLevelReader {
 		const internalSource = internalImport.getModuleSpecifierSourceFile();
 		if (internalSource === undefined) {
 			this.log.warning(`no /internal export from ${packageName}`);
-			// Set package's entry to null to avoid further load attempts.
-			// eslint-disable-next-line unicorn/no-null
-			this.map.set(packageName, null);
 			return undefined;
 		}
 		this.log.verbose(`\tLoading ${packageName} API data from ${internalSource.getFilePath()}`);
@@ -619,7 +633,6 @@ class ApiLevelReader {
 			}
 		}
 
-		this.map.set(packageName, memberData);
 		return memberData;
 	}
 }

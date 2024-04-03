@@ -11,11 +11,14 @@ Rewrite imports for Fluid Framework APIs to use the correct subpath import (/alp
 
 ```
 USAGE
-  $ flub modify fluid-imports [-v | --quiet] [--tsconfigs <value>] [--data <value>] [--onlyInternal]
+  $ flub modify fluid-imports [-v | --quiet] [--tsconfigs <value>] [--packageRegex <value>] [--data <value>]
+    [--onlyInternal]
 
 FLAGS
-  --data=<value>          Path to a data file containing raw API level data.
+  --data=<value>          Optional path to a data file containing raw API level data. Overrides API levels extracted
+                          from package data.
   --onlyInternal          Use /internal for all non-public APIs instead of /alpha or /beta.
+  --packageRegex=<value>  Regular expression filtering import packages to adjust
   --tsconfigs=<value>...  [default: ./tsconfig.json] Tsconfig file paths that will be used to load project files. When
                           multiple are given all must depend on the same version of packages; otherwise results are
                           unstable.
