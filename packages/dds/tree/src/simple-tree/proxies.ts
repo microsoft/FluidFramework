@@ -40,7 +40,7 @@ import {
 	NodeKind,
 	TreeMapNode,
 	type TreeNodeSchema,
-	FieldSchema,
+	storedKeyFromViewKey,
 } from "./schemaTypes.js";
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree.js";
 import { IterableTreeArrayContent, TreeArrayNode } from "./treeArrayNode.js";
@@ -123,6 +123,49 @@ export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeVal
 }
 
 /**
+ * Stores mappings from simple field keys ("view" keys) to their flex field counterparts ("stored" keys).
+ * Mappings are set via {@link cacheFlexKeyMapping}.
+ * Simple field keys can be translated via {@link getFlexKeyFromCache}.
+ */
+const simpleKeyToFlexKeyCache = new WeakMap<TreeNodeSchema, Map<string, FieldKey>>();
+
+/**
+ * Sets the view key to stored key mappings for the provided object field schemas in {@link simpleKeyToFlexKeyCache}.
+ */
+function cacheFlexKeyMapping(
+	nodeSchema: TreeNodeSchema,
+	fields: Record<string, ImplicitFieldSchema>,
+): void {
+	if (simpleKeyToFlexKeyCache.has(nodeSchema)) {
+		return;
+	}
+
+	const keyMap = new Map<string, FieldKey>();
+	for (const [viewKey, fieldSchema] of Object.entries(fields)) {
+		// Only specify mapping if the stored key differs from the view key.
+		// No entry in this map will indicate that the two keys are the same.
+		const storedKey = storedKeyFromViewKey(viewKey, fieldSchema);
+		if (viewKey !== storedKey) {
+			keyMap.set(viewKey, brand(storedKey));
+		}
+	}
+
+	simpleKeyToFlexKeyCache.set(nodeSchema, keyMap);
+}
+
+/**
+ * Gets the flex domain key (i.e. the "stored key") associated with the provided view key in an object schema.
+ *
+ * If an explicit stored key was specified in the schema, it will be used. Otherwise,
+ * the stored key is the same as the view key.
+ */
+function getFlexKeyFromCache(viewKey: FieldKey, nodeSchema: TreeNodeSchema): FieldKey {
+	const keyMap = simpleKeyToFlexKeyCache.get(nodeSchema);
+	assert(keyMap !== undefined, "No key mappings were populated for the provided node schema.");
+	return keyMap.get(viewKey) ?? viewKey;
+}
+
+/**
  * @param allowAdditionalProperties - If true, setting of unexpected properties will be forwarded to the target object.
  * Otherwise setting of unexpected properties will error.
  * @param customTargetObject - Target object of the proxy.
@@ -133,6 +176,9 @@ export function createObjectProxy(
 	allowAdditionalProperties: boolean,
 	targetObject: object = {},
 ): TreeNode {
+	// Populate view key => stored key mapping cache.
+	cacheFlexKeyMapping(schema, schema.info as Record<string, ImplicitFieldSchema>);
+
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
 	// prototype as an object literal '{}'.  This is because 'deepEquals' uses 'Object.getPrototypeOf'
 	// as a way to quickly reject objects with different prototype chains.
@@ -144,8 +190,8 @@ export function createObjectProxy(
 	// a dispatch object to see if it improves performance.
 	const proxy = new Proxy(targetObject, {
 		get(target, viewKey): unknown {
-			const storedKey = getFlexObjectKey(viewKey as FieldKey, schema);
-			const field = getFlexNode(proxy).tryGetField(storedKey);
+			const flexKey = getFlexKeyFromCache(viewKey as FieldKey, schema);
+			const field = getFlexNode(proxy).tryGetField(brand(flexKey));
 
 			if (field !== undefined) {
 				return getProxyForField(field);
@@ -159,8 +205,8 @@ export function createObjectProxy(
 			const flexNodeSchema = flexNode.schema;
 			assert(flexNodeSchema instanceof FlexObjectNodeSchema, 0x888 /* invalid schema */);
 
-			const storedKey = getFlexObjectKey(viewKey as FieldKey, schema);
-			const flexFieldSchema = flexNodeSchema.objectNodeFields.get(storedKey);
+			const flexKey: FieldKey = brand(getFlexKeyFromCache(viewKey as FieldKey, schema));
+			const flexFieldSchema = flexNodeSchema.objectNodeFields.get(flexKey);
 
 			if (flexFieldSchema === undefined) {
 				return allowAdditionalProperties ? Reflect.set(target, viewKey, value) : false;
@@ -169,7 +215,7 @@ export function createObjectProxy(
 			// TODO: Is it safe to assume 'content' is a LazyObjectNode?
 			assert(flexNode instanceof LazyObjectNode, 0x7e0 /* invalid content */);
 			assert(typeof viewKey === "string", 0x7e1 /* invalid key */);
-			const field = getBoxedField(flexNode, storedKey, flexFieldSchema);
+			const field = getBoxedField(flexNode, flexKey, flexFieldSchema);
 
 			const simpleNodeSchema = getSimpleNodeSchema(flexNodeSchema);
 			const simpleNodeFields = simpleNodeSchema.info as Record<string, ImplicitFieldSchema>;
@@ -216,7 +262,7 @@ export function createObjectProxy(
 			];
 		},
 		getOwnPropertyDescriptor: (target, viewKey) => {
-			const flexKey = getFlexObjectKey(viewKey as FieldKey, schema);
+			const flexKey = getFlexKeyFromCache(viewKey as FieldKey, schema);
 			const field = getFlexNode(proxy).tryGetField(flexKey);
 
 			if (field === undefined) {
@@ -236,28 +282,6 @@ export function createObjectProxy(
 		},
 	}) as TreeNode;
 	return proxy;
-}
-
-/**
- * Gets the flex domain key (i.e. the "stored key") associated with the provided view key.
- */
-function getFlexObjectKey(viewKey: string, classSchema: TreeNodeSchema): FieldKey {
-	const fields = classSchema.info as Record<string, ImplicitFieldSchema>;
-	return getFlexKey(viewKey, fields[viewKey]);
-}
-
-/**
- * Gets the flex domain key (i.e. the "stored key") associated with the provided view key in an object schema.
- *
- * If an explicit stored key was specified in the schema, it will be used. Otherwise,
- * the stored key is the same as the view key.
- */
-export function getFlexKey(viewKey: string, schema: ImplicitFieldSchema): FieldKey {
-	return brand(
-		schema instanceof FieldSchema && schema.props?.key !== undefined
-			? schema.props.key
-			: viewKey,
-	);
 }
 
 /**

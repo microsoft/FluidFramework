@@ -25,7 +25,7 @@ import {
 import { brand, fail, isReadonlyArray } from "../util/index.js";
 
 import { nullSchema } from "./leafNodeSchema.js";
-import { InsertableContent, getFlexKey } from "./proxies.js";
+import { InsertableContent } from "./proxies.js";
 import {
 	FieldKind,
 	FieldSchema,
@@ -35,6 +35,7 @@ import {
 	type TreeNodeSchema,
 	normalizeAllowedTypes,
 	normalizeFieldSchema,
+	storedKeyFromViewKey,
 } from "./schemaTypes.js";
 
 /**
@@ -278,7 +279,7 @@ function objectToMapTree(
 		if (fieldValue !== undefined) {
 			const fieldSchema = getObjectFieldSchema(schema, viewKey);
 			const mappedChildTree = nodeDataToMapTree(fieldValue, fieldSchema.allowedTypeSet);
-			const flexKey: FieldKey = getFlexKey(viewKey, fieldSchema);
+			const flexKey: FieldKey = brand(storedKeyFromViewKey(viewKey, fieldSchema));
 
 			// Note: SchemaFactory validates this at schema creation time, with a user-friendly error.
 			// So we don't expect to hit this, and if we do it is likely an internal bug.

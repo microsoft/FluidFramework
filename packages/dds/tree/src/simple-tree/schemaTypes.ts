@@ -265,6 +265,19 @@ export enum NodeKind {
 export type StoredFieldKey = string;
 
 /**
+ * Maps from a view key to its corresponding {@link StoredKey | stored key}.
+ *
+ * @remarks
+ * If an explicit stored key was specified in the schema, it will be used.
+ * Otherwise, the stored key is the same as the view key.
+ */
+export function storedKeyFromViewKey(viewKey: string, schema: ImplicitFieldSchema): StoredFieldKey {
+	return schema instanceof FieldSchema && schema.props?.key !== undefined
+		? schema.props.key
+		: viewKey;
+}
+
+/**
  * Properties associated with a field.
  *
  * @public
