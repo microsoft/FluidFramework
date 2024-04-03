@@ -158,21 +158,24 @@ class FluidImportManager {
 		let modificationsRequired = false;
 
 		// Collect the existing declarations
-		for (const { importDeclaration, packageName, level } of this.fluidImports) {
+		for (const {
+			importDeclaration,
+			packageName,
+			level,
+			declaration: { moduleSpecifier },
+		} of this.fluidImports) {
 			const data = this.apiMap.get(packageName);
 
 			// Skip modules with no mapping
 			if (data === undefined) {
-				this.log.verbose(
-					`Skipping (no entry in data file): ${importDeclaration.getModuleSpecifierValue()}`,
-				);
+				this.log.verbose(`Skipping: ${moduleSpecifier}`);
 				continue;
 			}
 
 			const namedImports = importDeclaration.getNamedImports();
 			const isTypeOnly = importDeclaration.isTypeOnly();
 
-			this.log.logIndent(`Iterating named imports...`, 2);
+			this.log.verbose(`Reviewing: ${moduleSpecifier}...`);
 			for (const importSpecifier of namedImports) {
 				const name = importSpecifier.getName();
 
@@ -191,9 +194,8 @@ class FluidImportManager {
 					onlyInternal,
 				);
 
-				this.log.logIndent(
-					`Found import named: '${fullImportSpecifierText}' (${expectedLevel})`,
-					4,
+				this.log.verbose(
+					`\t\tFound import named: '${fullImportSpecifierText}' (${expectedLevel})`,
 				);
 
 				const properImport = this.ensureFluidImport({
@@ -383,28 +385,9 @@ function getApiLevelForImportName(
 	return defaultValue;
 }
 
-function notDTsFile(sourceFile: SourceFile): boolean {
-	return sourceFile.getExtension() !== ".d.ts";
-}
-
 function* getSourceFiles(
 	tsconfigFilePaths: string[],
 ): IterableIterator<{ tsConfigFilePath: string; sources: SourceFile[] }> {
-	if (tsconfigFilePaths.length === 1) {
-		const tsConfigFilePath = tsconfigFilePaths[0];
-		const project = new Project({
-			tsConfigFilePath,
-		});
-		yield {
-			tsConfigFilePath,
-			sources: project
-				.getSourceFiles()
-				// Filter out type files - this may not be correct in projects with manually defined declarations.
-				.filter(notDTsFile),
-		};
-		return;
-	}
-
 	// ts-morph processing will pull sources from references and caller may very well have specified project
 	// files that reference one another. Each source should only be processed once. So build a unique
 	// SourceFile list from full paths.
@@ -417,9 +400,12 @@ function* getSourceFiles(
 		yield {
 			tsConfigFilePath,
 			sources: project
-				.getSourceFiles()
+				.getSourceFiles(
+					// Limit to sources in the current working directory
+					"./**",
+				)
 				// Filter out type files - this may not be correct in projects with manually defined declarations.
-				.filter(notDTsFile)
+				.filter((source) => source.getExtension() !== ".d.ts")
 				.filter((source) => {
 					const fullPath = source.getFilePath();
 					const alreadyVisiting = sources.has(fullPath);
@@ -446,7 +432,7 @@ async function updateImports(
 
 	// Iterate over each source file, looking for Fluid imports
 	for (const sourceFile of sourceFiles) {
-		log.verbose(`Source file: ${sourceFile.getBaseName()}`);
+		log.info(`Processing: ${sourceFile.getFilePath()}`);
 
 		// Delete any header comments at the beginning of the file. Save the text so we can re-insert it at the end of
 		// processing. Note that this does modify the source file, but we only save changes if the imports are updated, so
