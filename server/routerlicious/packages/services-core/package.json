@@ -82,6 +82,9 @@
 			"InterfaceDeclaration_IScribeServerConfiguration": {
 				"forwardCompat": false
 			},
+			"InterfaceDeclaration_IDocumentLambdaServerConfiguration": {
+				"forwardCompat": false
+			},
 			"InterfaceDeclaration_IDeliServerConfiguration": {
 				"forwardCompat": false,
 				"backCompat": true
