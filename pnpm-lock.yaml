@@ -7784,7 +7784,7 @@ importers:
       tslib: 1.14.1
       typescript: 5.1.6
 
-  packages/framework/client-logger/external-telemetry:
+  packages/framework/client-logger/fluid-telemetry:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~

@@ -9,7 +9,7 @@ import { type ITelemetryConsumer } from "../common/index.js";
 import type { IFluidContainer } from "@fluidframework/fluid-static";
 
 /**
- * Configuration object for subscribing to {@link @fluidframework/external-telemetry#IFluidTelemetry} and consuming said telemetry via one or more {@link ITelemetryConsumer}
+ * Configuration object for subscribing to {@link @fluidframework/fluid-telemetry#IFluidTelemetry} and consuming said telemetry via one or more {@link ITelemetryConsumer}
  *
  * @beta
  */
