@@ -6,8 +6,18 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { EventEmitter } from "@fluid-example/example-utils";
-import { IMergeTreeDeltaOp, createGroupOp, createRemoveRangeOp } from "@fluidframework/merge-tree";
-import { Marker, ReferenceType, SharedString, TextSegment } from "@fluidframework/sequence";
+import {
+	IMergeTreeDeltaOp,
+	// eslint-disable-next-line import/no-deprecated
+	createGroupOp,
+	createRemoveRangeOp,
+} from "@fluidframework/merge-tree/internal";
+import {
+	Marker,
+	ReferenceType,
+	SharedString,
+	TextSegment,
+} from "@fluidframework/sequence/internal";
 import { exampleSetup } from "prosemirror-example-setup";
 import { DOMSerializer, Schema, Slice } from "prosemirror-model";
 import { addListNodes } from "prosemirror-schema-list";
@@ -253,6 +263,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 						operations = operations.concat(sliceOperations);
 					}
 
+					// eslint-disable-next-line import/no-deprecated
 					const groupOp = createGroupOp(...operations);
 					this.text.groupOperation(groupOp);
 
@@ -317,6 +328,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 						operations = operations.concat(sliceOperations);
 					}
 
+					// eslint-disable-next-line import/no-deprecated
 					const groupOp = createGroupOp(...operations);
 					this.text.groupOperation(groupOp);
 

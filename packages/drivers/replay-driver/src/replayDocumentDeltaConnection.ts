@@ -5,13 +5,13 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDisposable } from "@fluidframework/core-interfaces";
-import { delay } from "@fluidframework/core-utils";
+import { delay } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 	IDocumentDeltaStorageService,
 	IDocumentService,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	ConnectionMode,
 	IClientConfiguration,

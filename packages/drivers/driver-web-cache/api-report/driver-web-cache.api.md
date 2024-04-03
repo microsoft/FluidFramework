@@ -5,9 +5,9 @@
 ```ts
 
 import { DeleteDBCallbacks } from 'idb';
-import { ICacheEntry } from '@fluidframework/odsp-driver-definitions';
-import { IFileEntry } from '@fluidframework/odsp-driver-definitions';
-import { IPersistedCache } from '@fluidframework/odsp-driver-definitions';
+import { ICacheEntry } from '@fluidframework/odsp-driver-definitions/internal';
+import { IFileEntry } from '@fluidframework/odsp-driver-definitions/internal';
+import { IPersistedCache } from '@fluidframework/odsp-driver-definitions/internal';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 
 // @alpha

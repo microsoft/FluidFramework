@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions";
+import { ContainerWarning } from "@fluidframework/container-definitions/internal";
 import { IEvent, IEventProvider, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
 	IDocumentMessage,
@@ -11,7 +12,8 @@ import {
 	ISummaryTree,
 } from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
-import { ITelemetryLoggerExt, ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils/internal";
 
 import { ISummaryConfigurationHeuristics } from "../containerRuntime.js";
 

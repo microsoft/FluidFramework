@@ -14,14 +14,14 @@ import {
 	shorthands,
 	tokens,
 } from "@fluentui/react-components";
-import { type Serializable } from "@fluidframework/datastore-definitions";
+import { type Serializable } from "@fluidframework/datastore-definitions/internal";
 import {
 	DataEdit,
 	type EditData,
 	EditType,
 	type FluidObjectValueNode,
 	type HasContainerKey,
-} from "@fluidframework/devtools-core";
+} from "@fluidframework/devtools-core/internal";
 import React from "react";
 
 import { useMessageRelay } from "../../MessageRelayContext.js";
