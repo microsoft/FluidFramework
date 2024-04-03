@@ -20,7 +20,7 @@ export type TreeItemProps = React.PropsWithChildren<{
 	/**
 	 * Header label created by {@link TreeHeader}.
 	 */
-	header?: React.ReactElement | string;
+	header: React.ReactElement | string;
 
 	// TODO: startOpen
 }>;
