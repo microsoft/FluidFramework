@@ -23,7 +23,7 @@ import {
 	OdspTokenManager,
 	getMicrosoftConfiguration,
 	odspTokensCache,
-} from "@fluidframework/tool-utils";
+} from "@fluidframework/tool-utils/internal";
 import { compare } from "semver";
 
 import { OdspDriverApi, OdspDriverApiType } from "./odspDriverApi.js";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { DocumentDeltaConnection } from "@fluidframework/driver-base";
+import { DocumentDeltaConnection } from "@fluidframework/driver-base/internal";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions/internal";
 import { IClient, IConnect } from "@fluidframework/protocol-definitions";
