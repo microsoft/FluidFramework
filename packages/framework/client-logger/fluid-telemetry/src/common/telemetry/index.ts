@@ -6,7 +6,7 @@
 import type { ContainerTelemetryEventName } from "../../container/index.js";
 
 /**
- * The base interface extended by all fluid telemetry
+ * The base interface extended by all Fluid telemetry
  *
  * @see {@link @fluidframework/fluid-telemetry#IContainerTelemetry} for an extension of this interface for all container related telemetry.
  *
@@ -24,7 +24,7 @@ export interface IFluidTelemetry {
 }
 
 /**
- * Aggregate type for all the different types of fluid telemetry event names.
+ * Aggregate type for all the different types of Fluid telemetry event names.
  *
  * @privateremarks This only looks odd right now because {@link ContainerTelemetryEventName} is the only aggregation at the moment.
  *
