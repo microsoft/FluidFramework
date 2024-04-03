@@ -7,6 +7,7 @@ import type {
 	JsonableTree,
 	SharedTreeContentSnapshot,
 	TreeNodeStoredSchema,
+	TreeTypeSet,
 } from "@fluidframework/tree/internal";
 import {
 	EmptyKey,
@@ -46,33 +47,41 @@ export function toVisualTree(tree: VisualSharedTreeNode): VisualChildNode {
 }
 
 /**
+ * Concatenrate allowed types for `ObjectNodeStoredSchema` and `MapNodeStoredSchema`.
+ */
+function concatenateAllowedTypes(fieldKey: string, fieldTypes: TreeTypeSet | undefined): string {
+	let fieldAllowedType = fieldKey === EmptyKey ? "" : `${fieldKey} : `;
+
+	if (fieldTypes === undefined) {
+		fieldAllowedType += "any";
+	} else {
+		for (const type of fieldTypes) {
+			fieldAllowedType += `${type} | `;
+		}
+	}
+
+	fieldAllowedType = `${fieldAllowedType.slice(0, -3)}, `;
+
+	return fieldAllowedType;
+}
+
+/**
  * Returns the allowed fields & types for the object fields (e.g., `foo : string | number, bar: boolean`)
  */
 function getObjectAllowedTypes(schema: ObjectNodeStoredSchema): string {
 	let result = "";
 
 	for (const [fieldKey, treeFieldStoredSchema] of schema.objectNodeFields) {
-		// Set of allowed tree types {@link TreeTypeSet}.
+		// Set of allowed tree types `TreeTypeSet`.
 		const fieldTypes = treeFieldStoredSchema.types;
 
-		let fieldAllowedType = fieldKey === "" ? "" : `${fieldKey} : `;
+		result += concatenateAllowedTypes(fieldKey, fieldTypes);
 
-		// If not specified, types are unconstrained.
-		if (fieldTypes === undefined) {
-			fieldAllowedType += "any";
-		} else {
-			for (const type of fieldTypes) {
-				fieldAllowedType += `${type} | `;
-			}
+		if (fieldKey === EmptyKey) {
+			return result.slice(0, -2);
 		}
-
-		// Slice the trailing ` | ` from the `fieldAllowedType`.
-		fieldAllowedType = `${fieldAllowedType.slice(0, -3)}, `;
-
-		result += fieldAllowedType;
 	}
 
-	// Slice the trailing `, ` from the `result`.
 	result = result.slice(0, -2);
 
 	return `{ ${result} }`;
@@ -85,28 +94,15 @@ function getMapAllowedTypes(
 	fields: FieldMapObject<JsonableTree> | undefined,
 	schema: MapNodeStoredSchema,
 ): string {
-	let fieldAllowedTypes = "";
-
-	const mapFieldAllowedTypes = schema.mapFields.types;
-
-	if (mapFieldAllowedTypes === undefined) {
-		fieldAllowedTypes = "any";
-	} else {
-		for (const type of mapFieldAllowedTypes) {
-			fieldAllowedTypes += `${type} | `;
-		}
-	}
-
-	// Slice the trailing ` | ` from the `fieldAllowedType`.
-	fieldAllowedTypes = fieldAllowedTypes.slice(0, -3);
-
 	if (fields === undefined) {
 		throw new TypeError("Fields should not be undefined.");
 	}
 
+	const mapFieldAllowedTypes = schema.mapFields.types;
+
 	let result = "";
 	for (const [fieldKey] of Object.entries(fields)) {
-		result += `${fieldKey} : ${fieldAllowedTypes}, `;
+		result += concatenateAllowedTypes(fieldKey, mapFieldAllowedTypes);
 	}
 
 	// Slice the trailing `, ` from the `result`.
@@ -124,7 +120,7 @@ function visualizeLeafNode(tree: JsonableTree): SharedTreeLeafNode {
 			name: tree.type,
 			schemaType: SharedTreeSchemaType.LeafNodeStoredSchema,
 		},
-		value: JSON.stringify(tree.value),
+		value: JSON.stringify(tree.value), // TODO: Change to VisualizeChildData.
 		kind: VisualSharedTreeNodeKind.LeafNode,
 	};
 }
