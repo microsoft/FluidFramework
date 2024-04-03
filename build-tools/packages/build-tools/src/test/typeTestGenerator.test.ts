@@ -5,18 +5,31 @@
 
 import { strict as assert } from "assert";
 import * as utils from "../type-test-generator/typeTestUtils";
-import { readJsonSync } from "fs-extra";
 import * as fs from "fs";
 import * as path from "path";
 import { PackageJson } from "../common/npmPackage";
 import { IExtractorConfigPrepareOptions } from "@microsoft/api-extractor";
 
 /**
+ * Mock package.json object for testing.
+ */
+const mockPackageObject: PackageJson = {
+	name: "mockPackageForTesting",
+	description: "Mock package.json",
+	version: "1.0.0",
+	scripts: {},
+	devDependencies: {
+		"dependency1": "1.0.0",
+		"dependency2": "2.0.0",
+		"mockPackage-previous": "1.2.3",
+	},
+};
+
+/**
  * Unit tests for the abstracted functions in typeTestUtils.
  */
 describe("typeTestUtils", () => {
-	const packageJsonPath = path.join(__dirname, "mockPackage.json");
-	const packageObject: PackageJson = readJsonSync(packageJsonPath);
+	const packageObject: PackageJson = mockPackageObject;
 	const previousPackageName = `${packageObject.name}-previous`;
 
 	describe("ensureDevDependencyExists", () => {
@@ -198,8 +211,9 @@ describe("typeTestUtils", () => {
 				}),
 				"utf-8",
 			);
-			assert.throws(() => utils.getTypePathFromExport(packageObject, previousBasePath),
-			/Type definition file path could not be determined from the 'exports' field using the default export entry '.'/,
+			assert.throws(
+				() => utils.getTypePathFromExport(packageObject, previousBasePath),
+				/Type definition file path could not be determined from the 'exports' field using the default export entry '.'/,
 			);
 		});
 	});

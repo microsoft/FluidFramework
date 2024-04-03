@@ -4,6 +4,7 @@
  */
 
 import { readJsonSync } from "fs-extra";
+import { PackageName } from "@rushstack/node-core-library";
 import path from "node:path";
 import { IExtractorConfigPrepareOptions } from "@microsoft/api-extractor";
 import { existsSync } from "node:fs";
@@ -280,12 +281,22 @@ export function generateCompatibilityTestCases(
 export function prepareFilepathForTests(packageObject): string {
 	const testPath = typeTestFilePath;
 	// remove scope if it exists
-	const unscopedName = path.basename(packageObject.name);
+	const unscopedName = PackageName.getUnscopedName(packageObject.name);
 
-	const fileBaseName = unscopedName
+	const fileBaseName = formatFileBaseName(unscopedName);
+
+	const filePath = `${testPath}/validate${fileBaseName}Previous.generated.ts`;
+	return filePath;
+}
+
+/**
+ * Formats the file base name based on the package name
+ * @param packageName - the package name
+ * @returns the formatted file base name
+ */
+function formatFileBaseName(packageName: string): string {
+	return packageName
 		.split("-")
 		.map((p) => p[0].toUpperCase() + p.substring(1))
 		.join("");
-	const filePath = `${testPath}/validate${fileBaseName}Previous.generated.ts`;
-	return filePath;
 }
