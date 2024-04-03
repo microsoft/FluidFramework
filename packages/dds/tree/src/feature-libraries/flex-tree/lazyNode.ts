@@ -201,6 +201,12 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 		});
 	}
 
+	public getBoxed(key: FieldKey): FlexTreeField {
+		return inCursorField(this[cursorSymbol], brand(key), (cursor) =>
+			makeField(this.context, this.schema.getFieldSchema(key), cursor),
+		);
+	}
+
 	public boxedIterator(): IterableIterator<FlexTreeField> {
 		return mapCursorFields(this[cursorSymbol], (cursor) =>
 			makeField(this.context, this.schema.getFieldSchema(cursor.getFieldKey()), cursor),
@@ -403,10 +409,8 @@ export class LazyMap<TSchema extends FlexMapNodeSchema>
 		) as FlexTreeUnboxField<TSchema["info"]>;
 	}
 
-	public getBoxed(key: string): FlexTreeTypedField<TSchema["info"]> {
-		return inCursorField(this[cursorSymbol], brand(key), (cursor) =>
-			makeField(this.context, this.schema.info, cursor),
-		) as FlexTreeTypedField<TSchema["info"]>;
+	public override getBoxed(key: string): FlexTreeTypedField<TSchema["info"]> {
+		return super.getBoxed(brand(key)) as FlexTreeTypedField<TSchema["info"]>;
 	}
 
 	public set(key: string, content: FlexibleFieldContent<TSchema["info"]> | undefined): void {
