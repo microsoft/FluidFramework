@@ -230,8 +230,11 @@ export function createObjectProxy<TSchema extends FlexObjectNodeSchema>(
 /**
  * Given a array node proxy, returns its underlying LazySequence field.
  */
-export const getSequenceField = <TTypes extends FlexAllowedTypes>(arrayNode: TreeArrayNode) =>
-	getFlexNode(arrayNode).content as FlexTreeSequenceField<TTypes>;
+export function getSequenceField<TTypes extends FlexAllowedTypes>(
+	arrayNode: TreeArrayNode,
+): FlexTreeSequenceField<TTypes> {
+	return getFlexNode(arrayNode).getBoxed(EmptyKey) as FlexTreeSequenceField<TTypes>;
+}
 
 // Used by 'insert*()' APIs to converts new content (expressed as a proxy union) to contextually
 // typed data prior to forwarding to 'LazySequence.insert*()'.

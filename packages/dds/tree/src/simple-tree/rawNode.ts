@@ -113,6 +113,10 @@ export abstract class RawTreeNode<TSchema extends FlexTreeNodeSchema, TContent>
 		throw rawError("Reading fields");
 	}
 
+	public getBoxed(key: string): never {
+		throw rawError("Reading boxed fields");
+	}
+
 	public boxedIterator(): IterableIterator<FlexTreeField> {
 		throw rawError("Boxed iteration");
 	}
@@ -163,9 +167,6 @@ export class RawMapNode<TSchema extends FlexMapNodeSchema>
 	}
 	public get(key: string): FlexTreeUnboxField<TSchema["info"]> {
 		return this[nodeContent].get(key) as FlexTreeUnboxField<TSchema["info"]>;
-	}
-	public getBoxed(key: string): FlexTreeTypedField<TSchema["info"]> {
-		throw rawError("Reading boxed map values");
 	}
 	public keys(): IterableIterator<FieldKey> {
 		return this[nodeContent].keys() as IterableIterator<FieldKey>;

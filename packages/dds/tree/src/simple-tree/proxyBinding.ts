@@ -8,10 +8,9 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { AnchorNode, AnchorSet, UpPath, anchorSlot } from "../core/index.js";
 import {
 	ContextSlot,
-	FlexFieldNodeSchema,
+	FlexTreeNodeSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
-	FlexTreeFieldNode,
 	FlexTreeMapNode,
 	FlexTreeNode,
 	FlexTreeObjectNode,
@@ -47,7 +46,7 @@ const proxyToAnchorNode = new WeakMap<TreeNode, AnchorNode>();
  * The raw node exists when the proxy is first created but before it has been associated with a real {@link FlexTreeNode}.
  * For example, after a user calls `const proxy = new Foo({})` but before `proxy` is inserted into the tree and queried.
  */
-const proxyToRawFlexNode = new WeakMap<TreeNode, RawTreeNode<FlexFieldNodeSchema, unknown>>();
+const proxyToRawFlexNode = new WeakMap<TreeNode, RawTreeNode<FlexTreeNodeSchema, unknown>>();
 /** Used by `anchorProxy` as an optimization to ensure that only one anchor is remembered at a time for a given anchor node */
 const anchorForgetters = new WeakMap<TreeNode, () => void>();
 
@@ -80,10 +79,7 @@ export function getFlexNode(
 	proxy: TypedNode<FlexObjectNodeSchema>,
 	allowFreed?: true,
 ): FlexTreeObjectNode;
-export function getFlexNode(
-	proxy: TreeArrayNode,
-	allowFreed?: true,
-): FlexTreeFieldNode<FlexFieldNodeSchema>;
+export function getFlexNode(proxy: TreeArrayNode, allowFreed?: true): FlexTreeNode;
 export function getFlexNode(
 	proxy: TreeMapNode,
 	allowFreed?: true,
