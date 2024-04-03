@@ -171,7 +171,7 @@ describe("schemaFactory", () => {
 			assert.equal(root.y, 2);
 
 			const values: number[] = [];
-			Tree.on(root, "nodeInvalidated", () => {
+			Tree.on(root, "nodeChanged", () => {
 				values.push(root.x);
 			});
 			root.x = 5;
@@ -207,7 +207,7 @@ describe("schemaFactory", () => {
 			assert.equal(root.x, 1);
 
 			const values: number[] = [];
-			Tree.on(root, "nodeInvalidated", () => {
+			Tree.on(root, "nodeChanged", () => {
 				values.push(root.x);
 			});
 
@@ -626,10 +626,10 @@ describe("schemaFactory", () => {
 			});
 
 			// Ensure that the proxies can be read during the change, as well as after
-			// Note: as of 2024-03-28, we can't easily test 'subtreeInvalidated' because it can fire at a time where the changes
-			// to the tree are not visible in the listener. 'nodeInvalidated' only fires once we confirmed that a
+			// Note: as of 2024-03-28, we can't easily test 'treeChanged' because it can fire at a time where the changes
+			// to the tree are not visible in the listener. 'nodeChanged' only fires once we confirmed that a
 			// relevant change was actually applied to the tree so the side effects this test validates already happened.
-			Tree.on(view.root, "nodeInvalidated", () => validate(view, nodes));
+			Tree.on(view.root, "nodeChanged", () => validate(view, nodes));
 			view.events.on("afterBatch", () => validate(view, nodes));
 			view.root.root = parent;
 			validate(view, nodes);

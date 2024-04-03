@@ -120,20 +120,20 @@ export const treeNodeApi: TreeNodeApi = {
 		const anchor = flex.anchorNode;
 
 		switch (eventName) {
-			case "nodeInvalidated": {
-				let alreadySubscribedToSubtreeChanged: boolean = false;
+			case "nodeChanged": {
+				let alreadySubscribedTotreeChanged: boolean = false;
 				return anchor.on("childrenChanged", () => {
-					if (!alreadySubscribedToSubtreeChanged) {
-						const offSubtreeChanged = anchor.on("subtreeChanged", () => {
+					if (!alreadySubscribedTotreeChanged) {
+						const offtreeChanged = anchor.on("subtreeChanged", () => {
 							listener();
-							offSubtreeChanged();
-							alreadySubscribedToSubtreeChanged = false;
-						})
-						alreadySubscribedToSubtreeChanged = true;
+							offtreeChanged();
+							alreadySubscribedTotreeChanged = false;
+						});
+						alreadySubscribedTotreeChanged = true;
 					}
 				});
 			}
-			case "subtreeInvalidated":
+			case "treeChanged":
 				return anchor.on("subtreeChanged", () => listener());
 			default:
 				return unreachableCase(eventName);
@@ -171,18 +171,18 @@ export const treeNodeApi: TreeNodeApi = {
  * A collection of events that can be raised by a {@link TreeNode}.
  *
  * @privateRemarks
- * TODO: add a way to subscribe to a specific field (for nodeInvalidated and subtreeInvalidated).
+ * TODO: add a way to subscribe to a specific field (for nodeChanged and treeChanged).
  * Probably have object node and map node specific APIs for this.
  *
  * TODO: ensure that subscription API for fields aligns with API for subscribing to the root.
  *
- * TODO: add more wider area (avoid needing tons of nodeInvalidated registration) events for use-cases other than subtreeInvalidated.
+ * TODO: add more wider area (avoid needing tons of nodeChanged registration) events for use-cases other than treeChanged.
  * Some ideas:
  *
- * - subtreeInvalidated, but with some subtrees/fields/paths excluded
- * - helper to batch several nodeInvalidated calls to a subtreeInvalidated scope
+ * - treeChanged, but with some subtrees/fields/paths excluded
+ * - helper to batch several nodeChanged calls to a treeChanged scope
  * - parent change (ex: registration on the parent field for a specific index: maybe allow it for a range. Ex: node event takes optional field and optional index range?)
- * - new content inserted into subtree. Either provide event for this and/or enough info to subtreeInvalidated to find and search the new sub-trees.
+ * - new content inserted into subtree. Either provide event for this and/or enough info to treeChanged to find and search the new sub-trees.
  * Add separate (non event related) API to efficiently scan tree for given set of types (using low level cursor and schema based filtering)
  * to allow efficiently searching for new content (and initial content) of a given type.
  *
@@ -221,7 +221,7 @@ export interface TreeChangeEvents {
 	 * node, or when the node has to be updated due to resolution of a merge conflict
 	 * (for example a previously applied local change might be undone, then reapplied differently or not at all).
 	 */
-	nodeInvalidated(): void;
+	nodeChanged(): void;
 
 	/**
 	 * Emitted by a node when something _may_ have changed anywhere in the subtree rooted at it.
@@ -245,5 +245,5 @@ export interface TreeChangeEvents {
 	 * how many times this event will be raised during any intermediate states.
 	 * When it is raised, the tree is guaranteed to be in-schema.
 	 */
-	subtreeInvalidated(): void;
+	treeChanged(): void;
 }
