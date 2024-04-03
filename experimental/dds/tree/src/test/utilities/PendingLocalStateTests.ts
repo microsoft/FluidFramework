@@ -3,26 +3,28 @@
  * Licensed under the MIT License.
  */
 
+import { IContainer } from '@fluidframework/container-definitions/internal';
+import { TestObjectProvider } from '@fluidframework/test-utils/internal';
 import { expect } from 'chai';
-import { IContainer } from '@fluidframework/container-definitions';
-import { TestObjectProvider } from '@fluidframework/test-utils';
-import { fail } from '../../Common';
-import { ChangeInternal, Edit, WriteFormat } from '../../persisted-types';
-import type { EditLog } from '../../EditLog';
-import { SharedTree } from '../../SharedTree';
-import { Change, StablePlace } from '../../ChangeTypes';
-import { TreeView } from '../../TreeView';
-import { EditId, NodeId, TraitLabel } from '../../Identifiers';
+
+import { Change, StablePlace } from '../../ChangeTypes.js';
+import { fail } from '../../Common.js';
+import type { EditLog } from '../../EditLog.js';
+import { EditId, NodeId, TraitLabel } from '../../Identifiers.js';
+import { SharedTree } from '../../SharedTree.js';
+import { TreeView } from '../../TreeView.js';
+import { ChangeInternal, Edit, WriteFormat } from '../../persisted-types/index.js';
+
+import { SimpleTestTree } from './TestNode.js';
 import {
-	applyNoop,
-	getEditLogInternal,
 	LocalServerSharedTreeTestingComponents,
 	LocalServerSharedTreeTestingOptions,
+	applyNoop,
+	getEditLogInternal,
 	setUpTestTree,
 	stabilizeEdit,
 	withContainerOffline,
-} from './TestUtilities';
-import { SimpleTestTree } from './TestNode';
+} from './TestUtilities.js';
 
 /**
  * Runs a test suite for SharedTree's ability to apply pending local state stashed by the host.

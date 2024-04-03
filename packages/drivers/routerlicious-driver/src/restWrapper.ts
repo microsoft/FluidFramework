@@ -3,28 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties } from "@fluidframework/core-interfaces";
-import {
-	ITelemetryLoggerExt,
-	PerformanceEvent,
-	numberFromString,
-} from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/core-utils";
 import { fromUtf8ToBase64, performance } from "@fluid-internal/client-utils";
-import { GenericNetworkError, NonRetryableError, RateLimiter } from "@fluidframework/driver-utils";
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
+import {
+	GenericNetworkError,
+	NonRetryableError,
+	RateLimiter,
+} from "@fluidframework/driver-utils/internal";
 import {
 	CorrelationIdHeaderName,
 	DriverVersionHeaderName,
-	getAuthorizationTokenFromCredentials,
 	RestLessClient,
+	getAuthorizationTokenFromCredentials,
 } from "@fluidframework/server-services-client";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, numberFromString } from "@fluidframework/telemetry-utils/internal";
 import fetch from "cross-fetch";
-import type { AxiosRequestConfig, AxiosRequestHeaders } from "axios";
 import safeStringify from "json-stringify-safe";
-import { RouterliciousErrorTypes, throwR11sNetworkError } from "./errorUtils";
-import { ITokenProvider, ITokenResponse } from "./tokens";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { QueryStringType, RestWrapper } from "./restWrapperBase";
+
+import type { AxiosRequestConfig, RawAxiosRequestHeaders } from "./axios.cjs";
+import { RouterliciousErrorTypes, throwR11sNetworkError } from "./errorUtils.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { QueryStringType, RestWrapper } from "./restWrapperBase.js";
+import { ITokenProvider, ITokenResponse } from "./tokens.js";
 
 type AuthorizationHeaderGetter = (token: ITokenResponse) => string;
 export type TokenFetcher = (refresh?: boolean) => Promise<ITokenResponse>;
@@ -49,7 +51,7 @@ const axiosRequestConfigToFetchRequestConfig = (
 export interface IR11sResponse<T> {
 	content: T;
 	headers: Map<string, string>;
-	propsToLog: ITelemetryProperties;
+	propsToLog: ITelemetryBaseProperties;
 	requestUrl: string;
 }
 
@@ -91,7 +93,7 @@ export function getPropsToLogFromResponse(headers: {
 		{ headerName: "content-encoding", logName: "contentEncoding" },
 		{ headerName: "content-type", logName: "contentType" },
 	];
-	const additionalProps: ITelemetryProperties = {
+	const additionalProps: ITelemetryBaseProperties = {
 		contentsize: numberFromString(headers.get("content-length")),
 	};
 	headersToLog.forEach((header) => {
@@ -224,11 +226,11 @@ export class RouterliciousRestWrapper extends RestWrapper {
 	}
 
 	private async generateHeaders(
-		requestHeaders?: AxiosRequestHeaders | undefined,
-	): Promise<Record<string, string>> {
+		requestHeaders?: RawAxiosRequestHeaders | undefined,
+	): Promise<RawAxiosRequestHeaders> {
 		const token = await this.getToken();
 		assert(token !== undefined, 0x679 /* token should be present */);
-		const headers: Record<string, string> = {
+		const headers: RawAxiosRequestHeaders = {
 			...requestHeaders,
 			[DriverVersionHeaderName]: driverVersion,
 			// NOTE: If this.authorizationHeader is undefined, should "Authorization" be removed entirely?

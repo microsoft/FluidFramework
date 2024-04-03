@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
-import { IRandom, makeRandom } from '@fluid-internal/stochastic-test-utils';
-import { compareFiniteNumbers } from '../Common';
-import { AppendOnlySortedMap } from '../id-compressor/AppendOnlySortedMap';
+import { IRandom, makeRandom } from '@fluid-private/stochastic-test-utils';
+import { BenchmarkType, benchmark } from '@fluid-tools/benchmark';
+
+import { compareFiniteNumbers } from '../Common.js';
+import { AppendOnlySortedMap } from '../id-compressor/AppendOnlySortedMap.js';
 
 function runAppendOnlyMapPerfTests(mapBuilder: () => AppendOnlySortedMap<number, number>) {
 	const type = BenchmarkType.Measurement;

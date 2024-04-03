@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { StablePlace, StableRange } from './ChangeTypes';
-import { assertWithMessage, fail } from './Common';
-import { TraitLocation, TreeView, TreeViewPlace, TreeViewRange } from './TreeView';
+import { StablePlace, StableRange } from './ChangeTypes.js';
+import { assertWithMessage, fail } from './Common.js';
+import { TraitLocation, TreeView, TreeViewPlace, TreeViewRange } from './TreeView.js';
 
 /**
  * Express the given {@link (StableRange:interface)} as a {@link TreeViewRange}
+ * @internal
  */
 export function rangeFromStableRange(view: TreeView, range: StableRange): TreeViewRange {
 	const location = getTraitLocationOfRange(view, range);
@@ -21,6 +22,7 @@ export function rangeFromStableRange(view: TreeView, range: StableRange): TreeVi
 
 /**
  * Express the given {@link (StablePlace:interface)} as a {@link TreeViewPlace}
+ * @internal
  */
 export function placeFromStablePlace(view: TreeView, stablePlace: StablePlace): TreeViewPlace {
 	const { side } = stablePlace;
@@ -42,6 +44,7 @@ export function placeFromStablePlace(view: TreeView, stablePlace: StablePlace): 
  * Return the trait under which the given range resides
  * @param view - the {@link TreeView} within which to retrieve the trait location
  * @param range - must be well formed and valid
+ * @internal
  */
 export function getTraitLocationOfRange(view: TreeView, range: StableRange): TraitLocation {
 	const referenceTrait = range.start.referenceTrait ?? range.end.referenceTrait;

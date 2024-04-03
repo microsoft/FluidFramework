@@ -3,39 +3,37 @@
  * Licensed under the MIT License.
  */
 
+import { PathHelper } from "@fluid-experimental/property-changeset";
 import {
-	PropertyFactory,
+	ArrayProperty,
 	BaseProperty,
 	ContainerProperty,
-	ValueProperty,
-	SetProperty,
 	MapProperty,
-	ArrayProperty,
+	PropertyFactory,
+	SetProperty,
+	ValueProperty,
 } from "@fluid-experimental/property-properties";
-import { PathHelper } from "@fluid-experimental/property-changeset";
 
-import { arrayProxyHandler } from "./arrayProxyHandler";
-import { proxyHandler } from "./proxyHandler";
-
-import { ComponentArray } from "./componentArray";
-import { ComponentMap } from "./componentMap";
-import { ComponentSet } from "./componentSet";
-import { PropertyProxyErrors } from "./errors";
-
-import { IParentAndPathOfReferencedProperty } from "./IParentAndPathOfReferencedProperty";
-import { forceType } from "./utilities";
-import { ProxyType, PropertyTypes, ReferenceType } from "./interfaces";
+import { IParentAndPathOfReferencedProperty } from "./IParentAndPathOfReferencedProperty.js";
+import { arrayProxyHandler } from "./arrayProxyHandler.js";
+import { ComponentArray } from "./componentArray.js";
+import { ComponentMap } from "./componentMap.js";
+import { ComponentSet } from "./componentSet.js";
+import { PropertyProxyErrors } from "./errors.js";
+import { PropertyTypes, ProxyType, ReferenceType } from "./interfaces.js";
+import { proxyHandler } from "./proxyHandler.js";
+import { forceType } from "./utilities.js";
 
 /**
  * This symbol is available on properties proxied via {@link PropertyProxy.proxify}.
+ * @internal
  */
 export const proxySymbol = Symbol("property-proxy");
 
 /**
  * Namespace that contains the {@link PropertyProxy.proxify} and {@link PropertyProxy.getParentOfReferencedProperty}
  * functions.
- *
- * @public
+ * @internal
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace PropertyProxy {
@@ -43,7 +41,7 @@ export namespace PropertyProxy {
 	 * This utility function returns the parent property of a referenced property.
 	 * @param property - The ReferenceProperty/ReferenceArrayProperty/ReferenceMapProperty.
 	 * @param key - The key of the referenced property in the Reference(Array/Map)Property.
-	 * @public
+	 * @internal
 	 */
 	export function getParentOfReferencedProperty(
 		property: ReferenceType,
@@ -143,8 +141,7 @@ export namespace PropertyProxy {
 	 * @param property - The BaseProperty to be proxied.
 	 *
 	 * @returns The newly created proxy if `property` is of a non-primitive type otherwise the value.
-	 *
-	 * @public
+	 * @internal
 	 */
 	export function proxify<T extends PropertyTypes>(property: T): ProxyType<T> {
 		if (PropertyFactory.instanceOf(property, "BaseProperty")) {

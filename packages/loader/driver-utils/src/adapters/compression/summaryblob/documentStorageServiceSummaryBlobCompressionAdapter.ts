@@ -4,8 +4,11 @@
  */
 
 import { IsoBuffer } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
-import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import {
+	IDocumentStorageService,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	ISnapshotTree,
 	ISummaryBlob,
@@ -16,9 +19,13 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { compress, decompress } from "lz4js";
-import { DocumentStorageServiceProxy } from "../../../documentStorageServiceProxy";
-import { ICompressionStorageConfig, SummaryCompressionAlgorithm } from "../";
 
+import { ICompressionStorageConfig, SummaryCompressionAlgorithm } from "..//index.js";
+import { DocumentStorageServiceProxy } from "../../../documentStorageServiceProxy.js";
+
+/**
+ * @internal
+ */
 export const blobHeadersBlobName = ".metadata.blobHeaders";
 const metadataBlobName = ".metadata";
 
@@ -32,6 +39,7 @@ const metadataBlobName = ".metadata";
  * In case, the markup blob is present, it is expected that the first byte of the markup blob
  * will contain the info about the compression. If the first byte is not present, it is assumed
  * that the compression is not enabled and no first prefix byte is present in the blobs.
+ * @public
  */
 export class DocumentStorageServiceCompressionAdapter extends DocumentStorageServiceProxy {
 	private _isCompressionEnabled: boolean = false;

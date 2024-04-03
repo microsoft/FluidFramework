@@ -2,18 +2,20 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Iterator to iterate over array ChangeSets
  */
 
-import isNumber from "lodash/isNumber";
-import isString from "lodash/isString";
+import { constants } from "@fluid-experimental/property-common";
+import isNumber from "lodash/isNumber.js";
+import isString from "lodash/isString.js";
 
 // @ts-ignore
-import { constants } from "@fluid-experimental/property-common";
 
-import { SerializedChangeSet } from "../changeset";
-import { ArrayIteratorOperationTypes } from "./operationTypes";
+import { SerializedChangeSet } from "../changeset.js";
+
+import { ArrayIteratorOperationTypes } from "./operationTypes.js";
 
 const { MSG } = constants;
 
@@ -77,7 +79,7 @@ export type GenericOperation = NoneNOPOperation | NOPOperation;
  * Iterator class which iterates over an array ChangeSet. It will successively return the operations ordered by their
  * position within the array. Additionally, it will keep track of the modifications to the array indices caused
  * by the previous operations.
- *
+ * @internal
  */
 export class ArrayChangeSetIterator {
 	static types = ArrayIteratorOperationTypes; // @TODO Not sure if this is still required if we export it separately.

@@ -4,11 +4,16 @@
  */
 
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { SharedString } from "../sharedString";
-import { SharedStringFactory } from "../sequenceFactory";
-import { IIntervalCollection } from "../intervalCollection";
-import { SequenceInterval } from "../intervals";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+
+import { IIntervalCollection } from "../intervalCollection.js";
+import {
+	IOverlappingIntervalsIndex,
+	createOverlappingIntervalsIndex,
+} from "../intervalIndex/index.js";
+import { SequenceInterval } from "../intervals/index.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { SharedString } from "../sharedString.js";
 
 /**
  * Note: Merge-tree has a number of perf tests for core operations (insert, remove, annotate).
@@ -30,6 +35,7 @@ function runFindOverlappingIntervalsBenchmark({
 }) {
 	let sharedString: SharedString;
 	let intervalCollection: IIntervalCollection<SequenceInterval>;
+	let overlappingIntervalsIndex: IOverlappingIntervalsIndex<SequenceInterval>;
 
 	const setupSharedString = () => {
 		sharedString = new SharedStringFactory().create(new MockFluidDataStoreRuntime(), "id");
@@ -48,6 +54,9 @@ function runFindOverlappingIntervalsBenchmark({
 				end: intervalWidth * (2 * i + 1),
 			});
 		}
+		// Create and attach the overlapping interval index
+		overlappingIntervalsIndex = createOverlappingIntervalsIndex(sharedString);
+		intervalCollection.attachIndex(overlappingIntervalsIndex);
 	};
 
 	benchmark({
@@ -58,7 +67,7 @@ function runFindOverlappingIntervalsBenchmark({
 		benchmarkFn: () => {
 			const start = (segmentLength * segmentCount) / 2;
 			const end = start + segmentLength;
-			intervalCollection.findOverlappingIntervals(start, end);
+			overlappingIntervalsIndex.findOverlappingIntervals(start, end);
 		},
 		before: setupSharedString,
 	});
@@ -73,7 +82,7 @@ function runFindOverlappingIntervalsBenchmark({
 		benchmarkFn: () => {
 			const start = (segmentLength * segmentCount) / 2;
 			const end = start + segmentLength;
-			for (const interval of intervalCollection.findOverlappingIntervals(start, end)) {
+			for (const interval of overlappingIntervalsIndex.findOverlappingIntervals(start, end)) {
 				sharedString.localReferencePositionToPosition(interval.start);
 				sharedString.localReferencePositionToPosition(interval.end);
 			}

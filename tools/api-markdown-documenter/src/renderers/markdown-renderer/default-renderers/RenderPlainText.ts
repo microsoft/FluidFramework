@@ -2,9 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { PlainTextNode } from "../../../documentation-domain";
-import type { DocumentWriter } from "../../DocumentWriter";
-import type { RenderContext } from "../RenderContext";
+
+import type { PlainTextNode } from "../../../documentation-domain/index.js";
+import type { DocumentWriter } from "../../DocumentWriter.js";
+import type { RenderContext } from "../RenderContext.js";
 
 /**
  * This logic was adapted from:
@@ -35,15 +36,17 @@ export function renderPlainText(
 			case "\n":
 			case " ":
 			case "[":
-			case ">":
+			case ">": {
 				// okay to put a symbol
 				break;
-			default:
+			}
+			default: {
 				// This is no problem:        "**one** *two* **three**"
 				// But this is trouble:       "**one***two***three**"
 				// The most general solution: "**one**<!-- -->*two*<!-- -->**three**"
 				writer.write("<!-- -->");
 				break;
+			}
 		}
 	}
 

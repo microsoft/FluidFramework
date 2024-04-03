@@ -2,18 +2,23 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
 
-import { generatePairwiseOptions } from "@fluid-internal/test-pairwise-generator";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { createLoader, ITestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluid-internal/test-version-utils";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import { ISharedMap, IValueChanged } from "@fluidframework/map";
-import type { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import type { ISharedMap, IValueChanged } from "@fluidframework/map";
+import type { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence/internal";
+import {
+	ITestFluidObject,
+	getContainerEntryPointBackCompat,
+	getDataStoreEntryPointBackCompat,
+	timeoutPromise,
+} from "@fluidframework/test-utils/internal";
 
 // during these point succeeding objects won't even exist locally
 const ContainerCreated = 0;
@@ -34,7 +39,7 @@ const testConfigs = generatePairwiseOptions({
 	ddsSaveAfterAttach: [true, false],
 });
 
-describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider, apis) => {
+describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedString } = apis.dds;
 	before(function () {
 		const provider = getTestObjectProvider();
@@ -62,16 +67,7 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider, apis) =>
 
 			// act code block
 			{
-				const initLoader = createLoader(
-					[
-						[
-							provider.defaultCodeDetails,
-							provider.createFluidEntryPoint(containerConfig),
-						],
-					],
-					provider.documentServiceFactory,
-					provider.urlResolver,
-				);
+				const initLoader = provider.makeTestLoader(containerConfig);
 
 				const initContainer = await initLoader.createDetachedContainer(
 					provider.defaultCodeDetails,
@@ -89,13 +85,11 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider, apis) =>
 					await attachContainer();
 				}
 
-				const initDataObject = await requestFluidObject<ITestFluidObject>(
-					initContainer,
-					"default",
-				);
+				const initDataObject =
+					await getContainerEntryPointBackCompat<ITestFluidObject>(initContainer);
 
 				const ds = await initDataObject.context.containerRuntime.createDataStore("default");
-				const newDataObj = await requestFluidObject<ITestFluidObject>(ds, "/");
+				const newDataObj = await getDataStoreEntryPointBackCompat<ITestFluidObject>(ds);
 				const attachDatastore = async () => {
 					initDataObject.root.set("ds", newDataObj.handle);
 					while (
@@ -181,16 +175,7 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider, apis) =>
 
 			// validation code block
 			{
-				const validationLoader = createLoader(
-					[
-						[
-							provider.defaultCodeDetails,
-							provider.createFluidEntryPoint(containerConfig),
-						],
-					],
-					provider.documentServiceFactory,
-					provider.urlResolver,
-				);
+				const validationLoader = provider.makeTestLoader(containerConfig);
 				const validationContainer = await validationLoader.resolve({
 					url: await provider.driver.createContainerUrl(
 						provider.documentId,
@@ -198,10 +183,8 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider, apis) =>
 					),
 				});
 
-				const initDataObject = await requestFluidObject<ITestFluidObject>(
-					validationContainer,
-					"default",
-				);
+				const initDataObject =
+					await getContainerEntryPointBackCompat<ITestFluidObject>(validationContainer);
 
 				const newDatastore = await (
 					await waitKey<IFluidHandle<ITestFluidObject>>(

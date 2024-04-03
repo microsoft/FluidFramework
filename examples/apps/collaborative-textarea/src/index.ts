@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { CollaborativeText } from "./fluid-object";
-export { CollaborativeTextView } from "./view";
+export { CollaborativeText } from "./fluid-object/index.js";
+export { CollaborativeTextView } from "./view.js";

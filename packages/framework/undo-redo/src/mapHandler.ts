@@ -4,13 +4,13 @@
  */
 
 import { ISharedMap, IValueChanged } from "@fluidframework/map";
-import { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager";
+
+import { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager.js";
 
 /**
  * A shared map undo redo handler that will add all local map changes to the provided
  * undo redo stack manager
- *
- * @public
+ * @internal
  */
 export class SharedMapUndoRedoHandler {
 	constructor(private readonly stackManager: UndoRedoStackManager) {}
@@ -35,8 +35,7 @@ export class SharedMapUndoRedoHandler {
 
 /**
  * Tracks a change on a shared map allows reverting it
- *
- * @public
+ * @internal
  */
 export class SharedMapRevertible implements IRevertible {
 	constructor(

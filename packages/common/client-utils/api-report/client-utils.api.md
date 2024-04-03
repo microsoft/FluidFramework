@@ -4,8 +4,7 @@
 
 ```ts
 
-import { EventEmitter } from 'events';
-import { IDisposable } from '@fluidframework/core-interfaces';
+import { EventEmitter } from 'events_pkg';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventTransformer } from '@fluidframework/core-interfaces';
@@ -20,28 +19,13 @@ export class Buffer extends Uint8Array {
     toString(encoding?: "utf8" | "utf-8" | "base64"): string;
 }
 
-// @internal
+// @alpha
 export const bufferToString: (blob: ArrayBufferLike, encoding: "utf8" | "utf-8" | "base64") => string;
 
-// @internal
-export type EventEmitterEventType = EventEmitter extends {
-    on(event: infer E, listener: any): any;
-} ? E : never;
+export { EventEmitter }
 
-// @internal
-export class EventForwarder<TEvent = IEvent> extends TypedEventEmitter<TEvent> implements IDisposable {
-    constructor(source?: EventEmitter | IEventProvider<TEvent & IEvent>);
-    // (undocumented)
-    dispose(): void;
-    // (undocumented)
-    get disposed(): boolean;
-    // (undocumented)
-    protected forwardEvent(source: EventEmitter | IEventProvider<TEvent & IEvent>, ...events: string[]): void;
-    // (undocumented)
-    protected static isEmitterEvent(event: string): boolean;
-    // (undocumented)
-    protected unforwardEvent(source: EventEmitter | IEventProvider<TEvent & IEvent>, ...events: string[]): void;
-}
+// @public
+export type EventEmitterEventType = string;
 
 // @internal
 export const fromBase64ToUtf8: (input: string) => string;
@@ -71,7 +55,7 @@ export interface ITraceEvent {
     readonly totalTimeElapsed: number;
 }
 
-// @internal (undocumented)
+// @internal
 const performance_2: IsomorphicPerformance;
 export { performance_2 as performance }
 
@@ -94,7 +78,7 @@ export class Trace {
     trace(): ITraceEvent;
 }
 
-// @internal
+// @public
 export class TypedEventEmitter<TEvent> extends EventEmitter implements IEventProvider<TEvent & IEvent> {
     constructor();
     // (undocumented)
@@ -113,7 +97,7 @@ export class TypedEventEmitter<TEvent> extends EventEmitter implements IEventPro
     readonly removeListener: TypedEventTransform<this, TEvent>;
 }
 
-// @internal (undocumented)
+// @public (undocumented)
 export type TypedEventTransform<TThis, TEvent> = TransformedEvent<TThis, "newListener" | "removeListener", Parameters<(event: string, listener: (...args: any[]) => void) => void>> & IEventTransformer<TThis, TEvent & IEvent> & TransformedEvent<TThis, EventEmitterEventType, any[]>;
 
 // @internal

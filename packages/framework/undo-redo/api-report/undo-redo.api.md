@@ -4,13 +4,13 @@
 
 ```ts
 
-import { ISegment } from '@fluidframework/merge-tree';
+import { ISegment } from '@fluidframework/merge-tree/internal';
 import { ISharedMap } from '@fluidframework/map';
 import { IValueChanged } from '@fluidframework/map';
-import { SequenceDeltaEvent } from '@fluidframework/sequence';
-import { SharedSegmentSequence } from '@fluidframework/sequence';
+import { SequenceDeltaEvent } from '@fluidframework/sequence/internal';
+import { SharedSegmentSequence } from '@fluidframework/sequence/internal';
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IRevertible {
     // (undocumented)
     discard(): any;
@@ -18,7 +18,7 @@ export interface IRevertible {
     revert(): any;
 }
 
-// @public
+// @internal
 export class SharedMapRevertible implements IRevertible {
     constructor(changed: IValueChanged, map: ISharedMap);
     // (undocumented)
@@ -27,7 +27,7 @@ export class SharedMapRevertible implements IRevertible {
     revert(): void;
 }
 
-// @public
+// @internal
 export class SharedMapUndoRedoHandler {
     constructor(stackManager: UndoRedoStackManager);
     // (undocumented)
@@ -36,7 +36,7 @@ export class SharedMapUndoRedoHandler {
     detachMap(map: ISharedMap): void;
 }
 
-// @public
+// @internal
 export class SharedSegmentSequenceRevertible implements IRevertible {
     constructor(sequence: SharedSegmentSequence<ISegment>);
     // (undocumented)
@@ -49,7 +49,7 @@ export class SharedSegmentSequenceRevertible implements IRevertible {
     readonly sequence: SharedSegmentSequence<ISegment>;
 }
 
-// @public
+// @internal
 export class SharedSegmentSequenceUndoRedoHandler {
     constructor(stackManager: UndoRedoStackManager);
     // (undocumented)
@@ -58,7 +58,7 @@ export class SharedSegmentSequenceUndoRedoHandler {
     detachSequence<T extends ISegment>(sequence: SharedSegmentSequence<T>): void;
 }
 
-// @public
+// @internal
 export class UndoRedoStackManager {
     constructor();
     // (undocumented)

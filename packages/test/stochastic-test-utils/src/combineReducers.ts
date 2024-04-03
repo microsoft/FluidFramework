@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { AsyncReducer, BaseFuzzTestState, Reducer } from "./types";
+import { assert } from "@fluidframework/core-utils/internal";
 
+import { AsyncReducer, BaseFuzzTestState, Reducer } from "./types.js";
+
+/**
+ * @internal
+ */
 export function combineReducers<
 	TOperation extends { type: string | number },
 	TState extends BaseFuzzTestState,
@@ -23,6 +27,9 @@ export function combineReducers<
 	};
 }
 
+/**
+ * @internal
+ */
 export function combineReducersAsync<
 	TOperation extends { type: string | number },
 	TState extends BaseFuzzTestState,

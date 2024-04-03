@@ -5,16 +5,17 @@
 
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelServices,
 	IChannelFactory,
+	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { Marker, TextSegment } from "@fluidframework/merge-tree";
-import { pkgVersion } from "./packageVersion";
-import { SharedString, SharedStringSegment } from "./sharedString";
+import { Marker, TextSegment } from "@fluidframework/merge-tree/internal";
+
+import { pkgVersion } from "./packageVersion.js";
+import { SharedString, SharedStringSegment } from "./sharedString.js";
 
 /**
- * @public
+ * @alpha
  */
 export class SharedStringFactory implements IChannelFactory {
 	// TODO rename back to https://graph.microsoft.com/types/mergeTree/string once paparazzi is able to dynamically
@@ -63,6 +64,9 @@ export class SharedStringFactory implements IChannelFactory {
 		return sharedString;
 	}
 
+	/**
+	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
+	 */
 	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
 		const sharedString = new SharedString(document, id, this.attributes);
 		sharedString.initializeLocal();

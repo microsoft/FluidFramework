@@ -12,6 +12,10 @@ parameters:
 - name: buildDirectory
   type: string
 
+- name: dependencyInstallCommand
+  type: string
+  default: "pnpm install --workspace-root --frozen-lockfile"
+
 # A list of scripts that execute checks of the repo, e.g. policy-check, layer-check, etc. These will be run serially in
 # a pipeline stage separate from the build stage.
 - name: checks
@@ -24,25 +28,23 @@ stages:
 - stage: run_checks
   dependsOn: [] # Has no prereqs
   displayName: Policy checks
-  pool: Small
+  pool: Small-1ES
   jobs:
   - job:
     displayName: Run checks
     steps:
-    - template: include-use-node-version.yml
+    - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
-    - template: include-install-pnpm.yml
+    - template: /tools/pipelines/templates/include-install-pnpm.yml@self
       parameters:
         buildDirectory: $(Build.SourcesDirectory)
 
     - task: Bash@3
-      displayName: Install root dependencies
+      displayName: Install dependencies
       inputs:
         targetType: 'inline'
         workingDirectory: ${{ parameters.buildDirectory }}
-        script: |
-          # We only need the root dependencies
-          pnpm install --workspace-root --frozen-lockfile
+        script: ${{ parameters.dependencyInstallCommand }}
 
     - ${{ if ne(convertToJson(parameters.checks), '[]') }}:
       - ${{ each check in parameters.checks }}:

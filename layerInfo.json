@@ -49,10 +49,6 @@
 				"packages": ["@fluidframework/driver-utils"],
 				"deps": ["Protocol-Utils", "Driver-Definitions", "Telemetry-Utils", "Core-Utils"]
 			},
-			"Framework-Utils": {
-				"packages": ["@fluidframework/view-adapters", "@fluidframework/view-interfaces"],
-				"deps": ["Core-Interfaces"]
-			},
 			"Other-Utils": {
 				"dot": false,
 				"packages": ["@fluidframework/odsp-doclib-utils"],
@@ -97,18 +93,7 @@
 					"experimental/PropertyDDS/packages/",
 					"packages/framework/"
 				],
-				"deps": ["Framework-Utils", "Loader", "Runtime", "Client-Utils"]
-			},
-			"ServiceClients": {
-				"packages": ["@fluidframework/tinylicious-client"],
-				"deps": [
-					"Framework",
-					"Loader",
-					"Routerlicious-Driver",
-					"Server-Libs",
-					"Server-Shared-Utils",
-					"Test-Utils"
-				]
+				"deps": ["Loader", "Runtime", "Client-Utils"]
 			},
 			"Examples": {
 				"dot": false,
@@ -125,6 +110,7 @@
 				"packages": [
 					"@fluidframework/build-common",
 					"@fluidframework/eslint-config-fluid",
+					"@fluid-internal/eslint-plugin-fluid",
 					"@fluid-tools/benchmark"
 				]
 			},
@@ -135,16 +121,32 @@
 			},
 			"Tests": {
 				"dev": true,
-				"dirs": ["packages/test/", "azure/packages/test/"]
+				"dirs": [
+					"packages/test/",
+					"azure/packages/test/",
+					"packages/service-clients/end-to-end-tests"
+				]
 			},
 			"Test-Utils": {
 				"dev": true,
 				"packages": [
-					"@fluid-internal/stochastic-test-utils",
-					"@fluid-internal/test-dds-utils",
+					"@fluid-private/stochastic-test-utils",
+					"@fluid-private/test-dds-utils",
 					"@fluidframework/local-driver",
-					"@fluidframework/test-runtime-utils",
-					"@fluid-tools/webpack-fluid-loader"
+					"@fluidframework/test-runtime-utils"
+				]
+			},
+			"ServiceClients": {
+				"dirs": ["packages/service-clients/"],
+				"deps": [
+					"Container-Definitions",
+					"Driver",
+					"Framework",
+					"Runtime",
+					"Routerlicious-Driver",
+					"Loader",
+					"Server-Libs",
+					"Test-Utils"
 				]
 			},
 			"AzureClient": {
@@ -171,7 +173,7 @@
 			},
 			"Azure-Examples": {
 				"packages": ["@fluid-example/app-integration-external-controller"],
-				"deps": ["UberPackage", "AzureClient", "ServiceClients"]
+				"deps": ["UberPackage", "ServiceClients"]
 			}
 		}
 	},

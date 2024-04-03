@@ -5,6 +5,9 @@
 
 import generateStupidName from "sillyname";
 
+/**
+ * @internal
+ */
 export function getRandomName(connector = "_", capitalize = false): string {
 	let [first, last] = (generateStupidName() as string).split(" ");
 
@@ -19,4 +22,7 @@ export function getRandomName(connector = "_", capitalize = false): string {
 
 // Exposing a choose() function to align with moniker's API. Moniker is
 // server-only, and we can swap it out with this function for the browser.
+/**
+ * @internal
+ */
 export const choose = (): string => getRandomName();

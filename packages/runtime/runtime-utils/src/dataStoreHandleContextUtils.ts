@@ -10,6 +10,7 @@ import { IFluidHandleContext } from "@fluidframework/core-interfaces";
  * @param path - The path to the Fluid object relative to the route context.
  * @param routeContext - The route context that contains the Fluid object.
  * @returns The absolute path to the Fluid object from the root of the Container.
+ * @internal
  */
 export function generateHandleContextPath(
 	path: string,

@@ -4,20 +4,20 @@
 
 ```ts
 
-import { IClientConfig } from '@fluidframework/odsp-doclib-utils';
-import { IOdspTokens } from '@fluidframework/odsp-doclib-utils';
+import { IClientConfig } from '@fluidframework/odsp-doclib-utils/internal';
+import { IOdspTokens } from '@fluidframework/odsp-doclib-utils/internal';
 import { ITree } from '@fluidframework/protocol-definitions';
 
-// @public
+// @internal
 export const gcBlobPrefix = "__gc";
 
-// @public (undocumented)
+// @internal (undocumented)
 export const getMicrosoftConfiguration: () => IClientConfig;
 
-// @public
+// @internal
 export function getNormalizedSnapshot(snapshot: ITree, config?: ISnapshotNormalizerConfig): ITree;
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IAsyncCache<TKey, TValue> {
     // (undocumented)
     get(key: TKey): Promise<TValue | undefined>;
@@ -27,7 +27,7 @@ export interface IAsyncCache<TKey, TValue> {
     save(key: TKey, value: TValue): Promise<void>;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IOdspTokenManagerCacheKey {
     // (undocumented)
     readonly isPush: boolean;
@@ -35,7 +35,7 @@ export interface IOdspTokenManagerCacheKey {
     readonly userOrServer: string;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IResources {
     // (undocumented)
     tokens?: {
@@ -49,20 +49,20 @@ export interface IResources {
     };
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface ISnapshotNormalizerConfig {
     // (undocumented)
     blobsToNormalize?: string[];
     excludedChannelContentTypes?: string[];
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export function loadRC(): Promise<IResources>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function lockRC(): Promise<any>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export type OdspTokenConfig = {
     type: "password";
     username: string;
@@ -73,7 +73,7 @@ export type OdspTokenConfig = {
     redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>;
 };
 
-// @public (undocumented)
+// @internal (undocumented)
 export class OdspTokenManager {
     constructor(tokenCache?: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens> | undefined);
     // (undocumented)
@@ -84,10 +84,10 @@ export class OdspTokenManager {
     updateTokensCache(key: IOdspTokenManagerCacheKey, value: IOdspTokens): Promise<void>;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export const odspTokensCache: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function saveRC(rc: IResources): Promise<void>;
 
 // (No @packageDocumentation comment for this package)

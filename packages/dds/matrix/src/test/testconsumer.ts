@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IMatrixConsumer, IMatrixReader, IMatrixProducer } from "@tiny-calc/nano";
 import { DenseVector, RowMajorMatrix } from "@tiny-calc/micro";
-import { MatrixItem } from "..";
+import { IMatrixConsumer, IMatrixProducer, IMatrixReader } from "@tiny-calc/nano";
+
+import { MatrixItem } from "../index.js";
 
 /**
  * IMatrixConsumer implementation that applies change notifications to it's own

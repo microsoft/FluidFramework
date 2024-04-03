@@ -4,25 +4,26 @@
  */
 
 import { strict as assert } from "assert";
-import { stringToBuffer } from "@fluid-internal/client-utils";
-import { IContainer } from "@fluidframework/container-definitions";
 
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+// eslint-disable-next-line import/no-internal-modules
+import { BlobManager } from "@fluidframework/container-runtime/test/blobManager";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
-import { describeNoCompat, ITestDataObject } from "@fluid-internal/test-version-utils";
-// eslint-disable-next-line import/no-internal-modules
-import { BlobManager } from "@fluidframework/container-runtime/dist/blobManager.js";
+} from "@fluidframework/test-utils/internal";
+
 import {
+	MockDetachedBlobStorage,
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
-	MockDetachedBlobStorage,
 } from "../mockDetachedBlobStorage.js";
+
 import {
 	getGCStateFromSummary,
 	waitForContainerWriteModeConnectionWrite,
@@ -31,7 +32,7 @@ import {
 /**
  * Validates that unreferenced blobs are marked as unreferenced and deleted correctly.
  */
-describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
+describeCompat("Garbage collection of blobs", "NoCompat", (getTestObjectProvider) => {
 	// If deleteUnreferencedContent is true, GC is run in test mode where content that is not referenced is
 	// deleted after each GC run.
 	const tests = (deleteUnreferencedContent: boolean = false) => {
@@ -117,14 +118,12 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
 
 		async function createSummarizerRuntime() {
 			const summarizerContainer = await loadContainer();
-			const summarizerDefaultDataStore = await requestFluidObject<ITestDataObject>(
-				summarizerContainer,
-				"/",
-			);
+			const summarizerDefaultDataStore =
+				(await summarizerContainer.getEntryPoint()) as ITestDataObject;
 			return summarizerDefaultDataStore._context.containerRuntime as ContainerRuntime;
 		}
 
-		beforeEach(async function () {
+		beforeEach("setup", async function () {
 			provider = getTestObjectProvider();
 			if (!driverSupportsBlobs(provider.driver)) {
 				this.skip();
@@ -135,7 +134,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
 				loaderProps: { detachedBlobStorage },
 			});
 			container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-			defaultDataStore = await requestFluidObject<ITestDataObject>(container, "/");
+			defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;
 		});
 
 		it("collects blobs uploaded in attached container", async () => {
@@ -198,7 +197,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
 
 			// Load a second container.
 			const container2 = await loadContainer();
-			const defaultDataStore2 = await requestFluidObject<ITestDataObject>(container2, "/");
+			const defaultDataStore2 = (await container2.getEntryPoint()) as ITestDataObject;
 
 			// Validate the blob handle's path is the same as the one in the first container.
 			const blobHandle2 = defaultDataStore2._root.get<IFluidHandle<ArrayBufferLike>>("blob");
@@ -426,7 +425,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
 
 			// Load a new container and disconnect it.
 			const container2 = await loadContainer();
-			const container2DataStore = await requestFluidObject<ITestDataObject>(container2, "/");
+			const container2DataStore = (await container2.getEntryPoint()) as ITestDataObject;
 			container2.disconnect();
 
 			// Upload an attachment blob when disconnected. We should get a handle with a localId for the blob. Mark it

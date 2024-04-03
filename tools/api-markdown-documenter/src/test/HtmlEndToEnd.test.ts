@@ -2,30 +2,37 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import * as Path from "node:path";
 
-import { ApiItemKind, ApiModel } from "@microsoft/api-extractor-model";
+import * as Path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { ApiItemKind, ApiModel, ReleaseTag } from "@microsoft/api-extractor-model";
 import { FileSystem } from "@rushstack/node-core-library";
 import { expect } from "chai";
-import { Suite } from "mocha";
+import { type Suite } from "mocha";
 
-import { renderApiModelAsHtml } from "../RenderHtml";
-import { type ApiItemTransformationConfiguration, transformApiModel } from "../api-item-transforms";
-import { DocumentNode } from "../documentation-domain";
-import { type HtmlRenderConfiguration } from "../renderers";
-import { compareDocumentationSuiteSnapshot } from "./SnapshotTestUtilities";
+import { renderApiModelAsHtml } from "../RenderHtml.js";
+import {
+	type ApiItemTransformationConfiguration,
+	transformApiModel,
+} from "../api-item-transforms/index.js";
+import { type DocumentNode } from "../documentation-domain/index.js";
+import { type HtmlRenderConfiguration } from "../renderers/index.js";
+import { compareDocumentationSuiteSnapshot } from "./SnapshotTestUtilities.js";
+
+const dirname = Path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * Temp directory under which all tests that generate files will output their contents.
  */
-const testTemporaryDirectoryPath = Path.resolve(__dirname, "test_temp", "html");
+const testTemporaryDirectoryPath = Path.resolve(dirname, "test_temp", "html");
 
 /**
  * Snapshot directory to which generated test data will be copied.
- * Relative to dist/test
+ * Relative to lib/test
  */
 const snapshotsDirectoryPath = Path.resolve(
-	__dirname,
+	dirname,
 	"..",
 	"..",
 	"src",
@@ -34,8 +41,8 @@ const snapshotsDirectoryPath = Path.resolve(
 	"html",
 );
 
-// Relative to dist/test
-const testDataDirectoryPath = Path.resolve(__dirname, "..", "..", "src", "test", "test-data");
+// Relative to lib/test
+const testDataDirectoryPath = Path.resolve(dirname, "..", "..", "src", "test", "test-data");
 const testModelPaths = [Path.resolve(testDataDirectoryPath, "simple-suite-test.json")];
 
 /**
@@ -186,6 +193,7 @@ describe("HTML rendering end-to-end tests", () => {
 				hierarchyBoundaries: [], // No additional hierarchy beyond the package level
 				frontMatter: (documentItem): string =>
 					`<!--- This is sample front-matter for API item "${documentItem.displayName}" -->`,
+				minimumReleaseLevel: ReleaseTag.Beta, // Only include `@public` and `beta` items in the docs suite
 			},
 			renderConfig: {},
 		},
@@ -219,6 +227,7 @@ describe("HTML rendering end-to-end tests", () => {
 					ApiItemKind.Variable,
 				],
 				hierarchyBoundaries: [], // No additional hierarchy beyond the package level
+				minimumReleaseLevel: ReleaseTag.Public, // Only include `@public` items in the docs suite
 			},
 			renderConfig: {
 				startingHeadingLevel: 2,

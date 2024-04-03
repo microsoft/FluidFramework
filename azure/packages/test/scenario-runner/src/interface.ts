@@ -2,8 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { AzureClient } from "@fluidframework/azure-client";
-import { IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/core-interfaces";
+import { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { CommanderStatic } from "commander";
 
 export enum RunnerStatus {
@@ -33,7 +35,7 @@ export interface IScenarioConfig {
 export interface IRunConfig {
 	runId: string;
 	scenarioName: string;
-	logger?: ITelemetryLogger;
+	logger?: ITelemetryLoggerExt;
 }
 
 export interface IScenarioRunConfig extends IRunConfig, IScenarioConfig {

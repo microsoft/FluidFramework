@@ -2,21 +2,23 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
-	ApiCallSignature,
-	ApiConstructSignature,
-	ApiIndexSignature,
-	ApiInterface,
-	ApiItem,
+	type ApiCallSignature,
+	type ApiConstructSignature,
+	type ApiIndexSignature,
+	type ApiInterface,
+	type ApiItem,
 	ApiItemKind,
-	ApiMethodSignature,
-	ApiPropertySignature,
+	type ApiMethodSignature,
+	type ApiPropertySignature,
 } from "@microsoft/api-extractor-model";
 
-import { SectionNode } from "../../documentation-domain";
-import { filterByKind } from "../../utilities";
-import { ApiItemTransformationConfiguration } from "../configuration";
-import { createChildDetailsSection, createMemberTables } from "../helpers";
+import { type SectionNode } from "../../documentation-domain/index.js";
+import { filterByKind } from "../../utilities/index.js";
+import { type ApiItemTransformationConfiguration } from "../configuration/index.js";
+import { createChildDetailsSection, createMemberTables } from "../helpers/index.js";
+import { filterChildMembers } from "../ApiItemTransformUtilities.js";
 
 /**
  * Default documentation transform for `Interface` items.
@@ -58,9 +60,8 @@ export function transformApiInterface(
 ): SectionNode[] {
 	const childSections: SectionNode[] = [];
 
-	const hasAnyChildren = apiInterface.members.length > 0;
-
-	if (hasAnyChildren) {
+	const filteredChildren = filterChildMembers(apiInterface, config);
+	if (filteredChildren.length > 0) {
 		// Accumulate child items
 		const constructSignatures = filterByKind(apiInterface.members, [
 			ApiItemKind.ConstructSignature,

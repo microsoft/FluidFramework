@@ -3,13 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentService, IDocumentServiceFactory } from "@fluidframework/driver-definitions";
-import { ReplayDocumentService, ReplayDocumentServiceFactory } from "@fluidframework/replay-driver";
-import { DebugReplayController } from "./fluidDebuggerController";
-import { DebuggerUI } from "./fluidDebuggerUi";
+import {
+	IDocumentService,
+	IDocumentServiceFactory,
+} from "@fluidframework/driver-definitions/internal";
+import {
+	ReplayDocumentService,
+	ReplayDocumentServiceFactory,
+} from "@fluidframework/replay-driver/internal";
+
+import { DebugReplayController } from "./fluidDebuggerController.js";
+import { DebuggerUI } from "./fluidDebuggerUi.js";
 
 /**
- * @public
+ * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace FluidDebugger {
@@ -18,6 +25,7 @@ export namespace FluidDebugger {
 	 * User can chose to start with any snapshot
 	 * If pop-ups are disabled, we continue without debugger.
 	 * @param documentService - original document service to use to fetch ops / snapshots.
+	 * @internal
 	 */
 	export async function createFromService(
 		documentService: IDocumentService,
@@ -29,6 +37,9 @@ export namespace FluidDebugger {
 		return ReplayDocumentService.create(documentService, controller);
 	}
 
+	/**
+	 * @alpha
+	 */
 	export async function createFromServiceFactory(
 		documentServiceFactory: IDocumentServiceFactory,
 	): Promise<IDocumentServiceFactory> {

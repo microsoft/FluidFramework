@@ -4,16 +4,25 @@
  */
 
 import { strict as assert } from "assert";
-import { describeLoaderCompat, describeNoCompat } from "@fluid-internal/test-version-utils";
+
+import {
+	describeCompat,
+	describeInstallVersions,
+	getVersionedTestObjectProvider,
+} from "@fluid-private/test-version-utils";
+// TODO:AB#6558: describeInstallVersions doesn't support dynamically providing package APIs.
+// eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { IContainer } from "@fluidframework/container-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+} from "@fluidframework/aqueduct/internal";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
+
+import { pkgVersion } from "../packageVersion.js";
 
 describe("entryPoint compat", () => {
 	let provider: ITestObjectProvider;
@@ -43,8 +52,8 @@ describe("entryPoint compat", () => {
 		return provider.createContainer(runtimeFactory);
 	}
 
-	describeNoCompat("no compat", (getTestObjectProvider) => {
-		beforeEach(async () => {
+	describeCompat("no compat", "NoCompat", (getTestObjectProvider) => {
+		beforeEach("getTestObjectProvider", async () => {
 			provider = getTestObjectProvider();
 		});
 
@@ -53,38 +62,26 @@ describe("entryPoint compat", () => {
 			const entryPoint = await container.getEntryPoint?.();
 			assert.notStrictEqual(entryPoint, undefined, "entryPoint was undefined");
 		});
-
-		it("request pattern", async () => {
-			const container = await createContainer();
-			const requestResult = await container.request({ url: "/" });
-
-			assert.strictEqual(requestResult.status, 200, requestResult.value);
-			assert.notStrictEqual(requestResult.value, undefined, "requestResult was undefined");
-		});
-
-		it("both entryPoint and request pattern", async () => {
-			const container = await createContainer();
-			const entryPoint = await container.getEntryPoint?.();
-			const requestResult = await container.request({ url: "/" });
-
-			assert.strictEqual(requestResult.status, 200, requestResult.value);
-			assert.strictEqual(
-				entryPoint,
-				requestResult.value,
-				"entryPoint and requestResult expected to be the same",
-			);
-		});
 	});
 
-	// Simulating old loader code
-	describeLoaderCompat("loader compat", (getTestObjectProvider) => {
-		beforeEach(async () => {
-			provider = getTestObjectProvider();
+	const loaderWithRequest = "2.0.0-internal.7.0.0";
+	describeInstallVersions({
+		requestAbsoluteVersions: [loaderWithRequest],
+	})("loader compat", (_) => {
+		beforeEach("getVersionedTestObjectProvider", async () => {
+			provider = await getVersionedTestObjectProvider(
+				pkgVersion, // base version
+				loaderWithRequest,
+			);
+		});
+
+		afterEach(() => {
+			provider.reset();
 		});
 
 		it("request pattern works", async () => {
 			const container = await createContainer();
-			const requestResult = await container.request({ url: "/" });
+			const requestResult = await (container as any).request({ url: "/" });
 
 			assert.strictEqual(requestResult.status, 200, requestResult.value);
 			assert.notStrictEqual(requestResult.value, undefined, "requestResult was undefined");
@@ -92,7 +89,7 @@ describe("entryPoint compat", () => {
 
 		it("request pattern works when entryPoint is available", async () => {
 			const container = await createContainer();
-			const requestResult = await container.request({ url: "/" });
+			const requestResult = await (container as any).request({ url: "/" });
 
 			// Verify request pattern still works for older loaders (even with entryPoint available)
 			assert.strictEqual(requestResult.status, 200, requestResult.value);

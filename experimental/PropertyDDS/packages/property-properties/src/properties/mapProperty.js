@@ -10,6 +10,7 @@ const { PathHelper, TypeIdHelper } = require("@fluid-experimental/property-chang
 const { MSG } = require("@fluid-experimental/property-common").constants;
 const { ConsoleUtils } = require("@fluid-experimental/property-common");
 const _ = require("lodash");
+
 const { AbstractStaticCollectionProperty } = require("./abstractStaticCollectionProperty");
 const { BaseProperty } = require("./baseProperty");
 const { IndexedCollectionBaseProperty } = require("./indexedCollectionBaseProperty");
@@ -26,6 +27,7 @@ const PATH_TOKENS = BaseProperty.PATH_TOKENS;
 
 /**
  * A MapProperty is a collection class that can contain an dictionary that maps from strings to properties.
+ * @internal
  */
 export class MapProperty extends IndexedCollectionBaseProperty {
 	/**

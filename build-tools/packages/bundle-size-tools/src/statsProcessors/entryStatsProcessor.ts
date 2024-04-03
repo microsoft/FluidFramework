@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { BundleMetric, WebpackStatsProcessor } from "../BundleBuddyTypes";
 
 export interface EntryStatsProcessorOptions {
@@ -12,7 +13,9 @@ export interface EntryStatsProcessorOptions {
 /**
  * Returns a stats processor that returns total asset size information for each entryPoint in the stats object
  */
-export function getEntryStatsProcessor(options: EntryStatsProcessorOptions): WebpackStatsProcessor {
+export function getEntryStatsProcessor(
+	options: EntryStatsProcessorOptions,
+): WebpackStatsProcessor {
 	return (stats) => {
 		const result = new Map<string, BundleMetric>();
 

@@ -4,52 +4,41 @@
 
 ```ts
 
-import { EventEmitter } from 'events';
+import { ConfigTypes } from '@fluidframework/core-interfaces';
+import type { EventEmitter } from '@fluid-internal/client-utils';
 import { EventEmitterEventType } from '@fluid-internal/client-utils';
-import { IDisposable } from '@fluidframework/core-interfaces';
+import { IConfigProviderBase } from '@fluidframework/core-interfaces';
+import type { IDisposable } from '@fluidframework/core-interfaces';
 import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
-import { IGenericError } from '@fluidframework/core-interfaces';
-import { ILoggingError } from '@fluidframework/core-interfaces';
+import { IGenericError } from '@fluidframework/core-interfaces/internal';
+import type { ILoggingError } from '@fluidframework/core-interfaces/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
-import { ITelemetryErrorEvent } from '@fluidframework/core-interfaces';
-import { ITelemetryGenericEvent } from '@fluidframework/core-interfaces';
-import { ITelemetryPerformanceEvent } from '@fluidframework/core-interfaces';
-import { ITelemetryProperties } from '@fluidframework/core-interfaces';
-import { IUsageError } from '@fluidframework/core-interfaces';
-import { Lazy } from '@fluidframework/core-utils';
+import { IUsageError } from '@fluidframework/core-interfaces/internal';
+import { Lazy } from '@fluidframework/core-utils/internal';
 import { LogLevel } from '@fluidframework/core-interfaces';
 import { Tagged } from '@fluidframework/core-interfaces';
 import { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
-import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
-// @public (undocumented)
-export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
-
-// @public (undocumented)
+// @internal (undocumented)
 export const connectedEventName = "connected";
 
-// @public
+// @alpha
 export function createChildLogger(props?: {
     logger?: ITelemetryBaseLogger;
     namespace?: string;
     properties?: ITelemetryLoggerPropertyBags;
 }): ITelemetryLoggerExt;
 
-// @public (undocumented)
+// @internal
 export function createChildMonitoringContext(props: Parameters<typeof createChildLogger>[0]): MonitoringContext;
 
-// @public
-export function createMultiSinkLogger(props: {
-    namespace?: string;
-    properties?: ITelemetryLoggerPropertyBags;
-    loggers?: (ITelemetryBaseLogger | undefined)[];
-    tryInheritProperties?: true;
-}): ITelemetryLoggerExt;
+// @internal
+export function createMultiSinkLogger(props: MultiSinkLoggerProperties): ITelemetryLoggerExt;
 
 // @internal
 export function createSampledLogger(logger: ITelemetryLoggerExt, eventSampler?: IEventSampler): ISampledTelemetryLogger;
@@ -67,22 +56,22 @@ export class DataCorruptionError extends LoggingError implements IErrorBase, IFl
 export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
     // (undocumented)
     readonly canRetry = false;
-    static create(errorMessage: string, dataProcessingCodepath: string, sequencedMessage?: ISequencedDocumentMessage, props?: ITelemetryBaseProperties): IFluidErrorBase;
+    static create(errorMessage: string, dataProcessingCodepath: string, sequencedMessage?: ISequencedDocumentMessage, props?: ITelemetryPropertiesExt): IFluidErrorBase;
     readonly errorType: "dataProcessingError";
     static wrapIfUnrecognized(originalError: unknown, dataProcessingCodepath: string, messageLike?: Partial<Pick<ISequencedDocumentMessage, "clientId" | "sequenceNumber" | "clientSequenceNumber" | "referenceSequenceNumber" | "minimumSequenceNumber" | "timestamp">>): IFluidErrorBase;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export const disconnectedEventName = "disconnected";
 
-// @public
+// @alpha
 export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> extends TypedEventEmitter<TEvent> {
     constructor(errorHandler: (eventName: EventEmitterEventType, error: any) => void);
     // (undocumented)
     emit(event: EventEmitterEventType, ...args: unknown[]): boolean;
 }
 
-// @public (undocumented)
+// @internal
 export const eventNamespaceSeparator: ":";
 
 // @internal
@@ -92,7 +81,7 @@ export function extractLogSafeErrorProperties(error: unknown, sanitizeStack: boo
     stack?: string | undefined;
 };
 
-// @public
+// @internal
 export const extractSafePropertiesFromMessage: (messageLike: Partial<Pick<ISequencedDocumentMessage, "clientId" | "sequenceNumber" | "clientSequenceNumber" | "referenceSequenceNumber" | "minimumSequenceNumber" | "timestamp">>) => {
     messageClientId: string | undefined;
     messageSequenceNumber: number | undefined;
@@ -102,7 +91,7 @@ export const extractSafePropertiesFromMessage: (messageLike: Partial<Pick<ISeque
     messageTimestamp: number | undefined;
 };
 
-// @public (undocumented)
+// @internal (undocumented)
 export function formatTick(tick: number): number;
 
 // @internal
@@ -123,12 +112,12 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
 // @internal
 export const getCircularReplacer: () => (key: string, value: unknown) => any;
 
-// @public
+// @internal
 export const hasErrorInstanceId: (x: unknown) => x is {
     errorInstanceId: string;
 };
 
-// @public
+// @internal
 export interface IConfigProvider extends IConfigProviderBase {
     // (undocumented)
     getBoolean(name: string): boolean | undefined;
@@ -144,12 +133,6 @@ export interface IConfigProvider extends IConfigProviderBase {
     getStringArray(name: string): string[] | undefined;
 }
 
-// @public
-export interface IConfigProviderBase {
-    // (undocumented)
-    getRawConfig(name: string): ConfigTypes;
-}
-
 // @internal
 export interface IEventSampler {
     // (undocumented)
@@ -161,18 +144,18 @@ export interface IFluidErrorAnnotations {
     props?: ITelemetryBaseProperties;
 }
 
-// @public
+// @internal
 export interface IFluidErrorBase extends Error {
-    addTelemetryProperties: (props: ITelemetryProperties) => void;
+    addTelemetryProperties: (props: ITelemetryPropertiesExt) => void;
     readonly errorInstanceId: string;
     readonly errorType: string;
-    getTelemetryProperties(): ITelemetryProperties;
+    getTelemetryProperties(): ITelemetryBaseProperties;
     readonly message: string;
     readonly name: string;
     readonly stack?: string;
 }
 
-// @public
+// @internal
 export interface IPerformanceEventMarkers {
     // (undocumented)
     cancel?: "generic" | "error";
@@ -190,19 +173,19 @@ export interface ISampledTelemetryLogger extends ITelemetryLoggerExt {
 // @internal
 export function isExternalError(error: unknown): boolean;
 
-// @public
+// @internal
 export function isFluidError(error: unknown): error is IFluidErrorBase;
 
-// @public
+// @internal
 export const isILoggingError: (x: unknown) => x is ILoggingError;
 
-// @public
+// @internal
 export function isTaggedTelemetryPropertyValue(x: Tagged<TelemetryEventPropertyTypeExt> | TelemetryEventPropertyTypeExt): x is Tagged<TelemetryEventPropertyTypeExt>;
 
-// @public
+// @internal
 export function isValidLegacyError(error: unknown): error is Omit<IFluidErrorBase, "errorInstanceId">;
 
-// @public @deprecated
+// @internal @deprecated
 export interface ITaggedTelemetryPropertyTypeExt {
     // (undocumented)
     tag: string;
@@ -216,7 +199,7 @@ export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
     eventName: string;
 }
 
-// @public
+// @internal
 export interface ITelemetryEventExt extends ITelemetryPropertiesExt {
     // (undocumented)
     category: string;
@@ -239,13 +222,13 @@ export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
     sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface ITelemetryLoggerPropertyBag {
     // (undocumented)
     [index: string]: TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes);
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface ITelemetryLoggerPropertyBags {
     // (undocumented)
     all?: ITelemetryLoggerPropertyBag;
@@ -265,13 +248,13 @@ export interface ITelemetryPropertiesExt {
     [index: string]: TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>;
 }
 
-// @public (undocumented)
+// @internal
 export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(logger: L): MonitoringContext<L>;
 
 // @internal
 export class LoggingError extends Error implements ILoggingError, Omit<IFluidErrorBase, "errorType"> {
     constructor(message: string, props?: ITelemetryBaseProperties, omitPropsFromLogging?: Set<string>);
-    addTelemetryProperties(props: ITelemetryBaseProperties): void;
+    addTelemetryProperties(props: ITelemetryPropertiesExt): void;
     // (undocumented)
     get errorInstanceId(): string;
     getTelemetryProperties(): ITelemetryBaseProperties;
@@ -280,13 +263,10 @@ export class LoggingError extends Error implements ILoggingError, Omit<IFluidErr
     static typeCheck(object: unknown): object is LoggingError;
 }
 
-// @public
-export function logIfFalse(condition: unknown, logger: ITelemetryBaseLogger, event: string | ITelemetryGenericEvent): condition is true;
-
-// @public (undocumented)
+// @internal
 export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(logger: L, ...configs: (IConfigProviderBase | undefined)[]): MonitoringContext<L>;
 
-// @public
+// @internal
 export class MockLogger implements ITelemetryBaseLogger {
     constructor(minLogLevel?: LogLevel | undefined);
     assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
@@ -308,7 +288,7 @@ export class MockLogger implements ITelemetryBaseLogger {
     toTelemetryLogger(): ITelemetryLoggerExt;
 }
 
-// @public
+// @internal
 export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt> {
     // (undocumented)
     config: IConfigProvider;
@@ -317,43 +297,51 @@ export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLo
 }
 
 // @internal
+export interface MultiSinkLoggerProperties {
+    loggers?: (ITelemetryBaseLogger | undefined)[];
+    namespace?: string;
+    properties?: ITelemetryLoggerPropertyBags;
+    tryInheritProperties?: true;
+}
+
+// @internal
 export const NORMALIZED_ERROR_TYPE = "genericError";
 
 // @internal
 export function normalizeError(error: unknown, annotations?: IFluidErrorAnnotations): IFluidErrorBase;
 
-// @public
+// @internal
 export function numberFromString(str: string | null | undefined): string | number | undefined;
 
 // @internal
 export function overwriteStack(error: IFluidErrorBase | LoggingError, stack: string): void;
 
-// @public
+// @internal
 export class PerformanceEvent {
-    protected constructor(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean, emitLogs?: boolean);
+    protected constructor(logger: ITelemetryLoggerExt, event: ITelemetryGenericEventExt, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean, emitLogs?: boolean);
     // (undocumented)
-    cancel(props?: ITelemetryProperties, error?: unknown): void;
+    cancel(props?: ITelemetryPropertiesExt, error?: unknown): void;
     // (undocumented)
     get duration(): number;
     // (undocumented)
-    end(props?: ITelemetryProperties): void;
-    reportEvent(eventNameSuffix: string, props?: ITelemetryProperties, error?: unknown): void;
+    end(props?: ITelemetryPropertiesExt): void;
+    reportEvent(eventNameSuffix: string, props?: ITelemetryPropertiesExt, error?: unknown): void;
     // (undocumented)
-    reportProgress(props?: ITelemetryProperties, eventNameSuffix?: string): void;
-    static start(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean, emitLogs?: boolean): PerformanceEvent;
-    static timedExec<T>(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, callback: (event: PerformanceEvent) => T, markers?: IPerformanceEventMarkers, sampleThreshold?: number): T;
-    static timedExecAsync<T>(logger: ITelemetryLoggerExt, event: ITelemetryGenericEvent, callback: (event: PerformanceEvent) => Promise<T>, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean, sampleThreshold?: number): Promise<T>;
+    reportProgress(props?: ITelemetryPropertiesExt, eventNameSuffix?: string): void;
+    static start(logger: ITelemetryLoggerExt, event: ITelemetryGenericEventExt, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean, emitLogs?: boolean): PerformanceEvent;
+    static timedExec<T>(logger: ITelemetryLoggerExt, event: ITelemetryGenericEventExt, callback: (event: PerformanceEvent) => T, markers?: IPerformanceEventMarkers, sampleThreshold?: number): T;
+    static timedExecAsync<T>(logger: ITelemetryLoggerExt, event: ITelemetryGenericEventExt, callback: (event: PerformanceEvent) => Promise<T>, markers?: IPerformanceEventMarkers, recordHeapSize?: boolean, sampleThreshold?: number): Promise<T>;
 }
 
-// @public
+// @internal
 export function raiseConnectedEvent(logger: ITelemetryLoggerExt, emitter: EventEmitter, connected: boolean, clientId?: string, disconnectedReason?: string): void;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function safeRaiseEvent(emitter: EventEmitter, logger: ITelemetryLoggerExt, event: string, ...args: unknown[]): void;
 
-// @public
+// @internal
 export class SampledTelemetryHelper implements IDisposable {
-    constructor(eventBase: ITelemetryGenericEvent, logger: ITelemetryLoggerExt, sampleThreshold: number, includeAggregateMetrics?: boolean, perBucketProperties?: Map<string, ITelemetryProperties>);
+    constructor(eventBase: ITelemetryGenericEventExt, logger: ITelemetryLoggerExt, sampleThreshold: number, includeAggregateMetrics?: boolean, perBucketProperties?: Map<string, ITelemetryBaseProperties>);
     // (undocumented)
     dispose(error?: Error | undefined): void;
     // (undocumented)
@@ -361,11 +349,11 @@ export class SampledTelemetryHelper implements IDisposable {
     measure<T>(codeToMeasure: () => T, bucket?: string): T;
 }
 
-// @public
+// @internal
 export const sessionStorageConfigProvider: Lazy<IConfigProviderBase>;
 
-// @public
-export const tagCodeArtifacts: <T extends Record<string, TelemetryEventPropertyType | (() => TelemetryBaseEventPropertyType)>>(values: T) => { [P in keyof T]: (T[P] extends () => TelemetryBaseEventPropertyType ? () => {
+// @internal
+export const tagCodeArtifacts: <T extends Record<string, TelemetryBaseEventPropertyType | (() => TelemetryBaseEventPropertyType)>>(values: T) => { [P in keyof T]: (T[P] extends () => TelemetryBaseEventPropertyType ? () => {
         value: ReturnType<T[P]>;
         tag: TelemetryDataTag.CodeArtifact;
     } : {
@@ -373,8 +361,8 @@ export const tagCodeArtifacts: <T extends Record<string, TelemetryEventPropertyT
         tag: TelemetryDataTag.CodeArtifact;
     }) | (T[P] extends undefined ? undefined : never); };
 
-// @public (undocumented)
-export const tagData: <T extends TelemetryDataTag, V extends Record<string, TelemetryEventPropertyType | (() => TelemetryBaseEventPropertyType)>>(tag: T, values: V) => { [P in keyof V]: (V[P] extends () => TelemetryBaseEventPropertyType ? () => {
+// @internal
+export const tagData: <T extends TelemetryDataTag, V extends Record<string, TelemetryBaseEventPropertyType | (() => TelemetryBaseEventPropertyType)>>(tag: T, values: V) => { [P in keyof V]: (V[P] extends () => TelemetryBaseEventPropertyType ? () => {
         value: ReturnType<V[P]>;
         tag: T;
     } : {
@@ -382,14 +370,13 @@ export const tagData: <T extends TelemetryDataTag, V extends Record<string, Tele
         tag: T;
     }) | (V[P] extends undefined ? undefined : never); };
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
     constructor(logger: ITelemetryBaseLogger);
-    // (undocumented)
     send(eventWithTagsMaybe: ITelemetryBaseEvent): void;
 }
 
-// @public
+// @internal
 export enum TelemetryDataTag {
     CodeArtifact = "CodeArtifact",
     UserData = "UserData"
@@ -404,22 +391,10 @@ export type TelemetryEventPropertyTypeExt = string | number | boolean | undefine
     string | number | boolean | undefined | (string | number | boolean)[];
 };
 
-// @public (undocumented)
+// @alpha (undocumented)
 export type TelemetryEventPropertyTypes = ITelemetryBaseProperties[string];
 
-// @public @deprecated
-export class TelemetryNullLogger implements ITelemetryLoggerExt {
-    // (undocumented)
-    send(event: ITelemetryBaseEvent): void;
-    // (undocumented)
-    sendErrorEvent(event: ITelemetryErrorEvent, error?: unknown): void;
-    // (undocumented)
-    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: unknown): void;
-    // (undocumented)
-    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: unknown): void;
-}
-
-// @public
+// @internal
 export class ThresholdCounter {
     constructor(threshold: number, logger: ITelemetryLoggerExt, thresholdMultiple?: number);
     send(eventName: string, value: number): void;
@@ -432,6 +407,12 @@ export class UsageError extends LoggingError implements IUsageError, IFluidError
     // (undocumented)
     readonly errorType: "usageError";
 }
+
+// @internal
+export function validatePrecondition(condition: boolean, message: string, props?: ITelemetryBaseProperties): asserts condition;
+
+// @internal
+export const wrapConfigProviderWithDefaults: (original: IConfigProviderBase | undefined, defaults: Record<string, ConfigTypes>) => IConfigProviderBase;
 
 // @internal
 export function wrapError<T extends LoggingError>(innerError: unknown, newErrorFn: (message: string) => T): T;

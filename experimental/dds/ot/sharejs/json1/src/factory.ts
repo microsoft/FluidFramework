@@ -4,17 +4,18 @@
  */
 
 import {
-	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelServices,
 	IChannel,
+	IChannelAttributes,
 	IChannelFactory,
+	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { pkgVersion } from "./packageVersion";
-import { SharedJson1 } from "./json1";
+
+import { SharedJson1 } from "./json1.js";
+import { pkgVersion } from "./packageVersion.js";
 
 /**
- * @public
+ * @internal
  */
 export class Json1Factory implements IChannelFactory {
 	public static Type = "https://graph.microsoft.com/types/sharedjson1";

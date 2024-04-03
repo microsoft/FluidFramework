@@ -23,6 +23,7 @@ export class DocumentPartition {
 	private corrupt = false;
 	private closed = false;
 	private activityTimeoutTime: number | undefined;
+	private readonly restartOnErrorNames: string[] = [];
 
 	constructor(
 		factory: IPartitionLambdaFactory<IPartitionLambdaConfig>,
@@ -37,6 +38,8 @@ export class DocumentPartition {
 			tenantId,
 			documentId,
 		};
+
+		this.restartOnErrorNames = ["MongoServerSelectionError"];
 
 		this.q = queue((message: IQueuedMessage, callback) => {
 			// Winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
@@ -85,13 +88,21 @@ export class DocumentPartition {
 				this.q.resume();
 			})
 			.catch((error) => {
-				// There is no need to pass the message to be checkpointed to markAsCorrupt().
-				// The message, in this case, would be the head in the DocumentContext. But the DocumentLambda
-				// that creates this DocumentPartition will also put the same message in the queue.
-				// So the DocumentPartition will see that message in the queue above, and checkpoint it
-				// since the document was marked as corrupted.
-				this.markAsCorrupt(error);
-				this.q.resume();
+				if (error.name && this.restartOnErrorNames.includes(error.name as string)) {
+					this.context.error(error, {
+						restart: true,
+						tenantId: this.tenantId,
+						documentId: this.documentId,
+					});
+				} else {
+					// There is no need to pass the message to be checkpointed to markAsCorrupt().
+					// The message, in this case, would be the head in the DocumentContext. But the DocumentLambda
+					// that creates this DocumentPartition will also put the same message in the queue.
+					// So the DocumentPartition will see that message in the queue above, and checkpoint it
+					// since the document was marked as corrupted.
+					this.markAsCorrupt(error);
+					this.q.resume();
+				}
 			});
 	}
 

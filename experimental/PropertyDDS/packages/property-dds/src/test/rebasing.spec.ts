@@ -4,41 +4,46 @@
  */
 
 /* eslint-disable @typescript-eslint/no-unused-expressions */
+
 import { strict as assert } from "assert";
-import { expect } from "chai";
-import { v5 as uuidv5 } from "uuid";
+
+import { DeterministicRandomGenerator } from "@fluid-experimental/property-common";
+import {
+	ArrayProperty,
+	Float64Property,
+	Int32Property,
+	NamedProperty,
+	PropertyFactory,
+	StringArrayProperty,
+	StringProperty,
+} from "@fluid-experimental/property-properties";
 import {
 	IContainer,
+	IFluidCodeDetails,
 	IHostLoader,
 	ILoaderOptions,
-	IFluidCodeDetails,
-} from "@fluidframework/container-definitions";
-import { LocalResolver, LocalDocumentServiceFactory } from "@fluidframework/local-driver";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { IUrlResolver } from "@fluidframework/driver-definitions";
+} from "@fluidframework/container-definitions/internal";
+import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
 import {
-	LocalDeltaConnectionServer,
 	ILocalDeltaConnectionServer,
+	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
+	ITestFluidObject,
+	LoaderContainerTracker,
+	TestFluidObjectFactory,
 	createAndAttachContainer,
 	createLoader,
-	ITestFluidObject,
-	TestFluidObjectFactory,
-	LoaderContainerTracker,
-} from "@fluidframework/test-utils";
-import { DeterministicRandomGenerator } from "@fluid-experimental/property-common";
-import * as _ from "lodash";
-import {
-	StringArrayProperty,
-	PropertyFactory,
-	ArrayProperty,
-	NamedProperty,
-	Int32Property,
-	StringProperty,
-	Float64Property,
-} from "@fluid-experimental/property-properties";
-import { SharedPropertyTree } from "../propertyTree";
+} from "@fluidframework/test-utils/internal";
+import { expect } from "chai";
+import lodash from "lodash";
+import { v5 as uuidv5 } from "uuid";
+
+// 'lodash' import workaround.
+const { range, sortedIndex, isFunction } = lodash;
+
+import { SharedPropertyTree } from "../propertyTree.js";
 
 // a "namespace" uuid to generate uuidv5 in fuzz tests
 const namespaceGuid: string = "b6abf2df-d86d-413b-8fd1-359d4aa341f2";
@@ -69,7 +74,7 @@ function getFunctionSource(fun: any): string {
 
 describe("PropertyDDS", () => {
 	const documentId = "localServerTest";
-	const documentLoadUrl = `fluid-test://localhost/${documentId}`;
+	const documentLoadUrl = `https://localhost/${documentId}`;
 	const propertyDdsId = "PropertyTree";
 	const codeDetails: IFluidCodeDetails = {
 		package: "localServerTestPackage",
@@ -146,9 +151,9 @@ describe("PropertyDDS", () => {
 				try {
 					const numOperations = random.irandom(maxOperations);
 					const maxCount = operationCumSums[operationCumSums.length - 1];
-					for (const j of _.range(numOperations)) {
+					for (const _j of range(numOperations)) {
 						const operationId = 1 + random.irandom(maxCount);
-						const selectedOperation = _.sortedIndex(operationCumSums, operationId);
+						const selectedOperation = sortedIndex(operationCumSums, operationId);
 
 						const parameters = operations[selectedOperation].getParameters(random);
 
@@ -157,7 +162,7 @@ describe("PropertyDDS", () => {
 							operations[selectedOperation].op.toString(),
 						);
 						for (const [key, value] of Object.entries(parameters)) {
-							const valueString = _.isFunction(value)
+							const valueString = isFunction(value)
 								? getFunctionSource(value)
 								: value.toString();
 							operationSource = operationSource.replace(
@@ -187,13 +192,13 @@ describe("PropertyDDS", () => {
 
 		// Create a Container for the first client.
 		container1 = await createContainer();
-		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+		dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 		sharedPropertyTree1 = await dataObject1.getSharedObject<SharedPropertyTree>(propertyDdsId);
 		(sharedPropertyTree1 as any).__id = 1; // Add an id to simplify debugging via conditional breakpoints
 
 		// Load the Container that was created by the first client.
 		container2 = await loadContainer();
-		dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		sharedPropertyTree2 = await dataObject2.getSharedObject<SharedPropertyTree>(propertyDdsId);
 		(sharedPropertyTree2 as any).__id = 2; // Add an id to simplify debugging via conditional breakpoints
 
@@ -246,10 +251,10 @@ describe("PropertyDDS", () => {
 			});
 
 			afterEach(() => {
-				const result = _.range(1, ACount + 1)
+				const result = range(1, ACount + 1)
 					.map((i) => `A${i}`)
 					.concat(["B1", "B2", "B3"])
-					.concat(_.range(1, CCount + 1).map((i) => `C${i}`));
+					.concat(range(1, CCount + 1).map((i) => `C${i}`));
 
 				const array1 = sharedPropertyTree1.root.get("array") as StringArrayProperty;
 				const array2 = sharedPropertyTree2.root.get("array") as StringArrayProperty;
@@ -475,7 +480,7 @@ describe("PropertyDDS", () => {
 						let testString = "";
 
 						const numOperations = random.irandom(30);
-						for (const j of _.range(numOperations)) {
+						for (const _j of range(numOperations)) {
 							const operation = random.irandom(6);
 							switch (operation) {
 								case 0:

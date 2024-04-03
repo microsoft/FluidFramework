@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ConnectionState } from "@fluidframework/container-loader";
-import { type IContainer } from "@fluidframework/container-definitions";
-import { type DevtoolsLogger } from "@fluid-experimental/devtools-core";
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
-import { type AppData } from "./FluidObject";
-import { RuntimeFactory, type IAppModel } from "./Container";
+import { type IContainer } from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader";
+import { type IDevtoolsLogger } from "@fluidframework/devtools-core/internal";
+
+import { type IAppModel, RuntimeFactory } from "./Container.js";
+import { type AppData } from "./FluidObject.js";
 
 /**
  * This module contains Fluid Client utilities, including Container creation / loading.
@@ -37,7 +38,7 @@ export interface ContainerInfo {
 /**
  * Creates a new Container from the provided client and container schema.
  */
-export function createLoader(logger?: DevtoolsLogger): SessionStorageModelLoader<IAppModel> {
+export function createLoader(logger?: IDevtoolsLogger): SessionStorageModelLoader<IAppModel> {
 	const codeLoader = new StaticCodeLoader(new RuntimeFactory());
 	const loader = new SessionStorageModelLoader<IAppModel>(codeLoader, logger);
 

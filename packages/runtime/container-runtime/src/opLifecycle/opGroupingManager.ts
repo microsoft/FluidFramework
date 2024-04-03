@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ContainerMessageType } from "../messageTypes";
-import { IBatch } from "./definitions";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+
+import { IBatch } from "./definitions.js";
 
 /**
  * Grouping makes assumptions about the shape of message contents. This interface codifies those assumptions, but does not validate them.
@@ -26,14 +28,38 @@ function isGroupContents(opContents: any): opContents is IGroupedBatchMessageCon
 	return opContents?.type === OpGroupingManager.groupedBatchOp;
 }
 
+export function isGroupedBatch(op: ISequencedDocumentMessage): boolean {
+	return isGroupContents(op.contents);
+}
+
+export interface OpGroupingManagerConfig {
+	readonly groupedBatchingEnabled: boolean;
+	readonly opCountThreshold: number;
+	readonly reentrantBatchGroupingEnabled: boolean;
+}
+
 export class OpGroupingManager {
 	static readonly groupedBatchOp = "groupedBatch";
+	private readonly logger;
 
-	constructor(private readonly groupedBatchingEnabled: boolean) {}
+	constructor(
+		private readonly config: OpGroupingManagerConfig,
+		logger: ITelemetryBaseLogger,
+	) {
+		this.logger = createChildLogger({ logger, namespace: "OpGroupingManager" });
+	}
 
 	public groupBatch(batch: IBatch): IBatch {
-		if (batch.content.length < 2 || !this.groupedBatchingEnabled) {
-			return batch;
+		assert(this.shouldGroup(batch), "cannot group the provided batch");
+
+		if (batch.content.length >= 1000) {
+			this.logger.sendTelemetryEvent({
+				eventName: "GroupLargeBatch",
+				length: batch.content.length,
+				threshold: this.config.opCountThreshold,
+				reentrant: batch.hasReentrantOps,
+				referenceSequenceNumber: batch.content[0].referenceSequenceNumber,
+			});
 		}
 
 		for (const message of batch.content) {
@@ -60,11 +86,9 @@ export class OpGroupingManager {
 			...batch,
 			content: [
 				{
-					localOpMetadata: undefined,
 					metadata: undefined,
 					referenceSequenceNumber: batch.content[0].referenceSequenceNumber,
 					contents: serializedContent,
-					type: OpGroupingManager.groupedBatchOp as ContainerMessageType,
 				},
 			],
 		};
@@ -72,18 +96,27 @@ export class OpGroupingManager {
 	}
 
 	public ungroupOp(op: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
-		if (!isGroupContents(op.contents)) {
-			return [op];
-		}
+		assert(isGroupContents(op.contents), "can only ungroup a grouped batch");
+		const contents: IGroupedBatchMessageContents = op.contents;
 
-		const messages = op.contents.contents;
 		let fakeCsn = 1;
-		return messages.map((subMessage) => ({
+		return contents.contents.map((subMessage) => ({
 			...op,
 			clientSequenceNumber: fakeCsn++,
 			contents: subMessage.contents,
 			metadata: subMessage.metadata,
 			compression: subMessage.compression,
 		}));
+	}
+
+	public shouldGroup(batch: IBatch): boolean {
+		return (
+			// Grouped batching must be enabled
+			this.config.groupedBatchingEnabled &&
+			// The number of ops in the batch must surpass the configured threshold
+			batch.content.length >= this.config.opCountThreshold &&
+			// Support for reentrant batches must be explicitly enabled
+			(this.config.reentrantBatchGroupingEnabled || batch.hasReentrantOps !== true)
+		);
 	}
 }

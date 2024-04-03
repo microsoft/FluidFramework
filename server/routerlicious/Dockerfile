@@ -33,6 +33,7 @@ WORKDIR /usr/src/server
 COPY package*.json ./
 COPY pnpm*.yaml ./
 COPY scripts/*.* ./scripts/
+COPY patches/*.* ./patches/
 
 COPY packages/gitresources/package*.json packages/gitresources/
 COPY packages/kafka-orderer/package*.json packages/kafka-orderer/
@@ -53,6 +54,7 @@ COPY packages/services-telemetry/package*.json packages/services-telemetry/
 COPY packages/services-utils/package*.json packages/services-utils/
 COPY packages/test-utils/package*.json packages/test-utils/
 COPY packages/protocol-base/package*.json packages/protocol-base/
+COPY packages/tinylicious/package*.json packages/tinylicious/
 
 RUN corepack enable
 

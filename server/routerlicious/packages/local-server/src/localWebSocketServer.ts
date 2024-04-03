@@ -8,6 +8,9 @@ import { IPubSub, ISubscriber, WebSocketSubscriber } from "@fluidframework/serve
 import { IWebSocket, IWebSocketServer } from "@fluidframework/server-services-core";
 import { v4 as uuid } from "uuid";
 
+/**
+ * @internal
+ */
 export class LocalWebSocket implements IWebSocket {
 	private readonly events = new EventEmitter();
 	private readonly rooms = new Set<string>();
@@ -40,12 +43,6 @@ export class LocalWebSocket implements IWebSocket {
 	}
 
 	public emit(event: string, ...args: any[]) {
-		// Disconnect from the "socket" if the message is greater than 1MB
-		if (JSON.stringify(args).length > 1e6) {
-			this.disconnect();
-			return;
-		}
-
 		this.events.emit(event, ...args);
 	}
 
@@ -74,6 +71,9 @@ export class LocalWebSocket implements IWebSocket {
 	}
 }
 
+/**
+ * @internal
+ */
 export class LocalWebSocketServer implements IWebSocketServer {
 	private readonly events = new EventEmitter();
 

@@ -103,7 +103,7 @@ import { v4 as uuid } from "uuid";
 describe("ClientTest", () => {
     const client = createAzureClient();
     let documentId: string;
-    beforeEach(() => {
+    beforeEach("initializeDocumentId", () => {
         documentId = uuid();
     });
 

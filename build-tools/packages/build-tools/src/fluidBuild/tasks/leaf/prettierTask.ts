@@ -2,14 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { readdir } from "fs/promises";
+
 import ignore from "ignore";
 import * as path from "path";
 
 import { existsSync, globFn, readFileAsync, statAsync } from "../../../common/utils";
 import { BuildPackage } from "../../buildGraph";
 import { LeafWithDoneFileTask } from "./leafTask";
-import { getInstalledPackageVersion } from "../../../common/taskUtils";
+import { getInstalledPackageVersion, getRecursiveFiles } from "../../../common/taskUtils";
 
 export class PrettierTask extends LeafWithDoneFileTask {
 	private parsed: boolean = false;
@@ -25,7 +25,7 @@ export class PrettierTask extends LeafWithDoneFileTask {
 		}
 		for (let i = 1; i < args.length; i++) {
 			if (args[i].startsWith("--")) {
-				if (args[i] === "--check") {
+				if (args[i] === "--check" || args[i] === "--cache") {
 					continue;
 				}
 				if (args[i] === "--ignore-path" && i + 1 < args.length) {
@@ -50,9 +50,7 @@ export class PrettierTask extends LeafWithDoneFileTask {
 
 	protected async getDoneFileContent() {
 		if (!this.parsed) {
-			this.traceError(
-				`error generating done file content, unable to understand command line`,
-			);
+			this.traceError(`error generating done file content, unable to understand command line`);
 			return undefined;
 		}
 
@@ -69,9 +67,7 @@ export class PrettierTask extends LeafWithDoneFileTask {
 				return undefined;
 			}
 		} catch (e) {
-			this.traceError(
-				`error generating done file content, unable to read ${ignoreFile} file`,
-			);
+			this.traceError(`error generating done file content, unable to read ${ignoreFile} file`);
 			return undefined;
 		}
 
@@ -87,11 +83,9 @@ export class PrettierTask extends LeafWithDoneFileTask {
 				if (existsSync(fullPath)) {
 					if ((await statAsync(fullPath)).isDirectory()) {
 						// TODO: This includes files that prettier might not check
-						const recursiveFiles = await this.getRecursiveFiles(fullPath);
+						const recursiveFiles = await getRecursiveFiles(fullPath);
 						files.push(
-							...recursiveFiles.map((file) =>
-								path.relative(this.node.pkg.directory, file),
-							),
+							...recursiveFiles.map((file) => path.relative(this.node.pkg.directory, file)),
 						);
 					} else {
 						files.push(entry);
@@ -117,22 +111,5 @@ export class PrettierTask extends LeafWithDoneFileTask {
 			this.traceError(`error generating done file content. ${e}`);
 			return undefined;
 		}
-	}
-
-	protected async getRecursiveFiles(pathName: string) {
-		const files = await readdir(pathName, { withFileTypes: true });
-		const result: string[] = [];
-		for (let i = 0; i < files.length; i++) {
-			const dirent = files[i];
-			const subPathName = path.join(pathName, dirent.name);
-			if (dirent.name !== "node_modules" && !dirent.name.startsWith(".")) {
-				if (dirent.isDirectory()) {
-					result.push(...(await this.getRecursiveFiles(subPathName)));
-				} else {
-					result.push(subPathName);
-				}
-			}
-		}
-		return result;
 	}
 }

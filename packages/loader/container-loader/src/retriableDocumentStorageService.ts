@@ -3,13 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { IDisposable } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	FetchSource,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	ISnapshot,
+	ISnapshotFetchOptions,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { runWithRetry } from "@fluidframework/driver-utils/internal";
 import {
 	ICreateBlobResponse,
 	ISnapshotTree,
@@ -17,19 +21,24 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { IDisposable } from "@fluidframework/core-interfaces";
-import { GenericError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { runWithRetry } from "@fluidframework/driver-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { GenericError, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 export class RetriableDocumentStorageService implements IDocumentStorageService, IDisposable {
 	private _disposed = false;
+	private internalStorageService: IDocumentStorageService | undefined;
 	constructor(
-		private readonly internalStorageService: IDocumentStorageService,
+		private readonly internalStorageServiceP: Promise<IDocumentStorageService>,
 		private readonly logger: ITelemetryLoggerExt,
-	) {}
+	) {
+		this.internalStorageServiceP.then((s) => (this.internalStorageService = s)).catch(() => {});
+	}
 
 	public get policies(): IDocumentStorageServicePolicies | undefined {
-		return this.internalStorageService.policies;
+		if (this.internalStorageService) {
+			return this.internalStorageService.policies;
+		}
+		throw new Error("storage service not yet instantiated");
 	}
 	public get disposed() {
 		return this._disposed;
@@ -38,23 +47,37 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 		this._disposed = true;
 	}
 
-	public get repositoryUrl(): string {
-		return this.internalStorageService.repositoryUrl;
-	}
-
 	public async getSnapshotTree(
 		version?: IVersion,
 		scenarioName?: string,
 	): Promise<ISnapshotTree | null> {
 		return this.runWithRetry(
-			async () => this.internalStorageService.getSnapshotTree(version, scenarioName),
+			async () =>
+				this.internalStorageServiceP.then(async (s) =>
+					s.getSnapshotTree(version, scenarioName),
+				),
 			"storage_getSnapshotTree",
+		);
+	}
+
+	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
+		return this.runWithRetry(
+			async () =>
+				this.internalStorageServiceP.then(async (s) => {
+					if (s.getSnapshot !== undefined) {
+						return s.getSnapshot(snapshotFetchOptions);
+					}
+					throw new UsageError(
+						"getSnapshot api should exist on internal storage in RetriableDocStorageService class",
+					);
+				}),
+			"storage_getSnapshot",
 		);
 	}
 
 	public async readBlob(id: string): Promise<ArrayBufferLike> {
 		return this.runWithRetry(
-			async () => this.internalStorageService.readBlob(id),
+			async () => this.internalStorageServiceP.then(async (s) => s.readBlob(id)),
 			"storage_readBlob",
 		);
 	}
@@ -67,11 +90,8 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 	): Promise<IVersion[]> {
 		return this.runWithRetry(
 			async () =>
-				this.internalStorageService.getVersions(
-					versionId,
-					count,
-					scenarioName,
-					fetchSource,
+				this.internalStorageServiceP.then(async (s) =>
+					s.getVersions(versionId, count, scenarioName, fetchSource),
 				),
 			"storage_getVersions",
 		);
@@ -95,26 +115,31 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 			0x251 /* "creation summary has to have seq=0 && handle === undefined" */,
 		);
 		if (context.referenceSequenceNumber !== 0) {
-			return this.internalStorageService.uploadSummaryWithContext(summary, context);
+			return this.internalStorageServiceP.then(async (s) =>
+				s.uploadSummaryWithContext(summary, context),
+			);
 		}
 
 		// Creation flow with attachment blobs - need to do retries!
 		return this.runWithRetry(
-			async () => this.internalStorageService.uploadSummaryWithContext(summary, context),
+			async () =>
+				this.internalStorageServiceP.then(async (s) =>
+					s.uploadSummaryWithContext(summary, context),
+				),
 			"storage_uploadSummaryWithContext",
 		);
 	}
 
 	public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
 		return this.runWithRetry(
-			async () => this.internalStorageService.downloadSummary(handle),
+			async () => this.internalStorageServiceP.then(async (s) => s.downloadSummary(handle)),
 			"storage_downloadSummary",
 		);
 	}
 
 	public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
 		return this.runWithRetry(
-			async () => this.internalStorageService.createBlob(file),
+			async () => this.internalStorageServiceP.then(async (s) => s.createBlob(file)),
 			"storage_createBlob",
 		);
 	}

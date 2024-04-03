@@ -2,13 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Helper functions to work with typeid strings
  */
 
 // @ts-ignore
 import { constants } from "@fluid-experimental/property-common";
-import { TemplateSchema as templateSchemaJson, NativeTypes } from "../templateSchema";
+
+import { NativeTypes, TemplateSchema as templateSchemaJson } from "../templateSchema.js";
 
 const { MSG } = constants;
 
@@ -17,6 +19,9 @@ export declare interface ExtractedVersion {
 	typeidWithoutVersion: string;
 }
 
+/**
+ * @internal
+ */
 export declare interface ExtractedContext {
 	typeid: string;
 	context: string;
@@ -25,8 +30,8 @@ export declare interface ExtractedContext {
 
 /**
  * Helper for Type IDs
- * @public
  * @description Helper functions to work with typeid strings
+ * @internal
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace TypeIdHelper {
@@ -35,6 +40,7 @@ export namespace TypeIdHelper {
 	 *
 	 * @param in_typeid - The typeid we want to check
 	 * @returns Is this a base type?
+	 * @internal
 	 */
 	export function isPrimitiveType(in_typeid: string): boolean {
 		const primitiveTypes = templateSchemaJson["$defs"]["primitive-typeid"]["enum"];
@@ -55,6 +61,7 @@ export namespace TypeIdHelper {
 	 *
 	 * @param in_typeid - The typeid we want to check
 	 * @returns Is this a base template typeid?
+	 * @internal
 	 */
 	export function isTemplateTypeid(in_typeid: string): boolean {
 		return in_typeid.indexOf(":") !== -1;
@@ -65,6 +72,7 @@ export namespace TypeIdHelper {
 	 *
 	 * @param in_typeid - The typeid we want to check
 	 * @returns Is this a reserved type?
+	 * @internal
 	 */
 	export function isReservedType(in_typeid: string): boolean {
 		const reservedTypes = templateSchemaJson["$defs"]["reserved-typeid"]["enum"];
@@ -75,6 +83,7 @@ export namespace TypeIdHelper {
 	 * Extract the version number from the given typeid
 	 * @param in_typeid - The typeid to check against
 	 * @returns Extracted version
+	 * @internal
 	 */
 	export function extractVersion(in_typeid): ExtractedVersion {
 		if (!in_typeid) {
@@ -93,6 +102,7 @@ export namespace TypeIdHelper {
 	 *
 	 * @param in_typeid - The typeid to process
 	 * @returns The typeid without context, the context and if we have an enum type
+	 * @internal
 	 */
 	export function extractContext(in_typeid: string | undefined): ExtractedContext {
 		const bracketIndex = in_typeid.indexOf("<");
@@ -145,6 +155,7 @@ export namespace TypeIdHelper {
 	 * @param in_enum - Set to true if the type should get an enum tag
 	 *
 	 * @returns The combined typeid string
+	 * @internal
 	 */
 	export function createSerializationTypeId(
 		in_typeid: string,
@@ -172,6 +183,7 @@ export namespace TypeIdHelper {
 	 *
 	 * @param in_typeid - The typeid to check
 	 * @returns Is this a reference property typeid?
+	 * @internal
 	 */
 	export function isReferenceTypeId(in_typeid: string | undefined): boolean {
 		// in_enum
@@ -186,6 +198,7 @@ export namespace TypeIdHelper {
 	 *
 	 * @param in_typeid - The typeid to process
 	 * @return The type of the referenced property
+	 * @internal
 	 */
 	export function extractReferenceTargetTypeIdFromReference(in_typeid: string): string {
 		// in_enum
@@ -199,6 +212,7 @@ export namespace TypeIdHelper {
 	 *
 	 * @param in_typeid - The typeid we want to check
 	 * @returns Is this a base template typeid?
+	 * @internal
 	 */
 	export function isSchemaTypeid(in_typeid: string): boolean {
 		return typeof in_typeid === "string" && in_typeid.indexOf(":") !== -1;
@@ -210,6 +224,7 @@ export namespace TypeIdHelper {
 	 * @param in_typeid - typeid
 	 *
 	 * @return referenced typeid or in_param if it is not a reference
+	 * @internal
 	 */
 	export function extractTypeId(in_typeid): string {
 		const matches = in_typeid.match(/\<(.*?)\>/);
@@ -227,6 +242,7 @@ export namespace TypeIdHelper {
 	 * @param in_baseTypeid - The base typeId to check for.
 	 * @throws If in_typeid or in_baseTypeid are not native typeid.
 	 * @returns True if in_baseTypeid is a parent of in_typeid.
+	 * @internal
 	 */
 	export function nativeInheritsFrom(in_typeid: string, in_baseTypeid: string): boolean {
 		if (!in_typeid || !in_baseTypeid) {
@@ -272,6 +288,7 @@ export namespace TypeIdHelper {
 	 * return all primitive typeIds
 	 *
 	 * @returns return a list of primitiveTypeIds
+	 * @internal
 	 */
 	export function getPrimitiveTypeIds(): string[] {
 		return templateSchemaJson["$defs"]["primitive-typeid"]["enum"];
@@ -281,6 +298,7 @@ export namespace TypeIdHelper {
 	 * return all reserved typeIds
 	 *
 	 * @returns return a list of reservedTypeIds
+	 * @internal
 	 */
 	export function getReservedTypeIds(): string[] {
 		return templateSchemaJson["$defs"]["reserved-typeid"]["enum"];

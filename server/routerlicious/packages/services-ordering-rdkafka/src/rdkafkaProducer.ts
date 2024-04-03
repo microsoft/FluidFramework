@@ -20,6 +20,7 @@ import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 
 /**
  * Rdkafka producer options
+ * @internal
  */
 export interface IKafkaProducerOptions extends Partial<IKafkaBaseOptions> {
 	/**
@@ -50,6 +51,7 @@ export interface IKafkaProducerOptions extends Partial<IKafkaBaseOptions> {
 
 /**
  * Kafka producer using the node-rdkafka library
+ * @internal
  */
 export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	private readonly producerOptions: IKafkaProducerOptions;

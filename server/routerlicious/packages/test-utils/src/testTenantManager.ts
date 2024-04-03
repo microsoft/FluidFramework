@@ -15,6 +15,9 @@ import {
 import { TestHistorian } from "./testHistorian";
 import { TestDb } from "./testCollection";
 
+/**
+ * @internal
+ */
 export class TestTenant implements ITenant {
 	private readonly owner = "test";
 	private readonly repository = "test";
@@ -52,6 +55,9 @@ export class TestTenant implements ITenant {
 	}
 }
 
+/**
+ * @internal
+ */
 export class TestTenantManager implements ITenantManager {
 	private readonly tenant: TestTenant;
 

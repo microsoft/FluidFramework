@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IOdspAuthRequestInfo } from "./odspAuth";
-import { getSiteUrl } from "./odspDocLibUtils";
-import { throwOdspNetworkError } from "./odspErrorUtils";
-import { getAsync, putAsync } from "./odspRequest";
+import { IOdspAuthRequestInfo } from "./odspAuth.js";
+import { getSiteUrl } from "./odspDocLibUtils.js";
+import { throwOdspNetworkError } from "./odspErrorUtils.js";
+import { getAsync, putAsync } from "./odspRequest.js";
 
 interface IOdspUser {
 	displayName: string;
@@ -47,6 +47,9 @@ interface IOdspDriveInfo {
 	quota: IOdspDriveQuota;
 }
 
+/**
+ * @internal
+ */
 export interface IOdspDriveItem {
 	path: string;
 	name: string;
@@ -55,6 +58,9 @@ export interface IOdspDriveItem {
 	isFolder: boolean;
 }
 
+/**
+ * @internal
+ */
 export async function getDriveItemByRootFileName(
 	server: string,
 	account: string | undefined,
@@ -76,6 +82,9 @@ export async function getDriveItemByRootFileName(
 	return getDriveItem(getDriveItemUrl, authRequestInfo, create);
 }
 
+/**
+ * @internal
+ */
 export async function getDriveItemByServerRelativePath(
 	server: string,
 	serverRelativePath: string,
@@ -108,6 +117,9 @@ export async function getDriveItemByServerRelativePath(
 	return getDriveItem(getDriveItemUrl, authRequestInfo, create);
 }
 
+/**
+ * @internal
+ */
 export async function getDriveItemFromDriveAndItem(
 	server: string,
 	drive: string,
@@ -118,6 +130,9 @@ export async function getDriveItemFromDriveAndItem(
 	return getDriveItem(url, authRequestInfo, false);
 }
 
+/**
+ * @internal
+ */
 export async function getChildrenByDriveItem(
 	driveItem: IOdspDriveItem,
 	server: string,
@@ -186,6 +201,9 @@ async function getDriveItem(
 	return toIODSPDriveItem(getDriveItemResult);
 }
 
+/**
+ * @alpha
+ */
 export async function getDriveId(
 	server: string,
 	account: string,

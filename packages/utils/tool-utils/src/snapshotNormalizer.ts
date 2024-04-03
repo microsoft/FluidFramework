@@ -3,14 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils";
-import { ITree, TreeEntry, ITreeEntry } from "@fluidframework/protocol-definitions";
+import {
+	AttachmentTreeEntry,
+	BlobTreeEntry,
+	TreeTreeEntry,
+} from "@fluidframework/driver-utils/internal";
+import { ITree, ITreeEntry, TreeEntry } from "@fluidframework/protocol-definitions";
 
 /** The name of the metadata blob added to the root of the container runtime. */
 const metadataBlobName = ".metadata";
-/** The prefix that all GC blob names start with. */
+/**
+ * The prefix that all GC blob names start with.
+ *
+ * @internal
+ */
 export const gcBlobPrefix = "__gc";
 
+/**
+ * @internal
+ */
 export interface ISnapshotNormalizerConfig {
 	// The paths of blobs whose contents should be normalized.
 	blobsToNormalize?: string[];
@@ -108,6 +119,10 @@ function getNormalizedBlobContent(blobContent: string, blobName: string): string
 		if (metadata.telemetryDocumentId !== undefined) {
 			metadata.telemetryDocumentId = "x";
 		}
+		// default was not written before, now it's written in.
+		if (metadata.documentSchema !== undefined) {
+			metadata.documentSchema = undefined;
+		}
 		content = JSON.stringify(metadata);
 	}
 
@@ -132,6 +147,7 @@ function getNormalizedBlobContent(blobContent: string, blobName: string): string
  * @param config - Configs to use when normalizing snapshot. For example, it can contain paths of blobs whose contents
  * should be normalized as well.
  * @returns a copy of the normalized snapshot tree.
+ * @internal
  */
 export function getNormalizedSnapshot(snapshot: ITree, config?: ISnapshotNormalizerConfig): ITree {
 	// Merge blobs to normalize in the config with runtime blobs to normalize. The contents of these blobs will be

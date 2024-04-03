@@ -4,40 +4,37 @@
  */
 
 import assert from "assert";
+
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { IContainer } from "@fluidframework/container-definitions";
-import {
-	IContainerRuntimeOptions,
-	SummaryCollection,
-	ISummaryConfiguration,
 	DefaultSummaryConfiguration,
-} from "@fluidframework/container-runtime";
-import { ITelemetryBaseEvent, IRequest } from "@fluidframework/core-interfaces";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
-import { ITestObjectProvider, timeoutAwait } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+	IContainerRuntimeOptions,
+	ISummaryConfiguration,
+	SummaryCollection,
+} from "@fluidframework/container-runtime/internal";
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { ITestObjectProvider, timeoutAwait } from "@fluidframework/test-utils/internal";
 
-class TestDataObject extends DataObject {
-	public get _root() {
-		return this.root;
+describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, apis) => {
+	const { DataObject, DataObjectFactory } = apis.dataRuntime;
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+
+	class TestDataObject extends DataObject {
+		public get _root() {
+			return this.root;
+		}
+
+		public get _runtime() {
+			return this.runtime;
+		}
+
+		public get _context() {
+			return this.context;
+		}
 	}
 
-	public get _runtime() {
-		return this.runtime;
-	}
-
-	public get _context() {
-		return this.context;
-	}
-}
-
-describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const dataObjectFactory = new DataObjectFactory("TestDataObject", TestDataObject, [], []);
 
@@ -59,12 +56,9 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
 			gcAllowed: true,
 		},
 	};
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory,
 		registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-		requestHandlers: [innerRequestHandler],
 		runtimeOptions,
 	});
 
@@ -108,7 +102,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
 	const createContainer = async (logger): Promise<IContainer> =>
 		provider.createContainer(runtimeFactory, { logger });
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		mockLogger = new MockLogger();
 		// Create a Container for the first client.
@@ -116,7 +110,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
 
 		// Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
 		// re-sent. Do it here so that the extra events don't mess with rest of the test.
-		mainDataStore = await requestFluidObject<TestDataObject>(mainContainer, "default");
+		mainDataStore = (await mainContainer.getEntryPoint()) as TestDataObject;
 		mainDataStore._root.set("test", "value");
 
 		await provider.ensureSynchronized();

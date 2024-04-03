@@ -3,20 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-
 import {
 	Button,
 	FluentProvider,
+	Tooltip,
 	makeStyles,
 	shorthands,
 	tokens,
-	Tooltip,
 } from "@fluentui/react-components";
 import { ArrowSync24Regular } from "@fluentui/react-icons";
-
 import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	type ContainerKey,
 	ContainerList,
@@ -24,31 +20,33 @@ import {
 	DevtoolsFeatures,
 	GetContainerList,
 	GetDevtoolsFeatures,
-	handleIncomingMessage,
 	type HasContainerKey,
-	type InboundHandlers,
 	type ISourcedDevtoolsMessage,
-} from "@fluid-experimental/devtools-core";
+	type InboundHandlers,
+	handleIncomingMessage,
+} from "@fluidframework/devtools-core/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import React from "react";
 
-import {
-	ContainerDevtoolsView,
-	LandingView,
-	MenuSection,
-	MenuItem,
-	NoDevtoolsErrorBar,
-	OpLatencyView,
-	SettingsView,
-	TelemetryView,
-	Waiting,
-} from "./components";
-import { useMessageRelay } from "./MessageRelayContext";
+import { useMessageRelay } from "./MessageRelayContext.js";
 import {
 	ConsoleVerboseLogger,
 	LoggerContext,
 	TelemetryOptInLogger,
 	useLogger,
-} from "./TelemetryUtils";
-import { getFluentUIThemeToUse, ThemeContext } from "./ThemeHelper";
+} from "./TelemetryUtils.js";
+import { ThemeContext, getFluentUIThemeToUse } from "./ThemeHelper.js";
+import {
+	ContainerDevtoolsView,
+	LandingView,
+	MenuItem,
+	MenuSection,
+	NoDevtoolsErrorBar,
+	OpLatencyView,
+	SettingsView,
+	TelemetryView,
+	Waiting,
+} from "./components/index.js";
 
 const loggingContext = "INLINE(DevtoolsView)";
 
@@ -159,7 +157,7 @@ export interface DevtoolsViewProps {
  *
  * @remarks
  *
- * Communicates with {@link @fluid-experimental/devtools-core#FluidDevtools} via {@link MessageRelayContext} to get
+ * Communicates with {@link @fluidframework/devtools-core#FluidDevtools} via {@link MessageRelayContext} to get
  * runtime-level stats to display, as well as the list of Container-level Devtools instances to display as menu options
  * and sub-views.
  *
@@ -472,7 +470,7 @@ interface MenuProps {
 	setSelection(newSelection: MenuSelection | undefined): void;
 
 	/**
-	 * Set of features supported by the {@link @fluid-experimental/devtools-core#IFluidDevtools}
+	 * Set of features supported by the {@link @fluidframework/devtools-core#IFluidDevtools}
 	 * instance being used by the page application.
 	 */
 	supportedFeatures: DevtoolsFeatureFlags;

@@ -11,3 +11,13 @@
  */
 export type IsomorphicPerformance = Partial<Performance> &
 	Pick<Performance, "clearMarks" | "mark" | "measure" | "now">;
+
+/**
+ * This exported "performance" member masks the built-in globalThis.performance object
+ * as an IsomorphicPerformance, which hides all of its features that aren't compatible
+ * between Node and browser implementations.  Anything exposed on this performance object
+ * is considered safe to use regarless of the environment it runs in.
+ *
+ * @internal
+ */
+export const performance: IsomorphicPerformance = globalThis.performance;

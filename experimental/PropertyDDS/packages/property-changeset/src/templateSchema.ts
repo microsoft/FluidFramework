@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview
  * Declaration of the TemplateSchema module
@@ -173,6 +174,9 @@ const originalSchema = {
 	required: ["typeid"],
 };
 
+/**
+ * @internal
+ */
 const TemplateSchema = {
 	$schema: "http://json-schema.org/schema",
 	title: "Property set template schema",

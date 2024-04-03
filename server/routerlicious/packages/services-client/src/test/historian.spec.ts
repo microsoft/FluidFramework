@@ -4,7 +4,6 @@
  */
 
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
-import qs from "querystring";
 import * as git from "@fluidframework/gitresources";
 import assert from "assert";
 import Axios, { AxiosRequestConfig } from "axios";
@@ -130,10 +129,10 @@ describe("Historian", () => {
 		credentials: ICredentials,
 		additionalQueryParams?: any,
 	) => {
-		return `${endpoint}${path}?${qs.encode({
+		return `${endpoint}${path}?${new URLSearchParams({
 			token: fromUtf8ToBase64(`${credentials.user}`),
 			...additionalQueryParams,
-		})}`;
+		}).toString()}`;
 	};
 
 	beforeEach(() => {

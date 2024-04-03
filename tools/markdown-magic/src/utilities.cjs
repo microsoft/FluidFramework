@@ -58,19 +58,6 @@ function getPackageMetadata(packageJsonFilePath) {
 }
 
 /**
- * Gets a package short-name (unscoped-name) from a scoped package name.
- *
- * @param {string} scopedPackageName - A scoped package name.
- */
-function getShortPackageName(scopedPackageName) {
-	const arr = scopedPackageName.split("/", 2);
-	if (arr[1]) {
-		return arr[1];
-	}
-	return arr[0];
-}
-
-/**
  * Generates the appropriately formatted Markdown section contents for the provided section body.
  * If header text is provided, a level 2 heading (i.e. `##`) will be included with the provided text.
  * The section will be wrapped in leading and trailing newlines to ensure adequate spacing between generated contents.
@@ -120,7 +107,6 @@ module.exports = {
 	formattedGeneratedContentBody,
 	formattedEmbeddedContentBody,
 	getPackageMetadata,
-	getShortPackageName,
 	resolveRelativePackageJsonPath,
 	resolveRelativePath,
 };

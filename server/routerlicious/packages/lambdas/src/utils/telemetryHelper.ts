@@ -18,6 +18,9 @@ import {
 	SessionState,
 } from "@fluidframework/server-services-telemetry";
 
+/**
+ * @internal
+ */
 export const createSessionMetric = (
 	tenantId: string,
 	documentId: string,
@@ -37,6 +40,9 @@ export const createSessionMetric = (
 	return sessionMetric;
 };
 
+/**
+ * @internal
+ */
 export const logCommonSessionEndMetrics = (
 	context: DocumentContext,
 	closeType: LambdaCloseType,
@@ -67,8 +73,7 @@ export const logCommonSessionEndMetrics = (
 		closeType === LambdaCloseType.Stop ||
 		closeType === LambdaCloseType.Rebalance
 	) {
-		sessionMetric.setProperties({ [CommonProperties.sessionState]: SessionState.paused });
-		sessionMetric.success("Session paused");
+		Lumberjack.info("Session Paused", sessionMetric?.properties);
 	} else if (closeType === LambdaCloseType.ActivityTimeout) {
 		if (activeNackMessageTypes?.includes(NackMessagesType.SummaryMaxOps)) {
 			sessionMetric.error(

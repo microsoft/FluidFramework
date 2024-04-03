@@ -1,10 +1,12 @@
 <!-- Front Matter! -->
 
-# TestInterface
+# TestInterface (ALPHA)
 
 [Packages](./) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestNamespace](./simple-suite-test/testnamespace-namespace) &gt; [TestInterface](./simple-suite-test/testnamespace/testinterface-interface)
 
 Test interface
+
+**WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.**
 
 ## Signature {#testinterface-signature}
 
@@ -12,25 +14,27 @@ Test interface
 interface TestInterface extends TestInterfaceWithTypeParameter<TestEnum>
 ```
 
-**Extends:** [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)&lt;[TestEnum](./simple-suite-test/testnamespace-namespace#testenum-enum)
+**Extends:** [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)&lt;[TestEnum](./simple-suite-test/testnamespace-namespace#testenum-enum)&gt;
 
 ## Properties
 
-| Property | Type | Description |
-| --- | --- | --- |
-| [testInterfaceProperty](./simple-suite-test/testnamespace/testinterface-interface#testinterfaceproperty-propertysignature) | boolean | Test interface property |
+| Property | Alerts | Type | Description |
+| --- | --- | --- | --- |
+| [testInterfaceProperty](./simple-suite-test/testnamespace/testinterface-interface#testinterfaceproperty-propertysignature) | `ALPHA` | boolean | Test interface property |
 
 ## Methods
 
-| Method | Return Type | Description |
-| --- | --- | --- |
-| [testInterfaceMethod()](./simple-suite-test/testnamespace/testinterface-interface#testinterfacemethod-methodsignature) | void | Test interface method |
+| Method | Alerts | Return Type | Description |
+| --- | --- | --- | --- |
+| [testInterfaceMethod()](./simple-suite-test/testnamespace/testinterface-interface#testinterfacemethod-methodsignature) | `ALPHA` | void | Test interface method |
 
 ## Property Details
 
-### testInterfaceProperty {#testinterfaceproperty-propertysignature}
+### testInterfaceProperty (ALPHA) {#testinterfaceproperty-propertysignature}
 
 Test interface property
+
+**WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.**
 
 #### Signature {#testinterfaceproperty-signature}
 
@@ -40,9 +44,11 @@ testInterfaceProperty: boolean;
 
 ## Method Details
 
-### testInterfaceMethod {#testinterfacemethod-methodsignature}
+### testInterfaceMethod (ALPHA) {#testinterfacemethod-methodsignature}
 
 Test interface method
+
+**WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.**
 
 #### Signature {#testinterfacemethod-signature}
 

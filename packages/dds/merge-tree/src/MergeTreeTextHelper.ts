@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { IIntegerRange } from "./client.js";
+import { MergeTree } from "./mergeTree.js";
+import { ISegment } from "./mergeTreeNodes.js";
 // eslint-disable-next-line import/no-deprecated
-import { IIntegerRange } from "./base";
-import { ISegment } from "./mergeTreeNodes";
-import { MergeTree } from "./mergeTree";
-import { IMergeTreeTextHelper, TextSegment } from "./textSegment";
+import { IMergeTreeTextHelper, TextSegment } from "./textSegment.js";
 
 interface ITextAccumulator {
 	textSegment: TextSegment;
@@ -15,6 +15,7 @@ interface ITextAccumulator {
 	parallelArrays?: boolean;
 }
 
+// eslint-disable-next-line import/no-deprecated
 export class MergeTreeTextHelper implements IMergeTreeTextHelper {
 	constructor(private readonly mergeTree: MergeTree) {}
 
@@ -45,9 +46,7 @@ export class MergeTreeTextHelper implements IMergeTreeTextHelper {
 		end: number | undefined,
 		refSeq: number,
 		clientId: number,
-		// eslint-disable-next-line import/no-deprecated
 	): IIntegerRange {
-		// eslint-disable-next-line import/no-deprecated
 		const range: IIntegerRange = {
 			end: end ?? this.mergeTree.getLength(refSeq, clientId),
 			start: start ?? 0,

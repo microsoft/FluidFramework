@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IsoDate } from "./date";
+import { IsoDate } from "./date.js";
 
 /**
- * @public
+ * @alpha
  */
 export interface IDocumentAttributes {
 	/**
@@ -21,7 +21,7 @@ export interface IDocumentAttributes {
 }
 
 /**
- * @public
+ * @alpha
  */
 export enum FileMode {
 	File = "100644",
@@ -32,8 +32,7 @@ export enum FileMode {
 
 /**
  * Raw blob stored within the tree.
- *
- * @public
+ * @alpha
  */
 export interface IBlob {
 	/**
@@ -44,18 +43,19 @@ export interface IBlob {
 	/**
 	 * The encoding of the contents string
 	 */
+	// eslint-disable-next-line unicorn/text-encoding-identifier-case
 	encoding: "utf-8" | "base64";
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface IAttachment {
 	id: string;
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface ICreateBlobResponse {
 	id: string;
@@ -63,8 +63,7 @@ export interface ICreateBlobResponse {
 
 /**
  * A tree entry wraps a path with a type of node.
- *
- * @public
+ * @alpha
  */
 export type ITreeEntry = {
 	/**
@@ -94,8 +93,7 @@ export type ITreeEntry = {
 
 /**
  * Type of entries that can be stored in a tree.
- *
- * @public
+ * @alpha
  */
 export enum TreeEntry {
 	Blob = "Blob",
@@ -104,7 +102,7 @@ export enum TreeEntry {
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface ITree {
 	entries: ITreeEntry[];
@@ -119,10 +117,18 @@ export interface ITree {
 	 * Indicates that this tree is unreferenced. If this is not present, the tree is considered referenced.
 	 */
 	unreferenced?: true;
+
+	/**
+	 * Represents the loading group to which the tree belongs to. Please refer to this readme for more context.
+	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}
+	 * Also note that "groupId" is the same as "loadingGroupId" used elsewhere in the repo. The naming discrepancy is
+	 * intentional to minimize snapshot/summary size.
+	 */
+	groupId?: string;
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface ISnapshotTree {
 	id?: string;
@@ -133,10 +139,24 @@ export interface ISnapshotTree {
 	 * Indicates that this tree is unreferenced. If this is not present, the tree is considered referenced.
 	 */
 	unreferenced?: true;
+
+	/**
+	 * Represents the loading group to which the snapshot tree belongs to. Please refer to this readme for more context.
+	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}
+	 * Also note that "groupId" is the same as "loadingGroupId" used elsewhere in the repo. The naming discrepancy is
+	 * intentional to minimize snapshot/summary size.
+	 */
+	groupId?: string;
+
+	/**
+	 * If true, then the service did not include the blobs content for the blobs in this snapshot tree. The service would
+	 * specify the groupId in that case, so that we can use that to fetch the latest content.
+	 */
+	omitted?: boolean;
 }
 
 /**
- * @public
+ * @internal
  */
 export interface ISnapshotTreeEx extends ISnapshotTree {
 	id: string;
@@ -145,8 +165,7 @@ export interface ISnapshotTreeEx extends ISnapshotTree {
 
 /**
  * Represents a version of the snapshot of a data store.
- *
- * @public
+ * @alpha
  */
 export interface IVersion {
 	/**

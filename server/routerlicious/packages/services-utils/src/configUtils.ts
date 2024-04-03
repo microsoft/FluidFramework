@@ -5,6 +5,9 @@
 
 import nconf from "nconf";
 
+/**
+ * @internal
+ */
 export function getBooleanFromConfig(name: string, config: nconf.Provider): boolean {
 	const rawValue = config.get(name);
 
@@ -17,6 +20,9 @@ export function getBooleanFromConfig(name: string, config: nconf.Provider): bool
 	}
 }
 
+/**
+ * @internal
+ */
 export function getNumberFromConfig(name: string, config: nconf.Provider): number {
 	const rawValue = config.get(name);
 	if (typeof rawValue === "number") {

@@ -3,19 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable } from "@fluidframework/core-interfaces";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
-import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
+import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
+import { IDisposable } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	FetchSource,
 	IDocumentService,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	ISnapshot,
+	ISnapshotFetchOptions,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
-import { UsageError } from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-definitions/internal";
+import { UsageError } from "@fluidframework/driver-utils/internal";
 import {
 	ICreateBlobResponse,
 	ISnapshotTree,
@@ -23,9 +24,11 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { IDetachedBlobStorage } from "./loader";
-import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
-import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+
+import { IDetachedBlobStorage } from "./loader.js";
+import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService.js";
+import { RetriableDocumentStorageService } from "./retriableDocumentStorageService.js";
 
 /**
  * Stringified blobs from a summary/snapshot tree.
@@ -79,14 +82,14 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 		this.disposed = true;
 	}
 
-	public async connectToService(service: IDocumentService): Promise<void> {
+	public connectToService(service: IDocumentService): void {
 		if (!(this._storageService instanceof BlobOnlyStorage)) {
 			return;
 		}
 
-		const storageService = await service.connectToStorage();
+		const storageServiceP = service.connectToStorage();
 		const retriableStorage = (this._storageService = new RetriableDocumentStorageService(
-			storageService,
+			storageServiceP,
 			this.logger,
 		));
 
@@ -101,16 +104,9 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 		}
 	}
 
-	public loadSnapshotForRehydratingContainer(snapshotTree: ISnapshotTreeWithBlobContents) {
-		this.getBlobContents(snapshotTree);
-	}
-
-	private getBlobContents(snapshotTree: ISnapshotTreeWithBlobContents) {
-		for (const [id, value] of Object.entries(snapshotTree.blobsContents)) {
+	public loadSnapshotFromSnapshotBlobs(snapshotBlobs: ISerializableBlobContents) {
+		for (const [id, value] of Object.entries(snapshotBlobs)) {
 			this.blobContents[id] = value;
-		}
-		for (const [_, tree] of Object.entries(snapshotTree.trees)) {
-			this.getBlobContents(tree);
 		}
 	}
 
@@ -123,15 +119,20 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 		return undefined;
 	}
 
-	public get repositoryUrl(): string {
-		return this._storageService.repositoryUrl;
-	}
-
 	public async getSnapshotTree(
 		version?: IVersion,
 		scenarioName?: string,
 	): Promise<ISnapshotTree | null> {
 		return this._storageService.getSnapshotTree(version, scenarioName);
+	}
+
+	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
+		if (this._storageService.getSnapshot !== undefined) {
+			return this._storageService.getSnapshot(snapshotFetchOptions);
+		}
+		throw new UsageError(
+			"getSnapshot api should exist in internal storage in ContainerStorageAdapter",
+		);
 	}
 
 	public async readBlob(id: string): Promise<ArrayBufferLike> {
@@ -200,12 +201,9 @@ class BlobOnlyStorage implements IDocumentStorageService {
 		return this.notCalled();
 	}
 
-	public get repositoryUrl(): string {
-		return this.notCalled();
-	}
-
 	/* eslint-disable @typescript-eslint/unbound-method */
 	public getSnapshotTree: () => Promise<ISnapshotTree | null> = this.notCalled;
+	public getSnapshot: () => Promise<ISnapshot> = this.notCalled;
 	public getVersions: () => Promise<IVersion[]> = this.notCalled;
 	public write: () => Promise<IVersion> = this.notCalled;
 	public uploadSummaryWithContext: () => Promise<string> = this.notCalled;
@@ -237,7 +235,7 @@ const redirectTableBlobName = ".redirectTable";
  */
 export async function getBlobContentsFromTree(
 	snapshot: ISnapshotTree,
-	storage: IDocumentStorageService,
+	storage: Pick<IDocumentStorageService, "readBlob">,
 ): Promise<ISerializableBlobContents> {
 	const blobs = {};
 	await getBlobContentsFromTreeCore(snapshot, blobs, storage);
@@ -247,7 +245,7 @@ export async function getBlobContentsFromTree(
 async function getBlobContentsFromTreeCore(
 	tree: ISnapshotTree,
 	blobs: ISerializableBlobContents,
-	storage: IDocumentStorageService,
+	storage: Pick<IDocumentStorageService, "readBlob">,
 	root = true,
 ) {
 	const treePs: Promise<any>[] = [];
@@ -270,7 +268,7 @@ async function getBlobContentsFromTreeCore(
 async function getBlobManagerTreeFromTree(
 	tree: ISnapshotTree,
 	blobs: ISerializableBlobContents,
-	storage: IDocumentStorageService,
+	storage: Pick<IDocumentStorageService, "readBlob">,
 ) {
 	const id = tree.blobs[redirectTableBlobName];
 	const blob = await storage.readBlob(id);
@@ -302,7 +300,7 @@ function getBlobContentsFromTreeWithBlobContentsCore(
 		}
 	}
 	for (const id of Object.values(tree.blobs)) {
-		const blob = tree.blobsContents[id];
+		const blob = tree.blobsContents?.[id];
 		assert(blob !== undefined, 0x2ec /* "Blob must be present in blobsContents" */);
 		// ArrayBufferLike will not survive JSON.stringify()
 		blobs[id] = bufferToString(blob, "utf8");
@@ -315,7 +313,7 @@ function getBlobManagerTreeFromTreeWithBlobContents(
 	blobs: ISerializableBlobContents,
 ) {
 	const id = tree.blobs[redirectTableBlobName];
-	const blob = tree.blobsContents[id];
+	const blob = tree.blobsContents?.[id];
 	assert(blob !== undefined, 0x70f /* Blob must be present in blobsContents */);
 	// ArrayBufferLike will not survive JSON.stringify()
 	blobs[id] = bufferToString(blob, "utf8");

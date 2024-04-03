@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
-
-import type { IAppModel, ITaskList } from "./model-interface";
-import { DebugView, AppView } from "./view";
-import { BaseDocumentContainerRuntimeFactory } from "./model";
+import { BaseDocumentContainerRuntimeFactory } from "./model/index.js";
+import type { IAppModel, ITaskList } from "./model-interface/index.js";
+import { AppView, DebugView } from "./view/index.js";
 
 const updateTabForId = (id: string): void => {
 	// Update the URL with the actual ID
@@ -30,7 +29,7 @@ const render = (model: IAppModel, showExternalServerView: boolean): void => {
 	if (showExternalServerView) {
 		const debugDiv = document.querySelector("#debug") as HTMLDivElement;
 		ReactDOM.unmountComponentAtNode(debugDiv);
-		ReactDOM.render(React.createElement(DebugView, { model }), debugDiv);
+		ReactDOM.render(React.createElement(DebugView), debugDiv);
 	}
 };
 

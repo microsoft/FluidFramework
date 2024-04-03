@@ -24,6 +24,9 @@ const creator = (dbFactoryConfig: IDBFactoryConfig) => async (): Promise<IDbFact
 	) as Promise<IDbFactory>;
 };
 
+/**
+ * @internal
+ */
 export async function getDbFactory(config: Provider): Promise<IDbFactory> {
 	const dbFactoryConfig = config.get("db") as IDBFactoryConfig;
 	// Default handling is Mongo

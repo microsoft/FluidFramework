@@ -4,14 +4,16 @@
  */
 
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
-import { unreachableCase } from "@fluidframework/core-utils";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, ITree, ITreeEntry, SummaryType } from "@fluidframework/protocol-definitions";
-import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "./blob";
-import { isCombinedAppAndProtocolSummary } from "./summaryForCreateNew";
+
+import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "./blob.js";
+import { isCombinedAppAndProtocolSummary } from "./summaryForCreateNew.js";
 
 /**
  * Converts ISummaryTree to ITree format.
  * @param summaryTree - summary tree in ISummaryTree format
+ * @internal
  */
 export function convertSummaryTreeToSnapshotITree(summaryTree: ISummaryTree): ITree {
 	const entries: ITreeEntry[] = [];
@@ -60,5 +62,6 @@ export function convertSummaryTreeToSnapshotITree(summaryTree: ISummaryTree): IT
 	return {
 		entries,
 		unreferenced: summaryTree.unreferenced,
+		groupId: summaryTree.groupId,
 	};
 }

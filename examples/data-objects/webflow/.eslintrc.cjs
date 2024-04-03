@@ -4,7 +4,10 @@
  */
 
 module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
+	extends: [
+		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
+		"prettier",
+	],
 	rules: {
 		"@typescript-eslint/no-use-before-define": "off",
 		"@typescript-eslint/prefer-nullish-coalescing": "off", // requires strictNullChecks
@@ -13,15 +16,6 @@ module.exports = {
 		"max-len": "off",
 		"no-bitwise": "off",
 		"no-case-declarations": "off",
-	},
-	settings: {
-		"import/resolver": {
-			// Use eslint-import-resolver-typescript.
-			// This ensures ESNext with `.js` extensions resolve correctly to their corresponding `.ts` files.
-			typescript: {
-				extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
-			},
-		},
 	},
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],

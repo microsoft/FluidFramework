@@ -3,14 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ISegment } from "@fluidframework/merge-tree";
-import { SequenceInterval } from "../intervals";
-import { IOverlappingIntervalsIndex } from "./overlappingIntervalsIndex";
+import { ISegment } from "@fluidframework/merge-tree/internal";
+
+import { SequenceInterval } from "../intervals/index.js";
+
+import { IOverlappingIntervalsIndex } from "./overlappingIntervalsIndex.js";
 
 /**
  * This namespace contains specialiazations of indexes which support spatial queries
  * specifically for `SequenceInterval`s.
- * @public
+ * @internal
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace SequenceIntervalIndexes {
@@ -18,6 +20,7 @@ export namespace SequenceIntervalIndexes {
 	 * Collection of intervals.
 	 *
 	 * Provides additional APIs to support efficiently querying a collection of intervals based on segments and offset.
+	 * @internal
 	 */
 	export interface Overlapping extends IOverlappingIntervalsIndex<SequenceInterval> {
 		/**

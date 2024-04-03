@@ -4,17 +4,15 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	AgentSchedulerFactory,
-	IAgentScheduler,
-	TaskSubscription,
-} from "@fluidframework/agent-scheduler";
-import { IContainer, IProvideRuntimeFactory } from "@fluidframework/container-definitions";
 
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider, createTestContainerRuntimeFactory } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluid-internal/test-version-utils";
-import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IAgentScheduler, TaskSubscription } from "@fluidframework/agent-scheduler/internal";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import {
+	ITestObjectProvider,
+	createTestContainerRuntimeFactory,
+	getContainerEntryPointBackCompat,
+} from "@fluidframework/test-utils/internal";
 
 // By default, the container loads in read mode.  However, pick() attempts silently fail if not in write
 // mode.  To overcome this and test pick(), we can register a fake task (which always tries to perform
@@ -24,39 +22,48 @@ let writeModeCount = 0;
 const forceWriteMode = async (scheduler: IAgentScheduler): Promise<void> =>
 	scheduler.register(`makeWriteMode ${writeModeCount++}`);
 
-describeFullCompat("AgentScheduler", (getTestObjectProvider, apis) => {
-	const TestContainerRuntimeFactory = createTestContainerRuntimeFactory(
-		apis.containerRuntime.ContainerRuntime,
-	);
-	const runtimeFactory: IProvideRuntimeFactory = {
-		IRuntimeFactory: new TestContainerRuntimeFactory(
-			AgentSchedulerFactory.type,
-			new AgentSchedulerFactory(),
-			{},
-			[rootDataStoreRequestHandler],
-		),
+describeCompat("AgentScheduler", "FullCompat", (getTestObjectProvider, apis) => {
+	const getContainerRuntimeFactory = (forLoad: boolean) => {
+		const runtime =
+			forLoad && apis.containerRuntimeForLoading !== undefined
+				? apis.containerRuntimeForLoading.ContainerRuntime
+				: apis.containerRuntime.ContainerRuntime;
+		const agentSchedulerFactory =
+			forLoad && apis.dataRuntimeForLoading !== undefined
+				? apis.dataRuntimeForLoading?.packages.agentScheduler.AgentSchedulerFactory
+				: apis.dataRuntime.packages.agentScheduler.AgentSchedulerFactory;
+
+		const TestContainerRuntimeFactory = createTestContainerRuntimeFactory(runtime);
+		return {
+			IRuntimeFactory: new TestContainerRuntimeFactory(
+				agentSchedulerFactory.type,
+				new agentSchedulerFactory(),
+				{},
+			),
+		};
 	};
 
 	let provider: ITestObjectProvider;
 
 	const createContainer = async (): Promise<IContainer> =>
-		provider.createContainer(runtimeFactory);
+		provider.createContainer(getContainerRuntimeFactory(false));
+	const loadContainer = async (): Promise<IContainer> =>
+		provider.loadContainer(getContainerRuntimeFactory(true));
 
-	const loadContainer = async (): Promise<IContainer> => provider.loadContainer(runtimeFactory);
 	const getAgentScheduler = async (container: IContainer): Promise<IAgentScheduler> => {
-		const scheduler = await requestFluidObject<IAgentScheduler>(container, "default");
+		const scheduler = await getContainerEntryPointBackCompat<IAgentScheduler>(container);
 		await forceWriteMode(scheduler);
 		return scheduler;
 	};
 
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 
 	describe("Single client", () => {
 		let scheduler: IAgentScheduler;
 
-		beforeEach(async () => {
+		beforeEach("createScheduler", async function () {
 			const container = await createContainer();
 			scheduler = await getAgentScheduler(container);
 		});
@@ -84,19 +91,23 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider, apis) => {
 		});
 
 		it("Duplicate picking fails", async () => {
+			// Added to support back compat error messages
+			const validErrors = ["Task is already attempted", "task1 is already attempted"];
 			await scheduler.pick("task1", async () => {});
 			assert.deepStrictEqual(scheduler.pickedTasks(), ["task1"]);
 			await scheduler
 				.pick("task1", async () => {})
 				.catch((err) => {
-					assert.deepStrictEqual(err.message, "Task is already attempted");
+					assert(validErrors.includes(err.message));
 				});
 		});
 
 		it("Unpicked task release should fail", async () => {
+			// Added to support back compat error messages
+			const validErrors = ["Task was never registered", "task2 was never registered"];
 			await scheduler.pick("task1", async () => {});
 			await scheduler.release("task2").catch((err) => {
-				assert.deepStrictEqual(err.message, "Task was never registered");
+				assert(validErrors.includes(err.message));
 			});
 		});
 
@@ -116,7 +127,7 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider, apis) => {
 		let scheduler1: IAgentScheduler;
 		let scheduler2: IAgentScheduler;
 
-		beforeEach(async () => {
+		beforeEach("createContainersAndSchedulers", async function () {
 			// Create a new Container for the first document.
 			container1 = await createContainer();
 			scheduler1 = await getAgentScheduler(container1);
@@ -125,11 +136,8 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider, apis) => {
 			container2 = await loadContainer();
 			scheduler2 = await getAgentScheduler(container2);
 
-			// const dataObject2 = await requestFluidObject<ITestDataObject>(container2, "default");
-
 			// // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
 			// // tasks. Sending an op will switch it to "write" mode.
-			// dataObject2._root.set("tempKey2", "tempValue2");
 			await provider.ensureSynchronized();
 		});
 
@@ -181,6 +189,13 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider, apis) => {
 		});
 
 		it("Tasks not currently hold can not be released", async () => {
+			// Added to support back compat error messages
+			const validErrors = [
+				"Task is not currently picked",
+				"task1 was never picked",
+				"task2 was never picked",
+				"task4 was never picked",
+			];
 			await scheduler1.pick("task1", async () => {});
 			await scheduler1.pick("task2", async () => {});
 			await scheduler2.pick("task2", async () => {});
@@ -193,13 +208,13 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider, apis) => {
 
 			await provider.ensureSynchronized();
 			await scheduler1.release("task4").catch((err) => {
-				assert.deepStrictEqual(err.message, "Task is not currently picked");
+				assert(validErrors.includes(err.message));
 			});
 			await scheduler2.release("task1").catch((err) => {
-				assert.deepStrictEqual(err.message, "Task is not currently picked");
+				assert(validErrors.includes(err.message));
 			});
 			await scheduler2.release("task2").catch((err) => {
-				assert.deepStrictEqual(err.message, "Task is not currently picked");
+				assert(validErrors.includes(err.message));
 			});
 		});
 
@@ -253,12 +268,12 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider, apis) => {
 		let scheduler1: IAgentScheduler;
 		let scheduler2: IAgentScheduler;
 
-		beforeEach(async () => {
+		beforeEach("createContainersAndSchedulers", async function () {
 			container1 = await createContainer();
-			scheduler1 = await requestFluidObject<IAgentScheduler>(container1, "default");
+			scheduler1 = await getContainerEntryPointBackCompat<IAgentScheduler>(container1);
 
 			container2 = await loadContainer();
-			scheduler2 = await requestFluidObject<IAgentScheduler>(container2, "default");
+			scheduler2 = await getContainerEntryPointBackCompat<IAgentScheduler>(container2);
 		});
 
 		it("Tasks picked while in read mode are assigned after switching to write mode", async () => {

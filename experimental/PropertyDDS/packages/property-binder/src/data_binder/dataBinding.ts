@@ -2,6 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import {
+	ArrayChangeSetIterator,
+	PathHelper,
+	TypeIdHelper,
+	Utils,
+} from "@fluid-experimental/property-changeset";
 /**
  * @fileoverview Defines the base DataBinding that all DataBindings should inherit from.
  */
@@ -10,40 +17,34 @@ import {
 	PropertyFactory,
 	ReferenceProperty,
 } from "@fluid-experimental/property-properties";
-import {
-	PathHelper,
-	TypeIdHelper,
-	ArrayChangeSetIterator,
-	Utils,
-} from "@fluid-experimental/property-changeset";
 
 import _ from "lodash";
-import { ModificationContext } from "./modificationContext";
-import { RemovalContext } from "./removalContext";
 import {
-	getOrInsertDefaultInNestedObjects,
 	getInNestedObjects,
-} from "../external/utils/nestedObjectHelpers";
+	getOrInsertDefaultInNestedObjects,
+} from "../external/utils/nestedObjectHelpers.js";
+import { DataBinder, DataBinderHandle, IRegisterOnPathOptions } from "../index.js";
+import { RESOLVE_ALWAYS, RESOLVE_NEVER, RESOLVE_NO_LEAFS } from "../internal/constants.js";
+import { PropertyElement } from "../internal/propertyElement.js";
+import { isCollection, isReferenceProperty } from "../internal/typeGuards.js";
+import { IRegisterOnPropertyOptions } from "./IRegisterOnPropertyOptions.js";
+import { concatTokenizedPath } from "./dataBindingTree.js";
 import {
-	escapeTokenizedPathForMap,
-	unescapeTokenizedStringForMap,
-	initializeReferencePropertyTableNode,
-	invokeCallbacks,
-	deferCallback,
-	isDataBindingRegistered,
-	installForEachPrototypeMember,
-	getOrCreateMemberOnPrototype,
 	createHandle,
-	invokeWithProperty,
-	invokeWithCollectionProperty,
 	createRegistrationFunction,
-} from "./internalUtils";
-import { concatTokenizedPath } from "./dataBindingTree";
-import { RESOLVE_NEVER, RESOLVE_ALWAYS, RESOLVE_NO_LEAFS } from "../internal/constants";
-import { PropertyElement } from "../internal/propertyElement";
-import { DataBinder, DataBinderHandle, IRegisterOnPathOptions } from "..";
-import { isCollection, isReferenceProperty } from "../internal/typeGuards";
-import { IRegisterOnPropertyOptions } from "./IRegisterOnPropertyOptions";
+	deferCallback,
+	escapeTokenizedPathForMap,
+	getOrCreateMemberOnPrototype,
+	initializeReferencePropertyTableNode,
+	installForEachPrototypeMember,
+	invokeCallbacks,
+	invokeWithCollectionProperty,
+	invokeWithProperty,
+	isDataBindingRegistered,
+	unescapeTokenizedStringForMap,
+} from "./internalUtils.js";
+import { ModificationContext } from "./modificationContext.js";
+import { RemovalContext } from "./removalContext.js";
 
 /**
  * _globalVisitIndex is to avoid callbacks being called twice. This works around bugs in getChangesToTokenizedPaths
@@ -96,9 +97,8 @@ export interface CallbackOptions {
  * to get the expected behaviors.
  * In addition, {@link DataBinding.registerOnPath} can be used to register for more granular events regarding
  * insert, modify and delete for subpaths rooted at the associated property.
- *
- * @public
  * @alias DataBinding
+ * @internal
  */
 export class DataBinding {
 	static __absolutePathInternalBinding: boolean;
@@ -137,7 +137,6 @@ export class DataBinding {
 	 * the DataBinding was activated using {@link DataBinder.activateDataBinding}.
 	 *
 	 * @returns The userData, or undefined if it wasn't specified during activation.
-	 * @public
 	 */
 	getUserData(): any | undefined {
 		return this._activationInfo.userData;
@@ -179,7 +178,6 @@ export class DataBinding {
 	 * Returns the property for which this DataBinding was instantiated.
 	 *
 	 * @returns The corresponding property.
-	 * @public
 	 */
 	getProperty(): BaseProperty | undefined {
 		return this._property;
@@ -190,7 +188,6 @@ export class DataBinding {
 	 * registered with the DataBinder using {@link DataBinder.activateDataBinding}.
 	 *
 	 * @returns The binding type of this DataBinding.
-	 * @public
 	 */
 	getDataBindingType(): string {
 		return this._activationInfo.bindingType;
@@ -200,7 +197,6 @@ export class DataBinding {
 	 * Returns the DataBinder instance associated with this DataBinding.
 	 *
 	 * @returns The DataBinder instance.
-	 * @public
 	 */
 	getDataBinder(): DataBinder {
 		return this._activationInfo.dataBinder;
@@ -670,7 +666,7 @@ export class DataBinding {
 					referencedPathTokenTypes.shift();
 				}
 				let absolutePathTokenTypes = [];
-				console.assert(in_referenceProperty);
+				console.assert(in_referenceProperty !== undefined);
 				// the path to which the referenced path is relative to is actually the _parent_ of the referenceProperty!
 				let absolutePath = in_referenceProperty!.getParent()!.getAbsolutePath().substr(1);
 				let tokenizedAbsolutePath = PathHelper.tokenizePathString(
@@ -1929,7 +1925,6 @@ export class DataBinding {
 	 * the property found via path, and a key / index if it gets triggered for one of the collection events.
 	 * @param in_options  Additional user specified options on how the callback should be
 	 * registered.
-	 * @public
 	 */
 	static registerOnProperty(
 		in_path: string,
@@ -1974,7 +1969,6 @@ export class DataBinding {
 	 * @param in_callback The function to call when the property behind the relative path changes.
 	 * @param in_options Additional user specified options on how the callback should be
 	 * registered.
-	 * @public
 	 */
 	static registerOnPath(
 		in_path: Array<string> | string,
@@ -1996,8 +1990,6 @@ export class DataBinding {
 	 * @param in_callback The function to call, when the property behind the relative path changes.
 	 * @param in_options Additional user specified options on how the callback should be
 	 * registered.
-	 *
-	 * @public
 	 */
 	static registerOnValues(
 		in_path: string,
@@ -2096,7 +2088,7 @@ export class DataBinding {
  * @param in_options Additional user specified options on how the callback should be
  * registered.
  * @returns A function that registers the decorated callback using registerOnValues.
- * @public
+ * @internal
  */
 export const onValuesChanged = function (
 	_in_path: string,
@@ -2119,7 +2111,7 @@ export const onValuesChanged = function (
  * @param in_options Additional user specified options on how the callback should be
  * registered.
  * @returns  function that registers the decorated callback using registerOnProperty.
- * @public
+ * @internal
  */
 export const onPropertyChanged = function (
 	_in_path: string,
@@ -2144,7 +2136,7 @@ export const onPropertyChanged = function (
  * @param in_options Additional user specified options on how the callback should be
  * registered.
  * @returns A function that registers the decorated callback using registerOnPath.
- * @public
+ * @internal
  */
 export const onPathChanged = function (
 	_in_path: Array<string> | string,

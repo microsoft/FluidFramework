@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { ClientManager } from "./clientManager";
-export { fluidServicePort } from "./fluidService";
+export { ClientManager } from "./clientManager.js";
+export { fluidServicePort } from "./fluidService.js";

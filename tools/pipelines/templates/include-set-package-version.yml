@@ -26,6 +26,12 @@ parameters:
 - name: interdependencyRange
   type: string
 
+# Parameter for modifying the 'types' field in the package.json.
+# If the value `none` is provided, the 'types' field in package.json will remain unchanged.
+- name: packageTypesOverride
+  type: string
+  default: none
+
 # Set version
 steps:
 - ${{ if eq(parameters.buildToolsVersionToInstall, 'repo') }}:
@@ -90,6 +96,7 @@ steps:
     VERSION_PATCH: ${{ parameters.buildNumberInPatch }}
     VERSION_TAGNAME: ${{ parameters.tagName }}
     VERSION_INCLUDE_INTERNAL_VERSIONS: ${{ parameters.includeInternalVersions }}
+    PACKAGE_TYPES_FIELD: ${{ parameters.packageTypesOverride }}
   inputs:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
@@ -101,10 +108,23 @@ steps:
       echo VERSION_RELEASE=$VERSION_RELEASE
       echo VERSION_PATCH=$VERSION_PATCH
       echo VERSION_INCLUDE_INTERNAL_VERSIONS=$VERSION_INCLUDE_INTERNAL_VERSIONS
+      echo PACKAGE_TYPES_FIELD=$PACKAGE_TYPES_FIELD
 
       # Generate the build version. Sets the environment variables version, codeVersion, and isLatest.
       # These are referenced in following steps prefixed by this task name. E.g. SetVersion.version
       flub generate buildVersion
+
+# This check runs only when the value of `Change package types` is selected as `alpha` or `beta`
+- ${{ if ne(parameters.packageTypesOverride, 'none') }}:
+  - task: Bash@3
+    displayName: Set Package Types - ${{ parameters.packageTypesOverride }}
+    continueOnError: false
+    inputs:
+      targetType: 'inline'
+      workingDirectory: ${{ parameters.buildDirectory }}
+      script: |
+        # At this point in the pipeline the build hasn't been done, so we skip checking if the types files and other build outputs exist.  
+        flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ parameters.packageTypesOverride }} --no-checkFileExists 
 
 - task: Bash@3
   displayName: Update Package Version (flub)

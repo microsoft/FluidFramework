@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 const SimpleQueryExecution = require("./simple_query_execution");
 const MultipleQueriesExecution = require("./multiple_queries_execution");
 const MockAsyncContext = require("../../utils/mock_async_context");

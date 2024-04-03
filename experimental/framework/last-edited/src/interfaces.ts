@@ -6,20 +6,20 @@
 import { IUser } from "@fluidframework/protocol-definitions";
 
 /**
- * @public
+ * @internal
  */
 export const IFluidLastEditedTracker: keyof IProvideFluidLastEditedTracker =
 	"IFluidLastEditedTracker";
 
 /**
- * @public
+ * @internal
  */
 export interface IProvideFluidLastEditedTracker {
 	readonly IFluidLastEditedTracker: IFluidLastEditedTracker;
 }
 
 /**
- * @public
+ * @internal
  */
 export interface IFluidLastEditedTracker extends IProvideFluidLastEditedTracker {
 	/**
@@ -34,7 +34,7 @@ export interface IFluidLastEditedTracker extends IProvideFluidLastEditedTracker 
 }
 
 /**
- * @public
+ * @internal
  */
 export interface ILastEditDetails {
 	user: IUser;

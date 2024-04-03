@@ -55,7 +55,7 @@ export const stringToBuffer = (input: string, encoding: string): ArrayBufferLike
  * @param encoding - output string's encoding
  * @returns the blob in string format
  *
- * @internal
+ * @alpha
  */
 export const bufferToString = (
 	blob: ArrayBufferLike,

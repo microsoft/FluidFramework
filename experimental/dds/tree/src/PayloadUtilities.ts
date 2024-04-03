@@ -4,8 +4,9 @@
  */
 
 import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { compareArrays } from '@fluidframework/core-utils';
-import { Payload } from './persisted-types';
+import { compareArrays } from '@fluidframework/core-utils/internal';
+
+import { Payload } from './persisted-types/index.js';
 
 /**
  * @returns true if two `Payloads` are identical.
@@ -40,7 +41,7 @@ import { Payload } from './persisted-types';
  * IFluidHandle instances (detected via JavaScript feature detection pattern) are only compared by absolutePath.
  *
  * TODO:#54095: Is there a better way to do this comparison?
- * @public
+ * @alpha
  */
 export function comparePayloads(a: Payload, b: Payload): boolean {
 	// === is not reflective because of how NaN is handled, so use Object.is instead.

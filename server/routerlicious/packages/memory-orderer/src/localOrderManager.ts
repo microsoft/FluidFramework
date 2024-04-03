@@ -9,6 +9,9 @@ import { IConcreteNode, IConcreteNodeFactory, IReservationManager } from "./inte
 
 // The LocalOrderManager maintains a set of nodes and their set of ownerships of documents
 // It then provides caches of orderers
+/**
+ * @internal
+ */
 export class LocalOrderManager {
 	private readonly localOrderers = new Map<string, Promise<IOrderer>>();
 	private localNodeP: Promise<IConcreteNode>;

@@ -2,24 +2,26 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
-import { v4 as uuid } from "uuid";
+
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { benchmark } from "@fluid-tools/benchmark";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { Loader, ILoaderProps } from "@fluidframework/container-loader";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import {
-	LocalCodeLoader,
-	LoaderContainerTracker,
 	ITestObjectProvider,
+	LoaderContainerTracker,
+	LocalCodeLoader,
 	TestFluidObjectFactory,
-} from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
+} from "@fluidframework/test-utils/internal";
+import { v4 as uuid } from "uuid";
 
 const codeDetails: IFluidCodeDetails = { package: "test" };
 
-describeNoCompat("Container - runtime benchmarks", (getTestObjectProvider) => {
+describeCompat("Container - runtime benchmarks", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let loader: Loader;
 	let fileName: string;

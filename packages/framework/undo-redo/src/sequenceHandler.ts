@@ -4,20 +4,20 @@
  */
 
 import {
-	appendToMergeTreeDeltaRevertibles,
-	discardMergeTreeDeltaRevertible,
 	ISegment,
 	MergeTreeDeltaRevertible,
+	appendToMergeTreeDeltaRevertibles,
+	discardMergeTreeDeltaRevertible,
 	revertMergeTreeDeltaRevertibles,
-} from "@fluidframework/merge-tree";
-import { SequenceDeltaEvent, SharedSegmentSequence } from "@fluidframework/sequence";
-import { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager";
+} from "@fluidframework/merge-tree/internal";
+import { SequenceDeltaEvent, SharedSegmentSequence } from "@fluidframework/sequence/internal";
+
+import { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager.js";
 
 /**
  * A shared segment sequence undo redo handler that will add all local sequences changes to the provided
  * undo redo stack manager
- *
- * @public
+ * @internal
  */
 export class SharedSegmentSequenceUndoRedoHandler {
 	private readonly sequences = new Map<
@@ -55,8 +55,7 @@ export class SharedSegmentSequenceUndoRedoHandler {
 
 /**
  * Tracks a change on a shared segment sequence and allows reverting it
- *
- * @public
+ * @internal
  */
 export class SharedSegmentSequenceRevertible implements IRevertible {
 	private readonly revertibles: MergeTreeDeltaRevertible[];

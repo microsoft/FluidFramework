@@ -4,19 +4,21 @@
  */
 
 import { IRequest } from "@fluidframework/core-interfaces";
-import { DriverHeader, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
+import {
+	DriverHeader,
+	IResolvedUrl,
+	IUrlResolver,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * Default endpoint port. Will be used by the service if the consumer does not specify a port.
- *
- * @public
+ * @internal
  */
 export const defaultTinyliciousPort = 7070;
 
 /**
  * Default endpoint URL base. Will be used by the service if the consumer does not specify an endpoint.
- *
- * @public
+ * @internal
  */
 export const defaultTinyliciousEndpoint = "http://localhost";
 
@@ -25,15 +27,12 @@ export const defaultTinyliciousEndpoint = "http://localhost";
  * for a given request.  This particular implementation has a goal to avoid imposing requirements on the app's
  * URL shape, so it expects the request url to have this format (as opposed to a more traditional URL):
  * documentId/containerRelativePathing
- *
- * @public
+ * @internal
  */
 export class InsecureTinyliciousUrlResolver implements IUrlResolver {
-	private readonly fluidProtocolEndpoint: string;
 	private readonly tinyliciousEndpoint: string;
 	public constructor(port = defaultTinyliciousPort, endpoint = defaultTinyliciousEndpoint) {
 		this.tinyliciousEndpoint = `${endpoint}:${port}`;
-		this.fluidProtocolEndpoint = this.tinyliciousEndpoint.replace(/(^\w+:|^)\/\//, "fluid://");
 	}
 
 	public async resolve(request: IRequest): Promise<IResolvedUrl> {
@@ -54,11 +53,11 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 				finalDocumentId = "new";
 			}
 			deltaStorageUrl = `${this.tinyliciousEndpoint}/deltas/tinylicious/${finalDocumentId}`;
-			documentUrl = `${this.fluidProtocolEndpoint}/tinylicious/${finalDocumentId}`;
+			documentUrl = `${this.tinyliciousEndpoint}/tinylicious/${finalDocumentId}`;
 		} else {
 			const encodedDocId = encodeURIComponent(finalDocumentId);
 			const documentRelativePath = relativeUrl.slice(documentIdFromRequest.length);
-			documentUrl = `${this.fluidProtocolEndpoint}/tinylicious/${encodedDocId}${documentRelativePath}`;
+			documentUrl = `${this.tinyliciousEndpoint}/tinylicious/${encodedDocId}${documentRelativePath}`;
 			deltaStorageUrl = `${this.tinyliciousEndpoint}/deltas/tinylicious/${encodedDocId}`;
 		}
 
@@ -77,7 +76,7 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 
 	public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
 		const documentId = decodeURIComponent(
-			resolvedUrl.url.replace(`${this.fluidProtocolEndpoint}/tinylicious/`, ""),
+			resolvedUrl.url.replace(`${this.tinyliciousEndpoint}/tinylicious/`, ""),
 		);
 		/*
 		 * The detached container flow will ultimately call getAbsoluteUrl() with the resolved.url produced by
@@ -91,8 +90,7 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 
 /**
  * Creates a Routerlicious {@link @fluidframework/core-interfaces#IRequest}.
- *
- * @public
+ * @internal
  */
 export const createTinyliciousCreateNewRequest = (documentId?: string): IRequest => ({
 	url: documentId ?? "",

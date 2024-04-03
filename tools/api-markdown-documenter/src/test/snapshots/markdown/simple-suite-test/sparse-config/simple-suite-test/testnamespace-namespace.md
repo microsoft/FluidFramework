@@ -26,12 +26,6 @@ const foo = bar;
 const bar = foo
 ```
 
-### Interfaces
-
-| Interface | Description |
-| --- | --- |
-| [TestInterface](docs/simple-suite-test/testnamespace-testinterface-interface) | Test interface |
-
 ### Classes
 
 | Class | Description |
@@ -55,12 +49,6 @@ const bar = foo
 | Function | Return Type | Description |
 | --- | --- | --- |
 | [testFunction(testParameter)](docs/simple-suite-test/testnamespace-testfunction-function) | number | Test function |
-
-### Variables
-
-| Variable | Modifiers | Description |
-| --- | --- | --- |
-| [TestConst](docs/simple-suite-test/testnamespace-testconst-variable) | `readonly` | Test Constant |
 
 ### Namespaces
 

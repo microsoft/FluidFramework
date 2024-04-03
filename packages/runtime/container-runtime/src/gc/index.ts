@@ -3,16 +3,17 @@
  * Licensed under the MIT License.
  */
 
-export { GarbageCollector } from "./garbageCollection";
+export { GarbageCollector } from "./garbageCollection.js";
 export {
 	nextGCVersion,
 	defaultInactiveTimeoutMs,
+	defaultSweepGracePeriodMs,
 	defaultSessionExpiryDurationMs,
-	disableSweepLogKey,
 	GCNodeType,
 	gcTestModeKey,
-	gcTombstoneGenerationOptionName,
-	gcSweepGenerationOptionName,
+	gcDisableDataStoreSweepOptionName,
+	gcDisableThrowOnTombstoneLoadOptionName,
+	gcGenerationOptionName,
 	GCFeatureMatrix,
 	GCVersion,
 	gcVersionUpgradeToV4Key,
@@ -21,39 +22,44 @@ export {
 	IGarbageCollectorConfigs,
 	IGarbageCollectorCreateParams,
 	IGCMetadata,
+	IGCMetadata_Deprecated,
 	IGCResult,
 	IGCRuntimeOptions,
+	IMarkPhaseStats,
+	ISweepPhaseStats,
 	IGCStats,
 	oneDayMs,
 	runGCKey,
 	runSessionExpiryKey,
 	runSweepKey,
 	stableGCVersion,
-	disableAttachmentBlobSweepKey,
+	disableAutoRecoveryKey,
 	disableDatastoreSweepKey,
-	throwOnTombstoneLoadKey,
-	throwOnTombstoneUsageKey,
+	detectOutboundRoutesViaDDSKey,
 	UnreferencedState,
-} from "./gcDefinitions";
+	throwOnTombstoneLoadOverrideKey,
+	GarbageCollectionMessage,
+	GarbageCollectionMessageType,
+	ISweepMessage,
+} from "./gcDefinitions.js";
 export {
 	cloneGCData,
 	concatGarbageCollectionStates,
-	shouldAllowGcTombstoneEnforcement,
-	shouldAllowGcSweep,
+	getGCVersionInEffect,
 	trimLeadingAndTrailingSlashes,
 	unpackChildNodesGCDetails,
-} from "./gcHelpers";
-export { runGarbageCollection } from "./gcReferenceGraphAlgorithm";
+} from "./gcHelpers.js";
+export { runGarbageCollection } from "./gcReferenceGraphAlgorithm.js";
 export {
 	IGarbageCollectionNodeData,
 	IGarbageCollectionSnapshotData,
 	IGarbageCollectionState,
 	IGarbageCollectionSummaryDetailsLegacy,
-} from "./gcSummaryDefinitions";
+} from "./gcSummaryDefinitions.js";
 export {
 	gcStateBlobKey,
 	GCSummaryStateTracker,
 	IGCSummaryTrackingData,
-} from "./gcSummaryStateTracker";
-export { GCTelemetryTracker, sendGCUnexpectedUsageEvent } from "./gcTelemetry";
-export { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
+} from "./gcSummaryStateTracker.js";
+export { GCTelemetryTracker, sendGCUnexpectedUsageEvent } from "./gcTelemetry.js";
+export { UnreferencedStateTracker } from "./gcUnreferencedStateTracker.js";

@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 
 /**
  * Returns a new IChannelStorageService that resolves the given `path` as root.
+ * @internal
  */
 export class ObjectStoragePartition implements IChannelStorageService {
 	constructor(

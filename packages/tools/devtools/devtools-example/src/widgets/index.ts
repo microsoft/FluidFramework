@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export type { CounterWidgetProps } from "./CounterWidget";
-export { CounterWidget } from "./CounterWidget";
-export type { EmojiButtonProps } from "./EmojiButton";
-export { EmojiButton } from "./EmojiButton";
-export type { EmojiGridProps } from "./EmojiGrid";
-export { EmojiGrid } from "./EmojiGrid";
+export type { CounterWidgetProps } from "./CounterWidget.js";
+export { CounterWidget } from "./CounterWidget.js";
+export type { EmojiButtonProps } from "./EmojiButton.js";
+export { EmojiButton } from "./EmojiButton.js";
+export type { EmojiGridProps } from "./EmojiGrid.js";
+export { EmojiGrid } from "./EmojiGrid.js";

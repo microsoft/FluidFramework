@@ -32,9 +32,9 @@ const bar = foo
 
 ## Interfaces
 
-| Interface | Description |
-| --- | --- |
-| [TestInterface](./simple-suite-test/testnamespace/testinterface-interface) | Test interface |
+| Interface | Alerts | Description |
+| --- | --- | --- |
+| [TestInterface](./simple-suite-test/testnamespace/testinterface-interface) | `ALPHA` | Test interface |
 
 ## Classes
 
@@ -62,9 +62,9 @@ const bar = foo
 
 ## Variables
 
-| Variable | Modifiers | Description |
-| --- | --- | --- |
-| [TestConst](./simple-suite-test/testnamespace-namespace#testconst-variable) | `readonly` | Test Constant |
+| Variable | Alerts | Modifiers | Description |
+| --- | --- | --- | --- |
+| [TestConst](./simple-suite-test/testnamespace-namespace#testconst-variable) | `BETA` | `readonly` | Test Constant |
 
 ## Namespaces
 
@@ -153,9 +153,11 @@ An Error
 
 ## Variable Details
 
-### TestConst {#testconst-variable}
+### TestConst (BETA) {#testconst-variable}
 
 Test Constant
+
+**WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
 
 #### Signature {#testconst-signature}
 

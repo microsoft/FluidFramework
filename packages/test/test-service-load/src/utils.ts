@@ -5,49 +5,50 @@
 
 import crypto from "crypto";
 import fs from "fs";
+
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import {
+	OdspTestDriver,
 	createFluidTestDriver,
 	generateOdspHostStoragePolicy,
-	OdspTestDriver,
-} from "@fluid-internal/test-drivers";
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
-import { assert, LazyPromise } from "@fluidframework/core-utils";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
-// eslint-disable-next-line import/no-deprecated
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+} from "@fluid-private/test-drivers";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader/internal";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
-	createChildLogger,
 	IConfigProviderBase,
-} from "@fluidframework/telemetry-utils";
+	ITelemetryBaseEvent,
+	LogLevel,
+} from "@fluidframework/core-interfaces";
+import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
+import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
+	DriverEndpoint,
 	ITelemetryBufferedLogger,
 	ITestDriver,
 	TestDriverTypes,
-	DriverEndpoint,
 } from "@fluidframework/test-driver-definitions";
-import { LocalCodeLoader } from "@fluidframework/test-utils";
-import { createFluidExport, ILoadTest } from "./loadTestDataStore";
+import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
+
+import { ILoadTest, createFluidExport } from "./loadTestDataStore.js";
 import {
 	generateConfigurations,
 	generateLoaderOptions,
 	generateRuntimeOptions,
 	getOptionOverride,
-} from "./optionsMatrix";
-import { pkgName, pkgVersion } from "./packageVersion";
-import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
+} from "./optionsMatrix.js";
+import { pkgName, pkgVersion } from "./packageVersion.js";
+import { ILoadTestConfig, ITestConfig } from "./testConfigFile.js";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
 class FileLogger implements ITelemetryBufferedLogger {
 	private static readonly loggerP = (minLogLevel?: LogLevel) =>
 		new LazyPromise<FileLogger>(async () => {
-			if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
-				await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
+			if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER !== undefined) {
+				await import(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
 				const logger = getTestLogger?.();
 				assert(logger !== undefined, "Expected getTestLogger to return something");
 				return new FileLogger(logger, minLogLevel);
@@ -225,8 +226,7 @@ export async function initialize(
 			testDriver.type === "odsp",
 			"attachment blobs in detached container not supported on this service",
 		);
-		// eslint-disable-next-line import/no-deprecated
-		const ds = await requestFluidObject<ILoadTest>(container, "/");
+		const ds = (await container.getEntryPoint()) as ILoadTest;
 		const dsm = await ds.detached({ testConfig, verbose, random, logger });
 		await Promise.all(
 			[...Array(testConfig.detachedBlobCount).keys()].map(async (i) => dsm.writeBlob(i)),

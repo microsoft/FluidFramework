@@ -17,8 +17,10 @@ const { MSG } = require("@fluid-experimental/property-common").constants;
 const { UniversalDataArray, ConsoleUtils } = require("@fluid-experimental/property-common");
 const fastestJSONCopy = require("fastest-json-copy");
 const _ = require("lodash");
+
 const { deserializeNonPrimitiveArrayElements } = require("../containerSerializer");
 const { validationsEnabled } = require("../enableValidations");
+
 const { AbstractStaticCollectionProperty } = require("./abstractStaticCollectionProperty");
 const { BaseProperty } = require("./baseProperty");
 const { LazyLoadedProperties: Property } = require("./lazyLoadedProperties");
@@ -147,6 +149,9 @@ var _getLongestIncreasingSubsequenceSegments = function (in_segmentStarts, in_se
 	return longestSequence;
 };
 
+/**
+ * @internal
+ */
 export class ArrayProperty extends AbstractStaticCollectionProperty {
 	/**
 	 * Default constructor for ArrayProperty

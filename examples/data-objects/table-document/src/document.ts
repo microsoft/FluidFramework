@@ -3,24 +3,35 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
-import { ICombiningOp, ReferencePosition, PropertySet } from "@fluidframework/merge-tree";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IntervalType, SequenceDeltaEvent } from "@fluidframework/sequence";
 import {
+	SharedNumberSequence,
+	SparseMatrix,
 	positionToRowCol,
 	rowColToPosition,
-	SparseMatrix,
-	SharedNumberSequence,
 } from "@fluid-experimental/sequence-deprecated";
-import { CellRange } from "./cellrange";
-import { TableDocumentType } from "./componentTypes";
-import { ConfigKey } from "./configKey";
-import { debug } from "./debug";
-import { TableSlice } from "./slice";
-import { ITable, TableDocumentItem } from "./table";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import {
+	PropertySet,
+	ReferencePosition,
+	SequenceDeltaEvent,
+	SharedString,
+	createEndpointIndex,
+} from "@fluidframework/sequence/internal";
 
+import { CellRange } from "./cellrange.js";
+import { TableDocumentType } from "./componentTypes.js";
+import { ConfigKey } from "./configKey.js";
+import { debug } from "./debug.js";
+import { TableSlice } from "./slice.js";
+import { ITable, TableDocumentItem } from "./table.js";
+
+/**
+ * @deprecated `TableDocument` is an abandoned prototype.
+ * Please use {@link @fluidframework/matrix#SharedMatrix} with the `IMatrixProducer`/`Consumer` interfaces instead.
+ * @alpha
+ */
 export interface ITableDocumentEvents extends IEvent {
 	(
 		event: "op",
@@ -39,6 +50,7 @@ export interface ITableDocumentEvents extends IEvent {
 /**
  * @deprecated `TableDocument` is an abandoned prototype.
  * Please use {@link @fluidframework/matrix#SharedMatrix} with the `IMatrixProducer`/`Consumer` interfaces instead.
+ * @alpha
  */
 export class TableDocument extends DataObject<{ Events: ITableDocumentEvents }> implements ITable {
 	public static getFactory() {
@@ -77,9 +89,12 @@ export class TableDocument extends DataObject<{ Events: ITableDocumentEvents }> 
 		this.matrix.setItems(row, col, [value], properties);
 	}
 
-	public async getRange(label: string) {
+	public async getRange(label: string): Promise<CellRange> {
+		const endpointIndex = createEndpointIndex(this.matrix as unknown as SharedString);
 		const intervals = this.matrix.getIntervalCollection(label);
-		const interval = intervals.nextInterval(0);
+		intervals.attachIndex(endpointIndex);
+		const interval = endpointIndex.nextInterval(0);
+		intervals.detachIndex(endpointIndex);
 		return new CellRange(interval, this.localRefToRowCol);
 	}
 
@@ -103,26 +118,16 @@ export class TableDocument extends DataObject<{ Events: ITableDocumentEvents }> 
 		return component;
 	}
 
-	public annotateRows(
-		startRow: number,
-		endRow: number,
-		properties: PropertySet,
-		op?: ICombiningOp,
-	) {
-		this.rows.annotateRange(startRow, endRow, properties, op);
+	public annotateRows(startRow: number, endRow: number, properties: PropertySet) {
+		this.rows.annotateRange(startRow, endRow, properties);
 	}
 
 	public getRowProperties(row: number): PropertySet {
 		return this.rows.getPropertiesAtPosition(row);
 	}
 
-	public annotateCols(
-		startCol: number,
-		endCol: number,
-		properties: PropertySet,
-		op?: ICombiningOp,
-	) {
-		this.cols.annotateRange(startCol, endCol, properties, op);
+	public annotateCols(startCol: number, endCol: number, properties: PropertySet) {
+		this.cols.annotateRange(startCol, endCol, properties);
 	}
 
 	public getColProperties(col: number): PropertySet {
@@ -149,7 +154,7 @@ export class TableDocument extends DataObject<{ Events: ITableDocumentEvents }> 
 		const start = rowColToPosition(minRow, minCol);
 		const end = rowColToPosition(maxRow, maxCol);
 		const intervals = this.matrix.getIntervalCollection(label);
-		intervals.add(start, end, IntervalType.SlideOnRemove);
+		intervals.add({ start, end });
 	}
 
 	public insertRows(startRow: number, numRows: number) {

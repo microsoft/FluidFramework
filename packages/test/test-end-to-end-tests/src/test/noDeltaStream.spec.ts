@@ -5,26 +5,29 @@
 
 import { strict as assert } from "assert";
 
-import { generatePairwiseOptions } from "@fluid-internal/test-pairwise-generator";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IContainerLoadMode, LoaderHeader } from "@fluidframework/container-definitions";
-
-import { SummaryCollection, DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IContainerLoadMode, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import {
+	DefaultSummaryConfiguration,
+	SummaryCollection,
+} from "@fluidframework/container-runtime/internal";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/driver-definitions/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
-	createLoader,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
+	createLoader,
+	getContainerEntryPointBackCompat,
 	timeoutPromise,
-} from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluid-internal/test-version-utils";
+} from "@fluidframework/test-utils/internal";
+
+import { wrapObjectAndOverride } from "../mocking.js";
 
 const loadOptions: IContainerLoadMode[] = generatePairwiseOptions<IContainerLoadMode>({
 	deltaConnection: [undefined, "none", "delayed"],
@@ -71,7 +74,7 @@ const testContainerConfigDisabled: ITestContainerConfig = {
 	},
 };
 
-describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvider) => {
+describeCompat("No Delta stream loading mode testing", "FullCompat", (getTestObjectProvider) => {
 	const scenarioToContainerUrl = new Map<string, string>();
 	const scenarioToSeqNum = new Map<string, number>();
 
@@ -109,10 +112,8 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 				);
 				containerResolvedUrl = initContainer.resolvedUrl;
 
-				const initDataObject = await requestFluidObject<ITestFluidObject>(
-					initContainer,
-					"default",
-				);
+				const initDataObject =
+					await getContainerEntryPointBackCompat<ITestFluidObject>(initContainer);
 				for (let i = 0; i < maxOps; i++) {
 					initDataObject.root.set(i.toString(), i);
 				}
@@ -157,10 +158,8 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 				});
 
 				// Force the container into write mode to ensure a summary will be created
-				const dataObject = await requestFluidObject<ITestFluidObject>(
-					summaryContainer,
-					"default",
-				);
+				const dataObject =
+					await getContainerEntryPointBackCompat<ITestFluidObject>(summaryContainer);
 				dataObject.root.set("Force write", 0);
 
 				const summaryCollection = new SummaryCollection(
@@ -187,6 +186,10 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 	for (const testConfig of testConfigs) {
 		it(`Validate Load Modes: ${JSON.stringify(testConfig ?? "undefined")}`, async function () {
 			const provider = getTestObjectProvider();
+			// REVIEW: enable CrossVersion compat testing?
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			switch (provider.driver.type) {
 				case "local":
 					break;
@@ -214,40 +217,23 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 				const validationContainer = await validationLoader.resolve({
 					url: containerUrl,
 				});
-				const validationDataObject = await requestFluidObject<ITestFluidObject>(
-					validationContainer,
-					"default",
-				);
+				const validationDataObject =
+					await getContainerEntryPointBackCompat<ITestFluidObject>(validationContainer);
 
-				const storageOnlyDsF: IDocumentServiceFactory = {
-					createContainer: provider.documentServiceFactory.createContainer.bind(
-						provider.documentServiceFactory,
-					),
-					createDocumentService: async (
-						resolvedUrl: IResolvedUrl,
-						logger?: ITelemetryBaseLogger,
-					) =>
-						new Proxy(
-							await provider.documentServiceFactory.createDocumentService(
-								resolvedUrl,
-								logger,
-							),
-							{
-								get: (target, prop: keyof IDocumentService, r) => {
-									if (prop === "policies") {
-										const policies: IDocumentService["policies"] = {
-											...target.policies,
-											storageOnly: true,
-										};
-										return policies;
-									}
-
-									// eslint-disable-next-line @typescript-eslint/no-unsafe-return -- Reflection
-									return Reflect.get(target, prop, r);
-								},
+				const storageOnlyDsF = wrapObjectAndOverride<IDocumentServiceFactory>(
+					provider.documentServiceFactory,
+					{
+						createDocumentService: {
+							policies: (ds) => {
+								const policies: IDocumentService["policies"] = {
+									...ds.policies,
+									storageOnly: true,
+								};
+								return policies;
 							},
-						),
-				};
+						},
+					},
+				);
 
 				const storageOnlyLoader = createLoader(
 					[
@@ -301,10 +287,10 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 						"deltaManager.readOnlyInfo.storageOnly",
 					);
 
-					const storageOnlyDataObject = await requestFluidObject<ITestFluidObject>(
-						storageOnlyContainer,
-						"default",
-					);
+					const storageOnlyDataObject =
+						await getContainerEntryPointBackCompat<ITestFluidObject>(
+							storageOnlyContainer,
+						);
 					for (const key of validationDataObject.root.keys()) {
 						assert.strictEqual(
 							storageOnlyDataObject.root.get(key),

@@ -24,18 +24,22 @@ import {
 	IDefineRepresentationOptions,
 	IRegisterOnPathOptions,
 	representationGenerator,
-} from "..";
-import { ActivationQueryCacheHelper, ActivationType } from "../internal/activationQueryCacheHelper";
-import { RESOLVE_ALWAYS, RESOLVE_NEVER, RESOLVE_NO_LEAFS } from "../internal/constants";
-import { DataBinderHandle } from "../internal/dataBinderHandle";
-import { PropertyElement } from "../internal/propertyElement";
-import { SemverMap, UpgradeType } from "../internal/semvermap";
-import { StatelessDataBindingWrapper } from "../internal/statelessDataBindingWrapper";
-import { CallbackOptions, DataBinding } from "./dataBinding";
-import { DataBindingRegistry } from "./dataBindingRegistry";
-import { ArrayNode, concatTokenizedPath, DataBindingTree, NodeType } from "./dataBindingTree";
-import { IDefineDataBindingOptions } from "./IDefineDataBindingOptions";
+} from "../index.js";
 import {
+	ActivationQueryCacheHelper,
+	ActivationType,
+} from "../internal/activationQueryCacheHelper.js";
+import { RESOLVE_ALWAYS, RESOLVE_NEVER, RESOLVE_NO_LEAFS } from "../internal/constants.js";
+import { DataBinderHandle } from "../internal/dataBinderHandle.js";
+import { PropertyElement } from "../internal/propertyElement.js";
+import { SemverMap, UpgradeType } from "../internal/semvermap.js";
+import { StatelessDataBindingWrapper } from "../internal/statelessDataBindingWrapper.js";
+import { IDefineDataBindingOptions } from "./IDefineDataBindingOptions.js";
+import { CallbackOptions, DataBinding } from "./dataBinding.js";
+import { DataBindingRegistry } from "./dataBindingRegistry.js";
+import { ArrayNode, DataBindingTree, NodeType, concatTokenizedPath } from "./dataBindingTree.js";
+import {
+	RecursiveCallback,
 	assertOperation,
 	deferCallback,
 	forEachProperty,
@@ -43,12 +47,11 @@ import {
 	isPrimitiveCollection,
 	makeCallbackOncePerChangeSet,
 	minimalRootPaths,
-	RecursiveCallback,
 	recursivelyVisitHierarchy,
 	visitTypeHierarchy,
-} from "./internalUtils";
-import { ModificationContext } from "./modificationContext";
-import { RemovalContext } from "./removalContext";
+} from "./internalUtils.js";
+import { ModificationContext } from "./modificationContext.js";
+import { RemovalContext } from "./removalContext.js";
 
 export interface DataBindingDefinition {
 	bindingType: string;
@@ -177,6 +180,7 @@ const _popUserData = function (in_context: Utils.TraversalContext) {
  * const workspace = databinder.getPropertyTree();
  * // ...
  * ```
+ * @internal
  */
 export class DataBinder {
 	_dataBinderId: number;
@@ -292,7 +296,6 @@ export class DataBinder {
 	 * @param in_options - An object containing optional parameters.
 	 *
 	 * @returns A handle that can be used to unregister this data binding
-	 * @public
 	 */
 	registerStateless(
 		in_bindingType: string,
@@ -321,8 +324,6 @@ export class DataBinder {
 	 * @param in_typeID                  - The id to use for this registration, usually the type id of the
 	 *                                              objects being represented (like a PropertySet template id).
 	 * @returns True if and only if there is a binding for this combination
-	 *
-	 * @public
 	 */
 	hasDataBinding(in_bindingType: string, in_typeID: string): boolean {
 		return this._registry.has(in_bindingType, in_typeID);
@@ -343,7 +344,6 @@ export class DataBinder {
 	 * @param in_options - An object containing additional parameters.
 	 *
 	 * @returns A handle that can be used to unregister this data binding.
-	 * @public
 	 * @throws Will throw an error if the constructor is missing or invalid.
 	 */
 	register(
@@ -395,8 +395,6 @@ export class DataBinder {
 	 *                                              as its only argument.
 	 * @param in_options - optional options for the new databinding
 	 * @returns A handle that can be used to undefine the binding.
-	 *
-	 * @public
 	 * @throws If the constructor is missing or invalid.
 	 * @throws If the bindingType/typeID pairing is already defined.
 	 */
@@ -458,7 +456,7 @@ export class DataBinder {
 		in_definition: DataBindingDefinition,
 	) {
 		const byBindingType = this._definitionsByBindingType.get(in_definition.bindingType);
-		console.assert(byBindingType);
+		console.assert(byBindingType !== undefined);
 		if (byBindingType) {
 			const index = byBindingType.indexOf(in_handle);
 			if (index !== -1) {
@@ -503,7 +501,6 @@ export class DataBinder {
 	 *
 	 * @returns A handle that can be used to deactivate this instance of the binding. See
 	 * {@link DataBinderHandle.destroy}.
-	 * @public
 	 */
 	activateDataBinding(
 		in_bindingType: string,
@@ -566,7 +563,7 @@ export class DataBinder {
 
 			// Not there - should be activated, or else it was already deactivated
 			const handles = this._activationHandlesByBindingType.get(in_activationRule.bindingType);
-			console.assert(handles);
+			console.assert(handles !== undefined);
 			if (handles) {
 				const index = handles.indexOf(in_handle);
 				console.assert(index >= 0);
@@ -594,8 +591,6 @@ export class DataBinder {
 	 * This functionality should be used with care, since unbalanced push/pop bracketing can render
 	 * the DataBinder permanently disabled. Consider doing push/pop scopes using try/catch blocks,
 	 * for example.
-	 *
-	 * @public
 	 */
 	pushBindingActivationScope() {
 		this._activationScope++;
@@ -606,8 +601,6 @@ export class DataBinder {
 	 * binding activations will be done, and all the corresponding bindings will be created.
 	 *
 	 * See {@link DataBinder.pushBindingActivationScope}.
-	 *
-	 * @public
 	 */
 	popBindingActivationScope() {
 		if (this._activationScope === 0) {
@@ -1374,7 +1367,6 @@ export class DataBinder {
 	 * @param in_options -  Additional user specified options for the
 	 * callback and its registration
 	 * @returns A handle that can be used to unregister the callback.
-	 * @public
 	 */
 	registerOnPath(
 		in_absolutePath: string | Array<string>,
@@ -1726,8 +1718,6 @@ export class DataBinder {
 	 *  created from {@link DataBinder.activateDataBinding} or {@link DataBinder.register}
 	 * @param in_undefine - if true (the default), undefine all bindings for this binding type
 	 *    {@link DataBinder.defineDataBinding} or {@link DataBinder.register}
-	 *
-	 * @public
 	 */
 	unregisterDataBindings(
 		in_bindingType?: string,
@@ -1750,7 +1740,6 @@ export class DataBinder {
 	 * Return true if this DataBinder is attached to a Workspace.
 	 *
 	 * @returns True if the DataBinder is attached to a Workspace.
-	 * @public
 	 */
 	isAttached(): boolean {
 		return !!this._propertyTree;
@@ -2470,8 +2459,6 @@ export class DataBinder {
 	 * bindings (either all in registration order or an empty array if no suitable bindings are present at the given path
 	 * or Property). If a binding type is given it's either a single data binding or undefined if no suitable bindings
 	 * are present at the given path or Property.
-	 *
-	 * @public
 	 */
 	resolve<T = DataBinding>(
 		in_pathOrProperty: string | BaseProperty,
@@ -2549,7 +2536,6 @@ export class DataBinder {
 	 *   after the ChangeSet has been processed
 	 * @param in_context - Optional value to be passed as
 	 *   the ```this``` parameter to the target function when the bound function is called
-	 * @public
 	 */
 	requestChangesetPostProcessing(in_callback: Function, in_context?: any) {
 		this._postProcessingCallbackQueue.push(in_callback.bind(in_context));
@@ -2559,7 +2545,6 @@ export class DataBinder {
 	 * Return the Workspace the DataBinder is currently attached to, or undefined if not attached.
 	 *
 	 * @returns The Workspace the DataBinder is attached to.
-	 * @public
 	 */
 	getPropertyTree(): SharedPropertyTree | undefined {
 		return this._propertyTree;
@@ -2606,8 +2591,6 @@ export class DataBinder {
 	 * @returns A handle to permit unregistering of the runtime representation.
 	 *
 	 * @throws If there is already runtime representation associated with the provided bindingType/typeID.
-	 *
-	 * @public
 	 */
 	defineRepresentation(
 		bindingType: string,
@@ -2786,8 +2769,6 @@ export class DataBinder {
 	 * @throws If not connected to a workspace
 	 * @throws If the property is not in the workspace the DataBinder is attached to.
 	 * @throws If the given property is undefined
-	 *
-	 * @public
 	 */
 	getRepresentation<T>(property: BaseProperty, bindingType: string): T | undefined {
 		if (!this.isAttached()) {
@@ -2819,8 +2800,6 @@ export class DataBinder {
 	 * @throws If the generator or a recursively-used generator fails to return a runtime representation when called.
 	 * @throws If not connected to a workspace
 	 * @throws If the property does not exist at the provided path
-	 *
-	 * @public
 	 */
 	getRepresentationAtPath<T>(path: string, bindingType: string): T | undefined {
 		if (!this.isAttached()) {
@@ -3203,7 +3182,6 @@ export class DataBinder {
 	 * A unique key per running application; each instance of the databinder will have a different Id.
 	 *
 	 * @returns  The id of this DataBinder instance.
-	 * @public
 	 */
 	getDataBinderId(): number {
 		return this._dataBinderId;

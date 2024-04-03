@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { TestObjectProvider, timeoutAwait } from "@fluidframework/test-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { TestObjectProvider, timeoutAwait } from "@fluidframework/test-utils/internal";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Context } from "mocha";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+
 import { ExpectedEvents, createExpectsTest } from "./itExpects.js";
 
 function createSkippedTestsWithDriverType(
@@ -35,12 +36,18 @@ function createSkippedTestsWithDriverType(
 	};
 }
 
+/**
+ * @internal
+ */
 export type SkippedTestWithDriverType = (
 	name: string,
 	skippedDrivers: TestDriverTypes[],
 	test: Mocha.AsyncFunc,
 ) => Mocha.Test;
 
+/**
+ * @internal
+ */
 export type SkippedErrorExpectingTestWithDriverType = (
 	name: string,
 	orderedExpectedEvents: ExpectedEvents,
@@ -49,8 +56,10 @@ export type SkippedErrorExpectingTestWithDriverType = (
 ) => Mocha.Test;
 
 /**
- * Similar to mocha's it function, but allow skipping for some if the error
- * happens on the specific drivers
+ * Similar to mocha's `it` function, but allow skipping for some if the error
+ * happens on the specific drivers.
+ *
+ * @internal
  */
 export const itSkipsFailureOnSpecificDrivers: SkippedTestWithDriverType = (
 	name: string,
@@ -59,8 +68,10 @@ export const itSkipsFailureOnSpecificDrivers: SkippedTestWithDriverType = (
 ): Mocha.Test => it(name, createSkippedTestsWithDriverType(skippedDrivers, test));
 
 /**
- * Similar to the ItExpects function, but allow skipping for some if the error
- * happens on the specific drivers
+ * Similar to the `itExpects` function, but allow skipping for some if the error
+ * happens on the specific drivers.
+ *
+ * @internal
  */
 export const itExpectsSkipsFailureOnSpecificDrivers: SkippedErrorExpectingTestWithDriverType = (
 	name: string,

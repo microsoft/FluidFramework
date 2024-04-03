@@ -4,15 +4,18 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer } from "@fluidframework/container-definitions";
-import { ContainerRuntime, DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
-import { channelsTreeName } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat, ITestDataObject } from "@fluid-internal/test-version-utils";
-import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
-import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
+
 import { bufferToString } from "@fluid-internal/client-utils";
+import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
+import { IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import {
+	ContainerRuntime,
+	DefaultSummaryConfiguration,
+} from "@fluidframework/container-runtime/internal";
+import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
+import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
+import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 const defaultDataStoreId = "default";
 const testContainerConfig: ITestContainerConfig = {
@@ -32,7 +35,7 @@ function readBlobContent(content: ISummaryBlob["content"]): unknown {
 	return JSON.parse(json);
 }
 
-describeNoCompat("Summarization - runtime benchmarks", (getTestObjectProvider) => {
+describeCompat("Summarization - runtime benchmarks", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
 	before(async () => {
@@ -46,10 +49,7 @@ describeNoCompat("Summarization - runtime benchmarks", (getTestObjectProvider) =
 		new (class implements IMemoryTestObject {
 			title = "Generate summary tree";
 			async run() {
-				const defaultDataStore = await requestFluidObject<ITestDataObject>(
-					mainContainer,
-					defaultDataStoreId,
-				);
+				const defaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 				const containerRuntime = defaultDataStore._context
 					.containerRuntime as ContainerRuntime;
 

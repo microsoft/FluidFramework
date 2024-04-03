@@ -14,8 +14,8 @@ export {
 	isFinalId,
 	isLocalId,
 	legacySharedTreeInitialTreeId,
-} from './IdCompressor';
-export { getIds } from './IdRange';
+} from './IdCompressor.js';
+export { getIds } from './IdRange.js';
 export {
 	IdCreationRange,
 	SerializedCluster,
@@ -29,5 +29,5 @@ export {
 	SerializedSessionIdNormalizer,
 	UnackedLocalId,
 	VersionedSerializedIdCompressor,
-} from './persisted-types';
-export { createSessionId } from './NumericUuid';
+} from './persisted-types/index.js';
+export { createSessionId } from './NumericUuid.js';

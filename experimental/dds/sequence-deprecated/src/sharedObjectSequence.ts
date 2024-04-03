@@ -3,13 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IFluidDataStoreRuntime,
-	IChannelAttributes,
-	Serializable,
-} from "@fluidframework/datastore-definitions";
-import { SharedObjectSequenceFactory } from "./sequenceFactory";
-import { SharedSequence } from "./sharedSequence";
+import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { Serializable } from "@fluidframework/datastore-definitions/internal";
+
+import { SharedObjectSequenceFactory } from "./sequenceFactory.js";
+import { SharedSequence } from "./sharedSequence.js";
 
 /**
  * The SharedObjectSequence holds a sequence of serializable objects. Each object will be stored
@@ -19,6 +17,7 @@ import { SharedSequence } from "./sharedSequence";
  *
  * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.
  * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}.
+ * @internal
  */
 export class SharedObjectSequence<T> extends SharedSequence<T> {
 	/**

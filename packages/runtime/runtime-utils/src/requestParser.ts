@@ -2,10 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 
 /**
  * The Request Parser takes an IRequest provides parsing and sub request creation
+ * @alpha
  */
 export class RequestParser implements IRequest {
 	/**

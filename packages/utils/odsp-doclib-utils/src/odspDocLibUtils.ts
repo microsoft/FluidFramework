@@ -8,14 +8,23 @@ const odspTenants = new Map<string, string>([
 	["spo-df", "microsoft-my.sharepoint-df.com"],
 ]);
 
+/**
+ * @internal
+ */
 export function isOdspHostname(server: string) {
 	return server.endsWith("sharepoint.com") || server.endsWith("sharepoint-df.com");
 }
 
+/**
+ * @internal
+ */
 export function isPushChannelHostname(server: string) {
 	return server.includes(".push") && server.endsWith(".svc.ms");
 }
 
+/**
+ * @internal
+ */
 export function getAadUrl(server: string) {
 	// special case for local / pushchannel testing
 	if (server === "localhost" || server.startsWith("localhost:")) {
@@ -31,6 +40,9 @@ export function getAadUrl(server: string) {
 	return `https://login.microsoftonline.com`;
 }
 
+/**
+ * @internal
+ */
 export function getAadTenant(server: string) {
 	let hostname = server;
 
@@ -59,6 +71,9 @@ export function getAadTenant(server: string) {
 	return `${tenantName}${restOfTenantHostname}`;
 }
 
+/**
+ * @internal
+ */
 export function getServer(tenantId: string): string {
 	const server = odspTenants.get(tenantId);
 	if (!server) {
@@ -67,6 +82,9 @@ export function getServer(tenantId: string): string {
 	return server;
 }
 
+/**
+ * @internal
+ */
 export function getSiteUrl(server: string) {
 	if (server.startsWith("http://") || server.startsWith("https://")) {
 		// server is already a site url

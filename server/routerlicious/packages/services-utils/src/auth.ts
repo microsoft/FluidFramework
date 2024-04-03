@@ -37,6 +37,7 @@ import { getBooleanFromConfig, getNumberFromConfig } from "./configUtils";
  * Validates a JWT token to authorize routerlicious.
  * @returns decoded claims.
  * @throws {@link NetworkError} if claims are invalid.
+ * @internal
  */
 export function validateTokenClaims(
 	token: string,
@@ -57,7 +58,7 @@ export function validateTokenClaims(
 		throw new NetworkError(403, "DocumentId in token claims does not match request.");
 	}
 
-	if (claims.scopes === undefined || claims.scopes.length === 0) {
+	if (claims.scopes === undefined || claims.scopes === null || claims.scopes.length === 0) {
 		throw new NetworkError(403, "Missing scopes in token claims.");
 	}
 
@@ -67,6 +68,7 @@ export function validateTokenClaims(
 /**
  * Generates a document creation JWT token, this token doesn't provide any sort of authorization to the user.
  * But it can be used by other services to validate the document creator identity upon creating a document.
+ * @internal
  */
 export function getCreationToken(
 	token: string,
@@ -85,6 +87,7 @@ export function getCreationToken(
 /**
  * Generates a JWT token to authorize routerlicious. This function uses a large auth library (jsonwebtoken)
  * and should only be used in server context.
+ * @internal
  */
 // TODO: We should use this library in all server code rather than using jsonwebtoken directly.
 export function generateToken(
@@ -117,6 +120,9 @@ export function generateToken(
 	return sign(claims, key, { jwtid: uuid() });
 }
 
+/**
+ * @internal
+ */
 export function generateUser(): IUser {
 	const randomUser = {
 		id: uuid(),
@@ -137,6 +143,9 @@ interface IVerifyTokenOptions {
 	revokedTokenChecker: IRevokedTokenChecker | undefined;
 }
 
+/**
+ * @internal
+ */
 export function respondWithNetworkError(response: Response, error: NetworkError): Response {
 	return response.status(error.code).json(error.details);
 }
@@ -148,7 +157,7 @@ function getTokenFromRequest(request: Request): string {
 	}
 	const tokenRegex = /Basic (.+)/;
 	const tokenMatch = tokenRegex.exec(authorizationHeader);
-	if (!tokenMatch || !tokenMatch[1]) {
+	if (!tokenMatch?.[1]) {
 		throw new NetworkError(403, "Missing access token.");
 	}
 	return tokenMatch[1];
@@ -156,6 +165,9 @@ function getTokenFromRequest(request: Request): string {
 
 const defaultMaxTokenLifetimeSec = 60 * 60; // 1 hour
 
+/**
+ * @internal
+ */
 export async function verifyToken(
 	tenantId: string,
 	documentId: string,
@@ -243,6 +255,7 @@ export async function verifyToken(
 
 /**
  * Verifies the storage token claims and calls riddler to validate the token.
+ * @internal
  */
 export function verifyStorageToken(
 	tenantManager: ITenantManager,
@@ -265,6 +278,7 @@ export function verifyStorageToken(
 		);
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	return async (request, res, next) => {
 		const tenantId = getParam(request.params, "tenantId");
 		if (!tenantId) {
@@ -294,6 +308,7 @@ export function verifyStorageToken(
 			);
 			// Riddler is known to take too long sometimes. Check timeout before continuing.
 			getGlobalTimeoutContext().checkTimeout();
+			// eslint-disable-next-line @typescript-eslint/return-await
 			return getGlobalTelemetryContext().bindPropertiesAsync(
 				{ tenantId, documentId },
 				async () => next(),
@@ -313,7 +328,11 @@ export function verifyStorageToken(
 	};
 }
 
+/**
+ * @internal
+ */
 export function validateTokenScopeClaims(expectedScopes: string): RequestHandler {
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	return async (request, response, next) => {
 		let token: string = "";
 		try {
@@ -328,7 +347,13 @@ export function validateTokenScopeClaims(expectedScopes: string): RequestHandler
 			);
 		}
 
-		const claims = decode(token) as ITokenClaims;
+		let claims: ITokenClaims;
+		try {
+			claims = decode(token) as ITokenClaims;
+		} catch {
+			return respondWithNetworkError(response, new NetworkError(401, "Invalid token."));
+		}
+
 		if (!claims) {
 			return respondWithNetworkError(
 				response,
@@ -336,7 +361,7 @@ export function validateTokenScopeClaims(expectedScopes: string): RequestHandler
 			);
 		}
 
-		if (claims.scopes === undefined || claims.scopes.length === 0) {
+		if (claims.scopes === undefined || claims.scopes === null || claims.scopes.length === 0) {
 			return respondWithNetworkError(
 				response,
 				new NetworkError(403, "Missing scopes in token claims."),
@@ -359,6 +384,9 @@ export function validateTokenScopeClaims(expectedScopes: string): RequestHandler
 	};
 }
 
+/**
+ * @internal
+ */
 export function getParam(params: Params, key: string) {
 	return Array.isArray(params) ? undefined : params[key];
 }

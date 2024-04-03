@@ -1,5 +1,14 @@
 # @fluid-experimental/attributable-map
 
+<!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCOPE_NOTICE) -->
+
+**IMPORTANT: This package is experimental.**
+**Its APIs may change without notice.**
+
+**Do not use in production scenarios.**
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 ## Overview
 
 This experimental DDS is a copy of `SharedMap` which additionally tracks attribution information, such as the user who made an update and the timestamp of the change. Please refer to the description of [attributor](../../../packages/framework/attributor/README.md) for more details.
@@ -23,11 +32,6 @@ const myMap = SharedMap.create(this.runtime, id);
 Unlike the JavaScript `Map`, a `SharedMap`'s keys must be strings. The value must only be plain JS objects or handles (e.g. to another DDS or Fluid objects).
 
 In collaborative scenarios, the value is settled with a policy of _last write wins_.
-
-#### `.wait()`
-
-`SharedMap` has a `wait` method in addition to the normal `get`, which returns a `Promise` that resolves to the value
-when the key becomes available.
 
 ### Eventing
 

@@ -1,5 +1,79 @@
 # @fluidframework/core-interfaces
 
+## 2.0.0-rc.2.0.0
+
+### Minor Changes
+
+-   core-interfaces: Removed ITelemetryProperties, TelemetryEventCategory, TelemetryEventPropertyType, and ITaggedTelemetryPropertyType ([#19752](https://github.com/microsoft/FluidFramework/issues/19752)) [615a7712e6](https://github.com/microsoft/FluidFramework/commits/615a7712e67885c6cda69ddd907cb5cc708eef18)
+
+    The `ITelemetryProperties` interface was deprecated and has been removed.
+    Use the identical `ITelemetryBaseProperties` instead.
+
+    The `TelemetryEventCategory` type was deprecated and has been removed from `@fluidframework/core-interfaces`, since
+    it had moved to `@fluidframework/telemetry-utils` in the past.
+
+    The `TelemetryEventPropertyType` type alias was deprecated and has been removed.
+    Use the identical `TelemetryBaseEventPropertyType` instead.
+
+    The `ITaggedTelemetryPropertyType` interface was deprecated and has been removed.
+    Use `Tagged<TelemetryBaseEventPropertyType>` instead.
+
+-   container-definitions: Added containerMetadata prop on IContainer interface ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
+
+    Added `containerMetadata` prop on IContainer interface.
+
+-   runtime-definitions: Moved ISignalEnvelope interface to core-interfaces ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
+
+    The `ISignalEnvelope` interface has been moved to the @fluidframework/core-interfaces package.
+
+-   core-interfaces: Removed deprecated telemetry event types ([#19740](https://github.com/microsoft/FluidFramework/issues/19740)) [0ff130a50e](https://github.com/microsoft/FluidFramework/commits/0ff130a50e9bcccb119673ac985ea27fa38de463)
+
+    The deprecated `ITelemetryErrorEvent`, `ITelemetryGenericEvent`, and `ITelemetryPerformanceEvent` interfaces,
+    which represented different kinds of telemetry events, were not intended for consumers of Fluid Framework and have thus
+    been removed.
+    `ITelemetryBaseEvent` is the only telemetry event interface that should be used in/by consuming code.
+
+    `ITelemetryLogger` was not intended for consumers of Fluid Framework and has been removed.
+    Consumers should use the simpler `ITelemetryBaseLogger` instead.
+
+## 2.0.0-rc.1.0.0
+
+Dependency updates only.
+
+## 2.0.0-internal.8.0.0
+
+### Major Changes
+
+-   container-runtime-definitions: Removed getRootDataStore [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The `getRootDataStore` method has been removed from `IContainerRuntime` and `ContainerRuntime`. Please migrate all usage to the new `getAliasedDataStoreEntryPoint` method. This method returns the data store's entry point which is its `IFluidHandle`.
+
+    See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
+
+-   core-interfaces: Removed IFluidRouter and IProvideFluidRouter [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The `IFluidRouter` and `IProvideFluidRouter` interfaces have been removed. Please migrate all usage to the new `entryPoint` pattern.
+
+    See [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md) for more details.
+
+## 2.0.0-internal.7.4.0
+
+### Minor Changes
+
+-   telemetry-utils: Deprecate ConfigTypes and IConfigProviderBase ([#18597](https://github.com/microsoft/FluidFramework/issues/18597)) [39b9ff57c0](https://github.com/microsoft/FluidFramework/commits/39b9ff57c0184b72f0e3f9425922dda944995265)
+
+    The types `ConfigTypes` and `IConfigProviderBase` have been deprecated in the @fluidframework/telemetry-utils package.
+    The types can now be found in the @fluidframework/core-interfaces package. Please replace any uses with the types from
+    @fluidframework/core-interfaces.
+
+## 2.0.0-internal.7.3.0
+
+Dependency updates only.
+
+## 2.0.0-internal.7.2.0
+
+Dependency updates only.
+
 ## 2.0.0-internal.7.1.0
 
 Dependency updates only.

@@ -2,16 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import * as path from "path";
 
 import {
 	DEFAULT_INTERDEPENDENCY_RANGE,
 	InterdependencyRange,
-	ReleaseVersion,
 	VersionBumpType,
 } from "@fluid-tools/version-tools";
 
-import { getFluidBuildConfig } from "./fluidUtils";
+import { loadFluidBuildConfig } from "./fluidUtils";
 import { MonoRepo } from "./monoRepo";
 import { Package, Packages } from "./npmPackage";
 import { ExecAsyncResult } from "./utils";
@@ -37,10 +37,15 @@ export interface IFluidBuildConfig {
 	};
 
 	/**
-	 * Policy configuration for the `check:policy` command. This can only be configured in the rrepo-wide Fluid build
+	 * Policy configuration for the `check:policy` command. This can only be configured in the repo-wide Fluid build
 	 * config (the repo-root package.json).
 	 */
 	policy?: PolicyConfig;
+
+	/**
+	 * Configuration for assert tagging.
+	 */
+	assertTagging?: AssertTaggingConfig;
 
 	/**
 	 * A mapping of branch names to previous version baseline styles. The type test generator takes this information
@@ -154,6 +159,21 @@ export interface PolicyConfig {
 	handlerExclusions?: { [rule: string]: string[] };
 
 	packageNames?: PackageNamePolicyConfig;
+
+	/**
+	 * (optional) requirements to enforce against each public package.
+	 */
+	publicPackageRequirements?: PackageRequirements;
+}
+
+export interface AssertTaggingConfig {
+	assertionFunctions: { [functionName: string]: number };
+
+	/**
+	 * An array of paths under which assert tagging applies to. If this setting is provided, only packages whose paths
+	 * match the regular expressions in this setting will be assert-tagged.
+	 */
+	enabledPaths?: RegExp[];
 }
 
 /**
@@ -199,6 +219,45 @@ export interface PackageNamePolicyConfig {
 		 */
 		internalFeed?: string[];
 	};
+}
+
+/**
+ * Expresses requirements for a given package, applied to its package.json.
+ */
+export interface PackageRequirements {
+	/**
+	 * (optional) list of script requirements for the package.
+	 */
+	requiredScripts?: ScriptRequirement[];
+
+	/**
+	 * (optional) list of required dev dependencies for the package.
+	 * @remarks Note: there is no enforcement of version requirements, only that a dependency on the specified name must exist.
+	 */
+	requiredDevDependencies?: string[];
+}
+
+/**
+ * Requirements for a given script.
+ */
+export interface ScriptRequirement {
+	/**
+	 * Name of the script to check.
+	 */
+	name: string;
+
+	/**
+	 * Body of the script being checked.
+	 * A contents match will be enforced iff {@link ScriptRequirement.bodyMustMatch}.
+	 * This value will be used as the default contents inserted by the policy resolver (regardless of {@link ScriptRequirement.bodyMustMatch}).
+	 */
+	body: string;
+
+	/**
+	 * Whether or not the script body is required to match {@link ScriptRequirement.body} when running the policy checker.
+	 * @defaultValue `false`
+	 */
+	bodyMustMatch?: boolean;
 }
 
 /**
@@ -248,20 +307,29 @@ export interface IFluidRepoPackage {
 	defaultInterdependencyRange: InterdependencyRange;
 }
 
-export type IFluidRepoPackageEntry = string | IFluidRepoPackage | (string | IFluidRepoPackage)[];
+export type IFluidRepoPackageEntry =
+	| string
+	| IFluidRepoPackage
+	| (string | IFluidRepoPackage)[];
 
 export class FluidRepo {
-	private readonly monoRepos = new Map<string, MonoRepo>();
+	private readonly _releaseGroups = new Map<string, MonoRepo>();
 
 	public get releaseGroups() {
-		return this.monoRepos;
+		return this._releaseGroups;
 	}
 
 	public readonly packages: Packages;
 
-	constructor(public readonly resolvedRoot: string) {
-		const packageManifest = getFluidBuildConfig(resolvedRoot);
+	public static create(resolvedRoot: string) {
+		const packageManifest = loadFluidBuildConfig(resolvedRoot);
+		return new FluidRepo(resolvedRoot, packageManifest);
+	}
 
+	protected constructor(
+		public readonly resolvedRoot: string,
+		packageManifest: IFluidBuildConfig,
+	) {
 		// Expand to full IFluidRepoPackage and full path
 		const normalizeEntry = (
 			item: IFluidRepoPackageEntry,
@@ -346,23 +414,7 @@ export class FluidRepo {
 	 * @returns the relative path.
 	 */
 	public relativeToRepo(p: string): string {
-		return path.relative(this.resolvedRoot, p);
+		// Replace \ in result with / in case OS is Windows.
+		return path.relative(this.resolvedRoot, p).replace(/\\/g, "/");
 	}
-}
-
-/**
- * Represents a release version and its release date, if applicable.
- *
- * @internal
- */
-export interface VersionDetails {
-	/**
-	 * The version of the release.
-	 */
-	version: ReleaseVersion;
-
-	/**
-	 * The date the version was released, if applicable.
-	 */
-	date?: Date;
 }

@@ -4,30 +4,33 @@
  */
 
 import { strict as assert } from "assert";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+
+import { AttachState } from "@fluidframework/container-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
-	appendToMergeTreeDeltaRevertibles,
 	Marker,
-	matchProperties,
 	MergeTreeDeltaRevertible,
 	ReferenceType,
+	appendToMergeTreeDeltaRevertibles,
+	matchProperties,
 	reservedMarkerIdKey,
 	reservedMarkerSimpleTypeKey,
 	reservedTileLabelsKey,
 	revertMergeTreeDeltaRevertibles,
-} from "@fluidframework/merge-tree";
+} from "@fluidframework/merge-tree/internal";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
 	MockEmptyDeltaConnection,
+	MockFluidDataStoreRuntime,
 	MockStorage,
 	validateAssertionError,
-} from "@fluidframework/test-runtime-utils";
-import { getTextAndMarkers, SharedString } from "../sharedString";
-import { SharedStringFactory } from "../sequenceFactory";
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { SharedString, getTextAndMarkers } from "../sharedString.js";
 
 describe("SharedString", () => {
 	let sharedString: SharedString;
@@ -399,7 +402,7 @@ describe("SharedString", () => {
 			await sharedString2.load(services2);
 
 			// Now connect the first Ink
-			dataStoreRuntime1.local = false;
+			dataStoreRuntime1.setAttachState(AttachState.Attached);
 			const containerRuntime1 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
@@ -448,7 +451,7 @@ describe("SharedString", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 			// Connect the first SharedString.
-			dataStoreRuntime1.local = false;
+			dataStoreRuntime1.setAttachState(AttachState.Attached);
 			const containerRuntime1 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
@@ -708,6 +711,43 @@ describe("SharedString", () => {
 
 			// Verify that the changes were correctly received by the second SharedString
 			assert.equal(sharedString2.getText(), "hello friend");
+		});
+
+		it("insert in middle of multibyte character", async () => {
+			let base = "🎉";
+
+			sharedString.insertText(0, "🎉");
+
+			assert.equal(sharedString.getText(), base);
+			assert.equal(sharedString.getLength(), base.length);
+
+			containerRuntimeFactory.processAllMessages();
+
+			base = `${base.slice(0, 1)}a${base.slice(1)}`;
+			sharedString.insertText(1, "a");
+
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(sharedString.getText(), base); // not 🎉a
+			assert.equal(sharedString.getLength(), base.length);
+		});
+
+		it("insert in middle of surrogate pair", async () => {
+			let base = "👨🏻‍🦱";
+			sharedString.insertText(0, "👨🏻‍🦱");
+
+			assert.equal(sharedString.getText(), base);
+			assert.equal(sharedString.getLength(), base.length);
+
+			containerRuntimeFactory.processAllMessages();
+
+			base = `${base.slice(0, 2)}a${base.slice(2)}`;
+			sharedString.insertText(2, "a");
+
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(sharedString.getText(), base); // not 👨🏻‍🦱a
+			assert.equal(sharedString.getLength(), base.length);
 		});
 
 		it("can store ops in disconnected state and resend them on reconnection", async () => {

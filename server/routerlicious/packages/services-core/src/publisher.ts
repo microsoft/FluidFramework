@@ -5,6 +5,7 @@
 
 /**
  * A topic where messages can be published
+ * @internal
  */
 export interface ITopic {
 	/**
@@ -15,6 +16,7 @@ export interface ITopic {
 
 /**
  * Basic interface used to publish messages to a topic
+ * @internal
  */
 export interface IPublisher<T = any> {
 	/**
@@ -45,6 +47,9 @@ export interface IPublisher<T = any> {
 	close(): Promise<void>;
 }
 
+/**
+ * @internal
+ */
 export interface IMessageBatch<T> {
 	/**
 	 * Tenant id for the batch

@@ -3,9 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { SaveInfo, makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { BaseOperation, DDSFuzzModel, DDSFuzzSuiteOptions, replayTest } from "./ddsFuzzHarness";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { SaveInfo } from "@fluid-private/stochastic-test-utils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions";
+
+import type {
+	BaseOperation,
+	DDSFuzzHarnessEvents,
+	DDSFuzzModel,
+	DDSFuzzSuiteOptions,
+} from "./ddsFuzzHarness.js";
+import { ReducerPreconditionError, replayTest } from "./ddsFuzzHarness.js";
 
 /**
  * A function which takes in an operation and modifies it by reference to be more
@@ -31,6 +40,8 @@ import { BaseOperation, DDSFuzzModel, DDSFuzzSuiteOptions, replayTest } from "./
  * 	 }
  * }
  * ```
+ *
+ * @internal
  */
 export type MinimizationTransform<TOperation extends BaseOperation> = (op: TOperation) => void;
 
@@ -38,7 +49,7 @@ export class FuzzTestMinimizer<
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 > {
-	private initialErrorMessage: string | undefined;
+	private initialError?: { message: string; op: BaseOperation };
 	private readonly transforms: MinimizationTransform<TOperation>[];
 	private readonly random = makeRandom();
 
@@ -57,10 +68,11 @@ export class FuzzTestMinimizer<
 		const firstError = await this.assertFails();
 
 		if (!firstError) {
-			// throw an error here rather than silently returning the operations
-			// unchanged. a test case that doesn't fail initially indicates an
-			// error, either on the part of the user or in the fuzz test runner
-			throw new Error("test case doesn't fail.");
+			throw new Error(
+				"Attempted to minimize fuzz test, but the original case didn't fail. " +
+					"This can happen if the original test failed at operation generation time rather than as part of a reducer. " +
+					"Use the `skipMinimization` option to skip minimization in this case.",
+			);
 		}
 
 		await this.tryDeleteEachOp();
@@ -90,7 +102,8 @@ export class FuzzTestMinimizer<
 		while (idx > 0) {
 			const deletedOp = this.operations.splice(idx, 1)[0];
 
-			if (!(await this.assertFails())) {
+			// don't remove attach ops, as it creates invalid scenarios
+			if (deletedOp.type === "attach" || !(await this.assertFails())) {
 				this.operations.splice(idx, 0, deletedOp);
 			}
 
@@ -182,6 +195,14 @@ export class FuzzTestMinimizer<
 	 * to avoid dealing with transforms that would result in invalid ops
 	 */
 	private async assertFails(): Promise<boolean> {
+		const emitter = (this.providedOptions.emitter ??=
+			new TypedEventEmitter<DDSFuzzHarnessEvents>());
+
+		let lastOp: BaseOperation = { type: "___none___" };
+		const lastOpTracker = (op: BaseOperation): void => {
+			lastOp = op;
+		};
+		emitter.on("operationStart", lastOpTracker);
 		try {
 			await replayTest(
 				this.ddsModel,
@@ -195,7 +216,7 @@ export class FuzzTestMinimizer<
 			);
 			return false;
 		} catch (error: unknown) {
-			if (!error || !(error instanceof Error)) {
+			if (!error || !(error instanceof Error) || error instanceof ReducerPreconditionError) {
 				return false;
 			}
 
@@ -205,12 +226,17 @@ export class FuzzTestMinimizer<
 				.map((s) => s.trim())
 				.find((s) => s.startsWith("at"));
 
-			if (this.initialErrorMessage === undefined) {
-				this.initialErrorMessage = message;
+			if (this.initialError === undefined && message !== undefined) {
+				this.initialError = { message, op: lastOp };
 				return true;
 			}
 
-			return message === this.initialErrorMessage;
+			return (
+				message === this.initialError?.message &&
+				this.initialError?.op?.type === lastOp.type
+			);
+		} finally {
+			emitter.off("operation", lastOpTracker);
 		}
 	}
 }

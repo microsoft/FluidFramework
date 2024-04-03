@@ -7,6 +7,7 @@ import { IDocument, IServiceConfiguration } from "@fluidframework/server-service
 
 /**
  * Whether a document exists and is not functionally deleted.
+ * @internal
  */
 export function isDocumentValid(document: IDocument): boolean {
 	return !!document && !document.scheduledDeletionTime;
@@ -14,6 +15,7 @@ export function isDocumentValid(document: IDocument): boolean {
 
 /**
  * Whether a document's active session aligns with the service's location.
+ * @internal
  */
 export function isDocumentSessionValid(
 	document: IDocument,
@@ -23,11 +25,16 @@ export function isDocumentSessionValid(
 		// No session location to validate.
 		return true;
 	}
+	const isSessionInThisCluster =
+		document.session.ordererUrl === serviceConfiguration.externalOrdererUrl;
+	if (document.session.isSessionActive && isSessionInThisCluster) {
+		return true;
+	}
 	if (!document.session.isSessionAlive) {
 		// Session is not "alive", so client has bypassed discovery flow.
 		// Other clients could be routed to alternate locations, resulting in "split-brain" scenario.
 		// Prevent Deli from processing ops.
 		return false;
 	}
-	return document.session.ordererUrl === serviceConfiguration.externalOrdererUrl;
+	return isSessionInThisCluster;
 }

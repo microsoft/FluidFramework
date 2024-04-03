@@ -14,12 +14,6 @@ When taking a dependency on a Fluid Framework library, we recommend using a `^` 
 While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
 library consumers should always prefer `^`.
 
-Note that when depending on a library version of the form `2.0.0-internal.x.y.z`, called the Fluid internal version scheme,
-you must use a `>= <` dependency range (such as `>=2.0.0-internal.x.y.z <2.0.0-internal.w.0.0` where `w` is `x+1`).
-Standard `^` and `~` ranges will not work as expected.
-See the [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/version-tools/README.md)
-package for more information including tools to convert between version schemes.
-
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -51,7 +45,7 @@ To write a unit test for these scenarios, follow these steps:
 -   We need to connect and attach the DDS to an IDeltaConnection so it can submit and process messages. Create a `MockDeltaConnection` by calling `createDeltaConnection` on the `MockContainerRuntime`.
 -   Use the `MockDeltaConnection` to connect the DDS.
 
-Examples - [sequenceHandler](..//../framework/undo-redo/src/test/sequenceHandler.spec.ts), [snapshotVersion](../sequence/src/test/snapshotVersion.spec.ts).
+Examples - [sequenceHandler](../../framework/undo-redo/src/test/sequenceHandler.spec.ts), [snapshotVersion](../sequence/src/test/snapshotVersion.spec.ts).
 
 ### Reconnection unit tests
 
@@ -107,8 +101,7 @@ Again, this should ONLY be used for local development as including the tenant ke
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 
-Use of these trademarks or logos must follow Microsoft's [Trademark & Brand
-Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 

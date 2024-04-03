@@ -5,6 +5,7 @@
 
 /**
  * Base interface for objects that require lifetime management via explicit disposal.
+ * @public
  */
 export interface IDisposable {
 	/**

@@ -7,6 +7,7 @@ import { BaseProperty } from "@fluid-experimental/property-properties";
 
 /**
  * Returned only from the [[PropertyProxy]].[[getParentOfReferencedProperty]] method.
+ * @internal
  */
 export interface IParentAndPathOfReferencedProperty {
 	/**

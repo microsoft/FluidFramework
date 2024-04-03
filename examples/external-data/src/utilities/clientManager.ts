@@ -4,10 +4,25 @@
  */
 
 /**
+ * Represents a Fluid containers documentId.
+ * It is part of the client's Fluid session information necessary for broadcasting signals to.
+ */
+type DocumentId = string;
+/**
+ * Represents a Fluid containers tenantId.
+ * It is part of the client's Fluid session information necessary for broadcasting signals to.
+ */
+type TenantId = string;
+/**
  * Represents a Fluid containers URL.
  * This URL contains the client's Fluid session information necessary for broadcasting signals to.
  */
-type ClientSessionUrl = string;
+type ClientSessionRecord = Record<TenantId, DocumentId>;
+
+/**
+ * String representation of ClientSessionRecord
+ */
+type ClientSessionString = string;
 
 /**
  * Represents the external data servers query url or uuid.
@@ -15,6 +30,15 @@ type ClientSessionUrl = string;
  */
 type ExternalTaskListId = string;
 
+function clientRecordToString(record: ClientSessionRecord): string {
+	return `${record.TenantId}_${record.DocumentId}`;
+}
+
+function clientStringToRecord(client: string): ClientSessionRecord {
+	const [tenantId, documentId] = client.split("_");
+	const record: ClientSessionRecord = { TenantId: tenantId, DocumentId: documentId };
+	return record;
+}
 /**
  * Mock client manager.
  * Can be registered with to receive notifications when {@link ClientManager.notifySubscribers} is called.
@@ -27,23 +51,30 @@ export class ClientManager<TData = unknown> {
 	 * Map of active external resource id to client sessions.
 	 * Values are the set of Fluid Container URLs that will be notified of changes.
 	 */
-	private readonly _taskListMapping: Map<ExternalTaskListId, Set<ClientSessionUrl>>;
+	private readonly _taskListMapping: Map<ExternalTaskListId, Set<ClientSessionString>>;
 	/**
 	 * Map of active clients to external resource id.
 	 * Values are the set of external resource id's that the client has active and is registered to listen for.
 	 */
-	private readonly _clientMapping: Map<ClientSessionUrl, Set<ExternalTaskListId>>;
+	private readonly _clientMapping: Map<ClientSessionString, Set<ExternalTaskListId>>;
 
 	public constructor() {
-		this._clientMapping = new Map<ClientSessionUrl, Set<ExternalTaskListId>>();
-		this._taskListMapping = new Map<ExternalTaskListId, Set<ClientSessionUrl>>();
+		this._clientMapping = new Map<ClientSessionString, Set<ExternalTaskListId>>();
+		this._taskListMapping = new Map<ExternalTaskListId, Set<ClientSessionString>>();
 	}
 	/**
 	 * Gets the current list of client session URLs for the specified task list id.
 	 */
-	public getClientSessions(externalTaskListId: ExternalTaskListId): Set<ClientSessionUrl> {
-		const clientSessionUrls = this._taskListMapping.get(externalTaskListId);
-		return clientSessionUrls ?? new Set<ClientSessionUrl>();
+	public getClientSessions(externalTaskListId: ExternalTaskListId): Set<ClientSessionRecord> {
+		const activeClients = this._taskListMapping.get(externalTaskListId);
+		const activeClientSessionRecords = new Set<ClientSessionRecord>();
+		if (activeClients) {
+			// eslint-disable-next-line unicorn/no-array-for-each
+			activeClients.forEach((client) => {
+				activeClientSessionRecords.add(clientStringToRecord(client));
+			});
+		}
+		return activeClientSessionRecords;
 	}
 
 	/**
@@ -58,7 +89,11 @@ export class ClientManager<TData = unknown> {
 	 * Registers a client session url to an external resource id until removeClientTaskListRegistration is called.
 	 * The client can choose when to call it, typically it will be at the end of the session.
 	 */
-	public registerClient(client: ClientSessionUrl, externalTaskListId: ExternalTaskListId): void {
+	public registerClient(
+		clientRecord: ClientSessionRecord,
+		externalTaskListId: ExternalTaskListId,
+	): void {
+		const client = clientRecordToString(clientRecord);
 		if (this._clientMapping.get(client) === undefined) {
 			this._clientMapping.set(client, new Set<ExternalTaskListId>([externalTaskListId]));
 		} else {
@@ -66,7 +101,7 @@ export class ClientManager<TData = unknown> {
 		}
 
 		if (this._taskListMapping.get(externalTaskListId) === undefined) {
-			this._taskListMapping.set(externalTaskListId, new Set<ClientSessionUrl>([client]));
+			this._taskListMapping.set(externalTaskListId, new Set<ClientSessionString>([client]));
 		} else {
 			this._taskListMapping.get(externalTaskListId)?.add(client);
 		}
@@ -79,9 +114,10 @@ export class ClientManager<TData = unknown> {
 	 * De-registers the provided subscriber URL from future notifications.
 	 */
 	public removeClientTaskListRegistration(
-		client: ClientSessionUrl,
+		clientRecord: ClientSessionRecord,
 		externalTaskListId: ExternalTaskListId,
 	): void {
+		const client = clientRecordToString(clientRecord);
 		const clientTaskListIds = this._clientMapping.get(client);
 		if (clientTaskListIds !== undefined && clientTaskListIds.has(externalTaskListId)) {
 			clientTaskListIds.delete(externalTaskListId);
@@ -96,11 +132,13 @@ export class ClientManager<TData = unknown> {
 	 * De-registers the provided subscriber URL from future notifications for all existing tasks it is subscribed to.
 	 * @returns A list of task list ID's that no longer have any client sessions mapped to them.
 	 */
-	public removeAllClientTaskListRegistrations(client: ClientSessionUrl): string[] {
+	public removeAllClientTaskListRegistrations(clientRecord: ClientSessionRecord): string[] {
+		const client = clientRecordToString(clientRecord);
 		const clientTaskListIds = this._clientMapping.get(client);
 		const emptyTaskListRegistrationIds: string[] = [];
 		if (clientTaskListIds !== undefined) {
-			for (const taskListId of clientTaskListIds) {
+			// eslint-disable-next-line unicorn/no-array-for-each
+			clientTaskListIds.forEach((taskListId) => {
 				const taskListClients = this._taskListMapping.get(taskListId);
 				if (taskListClients !== undefined && taskListClients.has(client)) {
 					taskListClients.delete(client);
@@ -109,7 +147,7 @@ export class ClientManager<TData = unknown> {
 						this._taskListMapping.delete(taskListId);
 					}
 				}
-			}
+			});
 			clientTaskListIds.clear();
 		}
 

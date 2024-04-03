@@ -7,6 +7,9 @@ import { CheckpointService, ICollection } from "@fluidframework/server-services-
 import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 import { FluidServiceError, FluidServiceErrorCode } from "./errorUtils";
 
+/**
+ * @internal
+ */
 export async function deleteSummarizedOps(
 	opCollection: ICollection<unknown>,
 	softDeleteRetentionPeriodMs: number,

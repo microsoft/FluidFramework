@@ -31,6 +31,7 @@ function getTelemetryContextPropertiesFromRequest(
 /**
  * TelemetryContext helper that checks HTTP request and response for {@link TelemetryContextHeaderName} header
  * and returns global telemetry context properties with those request context properties included if they exist.
+ * @internal
  */
 export function getTelemetryContextPropertiesWithHttpInfo(
 	req: Request,
@@ -52,6 +53,7 @@ export function getTelemetryContextPropertiesWithHttpInfo(
  * - {@link CorrelationIdHeaderName}: correlationId
  *
  * Requests from the Fluid client may not include a correlationId, so one is generated when unavailable.
+ * @internal
  */
 export const bindTelemetryContext = (): RequestHandler => {
 	return (req, res, next) => {

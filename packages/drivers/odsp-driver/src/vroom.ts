@@ -3,18 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
-import { ITelemetryProperties } from "@fluidframework/core-interfaces";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
-	InstrumentedStorageTokenFetcher,
-	ISocketStorageDiscovery,
 	IOdspUrlParts,
-} from "@fluidframework/odsp-driver-definitions";
-import { getOrigin, TokenFetchOptionsEx } from "./odspUtils";
-import { getApiRoot } from "./odspUrlHelper";
-import { EpochTracker } from "./epochTracker";
-import { runWithRetry } from "./retryUtils";
+	ISocketStorageDiscovery,
+	InstrumentedStorageTokenFetcher,
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import { v4 as uuid } from "uuid";
+
+import { EpochTracker } from "./epochTracker.js";
+import { getApiRoot } from "./odspUrlHelper.js";
+import { TokenFetchOptionsEx, getOrigin } from "./odspUtils.js";
+import { runWithRetry } from "./retryUtils.js";
 
 interface IJoinSessionBody {
 	requestSocketToken: boolean;
@@ -55,7 +57,7 @@ export async function fetchJoinSession(
 	const tokenRefreshProps = options.refresh
 		? { hasClaims: !!options.claims, hasTenantId: !!options.tenantId }
 		: {};
-	const details: ITelemetryProperties = {
+	const details: ITelemetryBaseProperties = {
 		refreshedToken: options.refresh,
 		requestSocketToken,
 		...tokenRefreshProps,

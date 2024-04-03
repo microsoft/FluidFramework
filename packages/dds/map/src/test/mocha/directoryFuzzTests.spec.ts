@@ -3,25 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import * as dirPath from "path";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
+import * as dirPath from "node:path";
+
 import {
 	AsyncGenerator,
 	AsyncReducer,
 	combineReducersAsync,
 	createWeightedAsyncGenerator,
 	takeAsync,
-} from "@fluid-internal/stochastic-test-utils";
+} from "@fluid-private/stochastic-test-utils";
 import {
 	Client,
-	createDDSFuzzSuite,
 	DDSFuzzModel,
 	DDSFuzzTestState,
-} from "@fluid-internal/test-dds-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions";
-import { DirectoryFactory } from "../../directory";
-import { IDirectory } from "../../interfaces";
-import { assertEquivalentDirectories } from "./directoryEquivalenceUtils";
+	createDDSFuzzSuite,
+} from "@fluid-private/test-dds-utils";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+
+import { DirectoryFactory, IDirectory } from "../../index.js";
+
+import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
+import { _dirname } from "./dirname.cjs";
 
 type FuzzTestState = DDSFuzzTestState<DirectoryFactory>;
 
@@ -88,7 +91,7 @@ const defaultOptions: Required<OperationGenerationConfig> = {
 function makeOperationGenerator(
 	optionsParam?: OperationGenerationConfig,
 ): AsyncGenerator<Operation, FuzzTestState> {
-	const options = { ...defaultOptions, ...(optionsParam ?? {}) };
+	const options = { ...defaultOptions, ...optionsParam };
 
 	// All subsequent helper functions are generators; note that they don't actually apply any operations.
 	function pickAbsolutePathForCreateDirectoryOp(state: FuzzTestState): string {
@@ -109,10 +112,10 @@ function makeOperationGenerator(
 				continue;
 			}
 			const subDir = random.pick<IDirectory | undefined>([undefined, ...subDirectories]);
-			if (subDir !== undefined) {
-				dir = subDir;
-			} else {
+			if (subDir === undefined) {
 				break;
+			} else {
+				dir = subDir;
 			}
 		}
 		return dir.absolutePath;
@@ -133,11 +136,11 @@ function makeOperationGenerator(
 				subDirs.push(b);
 			}
 			const subDir = random.pick<IDirectory | undefined>([undefined, ...subDirs]);
-			if (subDir !== undefined) {
+			if (subDir === undefined) {
+				break;
+			} else {
 				parentDir = dirToDelete;
 				dirToDelete = subDir;
-			} else {
-				break;
 			}
 		}
 		return parentDir.absolutePath;
@@ -266,12 +269,10 @@ function makeReducer(loggingInfo?: LoggingInfo): AsyncReducer<Operation, FuzzTes
 	const withLogging =
 		<T>(baseReducer: AsyncReducer<T, FuzzTestState>): AsyncReducer<T, FuzzTestState> =>
 		async (state, operation) => {
-			if (loggingInfo !== undefined) {
-				if (loggingInfo.printConsoleLogs) {
-					logCurrentState(state.clients, loggingInfo);
-					console.log("-".repeat(20));
-					console.log("Next operation:", JSON.stringify(operation, undefined, 4));
-				}
+			if (loggingInfo !== undefined && loggingInfo.printConsoleLogs) {
+				logCurrentState(state.clients, loggingInfo);
+				console.log("-".repeat(20));
+				console.log("Next operation:", JSON.stringify(operation, undefined, 4));
 			}
 			try {
 				await baseReducer(state, operation);
@@ -341,21 +342,23 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
 			clientAddProbability: 0.08,
+			stashableClientProbability: 0.2,
 		},
 		defaultTestCount: 25,
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 21,
-		saveFailures: { directory: dirPath.join(__dirname, "../../../src/test/mocha/results/1") },
+		saveFailures: { directory: dirPath.join(_dirname, "../../../src/test/mocha/results/1") },
 	});
 
 	createDDSFuzzSuite(
 		{ ...model, workloadName: "default directory 1 with rebasing" },
 		{
 			validationStrategy: {
-				type: "fixedInterval",
-				interval: defaultOptions.validateInterval,
+				type: "random",
+				probability: 0.4,
 			},
-			rebaseProbability: 0.15,
+			rebaseProbability: 0.2,
+			reconnectProbability: 0.5,
 			containerRuntimeOptions: {
 				flushMode: FlushMode.TurnBased,
 				enableGroupedBatching: true,
@@ -364,12 +367,13 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 			clientJoinOptions: {
 				maxNumberOfClients: 3,
 				clientAddProbability: 0.08,
+				stashableClientProbability: undefined,
 			},
-			defaultTestCount: 25,
+			defaultTestCount: 200,
 			// Uncomment this line to replay a specific seed from its failure file:
-			// replay: 21,
+			// replay: 0,
 			saveFailures: {
-				directory: dirPath.join(__dirname, "../../../src/test/mocha/results/1"),
+				directory: dirPath.join(_dirname, "../../../src/test/mocha/results/1"),
 			},
 		},
 	);
@@ -393,21 +397,23 @@ describe("SharedDirectory fuzz", () => {
 			// was refactored to use the DDS fuzz harness.
 			maxNumberOfClients: Number.MAX_SAFE_INTEGER,
 			clientAddProbability: 0.08,
+			stashableClientProbability: 0.2,
 		},
 		defaultTestCount: 25,
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
-		saveFailures: { directory: dirPath.join(__dirname, "../../../src/test/mocha/results/2") },
+		saveFailures: { directory: dirPath.join(_dirname, "../../../src/test/mocha/results/2") },
 	});
 
 	createDDSFuzzSuite(
 		{ ...model, workloadName: "default directory 2 with rebasing" },
 		{
 			validationStrategy: {
-				type: "fixedInterval",
-				interval: defaultOptions.validateInterval,
+				type: "random",
+				probability: 0.4,
 			},
-			rebaseProbability: 0.15,
+			rebaseProbability: 0.2,
+			reconnectProbability: 0.5,
 			containerRuntimeOptions: {
 				flushMode: FlushMode.TurnBased,
 				enableGroupedBatching: true,
@@ -418,12 +424,13 @@ describe("SharedDirectory fuzz", () => {
 				// was refactored to use the DDS fuzz harness.
 				maxNumberOfClients: Number.MAX_SAFE_INTEGER,
 				clientAddProbability: 0.08,
+				stashableClientProbability: undefined,
 			},
-			defaultTestCount: 25,
+			defaultTestCount: 200,
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 0,
 			saveFailures: {
-				directory: dirPath.join(__dirname, "../../../src/test/mocha/results/2"),
+				directory: dirPath.join(_dirname, "../../../src/test/mocha/results/2"),
 			},
 		},
 	);

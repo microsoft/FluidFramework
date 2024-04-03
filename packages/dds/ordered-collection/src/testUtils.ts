@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ConsensusResult, IConsensusOrderedCollection } from "./interfaces";
+import { ConsensusResult, IConsensusOrderedCollection } from "./interfaces.js";
 
 /**
  * Helper method to acquire and complete an item
  * Should be used in test code only
+ * @internal
  */
 export async function acquireAndComplete<T>(
 	collection: IConsensusOrderedCollection<T>,
@@ -23,6 +24,7 @@ export async function acquireAndComplete<T>(
 /**
  * Helper method to acquire and complete an item
  * Should be used in test code only
+ * @internal
  */
 export async function waitAcquireAndComplete<T>(
 	collection: IConsensusOrderedCollection<T>,

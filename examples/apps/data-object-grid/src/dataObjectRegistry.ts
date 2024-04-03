@@ -3,22 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import { Serializable } from "@fluidframework/datastore-definitions";
-import {
-	NamedFluidDataStoreRegistryEntries,
-	IFluidDataStoreFactory,
-	IFluidDataStoreContext,
-} from "@fluidframework/runtime-definitions";
+import { Clicker, ClickerInstantiationFactory, ClickerReactView } from "@fluid-example/clicker";
 import { CodeMirrorComponent, CodeMirrorReactView, SmdeFactory } from "@fluid-example/codemirror";
 import { CollaborativeText, CollaborativeTextView } from "@fluid-example/collaborative-textarea";
 import { Coordinate } from "@fluid-example/multiview-coordinate-model";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 import { ProseMirror, ProseMirrorFactory, ProseMirrorReactView } from "@fluid-example/prosemirror";
-import { Clicker, ClickerInstantiationFactory, ClickerReactView } from "@fluid-example/clicker";
-// eslint-disable-next-line import/no-deprecated
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { Serializable } from "@fluidframework/datastore-definitions/internal";
+import {
+	IFluidDataStoreContext,
+	IFluidDataStoreFactory,
+	NamedFluidDataStoreRegistryEntries,
+} from "@fluidframework/runtime-definitions/internal";
 import * as React from "react";
 
 const codeMirrorFactory = new SmdeFactory();
@@ -31,11 +28,9 @@ interface ISingleHandleItem {
 function createSingleHandleItem(subFactory: IFluidDataStoreFactory) {
 	return async (context: IFluidDataStoreContext): Promise<ISingleHandleItem> => {
 		const packagePath = [...context.packagePath, subFactory.type];
-		const router = await context.containerRuntime.createDataStore(packagePath);
-		// eslint-disable-next-line import/no-deprecated
-		const object = await requestFluidObject<IFluidLoadable>(router, "/");
+		const dataStore = await context.containerRuntime.createDataStore(packagePath);
 		return {
-			handle: object.handle,
+			handle: dataStore.entryPoint as IFluidHandle,
 		};
 	};
 }

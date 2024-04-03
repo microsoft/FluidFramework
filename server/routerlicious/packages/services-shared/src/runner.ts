@@ -16,9 +16,11 @@ import {
 	LumberEventName,
 	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
+import { ConfigDumper } from "./configDumper";
 
 /**
  * Uses the provided factories to create and execute a runner.
+ * @internal
  */
 export async function run<T extends IResources>(
 	config: nconf.Provider,
@@ -75,14 +77,19 @@ export async function run<T extends IResources>(
 		// Wait for the runner to complete
 		await runningP;
 	} finally {
-		// And then dispose of any resources
-		await resources.dispose();
+		try {
+			// And then dispose of any resources
+			await resources.dispose();
+		} catch (err) {
+			Lumberjack.error(`Could not dispose the resources due to error`, undefined, err);
+		}
 	}
 }
 
 /**
  * Variant of run that is used to fully run a service. It configures base settings such as logging. And then will
  * exit the service once the runner completes.
+ * @internal
  */
 export function runService<T extends IResources>(
 	resourceFactory: IResourcesFactory<T>,
@@ -101,6 +108,17 @@ export function runService<T extends IResources>(
 					.use("memory")
 			: configOrPath;
 
+	const configDumpEnabled = (config.get("config:configDumpEnabled") as boolean) ?? false;
+	if (configDumpEnabled) {
+		const secretNamesToRedactInConfigDump =
+			(config.get("config:secretNamesToRedactInConfigDump") as string[]) ?? undefined;
+		const configDumper = new ConfigDumper(
+			config.get(),
+			logger,
+			secretNamesToRedactInConfigDump,
+		);
+		configDumper.dumpConfig();
+	}
 	const waitInMs = waitBeforeExitInMs ?? 1000;
 	const runnerMetric = Lumberjack.newLumberMetric(LumberEventName.RunService);
 	const runningP = run(config, resourceFactory, runnerFactory, logger);

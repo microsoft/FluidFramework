@@ -3,25 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import commander from "commander";
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader";
+import { IContainerExperimental, Loader } from "@fluidframework/container-loader/internal";
+import { IRequestHeader, LogLevel } from "@fluidframework/core-interfaces";
+import { assert, delay } from "@fluidframework/core-utils/internal";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import { getRetryDelayFromError } from "@fluidframework/driver-utils/internal";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
+	DriverEndpoint,
 	ITestDriver,
 	TestDriverTypes,
-	DriverEndpoint,
 } from "@fluidframework/test-driver-definitions";
-import { Loader, ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
-// eslint-disable-next-line import/no-deprecated
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { IRequestHeader, LogLevel } from "@fluidframework/core-interfaces";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
-import { getRetryDelayFromError } from "@fluidframework/driver-utils";
-import { assert, delay } from "@fluidframework/core-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
-import { ILoadTest, IRunConfig } from "./loadTestDataStore";
+import commander from "commander";
+
+import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver.js";
+import { ILoadTest, IRunConfig } from "./loadTestDataStore.js";
+import {
+	generateConfigurations,
+	generateLoaderOptions,
+	generateRuntimeOptions,
+	getOptionOverride,
+} from "./optionsMatrix.js";
 import {
 	configProvider,
 	createCodeLoader,
@@ -30,14 +37,7 @@ import {
 	getProfile,
 	globalConfigurations,
 	safeExit,
-} from "./utils";
-import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
-import {
-	generateConfigurations,
-	generateLoaderOptions,
-	generateRuntimeOptions,
-	getOptionOverride,
-} from "./optionsMatrix";
+} from "./utils.js";
 
 function printStatus(runConfig: IRunConfig, message: string) {
 	if (runConfig.verbose) {
@@ -108,7 +108,8 @@ async function main() {
 			driverEndpointName: endpoint,
 			profile: profileName,
 		},
-		random.pick([LogLevel.verbose, LogLevel.default]),
+		// Turn on verbose events for ALL stress test runs.
+		random.pick([LogLevel.verbose]),
 	);
 
 	// this will enabling capturing the full stack for errors
@@ -255,8 +256,7 @@ async function runnerProcess(
 			container = await loader.resolve({ url, headers }, stashedOps);
 
 			container.connect();
-			// eslint-disable-next-line import/no-deprecated
-			const test = await requestFluidObject<ILoadTest>(container, "/");
+			const test = (await container.getEntryPoint()) as ILoadTest;
 
 			// Retain old behavior of runtime being disposed on container close
 			container.once("closed", () => container?.dispose());

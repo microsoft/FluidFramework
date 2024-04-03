@@ -6,15 +6,15 @@
 /**
  * @fileoverview Context which describes a remove operation.
  */
-import { BaseContext } from "./baseContext";
-import { DataBinding } from "./dataBinding";
-import { NodeType } from "./dataBindingTree";
+import { BaseContext } from "./baseContext.js";
+import { DataBinding } from "./dataBinding.js";
+import { NodeType } from "./dataBindingTree.js";
 
 /**
  * Context which describes a remove operation
  * @extends BaseContext
  * @alias RemovalContext
- * @public
+ * @internal
  */
 export class RemovalContext extends BaseContext {
 	private _subTree: NodeType;
@@ -50,7 +50,6 @@ export class RemovalContext extends BaseContext {
 	 *     bindingType as the DataBinding that triggered this removal context.
 	 * @returns A data binding (defined for the given bindingType
 	 *     or the one associated with the data binding) or undefined if no binding is present.
-	 * @public
 	 */
 	getDataBinding(in_bindingType: string = ""): DataBinding | undefined {
 		var originalDataBindingType = this._baseDataBinding

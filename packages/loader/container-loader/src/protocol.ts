@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IAudienceOwner } from "@fluidframework/container-definitions";
-import { canBeCoalescedByService } from "@fluidframework/driver-utils";
+import { IAudienceOwner } from "@fluidframework/container-definitions/internal";
+import { canBeCoalescedByService } from "@fluidframework/driver-utils/internal";
 import {
 	IProtocolHandler as IBaseProtocolHandler,
 	IQuorumSnapshot,
@@ -28,6 +28,7 @@ export enum SignalType {
 
 /**
  * Function to be used for creating a protocol handler.
+ * @alpha
  */
 export type ProtocolHandlerBuilder = (
 	attributes: IDocumentAttributes,
@@ -35,6 +36,9 @@ export type ProtocolHandlerBuilder = (
 	sendProposal: (key: string, value: any) => number,
 ) => IProtocolHandler;
 
+/**
+ * @alpha
+ */
 export interface IProtocolHandler extends IBaseProtocolHandler {
 	readonly audience: IAudienceOwner;
 	processSignal(message: ISignalMessage);

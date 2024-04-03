@@ -1,5 +1,55 @@
 # @fluidframework/data-object-base
 
+## 2.0.0-rc.2.0.0
+
+### Minor Changes
+
+-   data-object-base: LazyLoadedDataObject and LazyLoadedDataObjectFactory removed ([#19838](https://github.com/microsoft/FluidFramework/issues/19838)) [3bde9fc00b](https://github.com/microsoft/FluidFramework/commits/3bde9fc00bfb5271a88b0c20b94416add19d7a0a)
+
+    LazyLoadedDataObject and LazyLoadedDataObjectFactory are not recommended for use and have been removed.
+
+-   @fluidframework/data-object-base demoted to experimental status ([#19438](https://github.com/microsoft/FluidFramework/issues/19438)) [bbc812af86](https://github.com/microsoft/FluidFramework/commits/bbc812af8682c4cd1d6387d5708058c25a5c43a1)
+
+    @fluidframework/data-object-base is now @fluid-experimental/data-object-base, and is not recommended for use in production. Prefer to use the data object classes from @fluidframework/aqueduct.
+
+-   data-object-base: LazyLoadedDataObject and LazyLoadedDataObjectFactory deprecated ([#19482](https://github.com/microsoft/FluidFramework/issues/19482)) [c4c1e197cf](https://github.com/microsoft/FluidFramework/commits/c4c1e197cfdda1379b74b791dc1aef51aa3d7830)
+
+    `LazyLoadedDataObject` and `LazyLoadedDataObjectFactory` have been deprecated and are not recommended for use. For lazy loading of data objects, prefer to defer dereferencing their handles.
+
+## 2.0.0-rc.1.0.0
+
+Dependency updates only.
+
+## 2.0.0-internal.8.0.0
+
+### Major Changes
+
+-   data-object-base: Removed IFluidRouter from DataObject interfaces and classes [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The `IFluidRouter` property has been removed from a number of DataObject related classes:
+
+    -   `PureDataObject`
+    -   `LazyLoadedDataObject`
+    -   `TestFluidObject`
+
+    Please migrate to the new `entryPoint` pattern or use the relevant `request` method as necessary.
+
+    See
+    [Removing-IFluidRouter.md](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/Removing-IFluidRouter.md)
+    for more details.
+
+## 2.0.0-internal.7.4.0
+
+Dependency updates only.
+
+## 2.0.0-internal.7.3.0
+
+Dependency updates only.
+
+## 2.0.0-internal.7.2.0
+
+Dependency updates only.
+
 ## 2.0.0-internal.7.1.0
 
 Dependency updates only.

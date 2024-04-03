@@ -36,7 +36,9 @@ trigger:
     - release/*
   paths:
     include:
+    - .prettierignore
     - common/build/eslint-config-fluid
+    - tools/markdown-magic # Required since eslint-config-fluid takes a `file:` dependency on this package
     - tools/pipelines/build-eslint-config-fluid.yml
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
@@ -59,8 +61,10 @@ pr:
     - release/*
   paths:
     include:
+    - .prettierignore
     - common/build/eslint-config-fluid
-    - tools/pipelines/build-eslint-config-fluid.yml
+    - tools/markdown-magic
+    - tools/pipelines/build-eslint-config-fluid.yml # Required since eslint-config-fluid takes a `file:` dependency on this package
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -69,9 +73,17 @@ pr:
     - tools/pipelines/templates/include-process-test-results.yml
     - scripts/*
 
+variables:
+  - template: /tools/pipelines/templates/include-vars.yml@self
+    parameters:
+      publishOverride: '${{ parameters.publishOverride }}'
+      releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
+      buildNumberInPatch: ''
+
 extends:
-  template: templates/build-npm-package.yml
+  template: /tools/pipelines/templates/build-npm-package.yml@self
   parameters:
+    publish: ${{ variables.publish }}
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
@@ -79,7 +91,9 @@ extends:
     tagName: eslint-config-fluid
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
+    testCoverage: ${{ variables.testCoverage }}
     taskBuild: build
     taskBuildDocs: false
     taskLint: false
-    taskTest: [] # no tests
+    taskTest:
+      - test

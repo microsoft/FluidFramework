@@ -3,31 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITelemetryBaseLogger,
-	IDisposable,
+import type {
 	FluidObject,
-	IRequest,
-	IResponse,
+	IDisposable,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import {
+import type {
+	IDocumentStorageService,
+	ISnapshot,
+} from "@fluidframework/driver-definitions/internal";
+import type {
 	IClientDetails,
-	ISequencedDocumentMessage,
-	ISnapshotTree,
-	MessageType,
-	ISummaryTree,
-	IVersion,
 	IDocumentMessage,
 	IQuorumClients,
+	ISequencedDocumentMessage,
+	ISnapshotTree,
 	ISummaryContent,
+	ISummaryTree,
+	IVersion,
+	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { IAudience } from "./audience";
-import { IDeltaManager } from "./deltas";
-import { ICriticalContainerError } from "./error";
-import { ILoader, ILoaderOptions, ISnapshotTreeWithBlobContents } from "./loader";
-import { IFluidCodeDetails } from "./fluidPackage";
+
+import type { IAudience } from "./audience.js";
+import type { IDeltaManager } from "./deltas.js";
+import type { ICriticalContainerError } from "./error.js";
+import type { ILoader } from "./loader.js";
 
 /**
  * The attachment state of some Fluid data (e.g. a container or data store), denoting whether it is uploaded to the
@@ -56,15 +56,9 @@ export enum AttachState {
 /**
  * The IRuntime represents an instantiation of a code package within a Container.
  * Primarily held by the ContainerContext to be able to interact with the running instance of the Container.
- * @public
+ * @alpha
  */
 export interface IRuntime extends IDisposable {
-	/**
-	 * Executes a request against the runtime
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	request(request: IRequest): Promise<IResponse>;
-
 	/**
 	 * Notifies the runtime of a change in the connection state
 	 */
@@ -99,17 +93,8 @@ export interface IRuntime extends IDisposable {
 
 	/**
 	 * Get pending local state in a serializable format to be given back to a newly loaded container
-	 * @experimental
-	 * {@link https://github.com/microsoft/FluidFramework/packages/tree/main/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
-	getPendingLocalState(props?: { notifyImminentClosure?: boolean }): unknown;
-
-	/**
-	 * Notify runtime that container is moving to "Attaching" state
-	 * @param snapshot - snapshot created at attach time
-	 * @deprecated - not necessary after op replay moved to Container
-	 */
-	notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
+	getPendingLocalState(props?: IGetPendingLocalStateProps): unknown;
 
 	/**
 	 * Notify runtime that we have processed a saved message, so that it can do async work (applying
@@ -123,16 +108,16 @@ export interface IRuntime extends IDisposable {
 	 *
 	 * @see {@link IContainer.getEntryPoint}
 	 */
-	getEntryPoint(): Promise<FluidObject | undefined>;
+	getEntryPoint(): Promise<FluidObject>;
 }
 
 /**
  * Payload type for IContainerContext.submitBatchFn()
- * @public
+ * @alpha
  */
 export interface IBatchMessage {
 	contents?: string;
-	metadata: Record<string, unknown> | undefined;
+	metadata?: Record<string, unknown>;
 	compression?: string;
 	referenceSequenceNumber?: number;
 }
@@ -141,10 +126,20 @@ export interface IBatchMessage {
  * IContainerContext is fundamentally just the set of things that an IRuntimeFactory (and IRuntime) will consume from the
  * loader layer.  It gets passed into the IRuntimeFactory.instantiateRuntime call.  Only include members on this interface
  * if you intend them to be consumed/called from the runtime layer.
- * @public
+ *
+ * TODO: once `@alpha` tag is removed, `unknown` should be removed from submitSignalFn
+ * @see {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/7462}
+ * @alpha
  */
 export interface IContainerContext {
-	readonly options: ILoaderOptions;
+	/**
+	 * Not recommended for general use, is used in some cases to control various runtime behaviors.
+	 *
+	 * @remarks
+	 * Used to be ILoaderOptions, this is staging for eventual removal.
+	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
 	readonly clientDetails: IClientDetails;
 	readonly storage: IDocumentStorageService;
@@ -163,21 +158,11 @@ export interface IContainerContext {
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
 	) => number;
-	// TODO: use `unknown` instead (API breaking)
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	readonly submitSignalFn: (contents: any) => void;
+	readonly submitSignalFn: (contents: unknown, targetClientId?: string) => void;
 	readonly disposeFn?: (error?: ICriticalContainerError) => void;
 	readonly closeFn: (error?: ICriticalContainerError) => void;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly quorum: IQuorumClients;
-	/**
-	 * @deprecated This method is provided as a migration tool for customers currently reading the code details
-	 * from within the Container by directly accessing the Quorum proposals.  The code details should not be accessed
-	 * from within the Container as this requires coupling between the container contents and the code loader.
-	 * Direct access to Quorum proposals will be removed in an upcoming release, and in a further future release this
-	 * migration tool will be removed.
-	 */
-	getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
 	readonly audience: IAudience | undefined;
 	readonly loader: ILoader;
 	// The logger implementation, which would support tagged events, should be provided by the loader.
@@ -219,15 +204,20 @@ export interface IContainerContext {
 	 * @privateremarks Tracking in AB#5714
 	 */
 	readonly id: string;
+
+	/**
+	 * This contains all parts of a snapshot like blobContents, ops etc.
+	 */
+	readonly snapshotWithContents?: ISnapshot;
 }
 
 /**
- * @public
+ * @alpha
  */
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
 
 /**
- * @public
+ * @alpha
  */
 export interface IProvideRuntimeFactory {
 	readonly IRuntimeFactory: IRuntimeFactory;
@@ -238,7 +228,7 @@ export interface IProvideRuntimeFactory {
  *
  * Provides the entry point for the ContainerContext to load the proper IRuntime
  * to start up the running instance of the Container.
- * @public
+ * @alpha
  */
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
 	/**
@@ -249,4 +239,25 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 	 * @param existing - whether to instantiate for the first time or from an existing context
 	 */
 	instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
+}
+
+/**
+ * Defines list of properties expected for getPendingLocalState
+ * @alpha
+ */
+export interface IGetPendingLocalStateProps {
+	/**
+	 * Indicates the container will close after getting the pending state. Used internally
+	 * to wait for blobs to be attached to a DDS and collect generated ops before closing.
+	 */
+	readonly notifyImminentClosure: boolean;
+
+	/**
+	 * Abort signal to stop waiting for blobs to get attached to a DDS. When triggered,
+	 * only blobs attached will be collected in the pending state.
+	 * Intended to be used in the very rare scenario in which getLocalPendingState go stale due
+	 * to a blob failed to be referenced. Such a blob will be lost but the rest of the state will
+	 * be preserved and collected.
+	 */
+	readonly stopBlobAttachingSignal?: AbortSignal;
 }

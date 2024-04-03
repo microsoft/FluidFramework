@@ -7,10 +7,15 @@ import { serializeError } from "serialize-error";
 import { Lumber } from "./lumber";
 import { LumberEventName } from "./lumberEventNames";
 
+// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
 const isBrowser = typeof window !== "undefined" && typeof window.document !== "undefined";
 const isNode =
+	// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
 	typeof process !== "undefined" && process.versions != null && process.versions.node != null;
 
+/**
+ * @internal
+ */
 export enum LogLevel {
 	Error,
 	Warning,
@@ -19,11 +24,17 @@ export enum LogLevel {
 	Debug,
 }
 
+/**
+ * @internal
+ */
 export enum LumberType {
 	Metric,
 	Log,
 }
 
+/**
+ * @internal
+ */
 export enum BaseTelemetryProperties {
 	tenantId = "tenantId",
 	documentId = "documentId",
@@ -31,6 +42,9 @@ export enum BaseTelemetryProperties {
 }
 
 // Incoming message properties
+/**
+ * @internal
+ */
 export enum QueuedMessageProperties {
 	topic = "topic",
 	partition = "partition",
@@ -41,6 +55,9 @@ export enum QueuedMessageProperties {
 	offsetEnd = "offsetEnd",
 }
 
+/**
+ * @internal
+ */
 export enum HttpProperties {
 	driverVersion = "driverVersion",
 	method = "method",
@@ -48,10 +65,15 @@ export enum HttpProperties {
 	requestContentLength = "requestContentLength",
 	responseContentLength = "responseContentLength",
 	responseTime = "responseTime",
+	responsePrefinishToFinishLatencyMs = "responsePrefinishToFinishLatencyMs",
+	responseFinishToCloseLatencyMs = "responseFinishToCloseLatencyMs",
 	status = "status",
 	url = "url",
 }
 
+/**
+ * @internal
+ */
 export enum CommonProperties {
 	// Client properties
 	clientId = "clientId",
@@ -94,6 +116,9 @@ export enum CommonProperties {
 	restartReason = "restartReason",
 }
 
+/**
+ * @internal
+ */
 export enum ThrottlingTelemetryProperties {
 	// Use throttleId as key
 	key = "key",
@@ -108,6 +133,9 @@ export enum ThrottlingTelemetryProperties {
 	weight = "weight",
 }
 
+/**
+ * @internal
+ */
 export enum SessionState {
 	// State set when the document lambdas are up and first op for the document is ticketed
 	started = "started",
@@ -127,6 +155,9 @@ export enum SessionState {
 
 // Implementations of ILumberjackEngine are used by Lumberjack and Lumber
 // to process and emit collected data to the appropriate transports.
+/**
+ * @internal
+ */
 export interface ILumberjackEngine {
 	emit(lumber: Lumber<string>): void;
 }
@@ -134,16 +165,25 @@ export interface ILumberjackEngine {
 // Implementations of ILumberjackSchemaValidator are used by Lumber to validate the schema
 // of the collected data/properties. The schema validation rules can be defined by each individual
 // implementation.
+/**
+ * @internal
+ */
 export interface ILumberjackSchemaValidator {
 	validate(props: Map<string, any>): ILumberjackSchemaValidationResult;
 }
 
+/**
+ * @internal
+ */
 export interface ILumberjackSchemaValidationResult {
 	validationPassed: boolean;
 	validationFailedForProperties: string[];
 }
 
 // Helper method to assist with handling Lumberjack/Lumber errors depending on the context.
+/**
+ * @internal
+ */
 export function handleError(
 	eventName: LumberEventName,
 	errMsg: string,
@@ -166,11 +206,17 @@ export function handleError(
 }
 
 // Helper method to add commonly used Lumber properties
+/**
+ * @internal
+ */
 export const getLumberBaseProperties = (documentId: string, tenantId: string) => ({
 	[BaseTelemetryProperties.tenantId]: tenantId,
 	[BaseTelemetryProperties.documentId]: documentId,
 });
 
+/**
+ * @internal
+ */
 export interface ILumberFormatter {
 	transform(lumber: Lumber<string>): void;
 }

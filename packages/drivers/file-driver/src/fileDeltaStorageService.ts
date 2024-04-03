@@ -4,13 +4,15 @@
  */
 
 import fs from "fs";
-import { assert } from "@fluidframework/core-utils";
-import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions";
-import { emptyMessageStream } from "@fluidframework/driver-utils";
+
+import { assert } from "@fluidframework/core-utils/internal";
+import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions/internal";
+import { emptyMessageStream } from "@fluidframework/driver-utils/internal";
 import * as api from "@fluidframework/protocol-definitions";
 
 /**
  * Provides access to the underlying delta storage on the local file storage for file driver.
+ * @internal
  */
 export class FileDeltaStorageService implements IDocumentDeltaStorageService {
 	private readonly messages: api.ISequencedDocumentMessage[];

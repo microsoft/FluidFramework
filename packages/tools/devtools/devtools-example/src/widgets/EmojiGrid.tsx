@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import { Spinner } from "@fluentui/react-components";
+import { type SharedCell } from "@fluidframework/cell/internal";
+import { type IFluidHandle } from "@fluidframework/core-interfaces";
+import { type SharedMatrix } from "@fluidframework/matrix/internal";
 import React from "react";
 
-import { Spinner } from "@fluentui/react-components";
-
-import { type SharedMatrix } from "@fluidframework/matrix";
-import { type IFluidHandle } from "@fluidframework/core-interfaces";
-import { type SharedCell } from "@fluidframework/cell";
-import { EmojiButton } from "./EmojiButton";
+import { EmojiButton } from "./EmojiButton.js";
 
 /**
  * {@link EmojiGrid} input props.
+ * @internal
  */
 export interface EmojiGridProps {
 	emojiMatrix: SharedMatrix<IFluidHandle<SharedCell<boolean>>>;
@@ -21,6 +21,7 @@ export interface EmojiGridProps {
 
 /**
  * A grid view, backed by a `SharedMatrix`, containing a series of {@link EmojiButton}s.
+ * @internal
  */
 export function EmojiGrid(props: EmojiGridProps): React.ReactElement {
 	const { emojiMatrix } = props;

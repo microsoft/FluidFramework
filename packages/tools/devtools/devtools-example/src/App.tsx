@@ -2,39 +2,44 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
 	type BrandVariants,
-	createLightTheme,
 	FluentProvider,
-	makeStyles,
-	shorthands,
 	Spinner,
 	Text,
 	type Theme,
+	createLightTheme,
+	makeStyles,
+	shorthands,
 } from "@fluentui/react-components";
+import {
+	CollaborativeTextArea,
+	type SessionStorageModelLoader,
+	SharedStringHelper,
+} from "@fluid-example/example-utils";
+import { type SharedCounter } from "@fluidframework/counter/internal";
+import {
+	type ContainerKey,
+	type HasContainerKey,
+	type IDevtoolsLogger,
+	type IFluidDevtools,
+	createDevtoolsLogger,
+	initializeDevtools,
+} from "@fluidframework/devtools-core/internal";
+import { type SharedMatrix } from "@fluidframework/matrix/internal";
+import { type SharedString } from "@fluidframework/sequence/internal";
 import React from "react";
 
 import {
-	type ContainerKey,
-	DevtoolsLogger,
-	type HasContainerKey,
-	type IFluidDevtools,
-	initializeDevtools,
-} from "@fluid-experimental/devtools-core";
-import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
-import { type SharedCounter } from "@fluidframework/counter";
-import { type SessionStorageModelLoader } from "@fluid-example/example-utils";
-import { type SharedMatrix } from "@fluidframework/matrix";
-import { type SharedString } from "@fluidframework/sequence";
-import {
 	type ContainerInfo,
-	createLoader,
 	createContainer,
+	createLoader,
 	loadExistingContainer,
-} from "./ClientUtilities";
-import { CounterWidget, EmojiGrid } from "./widgets";
-import { type IAppModel } from "./Container";
-import { type AppData } from "./FluidObject";
+} from "./ClientUtilities.js";
+import { type IAppModel } from "./Container.js";
+import { type AppData } from "./FluidObject.js";
+import { CounterWidget, EmojiGrid } from "./widgets/index.js";
 
 const sharedContainerKey: ContainerKey = "Shared Container";
 const privateContainerKey: ContainerKey = "Private Container";
@@ -52,7 +57,7 @@ function getContainerIdFromLocation(location: Location): string {
  */
 function useContainerInfo(
 	devtools: IFluidDevtools,
-	logger: DevtoolsLogger,
+	logger: IDevtoolsLogger,
 	loader: SessionStorageModelLoader<IAppModel>,
 ): {
 	privateContainer: ContainerInfo | undefined;
@@ -183,7 +188,7 @@ const useStyles = makeStyles({
  */
 export function App(): React.ReactElement {
 	// Initialize the Devtools logger
-	const logger = React.useMemo(() => new DevtoolsLogger(), []);
+	const logger = React.useMemo(() => createDevtoolsLogger(), []);
 
 	// Initialize the Fluid Container loader
 	const loader = React.useMemo(() => createLoader(logger), [logger]);

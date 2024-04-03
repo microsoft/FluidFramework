@@ -4,44 +4,44 @@
 
 ```ts
 
-import { BaseSegment } from '@fluidframework/merge-tree';
+import { BaseSegment } from '@fluidframework/merge-tree/internal';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IJSONRunSegment } from '@fluidframework/sequence';
-import { IJSONSegment } from '@fluidframework/merge-tree';
-import { ISegment } from '@fluidframework/merge-tree';
+import { IJSONRunSegment } from '@fluidframework/sequence/internal';
+import { IJSONSegment } from '@fluidframework/merge-tree/internal';
+import { ISegment } from '@fluidframework/merge-tree/internal';
 import { ISharedObject } from '@fluidframework/shared-object-base';
-import { Jsonable } from '@fluidframework/datastore-definitions';
-import { PropertySet } from '@fluidframework/merge-tree';
-import { Serializable } from '@fluidframework/datastore-definitions';
-import { SharedSegmentSequence } from '@fluidframework/sequence';
-import { SharedSequence } from '@fluidframework/sequence';
-import { SubSequence } from '@fluidframework/sequence';
+import { Jsonable } from '@fluidframework/datastore-definitions/internal';
+import { PropertySet } from '@fluidframework/merge-tree/internal';
+import { Serializable } from '@fluidframework/datastore-definitions/internal';
+import { SharedSegmentSequence } from '@fluidframework/sequence/internal';
+import { SharedSequence } from '@fluidframework/sequence/internal';
+import { SubSequence } from '@fluidframework/sequence/internal';
 
 export { IJSONRunSegment }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export type MatrixSegment = RunSegment | PaddingSegment;
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export const maxCellPosition: number;
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export const maxCol = 2097152;
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export const maxCols: number;
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export const maxRow = 4294967295;
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export const maxRows: number;
 
-// @public @deprecated
+// @internal @deprecated
 export class PaddingSegment extends BaseSegment {
     constructor(size: number);
     // (undocumented)
@@ -71,16 +71,16 @@ export class PaddingSegment extends BaseSegment {
     static readonly typeString = "PaddingSegment";
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export function positionToRowCol(position: number): {
     row: number;
     col: number;
 };
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export const rowColToPosition: (row: number, col: number) => number;
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export class RunSegment extends SubSequence<SparseMatrixItem> {
     constructor(items: SparseMatrixItem[]);
     // (undocumented)
@@ -107,7 +107,7 @@ export class RunSegment extends SubSequence<SparseMatrixItem> {
     static readonly typeString = "RunSegment";
 }
 
-// @public @deprecated
+// @internal @deprecated
 export class SharedNumberSequence extends SharedSequence<number> {
     // @deprecated
     constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
@@ -121,7 +121,25 @@ export class SharedNumberSequence extends SharedSequence<number> {
     id: string;
 }
 
-// @public @deprecated
+// @internal @deprecated (undocumented)
+export class SharedNumberSequenceFactory implements IChannelFactory {
+    // @deprecated (undocumented)
+    static readonly Attributes: IChannelAttributes;
+    // @deprecated (undocumented)
+    get attributes(): IChannelAttributes;
+    // @deprecated (undocumented)
+    create(document: IFluidDataStoreRuntime, id: string): ISharedObject;
+    // @deprecated
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedObject>;
+    // @deprecated (undocumented)
+    static segmentFromSpec(segSpec: IJSONSegment): SubSequence<number>;
+    // @deprecated (undocumented)
+    static Type: string;
+    // @deprecated (undocumented)
+    get type(): string;
+}
+
+// @internal @deprecated
 export class SharedObjectSequence<T> extends SharedSequence<T> {
     // @deprecated
     constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
@@ -135,9 +153,27 @@ export class SharedObjectSequence<T> extends SharedSequence<T> {
     id: string;
 }
 
+// @internal @deprecated (undocumented)
+export class SharedObjectSequenceFactory implements IChannelFactory {
+    // @deprecated (undocumented)
+    static readonly Attributes: IChannelAttributes;
+    // @deprecated (undocumented)
+    get attributes(): IChannelAttributes;
+    // @deprecated (undocumented)
+    create(document: IFluidDataStoreRuntime, id: string): ISharedObject;
+    // @deprecated
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedObject>;
+    // @deprecated (undocumented)
+    static segmentFromSpec(segSpec: IJSONSegment): SubSequence<object>;
+    // @deprecated (undocumented)
+    static Type: string;
+    // @deprecated (undocumented)
+    get type(): string;
+}
+
 export { SharedSequence }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
     // (undocumented)
@@ -169,7 +205,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     setTag(row: number, col: number, tag: any): void;
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export class SparseMatrixFactory implements IChannelFactory {
     // (undocumented)
     static Attributes: IChannelAttributes;
@@ -177,7 +213,6 @@ export class SparseMatrixFactory implements IChannelFactory {
     get attributes(): IChannelAttributes;
     // (undocumented)
     create(document: IFluidDataStoreRuntime, id: string): ISharedObject;
-    // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedObject>;
     // (undocumented)
     static segmentFromSpec(spec: IJSONSegment): ISegment;
@@ -187,8 +222,8 @@ export class SparseMatrixFactory implements IChannelFactory {
     get type(): string;
 }
 
-// @public @deprecated (undocumented)
-export type SparseMatrixItem = Serializable;
+// @internal @deprecated (undocumented)
+export type SparseMatrixItem = any;
 
 export { SubSequence }
 

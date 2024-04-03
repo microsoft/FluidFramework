@@ -3,29 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
 import { strict as assert } from "assert";
+import * as path from "path";
+
 import {
 	AcceptanceCondition,
-	combineReducersAsync as combineReducers,
-	AsyncReducer as Reducer,
-} from "@fluid-internal/stochastic-test-utils";
-import {
-	DDSFuzzModel,
-	DDSFuzzSuiteOptions,
-	DDSFuzzTestState,
-} from "@fluid-internal/test-dds-utils";
+	AsyncGenerator,
+	AsyncReducer,
+	combineReducersAsync,
+	createWeightedAsyncGenerator,
+} from "@fluid-private/stochastic-test-utils";
+import { DDSFuzzModel, DDSFuzzSuiteOptions, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import {
 	IChannelAttributes,
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { PropertySet } from "@fluidframework/merge-tree";
-import { revertSharedStringRevertibles, SharedStringRevertible } from "../../revertibles";
-import { SharedStringFactory } from "../../sequenceFactory";
-import { SharedString } from "../../sharedString";
-import { Side } from "../../intervalCollection";
-import { assertEquivalentSharedStrings } from "../intervalUtils";
+import { PropertySet } from "@fluidframework/merge-tree/internal";
+
+import type { SequenceInterval } from "../../index.js";
+import { type IIntervalCollection, Side } from "../../intervalCollection.js";
+import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";
+import { SharedStringFactory } from "../../sequenceFactory.js";
+import { SharedString } from "../../sharedString.js";
+import { _dirname } from "../dirname.cjs";
+import { assertEquivalentSharedStrings } from "../intervalTestUtils.js";
 
 export type RevertibleSharedString = SharedString & {
 	revertibles: SharedStringRevertible[];
@@ -56,6 +58,10 @@ export interface RemoveRange extends RangeSpec {
 	type: "removeRange";
 }
 
+export interface ObliterateRange extends RangeSpec {
+	type: "obliterateRange";
+}
+
 // For non-interval collection fuzzing, annotating text would also be useful.
 export interface AddInterval extends IntervalCollectionSpec, RangeSpec {
 	type: "addInterval";
@@ -67,22 +73,19 @@ export interface AddInterval extends IntervalCollectionSpec, RangeSpec {
 	endSide: Side;
 }
 
-export interface ChangeInterval extends IntervalCollectionSpec, RangeSpec {
+export interface ChangeInterval extends IntervalCollectionSpec {
 	type: "changeInterval";
+	start: number | undefined;
+	end: number | undefined;
 	id: string;
 	startSide: Side;
 	endSide: Side;
+	properties: PropertySet | undefined;
 }
 
 export interface DeleteInterval extends IntervalCollectionSpec {
 	type: "deleteInterval";
 	id: string;
-}
-
-export interface ChangeProperties extends IntervalCollectionSpec {
-	type: "changeProperties";
-	id: string;
-	properties: PropertySet;
 }
 
 export interface RevertSharedStringRevertibles {
@@ -94,15 +97,15 @@ export interface RevertibleWeights {
 	revertWeight: number;
 	addText: number;
 	removeRange: number;
+	obliterateRange: number;
 	addInterval: number;
 	deleteInterval: number;
 	changeInterval: number;
-	changeProperties: number;
 }
 
-export type IntervalOperation = AddInterval | ChangeInterval | DeleteInterval | ChangeProperties;
+export type IntervalOperation = AddInterval | ChangeInterval | DeleteInterval;
 export type OperationWithRevert = IntervalOperation | RevertSharedStringRevertibles;
-export type TextOperation = AddText | RemoveRange;
+export type TextOperation = AddText | RemoveRange | ObliterateRange;
 
 export type ClientOperation = IntervalOperation | TextOperation;
 
@@ -121,6 +124,7 @@ export interface SharedStringOperationGenerationConfig {
 	weights?: {
 		addText: number;
 		removeRange: number;
+		obliterateRange: number;
 	};
 }
 
@@ -143,6 +147,7 @@ export const defaultSharedStringOperationGenerationConfig: Required<SharedString
 		weights: {
 			addText: 2,
 			removeRange: 1,
+			obliterateRange: 1,
 		},
 	};
 export const defaultIntervalOperationGenerationConfig: Required<IntervalOperationGenerationConfig> =
@@ -158,7 +163,7 @@ export const defaultIntervalOperationGenerationConfig: Required<IntervalOperatio
 			addInterval: 2,
 			deleteInterval: 2,
 			changeInterval: 2,
-			changeProperties: 2,
+			obliterateRange: 0,
 		},
 	};
 
@@ -199,9 +204,9 @@ type ClientOpState = FuzzTestState;
 
 export function makeReducer(
 	loggingInfo?: LoggingInfo,
-): Reducer<Operation | RevertOperation, ClientOpState> {
+): AsyncReducer<Operation | RevertOperation, ClientOpState> {
 	const withLogging =
-		<T>(baseReducer: Reducer<T, ClientOpState>): Reducer<T, ClientOpState> =>
+		<T>(baseReducer: AsyncReducer<T, ClientOpState>): AsyncReducer<T, ClientOpState> =>
 		async (state, operation) => {
 			if (loggingInfo !== undefined) {
 				logCurrentState(state, loggingInfo);
@@ -211,12 +216,15 @@ export function makeReducer(
 			await baseReducer(state, operation);
 		};
 
-	const reducer = combineReducers<Operation | RevertOperation, ClientOpState>({
+	const reducer = combineReducersAsync<Operation | RevertOperation, ClientOpState>({
 		addText: async ({ client }, { index, content }) => {
 			client.channel.insertText(index, content);
 		},
 		removeRange: async ({ client }, { start, end }) => {
 			client.channel.removeRange(start, end);
+		},
+		obliterateRange: async ({ client }, { start, end }) => {
+			client.channel.obliterateRange(start, end);
 		},
 		addInterval: async ({ client }, { start, end, collectionName, id, startSide, endSide }) => {
 			const collection = client.channel.getIntervalCollection(collectionName);
@@ -232,14 +240,18 @@ export function makeReducer(
 		},
 		changeInterval: async (
 			{ client },
-			{ id, start, end, collectionName, startSide, endSide },
+			{ id, start, end, collectionName, startSide, endSide, properties },
 		) => {
 			const collection = client.channel.getIntervalCollection(collectionName);
-			collection.change(id, { pos: start, side: startSide }, { pos: end, side: endSide });
-		},
-		changeProperties: async ({ client }, { id, properties, collectionName }) => {
-			const collection = client.channel.getIntervalCollection(collectionName);
-			collection.changeProperties(id, { ...properties });
+			if (start !== undefined && end !== undefined) {
+				collection.change(id, {
+					start: { pos: start, side: startSide },
+					end: { pos: end, side: endSide },
+					props: properties,
+				});
+			} else {
+				collection.change(id, { props: properties });
+			}
 		},
 		revertSharedStringRevertibles: async ({ client }, { editsToRevert }) => {
 			assert(isRevertibleSharedString(client.channel));
@@ -280,7 +292,14 @@ export function createSharedStringGeneratorOperations(
 		return {
 			type: "addText",
 			index: random.integer(0, client.channel.getLength()),
-			content: random.string(random.integer(0, options.maxInsertLength)),
+			content: random.string(random.integer(1, options.maxInsertLength)),
+		};
+	}
+
+	async function obliterateRange(state: ClientOpState): Promise<ObliterateRange> {
+		return {
+			type: "obliterateRange",
+			...exclusiveRange(state),
 		};
 	}
 
@@ -304,6 +323,7 @@ export function createSharedStringGeneratorOperations(
 		exclusiveRange,
 		exclusiveRangeLeaveChar,
 		addText,
+		obliterateRange,
 		removeRange,
 		removeRangeLeaveChar,
 		lengthSatisfies,
@@ -320,11 +340,13 @@ export class SharedStringFuzzFactory extends SharedStringFactory {
 		attributes: IChannelAttributes,
 	): Promise<SharedString> {
 		runtime.options.intervalStickinessEnabled = true;
+		runtime.options.mergeTreeEnableObliterate = true;
 		return super.load(runtime, id, services, attributes);
 	}
 
 	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
 		document.options.intervalStickinessEnabled = true;
+		document.options.mergeTreeEnableObliterate = true;
 		return super.create(document, id);
 	}
 }
@@ -356,10 +378,10 @@ export const baseModel: Omit<
 				case "removeRange":
 				case "addInterval":
 				case "changeInterval":
-					if (op.start > 0) {
+					if (op.start !== undefined && op.start > 0) {
 						op.start -= 1;
 					}
-					if (op.end > 0) {
+					if (op.end !== undefined && op.end > 0) {
 						op.end -= 1;
 					}
 					break;
@@ -375,7 +397,7 @@ export const baseModel: Omit<
 			) {
 				return;
 			}
-			if (op.end > 0) {
+			if (op.end !== undefined && op.end > 0) {
 				op.end -= 1;
 			}
 		},
@@ -391,7 +413,7 @@ export const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
 		clientAddProbability: 0.1,
 	},
 	defaultTestCount: 100,
-	saveFailures: { directory: path.join(__dirname, "../../../src/test/fuzz/results") },
+	saveFailures: { directory: path.join(_dirname, "../../src/test/fuzz/results") },
 	parseOperations: (serialized: string) => {
 		const operations: Operation[] = JSON.parse(serialized);
 		// Replace this value with some other interval ID and uncomment to filter replay of the test
@@ -405,3 +427,157 @@ export const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
 		return operations;
 	},
 };
+
+export function makeIntervalOperationGenerator(
+	optionsParam?: IntervalOperationGenerationConfig,
+	alwaysLeaveChar: boolean = false,
+): AsyncGenerator<Operation, ClientOpState> {
+	const {
+		startPosition,
+		addText,
+		obliterateRange,
+		removeRange,
+		removeRangeLeaveChar,
+		lengthSatisfies,
+		hasNonzeroLength,
+		isShorterThanMaxLength,
+	} = createSharedStringGeneratorOperations(optionsParam);
+
+	const options = { ...defaultIntervalOperationGenerationConfig, ...(optionsParam ?? {}) };
+
+	function isNonEmpty(collection: IIntervalCollection<SequenceInterval>): boolean {
+		for (const _ of collection) {
+			return true;
+		}
+
+		return false;
+	}
+
+	function inclusiveRange(state: ClientOpState): RangeSpec {
+		const start = startPosition(state);
+		const end = state.random.integer(
+			start,
+			Math.max(start, state.client.channel.getLength() - 1),
+		);
+		return { start, end };
+	}
+
+	function inclusiveRangeWithUndefined(
+		state: ClientOpState,
+	): RangeSpec | { start: undefined; end: undefined } {
+		return state.random.bool() ? inclusiveRange(state) : { start: undefined, end: undefined };
+	}
+
+	function propertySet(state: ClientOpState): PropertySet {
+		const propNamesShuffled = [...options.propertyNamePool];
+		state.random.shuffle(propNamesShuffled);
+		const propsToChange = propNamesShuffled.slice(
+			0,
+			state.random.integer(1, propNamesShuffled.length),
+		);
+		const propSet: PropertySet = {};
+		for (const name of propsToChange) {
+			propSet[name] = state.random.string(5);
+		}
+		return propSet;
+	}
+
+	function propertySetWithUndefined(state: ClientOpState): PropertySet | undefined {
+		return state.random.bool() ? propertySet(state) : undefined;
+	}
+
+	function nonEmptyIntervalCollection({ client, random }: ClientOpState): string {
+		const nonEmptyLabels = Array.from(client.channel.getIntervalCollectionLabels()).filter(
+			(label) => {
+				const collection = client.channel.getIntervalCollection(label);
+				return isNonEmpty(collection);
+			},
+		);
+		return random.pick(nonEmptyLabels);
+	}
+
+	function interval(state: ClientOpState): { collectionName: string; id: string } {
+		const collectionName = nonEmptyIntervalCollection(state);
+		const intervals = Array.from(state.client.channel.getIntervalCollection(collectionName));
+		const id = state.random.pick(intervals)?.getIntervalId();
+		assert(id);
+
+		return {
+			id,
+			collectionName,
+		};
+	}
+
+	async function addInterval(state: ClientOpState): Promise<AddInterval> {
+		return {
+			type: "addInterval",
+			...inclusiveRange(state),
+			collectionName: state.random.pick(options.intervalCollectionNamePool),
+			id: state.random.uuid4(),
+			startSide: state.random.pick([Side.Before, Side.After]),
+			endSide: state.random.pick([Side.Before, Side.After]),
+		};
+	}
+
+	async function deleteInterval(state: ClientOpState): Promise<DeleteInterval> {
+		return {
+			type: "deleteInterval",
+			...interval(state),
+		};
+	}
+
+	async function changeInterval(state: ClientOpState): Promise<ChangeInterval> {
+		const { start, end } = inclusiveRangeWithUndefined(state);
+		const properties = propertySetWithUndefined(state);
+		return {
+			type: "changeInterval",
+			start,
+			end,
+			startSide: state.random.pick([Side.Before, Side.After]),
+			endSide: state.random.pick([Side.Before, Side.After]),
+			properties,
+			...interval(state),
+		};
+	}
+
+	const hasAnInterval = ({ client }: ClientOpState): boolean =>
+		Array.from(client.channel.getIntervalCollectionLabels()).some((label) => {
+			const collection = client.channel.getIntervalCollection(label);
+			return isNonEmpty(collection);
+		});
+
+	const hasNotTooManyIntervals: AcceptanceCondition<ClientOpState> = ({ client }) => {
+		let intervalCount = 0;
+		for (const label of client.channel.getIntervalCollectionLabels()) {
+			for (const _ of client.channel.getIntervalCollection(label)) {
+				intervalCount++;
+				if (intervalCount >= options.maxIntervals) {
+					return false;
+				}
+			}
+		}
+		return true;
+	};
+
+	const all =
+		<T>(...clauses: AcceptanceCondition<T>[]): AcceptanceCondition<T> =>
+		(t: T) =>
+			clauses.reduce<boolean>((prev, cond) => prev && cond(t), true);
+	const usableWeights = optionsParam?.weights ?? defaultIntervalOperationGenerationConfig.weights;
+	return createWeightedAsyncGenerator<Operation, ClientOpState>([
+		[addText, usableWeights.addText, isShorterThanMaxLength],
+		[
+			alwaysLeaveChar ? removeRangeLeaveChar : removeRange,
+			usableWeights.removeRange,
+			alwaysLeaveChar
+				? lengthSatisfies((length) => {
+						return length > 1;
+				  })
+				: hasNonzeroLength,
+		],
+		[obliterateRange, usableWeights.obliterateRange, hasNonzeroLength],
+		[addInterval, usableWeights.addInterval, all(hasNotTooManyIntervals, hasNonzeroLength)],
+		[deleteInterval, usableWeights.deleteInterval, hasAnInterval],
+		[changeInterval, usableWeights.changeInterval, all(hasAnInterval, hasNonzeroLength)],
+	]);
+}

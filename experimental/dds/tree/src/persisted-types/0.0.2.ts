@@ -3,16 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import type { Serializable } from '@fluidframework/datastore-definitions';
 import type {
-	EditId,
 	Definition,
+	DetachedSequenceId,
+	EditId,
 	NodeId,
 	StableNodeId,
 	TraitLabel,
-	DetachedSequenceId,
 	UuidString,
-} from '../Identifiers';
+} from '../Identifiers.js';
 
 /**
  * Defines a place relative to sibling.
@@ -31,7 +30,7 @@ import type {
  * Each place can be specified, (aka 'anchored') in two ways (relative to the sibling before or after):
  * the choice of which way to anchor a place only matters when the kept across an edit, and thus evaluated in multiple contexts where the
  * two place description may no longer evaluate to the same place.
- * @public
+ * @alpha
  */
 export enum Side {
 	Before = 0,
@@ -41,7 +40,7 @@ export enum Side {
 /**
  * A collection of changes to the tree that are applied atomically along with a unique identifier for the edit.
  * If any individual change fails to apply, the entire Edit will fail to apply.
- * @public
+ * @alpha
  */
 export interface Edit<TChange> extends EditBase<TChange> {
 	/**
@@ -54,7 +53,7 @@ export interface Edit<TChange> extends EditBase<TChange> {
 /**
  * A collection of changes to the tree that are applied atomically. If any individual change fails to apply,
  * the entire Edit will fail to apply.
- * @public
+ * @internal
  */
 export interface EditWithoutId<TChange> extends EditBase<TChange> {
 	/**
@@ -65,7 +64,7 @@ export interface EditWithoutId<TChange> extends EditBase<TChange> {
 
 /**
  * The information included in an edit.
- * @public
+ * @alpha
  */
 export interface EditBase<TChange> {
 	/**
@@ -92,16 +91,15 @@ export interface EditBase<TChange> {
  * See {@link comparePayloads} for equality semantics and related details (like what is allowed to be lost when serializing)
  *
  * TODO:#51984: Allow opting into heuristic blobbing in snapshots with a special IFluid key.
- *
- * @public
+ * @alpha
  */
-export type Payload = Serializable;
+export type Payload = any;
 
 /**
  * Json compatible map as object.
  * Keys are TraitLabels,
  * Values are the content of the trait specified by the key.
- * @public
+ * @alpha
  */
 export interface TraitMap<TChild> {
 	readonly [key: string]: TreeNodeSequence<TChild>;
@@ -109,13 +107,13 @@ export interface TraitMap<TChild> {
 
 /**
  * A sequence of Nodes that make up a trait under a Node
- * @public
+ * @alpha
  */
 export type TreeNodeSequence<TChild> = readonly TChild[];
 
 /**
  * An object which may have traits with children of the given type underneath it
- * @public
+ * @alpha
  */
 export interface HasTraits<TChild> {
 	readonly traits: TraitMap<TChild>;
@@ -123,7 +121,7 @@ export interface HasTraits<TChild> {
 
 /**
  * The fields required by a node in a tree
- * @public
+ * @alpha
  */
 export interface NodeData<TId> {
 	/**
@@ -145,18 +143,19 @@ export interface NodeData<TId> {
 
 /**
  * Satisfies `NodeData` and may contain children under traits (which may or may not be `TreeNodes`)
- * @public
+ * @alpha
  */
 export interface TreeNode<TChild, TId> extends NodeData<TId>, HasTraits<TChild> {}
 
 /**
  * A tree whose nodes are either TreeNodes or a placeholder
+ * @internal
  */
 export type PlaceholderTree<TPlaceholder = never> = TreeNode<PlaceholderTree<TPlaceholder>, NodeId> | TPlaceholder;
 
 /**
  * Specifies the location of a trait (a labeled sequence of nodes) within the tree.
- * @public
+ * @alpha
  */
 export interface TraitLocationInternal_0_0_2 {
 	readonly parent: StableNodeId;
@@ -165,13 +164,13 @@ export interface TraitLocationInternal_0_0_2 {
 
 /**
  * JSON-compatible Node type. Objects of this type will be persisted in internal change objects (under Edits) in the SharedTree history.
- * @public
+ * @alpha
  */
 export type ChangeNode_0_0_2 = TreeNode<ChangeNode_0_0_2, StableNodeId>;
 
 /**
  * The status code of an attempt to apply the changes in an Edit.
- * @public
+ * @alpha
  */
 export enum EditStatus {
 	/**
@@ -246,7 +245,7 @@ export interface SharedTreeEditOp_0_0_2 extends VersionedOp<WriteFormat.v0_0_2> 
 
 /**
  * Format versions that SharedTree supports writing. Changes to op or summary formats necessitate updates.
- * @public
+ * @alpha
  */
 export enum WriteFormat {
 	/** Stores all edits in their raw format. */
@@ -257,6 +256,7 @@ export enum WriteFormat {
 
 /**
  * The minimal information on a SharedTree summary. Contains the summary format version.
+ * @alpha
  */
 export interface SharedTreeSummaryBase {
 	/**
@@ -282,7 +282,7 @@ export interface SharedTreeSummary_0_0_2 extends SharedTreeSummaryBase {
 
 /**
  * {@inheritdoc ChangeType}
- * @public
+ * @alpha
  */
 export enum ChangeTypeInternal {
 	Insert,
@@ -306,13 +306,13 @@ export type ChangeInternal_0_0_2 =
 
 /**
  * {@inheritdoc BuildNode}
- * @public
+ * @alpha
  */
 export type BuildNodeInternal_0_0_2 = TreeNode<BuildNodeInternal_0_0_2, StableNodeId> | DetachedSequenceId;
 
 /**
  * {@inheritdoc Build}
- * @public
+ * @alpha
  */
 export interface BuildInternal_0_0_2 {
 	/** {@inheritdoc Build.destination } */
@@ -325,7 +325,7 @@ export interface BuildInternal_0_0_2 {
 
 /**
  * {@inheritdoc (Insert:interface)}
- * @public
+ * @alpha
  */
 export interface InsertInternal_0_0_2 {
 	/** {@inheritdoc (Insert:interface).destination } */
@@ -338,7 +338,7 @@ export interface InsertInternal_0_0_2 {
 
 /**
  * {@inheritdoc Detach}
- * @public
+ * @alpha
  */
 export interface DetachInternal_0_0_2 {
 	/** {@inheritdoc Detach.destination } */
@@ -351,7 +351,7 @@ export interface DetachInternal_0_0_2 {
 
 /**
  * {@inheritdoc SetValue}
- * @public
+ * @alpha
  */
 export interface SetValueInternal_0_0_2 {
 	/** {@inheritdoc SetValue.nodeToModify } */
@@ -365,7 +365,7 @@ export interface SetValueInternal_0_0_2 {
 
 /**
  * What to do when a Constraint is violated.
- * @public
+ * @alpha
  */
 export enum ConstraintEffect {
 	/**
@@ -388,7 +388,7 @@ export enum ConstraintEffect {
 
 /**
  * {@inheritdoc Constraint}
- * @public
+ * @alpha
  */
 export interface ConstraintInternal_0_0_2 {
 	/** {@inheritdoc Constraint.toConstrain } */
@@ -411,7 +411,7 @@ export interface ConstraintInternal_0_0_2 {
 
 /**
  * {@inheritdoc (StablePlace:interface) }
- * @public
+ * @alpha
  */
 export interface StablePlaceInternal_0_0_2 {
 	/**
@@ -432,7 +432,7 @@ export interface StablePlaceInternal_0_0_2 {
 
 /**
  * {@inheritdoc (StableRange:interface) }
- * @public
+ * @alpha
  */
 export interface StableRangeInternal_0_0_2 {
 	/** {@inheritdoc (StableRange:interface).start } */

@@ -1,0 +1,63 @@
+[
+  {
+    "count": 1,
+    "effect": {
+      "delete": {
+        "revision": 0,
+        "idOverride": {
+          "type": 1,
+          "id": {
+            "atom": [
+              0,
+              0
+            ],
+            "adjacentCells": [
+              [
+                0,
+                2
+              ]
+            ],
+            "lineage": [
+              [
+                0,
+                0,
+                2,
+                1
+              ]
+            ]
+          }
+        },
+        "id": 0
+      }
+    },
+    "cellId": {
+      "atom": [
+        0,
+        0
+      ],
+      "adjacentCells": [
+        [
+          0,
+          2
+        ]
+      ],
+      "lineage": [
+        [
+          0,
+          0,
+          2,
+          1
+        ]
+      ]
+    },
+    "changes": {
+      "inputContext": [],
+      "intentions": [
+        1
+      ],
+      "outputContext": [
+        1
+      ]
+    }
+  }
+]

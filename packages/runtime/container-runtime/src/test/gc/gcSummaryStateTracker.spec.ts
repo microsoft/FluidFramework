@@ -4,16 +4,18 @@
  */
 
 import { strict as assert } from "assert";
+
 import { SummaryType } from "@fluidframework/protocol-definitions";
-import { gcDeletedBlobKey, gcTombstoneBlobKey } from "@fluidframework/runtime-definitions";
+import { gcDeletedBlobKey, gcTombstoneBlobKey } from "@fluidframework/runtime-definitions/internal";
+
 import {
-	nextGCVersion,
-	gcStateBlobKey,
 	GCSummaryStateTracker,
 	GCVersion,
-	IGarbageCollectionState,
 	IGCStats,
-} from "../../gc";
+	IGarbageCollectionState,
+	gcStateBlobKey,
+	nextGCVersion,
+} from "../../gc/index.js";
 
 type GCSummaryStateTrackerWithPrivates = Omit<GCSummaryStateTracker, "latestSummaryGCVersion"> & {
 	latestSummaryGCVersion: GCVersion;
@@ -168,6 +170,36 @@ describe("GCSummaryStateTracker tests", () => {
 		});
 	});
 
+	it("Autorecovery: requesting Full GC", async () => {
+		const tracker: GCSummaryStateTrackerWithPrivates = new GCSummaryStateTracker(
+			{
+				shouldRunGC: true,
+				tombstoneMode: false,
+				gcVersionInBaseSnapshot: 1,
+				gcVersionInEffect: 1,
+			},
+			false /* wasGCRunInBaseSnapshot */,
+		) as any;
+		assert.equal(tracker.autoRecovery.fullGCRequested(), false, "Should be false by default");
+
+		tracker.autoRecovery.requestFullGCOnNextRun();
+
+		assert.equal(
+			tracker.autoRecovery.fullGCRequested(),
+			true,
+			"Should be true after requesting full GC",
+		);
+
+		// After the first summary succeeds (refreshLatestSummary called), the state should be reset.
+		await tracker.refreshLatestSummary({ isSummaryTracked: true, isSummaryNewer: true });
+
+		assert.equal(
+			tracker.autoRecovery.fullGCRequested(),
+			false,
+			"Should be false after Summary Ack",
+		);
+	});
+
 	/**
 	 * These tests validate that the GC data is written in summary incrementally. Basically, only parts of the GC
 	 * data that has changed since the last successful summary is re-written, rest is written as SummaryHandle.
@@ -208,7 +240,6 @@ describe("GCSummaryStateTracker tests", () => {
 			// Summarize with the same GC state, tombstone state and deleted nodes as in the initial state.
 			// The GC data should be summarized as a summary handle.
 			const summary = summaryStateTracker.summarize(
-				false /* fullTree */,
 				true /* trackState */,
 				initialGCState,
 				initialDeletedNodes,
@@ -227,7 +258,6 @@ describe("GCSummaryStateTracker tests", () => {
 				},
 			};
 			const summary = summaryStateTracker.summarize(
-				false /* fullTree */,
 				true /* trackState */,
 				newGCState,
 				initialDeletedNodes,
@@ -253,7 +283,6 @@ describe("GCSummaryStateTracker tests", () => {
 			// state. The tombstone state should be summarized as a summary handle.
 			const newTombstones: string[] = Array.from([...initialTombstones, nodes[2]]);
 			const summary = summaryStateTracker.summarize(
-				false /* fullTree */,
 				true /* trackState */,
 				initialGCState,
 				initialDeletedNodes,
@@ -279,7 +308,6 @@ describe("GCSummaryStateTracker tests", () => {
 			// state. The deleted nodes should be summarized as a summary handle.
 			const newDeletedNodes: Set<string> = new Set(...initialDeletedNodes, nodes[2]);
 			const summary = summaryStateTracker.summarize(
-				false /* fullTree */,
 				true /* trackState */,
 				initialGCState,
 				newDeletedNodes,
@@ -313,6 +341,12 @@ describe("GCSummaryStateTracker tests", () => {
 			attachmentBlobCount: 0,
 			unrefAttachmentBlobCount: 0,
 			updatedAttachmentBlobCount: 0,
+			lifetimeNodeCount: 0,
+			lifetimeDataStoreCount: 0,
+			lifetimeAttachmentBlobCount: 0,
+			deletedNodeCount: 0,
+			deletedDataStoreCount: 0,
+			deletedAttachmentBlobCount: 0,
 		};
 
 		const summaryStateTracker = new GCSummaryStateTracker(
@@ -337,13 +371,7 @@ describe("GCSummaryStateTracker tests", () => {
 		// Call summarize but do not refresh latest summary. This mimics scenarios where summary generation fails
 		// sometime after summarize. This means updatedDSCountSinceLastSummary should be updated incrementally
 		// without resetting it.
-		summaryStateTracker.summarize(
-			false /* fullTree */,
-			true /* trackState */,
-			{ gcNodes: {} },
-			new Set(),
-			[],
-		);
+		summaryStateTracker.summarize(true /* trackState */, { gcNodes: {} }, new Set(), []);
 
 		// Update the stat from GC state again mimicking a GC run after a failed summary.
 		expectedUpdatedDataStoreCount += updatedDataStoreCount;
@@ -356,13 +384,7 @@ describe("GCSummaryStateTracker tests", () => {
 
 		// Call summarize and refresh latest summary. This mimics a successful summary after a failed one. After
 		// this, updatedDSCountSinceLastSummary should be reset to 0.
-		summaryStateTracker.summarize(
-			false /* fullTree */,
-			true /* trackState */,
-			{ gcNodes: {} },
-			new Set(),
-			[],
-		);
+		summaryStateTracker.summarize(true /* trackState */, { gcNodes: {} }, new Set(), []);
 
 		await summaryStateTracker.refreshLatestSummary({
 			isSummaryTracked: true,

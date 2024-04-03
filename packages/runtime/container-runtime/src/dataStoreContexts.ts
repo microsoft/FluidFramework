@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Deferred, Lazy } from "@fluidframework/core-utils";
 import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { createChildLogger, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext";
+import { assert, Deferred, Lazy } from "@fluidframework/core-utils/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
+import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext.js";
+
+/** @internal */
 export class DataStoreContexts implements Iterable<[string, FluidDataStoreContext]>, IDisposable {
 	private readonly notBoundContexts = new Set<string>();
 

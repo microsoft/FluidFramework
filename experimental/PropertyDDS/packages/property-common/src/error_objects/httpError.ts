@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { FlaggedError } from "./flaggedError";
 
 /**
@@ -12,6 +13,7 @@ import { FlaggedError } from "./flaggedError";
  * @param method - The HTTP method used in the request
  * @param url - The URL that the request was sent to
  * @param flags - Flags that characterize the error. See {@link FlaggedError.FLAGS}.
+ * @internal
  */
 export class HTTPError extends Error {
 	constructor(

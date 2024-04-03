@@ -3,22 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider, ITelemetryProperties } from "@fluidframework/core-interfaces";
-import { ITelemetryLoggerExt, ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils";
-import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions";
+import { ContainerWarning } from "@fluidframework/container-definitions/internal";
+import { IEvent, IEventProvider, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
+	IDocumentMessage,
 	ISequencedDocumentMessage,
 	ISummaryTree,
-	IDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
-import { ISummaryConfigurationHeuristics } from "../containerRuntime";
-import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection";
-import { SummarizeReason } from "./summaryGenerator";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils/internal";
+
+import { ISummaryConfigurationHeuristics } from "../containerRuntime.js";
+
+import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection.js";
+import { SummarizeReason } from "./summaryGenerator.js";
 
 /**
  * Similar to AbortSignal, but using promise instead of events
  * @param T - cancellation reason type
+ * @alpha
  */
 export interface ICancellationToken<T> {
 	/** Tells if this cancellable token is cancelled */
@@ -30,11 +35,15 @@ export interface ICancellationToken<T> {
 	readonly waitCancelled: Promise<T>;
 }
 
-/* Similar to AbortSignal, but using promise instead of events */
+/**
+ * Similar to AbortSignal, but using promise instead of events
+ * @alpha
+ */
 export type ISummaryCancellationToken = ICancellationToken<SummarizerStopReason>;
 
 /**
  * Data required to update internal tracking state after receiving a Summary Ack.
+ * @alpha
  */
 export interface IRefreshSummaryAckOptions {
 	/** Handle from the ack's summary op. */
@@ -47,6 +56,9 @@ export interface IRefreshSummaryAckOptions {
 	readonly summaryLogger: ITelemetryLoggerExt;
 }
 
+/**
+ * @alpha
+ */
 export interface ISummarizerInternalsProvider {
 	/** Encapsulates the work to walk the internals of the running container to generate a summary */
 	submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
@@ -56,23 +68,16 @@ export interface ISummarizerInternalsProvider {
 }
 
 /**
- * @deprecated Options that control the behavior of a running summarizer.
- * */
-export interface ISummarizerOptions {
-	/**
-	 * Set to true to disable the default heuristics from running; false by default.
-	 * This affects only the heuristics around when a summarizer should
-	 * submit summaries. So when it is disabled, summarizer clients should
-	 * not be expected to summarize unless an on-demand summary is requested.
-	 */
-	disableHeuristics: boolean;
-}
-
+ * @internal
+ */
 export interface ISummarizingWarning extends ContainerWarning {
 	readonly errorType: "summarizingError";
 	readonly logged: boolean;
 }
 
+/**
+ * @alpha
+ */
 export interface IConnectableRuntime {
 	readonly disposed: boolean;
 	readonly connected: boolean;
@@ -80,6 +85,9 @@ export interface IConnectableRuntime {
 	once(event: "connected" | "disconnected" | "dispose", listener: () => void): this;
 }
 
+/**
+ * @alpha
+ */
 export interface ISummarizerRuntime extends IConnectableRuntime {
 	readonly logger: ITelemetryLoggerExt;
 	/** clientId of parent (non-summarizing) container that owns summarizer container */
@@ -97,19 +105,25 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
 	): this;
 }
 
-/** Options affecting summarize behavior. */
+/**
+ * Options affecting summarize behavior.
+ * @alpha
+ */
 export interface ISummarizeOptions {
 	/** True to generate the full tree with no handle reuse optimizations; defaults to false */
 	readonly fullTree?: boolean;
 	/**
 	 * True to ask the server what the latest summary is first; defaults to false
 	 *
-	 * @deprecated - Summarize will not refresh latest snapshot state anymore. Instead it updates the cache and closes
+	 * @deprecated Summarize will not refresh latest snapshot state anymore. Instead it updates the cache and closes.
 	 * It's expected a new summarizer client will be created, likely by the same parent.
 	 */
 	readonly refreshLatestAck?: boolean;
 }
 
+/**
+ * @alpha
+ */
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
 	/** Logger to use for correlated summary events */
 	readonly summaryLogger: ITelemetryLoggerExt;
@@ -117,14 +131,24 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
 	readonly cancellationToken: ISummaryCancellationToken;
 	/** Summarization may be attempted multiple times. This tells whether this is the final summarization attempt. */
 	readonly finalAttempt?: boolean;
+	/** The sequence number of the latest summary used to validate if summary state is correct before summarizing */
+	readonly latestSummaryRefSeqNum: number;
 }
 
+/**
+ * @alpha
+ */
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
 	/** Reason for generating summary. */
 	readonly reason: string;
+	/** In case of a failure, will attempt to retry based on if the failure is retriable. */
+	readonly retryOnFailure?: boolean;
 }
 
-/** Options to use when enqueueing a summarize attempt. */
+/**
+ * Options to use when enqueueing a summarize attempt.
+ * @alpha
+ */
 export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 	/** If specified, The summarize attempt will not occur until after this sequence number. */
 	readonly afterSequenceNumber?: number;
@@ -141,6 +165,7 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 /**
  * In addition to the normal summary tree + stats, this contains additional stats
  * only relevant at the root of the tree.
+ * @alpha
  */
 export interface IGeneratedSummaryStats extends ISummaryStats {
 	/** The total number of data stores in the container. */
@@ -157,7 +182,10 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
 	readonly summaryNumber: number;
 }
 
-/** Base results for all submitSummary attempts. */
+/**
+ * Base results for all submitSummary attempts.
+ * @alpha
+ */
 export interface IBaseSummarizeResult {
 	readonly stage: "base";
 	/** Error object related to failed summarize attempt. */
@@ -167,7 +195,10 @@ export interface IBaseSummarizeResult {
 	readonly minimumSequenceNumber: number;
 }
 
-/** Results of submitSummary after generating the summary tree. */
+/**
+ * Results of submitSummary after generating the summary tree.
+ * @alpha
+ */
 export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "stage"> {
 	readonly stage: "generate";
 	/** Generated summary tree. */
@@ -180,7 +211,10 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
 	readonly forcedFullTree: boolean;
 }
 
-/** Results of submitSummary after uploading the tree to storage. */
+/**
+ * Results of submitSummary after uploading the tree to storage.
+ * @alpha
+ */
 export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "stage"> {
 	readonly stage: "upload";
 	/** The handle returned by storage pointing to the uploaded summary tree. */
@@ -189,7 +223,10 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
 	readonly uploadDuration: number;
 }
 
-/** Results of submitSummary after submitting the summarize op. */
+/**
+ * Results of submitSummary after submitting the summarize op.
+ * @alpha
+ */
 export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stage" | "error"> {
 	readonly stage: "submit";
 	/** The client sequence number of the summarize op submitted for the summary. */
@@ -213,6 +250,7 @@ export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stag
  * 3. "upload" - the summary was uploaded to storage, and the result contains the server-provided handle
  *
  * 4. "submit" - the summarize op was submitted, and the result contains the op client sequence number.
+ * @alpha
  */
 export type SubmitSummaryResult =
 	| IBaseSummarizeResult
@@ -220,34 +258,55 @@ export type SubmitSummaryResult =
 	| IUploadSummaryResult
 	| ISubmitSummaryOpResult;
 
-/** The stages of Summarize, used to describe how far progress succeeded in case of a failure at a later stage. */
+/**
+ * The stages of Summarize, used to describe how far progress succeeded in case of a failure at a later stage.
+ * @alpha
+ */
 export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
 
-/** Type for summarization failures that are retriable. */
+/**
+ * Type for summarization failures that are retriable.
+ * @alpha
+ */
 export interface IRetriableFailureResult {
 	readonly retryAfterSeconds?: number;
 }
 
-/** The data in summarizer result when submit summary stage fails. */
+/**
+ * The data in summarizer result when submit summary stage fails.
+ * @alpha
+ */
 export interface SubmitSummaryFailureData extends IRetriableFailureResult {
 	stage: SummaryStage;
 }
 
+/**
+ * @alpha
+ */
 export interface IBroadcastSummaryResult {
 	readonly summarizeOp: ISummaryOpMessage;
 	readonly broadcastDuration: number;
 }
 
+/**
+ * @alpha
+ */
 export interface IAckSummaryResult {
 	readonly summaryAckOp: ISummaryAckMessage;
 	readonly ackNackDuration: number;
 }
 
+/**
+ * @alpha
+ */
 export interface INackSummaryResult extends IRetriableFailureResult {
 	readonly summaryNackOp: ISummaryNackMessage;
 	readonly ackNackDuration: number;
 }
 
+/**
+ * @alpha
+ */
 export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 	| {
 			success: true;
@@ -260,6 +319,9 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 			error: any;
 	  };
 
+/**
+ * @alpha
+ */
 export interface ISummarizeResults {
 	/** Resolves when we generate, upload, and submit the summary. */
 	readonly summarySubmitted: Promise<
@@ -273,6 +335,9 @@ export interface ISummarizeResults {
 	>;
 }
 
+/**
+ * @alpha
+ */
 export type EnqueueSummarizeResult =
 	| (ISummarizeResults & {
 			/**
@@ -300,8 +365,11 @@ export type EnqueueSummarizeResult =
 			readonly overridden?: undefined;
 	  };
 
+/**
+ * @alpha
+ */
 export type SummarizerStopReason =
-	/** Summarizer client failed to summarize in all 3 consecutive attempts. */
+	/** Summarizer client failed to summarize in all attempts. */
 	| "failToSummarize"
 	/** Parent client reported that it is no longer connected. */
 	| "parentNotConnected"
@@ -326,16 +394,26 @@ export type SummarizerStopReason =
 	 */
 	| "latestSummaryStateStale";
 
+/**
+ * @alpha
+ */
 export interface ISummarizeEventProps {
 	result: "success" | "failure" | "canceled";
 	currentAttempt: number;
 	maxAttempts: number;
 	error?: any;
 }
+
+/**
+ * @alpha
+ */
 export interface ISummarizerEvents extends IEvent {
 	(event: "summarize", listener: (props: ISummarizeEventProps) => void);
 }
 
+/**
+ * @alpha
+ */
 export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
 	/**
 	 * Allows {@link ISummarizer} to be used with our {@link @fluidframework/core-interfaces#FluidObject} pattern.
@@ -352,7 +430,7 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
 	/* Closes summarizer. Any pending processes (summary in flight) are abandoned. */
 	close(): void;
 
-	run(onBehalfOf: string, disableHeuristics?: boolean): Promise<SummarizerStopReason>;
+	run(onBehalfOf: string): Promise<SummarizerStopReason>;
 
 	/**
 	 * Attempts to generate a summary on demand. If already running, takes no action.
@@ -465,10 +543,10 @@ type ISummarizeTelemetryOptionalProperties =
 	| keyof ISummarizeOptions;
 
 export type ISummarizeTelemetryProperties = Pick<
-	ITelemetryProperties,
+	ITelemetryBaseProperties,
 	ISummarizeTelemetryRequiredProperties
 > &
-	Partial<Pick<ITelemetryProperties, ISummarizeTelemetryOptionalProperties>>;
+	Partial<Pick<ITelemetryBaseProperties, ISummarizeTelemetryOptionalProperties>>;
 
 /** Strategy used to heuristically determine when we should run a summary */
 export interface ISummaryHeuristicStrategy {
@@ -534,10 +612,10 @@ type SummaryGeneratorOptionalTelemetryProperties =
 	| "stage";
 
 export type SummaryGeneratorTelemetry = Pick<
-	ITelemetryProperties,
+	ITelemetryBaseProperties,
 	SummaryGeneratorRequiredTelemetryProperties
 > &
-	Partial<Pick<ITelemetryProperties, SummaryGeneratorOptionalTelemetryProperties>>;
+	Partial<Pick<ITelemetryBaseProperties, SummaryGeneratorOptionalTelemetryProperties>>;
 
 export interface ISummarizeRunnerTelemetry extends ITelemetryLoggerPropertyBag {
 	/** Number of times the summarizer run. */

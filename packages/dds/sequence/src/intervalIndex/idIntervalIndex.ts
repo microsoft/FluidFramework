@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { ISerializableInterval } from "../intervals";
-import { IntervalIndex } from "./intervalIndex";
+import { assert } from "@fluidframework/core-utils/internal";
 
-const reservedIntervalIdKey = "intervalId";
+import { reservedIntervalIdKey } from "../intervalCollection.js";
+import { ISerializableInterval } from "../intervals/index.js";
+
+import { IntervalIndex } from "./intervalIndex.js";
 
 /**
- * @public
+ * @internal
  */
 export interface IIdIntervalIndex<TInterval extends ISerializableInterval>
 	extends IntervalIndex<TInterval>,
@@ -55,7 +56,7 @@ class IdIntervalIndex<TInterval extends ISerializableInterval>
 }
 
 /**
- * @public
+ * @internal
  */
 export function createIdIntervalIndex<
 	TInterval extends ISerializableInterval,

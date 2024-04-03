@@ -4,11 +4,13 @@
  */
 
 import { strict as assert } from "assert";
+
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { ChannelStorageService } from "../channelStorageService";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+
+import { ChannelStorageService } from "../channelStorageService.js";
 
 describe("ChannelStorageService", () => {
 	it("Empty Tree", async () => {

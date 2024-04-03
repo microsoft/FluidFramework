@@ -10,13 +10,15 @@ import {
 	IDocumentStorageService,
 	IResolvedUrl,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 
 /**
+ * @deprecated - unused
  * Wraps the given IDocumentStorageService to override the `uploadSummaryWithContext` method. It calls the
  * `uploadSummaryCb` whenever a summary is uploaded by the client. The summary context can be updated in the
  * callback before it is uploaded to the server.
+ * @internal
  */
 export function wrapDocumentStorageService(
 	innerDocStorageService: IDocumentStorageService,
@@ -34,11 +36,13 @@ export function wrapDocumentStorageService(
 }
 
 /**
+ * @deprecated - unused
  * Wraps the given IDocumentService to override the `connectToStorage` method. The intent is to plumb the
  * `uploadSummaryCb` to the IDocumentStorageService so that it is called whenever a summary is uploaded by
  * the client.
  * The document storage service that is created in `connectToStorage` is wrapped by calling `wrapDocumentStorageService`
  * to pass in the `uploadSummaryCb`.
+ * @internal
  */
 export function wrapDocumentService(
 	innerDocService: IDocumentService,
@@ -53,11 +57,13 @@ export function wrapDocumentService(
 }
 
 /**
+ * @deprecated - unused
  * Wraps the given IDocumentServiceFactory to override the `createDocumentService` method. The intent is to plumb
  * the `uploadSummaryCb` all the way to the IDocumentStorageService so that it is called whenever a summary is
  * uploaded by the client.
  * The document service that is created in `createDocumentService` is wrapped by calling `wrapDocumentService` to
  * pass in the `uploadSummaryCb`.
+ * @internal
  */
 export function wrapDocumentServiceFactory(
 	innerDocServiceFactory: IDocumentServiceFactory,

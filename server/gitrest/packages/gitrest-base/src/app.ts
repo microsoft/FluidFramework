@@ -46,21 +46,34 @@ export function create(
 	app.use(bindTelemetryContext());
 	const loggerFormat = store.get("logger:morganFormat");
 	if (loggerFormat === "json") {
+		const enableResponseCloseLatencyMetric =
+			store.get("enableResponseCloseLatencyMetric") ?? false;
 		app.use(
-			jsonMorganLoggerMiddleware("gitrest", (tokens, req, res) => {
-				const params = getRepoManagerParamsFromRequest(req);
-				const additionalProperties: Record<string, any> = {
-					[HttpProperties.driverVersion]: tokens.req(req, res, DriverVersionHeaderName),
-					[BaseTelemetryProperties.tenantId]: getTenantIdForGitRestRequest(params, req),
-					[BaseTelemetryProperties.documentId]: params.storageRoutingId?.documentId,
-				};
-				if (req.get(Constants.IsEphemeralContainer) !== undefined) {
-					additionalProperties.isEphemeralContainer = req.get(
-						Constants.IsEphemeralContainer,
-					);
-				}
-				return additionalProperties;
-			}),
+			jsonMorganLoggerMiddleware(
+				"gitrest",
+				(tokens, req, res) => {
+					const params = getRepoManagerParamsFromRequest(req);
+					const additionalProperties: Record<string, any> = {
+						[HttpProperties.driverVersion]: tokens.req(
+							req,
+							res,
+							DriverVersionHeaderName,
+						),
+						[BaseTelemetryProperties.tenantId]: getTenantIdForGitRestRequest(
+							params,
+							req,
+						),
+						[BaseTelemetryProperties.documentId]: params.storageRoutingId?.documentId,
+					};
+					if (req.get(Constants.IsEphemeralContainer) !== undefined) {
+						additionalProperties.isEphemeralContainer = req.get(
+							Constants.IsEphemeralContainer,
+						);
+					}
+					return additionalProperties;
+				},
+				enableResponseCloseLatencyMetric,
+			),
 		);
 	} else {
 		app.use(alternativeMorganLoggerMiddleware(loggerFormat));

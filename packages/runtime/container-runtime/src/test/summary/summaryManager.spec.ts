@@ -4,38 +4,40 @@
  */
 
 import { strict as assert } from "assert";
-import sinon from "sinon";
-import { Deferred } from "@fluidframework/core-utils";
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions";
-import { DefaultSummaryConfiguration } from "../../containerRuntime";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
+import sinon from "sinon";
+
+import { DefaultSummaryConfiguration } from "../../containerRuntime.js";
 import {
 	IConnectedEvents,
 	IConnectedState,
-	ISummaryManagerConfig,
-	SummaryManager,
-	SummaryManagerState,
-	Summarizer,
 	ISummarizer,
-	ISummarizerEvents,
-	SummarizerStopReason,
 	ISummarizerClientElection,
 	ISummarizerClientElectionEvents,
+	ISummarizerEvents,
+	ISummarizerRuntime,
+	ISummaryManagerConfig,
+	ISummaryOpMessage,
 	RunningSummarizer,
 	SummarizeHeuristicData,
+	Summarizer,
+	SummarizerStopReason,
 	SummaryCollection,
-	ISummaryOpMessage,
+	SummaryManager,
+	SummaryManagerState,
 	neverCancelledSummaryToken,
-	ISummarizerRuntime,
-} from "../../summary";
+} from "../../summary/index.js";
 
 class MockRuntime {
 	constructor(
@@ -264,12 +266,15 @@ describe("Summary Manager", () => {
 
 	afterEach(() => {
 		clientElection.removeAllListeners();
-		summarizer.removeAllListeners();
+		summarizer?.removeAllListeners();
 		connectedState.removeAllListeners();
 		throttler.delayMs = 0;
 		mockDeltaManager.lastSequenceNumber = 0;
 		requestCalls = 0;
 		clock.reset();
+
+		// Make sure we don't accidentally reuse the same summary manager across tests
+		summaryManager = undefined as any;
 	});
 
 	it("Should become summarizer if connected, then elected; stop summarizer after disconnect", async () => {
@@ -378,6 +383,37 @@ describe("Summary Manager", () => {
 			completeSummarizerRequest();
 			await flushPromises();
 			assertState(SummaryManagerState.Running, "summarizer should be running");
+		});
+
+		it("Should exit early if disposed (even if bypassing initial delay)", async () => {
+			mockDeltaManager.lastSequenceNumber = 1000; // seq >= opsToBypass, so bypass
+			createSummaryManager({
+				initialDelayMs: 2000,
+				opsToBypassInitialDelay: 1000,
+				connected: true,
+			});
+
+			// Simulate disposing the summary manager in between (potential) initial delay and actually starting
+			const summaryManager_delayBeforeCreatingSummarizer = (
+				summaryManager as any
+			).delayBeforeCreatingSummarizer.bind(summaryManager);
+			(summaryManager as any).delayBeforeCreatingSummarizer = async (...args) => {
+				const result = await summaryManager_delayBeforeCreatingSummarizer(args);
+				summaryManager.dispose();
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+				return result;
+			};
+
+			clientElection.electClient(thisClientId);
+			await flushPromises(); // To get to the main continuation in startSummarization
+			await flushPromises(); // To get to the finally continuation in startSummarization
+			assertState(
+				SummaryManagerState.Off,
+				"should be off due to SummaryManager being disposed",
+			);
+			assertRequests(0, "should not request summarizer");
+			await flushPromises();
+			assertState(SummaryManagerState.Off, "summarizer should still be off");
 		});
 
 		// This test attempts to validate a case where summarizer client does not wait

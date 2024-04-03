@@ -2,16 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-import { deflate, inflate } from "pako";
-import { compress, decompress } from "lz4js";
+
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelServices,
 	IChannelFactory,
+	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import { compress, decompress } from "lz4js";
+import { deflate, inflate } from "pako";
+
 import {
 	IPropertyTreeConfig,
 	IPropertyTreeMessage,
@@ -19,9 +22,12 @@ import {
 	ISnapshotSummary,
 	SharedPropertyTree,
 	SharedPropertyTreeOptions,
-} from "./propertyTree";
-import { DeflatedPropertyTree, LZ4PropertyTree } from "./propertyTreeExt";
+} from "./propertyTree.js";
+import { DeflatedPropertyTree, LZ4PropertyTree } from "./propertyTreeExt.js";
 
+/**
+ * @internal
+ */
 export abstract class CompressedPropertyTreeFactory implements IChannelFactory {
 	public abstract get attributes();
 	public abstract get type();
@@ -119,6 +125,9 @@ export abstract class CompressedPropertyTreeFactory implements IChannelFactory {
 	}
 }
 
+/**
+ * @internal
+ */
 export class DeflatedPropertyTreeFactory extends CompressedPropertyTreeFactory {
 	public static readonly Type = "DeflatedPropertyTree:84534a0fe613522101f6";
 
@@ -171,6 +180,9 @@ export class DeflatedPropertyTreeFactory extends CompressedPropertyTreeFactory {
 	}
 }
 
+/**
+ * @internal
+ */
 export class LZ4PropertyTreeFactory extends CompressedPropertyTreeFactory {
 	public static readonly Type = "LZ4PropertyTree:84534a0fe613522101f6";
 

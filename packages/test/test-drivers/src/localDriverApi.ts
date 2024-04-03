@@ -7,10 +7,14 @@ import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
 	createLocalResolverCreateNewRequest,
-} from "@fluidframework/local-driver";
+} from "@fluidframework/local-driver/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { pkgVersion } from "./packageVersion";
 
+import { pkgVersion } from "./packageVersion.js";
+
+/**
+ * @internal
+ */
 export const LocalDriverApi = {
 	version: pkgVersion,
 	LocalDocumentServiceFactory,
@@ -19,4 +23,7 @@ export const LocalDriverApi = {
 	createLocalResolverCreateNewRequest,
 };
 
+/**
+ * @internal
+ */
 export type LocalDriverApiType = typeof LocalDriverApi;

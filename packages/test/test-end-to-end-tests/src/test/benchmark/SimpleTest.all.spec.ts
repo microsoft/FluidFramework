@@ -2,13 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
-import { IContainer } from "@fluidframework/container-definitions";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
-import { benchmarkAll, IBenchmarkParameters } from "./DocumentCreator.js";
 
-describeNoCompat("Simple Scenario Title", (getTestObjectProvider) => {
+import { strict as assert } from "assert";
+
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
+
+import { IBenchmarkParameters, benchmarkAll } from "./DocumentCreator.js";
+
+describeCompat("Simple Scenario Title", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
 	before(async () => {

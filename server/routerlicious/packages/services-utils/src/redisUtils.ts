@@ -5,13 +5,19 @@
 
 import * as Redis from "ioredis";
 
+/**
+ * @internal
+ */
 export interface IRedisParameters {
 	prefix?: string;
 	expireAfterSeconds?: number;
 }
 
+/**
+ * @internal
+ */
 export const executeRedisMultiWithHmsetExpire = async (
-	client: Redis.default,
+	client: Redis.default | Redis.Cluster,
 	key: string,
 	data: { [key: string]: any },
 	expireAfterSeconds: number,
@@ -56,8 +62,11 @@ export const executeRedisMultiWithHmsetExpire = async (
 			});
 	});
 
+/**
+ * @internal
+ */
 export const executeRedisMultiWithHmsetExpireAndLpush = async (
-	client: Redis.default,
+	client: Redis.default | Redis.Cluster,
 	hKey: string,
 	hData: { [key: string]: any },
 	lKey: string,
@@ -110,3 +119,7 @@ export const executeRedisMultiWithHmsetExpireAndLpush = async (
 				reject(error);
 			});
 	});
+
+export const getRedisClusterRetryStrategy =
+	(options: { delayPerAttemptMs: number; maxDelayMs: number }) => (attempts: number) =>
+		Math.min(attempts * options.delayPerAttemptMs, options.maxDelayMs);

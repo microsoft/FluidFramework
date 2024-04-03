@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint accessor-pairs: [2, { "getWithoutSet": false }] */
 /**
  * @fileoverview Collection class definition
@@ -17,6 +18,9 @@ const MSGS = {
 	KEY_NOT_VALID: "Key must be of type String or Number",
 };
 
+/**
+ * @internal
+ */
 export class Collection<T> {
 	protected _items: { [key: string]: T } = {};
 	protected _order: (string | number)[] = [];

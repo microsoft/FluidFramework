@@ -5,26 +5,31 @@
 
 import { strict as assert } from "assert";
 import fs from "fs";
-import { Loader } from "@fluidframework/container-loader";
-import {
-	LocalCodeLoader,
-	TestFluidObjectFactory,
-	TestFluidObject,
-	LoaderContainerTracker,
-} from "@fluidframework/test-utils";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { SharedMap, SharedDirectory } from "@fluidframework/map";
-import { SharedString } from "@fluidframework/sequence";
-import { SharedCell } from "@fluidframework/cell";
-import { Ink } from "@fluidframework/ink";
-import { SharedMatrix } from "@fluidframework/matrix";
-import { SharedCounter } from "@fluidframework/counter";
-import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
-import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
-import { getTestContent, skipOrFailIfTestContentMissing } from "../testContent";
+import { SharedCell } from "@fluidframework/cell/internal";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
+import { SharedCounter } from "@fluidframework/counter/internal";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
+import { type ISharedMap, SharedMap } from "@fluidframework/map";
+import { SharedDirectory } from "@fluidframework/map/internal";
+import { SharedMatrix } from "@fluidframework/matrix/internal";
+import {
+	ConsensusOrderedCollection,
+	ConsensusQueue,
+} from "@fluidframework/ordered-collection/internal";
+import { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
+import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import {
+	LoaderContainerTracker,
+	LocalCodeLoader,
+	TestFluidObject,
+	TestFluidObjectFactory,
+} from "@fluidframework/test-utils/internal";
+
+import { getTestContent, skipOrFailIfTestContentMissing } from "../testContent.js";
 
 describe(`Container Serialization Backwards Compatibility`, () => {
 	const loaderContainerTracker = new LoaderContainerTracker();
@@ -53,13 +58,13 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 			const container = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
 
 			// Check for default data store
-			const response = await container.request({ url: "/" });
-			assert.strictEqual(response.status, 200, `Component should exist!! ${response.value}`);
-			const defaultDataStore = response.value as TestFluidObject;
+			const entryPoint = await container.getEntryPoint();
+			assert.notStrictEqual(entryPoint, undefined, `Component should exist!!`);
+			const defaultDataStore = entryPoint as TestFluidObject;
 			assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
 
 			// Check for dds
-			const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
+			const sharedMap = await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
 			const sharedDir =
 				await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 			const sharedString =
@@ -70,7 +75,6 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 			const crc =
 				await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
 			const coc = await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
-			const ink = await defaultDataStore.getSharedObject<Ink>(sharedInkId);
 			const sharedMatrix =
 				await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
 			const sparseMatrix =
@@ -82,7 +86,6 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 			assert.strictEqual(sharedCounter.id, sharedCounterId, "Shared counter should exist!!");
 			assert.strictEqual(crc.id, crcId, "CRC should exist!!");
 			assert.strictEqual(coc.id, cocId, "COC should exist!!");
-			assert.strictEqual(ink.id, sharedInkId, "Shared ink should exist!!");
 			assert.strictEqual(sharedMatrix.id, sharedMatrixId, "Shared matrix should exist!!");
 			assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
 		});
@@ -97,13 +100,13 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 			const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree2);
 
 			// Check for default data store
-			const response = await container2.request({ url: "/" });
-			assert.strictEqual(response.status, 200, `Component should exist!! ${response.value}`);
-			const defaultDataStore = response.value as TestFluidObject;
+			const entryPoint = await container2.getEntryPoint();
+			assert.notStrictEqual(entryPoint, undefined, `Component should exist!!`);
+			const defaultDataStore = entryPoint as TestFluidObject;
 			assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
 
 			// Check for dds
-			const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
+			const sharedMap = await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
 			const sharedDir =
 				await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 			const sharedString =
@@ -114,7 +117,6 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 			const crc =
 				await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
 			const coc = await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
-			const ink = await defaultDataStore.getSharedObject<Ink>(sharedInkId);
 			const sharedMatrix =
 				await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
 			const sparseMatrix =
@@ -126,7 +128,6 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 			assert.strictEqual(sharedCounter.id, sharedCounterId, "Shared counter should exist!!");
 			assert.strictEqual(crc.id, crcId, "CRC should exist!!");
 			assert.strictEqual(coc.id, cocId, "COC should exist!!");
-			assert.strictEqual(ink.id, sharedInkId, "Shared ink should exist!!");
 			assert.strictEqual(sharedMatrix.id, sharedMatrixId, "Shared matrix should exist!!");
 			assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
 		});
@@ -142,7 +143,6 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 		const sharedDirectoryId = "sd1Key";
 		const sharedCellId = "scell1Key";
 		const sharedMatrixId = "smatrix1Key";
-		const sharedInkId = "sink1Key";
 		const sparseMatrixId = "sparsematrixKey";
 		const sharedCounterId = "sharedcounterKey";
 
@@ -157,7 +157,6 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 				[crcId, ConsensusRegisterCollection.getFactory()],
 				[sharedDirectoryId, SharedDirectory.getFactory()],
 				[sharedCellId, SharedCell.getFactory()],
-				[sharedInkId, Ink.getFactory()],
 				[sharedMatrixId, SharedMatrix.getFactory()],
 				[cocId, ConsensusQueue.getFactory()],
 				[sparseMatrixId, SparseMatrix.getFactory()],

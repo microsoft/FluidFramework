@@ -5,13 +5,13 @@
 
 import {
 	Divider,
-	makeStyles,
 	type SelectTabData,
 	type SelectTabEvent,
-	shorthands,
 	Tab,
 	TabList,
 	type TabValue,
+	makeStyles,
+	shorthands,
 } from "@fluentui/react-components";
 import {
 	type ContainerDevtoolsFeatureFlags,
@@ -21,17 +21,18 @@ import {
 	type ISourcedDevtoolsMessage,
 	type InboundHandlers,
 	handleIncomingMessage,
-} from "@fluid-experimental/devtools-core";
+} from "@fluidframework/devtools-core/internal";
 import React from "react";
 
-import { useMessageRelay } from "../MessageRelayContext";
-import { ContainerFeatureFlagContext } from "../ContainerFeatureFlagHelper";
-import { useLogger } from "../TelemetryUtils";
-import { AudienceView } from "./AudienceView";
-import { ContainerHistoryView } from "./ContainerHistoryView";
-import { ContainerSummaryView } from "./ContainerSummaryView";
-import { DataObjectsView } from "./DataObjectsView";
-import { Waiting } from "./Waiting";
+import { ContainerFeatureFlagContext } from "../ContainerFeatureFlagHelper.js";
+import { useMessageRelay } from "../MessageRelayContext.js";
+import { useLogger } from "../TelemetryUtils.js";
+
+import { AudienceView } from "./AudienceView.js";
+import { ContainerHistoryView } from "./ContainerHistoryView.js";
+import { ContainerSummaryView } from "./ContainerSummaryView.js";
+import { DataObjectsView } from "./DataObjectsView.js";
+import { Waiting } from "./Waiting.js";
 
 // TODOs:
 // - Allow consumers to specify additional tabs / views for list of inner app view options.
@@ -78,7 +79,7 @@ const useStyles = makeStyles({
 
 /**
  * Container Devtools view.
- * Communicates with {@link @fluid-experimental/devtools-core#ContainerDevtools} via {@link MessageRelayContext} to get
+ * Communicates with {@link @fluidframework/devtools-core#ContainerDevtools} via {@link MessageRelayContext} to get
  * Container-level stats to display, including Container states and history, Audience state and history, and Container
  * data.
  */

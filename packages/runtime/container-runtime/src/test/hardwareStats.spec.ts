@@ -4,11 +4,13 @@
  */
 
 import assert from "assert";
+
+import { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
-import { IContainerContext } from "@fluidframework/container-definitions";
-import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { ContainerRuntime, getDeviceSpec } from "../containerRuntime";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
+
+import { ContainerRuntime, getDeviceSpec } from "../containerRuntime.js";
 
 function setNavigator(
 	navigator: Partial<Navigator & { deviceMemory?: number }> | undefined | null,
@@ -31,16 +33,19 @@ describe("Hardware Stats", () => {
 		mockLogger.events.filter((event) => event.eventName === "DeviceSpec");
 
 	const loadContainer = async () =>
-		ContainerRuntime.load(
-			mockContext as IContainerContext,
-			[],
-			undefined, // requestHandler
-			{
+		ContainerRuntime.loadRuntime({
+			context: mockContext as IContainerContext,
+			registryEntries: [],
+			runtimeOptions: {
 				summaryOptions: {
 					summaryConfigOverrides: { state: "disabled" },
 				},
 			},
-		);
+			provideEntryPoint: async () => ({
+				myProp: "myValue",
+			}),
+			existing: false,
+		});
 
 	beforeEach(async () => {
 		mockLogger = new MockLogger();

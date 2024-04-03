@@ -4,28 +4,28 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	IContainer,
+	IFluidCodeDetails,
 	IHostLoader,
 	ILoaderOptions,
-	IFluidCodeDetails,
-} from "@fluidframework/container-definitions";
-import { LocalResolver, LocalDocumentServiceFactory } from "@fluidframework/local-driver";
+} from "@fluidframework/container-definitions/internal";
+import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
 import { MessageType } from "@fluidframework/protocol-definitions";
-import { SharedString } from "@fluidframework/sequence";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { IUrlResolver } from "@fluidframework/driver-definitions";
+import { SharedString } from "@fluidframework/sequence/internal";
 import {
-	LocalDeltaConnectionServer,
 	ILocalDeltaConnectionServer,
+	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
+	ITestFluidObject,
+	LoaderContainerTracker,
+	TestFluidObjectFactory,
 	createAndAttachContainer,
 	createLoader,
-	LoaderContainerTracker,
-	ITestFluidObject,
-	TestFluidObjectFactory,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 /**
  * Creates a loader with the given package entries and a delta connection server.
@@ -45,7 +45,7 @@ function createLocalLoader(
 
 describe("LocalTestServer", () => {
 	const documentId = "localServerTest";
-	const documentLoadUrl = `fluid-test://localhost/${documentId}`;
+	const documentLoadUrl = `https://localhost/${documentId}`;
 	const stringId = "stringKey";
 	const codeDetails: IFluidCodeDetails = {
 		package: "localServerTestPackage",
@@ -94,12 +94,12 @@ describe("LocalTestServer", () => {
 
 		// Create a Container for the first client.
 		container1 = await createContainer();
-		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+		dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 		sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
 		// Load the Container that was created by the first client.
 		container2 = await loadContainer();
-		dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 	});
 

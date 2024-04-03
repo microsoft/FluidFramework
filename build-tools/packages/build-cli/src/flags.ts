@@ -2,10 +2,24 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Flags } from "@oclif/core";
 import * as semver from "semver";
 
-import { supportedMonoRepoValues } from "@fluidframework/build-tools";
+// eslint-disable-next-line import/no-deprecated
+import { MonoRepoKind } from "./library";
+
+/**
+ * An iterator that returns only the Enum values of MonoRepoKind.
+ * @deprecated should switch to ReleaseGroup.  Currently the only difference is "azure" not in ReleaseGroup.
+ */
+// eslint-disable-next-line import/no-deprecated
+function* supportedMonoRepoValues(): IterableIterator<MonoRepoKind> {
+	// eslint-disable-next-line import/no-deprecated
+	for (const [, flag] of Object.entries(MonoRepoKind)) {
+		yield flag;
+	}
+}
 
 import {
 	isVersionBumpType,
@@ -15,7 +29,7 @@ import {
 	VersionScheme,
 } from "@fluid-tools/version-tools";
 
-import { DependencyUpdateType } from "./lib";
+import { DependencyUpdateType } from "./library";
 import { isReleaseGroup, ReleaseGroup } from "./releaseGroups";
 
 /**
@@ -69,7 +83,7 @@ export const releaseGroupWithAllFlag = Flags.custom<ReleaseGroup | "all">({
 export const packageSelectorFlag = Flags.custom({
 	char: "p",
 	description:
-		"Name of package. You can use scoped or unscoped package names. For example, both @fluid-tools/markdown-magic and markdown-magic are valid.",
+		"Name of package. You can use scoped or unscoped package names. For example, both @fluid-tools/benchmark and benchmark are valid.",
 	multiple: false,
 });
 

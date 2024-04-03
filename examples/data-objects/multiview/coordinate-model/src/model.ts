@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IValueChanged } from "@fluidframework/map";
 import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { IValueChanged } from "@fluidframework/map";
 
 const xKey = "x";
 const yKey = "y";
 
 /**
  * The Coordinate is our implementation of the ICoordinate interface.
+ * @internal
  */
 export class Coordinate extends DataObject implements ICoordinate {
 	public static readonly ComponentName = "@fluid-example/coordinate";

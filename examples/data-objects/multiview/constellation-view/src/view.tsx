@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-
 import { IConstellation, ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
+import React from "react";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.css";
@@ -56,6 +55,7 @@ interface IConstellationViewProps {
  * ConstellationView is a React component that renders the given IConstellation's stars as dots that can be dragged
  * and dropped, plus slider views for more precise editing.  Note that the ConstellationView is the one making the
  * decision to bind the ICoordinate models to these particular views.
+ * @internal
  */
 export const ConstellationView: React.FC<IConstellationViewProps> = (
 	props: IConstellationViewProps,

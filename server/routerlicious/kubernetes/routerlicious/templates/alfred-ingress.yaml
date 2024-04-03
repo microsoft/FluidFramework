@@ -25,6 +25,13 @@ spec:
   - host: {{ .Values.alfred.host }}
     http:
       paths:
+      - pathType: Prefix
+        path: /socket.io
+        backend:
+          service:
+            name: {{ template "nexus.fullname" . }}
+            port:
+              number: 80
       - path: /
         pathType: ImplementationSpecific
         backend:

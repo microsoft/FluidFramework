@@ -1,5 +1,12 @@
 # @fluidframework/common-definitions Changelog
 
+## [1.1.0](https://github.com/microsoft/FluidFramework/releases/tag/common-definitions_v1.1.0)
+
+### Package now declares explicit exports
+
+This package now uses the [package.json exports field](https://nodejs.org/api/packages.html#exports) to declare package
+entrypoints. The package only provides a CommonJS entrypoint.
+
 ## [1.0.0](https://github.com/microsoft/FluidFramework/releases/tag/common-definitions_v1.0.0)
 
 ### Deprecated interfaces and types

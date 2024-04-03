@@ -14,6 +14,9 @@ const _isFlagSet = (flags: number, flag: number) => {
 	return (flags & flag) === flag;
 };
 
+/**
+ * @internal
+ */
 export class FlaggedError {
 	/**
 	 * Flags that may be set on an error instance.

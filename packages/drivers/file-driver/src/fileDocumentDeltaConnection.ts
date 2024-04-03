@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDisposable } from "@fluidframework/core-interfaces";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	ConnectionMode,
 	IClientConfiguration,
@@ -19,8 +20,8 @@ import {
 	ITokenClaims,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { FileDeltaStorageService } from "./fileDeltaStorageService";
+
+import { FileDeltaStorageService } from "./fileDeltaStorageService.js";
 
 const MaxBatchDeltas = 2000;
 
@@ -45,6 +46,7 @@ const Claims: ITokenClaims = {
 
 /**
  * Replay service used to play ops using the delta connection.
+ * @internal
  */
 export class Replayer {
 	private currentReplayOp = 0;
@@ -110,6 +112,9 @@ export class Replayer {
 	}
 }
 
+/**
+ * @internal
+ */
 export class ReplayFileDeltaConnection
 	extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
 	implements IDocumentDeltaConnection, IDisposable

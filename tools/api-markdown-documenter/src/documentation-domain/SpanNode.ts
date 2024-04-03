@@ -2,15 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
-	DocumentationNode,
+	type DocumentationNode,
 	DocumentationParentNodeBase,
-	SingleLineDocumentationNode,
-} from "./DocumentationNode";
-import { DocumentationNodeType } from "./DocumentationNodeType";
-import { PlainTextNode } from "./PlainTextNode";
-import { TextFormatting } from "./TextFormatting";
-import { createNodesFromPlainText } from "./Utilities";
+	type SingleLineDocumentationNode,
+} from "./DocumentationNode.js";
+import { DocumentationNodeType } from "./DocumentationNodeType.js";
+import { PlainTextNode } from "./PlainTextNode.js";
+import { type TextFormatting } from "./TextFormatting.js";
+import { createNodesFromPlainText } from "./Utilities.js";
 
 /**
  * A grouping of text, potentially spanning multiple lines, which may have some {@link TextFormatting}.

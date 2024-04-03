@@ -3,10 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidDataStoreContext, IFluidDataStoreChannel } from "./dataStoreContext";
+import type { IFluidDataStoreChannel, IFluidDataStoreContext } from "./dataStoreContext.js";
 
+/**
+ * @alpha
+ */
 export const IFluidDataStoreFactory: keyof IProvideFluidDataStoreFactory = "IFluidDataStoreFactory";
 
+/**
+ * @alpha
+ */
 export interface IProvideFluidDataStoreFactory {
 	readonly IFluidDataStoreFactory: IFluidDataStoreFactory;
 }
@@ -14,6 +20,7 @@ export interface IProvideFluidDataStoreFactory {
 /**
  * IFluidDataStoreFactory create data stores.  It is associated with an identifier (its `type` member)
  * and usually provided to consumers using this mapping through a data store registry.
+ * @alpha
  */
 export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
 	/**

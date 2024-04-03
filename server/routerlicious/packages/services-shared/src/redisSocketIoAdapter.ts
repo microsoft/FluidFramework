@@ -12,10 +12,16 @@ import * as uuid from "uuid";
 import { promiseTimeout } from "@fluidframework/server-services-client";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 
+/**
+ * @internal
+ */
 export interface ISocketIoRedisConnection {
 	publish(channel: string, message: string): Promise<void>;
 }
 
+/**
+ * @internal
+ */
 export interface ISocketIoRedisSubscriptionConnection extends ISocketIoRedisConnection {
 	subscribe(
 		channels: string | string[],
@@ -26,6 +32,9 @@ export interface ISocketIoRedisSubscriptionConnection extends ISocketIoRedisConn
 	isSubscribed(channel: string): boolean;
 }
 
+/**
+ * @internal
+ */
 export interface ISocketIoRedisOptions {
 	// the connection used for publishing messages
 	pubConnection: ISocketIoRedisConnection;
@@ -66,6 +75,7 @@ export interface ISocketIoRedisOptions {
  * - https://github.com/socketio/socket.io-redis
  * - https://github.com/socketio/socket.io-emitter
  * - https://github.com/socketio/socket.io-adapter
+ * @internal
  */
 export class RedisSocketIoAdapter extends Adapter {
 	private static options: ISocketIoRedisOptions;

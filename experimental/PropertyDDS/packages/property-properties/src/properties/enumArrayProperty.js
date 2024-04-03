@@ -2,10 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 const { MSG } = require("@fluid-experimental/property-common").constants;
 const { TypeIdHelper } = require("@fluid-experimental/property-changeset");
 const { BaseDataArray } = require("@fluid-experimental/property-common");
 const _ = require("lodash");
+
 const { ValueArrayProperty } = require("./valueArrayProperty");
 
 /**
@@ -14,6 +16,7 @@ const { ValueArrayProperty } = require("./valueArrayProperty");
  * efficient and convenient. Additionally, we provide direct access
  * methods to the enums in the array, e.g. .getEnumString(3) directly
  * returns the enum string at position 3 of the array
+ * @internal
  */
 export class EnumArrayProperty extends ValueArrayProperty {
 	/**

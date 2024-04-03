@@ -5,23 +5,24 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
-import { ISegment } from "./mergeTreeNodes";
-// eslint-disable-next-line import/no-deprecated
-import { matchProperties } from "./properties";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+
+import { NonCollabClient, UnassignedSequenceNumber } from "./constants.js";
+import { MergeTree } from "./mergeTree.js";
+import { ISegment } from "./mergeTreeNodes.js";
+import { matchProperties } from "./properties.js";
 import {
 	JsonSegmentSpecs,
 	MergeTreeChunkLegacy,
 	serializeAsMinSupportedVersion,
-} from "./snapshotChunks";
-import { MergeTree } from "./mergeTree";
+} from "./snapshotChunks.js";
 
 interface SnapshotHeader {
 	chunkCount?: number;
@@ -198,6 +199,8 @@ export class SnapshotLegacy {
 			seq: this.mergeTree.collabWindow.minSeq,
 		};
 
+		let originalSegments = 0;
+
 		const segs: ISegment[] = [];
 		let prev: ISegment | undefined;
 		const extractSegment = (
@@ -215,9 +218,9 @@ export class SnapshotLegacy {
 					segment.removedSeq === UnassignedSequenceNumber ||
 					segment.removedSeq > this.seq!)
 			) {
+				originalSegments += 1;
 				if (
 					prev?.canAppend(segment) &&
-					// eslint-disable-next-line import/no-deprecated
 					matchProperties(prev.properties, segment.properties)
 				) {
 					prev = prev.clone();
@@ -247,6 +250,17 @@ export class SnapshotLegacy {
 			}
 			this.segments!.push(segment);
 		});
+
+		// To reduce potential spam from this telemetry, we sample only a small
+		// percentage of summaries
+		if (Math.abs(originalSegments - segs.length) > 500 && Math.random() < 0.005) {
+			this.logger.sendTelemetryEvent({
+				eventName: "MergeTreeLegacySummarizeSegmentCount",
+				originalSegments,
+				segmentsAfterCombine: segs.length,
+				segmentsLen: this.segments.length,
+			});
+		}
 
 		// We observed this.header.segmentsTotalLength < totalLength to happen in some cases
 		// When this condition happens, we might not write out all segments in getSeqLengthSegs()

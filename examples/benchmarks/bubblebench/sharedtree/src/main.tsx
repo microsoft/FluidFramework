@@ -3,17 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IArrayish, IClient } from "@fluid-example/bubblebench-common";
+import { IClient } from "@fluid-example/bubblebench-common";
 import { SharedTree, WriteFormat } from "@fluid-experimental/tree";
-import { TreeObjectProxy } from "./proxy";
-import { AppState } from "./state";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+
+import { TreeObjectProxy } from "./proxy/index.js";
+import { AppState } from "./state.js";
 
 interface IApp {
-	clients: IArrayish<IClient>;
+	clients: IClient[];
 }
 
+/**
+ * @internal
+ */
 export class Bubblebench extends DataObject {
 	public static readonly Name = "@fluid-example/bubblebench-sharedtree";
 	private maybeTree?: SharedTree = undefined;
@@ -74,6 +78,7 @@ export class Bubblebench extends DataObject {
 /**
  * The DataObjectFactory declares the Fluid object and defines any additional distributed data structures.
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
+ * @internal
  */
 export const BubblebenchInstantiationFactory = new DataObjectFactory(
 	Bubblebench.Name,

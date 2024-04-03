@@ -4,18 +4,21 @@
  */
 
 import { strict as assert } from "node:assert";
-import { type IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
+
+import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
 	type MockContainerRuntimeForReconnection,
-	MockStorage,
+	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
-} from "@fluidframework/test-runtime-utils";
-import { SharedCell } from "../cell";
-import { CellFactory } from "../cellFactory";
-import { type ISharedCell, type ICellOptions } from "../interfaces";
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { SharedCell } from "../cell.js";
+import { CellFactory } from "../cellFactory.js";
+import { type ICellOptions, type ISharedCell } from "../interfaces.js";
 
 function createConnectedCell(
 	id: string,
@@ -67,7 +70,7 @@ describe("Cell", () => {
 		 */
 		let cell: ISharedCell;
 
-		beforeEach(() => {
+		beforeEach("createDetachedCell", () => {
 			cell = createDetachedCell("cell");
 		});
 
@@ -143,7 +146,7 @@ describe("Cell", () => {
 				await cell2.load(services2);
 
 				// Now connect the first SharedCell
-				dataStoreRuntime1.local = false;
+				dataStoreRuntime1.setAttachState(AttachState.Attached);
 
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				const services1 = {
@@ -212,7 +215,7 @@ describe("Cell", () => {
 		let containerRuntimeFactory: MockContainerRuntimeFactory;
 
 		describe("APIs", () => {
-			beforeEach(() => {
+			beforeEach("createConnectedCells", () => {
 				containerRuntimeFactory = new MockContainerRuntimeFactory();
 				// Connect the first SharedCell.
 				cell1 = createConnectedCell("cell1", containerRuntimeFactory);
@@ -296,7 +299,7 @@ describe("Cell", () => {
 		});
 
 		describe("Attributor", () => {
-			beforeEach(() => {
+			beforeEach("createConnectedCells", () => {
 				const options: ICellOptions = { attribution: { track: true } };
 				containerRuntimeFactory = new MockContainerRuntimeFactory();
 				// Connect the first SharedCell with attribution enabled.
@@ -418,7 +421,7 @@ describe("Cell", () => {
 		let cell1: ISharedCell;
 		let cell2: ISharedCell;
 
-		beforeEach(() => {
+		beforeEach("createCellsForReconnection", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
 			// Connect the first SharedCell.
@@ -516,7 +519,7 @@ describe("Cell", () => {
 			}
 
 			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.sharedObject}
+			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.sharedObject}
 			 */
 			public get sharedObject(): ISharedCell {
 				// Return the remote SharedCell because we want to verify its summary data.
@@ -524,14 +527,14 @@ describe("Cell", () => {
 			}
 
 			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.expectedOutboundRoutes}
+			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.expectedOutboundRoutes}
 			 */
 			public get expectedOutboundRoutes(): string[] {
 				return this._expectedRoutes;
 			}
 
 			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.addOutboundRoutes}
+			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.addOutboundRoutes}
 			 */
 			public async addOutboundRoutes(): Promise<void> {
 				const newSubCell = createDetachedCell(`subCell-${++this.subCellCount}`);
@@ -541,7 +544,7 @@ describe("Cell", () => {
 			}
 
 			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.deleteOutboundRoutes}
+			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.deleteOutboundRoutes}
 			 */
 			public async deleteOutboundRoutes(): Promise<void> {
 				this.cell2.delete();
@@ -550,7 +553,7 @@ describe("Cell", () => {
 			}
 
 			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.addNestedHandles}
+			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.addNestedHandles}
 			 */
 			public async addNestedHandles(): Promise<void> {
 				const newSubCell = createDetachedCell(`subCell-${++this.subCellCount}`);

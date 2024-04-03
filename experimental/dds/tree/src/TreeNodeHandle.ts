@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { Definition, NodeId } from './Identifiers';
-import { fail, memoizeGetter } from './Common';
-import { Payload, TraitMap, TreeNode } from './persisted-types';
-import { TreeView, TreeViewNode } from './TreeView';
+import { fail, memoizeGetter } from './Common.js';
+import { Definition, NodeId } from './Identifiers.js';
+import { TreeView, TreeViewNode } from './TreeView.js';
+import { Payload, TraitMap, TreeNode } from './persisted-types/index.js';
 
 /**
  * A handle to a `TreeNode` that exists within a specific `TreeView`. This type provides a convenient
  * API for traversing trees of nodes in a TreeView and is not designed to provide maximum runtime
  * performance; if performance is a concern, consider using the TreeView and TreeViewNode APIs directly.
- * @public
+ * @internal
  */
 export class TreeNodeHandle implements TreeNode<TreeNodeHandle, NodeId> {
 	private readonly view: TreeView;

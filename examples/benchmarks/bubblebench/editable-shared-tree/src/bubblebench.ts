@@ -2,25 +2,30 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	AllowedUpdateType,
-	fail,
+	FlexTreeView,
 	ISharedTree,
-	ISharedTreeView,
 	SharedTreeFactory,
-} from "@fluid-experimental/tree2";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { AppState } from "./appState";
-import { appSchemaData, ClientsField } from "./schema";
+	fail,
+} from "@fluidframework/tree/internal";
+
+import { AppState } from "./appState.js";
+import { appSchemaData, rootAppStateSchema } from "./schema.js";
 
 // Key used to store/retrieve the SharedTree instance within the root SharedMap.
 const treeKey = "treeKey";
 
+/**
+ * @internal
+ */
 export class Bubblebench extends DataObject {
 	public static readonly Name = "@fluid-example/bubblebench-sharedtree";
 
-	private view: ISharedTreeView | undefined;
+	private view: FlexTreeView<typeof rootAppStateSchema> | undefined;
 	private _appState: AppState | undefined;
 
 	protected async initializingFirstTime() {
@@ -42,8 +47,7 @@ export class Bubblebench extends DataObject {
 
 	protected async hasInitialized() {
 		this._appState = new AppState(
-			// TODO: make schematizeView strongly type root and remove this cast
-			this.tree.root as unknown as ClientsField,
+			this.tree.flexTree,
 			/* stageWidth: */ 640,
 			/* stageHeight: */ 480,
 			/* numBubbles: */ 1,
@@ -73,18 +77,23 @@ export class Bubblebench extends DataObject {
 	 * @param tree - ISharedTree
 	 */
 	initializeTree(tree: ISharedTree) {
-		this.view = tree.schematize({
-			allowedSchemaModifications: AllowedUpdateType.None,
-			initialTree: [],
-			schema: appSchemaData,
-		});
+		this.view = tree.schematizeFlexTree(
+			{
+				allowedSchemaModifications: AllowedUpdateType.None,
+				initialTree: [],
+				schema: appSchemaData,
+			},
+			() => {
+				throw new Error("Schema changed");
+			},
+		);
 	}
 
 	/**
 	 * Get the SharedTree.
 	 * Cannot be accessed until after initialization has complected.
 	 */
-	private get tree(): ISharedTreeView {
+	private get tree(): FlexTreeView<typeof rootAppStateSchema> {
 		return this.view ?? fail("not initialized");
 	}
 
@@ -100,6 +109,7 @@ export class Bubblebench extends DataObject {
 /**
  * The DataObjectFactory declares the Fluid object and defines any additional distributed data structures.
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
+ * @internal
  */
 export const BubblebenchInstantiationFactory = new DataObjectFactory(
 	Bubblebench.Name,

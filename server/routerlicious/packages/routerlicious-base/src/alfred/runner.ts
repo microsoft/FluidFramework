@@ -7,35 +7,31 @@ import cluster from "cluster";
 import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	ICache,
-	IClientManager,
+	IClusterDrainingChecker,
 	IDeltaService,
 	IDocumentStorage,
-	IOrdererManager,
 	IProducer,
 	IRunner,
 	ITenantManager,
 	IThrottler,
-	IThrottleAndUsageStorageManager,
 	IWebServer,
 	IWebServerFactory,
 	IDocumentRepository,
 	ITokenRevocationManager,
-	IWebSocketTracker,
 	IRevokedTokenChecker,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import { createMetricClient } from "@fluidframework/server-services";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
-import {
-	configureWebSocketServices,
-	ICollaborationSessionEvents,
-} from "@fluidframework/server-lambdas";
+import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 import * as app from "./app";
 import { IDocumentDeleteService } from "./services";
 
+/**
+ * @internal
+ */
 export class AlfredRunner implements IRunner {
 	private server: IWebServer;
 	private runningDeferred: Deferred<void>;
@@ -46,105 +42,53 @@ export class AlfredRunner implements IRunner {
 		private readonly serverFactory: IWebServerFactory,
 		private readonly config: Provider,
 		private readonly port: string | number,
-		private readonly orderManager: IOrdererManager,
 		private readonly tenantManager: ITenantManager,
 		private readonly restTenantThrottlers: Map<string, IThrottler>,
 		private readonly restClusterThrottlers: Map<string, IThrottler>,
-		private readonly socketConnectTenantThrottler: IThrottler,
-		private readonly socketConnectClusterThrottler: IThrottler,
-		private readonly socketSubmitOpThrottler: IThrottler,
-		private readonly socketSubmitSignalThrottler: IThrottler,
 		private readonly singleUseTokenCache: ICache,
 		private readonly storage: IDocumentStorage,
-		private readonly clientManager: IClientManager,
 		private readonly appTenants: IAlfredTenant[],
 		private readonly deltaService: IDeltaService,
 		private readonly producer: IProducer,
-		private readonly metricClientConfig: any,
 		private readonly documentRepository: IDocumentRepository,
 		private readonly documentDeleteService: IDocumentDeleteService,
-		private readonly throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager,
-		private readonly verifyMaxMessageSize?: boolean,
-		private readonly redisCache?: ICache,
-		private readonly socketTracker?: IWebSocketTracker,
 		private readonly tokenRevocationManager?: ITokenRevocationManager,
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
 		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+		private readonly clusterDrainingChecker?: IClusterDrainingChecker,
+		private readonly enableClientIPLogging?: boolean,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
 	public start(): Promise<void> {
 		this.runningDeferred = new Deferred<void>();
 
-		// Create the HTTP server and attach alfred to it
-		const alfred = app.create(
-			this.config,
-			this.tenantManager,
-			this.restTenantThrottlers,
-			this.restClusterThrottlers,
-			this.singleUseTokenCache,
-			this.storage,
-			this.appTenants,
-			this.deltaService,
-			this.producer,
-			this.documentRepository,
-			this.documentDeleteService,
-			this.tokenRevocationManager,
-			this.revokedTokenChecker,
-			this.collaborationSessionEventEmitter,
-		);
-		alfred.set("port", this.port);
+		const usingClusterModule: boolean | undefined = this.config.get("alfred:useNodeCluster");
+		// Don't include application logic in primary thread when Node.js cluster module is enabled.
+		const includeAppLogic = !(cluster.isPrimary && usingClusterModule);
 
-		this.server = this.serverFactory.create(alfred);
-
-		const httpServer = this.server.httpServer;
-
-		const maxNumberOfClientsPerDocument = this.config.get(
-			"alfred:maxNumberOfClientsPerDocument",
-		);
-		const numberOfMessagesPerTrace = this.config.get("alfred:numberOfMessagesPerTrace");
-		const maxTokenLifetimeSec = this.config.get("auth:maxTokenLifetimeSec");
-		const isTokenExpiryEnabled = this.config.get("auth:enableTokenExpiration");
-		const isClientConnectivityCountingEnabled = this.config.get(
-			"usage:clientConnectivityCountingEnabled",
-		);
-		const isSignalUsageCountingEnabled = this.config.get("usage:signalUsageCountingEnabled");
-
-		httpServer.on("error", (error) => this.onError(error));
-		httpServer.on("listening", () => this.onListening());
-
-		if (cluster.isPrimary && this.server.webSocketServer === null) {
-			// Listen on provided port, on all network interfaces.
-			httpServer.listen(this.port);
-		} else {
-			// Register all the socket.io stuff
-			configureWebSocketServices(
-				this.server.webSocketServer,
-				this.orderManager,
+		if (includeAppLogic) {
+			// Create the HTTP server and attach alfred to it
+			const alfred = app.create(
+				this.config,
 				this.tenantManager,
+				this.restTenantThrottlers,
+				this.restClusterThrottlers,
+				this.singleUseTokenCache,
 				this.storage,
-				this.clientManager,
-				createMetricClient(this.metricClientConfig),
-				winston,
-				maxNumberOfClientsPerDocument,
-				numberOfMessagesPerTrace,
-				maxTokenLifetimeSec,
-				isTokenExpiryEnabled,
-				isClientConnectivityCountingEnabled,
-				isSignalUsageCountingEnabled,
-				this.redisCache,
-				this.socketConnectTenantThrottler,
-				this.socketConnectClusterThrottler,
-				this.socketSubmitOpThrottler,
-				this.socketSubmitSignalThrottler,
-				this.throttleAndUsageStorageManager,
-				this.verifyMaxMessageSize,
-				this.socketTracker,
+				this.appTenants,
+				this.deltaService,
+				this.producer,
+				this.documentRepository,
+				this.documentDeleteService,
+				this.tokenRevocationManager,
 				this.revokedTokenChecker,
 				this.collaborationSessionEventEmitter,
+				this.clusterDrainingChecker,
+				this.enableClientIPLogging,
 			);
-			// Listen on primary thread port, on all network interfaces.
-			httpServer.listen(cluster.isPrimary ? this.port : 0);
+			alfred.set("port", this.port);
+			this.server = this.serverFactory.create(alfred);
 
 			if (this.tokenRevocationManager) {
 				this.tokenRevocationManager.start().catch((error) => {
@@ -152,7 +96,18 @@ export class AlfredRunner implements IRunner {
 					Lumberjack.error("Failed to start token revocation manager.", undefined, error);
 				});
 			}
+		} else {
+			// Create an HTTP server with a blank request listener
+			this.server = this.serverFactory.create(null);
 		}
+
+		const httpServer = this.server.httpServer;
+		httpServer.on("error", (error) => this.onError(error));
+		httpServer.on("listening", () => this.onListening());
+
+		// Listen on primary thread port, on all network interfaces,
+		// or allow cluster module to assign random port for worker thread.
+		httpServer.listen(cluster.isPrimary ? this.port : 0);
 
 		this.stopped = false;
 
@@ -161,12 +116,12 @@ export class AlfredRunner implements IRunner {
 
 	public async stop(caller?: string, uncaughtException?: any): Promise<void> {
 		if (this.stopped) {
-			Lumberjack.info("AlfredRunner.stop already called, returning early.");
+			Lumberjack.info("AlfredRunner.stop already called, returning early.", { caller });
 			return;
 		}
 
 		this.stopped = true;
-		Lumberjack.info("AlfredRunner.stop starting.");
+		Lumberjack.info("AlfredRunner.stop starting.", { caller });
 
 		const runnerServerCloseTimeoutMs =
 			this.config.get("shared:runnerServerCloseTimeoutMs") ?? 30000;

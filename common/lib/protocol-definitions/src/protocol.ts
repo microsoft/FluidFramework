@@ -4,7 +4,7 @@
  */
 
 /**
- * @public
+ * @alpha
  */
 export enum MessageType {
 	/**
@@ -77,7 +77,7 @@ export enum MessageType {
 }
 
 /**
- * @public
+ * @internal
  */
 export enum SignalType {
 	/**
@@ -93,7 +93,6 @@ export enum SignalType {
 
 /**
  * Messages to track latency trace.
- *
  * @public
  */
 export interface ITrace {
@@ -114,7 +113,7 @@ export interface ITrace {
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface INack {
 	/**
@@ -135,7 +134,6 @@ export interface INack {
 
 /**
  * Document-specific message.
- *
  * @public
  */
 export interface IDocumentMessage {
@@ -183,8 +181,7 @@ export interface IDocumentMessage {
 
 /**
  * Document Message with optional system level data field.
- *
- * @public
+ * @internal
  */
 export interface IDocumentSystemMessage extends IDocumentMessage {
 	data: string;
@@ -192,7 +189,6 @@ export interface IDocumentSystemMessage extends IDocumentMessage {
 
 /**
  * Branch origin information.
- *
  * @public
  */
 export interface IBranchOrigin {
@@ -214,7 +210,6 @@ export interface IBranchOrigin {
 
 /**
  * Sequenced message for a distributed document.
- *
  * @public
  */
 export interface ISequencedDocumentMessage {
@@ -304,8 +299,7 @@ export interface ISequencedDocumentMessage {
 
 /**
  * {@link ISequencedDocumentAugmentedMessage} with experimental properties.
- *
- * @alpha
+ * @internal
  */
 export type ISequencedDocumentMessageExperimental = Omit<
 	ISequencedDocumentMessage,
@@ -323,14 +317,14 @@ export type ISequencedDocumentMessageExperimental = Omit<
 };
 
 /**
- * @public
+ * @internal
  */
 export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessage {
 	data: string;
 }
 
 /**
- * @public
+ * @internal
  */
 export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMessage {
 	additionalContent: string;
@@ -338,7 +332,6 @@ export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMe
 
 /**
  * Common interface between incoming and outgoing signals.
- *
  * @public
  */
 export interface ISignalMessageBase {
@@ -353,7 +346,7 @@ export interface ISignalMessageBase {
 	type?: string;
 
 	/**
-	 * Counts the number of signals sent by the client
+	 * Counts the number of signals sent by the sending client.
 	 */
 	clientConnectionNumber?: number;
 
@@ -361,11 +354,16 @@ export interface ISignalMessageBase {
 	 * Sequence number that indicates when the signal was created in relation to the delta stream
 	 */
 	referenceSequenceNumber?: number;
+
+	/**
+	 * Client ID of the singular client the signal is being (or has been) sent to.
+	 * May only be specified when IConnect.supportedFeatures['submit_signals_v2'] is true, will throw otherwise.
+	 */
+	targetClientId?: string;
 }
 
 /**
  * Interface for signals sent by the server to clients.
- *
  * @public
  */
 export interface ISignalMessage extends ISignalMessageBase {
@@ -378,19 +376,13 @@ export interface ISignalMessage extends ISignalMessageBase {
 }
 
 /**
- * Interface for signals sent by clients to the server when submit_signals_v2 is enabled.
- *
- * @public
+ * Interface for signals sent by clients to the server.
+ * @internal
  */
-export interface ISentSignalMessage extends ISignalMessageBase {
-	/**
-	 * When specified, the signal is only sent to the provided client id
-	 */
-	targetClientId?: string;
-}
+export type ISentSignalMessage = ISignalMessageBase;
 
 /**
- * @public
+ * @alpha
  */
 export interface IUploadedSummaryDetails {
 	/**
@@ -400,7 +392,7 @@ export interface IUploadedSummaryDetails {
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface ISummaryContent {
 	/**
@@ -435,8 +427,7 @@ export interface ISummaryContent {
 /**
  * General errors returned from the server.
  * May want to add error code or something similar in the future.
- *
- * @public
+ * @internal
  */
 export interface IServerError {
 	/**
@@ -447,8 +438,7 @@ export interface IServerError {
 
 /**
  * Data about the original proposed summary message.
- *
- * @public
+ * @alpha
  */
 export interface ISummaryProposal {
 	/**
@@ -459,8 +449,7 @@ export interface ISummaryProposal {
 
 /**
  * Contents of summary ack expected from the server.
- *
- * @public
+ * @alpha
  */
 export interface ISummaryAck {
 	/**
@@ -476,8 +465,7 @@ export interface ISummaryAck {
 
 /**
  * Contents of summary nack expected from the server.
- *
- * @public
+ * @alpha
  */
 export interface ISummaryNack {
 	/**
@@ -507,8 +495,7 @@ export interface ISummaryNack {
 
 /**
  * Interface for nack content.
- *
- * @public
+ * @alpha
  */
 export interface INackContent {
 	/**
@@ -538,8 +525,7 @@ export interface INackContent {
 
 /**
  * Type of the nack.
- *
- * @public
+ * @alpha
  */
 export enum NackErrorType {
 	/**

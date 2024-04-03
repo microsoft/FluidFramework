@@ -7,6 +7,7 @@
  * Examples of known categories, however category can be any string for extensibility.
  *
  * @deprecated Moved to the `@fluidframework/core-interfaces` package.
+ * @internal
  */
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
@@ -18,6 +19,7 @@ export type TelemetryEventCategory = "generic" | "error" | "performance";
  * General best practice is to explicitly log the fields you care about from objects.
  *
  * @deprecated Moved to the `@fluidframework/core-interfaces` package.
+ * @alpha
  */
 export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
@@ -27,6 +29,7 @@ export type TelemetryEventPropertyType = string | number | boolean | undefined;
  * party scenarios. For example, tags are used to mark data that should not be stored in logs for privacy reasons.
  *
  * @deprecated Moved to the `@fluidframework/core-interfaces` package.
+ * @alpha
  */
 export interface ITaggedTelemetryPropertyType {
 	value: TelemetryEventPropertyType;
@@ -37,6 +40,7 @@ export interface ITaggedTelemetryPropertyType {
  * JSON-serializable properties, which will be logged with telemetry.
  *
  * @deprecated Moved to the `@fluidframework/core-interfaces` package.
+ * @alpha
  */
 export interface ITelemetryProperties {
 	[index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
@@ -49,6 +53,7 @@ export interface ITelemetryProperties {
  * @param eventName - name of the event.
  *
  * @deprecated Moved to the `@fluidframework/core-interfaces` package.
+ * @internal
  */
 export interface ITelemetryBaseEvent extends ITelemetryProperties {
 	category: string;
@@ -60,6 +65,7 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
  * Implemented by hosting app / loader
  *
  * @deprecated Moved to the `@fluidframework/core-interfaces` package.
+ * @internal
  */
 export interface ITelemetryBaseLogger {
 	send(event: ITelemetryBaseEvent): void;
@@ -70,6 +76,7 @@ export interface ITelemetryBaseLogger {
  * Maps to category = "generic"
  *
  * @deprecated Moved to the `@fluidframework/core-interfaces` package.
+ * @internal
  */
 export interface ITelemetryGenericEvent extends ITelemetryProperties {
 	eventName: string;
@@ -81,6 +88,7 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
  * Maps to category = "error"
  *
  * @deprecated Moved to the `@fluidframework/core-interfaces` package.
+ * @internal
  */
 export interface ITelemetryErrorEvent extends ITelemetryProperties {
 	eventName: string;
@@ -91,6 +99,7 @@ export interface ITelemetryErrorEvent extends ITelemetryProperties {
  * Maps to category = "performance"
  *
  * @deprecated Moved to the `@fluidframework/core-interfaces` package.
+ * @internal
  */
 export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
 	duration?: number; // Duration of event (optional)
@@ -100,6 +109,7 @@ export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
  * An error object that supports exporting its properties to be logged to telemetry
  *
  * @deprecated Moved to the `@fluidframework/core-interfaces` package.
+ * @internal
  */
 export interface ILoggingError extends Error {
 	/**
@@ -114,6 +124,7 @@ export interface ILoggingError extends Error {
  * Creates sub-logger that appends properties to all events
  *
  * @deprecated Moved to the `@fluidframework/core-interfaces` package.
+ * @internal
  */
 export interface ITelemetryLogger extends ITelemetryBaseLogger {
 	/**

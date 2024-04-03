@@ -27,7 +27,6 @@ import { ApiVariable } from '@microsoft/api-extractor-model';
 import type { Data } from 'unist';
 import { DocNode } from '@microsoft/tsdoc';
 import { DocSection } from '@microsoft/tsdoc';
-import { IndentedWriter as DocumentWriter } from '@microsoft/api-documenter/lib/utils/IndentedWriter';
 import type { Literal } from 'unist';
 import { NewlineKind } from '@rushstack/node-core-library';
 import type { Node as Node_2 } from 'unist';
@@ -71,8 +70,10 @@ export interface ApiItemTransformationOptions {
 declare namespace ApiItemUtilities {
     export {
         doesItemRequireOwnDocument,
+        filterItems,
         getHeadingForApiItem,
         getLinkForApiItem,
+        shouldItemBeIncluded,
         getDefaultValueBlock,
         getDeprecatedBlock,
         getExampleBlocks,
@@ -143,9 +144,6 @@ function createBreadcrumbParagraph(apiItem: ApiItem, config: Required<ApiItemTra
 function createDeprecationNoticeSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): ParagraphNode | undefined;
 
 // @public
-export function createDocumentWriter(): DocumentWriter;
-
-// @public
 function createExamplesSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, headingText?: string): SectionNode | undefined;
 
 // @public
@@ -170,7 +168,7 @@ function createSummaryParagraph(apiItem: ApiItem, config: Required<ApiItemTransf
 function createThrowsSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, headingText?: string): SectionNode | undefined;
 
 // @public
-function createTypeParametersSection(typeParameters: readonly TypeParameter[], contextApiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+function createTypeParametersSection(typeParameters: readonly TypeParameter[], contextApiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode;
 
 // @public
 export const defaultConsoleLogger: Logger;
@@ -198,6 +196,7 @@ export interface DocumentationLiteralNode<TValue = unknown> extends Literal<TVal
 // @public
 export abstract class DocumentationLiteralNodeBase<TValue = unknown> implements DocumentationLiteralNode<TValue> {
     protected constructor(value: TValue);
+    abstract get isEmpty(): boolean;
     readonly isLiteral = true;
     readonly isParent = false;
     abstract get singleLine(): boolean;
@@ -207,6 +206,7 @@ export abstract class DocumentationLiteralNodeBase<TValue = unknown> implements 
 
 // @public
 export interface DocumentationNode<TData extends object = Data> extends Node_2<TData> {
+    readonly isEmpty: boolean;
     readonly isLiteral: boolean;
     readonly isParent: boolean;
     readonly singleLine: boolean;
@@ -248,6 +248,7 @@ export abstract class DocumentationParentNodeBase<TDocumentationNode extends Doc
     protected constructor(children: TDocumentationNode[]);
     readonly children: TDocumentationNode[];
     get hasChildren(): boolean;
+    get isEmpty(): boolean;
     readonly isLiteral = false;
     readonly isParent = true;
     get singleLine(): boolean;
@@ -265,6 +266,7 @@ export interface DocumentationSuiteOptions {
     hierarchyBoundaries?: HierarchyBoundaries;
     includeBreadcrumb?: boolean;
     includeTopLevelDocumentHeading?: boolean;
+    minimumReleaseLevel?: Omit<ReleaseTag, ReleaseTag.None>;
     skipPackage?: (apiPackage: ApiPackage) => boolean;
 }
 
@@ -272,17 +274,10 @@ export interface DocumentationSuiteOptions {
 export type DocumentBoundaries = ApiMemberKind[];
 
 // @public
-export interface DocumentItemMetadata {
-    readonly apiItemKind: ApiItemKind;
-    readonly apiItemName: string;
-    readonly packageName: string | undefined;
-}
-
-// @public
 export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
     constructor(properties: DocumentNodeProps);
+    readonly apiItem?: ApiItem;
     readonly children: SectionNode[];
-    readonly documentItemMetadata: DocumentItemMetadata;
     readonly documentPath: string;
     readonly frontMatter?: string;
     readonly type = DocumentationNodeType.Document;
@@ -290,13 +285,29 @@ export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
 
 // @public
 export interface DocumentNodeProps {
+    readonly apiItem?: ApiItem;
     readonly children: SectionNode[];
-    readonly documentItemMetadata: DocumentItemMetadata;
     readonly documentPath: string;
     readonly frontMatter?: string;
 }
 
-export { DocumentWriter }
+// @public
+export interface DocumentWriter {
+    decreaseIndent(): void;
+    ensureNewLine(): void;
+    ensureSkippedLine(): void;
+    getText(): string;
+    increaseIndent(indentPrefix?: string): void;
+    peekLastCharacter(): string;
+    peekSecondLastCharacter(): string;
+    write(message: string): void;
+    writeLine(message?: string): void;
+}
+
+// @public
+export namespace DocumentWriter {
+    export function create(): DocumentWriter;
+}
 
 // @public
 function doesItemRequireOwnDocument(apiItem: ApiItem, documentBoundaries: DocumentBoundaries): boolean;
@@ -315,6 +326,9 @@ export interface FileSystemConfiguration {
     readonly newlineKind?: NewlineKind;
     outputDirectoryPath: string;
 }
+
+// @public
+function filterItems(apiItems: readonly ApiItem[], config: Required<ApiItemTransformationConfiguration>): ApiItem[];
 
 // @public
 export function getApiItemTransformationConfigurationWithDefaults(inputOptions: ApiItemTransformationConfiguration): Required<ApiItemTransformationConfiguration>;
@@ -378,6 +392,7 @@ export type HierarchyBoundaries = ApiMemberKind[];
 // @public
 export class HorizontalRuleNode implements MultiLineDocumentationNode {
     constructor();
+    readonly isEmpty = false;
     readonly isLiteral = true;
     readonly isParent = false;
     readonly singleLine = false;
@@ -447,6 +462,7 @@ export { LayoutUtilities }
 // @public
 export class LineBreakNode implements MultiLineDocumentationNode {
     constructor();
+    readonly isEmpty = false;
     readonly isLiteral = true;
     readonly isParent = false;
     readonly singleLine = false;
@@ -546,6 +562,7 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> implemen
     constructor(text: string, escaped?: boolean);
     static readonly Empty: PlainTextNode;
     readonly escaped: boolean;
+    get isEmpty(): boolean;
     readonly singleLine = true;
     get text(): string;
     readonly type = DocumentationNodeType.PlainText;
@@ -592,6 +609,9 @@ export class SectionNode extends DocumentationParentNodeBase implements MultiLin
     get singleLine(): false;
     readonly type = DocumentationNodeType.Section;
 }
+
+// @public
+function shouldItemBeIncluded(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): boolean;
 
 // @public
 export interface SingleLineDocumentationNode<TData extends object = Data> extends DocumentationNode<TData> {

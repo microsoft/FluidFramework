@@ -2,21 +2,24 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable import/no-deprecated */
 
-import { Client, RedBlackTree } from "@fluidframework/merge-tree";
+import { Client, RedBlackTree } from "@fluidframework/merge-tree/internal";
+
 import {
 	IIntervalHelpers,
 	ISerializableInterval,
 	IntervalType,
 	SequenceInterval,
 	sequenceIntervalHelpers,
-} from "../intervals";
-import { SharedString } from "../sharedString";
-import { IntervalIndex } from "./intervalIndex";
+} from "../intervals/index.js";
+import { SharedString } from "../sharedString.js";
+
+import { IntervalIndex } from "./intervalIndex.js";
 
 /**
- * @public
+ * @internal
  */
 export interface IEndpointIndex<TInterval extends ISerializableInterval>
 	extends IntervalIndex<TInterval> {
@@ -83,7 +86,7 @@ export class EndpointIndex<TInterval extends ISerializableInterval>
 }
 
 /**
- * @public
+ * @internal
  */
 export function createEndpointIndex(sharedString: SharedString): IEndpointIndex<SequenceInterval> {
 	const client = (sharedString as unknown as { client: Client }).client;

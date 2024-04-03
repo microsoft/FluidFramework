@@ -8,8 +8,6 @@ import os from "os";
 import path from "path";
 import util from "util";
 import child_process from "child_process";
-import interactiveLogin from "ms-rest-azure";
-import KeyVaultClient from "azure-keyvault";
 import { loadRC, saveRC } from "@fluidframework/tool-utils";
 
 const appendFile = util.promisify(fs.appendFile);
@@ -120,17 +118,26 @@ async function execAsync(command, options) {
 
 class AzCliKeyVaultClient {
 	static async get() {
-		await execAsync("az ad signed-in-user show");
+		// We use this to validate that the user is logged in (already ran `az login`).
+		try {
+			await execAsync("az ad signed-in-user show");
+		} catch (e) {
+			// Depending on how az login was performed, the above command may fail with a variety of errors.
+			// I've seen the one below in WSL2, but there are probably others.
+			// FATAL ERROR: Error: Command failed: az ad signed-in-user show
+			// ERROR: AADSTS530003: Your device is required to be managed to access this resource.
+			if (e.message.includes("AADSTS530003")) {
+				console.log(
+					`\nAn error occurred running \`az ad signed-in-user show\` that suggests you might need to \`az logout\` and ` +
+						`\`az login\` again. One potential cause for this is having used \`az login --use-device-code\`. Error:\n\n` +
+						`${e.message}`,
+				);
+				process.exit(1);
+			}
+		}
+		// Note: 'az keyvault' commands work regardless of which subscription is currently "in context",
+		// as long as the user is listed in the vault's access policy, so we don't need to do 'az account set'.
 		return new AzCliKeyVaultClient();
-
-		// Disabling fallback to REST client while we decide how to streamline the getkeys tool
-
-		// try {
-		//     await execAsync("az account set --subscription Fluid");
-		//     return new AzCliKeyVaultClient();
-		// } catch (e) {
-		//     return undefined;
-		// }
 	}
 
 	async getSecrets(vaultName) {
@@ -148,36 +155,8 @@ class AzCliKeyVaultClient {
 	}
 }
 
-class MsRestAzureKeyVaultClinet {
-	static async get() {
-		const credentials = await interactiveLogin();
-		return new MsRestAzureKeyVaultClinet(credentials);
-	}
-
-	constructor(credentials) {
-		this.client = new KeyVaultClient(credentials);
-	}
-
-	async getSecrets(vaultName) {
-		return this.client.getSecrets(`https://${vaultName}.vault.azure.net/`);
-	}
-
-	async getSecret(vaultName, secretName) {
-		return this.client.getSecret(`https://${vaultName}.vault.azure.net/`, secretName, "");
-	}
-}
-
 async function getClient() {
 	return AzCliKeyVaultClient.get();
-
-	// Disabling fallback to REST client while we decide how to streamline the getkeys tool
-
-	// const primary = await AzCliKeyVaultClient.get();
-	// if (primary !== undefined) {
-	//     console.log("Using Azure CLI");
-	//     return primary;
-	// }
-	// return MsRestAzureKeyVaultClinet.get();
 }
 
 (async () => {

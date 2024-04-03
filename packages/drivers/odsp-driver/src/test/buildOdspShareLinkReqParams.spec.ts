@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
+
 import {
 	SharingLinkRole,
 	SharingLinkScope,
-	ShareLinkTypes,
-} from "@fluidframework/odsp-driver-definitions";
-import { buildOdspShareLinkReqParams } from "../odspUtils";
+} from "@fluidframework/odsp-driver-definitions/internal";
+
+import { buildOdspShareLinkReqParams } from "../odspUtils.js";
 
 describe("buildOdspShareLinkReqParams", () => {
 	it("Should return appropriate query parameters when only scope is provided", async () => {
@@ -26,11 +27,6 @@ describe("buildOdspShareLinkReqParams", () => {
 			result,
 			`createLinkScope=${SharingLinkScope.organization}&createLinkRole=${SharingLinkRole.view}`,
 		);
-	});
-
-	it("Should return appropriate query parameters when a ShareLinkTypes enum value is provided", async () => {
-		const result = buildOdspShareLinkReqParams(ShareLinkTypes.csl);
-		assert.strictEqual(result, `createLinkType=${ShareLinkTypes.csl}`);
 	});
 
 	it("Should return undefined when the input is undefined", async () => {

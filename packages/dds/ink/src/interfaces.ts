@@ -7,6 +7,7 @@ import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-objec
 
 /**
  * Data about a single point in an ink stroke
+ * @internal
  */
 export interface IInkPoint {
 	/**
@@ -32,6 +33,7 @@ export interface IInkPoint {
 
 /**
  * RGBA color.
+ * @internal
  */
 export interface IColor {
 	/**
@@ -55,6 +57,9 @@ export interface IColor {
 	a: number;
 }
 
+/**
+ * @internal
+ */
 export interface IInkEvents extends ISharedObjectEvents {
 	(event: "stylus", listener: (operation: IStylusOperation) => void);
 	(event: "clear", listener: () => void);
@@ -62,6 +67,7 @@ export interface IInkEvents extends ISharedObjectEvents {
 
 /**
  * Shared data structure for representing ink.
+ * @internal
  */
 export interface IInk extends ISharedObject<IInkEvents> {
 	/**
@@ -100,6 +106,7 @@ export interface IInk extends ISharedObject<IInkEvents> {
 
 /**
  * Pen data for the current stroke
+ * @internal
  */
 export interface IPen {
 	/**
@@ -115,6 +122,7 @@ export interface IPen {
 
 /**
  * Signals a clear operation.
+ * @internal
  */
 export interface IClearOperation {
 	/**
@@ -131,6 +139,7 @@ export interface IClearOperation {
 /**
  * Create stroke operations notify clients that a new stroke has been created, along with basic information about
  * the stroke.
+ * @internal
  */
 export interface ICreateStrokeOperation {
 	/**
@@ -156,6 +165,7 @@ export interface ICreateStrokeOperation {
 
 /**
  * Base interface for stylus operations.
+ * @internal
  */
 export interface IStylusOperation {
 	/**
@@ -176,11 +186,13 @@ export interface IStylusOperation {
 
 /**
  * Ink operations are one of several types.
+ * @internal
  */
 export type IInkOperation = IClearOperation | ICreateStrokeOperation | IStylusOperation;
 
 /**
  * Represents a single ink stroke.
+ * @internal
  */
 export interface IInkStroke {
 	/**

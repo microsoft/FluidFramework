@@ -7,6 +7,17 @@
 		"timestamp": true,
 		"label": "winston"
 	},
+	"config": {
+		"configDumpEnabled": false,
+		"secretNamesToRedactInConfigDump": [
+			"mongo.globalDbEndpoint",
+			"mongo.operationsDbEndpoint",
+			"redis.pass",
+			"redisForTenantCache.pass",
+			"redis2.pass",
+			"redisForThrottling.pass"
+		]
+	},
 	"lumberjack": {
 		"options": {
 			"enableGlobalTelemetryContext": true,
@@ -60,7 +71,7 @@
 	},
 	"checkpoints": {
 		"localCheckpointEnabled": true,
-		"checkpointsTTLInSeconds": 864000,
+		"checkpointsTTLInSeconds": -1,
 		"kafkaCheckpointOnReprocessingOp": false,
 		"ignoreCheckpointFlushException": false
 	},
@@ -70,13 +81,9 @@
 	},
 	"alfred": {
 		"kafkaClientId": "alfred",
-		"maxMessageSize": "16KB",
-		"verifyMaxMessageSize": false,
-		"maxNumberOfClientsPerDocument": 1000000,
-		"numberOfMessagesPerTrace": 100,
 		"sessionStickinessDurationMs": 3600000,
-		"enableConnectionCountLogging": false,
 		"ignoreEphemeralFlag": true,
+		"enableClientIPLogging": false,
 		"throttling": {
 			"restCallsPerTenant": {
 				"generalRestCall": "disabled",
@@ -88,7 +95,44 @@
 				"createDoc": "disabled",
 				"getDeltas": "disabled",
 				"getSession": "disabled"
+			}
+		},
+		"topic": "rawdeltas",
+		"bucket": "snapshots",
+		"restJsonSize": "50mb",
+		"key": "VBQyoGpEYrTn3XQPtXW3K8fFDd",
+		"tenants": [
+			{
+				"id": "fluid",
+				"key": "create-new-tenants-if-going-to-production"
 			},
+			{
+				"id": "github",
+				"key": "create-new-tenants-if-going-to-production"
+			},
+			{
+				"id": "local",
+				"key": "create-new-tenants-if-going-to-production"
+			}
+		],
+		"enforceServerGeneratedDocumentId": false,
+		"jwtTokenCache": {
+			"enable": true
+		},
+		"getDeltasRequestMaxOpsRange": 2000,
+		"useNodeCluster": false,
+		"enableLatencyMetric": false
+	},
+	"riddler": {
+		"useNodeCluster": false
+	},
+	"nexus": {
+		"kafkaClientId": "nexus",
+		"maxMessageSize": "16KB",
+		"verifyMaxMessageSize": false,
+		"maxNumberOfClientsPerDocument": 1000000,
+		"numberOfMessagesPerTrace": 100,
+		"throttling": {
 			"socketConnectionsPerTenant": "disabled",
 			"socketConnectionsPerCluster": "disabled",
 			"submitOps": "disabled",
@@ -116,18 +160,13 @@
 			"enableCustomSocketIoAdapter": true,
 			"shouldDisableDefaultNamespace": false
 		},
-		"enforceServerGeneratedDocumentId": false,
 		"socketIo": {
-			"perMessageDeflate": true
+			"perMessageDeflate": false,
+			"gracefulShutdownEnabled": false
 		},
 		"jwtTokenCache": {
 			"enable": true
-		},
-		"getDeltasRequestMaxOpsRange": 2000,
-		"useNodeCluster": false
-	},
-	"riddler": {
-		"useNodeCluster": false
+		}
 	},
 	"client": {
 		"type": "browser",
@@ -148,7 +187,8 @@
 			"maxTime": 60000,
 			"maxMessages": 500
 		},
-		"restartOnCheckpointFailure": true
+		"restartOnCheckpointFailure": true,
+		"enableEphemeralContainerSummaryCleanup": true
 	},
 	"scribe": {
 		"kafkaClientId": "scribe",
@@ -162,7 +202,10 @@
 		"verifyLastOpPersistence": false,
 		"restartOnCheckpointFailure": true,
 		"disableTransientTenantFiltering": true,
-		"maxLogtailLength": 2000
+		"maxLogtailLength": 2000,
+		"scrubUserDataInGlobalCheckpoints": false,
+		"scrubUserDataInLocalCheckpoints": false,
+		"scrubUserDataInSummaries": false
 	},
 	"system": {
 		"httpServer": {
@@ -214,8 +257,11 @@
 		"checkpointBatchSize": 1,
 		"checkpointTimeIntervalMsec": 1000,
 		"enableTelemetry": true,
+		"shouldLogInitialSuccessVerbose": false,
 		"maxDbBatchSize": 1000,
-		"restartOnCheckpointFailure": true
+		"restartOnCheckpointFailure": true,
+		"logSavedOpsTimeIntervalMs": 60000,
+		"opsCountTelemetryEnabled": true
 	},
 	"copier": {
 		"topic": "rawdeltas",
@@ -224,44 +270,57 @@
 		"checkpointBatchSize": 1,
 		"checkpointTimeIntervalMsec": 1000
 	},
-	"rabbitmq": {
-		"connectionString": "amqp://rabbitmq"
-	},
 	"redis": {
 		"host": "redis",
 		"port": 6379,
 		"tls": false,
 		"connectTimeout": 10000,
+		"slotsRefreshTimeout": 50000,
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
-		"enableOfflineQueue": true
+		"enableOfflineQueue": true,
+		"enableClustering": false,
+		"retryDelayOnMoved": 100,
+		"maxRedirections": 16
 	},
 	"redisForTenantCache": {
 		"host": "redis",
 		"port": 6379,
 		"tls": false,
 		"connectTimeout": 10000,
+		"slotsRefreshTimeout": 50000,
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
-		"enableOfflineQueue": true
+		"enableOfflineQueue": true,
+		"enableClustering": false,
+		"retryDelayOnMoved": 100,
+		"maxRedirections": 16
 	},
 	"redis2": {
 		"host": "redis",
 		"port": 6379,
 		"tls": false,
 		"connectTimeout": 10000,
+		"slotsRefreshTimeout": 50000,
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
-		"enableOfflineQueue": true
+		"enableOfflineQueue": true,
+		"enableClustering": false,
+		"retryDelayOnMoved": 100,
+		"maxRedirections": 16
 	},
 	"redisForThrottling": {
 		"host": "redis",
 		"port": 6379,
 		"tls": false,
 		"connectTimeout": 10000,
+		"slotsRefreshTimeout": 50000,
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
-		"enableOfflineQueue": true
+		"enableOfflineQueue": true,
+		"enableClustering": false,
+		"retryDelayOnMoved": 100,
+		"maxRedirections": 16
 	},
 	"error": {
 		"track": false,
@@ -269,7 +328,7 @@
 	},
 	"worker": {
 		"alfredUrl": "http://alfred:3000",
-		"deltaStreamUrl": "http://localhost:3003",
+		"deltaStreamUrl": "http://localhost:3002",
 		"serverUrl": "http://localhost:3003",
 		"blobStorageUrl": "http://localhost:3001",
 		"internalBlobStorageUrl": "http://historian:3000",
@@ -329,6 +388,9 @@
 		}
 	],
 	"tokenRevocation": {
-		"enable": true
+		"enable": false
+	},
+	"clusterDraining": {
+		"enable": false
 	}
 }

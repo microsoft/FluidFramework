@@ -5,14 +5,15 @@
 
 /* eslint accessor-pairs: [2, { "getWithoutSet": false }] */
 
-import _ from "lodash";
 import {
 	ChangeSet,
 	PathHelper,
 	SerializedChangeSet,
 	TypeIdHelper,
 } from "@fluid-experimental/property-changeset";
-import { ConsoleUtils, constants } from "@fluid-experimental/property-common";
+import { constants, ConsoleUtils } from "@fluid-experimental/property-common";
+import _ from "lodash";
+
 import { LazyLoadedProperties as Property } from "./lazyLoadedProperties";
 
 const { MSG, PROPERTY_PATH_DELIMITER } = constants;
@@ -100,6 +101,7 @@ interface ISerializeOptions {
  * Thus, with the filtering options, it is NOT possible to prevent a part of a ChangeSet from being
  * processed (in `applyChangeSet()` for example), it is NOT possible to prevent a property from being
  * created by a direct call to a function like `deserialize()` or `createProperty()`.
+ * @internal
  */
 export abstract class BaseProperty {
 	protected _id: string | undefined;

@@ -20,19 +20,6 @@ chart. Or in the future simpling installing a chart we have published to a chart
 
 Prior to deploying the Routerlicious chart, a few base components need to be configured.
 
-#### Access to the docker images
-
-The Fluid Framework team's internal AKS cluster is configured so it can [authenticate to our ACR instance automatically](https://docs.microsoft.com/en-us/azure/aks/cluster-container-registry-integration?tabs=azure-cli),
-no manual configuration is needed in that cluster.
-
-For external clusters, you'll need to provide credentials to our private container registry as
-documented [here](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/). This boils
-down to the below command to create a secret in Kubernetes:
-
-```bash
-kubectl create secret docker-registry regsecret --docker-server=prague.azurecr.io --docker-username=prague --docker-password=/vM3i=D+K4+vj+pgha=cg=55OQLDWj3w --docker-email=kurtb@microsoft.com
-```
-
 #### Storage Classes
 
 We use specific [StorageClasses](https://kubernetes.io/docs/concepts/storage/storage-classes/) for some services running in the cluster. For MongoDB we use a storage class
@@ -46,14 +33,15 @@ kubectl apply -f system/azure-unmanaged-premium.yaml
 
 #### Other base components
 
-You'll also need to have a Redis, MongoDB, Rabbitmq, and Historian instances running.
+You'll also need to have a Redis, MongoDB, and Historian instances running.
 
-We install MongoDB and Rabbitmq from the helm stable repository. We also configure MongoDB to use the managed-premium storage class in AKS.
+We install MongoDB from the helm stable repository.
+We also configure it to use the managed-premium storage class in AKS.
 
-In the following commands you can omit the optional key+value pairs to use the defaults defined in the Helm Chart. Also, replace the `<helm-release-name>` with the appropriate value.
+In the following commands you can omit the optional key+value pairs to use the defaults defined in the Helm Chart.
+Also, replace the `<helm-release-name>` with the appropriate value.
 
 `helm install --set persistence.storageClass=managed-premium,persistence.size=4094Gi,usePassword=false,image.registry=<optional-registry>,image.repository=<optional-repo-name>,image.tag=<optional-tag> <helm-release-name> bitnami/mongodb`
-`helm install --set rbac.create=false,auth.username=prague,auth.password=[password],persistence.enabled=true,persistence.size=16Gi,image.registry=<optional-registry>,image.repository=<optional-repo-name>,image.tag=<optional-tag> <helm-release-name> bitnami/rabbitmq`
 
 Redis, Kafka and Historian come from the `/server/charts` directory. You'll want to install each of them.
 
@@ -110,11 +98,9 @@ care of by Azure Kubernetes Service.
 -   Mongo - quoting-armadillo
 -   Redis - lumpy-condor
 -   Historian - terrific-otter
--   Rabbitmq - modest-poodle
 
 #### Prod
 
 -   Mongo - quieting-guppy
 -   Redis - winsome-wombat
 -   Historian - smelly-wolf
--   Rabbitmq - lumpy-worm

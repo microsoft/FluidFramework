@@ -4,12 +4,14 @@
  */
 
 import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { SharedPropertyTree } from "./propertyTree";
-import { DeflatedPropertyTreeFactory, LZ4PropertyTreeFactory } from "./propertyTreeExtFactories";
+
+import { SharedPropertyTree } from "./propertyTree.js";
+import { DeflatedPropertyTreeFactory, LZ4PropertyTreeFactory } from "./propertyTreeExtFactories.js";
 
 /**
  * This class is the extension of SharedPropertyTree which compresses
  * the deltas and summaries communicated to the server by Deflate.
+ * @internal
  */
 export class DeflatedPropertyTree extends SharedPropertyTree {
 	public static create(runtime: IFluidDataStoreRuntime, id?: string, queryString?: string) {
@@ -21,6 +23,9 @@ export class DeflatedPropertyTree extends SharedPropertyTree {
 	}
 }
 
+/**
+ * @internal
+ */
 export class LZ4PropertyTree extends SharedPropertyTree {
 	public static create(runtime: IFluidDataStoreRuntime, id?: string, queryString?: string) {
 		return runtime.createChannel(id, LZ4PropertyTreeFactory.Type) as LZ4PropertyTree;

@@ -2,22 +2,23 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
 	ApiDocumentedItem,
-	ApiItem,
+	type ApiItem,
 	ApiItemKind,
-	ApiPackage,
-	ApiPropertyItem,
+	type ApiPackage,
+	type ApiPropertyItem,
 	ApiReturnTypeMixin,
-	Excerpt,
-	Parameter,
+	type Excerpt,
+	type Parameter,
 	ReleaseTag,
-	TypeParameter,
+	type TypeParameter,
 } from "@microsoft/api-extractor-model";
 
 import {
 	CodeSpanNode,
-	DocumentationNode,
+	type DocumentationNode,
 	HeadingNode,
 	LinkNode,
 	PlainTextNode,
@@ -27,21 +28,21 @@ import {
 	TableHeaderCellNode,
 	TableHeaderRowNode,
 	TableNode,
-} from "../../documentation-domain";
+} from "../../documentation-domain/index.js";
 import {
-	ApiFunctionLike,
-	ApiModifier,
+	type ApiFunctionLike,
+	type ApiModifier,
 	getDefaultValueBlock,
 	getModifiers,
 	getReleaseTag,
 	injectSeparator,
 	isDeprecated,
-} from "../../utilities";
-import { getLinkForApiItem } from "../ApiItemTransformUtilities";
-import { transformTsdocSection } from "../TsdocNodeTransforms";
-import { getTsdocNodeTransformationOptions } from "../Utilities";
-import { ApiItemTransformationConfiguration } from "../configuration";
-import { createExcerptSpanWithHyperlinks } from "./Helpers";
+} from "../../utilities/index.js";
+import { getLinkForApiItem } from "../ApiItemTransformUtilities.js";
+import { transformTsdocSection } from "../TsdocNodeTransforms.js";
+import { getTsdocNodeTransformationOptions } from "../Utilities.js";
+import { type ApiItemTransformationConfiguration } from "../configuration/index.js";
+import { createExcerptSpanWithHyperlinks } from "./Helpers.js";
 
 /**
  * Input properties for creating a table of API members
@@ -160,30 +161,34 @@ export function createSummaryTable(
 		case ApiItemKind.Constructor:
 		case ApiItemKind.Function:
 		case ApiItemKind.Method:
-		case ApiItemKind.MethodSignature:
+		case ApiItemKind.MethodSignature: {
 			return createFunctionLikeSummaryTable(
 				apiItems.map((apiItem) => apiItem as ApiFunctionLike),
 				itemKind,
 				config,
 				options,
 			);
+		}
 
 		case ApiItemKind.Property:
-		case ApiItemKind.PropertySignature:
+		case ApiItemKind.PropertySignature: {
 			return createPropertiesTable(
 				apiItems.map((apiItem) => apiItem as ApiPropertyItem),
 				config,
 				options,
 			);
+		}
 
-		case ApiItemKind.Package:
+		case ApiItemKind.Package: {
 			return createPackagesTable(
 				apiItems.map((apiItem) => apiItem as ApiPackage),
 				config,
 			);
+		}
 
-		default:
+		default: {
 			return createDefaultSummaryTable(apiItems, itemKind, config, options);
+		}
 	}
 }
 
@@ -315,24 +320,46 @@ export function createTypeParametersSummaryTable(
 	contextApiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
 ): TableNode {
-	// Only display "Modifiers" column if there are any optional parameters present.
-	const hasOptionalParameters = apiTypeParameters.some(
-		(apiTypeParameter) => apiTypeParameter.isOptional,
+	// Only display the "Constraint" column if there are any constraints present among the type parameters.
+	const hasAnyConstraints = apiTypeParameters.some(
+		(apiTypeParameter) => !apiTypeParameter.constraintExcerpt.isEmpty,
+	);
+
+	// Only display the "Default" column if there are any defaults present among the type parameters.
+	const hasAnyDefaults = apiTypeParameters.some(
+		(apiTypeParameter) => !apiTypeParameter.defaultTypeExcerpt.isEmpty,
 	);
 
 	const headerRowCells: TableHeaderCellNode[] = [
 		TableHeaderCellNode.createFromPlainText("Parameter"),
 	];
-	if (hasOptionalParameters) {
-		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Modifiers"));
+	if (hasAnyConstraints) {
+		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Constraint"));
+	}
+	if (hasAnyDefaults) {
+		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Default"));
 	}
 	headerRowCells.push(TableHeaderCellNode.createFromPlainText("Description"));
 	const headerRow = new TableHeaderRowNode(headerRowCells);
 
-	function createModifierCell(apiParameter: TypeParameter): TableBodyCellNode {
-		return apiParameter.isOptional
-			? TableBodyCellNode.createFromPlainText("optional")
-			: TableBodyCellNode.Empty;
+	function createTypeConstraintCell(apiParameter: TypeParameter): TableBodyCellNode {
+		const constraintSpan = createExcerptSpanWithHyperlinks(
+			apiParameter.constraintExcerpt,
+			config,
+		);
+		return constraintSpan === undefined
+			? TableBodyCellNode.Empty
+			: new TableBodyCellNode([constraintSpan]);
+	}
+
+	function createTypeDefaultCell(apiParameter: TypeParameter): TableBodyCellNode {
+		const excerptSpan = createExcerptSpanWithHyperlinks(
+			apiParameter.defaultTypeExcerpt,
+			config,
+		);
+		return excerptSpan === undefined
+			? TableBodyCellNode.Empty
+			: new TableBodyCellNode([excerptSpan]);
 	}
 
 	const bodyRows: TableBodyRowNode[] = [];
@@ -340,8 +367,11 @@ export function createTypeParametersSummaryTable(
 		const bodyRowCells: TableBodyCellNode[] = [
 			TableBodyCellNode.createFromPlainText(apiTypeParameter.name),
 		];
-		if (hasOptionalParameters) {
-			bodyRowCells.push(createModifierCell(apiTypeParameter));
+		if (hasAnyConstraints) {
+			bodyRowCells.push(createTypeConstraintCell(apiTypeParameter));
+		}
+		if (hasAnyDefaults) {
+			bodyRowCells.push(createTypeDefaultCell(apiTypeParameter));
 		}
 		bodyRowCells.push(createTypeParameterSummaryCell(apiTypeParameter, contextApiItem, config));
 
@@ -787,13 +817,17 @@ export function createTypeExcerptCell(
  */
 function getTableHeadingTitleForApiKind(itemKind: ApiItemKind): string {
 	switch (itemKind) {
-		case ApiItemKind.EnumMember:
+		case ApiItemKind.EnumMember: {
 			return "Flag";
-		case ApiItemKind.MethodSignature:
+		}
+		case ApiItemKind.MethodSignature: {
 			return ApiItemKind.Method;
-		case ApiItemKind.PropertySignature:
+		}
+		case ApiItemKind.PropertySignature: {
 			return ApiItemKind.Property;
-		default:
+		}
+		default: {
 			return itemKind;
+		}
 	}
 }

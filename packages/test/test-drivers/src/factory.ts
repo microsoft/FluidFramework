@@ -4,23 +4,30 @@
  */
 
 import http from "http";
-import Agent from "agentkeepalive";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { unreachableCase } from "@fluidframework/core-utils";
-import { LocalServerTestDriver } from "./localServerTestDriver";
-import { TinyliciousTestDriver } from "./tinyliciousTestDriver";
-import { RouterliciousTestDriver } from "./routerliciousTestDriver";
-import { OdspTestDriver } from "./odspTestDriver";
-import { LocalDriverApiType, LocalDriverApi } from "./localDriverApi";
-import { OdspDriverApiType, OdspDriverApi } from "./odspDriverApi";
-import { RouterliciousDriverApiType, RouterliciousDriverApi } from "./routerliciousDriverApi";
 
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import Agent from "agentkeepalive";
+
+import { LocalDriverApi, LocalDriverApiType } from "./localDriverApi.js";
+import { LocalServerTestDriver } from "./localServerTestDriver.js";
+import { OdspDriverApi, OdspDriverApiType } from "./odspDriverApi.js";
+import { OdspTestDriver } from "./odspTestDriver.js";
+import { RouterliciousDriverApi, RouterliciousDriverApiType } from "./routerliciousDriverApi.js";
+import { RouterliciousTestDriver } from "./routerliciousTestDriver.js";
+import { TinyliciousTestDriver } from "./tinyliciousTestDriver.js";
+
+/**
+ * @internal
+ */
 export interface DriverApiType {
 	LocalDriverApi: LocalDriverApiType;
 	OdspDriverApi: OdspDriverApiType;
 	RouterliciousDriverApi: RouterliciousDriverApiType;
 }
-
+/**
+ * @internal
+ */
 export const DriverApi: DriverApiType = {
 	LocalDriverApi,
 	OdspDriverApi,
@@ -36,6 +43,9 @@ export const DriverApi: DriverApiType = {
 // immediately react to the server closing the socket.
 http.globalAgent = new Agent();
 
+/**
+ * @internal
+ */
 export type CreateFromEnvConfigParam<T extends (config: any, ...args: any) => any> = T extends (
 	config: infer P,
 	...args: any
@@ -43,11 +53,17 @@ export type CreateFromEnvConfigParam<T extends (config: any, ...args: any) => an
 	? P
 	: never;
 
+/**
+ * @internal
+ */
 export interface FluidTestDriverConfig {
 	odsp?: CreateFromEnvConfigParam<typeof OdspTestDriver.createFromEnv>;
 	r11s?: CreateFromEnvConfigParam<typeof RouterliciousTestDriver.createFromEnv>;
 }
 
+/**
+ * @internal
+ */
 export async function createFluidTestDriver(
 	fluidTestDriverType: TestDriverTypes = "local",
 	config?: FluidTestDriverConfig,

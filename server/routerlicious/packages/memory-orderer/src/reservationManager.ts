@@ -11,6 +11,7 @@ import { NodeManager } from "./nodeManager";
 /**
  * Reservation for the given id within the system. The reservation is considered held for as long as the node
  * maintains the given epoch
+ * @internal
  */
 export interface IReservation {
 	_id: string;
@@ -18,6 +19,9 @@ export interface IReservation {
 	node: string;
 }
 
+/**
+ * @internal
+ */
 export class ReservationManager extends EventEmitter implements IReservationManager {
 	constructor(
 		private readonly nodeTracker: NodeManager,

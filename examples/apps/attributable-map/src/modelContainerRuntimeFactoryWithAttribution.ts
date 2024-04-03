@@ -3,23 +3,20 @@
  * Licensed under the MIT License.
  */
 
+import { IModelContainerRuntimeEntryPoint } from "@fluid-example/example-utils";
+import { createRuntimeAttributor, mixinAttributor } from "@fluid-experimental/attributor";
 import {
 	IContainer,
 	IContainerContext,
 	IRuntime,
 	IRuntimeFactory,
-} from "@fluidframework/container-definitions";
-import { IContainerRuntimeOptions, ContainerRuntime } from "@fluidframework/container-runtime";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
+} from "@fluidframework/container-definitions/internal";
 import {
-	mixinAttributor,
-	createRuntimeAttributor,
-	IProvideRuntimeAttributor,
-} from "@fluid-experimental/attributor";
-import { FluidObject } from "@fluidframework/core-interfaces";
-// eslint-disable-next-line import/no-deprecated
-import { makeModelRequestHandler } from "@fluid-example/example-utils";
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
 
 const containerRuntimeWithAttribution = mixinAttributor(ContainerRuntime);
 
@@ -47,18 +44,19 @@ export abstract class ModelContainerRuntimeFactoryWithAttribution<ModelType>
 		context: IContainerContext,
 		existing: boolean,
 	): Promise<IRuntime> {
-		const attributor = createRuntimeAttributor();
-		const scope: FluidObject<IProvideRuntimeAttributor> = { IRuntimeAttributor: attributor };
-
-		const runtime = await containerRuntimeWithAttribution.load(
+		const runtime = await containerRuntimeWithAttribution.loadRuntime({
 			context,
-			this.registryEntries,
-			// eslint-disable-next-line import/no-deprecated
-			makeModelRequestHandler(this.createModel.bind(this)),
-			this.runtimeOptions,
-			scope, // scope
+			registryEntries: this.registryEntries,
+			provideEntryPoint: async (
+				containerRuntime: IContainerRuntime,
+			): Promise<IModelContainerRuntimeEntryPoint<ModelType>> => ({
+				getModel: async (container: IContainer) =>
+					this.createModel(containerRuntime, container),
+			}),
+			runtimeOptions: this.runtimeOptions,
+			containerScope: { IRuntimeAttributor: createRuntimeAttributor() },
 			existing,
-		);
+		});
 
 		if (!existing) {
 			await this.containerInitializingFirstTime(runtime);

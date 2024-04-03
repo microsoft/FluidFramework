@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { takeAsync } from "@fluid-internal/stochastic-test-utils";
-import { Operation, SharedNothingFactory, baseModel } from "../sharedNothing";
-import { ChangeConnectionState, DDSFuzzModel, createDDSFuzzSuite } from "../../ddsFuzzHarness";
+import { takeAsync } from "@fluid-private/stochastic-test-utils";
+
+import type { ChangeConnectionState, DDSFuzzModel } from "../../ddsFuzzHarness.js";
+import { createDDSFuzzSuite } from "../../ddsFuzzHarness.js";
+import type { Operation, SharedNothingFactory } from "../sharedNothing.js";
+import { baseModel } from "../sharedNothing.js";
 
 const shortModel: DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionState> = {
 	...baseModel,

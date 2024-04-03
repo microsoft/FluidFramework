@@ -1,0 +1,14 @@
+[
+  [
+    42,
+    {
+      "inputContext": [],
+      "intentions": [
+        1
+      ],
+      "outputContext": [
+        1
+      ]
+    }
+  ]
+]

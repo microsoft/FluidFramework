@@ -2,32 +2,35 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
+
 import {
-	ContainerRuntime,
-	IContainerRuntimeOptions,
-	ISummarizer,
-} from "@fluidframework/container-runtime";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+	assertDocumentTypeInfo,
+	isDocumentMultipleDataStoresInfo,
+} from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { SharedMap } from "@fluidframework/map";
-import { SharedString } from "@fluidframework/sequence";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils";
+} from "@fluidframework/aqueduct/internal";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
-	assertDocumentTypeInfo,
-	isDocumentMultipleDataStoresInfo,
-} from "@fluid-internal/test-version-utils";
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+	ISummarizer,
+} from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
-	ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils";
+	IFluidHandle,
+	IRequest,
+} from "@fluidframework/core-interfaces";
+import { type ISharedMap, SharedMap } from "@fluidframework/map";
+import { SharedString } from "@fluidframework/sequence/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils/internal";
+
 import {
 	IDocumentLoaderAndSummarizer,
 	IDocumentProps,
@@ -54,7 +57,7 @@ class TestDataObject extends DataObject {
 	}
 
 	private readonly mapKey = "map";
-	public map!: SharedMap;
+	public map!: ISharedMap;
 
 	private readonly sharedStringKey = "sharedString";
 	public sharedString!: SharedString;
@@ -68,7 +71,7 @@ class TestDataObject extends DataObject {
 	}
 
 	protected async hasInitialized() {
-		const mapHandle = this.root.get<IFluidHandle<SharedMap>>(this.mapKey);
+		const mapHandle = this.root.get<IFluidHandle<ISharedMap>>(this.mapKey);
 		assert(mapHandle !== undefined, "SharedMap not found");
 		this.map = await mapHandle.get();
 
@@ -198,7 +201,7 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 			configProvider: configProvider(featureGates),
 		});
 		this.props.provider.updateDocumentId(this._mainContainer.resolvedUrl);
-		this.mainDataStore = await requestFluidObject<TestDataObject>(this._mainContainer, "/");
+		this.mainDataStore = (await this._mainContainer.getEntryPoint()) as TestDataObject;
 		this.containerRuntime = this.mainDataStore._context.containerRuntime as ContainerRuntime;
 		this.mainDataStore._root.set("mode", "write");
 		await this.ensureContainerConnectedWriteMode(this._mainContainer);

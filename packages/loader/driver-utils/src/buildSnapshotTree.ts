@@ -4,15 +4,15 @@
  */
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import * as git from "@fluidframework/gitresources";
+import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
 import {
 	FileMode,
 	ISnapshotTree,
 	ITreeEntry,
 	TreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
 import { v4 as uuid } from "uuid";
 
 function flattenCore(
@@ -86,6 +86,7 @@ function flatten(tree: ITreeEntry[], blobMap: Map<string, ArrayBufferLike>): git
  * @param blobMap - a map of blob's sha1 to content that gets filled with content from entries
  * NOTE: blobMap's validity is contingent on the returned promise's resolution
  * @returns the hierarchical tree
+ * @internal
  */
 export function buildSnapshotTree(
 	entries: ITreeEntry[],

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { globals } from "../jest.config";
+import { globals } from "../jest.config.cjs";
 
 describe("Bubblebench", () => {
 	describe("Baseline", () => {
@@ -11,6 +11,7 @@ describe("Bubblebench", () => {
 			// Wait for the page to load first before running any tests
 			// so this time isn't attributed to the first test
 			await page.goto(globals.PATH, { waitUntil: "load", timeout: 0 });
+			await page.waitForFunction(() => window["fluidStarted"]);
 		}, 45000);
 
 		beforeEach(async () => {
@@ -20,7 +21,7 @@ describe("Bubblebench", () => {
 
 		it("The page loads and displays current FPS", async () => {
 			// Validate there is a button that can be clicked
-			await expect(page).toMatch("FPS", { timeout: 0 });
+			await expect(page).toMatchTextContent("FPS", { timeout: 0 });
 		}, 20000);
 	});
 });

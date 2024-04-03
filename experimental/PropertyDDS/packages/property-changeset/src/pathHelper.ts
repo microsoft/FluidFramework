@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Helper functions to work with path strings
  */
@@ -15,6 +16,7 @@ export type PathTree = Map<String, PathTree>;
 
 /**
  * Helper functions for string processing
+ * @internal
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace PathHelper {
@@ -23,6 +25,7 @@ export namespace PathHelper {
 	/**
 	 * Token Types
 	 * Type of the token in the path string
+	 * @internal
 	 */
 	export enum TOKEN_TYPES {
 		/** A normal path segment, separated via . */
@@ -44,6 +47,7 @@ export namespace PathHelper {
 	 * @param out_types - The types of the tokens
 	 *
 	 * @returns the tokens from the path string
+	 * @internal
 	 */
 	export const tokenizePathString = function (
 		in_path: string,
@@ -329,6 +333,7 @@ export namespace PathHelper {
 	 * @param in_pathSegment - The path string to put in quotes
 	 *
 	 * @returns quoted path string
+	 * @internal
 	 */
 	export const quotePathSegment = function (in_pathSegment: string): string {
 		// WARNING: I use RegExps here, as the normal replace
@@ -350,6 +355,7 @@ export namespace PathHelper {
 	 * @param in_quotedPathSegment - The quoted/escaped path string to put in quotes
 	 *
 	 * @return unquoted path string
+	 * @internal
 	 */
 	export const unquotePathSegment = function (in_quotedPathSegment: string): string {
 		if (typeof in_quotedPathSegment !== "string") {
@@ -376,6 +382,7 @@ export namespace PathHelper {
 	 * @param in_pathSegment - The path string to put in quotes
 	 *
 	 * @returns quoted path string
+	 * @internal
 	 */
 	export const quotePathSegmentIfNeeded = function (in_pathSegment: string): string {
 		return in_pathSegment.indexOf(PROPERTY_PATH_DELIMITER) !== -1 ||
@@ -396,6 +403,7 @@ export namespace PathHelper {
 	 * It has to be either an empty string, or a path starting with a /
 	 *
 	 * @param in_path - The path to check
+	 * @internal
 	 */
 	export const checkValidRepositoryAbsolutePath = function (in_path: string) {
 		if (
@@ -414,6 +422,7 @@ export namespace PathHelper {
 	 *
 	 * @param in_absolutePath - The absolute path to make canonical
 	 * @return Absolute path in canonical form
+	 * @internal
 	 */
 	export const convertAbsolutePathToCanonical = function (in_absolutePath: string): string {
 		const tokenTypes = [];
@@ -456,6 +465,7 @@ export namespace PathHelper {
 	 * @param in_parentAbsolutePathCanonical - The absolute path of the parent property in canonical form
 	 * @param in_childId - The name of the child property in its parent
 	 * @returns Absolute path of the child property in canonical form
+	 * @internal
 	 */
 	export const getChildAbsolutePathCanonical = function (
 		in_parentAbsolutePathCanonical: string,
@@ -467,6 +477,9 @@ export namespace PathHelper {
 			: childPath;
 	};
 
+	/**
+	 * @internal
+	 */
 	export enum CoverageExtent {
 		// The base path is not covered by any path from a given list of paths.
 		// This means a property with this path and all its children would not be covered.
@@ -494,6 +507,7 @@ export namespace PathHelper {
 	 * @param in_paths - The array of paths that must cover the property and its children
 	 * @returns The coverage of the property and its children. For a coverage of
 	 * 'FULLY_COVERED', only the first matching path is returned.
+	 * @internal
 	 */
 	export const getPathCoverage = function (
 		in_basePath: string,

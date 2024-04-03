@@ -2,13 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { UsageError } from "@fluidframework/telemetry-utils";
+
 import {
 	FluidDataStoreRegistryEntry,
 	IFluidDataStoreRegistry,
 	NamedFluidDataStoreRegistryEntries,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
+/**
+ * @internal
+ */
 export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
 	private readonly map: Map<
 		string,

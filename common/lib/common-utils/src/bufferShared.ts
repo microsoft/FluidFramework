@@ -8,6 +8,7 @@
  * @param array - Array to convert to ArrayBuffer.
  *
  * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @internal
  */
 export function Uint8ArrayToArrayBuffer(array: Uint8Array): ArrayBuffer {
 	if (array.byteOffset === 0 && array.byteLength === array.buffer.byteLength) {

@@ -4,14 +4,15 @@
  */
 
 import {
-	IFluidDataStoreRuntime,
 	IChannelAttributes,
 	IChannelFactory,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { ConsensusOrderedCollection } from "./consensusOrderedCollection";
-import { ConsensusQueueFactory } from "./consensusOrderedCollectionFactory";
-import { IOrderedCollection } from "./interfaces";
-import { SnapshotableArray } from "./snapshotableArray";
+
+import { ConsensusOrderedCollection } from "./consensusOrderedCollection.js";
+import { ConsensusQueueFactory } from "./consensusOrderedCollectionFactory.js";
+import { IOrderedCollection } from "./interfaces.js";
+import { SnapshotableArray } from "./snapshotableArray.js";
 
 /**
  * An JS array based queue implementation that is the backing data structure for ConsensusQueue
@@ -33,6 +34,7 @@ class SnapshotableQueue<T> extends SnapshotableArray<T> implements IOrderedColle
  * Implementation of a consensus stack
  *
  * An derived type of ConsensusOrderedCollection with a queue as the backing data and order.
+ * @alpha
  */
 export class ConsensusQueue<T = any> extends ConsensusOrderedCollection<T> {
 	/**

@@ -1,0 +1,23 @@
+{
+	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+	"extends": "../../../../common/build/build-common/api-extractor-base.cjs.primary.json",
+	// CJS is actually secondary; so, no report.
+	"apiReport": {
+		"enabled": false
+	},
+	"messages": {
+		// The following overrides are workarounds for API-Extractor incorrectly running analysis on our application
+		// insights dependency.
+		"tsdocMessageReporting": {
+			"tsdoc-escape-right-brace": {
+				"logLevel": "none"
+			},
+			"tsdoc-malformed-inline-tag": {
+				"logLevel": "none"
+			},
+			"tsdoc-undefined-tag": {
+				"logLevel": "none"
+			}
+		}
+	}
+}

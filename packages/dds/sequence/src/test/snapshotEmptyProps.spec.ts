@@ -6,20 +6,24 @@
 import { strict as assert } from "assert";
 import fs from "fs";
 import path from "path";
+
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { SharedString } from "../sharedString";
-import { SharedStringFactory } from "../sequenceFactory";
-import { LocationBase } from "./generateSharedStrings";
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { SharedString } from "../sharedString.js";
+
+import { _dirname } from "./dirname.cjs";
+import { LocationBase } from "./generateSharedStrings.js";
 
 describe("SharedString Snapshot Version - Empty Props", () => {
 	let filebase: string;
 
 	before(() => {
-		filebase = path.join(__dirname, `../../${LocationBase}`);
+		filebase = path.join(_dirname, `../../${LocationBase}`);
 	});
 
 	async function loadSharedString(id: string, serializedSnapshot: string): Promise<SharedString> {

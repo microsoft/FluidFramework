@@ -9,6 +9,7 @@ import { INode } from "./orderer";
 
 /**
  * Interface to abstract the backend database
+ * @alpha
  */
 export interface IDatabaseManager {
 	/**
@@ -45,6 +46,7 @@ export interface IDatabaseManager {
 
 /**
  * Abstract away IDocument collection logics
+ * @internal
  */
 export interface IDocumentRepository {
 	/**
@@ -91,6 +93,7 @@ export interface IDocumentRepository {
 
 /**
  * Abstract away ICheckpoint collection logic
+ * @internal
  */
 export interface ICheckpointRepository {
 	/**
@@ -122,6 +125,7 @@ export interface ICheckpointRepository {
  * Interface for a database of values that have type T.
  * In some implementations, T should have a member "_id" which is a string used
  * when adding or finding value in the database.
+ * @internal
  */
 export interface ICollection<T> {
 	/**
@@ -248,16 +252,28 @@ export interface ICollection<T> {
 	createTTLIndex?(index: any, mongoExpireAfterSeconds?: number): Promise<void>;
 }
 
+/**
+ * @internal
+ */
 export interface IRetryable {
 	retryEnabled: boolean;
 }
 
+/**
+ * @internal
+ */
 export function isRetryEnabled<T>(collection: ICollection<T>): boolean {
 	return (collection as unknown as IRetryable).retryEnabled === true;
 }
 
+/**
+ * @alpha
+ */
 export type IDbEvents = "close" | "reconnect" | "error" | "reconnectFailed";
 
+/**
+ * @alpha
+ */
 export interface IDb {
 	close(): Promise<void>;
 
@@ -277,6 +293,9 @@ export interface IDb {
 	dropCollection?(name: string): Promise<boolean>;
 }
 
+/**
+ * @alpha
+ */
 export interface IDbFactory {
 	connect(global: boolean): Promise<IDb>;
 }

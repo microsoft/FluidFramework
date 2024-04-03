@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
-import { default as Random } from "random-js";
-import { makeRandom } from "../random";
-import { XSadd } from "../xsadd";
+import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+import { MersenneTwister19937, integer, real } from "random-js";
+
+import { makeRandom } from "../random.js";
+import { XSadd } from "../xsadd.js";
 
 let next: () => number;
 
@@ -14,7 +15,8 @@ benchmark({
 	type: BenchmarkType.Measurement,
 	title: "'random-js': raw MT19937 (uint32)",
 	before: () => {
-		next = Random.engines.mt19937().autoSeed();
+		const engine = MersenneTwister19937.autoSeed();
+		next = () => engine.next();
 	},
 	benchmarkFn: () => next(),
 });
@@ -23,8 +25,8 @@ benchmark({
 	type: BenchmarkType.Measurement,
 	title: "'random-js': integer (ideal)",
 	before: () => {
-		const engine = Random.engines.mt19937().autoSeed();
-		next = () => Random.integer(0, 1)(engine);
+		const engine = MersenneTwister19937.autoSeed();
+		next = () => integer(0, 1)(engine);
 	},
 	benchmarkFn: () => next(),
 });
@@ -33,8 +35,8 @@ benchmark({
 	type: BenchmarkType.Measurement,
 	title: "'random-js': integer (pathological)",
 	before: () => {
-		const engine = Random.engines.mt19937().autoSeed();
-		next = () => Random.integer(0, 2 ** 52)(engine);
+		const engine = MersenneTwister19937.autoSeed();
+		next = () => integer(0, 2 ** 52)(engine);
 	},
 	benchmarkFn: () => next(),
 });
@@ -43,8 +45,8 @@ benchmark({
 	type: BenchmarkType.Measurement,
 	title: "'random-js': real",
 	before: () => {
-		const engine = Random.engines.mt19937().autoSeed();
-		next = () => Random.real(0, 1)(engine);
+		const engine = MersenneTwister19937.autoSeed();
+		next = () => real(0, 1)(engine);
 	},
 	benchmarkFn: () => next(),
 });

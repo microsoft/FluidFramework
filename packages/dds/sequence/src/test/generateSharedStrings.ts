@@ -4,15 +4,17 @@
  */
 
 // eslint-disable-next-line import/no-internal-modules
-import { SnapshotLegacy as Snapshot } from "@fluidframework/merge-tree/dist/test";
-import Random from "random-js";
-import * as mocks from "@fluidframework/test-runtime-utils";
-import { SharedString } from "../sharedString";
-import { SharedStringFactory } from "../sequenceFactory";
+import { SnapshotLegacy as Snapshot } from "@fluidframework/merge-tree/test";
+import * as mocks from "@fluidframework/test-runtime-utils/internal";
+import { MersenneTwister19937, Random } from "random-js";
+
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { SharedString } from "../sharedString.js";
+
 import {
 	SharedStringWithV1IntervalCollection,
 	V1IntervalCollectionSharedStringFactory,
-} from "./v1IntervalCollectionHelpers";
+} from "./v1IntervalCollectionHelpers.js";
 
 export const LocationBase: string = "src/test/snapshots/";
 
@@ -28,7 +30,7 @@ export const supportedVersions = new Map<string, any>([
 ]);
 
 function createIntervals(sharedString) {
-	const rand = new Random(Random.engines.mt19937().seed(0));
+	const rand = new Random(MersenneTwister19937.seed(0));
 	const collection1 = sharedString.getIntervalCollection("collection1");
 	collection1.add({ start: 1, end: 5, props: { intervalId: rand.uuid4() } });
 

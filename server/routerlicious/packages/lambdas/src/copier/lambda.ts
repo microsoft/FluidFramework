@@ -13,6 +13,9 @@ import {
 	IRawOperationMessageBatch,
 } from "@fluidframework/server-services-core";
 
+/**
+ * @internal
+ */
 export class CopierLambda implements IPartitionLambda {
 	// Below, one job corresponds to the task of sending one batch to Mongo:
 	private pendingJobs = new Map<string, IRawOperationMessageBatch[]>();

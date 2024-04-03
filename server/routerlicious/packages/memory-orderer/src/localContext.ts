@@ -10,6 +10,9 @@ import {
 	IQueuedMessage,
 } from "@fluidframework/server-services-core";
 
+/**
+ * @internal
+ */
 export class LocalContext implements IContext {
 	constructor(public readonly log: ILogger | undefined) {}
 

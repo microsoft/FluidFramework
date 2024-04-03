@@ -13,6 +13,9 @@ import {
 } from "@fluidframework/server-services-core";
 import { TestContext } from "./testContext";
 
+/**
+ * @internal
+ */
 export class TestConsumer implements IConsumer {
 	private readonly emitter = new EventEmitter();
 	private pausedQueue: string[] = null;
@@ -116,6 +119,9 @@ export class TestConsumer implements IConsumer {
 	}
 }
 
+/**
+ * @internal
+ */
 export class TestProducer implements IProducer {
 	constructor(private readonly kafka: TestKafka) {}
 
@@ -142,6 +148,7 @@ export class TestProducer implements IProducer {
 
 /**
  * Test Kafka implementation. Allows for the creation of a joined producer/consumer pair.
+ * @internal
  */
 export class TestKafka {
 	public static createdQueuedMessage(offset: number, metadata?: any): IQueuedMessage {

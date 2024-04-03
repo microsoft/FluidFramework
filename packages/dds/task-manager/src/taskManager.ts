@@ -3,26 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-
-import { assert } from "@fluidframework/core-utils";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { EventEmitter } from "@fluid-internal/client-utils";
+import { ReadOnlyInfo } from "@fluidframework/container-definitions";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
 	IChannelFactory,
+	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
-import {
-	createSingleBlobSummary,
-	IFluidSerializer,
-	SharedObject,
-} from "@fluidframework/shared-object-base";
-import { ReadOnlyInfo } from "@fluidframework/container-definitions";
-import { TaskManagerFactory } from "./taskManagerFactory";
-import { ITaskManager, ITaskManagerEvents } from "./interfaces";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+
+import { ITaskManager, ITaskManagerEvents } from "./interfaces.js";
+import { TaskManagerFactory } from "./taskManagerFactory.js";
 
 /**
  * Description of a task manager operation
@@ -63,7 +60,7 @@ const placeholderClientId = "placeholder";
  * {@inheritDoc ITaskManager}
  *
  * @sealed
- * @public
+ * @internal
  */
 export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITaskManager {
 	/**
@@ -583,7 +580,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 	 * Create a summary for the task manager
 	 *
 	 * @returns the summary of the current state of the task manager
-	 * @internal
 	 */
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		if (this.runtime.clientId !== undefined) {
@@ -610,7 +606,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
-	 * @internal
 	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const content = await readAndParse<[string, string[]][]>(storage, snapshotFileName);
@@ -620,14 +615,11 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 		this.scrubClientsNotInQuorum();
 	}
 
-	/**
-	 * @internal
-	 */
+	/***/
 	protected initializeLocalCore() {}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
-	 * @internal
 	 */
 	protected onDisconnect() {
 		this.connectionWatcher.emit("disconnect");
@@ -635,7 +627,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onConnect}
-	 * @internal
 	 */
 	protected onConnect() {
 		this.connectionWatcher.emit("connect");
@@ -645,7 +636,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 	/**
 	 * Override resubmit core to avoid resubmission on reconnect.  On disconnect we accept our removal from the
 	 * queues, and leave it up to the user to decide whether they want to attempt to re-enter a queue on reconnect.
-	 * @internal
 	 */
 	protected reSubmitCore() {}
 
@@ -656,7 +646,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 	 * @param local - whether the message was sent by the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
-	 * @internal
 	 */
 	protected processCore(
 		message: ISequencedDocumentMessage,
@@ -778,7 +767,23 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 		}
 	}
 
-	public applyStashedOp() {
-		// do nothing...
+	protected applyStashedOp(content: any): void {
+		const taskOp: ITaskManagerOperation = content;
+		switch (taskOp.type) {
+			case "abandon": {
+				this.abandon(taskOp.taskId);
+				break;
+			}
+			case "complete": {
+				this.complete(taskOp.taskId);
+				break;
+			}
+			case "volunteer": {
+				this.subscribeToTask(taskOp.taskId);
+				break;
+			}
+			default:
+				unreachableCase(taskOp);
+		}
 	}
 }

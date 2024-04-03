@@ -12,6 +12,7 @@ import { TenantManager } from "./tenant";
 
 /**
  * Manager to fetch deltas from Alfred using the internal URL.
+ * @internal
  */
 export class DeltaManager implements IDeltaService {
 	constructor(

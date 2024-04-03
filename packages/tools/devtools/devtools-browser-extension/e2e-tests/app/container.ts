@@ -2,13 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { SharedString } from "@fluidframework/sequence";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IContainer } from "@fluidframework/container-definitions";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+
 import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { SharedString } from "@fluidframework/sequence/internal";
 
 export interface ICollaborativeTextAppModel {
 	readonly collaborativeText: CollaborativeText;
@@ -47,11 +47,15 @@ export class CollaborativeTextContainerRuntimeFactory extends ModelContainerRunt
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-		const collaborativeText = await requestFluidObject<CollaborativeText>(
-			await runtime.getRootDataStore(collaborativeTextId),
-			"",
-		);
-		return new CollaborativeTextAppModel(collaborativeText, container, runtime);
+		const entryPointHandle = (await runtime.getAliasedDataStoreEntryPoint(
+			collaborativeTextId,
+		)) as IFluidHandle<CollaborativeText> | undefined;
+
+		if (entryPointHandle === undefined) {
+			throw new Error(`Default dataStore [${collaborativeTextId}] must exist`);
+		}
+
+		return new CollaborativeTextAppModel(await entryPointHandle.get(), container, runtime);
 	}
 }
 

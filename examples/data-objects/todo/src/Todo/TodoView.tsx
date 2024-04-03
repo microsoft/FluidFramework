@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { CollaborativeInput } from "@fluid-experimental/react-inputs";
-import { SharedString } from "@fluidframework/sequence";
+import { CollaborativeInput } from "@fluid-example/example-utils";
+import { SharedString } from "@fluidframework/sequence/internal";
 import React, { useEffect, useRef, useState } from "react";
-import { TodoItem, TodoItemView } from "../TodoItem";
-import { Todo } from "./Todo";
+
+import { TodoItem, TodoItemView } from "../TodoItem/index.js";
+
+import { Todo } from "./Todo.js";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.css";

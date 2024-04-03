@@ -3,16 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { Checkout } from './Checkout';
-import { RevisionView } from './RevisionView';
-import { EditCommittedEventArguments, SharedTree } from './SharedTree';
+import { Checkout } from './Checkout.js';
+import { RevisionView } from './RevisionView.js';
+import { EditCommittedEventArguments, SharedTree } from './SharedTree.js';
 
 /**
  * Checkout that always stays up to date with the SharedTree.
  * This means that {@link EagerCheckout.waitForPendingUpdates} is always a no-op since EagerCheckout is always up to date.
- *
- * @public
  * @sealed
+ * @alpha
  */
 export class EagerCheckout extends Checkout {
 	/**

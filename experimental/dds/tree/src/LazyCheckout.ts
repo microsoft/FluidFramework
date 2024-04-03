@@ -3,18 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { Checkout } from './Checkout';
-import { EditId } from './Identifiers';
-import { RevisionView } from './RevisionView';
-import { EditCommittedEventArguments, SharedTree } from './SharedTree';
-import { ValidEditingResult } from './TransactionInternal';
+import { Checkout } from './Checkout.js';
+import { EditId } from './Identifiers.js';
+import { RevisionView } from './RevisionView.js';
+import { EditCommittedEventArguments, SharedTree } from './SharedTree.js';
+import { ValidEditingResult } from './TransactionInternal.js';
 
 /**
  * Checkout that only updates its view of the tree when explicitly requested.
  * This means that the {@link Checkout.currentView} field will never change unless {@link LazyCheckout.waitForPendingUpdates} is called.
- *
- * @public
  * @sealed
+ * @internal
  */
 export class LazyCheckout extends Checkout {
 	private latestView: RevisionView;

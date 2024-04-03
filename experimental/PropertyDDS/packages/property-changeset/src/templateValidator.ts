@@ -10,45 +10,33 @@
  */
 
 // There are lots of violations in this file.
-/* eslint-disable @typescript-eslint/no-base-to-string */
+
 /* eslint-disable jsdoc/check-line-alignment */
 
-import Ajv from "ajv";
-import ajvKeywords from "ajv-keywords";
-
-import each from "lodash/each";
-import isEqual from "lodash/isEqual";
-import every from "lodash/every";
-import isString from "lodash/isString";
-import isObject from "lodash/isObject";
-import difference from "lodash/difference";
-import has from "lodash/has";
-import mapValues from "lodash/mapValues";
-import includes from "lodash/includes";
-import map from "lodash/map";
-import find from "lodash/find";
-import isEmpty from "lodash/isEmpty";
-import { copy as cloneDeep } from "fastest-json-copy";
-
-import { gt, diff, major, valid, compare } from "semver";
-import traverse from "traverse";
-import { queue } from "async";
-
-// @ts-ignore
 import { constants, ConsoleUtils } from "@fluid-experimental/property-common";
-import { TemplateSchema } from "./templateSchema";
-import { TypeIdHelper } from "./helpers/typeidHelper";
-import { SchemaValidationResult, ValidationResultBuilder } from "./validationResultBuilder";
+import { queue } from "async";
+import { copy as cloneDeep } from "fastest-json-copy";
+import difference from "lodash/difference.js";
+import each from "lodash/each.js";
+import every from "lodash/every.js";
+import find from "lodash/find.js";
+import has from "lodash/has.js";
+import includes from "lodash/includes.js";
+import isEmpty from "lodash/isEmpty.js";
+import isEqual from "lodash/isEqual.js";
+import isObject from "lodash/isObject.js";
+import isString from "lodash/isString.js";
+import map from "lodash/map.js";
+import mapValues from "lodash/mapValues.js";
+import { compare, diff, gt, major, valid } from "semver";
+import traverse from "traverse";
+
+import { ajvFactory } from "./ajvFactory.cjs";
+import { TypeIdHelper } from "./helpers/typeidHelper.js";
+import { TemplateSchema } from "./templateSchema.js";
+import { SchemaValidationResult, ValidationResultBuilder } from "./validationResultBuilder.js";
 
 const { MSG } = constants;
-
-const ajvFactory = new Ajv({
-	allErrors: true,
-	verbose: true,
-});
-
-ajvKeywords(ajvFactory, "prohibited");
-ajvKeywords(ajvFactory, "typeof");
 
 const _syntaxValidator = ajvFactory.compile(TemplateSchema);
 
@@ -829,42 +817,46 @@ const _processValidationResults = function (in_template: PropertySchema) {
 			const regexTypeId = /typeid/;
 			switch (error.keyword) {
 				case "pattern":
-					if (error.dataPath === ".typeid") {
+					if (error.instancePath === ".typeid") {
+						// eslint-disable-next-line @typescript-eslint/no-base-to-string
 						error.message = `typeid should have a pattern like: my.example:point-1.0.0 ${error.data} does not match that pattern`;
-					} else if ("pattern" && regexTypeId.test(error.dataPath)) {
+					} else if ("pattern" && regexTypeId.test(error.instancePath)) {
 						error.message =
 							error.schemaPath === "#/definitions/typed-reference-typeid/pattern"
 								? ""
-								: `${error.dataPath} should follow this pattern: <namespace>:<typeid>-<version> ` +
+								: `${error.instancePath} should follow this pattern: <namespace>:<typeid>-<version> ` +
 								  `(for example: Sample:Rectangle-1.0.0) or match one of the Primitive Types (Float32, Float64, ` +
 								  `Int8, Uint8, Int16, Uint16, Int32, Uint32, Bool, String, Reference, Enum, Int64, Uint64) or ` +
 								  `Reserved Types (BaseProperty, NamedProperty, NodeProperty, NamedNodeProperty, ` +
+								  // eslint-disable-next-line @typescript-eslint/no-base-to-string
 								  `RelationshipProperty). '${error.data}' is not valid`;
 					}
 					break;
 
 				case "enum":
-					error.message = regexTypeId.test(error.dataPath)
+					error.message = regexTypeId.test(error.instancePath)
 						? ""
-						: `${error.dataPath} should match one of the following: ${error.schema}`;
+						: // eslint-disable-next-line @typescript-eslint/no-base-to-string
+						  `${error.instancePath} should match one of the following: ${error.schema}`;
 					break;
 
 				case "type":
-					error.message = `${error.dataPath} should be a ${error.schema}`;
+					// eslint-disable-next-line @typescript-eslint/no-base-to-string
+					error.message = `${error.instancePath} should be a ${error.schema}`;
 					break;
 
 				case "not":
 					if (error.schemaPath === "#/switch/1/then/anyOf/0/properties/typeid/not") {
-						// remove .typeid at the end of the dataPath
-						error.message = `For ${error.dataPath.slice(
+						// remove .typeid at the end of the instancePath
+						error.message = `For ${error.instancePath.slice(
 							0,
 							-7,
 						)}: Properties should have either a typeid or an array of child properties, but not both.`;
 					} else if (
 						error.schemaPath === "#/switch/1/then/anyOf/1/properties/properties/not"
 					) {
-						// remove .properties at the end of the dataPath
-						error.message = `For ${error.dataPath.slice(
+						// remove .properties at the end of the instancePath
+						error.message = `For ${error.instancePath.slice(
 							0,
 							-11,
 						)}: Properties should have either a typeid or an array of child properties, but not both.`;
@@ -878,10 +870,10 @@ const _processValidationResults = function (in_template: PropertySchema) {
 					error.message = "";
 					break;
 
-				// for minItems, required and any other error - add dataPath to indicate which part of the
+				// for minItems, required and any other error - add instancePath to indicate which part of the
 				// template the error refers to.
 				default:
-					error.message = `${error.dataPath} ${error.message}`;
+					error.message = `${error.instancePath} ${error.message}`;
 					break;
 			}
 			// Deep-copy for thread-safety.
@@ -1025,6 +1017,7 @@ const Utils = {
 /**
  * Instantiates a new TemplateValidator. Must be provided with a set of inheritsFrom and hasSchema
  * function or inheritsFromAsync and hasSchemaAsync, but not both.
+ * @internal
  */
 export class TemplateValidator {
 	static Utils = Utils;

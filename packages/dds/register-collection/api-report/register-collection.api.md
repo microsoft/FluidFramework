@@ -14,18 +14,17 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { SharedObject } from '@fluidframework/shared-object-base';
+import { SharedObject } from '@fluidframework/shared-object-base/internal';
 
-// @public
+// @alpha
 export class ConsensusRegisterCollection<T> extends SharedObject<IConsensusRegisterCollectionEvents> implements IConsensusRegisterCollection<T> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)
-    protected applyStashedOp(): () => void;
+    protected applyStashedOp(): void;
     static create<T>(runtime: IFluidDataStoreRuntime, id?: string): ConsensusRegisterCollection<T>;
     static getFactory(): ConsensusRegisterCollectionFactory;
     // (undocumented)
     keys(): string[];
-    // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // (undocumented)
     protected onDisconnect(): void;
@@ -39,7 +38,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject<IConsensusRegis
     write(key: string, value: T): Promise<boolean>;
 }
 
-// @public
+// @alpha
 export class ConsensusRegisterCollectionFactory implements IConsensusRegisterCollectionFactory {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
@@ -47,7 +46,6 @@ export class ConsensusRegisterCollectionFactory implements IConsensusRegisterCol
     get attributes(): IChannelAttributes;
     // (undocumented)
     create(document: IFluidDataStoreRuntime, id: string): IConsensusRegisterCollection;
-    // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<IConsensusRegisterCollection>;
     // (undocumented)
     static Type: string;
@@ -55,7 +53,7 @@ export class ConsensusRegisterCollectionFactory implements IConsensusRegisterCol
     get type(): string;
 }
 
-// @public
+// @alpha
 export interface IConsensusRegisterCollection<T = any> extends ISharedObject<IConsensusRegisterCollectionEvents> {
     keys(): string[];
     read(key: string, policy?: ReadPolicy): T | undefined;
@@ -63,21 +61,20 @@ export interface IConsensusRegisterCollection<T = any> extends ISharedObject<ICo
     write(key: string, value: T): Promise<boolean>;
 }
 
-// @public
+// @alpha
 export interface IConsensusRegisterCollectionEvents extends ISharedObjectEvents {
     // (undocumented)
     (event: "atomicChanged" | "versionChanged", listener: (key: string, value: any, local: boolean) => void): any;
 }
 
-// @public
+// @alpha
 export interface IConsensusRegisterCollectionFactory extends IChannelFactory {
     // (undocumented)
     create(document: IFluidDataStoreRuntime, id: string): IConsensusRegisterCollection;
-    // (undocumented)
     load(document: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<IConsensusRegisterCollection>;
 }
 
-// @public
+// @alpha
 export enum ReadPolicy {
     // (undocumented)
     Atomic = 0,

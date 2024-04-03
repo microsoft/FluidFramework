@@ -3,17 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { getUnexpectedLogErrorException, TestObjectProvider } from "@fluidframework/test-utils";
-import { ITelemetryGenericEvent } from "@fluidframework/core-interfaces";
+import { type ITelemetryGenericEventExt } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import {
+	getUnexpectedLogErrorException,
+	TestObjectProvider,
+} from "@fluidframework/test-utils/internal";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Context } from "mocha";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
 
+/**
+ * @internal
+ */
 export type ExpectedEvents =
-	| ITelemetryGenericEvent[]
-	| Partial<Record<TestDriverTypes, ITelemetryGenericEvent[]>>;
+	| ITelemetryGenericEventExt[]
+	| Partial<Record<TestDriverTypes, ITelemetryGenericEventExt[]>>;
 
+/**
+ * @internal
+ */
 export function createExpectsTest(orderedExpectedEvents: ExpectedEvents, test: Mocha.AsyncFunc) {
 	return async function (this: Context) {
 		const provider: TestObjectProvider | undefined = this.__fluidTestProvider;
@@ -46,6 +55,9 @@ export function createExpectsTest(orderedExpectedEvents: ExpectedEvents, test: M
 	};
 }
 
+/**
+ * @internal
+ */
 export type ExpectsTest = (
 	name: string,
 	orderedExpectedEvents: ExpectedEvents,
@@ -55,6 +67,8 @@ export type ExpectsTest = (
 /**
  * Similar to mocha's it function, but allow specifying expected events.
  * That must occur during the execution of the test.
+ *
+ * @internal
  */
 export const itExpects: ExpectsTest & Record<"only" | "skip", ExpectsTest> = (
 	name: string,

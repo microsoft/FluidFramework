@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { IDirectory } from "@fluidframework/map";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IDirectory } from "@fluidframework/map/internal";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 
 /**
  * - Create a new object from the passed subDirectory.
@@ -151,8 +151,7 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
  * @param setInterceptionCallback - The interception callback to be called
  *
  * @returns A new IDirectory object that intercepts the set method and calls the setInterceptionCallback.
- *
- * @public
+ * @internal
  */
 export function createDirectoryWithInterception<T extends IDirectory>(
 	baseDirectory: T,

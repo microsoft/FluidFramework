@@ -3,13 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url";
-import { assert } from "@fluidframework/core-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IResolvedUrl, IUrlResolver, DriverHeader } from "@fluidframework/driver-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import {
+	DriverHeader,
+	IResolvedUrl,
+	IUrlResolver,
+} from "@fluidframework/driver-definitions/internal";
 import { ScopeType } from "@fluidframework/protocol-definitions";
-import { generateToken } from "./auth";
 
+import { generateToken } from "./auth.js";
+
+/**
+ * @alpha
+ */
 export function createLocalResolverCreateNewRequest(documentId: string): IRequest {
 	const createNewRequest: IRequest = {
 		url: `http://localhost:3000/${documentId}`,
@@ -23,6 +30,7 @@ export function createLocalResolverCreateNewRequest(documentId: string): IReques
 /**
  * Resolves URLs by providing fake URLs which succeed with the other
  * related local classes.
+ * @alpha
  */
 export class LocalResolver implements IUrlResolver {
 	private readonly tenantId = "tenantId";
@@ -50,7 +58,7 @@ export class LocalResolver implements IUrlResolver {
 			id: documentId,
 			tokens: { jwt: generateToken(this.tenantId, documentId, this.tokenKey, scopes) },
 			type: "fluid",
-			url: `fluid-test://localhost:3000/${this.tenantId}/${fullPath}`,
+			url: `https://localhost:3000/${this.tenantId}/${fullPath}`,
 		};
 
 		return resolved;
@@ -61,7 +69,7 @@ export class LocalResolver implements IUrlResolver {
 		if (url.startsWith("/")) {
 			url = url.substr(1);
 		}
-		const parsedUrl = parse(resolvedUrl.url);
+		const parsedUrl = new URL(resolvedUrl.url);
 		if (parsedUrl.pathname === null) {
 			throw new Error("Url should contain tenant and docId!!");
 		}

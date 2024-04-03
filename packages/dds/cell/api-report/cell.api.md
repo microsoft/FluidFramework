@@ -4,9 +4,10 @@
 
 ```ts
 
-import { AttributionKey } from '@fluidframework/runtime-definitions';
+import { AttributionKey } from '@fluidframework/runtime-definitions/internal';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
+import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
@@ -14,51 +15,61 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { Serializable } from '@fluidframework/datastore-definitions';
-import { SharedObject } from '@fluidframework/shared-object-base';
+import { Serializable } from '@fluidframework/datastore-definitions/internal';
+import { SharedObject } from '@fluidframework/shared-object-base/internal';
 
-// @alpha
+// @internal @sealed
+export class CellFactory implements IChannelFactory {
+    // (undocumented)
+    static readonly Attributes: IChannelAttributes;
+    get attributes(): IChannelAttributes;
+    create(document: IFluidDataStoreRuntime, id: string): ISharedCell;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedCell>;
+    // (undocumented)
+    static readonly Type = "https://graph.microsoft.com/types/cell";
+    get type(): string;
+}
+
+// @internal
 export interface ICellAttributionOptions {
     // (undocumented)
     track?: boolean;
 }
 
-// @alpha
+// @internal
 export interface ICellOptions {
     // (undocumented)
     attribution?: ICellAttributionOptions;
 }
 
-// @public
+// @internal
 export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>> {
     delete(): void;
     empty(): boolean;
     get(): Serializable<T> | undefined;
-    // @alpha (undocumented)
+    // (undocumented)
     getAttribution(): AttributionKey | undefined;
     set(value: Serializable<T>): void;
 }
 
-// @public
+// @internal
 export interface ISharedCellEvents<T> extends ISharedObjectEvents {
     (event: "valueChanged", listener: (value: Serializable<T>) => void): any;
     (event: "delete", listener: () => void): any;
 }
 
-// @public
+// @internal
 export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> implements ISharedCell<T> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    // @internal (undocumented)
-    protected applyStashedOp(content: unknown): unknown;
+    protected applyStashedOp(content: unknown): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCell;
     delete(): void;
     empty(): boolean;
     get(): Serializable<T> | undefined;
-    // @alpha (undocumented)
+    // (undocumented)
     getAttribution(): AttributionKey | undefined;
     static getFactory(): IChannelFactory;
     protected initializeLocalCore(): void;
-    // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     protected onDisconnect(): void;
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;

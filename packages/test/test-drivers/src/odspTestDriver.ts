@@ -5,26 +5,28 @@
 
 import assert from "assert";
 import os from "os";
-import { compare } from "semver";
+
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import {
+	IClientConfig,
+	getDriveId,
+	getDriveItemByRootFileName,
+} from "@fluidframework/odsp-doclib-utils/internal";
 import type {
-	OdspResourceTokenFetchOptions,
 	HostStoragePolicy,
-} from "@fluidframework/odsp-driver-definitions";
+	OdspResourceTokenFetchOptions,
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { ITestDriver, OdspEndpoint } from "@fluidframework/test-driver-definitions";
 import {
 	OdspTokenConfig,
 	OdspTokenManager,
-	odspTokensCache,
 	getMicrosoftConfiguration,
-} from "@fluidframework/tool-utils";
-import {
-	getDriveId,
-	getDriveItemByRootFileName,
-	IClientConfig,
-} from "@fluidframework/odsp-doclib-utils";
-import { ITestDriver, OdspEndpoint } from "@fluidframework/test-driver-definitions";
-import { OdspDriverApiType, OdspDriverApi } from "./odspDriverApi";
+	odspTokensCache,
+} from "@fluidframework/tool-utils/internal";
+import { compare } from "semver";
+
+import { OdspDriverApi, OdspDriverApiType } from "./odspDriverApi.js";
 
 const passwordTokenConfig = (username, password): OdspTokenConfig => ({
 	type: "password",
@@ -62,6 +64,9 @@ interface LoginTenants {
 	};
 }
 
+/**
+ * @internal
+ */
 export function assertOdspEndpoint(
 	endpoint: string | undefined,
 ): asserts endpoint is OdspEndpoint | undefined {
@@ -118,6 +123,9 @@ function getCredentials(
 	return creds;
 }
 
+/**
+ * @internal
+ */
 export class OdspTestDriver implements ITestDriver {
 	// Share the tokens and driverId across multiple instance of the test driver
 	private static readonly odspTokenManager = new OdspTokenManager(odspTokensCache);

@@ -7,6 +7,7 @@ import { IUser, ScopeType } from "@fluidframework/protocol-definitions";
 
 /**
  * Method signature for a token generator
+ * @internal
  */
 export type TokenGenerator = (
 	tenantId: string,

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { stringToBuffer } from "@fluid-internal/client-utils";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { IBlob, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
-import { listBlobsAtTreePath } from "@fluidframework/runtime-utils";
+import { listBlobsAtTreePath } from "@fluidframework/runtime-utils/internal";
 
 export class LocalChannelStorageService implements IChannelStorageService {
 	constructor(private readonly tree: ITree) {}

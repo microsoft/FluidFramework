@@ -3,20 +3,27 @@
  * Licensed under the MIT License.
  */
 
+import {
+	CollaborativeTextArea,
+	SessionStorageModelLoader,
+	SharedStringHelper,
+	StaticCodeLoader,
+} from "@fluid-example/example-utils";
+import {
+	type ContainerKey,
+	createDevtoolsLogger,
+	initializeDevtools,
+} from "@fluidframework/devtools-core/internal";
 import React from "react";
 import ReactDOM from "react-dom";
-import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
-import {
-	ContainerKey,
-	DevtoolsLogger,
-	initializeDevtools,
-} from "@fluid-experimental/devtools-core";
-import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
-import { CollaborativeTextContainerRuntimeFactory, ICollaborativeTextAppModel } from "./container";
+import {
+	CollaborativeTextContainerRuntimeFactory,
+	ICollaborativeTextAppModel,
+} from "./container.js";
 
 // Initialize the Devtools logger
-const logger = new DevtoolsLogger();
+const logger = createDevtoolsLogger();
 
 // Initialize Devtools
 const devtools = initializeDevtools({ logger });

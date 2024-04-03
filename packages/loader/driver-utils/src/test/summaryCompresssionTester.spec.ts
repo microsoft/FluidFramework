@@ -2,10 +2,30 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable @typescript-eslint/no-unsafe-return */
+
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 /* eslint-disable @typescript-eslint/dot-notation */
+
 import { strict as assert } from "assert";
+
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import {
+	FetchSource,
+	IDocumentDeltaConnection,
+	IDocumentDeltaStorageService,
+	IDocumentService,
+	IDocumentServiceEvents,
+	IDocumentServiceFactory,
+	IDocumentServicePolicies,
+	IDocumentStorageService,
+	IDocumentStorageServicePolicies,
+	IResolvedUrl,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	IClient,
 	ICreateBlobResponse,
@@ -16,27 +36,17 @@ import {
 	IVersion,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
+
 import {
-	FetchSource,
-	IDocumentDeltaConnection,
-	IDocumentDeltaStorageService,
-	IDocumentService,
-	IDocumentServiceFactory,
-	IDocumentServicePolicies,
-	IDocumentStorageService,
-	IDocumentStorageServicePolicies,
-	IResolvedUrl,
-	ISummaryContext,
-} from "@fluidframework/driver-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import {
-	applyStorageCompression,
 	ICompressionStorageConfig,
 	SummaryCompressionAlgorithm,
+	applyStorageCompression,
 	blobHeadersBlobName,
-} from "../adapters";
-import { DocumentStorageServiceProxy } from "../documentStorageServiceProxy";
-import { snapshotTree, summaryTemplate } from "./summaryCompressionData";
+} from "../adapters/index.js";
+import { DocumentStorageServiceProxy } from "../documentStorageServiceProxy.js";
+
+import { snapshotTree, summaryTemplate } from "./summaryCompressionData.js";
+
 /**
  * This function clones the imported summary and returns a new summary with the same content.
  */
@@ -100,7 +110,6 @@ class InternalTestStorage implements IDocumentStorageService {
 	constructor() {}
 	private _uploadedSummary: ISummaryTree | undefined;
 
-	repositoryUrl: string = "";
 	policies?: IDocumentStorageServicePolicies | undefined;
 
 	async getSnapshotTree(
@@ -151,8 +160,13 @@ function isOriginalStorage(storage: IDocumentStorageService): boolean {
 	return (storage as InternalTestStorage).thisIsReallyOriginalStorage === "yes";
 }
 
-class InternalTestDocumentService implements IDocumentService {
-	constructor() {}
+class InternalTestDocumentService
+	extends TypedEventEmitter<IDocumentServiceEvents>
+	implements IDocumentService
+{
+	constructor() {
+		super();
+	}
 	resolvedUrl: IResolvedUrl = {} as any;
 	policies?: IDocumentServicePolicies | undefined;
 	storage: IDocumentStorageService = new InternalTestStorage();

@@ -5,15 +5,15 @@
 ```ts
 
 import { DeleteDBCallbacks } from 'idb';
-import { ICacheEntry } from '@fluidframework/odsp-driver-definitions';
-import { IFileEntry } from '@fluidframework/odsp-driver-definitions';
-import { IPersistedCache } from '@fluidframework/odsp-driver-definitions';
+import { ICacheEntry } from '@fluidframework/odsp-driver-definitions/internal';
+import { IFileEntry } from '@fluidframework/odsp-driver-definitions/internal';
+import { IPersistedCache } from '@fluidframework/odsp-driver-definitions/internal';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 
-// @public
+// @alpha
 export function deleteFluidCacheIndexDbInstance(deleteDBCallbacks?: DeleteDBCallbacks): Promise<void>;
 
-// @public
+// @alpha
 export class FluidCache implements IPersistedCache {
     constructor(config: FluidCacheConfig);
     // (undocumented)
@@ -24,7 +24,7 @@ export class FluidCache implements IPersistedCache {
     removeEntries(file: IFileEntry): Promise<void>;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface FluidCacheConfig {
     closeDbAfterMs?: number;
     logger?: ITelemetryBaseLogger;

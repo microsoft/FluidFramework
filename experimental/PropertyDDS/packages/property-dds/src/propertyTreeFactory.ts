@@ -5,14 +5,16 @@
 
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelServices,
 	IChannelFactory,
+	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { SharedPropertyTree, SharedPropertyTreeOptions } from "./propertyTree";
+
+import { SharedPropertyTree, SharedPropertyTreeOptions } from "./propertyTree.js";
 
 /**
  * The factory that defines the map
+ * @internal
  */
 export class PropertyTreeFactory implements IChannelFactory {
 	public static readonly Type = "PropertyTree:01EP5J4Y6C284JR6ATVPPHRJ4E";

@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-
 import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
+import React from "react";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.css";
@@ -17,6 +16,7 @@ interface IPlotCoordinateViewProps {
 /**
  * PlotCoordinateView is a React component that renders the given ICoordinate as a red dot in a rectangle.
  * For now, it only displays the coordinate, but we could enhance it to allow manipulating the coordinate.
+ * @internal
  */
 export const PlotCoordinateView: React.FC<IPlotCoordinateViewProps> = (
 	props: IPlotCoordinateViewProps,

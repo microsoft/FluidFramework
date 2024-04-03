@@ -3,23 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-	Jsonable,
 	IChannelFactory,
+	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import { Jsonable } from "@fluidframework/datastore-definitions/internal";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
-import {
-	createSingleBlobSummary,
-	IFluidSerializer,
-	SharedObject,
-} from "@fluidframework/shared-object-base";
-import { SharedSummaryBlockFactory } from "./sharedSummaryBlockFactory";
-import { ISharedSummaryBlock } from "./interfaces";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+
+import { ISharedSummaryBlock } from "./interfaces.js";
+import { SharedSummaryBlockFactory } from "./sharedSummaryBlockFactory.js";
 
 const snapshotFileName = "header";
 
@@ -28,14 +26,13 @@ const snapshotFileName = "header";
  * Directly used in JSON.stringify, direct result from JSON.parse.
  */
 interface ISharedSummaryBlockDataSerializable {
-	[key: string]: Jsonable;
+	[key: string]: Jsonable<unknown>;
 }
 
 /**
  * Implementation of a shared summary block. It does not generate any ops. It is only part of the summary.
  * Data should be set in this object in response to a remote op.
- *
- * @public
+ * @alpha
  */
 export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBlock {
 	/**
@@ -61,7 +58,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
 	/**
 	 * The data held by this object.
 	 */
-	private readonly data = new Map<string, Jsonable>();
+	private readonly data = new Map<string, Jsonable<unknown>>();
 
 	/**
 	 * Constructs a new SharedSummaryBlock. If the object is non-local, an id and service interfaces will

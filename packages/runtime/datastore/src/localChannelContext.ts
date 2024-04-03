@@ -3,30 +3,34 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
-import cloneDeep from "lodash/cloneDeep";
-import { DataProcessingError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import lodashPkg from "lodash";
+// eslint-disable-next-line @typescript-eslint/unbound-method
+const { cloneDeep } = lodashPkg;
+
+import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { IGarbageCollectionData, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import {
 	IFluidDataStoreContext,
-	IGarbageCollectionData,
 	ISummarizeResult,
-	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+} from "@fluidframework/runtime-definitions/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	ChannelServiceEndpoints,
-	createChannelServiceEndpoints,
 	IChannelContext,
+	createChannelServiceEndpoints,
 	loadChannel,
 	loadChannelFactoryAndAttributes,
 	summarizeChannel,
 	summarizeChannelAsync,
-} from "./channelContext";
-import { ISharedObjectRegistry } from "./dataStoreRuntime";
+} from "./channelContext.js";
+import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
 /**
  * Channel context for a locally created channel
@@ -42,6 +46,10 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		private _channel?: IChannel,
 	) {
 		assert(!this.id.includes("/"), 0x30f /* Channel context ID cannot contain slashes */);
+	}
+
+	protected get isGloballyVisible() {
+		return this.globallyVisible;
 	}
 
 	public async getChannel(): Promise<IChannel> {
@@ -103,9 +111,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		this.services.value.deltaConnection.rollback(content, localOpMetadata);
 	}
 
-	public applyStashedOp() {
-		throw new Error("no stashed ops on local channel");
-	}
+	public abstract applyStashedOp(content: unknown): unknown;
 
 	/**
 	 * Returns a summary at the current sequence number.
@@ -122,6 +128,11 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		return summarizeChannelAsync(channel, fullTree, trackState, telemetryContext);
 	}
 
+	/**
+	 * For crafting the DataStore attach op. Only to be called when the channel is loaded (if applicable).
+	 *
+	 * Synchronously generates the channel's attach summary to be joined with the same from the DataStore's other channels
+	 */
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummarizeResult {
 		assert(
 			this._channel !== undefined,
@@ -133,6 +144,22 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 			false /* trackState */,
 			telemetryContext,
 		);
+	}
+
+	/**
+	 * For crafting the DataStore attach op. Only to be called when the channel is loaded (if applicable).
+	 *
+	 * Synchronously generates the channel's attach GC data (set of outbound routes in the initial state)
+	 * to be joined with the same from the DataStore's other channels
+	 */
+	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
+		assert(
+			this._channel !== undefined,
+			0x8fd /* Local Channel should be loaded before being attached */,
+		);
+
+		// We need the GC Data to detect references added in this attach op
+		return this._channel.getGCData(/* fullGC: */ true);
 	}
 
 	public makeVisible(): void {
@@ -180,12 +207,15 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 		dirtyFn: (address: string) => void,
 		addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
 		private readonly snapshotTree: ISnapshotTree,
+		extraBlob?: Map<string, ArrayBufferLike>,
 	) {
 		super(
 			id,
 			runtime,
 			new Lazy(() => {
-				const blobMap: Map<string, ArrayBufferLike> = new Map<string, ArrayBufferLike>();
+				const blobMap: Map<string, ArrayBufferLike> = new Map<string, ArrayBufferLike>(
+					extraBlob,
+				);
 				const clonedSnapshotTree = cloneDeep(this.snapshotTree);
 				// 0.47 back-compat Need to sanitize if snapshotTree.blobs still contains blob contents too.
 				// This is for older snapshot which is generated by loader <=0.47 version which still contains
@@ -198,6 +228,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 					submitFn,
 					this.dirtyFn,
 					addedGCOutboundReferenceFn,
+					() => this.isGloballyVisible,
 					storageService,
 					logger,
 					clonedSnapshotTree,
@@ -244,19 +275,24 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 		};
 	}
 
+	public override applyStashedOp(content) {
+		return this.services.value.deltaConnection.applyStashedOp(content);
+	}
+
 	private isSnapshotInOldFormatAndCollectBlobs(
-		snapshotTree: ISnapshotTree,
+		snapshotTree: ISnapshotTreeWithBlobContents,
 		blobMap: Map<string, ArrayBufferLike>,
 	): boolean {
 		let sanitize = false;
-		const blobsContents: { [path: string]: ArrayBufferLike } = (snapshotTree as any)
-			.blobsContents;
-		Object.entries(blobsContents).forEach(([key, value]) => {
-			blobMap.set(key, value);
-			if (snapshotTree.blobs[key] !== undefined) {
-				sanitize = true;
-			}
-		});
+		const blobsContents = snapshotTree.blobsContents;
+		if (blobsContents !== undefined) {
+			Object.entries(blobsContents).forEach(([key, value]) => {
+				blobMap.set(key, value);
+				if (snapshotTree.blobs[key] !== undefined) {
+					sanitize = true;
+				}
+			});
+		}
 		for (const value of Object.values(snapshotTree.trees)) {
 			sanitize = sanitize || this.isSnapshotInOldFormatAndCollectBlobs(value, blobMap);
 		}
@@ -280,11 +316,8 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 
 export class LocalChannelContext extends LocalChannelContextBase {
 	private readonly dirtyFn: () => void;
-	public readonly channel: IChannel;
 	constructor(
-		id: string,
-		registry: ISharedObjectRegistry,
-		type: string,
+		public readonly channel: IChannel,
 		runtime: IFluidDataStoreRuntime,
 		dataStoreContext: IFluidDataStoreContext,
 		storageService: IDocumentStorageService,
@@ -293,14 +326,8 @@ export class LocalChannelContext extends LocalChannelContextBase {
 		dirtyFn: (address: string) => void,
 		addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
 	) {
-		assert(type !== undefined, 0x209 /* "Factory Type should be defined" */);
-		const factory = registry.get(type);
-		if (factory === undefined) {
-			throw new Error(`Channel Factory ${type} not registered`);
-		}
-		const channel = factory.create(runtime, id);
 		super(
-			id,
+			channel.id,
 			runtime,
 			new Lazy(() => {
 				return createChannelServiceEndpoints(
@@ -308,6 +335,7 @@ export class LocalChannelContext extends LocalChannelContextBase {
 					submitFn,
 					this.dirtyFn,
 					addedGCOutboundReferenceFn,
+					() => this.isGloballyVisible,
 					storageService,
 					logger,
 				);
@@ -318,7 +346,11 @@ export class LocalChannelContext extends LocalChannelContextBase {
 		this.channel = channel;
 
 		this.dirtyFn = () => {
-			dirtyFn(id);
+			dirtyFn(channel.id);
 		};
+	}
+
+	public applyStashedOp() {
+		throw new Error("no stashed ops on local channel");
 	}
 }

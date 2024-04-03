@@ -14,6 +14,9 @@ import {
 } from "@fluidframework/server-services-core";
 import { BroadcasterLambda } from "./lambda";
 
+/**
+ * @internal
+ */
 export class BroadcasterLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
 	constructor(
 		private readonly publisher: IPublisher,

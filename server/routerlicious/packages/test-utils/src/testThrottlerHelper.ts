@@ -11,6 +11,7 @@ import {
 
 /**
  * Super simple Token Bucket IThrottlerHelper implementation for use in tests.
+ * @internal
  */
 export class TestThrottlerHelper implements IThrottlerHelper {
 	private readonly throttleStorage: { [key: string]: IThrottlingMetrics };

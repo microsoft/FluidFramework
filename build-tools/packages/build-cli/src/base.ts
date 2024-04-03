@@ -2,15 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Command, Flags, Interfaces } from "@oclif/core";
 // eslint-disable-next-line import/no-internal-modules
 import { type PrettyPrintableError } from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
 
-import { Context, GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
-
+import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { rootPathFlag } from "./flags";
-import { indentString } from "./lib";
+import { Context, indentString } from "./library";
 import { CommandLogger } from "./logging";
 
 /**
@@ -79,6 +79,7 @@ export abstract class BaseCommand<T extends typeof Command>
 		const { args, flags } = await this.parse({
 			flags: this.ctor.flags,
 			baseFlags: (super.ctor as typeof BaseCommand).baseFlags,
+			enableJsonFlag: this.ctor.enableJsonFlag,
 			args: this.ctor.args,
 			strict: this.ctor.strict,
 		});

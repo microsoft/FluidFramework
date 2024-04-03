@@ -7,8 +7,9 @@ import {
 	getUnexpectedLogErrorException,
 	ITestObjectProvider,
 	TestObjectProvider,
-} from "@fluidframework/test-utils";
-import { driver, r11sEndpointName, tenantIndex } from "../compatOptions.cjs";
+} from "@fluidframework/test-utils/internal";
+
+import { driver, r11sEndpointName, tenantIndex } from "./compatOptions.js";
 import { getVersionedTestObjectProvider } from "./compatUtils.js";
 import { ITestObjectProviderOptions } from "./describeCompat.js";
 import { pkgVersion } from "./packageVersion.js";
@@ -18,6 +19,8 @@ import { ensurePackageInstalled, InstalledPackage } from "./testApi.js";
  * Interface to hold the requested versions which should be installed
  * prior to running the test suite. The properties are cumulative, as all
  * versions deduced from all properties will be installed.
+ *
+ * @internal
  */
 export interface IRequestedFluidVersions {
 	/**
@@ -122,7 +125,10 @@ function createTestSuiteWithInstalledVersion(
 	};
 }
 
-type DescribeSuiteWithVersions = (
+/**
+ * @internal
+ */
+export type DescribeSuiteWithVersions = (
 	name: string,
 	tests: (
 		this: Mocha.Suite,
@@ -130,7 +136,10 @@ type DescribeSuiteWithVersions = (
 	) => void,
 ) => Mocha.Suite | void;
 
-type DescribeWithVersions = DescribeSuiteWithVersions &
+/**
+ * @internal
+ */
+export type DescribeWithVersions = DescribeSuiteWithVersions &
 	Record<"skip" | "only", DescribeSuiteWithVersions>;
 
 /**
@@ -146,6 +155,8 @@ type DescribeWithVersions = DescribeSuiteWithVersions &
  * @param timeoutMs - the timeout for the tests in milliseconds, as package installation is time consuming.
  * If unspecified, the timeout is 20000 ms.
  * @returns A mocha test suite
+ *
+ * @internal
  */
 export function describeInstallVersions(
 	requestedVersions?: IRequestedFluidVersions,

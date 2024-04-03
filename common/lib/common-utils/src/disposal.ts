@@ -16,6 +16,7 @@ import { IDisposable } from "@fluidframework/common-definitions";
  * @privateremarks
  * This function is used in the container-loader package, so the implementation was moved there but it is no longer
  * exported.
+ * @internal
  */
 export function doIfNotDisposed<T>(
 	disposable: IDisposable,

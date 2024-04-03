@@ -1,5 +1,0 @@
-{
-	"tags": ["object-forest"],
-	"exports": ["index"],
-	"imports": ["util", "events", "core", "feature-libraries"]
-}

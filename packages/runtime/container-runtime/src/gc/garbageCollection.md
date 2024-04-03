@@ -50,16 +50,19 @@ Mark phase is enabled by default for a container. It is enabled during creation 
 
 ### Sweep phase
 
-In this phase, the GC algorithm identifies all Fluid objects that have been unreferenced for a specific amount of time (typically 30-40 days) and deletes them.
-Objects are only swept once the GC system is sure that they could never be referenced again by any active clients, i.e., clients that have the object in memory and could reference it.
-The Fluid Runtime enforces a maximum session length (configurable) in order to guarantee an object is safe to delete after sufficient time has elapsed.
+In this phase, the GC algorithm deletes any Fluid object that has been unreferenced for a sufficient time to guarantee
+they could never be referenced again by any active clients, i.e., clients that have the object in memory and could reference it again.
+The Fluid Runtime enforces a maximum session length (configurable) in order to guarantee all in-memory objects are cleared before
+it concludes an object is safe to delete.
 
-GC sweep phase has not been enabled by default yet. A "soft" version of Sweep called "Tombstone Mode" is enabled by default
-as part of the Mark Phase when Sweep is disabled. In this mode, any object that GC determines is ready to be deleted is
-marked as a "Tombstone", which triggers certain logging events and/or behavior changes if/when that Tombstoned object is
-accessed by the application.
+GC sweep phase runs in two stages:
 
-Tombstone is intended for use by early adopters of GC and is documented in more detail [here](./gcEarlyAdoption.md).
+-   The first stage is the "Tombstone" stage, where objects are marked as Tombstones, meaning GC believes they will
+    never be referenced again and are safe to delete. They are not yet deleted at this point, but any attempt to
+    load them will fail. This way, there's a chance to recover a Tombstoned object in case we detect it's still being used.
+-   The second stage is the "Sweep" or "Delete" stage, where the objects are fully deleted.
+    This occurs after a configurable delay called the "Sweep Grace Period", to give time for application teams
+    to monitor for Tombstone-related errors and react before delete occurs.
 
 ## GC Configuration
 
@@ -67,7 +70,8 @@ The default configuration for GC today is:
 
 -   GC Mark Phase is **enabled**, including Tombstone Mode
 -   Session Expiry is **enabled**
--   GC Sweep Phase is **disabled**
+-   The "Tombstone" stage of Sweep Phase is **enabled** (attempting to load a tombstoned object will fail)
+-   The "Delete" stage of Sweep Phase is **disabled**
     -   Note: Once enabled, Sweep will only run for documents created from that point forward
 
 ### Techniques used for configuration
@@ -94,12 +98,7 @@ covered in the [Advanced Configuration](./gcEarlyAdoption.md#more-advanced-confi
 
 ### Enabling Sweep Phase
 
-To enable Sweep Phase for new documents, you must set the `gcSweepGeneration` GC Option to a number, e.g. 0 to start.
-The full semantics of this GC Option are discussed [here](./gcEarlyAdoption.md#more-about-gcsweepgeneration-and-gctombstonegeneration).
-Note that this will disabled Tombstone Mode.
-
-A full treatment of Tombstone and Sweep configuration can be found in
-[this companion document geared towards early adopters of GC](./gcEarlyAdoption.md).
+To enable the Sweep Phase for new documents, you must set the `enableGCSweep` GC Option to true.
 
 ### More Advanced Configuration
 

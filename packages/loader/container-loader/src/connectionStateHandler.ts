@@ -3,20 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/core-interfaces";
-import { assert, Timer } from "@fluidframework/core-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
-import { ISequencedClient, IClient } from "@fluidframework/protocol-definitions";
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { assert, Timer } from "@fluidframework/core-utils/internal";
+import { IAnyDriverError } from "@fluidframework/driver-definitions";
+import { IClient, ISequencedClient } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt, type TelemetryEventCategory } from "@fluidframework/telemetry-utils";
 import {
-	ITelemetryLoggerExt,
 	PerformanceEvent,
 	loggerToMonitoringContext,
-} from "@fluidframework/telemetry-utils";
-import { IAnyDriverError } from "@fluidframework/driver-definitions";
-import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor";
-import { ConnectionState } from "./connectionState";
-import { IConnectionDetailsInternal, IConnectionStateChangeReason } from "./contracts";
-import { IProtocolHandler } from "./protocol";
+} from "@fluidframework/telemetry-utils/internal";
+
+import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor.js";
+import { ConnectionState } from "./connectionState.js";
+import { IConnectionDetailsInternal, IConnectionStateChangeReason } from "./contracts.js";
+import { IProtocolHandler } from "./protocol.js";
 
 // Based on recent data, it looks like majority of cases where we get stuck are due to really slow or
 // timing out ops fetches. So attempt recovery infrequently. Also fetch uses 30 second timeout, so
@@ -43,7 +44,7 @@ export interface IConnectionStateHandlerInputs {
 	logConnectionIssue: (
 		eventName: string,
 		category: TelemetryEventCategory,
-		details?: ITelemetryProperties,
+		details?: ITelemetryBaseProperties,
 	) => void;
 	/** Callback to note that an old local client ID is still present in the Quorum that should have left and should now be considered invalid */
 	clientShouldHaveLeft: (clientId: string) => void;
@@ -188,7 +189,7 @@ class ConnectionStateHandlerPassThrough
 	public logConnectionIssue(
 		eventName: string,
 		category: TelemetryEventCategory,
-		details?: ITelemetryProperties,
+		details?: ITelemetryBaseProperties,
 	) {
 		return this.inputs.logConnectionIssue(eventName, category, details);
 	}
@@ -312,12 +313,25 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 class ConnectionStateHandler implements IConnectionStateHandler {
 	private _connectionState = ConnectionState.Disconnected;
 	private _pendingClientId: string | undefined;
+
+	/**
+	 * Tracks that we observe the "leave" op within the timeout for our previous clientId (see comment on ConnectionStateHandler class)
+	 * ! This ensures we do not switch to a new clientId until we process all potential messages from old clientId
+	 * ! i.e. We will always see the "leave" op for a client after we have seen all the ops it has sent
+	 * ! This check helps prevent the same op from being resubmitted by the PendingStateManager upon reconnecting
+	 */
 	private readonly prevClientLeftTimer: Timer;
+
+	/**
+	 * Tracks that we observe our own "join" op within the timeout after receiving a "connected" event from the DeltaManager
+	 */
 	private readonly joinOpTimer: Timer;
+
 	private protocol?: IProtocolHandler;
 	private connection?: IConnectionDetailsInternal;
 	private _clientId?: string;
 
+	/** Track how long we waited to see "leave" op for previous clientId */
 	private waitEvent: PerformanceEvent | undefined;
 
 	public get connectionState(): ConnectionState {
@@ -453,9 +467,9 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 			0x2e2 /* "Must only wait for leave message when clientId in quorum" */,
 		);
 
-		// Move to connected state only if we are in Connecting state, we have seen our join op
-		// and there is no timer running which means we are not waiting for previous client to leave
-		// or timeout has occurred while doing so.
+		// Move to connected state only if:
+		// 1. We have seen our own "join" op (i.e. for this.pendingClientId)
+		// 2. There is no "leave" timer running, meaning this is our first connection or the previous client has left (via this.prevClientLeftTimer)
 		if (
 			this.pendingClientId !== this.clientId &&
 			this.hasMember(this.pendingClientId) &&

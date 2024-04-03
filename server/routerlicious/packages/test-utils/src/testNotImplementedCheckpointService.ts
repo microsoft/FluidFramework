@@ -10,11 +10,19 @@ import {
 	IScribe,
 } from "@fluidframework/server-services-core";
 
-const defaultErrorMsg = "Method not implemented. Provide your own mock.";
+const getDefaultErrorMsg = (methodName: string) =>
+	`TestNotImplementedCheckpointService.${methodName}: Method not implemented. Provide your own mock.`;
 
+/**
+ * @internal
+ */
 export class TestNotImplementedCheckpointService implements ICheckpointService {
-	localCheckpointEnabled: boolean = false;
-
+	getGlobalCheckpointFailed(): boolean {
+		throw new Error(getDefaultErrorMsg("getGlobalCheckpointFailed"));
+	}
+	getLocalCheckpointEnabled(): boolean {
+		throw new Error(getDefaultErrorMsg("getLocalCheckpointEnabled"));
+	}
 	async writeCheckpoint(
 		documentId: string,
 		tenantId: string,
@@ -22,7 +30,7 @@ export class TestNotImplementedCheckpointService implements ICheckpointService {
 		checkpoint: IScribe | IDeliState,
 		isLocal: boolean,
 	): Promise<void> {
-		throw new Error(defaultErrorMsg);
+		throw new Error(getDefaultErrorMsg("writeCheckpoint"));
 	}
 
 	async clearCheckpoint(
@@ -31,7 +39,7 @@ export class TestNotImplementedCheckpointService implements ICheckpointService {
 		service: string,
 		isLocal: boolean,
 	): Promise<void> {
-		throw new Error(defaultErrorMsg);
+		throw new Error(getDefaultErrorMsg("clearCheckpoint"));
 	}
 
 	async restoreFromCheckpoint(
@@ -40,7 +48,7 @@ export class TestNotImplementedCheckpointService implements ICheckpointService {
 		service: string,
 		document: IDocument,
 	): Promise<IScribe | IDeliState> {
-		throw new Error(defaultErrorMsg);
+		throw new Error(getDefaultErrorMsg("restoreFromCheckpoint"));
 	}
 
 	async getLatestCheckpoint(
@@ -48,6 +56,6 @@ export class TestNotImplementedCheckpointService implements ICheckpointService {
 		documentId: string,
 		activeClients?: boolean,
 	): Promise<any> {
-		throw new Error(defaultErrorMsg);
+		throw new Error(getDefaultErrorMsg("getLatestCheckpoint"));
 	}
 }

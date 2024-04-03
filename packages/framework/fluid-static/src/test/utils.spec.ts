@@ -3,29 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { MapFactory, SharedMap } from "@fluidframework/map";
-import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
-import { parseDataObjectsFromSharedObjects } from "../utils";
+import { strict as assert } from "node:assert";
 
-export class TestDataObject extends DataObject {
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { SharedMap } from "@fluidframework/map";
+import { MapFactory } from "@fluidframework/map/internal";
+import { SharedString, SharedStringFactory } from "@fluidframework/sequence/internal";
+
+import { type ContainerSchema } from "../types.js";
+import { parseDataObjectsFromSharedObjects } from "../utils.js";
+
+class TestDataObject extends DataObject {
 	public static readonly Name = "@fluid-example/test-data-object";
 
 	public static readonly factory = new DataObjectFactory(
 		TestDataObject.Name,
 		TestDataObject,
-		[],
-		{},
-	);
-}
-
-export class AnotherTestDataObject extends DataObject {
-	public static readonly Name = "@fluid-example/another-test-data-object";
-
-	public static readonly factory = new DataObjectFactory(
-		AnotherTestDataObject.Name,
-		AnotherTestDataObject,
 		[],
 		{},
 	);
@@ -38,7 +31,7 @@ describe("parseDataObjectsFromSharedObjects", () => {
 				map: SharedMap,
 				text: SharedString,
 			},
-		};
+		} satisfies ContainerSchema;
 		const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 
 		assert.strictEqual(registryEntries.length, 0, "We should have no registry entries");
@@ -56,7 +49,7 @@ describe("parseDataObjectsFromSharedObjects", () => {
 				text: SharedString,
 				text2: SharedString,
 			},
-		};
+		} satisfies ContainerSchema;
 		const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 
 		assert.strictEqual(registryEntries.length, 0, "We should have no registry entries");
@@ -73,7 +66,7 @@ describe("parseDataObjectsFromSharedObjects", () => {
 				map: SharedMap,
 				do: TestDataObject,
 			},
-		};
+		} satisfies ContainerSchema;
 		const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 
 		assert.strictEqual(registryEntries.length, 1, "We should have one registry entry");
@@ -90,7 +83,7 @@ describe("parseDataObjectsFromSharedObjects", () => {
 				do: TestDataObject,
 				do2: TestDataObject,
 			},
-		};
+		} satisfies ContainerSchema;
 		const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 
 		assert.strictEqual(registryEntries.length, 1, "We should have one registry entry");
@@ -101,13 +94,13 @@ describe("parseDataObjectsFromSharedObjects", () => {
 	});
 
 	it("should be able to dedup Data Objects even if passed as dynamic types", () => {
-		const schema = {
+		const schema: ContainerSchema = {
 			initialObjects: {
 				map: SharedMap,
 				do: TestDataObject,
 			},
 			dynamicObjectTypes: [SharedString, TestDataObject],
-		};
+		} satisfies ContainerSchema;
 		const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 
 		assert.strictEqual(registryEntries.length, 1, "We should have one registry entry");

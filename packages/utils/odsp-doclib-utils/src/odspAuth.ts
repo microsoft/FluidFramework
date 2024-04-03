@@ -3,27 +3,40 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { isFluidError } from "@fluidframework/telemetry-utils";
-import { getAadTenant, getAadUrl, getSiteUrl } from "./odspDocLibUtils";
-import { throwOdspNetworkError } from "./odspErrorUtils";
-import { unauthPostAsync } from "./odspRequest";
+import { assert } from "@fluidframework/core-utils/internal";
+import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 
+import { getAadTenant, getAadUrl, getSiteUrl } from "./odspDocLibUtils.js";
+import { throwOdspNetworkError } from "./odspErrorUtils.js";
+import { unauthPostAsync } from "./odspRequest.js";
+
+/**
+ * @internal
+ */
 export interface IOdspTokens {
 	readonly accessToken: string;
 	readonly refreshToken: string;
 }
 
+/**
+ * @internal
+ */
 export interface IClientConfig {
 	clientId: string;
 	clientSecret: string;
 }
 
+/**
+ * @alpha
+ */
 export interface IOdspAuthRequestInfo {
 	accessToken: string;
 	refreshTokenFn?: () => Promise<string>;
 }
 
+/**
+ * @internal
+ */
 export type TokenRequestCredentials =
 	| {
 			grant_type: "authorization_code";
@@ -46,14 +59,26 @@ type TokenRequestBody = TokenRequestCredentials & {
 	scope: string;
 };
 
+/**
+ * @alpha
+ */
 export const getOdspScope = (server: string) =>
 	`offline_access ${getSiteUrl(server)}/AllSites.Write`;
+/**
+ * @alpha
+ */
 export const pushScope = "offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All";
 
+/**
+ * @internal
+ */
 export function getFetchTokenUrl(server: string): string {
 	return `${getAadUrl(server)}/${getAadTenant(server)}/oauth2/v2.0/token`;
 }
 
+/**
+ * @internal
+ */
 export function getLoginPageUrl(
 	server: string,
 	clientConfig: IClientConfig,
@@ -69,16 +94,25 @@ export function getLoginPageUrl(
 	);
 }
 
+/**
+ * @internal
+ */
 export const getOdspRefreshTokenFn = (
 	server: string,
 	clientConfig: IClientConfig,
 	tokens: IOdspTokens,
 ) => getRefreshTokenFn(getOdspScope(server), server, clientConfig, tokens);
+/**
+ * @internal
+ */
 export const getPushRefreshTokenFn = (
 	server: string,
 	clientConfig: IClientConfig,
 	tokens: IOdspTokens,
 ) => getRefreshTokenFn(pushScope, server, clientConfig, tokens);
+/**
+ * @internal
+ */
 export const getRefreshTokenFn =
 	(scope: string, server: string, clientConfig: IClientConfig, tokens: IOdspTokens) =>
 	async () => {
@@ -92,6 +126,7 @@ export const getRefreshTokenFn =
  * @param scope - The desired oauth scope
  * @param clientConfig - Info about this client's identity
  * @param credentials - Credentials authorizing the client for the requested token
+ * @internal
  */
 export async function fetchTokens(
 	server: string,
@@ -166,6 +201,7 @@ function isAccessTokenError(parsedResponse: any): parsedResponse is AadOauth2Tok
  * @param tokens - The tokens object provides the refresh token for the request
  *
  * @returns The tokens object with refreshed tokens.
+ * @internal
  */
 export async function refreshTokens(
 	server: string,
@@ -190,6 +226,7 @@ export async function refreshTokens(
 /**
  * Issue the requestCallback, providing the proper auth header based on authRequestInfo,
  * and retrying with a refreshed token if necessary.
+ * @internal
  */
 export async function authRequestWithRetry(
 	authRequestInfo: IOdspAuthRequestInfo,

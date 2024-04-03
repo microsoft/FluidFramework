@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions";
+import { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions/internal";
 
 // Centralized store for all ODC/SPO logic
 
 /**
  * Checks whether or not the given URL origin is an ODC origin
  * @param origin - The URL origin to check
- * @public
+ * @internal
  */
 export function isOdcOrigin(origin: string): boolean {
 	return (
@@ -28,7 +28,7 @@ export function isOdcOrigin(origin: string): boolean {
 /**
  * Gets the correct API root for the given ODSP url, e.g. 'https://foo-my.sharepoint.com/_api/v2.1'
  * @param origin - The URL origin
- * @public
+ * @internal
  */
 export function getApiRoot(origin: string): string {
 	let prefix = "_api/";
@@ -42,20 +42,20 @@ export function getApiRoot(origin: string): string {
 /**
  * Whether or not the given URL is a valid SPO/ODB URL
  * @param url - The URL to check
- * @public
+ * @internal
  */
 export function isSpoUrl(url: string): boolean {
 	const urlLower = url.toLowerCase();
 
 	// Format: foo.sharepoint.com/_api/v2.1./drives/bar/items/baz and foo.sharepoint-df.com/...
 	const spoRegex = /(.*\.sharepoint(-df)*\.com)\/_api\/v2.1\/drives\/([^/]*)\/items\/([^/]*)/;
-	return !!spoRegex.exec(urlLower);
+	return spoRegex.test(urlLower);
 }
 
 /**
  * Whether or not the given URL is a valid ODC URL
  * @param url - The URL to check
- * @public
+ * @internal
  */
 export function isOdcUrl(url: string | URL): boolean {
 	const urlObj = typeof url === "string" ? new URL(url) : url;
@@ -80,7 +80,7 @@ export function isOdcUrl(url: string | URL): boolean {
  * Breaks an ODSP URL into its parts, extracting the site, drive ID, and item ID.
  * Returns undefined for invalid/malformed URLs.
  * @param url - The (raw) URL to parse
- * @public
+ * @internal
  */
 export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefined> {
 	const pathname = url.pathname;
@@ -88,7 +88,7 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 	// Joinsession like URL
 	// Pick a regex based on the hostname
 	// TODO This will only support ODC using api.onedrive.com, update to handle the future (share links etc)
-	let joinSessionMatch;
+	let joinSessionMatch: RegExpExecArray | null;
 	if (isOdcOrigin(url.origin)) {
 		// Capture groups:
 		// 0: match
@@ -97,7 +97,6 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 		// 3: optional captured drive ID
 		// 4: Item ID
 		// 5: Drive ID portion of Item ID
-		// eslint-disable-next-line unicorn/no-unsafe-regex
 		joinSessionMatch = /(.*)\/v2\.1\/drive(s\/([\dA-Za-z]+))?\/items\/(([\dA-Za-z]+)!\d+)/.exec(
 			pathname,
 		);

@@ -11,6 +11,7 @@ import {
 
 /**
  * In-memory cache implementation of IThrottleManager for testing
+ * @internal
  */
 export class TestThrottleAndUsageStorageManager implements IThrottleAndUsageStorageManager {
 	private readonly throttlingCache: { [key: string]: IThrottlingMetrics } = {};

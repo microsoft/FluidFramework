@@ -2,19 +2,27 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { performance } from "@fluid-internal/client-utils";
-import { ITelemetryProperties } from "@fluidframework/core-interfaces";
-import { assert, Deferred } from "@fluidframework/core-utils";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IDeltasFetchResult, IStream, IStreamResult } from "@fluidframework/driver-definitions";
-import { getRetryDelayFromError, canRetryOnError, createGenericNetworkError } from "./network";
-import { logNetworkFailure } from "./networkUtils";
-// For now, this package is versioned and released in unison with the specific drivers
-import { pkgVersion as driverVersion } from "./packageVersion";
 
-const MaxFetchDelayInMs = 10000;
-const MissingFetchDelayInMs = 100;
+import { performance } from "@fluid-internal/client-utils";
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
+import {
+	IDeltasFetchResult,
+	IStream,
+	IStreamResult,
+} from "@fluidframework/driver-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+
+import { canRetryOnError, createGenericNetworkError, getRetryDelayFromError } from "./network.js";
+import { logNetworkFailure } from "./networkUtils.js";
+// For now, this package is versioned and released in unison with the specific drivers
+import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { calculateMaxWaitTime } from "./runWithRetry.js";
+
+// We double this value in first try in when we calculate time to wait for in "calculateMaxWaitTime" function.
+const MissingFetchDelayInMs = 50;
 
 type WorkingState = "working" | "done" | "canceled";
 
@@ -29,6 +37,7 @@ type WorkingState = "working" | "done" | "canceled";
  * @param logger - logger to use
  * @param requestCallback - callback to request batches
  * @returns Queue that can be used to retrieve data
+ * @internal
  */
 export class ParallelRequests<T> {
 	private latestRequested: number;
@@ -57,7 +66,7 @@ export class ParallelRequests<T> {
 			from: number,
 			to: number,
 			strongTo: boolean,
-			props: ITelemetryProperties,
+			props: ITelemetryBaseProperties,
 		) => Promise<{ partial: boolean; cancel: boolean; payload: T[] }>,
 		private readonly responseCallback: (payload: T[]) => void,
 	) {
@@ -338,6 +347,7 @@ export class ParallelRequests<T> {
 /**
  * Helper queue class to allow async push / pull
  * It's essentially a pipe allowing multiple writers, and single reader
+ * @internal
  */
 export class Queue<T> implements IStream<T> {
 	private readonly queue: Promise<IStreamResult<T>>[] = [];
@@ -408,8 +418,8 @@ const waitForOnline = async (): Promise<void> => {
  * @returns An object with resulting ops and cancellation / partial result flags
  */
 async function getSingleOpBatch(
-	get: (telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>,
-	props: ITelemetryProperties,
+	get: (telemetryProps: ITelemetryBaseProperties) => Promise<IDeltasFetchResult>,
+	props: ITelemetryBaseProperties,
 	strongTo: boolean,
 	logger: ITelemetryLoggerExt,
 	signal?: AbortSignal,
@@ -421,10 +431,11 @@ async function getSingleOpBatch(
 	let retry: number = 0;
 	const nothing = { partial: false, cancel: true, payload: [] };
 	let waitStartTime: number = 0;
+	let waitTime = MissingFetchDelayInMs;
 
 	while (signal?.aborted !== true) {
 		retry++;
-		let delay = Math.min(MaxFetchDelayInMs, MissingFetchDelayInMs * Math.pow(2, retry));
+		let lastError: unknown;
 		const startTime = performance.now();
 
 		try {
@@ -468,6 +479,7 @@ async function getSingleOpBatch(
 				);
 			}
 		} catch (error) {
+			lastError = error;
 			const canRetry = canRetryOnError(error);
 
 			const retryAfter = getRetryDelayFromError(error);
@@ -490,11 +502,6 @@ async function getSingleOpBatch(
 				// It's game over scenario.
 				throw error;
 			}
-
-			if (retryAfter !== undefined) {
-				// If the error told us to wait, then we will wait for that specific amount rather than the default.
-				delay = retryAfter;
-			}
 		}
 
 		if (telemetryEvent === undefined) {
@@ -504,10 +511,12 @@ async function getSingleOpBatch(
 			});
 		}
 
+		waitTime = calculateMaxWaitTime(waitTime, lastError);
+
 		// If we get here something has gone wrong - either got an unexpected empty set of messages back or a real error.
 		// Either way we will wait a little bit before retrying.
 		await new Promise<void>((resolve) => {
-			setTimeout(resolve, delay);
+			setTimeout(resolve, waitTime);
 		});
 
 		// If we believe we're offline, we assume there's no point in trying until we at least think we're online.
@@ -531,12 +540,13 @@ async function getSingleOpBatch(
  * @param signal - Cancelation signal
  * @param scenarioName - Reason for fetching ops
  * @returns Messages fetched
+ * @internal
  */
 export function requestOps(
 	get: (
 		from: number,
 		to: number,
-		telemetryProps: ITelemetryProperties,
+		telemetryProps: ITelemetryBaseProperties,
 	) => Promise<IDeltasFetchResult>,
 	concurrency: number,
 	fromTotal: number,
@@ -551,7 +561,7 @@ export function requestOps(
 	let length = 0;
 	const queue = new Queue<ISequencedDocumentMessage[]>();
 
-	const propsTotal: ITelemetryProperties = {
+	const propsTotal: ITelemetryBaseProperties = {
 		fromTotal,
 		toTotal,
 	};
@@ -572,7 +582,7 @@ export function requestOps(
 			from: number,
 			to: number,
 			strongTo: boolean,
-			propsPerRequest: ITelemetryProperties,
+			propsPerRequest: ITelemetryBaseProperties,
 		) => {
 			requests++;
 			return getSingleOpBatch(
@@ -651,12 +661,18 @@ export function requestOps(
 	return queue;
 }
 
+/**
+ * @internal
+ */
 export const emptyMessageStream: IStream<ISequencedDocumentMessage[]> = {
 	read: async () => {
 		return { done: true };
 	},
 };
 
+/**
+ * @internal
+ */
 export function streamFromMessages(
 	messagesArg: Promise<ISequencedDocumentMessage[]>,
 ): IStream<ISequencedDocumentMessage[]> {
@@ -673,6 +689,9 @@ export function streamFromMessages(
 	};
 }
 
+/**
+ * @internal
+ */
 export function streamObserver<T>(
 	stream: IStream<T>,
 	handler: (value: IStreamResult<T>) => void,

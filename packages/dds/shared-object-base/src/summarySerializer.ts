@@ -4,10 +4,12 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { FluidSerializer } from "./serializer";
+
+import { FluidSerializer } from "./serializer.js";
 
 /**
  * Serializer implementation for serializing handles during summary.
+ * @internal
  */
 export class SummarySerializer extends FluidSerializer {
 	private readonly serializedRoutes: Set<string> = new Set();

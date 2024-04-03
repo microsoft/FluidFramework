@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ScopeType, ITokenClaims } from "@fluidframework/protocol-definitions";
+import { ITokenClaims, ScopeType } from "@fluidframework/protocol-definitions";
 import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { v4 as uuid } from "uuid";
@@ -11,8 +11,7 @@ import { v4 as uuid } from "uuid";
 /**
  * As the name implies this is not secure and should not be used in production. It simply makes the example easier
  * to get up and running.
- *
- * @public
+ * @internal
  */
 export class InsecureTinyliciousTokenProvider implements ITokenProvider {
 	constructor(

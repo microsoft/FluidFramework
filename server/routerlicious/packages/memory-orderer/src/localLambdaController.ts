@@ -14,10 +14,14 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IKafkaSubscriber, ILocalOrdererSetup } from "./interfaces";
 import { LocalKafka } from "./localKafka";
 
+/**
+ * @internal
+ */
 export type LocalLambdaControllerState = "created" | "starting" | "started" | "closed";
 
 /**
  * Controls lambda startups and subscriptions for localOrderer
+ * @internal
  */
 export class LocalLambdaController<T = ILocalOrdererSetup>
 	extends EventEmitter

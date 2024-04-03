@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { DataBinding } from "..";
-import { ModificationContext } from "../data_binder/modificationContext";
+import { ModificationContext } from "../data_binder/modificationContext.js";
+import { DataBinding } from "../index.js";
 
 declare type DataBindingHandle = any; // TODO declare handle type
 declare type DestroyCallbackType = (handle: DataBindingHandle, userData: any) => any;
@@ -22,8 +22,7 @@ type PathCallback = {
  * if the creation of a data binding is delayed by a {@link DataBinder.pushBindingActivationScope},
  * it can still be removed using destroy() before the final {@link DataBinder.popBindingActivationScope}
  * actually instantiates any bindings.
- *
- * @public
+ * @internal
  */
 export class DataBinderHandle {
 	_destroyCallback: DestroyCallbackType | undefined;

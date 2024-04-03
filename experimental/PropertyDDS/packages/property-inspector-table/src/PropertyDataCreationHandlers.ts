@@ -2,14 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { PropertyProxy } from "@fluid-experimental/property-proxy";
-import { PropertyFactory } from "@fluid-experimental/property-properties";
+
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
-import { InputValidator } from "./InputValidator";
-import { IDataCreationOptions, IInspectorRow } from "./InspectorTableTypes";
+import { PropertyFactory } from "@fluid-experimental/property-properties";
+import { PropertyProxy } from "@fluid-experimental/property-proxy";
+
+import { InputValidator } from "./InputValidator.js";
+import type { IDataCreationOptions, IInspectorRow } from "./InspectorTableTypes.js";
 
 const EXCLUDE_PROPS = ["BaseProperty", "Enum", "ContainerProperty"];
 
+/**
+ * @internal
+ */
 export const fetchRegisteredTemplates = () => {
 	const toTemplateList = (x: string) => ({ value: x, label: x });
 	// extract primitive templates
@@ -32,6 +37,9 @@ export const fetchRegisteredTemplates = () => {
 	return templates;
 };
 
+/**
+ * @internal
+ */
 export const handlePropertyDataCreationOptionGeneration = (
 	rowData: IInspectorRow,
 	nameOnly: boolean,
@@ -81,6 +89,9 @@ const createProperty = (name: string, typeid: string, context: string, parent: a
 	return parent.getProperty().getRoot().getWorkspace().commit();
 };
 
+/**
+ * @internal
+ */
 export const handlePropertyDataCreation = (
 	rowData: IInspectorRow,
 	name: string,

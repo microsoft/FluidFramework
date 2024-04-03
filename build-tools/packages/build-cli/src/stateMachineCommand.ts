@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Command, Flags } from "@oclif/core";
 import chalk from "chalk";
 import { Machine } from "jssm";
@@ -136,7 +137,7 @@ export abstract class StateMachineCommand<
 
 				if (machine.state_is_final(state)) {
 					this.verbose(`Exiting. Final state: ${state}`);
-					this.exit();
+					this.exit(0);
 				}
 
 				// eslint-disable-next-line no-constant-condition

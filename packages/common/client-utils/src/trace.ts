@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "./indexNode";
+import { performance } from "./indexNode.js";
 
 /**
  * Helper class for tracing performance of events

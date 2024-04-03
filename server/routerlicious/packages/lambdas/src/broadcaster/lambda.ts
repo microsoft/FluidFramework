@@ -46,6 +46,9 @@ if (typeof setImmediate === "function") {
 	clearTaskScheduleTimerFunction = clearTimeout;
 }
 
+/**
+ * @internal
+ */
 export class BroadcasterLambda implements IPartitionLambda {
 	private pending = new Map<string, BroadcasterMessageBatch>();
 	private pendingOffset: IQueuedMessage | undefined;

@@ -9,9 +9,11 @@
 
 export {
 	doesItemRequireOwnDocument,
+	filterItems,
 	getHeadingForApiItem,
 	getLinkForApiItem,
-} from "./api-item-transforms";
+	shouldItemBeIncluded,
+} from "./api-item-transforms/index.js";
 export {
 	getDefaultValueBlock,
 	getDeprecatedBlock,
@@ -27,4 +29,4 @@ export {
 	isOptional,
 	isReadonly,
 	isStatic,
-} from "./utilities";
+} from "./utilities/index.js";

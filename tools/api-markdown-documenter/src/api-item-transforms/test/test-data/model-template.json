@@ -170,7 +170,10 @@
 			"kind": "EntryPoint",
 			"canonicalReference": "test-package!",
 			"name": "",
-			"preserveMemberOrder": false
+			"preserveMemberOrder": false,
+			"members": [
+				// Add members here as needed for your test case
+			]
 		}
 	]
 }

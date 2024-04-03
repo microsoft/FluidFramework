@@ -6,12 +6,18 @@
 import assert from "assert";
 import { IWebSocket } from "@fluidframework/server-services-core";
 
+/**
+ * @internal
+ */
 export interface ISubscriber {
 	id: string;
 	readonly webSocket?: IWebSocket;
 	send(topic: string, event: string, ...args: any[]): void;
 }
 
+/**
+ * @internal
+ */
 export class WebSocketSubscriber implements ISubscriber {
 	public get id(): string {
 		return this.webSocket.id;
@@ -24,6 +30,9 @@ export class WebSocketSubscriber implements ISubscriber {
 	}
 }
 
+/**
+ * @internal
+ */
 export interface IPubSub {
 	// Registers a subscriber for the given message
 	subscribe(topic: string, subscriber: ISubscriber): void;
@@ -35,6 +44,9 @@ export interface IPubSub {
 	publish(topic: string, event: string, ...args: any[]): void;
 }
 
+/**
+ * @internal
+ */
 export class PubSub implements IPubSub {
 	private readonly topics = new Map<
 		string,

@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions";
-import { streamFromMessages } from "@fluidframework/driver-utils";
+import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions/internal";
+import { streamFromMessages } from "@fluidframework/driver-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 /**
- * Mock Document Delta Storage Service for testing
+ * Mock Document Delta Storage Service for testing.
+ *
+ * @internal
  */
 export class MockDocumentDeltaStorageService implements IDocumentDeltaStorageService {
 	constructor(private readonly messages: ISequencedDocumentMessage[]) {

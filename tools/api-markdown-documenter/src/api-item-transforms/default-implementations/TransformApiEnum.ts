@@ -2,12 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ApiEnum, ApiEnumMember, ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
 
-import { DocumentationNode, SectionNode } from "../../documentation-domain";
-import { filterByKind } from "../../utilities";
-import { ApiItemTransformationConfiguration } from "../configuration";
-import { createMemberTables, wrapInSection } from "../helpers";
+import {
+	type ApiEnum,
+	type ApiEnumMember,
+	type ApiItem,
+	ApiItemKind,
+} from "@microsoft/api-extractor-model";
+
+import { type DocumentationNode, type SectionNode } from "../../documentation-domain/index.js";
+import { filterByKind } from "../../utilities/index.js";
+import { type ApiItemTransformationConfiguration } from "../configuration/index.js";
+import { createMemberTables, wrapInSection } from "../helpers/index.js";
+import { filterChildMembers } from "../ApiItemTransformUtilities.js";
 
 /**
  * Default documentation transform for `Enum` items.
@@ -19,9 +26,8 @@ export function transformApiEnum(
 ): SectionNode[] {
 	const sections: SectionNode[] = [];
 
-	const hasAnyChildren = apiEnum.members.length > 0;
-
-	if (hasAnyChildren) {
+	const filteredChildren = filterChildMembers(apiEnum, config);
+	if (filteredChildren.length > 0) {
 		// Accumulate child items
 		const flags = filterByKind(apiEnum.members, [ApiItemKind.EnumMember]).map(
 			(apiItem) => apiItem as ApiEnumMember,

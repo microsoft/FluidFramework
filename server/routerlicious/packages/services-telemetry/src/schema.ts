@@ -10,6 +10,9 @@ import {
 	QueuedMessageProperties,
 } from "./resources";
 
+/**
+ * @internal
+ */
 export abstract class BaseLumberjackSchemaValidator implements ILumberjackSchemaValidator {
 	protected readonly validators = new Map<string, (propvalue: string) => boolean>();
 
@@ -58,6 +61,9 @@ export abstract class BaseLumberjackSchemaValidator implements ILumberjackSchema
 	}
 }
 
+/**
+ * @internal
+ */
 export class BasePropertiesValidator extends BaseLumberjackSchemaValidator {
 	constructor() {
 		super();
@@ -70,6 +76,9 @@ export class BasePropertiesValidator extends BaseLumberjackSchemaValidator {
 	}
 }
 
+/**
+ * @internal
+ */
 export class LambdaSchemaValidator extends BasePropertiesValidator {
 	constructor() {
 		super();

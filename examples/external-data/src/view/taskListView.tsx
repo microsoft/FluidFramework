@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { CollaborativeInput } from "@fluid-experimental/react-inputs";
 
+import { CollaborativeInput } from "@fluid-example/example-utils";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
-import type { ExternalSnapshotTask, ITask, ITaskList } from "../model-interface";
+import type { ExternalSnapshotTask, ITask, ITaskList } from "../model-interface/index.js";
 
 /**
  * {@link TaskRow} input props.

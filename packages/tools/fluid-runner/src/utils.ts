@@ -4,7 +4,8 @@
  */
 
 import * as fs from "fs";
-import { IFluidFileConverter } from "./codeLoaderBundle";
+
+import { IFluidFileConverter } from "./codeLoaderBundle.js";
 
 /**
  * Is the given snapshot in JSON format
@@ -19,6 +20,7 @@ export function isJsonSnapshot(content: Buffer): boolean {
  * Get the ODSP snapshot file content
  * Works on both JSON and binary snapshot formats
  * @param filePath - path to the ODSP snapshot file
+ * @internal
  */
 export function getSnapshotFileContent(filePath: string): string | Buffer {
 	// TODO: read file stream

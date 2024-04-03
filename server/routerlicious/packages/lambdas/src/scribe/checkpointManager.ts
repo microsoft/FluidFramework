@@ -17,9 +17,11 @@ import {
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ICheckpointManager } from "./interfaces";
+import { isLocalCheckpoint } from "./utils";
 
 /**
  * MongoDB specific implementation of ICheckpointManager
+ * @internal
  */
 export class CheckpointManager implements ICheckpointManager {
 	private readonly clientFacadeRetryEnabled: boolean;
@@ -48,7 +50,7 @@ export class CheckpointManager implements ICheckpointManager {
 		globalCheckpointOnly: boolean,
 		markAsCorrupt: boolean = false,
 	) {
-		const isLocalCheckpoint = !noActiveClients && !globalCheckpointOnly;
+		const isLocal = isLocalCheckpoint(noActiveClients, globalCheckpointOnly);
 		if (this.getDeltasViaAlfred) {
 			if (pending.length > 0 && this.verifyLastOpPersistence) {
 				// Verify that the last pending op has been persisted to op storage
@@ -108,7 +110,7 @@ export class CheckpointManager implements ICheckpointManager {
 				this.tenantId,
 				"scribe",
 				checkpoint,
-				isLocalCheckpoint,
+				isLocal,
 				markAsCorrupt,
 			);
 		} else {
@@ -134,7 +136,10 @@ export class CheckpointManager implements ICheckpointManager {
 					3 /* maxRetries */,
 					1000 /* retryAfterMs */,
 					getLumberBaseProperties(this.documentId, this.tenantId),
-					(error) => error.code === 11000 /* shouldIgnoreError */,
+					(error) =>
+						error.code === 11000 ||
+						error.message?.toString()?.indexOf("E11000 duplicate key") >=
+							0 /* shouldIgnoreError */,
 					(error) => !this.clientFacadeRetryEnabled /* shouldRetry */,
 				);
 			}
@@ -145,7 +150,7 @@ export class CheckpointManager implements ICheckpointManager {
 				this.tenantId,
 				"scribe",
 				checkpoint,
-				isLocalCheckpoint,
+				isLocal,
 				markAsCorrupt,
 			);
 

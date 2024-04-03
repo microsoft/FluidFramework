@@ -10,6 +10,9 @@ import {
 	IWholeFlatSummaryTreeEntry,
 } from "@fluidframework/server-services-client";
 
+/**
+ * @internal
+ */
 export class WholeSummaryReadGitManager {
 	constructor(
 		/**

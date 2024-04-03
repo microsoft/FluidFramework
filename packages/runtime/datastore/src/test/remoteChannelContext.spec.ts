@@ -4,18 +4,20 @@
  */
 
 import { strict as assert } from "assert";
+
+import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	CreateChildSummarizerNodeFn,
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	MockFluidDataStoreContext,
 	validateAssertionError,
-} from "@fluidframework/test-runtime-utils";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime";
-import { RemoteChannelContext } from "../remoteChannelContext";
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime.js";
+import { RemoteChannelContext } from "../remoteChannelContext.js";
 
 describe("RemoteChannelContext Tests", () => {
 	let dataStoreContext: MockFluidDataStoreContext;

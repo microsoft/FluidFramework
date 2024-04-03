@@ -9,28 +9,30 @@ import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IConnected } from '@fluidframework/protocol-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
-import { IDocumentDeltaConnection } from '@fluidframework/driver-definitions';
-import { IDocumentDeltaConnectionEvents } from '@fluidframework/driver-definitions';
-import { IDocumentDeltaStorageService } from '@fluidframework/driver-definitions';
+import { IDocumentDeltaConnection } from '@fluidframework/driver-definitions/internal';
+import { IDocumentDeltaConnectionEvents } from '@fluidframework/driver-definitions/internal';
+import { IDocumentDeltaStorageService } from '@fluidframework/driver-definitions/internal';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IDocumentService } from '@fluidframework/driver-definitions';
-import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
-import { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions';
-import { IFileSnapshot } from '@fluidframework/replay-driver';
-import { IResolvedUrl } from '@fluidframework/driver-definitions';
+import { IDocumentService } from '@fluidframework/driver-definitions/internal';
+import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
+import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
+import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions/internal';
+import { IFileSnapshot } from '@fluidframework/replay-driver/internal';
+import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalClient } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
-import { IStream } from '@fluidframework/driver-definitions';
-import { ISummaryContext } from '@fluidframework/driver-definitions';
+import { ISnapshot } from '@fluidframework/driver-definitions/internal';
+import { ISnapshotFetchOptions } from '@fluidframework/driver-definitions/internal';
+import { IStream } from '@fluidframework/driver-definitions/internal';
+import { ISummaryContext } from '@fluidframework/driver-definitions/internal';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
-import { ReadDocumentStorageServiceBase } from '@fluidframework/replay-driver';
+import { ReadDocumentStorageServiceBase } from '@fluidframework/replay-driver/internal';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
-// @public
+// @internal
 export class FileDeltaStorageService implements IDocumentDeltaStorageService {
     constructor(path: string);
     // (undocumented)
@@ -40,7 +42,7 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
     get ops(): readonly Readonly<api.ISequencedDocumentMessage>[];
 }
 
-// @public
+// @internal
 export class FileDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(storage: IDocumentStorageService, deltaStorage: FileDeltaStorageService, deltaConnection: IDocumentDeltaConnection);
     // (undocumented)
@@ -48,7 +50,7 @@ export class FileDocumentServiceFactory implements IDocumentServiceFactory {
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export const FileSnapshotWriterClassFactory: <TBase extends ReaderConstructor>(Base: TBase) => {
     new (...args: any[]): {
         blobsWriter: Map<string, ArrayBufferLike>;
@@ -61,8 +63,8 @@ export const FileSnapshotWriterClassFactory: <TBase extends ReaderConstructor>(B
         getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
         uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string>;
         buildTree(snapshotTree: api.ISnapshotTree): Promise<api.ITree>;
-        repositoryUrl: string;
         readonly policies?: IDocumentStorageServicePolicies | undefined;
+        getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions | undefined): Promise<ISnapshot>;
         createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse>;
         downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree>;
         readonly disposed?: boolean | undefined;
@@ -70,10 +72,10 @@ export const FileSnapshotWriterClassFactory: <TBase extends ReaderConstructor>(B
     };
 } & TBase;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const FileStorageDocumentName = "FileStorageDocId";
 
-// @public
+// @internal
 export class FluidFetchReader extends ReadDocumentStorageServiceBase implements IDocumentStorageService {
     constructor(path: string, versionName?: string | undefined);
     // (undocumented)
@@ -84,7 +86,7 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
     readBlob(sha: string): Promise<ArrayBufferLike>;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export const FluidFetchReaderFileSnapshotWriter: {
     new (...args: any[]): {
         blobsWriter: Map<string, ArrayBufferLike>;
@@ -97,8 +99,8 @@ export const FluidFetchReaderFileSnapshotWriter: {
         getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
         uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string>;
         buildTree(snapshotTree: api.ISnapshotTree): Promise<api.ITree>;
-        repositoryUrl: string;
         readonly policies?: IDocumentStorageServicePolicies | undefined;
+        getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions | undefined): Promise<ISnapshot>;
         createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse>;
         downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree>;
         readonly disposed?: boolean | undefined;
@@ -106,7 +108,7 @@ export const FluidFetchReaderFileSnapshotWriter: {
     };
 } & typeof FluidFetchReader;
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface ISnapshotWriterStorage extends IDocumentStorageService {
     // (undocumented)
     onSnapshotHandler(snapshot: IFileSnapshot): void;
@@ -114,10 +116,10 @@ export interface ISnapshotWriterStorage extends IDocumentStorageService {
     reset(): void;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export type ReaderConstructor = new (...args: any[]) => IDocumentStorageService;
 
-// @public
+// @internal
 export class Replayer {
     constructor(deltaConnection: ReplayFileDeltaConnection, documentStorageService: FileDeltaStorageService);
     // (undocumented)
@@ -128,7 +130,7 @@ export class Replayer {
     replay(replayTo: number): number;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export class ReplayFileDeltaConnection extends TypedEventEmitter<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection, IDisposable {
     constructor(details: IConnected, documentDeltaStorageService: FileDeltaStorageService);
     // (undocumented)

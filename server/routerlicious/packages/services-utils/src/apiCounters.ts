@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @internal
+ */
 export interface IApiCounters {
 	initializeCounter(apiName: string): void;
 	initializeCounters(apiNames: string[]): void;
@@ -14,6 +17,9 @@ export interface IApiCounters {
 	countersAreActive: boolean;
 }
 
+/**
+ * @internal
+ */
 export class InMemoryApiCounters implements IApiCounters {
 	private readonly apiCounters = new Map<string, number>();
 	constructor(apiNames?: string[]) {

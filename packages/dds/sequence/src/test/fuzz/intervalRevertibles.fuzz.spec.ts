@@ -4,38 +4,41 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	createWeightedAsyncGenerator as createWeightedGenerator,
-	AsyncGenerator as Generator,
-	takeAsync as take,
-} from "@fluid-internal/stochastic-test-utils";
-import {
-	createDDSFuzzSuite,
-	DDSFuzzModel,
-	DDSFuzzHarnessEvents,
-	DDSFuzzSuiteOptions,
-} from "@fluid-internal/test-dds-utils";
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions";
+import {
+	AsyncGenerator as Generator,
+	createWeightedAsyncGenerator as createWeightedGenerator,
+	takeAsync as take,
+} from "@fluid-private/stochastic-test-utils";
+import {
+	DDSFuzzHarnessEvents,
+	DDSFuzzModel,
+	DDSFuzzSuiteOptions,
+	createDDSFuzzSuite,
+} from "@fluid-private/test-dds-utils";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+
 import {
 	appendAddIntervalToRevertibles,
 	appendChangeIntervalToRevertibles,
 	appendDeleteIntervalToRevertibles,
 	appendIntervalPropertyChangedToRevertibles,
 	appendSharedStringDeltaToRevertibles,
-} from "../../revertibles";
+} from "../../revertibles.js";
+
 import {
 	FuzzTestState,
-	RevertOperation,
-	RevertibleSharedString,
-	isRevertibleSharedString,
 	IntervalOperationGenerationConfig,
+	RevertOperation,
 	RevertSharedStringRevertibles,
+	RevertibleSharedString,
 	SharedStringFuzzFactory,
 	baseModel,
 	defaultFuzzOptions,
-} from "./fuzzUtils";
-import { makeOperationGenerator } from "./intervalCollection.fuzz.spec";
+	isRevertibleSharedString,
+	makeIntervalOperationGenerator,
+} from "./fuzzUtils.js";
 
 const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 
@@ -120,7 +123,7 @@ function operationGenerator(
 	};
 
 	assert(optionsParam.weights !== undefined);
-	const baseGenerator = makeOperationGenerator(optionsParam, true);
+	const baseGenerator = makeIntervalOperationGenerator(optionsParam, true);
 	return createWeightedGenerator<RevertOperation, ClientOpState>([
 		[revertSharedStringRevertibles, optionsParam.weights.revertWeight, hasRevertibles],
 		[baseGenerator, 1],
@@ -141,10 +144,10 @@ describe("IntervalCollection fuzz testing", () => {
 						revertWeight: 2,
 						addText: 2,
 						removeRange: 1,
+						obliterateRange: 0,
 						addInterval: 2,
 						deleteInterval: 2,
 						changeInterval: 2,
-						changeProperties: 2,
 					},
 				}),
 			),
@@ -167,10 +170,10 @@ describe("IntervalCollection fuzz testing with rebasing", () => {
 						revertWeight: 2,
 						addText: 2,
 						removeRange: 1,
+						obliterateRange: 0,
 						addInterval: 2,
 						deleteInterval: 2,
 						changeInterval: 2,
-						changeProperties: 2,
 					},
 				}),
 			),
@@ -183,7 +186,5 @@ describe("IntervalCollection fuzz testing with rebasing", () => {
 			flushMode: FlushMode.TurnBased,
 			enableGroupedBatching: true,
 		},
-		// Skipped due to 0x54e, see AB#5337 or comment on "default interval collection" fuzz suite.
-		skip: [13, 16, 17, 20, 21, 23, 30, 37, 41, 43, 44, 49, 51, 55, 62, 69, 70, 73, 84, 91, 95],
 	});
 });

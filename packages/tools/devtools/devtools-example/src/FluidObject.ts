@@ -2,23 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { SharedCell } from "@fluidframework/cell/internal";
 import { type IFluidHandle, type IFluidLoadable } from "@fluidframework/core-interfaces";
-import { SharedCounter } from "@fluidframework/counter";
-import { SharedString } from "@fluidframework/sequence";
-import { SharedCell } from "@fluidframework/cell";
-import { SharedMatrix } from "@fluidframework/matrix";
-import { type SharedObjectClass } from "@fluidframework/fluid-static";
-import {
-	AllowedUpdateType,
-	type ISharedTree,
-	SchemaBuilder,
-	SharedTreeFactory,
-	valueSymbol,
-	typeNameSymbol,
-	leaf,
-} from "@fluid-experimental/tree2";
-import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { SharedCounter } from "@fluidframework/counter/internal";
+import { SharedMatrix } from "@fluidframework/matrix/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
+import { type ITree, SchemaFactory, SharedTree, TreeConfiguration } from "@fluidframework/tree";
 /**
  * AppData uses the React CollaborativeTextArea to load a collaborative HTML <textarea>
  */
@@ -50,7 +41,7 @@ export class AppData extends DataObject {
 
 	// previous app's `rootMap`
 	private readonly _initialObjects: Record<string, IFluidLoadable> = {};
-	private _sharedTree: ISharedTree | undefined;
+	private _sharedTree: ITree | undefined;
 	private _text: SharedString | undefined;
 	private _counter: SharedCounter | undefined;
 	private _emojiMatrix: SharedMatrix | undefined;
@@ -76,7 +67,7 @@ export class AppData extends DataObject {
 		return this._emojiMatrix;
 	}
 
-	public get sharedTree(): ISharedTree {
+	public get sharedTree(): ITree {
 		if (this._sharedTree === undefined) {
 			throw new Error("The SharedTree was not initialized correctly");
 		}
@@ -97,7 +88,7 @@ export class AppData extends DataObject {
 			SharedCounter.getFactory(),
 			SharedMatrix.getFactory(),
 			SharedCell.getFactory(),
-			new SharedTreeFactory(),
+			SharedTree.getFactory(),
 		],
 		{},
 	);
@@ -110,7 +101,7 @@ export class AppData extends DataObject {
 		// Create the shared objects and store their handles in the root SharedDirectory
 		const text = SharedString.create(this.runtime, this.sharedTextKey);
 		const counter = SharedCounter.create(this.runtime, this.sharedCounterKey);
-		const sharedTree = this.generateSharedTree(this.runtime);
+		const sharedTree = SharedTree.create(this.runtime);
 
 		const emojiMatrix = SharedMatrix.create(this.runtime, this.emojiMatrixKey);
 		const matrixDimension = 2; // Height and Width
@@ -153,9 +144,7 @@ export class AppData extends DataObject {
 		this._emojiMatrix = await this.root
 			.get<IFluidHandle<SharedMatrix>>(this.emojiMatrixKey)
 			?.get();
-		const sharedTree = await this.root
-			.get<IFluidHandle<ISharedTree>>(this.sharedTreeKey)
-			?.get();
+		const sharedTree = await this.root.get<IFluidHandle<ITree>>(this.sharedTreeKey)?.get();
 		if (sharedTree === undefined) {
 			throw new Error("SharedTree was not initialized");
 		} else {
@@ -184,86 +173,44 @@ export class AppData extends DataObject {
 		}
 	}
 
-	/**
-	 * Function to create an instance which contains getFactory method returning SharedTreeFactory.
-	 * The example application calls container.create() to create a new DDS, and the method requires:
-	 * #1. static factory method
-	 * #2. class object with a constructor returning a type with a handle field
-	 *
-	 * The function below satisfies the requirements to populate the SharedTree within the application.
-	 */
-	private castSharedTreeType(): SharedObjectClass<ISharedTree> {
-		/**
-		 * SharedTree class object containing static factory method used for {@link @fluidframework/fluid-static#IFluidContainer}.
-		 */
-		// eslint-disable-next-line @typescript-eslint/no-extraneous-class
-		class SharedTree {
-			public static getFactory(): SharedTreeFactory {
-				return new SharedTreeFactory();
-			}
-		}
-
-		return SharedTree as unknown as SharedObjectClass<ISharedTree>;
-	}
-
-	private generateSharedTree(runtime: IFluidDataStoreRuntime): ISharedTree {
-		const sharedTreeObject = this.castSharedTreeType();
-
-		const factory = sharedTreeObject.getFactory();
-		return runtime.createChannel(undefined, factory.type) as ISharedTree;
-	}
-
-	private populateSharedTree(sharedTree: ISharedTree): void {
+	private populateSharedTree(sharedTree: ITree): void {
 		// Set up SharedTree for visualization
-		const builder = new SchemaBuilder({
-			scope: "DefaultVisualizer_SharedTree_Test",
-			libraries: [leaf.library],
-		});
+		const builder = new SchemaFactory("DefaultVisualizer_SharedTree_Test");
 
 		// TODO: Maybe include example handle
 
-		const leafSchema = builder.struct("leaf-item", {
-			leafField: [leaf.boolean, leaf.handle, leaf.string],
-		});
+		class LeafSchema extends builder.object("leaf-item", {
+			leafField: [builder.boolean, builder.handle, builder.string],
+		}) {}
 
-		const childSchema = builder.struct("child-item", {
-			childField: [leaf.string, leaf.boolean],
-			childData: builder.optional(leafSchema),
-		});
+		class ChildSchema extends builder.object("child-item", {
+			childField: [builder.string, builder.boolean],
+			childData: builder.optional(LeafSchema),
+		}) {}
 
-		const rootNodeSchema = builder.struct("root-item", {
-			childrenOne: builder.sequence(childSchema),
-			childrenTwo: leaf.number,
-		});
+		class RootNodeSchema extends builder.object("root-item", {
+			childrenOne: builder.array(ChildSchema),
+			childrenTwo: builder.number,
+		}) {}
 
-		const schema = builder.intoSchema(rootNodeSchema);
-
-		sharedTree.schematize({
-			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-			initialTree: {
-				childrenOne: [
-					{
-						childField: "Hello world!",
-						childData: {
-							leafField: {
-								[typeNameSymbol]: leaf.string.name,
-								[valueSymbol]: "Hello world again!",
-							},
-						},
+		const config = new TreeConfiguration(RootNodeSchema, () => ({
+			childrenOne: [
+				{
+					childField: "Hello world!",
+					childData: {
+						leafField: "Hello world again!",
 					},
-					{
-						childField: true,
-						childData: {
-							leafField: {
-								[typeNameSymbol]: leaf.boolean.name,
-								[valueSymbol]: false,
-							},
-						},
+				},
+				{
+					childField: true,
+					childData: {
+						leafField: false,
 					},
-				],
-				childrenTwo: 32,
-			},
-		});
+				},
+			],
+			childrenTwo: 32,
+		}));
+
+		sharedTree.schematize(config);
 	}
 }

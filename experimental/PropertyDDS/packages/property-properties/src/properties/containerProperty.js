@@ -9,13 +9,16 @@
 const { MSG } = require("@fluid-experimental/property-common").constants;
 const { ConsoleUtils } = require("@fluid-experimental/property-common");
 const _ = require("underscore");
+
 const { validationsEnabled } = require("../enableValidations");
+
 const { AbstractStaticCollectionProperty } = require("./abstractStaticCollectionProperty");
 const { BaseProperty } = require("./baseProperty");
 const { IndexedCollectionBaseProperty } = require("./indexedCollectionBaseProperty");
 
 /**
  * A property object that allows to add child properties dynamically.
+ * @internal
  */
 export class ContainerProperty extends IndexedCollectionBaseProperty {
 	/**

@@ -4,28 +4,28 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { ConnectionState, Loader } from "@fluidframework/container-loader";
 
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader";
+import { Loader } from "@fluidframework/container-loader/internal";
 import {
-	LocalCodeLoader,
-	LoaderContainerTracker,
 	ITestObjectProvider,
+	LoaderContainerTracker,
+	LocalCodeLoader,
 	TestFluidObjectFactory,
-	waitForContainerConnection,
 	timeoutPromise,
-} from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 const codeDetails: IFluidCodeDetails = { package: "test" };
-const timeoutMs = 500;
 
 describe("Pong", () => {
-	describeNoCompat("Pong", (getTestObjectProvider) => {
+	describeCompat("Pong", "NoCompat", (getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
 		const loaderContainerTracker = new LoaderContainerTracker();
 
-		beforeEach(async function () {
+		beforeEach("setup", async function () {
 			provider = getTestObjectProvider();
 			// only skip local driver
 			if (provider.driver.type === "local") {
@@ -48,7 +48,6 @@ describe("Pong", () => {
 		async function createConnectedContainer(): Promise<IContainer> {
 			const container = await provider.makeTestContainer();
 			await waitForContainerConnection(container, true, {
-				durationMs: timeoutMs,
 				errorMsg: "Container initial connection timeout",
 			});
 			assert.strictEqual(

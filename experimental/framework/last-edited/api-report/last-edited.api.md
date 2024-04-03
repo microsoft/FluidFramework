@@ -4,23 +4,23 @@
 
 ```ts
 
-import { DataObject } from '@fluidframework/aqueduct';
-import { DataObjectFactory } from '@fluidframework/aqueduct';
-import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
+import { DataObject } from '@fluidframework/aqueduct/internal';
+import { DataObjectFactory } from '@fluidframework/aqueduct/internal';
+import { IContainerRuntime } from '@fluidframework/container-runtime-definitions/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IUser } from '@fluidframework/protocol-definitions';
-import { SharedSummaryBlock } from '@fluidframework/shared-summary-block';
+import { SharedSummaryBlock } from '@fluidframework/shared-summary-block/internal';
 
-// @public (undocumented)
+// @internal (undocumented)
 export const IFluidLastEditedTracker: keyof IProvideFluidLastEditedTracker;
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IFluidLastEditedTracker extends IProvideFluidLastEditedTracker {
     getLastEditDetails(): ILastEditDetails | undefined;
     updateLastEditDetails(lastEditDetails: ILastEditDetails): void;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface ILastEditDetails {
     // (undocumented)
     timestamp: number;
@@ -28,13 +28,13 @@ export interface ILastEditDetails {
     user: IUser;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IProvideFluidLastEditedTracker {
     // (undocumented)
     readonly IFluidLastEditedTracker: IFluidLastEditedTracker;
 }
 
-// @public
+// @internal
 export class LastEditedTracker implements IFluidLastEditedTracker {
     constructor(sharedSummaryBlock: SharedSummaryBlock);
     getLastEditDetails(): ILastEditDetails | undefined;
@@ -43,7 +43,7 @@ export class LastEditedTracker implements IFluidLastEditedTracker {
     updateLastEditDetails(lastEditDetails: ILastEditDetails): void;
 }
 
-// @public
+// @internal
 export class LastEditedTrackerDataObject extends DataObject implements IProvideFluidLastEditedTracker {
     // (undocumented)
     static getFactory(): DataObjectFactory<LastEditedTrackerDataObject>;
@@ -55,7 +55,7 @@ export class LastEditedTrackerDataObject extends DataObject implements IProvideF
     protected initializingFirstTime(): Promise<void>;
 }
 
-// @public
+// @internal
 export function setupLastEditedTrackerForContainer(lastEditedTracker: IFluidLastEditedTracker, runtime: IContainerRuntime, shouldDiscardMessageFn?: (message: ISequencedDocumentMessage) => boolean): void;
 
 // (No @packageDocumentation comment for this package)

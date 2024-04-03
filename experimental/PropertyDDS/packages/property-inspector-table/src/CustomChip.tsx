@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { makeStyles } from "@material-ui/core/styles";
 import * as React from "react";
 
@@ -28,6 +29,9 @@ interface IChipProps {
 	className: string;
 }
 
+/**
+ * @internal
+ */
 export const CustomChip: React.FunctionComponent<IChipProps> = (props) => {
 	const classes = useStyles(props);
 	return <span className={`${classes.chip} ${props.className}`}>{props.label}</span>;

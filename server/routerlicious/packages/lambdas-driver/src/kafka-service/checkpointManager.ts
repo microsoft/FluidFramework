@@ -70,8 +70,9 @@ export class CheckpointManager {
 
 		// Finally begin checkpointing the offsets.
 		this.checkpointing = true;
-		const commitP = this.consumer.commitCheckpoint(this.id, queuedMessage);
-		return commitP
+
+		return this.consumer
+			.commitCheckpoint(this.id, queuedMessage)
 			.then(() => {
 				this.commitedCheckpoint = queuedMessage;
 				this.checkpointing = false;

@@ -4,15 +4,15 @@
 
 ```ts
 
-import { IDocumentService } from '@fluidframework/driver-definitions';
-import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
-import { IResolvedUrl } from '@fluidframework/driver-definitions';
+import { IDocumentService } from '@fluidframework/driver-definitions/internal';
+import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
+import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 import { ISession } from '@fluidframework/server-services-client';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 
-// @public
+// @internal
 export class DefaultTokenProvider implements ITokenProvider {
     constructor(jwt: string);
     // (undocumented)
@@ -21,7 +21,7 @@ export class DefaultTokenProvider implements ITokenProvider {
     fetchStorageToken(): Promise<ITokenResponse>;
 }
 
-// @public
+// @internal
 export class DocumentPostCreateError extends Error {
     constructor(
     innerError: Error);
@@ -31,7 +31,7 @@ export class DocumentPostCreateError extends Error {
     get stack(): string | undefined;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IRouterliciousDriverPolicies {
     enableDiscovery: boolean;
     enableInternalSummaryCaching: boolean;
@@ -39,9 +39,14 @@ export interface IRouterliciousDriverPolicies {
     enablePrefetch: boolean;
     enableRestLess: boolean;
     enableWholeSummaryUpload: boolean;
-    isEphemeralContainer: boolean;
     maxConcurrentOrdererRequests: number;
     maxConcurrentStorageRequests: number;
+}
+
+// @alpha
+export interface IRouterliciousResolvedUrl extends IResolvedUrl {
+    createAsEphemeral?: boolean;
+    routerliciousResolvedUrl: true;
 }
 
 // @public
@@ -57,27 +62,19 @@ export interface ITokenResponse {
     jwt: string;
 }
 
-// @public
+// @internal
 export interface ITokenService {
     extractClaims(token: string): ITokenClaims;
 }
 
-// @public
+// @internal
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(tokenProvider: ITokenProvider, driverPolicies?: Partial<IRouterliciousDriverPolicies>);
-    // (undocumented)
     createContainer(createNewSummary: ISummaryTree | undefined, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    // (undocumented)
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean, session?: ISession): Promise<IDocumentService>;
 }
 
-// @public @deprecated
-export enum RouterliciousErrorType {
-    fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
-    sslCertError = "sslCertError"
-}
-
-// @public
+// @internal
 export const RouterliciousErrorTypes: {
     readonly sslCertError: "sslCertError";
     readonly genericNetworkError: "genericNetworkError";
@@ -100,7 +97,7 @@ export const RouterliciousErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @public (undocumented)
+// @internal (undocumented)
 export type RouterliciousErrorTypes = (typeof RouterliciousErrorTypes)[keyof typeof RouterliciousErrorTypes];
 
 // (No @packageDocumentation comment for this package)

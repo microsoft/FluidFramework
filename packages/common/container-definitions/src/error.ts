@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { FluidErrorTypes, IErrorBase } from "@fluidframework/core-interfaces";
+import type { IErrorBase } from "@fluidframework/core-interfaces";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 
 /**
  * Different error types the ClientSession may report out to the Host.
- * @public
+ * @alpha
  */
 export const ContainerErrorTypes = {
 	...FluidErrorTypes,
@@ -19,7 +20,8 @@ export const ContainerErrorTypes = {
 } as const;
 
 /**
- * @public
+ * {@inheritDoc (ContainerErrorTypes:variable)}
+ * @alpha
  */
 export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
 
@@ -27,7 +29,7 @@ export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof Cont
  * Different error types the Container may report out to the Host.
  *
  * @deprecated ContainerErrorType is being deprecated as a public export. Please use {@link ContainerErrorTypes#clientSessionExpiredError} instead.
- * @public
+ * @internal
  */
 export enum ContainerErrorType {
 	/**
@@ -64,7 +66,7 @@ export enum ContainerErrorType {
 
 /**
  * Represents warnings raised on container.
- * @public
+ * @alpha
  */
 export interface ContainerWarning extends IErrorBase {
 	/**
@@ -82,14 +84,13 @@ export interface ContainerWarning extends IErrorBase {
  *
  * The following are commonly thrown error types, but `errorType` could be any string.
  *
- * - {@link @fluidframework/core-interfaces#ContainerErrorType}
+ * - {@link @fluidframework/core-interfaces#ContainerErrorTypes}
  *
- * - {@link @fluidframework/driver-definitions#DriverErrorType}
+ * - {@link @fluidframework/driver-definitions#DriverErrorTypes}
  *
- * - {@link @fluidframework/odsp-driver-definitions#OdspErrorType}
+ * - {@link @fluidframework/odsp-driver-definitions#OdspErrorTypes}
  *
  * - {@link @fluidframework/routerlicious-driver#RouterliciousErrorType}
- *
  * @public
  */
 export type ICriticalContainerError = IErrorBase;

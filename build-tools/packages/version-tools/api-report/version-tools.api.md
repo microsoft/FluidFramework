@@ -19,13 +19,20 @@ export function changePreReleaseIdentifier(version: semver.SemVer | string, newI
 export const DEFAULT_INTERDEPENDENCY_RANGE: InterdependencyRange;
 
 // @public
+export const DEFAULT_PRERELEASE_IDENTIFIER = "internal";
+
+// @public
 export function detectBumpType(v1: semver.SemVer | string | null, v2: semver.SemVer | string | null): VersionBumpType | undefined;
 
 // @public
 export function detectVersionScheme(rangeOrVersion: string | semver.SemVer): VersionScheme;
 
 // @public
-export function fromInternalScheme(internalVersion: semver.SemVer | string, allowPrereleases?: boolean, allowAnyPrereleaseId?: boolean): [publicVersion: semver.SemVer, internalVersion: semver.SemVer, prereleaseIndentifier: string];
+export function fromInternalScheme(internalVersion: semver.SemVer | string, allowPrereleases?: boolean, allowAnyPrereleaseId?: boolean): [
+publicVersion: semver.SemVer,
+internalVersion: semver.SemVer,
+prereleaseIndentifier: string
+];
 
 // @public
 export function fromVirtualPatchScheme(virtualPatchVersion: semver.SemVer | string): semver.SemVer;
@@ -42,7 +49,7 @@ export function getLatestReleaseFromList(versionList: string[], allowPrereleases
 export function getPreviousVersions(version: ReleaseVersion): [ReleaseVersion | undefined, ReleaseVersion | undefined, ReleaseVersion | undefined];
 
 // @public
-export function getSimpleVersion(fileVersion: string, argBuildNum: string, argRelease: boolean, patch: boolean): string;
+export function getSimpleVersion(fileVersion: string, argBuildNum: string, argRelease: boolean, simplePatchVersioning: boolean): string;
 
 // @public
 export function getVersionRange(version: semver.SemVer | string, maxAutomaticBump: "minor" | "patch" | "~" | "^"): string;

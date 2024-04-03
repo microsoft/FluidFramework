@@ -4,23 +4,33 @@
  */
 
 /* eslint-disable @typescript-eslint/no-unsafe-return */
+
 import { strict as assert } from "assert";
+
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import {
+	CompressionAlgorithms,
+	IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import {
 	IDocumentDeltaConnectionEvents,
 	IDocumentServiceFactory,
-} from "@fluidframework/driver-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider, TestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
-import { isFluidError, isILoggingError } from "@fluidframework/telemetry-utils";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { FluidErrorTypes } from "@fluidframework/core-interfaces";
+import { isFluidError, isILoggingError } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITestObjectProvider,
+	TestFluidObject,
+	timeoutPromise,
+} from "@fluidframework/test-utils/internal";
+
+import { wrapObjectAndOverride } from "../mocking.js";
 
 /**
  * In all cases we end up with a permanently corrupt file.
@@ -34,47 +44,6 @@ import { FluidErrorTypes } from "@fluidframework/core-interfaces";
  * needs improvement such that we can avoid permanent
  * data corruption in most these cases.
  */
-
-type UnPromise<T> = T extends Promise<infer U> ? U : T;
-
-type OverrideFunction<T, P extends keyof T> = (T: T) => T[P];
-
-type ProxyOverrides<T> = {
-	[P in keyof T]?: T[P] extends (...args: any) => any
-		? ProxyOverrides<UnPromise<ReturnType<T[P]>>> | OverrideFunction<T, P>
-		: OverrideFunction<T, P>;
-};
-
-function createFunctionOverrideProxy<T extends Record<string, any>>(
-	obj: T,
-	overrides: ProxyOverrides<T>,
-): T {
-	return new Proxy(obj, {
-		get: (target: T, property: string) => {
-			const override = overrides[property as keyof T];
-			if (override) {
-				if (typeof override === "function") {
-					return override(target);
-				}
-				const real = target[property as keyof T];
-				if (typeof real === "function") {
-					return (...args: any) => {
-						const res = real.bind(target)(...args);
-						if (res.then !== undefined) {
-							return res.then((v) => createFunctionOverrideProxy(v, override));
-						}
-
-						return createFunctionOverrideProxy(res, override);
-					};
-				}
-
-				return createFunctionOverrideProxy(real as any, override);
-			}
-
-			return target[property];
-		},
-	});
-}
 
 async function runAndValidateBatch(
 	provider: ITestObjectProvider,
@@ -114,7 +83,7 @@ async function runAndValidateBatch(
 			},
 		);
 		const container = await loader.resolve({ url: containerUrl });
-		const testObject = await requestFluidObject<TestFluidObject>(container, "default");
+		const testObject = (await container.getEntryPoint()) as TestFluidObject;
 		// send batch
 		testObject.context.containerRuntime.orderSequentially(() => {
 			for (let i = 0; i < 10; i++) {
@@ -142,11 +111,11 @@ async function runAndValidateBatch(
 	}
 }
 
-describeNoCompat("Batching failures", (getTestObjectProvider) => {
+describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 	it("working proxy", async function () {
 		const provider = getTestObjectProvider({ resetAfterEach: true });
 
-		const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
+		const proxyDsf = wrapObjectAndOverride<IDocumentServiceFactory>(
 			provider.documentServiceFactory,
 			{
 				createDocumentService: {
@@ -173,7 +142,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 			let batchesSent = 0;
 			const sentMessages: IDocumentMessage[][] = [];
 
-			const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
+			const proxyDsf = wrapObjectAndOverride<IDocumentServiceFactory>(
 				provider.documentServiceFactory,
 				{
 					createDocumentService: {
@@ -190,6 +159,11 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 
 			await runAndValidateBatch(provider, proxyDsf, this.timeout(), {
 				enableGroupedBatching,
+				chunkSizeInBytes: Number.POSITIVE_INFINITY, // disable
+				compressionOptions: {
+					minimumBatchSizeInBytes: Number.POSITIVE_INFINITY, // disable
+					compressionAlgorithm: CompressionAlgorithms.lz4,
+				},
 			});
 			assert.strictEqual(batchesSent, 1, "expected only a single batch to be sent");
 
@@ -223,7 +197,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 			async function () {
 				const provider = getTestObjectProvider({ resetAfterEach: true });
 
-				const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
+				const proxyDsf = wrapObjectAndOverride<IDocumentServiceFactory>(
 					provider.documentServiceFactory,
 					{
 						createDocumentService: {
@@ -267,7 +241,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 		itExpects.skip("Batch start without end", [], async function () {
 			const provider = getTestObjectProvider({ resetAfterEach: true });
 
-			const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
+			const proxyDsf = wrapObjectAndOverride<IDocumentServiceFactory>(
 				provider.documentServiceFactory,
 				{
 					createDocumentService: {
@@ -308,7 +282,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 		itExpects("Split batch", [], async function () {
 			const provider = getTestObjectProvider({ resetAfterEach: true });
 
-			const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
+			const proxyDsf = wrapObjectAndOverride<IDocumentServiceFactory>(
 				provider.documentServiceFactory,
 				{
 					createDocumentService: {
@@ -346,7 +320,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 			async function () {
 				const provider = getTestObjectProvider({ resetAfterEach: true });
 
-				const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
+				const proxyDsf = wrapObjectAndOverride<IDocumentServiceFactory>(
 					provider.documentServiceFactory,
 					{
 						createDocumentService: {
@@ -397,14 +371,14 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 			async function () {
 				const provider = getTestObjectProvider({ resetAfterEach: true });
 
-				const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
+				const proxyDsf = wrapObjectAndOverride<IDocumentServiceFactory>(
 					provider.documentServiceFactory,
 					{
 						createDocumentService: {
 							connectToDeltaStream: (docService) => async (client) => {
 								const real = await docService.connectToDeltaStream(client);
 								const emitter =
-									real as any as TypedEventEmitter<IDocumentDeltaConnectionEvents>;
+									real as unknown as TypedEventEmitter<IDocumentDeltaConnectionEvents>;
 								const originalEmit = emitter.emit.bind(emitter);
 								emitter.emit = (event, ...args) => {
 									if (

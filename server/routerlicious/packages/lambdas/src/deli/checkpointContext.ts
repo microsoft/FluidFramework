@@ -54,7 +54,7 @@ export class CheckpointContext {
 		} catch (ex) {
 			// TODO flag context as error / use this.context.error() instead?
 			this.context.log?.error(
-				`Error writing checkpoint to the database: ${JSON.stringify(ex)}`,
+				`Error writing checkpoint to the database: ${JSON.stringify(ex)}, ${ex}`,
 				{
 					messageMetaData: {
 						documentId: this.id,
@@ -66,6 +66,8 @@ export class CheckpointContext {
 			databaseCheckpointFailed = true;
 		}
 
+		// We write a kafka checkpoint if either the local or global checkpoint succeeds
+		// databaseCheckpointFailed is true only if both local and global checkpoint fail
 		if (!databaseCheckpointFailed) {
 			// Kafka checkpoint
 			try {
@@ -127,7 +129,7 @@ export class CheckpointContext {
 
 		let updateP: Promise<void>;
 
-		const localCheckpointEnabled = this.checkpointService?.localCheckpointEnabled;
+		const localCheckpointEnabled = this.checkpointService?.getLocalCheckpointEnabled();
 
 		// determine if checkpoint is local
 		const isLocal =

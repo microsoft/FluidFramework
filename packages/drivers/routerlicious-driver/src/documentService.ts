@@ -3,31 +3,38 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import * as api from "@fluidframework/driver-definitions";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
-import { RateLimiter, NetworkErrorBasic, canRetryOnError } from "@fluidframework/driver-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+import * as api from "@fluidframework/driver-definitions/internal";
+import {
+	NetworkErrorBasic,
+	RateLimiter,
+	canRetryOnError,
+} from "@fluidframework/driver-utils/internal";
 import { IClient } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils/internal";
 import io from "socket.io-client";
-import { PerformanceEvent, wrapError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
-import { DocumentStorageService } from "./documentStorageService";
-import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";
-import { NullBlobStorageService } from "./nullBlobStorageService";
-import { ITokenProvider } from "./tokens";
+
+import { ICache } from "./cache.js";
+import { INormalizedWholeSnapshot } from "./contracts.js";
+import { ISnapshotTreeVersion } from "./definitions.js";
+import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService.js";
+import { R11sDocumentDeltaConnection } from "./documentDeltaConnection.js";
+import { DocumentStorageService } from "./documentStorageService.js";
+import { RouterliciousErrorTypes } from "./errorUtils.js";
+import { GitManager } from "./gitManager.js";
+import { Historian } from "./historian.js";
+import { NullBlobStorageService } from "./nullBlobStorageService.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { IRouterliciousDriverPolicies } from "./policies.js";
 import {
 	RouterliciousOrdererRestWrapper,
 	RouterliciousStorageRestWrapper,
 	TokenFetcher,
-} from "./restWrapper";
-import { IRouterliciousDriverPolicies } from "./policies";
-import { ICache } from "./cache";
-import { ISnapshotTreeVersion } from "./definitions";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { GitManager } from "./gitManager";
-import { Historian } from "./historian";
-import { RestWrapper } from "./restWrapperBase";
-import { INormalizedWholeSnapshot } from "./contracts";
+} from "./restWrapper.js";
+import { RestWrapper } from "./restWrapperBase.js";
+import { ITokenProvider } from "./tokens.js";
 
 /**
  * Amount of time between discoveries within which we don't need to rediscover on re-connect.
@@ -42,7 +49,10 @@ const RediscoverAfterTimeSinceDiscoveryMs = 5 * 60000; // 5 minute
  * clients.
  */
 // eslint-disable-next-line import/namespace
-export class DocumentService implements api.IDocumentService {
+export class DocumentService
+	extends TypedEventEmitter<api.IDocumentServiceEvents>
+	implements api.IDocumentService
+{
 	private lastDiscoveredAt: number = Date.now();
 	private discoverP: Promise<void> | undefined;
 
@@ -73,7 +83,9 @@ export class DocumentService implements api.IDocumentService {
 		private storageRestWrapper: RouterliciousStorageRestWrapper,
 		private readonly storageTokenFetcher: TokenFetcher,
 		private readonly ordererTokenFetcher: TokenFetcher,
-	) {}
+	) {
+		super();
+	}
 
 	private documentStorageService: DocumentStorageService | undefined;
 
@@ -221,7 +233,7 @@ export class DocumentService implements api.IDocumentService {
 										(errorMessage) =>
 											new NetworkErrorBasic(
 												`The Host-provided token fetcher threw an error`,
-												DriverErrorTypes.fetchTokenError,
+												RouterliciousErrorTypes.fetchTokenError,
 												canRetryOnError(error),
 												{ errorMessage, driverVersion },
 											),

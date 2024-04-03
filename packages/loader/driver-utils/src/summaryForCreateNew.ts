@@ -4,11 +4,11 @@
  */
 
 import {
-	ISummaryTree,
-	SummaryType,
-	ISummaryBlob,
 	ICommittedProposal,
 	IDocumentAttributes,
+	ISummaryBlob,
+	ISummaryTree,
+	SummaryType,
 } from "@fluidframework/protocol-definitions";
 
 /**
@@ -49,6 +49,7 @@ export function isCombinedAppAndProtocolSummary(
 /**
  * Extract the attributes from the protocol summary.
  * @param protocolSummary - protocol summary from which the values are to be extracted.
+ * @internal
  */
 export function getDocAttributesFromProtocolSummary(
 	protocolSummary: ISummaryTree,
@@ -60,6 +61,7 @@ export function getDocAttributesFromProtocolSummary(
 /**
  * Extract quorum values from the protocol summary.
  * @param protocolSummary - protocol summary from which the values are to be extracted.
+ * @internal
  */
 export function getQuorumValuesFromProtocolSummary(
 	protocolSummary: ISummaryTree,

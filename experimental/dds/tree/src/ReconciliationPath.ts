@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeInternal } from './persisted-types';
-import { TransactionView } from './RevisionView';
-import { TreeView } from './TreeView';
+import { TransactionView } from './RevisionView.js';
+import { TreeView } from './TreeView.js';
+import { ChangeInternal } from './persisted-types/index.js';
 
 /**
  * The path of edits from the revision view where a change was meant to have been applied to the view where the edit that contains the
  * change is actually applied.
  * The path only contains edits that were successfully applied.
  * This path is always empty for a change that has no concurrent edits.
- * @public
+ * @alpha
  */
 export interface ReconciliationPath {
 	/**
@@ -28,7 +28,7 @@ export interface ReconciliationPath {
 
 /**
  * An edit in the `ReconciliationPath`.
- * @public
+ * @alpha
  */
 export interface ReconciliationEdit {
 	/**
@@ -52,7 +52,7 @@ export interface ReconciliationEdit {
 
 /**
  * A change in the `ReconciliationPath`.
- * @public
+ * @alpha
  */
 export interface ReconciliationChange {
 	/**

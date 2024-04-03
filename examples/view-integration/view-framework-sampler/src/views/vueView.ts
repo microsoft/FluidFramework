@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import Vue from "vue";
-import { IDiceRoller } from "../dataObject";
+import { createApp } from "vue";
+
+import { IDiceRoller } from "../dataObject.js";
 
 /**
  * Render Dice into a given HTMLElement as a text character, with a button to roll it.
@@ -12,7 +13,7 @@ import { IDiceRoller } from "../dataObject";
  * @param div - The HTMLElement to render into
  */
 export function vueRenderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement) {
-	const app = new Vue({
+	const app = createApp({
 		template: `
         <div style="font-size: 50px; text-align: center" >
             <div>Vue</div>
@@ -41,9 +42,9 @@ export function vueRenderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement
 			},
 		},
 		mounted() {
-			diceRoller.on("diceRolled", (this as any).updateDiceValue);
+			diceRoller.on("diceRolled", this.updateDiceValue);
 		},
 	});
 
-	app.$mount(div);
+	app.mount(div);
 }

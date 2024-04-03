@@ -4,14 +4,19 @@
  */
 
 import { FluidObject } from "@fluidframework/core-interfaces";
+
 import { paste } from "../clipboard/paste.js";
 import { FlowDocument } from "../document/index.js";
-import { Direction, getDeltaX, KeyCode } from "../util/index.js";
+import { Direction, KeyCode, getDeltaX } from "../util/index.js";
 import { IFormatterState, RootFormatter } from "../view/formatter.js";
 import { Layout } from "../view/layout.js";
+
 import { Caret } from "./caret.js";
 import { debug } from "./debug.js";
 
+/**
+ * @internal
+ */
 export class Editor {
 	private readonly layout: Layout;
 	private readonly caret: Caret;

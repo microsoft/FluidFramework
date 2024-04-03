@@ -4,31 +4,30 @@
  */
 
 import { strict as assert } from "assert";
-import { Loader } from "@fluidframework/container-loader";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { SharedString } from "@fluidframework/sequence";
+
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { Loader } from "@fluidframework/container-loader/internal";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import { NonRetryableError, readAndParse } from "@fluidframework/driver-utils/internal";
+import { ReferenceType, TextSegment } from "@fluidframework/merge-tree/internal";
+import type { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ChannelFactoryRegistry,
-	createDocumentId,
 	ITestFluidObject,
 	LocalCodeLoader,
 	SupportedExportInterfaces,
 	TestFluidObjectFactory,
-} from "@fluidframework/test-utils";
-import {
-	IDocumentService,
-	IDocumentServiceFactory,
-	IDocumentStorageService,
-	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
-import { NonRetryableError, readAndParse } from "@fluidframework/driver-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ReferenceType, TextSegment } from "@fluidframework/merge-tree";
-import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
+	createDocumentId,
+} from "@fluidframework/test-utils/internal";
+
+import { wrapObjectAndOverride } from "../mocking.js";
 import { pkgVersion } from "../packageVersion.js";
 
 // REVIEW: enable compat testing?
-describeNoCompat("SharedString", (getTestObjectProvider) => {
+describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedString } = apis.dds;
+
 	itExpects(
 		"Failure to Load in Shared String",
 		[
@@ -69,7 +68,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
 				});
 
 				const container = await loader.createDetachedContainer(codeDetails);
-				const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 				const sharedString = await dataObject.root
 					.get<IFluidHandle<SharedString>>(stringId)
 					?.get();
@@ -94,7 +93,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
 				const container = await loader.resolve({
 					url: await provider.driver.createContainerUrl(documentId, containerUrl),
 				});
-				const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 				const sharedString = await dataObject.root
 					.get<IFluidHandle<SharedString>>(stringId)
 					?.get();
@@ -102,35 +101,33 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
 				assert.strictEqual(sharedString.getText(0), text);
 			}
 			{
-				// failure load client
-				const realSf: IDocumentServiceFactory = provider.documentServiceFactory;
-				const documentServiceFactory: IDocumentServiceFactory = {
-					...realSf,
-					createDocumentService: async (resolvedUrl, logger2) => {
-						const realDs = await realSf.createDocumentService(resolvedUrl, logger2);
-						const mockDs = Object.create(realDs) as IDocumentService;
-						mockDs.connectToStorage = async () => {
-							const realStorage = await realDs.connectToStorage();
-							const mockstorage = Object.create(
-								realStorage,
-							) as IDocumentStorageService;
-							mockstorage.readBlob = async (id) => {
-								const blob = await realStorage.readBlob(id);
-								const blobObj = await readAndParse<any>(realStorage, id);
-								// throw when trying to load the header blob
-								if (blobObj.headerMetadata !== undefined) {
-									throw new NonRetryableError("Not Found", "someErrorType", {
-										statusCode: 404,
-										driverVersion: pkgVersion,
-									});
-								}
-								return blob;
-							};
-							return mockstorage;
-						};
-						return mockDs;
-					},
-				};
+				const documentServiceFactory: IDocumentServiceFactory =
+					wrapObjectAndOverride<IDocumentServiceFactory>(
+						provider.documentServiceFactory,
+						{
+							createDocumentService: {
+								connectToStorage: {
+									readBlob: (realStorage) => async (id) => {
+										const blob = await realStorage.readBlob(id);
+										const blobObj = await readAndParse<any>(realStorage, id);
+										// throw when trying to load the header blob
+										if (blobObj.headerMetadata !== undefined) {
+											throw new NonRetryableError(
+												"Not Found",
+												"someErrorType",
+												{
+													statusCode: 404,
+													driverVersion: pkgVersion,
+												},
+											);
+										}
+										return blob;
+									},
+								},
+							},
+						},
+					);
+
 				const codeDetails = { package: "no-dynamic-pkg" };
 				const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]], {
 					summaryOptions: {
@@ -152,7 +149,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
 				const container = await loader.resolve({
 					url: await provider.driver.createContainerUrl(documentId, containerUrl),
 				});
-				const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 
 				await dataObject.root.get<IFluidHandle<SharedString>>(stringId)?.get();
 			}
@@ -185,7 +182,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
 			});
 
 			const container = await loader.createDetachedContainer(codeDetails);
-			const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+			const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 			const sharedString = await dataObject.root
 				.get<IFluidHandle<SharedString>>(stringId)
 				?.get();
@@ -231,7 +228,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
 			const container = await loader.resolve({
 				url: await provider.driver.createContainerUrl(documentId, containerUrl),
 			});
-			const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+			const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 			const sharedString = await dataObject.root
 				.get<IFluidHandle<SharedString>>(stringId)
 				?.get();

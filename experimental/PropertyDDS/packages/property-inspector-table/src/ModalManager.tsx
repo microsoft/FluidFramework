@@ -27,6 +27,9 @@ interface IModalContext<P = any> {
 	hideModal: () => void;
 	showModal: showModalSignature;
 }
+/**
+ * @internal
+ */
 export const ModalContext = React.createContext<IModalContext>({
 	closeHandler: undefined,
 	component: null,
@@ -39,6 +42,9 @@ export const ModalContext = React.createContext<IModalContext>({
 	},
 });
 
+/**
+ * @internal
+ */
 // eslint-disable-next-line @typescript-eslint/ban-types
 export class ModalManager extends React.Component<{}, IModalContext> {
 	constructor(props) {
@@ -78,4 +84,7 @@ export class ModalManager extends React.Component<{}, IModalContext> {
 	};
 }
 
+/**
+ * @internal
+ */
 export const ModalConsumer = ModalContext.Consumer;

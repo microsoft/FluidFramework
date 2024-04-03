@@ -11,29 +11,44 @@ export {
 	ISummaryConfigurationDisableHeuristics,
 	IContainerRuntimeOptions,
 	isRuntimeMessage,
-	RuntimeMessage,
 	agentSchedulerId,
 	ContainerRuntime,
-	RuntimeHeaders,
-	AllowTombstoneRequestHeaderKey,
-	AllowInactiveRequestHeaderKey,
 	TombstoneResponseHeaderKey,
 	InactiveResponseHeaderKey,
 	ISummaryConfiguration,
 	DefaultSummaryConfiguration,
 	ICompressionRuntimeOptions,
 	CompressionAlgorithms,
-	TEST_requestSummarizer,
-} from "./containerRuntime";
+	RuntimeHeaderData,
+	disabledCompressionConfig,
+} from "./containerRuntime.js";
 export {
 	ContainerMessageType,
 	ContainerRuntimeMessage,
 	IContainerRuntimeMessageCompatDetails,
 	CompatModeBehavior,
 	RecentlyAddedContainerRuntimeMessageDetails,
-} from "./messageTypes";
-export { FluidDataStoreRegistry } from "./dataStoreRegistry";
-export { IGCRuntimeOptions, IGCStats } from "./gc";
+	UnknownContainerRuntimeMessage,
+} from "./messageTypes.js";
+export { IBlobManagerLoadInfo } from "./blobManager.js";
+export { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
+export {
+	detectOutboundReferences,
+	RuntimeHeaders,
+	ChannelCollectionFactory,
+	AllowTombstoneRequestHeaderKey,
+	AllowInactiveRequestHeaderKey,
+} from "./channelCollection.js";
+export {
+	GCNodeType,
+	IGCMetadata,
+	GCFeatureMatrix,
+	GCVersion,
+	IGCRuntimeOptions,
+	IMarkPhaseStats,
+	ISweepPhaseStats,
+	IGCStats,
+} from "./gc/index.js";
 export {
 	IAckedSummary,
 	ISummarizer,
@@ -49,6 +64,8 @@ export {
 	IBroadcastSummaryResult,
 	ICancellationToken,
 	IConnectableRuntime,
+	IContainerRuntimeMetadata,
+	ICreateContainerMetadata,
 	IEnqueueSummarizeOptions,
 	IGenerateSummaryTreeResult,
 	IGeneratedSummaryStats,
@@ -57,6 +74,7 @@ export {
 	IRefreshSummaryAckOptions,
 	ISubmitSummaryOpResult,
 	ISubmitSummaryOptions,
+	ISerializedElection,
 	ISummarizeOptions,
 	ISummarizerEvents,
 	ISummarizerInternalsProvider,
@@ -69,6 +87,7 @@ export {
 	ISummary,
 	ISummaryCollectionOpEvents,
 	ISummaryAckMessage,
+	ISummaryMetadataMessage,
 	ISummaryNackMessage,
 	ISummaryOpMessage,
 	OpActionEventListener,
@@ -78,6 +97,26 @@ export {
 	SummaryStage,
 	IRetriableFailureResult,
 	ISummarizeEventProps,
-} from "./summary";
-export { isStableId, generateStableId, assertIsStableId } from "./id-compressor";
-export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle";
+	IdCompressorMode,
+	IDocumentSchema,
+	DocumentSchemaValueType,
+	IDocumentSchemaCurrent,
+	currentDocumentVersionSchema,
+	DocumentsSchemaController,
+	IDocumentSchemaChangeMessage,
+	IDocumentSchemaFeatures,
+} from "./summary/index.js";
+export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
+export { ChannelCollection } from "./channelCollection.js";
+export {
+	IFluidDataStoreContextInternal,
+	ISnapshotDetails,
+	LocalFluidDataStoreContext,
+	LocalFluidDataStoreContextBase,
+	FluidDataStoreContext,
+	IFluidDataStoreContextProps,
+	ILocalFluidDataStoreContextProps,
+	ILocalDetachedFluidDataStoreContextProps,
+	IFluidDataStoreContextEvents,
+} from "./dataStoreContext.js";
+export { DataStoreContexts } from "./dataStoreContexts.js";

@@ -11,6 +11,9 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import { NetworkError, ITimeoutContext } from "@fluidframework/server-services-client";
 
+/**
+ * @internal
+ */
 export class AsyncLocalStorageContextProvider<T> {
 	private readonly asyncLocalStorage = new AsyncLocalStorage<T>();
 
@@ -42,6 +45,7 @@ export class AsyncLocalStorageContextProvider<T> {
 /**
  * AsyncLocalStorage based TelemetryContext implementation.
  * Callbacks are executed within an AsyncContext containing telemetry properties.
+ * @internal
  */
 export class AsyncLocalStorageTelemetryContext implements ITelemetryContext {
 	private readonly contextProvider = new AsyncLocalStorageContextProvider<
@@ -81,6 +85,7 @@ interface ITimeoutContextProperties {
 /**
  * AsyncLocalStorage based TimeoutContext implementation.
  * Callbacks are executed within an AsyncContext containing timeout info.
+ * @internal
  */
 export class AsyncLocalStorageTimeoutContext implements ITimeoutContext {
 	private readonly contextProvider =

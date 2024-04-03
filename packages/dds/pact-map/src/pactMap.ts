@@ -3,29 +3,22 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable unicorn/numeric-separators-style */
-
-// False positive: this is an import from the `events` package, not from Node.
-// eslint-disable-next-line unicorn/prefer-node-protocol
-import { EventEmitter } from "events";
-
-import { assert } from "@fluidframework/core-utils";
-import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { EventEmitter } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type IChannelAttributes,
-	type IFluidDataStoreRuntime,
-	type IChannelStorageService,
 	type IChannelFactory,
+	type IChannelStorageService,
+	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
+import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
-import {
-	createSingleBlobSummary,
-	type IFluidSerializer,
-	SharedObject,
-} from "@fluidframework/shared-object-base";
-import { PactMapFactory } from "./pactMapFactory";
-import { type IAcceptedPact, type IPactMap, type IPactMapEvents } from "./interfaces";
+import { type IFluidSerializer } from "@fluidframework/shared-object-base";
+import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+
+import { type IAcceptedPact, type IPactMap, type IPactMapEvents } from "./interfaces.js";
+import { PactMapFactory } from "./pactMapFactory.js";
 
 /**
  * The accepted pact information, if any.
@@ -155,8 +148,7 @@ const snapshotFileName = "header";
  *     console.log(`New value was accepted for key: ${ key }, value: ${ pactMap.get(key) }`);
  * });
  * ```
- *
- * @public
+ * @internal
  */
 export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implements IPactMap<T> {
 	/**
@@ -414,7 +406,6 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 	 * Create a summary for the PactMap
 	 *
 	 * @returns the summary of the current state of the PactMap
-	 * @internal
 	 */
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		const allEntries = [...this.values.entries()];
@@ -423,7 +414,6 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
-	 * @internal
 	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const content = await readAndParse<[string, Pact<T>][]>(storage, snapshotFileName);
@@ -434,19 +424,16 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.initializeLocalCore}
-	 * @internal
 	 */
 	protected initializeLocalCore(): void {}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.onDisconnect}
-	 * @internal
 	 */
 	protected onDisconnect(): void {}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.reSubmitCore}
-	 * @internal
 	 */
 	protected reSubmitCore(content: unknown, localOpMetadata: unknown): void {
 		const pactMapOp = content as IPactMapOperation<T>;
@@ -478,7 +465,6 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 	 * @param local - whether the message was sent by the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
-	 * @internal
 	 */
 	protected processCore(
 		message: ISequencedDocumentMessage,
@@ -518,7 +504,7 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 		}
 	}
 
-	public applyStashedOp(): void {
+	protected applyStashedOp(): void {
 		throw new Error("not implemented");
 	}
 }

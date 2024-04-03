@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { initializeCustomerService } from "./service";
+export { initializeCustomerService } from "./service.js";

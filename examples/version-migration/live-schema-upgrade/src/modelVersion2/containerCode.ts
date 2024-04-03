@@ -3,15 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-example/example-utils";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-// eslint-disable-next-line import/no-deprecated
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 
-import { DiceRollerInstantiationFactory, IDiceRoller } from "./diceRoller";
-import { DiceCounterInstantiationFactory, IDiceCounter } from "./diceCounter";
+import { DiceCounterInstantiationFactory, IDiceCounter } from "./diceCounter.js";
+import { DiceRollerInstantiationFactory, IDiceRoller } from "./diceRoller.js";
 
 const diceRollerId = "dice-roller";
 const diceCounterId = "dice-counter";
@@ -117,30 +115,19 @@ export class DiceRollerContainerRuntimeFactory extends ModelContainerRuntimeFact
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-		// eslint-disable-next-line import/no-deprecated
-		const diceRoller = await requestFluidObject<IDiceRoller>(
-			await runtime.getRootDataStore(diceRollerId),
-			"",
-		);
+		const diceRoller = await getDataStoreEntryPoint<IDiceRoller>(runtime, diceRollerId);
+
 		// Note: Since at this point is unclear whether or not this is the first time the app is being loaded with the
 		// new model, we should try to get the DiceCounter object and if it doesn't exist, create it.
 		let diceCounter: IDiceCounter;
 		try {
-			// eslint-disable-next-line import/no-deprecated
-			diceCounter = await requestFluidObject<IDiceCounter>(
-				await runtime.getRootDataStore(diceCounterId, false),
-				"",
-			);
+			diceCounter = await getDataStoreEntryPoint<IDiceCounter>(runtime, diceCounterId);
 		} catch {
 			const diceCounterDataStore = await runtime.createDataStore(
 				DiceCounterInstantiationFactory.type,
 			);
 			await diceCounterDataStore.trySetAlias(diceCounterId);
-			// eslint-disable-next-line import/no-deprecated
-			diceCounter = await requestFluidObject<IDiceCounter>(
-				await runtime.getRootDataStore(diceCounterId),
-				"",
-			);
+			diceCounter = await getDataStoreEntryPoint<IDiceCounter>(runtime, diceCounterId);
 		}
 
 		return new DiceRollerAppModel(diceRoller, diceCounter, container);

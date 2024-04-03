@@ -20,6 +20,9 @@ import {
 import shajs from "sha.js";
 import Axios from "axios";
 
+/**
+ * @internal
+ */
 export class MoiraLambda implements IPartitionLambda {
 	private pending = new Map<string, ISequencedOperationMessage[]>();
 	private pendingOffset: IQueuedMessage | undefined;

@@ -3,20 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
-import { strict as assert } from "assert";
-import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-internal/test-dds-utils";
-import { Jsonable } from "@fluidframework/datastore-definitions";
+import { strict as assert } from "node:assert";
+import * as path from "node:path";
+
 import {
-	combineReducers,
-	createWeightedGenerator,
 	AsyncGenerator,
 	Generator,
+	combineReducers,
+	createWeightedGenerator,
 	takeAsync,
-} from "@fluid-internal/stochastic-test-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions";
-import { MapFactory } from "../../map";
-import { ISharedMap } from "../../interfaces";
+} from "@fluid-private/stochastic-test-utils";
+import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
+import { Jsonable } from "@fluidframework/datastore-definitions/internal";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+
+import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
+import { ISharedMap, MapFactory } from "../../index.js";
+
+import { _dirname } from "./dirname.cjs";
 
 interface Clear {
 	type: "clear";
@@ -25,7 +29,7 @@ interface Clear {
 interface SetKey {
 	type: "setKey";
 	key: string;
-	value: Jsonable;
+	value: Jsonable<unknown>;
 }
 
 interface DeleteKey {
@@ -38,12 +42,31 @@ type Operation = SetKey | DeleteKey | Clear;
 // This type gets used a lot as the state object of the suite; shorthand it here.
 type State = DDSFuzzTestState<MapFactory>;
 
-function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap) {
+async function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap): Promise<void> {
 	assert.equal(a.size, b.size, `${a.id} and ${b.id} have different number of keys.`);
 	for (const key of a.keys()) {
-		const aVal = a.get(key);
-		const bVal = b.get(key);
-		assert.equal(aVal, bVal, `${a.id} and ${b.id} differ at ${key}: ${aVal} vs ${bVal}`);
+		const aVal: unknown = a.get(key);
+		const bVal: unknown = b.get(key);
+		if (
+			aVal !== null &&
+			typeof aVal === "object" &&
+			bVal !== null &&
+			typeof bVal === "object"
+		) {
+			const aObj: FluidObject<IFluidHandle> = aVal;
+			const bObj: FluidObject<IFluidHandle> = bVal;
+			const aHandle = aObj.IFluidHandle ? await aObj.IFluidHandle?.get() : aObj;
+			const bHandle = bObj.IFluidHandle ? await bObj.IFluidHandle?.get() : bObj;
+			assert.equal(
+				aHandle,
+				bHandle,
+				`${a.id} and ${b.id} differ at ${key}: ${JSON.stringify(
+					aHandle,
+				)} vs ${JSON.stringify(bHandle)}`,
+			);
+		} else {
+			assert.equal(aVal, bVal, `${a.id} and ${b.id} differ at ${key}: ${aVal} vs ${bVal}`);
+		}
 	}
 }
 
@@ -113,11 +136,12 @@ describe("Map fuzz tests", () => {
 		clientJoinOptions: {
 			maxNumberOfClients: 6,
 			clientAddProbability: 0.1,
+			stashableClientProbability: 0.2,
 		},
 		reconnectProbability: 0,
 		// Uncomment to replay a particular seed.
 		// replay: 0,
-		saveFailures: { directory: path.join(__dirname, "../../../src/test/mocha/results/map") },
+		saveFailures: { directory: path.join(_dirname, "../../../src/test/mocha/results/map") },
 	});
 
 	createDDSFuzzSuite(
@@ -128,12 +152,13 @@ describe("Map fuzz tests", () => {
 			clientJoinOptions: {
 				maxNumberOfClients: 6,
 				clientAddProbability: 0.1,
+				stashableClientProbability: 0.2,
 			},
 			reconnectProbability: 0.1,
 			// Uncomment to replay a particular seed.
 			// replay: 0,
 			saveFailures: {
-				directory: path.join(__dirname, "../../../src/test/mocha/results/map-reconnect"),
+				directory: path.join(_dirname, "../../../src/test/mocha/results/map-reconnect"),
 			},
 		},
 	);
@@ -146,6 +171,7 @@ describe("Map fuzz tests", () => {
 			clientJoinOptions: {
 				maxNumberOfClients: 6,
 				clientAddProbability: 0.1,
+				stashableClientProbability: 0.2,
 			},
 			rebaseProbability: 0.2,
 			containerRuntimeOptions: {
@@ -155,7 +181,7 @@ describe("Map fuzz tests", () => {
 			// Uncomment to replay a particular seed.
 			// replay: 0,
 			saveFailures: {
-				directory: path.join(__dirname, "../../../src/test/mocha/results/map-rebase"),
+				directory: path.join(_dirname, "../../../src/test/mocha/results/map-rebase"),
 			},
 		},
 	);

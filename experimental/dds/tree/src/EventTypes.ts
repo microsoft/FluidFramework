@@ -6,7 +6,7 @@
 /**
  * An event emitted by a `SharedTree` to indicate a state change. See {@link ISharedTreeEvents} for event
  * argument information.
- * @public
+ * @alpha
  */
 export enum SharedTreeEvent {
 	/**
@@ -49,6 +49,7 @@ export enum SharedTreeEvent {
 /**
  * An event emitted by a `SharedTree` for diagnostic purposes.
  * See {@link ISharedTreeEvents} for event argument information.
+ * @internal
  */
 export enum SharedTreeDiagnosticEvent {
 	/**

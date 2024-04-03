@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { AsyncPriorityQueue, priorityQueue } from "async";
 
 import { BuildPackage, BuildResult } from "../buildGraph";
@@ -13,6 +14,7 @@ import registerDebug from "debug";
 const traceTaskInit = registerDebug("fluid-build:task:init");
 const traceTaskExec = registerDebug("fluid-build:task:exec");
 const traceTaskExecWait = registerDebug("fluid-build:task:exec:wait");
+const traceTaskDepTask = registerDebug("fluid-build:task:init:dep:task");
 
 export interface TaskExec {
 	task: LeafTask;
@@ -21,8 +23,8 @@ export interface TaskExec {
 }
 
 export abstract class Task {
-	public dependentTasks?: Task[];
-	private _transitiveDependentLeafTasks?: LeafTask[];
+	private dependentTasks?: Task[];
+	private _transitiveDependentLeafTasks: LeafTask[] | undefined | null;
 	public static createTaskQueue(): AsyncPriorityQueue<TaskExec> {
 		return priorityQueue(async (taskExec: TaskExec) => {
 			const waitTime = (Date.now() - taskExec.queueTime) / 1000;
@@ -51,6 +53,10 @@ export abstract class Task {
 		public readonly taskName: string | undefined,
 	) {
 		traceTaskInit(`${this.nameColored}`);
+		if (this.taskName === undefined) {
+			// initializeDependentTasks won't be called for unnamed tasks
+			this.dependentTasks = [];
+		}
 	}
 
 	public get package() {
@@ -65,25 +71,59 @@ export abstract class Task {
 		// This function should only be called by task with task names
 		assert.notStrictEqual(this.taskName, undefined);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this.dependentTasks = this.node.getDependentTasks(this, this.taskName!, pendingInitDep);
+		this.dependentTasks = this.node.getDependsOnTasks(this, this.taskName!, pendingInitDep);
+	}
+
+	// Add dependent task. For group tasks, propagate to unnamed subtask only if it's a default dependency
+	public addDependentTasks(dependentTasks: Task[], isDefault?: boolean) {
+		if (traceTaskDepTask.enabled) {
+			dependentTasks.forEach((dependentTask) => {
+				traceTaskDepTask(
+					`${this.nameColored} -> ${dependentTask.nameColored}${
+						isDefault === true ? " (default)" : ""
+					}`,
+				);
+			});
+		}
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		this.dependentTasks!.push(...dependentTasks);
 	}
 
 	protected get transitiveDependentLeafTask() {
-		if (this._transitiveDependentLeafTasks === undefined) {
-			const dependentTasks = this.dependentTasks;
-			if (dependentTasks) {
+		if (this._transitiveDependentLeafTasks === null) {
+			// Circular dependency, start unrolling
+			throw [this];
+		}
+		try {
+			if (this._transitiveDependentLeafTasks === undefined) {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const dependentTasks = this.dependentTasks!;
+				assert.notStrictEqual(dependentTasks, undefined);
+				this._transitiveDependentLeafTasks = null;
+
 				const s = new Set<LeafTask>();
 				for (const dependentTask of dependentTasks) {
 					dependentTask.transitiveDependentLeafTask.forEach((t) => s.add(t));
 					dependentTask.collectLeafTasks(s);
 				}
 				this._transitiveDependentLeafTasks = [...s.values()];
-			} else {
-				this._transitiveDependentLeafTasks = [];
-				assert.strictEqual(this.taskName, undefined);
 			}
+			return this._transitiveDependentLeafTasks;
+		} catch (e) {
+			if (Array.isArray(e)) {
+				// Add to the dependency chain
+				e.push(this);
+				if (e[0] === this) {
+					// detected a cycle, convert into a message
+					throw new Error(
+						`Circular dependency in dependent tasks: ${e
+							.map((v) => v.nameColored)
+							.join("->")}`,
+					);
+				}
+			}
+			throw e;
 		}
-		return this._transitiveDependentLeafTasks;
 	}
 
 	public async run(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {

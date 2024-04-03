@@ -2,9 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { BaseProperty } from "@fluid-experimental/property-properties";
-import { UpgradeType } from "../internal/semvermap";
 
+import { BaseProperty } from "@fluid-experimental/property-properties";
+import { UpgradeType } from "../internal/semvermap.js";
+
+/**
+ * @internal
+ */
 export type representationGenerator =
 	/**
 	 * Callback signature for generating a runtime representation for a property. A runtime representation is an
@@ -27,6 +31,9 @@ export type representationGenerator =
 	 */
 	(property: BaseProperty, bindingType: string, userData?: any) => any;
 
+/**
+ * @internal
+ */
 export type representationInitializer =
 	/**
 	 * Callback signature for finalizing a runtime representation for a property, used with
@@ -48,6 +55,9 @@ export type representationInitializer =
 	 */
 	(runtimeObject: any, property: BaseProperty, bindingType: string, userData?: any) => void;
 
+/**
+ * @internal
+ */
 export type representationDestroyer =
 	/**
 	 * Callback signature for destroying a runtime representation associated with a property, used
@@ -66,6 +76,7 @@ export type representationDestroyer =
 
 /**
  * Options for {@link DataBinder.defineRepresentation}
+ * @internal
  */
 export interface IDefineRepresentationOptions {
 	/**

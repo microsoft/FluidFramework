@@ -3,11 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import { compareArrays } from '@fluidframework/core-utils/internal';
 import { v4 as uuidv4 } from 'uuid';
-import { compareArrays } from '@fluidframework/core-utils';
-import { copyPropertyIfDefined, fail, Mutable } from './Common';
-import { Definition, DetachedSequenceId, EditId, NodeId, StableNodeId, TraitLabel } from './Identifiers';
-import { NodeIdContext, NodeIdConverter } from './NodeIdUtilities';
+
+import { BuildNode, BuildTreeNode, Change, HasVariadicTraits, StablePlace, StableRange } from './ChangeTypes.js';
+import { Mutable, copyPropertyIfDefined, fail } from './Common.js';
+import { Definition, DetachedSequenceId, EditId, NodeId, StableNodeId, TraitLabel } from './Identifiers.js';
+import { NodeIdContext, NodeIdConverter } from './NodeIdUtilities.js';
+import { comparePayloads } from './PayloadUtilities.js';
+import { TransactionView, iterateChildren } from './RevisionView.js';
+import { getChangeNode_0_0_2FromView } from './SerializationUtilities.js';
+import { TraitLocation, TreeView } from './TreeView.js';
+import { placeFromStablePlace, rangeFromStableRange } from './TreeViewUtilities.js';
 import {
 	BuildNodeInternal,
 	ChangeInternal,
@@ -23,13 +30,7 @@ import {
 	TraitMap,
 	TreeNode,
 	TreeNodeSequence,
-} from './persisted-types';
-import { TraitLocation, TreeView } from './TreeView';
-import { BuildNode, BuildTreeNode, Change, HasVariadicTraits, StablePlace, StableRange } from './ChangeTypes';
-import { placeFromStablePlace, rangeFromStableRange } from './TreeViewUtilities';
-import { iterateChildren, TransactionView } from './RevisionView';
-import { getChangeNode_0_0_2FromView } from './SerializationUtilities';
-import { comparePayloads } from './PayloadUtilities';
+} from './persisted-types/index.js';
 
 /**
  * Functions for constructing and comparing Edits.
@@ -295,6 +296,7 @@ export function compareNodes(
 
 /**
  * Compare two views such that semantically equivalent node IDs are considered equal.
+ * @internal
  */
 export function areRevisionViewsSemanticallyEqual(
 	treeViewA: TreeView,
@@ -313,7 +315,7 @@ export function areRevisionViewsSemanticallyEqual(
 
 /**
  * Create a sequence of changes that resets the contents of `trait`.
- * @public
+ * @internal
  */
 export function setTrait(trait: TraitLocation, nodes: BuildNode | TreeNodeSequence<BuildNode>): Change[] {
 	const id = 0 as DetachedSequenceId;
@@ -402,6 +404,7 @@ export function validateStablePlace(
 
 /**
  * The result of validating a place.
+ * @alpha
  */
 export enum PlaceValidationResult {
 	Valid = 'Valid',
@@ -413,6 +416,7 @@ export enum PlaceValidationResult {
 
 /**
  * The result of validating a bad place.
+ * @alpha
  */
 export type BadPlaceValidationResult = Exclude<PlaceValidationResult, PlaceValidationResult.Valid>;
 
@@ -468,6 +472,7 @@ export function validateStableRange(
 
 /**
  * The kinds of result of validating a range.
+ * @alpha
  */
 export enum RangeValidationResultKind {
 	Valid = 'Valid',
@@ -478,6 +483,7 @@ export enum RangeValidationResultKind {
 
 /**
  * The result of validating a range.
+ * @alpha
  */
 export type RangeValidationResult =
 	| RangeValidationResultKind.Valid
@@ -491,6 +497,7 @@ export type RangeValidationResult =
 
 /**
  * The result of validating a bad range.
+ * @alpha
  */
 export type BadRangeValidationResult = Exclude<RangeValidationResult, RangeValidationResultKind.Valid>;
 

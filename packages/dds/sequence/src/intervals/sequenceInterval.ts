@@ -6,9 +6,9 @@
 /* eslint-disable no-bitwise */
 /* eslint-disable import/no-deprecated */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	Client,
-	ICombiningOp,
 	ISegment,
 	LocalReferencePosition,
 	PropertiesManager,
@@ -23,17 +23,19 @@ import {
 	minReferencePosition,
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
-} from "@fluidframework/merge-tree";
-import { assert } from "@fluidframework/core-utils";
+} from "@fluidframework/merge-tree/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { UsageError } from "@fluidframework/telemetry-utils";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	SequencePlace,
 	Side,
 	computeStickinessFromSide,
 	endpointPosAndSide,
+	reservedIntervalIdKey,
 	sidesFromStickiness,
-} from "../intervalCollection";
+} from "../intervalCollection.js";
+
 import {
 	IIntervalHelpers,
 	ISerializableInterval,
@@ -42,9 +44,7 @@ import {
 	IntervalType,
 	endReferenceSlidingPreference,
 	startReferenceSlidingPreference,
-} from "./intervalUtils";
-
-const reservedIntervalIdKey = "intervalId";
+} from "./intervalUtils.js";
 
 function compareSides(sideA: Side, sideB: Side): number {
 	if (sideA === sideB) {
@@ -100,22 +100,20 @@ function maxSide(sideA: Side, sideB: Side): Side {
  * `mergeTreeReferencesCanSlideToEndpoint` feature flag set to true, the endpoints
  * of the interval that are exclusive will have the ability to slide to these
  * special endpoint segments.
- * @public
+ * @alpha
  */
 export class SequenceInterval implements ISerializableInterval {
 	/**
 	 * {@inheritDoc ISerializableInterval.properties}
 	 */
-	public properties: PropertySet;
-	/**
-	 * {@inheritDoc ISerializableInterval.propertyManager}
-	 * @internal
-	 */
-	public propertyManager: PropertiesManager;
+	public properties: PropertySet = createMap<any>();
 
 	/**
-	 * @internal
+	 * {@inheritDoc ISerializableInterval.propertyManager}
 	 */
+	public propertyManager: PropertiesManager = new PropertiesManager();
+
+	/***/
 	public get stickiness(): IntervalStickiness {
 		const startSegment = this.start.getSegment();
 		const endSegment = this.end.getSegment();
@@ -144,9 +142,6 @@ export class SequenceInterval implements ISerializableInterval {
 		public readonly startSide: Side = Side.Before,
 		public readonly endSide: Side = Side.Before,
 	) {
-		this.propertyManager = new PropertiesManager();
-		this.properties = {};
-
 		if (props) {
 			this.addProperties(props);
 		}
@@ -156,7 +151,6 @@ export class SequenceInterval implements ISerializableInterval {
 
 	/**
 	 * Subscribes to position change events on this interval if there are no current listeners.
-	 * @internal
 	 */
 	public addPositionChangeListeners(
 		beforePositionChange: () => void,
@@ -177,7 +171,6 @@ export class SequenceInterval implements ISerializableInterval {
 
 	/**
 	 * Removes the currently subscribed position change listeners.
-	 * @internal
 	 */
 	public removePositionChangeListeners(): void {
 		if (this.callbacks) {
@@ -189,7 +182,6 @@ export class SequenceInterval implements ISerializableInterval {
 
 	/**
 	 * {@inheritDoc ISerializableInterval.serialize}
-	 * @internal
 	 */
 	public serialize(): ISerializedInterval {
 		const startPosition = this.client.localReferencePositionToPosition(this.start);
@@ -299,7 +291,6 @@ export class SequenceInterval implements ISerializableInterval {
 
 	/**
 	 * {@inheritDoc IInterval.union}
-	 * @internal
 	 */
 	public union(b: SequenceInterval) {
 		const newStart = minReferencePosition(this.start, b.start);
@@ -334,16 +325,13 @@ export class SequenceInterval implements ISerializableInterval {
 
 	/**
 	 * {@inheritDoc ISerializableInterval.addProperties}
-	 * @internal
 	 */
 	public addProperties(
 		newProps: PropertySet,
 		collab: boolean = false,
 		seq?: number,
-		op?: ICombiningOp,
 	): PropertySet | undefined {
-		this.initializeProperties();
-		return this.propertyManager.addProperties(this.properties, newProps, op, seq, collab);
+		return this.propertyManager.addProperties(this.properties, newProps, seq, collab);
 	}
 
 	/**
@@ -357,7 +345,6 @@ export class SequenceInterval implements ISerializableInterval {
 
 	/**
 	 * {@inheritDoc IInterval.modify}
-	 * @internal
 	 */
 	public modify(
 		label: string,
@@ -429,7 +416,6 @@ export class SequenceInterval implements ISerializableInterval {
 			endSide ?? this.endSide,
 		);
 		if (this.properties) {
-			newInterval.initializeProperties();
 			this.propertyManager.copyTo(
 				this.properties,
 				newInterval.properties,
@@ -437,15 +423,6 @@ export class SequenceInterval implements ISerializableInterval {
 			);
 		}
 		return newInterval;
-	}
-
-	private initializeProperties(): void {
-		if (!this.propertyManager) {
-			this.propertyManager = new PropertiesManager();
-		}
-		if (!this.properties) {
-			this.properties = createMap<any>();
-		}
 	}
 }
 
@@ -577,10 +554,6 @@ export function createSequenceInterval(
 		beginRefType = ReferenceType.Transient;
 		endRefType = ReferenceType.Transient;
 	} else {
-		if (intervalType === IntervalType.Nest) {
-			beginRefType = ReferenceType.NestBegin;
-			endRefType = ReferenceType.NestEnd;
-		}
 		// All non-transient interval references must eventually be SlideOnRemove
 		// To ensure eventual consistency, they must start as StayOnRemove when
 		// pending (created locally and creation op is not acked)
@@ -637,7 +610,7 @@ export function createSequenceInterval(
 
 /**
  * @deprecated The methods within have substitutions
- * @public
+ * @internal
  */
 export const sequenceIntervalHelpers: IIntervalHelpers<SequenceInterval> = {
 	create: createSequenceInterval,

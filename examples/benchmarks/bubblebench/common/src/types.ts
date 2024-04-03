@@ -3,13 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { normal, randomColor, rnd } from "./rnd";
+import { normal, randomColor, rnd } from "./rnd.js";
 
-export interface IArrayish<T>
-	extends ArrayLike<T>,
-		Pick<T[], "push" | "pop" | "map">,
-		Iterable<T> {}
-
+/**
+ * @internal
+ */
 export interface IBubble {
 	x: number;
 	y: number;
@@ -18,15 +16,22 @@ export interface IBubble {
 	vy: number;
 }
 
+/**
+ * @internal
+ */
 export interface IClient {
-	clientId: string;
-	color: string;
-	bubbles: IArrayish<IBubble>;
+	readonly clientId: string;
+	readonly color: string;
+	// Mark `IBubble[]` as read-only, as SharedTree ArrayNodes are not compatible with JavaScript arrays for writing purposes.
+	readonly bubbles: readonly IBubble[];
 }
 
+/**
+ * @internal
+ */
 export interface IAppState {
 	readonly localClient: IClient;
-	readonly clients: IArrayish<IClient>;
+	readonly clients: Iterable<IClient>;
 	readonly width: number;
 	readonly height: number;
 	setSize(width?: number, height?: number);
@@ -35,6 +40,10 @@ export interface IAppState {
 	applyEdits(): void;
 }
 
+// eslint-disable-next-line jsdoc/require-description
+/**
+ * @internal
+ */
 export function makeBubble(stageWidth: number, stageHeight: number): IBubble {
 	const radius = Math.max(normal() * 10 + 10, 3);
 	const maxSpeed = 4;
@@ -49,12 +58,27 @@ export function makeBubble(stageWidth: number, stageHeight: number): IBubble {
 	};
 }
 
-export const makeClient = (
+/**
+ * Simple mutable type implementing IClient.
+ */
+export interface SimpleClient extends IClient {
+	clientId: string;
+	readonly color: string;
+	readonly bubbles: IBubble[];
+}
+
+/**
+ * Creates a SimpleClient with random values.
+ * @internal
+ */
+export function makeClient(
 	stageWidth: number,
 	stageHeight: number,
 	numBubbles: number,
-): IClient => ({
-	clientId: "pending",
-	color: randomColor(),
-	bubbles: Array.from({ length: numBubbles }).map(() => makeBubble(stageWidth, stageHeight)),
-});
+): SimpleClient {
+	return {
+		clientId: "pending",
+		color: randomColor(),
+		bubbles: Array.from({ length: numBubbles }).map(() => makeBubble(stageWidth, stageHeight)),
+	};
+}

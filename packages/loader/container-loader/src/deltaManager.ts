@@ -3,54 +3,61 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
-import {
-	IThrottlingWarning,
-	IEventProvider,
-	ITelemetryProperties,
-	ITelemetryErrorEvent,
-} from "@fluidframework/core-interfaces";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	ICriticalContainerError,
 	IDeltaManager,
 	IDeltaManagerEvents,
 	IDeltaQueue,
 } from "@fluidframework/container-definitions";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
 import {
-	DataProcessingError,
-	extractSafePropertiesFromMessage,
-	normalizeError,
-	logIfFalse,
-	safeRaiseEvent,
-	isFluidError,
-	ITelemetryLoggerExt,
-	DataCorruptionError,
-	UsageError,
-} from "@fluidframework/telemetry-utils";
+	IEventProvider,
+	type ITelemetryBaseEvent,
+	ITelemetryBaseProperties,
+} from "@fluidframework/core-interfaces";
+import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
-	DriverErrorTypes,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
+	MessageType2,
+	NonRetryableError,
+	isRuntimeMessage,
+} from "@fluidframework/driver-utils/internal";
+import {
+	ConnectionMode,
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	ISignalMessage,
 	MessageType,
-	ConnectionMode,
 } from "@fluidframework/protocol-definitions";
-import { NonRetryableError, isRuntimeMessage, MessageType2 } from "@fluidframework/driver-utils";
+import {
+	type ITelemetryErrorEventExt,
+	type ITelemetryGenericEventExt,
+	ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils";
+import {
+	DataCorruptionError,
+	DataProcessingError,
+	UsageError,
+	extractSafePropertiesFromMessage,
+	isFluidError,
+	normalizeError,
+	safeRaiseEvent,
+} from "@fluidframework/telemetry-utils/internal";
+import { v4 as uuid } from "uuid";
 
 import {
 	IConnectionDetailsInternal,
 	IConnectionManager,
 	IConnectionManagerFactoryArgs,
 	IConnectionStateChangeReason,
-} from "./contracts";
-import { DeltaQueue } from "./deltaQueue";
-import { ThrottlingWarning } from "./error";
+} from "./contracts.js";
+import { DeltaQueue } from "./deltaQueue.js";
+import { ThrottlingWarning } from "./error.js";
 
 export interface IConnectionArgs {
 	mode?: ConnectionMode;
@@ -112,6 +119,29 @@ function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage):
 		default:
 			return false;
 	}
+}
+
+/**
+ * Like assert, but logs only if the condition is false, rather than throwing
+ * @param condition - The condition to attest too
+ * @param logger - The logger to log with
+ * @param event - The string or event to log
+ * @returns The outcome of the condition
+ */
+function logIfFalse(
+	condition: boolean,
+	logger: ITelemetryLoggerExt,
+	event: string | ITelemetryGenericEventExt,
+): condition is true {
+	if (condition) {
+		return true;
+	}
+	const newEvent: ITelemetryBaseEvent =
+		typeof event === "string"
+			? { eventName: event, category: "error" }
+			: { category: "error", ...event };
+	logger.send(newEvent);
+	return false;
 }
 
 /**
@@ -301,8 +331,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		return message.clientSequenceNumber;
 	}
 
-	public submitSignal(content: any) {
-		return this.connectionManager.submitSignal(content);
+	public submitSignal(content: string, targetClientId?: string) {
+		return this.connectionManager.submitSignal(content, targetClientId);
 	}
 
 	public flush() {
@@ -337,7 +367,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		assert(this.messageBuffer.length === 0, 0x3cc /* reentrancy */);
 	}
 
-	public get connectionProps(): ITelemetryProperties {
+	public get connectionProps(): ITelemetryBaseProperties {
 		return {
 			sequenceNumber: this.lastSequenceNumber,
 			opsSize: this.opsSize > 0 ? this.opsSize : undefined,
@@ -352,7 +382,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	 * we stop processing ops that results in no processing join op and thus moving to connected state)
 	 * @param event - Event to log.
 	 */
-	public logConnectionIssue(event: ITelemetryErrorEvent) {
+	public logConnectionIssue(event: ITelemetryErrorEventExt) {
 		assert(this.connectionManager.connected, 0x238 /* "called only in connected state" */);
 
 		const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
@@ -773,7 +803,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	private disconnectHandler(reason: IConnectionStateChangeReason) {
 		this.messageBuffer.length = 0;
-		this.emit("disconnect", reason);
+		this.emit("disconnect", reason.text, reason.error);
 	}
 
 	/**

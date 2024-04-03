@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from './Common';
-import type { InternedStringId } from './Identifiers';
+import { fail } from './Common.js';
+import type { InternedStringId } from './Identifiers.js';
 
 /**
  * Interns strings as integers.
+ * @internal
  */
 export interface StringInterner {
 	getInternedId(input: string): InternedStringId | undefined;

@@ -7,11 +7,12 @@ import {
 	IDocumentService,
 	IDocumentStorageService,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import * as api from "@fluidframework/protocol-definitions";
 
 /**
  * Partial implementation of IDocumentStorageService
+ * @internal
  */
 export abstract class ReadDocumentStorageServiceBase implements IDocumentStorageService {
 	public abstract getVersions(versionId: string | null, count: number): Promise<api.IVersion[]>;
@@ -32,16 +33,13 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
 	public async downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {
 		throw new Error("Invalid operation");
 	}
-
-	public get repositoryUrl(): string {
-		throw new Error("Invalid operation");
-	}
 }
 
 /**
  * Replay controller object
  * It controls where we start (snapshot, local file, no snapshots)
  * As well as dispatch of ops
+ * @internal
  */
 export abstract class ReplayController extends ReadDocumentStorageServiceBase {
 	/**

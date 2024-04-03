@@ -2,35 +2,43 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ITelemetryBaseLogger, IRequest } from "@fluidframework/core-interfaces";
-import {
+
+import type { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type {
 	IDocumentServiceFactory,
 	IResolvedUrl,
 	IUrlResolver,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 
 /**
- * @public
+ * Types of test drivers.
+ * These values are replicated in {@link @fluid-private/test-version-utils#compatOptions.d.ts}. Ensure that any revisions here are also reflected in test-version-utils.
+ * @internal
  */
 export type TestDriverTypes = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local";
 
 /**
- * @public
+ * Types of Routerlicious endpoints.
+ * These values are replicated in {@link @fluid-private/test-version-utils#compatOptions.d.ts}. Ensure that any revisions here are also reflected in test-version-utils.
+ * @internal
  */
 export type RouterliciousEndpoint = "frs" | "frsCanary" | "r11s" | "docker";
 
 /**
- * @public
+ * Types of Odsp endpoints.
+ * @internal
  */
 export type OdspEndpoint = "odsp" | "odsp-df";
 
 /**
- * @public
+ * Types of Driver endpoints.
+ * @internal
  */
 export type DriverEndpoint = RouterliciousEndpoint | OdspEndpoint;
 
 /**
- * @public
+ * Base interface for test drivers.
+ * @internal
  */
 export interface ITestDriver {
 	/**
@@ -107,8 +115,7 @@ export interface ITestDriver {
 /**
  * Extension of ITelemetryBaseLogger with support for flushing
  * all buffered logs that have not yet been fully processed (e.g. uploaded)
- *
- * @public
+ * @internal
  */
 export interface ITelemetryBufferedLogger extends ITelemetryBaseLogger {
 	/**

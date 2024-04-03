@@ -160,6 +160,15 @@ module.exports = {
 			packages: ["**"],
 			isIgnored: true,
 		},
+		// Workaround for this private internal package. Can be removed once our types wrapper around
+		// the package is no longer needed - see https://github.com/argos-ci/jest-puppeteer/issues/568.
+		{
+			label: "Ignore private workaround package @types/jest-environment-puppeteer",
+			dependencies: ["@types/jest-environment-puppeteer"],
+			dependencyTypes: ["dev", "prod"],
+			packages: ["**"],
+			isIgnored: true,
+		},
 
 		{
 			label: "Versions of common Fluid packages should all match",

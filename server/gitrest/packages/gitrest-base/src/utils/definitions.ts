@@ -79,6 +79,7 @@ export interface IFileSystemManager {
 
 export interface IFileSystemManagerParams {
 	storageName?: string;
+	rootDir?: string;
 }
 
 export interface IFileSystemManagerFactory {

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Definition of the ReferenceProperty class
  */
@@ -9,6 +10,7 @@
 const { PathHelper, TypeIdHelper } = require("@fluid-experimental/property-changeset");
 const { MSG } = require("@fluid-experimental/property-common").constants;
 const _ = require("lodash");
+
 const { AbstractStaticCollectionProperty } = require("./abstractStaticCollectionProperty");
 const { BaseProperty } = require("./baseProperty");
 const { _castFunctors } = require("./primitiveTypeCasts");
@@ -19,6 +21,7 @@ const { ValueProperty } = require("./valueProperty");
  * object's value field. To do this we simply keep a pointer to the object and
  * it's associated data field that we are interested in. If no data field is
  * present this property will have an undefined value.
+ * @internal
  */
 export class ReferenceProperty extends ValueProperty {
 	/**

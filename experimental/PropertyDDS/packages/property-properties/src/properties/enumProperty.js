@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Definition of the EnumProperty classes
  */
@@ -10,12 +11,14 @@ const { TypeIdHelper } = require("@fluid-experimental/property-changeset");
 const { MSG } = require("@fluid-experimental/property-common").constants;
 const { ConsoleUtils } = require("@fluid-experimental/property-common");
 const _ = require("lodash");
+
 const { Int32Property } = require("./intProperties");
 const { _castFunctors } = require("./primitiveTypeCasts");
 const { ValueProperty } = require("./valueProperty");
 
 /**
  * A primitive property for enums.
+ * @internal
  */
 export class EnumProperty extends Int32Property {
 	/**

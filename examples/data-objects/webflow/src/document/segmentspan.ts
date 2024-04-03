@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISegment } from "@fluidframework/merge-tree";
+import { ISegment } from "@fluidframework/sequence/internal";
 
 export class SegmentSpan {
 	public get segments(): readonly ISegment[] {

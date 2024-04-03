@@ -1,5 +1,0 @@
-{
-	"tags": ["codec"],
-	"exports": ["index"],
-	"imports": ["util"]
-}

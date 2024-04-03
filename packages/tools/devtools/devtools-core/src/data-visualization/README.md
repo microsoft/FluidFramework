@@ -1,4 +1,4 @@
-# @fluid-experimental/devtools-core DDS Visualization
+# @fluidframework/devtools-core DDS Visualization
 
 This directory contains a system for describing Fluid Distributed Data Structure (DDS) visuals in a declarative manner, and for communicating incremental updates to those visuals.
 

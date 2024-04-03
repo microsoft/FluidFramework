@@ -4,7 +4,7 @@
  */
 
 import { Plugin } from "prosemirror-state";
-import { DecorationSet, Decoration } from "prosemirror-view";
+import { Decoration, DecorationSet } from "prosemirror-view";
 
 // Sample from
 // https://github.com/PierBover/prosemirror-cookbook

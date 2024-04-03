@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IColor, IInk, IInkPoint, IInkStroke, IPen, IStylusOperation } from "./interfaces";
+import { IColor, IInk, IInkPoint, IInkStroke, IPen, IStylusOperation } from "./interfaces.js";
 
 interface IPoint {
 	x: number;
@@ -108,6 +108,9 @@ function drawShapes(
 	drawCircle(context, { x: endPoint.x, y: endPoint.y }, widthAtEnd);
 }
 
+/**
+ * @internal
+ */
 export class InkCanvas {
 	private readonly context: CanvasRenderingContext2D;
 	private readonly localActiveStrokeMap: Map<number, string> = new Map();

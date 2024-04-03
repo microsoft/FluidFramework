@@ -3,31 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import { PropertyProxy } from "@fluid-experimental/property-proxy";
-import { BaseProperty, PropertyFactory } from "@fluid-experimental/property-properties";
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
+import { BaseProperty, PropertyFactory } from "@fluid-experimental/property-properties";
+import { PropertyProxy } from "@fluid-experimental/property-proxy";
 import {
 	defaultInspectorTableChildGetter,
 	defaultInspectorTableNameGetter,
-} from "../src/InspectorTable";
-import { IColumns, IInspectorRow, IInspectorSearchMatch } from "../src/InspectorTableTypes";
-import { search, showNextResult } from "../src/utils";
+} from "../src/InspectorTable.js";
+import type { IColumns, IInspectorRow, IInspectorSearchMatch } from "../src/InspectorTableTypes.js";
+import { search, showNextResult } from "../src/utils.js";
 
 import {
+	dummyChild,
+	expandAll,
+	fillExpanded,
+	sanitizePath,
+	toTableRows,
+} from "../src/propertyInspectorUtils";
+import { uniqueIdentifier } from "./common";
+import {
 	findRow,
+	getAllMatchesFromRows,
 	getExpandedMap,
 	getHash,
 	initializeWorkspace,
-	getAllMatchesFromRows,
-} from "./testUtils";
-import {
-	toTableRows,
-	dummyChild,
-	fillExpanded,
-	expandAll,
-	sanitizePath,
-} from "../src/propertyInspectorUtils";
-import { uniqueIdentifier } from "./common";
+} from "./testUtils.js";
 
 describe("InspectorTable", () => {
 	let workspace;

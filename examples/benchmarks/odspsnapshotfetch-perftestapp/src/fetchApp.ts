@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { FluidAppOdspUrlResolver } from "@fluid-tools/fluidapp-odsp-urlresolver";
-import { assert } from "@fluidframework/core-utils";
-import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { OdspSampleCache } from "./odspPersistantCache";
+import { assert } from "@fluidframework/core-utils/internal";
+import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver/internal";
+import { FluidAppOdspUrlResolver } from "@fluidframework/odsp-urlresolver/internal";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+
+import { OdspSampleCache } from "./odspPersistantCache.js";
 
 export function start(div: HTMLDivElement, odspAccessToken: string) {
 	const binaryDiv = document.createElement("div");

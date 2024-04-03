@@ -5,6 +5,7 @@
 
 /**
  * Details about the author of the commit
+ * @internal
  */
 export interface IAuthor {
 	name: string;
@@ -15,6 +16,7 @@ export interface IAuthor {
 
 /**
  * Details about the committer of the commit
+ * @internal
  */
 export interface ICommitter {
 	name: string;
@@ -25,6 +27,7 @@ export interface ICommitter {
 
 /**
  * Details of the commit
+ * @internal
  */
 export interface ICommitHash {
 	sha: string;
@@ -33,6 +36,7 @@ export interface ICommitHash {
 
 /**
  * Required params to create commit
+ * @internal
  */
 export interface ICreateCommitParams {
 	message: string;
@@ -44,6 +48,7 @@ export interface ICreateCommitParams {
 
 /**
  * Commit content
+ * @internal
  */
 export interface ICommit {
 	sha: string;
@@ -64,6 +69,7 @@ export interface ICommit {
  *
  * https://developer.github.com/v3/git/commits/
  * https://developer.github.com/v3/repos/commits/
+ * @internal
  */
 export interface ICommitDetails {
 	url: string;
@@ -80,6 +86,7 @@ export interface ICommitDetails {
 
 /**
  * Blob content
+ * @internal
  */
 export interface IBlob {
 	content: string;
@@ -91,17 +98,20 @@ export interface IBlob {
 
 /**
  * Required params to create blob
+ * @internal
  */
 export interface ICreateBlobParams {
 	// The encoded content
 	content: string;
 
 	// The encoding of the content.
+	// eslint-disable-next-line unicorn/text-encoding-identifier-case
 	encoding: "utf-8" | "base64";
 }
 
 /**
  * Response to create blob request
+ * @internal
  */
 export interface ICreateBlobResponse {
 	sha: string;
@@ -110,6 +120,7 @@ export interface ICreateBlobResponse {
 
 /**
  * Ref content
+ * @internal
  */
 export interface IRef {
 	ref: string;
@@ -123,6 +134,7 @@ export interface IRef {
 
 /**
  * Required params to create ref
+ * @alpha
  */
 export interface ICreateRefParams {
 	ref: string;
@@ -131,6 +143,7 @@ export interface ICreateRefParams {
 
 /**
  * Required params to patch ref
+ * @alpha
  */
 export interface IPatchRefParams {
 	sha: string;
@@ -140,6 +153,7 @@ export interface IPatchRefParams {
 /**
  * Required params to create repo
  * @param name - name of the repository
+ * @internal
  */
 export interface ICreateRepoParams {
 	name: string;
@@ -147,6 +161,7 @@ export interface ICreateRepoParams {
 
 /**
  * Required details to create tree entry
+ * @internal
  */
 export interface ICreateTreeEntry {
 	path: string;
@@ -157,6 +172,7 @@ export interface ICreateTreeEntry {
 
 /**
  * Required params to create tree
+ * @internal
  */
 export interface ICreateTreeParams {
 	base_tree?: string;
@@ -165,6 +181,7 @@ export interface ICreateTreeParams {
 
 /**
  * Tree Entry Content
+ * @internal
  */
 export interface ITreeEntry {
 	path: string;
@@ -177,6 +194,7 @@ export interface ITreeEntry {
 
 /**
  * Tree content
+ * @internal
  */
 export interface ITree {
 	sha: string;
@@ -186,6 +204,7 @@ export interface ITree {
 
 /**
  * Tagger content
+ * @internal
  */
 export interface ITagger {
 	name: string;
@@ -196,6 +215,7 @@ export interface ITagger {
 
 /**
  * Required params to create tag
+ * @internal
  */
 export interface ICreateTagParams {
 	tag: string;
@@ -207,6 +227,7 @@ export interface ICreateTagParams {
 
 /**
  * Tag content
+ * @internal
  */
 export interface ITag {
 	tag: string;

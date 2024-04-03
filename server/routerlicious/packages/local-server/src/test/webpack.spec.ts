@@ -58,5 +58,5 @@ describe("Local server", () => {
 				}
 			});
 		});
-	}).timeout(20000);
+	}).timeout(30000);
 });

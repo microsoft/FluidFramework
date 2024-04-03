@@ -4,15 +4,15 @@
  */
 
 import { IPactMap, PactMap } from "@fluid-experimental/pact-map";
-import { ITaskManager, TaskManager } from "@fluidframework/task-manager";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	ConsensusRegisterCollection,
 	IConsensusRegisterCollection,
-} from "@fluidframework/register-collection";
+} from "@fluidframework/register-collection/internal";
+import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
 
-import type { IMigrationTool } from "../migrationInterfaces";
+import type { IMigrationTool, MigrationState } from "../migrationInterfaces/index.js";
 
 const pactMapKey = "pact-map";
 const crcKey = "crc";
@@ -21,6 +21,9 @@ const newVersionKey = "newVersion";
 const migrateTaskName = "migrate";
 const newContainerIdKey = "newContainerId";
 
+/**
+ * @internal
+ */
 export class MigrationTool extends DataObject implements IMigrationTool {
 	private _pactMap: IPactMap<string> | undefined;
 	private _crc: IConsensusRegisterCollection<string> | undefined;
@@ -47,7 +50,7 @@ export class MigrationTool extends DataObject implements IMigrationTool {
 		return this._taskManager;
 	}
 
-	public get migrationState() {
+	public get migrationState(): MigrationState {
 		if (this.newContainerId !== undefined) {
 			return "migrated";
 		} else if (this.acceptedVersion !== undefined) {
@@ -151,6 +154,7 @@ export class MigrationTool extends DataObject implements IMigrationTool {
  * The DataObjectFactory is used by Fluid Framework to instantiate our DataObject.  We provide it with a unique name
  * and the constructor it will call.  The third argument lists the other data structures it will utilize.  In this
  * scenario, the fourth argument is not used.
+ * @internal
  */
 export const MigrationToolInstantiationFactory = new DataObjectFactory<MigrationTool>(
 	"migration-tool",

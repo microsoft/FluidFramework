@@ -21,6 +21,9 @@ import {
 // Lumber should be created through Lumberjack. Additional properties can be set through
 // setProperty(). Once the telemetry event is complete, the user must call either success()
 // or error() on Lumber to emit the data.
+/**
+ * @internal
+ */
 export class Lumber<T extends string = LumberEventName> {
 	private readonly _startTime = performance.now();
 	private _properties = new Map<string, any>();

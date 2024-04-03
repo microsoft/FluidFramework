@@ -4,17 +4,19 @@
  */
 
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { assertNotUndefined, fail } from './Common';
-import { PlaceValidationResult, RangeValidationResultKind } from './EditUtilities';
-import { SharedTreeEvent } from './EventTypes';
-import { EditStatus } from './persisted-types';
-import { SequencedEditAppliedEventArguments, SharedTree } from './SharedTree';
-import { TransactionInternal } from './TransactionInternal';
+
+import { assertNotUndefined, fail } from './Common.js';
+import { PlaceValidationResult, RangeValidationResultKind } from './EditUtilities.js';
+import { SharedTreeEvent } from './EventTypes.js';
+import { SequencedEditAppliedEventArguments, SharedTree } from './SharedTree.js';
+import { TransactionInternal } from './TransactionInternal.js';
+import { EditStatus } from './persisted-types/index.js';
 
 /**
  * Logs generic telemetry for failed sequenced edits.
  * Only failing edits that were originally made locally are logged.
  * @param tree - The tree for which to log the telemetry.
+ * @internal
  */
 export function useFailedSequencedEditTelemetry(tree: SharedTree): { disable: () => void } {
 	function onEdit({ wasLocal, logger, outcome }: SequencedEditAppliedEventArguments): void {
@@ -37,6 +39,7 @@ export function useFailedSequencedEditTelemetry(tree: SharedTree): { disable: ()
 /**
  * Statistics about the health of collaborative edit merging when using {@link SharedTree}.
  * All of those numbers constitute a tally since the last heartbeat was logged or cleared.
+ * @internal
  */
 export interface MergeHealthStats {
 	/** Number of sequenced edits applied (failed or not). */
@@ -204,6 +207,7 @@ export interface MergeHealthStats {
 
 /**
  * Aggregates and logs telemetry about the success of concurrent edits.
+ * @internal
  */
 export class SharedTreeMergeHealthTelemetryHeartbeat {
 	private heartbeatTimerId = 0;

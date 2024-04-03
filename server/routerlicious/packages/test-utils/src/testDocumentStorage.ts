@@ -32,11 +32,15 @@ import {
 	SummaryType,
 	ISnapshotTreeEx,
 	SummaryObject,
+	FileMode,
 } from "@fluidframework/protocol-definitions";
 import { IQuorumSnapshot, getGitMode, getGitType } from "@fluidframework/protocol-base";
 import { gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 
 // Forked from DocumentStorage to remove to server dependencies and enable testing of other data stores.
+/**
+ * @internal
+ */
 export class TestDocumentStorage implements IDocumentStorage {
 	constructor(
 		private readonly databaseManager: IDatabaseManager,
@@ -140,6 +144,8 @@ export class TestDocumentStorage implements IDocumentStorage {
 			lastSummarySequenceNumber: 0,
 			validParentSummaries: undefined,
 			isCorrupt: false,
+			protocolHead: undefined,
+			checkpointTimestamp: Date.now(),
 		};
 
 		const collection = await this.databaseManager.getDocumentCollection();
@@ -243,6 +249,7 @@ export class TestDocumentStorage implements IDocumentStorage {
  * @param summaryTree - summary tree to be written to storage.
  * @param blobsShaCache - cache so that duplicate blobs are written only once.
  * @param snapshot - snapshot tree.
+ * @internal
  */
 export async function writeSummaryTree(
 	manager: IGitManager,
@@ -269,6 +276,17 @@ export async function writeSummaryTree(
 			return treeEntry;
 		}),
 	);
+
+	if (summaryTree.groupId !== undefined) {
+		const groupId = summaryTree.groupId;
+		const groupIdBlobHandle = await writeSummaryBlob(groupId, blobsShaCache, manager);
+		entries.push({
+			mode: FileMode.File,
+			path: encodeURIComponent(".groupId"),
+			sha: groupIdBlobHandle,
+			type: "blob",
+		});
+	}
 
 	const treeHandle = await manager.createGitTree({ tree: entries });
 	return treeHandle.sha;

@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Deferred } from "@fluidframework/core-utils";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
+import type * as Mocha from "mocha";
 
 // @deprecated this value is no longer used
+/**
+ * @internal
+ */
 export const defaultTimeoutDurationMs = 250;
 
 const timeBuffer = 15; // leave 15 ms leeway for finish processing
@@ -100,6 +104,9 @@ if (globalThis.getMochaModule !== undefined) {
 	};
 }
 
+/**
+ * @internal
+ */
 export interface TimeoutWithError {
 	/**
 	 * Timeout duration in milliseconds, if it is great than 0 and not Infinity
@@ -110,6 +117,9 @@ export interface TimeoutWithError {
 	reject?: true;
 	errorMsg?: string;
 }
+/**
+ * @internal
+ */
 export interface TimeoutWithValue<T = void> {
 	/**
 	 * Timeout duration in milliseconds, if it is great than 0 and not Infinity
@@ -136,6 +146,7 @@ export type PromiseExecutor<T = void> = (
  * when the promise is not fulfilled. For example, instead of rejecting the promise, resolve with a
  * specific value.
  * @returns A new promise that will complete when the given promise resolves or the timeout expires.
+ * @internal
  */
 export async function timeoutAwait<T = void>(
 	promise: PromiseLike<T>,
@@ -152,6 +163,7 @@ export async function timeoutAwait<T = void>(
  * @param timeoutOptions - Options that can be used to override the timeout and / or define the behavior when
  * the promise is not fulfilled. For example, instead of rejecting the promise, resolve with a specific value.
  * @returns A new promise that will complete when the given executor resolves or the timeout expires.
+ * @internal
  */
 export async function timeoutPromise<T = void>(
 	executor: (

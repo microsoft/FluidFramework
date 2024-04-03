@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Declaration of the PropertyTemplate module.
  * PropertyTemplate is used to describe a static property.
@@ -13,6 +14,9 @@ const deepCopy = fastestJSONCopy.copy;
 const { ConsoleUtils } = require("@fluid-experimental/property-common");
 const { MSG } = require("@fluid-experimental/property-common").constants;
 
+/**
+ * @internal
+ */
 export class PropertyTemplate {
 	/**
 	 * Constructor for creating a PropertyTemplate based on the given parameters.
@@ -331,8 +335,6 @@ export class PropertyTemplate {
 	 * @param {object} in_param - Parameter to assess
 	 *
 	 * @return {Boolean} true if in_param is a template
-	 *
-	 * @public
 	 */
 	static isTemplate(in_param) {
 		if (in_param.typeid && in_param.typeid.indexOf(":") !== -1) {
@@ -347,8 +349,6 @@ export class PropertyTemplate {
 	 * @param {object} template - Structure from which to extract dependencies
 	 *
 	 * @return {Array} List of typeids this template refers directly to
-	 *
-	 * @public
 	 */
 	static extractDependencies(template) {
 		var dependencies = {};

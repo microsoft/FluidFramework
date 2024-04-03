@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITokenProvider, ITokenResponse } from "./tokens";
+import { ITokenProvider, ITokenResponse } from "./tokens.js";
 
 /**
  * Default token provider in case the host does not provide one. It simply caches the provided jwt and returns it back.
+ * @internal
  */
 
 export class DefaultTokenProvider implements ITokenProvider {

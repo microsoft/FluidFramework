@@ -5,38 +5,37 @@
 
 import { strict as assert } from "assert";
 
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import {
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { ConfigTypes, IConfigProviderBase, IFluidHandle } from "@fluidframework/core-interfaces";
+import type { ISharedMap } from "@fluidframework/map";
+import type {
 	IDirectory,
 	IDirectoryValueChanged,
 	ISharedDirectory,
-	ISharedMap,
 	SharedDirectory,
-	SharedMap,
-} from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/map/internal";
 import {
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	ITestFluidObject,
 	ChannelFactoryRegistry,
-} from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat } from "@fluid-internal/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	getContainerEntryPointBackCompat,
+} from "@fluidframework/test-utils/internal";
 
-const directoryId = "directoryKey";
-const registry: ChannelFactoryRegistry = [[directoryId, SharedDirectory.getFactory()]];
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-};
+describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap, SharedDirectory } = apis.dds;
+	const directoryId = "directoryKey";
+	const registry: ChannelFactoryRegistry = [[directoryId, SharedDirectory.getFactory()]];
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
 
-describeFullCompat("SharedDirectory", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 	let dataObject1: ITestFluidObject;
@@ -44,20 +43,20 @@ describeFullCompat("SharedDirectory", (getTestObjectProvider) => {
 	let sharedDirectory2: ISharedDirectory;
 	let sharedDirectory3: ISharedDirectory;
 
-	beforeEach(async () => {
+	beforeEach("createContainers", async () => {
 		// Create a Container for the first client.
 		const container1 = await provider.makeTestContainer(testContainerConfig);
-		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		sharedDirectory1 = await dataObject1.getSharedObject<SharedDirectory>(directoryId);
 
 		// Load the Container that was created by the first client.
 		const container2 = await provider.loadTestContainer(testContainerConfig);
-		const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		const dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 		sharedDirectory2 = await dataObject2.getSharedObject<SharedDirectory>(directoryId);
 
 		// Load the Container that was created by the first client.
 		const container3 = await provider.loadTestContainer(testContainerConfig);
-		const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "default");
+		const dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 		sharedDirectory3 = await dataObject3.getSharedObject<SharedDirectory>(directoryId);
 
 		await provider.ensureSynchronized();
@@ -513,7 +512,7 @@ describeFullCompat("SharedDirectory", (getTestObjectProvider) => {
 			let root1SubDir;
 			let root2SubDir;
 			let root3SubDir;
-			beforeEach(async () => {
+			beforeEach("createSubdirectories", async () => {
 				sharedDirectory1.createSubDirectory("testSubDir").set("dummyKey", "dummyValue");
 
 				await provider.ensureSynchronized();
@@ -833,15 +832,23 @@ describeFullCompat("SharedDirectory", (getTestObjectProvider) => {
 	});
 });
 
-describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) => {
+describeCompat("SharedDirectory orderSequentially", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedDirectory } = apis.dds;
+	const directoryId = "directoryKey";
+	const registry: ChannelFactoryRegistry = [[directoryId, SharedDirectory.getFactory()]];
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
+
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 
 	let container: IContainer;
 	let dataObject: ITestFluidObject;
-	let sharedDir: SharedDirectory;
+	let sharedDir: ISharedDirectory;
 	let containerRuntime: ContainerRuntime;
 	let clearEventCount: number;
 	let changedEventData: IDirectoryValueChanged[];
@@ -855,7 +862,7 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
 	});
 	const errorMessage = "callback failure";
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		const configWithFeatureGates = {
 			...testContainerConfig,
 			loaderProps: {
@@ -865,7 +872,7 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
 			},
 		};
 		container = await provider.makeTestContainer(configWithFeatureGates);
-		dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+		dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 		sharedDir = await dataObject.getSharedObject<SharedDirectory>(directoryId);
 		containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
 		clearEventCount = 0;
@@ -1020,7 +1027,7 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
 		assert.notEqual(error, undefined, "No error");
 		assert.equal(error?.message, errorMessage, "Unexpected error message");
 		assert.equal(containerRuntime.disposed, false);
-		assert.equal(sharedDir.countSubDirectory(), 0);
+		assert.equal(sharedDir.countSubDirectory?.(), 0);
 		assert.equal(subDirCreatedEventData.length, 1);
 		assert.equal(subDirCreatedEventData[0], "subDirName");
 		// rollback
@@ -1049,7 +1056,7 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
 		assert.notEqual(error, undefined, "No error");
 		assert.equal(error?.message, errorMessage, "Unexpected error message");
 		assert.equal(containerRuntime.disposed, false);
-		assert.equal(sharedDir.countSubDirectory(), 1);
+		assert.equal(sharedDir.countSubDirectory?.(), 1);
 		assert.notEqual(sharedDir.getSubDirectory("subDirName"), undefined);
 		assert.equal(subDirCreatedEventData.length, 1);
 		assert.equal(subDirCreatedEventData[0], "subDirName");
@@ -1076,7 +1083,7 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
 		assert.notEqual(error, undefined, "No error");
 		assert.equal(error?.message, errorMessage, "Unexpected error message");
 		assert.equal(containerRuntime.disposed, false);
-		assert.equal(sharedDir.countSubDirectory(), 0);
+		assert.equal(sharedDir.countSubDirectory?.(), 0);
 		assert.equal(
 			subDirCreatedEventData.length,
 			2,
@@ -1120,7 +1127,7 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
 		assert.notEqual(error, undefined, "No error");
 		assert.equal(error?.message, errorMessage, "Unexpected error message");
 		assert.equal(containerRuntime.disposed, false);
-		assert.equal(sharedDir.countSubDirectory(), 1);
+		assert.equal(sharedDir.countSubDirectory?.(), 1);
 		assert.notEqual(sharedDir.getSubDirectory("subDirName"), undefined);
 		assert.equal(subDirCreatedEventData.length, 2);
 		assert.equal(subDirCreatedEventData[0], "subDirName");
@@ -1147,7 +1154,7 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
 		assert.notEqual(error, undefined, "No error");
 		assert.equal(error?.message, errorMessage, "Unexpected error message");
 		assert.equal(containerRuntime.disposed, false);
-		assert.equal(sharedDir.countSubDirectory(), 0);
+		assert.equal(sharedDir.countSubDirectory?.(), 0);
 		assert.equal(subDirDeletedEventData.length, 0);
 		// rollback
 		assert.equal(subDirCreatedEventData.length, 0);
@@ -1176,7 +1183,7 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
 		assert.notEqual(error, undefined, "No error");
 		assert.equal(error?.message, errorMessage, "Unexpected error message");
 		assert.equal(containerRuntime.disposed, false);
-		assert.equal(sharedDir.countSubDirectory(), 1);
+		assert.equal(sharedDir.countSubDirectory?.(), 1);
 		const readSubdir = sharedDir.getSubDirectory("subDirName");
 		assert.equal(readSubdir, subdir);
 		assert.equal(subdir.size, 1);
@@ -1208,4 +1215,173 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
 		assert.equal(changedEventData[1].key, "key2");
 		assert.equal(changedEventData[1].previousValue, undefined);
 	});
+
+	it("Should rollback deleted subdirectories with the original order", () => {
+		let error: Error | undefined;
+
+		sharedDir.createSubDirectory("dir2");
+		sharedDir.createSubDirectory("dir3");
+		sharedDir.createSubDirectory("dir1");
+
+		let dirNames = Array.from(sharedDir.subdirectories()).map(([dirName, _]) => dirName);
+		assert.deepStrictEqual(dirNames, ["dir2", "dir3", "dir1"]);
+
+		try {
+			containerRuntime.orderSequentially(() => {
+				sharedDir.deleteSubDirectory("dir3");
+				throw new Error("callback failure");
+			});
+		} catch (err) {
+			error = err as Error;
+		}
+
+		// rollback
+		dirNames = Array.from(sharedDir.subdirectories()).map(([dirName, _]) => dirName);
+		assert.deepStrictEqual(dirNames, ["dir2", "dir3", "dir1"]);
+	});
+
+	it("Should rollback deleted subdirectory when multiple subdirectories exist", () => {
+		let error: Error | undefined;
+
+		sharedDir.createSubDirectory("dir2");
+		sharedDir.createSubDirectory("dir3");
+		sharedDir.createSubDirectory("dir1");
+
+		try {
+			containerRuntime.orderSequentially(() => {
+				sharedDir.deleteSubDirectory("dir3");
+				throw new Error("callback failure");
+			});
+		} catch (err) {
+			error = err as Error;
+		}
+
+		assert.notEqual(error, undefined, "No error");
+		assert.equal(error?.message, errorMessage, "Unexpected error message");
+		assert.equal(containerRuntime.disposed, false);
+		// rollback
+		assert.equal(sharedDir.countSubDirectory?.(), 3);
+		assert.equal(subDirCreatedEventData.length, 4);
+		assert.deepStrictEqual(subDirCreatedEventData, ["dir2", "dir3", "dir1", "dir3"]);
+		assert.equal(subDirDeletedEventData.length, 1);
+		assert.equal(subDirDeletedEventData[0], "dir3");
+	});
 });
+
+describeCompat(
+	"SharedDirectory ordering maintenance",
+	"NoCompat",
+	(getTestObjectProvider, apis) => {
+		const { SharedDirectory } = apis.dds;
+		const directoryId = "directoryKey";
+		const registry: ChannelFactoryRegistry = [[directoryId, SharedDirectory.getFactory()]];
+		const testContainerConfig: ITestContainerConfig = {
+			fluidDataObjectType: DataObjectFactoryType.Test,
+			registry,
+		};
+
+		let provider: ITestObjectProvider;
+		beforeEach("getTestObjectProvider", () => {
+			provider = getTestObjectProvider();
+		});
+		let container1: IContainer;
+		let container2: IContainer;
+		let container3: IContainer;
+
+		let sharedDirectory1: ISharedDirectory;
+		let sharedDirectory2: ISharedDirectory;
+		let sharedDirectory3: ISharedDirectory;
+
+		beforeEach("createSharedDirectories", async () => {
+			// Create a Container for the first client.
+			container1 = await provider.makeTestContainer(testContainerConfig);
+			const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+			sharedDirectory1 = await dataObject1.getSharedObject<SharedDirectory>(directoryId);
+
+			// Load the Container that was created by the first client.
+			container2 = await provider.loadTestContainer(testContainerConfig);
+			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			sharedDirectory2 = await dataObject2.getSharedObject<SharedDirectory>(directoryId);
+
+			// Load the Container that was created by the first client.
+			container3 = await provider.loadTestContainer(testContainerConfig);
+			const dataObject3 = (await container3.getEntryPoint()) as ITestFluidObject;
+			sharedDirectory3 = await dataObject3.getSharedObject<SharedDirectory>(directoryId);
+
+			await provider.ensureSynchronized();
+		});
+
+		function expectSubdirsOrder(
+			directory: ISharedDirectory,
+			subdirsInOrder: string[],
+			path?: string,
+		) {
+			const dir = path ? directory.getWorkingDirectory(path) : directory;
+			assert(dir);
+
+			const subdirs = Array.from(dir.subdirectories()).map(([subdirName, _]) => {
+				return subdirName;
+			});
+			assert.deepEqual(
+				subdirs,
+				subdirsInOrder,
+				"Incorrect order of subdirs in the container",
+			);
+		}
+
+		function expectAllSubdirsOrder(dirsInOrder: string[], path?: string) {
+			expectSubdirsOrder(sharedDirectory1, dirsInOrder, path);
+			expectSubdirsOrder(sharedDirectory2, dirsInOrder, path);
+			expectSubdirsOrder(sharedDirectory3, dirsInOrder, path);
+		}
+
+		async function pauseAllContainers() {
+			await container1.deltaManager.inbound.pause();
+			await container2.deltaManager.inbound.pause();
+			await container3.deltaManager.inbound.pause();
+
+			await container1.deltaManager.outbound.pause();
+			await container2.deltaManager.outbound.pause();
+			await container3.deltaManager.outbound.pause();
+		}
+
+		function resumeContainer(c: IContainer) {
+			c.deltaManager.inbound.resume();
+			c.deltaManager.outbound.resume();
+		}
+
+		/**
+		 * Wait for the message sent by the current container to be sequenced.
+		 */
+		async function waitForContainerSave(c: IContainer) {
+			if (!c.isDirty) {
+				return;
+			}
+			await new Promise<void>((resolve) => c.once("saved", () => resolve()));
+		}
+
+		it("Eventual consistency in ordering with subdirectories creation/deletion", async () => {
+			// Pause to not allow ops to be processed while we maintained them in order.
+			await pauseAllContainers();
+
+			resumeContainer(container1);
+			sharedDirectory1.createSubDirectory("dir2");
+			await waitForContainerSave(container1);
+
+			resumeContainer(container2);
+			sharedDirectory2.createSubDirectory("dir1");
+			sharedDirectory2.createSubDirectory("dir2");
+			await waitForContainerSave(container2);
+
+			resumeContainer(container3);
+			sharedDirectory3.createSubDirectory("dir3");
+			sharedDirectory3.createSubDirectory("dir2");
+			await waitForContainerSave(container3);
+
+			await provider.opProcessingController.processIncoming();
+			await provider.ensureSynchronized();
+
+			expectAllSubdirsOrder(["dir2", "dir1", "dir3"]);
+		});
+	},
+);

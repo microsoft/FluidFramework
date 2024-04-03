@@ -10,6 +10,7 @@
  */
 
 import base64js from "base64-js";
+
 import { generateRandomUInt32Array } from "../platform-dependent";
 const UINT_32HASH_PRIME = 16777619;
 
@@ -326,6 +327,9 @@ const initializeGUIDGenerator = (...args) => {
 	guidRNG.initialize(...args);
 };
 
+/**
+ * @internal
+ */
 export const GuidUtils = {
 	uint32x4ToGUID,
 	guidToUint32x4,

@@ -15,22 +15,26 @@ import {
 	IRunner,
 	IRunnerFactory,
 	IWebServerFactory,
-	ICollection,
 } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import * as Redis from "ioredis";
 import { RedisCache } from "@fluidframework/server-services";
+import { RedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import { RiddlerRunner } from "./runner";
 import { ITenantDocument } from "./tenantManager";
+import { IRiddlerResourcesCustomizations } from "./customizations";
+import { ITenantRepository, MongoTenantRepository } from "./mongoTenantRepository";
 
+/**
+ * @internal
+ */
 export class RiddlerResources implements IResources {
 	public webServerFactory: IWebServerFactory;
 
 	constructor(
 		public readonly config: Provider,
-		public readonly tenantsCollection: ICollection<ITenantDocument>,
+		public readonly tenantRepository: ITenantRepository,
 		public readonly tenantsCollectionName: string,
 		public readonly mongoManager: MongoManager,
 		public readonly port: any,
@@ -58,41 +62,41 @@ export class RiddlerResources implements IResources {
 	}
 }
 
+/**
+ * @internal
+ */
 export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResources> {
-	public async create(config: Provider): Promise<RiddlerResources> {
+	public async create(
+		config: Provider,
+		customizations?: IRiddlerResourcesCustomizations,
+	): Promise<RiddlerResources> {
 		// Cache connection
 		const redisConfig = config.get("redisForTenantCache");
 		let cache: RedisCache;
 		if (redisConfig) {
-			const redisOptions: Redis.RedisOptions = {
-				host: redisConfig.host,
-				port: redisConfig.port,
-				password: redisConfig.pass,
-				connectTimeout: redisConfig.connectTimeout,
-				enableReadyCheck: true,
-				maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
-				enableOfflineQueue: redisConfig.enableOfflineQueue,
-			};
-			if (redisConfig.enableAutoPipelining) {
-				/**
-				 * When enabled, all commands issued during an event loop iteration are automatically wrapped in a
-				 * pipeline and sent to the server at the same time. This can improve performance by 30-50%.
-				 * More info: https://github.com/luin/ioredis#autopipelining
-				 */
-				redisOptions.enableAutoPipelining = true;
-				redisOptions.autoPipeliningIgnoredCommands = ["ping"];
-			}
-			if (redisConfig.tls) {
-				redisOptions.tls = {
-					servername: redisConfig.host,
-				};
-			}
 			const redisParams = {
 				expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
 			};
-			const redisClient = new Redis.default(redisOptions);
 
-			cache = new RedisCache(redisClient, redisParams);
+			const retryDelays = {
+				retryDelayOnFailover: 100,
+				retryDelayOnClusterDown: 100,
+				retryDelayOnTryAgain: 100,
+				retryDelayOnMoved: redisConfig.retryDelayOnMoved ?? 100,
+				maxRedirections: redisConfig.maxRedirections ?? 16,
+			};
+
+			const redisClientConnectionManagerForTenantCache =
+				customizations?.redisClientConnectionManagerForTenantCache
+					? customizations.redisClientConnectionManagerForTenantCache
+					: new RedisClientConnectionManager(
+							undefined,
+							redisConfig,
+							redisConfig.enableClustering,
+							redisConfig.slotsRefreshTimeout,
+							retryDelays,
+					  );
+			cache = new RedisCache(redisClientConnectionManagerForTenantCache, redisParams);
 		}
 		// Database connection
 		const factory = await services.getDbFactory(config);
@@ -113,6 +117,8 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 		const db: IDb = await mongoManager.getDatabase();
 
 		const collection = db.collection<ITenantDocument>(tenantsCollectionName);
+		const tenantRepository =
+			customizations?.tenantRepository ?? new MongoTenantRepository(collection);
 		const tenants = config.get("tenantConfig") as any[];
 		const upsertP = tenants.map(async (tenant) => {
 			tenant.key = secretManager.encryptSecret(tenant.key);
@@ -155,7 +161,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 
 		return new RiddlerResources(
 			config,
-			collection,
+			tenantRepository,
 			tenantsCollectionName,
 			mongoManager,
 			port,
@@ -171,11 +177,14 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 	}
 }
 
+/**
+ * @internal
+ */
 export class RiddlerRunnerFactory implements IRunnerFactory<RiddlerResources> {
 	public async create(resources: RiddlerResources): Promise<IRunner> {
 		return new RiddlerRunner(
 			resources.webServerFactory,
-			resources.tenantsCollection,
+			resources.tenantRepository,
 			resources.port,
 			resources.loggerFormat,
 			resources.baseOrdererUrl,

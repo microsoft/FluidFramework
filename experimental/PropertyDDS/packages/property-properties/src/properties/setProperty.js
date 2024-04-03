@@ -10,6 +10,7 @@
 const { PathHelper, TypeIdHelper } = require("@fluid-experimental/property-changeset");
 const { MSG } = require("@fluid-experimental/property-common").constants;
 const _ = require("lodash");
+
 const { AbstractStaticCollectionProperty } = require("./abstractStaticCollectionProperty");
 const { BaseProperty } = require("./baseProperty");
 const { IndexedCollectionBaseProperty } = require("./indexedCollectionBaseProperty");
@@ -20,6 +21,7 @@ var PATH_TOKENS = BaseProperty.PATH_TOKENS;
 /**
  * A SetProperty is a collection class that can contain an unordered set of properties. These properties
  * must derive from NamedProperty and their URN is used to identify them within the set.
+ * @internal
  */
 export class SetProperty extends IndexedCollectionBaseProperty {
 	/**

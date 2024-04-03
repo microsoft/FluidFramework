@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
 	ISnapshotTree,
 	ISummaryHandle,
@@ -15,8 +16,14 @@ import {
  *
  */
 
+/**
+ * @internal
+ */
 export type IWholeSummaryPayloadType = "container" | "channel";
 
+/**
+ * @internal
+ */
 export interface IWholeSummaryPayload {
 	type: IWholeSummaryPayloadType;
 	message: string;
@@ -24,47 +31,80 @@ export interface IWholeSummaryPayload {
 	entries: WholeSummaryTreeEntry[];
 }
 
+/**
+ * @internal
+ */
 export interface IWriteSummaryResponse {
 	id: string;
 }
 
+/**
+ * @internal
+ */
 export type WholeSummaryTreeEntry = IWholeSummaryTreeValueEntry | IWholeSummaryTreeHandleEntry;
 
+/**
+ * @internal
+ */
 export interface IWholeSummaryTreeBaseEntry {
 	path: string;
 	type: "blob" | "tree" | "commit";
 }
 
+/**
+ * @internal
+ */
 export interface IWholeSummaryTreeValueEntry extends IWholeSummaryTreeBaseEntry {
 	value: WholeSummaryTreeValue;
 	// Indicates that this tree entry is unreferenced. If this is not present, the tree entry is considered referenced.
 	unreferenced?: true;
 }
 
+/**
+ * @internal
+ */
 export interface IWholeSummaryTreeHandleEntry extends IWholeSummaryTreeBaseEntry {
 	id: string;
 }
 
+/**
+ * @internal
+ */
 export type WholeSummaryTreeValue = IWholeSummaryTree | IWholeSummaryBlob;
 
+/**
+ * @internal
+ */
 export interface IWholeSummaryTree {
 	type: "tree";
 	entries?: WholeSummaryTreeEntry[];
 }
 
+/**
+ * @internal
+ */
 export interface IWholeSummaryBlob {
 	type: "blob";
 	content: string;
 	encoding: "base64" | "utf-8";
 }
 
+/**
+ * @internal
+ */
 export interface IEmbeddedSummaryHandle extends ISummaryHandle {
 	// Indicates that the handle belongs to the same version of summary
 	embedded: boolean;
 }
 
+/**
+ * @internal
+ */
 export type ExtendedSummaryObject = SummaryObject | IEmbeddedSummaryHandle;
 
+/**
+ * @internal
+ */
 export interface ISummaryTree extends BaseSummaryTree {
 	tree: { [path: string]: ExtendedSummaryObject };
 }
@@ -75,6 +115,9 @@ export interface ISummaryTree extends BaseSummaryTree {
  *
  */
 
+/**
+ * @internal
+ */
 export interface IWholeFlatSummaryTreeEntryTree {
 	path: string;
 	type: "tree";
@@ -82,22 +125,34 @@ export interface IWholeFlatSummaryTreeEntryTree {
 	unreferenced?: true;
 }
 
+/**
+ * @internal
+ */
 export interface IWholeFlatSummaryTreeEntryBlob {
 	id: string;
 	path: string;
 	type: "blob";
 }
 
+/**
+ * @internal
+ */
 export type IWholeFlatSummaryTreeEntry =
 	| IWholeFlatSummaryTreeEntryTree
 	| IWholeFlatSummaryTreeEntryBlob;
 
+/**
+ * @internal
+ */
 export interface IWholeFlatSummaryTree {
 	entries: IWholeFlatSummaryTreeEntry[];
 	id: string;
 	sequenceNumber: number;
 }
 
+/**
+ * @internal
+ */
 export interface IWholeFlatSummaryBlob {
 	content: string;
 	encoding: "base64" | "utf-8";
@@ -105,6 +160,9 @@ export interface IWholeFlatSummaryBlob {
 	size: number;
 }
 
+/**
+ * @internal
+ */
 export interface IWholeFlatSummary {
 	// The same as the id of the first snapshot tree in the trees array.
 	id: string;
@@ -115,6 +173,7 @@ export interface IWholeFlatSummary {
 
 /**
  * Normalized Whole Summary with decoded blobs and unflattened snapshot tree.
+ * @internal
  */
 export interface INormalizedWholeSummary {
 	blobs: Map<string, ArrayBuffer>;

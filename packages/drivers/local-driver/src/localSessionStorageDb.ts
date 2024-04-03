@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { EventEmitter } from "events";
+
+import { EventEmitter } from "@fluid-internal/client-utils";
 import { ICollection, IDb } from "@fluidframework/server-services-core";
 import { ITestDbFactory } from "@fluidframework/server-test-utils";
 import { v4 as uuid } from "uuid";
@@ -310,6 +311,7 @@ class LocalSessionStorageDb extends EventEmitter implements IDb {
 
 /**
  * A database factory for testing that stores data in the browsers session storage
+ * @internal
  */
 export class LocalSessionStorageDbFactory implements ITestDbFactory {
 	public readonly testDatabase: IDb = new LocalSessionStorageDb();

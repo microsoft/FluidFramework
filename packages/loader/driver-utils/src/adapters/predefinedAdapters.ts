@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+
 import {
+	DefaultCompressionStorageConfig,
 	DocumentServiceFactoryCompressionAdapter,
 	ICompressionStorageConfig,
-	DefaultCompressionStorageConfig,
-} from "./compression";
+} from "./compression/index.js";
 
 /**
  * This method optionally applies compression to the given document service factory. The compression
@@ -17,6 +18,7 @@ import {
  * @param documentServiceFactory - The document service factory to apply compression to.
  * @param config - The compression configuration.
  * @returns The document service factory possibly with compression applied.
+ * @internal
  */
 export function applyStorageCompression(
 	documentServiceFactory: IDocumentServiceFactory,

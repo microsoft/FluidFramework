@@ -5,9 +5,9 @@
 
 /* eslint-disable no-bitwise */
 
-import * as distribution from "./distributions";
-import { IRandom } from "./types";
-import { XSadd } from "./xsadd";
+import * as distribution from "./distributions/index.js";
+import { IRandom } from "./types.js";
+import { XSadd } from "./xsadd.js";
 
 // The base58 alphabet contains upper and lower case Latin letters and Arabic numerals,
 // excluding 0 (zero) / O (capital O) and l (lowercase L) / I (uppercase I) for improved
@@ -42,6 +42,8 @@ export function makeUuid4(u32_0: number, u32_1: number, u32_2: number, u32_3: nu
 /**
  * Construct a new IRandom instance, optionally seeding it with up to four 32b integers.
  * If no seeds are provided, the PRNG is non-deterministically seeded using Math.random().
+ *
+ * @internal
  */
 export function makeRandom(
 	...seed:

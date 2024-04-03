@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-
 import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
+import React from "react";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.css";
@@ -15,6 +14,10 @@ interface ISliderCoordinateViewProps {
 	model: ICoordinate;
 }
 
+// eslint-disable-next-line jsdoc/require-description
+/**
+ * @internal
+ */
 export const SliderCoordinateView: React.FC<ISliderCoordinateViewProps> = (
 	props: ISliderCoordinateViewProps,
 ) => {

@@ -4,10 +4,13 @@
  */
 
 import * as fs from "fs";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import { CSVFileLogger } from "./csvFileLogger";
-import { IFileLogger, ITelemetryOptions, OutputFormat } from "./fileLogger";
-import { JSONFileLogger } from "./jsonFileLogger";
+
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+
+import { CSVFileLogger } from "./csvFileLogger.js";
+import { IFileLogger, ITelemetryOptions, OutputFormat } from "./fileLogger.js";
+import { JSONFileLogger } from "./jsonFileLogger.js";
 
 /**
  * Create an {@link @fluidframework/telemetry-utils#ITelemetryLoggerExt} wrapped around provided {@link IFileLogger}.
@@ -21,6 +24,7 @@ import { JSONFileLogger } from "./jsonFileLogger";
  * Note: if an output format is not supplied, default is JSON.
  *
  * @returns Both the `IFileLogger` implementation and `ITelemetryLoggerExt` wrapper to be called.
+ * @internal
  */
 export function createLogger(
 	filePath: string,
@@ -45,6 +49,7 @@ export function createLogger(
 /**
  * Validate the telemetryFile command line argument
  * @param telemetryFile - path where telemetry will be written
+ * @internal
  */
 export function getTelemetryFileValidationError(telemetryFile: string): string | undefined {
 	if (!telemetryFile) {
@@ -60,6 +65,7 @@ export function getTelemetryFileValidationError(telemetryFile: string): string |
  * Validate the provided output format and default properties
  * @param format - desired output format of the telemetry
  * @param props - default properties to be added to every telemetry entry
+ * @internal
  */
 export function validateAndParseTelemetryOptions(
 	format?: string,

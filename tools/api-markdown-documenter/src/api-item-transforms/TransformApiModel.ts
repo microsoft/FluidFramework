@@ -2,17 +2,23 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ApiEntryPoint, ApiItem, ApiModel, ApiPackage } from "@microsoft/api-extractor-model";
 
-import { DocumentNode, SectionNode } from "../documentation-domain";
-import { createDocument } from "./Utilities";
 import {
-	ApiItemTransformationConfiguration,
+	type ApiEntryPoint,
+	type ApiItem,
+	type ApiModel,
+	type ApiPackage,
+} from "@microsoft/api-extractor-model";
+
+import { type DocumentNode, type SectionNode } from "../documentation-domain/index.js";
+import { createDocument } from "./Utilities.js";
+import {
+	type ApiItemTransformationConfiguration,
 	getApiItemTransformationConfigurationWithDefaults,
-} from "./configuration";
-import { doesItemRequireOwnDocument } from "./ApiItemTransformUtilities";
-import { createBreadcrumbParagraph, createEntryPointList, wrapInSection } from "./helpers";
-import { apiItemToDocument, apiItemToSections } from "./TransformApiItem";
+} from "./configuration/index.js";
+import { doesItemRequireOwnDocument, shouldItemBeIncluded } from "./ApiItemTransformUtilities.js";
+import { createBreadcrumbParagraph, createEntryPointList, wrapInSection } from "./helpers/index.js";
+import { apiItemToDocument, apiItemToSections } from "./TransformApiItem.js";
 
 /**
  * Renders the provided model and its contents to a series of {@link DocumentNode}s.
@@ -140,7 +146,10 @@ function getDocumentItems(
 
 	const result: ApiItem[] = [];
 	for (const childItem of apiItem.members) {
-		if (doesItemRequireOwnDocument(childItem, documentBoundaries)) {
+		if (
+			shouldItemBeIncluded(childItem, config) &&
+			doesItemRequireOwnDocument(childItem, documentBoundaries)
+		) {
 			result.push(childItem);
 		}
 		result.push(...getDocumentItems(childItem, config));

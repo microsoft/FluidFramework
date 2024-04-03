@@ -34,6 +34,9 @@ import { ICollection, IDb } from "@fluidframework/server-services-core";
 import { v4 as uuid } from "uuid";
 import { TestDb } from "./testCollection";
 
+/**
+ * @internal
+ */
 export class TestHistorian implements IHistorian {
 	public readonly endpoint = "";
 
@@ -100,7 +103,13 @@ export class TestHistorian implements IHistorian {
 	}
 
 	public async getBlob(sha: string): Promise<IBlob> {
+		// TestCollection.findOneInternal() will return whole collection and first element will be retured!
+		// So better throw here to avoid running into hard to debug issues.
+		if (sha === undefined) {
+			throw new Error("blob ID is undefined");
+		}
 		const blob = await this.blobs.findOne({ _id: sha });
+
 		return {
 			content: IsoBuffer.from(
 				blob.content ?? blob.value?.content,

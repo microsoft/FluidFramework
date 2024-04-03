@@ -3,13 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDisposable } from "@fluidframework/core-interfaces";
+import { delay } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentDeltaConnection,
-	IDocumentDeltaStorageService,
 	IDocumentDeltaConnectionEvents,
+	IDocumentDeltaStorageService,
 	IDocumentService,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	ConnectionMode,
 	IClientConfiguration,
@@ -22,9 +24,8 @@ import {
 	IVersion,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { delay } from "@fluidframework/core-utils";
-import { ReplayController } from "./replayController";
+
+import { ReplayController } from "./replayController.js";
 
 const ReplayDocumentId = "documentId";
 

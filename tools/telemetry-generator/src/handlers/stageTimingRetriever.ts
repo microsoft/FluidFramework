@@ -38,7 +38,9 @@ module.exports = function handler(fileData, logger) {
 				finishTime && startTime ? Math.abs(finishTime - startTime) / 1000 : undefined; // diff in seconds
 			console.log(`Name=${job.name}`);
 			return {
-				stageName: job.name,
+				// Using the 'identifier' property because that's the one available in the API response for test results,
+				// and we want the values to be consistent so we can correlate them later.
+				stageName: job.identifier,
 				startTime,
 				finishTime,
 				totalTime: dateDiff,
@@ -52,7 +54,9 @@ module.exports = function handler(fileData, logger) {
 		if (job.stageName === "runAfterAll") {
 			continue;
 		}
+
 		logger.send({
+			namespace: "FFEngineering", // Transfer the telemetry associated with pipeline status to namespace "FFEngineering".
 			category: "performance",
 			eventName: "StageTiming",
 			benchmarkType: "PipelineInfo",

@@ -5,6 +5,7 @@
 
 /**
  * Represents the details associated with a {@link NetworkError}.
+ * @internal
  */
 export interface INetworkErrorDetails {
 	/**
@@ -32,6 +33,11 @@ export interface INetworkErrorDetails {
 	 * Refer to {@link NetworkError.retryAfterMs}.
 	 */
 	retryAfterMs?: number;
+	/**
+	 * Indicates the source where the network error is triggered from. It can contain a message or a stack trace.
+	 * Refer to {@link NetworkError.source}.
+	 */
+	source?: string;
 }
 
 /**
@@ -42,12 +48,12 @@ export interface INetworkErrorDetails {
  * over the network. Network communication is subject to a diverse range of errors. {@link NetworkError} helps
  * convey more information than a simple HTTP status code, allowing services to be aware of the context of a
  * network error and making those services more prepared to react to such kinds of errors.
+ * @internal
  */
 export class NetworkError extends Error {
 	/**
 	 * Value representing the time in seconds that should be waited before retrying.
 	 * TODO: remove in favor of retryAfterMs once driver supports retryAfterMs.
-	 * @public
 	 */
 	public readonly retryAfter: number;
 
@@ -79,6 +85,11 @@ export class NetworkError extends Error {
 		 * @public
 		 */
 		public readonly retryAfterMs?: number,
+		/**
+		 * Optional value indicating the source where the network error is triggered from. It can contain a message or a stack trace.
+		 * @public
+		 */
+		public readonly source?: string,
 	) {
 		super(message);
 		this.name = "NetworkError";
@@ -89,13 +100,13 @@ export class NetworkError extends Error {
 	 * Gets the details associated with this {@link NetworkError}.
 	 * @returns A simple string conveying the message if no other details are included in this {@link NetworkError},
 	 * or an {@link INetworkErrorDetails} object otherwise.
-	 * @public
 	 */
 	public get details(): INetworkErrorDetails | string {
 		if (
 			this.canRetry === undefined &&
 			this.isFatal === undefined &&
-			this.retryAfterMs === undefined
+			this.retryAfterMs === undefined &&
+			this.source === undefined
 		) {
 			return this.message;
 		}
@@ -106,12 +117,12 @@ export class NetworkError extends Error {
 			isFatal: this.isFatal,
 			retryAfter: this.retryAfter,
 			retryAfterMs: this.retryAfterMs,
+			source: this.source,
 		};
 	}
 
 	/**
 	 * Explicitly define how to serialize as JSON so that socket.io can emit relevant info.
-	 * @public
 	 */
 	public toJSON(): INetworkErrorDetails & { code: number } {
 		return {
@@ -121,10 +132,14 @@ export class NetworkError extends Error {
 			isFatal: this.isFatal,
 			retryAfterMs: this.retryAfterMs,
 			retryAfter: this.retryAfter,
+			source: this.source,
 		};
 	}
 }
 
+/**
+ * @internal
+ */
 export function isNetworkError(error: unknown): error is NetworkError {
 	return (
 		(error as NetworkError).name === "NetworkError" &&
@@ -142,7 +157,7 @@ export function isNetworkError(error: unknown): error is NetworkError {
  * @param errorData - Optional additional data associated with the error. Can either be a simple string representing
  * the message, or an {@link INetworkErrorDetails} object.
  * @returns A {@link NetworkError} instance properly configured according to the parameters provided.
- * @public
+ * @internal
  */
 export function createFluidServiceNetworkError(
 	statusCode: number,
@@ -152,12 +167,14 @@ export function createFluidServiceNetworkError(
 	let canRetry: boolean | undefined;
 	let isFatal: boolean | undefined;
 	let retryAfter: number | undefined;
+	let source: string | undefined;
 
 	if (errorData && typeof errorData === "object") {
 		message = errorData.message ?? "Unknown Error";
 		canRetry = errorData.canRetry;
 		isFatal = errorData.isFatal;
 		retryAfter = errorData.retryAfter;
+		source = errorData.source;
 	} else if (errorData && typeof errorData === "string") {
 		message = errorData;
 	} else {
@@ -168,7 +185,14 @@ export function createFluidServiceNetworkError(
 		case 401:
 		case 403:
 		case 404:
-			return new NetworkError(statusCode, message, false /* canRetry */, false); /* isFatal */
+			return new NetworkError(
+				statusCode,
+				message,
+				false /* canRetry */,
+				false /* isFatal */,
+				undefined /* retryAfterMs */,
+				source,
+			);
 		case 413:
 		case 422:
 			return new NetworkError(
@@ -177,6 +201,7 @@ export function createFluidServiceNetworkError(
 				canRetry ?? false /* canRetry */,
 				isFatal ?? false /* isFatal */,
 				canRetry ? retryAfter : undefined,
+				source,
 			);
 		case 429:
 			return new NetworkError(
@@ -185,6 +210,7 @@ export function createFluidServiceNetworkError(
 				true /* canRetry */,
 				false /* isFatal */,
 				retryAfter,
+				source,
 			);
 		case 500: {
 			return new NetworkError(
@@ -193,6 +219,7 @@ export function createFluidServiceNetworkError(
 				canRetry ?? true /* canRetry */,
 				isFatal ?? false /* isFatal */,
 				canRetry ? retryAfter : undefined,
+				source,
 			);
 		}
 		case 502:
@@ -204,9 +231,17 @@ export function createFluidServiceNetworkError(
 				true /* canRetry */,
 				false /* isFatal */,
 				retryAfter,
+				source,
 			);
 		default:
-			return new NetworkError(statusCode, message, false /* canRetry */, true); /* isFatal */
+			return new NetworkError(
+				statusCode,
+				message,
+				false /* canRetry */,
+				true /* isFatal */,
+				undefined /* retryAfterMs */,
+				source,
+			);
 	}
 }
 
@@ -218,7 +253,7 @@ export function createFluidServiceNetworkError(
  * @param statusCode - HTTP status code that describes the error.
  * @param errorData - Optional additional data associated with the error. Can either be a simple string representing
  * the message, or an {@link INetworkErrorDetails} object.
- * @public
+ * @internal
  */
 export function throwFluidServiceNetworkError(
 	statusCode: number,

@@ -2,12 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Definition of the reference map property class
  */
 const { PathHelper, TypeIdHelper } = require("@fluid-experimental/property-changeset");
 const { MSG } = require("@fluid-experimental/property-common").constants;
 const _ = require("lodash");
+
 const { BaseProperty } = require("./baseProperty");
 const { ContainerProperty } = require("./containerProperty");
 const { ReferenceProperty } = require("./referenceProperty");
@@ -15,6 +17,7 @@ const { StringMapProperty } = require("./valueMapProperty");
 
 /**
  * A StringMapProperty which stores reference values
+ * @internal
  */
 export class ReferenceMapProperty extends StringMapProperty {
 	/**

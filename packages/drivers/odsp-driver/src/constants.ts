@@ -4,11 +4,11 @@
  */
 
 /**
- * @public
+ * @alpha
  */
 export const OdcApiSiteOrigin = "https://my.microsoftpersonalcontent.com";
 
 /**
- * @public
+ * @alpha
  */
 export const OdcFileSiteOrigin = "https://1drv.ms";
