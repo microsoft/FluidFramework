@@ -4,15 +4,17 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
-	createWeightedGenerator,
 	Generator,
 	IRandom,
+	createWeightedGenerator,
 	makeRandom,
 	performFuzzActions,
 	take,
 } from "@fluid-private/stochastic-test-utils";
-import { AttributionKey } from "@fluidframework/runtime-definitions";
+import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
+
 import {
 	AttributionCollection,
 	SerializedAttributionCollection,

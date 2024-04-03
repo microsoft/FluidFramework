@@ -4,8 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { unreachableCase } from "@fluidframework/core-utils";
+
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+
 import { ParallelRequests } from "../parallelRequests.js";
 
 enum HowMany {

@@ -13,7 +13,7 @@ export {
 	getHeadingForApiItem,
 	getLinkForApiItem,
 	shouldItemBeIncluded,
-} from "./ApiItemTransformUtilities";
+} from "./ApiItemTransformUtilities.js";
 export {
 	type ApiItemTransformationConfiguration,
 	type ApiItemTransformationOptions,
@@ -24,7 +24,7 @@ export {
 	type HierarchyBoundaries,
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,
-} from "./configuration";
+} from "./configuration/index.js";
 export {
 	createBreadcrumbParagraph,
 	createDeprecationNoticeSection,
@@ -37,7 +37,7 @@ export {
 	createSummaryParagraph,
 	createThrowsSection,
 	createTypeParametersSection,
-} from "./helpers";
-export { transformTsdocNode } from "./TsdocNodeTransforms";
-export { apiItemToDocument, apiItemToSections } from "./TransformApiItem";
-export { transformApiModel } from "./TransformApiModel";
+} from "./helpers/index.js";
+export { transformTsdocNode } from "./TsdocNodeTransforms.js";
+export { apiItemToDocument, apiItemToSections } from "./TransformApiItem.js";
+export { transformApiModel } from "./TransformApiModel.js";

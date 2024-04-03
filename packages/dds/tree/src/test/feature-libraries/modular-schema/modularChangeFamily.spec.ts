@@ -4,10 +4,12 @@
  */
 
 import { strict as assert } from "assert";
+
 import { SessionId } from "@fluidframework/id-compressor";
+
+import { ICodecOptions } from "../../../codec/index.js";
 import {
 	FieldChangeHandler,
-	Multiplicity,
 	genericFieldKind,
 	FieldChange,
 	ModularChangeset,
@@ -21,6 +23,11 @@ import {
 	makeFieldBatchCodec,
 	GenericChangeset,
 	NodeId,
+	FieldKindConfiguration,
+	FieldKindConfigurationEntry,
+	makeModularChangeCodecFamily,
+	ModularChangeFamily,
+	EncodedModularChangeset,
 } from "../../../feature-libraries/index.js";
 import {
 	makeAnonChange,
@@ -39,6 +46,7 @@ import {
 	ChangeEncodingContext,
 	ChangeAtomIdMap,
 	taggedAtomId,
+	Multiplicity,
 } from "../../../core/index.js";
 import {
 	brand,
@@ -47,7 +55,6 @@ import {
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../../util/index.js";
-import { ICodecOptions } from "../../../codec/index.js";
 import {
 	EncodingTestData,
 	assertDeltaEqual,
@@ -57,25 +64,27 @@ import {
 	testChangeReceiver,
 	testRevisionTagCodec,
 } from "../../utils.js";
-import {
-	ModularChangeFamily,
-	relevantRemovedRoots as relevantDetachedTreesImplementation,
-	intoDelta,
-	updateRefreshers,
-	getFieldKind,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-import { jsonObject, singleJsonCursor } from "../../../domains/index.js";
-// Allows typechecking test data used in modulaChangeFamily's codecs.
-// eslint-disable-next-line import/no-internal-modules
-import { EncodedModularChangeset } from "../../../feature-libraries/modular-schema/modularChangeFormat.js";
+
+import { ValueChangeset, valueField } from "./basicRebasers.js";
 import { ajvValidator } from "../../codec/index.js";
+import { jsonObject, singleJsonCursor } from "../../../domains/index.js";
 import {
 	FieldChangeMap,
 	NodeChangeset,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
-import { ValueChangeset, valueField } from "./basicRebasers.js";
+import {
+	getFieldKind,
+	intoDelta,
+	updateRefreshers,
+	relevantRemovedRoots as relevantDetachedTreesImplementation,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+
+export const fieldKindConfiguration: FieldKindConfiguration = new Map<
+	FieldKindIdentifier,
+	FieldKindConfigurationEntry
+>([[valueField.identifier, { kind: valueField, formatVersion: 0 }]]);
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
 	[valueField].map((field) => [field.identifier, field]),
@@ -84,12 +93,14 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Ma
 const codecOptions: ICodecOptions = {
 	jsonValidator: ajvValidator,
 };
-const family = new ModularChangeFamily(
-	fieldKinds,
+
+const codec = makeModularChangeCodecFamily(
+	new Map([[0, fieldKindConfiguration]]),
 	testRevisionTagCodec,
-	makeFieldBatchCodec(codecOptions),
+	makeFieldBatchCodec(codecOptions, 1),
 	codecOptions,
 );
+const family = new ModularChangeFamily(fieldKinds, codec);
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
@@ -1412,6 +1423,35 @@ describe("ModularChangeFamily", () => {
 				assert.throws(() =>
 					updateRefreshers(makeAnonChange(input), getDetachedNode, [{ minor: 2 }]),
 				);
+			});
+		});
+
+		describe("handles implicit and explicit build revision representations", () => {
+			it("explicit builds", () => {
+				const explicitBuild: ModularChangeset = {
+					nodeChanges: new Map(),
+					fieldChanges: new Map([]),
+					builds: new Map([[tag1, new Map([[brand(1), node1Chunk]])]]),
+				};
+				const withBuilds = updateRefreshers(
+					makeAnonChange(explicitBuild),
+					getDetachedNode,
+					[{ major: tag1, minor: 1 }],
+				);
+				assert.deepEqual(withBuilds, explicitBuild);
+			});
+			it("implicit builds", () => {
+				const implicitBuild: ModularChangeset = {
+					nodeChanges: new Map(),
+					fieldChanges: new Map([]),
+					builds: new Map([[undefined, new Map([[brand(1), node1Chunk]])]]),
+				};
+				const withBuilds = updateRefreshers(
+					tagChange(implicitBuild, tag1),
+					getDetachedNode,
+					[{ major: tag1, minor: 1 }],
+				);
+				assert.deepEqual(withBuilds, implicitBuild);
 			});
 		});
 	});

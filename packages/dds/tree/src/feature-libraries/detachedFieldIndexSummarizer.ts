@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { bufferToString } from "@fluid-internal/client-utils";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
-import { IChannelStorageService } from "@fluidframework/datastore-definitions";
-import { bufferToString } from "@fluid-internal/client-utils";
+import { createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+
 import { DetachedFieldIndex } from "../core/index.js";
 import {
 	Summarizable,

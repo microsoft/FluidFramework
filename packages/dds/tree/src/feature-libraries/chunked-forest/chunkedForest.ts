@@ -3,35 +3,37 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
-	ITreeSubscriptionCursor,
+	Anchor,
+	AnchorSet,
+	DeltaVisitor,
+	DetachedField,
+	FieldAnchor,
+	FieldKey,
+	ForestEvents,
 	IEditableForest,
+	ITreeCursorSynchronous,
+	ITreeSubscriptionCursor,
+	ITreeSubscriptionCursorState,
+	PlaceIndex,
+	ProtoNodes,
+	Range,
 	TreeNavigationResult,
 	TreeStoredSchemaSubscription,
-	FieldKey,
-	DetachedField,
-	AnchorSet,
-	detachedFieldAsKey,
 	UpPath,
-	Anchor,
-	FieldAnchor,
-	ForestEvents,
-	ITreeSubscriptionCursorState,
-	rootFieldKey,
-	mapCursorField,
-	DeltaVisitor,
-	PlaceIndex,
-	Range,
-	ITreeCursorSynchronous,
 	aboveRootPlaceholder,
-	ProtoNodes,
+	detachedFieldAsKey,
+	mapCursorField,
+	rootFieldKey,
 } from "../../core/index.js";
-import { assertValidRange, brand, fail, getOrAddEmptyToMap } from "../../util/index.js";
 import { createEmitter } from "../../events/index.js";
+import { assertValidRange, brand, fail, getOrAddEmptyToMap } from "../../util/index.js";
+
 import { BasicChunk, BasicChunkCursor, SiblingsOrKey } from "./basicChunk.js";
-import { basicChunkTree, chunkTree, IChunker } from "./chunkTree.js";
 import { ChunkedCursor, TreeChunk } from "./chunk.js";
+import { IChunker, basicChunkTree, chunkTree } from "./chunkTree.js";
 
 function makeRoot(): BasicChunk {
 	return new BasicChunk(aboveRootPlaceholder, new Map());
@@ -122,6 +124,7 @@ export class ChunkedForest implements IEditableForest {
 			create(content: ProtoNodes, destination: FieldKey): void {
 				const chunks: TreeChunk[] = content.map((c) => chunkTree(c, this.forest.chunker));
 				this.forest.roots.fields.set(destination, chunks);
+				this.forest.events.emit("afterRootFieldCreated", destination);
 			},
 			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
 				this.attachEdit(source, count, destination);

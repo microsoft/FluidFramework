@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { IsoBuffer } from "@fluid-internal/client-utils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import { IChannel, IChannelFactory } from "@fluidframework/datastore-definitions";
+import { SessionId } from "@fluidframework/id-compressor";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { IChannel, IChannelFactory } from "@fluidframework/datastore-definitions";
-import { IsoBuffer } from "@fluid-internal/client-utils";
-import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
+} from "@fluidframework/test-runtime-utils/internal";
 
 export function create(factory: IChannelFactory) {
 	const runtimeFactory = new MockContainerRuntimeFactory();

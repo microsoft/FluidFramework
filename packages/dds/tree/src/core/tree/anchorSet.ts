@@ -3,32 +3,34 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { createEmitter, ISubscribable } from "../../events/index.js";
+import { assert } from "@fluidframework/core-utils/internal";
+
+import { ISubscribable, createEmitter } from "../../events/index.js";
 import {
-	brand,
 	Brand,
-	fail,
-	Opaque,
-	ReferenceCountedBase,
 	BrandedKey,
 	BrandedMapSubset,
+	Opaque,
+	ReferenceCountedBase,
+	brand,
 	brandedSlot,
+	fail,
 } from "../../util/index.js";
 import { FieldKey } from "../schema-stored/index.js";
+
+import * as Delta from "./delta.js";
 import {
 	DetachedPlaceUpPath,
 	DetachedRangeUpPath,
 	PlaceIndex,
-	UpPath,
-	Range,
 	PlaceUpPath,
+	Range,
 	RangeUpPath,
+	UpPath,
 } from "./pathTree.js";
-import { Value, EmptyKey } from "./types.js";
-import { PathVisitor } from "./visitPath.js";
+import { EmptyKey, Value } from "./types.js";
 import { DeltaVisitor } from "./visitDelta.js";
-import * as Delta from "./delta.js";
+import { PathVisitor } from "./visitPath.js";
 import { AnnouncedVisitor } from "./visitorUtils.js";
 
 /**

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { IEvent } from "@fluidframework/core-interfaces";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
-import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
+import type { IEvent } from "@fluidframework/core-interfaces";
+import { MergeTreeDeltaType } from "@fluidframework/merge-tree/internal";
+import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence/internal";
 
 /**
  * @internal

@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 import {
 	IDisposable,
 	IEvent,
 	IEventProvider,
 	IEventThisPlaceHolder,
 } from "@fluidframework/core-interfaces";
+import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 /**
  * Type of "valueChanged" event parameter.
@@ -196,7 +196,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 export interface IDirectoryEvents extends IEvent {
 	/**
 	 * Emitted when a key is set or deleted. As opposed to the
-	 * {@link SharedDirectory}'s valueChanged event, this is emitted only on the {@link IDirectory} that directly
+	 * {@link ISharedDirectory}'s valueChanged event, this is emitted only on the {@link IDirectory} that directly
 	 * contains the key.
 	 *
 	 * @remarks Listener parameters:
@@ -360,59 +360,4 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
 	 * @returns The {@link ISharedMap} itself
 	 */
 	set<T = unknown>(key: string, value: T): this;
-}
-
-/**
- * The _ready-for-serialization_ format of values contained in DDS contents. This allows us to use
- * {@link ISerializableValue."type"} to understand whether they're storing a Plain JavaScript object,
- * a {@link @fluidframework/shared-object-base#SharedObject}, or a value type.
- *
- * @remarks
- *
- * Note that the in-memory equivalent of ISerializableValue is ILocalValue (similarly holding a type, but with
- * the _in-memory representation_ of the value instead).  An ISerializableValue is what gets passed to
- * JSON.stringify and comes out of JSON.parse. This format is used both for snapshots (loadCore/populate)
- * and ops (set).
- *
- * If type is Plain, it must be a plain JS object that can survive a JSON.stringify/parse.  E.g. a URL object will
- * just get stringified to a URL string and not rehydrate as a URL object on the other side. It may contain members
- * that are ISerializedHandle (the serialized form of a handle).
- *
- * If type is a value type then it must be amongst the types registered via registerValueType or we won't know how
- * to serialize/deserialize it (we rely on its factory via .load() and .store()).  Its value will be type-dependent.
- * If type is Shared, then the in-memory value will just be a reference to the SharedObject.  Its value will be a
- * channel ID.
- *
- * @deprecated This type is legacy and deprecated.
- * @alpha
- */
-export interface ISerializableValue {
-	/**
-	 * A type annotation to help indicate how the value serializes.
-	 */
-	type: string;
-
-	/**
-	 * The JSONable representation of the value.
-	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	value: any;
-}
-
-/**
- * Serialized {@link ISerializableValue} counterpart.
- * @alpha
- */
-export interface ISerializedValue {
-	/**
-	 * A type annotation to help indicate how the value serializes.
-	 */
-	type: string;
-
-	/**
-	 * String representation of the value.
-	 *
-	 * @remarks Will be undefined if the original value was undefined.
-	 */
-	value: string | undefined;
 }

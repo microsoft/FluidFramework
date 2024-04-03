@@ -4,12 +4,13 @@
  */
 
 import { openDB } from "idb";
+
 import {
-	getFluidCacheIndexedDbInstance,
-	oldVersionNameMapping,
+	CurrentCacheVersion,
 	FluidDriverCacheDBName,
 	FluidDriverObjectStoreName,
-	CurrentCacheVersion,
+	getFluidCacheIndexedDbInstance,
+	oldVersionNameMapping,
 } from "../FluidCacheIndexedDb.js";
 import { FluidCacheErrorEvent } from "../fluidCacheTelemetry.js";
 

@@ -4,41 +4,48 @@
  */
 
 import { strict as assert } from "assert";
-import type { PureDataObject } from "@fluidframework/aqueduct";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
-import { ILoaderProps } from "@fluidframework/container-loader";
+
+import { describeCompat } from "@fluid-private/test-version-utils";
+import type { PureDataObject } from "@fluidframework/aqueduct/internal";
+import {
+	IContainer,
+	IRuntimeFactory,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
+import { ILoaderProps } from "@fluidframework/container-loader/internal";
 import {
 	ContainerRuntime,
 	IAckedSummary,
 	IContainerRuntimeOptions,
 	ISummaryNackMessage,
-	neverCancelledSummaryToken,
 	SummaryCollection,
-} from "@fluidframework/container-runtime";
+	neverCancelledSummaryToken,
+} from "@fluidframework/container-runtime/internal";
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
-import type { SharedCounter } from "@fluidframework/counter";
-import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
+import type { SharedCounter } from "@fluidframework/counter/internal";
+import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import {
 	DriverHeader,
-	ISummaryContext,
 	type IDocumentServiceFactory,
-} from "@fluidframework/driver-definitions";
-import type { SharedMatrix } from "@fluidframework/matrix";
+	ISummaryContext,
+} from "@fluidframework/driver-definitions/internal";
+import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import {
 	ISequencedDocumentMessage,
 	ISummaryTree,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
-	waitForContainerConnection,
-	summarizeNow,
 	createSummarizerFromFactory,
-} from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
+	summarizeNow,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
+
 import { wrapObjectAndOverride } from "../mocking.js";
 
 interface ProvideSearchContent {
@@ -155,7 +162,8 @@ describeCompat(
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
 		const { SharedMatrix, SharedCounter } = apis.dds;
-		const { DataObject, DataObjectFactory } = apis.dataRuntime;
+		const { DataObject, DataObjectFactory, FluidDataStoreRuntime } = apis.dataRuntime;
+		const { mixinSummaryHandler } = apis.dataRuntime.packages.datastore;
 		const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 
 		class TestDataObject2 extends DataObject {

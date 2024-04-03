@@ -2,15 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ConnectionState } from "@fluidframework/container-loader";
-import { SharedMap, type ISharedMap } from "@fluidframework/map";
+
 import { AzureClient } from "@fluidframework/azure-client";
+import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { timeoutPromise } from "@fluidframework/test-utils";
+import { type ISharedMap, SharedMap } from "@fluidframework/map";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { v4 as uuid } from "uuid";
 
+import { ScenarioRunner } from "./ScenarioRunner.js";
 import { IRunConfig, IScenarioConfig, IScenarioRunConfig } from "./interface.js";
+import { getLogger, loggerP } from "./logger.js";
 import {
 	FluidSummarizerTelemetryEventNames,
 	createAzureClient,
@@ -18,8 +22,6 @@ import {
 	getScenarioRunnerTelemetryEventMap,
 	loadInitialObjSchema,
 } from "./utils.js";
-import { getLogger, loggerP } from "./logger.js";
-import { ScenarioRunner } from "./ScenarioRunner.js";
 
 const eventMap = getScenarioRunnerTelemetryEventMap("NestedMap");
 
@@ -46,7 +48,7 @@ export class NestedMapRunner extends ScenarioRunner<
 	NestedMapRunConfig,
 	string
 > {
-	protected runnerClientFilePath: string = "./dist/nestedMapRunnerClient.js";
+	protected runnerClientFilePath: string = "./lib/nestedMapRunnerClient.js";
 
 	constructor(scenarioConfig: NestedMapRunnerConfig) {
 		super({

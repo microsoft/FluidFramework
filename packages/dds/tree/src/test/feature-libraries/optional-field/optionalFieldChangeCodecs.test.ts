@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { SessionId } from "@fluidframework/id-compressor";
 
 import { JsonCompatibleReadOnly, brand } from "../../../util/index.js";
@@ -63,6 +64,8 @@ const change1WithChildChange = Change.atOnce(
 
 const clearEmpty = Change.reserve("self", brand(3));
 
+const pin = Change.pin(brand(4));
+
 export function testCodecs() {
 	describe("Codecs", () => {
 		const sessionId = { originatorId: "session1" as SessionId };
@@ -84,6 +87,7 @@ export function testCodecs() {
 				["field set with child change", change1WithChildChange, context], // Note: should only get sent over the wire when using transaction APIs.
 				["undone field change", change2Inverted, context],
 				["clear from empty", clearEmpty, context],
+				["pin", pin, context],
 			],
 		};
 

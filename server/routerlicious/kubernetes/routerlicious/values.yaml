@@ -103,6 +103,9 @@ scribe:
     maxTime: 60000
     maxMessages: 500
   restartOnCheckpointFailure: true
+  scrubUserDataInGlobalCheckpoints: false
+  scrubUserDataInLocalCheckpoints: false
+  scrubUserDataInSummaries: false
 
 riddler:
   name: riddler

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import * as child_process from "child_process";
 import * as fs from "fs";
 import * as glob from "glob";
@@ -10,14 +11,22 @@ import * as path from "path";
 import * as util from "util";
 import { pathToFileURL } from "node:url";
 
+/**
+ *	An array of commands that are known to have subcommands and should be parsed as such
+ */
+const multiCommandExecutables = ["flub", "biome"];
+
 export function getExecutableFromCommand(command: string) {
 	let toReturn: string;
 	const commands = command.split(" ");
-	if (commands[0] === "flub") {
-		// Find the first flag argument, and filter them out. Assumes flags come at the end of the command, and that all
-		// subsequent arguments are flags.
-		const flagsStartIndex = commands.findIndex((c) => c.startsWith("-"));
-		toReturn = flagsStartIndex !== -1 ? commands.slice(0, flagsStartIndex).join(" ") : command;
+	if (multiCommandExecutables.includes(commands[0])) {
+		// For multi-commands (e.g., "flub bump ...") our heuristic is to scan for the first argument that cannot
+		// be the name of a sub-command, such as '.' or an argument that starts with '-'.
+		//
+		// This assumes that subcommand names always precede flags and that non-command arguments
+		// match one of the patterns we look for below.
+		const nonCommandIndex = commands.findIndex((c) => c.startsWith("-") || c === ".");
+		toReturn = nonCommandIndex !== -1 ? commands.slice(0, nonCommandIndex).join(" ") : command;
 	} else {
 		toReturn = commands[0];
 	}
@@ -212,12 +221,6 @@ export function isSameFileOrDir(f1: string, f2: string) {
 	return isEqual(fs.lstatSync(n1), fs.lstatSync(n2));
 }
 
-export function fatal(error: string): never {
-	const e = new Error(error);
-	(e as any).fatal = true;
-	throw e;
-}
-
 /**
  * Execute a command. If there is an error, print error message and exit process
  *
@@ -228,7 +231,7 @@ export function fatal(error: string): never {
 export async function exec(cmd: string, dir: string, error: string, pipeStdIn?: string) {
 	const result = await execAsync(cmd, { cwd: dir }, pipeStdIn);
 	if (result.error) {
-		fatal(
+		throw new Error(
 			`ERROR: Unable to ${error}\nERROR: error during command ${cmd}\nERROR: ${result.error.message}`,
 		);
 	}

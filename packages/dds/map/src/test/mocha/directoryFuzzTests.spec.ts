@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as dirPath from "node:path";
 import { strict as assert } from "node:assert";
+import * as dirPath from "node:path";
+
 import {
 	AsyncGenerator,
 	AsyncReducer,
@@ -14,13 +15,14 @@ import {
 } from "@fluid-private/stochastic-test-utils";
 import {
 	Client,
-	createDDSFuzzSuite,
 	DDSFuzzModel,
 	DDSFuzzTestState,
+	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions";
-import { DirectoryFactory } from "../../directory.js";
-import { IDirectory } from "../../interfaces.js";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+
+import { DirectoryFactory, IDirectory } from "../../index.js";
+
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 import { _dirname } from "./dirname.cjs";
 
@@ -368,13 +370,8 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 				stashableClientProbability: undefined,
 			},
 			defaultTestCount: 200,
-			// The seeds below fail only when rebaseProbability is non-zero ADO:6044
-			skip: [
-				13, 40, 43, 55, 66, 93, 94, 107, 110, 123, 136, 148, 160, 163, 168, 172, 177, 191,
-				196,
-			],
 			// Uncomment this line to replay a specific seed from its failure file:
-			// replay: 21,
+			// replay: 0,
 			saveFailures: {
 				directory: dirPath.join(_dirname, "../../../src/test/mocha/results/1"),
 			},
@@ -430,8 +427,6 @@ describe("SharedDirectory fuzz", () => {
 				stashableClientProbability: undefined,
 			},
 			defaultTestCount: 200,
-			// The seeds below fail only when rebaseProbability is non-zero ADO:6044
-			skip: [73],
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 0,
 			saveFailures: {

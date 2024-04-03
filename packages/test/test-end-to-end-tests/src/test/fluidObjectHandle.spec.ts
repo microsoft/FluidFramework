@@ -4,20 +4,21 @@
  */
 
 import assert from "assert";
+
+import {
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+} from "@fluid-private/test-version-utils";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map";
 import {
-	TestFluidObject,
 	ITestObjectProvider,
+	TestFluidObject,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
-} from "@fluidframework/test-utils";
-import {
-	describeCompat,
-	ITestDataObject,
-	TestDataObjectType,
-} from "@fluid-private/test-version-utils";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+} from "@fluidframework/test-utils/internal";
 
 describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;

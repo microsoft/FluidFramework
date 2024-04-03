@@ -2,19 +2,23 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
-import { ReferenceType, SlidingPreference } from "@fluidframework/merge-tree";
-import {
-	MockFluidDataStoreRuntime,
-	MockContainerRuntimeFactory,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+
 import { AttachState } from "@fluidframework/container-definitions";
-import { SharedString } from "../sharedString.js";
-import { SharedStringFactory } from "../sequenceFactory.js";
-import { IIntervalCollection, intervalLocatorFromEndpoint, Side } from "../intervalCollection.js";
+import { ReferenceType, SlidingPreference } from "@fluidframework/merge-tree/internal";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import {
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { IIntervalCollection, Side, intervalLocatorFromEndpoint } from "../intervalCollection.js";
 import { IntervalStickiness, SequenceInterval } from "../intervals/index.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { SharedString } from "../sharedString.js";
+
 import { assertSequenceIntervals } from "./intervalTestUtils.js";
 
 async function loadSharedString(

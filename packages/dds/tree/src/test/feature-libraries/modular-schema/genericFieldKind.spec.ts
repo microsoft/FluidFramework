@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { SessionId } from "@fluidframework/id-compressor";
 import {
 	GenericChangeset,

@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
 	IConnectionDetails,
 	ICriticalContainerError,
 	IDeltaQueue,
-	IFluidCodeDetails,
-	isFluidPackage,
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails, isFluidPackage } from "@fluidframework/container-definitions/internal";
+import { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { IContainerPackageInfo } from "@fluidframework/driver-definitions/internal";
 import {
 	ConnectionMode,
 	IClientConfiguration,
@@ -21,7 +21,6 @@ import {
 	ISignalClient,
 	ISignalMessage,
 } from "@fluidframework/protocol-definitions";
-import { IContainerPackageInfo } from "@fluidframework/driver-definitions";
 
 export enum ReconnectMode {
 	Never = "Never",
@@ -100,7 +99,7 @@ export interface IConnectionManager {
 	 * Submits signal to relay service.
 	 * Called only when active connection is present.
 	 */
-	submitSignal(content: any, targetClientId?: string): void;
+	submitSignal: (content: string, targetClientId?: string) => void;
 
 	/**
 	 * Submits messages to relay service.

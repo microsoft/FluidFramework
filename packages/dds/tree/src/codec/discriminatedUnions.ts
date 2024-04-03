@@ -2,8 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import { assert } from "@fluidframework/core-utils/internal";
 import { ObjectOptions } from "@sinclair/typebox";
-import { assert } from "@fluidframework/core-utils";
+
 import { _InlineTrick, fail, objectToMap } from "../util/index.js";
 
 /**

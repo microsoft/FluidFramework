@@ -3,24 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ILoggingError,
-	ITelemetryBaseProperties,
-	Tagged,
-} from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseProperties, Tagged } from "@fluidframework/core-interfaces";
+import type { ILoggingError } from "@fluidframework/core-interfaces/internal";
 import { v4 as uuid } from "uuid";
+
 import {
-	hasErrorInstanceId,
 	IFluidErrorBase,
+	hasErrorInstanceId,
 	isFluidError,
 	isValidLegacyError,
 } from "./fluidErrorBase.js";
+import { convertToBasePropertyType } from "./logger.js";
 import type {
 	ITelemetryLoggerExt,
-	TelemetryEventPropertyTypeExt,
 	ITelemetryPropertiesExt,
+	TelemetryEventPropertyTypeExt,
 } from "./telemetryTypes.js";
-import { convertToBasePropertyType } from "./logger.js";
 
 /**
  * Determines if the provided value is an object but neither null nor an array.

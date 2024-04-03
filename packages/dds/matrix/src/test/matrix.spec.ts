@@ -4,23 +4,26 @@
  */
 
 import { strict as assert } from "assert";
+
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
+import { AttachState } from "@fluidframework/container-definitions";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
 	MockEmptyDeltaConnection,
-	MockStorage,
+	MockFluidDataStoreRuntime,
 	MockHandle,
-} from "@fluidframework/test-runtime-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IChannelServices } from "@fluidframework/datastore-definitions";
-import { AttachState } from "@fluidframework/container-definitions";
-import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "../index.js";
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { type ISharedMatrix, MatrixItem, SharedMatrix, SharedMatrixFactory } from "../index.js";
 import type { PermutationVector } from "../permutationvector.js";
-import { fill, check, insertFragmented, extract, expectSize } from "./utils.js";
+
 import { TestConsumer } from "./testconsumer.js";
+import { check, expectSize, extract, fill, insertFragmented } from "./utils.js";
 
 function createConnectedMatrix(
 	id: string,
@@ -987,7 +990,7 @@ describe("Matrix1", () => {
 					return count;
 				}
 
-				function findTotalReferenceCount(matrix: SharedMatrix): {
+				function findTotalReferenceCount(matrix: ISharedMatrix): {
 					rows: number;
 					cols: number;
 				} {

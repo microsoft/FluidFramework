@@ -4,19 +4,33 @@
  */
 
 import { strict as assert } from "assert";
-import { createSandbox, SinonFakeTimers, useFakeTimers } from "sinon";
+
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
-	AttachState,
 	ContainerErrorTypes,
 	IContainerContext,
-	ICriticalContainerError,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import {
+	ConfigTypes,
+	FluidObject,
+	IConfigProviderBase,
+	IErrorBase,
+	IResponse,
+} from "@fluidframework/core-interfaces";
+import {
+	IDocumentStorageService,
+	ISnapshot,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	ISequencedDocumentMessage,
+	type ISnapshotTree,
 	ISummaryTree,
 	MessageType,
-	type ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
 	FluidDataStoreRegistryEntry,
 	FlushMode,
@@ -24,36 +38,24 @@ import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
-	ISummaryTreeWithStats,
 	NamedFluidDataStoreRegistryEntries,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import {
-	createChildLogger,
 	IFluidErrorBase,
+	MockLogger,
+	createChildLogger,
 	isFluidError,
 	isILoggingError,
 	mixinMonitoringContext,
-	MockLogger,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	MockDeltaManager,
 	MockFluidDataStoreRuntime,
 	MockQuorumClients,
-} from "@fluidframework/test-runtime-utils";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import {
-	IErrorBase,
-	IResponse,
-	FluidObject,
-	ConfigTypes,
-	IConfigProviderBase,
-} from "@fluidframework/core-interfaces";
-import {
-	IDocumentStorageService,
-	ISnapshot,
-	ISummaryContext,
-} from "@fluidframework/driver-definitions";
-import { stringToBuffer } from "@fluid-internal/client-utils";
+	validateAssertionError,
+} from "@fluidframework/test-runtime-utils/internal";
+import { SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
+
 import { ChannelCollection } from "../channelCollection.js";
 import {
 	CompressionAlgorithms,
@@ -64,8 +66,8 @@ import {
 } from "../containerRuntime.js";
 import {
 	ContainerMessageType,
-	type RecentlyAddedContainerRuntimeMessageDetails,
 	type OutboundContainerRuntimeMessage,
+	type RecentlyAddedContainerRuntimeMessageDetails,
 	type UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
 import {
@@ -1566,10 +1568,11 @@ describe("Runtime", () => {
 				},
 				maxBatchSizeInBytes: 700 * 1024,
 				chunkSizeInBytes: 204800,
-				enableRuntimeIdCompressor: "off",
+				enableRuntimeIdCompressor: undefined,
 				enableOpReentryCheck: false,
 				enableGroupedBatching: false,
-			};
+				explicitSchemaControl: false,
+			} satisfies IContainerRuntimeOptions;
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
 
 			it("Container load stats", async () => {
@@ -1614,6 +1617,7 @@ describe("Runtime", () => {
 						options: JSON.stringify(mergedRuntimeOptions),
 						idCompressorMode: "on",
 						featureGates: JSON.stringify({
+							disableGroupedBatching: true,
 							disableCompression: true,
 							disableOpReentryCheck: false,
 							disableChunking: true,
@@ -2195,10 +2199,7 @@ describe("Runtime", () => {
 						await containerRuntime.getAliasedDataStoreEntryPoint("missingDataStore");
 					},
 					(err: IFluidErrorBase) => {
-						assert(
-							err.message === "groupId should be present to fetch snapshot",
-							"groupId not specified when the snapshot was omitted",
-						);
+						validateAssertionError(err, "groupId should be present to fetch snapshot");
 						return true;
 					},
 				);

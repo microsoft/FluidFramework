@@ -6,37 +6,48 @@
 import { strict as assert } from "assert";
 
 import {
-	IEditableForest,
-	initializeForest,
-	moveToDetachedField,
-	TreeNavigationResult,
-	TreeStoredSchemaSubscription,
+	DeltaFieldChanges,
+	DeltaFieldMap,
+	DeltaMark,
+	DetachedField,
+	DetachedFieldIndex,
+	EmptyKey,
 	FieldKey,
+	FieldUpPath,
+	ForestRootId,
+	IEditableForest,
+	ITreeCursor,
 	JsonableTree,
-	mapCursorField,
-	rootFieldKey,
+	TreeNavigationResult,
+	TreeStoredSchemaRepository,
+	TreeStoredSchemaSubscription,
 	UpPath,
 	clonePath,
-	ITreeCursor,
-	EmptyKey,
-	FieldUpPath,
-	DetachedFieldIndex,
-	ForestRootId,
-	DetachedField,
 	detachedFieldAsKey,
-	DeltaFieldChanges,
-	DeltaMark,
-	DeltaFieldMap,
-	TreeStoredSchemaRepository,
+	initializeForest,
+	mapCursorField,
+	moveToDetachedField,
+	rootFieldKey,
 } from "../core/index.js";
 import {
 	cursorToJsonObject,
-	jsonSchema,
 	jsonRoot,
-	singleJsonCursor,
+	jsonSchema,
 	leaf,
+	singleJsonCursor,
 } from "../domains/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
+import {
+	FieldKinds,
+	FlexFieldSchema,
+	SchemaBuilderBase,
+	cursorForJsonableTreeNode,
+	cursorForTypedTreeData,
+	defaultSchemaPolicy,
+	intoStoredSchema,
+	isNeverField,
+	jsonableTreeFromCursor,
+} from "../feature-libraries/index.js";
 import {
 	IdAllocator,
 	JsonCompatible,
@@ -44,17 +55,8 @@ import {
 	idAllocatorFromMaxId,
 	mapIterable,
 } from "../util/index.js";
-import {
-	FieldKinds,
-	jsonableTreeFromCursor,
-	cursorForJsonableTreeNode,
-	defaultSchemaPolicy,
-	isNeverField,
-	cursorForTypedTreeData,
-	FlexFieldSchema,
-	intoStoredSchema,
-	SchemaBuilderBase,
-} from "../feature-libraries/index.js";
+
+import { testGeneralPurposeTreeCursor, testTreeSchema } from "./cursorTestSuite.js";
 import {
 	applyTestDelta,
 	expectEqualFieldPaths,
@@ -62,7 +64,6 @@ import {
 	jsonSequenceRootSchema,
 	testRevisionTagCodec,
 } from "./utils.js";
-import { testGeneralPurposeTreeCursor, testTreeSchema } from "./cursorTestSuite.js";
 
 /**
  * Configuration for the forest test suite.
@@ -119,7 +120,10 @@ export function testForest(config: ForestTestConfiguration): void {
 					const schema = new TreeStoredSchemaRepository();
 					const forest = factory(schema);
 
-					const rootFieldSchema = FlexFieldSchema.create(FieldKinds.optional, jsonRoot);
+					const rootFieldSchema = FlexFieldSchema.create(
+						FieldKinds.optional,
+						jsonRoot,
+					).stored;
 					schema.apply({
 						nodeSchema: new Map(
 							mapIterable(jsonSchema.nodeSchema.entries(), ([k, v]) => [k, v.stored]),

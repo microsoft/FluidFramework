@@ -4,7 +4,6 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
 import {
 	type IEvent,
 	type IFluidHandle,
@@ -13,10 +12,12 @@ import {
 	type IRequest,
 	type IResponse,
 } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { type IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { type AsyncFluidObjectProvider } from "@fluidframework/synthesize";
-import { create404Response } from "@fluidframework/runtime-utils";
+import { type IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import { create404Response } from "@fluidframework/runtime-utils/internal";
+import { type AsyncFluidObjectProvider } from "@fluidframework/synthesize/internal";
+
 import { type DataObjectTypes, type IDataObjectProps } from "./types.js";
 
 /**

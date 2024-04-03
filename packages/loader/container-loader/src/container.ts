@@ -3,38 +3,40 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
-import { assert, unreachableCase, isPromiseLike } from "@fluidframework/core-utils";
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import {
-	IEvent,
-	ITelemetryBaseProperties,
-	FluidObject,
-	LogLevel,
-	IRequest,
-} from "@fluidframework/core-interfaces";
-import {
 	AttachState,
-	ContainerWarning,
 	IAudience,
+	ICriticalContainerError,
+	IDeltaManager,
+	ReadOnlyInfo,
+} from "@fluidframework/container-definitions";
+import {
+	ContainerWarning,
 	IBatchMessage,
 	ICodeDetailsLoader,
 	IContainer,
 	IContainerEvents,
 	IContainerLoadMode,
-	ICriticalContainerError,
-	IDeltaManager,
 	IFluidCodeDetails,
-	IHostLoader,
-	IFluidModuleWithDetails,
-	IProvideRuntimeFactory,
-	IProvideFluidCodeDetailsComparer,
 	IFluidCodeDetailsComparer,
-	IRuntime,
-	ReadOnlyInfo,
-	isFluidCodeDetails,
+	IFluidModuleWithDetails,
 	IGetPendingLocalStateProps,
-} from "@fluidframework/container-definitions";
+	IHostLoader,
+	IProvideFluidCodeDetailsComparer,
+	IProvideRuntimeFactory,
+	IRuntime,
+	isFluidCodeDetails,
+} from "@fluidframework/container-definitions/internal";
+import {
+	FluidObject,
+	IEvent,
+	IRequest,
+	ITelemetryBaseProperties,
+	LogLevel,
+} from "@fluidframework/core-interfaces";
+import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
@@ -43,16 +45,16 @@ import {
 	ISnapshot,
 	IThrottlingWarning,
 	IUrlResolver,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
-	readAndParse,
-	OnlineStatus,
-	isOnline,
-	isCombinedAppAndProtocolSummary,
 	MessageType2,
+	OnlineStatus,
+	isCombinedAppAndProtocolSummary,
 	isInstanceOfISnapshot,
+	isOnline,
+	readAndParse,
 	runWithRetry,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
 	IClient,
@@ -73,59 +75,65 @@ import {
 	MessageType,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt, type TelemetryEventCategory } from "@fluidframework/telemetry-utils";
 import {
-	createChildLogger,
 	EventEmitterWithErrorHandling,
-	PerformanceEvent,
-	raiseConnectedEvent,
-	connectedEventName,
-	normalizeError,
-	MonitoringContext,
-	createChildMonitoringContext,
-	wrapError,
-	ITelemetryLoggerExt,
-	formatTick,
 	GenericError,
-	UsageError,
 	IFluidErrorBase,
-	type TelemetryEventCategory,
-} from "@fluidframework/telemetry-utils";
+	MonitoringContext,
+	PerformanceEvent,
+	UsageError,
+	connectedEventName,
+	createChildLogger,
+	createChildMonitoringContext,
+	formatTick,
+	normalizeError,
+	raiseConnectedEvent,
+	wrapError,
+} from "@fluidframework/telemetry-utils/internal";
 import structuredClone from "@ungap/structured-clone";
+import { v4 as uuid } from "uuid";
+
+import { AttachProcessProps, AttachmentData, runRetriableAttachProcess } from "./attachment.js";
 import { Audience } from "./audience.js";
+import { ConnectionManager } from "./connectionManager.js";
+import { ConnectionState } from "./connectionState.js";
+import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler.js";
 import { ContainerContext } from "./containerContext.js";
+import { ContainerStorageAdapter } from "./containerStorageAdapter.js";
 import {
-	ReconnectMode,
-	IConnectionManagerFactoryArgs,
-	getPackageName,
 	IConnectionDetailsInternal,
+	IConnectionManagerFactoryArgs,
 	IConnectionStateChangeReason,
+	ReconnectMode,
+	getPackageName,
 } from "./contracts.js";
 import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
 import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader.js";
-import { pkgVersion } from "./packageVersion.js";
-import { ContainerStorageAdapter, ISerializableBlobContents } from "./containerStorageAdapter.js";
-import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler.js";
-import {
-	ISnapshotTreeWithBlobContents,
-	combineAppAndProtocolSummary,
-	getProtocolSnapshotTree,
-	getSnapshotTreeAndBlobsFromSerializedContainer,
-	combineSnapshotTreeAndSnapshotBlobs,
-	getDetachedContainerStateFromSerializedContainer,
-	runSingle,
-} from "./utils.js";
-import { initQuorumValuesFromCodeDetails } from "./quorum.js";
 import { NoopHeuristic } from "./noopHeuristic.js";
-import { ConnectionManager } from "./connectionManager.js";
-import { ConnectionState } from "./connectionState.js";
+import { pkgVersion } from "./packageVersion.js";
 import {
 	IProtocolHandler,
 	ProtocolHandler,
 	ProtocolHandlerBuilder,
 	protocolHandlerShouldProcessSignal,
 } from "./protocol.js";
-import { AttachProcessProps, AttachmentData, runRetriableAttachProcess } from "./attachment.js";
-import { SerializedStateManager } from "./serializedStateManager.js";
+import { initQuorumValuesFromCodeDetails } from "./quorum.js";
+import {
+	type IPendingContainerState,
+	type IPendingDetachedContainerState,
+	SerializedStateManager,
+} from "./serializedStateManager.js";
+import {
+	ISnapshotTreeWithBlobContents,
+	combineAppAndProtocolSummary,
+	combineSnapshotTreeAndSnapshotBlobs,
+	getDetachedContainerStateFromSerializedContainer,
+	getDocumentAttributes,
+	getProtocolSnapshotTree,
+	getSnapshotTreeAndBlobsFromSerializedContainer,
+	runSingle,
+} from "./utils.js";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -333,46 +341,6 @@ export async function ReportIfTooLong(
 	if (event.duration > 200) {
 		event.end(props);
 	}
-}
-
-/**
- * State saved by a container at close time, to be used to load a new instance
- * of the container to the same state
- * @internal
- */
-export interface IPendingContainerState {
-	attached: true;
-	pendingRuntimeState: unknown;
-	/**
-	 * Snapshot from which container initially loaded.
-	 */
-	baseSnapshot: ISnapshotTree;
-	/**
-	 * Serializable blobs from the base snapshot. Used to load offline since
-	 * storage is not available.
-	 */
-	snapshotBlobs: ISerializableBlobContents;
-	/**
-	 * All ops since base snapshot sequence number up to the latest op
-	 * seen when the container was closed. Used to apply stashed (saved pending)
-	 * ops at the same sequence number at which they were made.
-	 */
-	savedOps: ISequencedDocumentMessage[];
-	url: string;
-	clientId?: string;
-}
-
-/**
- * State saved by a container in detached state, to be used to load a new instance
- * of the container to the same state (rehydrate)
- * @internal
- */
-export interface IPendingDetachedContainerState {
-	attached: false;
-	baseSnapshot: ISnapshotTree;
-	snapshotBlobs: ISerializableBlobContents;
-	hasAttachmentBlobs: boolean;
-	pendingRuntimeState?: unknown;
 }
 
 const summarizerClientType = "summarizer";
@@ -1188,17 +1156,16 @@ export class Container
 				this.captureProtocolSummary(),
 			);
 
-		const { tree: snapshot, blobs } =
+		const { baseSnapshot, snapshotBlobs } =
 			getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
-
 		const pendingRuntimeState =
 			attachingData !== undefined ? this.runtime.getPendingLocalState() : undefined;
-		assert(!isPromiseLike(pendingRuntimeState), "should not be a promise");
+		assert(!isPromiseLike(pendingRuntimeState), 0x8e3 /* should not be a promise */);
 
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
-			baseSnapshot: snapshot,
-			snapshotBlobs: blobs,
+			baseSnapshot,
+			snapshotBlobs,
 			pendingRuntimeState,
 			hasAttachmentBlobs: !!this.detachedBlobStorage && this.detachedBlobStorage.size > 0,
 		};
@@ -1578,15 +1545,19 @@ export class Container
 		};
 
 		timings.phase2 = performance.now();
+
+		const supportGetSnapshotApi: boolean =
+			this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch") ===
+				true && this.service?.policies?.supportGetSnapshotApi === true;
 		// Fetch specified snapshot.
-		const { snapshotTree, version } = await this.serializedStateManager.fetchSnapshot(
+		const { baseSnapshot, version } = await this.serializedStateManager.fetchSnapshot(
 			specifiedVersion,
-			this.service?.policies?.supportGetSnapshotApi,
+			supportGetSnapshotApi,
 		);
 		this._loadedFromVersion = version;
-		const attributes: IDocumentAttributes = await this.getDocumentAttributes(
+		const attributes: IDocumentAttributes = await getDocumentAttributes(
 			this.storageAdapter,
-			snapshotTree,
+			baseSnapshot,
 		);
 
 		// If we saved ops, we will replay them and don't need DeltaManager to fetch them
@@ -1676,17 +1647,17 @@ export class Container
 		await this.initializeProtocolStateFromSnapshot(
 			attributes,
 			this.storageAdapter,
-			snapshotTree,
+			baseSnapshot,
 		);
 
 		timings.phase3 = performance.now();
 		const codeDetails = this.getCodeDetailsFromQuorum();
 		await this.instantiateRuntime(
 			codeDetails,
-			snapshotTree,
+			baseSnapshot,
 			// give runtime a dummy value so it knows we're loading from a stash blob
 			pendingLocalState ? pendingLocalState?.pendingRuntimeState ?? {} : undefined,
-			isInstanceOfISnapshot(snapshotTree) ? snapshotTree : undefined,
+			isInstanceOfISnapshot(baseSnapshot) ? baseSnapshot : undefined,
 		);
 
 		// replay saved ops
@@ -1814,7 +1785,7 @@ export class Container
 		const snapshotTreeWithBlobContents: ISnapshotTreeWithBlobContents =
 			combineSnapshotTreeAndSnapshotBlobs(baseSnapshot, snapshotBlobs);
 		this.storageAdapter.loadSnapshotFromSnapshotBlobs(snapshotBlobs);
-		const attributes = await this.getDocumentAttributes(
+		const attributes = await getDocumentAttributes(
 			this.storageAdapter,
 			snapshotTreeWithBlobContents,
 		);
@@ -1844,28 +1815,6 @@ export class Container
 		);
 
 		this.setLoaded();
-	}
-
-	private async getDocumentAttributes(
-		storage: IDocumentStorageService,
-		tree: ISnapshotTree | undefined,
-	): Promise<IDocumentAttributes> {
-		if (tree === undefined) {
-			return {
-				minimumSequenceNumber: 0,
-				sequenceNumber: 0,
-			};
-		}
-
-		// Backward compatibility: old docs would have ".attributes" instead of "attributes"
-		const attributesHash =
-			".protocol" in tree.trees
-				? tree.trees[".protocol"].blobs.attributes
-				: tree.blobs[".attributes"];
-
-		const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
-
-		return attributes;
 	}
 
 	private async initializeProtocolStateFromSnapshot(
@@ -2341,7 +2290,8 @@ export class Container
 		this.emit("op", message);
 	}
 
-	private submitSignal(content: any, targetClientId?: string) {
+	// unknown should be removed once `@alpha` tag is removed from IContainerContext
+	private submitSignal(content: unknown | ISignalEnvelope, targetClientId?: string) {
 		this._deltaManager.submitSignal(JSON.stringify(content), targetClientId);
 	}
 
@@ -2389,10 +2339,6 @@ export class Container
 			throw new Error(packageNotFactoryError);
 		}
 
-		const getSpecifiedCodeDetails = () =>
-			(this.protocolHandler.quorum.get("code") ??
-				this.protocolHandler.quorum.get("code2")) as IFluidCodeDetails | undefined;
-
 		const existing = snapshotTree !== undefined;
 
 		const context = new ContainerContext(
@@ -2420,7 +2366,6 @@ export class Container
 			() => this.clientId,
 			() => this.attachState,
 			() => this.connected,
-			getSpecifiedCodeDetails,
 			this._deltaManager.clientDetails,
 			existing,
 			this.subLogger,

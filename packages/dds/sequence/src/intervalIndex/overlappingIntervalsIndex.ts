@@ -2,19 +2,22 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable import/no-deprecated */
 
-import { Client } from "@fluidframework/merge-tree";
+import { Client } from "@fluidframework/merge-tree/internal";
+
+import { SequencePlace, endpointPosAndSide } from "../intervalCollection.js";
+import { IntervalNode, IntervalTree } from "../intervalTree.js";
 import {
-	IntervalType,
 	IIntervalHelpers,
 	ISerializableInterval,
-	sequenceIntervalHelpers,
+	IntervalType,
 	SequenceInterval,
+	sequenceIntervalHelpers,
 } from "../intervals/index.js";
-import { IntervalNode, IntervalTree } from "../intervalTree.js";
 import { SharedString } from "../sharedString.js";
-import { SequencePlace, endpointPosAndSide } from "../intervalCollection.js";
+
 import { IntervalIndex } from "./intervalIndex.js";
 
 /**

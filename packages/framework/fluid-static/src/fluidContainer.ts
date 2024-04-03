@@ -2,21 +2,23 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import {
+	AttachState,
+	type ConnectionState,
+	type ICriticalContainerError,
+} from "@fluidframework/container-definitions";
+import { type IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	type IEvent,
 	type IEventProvider,
 	type IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import {
-	AttachState,
-	type IContainer,
-	type ICriticalContainerError,
-	type ConnectionState,
-} from "@fluidframework/container-definitions";
+
 import type {
-	ContainerSchema,
 	ContainerAttachProps,
+	ContainerSchema,
 	IRootDataObject,
 	LoadableObjectClass,
 } from "./types.js";
@@ -321,6 +323,7 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	 * but internally this separation is not there.
 	 */
 	public async attach(props?: ContainerAttachProps): Promise<string> {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- AB#7608
 		if (this.container.attachState !== AttachState.Detached) {
 			throw new Error("Cannot attach container. Container is not in detached state.");
 		}

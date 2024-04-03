@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
-import { NonRetryableError } from "@fluidframework/driver-utils";
-import { OdspError, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
-import { getCircularReplacer, IFluidErrorBase } from "@fluidframework/telemetry-utils";
+import { OdspError, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
+import { IFluidErrorBase, getCircularReplacer } from "@fluidframework/telemetry-utils/internal";
+
 import { IOdspSocketError } from "./contracts.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 

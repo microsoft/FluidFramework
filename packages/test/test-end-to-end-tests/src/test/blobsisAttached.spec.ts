@@ -4,22 +4,26 @@
  */
 
 import assert from "assert";
-import { AttachState, IContainer, IHostLoader } from "@fluidframework/container-definitions";
-import type { ISharedDirectory, ISharedMap, SharedDirectory } from "@fluidframework/map";
-import {
-	ChannelFactoryRegistry,
-	ITestFluidObject,
-	ITestContainerConfig,
-	ITestObjectProvider,
-	DataObjectFactoryType,
-	createAndAttachContainer,
-} from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
+
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { AttachState } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { type IPendingRuntimeState } from "@fluidframework/container-runtime/test/containerRuntime";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { ISharedMap } from "@fluidframework/map";
+import type { ISharedDirectory, SharedDirectory } from "@fluidframework/map/internal";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	createAndAttachContainer,
+} from "@fluidframework/test-utils/internal";
+
 import { MockDetachedBlobStorage, driverSupportsBlobs } from "./mockDetachedBlobStorage.js";
 
 const mapId = "map";

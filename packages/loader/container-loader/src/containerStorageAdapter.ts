@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable } from "@fluidframework/core-interfaces";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
-import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
+import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
+import { IDisposable } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	FetchSource,
 	IDocumentService,
@@ -16,8 +15,8 @@ import {
 	ISnapshot,
 	ISnapshotFetchOptions,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
-import { UsageError } from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-definitions/internal";
+import { UsageError } from "@fluidframework/driver-utils/internal";
 import {
 	ICreateBlobResponse,
 	ISnapshotTree,
@@ -25,6 +24,8 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+
 import { IDetachedBlobStorage } from "./loader.js";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService.js";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService.js";

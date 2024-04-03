@@ -4,17 +4,19 @@
  */
 
 import { SummaryType } from "@fluidframework/protocol-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
+	ISummarizeResult,
 	gcBlobPrefix,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
-	ISummarizeResult,
-	ISummaryTreeWithStats,
-} from "@fluidframework/runtime-definitions";
-import { mergeStats, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+} from "@fluidframework/runtime-definitions/internal";
+import { SummaryTreeBuilder, mergeStats } from "@fluidframework/runtime-utils/internal";
+
 import { IRefreshSummaryResult } from "../summary/index.js";
-import { GCVersion, IGarbageCollectorConfigs, IGCStats } from "./gcDefinitions.js";
+
+import { GCVersion, IGCStats, IGarbageCollectorConfigs } from "./gcDefinitions.js";
 import { generateSortedGCState } from "./gcHelpers.js";
 import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions.js";
 

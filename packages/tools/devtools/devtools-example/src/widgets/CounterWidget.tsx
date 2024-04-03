@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-import { Button, makeStyles, shorthands, Text, Tooltip } from "@fluentui/react-components";
+import { Button, Text, Tooltip, makeStyles, shorthands } from "@fluentui/react-components";
 import { AddSquare24Regular, SubtractSquare24Regular } from "@fluentui/react-icons";
-
-import { type SharedCounter } from "@fluidframework/counter";
+import { type SharedCounter } from "@fluidframework/counter/internal";
+import React from "react";
 
 // TODOs:
 // - This seems like it might be worth sharing somewhere more general?

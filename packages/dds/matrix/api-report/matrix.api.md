@@ -14,7 +14,7 @@ import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
-import { IJSONSegment } from '@fluidframework/merge-tree';
+import { IJSONSegment } from '@fluidframework/merge-tree/internal';
 import { IMatrixConsumer } from '@tiny-calc/nano';
 import { IMatrixProducer } from '@tiny-calc/nano';
 import { IMatrixReader } from '@tiny-calc/nano';
@@ -22,8 +22,8 @@ import { IMatrixWriter } from '@tiny-calc/nano';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { Serializable } from '@fluidframework/datastore-definitions';
-import { SharedObject } from '@fluidframework/shared-object-base';
+import { Serializable } from '@fluidframework/datastore-definitions/internal';
+import { SharedObject } from '@fluidframework/shared-object-base/internal';
 
 // @alpha (undocumented)
 export interface IRevertible {
@@ -123,14 +123,14 @@ export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T> &
 }
 
 // @alpha
-export class SharedMatrixFactory implements IChannelFactory {
+export class SharedMatrixFactory implements IChannelFactory<ISharedMatrix> {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
     // (undocumented)
     get attributes(): IChannelAttributes;
     // (undocumented)
-    create(document: IFluidDataStoreRuntime, id: string): SharedMatrix;
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<IChannel>;
+    create(document: IFluidDataStoreRuntime, id: string): ISharedMatrix & IChannel;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedMatrix & IChannel>;
     // (undocumented)
     static Type: string;
     // (undocumented)

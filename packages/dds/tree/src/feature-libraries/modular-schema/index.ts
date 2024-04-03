@@ -23,6 +23,7 @@ export {
 	EncodedChangeAtomId,
 	EncodedRevisionInfo,
 	EncodedModularChangeset,
+	EncodedNodeChangeset,
 } from "./modularChangeFormat.js";
 export { FlexFieldKind, FullSchemaPolicy } from "./fieldKind.js";
 export { FieldKindWithEditor } from "./fieldKindWithEditor.js";
@@ -67,4 +68,5 @@ export {
 	intoDelta,
 	relevantRemovedRoots,
 } from "./modularChangeFamily.js";
-export { makeV0Codec } from "./modularChangeCodecs.js";
+export { makeModularChangeCodecFamily } from "./modularChangeCodecs.js";
+export { FieldKindConfiguration, FieldKindConfigurationEntry } from "./fieldKindConfiguration.js";

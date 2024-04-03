@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	DeltaDetachedNodeId,
 	DeltaFieldChanges,
@@ -12,62 +13,60 @@ import {
 	DeltaRoot,
 	FieldKey,
 	FieldKindIdentifier,
+	RevisionTag,
+	UpPath,
 	makeAnonChange,
 	revisionMetadataSourceFromInfo,
-	RevisionTag,
 	tagChange,
 	tagRollbackInverse,
-	UpPath,
 } from "../../core/index.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
+import { leaf } from "../../domains/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	DefaultEditBuilder,
-	FieldKinds,
 	FieldKindWithEditor,
+	FieldKinds,
 	ModularChangeset,
 	cursorForJsonableTreeNode,
-	NodeId,
 } from "../../feature-libraries/index.js";
-
 import {
-	brand,
+	ModularChangeFamily,
+	intoDelta,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../feature-libraries/modular-schema/modularChangeFamily.js";
+// eslint-disable-next-line import/no-internal-modules
+import { DetachIdOverrideType } from "../../feature-libraries/sequence-field/index.js";
+import {
 	IdAllocator,
-	idAllocatorFromMaxId,
 	Mutable,
+	brand,
+	idAllocatorFromMaxId,
 	nestedMapFromFlatList,
 } from "../../util/index.js";
 import {
 	assertDeltaEqual,
 	defaultRevisionMetadataFromChanges,
-	failCodec,
+	failCodecFamily,
 	mintRevisionTag,
 	testChangeReceiver,
-	testRevisionTagCodec,
 } from "../utils.js";
+
 import {
-	intoDelta,
-	ModularChangeFamily,
+	NodeChangeset,
+	NodeId,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../feature-libraries/modular-schema/modularChangeFamily.js";
-import { leaf } from "../../domains/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
-// eslint-disable-next-line import/no-internal-modules
-import { DetachIdOverrideType } from "../../feature-libraries/sequence-field/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { NodeChangeset } from "../../feature-libraries/modular-schema/modularChangeTypes.js";
+} from "../../feature-libraries/modular-schema/modularChangeTypes.js";
 // eslint-disable-next-line import/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits.js";
 // eslint-disable-next-line import/no-internal-modules
 import { purgeUnusedCellOrderingInfo } from "./sequence-field/utils.js";
 
-const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
-	[sequence].map((f) => [f.identifier, f]),
-);
+const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map([
+	[sequence.identifier, sequence],
+]);
 
-const family = new ModularChangeFamily(fieldKinds, testRevisionTagCodec, failCodec, {
-	jsonValidator: typeboxValidator,
-});
+const family = new ModularChangeFamily(fieldKinds, failCodecFamily);
 
 const fieldA: FieldKey = brand("FieldA");
 const fieldB: FieldKey = brand("FieldB");

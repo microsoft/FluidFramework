@@ -2,18 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IFluidContainer, ISharedMap, IValueChanged, SharedMap } from "fluid-framework";
 
-import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools";
 import {
 	AzureClient,
 	AzureContainerServices,
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
-
+import { createDevtoolsLogger } from "@fluidframework/devtools/internal";
+import { initializeDevtools } from "@fluidframework/devtools/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
+import { IFluidContainer, ISharedMap, IValueChanged, SharedMap } from "fluid-framework";
 import { v4 as uuid } from "uuid";
 
 import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";

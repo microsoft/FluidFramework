@@ -4,19 +4,43 @@
  */
 
 import { strict as assert } from "assert";
+
 import { describeStress } from "@fluid-private/stochastic-test-utils";
 import { CrossFieldManager } from "../../../feature-libraries/index.js";
 import {
 	ChangesetLocalId,
 	DeltaFieldChanges,
-	makeAnonChange,
 	RevisionMetadataSource,
 	RevisionTag,
-	tagChange,
 	TaggedChange,
-	tagRollbackInverse,
 	TreeNodeSchemaIdentifier,
+	makeAnonChange,
+	tagChange,
+	tagRollbackInverse,
 } from "../../../core/index.js";
+import {
+	NodeId,
+	RebaseRevisionMetadata,
+	ToDelta,
+	rebaseRevisionMetadataFromInfo,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/modular-schema/index.js";
+import {
+	OptionalChangeset,
+	optionalChangeRebaser,
+	optionalFieldEditor,
+	optionalFieldIntoDelta,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/optional-field/index.js";
+import { brand, fail, idAllocatorFromMaxId } from "../../../util/index.js";
+import {
+	ChildStateGenerator,
+	FieldStateTree,
+	generatePossibleSequenceOfEdits,
+	getSequentialEdits,
+	getSequentialStates,
+} from "../../exhaustiveRebaserUtils.js";
+import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js";
 // TODO: Throughout this file, we use TestChange as the child change type.
 // This is the same approach used in sequenceChangeRebaser.spec.ts, but it requires casting in this file
 // since OptionalChangeset is not generic over the child changeset type.
@@ -28,29 +52,6 @@ import {
 	defaultRevisionMetadataFromChanges,
 	isDeltaVisible,
 } from "../../utils.js";
-import { brand, fail, idAllocatorFromMaxId } from "../../../util/index.js";
-import {
-	optionalChangeRebaser,
-	optionalFieldEditor,
-	optionalFieldIntoDelta,
-	OptionalChangeset,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/optional-field/index.js";
-import {
-	FieldStateTree,
-	getSequentialEdits,
-	generatePossibleSequenceOfEdits,
-	ChildStateGenerator,
-	getSequentialStates,
-} from "../../exhaustiveRebaserUtils.js";
-import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js";
-import {
-	NodeId,
-	RebaseRevisionMetadata,
-	rebaseRevisionMetadataFromInfo,
-	ToDelta,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/modular-schema/index.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { Change, assertTaggedEqual, verifyContextChain } from "./optionalFieldUtils.js";
 
@@ -155,9 +156,7 @@ function rebase(
 
 	const metadata =
 		metadataArg ??
-		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([base, makeAnonChange(change)]), [
-			base.revision,
-		]);
+		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([base]), [base.revision]);
 	const moveEffects = failCrossFieldManager;
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
 	const rebased = optionalChangeRebaser.rebase(
@@ -254,6 +253,22 @@ function compose(
 	);
 }
 
+// This is only valid for optional changesets for childchanges of type TestChange
+function isChangeEmpty(change: OptionalChangeset): boolean {
+	const delta = toDelta(change);
+	return !isDeltaVisible(delta);
+}
+
+function assertChangesetsEquivalent(
+	change1: TaggedChange<OptionalChangeset>,
+	change2: TaggedChange<OptionalChangeset>,
+) {
+	assert.deepEqual(
+		toDelta(change1.change, change1.revision),
+		toDelta(change2.change, change2.revision),
+	);
+}
+
 type OptionalFieldTestState = FieldStateTree<string | undefined, OptionalChangeset>;
 
 function computeChildChangeInputContext(inputState: OptionalFieldTestState): number[] {
@@ -302,7 +317,9 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 			content: state.content,
 			mostRecentEdit: {
 				changeset: tagChange(
-					OptionalChange.buildChildChange({ localId: brand(0) }),
+					OptionalChange.buildChildChange({
+						localId: brand(0),
+					}),
 					tagFromIntention(changeChildIntention),
 				),
 				intention: changeChildIntention,
@@ -516,6 +533,8 @@ export function testRebaserAxioms() {
 					invert,
 					assertEqual: assertTaggedEqual,
 					createEmpty: Change.empty,
+					isEmpty: isChangeEmpty,
+					assertChangesetsEquivalent,
 				},
 				{
 					numberOfEditsToRebase: 3,

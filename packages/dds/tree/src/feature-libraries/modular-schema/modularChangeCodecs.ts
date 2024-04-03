@@ -3,35 +3,39 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import { TAnySchema } from "@sinclair/typebox";
-import { assert } from "@fluidframework/core-utils";
+
 import {
-	ChangesetLocalId,
+	type ICodecFamily,
+	ICodecOptions,
+	IJsonCodec,
+	IMultiFormatCodec,
+	SchemaValidationFunction,
+	makeCodecFamily,
+	withSchemaValidation,
+} from "../../codec/index.js";
+import {
+	ChangeAtomIdMap,
 	ChangeEncodingContext,
+	ChangesetLocalId,
 	EncodedRevisionTag,
 	FieldKey,
 	FieldKindIdentifier,
 	ITreeCursorSynchronous,
 	RevisionInfo,
 	RevisionTag,
-	ChangeAtomIdMap,
 } from "../../core/index.js";
 import {
-	brand,
-	fail,
 	IdAllocator,
-	idAllocatorFromMaxId,
 	JsonCompatibleReadOnly,
 	Mutable,
+	brand,
+	fail,
+	idAllocatorFromMaxId,
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../util/index.js";
-import {
-	ICodecOptions,
-	IJsonCodec,
-	IMultiFormatCodec,
-	SchemaValidationFunction,
-} from "../../codec/index.js";
 import {
 	FieldBatchCodec,
 	TreeChunk,
@@ -39,14 +43,8 @@ import {
 	defaultChunkPolicy,
 } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
-import {
-	FieldChangeMap,
-	FieldChangeset,
-	ModularChangeset,
-	NodeChangeset,
-	NodeId,
-} from "./modularChangeTypes.js";
-import { FieldKindWithEditor } from "./fieldKindWithEditor.js";
+
+import { FieldKindConfiguration, FieldKindConfigurationEntry } from "./fieldKindConfiguration.js";
 import { genericFieldKind } from "./genericFieldKind.js";
 import {
 	EncodedBuilds,
@@ -57,10 +55,17 @@ import {
 	EncodedNodeChangeset,
 	EncodedRevisionInfo,
 } from "./modularChangeFormat.js";
+import {
+	FieldChangeMap,
+	FieldChangeset,
+	ModularChangeset,
+	NodeChangeset,
+	NodeId,
+} from "./modularChangeTypes.js";
 import { FieldChangeEncodingContext } from "./fieldChangeHandler.js";
 
-export function makeV0Codec(
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+export function makeModularChangeCodecFamily(
+	fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration>,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
@@ -70,14 +75,49 @@ export function makeV0Codec(
 	fieldsCodec: FieldBatchCodec,
 	{ jsonValidator: validator }: ICodecOptions,
 	chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
-): IJsonCodec<
+): ICodecFamily<ModularChangeset, ChangeEncodingContext> {
+	return makeCodecFamily(
+		Array.from(fieldKindConfigurations.entries(), ([version, fieldKinds]) => [
+			version,
+			makeModularChangeCodec(
+				fieldKinds,
+				revisionTagCodec,
+				fieldsCodec,
+				{ jsonValidator: validator },
+				chunkCompressionStrategy,
+			),
+		]),
+	);
+}
+
+type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,
 	EncodedModularChangeset,
 	EncodedModularChangeset,
 	ChangeEncodingContext
-> {
-	const getMapEntry = (field: FieldKindWithEditor) => {
-		const codec = field.changeHandler.codecsFactory(revisionTagCodec).resolve(0);
+>;
+
+type FieldCodec = IMultiFormatCodec<
+	FieldChangeset,
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnly,
+	FieldChangeEncodingContext
+>;
+
+function makeModularChangeCodec(
+	fieldKinds: FieldKindConfiguration,
+	revisionTagCodec: IJsonCodec<
+		RevisionTag,
+		EncodedRevisionTag,
+		EncodedRevisionTag,
+		ChangeEncodingContext
+	>,
+	fieldsCodec: FieldBatchCodec,
+	{ jsonValidator: validator }: ICodecOptions,
+	chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
+): ModularChangeCodec {
+	const getMapEntry = ({ kind, formatVersion }: FieldKindConfigurationEntry) => {
+		const codec = kind.changeHandler.codecsFactory(revisionTagCodec).resolve(formatVersion);
 		return {
 			codec,
 			compiledSchema: codec.json.encodedSchema
@@ -86,23 +126,25 @@ export function makeV0Codec(
 		};
 	};
 
-	type FieldCodec = IMultiFormatCodec<
-		FieldChangeset,
-		JsonCompatibleReadOnly,
-		JsonCompatibleReadOnly,
-		FieldChangeEncodingContext
-	>;
-
+	/**
+	 * The codec version for the generic field kind.
+	 */
+	const genericFieldKindFormatVersion = 0;
 	const fieldChangesetCodecs: Map<
 		FieldKindIdentifier,
 		{
 			compiledSchema?: SchemaValidationFunction<TAnySchema>;
 			codec: FieldCodec;
 		}
-	> = new Map([[genericFieldKind.identifier, getMapEntry(genericFieldKind)]]);
+	> = new Map([
+		[
+			genericFieldKind.identifier,
+			getMapEntry({ kind: genericFieldKind, formatVersion: genericFieldKindFormatVersion }),
+		],
+	]);
 
-	fieldKinds.forEach((fieldKind, identifier) => {
-		fieldChangesetCodecs.set(identifier, getMapEntry(fieldKind));
+	fieldKinds.forEach((entry, identifier) => {
+		fieldChangesetCodecs.set(identifier, getMapEntry(entry));
 	});
 
 	const getFieldChangesetCodec = (
@@ -348,8 +390,7 @@ export function makeV0Codec(
 		return decodedRevisions;
 	}
 
-	// TODO: use withSchemaValidation here to validate data against format.
-	return {
+	const modularChangeCodec: ModularChangeCodec = {
 		encode: (change, context) => {
 			// Destroys only exist in rollback changesets, which are never sent.
 			assert(change.destroys === undefined, 0x899 /* Unexpected changeset with destroys */);
@@ -369,9 +410,7 @@ export function makeV0Codec(
 			};
 		},
 
-		decode: (change, context) => {
-			const encodedChange = change as unknown as EncodedModularChangeset;
-
+		decode: (encodedChange: EncodedModularChangeset, context) => {
 			const [fieldChanges, nodeChanges] = decodeFieldChangesFromJson(
 				encodedChange.changes,
 				context,
@@ -396,6 +435,7 @@ export function makeV0Codec(
 			}
 			return decoded;
 		},
-		encodedSchema: EncodedModularChangeset,
 	};
+
+	return withSchemaValidation(EncodedModularChangeset, modularChangeCodec, validator);
 }

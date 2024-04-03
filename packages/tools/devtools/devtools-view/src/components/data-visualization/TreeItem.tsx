@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
 import {
 	Tree as FluentTree,
 	TreeItem as FluentTreeItem,
 	TreeItemLayout as FluentTreeItemLayout,
 } from "@fluentui/react-components/unstable";
+import React from "react";
 
 /**
  * Input to {@link TreeItem}

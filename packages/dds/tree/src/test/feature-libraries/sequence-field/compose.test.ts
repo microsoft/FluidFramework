@@ -4,16 +4,16 @@
  */
 
 import { strict as assert, fail } from "assert";
-import { mintRevisionTag } from "../../utils.js";
+
 import {
+	ChangeAtomId,
+	ChangesetLocalId,
+	RevisionInfo,
 	RevisionTag,
+	TreeNodeSchemaIdentifier,
 	makeAnonChange,
 	tagChange,
-	TreeNodeSchemaIdentifier,
 	tagRollbackInverse,
-	ChangesetLocalId,
-	ChangeAtomId,
-	RevisionInfo,
 } from "../../../core/index.js";
 import { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
@@ -30,6 +30,7 @@ import {
 	skipOnLineageMethod,
 	withOrderingMethod,
 } from "./utils.js";
+import { mintRevisionTag } from "../../utils.js";
 
 const type: TreeNodeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = mintRevisionTag();

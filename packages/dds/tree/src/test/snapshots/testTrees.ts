@@ -4,11 +4,31 @@
  */
 
 import { SessionId } from "@fluidframework/id-compressor";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-// eslint-disable-next-line import/no-internal-modules -- test import
-import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/test/idCompressorTestUtilities";
-import { brand } from "../../util/index.js";
+import {
+	AllowedUpdateType,
+	FieldKey,
+	FieldUpPath,
+	ITreeCursorSynchronous,
+	JsonableTree,
+	UpPath,
+	rootFieldKey,
+} from "../../core/index.js";
+import { SchemaBuilder, leaf } from "../../domains/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
+import {
+	Any,
+	FieldKinds,
+	FlexFieldSchema,
+	FlexTreeNodeSchema,
+	InsertableFlexNode,
+	TreeCompressionStrategy,
+	cursorForJsonableTreeNode,
+	cursorForTypedTreeData,
+	intoStoredSchema,
+} from "../../feature-libraries/index.js";
 import {
 	ISharedTree,
 	ITreeCheckout,
@@ -16,18 +36,9 @@ import {
 	SharedTreeFactory,
 	runSynchronous,
 } from "../../shared-tree/index.js";
-import {
-	Any,
-	FieldKinds,
-	FlexFieldSchema,
-	cursorForJsonableTreeNode,
-	cursorForTypedTreeData,
-	FlexTreeNodeSchema,
-	InsertableFlexNode,
-	intoStoredSchema,
-	TreeCompressionStrategy,
-} from "../../feature-libraries/index.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { SharedTreeOptions, defaultSharedTreeOptions } from "../../shared-tree/sharedTree.js";
+import { brand } from "../../util/index.js";
 import {
 	TestTreeProviderLite,
 	emptyJsonSequenceConfig,
@@ -38,18 +49,6 @@ import {
 	schematizeFlexTree,
 	treeTestFactory,
 } from "../utils.js";
-import {
-	AllowedUpdateType,
-	FieldKey,
-	FieldUpPath,
-	ITreeCursorSynchronous,
-	JsonableTree,
-	UpPath,
-	rootFieldKey,
-} from "../../core/index.js";
-import { leaf, SchemaBuilder } from "../../domains/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SharedTreeOptions, defaultSharedTreeOptions } from "../../shared-tree/sharedTree.js";
 
 // Session ids used for the created trees' IdCompressors must be deterministic.
 // TestTreeProviderLite does this by default.
@@ -257,7 +256,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 					scope: "optional-field",
 					libraries: [leaf.library],
 				});
-				const testNode = innerBuilder.map("TestNode", leaf.all);
+				const testNode = innerBuilder.map("TestNode", SchemaBuilder.optional(leaf.all));
 				const docSchema = innerBuilder.intoSchema(SchemaBuilder.optional(testNode));
 
 				const config = {

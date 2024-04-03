@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { mintRevisionTag } from "../../utils.js";
+
 import {
 	ChangeAtomId,
 	DeltaDetachedNodeId,
@@ -16,6 +16,7 @@ import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { TestChangeset, MarkMaker as Mark } from "./testEdits.js";
+import { mintRevisionTag } from "../../utils.js";
 
 const tag = mintRevisionTag();
 const atomId: ChangeAtomId = { localId: brand(0) };

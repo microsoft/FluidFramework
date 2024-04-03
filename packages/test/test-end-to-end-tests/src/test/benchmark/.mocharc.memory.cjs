@@ -6,7 +6,7 @@
 /**
  * Mocha configuration file for memory profiling tests
  */
-const getFluidTestMochaConfig = require("@fluid-private/test-version-utils/mocharc-common.cjs");
+const getFluidTestMochaConfig = require("@fluid-private/test-version-utils/mocharc-common");
 const packageDir = `${__dirname}/../../..`;
 
 const config = getFluidTestMochaConfig(packageDir);

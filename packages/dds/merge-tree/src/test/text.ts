@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISegment, Marker } from "../mergeTreeNodes.js";
 import { MergeTree } from "../mergeTree.js";
+import { ISegment, Marker } from "../mergeTreeNodes.js";
 import { ReferenceType } from "../ops.js";
 import { reservedTileLabelsKey } from "../referencePositions.js";
 import { TextSegment } from "../textSegment.js";

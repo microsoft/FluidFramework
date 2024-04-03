@@ -3,8 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
 import { strict as assert } from "assert";
+import * as path from "path";
+
+import {
+	AsyncGenerator,
+	Generator,
+	combineReducers,
+	createWeightedGenerator,
+	takeAsync,
+} from "@fluid-private/stochastic-test-utils";
 import {
 	DDSFuzzModel,
 	DDSFuzzSuiteOptions,
@@ -16,17 +24,12 @@ import {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import {
-	combineReducers,
-	createWeightedGenerator,
-	AsyncGenerator,
-	Generator,
-	takeAsync,
-} from "@fluid-private/stochastic-test-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+
 import { SharedMatrix } from "../matrix.js";
 import { MatrixItem } from "../ops.js";
 import { SharedMatrixFactory } from "../runtime.js";
+
 import { _dirname } from "./dirname.cjs";
 
 /**

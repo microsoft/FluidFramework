@@ -6,65 +6,66 @@
 import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { LazyPromise } from "@fluidframework/core-utils";
-import { AttachState, ContainerErrorTypes } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
+import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IFluidHandleContext,
+	ITelemetryBaseLogger,
 	Tagged,
 	TelemetryBaseEventPropertyType,
-	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { LazyPromise } from "@fluidframework/core-utils/internal";
+import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore/internal";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	IBlob,
 	ISnapshotTree,
 	ISummaryBlob,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
+	CreateChildSummarizerNodeFn,
+	CreateSummarizerNodeSource,
+	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
-	IGarbageCollectionData,
+	IFluidParentContext,
 	IGarbageCollectionDetailsBase,
 	SummarizeInternalFn,
-	CreateChildSummarizerNodeFn,
-	CreateSummarizerNodeSource,
 	channelsTreeName,
-	IFluidDataStoreChannel,
-	IFluidParentContext,
-} from "@fluidframework/runtime-definitions";
-import { GCDataBuilder, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
+} from "@fluidframework/runtime-definitions/internal";
+import { GCDataBuilder, convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
 import {
-	isFluidError,
 	MockLogger,
 	TelemetryDataTag,
 	createChildLogger,
-} from "@fluidframework/telemetry-utils";
+	isFluidError,
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	MockFluidDataStoreRuntime,
 	validateAssertionError,
-} from "@fluidframework/test-runtime-utils";
-import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore";
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { ChannelCollection, wrapContextForInnerChannel } from "../channelCollection.js";
+import { ContainerRuntime } from "../containerRuntime.js";
+import { channelToDataStore } from "../dataStore.js";
 import {
 	LocalDetachedFluidDataStoreContext,
 	LocalFluidDataStoreContext,
 	RemoteFluidDataStoreContext,
 } from "../dataStoreContext.js";
-import { ContainerRuntime } from "../containerRuntime.js";
 import { StorageServiceWithAttachBlobs } from "../storageServiceWithAttachBlobs.js";
 import {
-	createRootSummarizerNodeWithGC,
-	dataStoreAttributesBlobName,
 	IRootSummarizerNodeWithGC,
 	ReadFluidDataStoreAttributes,
 	WriteFluidDataStoreAttributes,
+	createRootSummarizerNodeWithGC,
+	dataStoreAttributesBlobName,
 	summarizerClientType,
 } from "../summary/index.js";
-import { channelToDataStore } from "../dataStore.js";
 
 describe("Data Store Context Tests", () => {
 	const dataStoreId = "Test1";
@@ -144,7 +145,6 @@ describe("Data Store Context Tests", () => {
 						createSummarizerNodeFn,
 						makeLocallyVisibleFn,
 						snapshotTree: undefined,
-						isRootDataStore: true,
 					});
 
 				assert.throws(codeBlock, (e: Error) =>
@@ -163,7 +163,6 @@ describe("Data Store Context Tests", () => {
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
-					isRootDataStore: true,
 				});
 
 				try {
@@ -205,7 +204,6 @@ describe("Data Store Context Tests", () => {
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
-					isRootDataStore: true,
 				});
 
 				await localDataStoreContext.realize();
@@ -229,7 +227,7 @@ describe("Data Store Context Tests", () => {
 				const dataStoreAttributes: WriteFluidDataStoreAttributes = {
 					pkg: JSON.stringify(["TestDataStore1"]),
 					summaryFormatVersion: 2,
-					isRootDataStore: true,
+					isRootDataStore: false,
 				};
 
 				assert.strictEqual(
@@ -261,7 +259,6 @@ describe("Data Store Context Tests", () => {
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
-					isRootDataStore: false,
 				});
 
 				await localDataStoreContext.realize().catch((error) => {
@@ -295,7 +292,6 @@ describe("Data Store Context Tests", () => {
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
-					isRootDataStore: false,
 				});
 
 				await localDataStoreContext.realize();
@@ -339,23 +335,6 @@ describe("Data Store Context Tests", () => {
 				assert.strictEqual(type, "SubComp", "Attach message type does not match.");
 			});
 
-			it("can correctly initialize root context", async () => {
-				localDataStoreContext = new LocalFluidDataStoreContext({
-					id: dataStoreId,
-					pkg: ["TestDataStore1"],
-					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
-					storage,
-					scope,
-					createSummarizerNodeFn,
-					makeLocallyVisibleFn,
-					snapshotTree: undefined,
-					isRootDataStore: true,
-				});
-
-				const isRootNode = await localDataStoreContext.isRoot();
-				assert.strictEqual(isRootNode, true, "The data store should be root.");
-			});
-
 			it("can correctly initialize non-root context", async () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
@@ -366,7 +345,6 @@ describe("Data Store Context Tests", () => {
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
-					isRootDataStore: false,
 				});
 
 				const isRootNode = await localDataStoreContext.isRoot();
@@ -399,7 +377,6 @@ describe("Data Store Context Tests", () => {
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
-					isRootDataStore: false,
 				});
 
 				const expectedEvents = [
@@ -432,7 +409,6 @@ describe("Data Store Context Tests", () => {
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
-					isRootDataStore: false,
 				});
 				await localDataStoreContext.realize();
 
@@ -472,7 +448,6 @@ describe("Data Store Context Tests", () => {
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
-					isRootDataStore: false,
 				});
 				await localDataStoreContext.realize();
 
@@ -508,7 +483,6 @@ describe("Data Store Context Tests", () => {
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
-					isRootDataStore: true,
 				});
 
 				const gcData = await localDataStoreContext.getGCData();
@@ -529,7 +503,6 @@ describe("Data Store Context Tests", () => {
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
-					isRootDataStore: false,
 				});
 
 				// Get the summarizer node for this data store which tracks its referenced state.
@@ -567,7 +540,6 @@ describe("Data Store Context Tests", () => {
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
-					isRootDataStore: false,
 				});
 
 				localDataStoreContext.setTombstone(true);
@@ -1133,7 +1105,6 @@ describe("Data Store Context Tests", () => {
 						createSummarizerNodeFn,
 						makeLocallyVisibleFn,
 						snapshotTree: undefined,
-						isRootDataStore: true,
 						channelToDataStoreFn,
 					});
 
@@ -1157,7 +1128,6 @@ describe("Data Store Context Tests", () => {
 						createSummarizerNodeFn,
 						makeLocallyVisibleFn,
 						snapshotTree: undefined,
-						isRootDataStore: false,
 						channelToDataStoreFn,
 					});
 
@@ -1194,7 +1164,6 @@ describe("Data Store Context Tests", () => {
 						createSummarizerNodeFn,
 						makeLocallyVisibleFn,
 						snapshotTree: undefined,
-						isRootDataStore: false,
 						channelToDataStoreFn,
 					});
 

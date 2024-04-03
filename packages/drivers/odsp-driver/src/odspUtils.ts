@@ -3,50 +3,51 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseProperties, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IResolvedUrl, ISnapshot } from "@fluidframework/driver-definitions";
+import { performance } from "@fluid-internal/client-utils";
+import { ITelemetryBaseLogger, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IResolvedUrl, ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
-	isOnline,
+	type AuthorizationError,
+	NetworkErrorBasic,
+	NonRetryableError,
 	OnlineStatus,
 	RetryableError,
-	NonRetryableError,
-	NetworkErrorBasic,
-	type AuthorizationError,
-} from "@fluidframework/driver-utils";
-import { performance } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+	isOnline,
+} from "@fluidframework/driver-utils/internal";
 import {
-	ITelemetryLoggerExt,
+	fetchIncorrectResponse,
+	getSPOAndGraphRequestIdsFromResponse,
+	throwOdspNetworkError,
+} from "@fluidframework/odsp-doclib-utils/internal";
+import {
+	ICacheEntry,
+	IOdspResolvedUrl,
+	IOdspUrlParts,
+	ISharingLinkKind,
+	InstrumentedStorageTokenFetcher,
+	OdspErrorTypes,
+	OdspResourceTokenFetchOptions,
+	TokenFetchOptions,
+	TokenFetcher,
+	isTokenFromCache,
+	snapshotKey,
+	tokenFromResponse,
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import {
+	type IFluidErrorBase,
 	PerformanceEvent,
 	TelemetryDataTag,
 	createChildLogger,
 	wrapError,
-	type IFluidErrorBase,
-} from "@fluidframework/telemetry-utils";
-import {
-	fetchIncorrectResponse,
-	throwOdspNetworkError,
-	getSPOAndGraphRequestIdsFromResponse,
-} from "@fluidframework/odsp-doclib-utils/internal";
-import {
-	IOdspResolvedUrl,
-	TokenFetchOptions,
-	OdspErrorTypes,
-	tokenFromResponse,
-	isTokenFromCache,
-	OdspResourceTokenFetchOptions,
-	ISharingLinkKind,
-	TokenFetcher,
-	ICacheEntry,
-	snapshotKey,
-	InstrumentedStorageTokenFetcher,
-	IOdspUrlParts,
-} from "@fluidframework/odsp-driver-definitions";
-import { fetch } from "./fetch.js";
-import { pkgVersion as driverVersion } from "./packageVersion.js";
+} from "@fluidframework/telemetry-utils/internal";
+
 import { IOdspSnapshot } from "./contracts.js";
+import { fetch } from "./fetch.js";
 // eslint-disable-next-line import/no-deprecated
 import { ISnapshotContents } from "./odspPublicUtils.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRepeat";
 

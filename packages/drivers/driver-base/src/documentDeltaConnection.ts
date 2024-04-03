@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import {
-	IAnyDriverError,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
-} from "@fluidframework/driver-definitions";
-import { UsageError, createGenericNetworkError } from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-definitions/internal";
+import { UsageError, createGenericNetworkError } from "@fluidframework/driver-utils/internal";
 import {
 	ConnectionMode,
 	IClientConfiguration,
@@ -22,17 +23,17 @@ import {
 	ITokenClaims,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
-	ITelemetryLoggerExt,
+	EventEmitterWithErrorHandling,
+	MonitoringContext,
+	createChildMonitoringContext,
 	extractLogSafeErrorProperties,
 	getCircularReplacer,
-	MonitoringContext,
-	EventEmitterWithErrorHandling,
 	normalizeError,
-	createChildMonitoringContext,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import type { Socket } from "socket.io-client";
+
 // For now, this package is versioned and released in unison with the specific drivers
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 
@@ -310,7 +311,9 @@ export class DocumentDeltaConnection
 		return this.details.initialClients;
 	}
 
-	protected emitMessages(type: string, messages: IDocumentMessage[][]) {
+	protected emitMessages(type: "submitOp", messages: IDocumentMessage[][]): void;
+	protected emitMessages(type: "submitSignal", messages: string[][]): void;
+	protected emitMessages(type: string, messages: unknown): void {
 		// Although the implementation here disconnects the socket and does not reuse it, other subclasses
 		// (e.g. OdspDocumentDeltaConnection) may reuse the socket.  In these cases, we need to avoid emitting
 		// on the still-live socket.
@@ -335,7 +338,7 @@ export class DocumentDeltaConnection
 	 * @param content - Content of the signal.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(content: IDocumentMessage, targetClientId?: string): void {
+	public submitSignal(content: string, targetClientId?: string): void {
 		this.checkNotDisposed();
 
 		if (targetClientId && this.details.supportedFeatures?.submit_signals_v2 !== true) {
@@ -763,6 +766,8 @@ export class DocumentDeltaConnection
 				details: JSON.stringify({
 					...this.getConnectionDetailsProps(),
 				}),
+				// We use this param to clear the joinSession cache if the error happens in connect_document flow.
+				errorFrom: handler,
 			},
 		);
 	}

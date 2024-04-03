@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
+
+import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence/internal";
 import React from "react";
 
 /**

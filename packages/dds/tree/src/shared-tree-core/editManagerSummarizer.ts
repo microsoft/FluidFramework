@@ -4,31 +4,24 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
-import { ICodecOptions, IJsonCodec } from "../codec/index.js";
-import {
-	ChangeEncodingContext,
-	ChangeFamily,
-	ChangeFamilyEditor,
-	EncodedRevisionTag,
-	RevisionTag,
-} from "../core/index.js";
+import { createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+
+import { IJsonCodec } from "../codec/index.js";
+import { ChangeFamily, ChangeFamilyEditor, SchemaAndPolicy } from "../core/index.js";
 import { JsonCompatibleReadOnly } from "../util/index.js";
-import { SchemaAndPolicy } from "../feature-libraries/index.js";
-import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "./sharedTreeCore.js";
+
 import { EditManager, SummaryData } from "./editManager.js";
-import { EditManagerEncodingContext, makeEditManagerCodec } from "./editManagerCodecs.js";
+import { EditManagerEncodingContext } from "./editManagerCodecs.js";
+import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "./sharedTreeCore.js";
 
 const stringKey = "String";
-
-const formatVersion = 0;
 
 /**
  * Provides methods for summarizing and loading an `EditManager`
@@ -36,35 +29,20 @@ const formatVersion = 0;
 export class EditManagerSummarizer<TChangeset> implements Summarizable {
 	public readonly key = "EditManager";
 
-	// Note: since there is only one format, this can just be cached on the class.
-	// With more write formats active, it may make sense to keep around the "usual" format codec
-	// (the one for the current persisted configuration) and resolve codecs for different versions
-	// as necessary (e.g. an upgrade op came in, or the configuration changed within the collab window
-	// and an op needs to be interpreted which isn't written with the current configuration).
-	private readonly codec: IJsonCodec<
-		SummaryData<TChangeset>,
-		JsonCompatibleReadOnly,
-		JsonCompatibleReadOnly,
-		EditManagerEncodingContext
-	>;
 	public constructor(
 		private readonly editManager: EditManager<
 			ChangeFamilyEditor,
 			TChangeset,
 			ChangeFamily<ChangeFamilyEditor, TChangeset>
 		>,
-		revisionTagCodec: IJsonCodec<
-			RevisionTag,
-			EncodedRevisionTag,
-			EncodedRevisionTag,
-			ChangeEncodingContext
+		private readonly codec: IJsonCodec<
+			SummaryData<TChangeset>,
+			JsonCompatibleReadOnly,
+			JsonCompatibleReadOnly,
+			EditManagerEncodingContext
 		>,
-		options: ICodecOptions,
 		private readonly schemaAndPolicy?: SchemaAndPolicy,
-	) {
-		const changesetCodec = this.editManager.changeFamily.codecs.resolve(formatVersion);
-		this.codec = makeEditManagerCodec(changesetCodec, revisionTagCodec, options);
-	}
+	) {}
 
 	public getAttachSummary(
 		stringify: SummaryElementStringifier,

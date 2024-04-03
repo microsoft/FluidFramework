@@ -4,17 +4,17 @@
  */
 
 import {
+	ArrayProperty,
 	BaseProperty,
 	ContainerProperty,
-	ValueProperty,
-	ValueArrayProperty,
-	ValueMapProperty,
 	MapProperty,
-	ArrayProperty,
-	SetProperty,
-	ReferenceProperty,
 	ReferenceArrayProperty,
 	ReferenceMapProperty,
+	ReferenceProperty,
+	SetProperty,
+	ValueArrayProperty,
+	ValueMapProperty,
+	ValueProperty,
 } from "@fluid-experimental/property-properties";
 
 /**

@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	ChangeAtomId,
 	ChangesetLocalId,
@@ -14,18 +15,18 @@ import {
 	taggedAtomId,
 } from "../../../core/index.js";
 import {
-	RegisterId,
-	OptionalChangeset,
-	RegisterMap,
 	Move,
+	OptionalChangeset,
+	RegisterId,
+	RegisterMap,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
-import { Mutable, brand } from "../../../util/index.js";
 import {
 	ChildChange,
 	Replace,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
+import { Mutable, brand } from "../../../util/index.js";
 
 const dummyDetachId: ChangeAtomId = { localId: brand(0) };
 
@@ -105,6 +106,18 @@ export const Change = {
 			moves: [],
 			childChanges: [],
 			valueReplace: { isEmpty: true, dst: asChangeAtomId(dst) },
+		};
+	},
+	/**
+	 * @param dst - The register that the contents of the field should be moved to should it become populated
+	 * with a different node that the current one (which will take its place).
+	 * @returns A changeset that pins the current node to the field.
+	 */
+	pin: (dst: ChangeAtomId | ChangesetLocalId): OptionalChangeset<never> => {
+		return {
+			moves: [],
+			childChanges: [],
+			valueReplace: { isEmpty: false, dst: asChangeAtomId(dst), src: "self" },
 		};
 	},
 	/**

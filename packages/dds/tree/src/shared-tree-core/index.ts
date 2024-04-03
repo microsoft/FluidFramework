@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 export {
 	onForkTransitive,
 	SharedTreeBranch,
@@ -11,6 +12,7 @@ export {
 } from "./branch.js";
 
 export {
+	ExplicitCoreCodecVersions,
 	SharedTreeCore,
 	Summarizable,
 	SummaryElementParser,

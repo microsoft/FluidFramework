@@ -6,13 +6,14 @@
 import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import type {
-	IGarbageCollectionData,
 	IExperimentalIncrementalSummaryContext,
+	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import type { IChannelAttributes } from "./storage.js";
+
 import type { IFluidDataStoreRuntime } from "./dataStoreRuntime.js";
+import type { IChannelAttributes } from "./storage.js";
 
 /**
  * @public
@@ -262,14 +263,14 @@ export interface IChannelServices {
  * the collaborating clients will need to have access to a factory that can produce the `SharedMap` object.
  *
  * @privateRemarks
- * TChannel extends IFluidLoadable instead of TChannel since doing so enables LoadableObjectClass to be covariant over its input parameter.
+ * TChannel is intersected with IChannel when returned instead of constrained to it since doing so enables LoadableObjectClass to be covariant over its input parameter.
  * This means that code like fluid-static's `InitialObjects` can be simple and type safe and LoadableObjectClass<any> is not needed.
  * This approach (not requiring TChannel to extend IChannel) also makes it possible for SharedObject's public interfaces to not include IChannel if desired
  * (while still requiring the implementation to implement it).
  *
  * @public
  */
-export interface IChannelFactory<out TChannel extends IFluidLoadable = IFluidLoadable> {
+export interface IChannelFactory<out TChannel = unknown> {
 	/**
 	 * String representing the type of the factory.
 	 */

@@ -3,35 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
-	TreeNavigationResult,
 	ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
+	TreeNavigationResult,
 } from "../../core/index.js";
-import { disposeSymbol, IDisposable } from "../../util/index.js";
+import { IDisposable, disposeSymbol } from "../../util/index.js";
+
 import { Context } from "./context.js";
 import { FlexTreeEntity, FlexTreeEntityKind, TreeStatus, flexTreeMarker } from "./flexTreeTypes.js";
-
-/**
- * Like {@link makePropertyNotEnumerable}, but less type safe so it works on private properties.
- */
-export function makePrivatePropertyNotEnumerable(
-	target: object,
-	key: string | symbol | number,
-): void {
-	assert(
-		Object.getOwnPropertyDescriptor(target, key)?.enumerable === true,
-		0x777 /* missing property or not enumerable */,
-	);
-	Object.defineProperty(target, key, { enumerable: false });
-}
 
 export const prepareForEditSymbol = Symbol("prepareForEdit");
 export const isFreedSymbol = Symbol("isFreed");
 export const tryMoveCursorToAnchorSymbol = Symbol("tryMoveCursorToAnchor");
 export const forgetAnchorSymbol = Symbol("forgetAnchor");
 export const cursorSymbol = Symbol("cursor");
+/**
+ * Symbol used to access the (generic) anchor of a {@link LazyEntity}.
+ */
 export const anchorSymbol = Symbol("anchor");
 
 /**
@@ -41,8 +32,8 @@ export const anchorSymbol = Symbol("anchor");
  * TODO: provide a non implementation dependent way to leverage this optimization.
  */
 export function assertFlexTreeEntityNotFreed(entity: FlexTreeEntity): void {
-	assert(entity instanceof LazyEntity, "unexpected implementation");
-	assert(!entity[isFreedSymbol](), "Use after free");
+	assert(entity instanceof LazyEntity, 0x8c9 /* unexpected implementation */);
+	assert(!entity[isFreedSymbol](), 0x8ca /* Use after free */);
 }
 
 /**
@@ -74,7 +65,7 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 	public [disposeSymbol](): void {
 		this.#lazyCursor.free();
 		this.context.withCursors.delete(this);
-		this[forgetAnchorSymbol](this[anchorSymbol]);
+		this[forgetAnchorSymbol]();
 		this.context.withAnchors.delete(this);
 	}
 
@@ -95,12 +86,12 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 			);
 			assert(
 				this[anchorSymbol] !== undefined,
-				0x779 /* EditableTree should have an anchor if it does not have a cursor */,
+				0x779 /* FlexTree should have an anchor if it does not have a cursor */,
 			);
-			const result = this[tryMoveCursorToAnchorSymbol](this[anchorSymbol], this.#lazyCursor);
+			const result = this[tryMoveCursorToAnchorSymbol](this.#lazyCursor);
 			assert(
 				result === TreeNavigationResult.Ok,
-				0x77a /* It is invalid to access an EditableTree node which no longer exists */,
+				0x77a /* It is invalid to access a FlexTree node which no longer exists */,
 			);
 			this.context.withCursors.add(this);
 		}
@@ -108,14 +99,13 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 	}
 
 	protected abstract [tryMoveCursorToAnchorSymbol](
-		anchor: TAnchor,
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult;
 
 	/**
 	 * Called when disposing of this target, iff it has an anchor.
 	 */
-	protected abstract [forgetAnchorSymbol](anchor: TAnchor): void;
+	protected abstract [forgetAnchorSymbol](): void;
 }
 
 /**

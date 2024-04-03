@@ -3,22 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { TreeNodeSchemaIdentifier, TreeValue, ValueSchema } from "../../core/index.js";
+import {
+	TreeNodeSchemaIdentifier,
+	TreeValue,
+	ValueSchema,
+	Multiplicity,
+} from "../../core/index.js";
+import { Assume, FlattenKeys, _InlineTrick } from "../../util/index.js";
 import { ContextuallyTypedNodeData, typeNameSymbol, valueSymbol } from "../contextuallyTyped.js";
 import {
-	FlexFieldSchema,
-	FlexTreeNodeSchema,
 	FlexAllowedTypes,
-	LeafNodeSchema,
-	FlexObjectNodeSchema,
-	FlexObjectNodeFields,
 	FlexFieldNodeSchema,
-	FlexMapNodeSchema,
+	FlexFieldSchema,
 	FlexListToUnion,
+	FlexMapNodeSchema,
+	FlexObjectNodeFields,
+	FlexObjectNodeSchema,
+	FlexTreeNodeSchema,
 	LazyItem,
+	LeafNodeSchema,
 } from "../typed-schema/index.js";
-import { Assume, FlattenKeys, _InlineTrick } from "../../util/index.js";
-import { Multiplicity } from "../multiplicity.js";
 
 /**
  * Empty Object for use in type computations that should contribute no fields when `&`ed with another type.

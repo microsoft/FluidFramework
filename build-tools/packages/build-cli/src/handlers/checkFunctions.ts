@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "node:assert";
 import execa from "execa";
 import inquirer from "inquirer";
@@ -237,7 +238,7 @@ export const checkDependenciesInstalled: StateHandlerFunction = async (
 	const packagesToCheck = isReleaseGroup(releaseGroup)
 		? context.packagesInReleaseGroup(releaseGroup)
 		: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		  [context.fullPackageMap.get(releaseGroup)!];
+			[context.fullPackageMap.get(releaseGroup)!];
 
 	const installed = await FluidRepo.ensureInstalled(packagesToCheck);
 

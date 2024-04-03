@@ -3,19 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { fail, strict as assert } from "assert";
-import { PropertySet, toRemovalInfo } from "@fluidframework/merge-tree";
-import {
-	MockFluidDataStoreRuntime,
-	MockContainerRuntimeFactory,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { strict as assert, fail } from "assert";
+
 import { AttachState } from "@fluidframework/container-definitions";
-import { SharedString } from "../sharedString.js";
-import { SharedStringFactory } from "../sequenceFactory.js";
+import { PropertySet, toRemovalInfo } from "@fluidframework/merge-tree/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import {
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
+
 import { IIntervalCollection } from "../intervalCollection.js";
 import { SequenceInterval } from "../intervals/index.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { SharedString } from "../sharedString.js";
 
 interface IntervalEventInfo {
 	interval: { start: number; end: number };

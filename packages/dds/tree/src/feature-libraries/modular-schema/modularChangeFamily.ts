@@ -3,71 +3,70 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { ICodecFamily, ICodecOptions, makeCodecFamily } from "../../codec/index.js";
+import { assert } from "@fluidframework/core-utils/internal";
+
+import { ICodecFamily } from "../../codec/index.js";
 import {
-	ChangeFamily,
-	EditBuilder,
-	ChangeRebaser,
-	FieldKindIdentifier,
-	FieldKey,
-	UpPath,
-	TaggedChange,
-	RevisionTag,
-	tagChange,
-	makeAnonChange,
-	ChangeFamilyEditor,
-	FieldUpPath,
-	ChangesetLocalId,
-	isEmptyFieldChanges,
-	RevisionMetadataSource,
-	RevisionInfo,
-	revisionMetadataSourceFromInfo,
 	ChangeAtomIdMap,
-	makeDetachedNodeId,
-	emptyDelta,
-	DeltaFieldMap,
-	DeltaFieldChanges,
+	ChangeEncodingContext,
+	ChangeFamily,
+	ChangeFamilyEditor,
+	ChangeRebaser,
+	ChangesetLocalId,
+	CursorLocationType,
 	DeltaDetachedNodeBuild,
 	DeltaDetachedNodeDestruction,
-	DeltaRoot,
 	DeltaDetachedNodeId,
-	ChangeEncodingContext,
-	RevisionTagCodec,
-	mapCursorField,
+	DeltaFieldChanges,
+	DeltaFieldMap,
+	DeltaRoot,
+	EditBuilder,
+	FieldKey,
+	FieldKindIdentifier,
+	FieldUpPath,
 	ITreeCursorSynchronous,
-	CursorLocationType,
+	RevisionInfo,
+	RevisionMetadataSource,
+	RevisionTag,
+	TaggedChange,
+	UpPath,
+	emptyDelta,
+	isEmptyFieldChanges,
+	makeAnonChange,
+	makeDetachedNodeId,
+	mapCursorField,
+	revisionMetadataSourceFromInfo,
+	tagChange,
 	taggedAtomId,
 	taggedOptAtomId,
 } from "../../core/index.js";
 import {
+	IdAllocationState,
+	IdAllocator,
+	Mutable,
+	NestedSet,
 	addToNestedSet,
 	brand,
 	deleteFromNestedMap,
 	fail,
 	forEachInNestedMap,
 	getOrAddInMap,
-	IdAllocationState,
-	IdAllocator,
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
-	Mutable,
-	NestedSet,
 	nestedSetContains,
 	populateNestedMap,
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../util/index.js";
-import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 import {
 	TreeChunk,
 	chunkFieldSingle,
-	defaultChunkPolicy,
-	FieldBatchCodec,
 	chunkTree,
+	defaultChunkPolicy,
 } from "../chunked-forest/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
-import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
+import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
+
 import {
 	CrossFieldManager,
 	CrossFieldMap,
@@ -80,7 +79,6 @@ import {
 	NodeExistenceState,
 	RebaseRevisionMetadata,
 } from "./fieldChangeHandler.js";
-import { FlexFieldKind } from "./fieldKind.js";
 import { FieldKindWithEditor, withEditor } from "./fieldKindWithEditor.js";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind.js";
 import { GenericChangeset } from "./genericFieldKindTypes.js";
@@ -92,7 +90,6 @@ import {
 	NodeChangeset,
 	NodeId,
 } from "./modularChangeTypes.js";
-import { makeV0Codec } from "./modularChangeCodecs.js";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -103,25 +100,13 @@ export class ModularChangeFamily
 {
 	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
 
-	public readonly latestCodec: ReturnType<typeof makeV0Codec>;
-
-	public readonly codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>;
+	public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>;
 
 	public constructor(
-		public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-		revisionTagCodec: RevisionTagCodec,
-		fieldBatchCodec: FieldBatchCodec,
-		codecOptions: ICodecOptions,
-		chunkCompressionStrategy?: TreeCompressionStrategy,
+		fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+		public readonly codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
 	) {
-		this.latestCodec = makeV0Codec(
-			fieldKinds,
-			revisionTagCodec,
-			fieldBatchCodec,
-			codecOptions,
-			chunkCompressionStrategy,
-		);
-		this.codecs = makeCodecFamily([[0, this.latestCodec]]);
+		this.fieldKinds = fieldKinds;
 	}
 
 	public get rebaser(): ChangeRebaser<ModularChangeset> {
@@ -269,7 +254,10 @@ export class ModularChangeFamily
 			crossFieldTable.invalidatedFields = new Set();
 			for (const fieldChange of fieldsToUpdate) {
 				const context = crossFieldTable.fieldToContext.get(fieldChange);
-				assert(context !== undefined, "Should have context for every invalidated field");
+				assert(
+					context !== undefined,
+					0x8cc /* Should have context for every invalidated field */,
+				);
 				const { change1: fieldChange1, change2: fieldChange2, composedChange } = context;
 
 				const rebaser = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).rebaser;
@@ -1194,23 +1182,24 @@ function* relevantRemovedRootsFromFields(
  * Can be retrieved by calling {@link relevantRemovedRoots}.
  */
 export function updateRefreshers(
-	change: TaggedChange<ModularChangeset>,
+	{ change, revision }: TaggedChange<ModularChangeset>,
 	getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
 	removedRoots: Iterable<DeltaDetachedNodeId>,
 ): ModularChangeset {
 	const refreshers: ChangeAtomIdMap<TreeChunk> = new Map();
 
 	for (const root of removedRoots) {
-		if (change.change.builds !== undefined) {
+		if (change.builds !== undefined) {
+			const major = root.major === revision ? undefined : root.major;
 			// if the root exists in the original builds map, it does not need to be added as a refresher
-			const original = tryGetFromNestedMap(change.change.builds, root.major, root.minor);
+			const original = tryGetFromNestedMap(change.builds, major, root.minor);
 			if (original !== undefined) {
 				continue;
 			}
 		}
 
 		const node = getDetachedNode(root);
-		assert(node !== undefined, "detached node should exist");
+		assert(node !== undefined, 0x8cd /* detached node should exist */);
 		setInNestedMap(refreshers, root.major, root.minor, node);
 	}
 
@@ -1222,7 +1211,7 @@ export function updateRefreshers(
 		constraintViolationCount,
 		builds,
 		destroys,
-	} = change.change;
+	} = change;
 
 	return makeModularChangeset(
 		fieldChanges,
@@ -1387,7 +1376,7 @@ function isEmptyNodeChangeset(change: NodeChangeset): boolean {
 }
 
 export function getFieldKind(
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 	kind: FieldKindIdentifier,
 ): FieldKindWithEditor {
 	if (kind === genericFieldKind.identifier) {
@@ -1399,7 +1388,7 @@ export function getFieldKind(
 }
 
 export function getChangeHandler(
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 	kind: FieldKindIdentifier,
 ): FieldChangeHandler<unknown> {
 	return getFieldKind(fieldKinds, kind).changeHandler;
@@ -1722,7 +1711,13 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 					  ),
 			),
 		);
-		const composedChange = this.changeFamily.rebaser.compose(changeMaps);
+		const composedChange: Mutable<ModularChangeset> =
+			this.changeFamily.rebaser.compose(changeMaps);
+
+		const maxId: ChangesetLocalId = brand(this.idAllocator.getMaxId());
+		if (maxId >= 0) {
+			composedChange.maxId = maxId;
+		}
 		return composedChange;
 	}
 

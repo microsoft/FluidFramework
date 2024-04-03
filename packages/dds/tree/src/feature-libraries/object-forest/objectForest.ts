@@ -3,45 +3,46 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
-	ITreeSubscriptionCursor,
-	IEditableForest,
-	ITreeSubscriptionCursorState,
-	TreeNavigationResult,
-	TreeStoredSchemaSubscription,
-	FieldKey,
-	DetachedField,
-	AnchorSet,
-	UpPath,
 	Anchor,
-	ITreeCursor,
+	AnchorSet,
 	CursorLocationType,
-	TreeNodeSchemaIdentifier,
-	MapTree,
-	getMapTreeField,
+	DeltaVisitor,
+	DetachedField,
 	FieldAnchor,
+	FieldKey,
 	FieldUpPath,
 	ForestEvents,
-	PathRootPrefix,
-	DeltaVisitor,
-	Range,
-	PlaceIndex,
-	Value,
+	IEditableForest,
+	ITreeCursor,
 	ITreeCursorSynchronous,
-	aboveRootPlaceholder,
+	ITreeSubscriptionCursor,
+	ITreeSubscriptionCursorState,
+	MapTree,
+	PathRootPrefix,
+	PlaceIndex,
 	ProtoNodes,
+	Range,
+	TreeNavigationResult,
+	TreeNodeSchemaIdentifier,
+	TreeStoredSchemaSubscription,
+	UpPath,
+	Value,
+	aboveRootPlaceholder,
+	getMapTreeField,
 } from "../../core/index.js";
+import { createEmitter } from "../../events/index.js";
 import {
-	brand,
-	fail,
+	assertNonNegativeSafeInteger,
 	assertValidIndex,
 	assertValidRange,
-	assertNonNegativeSafeInteger,
+	brand,
+	fail,
 } from "../../util/index.js";
+import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
-import { mapTreeFromCursor, cursorForMapTreeNode } from "../mapTreeCursor.js";
-import { createEmitter } from "../../events/index.js";
 
 function makeRoot(): MapTree {
 	return {
@@ -131,6 +132,7 @@ export class ObjectForest implements IEditableForest {
 			},
 			create(content: ProtoNodes, destination: FieldKey): void {
 				this.forest.add(content, destination);
+				this.forest.events.emit("afterRootFieldCreated", destination);
 			},
 			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
 				this.attachEdit(source, count, destination);

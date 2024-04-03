@@ -4,49 +4,50 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { PromiseCache } from "@fluidframework/core-utils";
+import { PromiseCache } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	getDocAttributesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import {
-	TokenFetchOptions,
-	OdspResourceTokenFetchOptions,
-	TokenFetcher,
-	IPersistedCache,
 	HostStoragePolicy,
 	IFileEntry,
 	IOdspUrlParts,
-	SharingLinkScope,
-	SharingLinkRole,
+	IPersistedCache,
+	IRelaySessionAwareDriverFactory,
 	ISharingLinkKind,
 	ISocketStorageDiscovery,
-	IRelaySessionAwareDriverFactory,
-} from "@fluidframework/odsp-driver-definitions";
+	OdspResourceTokenFetchOptions,
+	SharingLinkRole,
+	SharingLinkScope,
+	TokenFetchOptions,
+	TokenFetcher,
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
+
+import { ICacheAndTracker, createOdspCacheAndTracker } from "./epochTracker.js";
 import {
 	INonPersistentCache,
 	IPrefetchSnapshotContents,
 	LocalPersistentCache,
 	NonPersistentCache,
 } from "./odspCache.js";
-import { createOdspCacheAndTracker, ICacheAndTracker } from "./epochTracker.js";
 import { OdspDocumentService } from "./odspDocumentService.js";
 import {
-	INewFileInfo,
-	getOdspResolvedUrl,
-	createOdspLogger,
-	toInstrumentedOdspTokenFetcher,
 	IExistingFileInfo,
-	isNewFileInfo,
+	INewFileInfo,
+	createOdspLogger,
 	getJoinSessionCacheKey,
+	getOdspResolvedUrl,
+	isNewFileInfo,
+	toInstrumentedOdspTokenFetcher,
 } from "./odspUtils.js";
 
 /**
@@ -151,6 +152,7 @@ export class OdspDocumentServiceFactoryCore
 			fileEntry,
 			odspLogger,
 			clientIsSummarizer,
+			this.hostPolicy,
 		);
 
 		return PerformanceEvent.timedExecAsync(
@@ -290,6 +292,7 @@ export class OdspDocumentServiceFactoryCore
 				{ resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId },
 				extLogger,
 				clientIsSummarizer,
+				this.hostPolicy,
 			);
 
 		const storageTokenFetcher = toInstrumentedOdspTokenFetcher(

@@ -3,37 +3,39 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces";
+import { Deferred } from "@fluidframework/core-utils/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
-	ITelemetryLoggerExt,
-	createChildLogger,
 	IFluidErrorBase,
 	LoggingError,
 	UsageError,
+	createChildLogger,
 	wrapErrorAndLog,
-} from "@fluidframework/telemetry-utils";
-import { IFluidHandleContext } from "@fluidframework/core-interfaces";
+} from "@fluidframework/telemetry-utils/internal";
+
 import { ISummaryConfiguration } from "../containerRuntime.js";
+
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator.js";
-import { SummaryCollection } from "./summaryCollection.js";
 import { RunningSummarizer } from "./runningSummarizer.js";
+import { SummarizeHeuristicData } from "./summarizerHeuristics.js";
 import {
+	EnqueueSummarizeResult,
 	IConnectableRuntime,
-	ISummarizer,
+	IEnqueueSummarizeOptions,
+	IOnDemandSummarizeOptions,
+	ISummarizeEventProps,
 	ISummarizeHeuristicData,
+	ISummarizeResults,
+	ISummarizer,
+	ISummarizerEvents,
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
 	ISummarizingWarning,
 	SummarizerStopReason,
-	IOnDemandSummarizeOptions,
-	ISummarizeResults,
-	IEnqueueSummarizeOptions,
-	EnqueueSummarizeResult,
-	ISummarizerEvents,
-	ISummarizeEventProps,
 } from "./summarizerTypes.js";
-import { SummarizeHeuristicData } from "./summarizerHeuristics.js";
+import { SummaryCollection } from "./summaryCollection.js";
 import { SummarizeResultBuilder } from "./summaryGenerator.js";
 
 const summarizingError = "summarizingError";
@@ -240,7 +242,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 			this.summaryCollection.createWatcher(clientId),
 			this.configurationGetter(),
 			async (...args) => this.internalsProvider.submitSummary(...args), // submitSummaryCallback
-			async (...args) => this.internalsProvider.refreshLatestSummaryAck(...args), // refreshLatestSummaryCallback
+			async (...args) => this.internalsProvider.refreshLatestSummaryAck(...args), // refreshLatestSummaryAckCallback
 			this._heuristicData,
 			this.summaryCollection,
 			runCoordinator /* cancellationToken */,

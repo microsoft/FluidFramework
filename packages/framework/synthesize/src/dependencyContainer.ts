@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { LazyPromise } from "@fluidframework/core-utils";
+import { LazyPromise } from "@fluidframework/core-utils/internal";
+
+import { IFluidDependencySynthesizer } from "./IFluidDependencySynthesizer.js";
 import {
 	AsyncFluidObjectProvider,
-	FluidObjectSymbolProvider,
-	FluidObjectProvider,
 	AsyncOptionalFluidObjectProvider,
 	AsyncRequiredFluidObjectProvider,
+	FluidObjectProvider,
+	FluidObjectSymbolProvider,
 } from "./types.js";
-import { IFluidDependencySynthesizer } from "./IFluidDependencySynthesizer.js";
 
 /**
  * DependencyContainer is similar to a IoC Container. It takes providers and will

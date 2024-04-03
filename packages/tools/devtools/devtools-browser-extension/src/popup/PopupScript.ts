@@ -2,12 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import React from "react";
 import ReactDOM from "react-dom";
-import { browser } from "../Globals";
-import { BackgroundConnection } from "../BackgroundConnection";
-import { extensionPopupMessageSource } from "../messaging";
-import { PopupView } from "./PopupView";
+
+import { BackgroundConnection } from "../BackgroundConnection.js";
+import { browser } from "../Globals.js";
+import { extensionPopupMessageSource } from "../messaging/index.js";
+
+import { PopupView } from "./PopupView.js";
 
 /**
  * This module is the extensions "pop-up" script.

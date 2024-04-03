@@ -6,15 +6,18 @@
 import { strict as assert } from "assert";
 import fs from "fs";
 import path from "path";
+
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { SharedString } from "../sharedString.js";
+} from "@fluidframework/test-runtime-utils/internal";
+
 import { SharedStringFactory } from "../sequenceFactory.js";
-import { LocationBase } from "./generateSharedStrings.js";
+import { SharedString } from "../sharedString.js";
+
 import { _dirname } from "./dirname.cjs";
+import { LocationBase } from "./generateSharedStrings.js";
 
 describe("SharedString Snapshot Version - Empty Props", () => {
 	let filebase: string;

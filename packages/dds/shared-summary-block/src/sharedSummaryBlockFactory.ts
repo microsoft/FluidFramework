@@ -5,11 +5,12 @@
 
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelServices,
 	IChannelFactory,
+	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
+
 import { pkgVersion } from "./packageVersion.js";
 import { SharedSummaryBlock } from "./sharedSummaryBlock.js";
 

@@ -4,21 +4,22 @@
  */
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	IBlob,
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
-import { ISnapshot } from "@fluidframework/driver-definitions";
-import { snapshotMinReadVersion } from "./compactSnapshotParser.js";
+
 import { TreeBuilderSerializer } from "./WriteBufferUtils.js";
+import { snapshotMinReadVersion } from "./compactSnapshotParser.js";
 import {
+	NodeCore,
 	addBoolProperty,
+	addDictionaryStringProperty,
 	addNumberProperty,
 	addStringProperty,
-	addDictionaryStringProperty,
-	NodeCore,
 } from "./zipItDataRepresentationUtils.js";
 
 /**

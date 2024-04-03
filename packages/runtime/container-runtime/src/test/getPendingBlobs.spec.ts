@@ -4,12 +4,14 @@
  */
 
 import { strict as assert } from "assert";
+
+import { IsoBuffer } from "@fluid-internal/client-utils";
 import {
 	MonitoringContext,
 	createChildLogger,
 	mixinMonitoringContext,
-} from "@fluidframework/telemetry-utils";
-import { IsoBuffer } from "@fluid-internal/client-utils";
+} from "@fluidframework/telemetry-utils/internal";
+
 import { MockRuntime, validateSummary } from "./blobManager.spec.js";
 
 describe("getPendingLocalState", () => {

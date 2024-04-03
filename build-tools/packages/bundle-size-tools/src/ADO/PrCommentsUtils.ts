@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { WebApi, getBearerHandler } from "azure-devops-node-api";
 import { IGitApi } from "azure-devops-node-api/GitApi";
 import { CommentThreadStatus } from "azure-devops-node-api/interfaces/GitInterfaces";

@@ -3,23 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ISnapshot } from "@fluidframework/driver-definitions";
+
 import { ReadBuffer } from "./ReadBufferUtils.js";
+import { measure } from "./odspUtils.js";
 import {
+	NodeCore,
+	NodeTypes,
+	TreeBuilder,
 	assertBlobCoreInstance,
-	getStringInstance,
 	assertBoolInstance,
 	assertNodeCoreInstance,
 	assertNumberInstance,
 	getNodeProps,
-	NodeCore,
-	NodeTypes,
-	TreeBuilder,
+	getStringInstance,
 } from "./zipItDataRepresentationUtils.js";
-import { measure } from "./odspUtils.js";
 
 export const snapshotMinReadVersion = "1.0";
 export const currentReadVersion = "1.0";
@@ -200,7 +201,7 @@ function readTreeSection(node: NodeCore): {
 			assertBoolInstance(records.omitted, "omitted should be a boolean");
 			assert(
 				!records.omitted || snapshotTree.groupId !== undefined,
-				"GroupId absent but omitted is true",
+				0x8df /* GroupId absent but omitted is true */,
 			);
 			snapshotTree.omitted = records.omitted;
 		}

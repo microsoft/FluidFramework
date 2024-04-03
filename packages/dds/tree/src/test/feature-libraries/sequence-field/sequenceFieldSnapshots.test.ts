@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { RevisionTagCodec } from "../../../core/index.js";
 import { SequenceField } from "../../../feature-libraries/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { createSnapshotCompressor } from "../../snapshots/testTrees.js";
-import { RevisionTagCodec } from "../../../core/index.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { generatePopulatedMarks } from "./populatedMarks.js";
 

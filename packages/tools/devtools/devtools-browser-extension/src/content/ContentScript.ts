@@ -4,21 +4,22 @@
  */
 
 import {
-	devtoolsMessageSource,
 	type ISourcedDevtoolsMessage,
+	devtoolsMessageSource,
 	isDevtoolsMessage,
-} from "@fluidframework/devtools-core";
+} from "@fluidframework/devtools-core/internal";
 
-import { browser, window } from "../Globals";
+import { browser, window } from "../Globals.js";
 import {
-	extensionViewMessageSource,
 	extensionPopupMessageSource,
+	extensionViewMessageSource,
 	relayMessageToPort,
-} from "../messaging";
+} from "../messaging/index.js";
+
 import {
 	contentScriptMessageLoggingOptions,
 	formatContentScriptMessageForLogging,
-} from "./Logging";
+} from "./Logging.js";
 
 type Port = chrome.runtime.Port;
 

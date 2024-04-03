@@ -76,19 +76,23 @@ export {
 	UpPathDefault,
 	AnchorEvents,
 	AnchorSetRootEvents,
-	FieldKindSpecifier,
+	FieldKindData,
 	AllowedUpdateType,
 	PathVisitor,
 	Adapters,
 	TreeAdapter,
 	MapTree,
 	Revertible,
-	RevertibleKind,
+	CommitKind,
 	RevertibleStatus,
-	RevertibleResult,
+	CommitMetadata,
 	forbiddenFieldKindIdentifier,
 	StoredSchemaCollection,
 	ErasedTreeNodeSchemaDataFormat,
+	ObjectNodeStoredSchema,
+	MapNodeStoredSchema,
+	LeafNodeStoredSchema,
+	Multiplicity,
 } from "./core/index.js";
 
 export {
@@ -128,7 +132,6 @@ export { leaf } from "./domains/index.js";
 
 export {
 	FlexFieldKind,
-	Multiplicity,
 	isNeverField,
 	FullSchemaPolicy,
 	typeNameSymbol,
@@ -152,7 +155,7 @@ export {
 	stackTreeNodeCursor,
 	CursorAdapter,
 	CursorWithNode,
-	EditableTreeEvents,
+	FlexTreeNodeEvents,
 	ArrayLikeMut,
 	FieldKinds,
 	ContextuallyTypedFieldData,
@@ -253,6 +256,10 @@ export {
 	buildTreeConfiguration,
 	ISharedTreeEditor,
 	ISchemaEditor,
+	SharedTreeFormatOptions,
+	SharedTreeFormatVersion,
+	Tree,
+	TreeApi,
 } from "./shared-tree/index.js";
 
 export {
@@ -268,8 +275,7 @@ export {
 	TreeViewEvents,
 	SchemaFactory,
 	type ScopedSchemaName,
-	Tree,
-	TreeApi,
+	TreeNodeApi,
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
 	TreeNodeEvents,
@@ -290,6 +296,7 @@ export {
 	NodeBuilderData,
 	NodeKind,
 	ObjectFromSchemaRecord,
+	TreeObjectNode,
 	TreeNodeFromImplicitAllowedTypes,
 	TreeNodeSchemaClass,
 	TreeNodeSchemaCore,
@@ -300,6 +307,7 @@ export {
 	SchemaFactoryRecursive,
 	ValidateRecursiveSchema,
 	ObjectFromSchemaRecordUnsafe,
+	TreeObjectNodeUnsafe,
 	TreeFieldFromImplicitFieldUnsafe,
 	TreeNodeFromImplicitAllowedTypesUnsafe,
 	FieldSchemaUnsafe,
@@ -323,7 +331,7 @@ export {
 	test_RecursiveObject_base,
 	test_RecursiveObjectPojoMode,
 } from "./simple-tree/index.js";
-export { SharedTree, TreeFactory } from "./treeFactory.js";
+export { SharedTree, configuredSharedTree } from "./treeFactory.js";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec/index.js";
 export { noopValidator } from "./codec/index.js";

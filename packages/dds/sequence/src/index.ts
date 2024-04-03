@@ -19,7 +19,7 @@ export {
 	IMapMessageLocalMetadata,
 	IValueOpEmitter,
 	SequenceOptions,
-} from "./defaultMapInterfaces.js";
+} from "./intervalCollectionMapInterfaces.js";
 export {
 	IInterval,
 	Interval,
@@ -105,4 +105,4 @@ export {
 	reservedRangeLabelsKey,
 	TrackingGroup,
 	LocalReferencePosition,
-} from "@fluidframework/merge-tree";
+} from "@fluidframework/merge-tree/internal";

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { EventEmitter } from "events_pkg";
 import type { IClient } from "@fluidframework/protocol-definitions";
+import type { EventEmitter } from "events_pkg";
 
 /**
  * Manages the state and the members for {@link IAudience}

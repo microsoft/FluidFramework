@@ -4,7 +4,7 @@
 
 ```ts
 
-import { AttributionKey } from '@fluidframework/runtime-definitions';
+import { AttributionKey } from '@fluidframework/runtime-definitions/internal';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -18,7 +18,7 @@ import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { SharedObject } from '@fluidframework/shared-object-base';
+import { SharedObject } from '@fluidframework/shared-object-base/internal';
 
 // @internal
 export class AttributableMap extends SharedObject<ISharedMapEvents> implements ISharedMap {

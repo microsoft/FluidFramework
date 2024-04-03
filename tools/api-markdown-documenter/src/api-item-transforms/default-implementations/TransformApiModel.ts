@@ -2,11 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { ApiItemKind, type ApiModel } from "@microsoft/api-extractor-model";
 
-import { ParagraphNode, SectionNode, SpanNode } from "../../documentation-domain";
-import { type ApiItemTransformationConfiguration } from "../configuration";
-import { createTableWithHeading } from "../helpers";
+import { ParagraphNode, SectionNode, SpanNode } from "../../documentation-domain/index.js";
+import { type ApiItemTransformationConfiguration } from "../configuration/index.js";
+import { createTableWithHeading } from "../helpers/index.js";
 
 /**
  * Default documentation transform for `Model` items.

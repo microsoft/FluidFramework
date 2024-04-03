@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert } from "@fluidframework/core-utils";
+
+import { assert } from "@fluidframework/core-utils/internal";
 import { type IClient } from "@fluidframework/protocol-definitions";
 
 import { type OdspMember } from "./interfaces.js";

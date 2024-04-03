@@ -3,15 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { TokenResponse } from "@fluidframework/odsp-driver-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IClientConfig,
 	TokenRequestCredentials,
 	getFetchTokenUrl,
 	unauthPostAsync,
 } from "@fluidframework/odsp-doclib-utils/internal";
+import { TokenResponse } from "@fluidframework/odsp-driver-definitions/internal";
+
 import { IOdspTokenProvider } from "../token.js";
+
 import { OdspTestCredentials } from "./odspClient.spec.js";
 
 /**

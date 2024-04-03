@@ -4,7 +4,7 @@
  */
 
 import { strict } from "assert";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { ChangeAtomIdMap, TaggedChange, tagChange, taggedOptAtomId } from "../core/index.js";
 import {
 	NodeChangeComposer,

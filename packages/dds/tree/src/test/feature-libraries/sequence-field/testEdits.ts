@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { isNewAttach } from "../../../feature-libraries/sequence-field/utils.js";
 import { brand } from "../../../util/index.js";
-import { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../../core/index.js";
 import { TestChange } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
 import { TestNodeId } from "../../testNodeId.js";
+import { ChangesetLocalId, RevisionTag } from "../../../index.js";
+import { ChangeAtomId } from "../../../core/index.js";
 
 const tag: RevisionTag = mintRevisionTag();
 

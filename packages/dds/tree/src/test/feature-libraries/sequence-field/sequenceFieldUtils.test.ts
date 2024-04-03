@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { ChangeAtomId } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import {

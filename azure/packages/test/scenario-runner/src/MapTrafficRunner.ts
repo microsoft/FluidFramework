@@ -2,21 +2,21 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { v4 as uuid } from "uuid";
 
 import { SharedMap } from "@fluidframework/map";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { timeoutPromise } from "@fluidframework/test-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
+import { v4 as uuid } from "uuid";
 
+import { ScenarioRunner } from "./ScenarioRunner.js";
 import { IRunConfig, IScenarioConfig, IScenarioRunConfig } from "./interface.js";
+import { getLogger } from "./logger.js";
 import {
 	createAzureClient,
 	delay,
 	getScenarioRunnerTelemetryEventMap,
 	loadInitialObjSchema,
 } from "./utils.js";
-import { getLogger } from "./logger.js";
-import { ScenarioRunner } from "./ScenarioRunner.js";
 
 // This was originally namespaced as "DocLoader"
 const eventMap = getScenarioRunnerTelemetryEventMap("MapTraffic");
@@ -36,7 +36,7 @@ export class MapTrafficRunner extends ScenarioRunner<
 	MapTrafficRunConfig,
 	void
 > {
-	protected runnerClientFilePath: string = "./dist/mapTrafficRunnerClient.js";
+	protected runnerClientFilePath: string = "./lib/mapTrafficRunnerClient.js";
 
 	public static async execRun(runConfig: MapTrafficRunConfig): Promise<void> {
 		let schema;

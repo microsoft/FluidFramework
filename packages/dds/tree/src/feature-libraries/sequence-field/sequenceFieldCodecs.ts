@@ -3,21 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { TAnySchema } from "@sinclair/typebox";
-import { JsonCompatibleReadOnly, Mutable, fail } from "../../util/index.js";
+
 import { DiscriminatedUnionDispatcher, IJsonCodec, makeCodecFamily } from "../../codec/index.js";
 import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
+import { JsonCompatibleReadOnly, Mutable, fail } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
-import { FieldChangeEncodingContext, NodeId } from "../index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { EncodedNodeChangeset } from "../modular-schema/modularChangeFormat.js";
+
+import { Changeset as ChangesetSchema, Encoded } from "./format.js";
 import {
 	Attach,
 	AttachAndDetach,
 	CellId,
 	Changeset,
-	Remove,
 	Detach,
 	Insert,
 	Mark,
@@ -25,9 +24,11 @@ import {
 	MoveIn,
 	MoveOut,
 	NoopMarkType,
+	Remove,
 } from "./types.js";
-import { Changeset as ChangesetSchema, Encoded } from "./format.js";
 import { isNoopMark } from "./utils.js";
+import { FieldChangeEncodingContext, NodeId } from "../index.js";
+import { EncodedNodeChangeset } from "../modular-schema/index.js";
 
 export const sequenceFieldChangeCodecFactory = <TNodeChange>(
 	revisionTagCodec: IJsonCodec<

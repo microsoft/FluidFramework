@@ -4,19 +4,20 @@
  */
 
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { IClientConfig, IOdspAuthRequestInfo } from "@fluidframework/odsp-doclib-utils/internal";
-import * as odsp from "@fluidframework/odsp-driver";
+import * as odsp from "@fluidframework/odsp-driver/internal";
 import {
 	IOdspResolvedUrl,
 	OdspResourceTokenFetchOptions,
-} from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/odsp-driver-definitions/internal";
 import { FluidAppOdspUrlResolver, OdspUrlResolver } from "@fluidframework/odsp-urlresolver";
-import * as r11s from "@fluidframework/routerlicious-driver";
+import * as r11s from "@fluidframework/routerlicious-driver/internal";
 import { RouterliciousUrlResolver } from "@fluidframework/routerlicious-urlresolver";
 import { getMicrosoftConfiguration } from "@fluidframework/tool-utils";
-import { localDataOnly, paramJWT } from "./fluidFetchArgs";
-import { resolveWrapper } from "./fluidFetchSharePoint";
+
+import { localDataOnly, paramJWT } from "./fluidFetchArgs.js";
+import { resolveWrapper } from "./fluidFetchSharePoint.js";
 
 export let latestVersionsId: string = "";
 export let connectionInfo: any;

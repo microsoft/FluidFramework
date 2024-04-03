@@ -8,115 +8,95 @@ import { DownPath } from "../../../feature-libraries/index.js";
 
 export type Operation = TreeOperation | Synchronize;
 
-export type TreeOperation = TreeEdit | TransactionBoundary | UndoRedo;
+export type TreeOperation = TreeEdit | TransactionBoundary | UndoRedo | SchemaChange;
 
 export interface TreeEdit {
-	type: "edit";
-	contents: FieldEdit;
+	type: "treeEdit";
+	edit: FieldEdit;
 }
 
 export interface TransactionBoundary {
-	type: "transaction";
-	contents: FuzzTransactionType;
+	type: "transactionBoundary";
+	boundary: "start" | "abort" | "commit";
 }
 
 export interface UndoRedo {
 	type: "undoRedo";
-	contents: FuzzUndoRedoType;
+	operation: "undo" | "redo";
 }
 
-export type FuzzFieldChange = FuzzInsert | FuzzRemove | FuzzMove;
+export interface SchemaChange {
+	type: "schemaChange";
+	operation: SchemaOp;
+}
 
 export interface FieldEdit {
 	type: "fieldEdit";
-	change: FieldEditTypes;
+	/** The field being edited */
+	field: FieldDownPath;
+	/** The edit performed on the field */
+	change: SequenceFieldEdit | RequiredFieldEdit | OptionalFieldEdit;
 }
 
-export interface FuzzInsert {
+export interface Insert {
 	type: "insert";
 	/**
-	 * DownPath to the field's parent node. Undefined iff this is the root trait.
-	 */
-	parent: DownPath | undefined;
-	/**
-	 * Key on the parent node corresponding to this field.
-	 */
-	key: FieldKey;
-	/**
-	 * Index to insert within the field.
+	 * Index to insert at within the field.
 	 */
 	index: number;
-	value: JsonableTree;
+	content: JsonableTree[];
 }
 
-export interface FuzzSet {
+export interface SetField {
 	type: "set";
 	/**
-	 * DownPath to the field's parent node. Undefined iff this is the root trait.
-	 */
-	parent: DownPath | undefined;
-	/**
-	 * Key on the parent node corresponding to this field.
-	 */
-	key: FieldKey;
-	/**
-	 * @privateRemarks - Optional fields use {@link FuzzRemove} to mean "remove the field's contents" rather than
-	 * a `FuzzSet` with undefined value, hence why this property is required.
+	 * @privateRemarks - Optional fields use {@link ClearField} to mean "remove the field's contents" rather than
+	 * a `SetField` with undefined value, hence why this property is required.
 	 */
 	value: JsonableTree;
 }
-
-export type FieldEditTypes = SequenceFieldEdit | RequiredFieldEdit | OptionalFieldEdit;
 
 export interface SequenceFieldEdit {
 	type: "sequence";
-	edit: FuzzInsert | FuzzRemove | FuzzMove;
+	edit: Insert | Remove | IntraFieldMove;
 }
 
 export interface RequiredFieldEdit {
 	type: "required";
-	edit: FuzzSet;
+	edit: SetField;
 }
 
 export interface OptionalFieldEdit {
 	type: "optional";
-	edit: FuzzSet | FuzzRemove;
+	edit: SetField | ClearField;
 }
 
-export interface FuzzRemove extends NodeRangePath {
+export interface Remove {
 	type: "remove";
+	range: NodeRange;
 }
 
-export interface FuzzMove extends NodeRangePath {
-	type: "move";
+export interface ClearField {
+	type: "clear";
+}
+
+export interface Move {
 	/**
-	 * The index (pre-move) to move the sequence to.
+	 * The nodes to move.
+	 */
+	range: NodeRange;
+	/**
+	 * The index (pre-move) to move the content to.
 	 */
 	dstIndex: number;
 }
 
-export type FuzzTransactionType = TransactionStartOp | TransactionAbortOp | TransactionCommitOp;
-
-export interface TransactionStartOp {
-	fuzzType: "transactionStart";
+export interface IntraFieldMove extends Move {
+	type: "intraFieldMove";
 }
 
-export interface TransactionCommitOp {
-	fuzzType: "transactionCommit";
-}
-
-export interface TransactionAbortOp {
-	fuzzType: "transactionAbort";
-}
-
-export type FuzzUndoRedoType = UndoOp | RedoOp;
-
-export interface UndoOp {
-	type: "undo";
-}
-
-export interface RedoOp {
-	type: "redo";
+export interface SchemaOp {
+	type: string;
 }
 
 /**
@@ -131,11 +111,26 @@ export interface NodeRangePath {
 	count: number;
 }
 
-export interface EditGeneratorOpWeights {
-	insert: number;
-	remove: number;
-	start: number;
-	commit: number;
-	abort: number;
-	synchronize: number;
+export interface FieldDownPath {
+	/**
+	 * The field's parent node. Undefined when targeting the root field.
+	 */
+	parent: DownPath | undefined;
+	/**
+	 * Key on the parent node corresponding to this field.
+	 */
+	key: FieldKey;
+}
+
+export interface NodeRange {
+	/**
+	 * The index of the first node in the range
+	 * Must be less-than or equal to `last`.
+	 */
+	first: number;
+	/**
+	 * The index of the last node in the range.
+	 * Must be greater-than or equal to `first`.
+	 */
+	last: number;
 }
