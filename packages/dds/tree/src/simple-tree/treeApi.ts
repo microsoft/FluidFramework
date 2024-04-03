@@ -121,24 +121,17 @@ export const treeNodeApi: TreeNodeApi = {
 
 		switch (eventName) {
 			case "nodeInvalidated": {
-				// The funky pattern subscribing to two events from the anchors is so we can fire nodeInvalidated once,
-				// batching changes to several fields of the node. 'childrenChanged' on the anchor fires on every change to
-				// a field so doesn't allow us to batch.
-				let shouldFireShallowChange = false;
-				const unsubscribeFromChildrenChanged = anchor.on("childrenChanged", () => {
-					shouldFireShallowChange = true;
-				});
-				const unsubscribeFromSubtreeChanged = anchor.on("subtreeChanged", () => {
-					if (shouldFireShallowChange) {
-						listener();
-						shouldFireShallowChange = false;
+				let alreadySubscribedToSubtreeChanged: boolean = false;
+				return anchor.on("childrenChanged", () => {
+					if (!alreadySubscribedToSubtreeChanged) {
+						const offSubtreeChanged = anchor.on("subtreeChanged", () => {
+							listener();
+							offSubtreeChanged();
+							alreadySubscribedToSubtreeChanged = false;
+						})
+						alreadySubscribedToSubtreeChanged = true;
 					}
 				});
-
-				return () => {
-					unsubscribeFromChildrenChanged();
-					unsubscribeFromSubtreeChanged();
-				};
 			}
 			case "subtreeInvalidated":
 				return anchor.on("subtreeChanged", () => listener());
