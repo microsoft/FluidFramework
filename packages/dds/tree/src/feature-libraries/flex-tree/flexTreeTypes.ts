@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { StableId } from "@fluidframework/id-compressor";
 import { AllowedTypesToFlexInsertableTree, InsertableFlexField } from "../schema-aware/index.js";
 import { FieldKey, ITreeCursorSynchronous, TreeValue } from "../../core/index.js";
 import { Assume, FlattenKeys } from "../../util/index.js";
@@ -23,6 +24,8 @@ import {
 } from "../typed-schema/index.js";
 import { FieldKinds } from "../default-schema/index.js";
 import { FieldKind } from "../modular-schema/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { IdentifierReferenceSchema } from "../typed-schema/typedTreeSchema.js";
 import { EditableTreeEvents } from "./treeEvents.js";
 import { FlexTreeContext } from "./context.js";
 
@@ -485,6 +488,18 @@ export interface FlexTreeLeafNode<in out TSchema extends LeafNodeSchema> extends
 	readonly value: TreeValue<TSchema["info"]>;
 }
 
+export interface FlexTreeIdentifierReference<in out TSchema extends IdentifierReferenceSchema>
+	extends FlexTreeNode {
+	readonly schema: TSchema;
+
+	/**
+	 * Local node key
+	 */
+	readonly value: TreeValue<TSchema["info"]>;
+
+	uuid(): StableId;
+}
+
 /**
  * An {@link FlexTreeObjectNode} with schema aware accessors for its fields.
  *
@@ -945,6 +960,14 @@ export interface FlexTreeNodeKeyField extends FlexTreeField {
 	readonly stableNodeKey: StableNodeKey;
 }
 
+/**
+ * Field that contains an immutable {@link StableNodeKey} identifying this node.
+ * @internal
+ */
+export interface FlexTreeIdentifierField<in out TTypes extends AllowedTypes> extends FlexTreeField {
+	get identifier(): FlexTreeUnboxNodeUnion<TTypes>;
+}
+
 // #endregion
 
 // #region Typed
@@ -973,6 +996,8 @@ export type FlexTreeTypedFieldInner<
 	? FlexTreeOptionalField<Types>
 	: Kind extends typeof FieldKinds.nodeKey
 	? FlexTreeNodeKeyField
+	: Kind extends typeof FieldKinds.identifier
+	? FlexTreeIdentifierField<Types>
 	: FlexTreeField;
 
 /**
@@ -989,6 +1014,8 @@ export type FlexTreeTypedNodeUnion<T extends AllowedTypes> = T extends FlexList<
  */
 export type FlexTreeTypedNode<TSchema extends FlexTreeNodeSchema> = TSchema extends LeafNodeSchema
 	? FlexTreeLeafNode<TSchema>
+	: TSchema extends IdentifierReferenceSchema
+	? FlexTreeIdentifierReference<TSchema>
 	: TSchema extends MapNodeSchema
 	? FlexTreeMapNode<TSchema>
 	: TSchema extends FieldNodeSchema
@@ -1031,6 +1058,9 @@ export type FlexTreeUnboxFieldInner<
 	: // Since struct already provides a short-hand accessor for the local field key, and the field provides a nicer general API than the node under it in this case, do not unbox nodeKey fields.
 	Kind extends typeof FieldKinds.nodeKey
 	? FlexTreeNodeKeyField
+	: // Since struct already provides a short-hand accessor for the local field key, and the field provides a nicer general API than the node under it in this case, do not unbox nodeKey fields.
+	Kind extends typeof FieldKinds.identifier
+	? FlexTreeIdentifierField<TTypes>
 	: // TODO: forbidden
 	  unknown;
 
@@ -1075,6 +1105,8 @@ export type IsArrayOfOne<T extends readonly unknown[]> = T["length"] extends 1
  */
 export type FlexTreeUnboxNode<TSchema extends FlexTreeNodeSchema> = TSchema extends LeafNodeSchema
 	? TreeValue<TSchema["info"]>
+	: TSchema extends IdentifierReferenceSchema
+	? FlexTreeIdentifierReference<TSchema>
 	: TSchema extends MapNodeSchema
 	? FlexTreeMapNode<TSchema>
 	: TSchema extends FieldNodeSchema

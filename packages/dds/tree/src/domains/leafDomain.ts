@@ -20,6 +20,14 @@ const nullSchema = builder.leaf("null", ValueSchema.Null);
 const primitives = [number, boolean, string] as const;
 const all = [handle, nullSchema, ...primitives] as const;
 
+const identifierReferenceBuilder = new SchemaBuilderInternal({
+	scope: "com.fluidframework.identifier",
+});
+const identifier = identifierReferenceBuilder.identifierReference(
+	"identifierReference",
+	ValueSchema.Number,
+);
+
 const library = builder.intoLibrary();
 
 /**
@@ -95,4 +103,8 @@ export const leaf = {
 	 * This is included by default in schema produced with {@link SchemaBuilder}.
 	 */
 	library,
+};
+
+export const identifierReferenceSchema = {
+	identifier,
 };

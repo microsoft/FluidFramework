@@ -31,6 +31,8 @@ import {
 	typeNameSymbol,
 } from "../feature-libraries/index.js";
 import { brand, isReadonlyArray } from "../util/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { IdentifierReferenceSchema } from "../feature-libraries/typed-schema/typedTreeSchema.js";
 import { InsertableContent } from "./proxies.js";
 
 /**
@@ -188,7 +190,9 @@ function valueToMapTree(
 
 	const schema = getType(mappedValue, globalSchema, typeSet);
 	assert(
-		schema instanceof LeafNodeSchema && allowsValue(schema.leafValue, mappedValue),
+		(schema instanceof LeafNodeSchema && allowsValue(schema.leafValue, mappedValue)) ||
+			(schema instanceof IdentifierReferenceSchema &&
+				allowsValue(schema.identifierValue, mappedValue)),
 		0x84a /* Unsupported schema for provided primitive. */,
 	);
 
@@ -388,7 +392,10 @@ function shallowCompatibilityTest(
 		0x889 /* undefined cannot be used as contextually typed data. Use ContextuallyTypedFieldData. */,
 	);
 	if (isTreeValue(data)) {
-		return schema instanceof LeafNodeSchema && allowsValue(schema.leafValue, data);
+		return schema instanceof LeafNodeSchema
+			? schema instanceof LeafNodeSchema && allowsValue(schema.leafValue, data)
+			: schema instanceof IdentifierReferenceSchema &&
+					allowsValue(schema.identifierValue, data);
 	}
 	if (schema instanceof LeafNodeSchema) {
 		return false;

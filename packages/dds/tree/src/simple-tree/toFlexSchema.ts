@@ -26,6 +26,7 @@ import {
 	TreeNodeSchemaIdentifier,
 } from "../core/index.js";
 import { type InitializeAndSchematizeConfiguration } from "../shared-tree/index.js";
+import { schemaIsIdentifierNode } from "../feature-libraries/typed-schema/typedTreeSchema.js";
 import {
 	InsertableContent,
 	extractFactoryContent,
@@ -95,7 +96,9 @@ export function toFlexSchema(root: ImplicitFieldSchema): FlexTreeSchema {
 			const schema = value.toFlex();
 			const classSchema = getClassSchema(schema);
 			if (classSchema === undefined) {
-				assert(schemaIsLeaf(schema), 0x83e /* invalid leaf */);
+				if (!schemaIsIdentifierNode(schema)) {
+					assert(schemaIsLeaf(schema), 0x83e /* invalid leaf */);
+				}
 			} else {
 				assert(
 					cachedFlexSchemaFromClassSchema(classSchema) === schema,
@@ -148,6 +151,7 @@ export function convertField(
 const convertFieldKind = new Map<FieldKind, FlexFieldKind>([
 	[FieldKind.Optional, FieldKinds.optional],
 	[FieldKind.Required, FieldKinds.required],
+	[FieldKind.identifier, FieldKinds.identifier],
 ]);
 
 /**
@@ -199,6 +203,13 @@ export function convertNodeSchema(
 					cachedFlexSchemaFromClassSchema(schema) ??
 					fail("leaf schema should be pre-cached");
 				assert(schemaIsLeaf(cached), 0x840 /* expected leaf */);
+				return cached;
+			}
+			case NodeKind.IdentifierReference: {
+				const cached =
+					cachedFlexSchemaFromClassSchema(schema) ??
+					fail("identifier schema should be pre-cached");
+				assert(schemaIsIdentifierNode(cached), 0x840 /* expected leaf */);
 				return cached;
 			}
 			case NodeKind.Map: {

@@ -14,6 +14,8 @@ import {
 	ObjectNodeStoredSchema,
 } from "../../core/index.js";
 import { Multiplicity } from "../multiplicity.js";
+// eslint-disable-next-line import/no-internal-modules
+import { IdentifierReferenceStoredSchema } from "../../core/schema-stored/schema.js";
 import { FullSchemaPolicy } from "./fieldKind.js";
 
 /**
@@ -111,7 +113,12 @@ export function isNeverTreeRecursive(
 			}
 			return false;
 		} else {
-			assert(treeNode instanceof LeafNodeStoredSchema, 0x897 /* unsupported node kind */);
+			// TODO: add case for IdentifierReferenceSchema
+			assert(
+				treeNode instanceof LeafNodeStoredSchema ||
+					treeNode instanceof IdentifierReferenceStoredSchema,
+				0x897 /* unsupported node kind */,
+			);
 			return false;
 		}
 	} finally {

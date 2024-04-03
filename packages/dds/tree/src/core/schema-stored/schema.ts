@@ -224,6 +224,34 @@ export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
 	}
 }
 
+/**
+ * @internal
+ */
+export class IdentifierReferenceStoredSchema extends TreeNodeStoredSchema {
+	/**
+	 * @param identifier -
+	 * There are several approaches for how to store actual data in the tree
+	 * (special node types, special field contents, data on nodes etc.)
+	 * as well as several options about how the data should be modeled at this level
+	 * (byte sequence? javascript type? json?),
+	 * as well as options for how much of this would be exposed in the schema language
+	 * (ex: would all nodes with values be special built-ins, or could any schema add them?)
+	 * A simple easy to do in javascript approach is taken here:
+	 * this is not intended to be a suggestion of what approach to take, or what to expose in the schema language.
+	 * This is simply one approach that can work for modeling them in the internal schema representation.
+	 */
+	public readonly identifier: ValueSchema = ValueSchema.Number;
+	public constructor() {
+		super();
+	}
+
+	public override encode(): ErasedTreeNodeSchemaDataFormat {
+		return brandErased<BrandedTreeNodeSchemaDataFormat>({
+			leaf: encodeValueSchema(ValueSchema.Number),
+		});
+	}
+}
+
 export const storedSchemaDecodeDispatcher: DiscriminatedUnionDispatcher<
 	TreeNodeSchemaDataFormat,
 	[],

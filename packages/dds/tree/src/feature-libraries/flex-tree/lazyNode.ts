@@ -38,6 +38,11 @@ import {
 } from "../typed-schema/index.js";
 import { FieldKinds } from "../default-schema/index.js";
 import { LocalNodeKey } from "../node-key/index.js";
+import {
+	IdentifierReferenceSchema,
+	schemaIsIdentifierNode,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../typed-schema/typedTreeSchema.js";
 import { EditableTreeEvents, TreeEvent } from "./treeEvents.js";
 import { Context } from "./context.js";
 import {
@@ -62,6 +67,7 @@ import {
 	PropertyNameFromFieldKey,
 	reservedObjectNodeFieldPropertyNamePrefixes,
 	reservedObjectNodeFieldPropertyNames,
+	FlexTreeIdentifierReference,
 } from "./flexTreeTypes.js";
 import { LazyNodeKeyField, makeField } from "./lazyField.js";
 import {
@@ -111,6 +117,9 @@ function buildSubclass(
 	}
 	if (schemaIsLeaf(schema)) {
 		return new LazyLeaf(context, schema, cursor, anchorNode, anchor);
+	}
+	if (schemaIsIdentifierNode(schema)) {
+		return new LazyIdentifierReference(context, schema, cursor, anchorNode, anchor);
 	}
 	if (schemaIsFieldNode(schema)) {
 		return new LazyFieldNode(context, schema, cursor, anchorNode, anchor);
@@ -487,6 +496,28 @@ export class LazyLeaf<TSchema extends LeafNodeSchema>
 
 	public override get value(): TreeValue<TSchema["info"]> {
 		return super.value as TreeValue<TSchema["info"]>;
+	}
+}
+
+export class LazyIdentifierReference<TSchema extends IdentifierReferenceSchema>
+	extends LazyTreeNode<TSchema>
+	implements FlexTreeIdentifierReference<TSchema>
+{
+	public constructor(
+		context: Context,
+		schema: TSchema,
+		cursor: ITreeSubscriptionCursor,
+		anchorNode: AnchorNode,
+		anchor: Anchor,
+	) {
+		super(context, schema, cursor, anchorNode, anchor);
+	}
+	public override get value(): TreeValue<TSchema["info"]> {
+		return super.value as TreeValue<TSchema["info"]>;
+	}
+
+	public uuid() {
+		return this.context.nodeKeys.stabilize(this.value as unknown as LocalNodeKey);
 	}
 }
 

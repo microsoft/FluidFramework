@@ -33,8 +33,17 @@ import {
 } from "../feature-libraries/index.js";
 import { EmptyKey, FieldKey, TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
-// eslint-disable-next-line import/no-internal-modules
-import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/lazyNode.js";
+import {
+	LazyIdentifierReference,
+	LazyObjectNode,
+	getBoxedField,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../feature-libraries/flex-tree/lazyNode.js";
+import {
+	IdentifierReferenceSchema,
+	schemaIsIdentifierNode,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../feature-libraries/typed-schema/typedTreeSchema.js";
 import {
 	type TreeNodeSchema as TreeNodeSchemaClass,
 	type InsertableTypedNode,
@@ -82,6 +91,12 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 			// 'getProxyForNode' handles FieldNodes by unconditionally creating a array node proxy, making
 			// this case unreachable as long as users follow the 'array recipe'.
 			fail("'sequence' field is unexpected.");
+		}
+		case FieldKinds.identifier: {
+			const asValue = field as FlexTreeTypedField<
+				TreeFieldSchema<typeof FieldKinds.required>
+			>;
+			return getOrCreateNodeProxy(asValue.boxedContent);
 		}
 		default:
 			fail("invalid field kind");
@@ -144,6 +159,10 @@ export function createNodeProxy(
 		// Can't use `??` here since null is a valid TreeValue.
 		assert(flexNode.value !== undefined, 0x887 /* Leaf must have value */);
 		return flexNode.value;
+	}
+	if (schemaIsIdentifierNode(schema)) {
+		assert(flexNode.value !== undefined, "node must contain an identifier.");
+		return (flexNode as LazyIdentifierReference<IdentifierReferenceSchema>).uuid();
 	}
 	let proxy: TreeNode;
 	if (schemaIsMap(schema)) {
@@ -925,7 +944,7 @@ export function extractFactoryContent(
 		extractedContent = extractContentObject(content as object);
 	} else {
 		extractedContent = { content, hydrateProxies: noopHydrator };
-		type = NodeKind.Leaf;
+		type = NodeKind.Leaf; // TODO: find a way to distinguish between identifier and leafnode.
 	}
 
 	if (input instanceof TreeNode) {

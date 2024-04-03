@@ -25,7 +25,16 @@ import {
 	MapNodeSchema,
 	TreeNodeSchemaBase,
 } from "../feature-libraries/index.js";
-import { RestrictiveReadonlyRecord, getOrCreate, isAny, requireFalse } from "../util/index.js";
+import {
+	Named,
+	RestrictiveReadonlyRecord,
+	getOrCreate,
+	isAny,
+	requireFalse,
+} from "../util/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { IdentifierReferenceSchema } from "../feature-libraries/typed-schema/typedTreeSchema.js";
+import { TreeNodeSchemaIdentifier, ValueSchema } from "../core/index.js";
 import { leaf } from "./leafDomain.js";
 
 /**
@@ -61,6 +70,13 @@ export class SchemaBuilder<
 			...options,
 			libraries: [...(options.libraries ?? []), leaf.library],
 		});
+	}
+
+	public identifierReference<Name extends string = string>(
+		builder: Named<string>,
+		name: TreeNodeSchemaIdentifier<Name>,
+	): IdentifierReferenceSchema<Name> {
+		return IdentifierReferenceSchema.create(builder, name, ValueSchema.Number);
 	}
 
 	public override objectRecursive<
@@ -273,6 +289,25 @@ export class SchemaBuilder<
 	 * therefore this method is the same as the static version.
 	 */
 	public readonly sequence = SchemaBuilder.sequence;
+
+	/**
+	 * Define a schema for a {@link FieldKinds.identifier|identifier field}.
+	 * @remarks
+	 * Shorthand or passing `FieldKinds.identifier` to {@link TreeFieldSchema.create}.
+	 *
+	 * This method is also available as an instance method on {@link SchemaBuilder}
+	 */
+	public static identifier = fieldHelper(FieldKinds.identifier);
+
+	/**
+	 * Define a schema for a {@link FieldKinds.identifier|identifier field}.
+	 * @remarks
+	 * Shorthand or passing `FieldKinds.identifier` to {@link TreeFieldSchema.create}.
+	 *
+	 * Since this creates a {@link TreeFieldSchema} (and not a {@link FlexTreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
+	 * therefore this method is the same as the static version.
+	 */
+	public readonly identifier = SchemaBuilder.identifier;
 
 	/**
 	 * {@link leaf.number}

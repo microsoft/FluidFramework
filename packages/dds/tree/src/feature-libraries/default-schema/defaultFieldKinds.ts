@@ -133,6 +133,26 @@ export const nodeKey = new FieldKindWithEditor(
 	new Set(),
 );
 
+// TODO: This name was to be consistent with the naming conventions of other field kind identifier names.
+// We may or may not rename this in the future.
+const identifierIdentifier = "identifier";
+
+/**
+ * Exactly one identifier.
+ */
+export const identifier = new FieldKindWithEditor(
+	identifierIdentifier,
+	Multiplicity.Single,
+	noChangeHandler,
+	(types, other) =>
+		(other.kind.identifier === sequence.identifier ||
+			other.kind.identifier === requiredIdentifier ||
+			other.kind.identifier === optional.identifier ||
+			other.kind.identifier === identifierIdentifier) &&
+		allowsTreeSchemaIdentifierSuperset(types, other.types),
+	new Set(),
+);
+
 /**
  * Exactly 0 items.
  *
@@ -174,7 +194,7 @@ export const forbidden = new FieldKindWithEditor(
  * Default field kinds by identifier
  */
 export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
-	[required, optional, sequence, nodeKey, forbidden].map((s) => [s.identifier, s]),
+	[required, optional, sequence, nodeKey, identifier, forbidden].map((s) => [s.identifier, s]),
 );
 
 // Create named Aliases for nicer intellisense.
@@ -201,6 +221,10 @@ export interface NodeKeyFieldKind extends FieldKind<"NodeKey", Multiplicity.Sing
 /**
  * @internal
  */
+export interface identifier extends FieldKind<"identifier", Multiplicity.Single> {}
+/**
+ * @internal
+ */
 export interface Forbidden
 	extends FieldKind<typeof forbiddenFieldKindIdentifier, Multiplicity.Forbidden> {}
 
@@ -214,5 +238,6 @@ export const FieldKinds: {
 	readonly optional: Optional;
 	readonly sequence: Sequence;
 	readonly nodeKey: NodeKeyFieldKind;
+	readonly identifier: identifier;
 	readonly forbidden: Forbidden;
-} = { required, optional, sequence, nodeKey, forbidden };
+} = { required, optional, sequence, nodeKey, identifier, forbidden };

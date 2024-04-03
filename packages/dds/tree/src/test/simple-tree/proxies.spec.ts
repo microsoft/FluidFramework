@@ -4,8 +4,22 @@
  */
 
 import { strict as assert } from "assert";
-import { MockHandle } from "@fluidframework/test-runtime-utils";
-import { TreeArrayNode, NodeFromSchema, SchemaFactory, Tree } from "../../simple-tree/index.js";
+import { MockFluidDataStoreRuntime, MockHandle } from "@fluidframework/test-runtime-utils";
+import { createIdCompressor } from "@fluidframework/id-compressor";
+import {
+	TreeArrayNode,
+	NodeFromSchema,
+	SchemaFactory,
+	Tree,
+	TreeConfiguration,
+} from "../../simple-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { ForestType } from "../../shared-tree/sharedTree.js";
+import { TreeFactory } from "../../treeFactory.js";
+// eslint-disable-next-line import/no-internal-modules
+import { nodeApi } from "../../simple-tree/treeApi.js";
+// eslint-disable-next-line import/no-internal-modules
+import { typeboxValidator } from "../../external-utilities/typeboxValidator.js";
 import { getRoot, pretty } from "./utils.js";
 
 describe("SharedTree proxies", () => {
@@ -94,6 +108,32 @@ describe("SharedTreeObject", () => {
 		const root = getRoot(schema, initialTree);
 		assert.equal(root.content, 42);
 		assert.equal(root.child.content, 42);
+	});
+
+	it("can add identifiers under the identifier field kind", () => {
+		const schemaWithIdentifier = sb.object("parent", {
+			identifier: sb.identifier(sb.identifierReference),
+		});
+		const idCompressor = createIdCompressor();
+		const id = idCompressor.generateCompressedId();
+
+		const config = new TreeConfiguration(schemaWithIdentifier, () => ({
+			identifier: id as number,
+		}));
+		const factory = new TreeFactory({
+			jsonValidator: typeboxValidator,
+			forest: ForestType.Reference,
+		});
+
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({
+				idCompressor,
+			}),
+			"tree",
+		);
+		const root = tree.schematize(config).root;
+		// assert.equal(root.identifier, "2fdabf35-a1b9-480d-afcf-b72e72340817");
+		assert.equal(nodeApi.shortID(root), id);
 	});
 
 	it("can read lists", () => {

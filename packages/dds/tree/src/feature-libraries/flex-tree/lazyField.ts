@@ -438,8 +438,34 @@ export class LazySequence<TTypes extends AllowedTypes>
 	}
 }
 
-export class LazyValueField<TTypes extends AllowedTypes>
+export class LazyValueFieldReadOnly<TTypes extends AllowedTypes>
 	extends LazyField<typeof FieldKinds.required, TTypes>
+	implements FlexTreeRequiredField<TTypes>
+{
+	public constructor(
+		context: Context,
+		schema: TreeFieldSchema<typeof FieldKinds.required, TTypes>,
+		cursor: ITreeSubscriptionCursor,
+		fieldAnchor: FieldAnchor,
+	) {
+		super(context, schema, cursor, fieldAnchor);
+	}
+
+	public get content(): FlexTreeUnboxNodeUnion<TTypes> {
+		return this.atIndex(0);
+	}
+
+	public set content(newContent: FlexibleNodeContent<TTypes>) {
+		fail("cannot set newContent in readonly field");
+	}
+
+	public get boxedContent(): FlexTreeTypedNodeUnion<TTypes> {
+		return this.boxedAt(0) ?? fail("value node must have 1 item");
+	}
+}
+
+export class LazyValueField<TTypes extends AllowedTypes>
+	extends LazyValueFieldReadOnly<TTypes>
 	implements FlexTreeRequiredField<TTypes>
 {
 	public constructor(
@@ -457,11 +483,11 @@ export class LazyValueField<TTypes extends AllowedTypes>
 		return fieldEditor;
 	}
 
-	public get content(): FlexTreeUnboxNodeUnion<TTypes> {
+	public override get content(): FlexTreeUnboxNodeUnion<TTypes> {
 		return this.atIndex(0);
 	}
 
-	public set content(newContent: FlexibleNodeContent<TTypes>) {
+	public override set content(newContent: FlexibleNodeContent<TTypes>) {
 		const content: ITreeCursorSynchronous[] = isCursor(newContent)
 			? prepareNodeCursorForInsert(newContent)
 			: [cursorFromContextualData(this.context, this.schema.allowedTypeSet, newContent)];
@@ -470,7 +496,7 @@ export class LazyValueField<TTypes extends AllowedTypes>
 		fieldEditor.set(content[0]);
 	}
 
-	public get boxedContent(): FlexTreeTypedNodeUnion<TTypes> {
+	public override get boxedContent(): FlexTreeTypedNodeUnion<TTypes> {
 		return this.boxedAt(0) ?? fail("value node must have 1 item");
 	}
 }
@@ -566,6 +592,7 @@ const builderList: [FieldKind, Builder][] = [
 	[FieldKinds.optional, LazyOptionalField],
 	[FieldKinds.sequence, LazySequence],
 	[FieldKinds.required, LazyValueField],
+	[FieldKinds.identifier, LazyValueField],
 ];
 
 const kindToClass: ReadonlyMap<FieldKind, Builder> = new Map(builderList);

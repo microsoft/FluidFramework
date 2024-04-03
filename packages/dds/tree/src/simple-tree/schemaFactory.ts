@@ -18,6 +18,10 @@ import {
 } from "../feature-libraries/index.js";
 import { leaf } from "../domains/index.js";
 import { TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { IdentifierReferenceSchema as FlexTreeIdentifierReferenceSchema } from "../feature-libraries/typed-schema/typedTreeSchema.js";
+// eslint-disable-next-line import/no-internal-modules
+import { identifierReferenceSchema } from "../domains/leafDomain.js";
 import {
 	createNodeProxy,
 	createRawNodeProxy,
@@ -77,6 +81,29 @@ class LeafNodeSchema<T extends FlexLeafNodeSchema>
 	}
 }
 
+class IdentifierReferenceSchema<T extends FlexTreeIdentifierReferenceSchema>
+	implements
+		TreeNodeSchemaNonClass<
+			UnbrandedIdentifierName<T>,
+			NodeKind.IdentifierReference,
+			TreeValue<T["info"]>
+		>
+{
+	public readonly identifier: UnbrandedIdentifierName<T>;
+	public readonly kind = NodeKind.IdentifierReference;
+	public readonly info: T["info"];
+	public readonly implicitlyConstructable = true as const;
+	public create(data: TreeValue<T["info"]>): TreeValue<T["info"]> {
+		return data;
+	}
+
+	public constructor(schema: T) {
+		setFlexSchemaFromClassSchema(this, schema);
+		this.identifier = schema.name as UnbrandedIdentifierName<T>;
+		this.info = schema.info;
+	}
+}
+
 /**
  * Wrapper around LeafNodeSchema's constructor that provides the return type that is desired in the package public API.
  */
@@ -86,12 +113,25 @@ function makeLeaf<T extends FlexLeafNodeSchema>(
 	return new LeafNodeSchema(schema);
 }
 
+function makeIdentifier<T extends FlexTreeIdentifierReferenceSchema>(
+	schema: T,
+): TreeNodeSchema<
+	UnbrandedIdentifierName<T>,
+	NodeKind.IdentifierReference,
+	TreeValue<T["info"]>,
+	TreeValue<T["info"]>
+> {
+	return new IdentifierReferenceSchema(schema);
+}
+
 // Leaf schema shared between all SchemaFactory instances.
 const stringSchema = makeLeaf(leaf.string);
 const numberSchema = makeLeaf(leaf.number);
 const booleanSchema = makeLeaf(leaf.boolean);
 const nullSchema = makeLeaf(leaf.null);
 const handleSchema = makeLeaf(leaf.handle);
+
+const identifierSchema = makeIdentifier(identifierReferenceSchema.identifier);
 
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
@@ -121,6 +161,9 @@ type UnbrandedName<T extends FlexLeafNodeSchema> = T["name"] extends TreeNodeSch
 >
 	? Name
 	: T["name"];
+
+type UnbrandedIdentifierName<T extends FlexTreeIdentifierReferenceSchema> =
+	T["name"] extends TreeNodeSchemaIdentifier<infer Name extends string> ? Name : T["name"];
 
 /**
  * Builds schema libraries, and the schema within them.
@@ -194,6 +237,8 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 	 * {@link TreeNodeSchema} for holding an {@link @fluidframework/core-interfaces#IFluidHandle}.
 	 */
 	public readonly handle = handleSchema;
+
+	public readonly identifierReference = identifierSchema;
 
 	/**
 	 * Construct a class that provides the common parts all TreeNodeSchemaClass share.
@@ -603,6 +648,17 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 		t: T,
 	): FieldSchema<FieldKind.Optional, T> {
 		return new FieldSchema(FieldKind.Optional, t);
+	}
+
+	/**
+	 * Make a field of type identifier instead of the default which is required.
+	 * TODO: The type should be updated to a hardcoded allowedType which represents a identifier node type (i.e. object with compressedid and its uuid).
+	 * The user should not be able to specify the schema of the node identifier.
+	 */
+	public identifier<const T extends ImplicitAllowedTypes>(
+		t: T,
+	): FieldSchema<FieldKind.identifier, T> {
+		return new FieldSchema(FieldKind.identifier, t);
 	}
 
 	/**

@@ -13,6 +13,10 @@ import {
 	isTreeValue,
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { schemaIsIdentifierNode } from "../feature-libraries/typed-schema/typedTreeSchema.js";
+// eslint-disable-next-line import/no-internal-modules
+import { identifier } from "../feature-libraries/default-schema/defaultFieldKinds.js";
 import { TreeNode } from "./types.js";
 import { getFlexNode, tryGetFlexNode } from "./flexNode.js";
 import { getClassSchema, getOrCreateNodeProxy } from "./proxies.js";
@@ -70,6 +74,7 @@ export interface TreeApi {
 		eventName: K,
 		listener: TreeNodeEvents[K],
 	): () => void;
+	shortID(node: TreeNode): number | undefined;
 	/**
 	 * Returns the {@link TreeStatus} of the given node.
 	 */
@@ -136,6 +141,19 @@ export const nodeApi: TreeApi = {
 			unknown,
 			T
 		>;
+	},
+	shortID(node: TreeNode): number | undefined {
+		const flexNode = getFlexNode(node);
+		for (const field of flexNode.boxedIterator()) {
+			if (field.schema.kind === identifier) {
+				for (const child of field.boxedIterator()) {
+					if (schemaIsIdentifierNode(child.schema)) {
+						return child.value as number;
+					}
+				}
+			}
+		}
+		return;
 	},
 };
 

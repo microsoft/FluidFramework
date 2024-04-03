@@ -16,6 +16,8 @@ import {
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
 } from "../../core/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { IdentifierReferenceStoredSchema } from "../../core/schema-stored/schema.js";
 import { FullSchemaPolicy } from "./fieldKind.js";
 import { withEditor } from "./fieldKindWithEditor.js";
 import { isNeverTree } from "./isNeverTree.js";
@@ -44,6 +46,11 @@ export function allowsTreeSuperset(
 	if (original instanceof LeafNodeStoredSchema) {
 		if (superset instanceof LeafNodeStoredSchema) {
 			return allowsValueSuperset(original.leafValue, superset.leafValue);
+		}
+		return false;
+	} else if (original instanceof IdentifierReferenceStoredSchema) {
+		if (superset instanceof IdentifierReferenceStoredSchema) {
+			return allowsValueSuperset(original.identifier, superset.identifier);
 		}
 		return false;
 	}

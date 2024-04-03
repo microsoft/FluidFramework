@@ -88,6 +88,10 @@ export const TreeNodeSchemaDataFormat = Type.Object(
 		 * Leaf node union member.
 		 */
 		leaf: Type.Optional(Type.Enum(PersistedValueSchema)),
+		/**
+		 * Identifier node union member.
+		 */
+		identifierReference: Type.Optional(Type.Enum(PersistedValueSchema)), // TODO: update this to be specific to node identifier schema
 	},
 	unionOptions,
 );
