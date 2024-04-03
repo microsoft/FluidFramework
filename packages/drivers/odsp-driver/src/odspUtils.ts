@@ -391,7 +391,7 @@ export function toInstrumentedOdspStorageTokenFetcher(
 
 /**
  * Returns a function that can be used to fetch storage or websocket token.
- * There are scneaios where websocket token is not required / present (consumer stack and orderging service token),
+ * There are scenarios where websocket token is not required / present (consumer stack and ordering service token),
  * thus it could return null. Use toInstrumentedOdspStorageTokenFetcher if you deal with storage token.
  */
 export function toInstrumentedOdspTokenFetcher(
