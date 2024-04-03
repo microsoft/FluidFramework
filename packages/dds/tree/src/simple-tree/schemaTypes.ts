@@ -278,7 +278,7 @@ export function storedKeyFromViewKey(viewKey: string, schema: ImplicitFieldSchem
 }
 
 /**
- * Properties associated with a field.
+ * Additional information to provide to a {@link FieldSchema}.
  *
  * @public
  */
