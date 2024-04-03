@@ -19,35 +19,76 @@ In our case, we are sending custom metrics. [Learn more about Azure App Insights
 
 # Getting Started
 
-The core functionality of this package is exposed by the `createTelemetryManagers(config: TelemetryManagerConfig);` method. A Telemetry manager handles the production and consumption/emission of telemetry events and there should be one manager created per area of interest within the Fluid Framework such as Containers. In the future more areas of interest will be added.
+Let's walk through some simple examples for getting started with fluid telemetry for containers using the @fluidframework/fluid-telemetry package, we'll have to write some code.
+
+## Example 1: Logging container telemetry to the console.
+
+In this example, you'll walk through the basic setup process to start getting container telemetry to be produced and logging it to the console.
+
+### Step 1: First, we'll have to create our own telemetry consumer which extends the ITelemetryConsumer interface. Let's look at an example that will simply console.log the telemetry.
 
 ```ts
-import { ApplicationInsights } from "@microsoft/applicationinsights-web";
-import { IFluidContainer } from "@fluidframework/fluid-static";
-import { TelemetryConfig, startTelemetry, IFluidTelemetry } from "@fluidframework/external-telemetry"
+import { ITelemetryConsumer } from "@fluidframework/fluid-telemetry";
 
+class MySimpleTelemetryConsumer implements ITelemetryConsumer {
+	constructor(private readonly appInsightsClient: ApplicationInsights) {}
+
+	consume(event: IExternalTelemetry) {
+		console.log(event);
+	}
+}
+```
+
+### Step 2: Now, let's start the telemetry production and hook in our telemetry consumer from step 1. We will be initializing our telemetry collection where we initialize our containers:
+
+```ts
+import { IFluidContainer } from "@fluidframework/fluid-static";
+import { ITelemetryConsumer , TelemetryConfig, startTelemetry, IFluidTelemetry } from "@fluidframework/external-telemetry"
+
+// 1: This is supposed to be your code for loading a Fluid Container
 let myAppContainer: IFluidContainer;
 let myAppContainerId: string;
 if (containerExists) {
-	myAppContainerId = {...your code to get the id of the existing container}
-	myAppContainer = {...your code to load a Fluid Container from myAppContainerId}
+    myAppContainerId = {...your code to get the id of the existing container}
+    myAppContainer = {...your code to load a Fluid Container from myAppContainerId}
 } else {
-	myAppContainer = {...your code to create a new Fluid Container}
-	myAppContainerId = await myAppContainer.attach();
+    myAppContainer = {...your code to create a new Fluid Container}
+    myAppContainerId = await myAppContainer.attach();
 }
 
-// Create App Insights Client
-const appInsightsClient = new ApplicationInsights({
-	config: {
-		connectionString:
-			"InstrumentationKey=abcdefgh-ijkl-mnop-qrst-uvwxyz6ffd9c;IngestionEndpoint=https://westus2-2.in.applicationinsights.azure.com/;LiveEndpoint=https://westus2.livediagnostics.monitor.azure.com/",
-	},
-});
+// 2: This is our implementation of ITelemetryConsumer
+class MySimpleTelemetryConsumer implements ITelemetryConsumer {
+    constructor(private readonly appInsightsClient: ApplicationInsights) {}
 
-// Initializes the App Insights client. Without this, logs will not be sent to Azure.
-appInsightsClient.loadAppInsights();
+    consume(event: IExternalTelemetry) {
+        console.log(event);
+    }
+}
 
-// This is our implementation of ITelemetryConsumer to enable sending telemetry to Azure App Insights.
+// 3. Next, we'll Create the telemetry config object.
+// Note that we have to obtain the containerId before we can do this.
+const telemetryConfig: TelemetryConfig = {
+    container: myAppContainer,
+    containerId: myAppContainerId,
+    consumers: [new MySimpleTelemetryConsumer(appInsightsClient)],
+};
+
+// 4. Start Telemetry
+startTelemetry(telemetryConfig);
+
+// Done! Your container telemetry is now being created and sent to your Telemetry Consumer
+```
+
+## Example 2: Logging container telemetry to Azure App Insights
+
+Before you can get telemetry sent to Azure App Insights, you'll need to create an Instance of App Insights on Azure. Then you'll be able to create an Azure App Insights client that you can easily turn into a ITelemetryConsumer and finally hook it up to container telemetry.
+
+### Step 1: First, we'll have to create our own telemetry consumer which extends the ITelemetryConsumer interface using our Azure App Insights client:
+
+```ts
+import { ApplicationInsights } from "@microsoft/applicationinsights-web";
+import { ITelemetryConsumer } from "@fluidframework/fluid-telemetry";
+
 class AppInsightsTelemetryConsumer implements ITelemetryConsumer {
 	constructor(private readonly appInsightsClient: ApplicationInsights) {}
 
@@ -58,19 +99,49 @@ class AppInsightsTelemetryConsumer implements ITelemetryConsumer {
 		});
 	}
 }
+```
 
-// Create the telemetry manager config object(s)
+#### Step 2: Now, let's start the telemetry production and hook in our telemetry consumer from step 1. We will be initializing our telemetry collection where we initialize our containers:
+
+```ts
+// 1: This is supposed to be your code for loading a Fluid Container
+let myAppContainer: IFluidContainer;
+let myAppContainerId: string;
+if (containerExists) {
+    myAppContainerId = {...your code to get the id of the existing container}
+    myAppContainer = {...your code to load a Fluid Container from myAppContainerId}
+} else {
+    myAppContainer = {...your code to create a new Fluid Container}
+    myAppContainerId = await myAppContainer.attach();
+}
+
+// 2: This is our implementation of ITelemetryConsumer that will send telemetry to Azure App Insights
+class AppInsightsTelemetryConsumer implements ITelemetryConsumer {
+    constructor(private readonly appInsightsClient: ApplicationInsights) {}
+
+    consume(event: IFluidTelemetry) {
+        this.appInsightsClient.trackEvent({
+            name: event.eventName,
+            properties: event,
+        });
+    }
+}
+
+// 3. Next, we'll Create the telemetry config object.
+// Note that we have to obtain the containerId before we can do this.
 const telemetryConfig: TelemetryConfig = {
-	container: myAppContainer,
-	containerId: myAppContainerId,
-	consumers: [new AppInsightsTelemetryConsumer(appInsightsClient)],
+    container: myAppContainer,
+    containerId: myAppContainerId,
+    consumers: [new AppInsightsTelemetryConsumer(appInsightsClient)],
 };
 
-// Start Telemetry
+// 4. Start Telemetry
 startTelemetry(telemetryConfig);
 
-// Done!
+// Done! Your container telemetry is now being created and sent to your Telemetry Consumer which will forward it to Azure App Insights.
 ```
+
+Congrats, that's it for now! If you've decided to use Azure App Insights, we have designed useful prebuilt queries for you that utilize the generated telemetry
 
 # Telemetry Events
 
