@@ -7,14 +7,8 @@ import { spy } from "sinon";
 import { expect } from "chai";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
-import {
-	type IContainer,
-	type IContainerEvents,
-} from "@fluidframework/container-definitions/internal";
 import { ApplicationInsights, type IEventTelemetry } from "@microsoft/applicationinsights-web";
-import { type IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import type { IFluidContainer } from "@fluidframework/fluid-static";
-import { createFluidContainer, type IRootDataObject } from "@fluidframework/fluid-static/internal";
+import type { IFluidContainer, IFluidContainerEvents } from "@fluidframework/fluid-static";
 import { startTelemetry, type TelemetryConfig } from "../factory/index.js";
 import { IFluidContainerSystemEventNames, type IContainerTelemetry } from "../container/index.js";
 import {
@@ -25,22 +19,12 @@ import {
 	type IFluidTelemetry,
 	type ITelemetryConsumer,
 } from "../index.js";
-/**
- * Mock {@link @fluidframework/container-definitions#IContainer} for use in tests.
- */
-class MockContainer
-	extends TypedEventEmitter<IContainerEvents>
-	implements Partial<Omit<IContainer, "on" | "off" | "once">>
-{
-	public readonly clientId = "testClientId";
-	public readonly resolvedUrl: IResolvedUrl = {
-		id: "testDocumentId",
-		url: "testUrl",
-		type: "fluid",
-		tokens: {},
-		endpoints: {},
-	};
 
+/**
+ * For these unit tests, we are just interested in the event emitter part of the Fluid container.
+ * The rest of the functionality of IFluidContainer is irrelevant.
+ */
+class MockFluidContainer extends TypedEventEmitter<IFluidContainerEvents> {
 	public connect(): void {
 		this.emit(IFluidContainerSystemEventNames.CONNECTED);
 	}
@@ -50,32 +34,13 @@ class MockContainer
 	}
 
 	public dispose(error?: ICriticalContainerError): void {
-		// IFluidContainer wraps the internal container events and emits its own events that aren't a 1:1 match.
-		// In this case, the "closed" event is instead wrapped on IFluidContainer which will emit "disposed" instead.
-		this.emit("closed", error);
+		this.emit(IFluidContainerSystemEventNames.DISPOSED, error);
 	}
 }
 
-/**
- * Creates a mock {@link @fluidframework/container-definitions#IContainer} for use in tests.
- *
- * @remarks
- *
- * Note: the implementation here is incomplete. If a test needs particular functionality, {@link MockContainer}
- * will need to be updated accordingly.
- */
-export function createMockFluidContainer(container: IContainer): IFluidContainer {
-	return createFluidContainer({
-		container,
-		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-		rootDataObject: {} as IRootDataObject,
-	});
-}
-
 describe("container telemetry via", () => {
-	let mockContainer: IContainer;
+	let mockFluidContainer: MockFluidContainer;
 	const mockContainerId = "mockContainerId";
-	let mockFluidContainer: IFluidContainer;
 	let appInsightsClient: ApplicationInsights;
 	let trackEventSpy: Sinon.SinonSpy;
 	let telemetryConfig: TelemetryConfig;
@@ -90,8 +55,7 @@ describe("container telemetry via", () => {
 		});
 
 		trackEventSpy = spy(appInsightsClient, "trackEvent");
-		mockContainer = new MockContainer() as unknown as IContainer;
-		mockFluidContainer = createMockFluidContainer(mockContainer);
+		mockFluidContainer = new MockFluidContainer();
 
 		class AppInsightsTelemetryConsumer implements ITelemetryConsumer {
 			public constructor(private readonly client: ApplicationInsights) {}
@@ -105,7 +69,7 @@ describe("container telemetry via", () => {
 		}
 
 		telemetryConfig = {
-			container: mockFluidContainer,
+			container: mockFluidContainer as unknown as IFluidContainer,
 			containerId: mockContainerId,
 			consumers: [new AppInsightsTelemetryConsumer(appInsightsClient)],
 		};
@@ -114,7 +78,7 @@ describe("container telemetry via", () => {
 	it("Emitting 'connected' container system event produces expected ContainerConnectedTelemetry using Azure App Insights", () => {
 		startTelemetry(telemetryConfig);
 
-		mockContainer.connect();
+		mockFluidContainer.connect();
 
 		expect(trackEventSpy.callCount).to.equal(1);
 
@@ -140,7 +104,7 @@ describe("container telemetry via", () => {
 	it("Emitting 'disconnected' container system event produces expected ContainerDisconnectedTelemetry using Azure App Insights", () => {
 		startTelemetry(telemetryConfig);
 
-		mockContainer.disconnect();
+		mockFluidContainer.disconnect();
 
 		expect(trackEventSpy.callCount).to.equal(1);
 
@@ -166,7 +130,7 @@ describe("container telemetry via", () => {
 	it("Emitting 'disposed' system event produces expected ContainerDisposedTelemetry using Azure App Insights", () => {
 		startTelemetry(telemetryConfig);
 
-		mockContainer.dispose();
+		mockFluidContainer.dispose();
 
 		expect(trackEventSpy.callCount).to.equal(1);
 
@@ -198,7 +162,7 @@ describe("container telemetry via", () => {
 			stack: "example stack error at line 52 of Container.ts",
 		};
 
-		mockContainer.dispose(containerError);
+		mockFluidContainer.dispose(containerError);
 
 		// Obtain the events from the method that the spy was called with
 		const actualAppInsightsTelemetry = trackEventSpy.getCall(0).args[0] as IEventTelemetry;

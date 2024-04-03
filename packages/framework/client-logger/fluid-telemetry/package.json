@@ -88,7 +88,6 @@
 	"dependencies": {
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
-		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
 		"uuid": "^9.0.0"
 	},

@@ -7793,7 +7793,6 @@ importers:
       '@fluidframework/build-tools': ^0.34.0
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
-      '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/fluid-static': workspace:~
       '@microsoft/api-extractor': ^7.42.3
       '@microsoft/applicationinsights-web': ^2.8.11
@@ -7813,7 +7812,6 @@ importers:
     dependencies:
       '@fluidframework/container-definitions': link:../../../common/container-definitions
       '@fluidframework/container-loader': link:../../../loader/container-loader
-      '@fluidframework/driver-definitions': link:../../../common/driver-definitions
       '@fluidframework/fluid-static': link:../../fluid-static
       uuid: 9.0.1
     devDependencies:
