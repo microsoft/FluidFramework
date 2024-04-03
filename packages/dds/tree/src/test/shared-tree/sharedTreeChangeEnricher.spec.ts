@@ -23,7 +23,7 @@ import {
 	buildForest,
 	fieldKinds,
 } from "../../feature-libraries/index.js";
-import { ICodecOptions, JsonCompatible } from "../../index.js";
+import { JsonCompatible } from "../../index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedTreeChangeEnricher } from "../../shared-tree/sharedTreeChangeEnricher.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -35,25 +35,18 @@ import {
 	idAllocatorFromMaxId,
 	nestedMapToFlatList,
 } from "../../util/index.js";
-import { ajvValidator } from "../codec/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { Change } from "../feature-libraries/optional-field/optionalFieldUtils.js";
-import { jsonTreeFromForest, testIdCompressor, testRevisionTagCodec } from "../utils.js";
+import {
+	failCodecFamily,
+	jsonTreeFromForest,
+	testIdCompressor,
+	testRevisionTagCodec,
+} from "../utils.js";
 
 const content: JsonCompatible = { x: 42 };
 
-const codecOptions: ICodecOptions = { jsonValidator: ajvValidator };
-const fieldBatchCodec = {
-	encode: () => assert.fail("Unexpected encode"),
-	decode: () => assert.fail("Unexpected decode"),
-};
-
-const modularFamily = new ModularChangeFamily(
-	fieldKinds,
-	testRevisionTagCodec,
-	fieldBatchCodec,
-	codecOptions,
-);
+const modularFamily = new ModularChangeFamily(fieldKinds, failCodecFamily);
 
 const dataChanges: ModularChangeset[] = [];
 const defaultEditor = new DefaultEditBuilder(modularFamily, (change) => dataChanges.push(change));

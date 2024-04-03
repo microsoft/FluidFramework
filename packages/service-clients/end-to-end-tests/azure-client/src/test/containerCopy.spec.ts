@@ -7,13 +7,13 @@ import { strict as assert } from "node:assert";
 
 import { AzureClient } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
+import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
-import { timeoutPromise } from "@fluidframework/test-utils";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-import { ConnectionState } from "@fluidframework/container-loader";
-import { createAzureClient } from "./AzureClientFactory";
-import { mapWait } from "./utils";
+import { createAzureClient } from "./AzureClientFactory.js";
+import { mapWait } from "./utils.js";
 
 describe("Container copy scenarios", () => {
 	const connectTimeoutMs = 10_000;

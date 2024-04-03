@@ -8,8 +8,10 @@ import type {
 	IDisposable,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-
-import type { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions";
+import type {
+	IDocumentStorageService,
+	ISnapshot,
+} from "@fluidframework/driver-definitions/internal";
 import type {
 	IClientDetails,
 	IDocumentMessage,
@@ -21,6 +23,7 @@ import type {
 	IVersion,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
+
 import type { IAudience } from "./audience.js";
 import type { IDeltaManager } from "./deltas.js";
 import type { ICriticalContainerError } from "./error.js";
@@ -114,7 +117,7 @@ export interface IRuntime extends IDisposable {
  */
 export interface IBatchMessage {
 	contents?: string;
-	metadata: Record<string, unknown> | undefined;
+	metadata?: Record<string, unknown>;
 	compression?: string;
 	referenceSequenceNumber?: number;
 }

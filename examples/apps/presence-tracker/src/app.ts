@@ -4,6 +4,7 @@
  */
 
 import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
+
 import { ITrackerAppModel, TrackerContainerRuntimeFactory } from "./containerCode.js";
 import { renderFocusPresence, renderMousePresence } from "./view.js";
 

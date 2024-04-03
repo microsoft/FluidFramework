@@ -205,7 +205,10 @@ module.exports = {
 			],
 			"fluid-build-tasks-eslint": [
 				// eslint doesn't really depend on build. Doing so just slows down a package build.
+				"^packages/test/snapshots/package.json",
 				"^packages/test/test-utils/package.json",
+				// TODO: AB#7630 uses lint only ts projects for coverage which don't have representative tsc scripts
+				"^packages/tools/fluid-runner/package.json",
 			],
 			"fluid-build-tasks-tsc": [
 				// TODO: AB#7460 fix tsconfig reference path match on Windows
@@ -219,6 +222,11 @@ module.exports = {
 				// These files all require a node shebang at the top of the file.
 				"azure/packages/azure-local-service/src/index.ts",
 				"experimental/PropertyDDS/packages/property-query/test/get_config.js",
+				"server/routerlicious/packages/tinylicious/src/index.ts",
+
+				// Type test files can be excluded since they're generated and known to have the correct header.
+				// This can be removed once the whole repo uses build-tools v0.35.0+.
+				/.*\/validate.*\.generated\.ts/,
 			],
 			"no-js-file-extensions": [
 				// PropertyDDS uses .js files which should be renamed eventually.
@@ -425,7 +433,6 @@ module.exports = {
 				["oclif", "oclif"],
 				["renamer", "renamer"],
 				["ts2esm", "ts2esm"],
-				["tsc-multi", "tsc-multi"],
 				["tinylicious", "tinylicious"],
 				["attw", "@arethetypeswrong/cli"],
 			],

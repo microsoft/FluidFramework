@@ -4,7 +4,8 @@
  */
 
 import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+
 import { ICodecOptions } from "../../codec/index.js";
 import {
 	GraphCommit,
@@ -18,7 +19,9 @@ import {
 	DefaultEditBuilder,
 	TreeCompressionStrategy,
 	defaultSchemaPolicy,
+	fieldKindConfigurations,
 	makeFieldBatchCodec,
+	makeModularChangeCodecFamily,
 } from "../../feature-libraries/index.js";
 import {
 	ICommitEnricher,
@@ -48,16 +51,22 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Uncompressed,
 		enricher?: ICommitEnricher<DefaultChangeset>,
 	) {
-		const codecOptions: ICodecOptions = { jsonValidator: typeboxValidator };
+		const codecOptions: ICodecOptions = {
+			jsonValidator: typeboxValidator,
+		};
+		const formatVersions = { editManager: 1, message: 1, fieldBatch: 1 };
+		const codec = makeModularChangeCodecFamily(
+			fieldKindConfigurations,
+			testRevisionTagCodec,
+			makeFieldBatchCodec(codecOptions, formatVersions.fieldBatch),
+			codecOptions,
+			chunkCompressionStrategy,
+		);
 		super(
 			summarizables,
-			new DefaultChangeFamily(
-				testRevisionTagCodec,
-				makeFieldBatchCodec(codecOptions),
-				codecOptions,
-				chunkCompressionStrategy,
-			),
+			new DefaultChangeFamily(codec),
 			codecOptions,
+			formatVersions,
 			id,
 			runtime,
 			TestSharedTreeCore.attributes,

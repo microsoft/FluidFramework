@@ -4,16 +4,17 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { AzureClient } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { type ISharedMap, SharedMap } from "@fluidframework/map";
-import { timeoutPromise } from "@fluidframework/test-utils";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-import { createAzureClient } from "./AzureClientFactory";
-import { CounterTestDataObject, TestDataObject } from "./TestDataObject";
-import { mapWait } from "./utils";
+import { createAzureClient } from "./AzureClientFactory.js";
+import { CounterTestDataObject, TestDataObject } from "./TestDataObject.js";
+import { mapWait } from "./utils.js";
 
 describe("Fluid data updates", () => {
 	const connectTimeoutMs = 10_000;

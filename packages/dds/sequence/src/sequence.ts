@@ -5,7 +5,7 @@
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
-import { assert, Deferred } from "@fluidframework/core-utils";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IChannelStorageService,
@@ -32,24 +32,21 @@ import {
 	ReferenceType,
 	SegmentGroup,
 	SlidingPreference,
-	createAnnotateRangeOp,
-	// eslint-disable-next-line import/no-deprecated
+	createAnnotateRangeOp, // eslint-disable-next-line import/no-deprecated
 	createGroupOp,
 	createInsertOp,
 	createObliterateRangeOp,
 	createRemoveRangeOp,
 	matchProperties,
-} from "@fluidframework/merge-tree";
+} from "@fluidframework/merge-tree/internal";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
-import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import {
-	IFluidSerializer,
-	ISharedObjectEvents,
-	SharedObject,
-} from "@fluidframework/shared-object-base";
-import { LoggingError, createChildLogger } from "@fluidframework/telemetry-utils";
+import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import { IFluidSerializer, ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import { SharedObject } from "@fluidframework/shared-object-base/internal";
+import { LoggingError, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
+
 import { IIntervalCollection, SequenceIntervalCollectionValueType } from "./intervalCollection.js";
 import { IMapOperation, IntervalCollectionMap } from "./intervalCollectionMap.js";
 import { IMapMessageLocalMetadata, IValueChanged } from "./intervalCollectionMapInterfaces.js";

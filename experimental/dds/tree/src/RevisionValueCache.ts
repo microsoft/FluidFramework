@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/core-utils';
+import { assert } from '@fluidframework/core-utils/internal';
 import { BTree } from '@tylerbu/sorted-btree-es6';
 import LRU from 'lru-cache';
+
 import { compareFiniteNumbers, fail } from './Common.js';
 
 /**

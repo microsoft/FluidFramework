@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { LazyPromise } from "@fluidframework/core-utils";
+import { LazyPromise } from "@fluidframework/core-utils/internal";
+
 import { IFluidDependencySynthesizer } from "./IFluidDependencySynthesizer.js";
 import {
 	AsyncFluidObjectProvider,

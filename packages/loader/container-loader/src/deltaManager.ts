@@ -14,15 +14,19 @@ import {
 	IEventProvider,
 	type ITelemetryBaseEvent,
 	ITelemetryBaseProperties,
-	IThrottlingWarning,
 } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
-	DriverErrorTypes,
 	IDocumentDeltaStorageService,
 	IDocumentService,
-} from "@fluidframework/driver-definitions";
-import { MessageType2, NonRetryableError, isRuntimeMessage } from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-definitions/internal";
+import {
+	MessageType2,
+	NonRetryableError,
+	isRuntimeMessage,
+} from "@fluidframework/driver-utils/internal";
 import {
 	ConnectionMode,
 	IDocumentMessage,
@@ -31,17 +35,19 @@ import {
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 import {
-	DataCorruptionError,
-	DataProcessingError,
 	type ITelemetryErrorEventExt,
 	type ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils";
+import {
+	DataCorruptionError,
+	DataProcessingError,
 	UsageError,
 	extractSafePropertiesFromMessage,
 	isFluidError,
 	normalizeError,
 	safeRaiseEvent,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import {
@@ -325,7 +331,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		return message.clientSequenceNumber;
 	}
 
-	public submitSignal(content: any, targetClientId?: string) {
+	public submitSignal(content: string, targetClientId?: string) {
 		return this.connectionManager.submitSignal(content, targetClientId);
 	}
 

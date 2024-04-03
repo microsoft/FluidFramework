@@ -12,10 +12,16 @@ import {
 	IResponse,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils";
-import { FluidObjectHandle } from "@fluidframework/datastore";
-import { buildSnapshotTree } from "@fluidframework/driver-utils";
+import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
+import { FluidObjectHandle } from "@fluidframework/datastore/internal";
+import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import {
+	IGarbageCollectionData,
+	IInboundSignalMessage,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+} from "@fluidframework/runtime-definitions";
 import {
 	AliasResult,
 	CreateSummarizerNodeSource,
@@ -27,15 +33,11 @@ import {
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
 	IFluidParentContext,
-	IGarbageCollectionData,
-	IInboundSignalMessage,
 	ISummarizeResult,
-	ISummaryTreeWithStats,
-	ITelemetryContext,
 	InboundAttachMessage,
 	NamedFluidDataStoreRegistryEntries,
 	channelsTreeName,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
 	RequestParser,
@@ -49,7 +51,7 @@ import {
 	processAttachMessageGCData,
 	responseToException,
 	unpackChildNodesUsedRoutes,
-} from "@fluidframework/runtime-utils";
+} from "@fluidframework/runtime-utils/internal";
 import {
 	DataCorruptionError,
 	DataProcessingError,
@@ -59,7 +61,8 @@ import {
 	createChildMonitoringContext,
 	extractSafePropertiesFromMessage,
 	tagCodeArtifacts,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
+
 import { RuntimeHeaderData, defaultRuntimeHeaderData } from "./containerRuntime.js";
 import {
 	IDataStoreAliasMessage,
@@ -746,9 +749,49 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	}
 
 	private async applyStashedAttachOp(message: IAttachMessage) {
-		this.pendingAttach.set(message.id, message);
-		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-		this.processAttachMessage({ contents: message } as ISequencedDocumentMessage, false);
+		const { id, snapshot } = message;
+
+		// build the snapshot from the summary in the attach message
+		const flatAttachBlobs = new Map<string, ArrayBufferLike>();
+		const snapshotTree = buildSnapshotTree(snapshot.entries, flatAttachBlobs);
+		const storage = new StorageServiceWithAttachBlobs(
+			this.parentContext.storage,
+			flatAttachBlobs,
+		);
+
+		// create a local datastore context for the data store context,
+		// which this message represents. All newly created data store
+		// contexts start as a local context on the client that created
+		// them, and for stashed ops, the client that applies it plays
+		// the role of creating client.
+		const dataStoreContext = new LocalFluidDataStoreContext({
+			id,
+			pkg: undefined,
+			parentContext: this.wrapContextForInnerChannel(id),
+			storage,
+			scope: this.parentContext.scope,
+			createSummarizerNodeFn: this.parentContext.getCreateChildSummarizerNodeFn(id, {
+				type: CreateSummarizerNodeSource.FromSummary,
+			}),
+			makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
+			snapshotTree,
+		});
+
+		// realize the local context, as local contexts shouldn't be delay
+		// loaded, as this client is playing the role of creating client,
+		// and creating clients always create realized data store contexts.
+		const channel = await dataStoreContext.realize();
+		await channel.entryPoint.get();
+
+		// add to the list of bound or remoted, as this context must be bound
+		// to had an attach message sent, and is the non-detached case is remoted.
+		this.contexts.addBoundOrRemoted(dataStoreContext);
+		if (this.parentContext.attachState !== AttachState.Detached) {
+			// if the client is not detached put in the pending attach list
+			// so that on ack of the stashed op, the context is found.
+			// detached client don't send ops, so should not expect and ack.
+			this.pendingAttach.set(message.id, message);
+		}
 	}
 
 	public process(

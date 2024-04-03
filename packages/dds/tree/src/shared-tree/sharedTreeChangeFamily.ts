@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { ICodecFamily, ICodecOptions } from "../codec/index.js";
 import {
 	ChangeEncodingContext,
@@ -22,9 +23,12 @@ import {
 	ModularChangeset,
 	TreeChunk,
 	TreeCompressionStrategy,
+	fieldKindConfigurations,
 	fieldKinds,
+	makeModularChangeCodecFamily,
 } from "../feature-libraries/index.js";
 import { Mutable, NestedSet, addToNestedSet, fail, nestedSetContains } from "../util/index.js";
+
 import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs.js";
 import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
@@ -52,15 +56,16 @@ export class SharedTreeChangeFamily
 		codecOptions: ICodecOptions,
 		chunkCompressionStrategy?: TreeCompressionStrategy,
 	) {
-		this.modularChangeFamily = new ModularChangeFamily(
-			fieldKinds,
+		const modularChangeCodec = makeModularChangeCodecFamily(
+			fieldKindConfigurations,
 			revisionTagCodec,
 			fieldBatchCodec,
 			codecOptions,
 			chunkCompressionStrategy,
 		);
+		this.modularChangeFamily = new ModularChangeFamily(fieldKinds, modularChangeCodec);
 		this.codecs = makeSharedTreeChangeCodecFamily(
-			this.modularChangeFamily.latestCodec,
+			this.modularChangeFamily.codecs,
 			codecOptions,
 		);
 	}
@@ -119,6 +124,7 @@ export class SharedTreeChangeFamily
 								new: innerChange.innerChange.schema.old,
 								old: innerChange.innerChange.schema.new,
 							},
+							isInverse: true,
 						},
 					};
 				}
@@ -182,7 +188,7 @@ export class SharedTreeChangeFamily
 	}
 }
 
-function hasSchemaChange(change: SharedTreeChange): boolean {
+export function hasSchemaChange(change: SharedTreeChange): boolean {
 	return change.changes.some((innerChange) => innerChange.type === "schema");
 }
 

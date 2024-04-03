@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { PromiseCache } from "@fluidframework/core-utils";
-import { ISnapshot } from "@fluidframework/driver-definitions";
+import { PromiseCache } from "@fluidframework/core-utils/internal";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	ICacheEntry,
 	IEntry,
@@ -13,7 +13,7 @@ import {
 	IPersistedCache,
 	ISocketStorageDiscovery,
 	getKeyForCacheEntry,
-} from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/odsp-driver-definitions/internal";
 
 /**
  * Similar to IPersistedCache, but exposes cache interface for single file

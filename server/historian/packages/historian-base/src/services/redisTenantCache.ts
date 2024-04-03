@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IRedisParameters } from "@fluidframework/server-services-utils";
+import {
+	IRedisParameters,
+	IRedisClientConnectionManager,
+} from "@fluidframework/server-services-utils";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import * as Redis from "ioredis";
 import * as winston from "winston";
 /**
  * Redis based cache client for caching and expiring tenants and tokens.
@@ -15,7 +17,7 @@ export class RedisTenantCache {
 	private readonly prefix: string = "tenant";
 
 	constructor(
-		private readonly client: Redis.default | Redis.Cluster,
+		private readonly redisClientConnectionManager: IRedisClientConnectionManager,
 		parameters?: IRedisParameters,
 	) {
 		if (parameters?.expireAfterSeconds) {
@@ -26,15 +28,23 @@ export class RedisTenantCache {
 			this.prefix = parameters.prefix;
 		}
 
-		client.on("error", (error) => {
+		redisClientConnectionManager.getRedisClient().on("error", (error) => {
 			winston.error("Redis Tenant Cache Error:", error);
 			Lumberjack.error("Redis Tenant Cache Error", undefined, error);
 		});
 	}
 
 	public async exists(item: string): Promise<boolean> {
-		const result = await this.client.exists(this.getKey(item));
-		return result >= 1;
+		try {
+			const result = await this.redisClientConnectionManager
+				.getRedisClient()
+				.exists(this.getKey(item));
+			return result >= 1;
+		} catch (error) {
+			Lumberjack.error("Redis Tenant Cache error in exists", undefined, error);
+			// Calling class also has a catch block
+			throw error;
+		}
 	}
 
 	public async set(
@@ -42,19 +52,41 @@ export class RedisTenantCache {
 		value: string = "",
 		expireAfterSeconds: number = this.expireAfterSeconds,
 	): Promise<void> {
-		const result = await this.client.set(this.getKey(key), value, "EX", expireAfterSeconds);
-		if (result !== "OK") {
-			throw new Error(result);
+		try {
+			const result = await this.redisClientConnectionManager
+				.getRedisClient()
+				.set(this.getKey(key), value, "EX", expireAfterSeconds);
+			if (result !== "OK") {
+				throw new Error(result);
+			}
+		} catch (error) {
+			Lumberjack.error("Redis Tenant Cache error in set", undefined, error);
+			// Calling class also has a catch block
+			throw error;
 		}
 	}
 
 	public async delete(key: string): Promise<boolean> {
-		const result = await this.client.del(this.getKey(key));
-		return result === 1;
+		try {
+			const result = await this.redisClientConnectionManager
+				.getRedisClient()
+				.del(this.getKey(key));
+			return result === 1;
+		} catch (error) {
+			Lumberjack.error("Redis Tenant Cache error in delete", undefined, error);
+			// Calling class does not have a catch block
+			return false;
+		}
 	}
 
 	public async get(key: string): Promise<string> {
-		return this.client.get(this.getKey(key));
+		try {
+			return await this.redisClientConnectionManager.getRedisClient().get(this.getKey(key));
+		} catch (error) {
+			Lumberjack.error("Redis Tenant Cache error in get", undefined, error);
+			// Calling class also has a catch block
+			throw error;
+		}
 	}
 
 	/**

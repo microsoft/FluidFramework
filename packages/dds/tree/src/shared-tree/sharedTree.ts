@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IChannelFactory,
@@ -12,6 +12,8 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import { ICodecOptions, noopValidator } from "../codec/index.js";
 import {
 	AnchorSet,
@@ -40,7 +42,7 @@ import {
 	makeMitigatedChangeFamily,
 	makeTreeChunker,
 } from "../feature-libraries/index.js";
-import { SharedTreeCore } from "../shared-tree-core/index.js";
+import { ExplicitCoreCodecVersions, SharedTreeCore } from "../shared-tree-core/index.js";
 import {
 	ITree,
 	ImplicitFieldSchema,
@@ -49,6 +51,7 @@ import {
 	TreeView,
 } from "../simple-tree/index.js";
 import { brand } from "../util/index.js";
+
 import { DefaultCommitEnricher } from "./defaultCommitEnricher.js";
 import { InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
 import { SchematizingSimpleTreeView, requireSchema } from "./schematizingTreeView.js";
@@ -114,6 +117,33 @@ export interface ISharedTree extends ISharedObject, ITree {
 }
 
 /**
+ * Has an entry for each codec which writes an explicit version into its data.
+ *
+ * This is used to map the single API entrypoint controlling the format {@link SharedTreeOptions.formatVersion}
+ * to a list of write versions that for each codec that should be used for that format.
+ *
+ * Note that all explicitly versioned codecs should be using the format version from the data to read encoded data.
+ *
+ * TODO: Plumb these write versions into forest, schema, detached field index codec creation.
+ */
+interface ExplicitCodecVersions extends ExplicitCoreCodecVersions {
+	forest: number;
+	schema: number;
+	detachedFieldIndex: number;
+	fieldBatch: number;
+}
+
+const formatVersionToTopLevelCodecVersions = new Map<number, ExplicitCodecVersions>([
+	[1, { forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 1, message: 1, fieldBatch: 1 }],
+]);
+
+function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
+	const versions = formatVersionToTopLevelCodecVersions.get(formatVersion);
+	assert(versions !== undefined, "Unknown format version");
+	return versions;
+}
+
+/**
  * Shared tree, configured with a good set of indexes and field kinds which will maintain compatibility over time.
  *
  * TODO: detail compatibility requirements.
@@ -137,12 +167,12 @@ export class SharedTree
 		optionsParam: SharedTreeOptions,
 		telemetryContextPrefix: string,
 	) {
-		assert(
-			runtime.idCompressor !== undefined,
-			0x883 /* IdCompressor must be enabled to use SharedTree */,
-		);
+		if (runtime.idCompressor === undefined) {
+			throw new UsageError("IdCompressor must be enabled to use SharedTree");
+		}
 
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };
+		const codecVersions = getCodecVersions(options.formatVersion);
 		const schema = new TreeStoredSchemaRepository();
 		const forest =
 			options.forest === ForestType.Optimized
@@ -153,7 +183,7 @@ export class SharedTree
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options, {
 			getCurrentSeq: () => this.runtime.deltaManager.lastSequenceNumber,
 		});
-		const fieldBatchCodec = makeFieldBatchCodec(options);
+		const fieldBatchCodec = makeFieldBatchCodec(options, codecVersions.fieldBatch);
 
 		const encoderContext = {
 			schema: {
@@ -202,6 +232,7 @@ export class SharedTree
 			[schemaSummarizer, forestSummarizer, removedRootsSummarizer],
 			changeFamily,
 			options,
+			codecVersions,
 			id,
 			runtime,
 			attributes,
@@ -219,16 +250,21 @@ export class SharedTree
 		);
 		this._events = createEmitter<CheckoutEvents>();
 		const localBranch = this.getLocalBranch();
-		this.checkout = createTreeCheckout(runtime.idCompressor, revisionTagCodec, {
-			branch: localBranch,
-			changeFamily,
-			schema,
-			forest,
-			fieldBatchCodec,
-			events: this._events,
-			removedRoots,
-			chunkCompressionStrategy: options.treeEncodeType,
-		});
+		this.checkout = createTreeCheckout(
+			runtime.idCompressor,
+			this.mintRevisionTag,
+			revisionTagCodec,
+			{
+				branch: localBranch,
+				changeFamily,
+				schema,
+				forest,
+				fieldBatchCodec,
+				events: this._events,
+				removedRoots,
+				chunkCompressionStrategy: options.treeEncodeType,
+			},
+		);
 	}
 
 	public contentSnapshot(): SharedTreeContentSnapshot {
@@ -286,14 +322,61 @@ export class SharedTree
 }
 
 /**
+ * Format versions supported by SharedTree.
+ *
+ * Each version documents a required minimum version of the \@fluidframework/tree package.
  * @internal
  */
-export interface SharedTreeOptions extends Partial<ICodecOptions> {
+export const SharedTreeFormatVersion = {
 	/**
-	 * The {@link ForestType} indicating which forest type should be created for the SharedTree.
+	 * Requires \@fluidframework/tree \>= 2.0.0.
 	 */
-	forest?: ForestType;
-	treeEncodeType?: TreeCompressionStrategy;
+	v1: 1,
+} as const;
+
+/**
+ * Format versions supported by SharedTree.
+ *
+ * Each version documents a required minimum version of the \@fluidframework/tree package.
+ * @internal
+ * @privateRemarks
+ * See packages/dds/tree/docs/main/compatibility.md for information on how to add support for a new format.
+ */
+export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
+
+/**
+ * @internal
+ */
+export type SharedTreeOptions = Partial<ICodecOptions> &
+	Partial<SharedTreeFormatOptions> & {
+		/**
+		 * The {@link ForestType} indicating which forest type should be created for the SharedTree.
+		 */
+		forest?: ForestType;
+	};
+
+/**
+ * Options for configuring the persisted format SharedTree uses.
+ * @internal
+ */
+export interface SharedTreeFormatOptions {
+	/**
+	 * See {@link TreeCompressionStrategy}.
+	 * default: TreeCompressionStrategy.Compressed
+	 */
+	treeEncodeType: TreeCompressionStrategy;
+	/**
+	 * The format version SharedTree should use to persist documents.
+	 *
+	 * This option has compatibility implications for applications using SharedTree.
+	 * Each version documents a required minimum version of \@fluidframework/tree.
+	 * If this minimum version fails to be met, the SharedTree may fail to load.
+	 * To be safe, application authors should verify that they have saturated this version
+	 * of \@fluidframework/tree in their ecosystem before changing the format version.
+	 *
+	 * This option defaults to SharedTreeFormatVersion.v1.
+	 */
+	formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
 }
 
 /**
@@ -315,6 +398,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 	jsonValidator: noopValidator,
 	forest: ForestType.Reference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,
+	formatVersion: SharedTreeFormatVersion.v1,
 };
 
 /**

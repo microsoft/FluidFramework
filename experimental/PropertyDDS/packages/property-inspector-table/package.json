@@ -33,13 +33,11 @@
 		"build:copy-resources": "copyfiles -u 2 \"dist/assets/**/*\" lib/assets",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:webpack": "webpack --config webpack.svgs.cjs && copyfiles -u 2 \"dist/assets/**/*\" lib/assets",
-		"check:biome": "biome check .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "fluid-build --task format .",
-		"format:biome": "biome check --apply .",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
@@ -68,7 +66,7 @@
 	},
 	"devDependencies": {
 		"@babel/core": "^7.13.0",
-		"@biomejs/biome": "^1.6.1",
+		"@biomejs/biome": "^1.6.2",
 		"@fluid-experimental/property-binder": "workspace:~",
 		"@fluid-experimental/property-changeset": "workspace:~",
 		"@fluid-experimental/property-dds": "workspace:~",
@@ -118,7 +116,7 @@
 		"typescript": "~5.1.6",
 		"webpack": "^5.82.0",
 		"webpack-cli": "^4.9.2",
-		"webpack-dev-server": "~4.6.0",
+		"webpack-dev-server": "~4.15.1",
 		"webpack-merge": "^5.8.0"
 	},
 	"peerDependencies": {

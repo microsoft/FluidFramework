@@ -4,13 +4,14 @@
  */
 
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
-import { LocalDriverApiType, LocalDriverApi } from "./localDriverApi.js";
+
+import { LocalDriverApi, LocalDriverApiType } from "./localDriverApi.js";
 
 /**
  * @internal

@@ -3,18 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { promises as fs, writeFileSync, mkdirSync } from "fs";
+import { promises as fs, mkdirSync, writeFileSync } from "fs";
 import path from "path";
+
+import { combineReducers, combineReducersAsync } from "./combineReducers.js";
 import {
 	AsyncGenerator,
 	AsyncReducer,
 	BaseFuzzTestState,
-	done,
 	Generator,
 	Reducer,
 	SaveInfo,
+	done,
 } from "./types.js";
-import { combineReducers, combineReducersAsync } from "./combineReducers.js";
 
 /**
  * Performs random actions on a set of clients.
@@ -61,8 +62,8 @@ export async function performFuzzActionsAsync<
  * this parameter might look like:
  * ```typescript
  * {
- *   add: (state, index) => { myList.insert(index); return state; },
- *   delete: (state, index) => { myList.delete(index); return state; }
+ * add: (state, index) => { myList.insert(index); return state; },
+ * delete: (state, index) => { myList.delete(index); return state; }
  * }
  * ```
  * @param initialState - Initial state for the test
@@ -188,8 +189,8 @@ export function performFuzzActions<
  * this parameter might look like:
  * ```typescript
  * {
- *   add: (state, index) => { myList.insert(index); return state; },
- *   delete: (state, index) => { myList.delete(index); return state; }
+ * add: (state, index) => { myList.insert(index); return state; },
+ * delete: (state, index) => { myList.delete(index); return state; }
  * }
  * ```
  * @param initialState - Initial state for the test

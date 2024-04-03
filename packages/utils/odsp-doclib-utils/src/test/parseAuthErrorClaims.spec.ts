@@ -4,6 +4,7 @@
  */
 
 import assert from "assert";
+
 import { parseAuthErrorClaims } from "../parseAuthErrorClaims.js";
 
 const invalidWwwAuthenticateHeaderWithoutError =

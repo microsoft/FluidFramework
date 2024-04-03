@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { SequenceEvent } from "@fluidframework/sequence";
+import { SequenceEvent } from "@fluidframework/sequence/internal";
+
 import { emptyObject } from "../util/index.js";
+
 import { Layout } from "./layout.js";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface

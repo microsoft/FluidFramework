@@ -4,37 +4,39 @@
  */
 
 import { strict as assert } from "assert";
+
+import {
+	DocumentMatrixPlainInfo,
+	assertDocumentTypeInfo,
+	isDocumentMatrixPlainInfo,
+} from "@fluid-private/test-version-utils";
+import {
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	DataObject,
+	DataObjectFactory,
+} from "@fluidframework/aqueduct/internal";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 	ISummarizer,
-} from "@fluidframework/container-runtime";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { SharedMatrix } from "@fluidframework/matrix";
+} from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
 	IFluidHandle,
 	IRequest,
 } from "@fluidframework/core-interfaces";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { SharedMatrix } from "@fluidframework/matrix/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	ChannelFactoryRegistry,
 	ITestContainerConfig,
 	createSummarizerFromFactory,
 	summarizeNow,
-} from "@fluidframework/test-utils";
-import {
-	DocumentMatrixPlainInfo,
-	assertDocumentTypeInfo,
-	isDocumentMatrixPlainInfo,
-} from "@fluid-private/test-version-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/test-utils/internal";
+
 import {
 	IDocumentLoaderAndSummarizer,
 	IDocumentProps,

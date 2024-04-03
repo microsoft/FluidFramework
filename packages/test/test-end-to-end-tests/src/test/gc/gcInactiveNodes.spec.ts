@@ -6,33 +6,35 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
+
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import {
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+	itExpects,
+} from "@fluid-private/test-version-utils";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	AllowInactiveRequestHeaderKey,
 	ContainerRuntime,
-	InactiveResponseHeaderKey,
 	ISummarizer,
-} from "@fluidframework/container-runtime";
+	InactiveResponseHeaderKey,
+} from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { DriverHeader } from "@fluidframework/driver-definitions";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { delay } from "@fluidframework/core-utils/internal";
+import { DriverHeader } from "@fluidframework/driver-definitions/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
+import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
 	createSummarizer,
 	summarizeNow,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
-import {
-	describeCompat,
-	ITestDataObject,
-	itExpects,
-	TestDataObjectType,
-} from "@fluid-private/test-version-utils";
-import { delay } from "@fluidframework/core-utils";
-import type { ISharedDirectory } from "@fluidframework/map";
+} from "@fluidframework/test-utils/internal";
+
 import {
 	manufactureHandle,
 	waitForContainerWriteModeConnectionWrite,

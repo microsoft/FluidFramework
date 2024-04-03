@@ -4,35 +4,38 @@
  */
 
 import { strict as assert } from "assert";
-import * as semver from "semver";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
-import {
-	LocalCodeLoader,
-	TestFluidObjectFactory,
-	ITestFluidObject,
-	TestFluidObject,
-	createDocumentId,
-	LoaderContainerTracker,
-	ITestObjectProvider,
-} from "@fluidframework/test-utils";
-import type { SharedDirectory, ISharedMap } from "@fluidframework/map";
+
+import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
+import { describeCompat } from "@fluid-private/test-version-utils";
+import type { SharedCell } from "@fluidframework/cell/internal";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
+import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import type { SharedCounter } from "@fluidframework/counter/internal";
+import type { ISharedMap } from "@fluidframework/map";
+import type { SharedDirectory } from "@fluidframework/map/internal";
+import type { SharedMatrix } from "@fluidframework/matrix/internal";
+import type { ConsensusOrderedCollection } from "@fluidframework/ordered-collection/internal";
 import {
 	IDocumentAttributes,
 	ISnapshotTree,
 	ISummaryTree,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import type { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import type { SequenceInterval, SharedString } from "@fluidframework/sequence";
-import type { SharedCell } from "@fluidframework/cell";
-import type { SharedMatrix } from "@fluidframework/matrix";
-import type { ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
-import type { SharedCounter } from "@fluidframework/counter";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
+import type { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
+import type { SequenceInterval, SharedString } from "@fluidframework/sequence/internal";
+import {
+	ITestFluidObject,
+	ITestObjectProvider,
+	LoaderContainerTracker,
+	LocalCodeLoader,
+	TestFluidObject,
+	TestFluidObjectFactory,
+	createDocumentId,
+} from "@fluidframework/test-utils/internal";
+import * as semver from "semver";
+
 // eslint-disable-next-line import/no-internal-modules
 import type { SnapshotWithBlobs } from "../../../../loader/container-loader/lib/serializedStateManager.js";
 

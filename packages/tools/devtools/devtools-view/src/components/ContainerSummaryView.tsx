@@ -25,8 +25,6 @@ import {
 	PlugConnected20Regular,
 	PlugDisconnected20Regular,
 } from "@fluentui/react-icons";
-import React from "react";
-
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import {
@@ -41,11 +39,13 @@ import {
 	type ISourcedDevtoolsMessage,
 	type InboundHandlers,
 	handleIncomingMessage,
-} from "@fluidframework/devtools-core";
+} from "@fluidframework/devtools-core/internal";
+import React from "react";
 
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
 import { connectionStateToString } from "../Utilities.js";
+
 import {
 	clientIdTooltipText,
 	containerStatusTooltipText,

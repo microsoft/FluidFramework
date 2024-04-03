@@ -4,7 +4,8 @@
  */
 
 import { IsoBuffer } from '@fluid-internal/client-utils';
-import { assert } from '@fluidframework/core-utils';
+import { assert } from '@fluidframework/core-utils/internal';
+
 import { ChangeCompressor, compressEdit, decompressEdit } from './ChangeCompression.js';
 import { assertWithMessage, fail } from './Common.js';
 import { EditLog } from './EditLog.js';

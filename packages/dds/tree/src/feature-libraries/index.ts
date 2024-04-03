@@ -44,7 +44,6 @@ export {
 export {
 	typeNameSymbol,
 	valueSymbol,
-	isTreeValue,
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
@@ -63,7 +62,7 @@ export {
 	getAllowedTypes,
 } from "./contextuallyTyped.js";
 
-export { allowsValue, assertAllowedValue, isFluidHandle } from "./valueUtilities.js";
+export { allowsValue, assertAllowedValue, isFluidHandle, isTreeValue } from "./valueUtilities.js";
 
 export { FieldGenerator, TreeDataContext } from "./fieldGenerator.js";
 
@@ -105,6 +104,7 @@ export {
 	FieldChangeset,
 	ToDelta,
 	ModularChangeset,
+	makeModularChangeCodecFamily,
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
@@ -120,13 +120,12 @@ export {
 	NodeExistenceState,
 	FieldKindWithEditor,
 	ModularChangeFamily,
-	makeV0Codec,
 	RelevantRemovedRootsFromChild,
 	EncodedModularChangeset,
 	updateRefreshers,
+	FieldKindConfiguration,
+	FieldKindConfigurationEntry,
 } from "./modular-schema/index.js";
-
-export { Multiplicity } from "./multiplicity.js";
 
 export {
 	FlexTreeNodeSchema,
@@ -192,7 +191,6 @@ export {
 	makeTreeChunker,
 	makeFieldBatchCodec,
 	FieldBatchEncodingContext,
-	SchemaAndPolicy,
 } from "./chunked-forest/index.js";
 
 export {
@@ -223,6 +221,7 @@ export {
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
 	fieldKinds,
+	fieldKindConfigurations,
 	intoDelta,
 	relevantRemovedRoots,
 } from "./default-schema/index.js";
@@ -254,7 +253,6 @@ export {
 	TreeEvent,
 	FlexTreeNodeEvents,
 	FlexTreeUnknownUnboxed,
-	onNextChange,
 	isFlexTreeNode,
 
 	// Internal
@@ -277,6 +275,7 @@ export {
 	reservedObjectNodeFieldPropertyNamePrefixes,
 	FlexTreeObjectNodeFieldsInner,
 	assertFlexTreeEntityNotFreed,
+	flexTreeSlot,
 } from "./flex-tree/index.js";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema.js";
@@ -300,6 +299,6 @@ export {
 
 export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer.js";
 
-export { SchemaChange, makeSchemaChangeCodec, EncodedSchemaChange } from "./schema-edits/index.js";
+export { SchemaChange, makeSchemaChangeCodecs, EncodedSchemaChange } from "./schema-edits/index.js";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";
