@@ -21,7 +21,7 @@ import { v4 as uuid } from "uuid";
 
 const codeDetails: IFluidCodeDetails = { package: "test" };
 
-describeCompat("Container - runtime benchmarks", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Container - runtime benchmarks", "2.0.0-rc.3.0.0", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let loader: Loader;
 	let fileName: string;

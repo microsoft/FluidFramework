@@ -276,7 +276,7 @@ describeCompat("V1/V2 compat", "FullCompat", (getTestObjectProvider) => {
  *
  * NOTE: These tests speak of "Sweep" but simply use "tombstoneTimeoutMs" throughout, since sweepGracePeriod is set to 0.
  */
-describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) => {
+describeCompat("GC data store sweep tests", "2.0.0-rc.3.0.0", (getTestObjectProvider) => {
 	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		if (provider.driver.type !== "local") {

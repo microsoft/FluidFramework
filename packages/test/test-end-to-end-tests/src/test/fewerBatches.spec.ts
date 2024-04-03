@@ -21,7 +21,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
-describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("Fewer batches", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 
 	const mapId = "mapId";

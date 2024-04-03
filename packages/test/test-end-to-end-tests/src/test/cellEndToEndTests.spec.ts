@@ -304,7 +304,7 @@ describeCompat("SharedCell", "FullCompat", (getTestObjectProvider, apis) => {
 	});
 });
 
-describeCompat("SharedCell orderSequentially", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("SharedCell orderSequentially", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const { SharedCell } = apis.dds;
 
 	let provider: ITestObjectProvider;

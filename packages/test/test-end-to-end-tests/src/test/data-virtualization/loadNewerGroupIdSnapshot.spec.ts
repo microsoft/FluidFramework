@@ -46,7 +46,7 @@ const overrideResult = <T>(parent: any, fn: (...args: any[]) => Promise<T>, resu
 	parent[fn.name] = overrideFn;
 };
 
-describeCompat("Create data store with group id", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("Create data store with group id", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const { DataObjectFactory, DataObject } = apis.dataRuntime;
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 

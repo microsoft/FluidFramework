@@ -21,7 +21,7 @@ import {
 
 import { wrapObjectAndOverride } from "../mocking.js";
 
-describeCompat("Cache CreateNewSummary", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("Cache CreateNewSummary", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const {
 		dataRuntime: { DataObject, DataObjectFactory },
 		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },

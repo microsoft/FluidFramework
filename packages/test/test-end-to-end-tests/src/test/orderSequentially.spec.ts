@@ -28,7 +28,7 @@ const dirId = "sharedDirKey";
 const cellId = "cellKey";
 const mapId = "mapKey";
 
-describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("Multiple DDS orderSequentially", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const { SharedMap, SharedDirectory, SharedString, SharedCell } = apis.dds;
 	const { SequenceDeltaEvent } = apis.dataRuntime.packages.sequence;
 

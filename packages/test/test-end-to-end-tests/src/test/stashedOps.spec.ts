@@ -90,7 +90,7 @@ type SharedObjCallback = (
 
 // Introduced in 0.37
 // REVIEW: enable compat testing
-describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("stashed ops", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const { SharedMap, SharedDirectory, SharedCounter, SharedString, SharedCell } = apis.dds;
 	const { getTextAndMarkers } = apis.dataRuntime.packages.sequence;
 
@@ -1810,7 +1810,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 });
 
-describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("stashed ops", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const { SharedMap, SharedDirectory, SharedCounter, SharedString, SharedCell } = apis.dds;
 	const registry: ChannelFactoryRegistry = [
 		[mapId, SharedMap.getFactory()],

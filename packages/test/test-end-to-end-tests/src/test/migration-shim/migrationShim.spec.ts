@@ -84,7 +84,7 @@ function getQuantity(tree: LegacySharedTree): number {
 
 const testValue = 5;
 
-describeCompat("MigrationShim", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("MigrationShim", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 

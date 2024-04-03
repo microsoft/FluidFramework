@@ -25,7 +25,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 // These tests intend to ensure that summarization succeeds in edge case scenarios that rarely happen
-describeCompat("Summarization edge cases", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("Summarization edge cases", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {

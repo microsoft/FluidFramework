@@ -20,8 +20,7 @@ import {
  */
 describeCompat(
 	"All clients generate OpRoundtripTime telemetry",
-	// TODO: this should be "2.0.0-rc.2.0.0" (I think) once the bugs with describeCompat are fixed and versions are used correctly
-	"NoCompat",
+	"2.0.0-rc.2.0.0",
 	(getTestObjectProvider, apis) => {
 		const { SharedString } = apis.dds;
 

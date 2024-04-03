@@ -9,7 +9,7 @@ import { BuildNode, Change, SharedTree, StablePlace, TraitLabel } from "@fluid-e
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
-describeCompat("Can attach Legacy Shared Tree", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("Can attach Legacy Shared Tree", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 

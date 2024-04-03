@@ -104,7 +104,7 @@ function readBlobContent(content: ISummaryBlob["content"]): unknown {
 	return JSON.parse(json);
 }
 
-describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("Summaries", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const { SharedString } = apis.dds;
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
@@ -507,7 +507,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 });
 
-describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Summaries", "2.0.0-rc.3.0.0", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
@@ -566,7 +566,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
 	it("TelemetryContext is populated with data even if summarize fails", getTestFn(true));
 });
 
-describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvider) => {
+describeCompat("SingleCommit Summaries Tests", "2.0.0-rc.3.0.0", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let configForSingleCommitSummary: ITestContainerConfig;
 	beforeEach("setup", () => {

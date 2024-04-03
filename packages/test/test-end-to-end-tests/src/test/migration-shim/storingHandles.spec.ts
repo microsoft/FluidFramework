@@ -73,7 +73,7 @@ function getNewTreeView(tree: ITree): TreeView<HandleType> {
 	);
 }
 
-describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("Storing handles", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 

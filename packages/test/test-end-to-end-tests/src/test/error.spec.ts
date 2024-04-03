@@ -22,7 +22,7 @@ import { v4 as uuid } from "uuid";
 import { wrapObjectAndOverride } from "../mocking.js";
 
 // REVIEW: enable compat testing?
-describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Errors Types", "2.0.0-rc.3.0.0", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let fileName: string;
 	let containerUrl: IResolvedUrl;

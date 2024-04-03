@@ -43,7 +43,7 @@ export const TestDataObjectType1 = "@fluid-example/test-dataStore1";
  */
 describeCompat(
 	"Summarizer fetches expected number of times",
-	"NoCompat",
+	"2.0.0-rc.3.0.0",
 	(getTestObjectProvider, apis) => {
 		const { SharedMatrix } = apis.dds;
 		const { DataObject, DataObjectFactory } = apis.dataRuntime;

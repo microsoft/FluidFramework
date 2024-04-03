@@ -35,7 +35,7 @@ interface IDataStores extends IFluidDataStoreChannel {
 	createDataStoreContext(pkg: string[], props?: any, loadingGroupId?: string): any;
 }
 
-describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("Nested DataStores", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 	const { SharedMap } = apis.dds;
 

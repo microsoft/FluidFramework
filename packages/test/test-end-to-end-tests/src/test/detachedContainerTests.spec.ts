@@ -848,7 +848,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 });
 
 // Review: Run with Full Compat?
-describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("Detached Container", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const {
 		SharedString,
 		SharedMap,

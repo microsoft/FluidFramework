@@ -461,7 +461,7 @@ class TestIncrementalSummaryTreeDDS extends SharedObject {
  */
 describeCompat(
 	"Incremental summaries can be generated for DDS content",
-	"NoCompat",
+	"2.0.0-rc.3.0.0",
 	(getTestObjectProvider, apis) => {
 		const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 

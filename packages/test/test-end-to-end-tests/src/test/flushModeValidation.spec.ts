@@ -23,7 +23,7 @@ import {
  * This test validates that changing the FlushMode does not hit any validation errors in PendingStateManager.
  * It also validates the scenario in this bug - https://github.com/microsoft/FluidFramework/issues/9398.
  */
-describeCompat("Flush mode validation", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("Flush mode validation", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 	const map1Id = "map1Key";
 	const registry: ChannelFactoryRegistry = [[map1Id, SharedMap.getFactory()]];

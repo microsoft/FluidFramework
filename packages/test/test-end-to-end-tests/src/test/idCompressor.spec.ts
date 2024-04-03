@@ -39,7 +39,7 @@ function getIdCompressor(dds: IChannel): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;
 }
 
-describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("Runtime IdCompressor", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const {
 		dataRuntime: { DataObject, DataObjectFactory },
 		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
@@ -617,7 +617,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 
 // No-compat: 2.0.0-internal.8.x and earlier versions of container-runtime don't finalize ids prior to attaching.
 // Even older versions of the runtime also don't have an id compression feature enabled.
-describeCompat("IdCompressor in detached container", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("IdCompressor in detached container", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
 	let request: IRequest;
 
@@ -672,7 +672,7 @@ describeCompat("IdCompressor in detached container", "NoCompat", (getTestObjectP
 	});
 });
 
-describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => {
+describeCompat("IdCompressor Summaries", "2.0.0-rc.3.0.0", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const disableConfig: ITestContainerConfig = {
 		runtimeOptions: { enableRuntimeIdCompressor: undefined },

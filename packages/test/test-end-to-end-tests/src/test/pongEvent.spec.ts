@@ -21,7 +21,7 @@ import {
 const codeDetails: IFluidCodeDetails = { package: "test" };
 
 describe("Pong", () => {
-	describeCompat("Pong", "NoCompat", (getTestObjectProvider) => {
+	describeCompat("Pong", "2.0.0-rc.3.0.0", (getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
 		const loaderContainerTracker = new LoaderContainerTracker();
 

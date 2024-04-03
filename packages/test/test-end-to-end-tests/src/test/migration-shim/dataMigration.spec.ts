@@ -51,7 +51,7 @@ function getNewTreeView(tree: ITree): TreeView<InventorySchema> {
 	);
 }
 
-describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("HotSwap", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 

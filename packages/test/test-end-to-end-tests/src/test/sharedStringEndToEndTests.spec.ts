@@ -124,7 +124,7 @@ describeCompat("SharedString", "FullCompat", (getTestObjectProvider, apis) => {
 	});
 });
 
-describeCompat("SharedString grouped batching", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("SharedString grouped batching", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const { SharedString } = apis.dds;
 
 	const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];

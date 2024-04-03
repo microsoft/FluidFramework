@@ -71,7 +71,7 @@ function assertAttributionMatches(
 	}
 }
 
-describeCompat("Attributor for SharedCell", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("Attributor for SharedCell", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const { SharedCell } = apis.dds;
 
 	const cellId = "sharedCellKey";

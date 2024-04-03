@@ -381,7 +381,7 @@ async function validateBlobsReferenceState(
 /**
  * Validates that when running in GC test mode, unreferenced content is deleted from the summary.
  */
-describeCompat("GC delete attachment blobs in test mode", "NoCompat", (getTestObjectProvider) => {
+describeCompat("GC delete attachment blobs in test mode", "2.0.0-rc.3.0.0", (getTestObjectProvider) => {
 	// If deleteContent is true, GC is run in test mode where content that is not referenced is
 	// deleted after each GC run.
 	const tests = (deleteContent: boolean = false) => {

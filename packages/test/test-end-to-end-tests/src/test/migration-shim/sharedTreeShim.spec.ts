@@ -38,7 +38,7 @@ function getNewTreeView(tree: ITree): TreeView<RootType> {
 
 const testValue = 5;
 
-describeCompat("SharedTreeShim", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("SharedTreeShim", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 	// Allow us to control summaries

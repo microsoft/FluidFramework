@@ -270,7 +270,7 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
 
 // this functionality was added in 0.47 and can be added to the compat-enabled
 // tests above when the LTS version is bumped > 0.47
-describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("blobs", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const { SharedString } = apis.dds;
 	const testContainerConfig = makeTestContainerConfig([
 		["sharedString", SharedString.getFactory()],

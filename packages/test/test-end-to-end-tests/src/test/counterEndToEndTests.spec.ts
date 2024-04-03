@@ -166,7 +166,7 @@ describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider, apis) => {
 	});
 });
 
-describeCompat("SharedCounter orderSequentially", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("SharedCounter orderSequentially", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const { SharedCounter } = apis.dds;
 
 	const registry: ChannelFactoryRegistry = [[counterId, SharedCounter.getFactory()]];

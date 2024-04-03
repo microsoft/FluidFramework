@@ -832,7 +832,7 @@ describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider, apis) =>
 	});
 });
 
-describeCompat("SharedDirectory orderSequentially", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("SharedDirectory orderSequentially", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const { SharedDirectory } = apis.dds;
 	const directoryId = "directoryKey";
 	const registry: ChannelFactoryRegistry = [[directoryId, SharedDirectory.getFactory()]];
@@ -1270,7 +1270,7 @@ describeCompat("SharedDirectory orderSequentially", "NoCompat", (getTestObjectPr
 
 describeCompat(
 	"SharedDirectory ordering maintenance",
-	"NoCompat",
+	"2.0.0-rc.3.0.0",
 	(getTestObjectProvider, apis) => {
 		const { SharedDirectory } = apis.dds;
 		const directoryId = "directoryKey";

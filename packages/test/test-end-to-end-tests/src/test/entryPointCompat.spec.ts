@@ -52,7 +52,7 @@ describe("entryPoint compat", () => {
 		return provider.createContainer(runtimeFactory);
 	}
 
-	describeCompat("no compat", "NoCompat", (getTestObjectProvider) => {
+	describeCompat("no compat", "2.0.0-rc.3.0.0", (getTestObjectProvider) => {
 		beforeEach("getTestObjectProvider", async () => {
 			provider = getTestObjectProvider();
 		});

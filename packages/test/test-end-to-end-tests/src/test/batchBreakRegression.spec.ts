@@ -111,7 +111,7 @@ async function runAndValidateBatch(
 	}
 }
 
-describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Batching failures", "2.0.0-rc.3.0.0", (getTestObjectProvider) => {
 	it("working proxy", async function () {
 		const provider = getTestObjectProvider({ resetAfterEach: true });
 

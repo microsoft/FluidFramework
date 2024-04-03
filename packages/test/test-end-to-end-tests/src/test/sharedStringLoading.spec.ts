@@ -25,7 +25,7 @@ import { wrapObjectAndOverride } from "../mocking.js";
 import { pkgVersion } from "../packageVersion.js";
 
 // REVIEW: enable compat testing?
-describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("SharedString", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const { SharedString } = apis.dds;
 
 	itExpects(

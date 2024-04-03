@@ -24,7 +24,7 @@ import {
 
 describeCompat(
 	"Concurrent op processing via DDS event handlers",
-	"NoCompat",
+	"2.0.0-rc.3.0.0",
 	(getTestObjectProvider, apis) => {
 		const { SharedMap, SharedDirectory, SharedString } = apis.dds;
 		const mapId = "mapKey";

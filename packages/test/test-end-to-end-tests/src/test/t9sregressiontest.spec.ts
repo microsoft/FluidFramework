@@ -18,7 +18,7 @@ import {
 const mapId = "map";
 
 // This is a regression test for https://github.com/microsoft/FluidFramework/issues/9163
-describeCompat("t9s issue regression test", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("t9s issue regression test", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const registry: ChannelFactoryRegistry = [[mapId, apis.dds.SharedMap.getFactory()]];
 	const testContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,

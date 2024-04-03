@@ -25,7 +25,7 @@ import {
 
 describeCompat(
 	"Op reentry and rebasing during pending batches",
-	"NoCompat",
+	"2.0.0-rc.3.0.0",
 	(getTestObjectProvider, apis) => {
 		const {
 			SharedMap,

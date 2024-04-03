@@ -29,7 +29,7 @@ import {
 const counterKey = "count";
 
 // REVIEW: enable compat testing?
-describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis) => {
+describeCompat("LoadModes", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis: CompatApis) => {
 	const { SharedCounter } = apis.dds;
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;

@@ -19,7 +19,7 @@ import {
 
 describeCompat(
 	"Summarizer closes instead of refreshing",
-	"NoCompat",
+	"2.0.0-rc.3.0.0",
 	(getTestObjectProvider, apis) => {
 		const { SharedCounter } = apis.dds;
 

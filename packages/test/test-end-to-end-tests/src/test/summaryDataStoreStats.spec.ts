@@ -17,7 +17,7 @@ import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { ITestObjectProvider, timeoutAwait } from "@fluidframework/test-utils/internal";
 
-describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("Generate Summary Stats", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 

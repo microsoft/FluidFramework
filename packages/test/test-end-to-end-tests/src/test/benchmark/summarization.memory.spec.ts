@@ -35,7 +35,7 @@ function readBlobContent(content: ISummaryBlob["content"]): unknown {
 	return JSON.parse(json);
 }
 
-describeCompat("Summarization - runtime benchmarks", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Summarization - runtime benchmarks", "2.0.0-rc.3.0.0", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
 	before(async () => {

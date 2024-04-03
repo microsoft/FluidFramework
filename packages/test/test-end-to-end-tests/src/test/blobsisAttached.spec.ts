@@ -29,7 +29,7 @@ import { MockDetachedBlobStorage, driverSupportsBlobs } from "./mockDetachedBlob
 const mapId = "map";
 const directoryId = "directoryKey";
 
-describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("blob handle isAttached", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const { SharedMap, SharedDirectory } = apis.dds;
 	const registry: ChannelFactoryRegistry = [
 		[mapId, SharedMap.getFactory()],

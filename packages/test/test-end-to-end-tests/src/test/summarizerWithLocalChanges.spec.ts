@@ -50,7 +50,7 @@ async function waitForSummaryOp(container: IContainer): Promise<boolean> {
 	});
 }
 
-describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("Summarizer with local changes", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
 	const { mixinSummaryHandler } = apis.dataRuntime.packages.datastore;
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;

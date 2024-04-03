@@ -44,7 +44,7 @@ export const TestDataObjectType2 = "@fluid-example/test-dataStore2";
  */
 describeCompat(
 	"Summary where data store is loaded out of order",
-	"NoCompat",
+	"2.0.0-rc.3.0.0",
 	(getTestObjectProvider, apis) => {
 		const { SharedMap, SharedMatrix } = apis.dds;
 		const { DataObject, DataObjectFactory, FluidDataStoreRuntime } = apis.dataRuntime;

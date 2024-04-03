@@ -37,7 +37,7 @@ const testKey = "test key";
 const testValue = "test value";
 const mockLogger = new MockLogger();
 
-describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("Snapshot refresh at loading", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({

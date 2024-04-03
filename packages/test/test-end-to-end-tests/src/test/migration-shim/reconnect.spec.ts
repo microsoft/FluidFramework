@@ -70,7 +70,7 @@ function getNewTreeView(tree: ITree) {
 	return tree.schematize(new TreeConfiguration(QuantityType, () => ({ quantity: 0 })));
 }
 
-describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("Stamped v2 ops", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 

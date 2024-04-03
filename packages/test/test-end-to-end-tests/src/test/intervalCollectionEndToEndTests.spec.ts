@@ -57,7 +57,7 @@ const assertIntervals = (
 	assert.deepEqual(actualPos, expected, "intervals are not as expected");
 };
 
-describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("IntervalCollection with stashed ops", "2.0.0-rc.3.0.0", (getTestObjectProvider, apis) => {
 	const { SharedString } = apis.dds;
 
 	const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
