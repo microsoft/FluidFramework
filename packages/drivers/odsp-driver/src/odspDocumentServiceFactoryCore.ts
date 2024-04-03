@@ -4,16 +4,16 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { PromiseCache } from "@fluidframework/core-utils";
+import { PromiseCache } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	getDocAttributesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import {
 	HostStoragePolicy,
 	IFileEntry,
@@ -27,9 +27,9 @@ import {
 	SharingLinkScope,
 	TokenFetchOptions,
 	TokenFetcher,
-} from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/odsp-driver-definitions/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { ICacheAndTracker, createOdspCacheAndTracker } from "./epochTracker.js";

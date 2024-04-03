@@ -5,21 +5,21 @@
 
 import { strict as assert } from "assert";
 
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import {
 	ICodeDetailsLoader,
 	IContainer,
 	IFluidCodeDetails,
-} from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
+} from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
 import { SharedMap } from "@fluidframework/map";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
 	TestFluidObjectFactory,
 	timeoutPromise,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 describe("Audience correctness", () => {
 	const mapId = "mapKey";

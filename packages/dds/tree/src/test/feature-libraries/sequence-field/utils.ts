@@ -5,7 +5,7 @@
 
 import { strict } from "assert";
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
 	ChangesetLocalId,

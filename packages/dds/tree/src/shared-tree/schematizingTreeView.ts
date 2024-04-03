@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { UsageError } from "@fluidframework/telemetry-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { AllowedUpdateType, Compatibility, FieldKey, anchorSlot } from "../core/index.js";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";

@@ -5,11 +5,12 @@
 
 import * as fs from "fs";
 
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { CSVFileLogger } from "./csvFileLogger";
-import { IFileLogger, ITelemetryOptions, OutputFormat } from "./fileLogger";
-import { JSONFileLogger } from "./jsonFileLogger";
+import { CSVFileLogger } from "./csvFileLogger.js";
+import { IFileLogger, ITelemetryOptions, OutputFormat } from "./fileLogger.js";
+import { JSONFileLogger } from "./jsonFileLogger.js";
 
 /**
  * Create an {@link @fluidframework/telemetry-utils#ITelemetryLoggerExt} wrapped around provided {@link IFileLogger}.
