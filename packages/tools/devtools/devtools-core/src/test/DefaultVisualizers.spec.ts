@@ -453,7 +453,7 @@ describe("DefaultVisualizers unit tests", () => {
 													value: "true",
 													nodeKind: "ValueNode",
 													tooltipContents:
-														"com.fluidframework.leaf.boolean | com.fluidframework.leaf.string | com.fluidframework.leaf.number",
+														"com.fluidframework.leaf.boolean",
 												},
 											},
 											nodeKind: "TreeNode",
@@ -478,7 +478,7 @@ describe("DefaultVisualizers unit tests", () => {
 													value: "false",
 													nodeKind: "ValueNode",
 													tooltipContents:
-														"com.fluidframework.leaf.boolean | com.fluidframework.leaf.string | com.fluidframework.leaf.number",
+														"com.fluidframework.leaf.boolean",
 												},
 											},
 											nodeKind: "TreeNode",
@@ -492,7 +492,7 @@ describe("DefaultVisualizers unit tests", () => {
 								},
 							},
 							nodeKind: "TreeNode",
-							tooltipContents: "{ shared-tree-test.foo-item }",
+							tooltipContents: "shared-tree-test.foo-item",
 						},
 					},
 					nodeKind: "TreeNode",
@@ -581,8 +581,7 @@ describe("DefaultVisualizers unit tests", () => {
 										appleCider: {
 											value: "true",
 											nodeKind: "ValueNode",
-											tooltipContents:
-												"com.fluidframework.leaf.boolean | com.fluidframework.leaf.string | com.fluidframework.leaf.handle",
+											tooltipContents: "com.fluidframework.leaf.boolean",
 										},
 									},
 									nodeKind: "TreeNode",
@@ -606,26 +605,24 @@ describe("DefaultVisualizers unit tests", () => {
 										},
 									},
 									nodeKind: "TreeNode",
-									tooltipContents: "{ shared-tree-test.dalgona-object }",
+									tooltipContents: "shared-tree-test.dalgona-object",
 								},
 								espresso: {
 									children: {
 										"0": {
 											value: "256",
 											nodeKind: "ValueNode",
-											tooltipContents:
-												"com.fluidframework.leaf.number | com.fluidframework.leaf.string",
+											tooltipContents: "com.fluidframework.leaf.number",
 										},
 										"1": {
 											value: '"FiveHundredTwelve"',
 											nodeKind: "ValueNode",
-											tooltipContents:
-												"com.fluidframework.leaf.number | com.fluidframework.leaf.string",
+											tooltipContents: "com.fluidframework.leaf.string",
 										},
 									},
 									nodeKind: "TreeNode",
 									tooltipContents:
-										"{ com.fluidframework.leaf.number | com.fluidframework.leaf.string }",
+										"com.fluidframework.leaf.number | com.fluidframework.leaf.string",
 								},
 							},
 							nodeKind: "TreeNode",
@@ -680,8 +677,7 @@ describe("DefaultVisualizers unit tests", () => {
 						foo: {
 							value: "128",
 							nodeKind: "ValueNode",
-							tooltipContents:
-								"com.fluidframework.leaf.number | com.fluidframework.leaf.string | com.fluidframework.leaf.boolean",
+							tooltipContents: "com.fluidframework.leaf.number",
 						},
 					},
 					nodeKind: "TreeNode",
@@ -818,7 +814,7 @@ describe("DefaultVisualizers unit tests", () => {
 															value: "16",
 															nodeKind: "ValueNode",
 															tooltipContents:
-																"com.fluidframework.leaf.number | com.fluidframework.leaf.string",
+																"com.fluidframework.leaf.number",
 														},
 														broccoli: {
 															children: {
@@ -838,7 +834,7 @@ describe("DefaultVisualizers unit tests", () => {
 															},
 															nodeKind: "TreeNode",
 															tooltipContents:
-																"{ shared-tree-test.broccoli-object-schema }",
+																"shared-tree-test.broccoli-object-schema",
 														},
 													},
 													nodeKind: "TreeNode",
@@ -847,8 +843,7 @@ describe("DefaultVisualizers unit tests", () => {
 												},
 											},
 											nodeKind: "TreeNode",
-											tooltipContents:
-												"{ shared-tree-test.apple-object-schema }",
+											tooltipContents: "shared-tree-test.apple-object-schema",
 										},
 										banana: {
 											children: {
@@ -856,7 +851,7 @@ describe("DefaultVisualizers unit tests", () => {
 													value: "true",
 													nodeKind: "ValueNode",
 													tooltipContents:
-														"com.fluidframework.leaf.boolean | com.fluidframework.leaf.string | com.fluidframework.leaf.number",
+														"com.fluidframework.leaf.boolean",
 												},
 											},
 											nodeKind: "TreeNode",
@@ -883,7 +878,7 @@ describe("DefaultVisualizers unit tests", () => {
 															value: '"Avacado Advocate."',
 															nodeKind: "ValueNode",
 															tooltipContents:
-																"com.fluidframework.leaf.number | com.fluidframework.leaf.string",
+																"com.fluidframework.leaf.string",
 														},
 														broccoli: {
 															children: {
@@ -903,7 +898,7 @@ describe("DefaultVisualizers unit tests", () => {
 															},
 															nodeKind: "TreeNode",
 															tooltipContents:
-																"{ shared-tree-test.broccoli-object-schema }",
+																"shared-tree-test.broccoli-object-schema",
 														},
 													},
 													nodeKind: "TreeNode",
@@ -912,8 +907,7 @@ describe("DefaultVisualizers unit tests", () => {
 												},
 											},
 											nodeKind: "TreeNode",
-											tooltipContents:
-												"{ shared-tree-test.apple-object-schema }",
+											tooltipContents: "shared-tree-test.apple-object-schema",
 										},
 										banana: {
 											children: {
@@ -921,7 +915,7 @@ describe("DefaultVisualizers unit tests", () => {
 													value: "false",
 													nodeKind: "ValueNode",
 													tooltipContents:
-														"com.fluidframework.leaf.boolean | com.fluidframework.leaf.string | com.fluidframework.leaf.number",
+														"com.fluidframework.leaf.boolean",
 												},
 											},
 											nodeKind: "TreeNode",
@@ -935,7 +929,7 @@ describe("DefaultVisualizers unit tests", () => {
 								},
 							},
 							nodeKind: "TreeNode",
-							tooltipContents: "{ shared-tree-test.foo-item }",
+							tooltipContents: "shared-tree-test.foo-item",
 						},
 						bar: {
 							children: {
@@ -954,8 +948,7 @@ describe("DefaultVisualizers unit tests", () => {
 										appleCider: {
 											value: "true",
 											nodeKind: "ValueNode",
-											tooltipContents:
-												"com.fluidframework.leaf.boolean | com.fluidframework.leaf.string | com.fluidframework.leaf.handle",
+											tooltipContents: "com.fluidframework.leaf.boolean",
 										},
 									},
 									nodeKind: "TreeNode",
@@ -979,26 +972,24 @@ describe("DefaultVisualizers unit tests", () => {
 										},
 									},
 									nodeKind: "TreeNode",
-									tooltipContents: "{ shared-tree-test.dalgona-object }",
+									tooltipContents: "shared-tree-test.dalgona-object",
 								},
 								espresso: {
 									children: {
 										"0": {
 											value: "256",
 											nodeKind: "ValueNode",
-											tooltipContents:
-												"com.fluidframework.leaf.number | com.fluidframework.leaf.string",
+											tooltipContents: "com.fluidframework.leaf.number",
 										},
 										"1": {
 											value: '"FiveHundredTwelve"',
 											nodeKind: "ValueNode",
-											tooltipContents:
-												"com.fluidframework.leaf.number | com.fluidframework.leaf.string",
+											tooltipContents: "com.fluidframework.leaf.string",
 										},
 									},
 									nodeKind: "TreeNode",
 									tooltipContents:
-										"{ com.fluidframework.leaf.number | com.fluidframework.leaf.string }",
+										"com.fluidframework.leaf.number | com.fluidframework.leaf.string",
 								},
 							},
 							nodeKind: "TreeNode",
@@ -1008,28 +999,24 @@ describe("DefaultVisualizers unit tests", () => {
 						baz: {
 							value: "128",
 							nodeKind: "ValueNode",
-							tooltipContents:
-								"com.fluidframework.leaf.number | com.fluidframework.leaf.string | com.fluidframework.leaf.boolean",
+							tooltipContents: "com.fluidframework.leaf.number",
 						},
 						foobar: {
 							children: {
 								anthropology: {
 									value: "1",
 									nodeKind: "ValueNode",
-									tooltipContents:
-										"com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | shared-tree-test.map-object",
+									tooltipContents: "com.fluidframework.leaf.number",
 								},
 								biology: {
 									value: "2",
 									nodeKind: "ValueNode",
-									tooltipContents:
-										"com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | shared-tree-test.map-object",
+									tooltipContents: "com.fluidframework.leaf.number",
 								},
 								choreography: {
 									value: "3",
 									nodeKind: "ValueNode",
-									tooltipContents:
-										"com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | shared-tree-test.map-object",
+									tooltipContents: "com.fluidframework.leaf.number",
 								},
 							},
 							nodeKind: "TreeNode",
