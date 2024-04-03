@@ -26,9 +26,10 @@ describe("typeTestUtils", () => {
 
 		it("Should throw an error if dev dependency does not exist", () => {
 			const previousPackageName = `${packageObject.name}-does-not-exist`;
-			assert.throws(() => {
-				utils.ensureDevDependencyExists(packageObject, previousPackageName);
-			});
+			assert.throws(
+				() => utils.ensureDevDependencyExists(packageObject, previousPackageName),
+				/Error: Did not find devDependency in package.json/,
+			);
 		});
 	});
 
@@ -153,7 +154,10 @@ describe("typeTestUtils", () => {
 		it("should throw an error if both import and require resolutions are missing", () => {
 			packageObject.exports = { ".": {} };
 
-			assert.throws(() => utils.getTypePathFromExport(packageObject, previousBasePath));
+			assert.throws(
+				() => utils.getTypePathFromExport(packageObject, previousBasePath),
+				/Type definition file path could not be determined from the 'exports' field using the default export entry '.'/,
+			);
 		});
 
 		it("should return the type definition file path if it exists in exports", () => {
@@ -194,7 +198,9 @@ describe("typeTestUtils", () => {
 				}),
 				"utf-8",
 			);
-			assert.throws(() => utils.getTypePathFromExport(packageObject, previousBasePath));
+			assert.throws(() => utils.getTypePathFromExport(packageObject, previousBasePath),
+			/Type definition file path could not be determined from the 'exports' field using the default export entry '.'/,
+			);
 		});
 	});
 

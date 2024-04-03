@@ -32,7 +32,7 @@ export function ensureDevDependencyExists(
 ): void {
 	const dependencyVersion = packageObject?.devDependencies?.[dependencyName];
 	if (typeof dependencyVersion !== "string") {
-		throw new Error(`Did not find devDependency ${dependencyName} in package.json`);
+		throw new Error(`Did not find devDependency in package.json`);
 	}
 }
 
@@ -138,8 +138,7 @@ export function getTypeDefinitionFilePath(packageBasePath: string): string | und
 		return path.join(packageBasePath, packageJson.types);
 	} else {
 		throw new Error(
-			`Type definition file path could not be determined from '${previousPackageJsonPath},
-			)}'. No 'exports' nor 'type' fields found.`,
+			`Type definition file path could not be determined from ${previousPackageJsonPath}. No 'exports' nor 'type' fields found.`,
 		);
 	}
 }
