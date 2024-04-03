@@ -254,7 +254,7 @@ export interface FlexTreeField extends FlexTreeEntity<FlexFieldSchema> {
 	 * @param index - Zero-based index of the item to retrieve. Negative values are interpreted from the end of the sequence.
 	 *
 	 * @returns The element in the sequence matching the given index. Always returns undefined if index \< -sequence.length
-	 * or index \>= array.length.
+	 * or index \>= sequence.length.
 	 *
 	 * @remarks
 	 * Semantics match {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at | Array.at}.
