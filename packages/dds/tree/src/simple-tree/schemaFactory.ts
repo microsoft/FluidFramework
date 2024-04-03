@@ -32,6 +32,7 @@ import {
 	createArrayNodeProxy,
 	createMapProxy,
 	createObjectProxy,
+	getFlexKey,
 	isTreeNode,
 	mapStaticDispatchMap,
 } from "./proxies.js";
@@ -364,8 +365,7 @@ export class SchemaFactory<
 			}
 			viewKeys.add(viewKey);
 
-			const storedKey =
-				schema instanceof FieldSchema ? schema.props?.key ?? viewKey : viewKey;
+			const storedKey = getFlexKey(viewKey, schema);
 			if (storedKeys.has(storedKey)) {
 				throw new UsageError(
 					`Duplicate stored key "${storedKey}" in schema "${schemaName}". This could be due to an implicit collision with another view key`,
