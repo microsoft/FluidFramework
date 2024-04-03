@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
-import { IFluidFileConverter } from "../../codeLoaderBundle";
+import { IFluidFileConverter } from "../../codeLoaderBundle.js";
 
 // If the test collateral includes code proposals, the code loader must implement IFluidCodeDetailsComparer, or else
 // the container will immediately be closed.  This implementation is a naive approach that claims all code details are

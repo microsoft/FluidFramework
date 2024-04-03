@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IArrayish } from "@fluid-example/bubblebench-common";
 import {
 	Change,
 	ChangeNode,
@@ -80,7 +79,7 @@ export const TreeObjectProxy = <T extends Object>(
 		// },
 	});
 
-export class TreeArrayProxy<T> implements IArrayish<Serializable<T>> {
+export class TreeArrayProxy<T> {
 	constructor(
 		private readonly tree: SharedTree,
 		private readonly nodeId: NodeId,

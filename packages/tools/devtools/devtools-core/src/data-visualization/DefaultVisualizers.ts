@@ -8,7 +8,7 @@
  * implementations for our DDSs.
  */
 
-import { SharedCell } from "@fluidframework/cell";
+import { SharedCell } from "@fluidframework/cell/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import { type ISharedMap, SharedMap } from "@fluidframework/map";
 import { type IDirectory, SharedDirectory } from "@fluidframework/map/internal";

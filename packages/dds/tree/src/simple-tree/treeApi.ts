@@ -5,11 +5,10 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { rootFieldKey } from "../core/index.js";
+import { Multiplicity, rootFieldKey } from "../core/index.js";
 import {
 	FlexTreeNodeEvents,
 	LeafNodeSchema,
-	Multiplicity,
 	TreeStatus,
 	isTreeValue,
 	valueSchemaAllows,

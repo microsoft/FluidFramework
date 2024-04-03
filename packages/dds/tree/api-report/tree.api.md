@@ -480,6 +480,14 @@ export enum FieldKind {
 }
 
 // @internal
+export interface FieldKindData {
+    // (undocumented)
+    readonly identifier: FieldKindIdentifier;
+    // (undocumented)
+    readonly multiplicity: Multiplicity;
+}
+
+// @internal
 export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 
 // @internal
@@ -490,12 +498,6 @@ export const FieldKinds: {
     readonly nodeKey: NodeKeyFieldKind;
     readonly forbidden: Forbidden;
 };
-
-// @internal
-export interface FieldKindSpecifier<T = FieldKindIdentifier> {
-    // (undocumented)
-    identifier: T;
-}
 
 // @internal
 export interface FieldLocation {
@@ -551,7 +553,7 @@ export type FlattenKeys<T> = [{
 export type FlexAllowedTypes = readonly [Any] | readonly LazyItem<FlexTreeNodeSchema>[];
 
 // @internal @sealed
-export abstract class FlexFieldKind<TName extends string = string, TMultiplicity extends Multiplicity = Multiplicity> implements FieldKindSpecifier {
+export abstract class FlexFieldKind<TName extends string = string, TMultiplicity extends Multiplicity = Multiplicity> implements FieldKindData {
     protected constructor(identifier: TName & FieldKindIdentifier, multiplicity: TMultiplicity);
     // (undocumented)
     readonly identifier: TName & FieldKindIdentifier;
@@ -570,7 +572,7 @@ export class FlexFieldNodeSchema<Name extends string = string, Specification ext
 }
 
 // @internal @sealed
-export class FlexFieldSchema<out TKind extends FlexFieldKind = FlexFieldKind, const out TTypes extends Unenforced<FlexAllowedTypes> = FlexAllowedTypes> implements TreeFieldStoredSchema {
+export class FlexFieldSchema<out TKind extends FlexFieldKind = FlexFieldKind, const out TTypes extends Unenforced<FlexAllowedTypes> = FlexAllowedTypes> {
     // (undocumented)
     readonly allowedTypes: TTypes;
     get allowedTypeSet(): AllowedTypeSet;
@@ -581,6 +583,8 @@ export class FlexFieldSchema<out TKind extends FlexFieldKind = FlexFieldKind, co
     // (undocumented)
     readonly kind: TKind;
     get monomorphicChildType(): FlexTreeNodeSchema | undefined;
+    // (undocumented)
+    readonly stored: TreeFieldStoredSchema;
     // (undocumented)
     protected _typeCheck?: MakeNominal;
     get types(): TreeTypeSet;
@@ -1858,7 +1862,7 @@ export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<Implicit
 // @internal
 export interface TreeFieldStoredSchema {
     // (undocumented)
-    readonly kind: FieldKindSpecifier;
+    readonly kind: FieldKindIdentifier;
     readonly types?: TreeTypeSet;
 }
 

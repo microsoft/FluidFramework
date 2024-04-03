@@ -10,7 +10,7 @@ import { createOdspUrl } from '@fluidframework/odsp-driver/internal';
 import { HostStoragePolicy } from '@fluidframework/odsp-driver-definitions/internal';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
 import { ILocalDeltaConnectionServer } from '@fluidframework/server-local-server';
-import { InsecureTinyliciousUrlResolver } from '@fluidframework/tinylicious-driver';
+import { InsecureTinyliciousUrlResolver } from '@fluidframework/tinylicious-driver/internal';
 import { InsecureUrlResolver } from '@fluidframework/driver-utils/internal';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
