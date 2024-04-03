@@ -62,7 +62,7 @@
     "@fluidframework/local-driver": "^1.4.0",
     "@fluidframework/mocha-test-setup": "^1.4.0",
     "@fluidframework/sequence": "^1.4.0",
-    "@fluidframework/server-local-server": "^0.1036.5000",
+    "@fluidframework/server-local-server": "^0.1036.5002",
     "@fluidframework/test-drivers": "^1.4.0",
     "@fluidframework/test-runtime-utils": "^1.4.0",
     "@fluidframework/test-utils": "^1.4.0",
