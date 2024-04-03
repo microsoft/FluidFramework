@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { ITestDriver } from "@fluid-internal/test-driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import {
 	InsecureTinyliciousTokenProvider,
 	InsecureTinyliciousUrlResolver,
