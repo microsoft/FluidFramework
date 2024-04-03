@@ -72,17 +72,16 @@ export interface IPendingDetachedContainerState extends SnapshotWithBlobs {
 }
 
 interface SnapshotInfo extends SnapshotWithBlobs {
-	snapshotSequenceNumber: number;
+	snapshotSequenceNumber?: number;
+	snapshotFetchedTime?: number;
 }
 
 export class SerializedStateManager {
 	private readonly processedOps: ISequencedDocumentMessage[] = [];
-	private snapshot: SnapshotWithBlobs | undefined;
+	private snapshot: SnapshotInfo | undefined;
 	private readonly mc: MonitoringContext;
 	private latestSnapshot: SnapshotInfo | undefined;
 	private refreshSnapshot: Promise<void> | undefined;
-	private sessionExpiryTimerStarted: number | undefined;
-	private useNewSessionExpiryTime: boolean = false;
 
 	constructor(
 		private readonly pendingLocalState: IPendingContainerState | undefined,
@@ -141,7 +140,6 @@ export class SerializedStateManager {
 					supportGetSnapshotApi,
 				);
 				this.newSnapshotFetched?.();
-				this.sessionExpiryTimerStarted = Date.now();
 				this.updateSnapshotAndProcessedOpsMaybe();
 			})();
 
@@ -156,7 +154,8 @@ export class SerializedStateManager {
 		if (this.latestSnapshot === undefined) {
 			return;
 		}
-		const snapshotSequenceNumber = this.latestSnapshot?.snapshotSequenceNumber;
+		const snapshotSequenceNumber = this.latestSnapshot.snapshotSequenceNumber;
+		assert(snapshotSequenceNumber !== undefined, "snapshot sequence number is not defined");
 		if (this.processedOps.length === 0) {
 			// can't refresh latest snapshot until we have processed the ops up to it.
 			// Pending state would be behind the latest snapshot.
@@ -188,7 +187,6 @@ export class SerializedStateManager {
 			);
 			this.snapshot = this.latestSnapshot;
 			this.latestSnapshot = undefined;
-			this.useNewSessionExpiryTime = true;
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "SnapshotRefreshed",
 				snapshotSequenceNumber,
@@ -233,9 +231,7 @@ export class SerializedStateManager {
 				assert(this.snapshot !== undefined, 0x8e5 /* no base data */);
 				const pendingRuntimeState = await runtime.getPendingLocalState({
 					...props,
-					sessionExpiryTimerStarted: this.useNewSessionExpiryTime
-						? this.sessionExpiryTimerStarted
-						: undefined,
+					sessionExpiryTimerStarted: this.snapshot.snapshotFetchedTime,
 				});
 				const pendingState: IPendingContainerState = {
 					attached: true,
@@ -245,7 +241,11 @@ export class SerializedStateManager {
 					savedOps: this.processedOps,
 					url: resolvedUrl.url,
 					// no need to save this if there is no pending runtime state
-					clientId: pendingRuntimeState !== undefined ? clientId : undefined,
+					clientId:
+						(pendingRuntimeState as any).pending !== undefined ||
+						(pendingRuntimeState as any).pendingAttachmentBlobs !== undefined
+							? clientId
+							: undefined,
 				};
 
 				return JSON.stringify(pendingState);
@@ -280,13 +280,14 @@ export async function getLatestSnapshotInfo(
 				supportGetSnapshotApi,
 				undefined,
 			);
+			const snapshotFetchedTime = Date.now();
 			const snapshotBlobs = await getBlobContentsFromTree(baseSnapshot, storageAdapter);
 			const attributes: IDocumentAttributes = await getDocumentAttributes(
 				storageAdapter,
 				baseSnapshot,
 			);
 			const snapshotSequenceNumber = attributes.sequenceNumber;
-			return { baseSnapshot, snapshotBlobs, snapshotSequenceNumber };
+			return { baseSnapshot, snapshotBlobs, snapshotSequenceNumber, snapshotFetchedTime };
 		},
 	).catch(() => undefined);
 }

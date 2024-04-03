@@ -1996,6 +1996,72 @@ describe("Runtime", () => {
 				assert.strictEqual(typeof state, "object");
 				assert.strictEqual(state.pending?.pendingStates, pendingStates);
 			});
+
+			it("sessionExpiryTimerStarted. No pending state", async () => {
+				const logger = new MockLogger();
+
+				const containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext({}, logger) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
+						enableRuntimeIdCompressor: "on",
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				const state = (await containerRuntime.getPendingLocalState({
+					notifyImminentClosure: true,
+					sessionExpiryTimerStarted: 100,
+				})) as Partial<IPendingRuntimeState>;
+				assert.strictEqual(typeof state, "object");
+				assert.strictEqual(state.sessionExpiryTimerStarted, 100);
+			});
+
+			it("sessionExpiryTimerStarted. Some pending state", async () => {
+				const logger = new MockLogger();
+
+				const containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext({}, logger) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
+						enableRuntimeIdCompressor: "on",
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				const pendingStates = Array.from({ length: 5 }).map<IPendingMessage>((_, i) => ({
+					content: i.toString(),
+					type: "message",
+					referenceSequenceNumber: 0,
+					localOpMetadata: undefined,
+					opMetadata: undefined,
+				}));
+				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
+					get: (_t, p: keyof PendingStateManager, _r) => {
+						switch (p) {
+							case "getLocalState":
+								return (): IPendingLocalState => ({
+									pendingStates,
+								});
+							case "pendingMessagesCount":
+								return 5;
+							default:
+								assert.fail(`unexpected access to pendingStateManager.${p}`);
+						}
+					},
+				});
+
+				(containerRuntime as any).pendingStateManager = mockPendingStateManager;
+
+				const state = (await containerRuntime.getPendingLocalState({
+					notifyImminentClosure: true,
+					sessionExpiryTimerStarted: 100,
+				})) as Partial<IPendingRuntimeState>;
+				assert.strictEqual(state.sessionExpiryTimerStarted, 100);
+			});
 		});
 
 		describe("Load Partial Snapshot with datastores with GroupId", () => {

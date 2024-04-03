@@ -4302,8 +4302,12 @@ export class ContainerRuntime
 			pendingAttachmentBlobs?: IPendingBlobs,
 		): IPendingRuntimeState | undefined => {
 			const pending = this.pendingStateManager.getLocalState();
+			const sessionExpiryTimerStarted =
+				props?.sessionExpiryTimerStarted ?? this.garbageCollector.sessionExpiryTimerStarted;
 			if (pendingAttachmentBlobs === undefined && !this.hasPendingMessages()) {
-				return; // no pending state to save
+				return {
+					sessionExpiryTimerStarted,
+				};
 			}
 
 			const pendingIdCompressorState = this._idCompressor?.serialize(true);
@@ -4312,9 +4316,7 @@ export class ContainerRuntime
 				pending,
 				pendingIdCompressorState,
 				pendingAttachmentBlobs,
-				sessionExpiryTimerStarted:
-					props?.sessionExpiryTimerStarted ??
-					this.garbageCollector.sessionExpiryTimerStarted,
+				sessionExpiryTimerStarted,
 			};
 		};
 		const perfEvent = {
