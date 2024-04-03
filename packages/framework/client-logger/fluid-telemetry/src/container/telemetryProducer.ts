@@ -21,8 +21,6 @@ import {
  * This class produces {@link IContainerTelemetry} from raw container system events {@link @fluidframework/fluid-static#IFluidContainerEvents}.
  * The class contains different helper methods for simplifying and standardizing logic for adding additional information necessary
  * to produce different {@link IContainerTelemetry}.
- *
- * @internal
  */
 export class ContainerEventTelemetryProducer {
 	/**

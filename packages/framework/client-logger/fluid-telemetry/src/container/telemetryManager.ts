@@ -18,8 +18,6 @@ import {
  * This class manages container telemetry intended for customers to consume by wiring together the provided container system events, telemetry producers and consumers together.
  * It manages subcribing to the proper raw container system events, sending them to the {@link ContainerEventTelemetryProducer}
  * to be transformed into {@link IContainerTelemetry} and finally sending them to the provided {@link ITelemetryConsumer}
- *
- * @internal
  */
 export class ContainerTelemetryManager {
 	private static readonly HEARTBEAT_EMISSION_INTERNAL_MS = 60000;

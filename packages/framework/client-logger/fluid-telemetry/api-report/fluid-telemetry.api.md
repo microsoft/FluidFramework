@@ -63,6 +63,4 @@ export interface TelemetryConfig {
     containerId: string;
 }
 
-// (No @packageDocumentation comment for this package)
-
 ```
