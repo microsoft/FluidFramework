@@ -342,12 +342,15 @@ export class DocumentDeltaConnection
 	public submitSignal(content: string, targetClientId?: string): void {
 		this.checkNotDisposed();
 
-		const signal: ISentSignalMessage = {
-			content,
-			targetClientId,
-		};
-
-		this.emitMessages("submitSignal", [signal]);
+		if (this.details.supportedFeatures?.submit_signals_v2 === true) {
+			const signal: ISentSignalMessage = {
+				content,
+				targetClientId,
+			};
+			this.emitMessages("submitSignal", [signal]);
+		} else {
+			this.emitMessages("submitSignal", [[content]]);
+		}
 	}
 
 	/**
