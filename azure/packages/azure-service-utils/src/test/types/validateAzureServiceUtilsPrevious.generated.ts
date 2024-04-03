@@ -79,6 +79,7 @@ declare function get_old_FunctionDeclaration_generateToken():
 declare function use_current_FunctionDeclaration_generateToken(
     use: TypeOnly<typeof current.generateToken>): void;
 use_current_FunctionDeclaration_generateToken(
+    // @ts-expect-error compatibility expected to be broken
     get_old_FunctionDeclaration_generateToken());
 
 /*
@@ -91,4 +92,5 @@ declare function get_current_FunctionDeclaration_generateToken():
 declare function use_old_FunctionDeclaration_generateToken(
     use: TypeOnly<typeof old.generateToken>): void;
 use_old_FunctionDeclaration_generateToken(
+    // @ts-expect-error compatibility expected to be broken
     get_current_FunctionDeclaration_generateToken());
