@@ -178,7 +178,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					eventName: "readDataBlob",
 					blobId,
 					evicted,
-					headers: Object.keys(headers).length > 0 ? true : undefined,
 					waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
 				},
 				async (event) => {
@@ -491,7 +490,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				this.logger,
 				{
 					eventName: "getVersions",
-					headers: Object.keys(headers).length > 0 ? true : undefined,
 				},
 				async () =>
 					this.epochTracker.fetchAndParseAsJSON<IDocumentStorageGetVersionsResponse>(
