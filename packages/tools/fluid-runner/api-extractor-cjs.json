@@ -1,7 +1,7 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "@fluidframework/build-common/api-extractor-base.json",
-	"mainEntryPointFilePath": "<projectFolder>/dist/replayTool.d.ts",
+	"extends": "../../../common/build/build-common/api-extractor-base.cjs.primary.json",
+	// CJS is actually secondary; so, no report.
 	"apiReport": {
 		"enabled": false
 	}

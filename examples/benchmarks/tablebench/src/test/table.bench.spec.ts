@@ -5,7 +5,7 @@
 
 import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { IChannel } from "@fluidframework/datastore-definitions";
-import { SharedMatrix } from "@fluidframework/matrix";
+import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { type ITree, NodeFromSchema, SharedTree } from "@fluidframework/tree";
 
 import { Table, generateTable } from "../index.js";

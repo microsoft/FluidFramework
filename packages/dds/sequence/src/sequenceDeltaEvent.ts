@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	Client,
@@ -14,10 +14,9 @@ import {
 	MergeTreeDeltaOperationType,
 	MergeTreeDeltaOperationTypes,
 	MergeTreeMaintenanceType,
-	PropertySet,
-	// eslint-disable-next-line import/no-deprecated
+	PropertySet, // eslint-disable-next-line import/no-deprecated
 	SortedSegmentSet,
-} from "@fluidframework/merge-tree";
+} from "@fluidframework/merge-tree/internal";
 
 /**
  * Base class for SequenceDeltaEvent and SequenceMaintenanceEvent.

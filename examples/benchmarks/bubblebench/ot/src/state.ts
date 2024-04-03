@@ -5,24 +5,25 @@
 
 import {
 	IAppState,
-	IArrayish,
 	IClient,
 	makeBubble,
 	randomColor,
-	type IBubble,
+	type SimpleClient,
 } from "@fluid-example/bubblebench-common";
 import { SharedJson1 } from "@fluid-experimental/sharejs-json1";
 
 import { observe } from "./proxy/index.js";
 
 interface IApp {
-	clients: IArrayish<IClient<IBubble[]>>;
+	clients: IArrayish<SimpleClient>;
 }
+
+interface IArrayish<T> extends ArrayLike<T>, Pick<T[], "push">, Iterable<T> {}
 
 export class AppState implements IAppState {
 	private readonly root: IApp;
 
-	public readonly localClient: IClient<IBubble[]>;
+	public readonly localClient: SimpleClient;
 
 	constructor(
 		tree: SharedJson1,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import { DiscriminatedUnionDispatcher } from "../../../codec/index.js";
 import { BrandedType } from "../../../util/index.js";

@@ -7,8 +7,8 @@ import { strict as assert } from "assert";
 import { join as pathJoin } from "path";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import { FuzzSerializedIdCompressor } from "@fluid-private/test-dds-utils";
 import {
-	SerializedIdCompressorWithNoSession,
 	SessionId,
 	createIdCompressor,
 	deserializeIdCompressor,
@@ -159,20 +159,20 @@ export const failureDirectory = pathJoin(testSrcPath, "shared-tree/fuzz/failures
 
 export const createOrDeserializeCompressor = (
 	sessionId: SessionId,
-	summary?: SerializedIdCompressorWithNoSession,
+	summary?: FuzzSerializedIdCompressor,
 ) => {
 	return summary === undefined
 		? createIdCompressor(sessionId)
-		: deserializeIdCompressor(summary, sessionId);
+		: summary.withSession
+		? deserializeIdCompressor(summary.serializedCompressor)
+		: deserializeIdCompressor(summary.serializedCompressor, sessionId);
 };
 
 export const deterministicIdCompressorFactory: (
 	seed: number,
-) => (summary?: SerializedIdCompressorWithNoSession) => ReturnType<typeof createIdCompressor> = (
-	seed,
-) => {
+) => (summary?: FuzzSerializedIdCompressor) => ReturnType<typeof createIdCompressor> = (seed) => {
 	const random = makeRandom(seed);
-	return (summary?: SerializedIdCompressorWithNoSession) => {
+	return (summary?: FuzzSerializedIdCompressor) => {
 		const sessionId = random.uuid4() as SessionId;
 		return createOrDeserializeCompressor(sessionId, summary);
 	};

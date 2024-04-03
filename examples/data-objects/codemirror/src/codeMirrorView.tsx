@@ -12,7 +12,7 @@ import {
 	TextSegment,
 	getTextAndMarkers,
 	reservedTileLabelsKey,
-} from "@fluidframework/sequence";
+} from "@fluidframework/sequence/internal";
 import CodeMirror from "codemirror";
 import React, { useEffect, useRef } from "react";
 

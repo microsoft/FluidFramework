@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { compareArrays } from '@fluidframework/core-utils';
+import { compareArrays } from '@fluidframework/core-utils/internal';
 import { v4 as uuidv4 } from 'uuid';
 
 import { BuildNode, BuildTreeNode, Change, HasVariadicTraits, StablePlace, StableRange } from './ChangeTypes.js';
