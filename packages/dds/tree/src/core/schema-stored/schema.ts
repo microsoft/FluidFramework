@@ -204,10 +204,10 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 	/**
 	 * @param mapFields -
-	 * Allows using using the fields as a map, with the keys being
+	 * Allows using the fields as a map, with the keys being
 	 * FieldKeys and the values being constrained by this TreeFieldStoredSchema.
 	 * Usually `FieldKind.Value` should NOT be used here
-	 * since no nodes can ever be in schema are in schema if you use `FieldKind.Value` here
+	 * since no nodes can ever be in schema if you use `FieldKind.Value` here
 	 * (that would require infinite children).
 	 */
 	public constructor(public readonly mapFields: TreeFieldStoredSchema) {
