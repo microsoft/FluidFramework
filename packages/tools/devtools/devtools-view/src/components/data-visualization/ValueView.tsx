@@ -8,7 +8,7 @@ import React from "react";
 
 import type { DataVisualizationTreeProps } from "./CommonInterfaces.js";
 import { TreeHeader } from "./TreeHeader.js";
-import { TreeItem } from "./TreeItem.js";
+import { RecursiveTreeItem } from "./TreeItem.js";
 
 /**
  * {@link ValueView} input props.
@@ -30,5 +30,5 @@ export function ValueView(props: ValueViewProps): React.ReactElement {
 			metadata={metadata}
 		/>
 	);
-	return <TreeItem header={header} />;
+	return <RecursiveTreeItem header={header} />;
 }

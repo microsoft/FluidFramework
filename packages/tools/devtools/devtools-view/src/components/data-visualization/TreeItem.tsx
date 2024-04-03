@@ -7,7 +7,10 @@ import {
 	Tree as FluentTree,
 	TreeItem as FluentTreeItem,
 	TreeItemLayout as FluentTreeItemLayout,
-} from "@fluentui/react-components/unstable";
+	treeItemLevelToken,
+	useTreeItemContext_unstable,
+	useSubtreeContext_unstable,
+} from "@fluentui/react-components";
 import React from "react";
 
 /**
@@ -17,7 +20,7 @@ export type TreeItemProps = React.PropsWithChildren<{
 	/**
 	 * Header label created by {@link TreeHeader}.
 	 */
-	header: React.ReactElement | string;
+	header?: React.ReactElement | string;
 
 	// TODO: startOpen
 }>;
@@ -27,16 +30,20 @@ export type TreeItemProps = React.PropsWithChildren<{
  *
  * Intended to be used inside an outer {@link @fluentui/react-components/unstable#Tree} context.
  */
-export function TreeItem(props: TreeItemProps): React.ReactElement {
+export function RecursiveTreeItem(props: TreeItemProps): React.ReactElement {
 	const { children, header } = props;
-
-	const isLeaf = React.Children.count(children) === 0;
+	const { level } = useSubtreeContext_unstable();
+	const open = useTreeItemContext_unstable((ctx) => ctx.open || level === 1);
 
 	return (
-		<FluentTreeItem leaf={isLeaf} data-testid="tree-button">
+		<FluentTreeItem value={level} itemType="branch" style={{ [treeItemLevelToken]: level }}>
 			<FluentTreeItemLayout>{header}</FluentTreeItemLayout>
 
-			<FluentTree>{children}</FluentTree>
+			{open && (
+				<FluentTree>
+					<RecursiveTreeItem header={header}> {children} </RecursiveTreeItem>
+				</FluentTree>
+			)}
 		</FluentTreeItem>
 	);
 }

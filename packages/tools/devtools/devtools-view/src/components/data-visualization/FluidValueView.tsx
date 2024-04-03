@@ -11,7 +11,7 @@ import { useContainerFeaturesContext } from "../../ContainerFeatureFlagHelper.js
 import type { DataVisualizationTreeProps } from "./CommonInterfaces.js";
 import { EditableView } from "./EditableView.js";
 import { TreeHeader } from "./TreeHeader.js";
-import { TreeItem } from "./TreeItem.js";
+import { RecursiveTreeItem } from "./TreeItem.js";
 
 /**
  * {@link ValueView} input props.
@@ -44,5 +44,5 @@ export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 		</>
 	);
 
-	return <TreeItem header={header} />;
+	return <RecursiveTreeItem header={header} />;
 }

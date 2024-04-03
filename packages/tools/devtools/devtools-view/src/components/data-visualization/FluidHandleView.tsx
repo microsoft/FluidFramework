@@ -21,7 +21,7 @@ import { useMessageRelay } from "../../MessageRelayContext.js";
 import { type HasLabel } from "./CommonInterfaces.js";
 import { TreeDataView } from "./TreeDataView.js";
 import { TreeHeader } from "./TreeHeader.js";
-import { TreeItem } from "./TreeItem.js";
+import { RecursiveTreeItem } from "./TreeItem.js";
 
 const loggingContext = "EXTENSION(HandleView)";
 
@@ -85,7 +85,7 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 
 	if (visualTree === undefined) {
 		const header = <TreeHeader label={label} inlineValue={<Spinner size="tiny" />} />;
-		return <TreeItem header={header} />;
+		return <RecursiveTreeItem header={header} />;
 	} else {
 		return <TreeDataView containerKey={containerKey} label={label} node={visualTree} />;
 	}

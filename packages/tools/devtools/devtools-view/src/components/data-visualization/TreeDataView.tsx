@@ -26,6 +26,8 @@ export interface TreeDataViewProps extends HasContainerKey, DataVisualizationTre
 export function TreeDataView(props: TreeDataViewProps): React.ReactElement {
 	const { containerKey, label, node } = props;
 
+	console.log("TreeDataView");
+
 	switch (node.nodeKind) {
 		/**
 		 * Node with children.

@@ -8,7 +8,7 @@ import React from "react";
 
 import type { DataVisualizationTreeProps } from "./CommonInterfaces.js";
 import { TreeHeader } from "./TreeHeader.js";
-import { TreeItem } from "./TreeItem.js";
+import { RecursiveTreeItem } from "./TreeItem.js";
 
 /**
  * {@link UnknownDataView} input props.
@@ -30,5 +30,5 @@ export function UnknownDataView(props: UnknownDataViewProps): React.ReactElement
 			metadata={metadata}
 		/>
 	);
-	return <TreeItem header={header} />;
+	return <RecursiveTreeItem header={header} />;
 }

@@ -37,6 +37,8 @@ export type DataObjectsViewProps = HasContainerKey;
 export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement {
 	const { containerKey } = props;
 
+	console.log("DataObjectsView");
+
 	const messageRelay = useMessageRelay();
 
 	const [rootDataHandles, setRootDataHandles] = React.useState<
@@ -82,6 +84,8 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 		return <Waiting />;
 	}
 
+	console.log("DataObjectsView After");
+	console.log("rootDataHandles", rootDataHandles);
 	return (
 		<FluentTree aria-label="Data tree view">
 			{Object.entries(rootDataHandles).map(([key, fluidObject], index) => {
