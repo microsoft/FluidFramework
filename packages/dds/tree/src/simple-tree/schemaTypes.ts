@@ -274,7 +274,7 @@ export interface FieldProps {
 	 * {@inheritDoc StoredKey}
 	 * @defaultValue If not specified, the key that is persisted is the property key that was specified in the schema.
 	 */
-	readonly key?: string;
+	readonly key?: StoredKey;
 }
 
 /**

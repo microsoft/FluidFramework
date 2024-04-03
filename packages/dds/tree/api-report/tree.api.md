@@ -515,7 +515,7 @@ export interface FieldMapObject<TChild> {
 
 // @public
 export interface FieldProps {
-    readonly key?: string;
+    readonly key?: StoredKey;
 }
 
 // @public @sealed
