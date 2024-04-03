@@ -6,7 +6,6 @@ import { assert } from "@fluidframework/core-utils";
 
 export function getUrlAndHeadersWithAuth(
 	url: string,
-	// eslint-disable-next-line @rushstack/no-new-null
 	token: string,
 	forceAccessTokenViaAuthorizationHeader: boolean,
 ): { url: string; headers: { [index: string]: string } } {

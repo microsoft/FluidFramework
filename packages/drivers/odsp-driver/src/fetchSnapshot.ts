@@ -110,7 +110,6 @@ export async function fetchSnapshot(
 		logger,
 		{
 			eventName: "fetchSnapshot",
-			headers: Object.keys(headers).length > 0 ? true : undefined,
 		},
 		async () => snapshotDownloader(url, { headers }),
 	)) as IOdspResponse<IOdspSnapshot>;
@@ -489,7 +488,6 @@ async function fetchLatestSnapshotCore(
 				useLegacyFlowWithoutGroups:
 					useLegacyFlowWithoutGroupsForSnapshotFetch(loadingGroupIds),
 				userOps: snapshot.ops?.filter((op) => isRuntimeMessage(op)).length ?? 0,
-				headers: Object.keys(response.requestHeaders).length > 0 ? true : undefined,
 				// Measures time to make fetch call. Should be similar to
 				// fetchStartToResponseEndTime - receiveContentTime, i.e. it looks like it's time till first byte /
 				// end of response headers

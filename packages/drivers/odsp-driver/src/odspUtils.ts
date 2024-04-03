@@ -370,6 +370,10 @@ export function evalBlobsAndTrees(snapshot: IOdspSnapshot): {
 	return { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize };
 }
 
+/**
+ * Returns a function that can be used to fetch storage token.
+ * Storage token can not be empty - if original delegate (tokenFetcher argument) returns null result, exception will be thrown
+ */
 export function toInstrumentedOdspStorageTokenFetcher(
 	logger: ITelemetryLoggerExt,
 	resolvedUrlParts: IOdspUrlParts,
@@ -385,6 +389,11 @@ export function toInstrumentedOdspStorageTokenFetcher(
 	return res as InstrumentedStorageTokenFetcher;
 }
 
+/**
+ * Returns a function that can be used to fetch storage or websocket token.
+ * There are scneaios where websocket token is not required / present (consumer stack and orderging service token),
+ * thus it could return null. Use toInstrumentedOdspStorageTokenFetcher if you deal with storage token.
+ */
 export function toInstrumentedOdspTokenFetcher(
 	logger: ITelemetryLoggerExt,
 	resolvedUrlParts: IOdspUrlParts,
