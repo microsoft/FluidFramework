@@ -19,7 +19,7 @@ In our case, we are sending custom metrics. [Learn more about Azure App Insights
 
 # Getting Started
 
-Let's walk through some simple examples for getting started with fluid telemetry for containers using the @fluidframework/fluid-telemetry package, we'll have to write some code.
+Let's walk through some simple examples for getting started with Fluid telemetry for containers using the @fluidframework/fluid-telemetry package, we'll have to write some code.
 
 ## Example 1: Logging container telemetry to the console.
 
@@ -104,6 +104,10 @@ class AppInsightsTelemetryConsumer implements ITelemetryConsumer {
 #### Step 2: Now, let's start the telemetry production and hook in our telemetry consumer from step 1. We will be initializing our telemetry collection where we initialize our containers:
 
 ```ts
+import { ApplicationInsights } from "@microsoft/applicationinsights-web";
+import { IFluidContainer } from "@fluidframework/fluid-static";
+import { ITelemetryConsumer , TelemetryConfig, startTelemetry, IFluidTelemetry } from "@fluidframework/external-telemetry"
+
 // 1: This is supposed to be your code for loading a Fluid Container
 let myAppContainer: IFluidContainer;
 let myAppContainerId: string;
