@@ -407,78 +407,94 @@ export class SummaryGenerator {
 				handle: summarizeOp.contents.handle,
 			});
 
-			// Wait for ack/nack
-			const waitAckNackResult = await raceTimer(
-				summary.waitAckNack(),
-				pendingTimeoutP,
-				cancellationToken,
-			);
-			if (waitAckNackResult.result === "cancelled") {
-				return fail("disconnect");
-			}
-			if (waitAckNackResult.result !== "done") {
-				return fail("summaryAckWaitTimeout");
-			}
-			const ackNackOp = waitAckNackResult.value;
-			this.pendingAckTimer.clear();
-
 			// Update for success/failure
-			const ackNackDuration = Date.now() - this.heuristicData.lastAttempt.summaryTime;
+			const summaryDuration = Date.now() - this.heuristicData.lastAttempt.summaryTime;
 
-			// adding new properties
-			summarizeTelemetryProps = {
-				ackWaitDuration: ackNackDuration,
-				ackNackSequenceNumber: ackNackOp.sequenceNumber,
-				summarySequenceNumber: ackNackOp.contents.summaryProposal.summarySequenceNumber,
-				...summarizeTelemetryProps,
-			};
-			if (ackNackOp.type === MessageType.SummaryAck) {
+			// Declaring a re-usable function here which can be called either after a summary boradcast is received or after summaryAck is received
+			// based on whether client is uses a single-commit summary pattern or two-commit summary respectively.
+			const afterSuccessfullSummary = async (opReceivedForSuccessfullSummary) => {
 				this.heuristicData.markLastAttemptAsSuccessful();
 				this.successfulSummaryCallback();
 				summarizeEvent.end({
 					...summarizeTelemetryProps,
-					handle: ackNackOp.contents.handle,
+					handle: opReceivedForSuccessfullSummary.contents.handle,
 				});
 				// This processes the summary ack of the successful summary. This is so that the next summary does not
 				// start before the ack of the previous summary is processed.
 				await this.refreshLatestSummaryCallback({
 					proposalHandle: summarizeOp.contents.handle,
-					ackHandle: ackNackOp.contents.handle,
+					ackHandle: opReceivedForSuccessfullSummary.contents.handle,
 					summaryRefSeq: summarizeOp.referenceSequenceNumber,
 					summaryLogger,
 				});
 				resultsBuilder.receivedSummaryAckOrNack.resolve({
 					success: true,
 					data: {
-						summaryAckOp: ackNackOp,
-						ackNackDuration,
+						summaryAckOp: opReceivedForSuccessfullSummary,
+						ackNackDuration: summaryDuration,
 					},
 				});
+			};
+
+			// includesProtocolTree property represents the summary was generated using single-commit summary pattern
+			// thus there is no need to wait for ack/nacks and we can simply use the summarizeOp to extract the summary handle.
+			if (summarizeOp.contents.details?.includesProtocolTree) {
+				afterSuccessfullSummary(summarizeOp);
 			} else {
-				// Check for retryDelay in summaryNack response.
-				assert(ackNackOp.type === MessageType.SummaryNack, 0x274 /* "type check" */);
-				const summaryNack = ackNackOp.contents;
-				const errorMessage = summaryNack?.message;
-				const retryAfterSeconds = summaryNack?.retryAfter;
-
-				// pre-0.58 error message prefix: summaryNack
-				const error = new LoggingError(`Received summaryNack`, {
-					retryAfterSeconds,
-					errorMessage,
-				});
-
-				assert(
-					getRetryDelaySecondsFromError(error) === retryAfterSeconds,
-					0x25f /* "retryAfterSeconds" */,
+				// Wait for ack/nack
+				const waitAckNackResult = await raceTimer(
+					summary.waitAckNack(),
+					pendingTimeoutP,
+					cancellationToken,
 				);
-				// This will only set resultsBuilder.receivedSummaryAckOrNack, as other promises are already set.
-				return fail(
-					"summaryNack",
-					error,
-					{ ...summarizeTelemetryProps, nackRetryAfter: retryAfterSeconds },
-					undefined /* submitFailureResult */,
-					{ summaryNackOp: ackNackOp, ackNackDuration, retryAfterSeconds },
-				);
+				if (waitAckNackResult.result === "cancelled") {
+					return fail("disconnect");
+				}
+				if (waitAckNackResult.result !== "done") {
+					return fail("summaryAckWaitTimeout");
+				}
+				const ackNackOp = waitAckNackResult.value;
+				this.pendingAckTimer.clear();
+
+				// adding new properties
+				summarizeTelemetryProps = {
+					ackWaitDuration: summaryDuration,
+					ackNackSequenceNumber: ackNackOp.sequenceNumber,
+					summarySequenceNumber: ackNackOp.contents.summaryProposal.summarySequenceNumber,
+					...summarizeTelemetryProps,
+				};
+				if (ackNackOp.type === MessageType.SummaryAck) {
+					afterSuccessfullSummary(ackNackOp);
+				} else {
+					// Check for retryDelay in summaryNack response.
+					assert(ackNackOp.type === MessageType.SummaryNack, 0x274 /* "type check" */);
+					const summaryNack = ackNackOp.contents;
+					const errorMessage = summaryNack?.message;
+					const retryAfterSeconds = summaryNack?.retryAfter;
+
+					// pre-0.58 error message prefix: summaryNack
+					const error = new LoggingError(`Received summaryNack`, {
+						retryAfterSeconds,
+						errorMessage,
+					});
+
+					assert(
+						getRetryDelaySecondsFromError(error) === retryAfterSeconds,
+						0x25f /* "retryAfterSeconds" */,
+					);
+					// This will only set resultsBuilder.receivedSummaryAckOrNack, as other promises are already set.
+					return fail(
+						"summaryNack",
+						error,
+						{ ...summarizeTelemetryProps, nackRetryAfter: retryAfterSeconds },
+						undefined /* submitFailureResult */,
+						{
+							summaryNackOp: ackNackOp,
+							ackNackDuration: summaryDuration,
+							retryAfterSeconds,
+						},
+					);
+				}
 			}
 		} finally {
 			this.pendingAckTimer.clear();

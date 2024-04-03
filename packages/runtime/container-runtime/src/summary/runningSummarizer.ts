@@ -78,7 +78,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 		stopSummarizerCallback: (reason: SummarizerStopReason) => void,
 		runtime: ISummarizerRuntime,
 	): Promise<RunningSummarizer> {
-		const summarizer = new RunningSummarizer(
+		const runningSummarizer = new RunningSummarizer(
 			logger,
 			summaryWatcher,
 			configuration,
@@ -102,15 +102,15 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 			latestAck !== undefined &&
 			latestAck.summaryOp.referenceSequenceNumber >= nextReferenceSequenceNumber
 		) {
-			await summarizer.handleSummaryAck(latestAck);
+			await runningSummarizer.handleSummaryAck(latestAck);
 			nextReferenceSequenceNumber = latestAck.summaryOp.referenceSequenceNumber + 1;
 		}
 
-		await summarizer.waitStart();
+		await runningSummarizer.waitStart();
 
 		// Process summary acks asynchronously
 		// Note: no exceptions are thrown from processIncomingSummaryAcks handler as it handles all exceptions
-		summarizer.processIncomingSummaryAcks(nextReferenceSequenceNumber).catch((error) => {
+		runningSummarizer.processIncomingSummaryAcks(nextReferenceSequenceNumber).catch((error) => {
 			createChildLogger({ logger }).sendErrorEvent(
 				{ eventName: "HandleSummaryAckFatalError" },
 				error,
@@ -140,10 +140,10 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 		heuristicData.lastOpSequenceNumber = runtime.deltaManager.lastSequenceNumber;
 
 		// Start heuristics
-		summarizer.heuristicRunner?.start();
-		summarizer.heuristicRunner?.run();
+		runningSummarizer.heuristicRunner?.start();
+		runningSummarizer.heuristicRunner?.run();
 
-		return summarizer;
+		return runningSummarizer;
 	}
 
 	public get disposed() {
