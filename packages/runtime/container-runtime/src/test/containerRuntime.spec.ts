@@ -1906,8 +1906,11 @@ describe("Runtime", () => {
 
 				(containerRuntime as any).pendingStateManager = mockPendingStateManager;
 
-				const state = containerRuntime.getPendingLocalState();
-				assert.strictEqual(state, undefined);
+				const state =
+					containerRuntime.getPendingLocalState() as Partial<IPendingRuntimeState>;
+				assert.strictEqual(state.pending, undefined);
+				assert.strictEqual(state.pendingAttachmentBlobs, undefined);
+				assert.ok(state.sessionExpiryTimerStarted !== undefined);
 			});
 			it("No Props. Some pending state", async () => {
 				const logger = new MockLogger();
