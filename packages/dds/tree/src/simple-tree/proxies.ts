@@ -176,7 +176,7 @@ export function createObjectProxy(
 	allowAdditionalProperties: boolean,
 	targetObject: object = {},
 ): TreeNode {
-	// Populate view key => stored key mapping cache.
+	// Performance optimization: cache view key => stored key mapping.
 	cacheFlexKeyMapping(schema, schema.info as Record<string, ImplicitFieldSchema>);
 
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
