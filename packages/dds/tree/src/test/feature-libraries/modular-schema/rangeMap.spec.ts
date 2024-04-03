@@ -11,6 +11,7 @@ import {
 	deleteFromRangeMap,
 	getFirstEntryFromRangeMap,
 	setInRangeMap,
+	getAllRangeSegments,
 } from "../../../util/index.js";
 
 function newRangeMap(): RangeMap<string> {
@@ -142,6 +143,16 @@ describe("RangeMap", () => {
 		const entry7 = getFirstEntryFromRangeMap(map, 7, 4);
 		const expectedA2: RangeEntry<string> = { start: 7, length: 4, value: "a" };
 		assert.deepEqual(entry7, expectedA2);
+	});
+
+	it("test about find all segments", () => {
+		const map = newRangeMap();
+
+		setInRangeMap(map, 1, 3, "a");
+		setInRangeMap(map, 6, 2, "b");
+
+		const results = getAllRangeSegments(map, 0, 10);
+		assert(results);
 	});
 
 	describe("deleteFromRangeMap", () => {

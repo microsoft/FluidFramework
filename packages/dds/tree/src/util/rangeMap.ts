@@ -194,7 +194,7 @@ export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: n
 	}
 
 	const iFirst = iBefore + 1;
-	const iLast = iAfter - 1;
+	let iLast = iAfter - 1;
 
 	// Update or remove the overlapping entries
 	for (let i = iFirst; i <= iLast; ++i) {
@@ -205,6 +205,7 @@ export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: n
 		// If the entry lies within the range to be deleted, remove it
 		if (entry.start >= start && entryLastKey <= end) {
 			map.splice(i, 1);
+			iLast--;
 		} else {
 			// If the entry partially or completely overlaps with the range to be deleted
 			if (entry.start < start) {
@@ -226,4 +227,57 @@ export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: n
 			}
 		}
 	}
+}
+
+export function getAllRangeSegments<T>(
+	map: RangeMap<T>,
+	start: number,
+	length: number,
+): FullQueryResult<T>[] {
+	const result: FullQueryResult<T>[] = [];
+	let currentStart = start;
+	// let currentIndex = 0;
+
+	// iterate over the entire range
+	while (currentStart < start + length) {
+		// Get the first next entry given the current position
+		const nextResult = getFirstEntryFromRangeMap(
+			map,
+			currentStart,
+			length - (currentStart - start),
+		);
+
+		if (!nextResult) {
+			result.push({
+				value: undefined,
+				start: currentStart,
+				length: length - (currentStart - start),
+			});
+			break;
+		} else {
+			if (nextResult.start > currentStart) {
+				result.push({
+					value: undefined,
+					start: currentStart,
+					length: nextResult.start - currentStart,
+				});
+				currentStart = nextResult.start;
+			} else {
+				// push the current nextResult
+				result.push({
+					value: nextResult.value,
+					start: currentStart,
+					length: nextResult.length,
+				});
+				currentStart = nextResult.start + nextResult.length;
+			}
+		}
+	}
+	return result;
+}
+
+export interface FullQueryResult<T> {
+	value: T | undefined;
+	start: number;
+	length: number;
 }

@@ -13,10 +13,15 @@ import {
 	NestedMap,
 	brand,
 	deleteFromNestedMap,
+	deleteFromRangeMap,
+	getAllRangeSegments,
 	idAllocatorFromMaxId,
 	populateNestedMap,
 	setInNestedMap,
+	setInRangeMap,
 	tryGetFromNestedMap,
+	type RangeMap,
+	FullQueryResult,
 } from "../../util/index.js";
 import { RevisionTagCodec } from "../rebase/index.js";
 import { FieldKey } from "../schema-stored/index.js";
@@ -40,6 +45,7 @@ export type ForestRootId = Brand<number, "tree.ForestRootId">;
 export class DetachedFieldIndex {
 	// TODO: don't store the field key in the index, it can be derived from the root ID
 	private detachedNodeToField: NestedMap<Major, Minor, ForestRootId> = new Map();
+	private readonly detachedNodeRange: Map<Major, RangeMap<ForestRootId>> = new Map();
 	private readonly codec: IJsonCodec<DetachedFieldSummaryData, Format>;
 	private readonly options: ICodecOptions;
 
@@ -106,6 +112,20 @@ export class DetachedFieldIndex {
 				}
 			}
 		}
+		// update the rangeMap
+		const currentRangeMap = this.detachedNodeRange.get(current);
+		if (currentRangeMap !== undefined) {
+			this.detachedNodeRange.delete(current);
+			const updatedRangeMap = this.detachedNodeRange.get(updated);
+			if (updatedRangeMap === undefined) {
+				this.detachedNodeRange.set(updated, currentRangeMap);
+			} else {
+				for (const rangeEntry of currentRangeMap) {
+					const { start, length, value } = rangeEntry;
+					setInRangeMap(updatedRangeMap, start, length, value);
+				}
+			}
+		}
 	}
 
 	/**
@@ -134,9 +154,22 @@ export class DetachedFieldIndex {
 		return key;
 	}
 
-	public deleteEntry(nodeId: Delta.DetachedNodeId): void {
-		const found = deleteFromNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor);
-		assert(found, 0x7ab /* Unable to delete unknown entry */);
+	public deleteEntry(nodeId: Delta.DetachedNodeId, count: number = 1): void {
+		for (let i = 0; i < count; ++i) {
+			const found = deleteFromNestedMap(
+				this.detachedNodeToField,
+				nodeId.major,
+				nodeId.minor + i,
+			);
+			assert(found, 0x7ab /* Unable to delete unknown entry */);
+		}
+		if (this.detachedNodeRange.has(nodeId.major)) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const rangeMap = this.detachedNodeRange.get(nodeId.major)!;
+			deleteFromRangeMap(rangeMap, nodeId.minor, count);
+		}
+		// const found = deleteFromNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor);
+		// assert(found, 0x7ab /* Unable to delete unknown entry */);
 	}
 
 	/**
@@ -154,10 +187,38 @@ export class DetachedFieldIndex {
 					) === undefined,
 					0x7ce /* Detached node ID already exists in index */,
 				);
-				setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor + i, root + i);
+				// setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor + i, root + i);
+				setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor + i, root);
 			}
+			// set the range
+			this.setDetachedNodeRange(nodeId, count, root);
 		}
 		return root;
+	}
+
+	private setDetachedNodeRange(
+		nodeId: Delta.DetachedNodeId,
+		count: number,
+		root: ForestRootId,
+	): void {
+		if (!this.detachedNodeRange.has(nodeId.major)) {
+			this.detachedNodeRange.set(nodeId.major, []);
+		}
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const rangeMap = this.detachedNodeRange.get(nodeId.major)!;
+		setInRangeMap(rangeMap, nodeId.minor, count, root);
+	}
+
+	public getAllDetachedRanges(
+		nodeId: Delta.DetachedNodeId,
+		count: number,
+	): FullQueryResult<ForestRootId>[] | undefined {
+		if (!this.detachedNodeRange.has(nodeId.major)) {
+			return undefined;
+		}
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const rangeMap = this.detachedNodeRange.get(nodeId.major)!;
+		return getAllRangeSegments(rangeMap, nodeId.minor, count);
 	}
 
 	public encode(): JsonCompatibleReadOnly {
@@ -177,5 +238,6 @@ export class DetachedFieldIndex {
 			detachedFieldIndex.maxId,
 		) as IdAllocator<ForestRootId>;
 		this.detachedNodeToField = detachedFieldIndex.data;
+		// TODO: Need to build the rangemap
 	}
 }

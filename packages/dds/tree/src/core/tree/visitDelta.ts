@@ -402,6 +402,13 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 				visitNode(index, mark.fields, visitor, config);
 			}
 			if (isDetachMark(mark)) {
+				const root = config.detachedFieldIndex.createEntry(mark.detach, mark.count);
+				if (mark.fields !== undefined) {
+					config.attachPassRoots.set(root, mark.fields);
+				}
+				const field = config.detachedFieldIndex.toFieldKey(root);
+				visitor.detach({ start: index, end: index + mark.count }, field);
+				/*
 				for (let i = 0; i < mark.count; i += 1) {
 					const root = config.detachedFieldIndex.createEntry(
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -412,7 +419,7 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 					}
 					const field = config.detachedFieldIndex.toFieldKey(root);
 					visitor.detach({ start: index, end: index + 1 }, field);
-				}
+				} */
 			} else if (!isAttachMark(mark)) {
 				index += mark.count;
 			}
@@ -426,6 +433,17 @@ function buildTrees(
 	config: PassConfig,
 	visitor: DeltaVisitor,
 ) {
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const rangeQueryResults = config.detachedFieldIndex.getAllDetachedRanges(id, trees.length)!;
+	for (const { value, start, length } of rangeQueryResults) {
+		if (value === undefined) {
+			const offsettedId = offsetDetachId(id, start - id.minor);
+			const root = config.detachedFieldIndex.createEntry(offsettedId, length);
+			const field = config.detachedFieldIndex.toFieldKey(root);
+			visitor.create(trees.slice(start, start + length), field);
+		}
+	}
+	/*
 	for (let i = 0; i < trees.length; i += 1) {
 		const offsettedId = offsetDetachId(id, i);
 		let root = config.detachedFieldIndex.tryGetEntry(offsettedId);
@@ -436,7 +454,7 @@ function buildTrees(
 			const field = config.detachedFieldIndex.toFieldKey(root);
 			visitor.create([trees[i]], field);
 		}
-	}
+	} */
 }
 
 function processBuilds(
@@ -471,6 +489,35 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 		let index = 0;
 		for (const mark of delta.local) {
 			if (isAttachMark(mark) || isReplaceMark(mark)) {
+				/*
+				// break and find all ranges
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const rangeQueryResults = config.detachedFieldIndex.getAllDetachedRanges(mark.attach!, mark.count);
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				for (const { value, start, length } of rangeQueryResults!) {
+					let sourceRoot = value;
+					if (sourceRoot === undefined) {
+						assert(mark.attach);
+						const offsetAttachId = offsetDetachId(mark.attach, start - mark.attach.minor);
+						const trees = [];
+						for (let offset = 0; offset < length; offset++) {
+							const tree = tryGetFromNestedMap(
+								config.refreshers,
+								offsetAttachId.major,
+								offsetAttachId.minor + offset,
+							);
+							trees.push(tree);
+						}
+						buildTrees(offsetAttachId, trees as readonly ITreeCursorSynchronous[], config, visitor);
+						sourceRoot = config.detachedFieldIndex.getEntry(offsetAttachId);
+					}
+					const sourceField = config.detachedFieldIndex.toFieldKey(sourceRoot);
+					const offsetIndex = index + start;
+					// TODO: need some clear 
+					if (isReplaceMark(mark)) {
+						const rootDestination = 
+					}
+				} */
 				for (let i = 0; i < mark.count; i += 1) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const offsetAttachId = offsetDetachId(mark.attach!, i);
