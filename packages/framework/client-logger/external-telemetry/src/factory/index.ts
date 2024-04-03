@@ -19,9 +19,9 @@ export interface TelemetryConfig {
 	 */
 	container: IFluidContainer;
 	/**
-	 * Unique identifier for a container, stable across creation and load.
-	 * I.e. different clients loading the same container (or the same client loading the container two separate times)
-	 * will agree on this value.
+	 * Unique identifier for the passed in container, i.e. the return value of a call
+	 * to {@link @fluidframework/fluid-static#IFluidContainer.attach | `IFluidContainer.attach()`} when creating a new
+	 * Fluid container, or the id used to load a pre-existing one.
 	 */
 	containerId: string;
 	/**

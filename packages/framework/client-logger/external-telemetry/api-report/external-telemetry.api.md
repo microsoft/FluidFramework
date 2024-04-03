@@ -9,20 +9,17 @@ import type { IFluidContainer } from '@fluidframework/fluid-static';
 
 // @beta
 export interface ContainerConnectedTelemetry extends IContainerTelemetry {
-    // (undocumented)
     eventName: "fluidframework.container.connected";
 }
 
 // @beta
 export interface ContainerDisconnectedTelemetry extends IContainerTelemetry {
-    // (undocumented)
     eventName: "fluidframework.container.disconnected";
 }
 
 // @beta
 export interface ContainerDisposedTelemetry extends IContainerTelemetry {
     error?: ICriticalContainerError;
-    // (undocumented)
     eventName: "fluidframework.container.disposed";
 }
 
@@ -54,8 +51,7 @@ export interface IExternalTelemetry {
 
 // @beta
 export interface ITelemetryConsumer {
-    // (undocumented)
-    consume(event: Record<string, any>): any;
+    consume(event: IExternalTelemetry): any;
 }
 
 // @beta

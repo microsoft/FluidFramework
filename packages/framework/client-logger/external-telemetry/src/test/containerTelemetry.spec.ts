@@ -119,12 +119,15 @@ describe("External container telemetry", () => {
 			properties: {
 				eventName: ContainerTelemetryEventNames.CONNECTED,
 				containerId: mockContainerId,
+				containerInstanceId: actualTelemetryEvent.properties.containerInstanceId,
 			} as ContainerConnectedTelemetry,
 		};
 
 		expect(expectedEvent).to.deep.equal(actualTelemetryEvent);
-		// We won't know what the container UUID will be but we can still check that it is defined.
-		expect(actualTelemetryEvent.properties.containerId).to.be.a("string").with.length.above(0);
+		// We won't know what the container containerInstanceId will be but we can still check that it is defined.
+		expect(actualTelemetryEvent.properties.containerInstanceId)
+			.to.be.a("string")
+			.with.length.above(0);
 	});
 
 	it("Emitting 'disconnected' container system event produces expected ContainerDisconnectedTelemetry", () => {
@@ -141,15 +144,18 @@ describe("External container telemetry", () => {
 			properties: {
 				eventName: ContainerTelemetryEventNames.DISCONNECTED,
 				containerId: mockContainerId,
+				containerInstanceId: actualTelemetryEvent.properties.containerInstanceId,
 			} as ContainerDisconnectedTelemetry,
 		};
 
 		expect(expectedEvent).to.deep.equal(actualTelemetryEvent);
-		// We won't know what the container UUID will be but we can still check that it is defined.
-		expect(actualTelemetryEvent.properties.containerId).to.be.a("string").with.length.above(0);
+		// We won't know what the container containerInstanceId will be but we can still check that it is defined.
+		expect(actualTelemetryEvent.properties.containerInstanceId)
+			.to.be.a("string")
+			.with.length.above(0);
 	});
 
-	it("Emitting 'disposed' system event produces expected ContainerClosedTelemetry", () => {
+	it("Emitting 'disposed' system event produces expected ContainerDisposedTelemetry", () => {
 		startTelemetry(telemetryConfig);
 
 		mockContainer.dispose();
@@ -161,11 +167,45 @@ describe("External container telemetry", () => {
 			properties: {
 				eventName: ContainerTelemetryEventNames.DISPOSED,
 				containerId: mockContainerId,
+				containerInstanceId: actualTelemetryEvent.properties.containerInstanceId,
 			} as ContainerDisposedTelemetry,
 		};
 
 		expect(expectedEvent).to.deep.equal(actualTelemetryEvent);
-		// We won't know what the container UUID will be but we can still check that it is defined.
-		expect(actualTelemetryEvent.properties.containerId).to.be.a("string").with.length.above(0);
+		// We won't know what the container containerInstanceId will be but we can still check that it is defined.
+		expect(actualTelemetryEvent.properties.containerInstanceId)
+			.to.be.a("string")
+			.with.length.above(0);
+	});
+
+	it("Emitting 'disposed' system event with an error produces expected ContainerDisposedTelemetry", () => {
+		startTelemetry(telemetryConfig);
+
+		const containerError: ICriticalContainerError = {
+			errorType: "unknown error",
+			message: "An unknown error occured",
+			stack: "example stack error at line 52 of Container.ts",
+		};
+
+		mockContainer.dispose(containerError);
+
+		// Obtain the events from the method that the spy was called with
+		const actualTelemetryEvent = trackEventSpy.getCall(0).args[0];
+
+		const expectedEvent = {
+			name: ContainerTelemetryEventNames.DISPOSED,
+			properties: {
+				eventName: ContainerTelemetryEventNames.DISPOSED,
+				containerId: mockContainerId,
+				containerInstanceId: actualTelemetryEvent.properties.containerInstanceId,
+				error: containerError,
+			} as ContainerDisposedTelemetry,
+		};
+
+		expect(expectedEvent).to.deep.equal(actualTelemetryEvent);
+		// We won't know what the container containerInstanceId will be but we can still check that it is defined.
+		expect(actualTelemetryEvent.properties.containerInstanceId)
+			.to.be.a("string")
+			.with.length.above(0);
 	});
 });

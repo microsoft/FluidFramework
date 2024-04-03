@@ -24,10 +24,17 @@ The core functionality of this package is exposed by the `createTelemetryManager
 ```ts
 import { ApplicationInsights } from "@microsoft/applicationinsights-web";
 import { IFluidContainer } from "@fluidframework/fluid-static";
-import { TelemetryConfig, startTelemetry, createAppInsightsTelemetryConsumer } from "@fluidframework/external-telemetry"
+import { TelemetryConfig, startTelemetry } from "@fluidframework/external-telemetry"
 
-const myAppContainer: IFluidContainer = {...your code to create/load a Fluid Continer}
-const myAppContainerId = "123-456-12331-23"
+let myAppContainer: IFluidContainer;
+let myAppContainerId: string;
+if (containerExists) {
+	myAppContainerId = {...your code to get the id of the existing container}
+	myAppContainer = {...your code to load a Fluid Container from myAppContainerId}
+} else {
+	myAppContainer = {...your code to create a new Fluid Container}
+	myAppContainerId = await myAppContainer.attach();
+}
 
 // Create App Insights Client
 const appInsightsClient = new ApplicationInsights({
@@ -40,10 +47,11 @@ const appInsightsClient = new ApplicationInsights({
 // Initializes the App Insights client. Without this, logs will not be sent to Azure.
 appInsightsClient.loadAppInsights();
 
+// This is our implementation of ITelemetryConsumer to enable sending telemetry to Azure App Insights.
 class AppInsightsTelemetryConsumer implements ITelemetryConsumer {
 	constructor(private readonly appInsightsClient: ApplicationInsights) {}
 
-	consume(event: IExternalTelemetry) {
+	consume(event: Record<string, any>) {
 		this.appInsightsClient.trackEvent({
 			name: event.eventName,
 			properties: event,

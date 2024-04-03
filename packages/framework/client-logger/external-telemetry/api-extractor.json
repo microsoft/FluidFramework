@@ -14,6 +14,13 @@
 			"tsdoc-undefined-tag": {
 				"logLevel": "none"
 			}
+		},
+		"extractorMessageReporting": {
+			// Require documentation on all package-exported API items.
+			"ae-undocumented": {
+				"logLevel": "error",
+				"addToApiReportFile": false
+			}
 		}
 	}
 }

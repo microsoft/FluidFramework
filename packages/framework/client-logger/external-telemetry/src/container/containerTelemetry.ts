@@ -93,6 +93,9 @@ export interface IContainerTelemetry extends IExternalTelemetry {
  * @beta
  */
 export interface ContainerConnectedTelemetry extends IContainerTelemetry {
+	/**
+	 * {@inheritDoc IExternalTelemetry.eventName}
+	 */
 	eventName: "fluidframework.container.connected";
 }
 
@@ -108,16 +111,25 @@ export interface ContainerConnectedTelemetry extends IContainerTelemetry {
  * @beta
  */
 export interface ContainerDisconnectedTelemetry extends IContainerTelemetry {
+	/**
+	 * {@inheritDoc IExternalTelemetry.eventName}
+	 */
 	eventName: "fluidframework.container.disconnected";
 }
 
 /**
- * The Fluid container "saved" telemetry event. This telemetry is produced from the "saved" Fluid container system event
- * {@link @fluidframework/container-definitions#IFluidContainerEvents} which is emitted when the {@link @fluidframework/fluid-static#IFluidContainer} is closed, which permanently disables it.
+ *
+ * The Fluid container "disposed" telemetry event. This telemetry is produced from the "disposed" Fluid container system event
+ * which is emitted when the {@link @fluidframework/fluid-static#IFluidContainer} is closed, which permanently disables it.
+ *
+ * @see More details about{@link @fluidframework/container-definitions#IContainer.close | the container close event}
  *
  * @beta
  */
 export interface ContainerDisposedTelemetry extends IContainerTelemetry {
+	/**
+	 * {@inheritDoc IExternalTelemetry.eventName}
+	 */
 	eventName: "fluidframework.container.disposed";
 	/**
 	 * If the container was closed due to error (as opposed to an explicit call to
@@ -127,8 +139,12 @@ export interface ContainerDisposedTelemetry extends IContainerTelemetry {
 }
 
 /**
+ * A Synethetic event that is used to track the length of the lifetime of a container in the connected state.
  * @internal
  */
 export interface ContainerHeartbeatTelemetry extends IContainerTelemetry {
+	/**
+	 * {@inheritDoc IExternalTelemetry.eventName}
+	 */
 	eventName: "fluidframework.container.heartbeat";
 }

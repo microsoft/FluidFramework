@@ -4,12 +4,12 @@
  */
 
 export {
-	ContainerTelemetryEventName,
+	type ContainerTelemetryEventName,
 	ContainerTelemetryEventNames,
-	IContainerTelemetry,
-	ContainerConnectedTelemetry,
-	ContainerDisconnectedTelemetry,
-	ContainerDisposedTelemetry,
+	type IContainerTelemetry,
+	type ContainerConnectedTelemetry,
+	type ContainerDisconnectedTelemetry,
+	type ContainerDisposedTelemetry,
 } from "./containerTelemetry.js";
 
 export { ContainerTelemetryManager } from "./telemetryManager.js";

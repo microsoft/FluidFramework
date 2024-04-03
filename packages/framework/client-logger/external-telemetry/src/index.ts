@@ -4,16 +4,16 @@
  */
 
 export {
-	IExternalTelemetry,
-	ExternalTelemetryEventName,
-	ITelemetryConsumer,
+	type IExternalTelemetry,
+	type ExternalTelemetryEventName,
+	type ITelemetryConsumer,
 } from "./common/index.js";
 export {
-	IContainerTelemetry,
-	ContainerTelemetryEventName,
+	type IContainerTelemetry,
+	type ContainerTelemetryEventName,
 	ContainerTelemetryEventNames,
-	ContainerConnectedTelemetry,
-	ContainerDisconnectedTelemetry,
-	ContainerDisposedTelemetry,
+	type ContainerConnectedTelemetry,
+	type ContainerDisconnectedTelemetry,
+	type ContainerDisposedTelemetry,
 } from "./container/index.js";
 export { startTelemetry, TelemetryConfig } from "./factory/index.js";

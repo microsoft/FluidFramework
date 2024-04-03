@@ -12,6 +12,7 @@ import {
 	IFluidContainerSystemEventNames,
 } from "./containerSystemEvents.js";
 import type { IFluidContainer } from "@fluidframework/fluid-static";
+import { ConnectionState } from "@fluidframework/container-loader";
 
 /**
  * This class manages container telemetry intended for customers to consume by wiring together the provided container system events, telemetry producers and consumers together.
@@ -52,14 +53,18 @@ export class ContainerTelemetryManager {
 	}
 
 	/**
-	 * Sets up the synthetic container heartbeat telemetry to be emitted on a given time interval.
+	 * Sets up the synthetic container heartbeat telemetry to be emitted on a given time interval
+	 * if and only if the container is in a "connected" state
 	 */
 	private setupHeartbeatTelemetryEmission() {
 		const createAndConsumeHeartbeatTelemetry = () => {
-			const telemetry: ContainerHeartbeatTelemetry =
-				this.telemetryProducer.produceHeartbeatTelemetry();
-			this.telemetryConsumers.forEach((consumer) => consumer.consume(telemetry));
+			if (this.container.connectionState === ConnectionState.Connected) {
+				const telemetry: ContainerHeartbeatTelemetry =
+					this.telemetryProducer.produceHeartbeatTelemetry();
+				this.telemetryConsumers.forEach((consumer) => consumer.consume(telemetry));
+			}
 		};
+
 		setInterval(
 			createAndConsumeHeartbeatTelemetry,
 			ContainerTelemetryManager.HEARTBEAT_EMISSION_INTERNAL_MS,

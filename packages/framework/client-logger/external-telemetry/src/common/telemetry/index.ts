@@ -14,10 +14,11 @@ import type { ContainerTelemetryEventName } from "../../container/index.js";
  */
 export interface IExternalTelemetry {
 	/**
-	 * The name of the telemetry event. This will include the scope of the event as well
+	 * The unique name of the telemetry event. The event name contains scope concatenated together
+	 * with periods to enable more granular log searching
 	 *
 	 * @example
-	 * "container.connected"
+	 * "fluidframework.container.connected"
 	 */
 	eventName: ExternalTelemetryEventName;
 }
