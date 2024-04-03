@@ -75,7 +75,7 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 						style={{
 							color:
 								themeInfo.name === ThemeOption.HighContrast
-									? ""
+									? undefined
 									: tokens.colorPalettePlatinumBorderActive,
 							fontStyle: "oblique",
 							fontSize: "10px",

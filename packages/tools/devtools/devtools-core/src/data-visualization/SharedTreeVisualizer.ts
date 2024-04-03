@@ -49,18 +49,23 @@ export function toVisualTree(tree: VisualSharedTreeNode): VisualChildNode {
 /**
  * Concatenrate allowed types for `ObjectNodeStoredSchema` and `MapNodeStoredSchema`.
  */
-function concatenateAllowedTypes(fieldKey: string, fieldTypes: TreeTypeSet | undefined): string {
+function concatenateAllowedTypes(
+	fieldKey: string,
+	fieldTypes: TreeTypeSet | undefined,
+	endFlag: boolean,
+): string {
 	let fieldAllowedType = fieldKey === EmptyKey ? "" : `${fieldKey} : `;
 
 	if (fieldTypes === undefined) {
 		fieldAllowedType += "any";
 	} else {
-		for (const type of fieldTypes) {
-			fieldAllowedType += `${type} | `;
-		}
+		const allowedTypes = [...fieldTypes].join(" | ");
+		fieldAllowedType += `${allowedTypes}`;
 	}
 
-	fieldAllowedType = `${fieldAllowedType.slice(0, -3)}, `;
+	if (!endFlag) {
+		fieldAllowedType += ", ";
+	}
 
 	return fieldAllowedType;
 }
@@ -71,18 +76,21 @@ function concatenateAllowedTypes(fieldKey: string, fieldTypes: TreeTypeSet | und
 function getObjectAllowedTypes(schema: ObjectNodeStoredSchema): string {
 	let result = "";
 
+	// Checks if the field is the last field in the map to prevent adding a trailing comma.
+	let idx = 0;
+	const size = schema.objectNodeFields.size;
+
 	for (const [fieldKey, treeFieldStoredSchema] of schema.objectNodeFields) {
 		// Set of allowed tree types `TreeTypeSet`.
 		const fieldTypes = treeFieldStoredSchema.types;
 
-		result += concatenateAllowedTypes(fieldKey, fieldTypes);
+		result += `${concatenateAllowedTypes(fieldKey, fieldTypes, idx === size - 1)}`;
+		idx += 1;
 
 		if (fieldKey === EmptyKey) {
-			return result.slice(0, -2);
+			return result;
 		}
 	}
-
-	result = result.slice(0, -2);
 
 	return `{ ${result} }`;
 }
@@ -101,12 +109,15 @@ function getMapAllowedTypes(
 	const mapFieldAllowedTypes = schema.mapFields.types;
 
 	let result = "";
-	for (const [fieldKey] of Object.entries(fields)) {
-		result += concatenateAllowedTypes(fieldKey, mapFieldAllowedTypes);
-	}
 
-	// Slice the trailing `, ` from the `result`.
-	result = result.slice(0, -2);
+	// Checks if the field is the last field in the map to prevent adding a trailing comma.
+	let idx = 0;
+	const size = Object.keys(fields).length;
+
+	for (const [fieldKey] of Object.entries(fields)) {
+		result += concatenateAllowedTypes(fieldKey, mapFieldAllowedTypes, idx === size - 1);
+		idx += 1;
+	}
 
 	return `{ ${result} }`;
 }
