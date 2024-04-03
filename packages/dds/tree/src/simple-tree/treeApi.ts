@@ -121,15 +121,14 @@ export const treeNodeApi: TreeNodeApi = {
 
 		switch (eventName) {
 			case "nodeChanged": {
-				let alreadySubscribedTotreeChanged: boolean = false;
+				let unsubscribeFromTreeChanged: (() => void) | undefined;
 				return anchor.on("childrenChanged", () => {
-					if (!alreadySubscribedTotreeChanged) {
-						const offtreeChanged = anchor.on("subtreeChanged", () => {
+					if (unsubscribeFromTreeChanged === undefined) {
+						unsubscribeFromTreeChanged = anchor.on("subtreeChanged", () => {
 							listener();
-							offtreeChanged();
-							alreadySubscribedTotreeChanged = false;
+							unsubscribeFromTreeChanged?.();
+							unsubscribeFromTreeChanged = undefined;
 						});
-						alreadySubscribedTotreeChanged = true;
 					}
 				});
 			}
