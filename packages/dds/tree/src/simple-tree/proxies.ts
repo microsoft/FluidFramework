@@ -189,7 +189,7 @@ export function createObjectProxy(
 	const proxy = new Proxy(targetObject, {
 		get(target, viewKey): unknown {
 			const flexKey = getFlexKey(viewKey as FieldKey);
-			const field = getFlexNode(proxy).tryGetField(brand(flexKey));
+			const field = getFlexNode(proxy).tryGetField(flexKey);
 
 			if (field !== undefined) {
 				return getProxyForField(field);
