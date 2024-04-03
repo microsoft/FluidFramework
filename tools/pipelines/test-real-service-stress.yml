@@ -49,6 +49,7 @@ stages:
         artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 120
         testCommand: start:odsp
+        skipTestResultPublishing: true
         env:
           login__microsoft__clientId: $(login-microsoft-clientId)
           login__microsoft__secret: $(login-microsoft-secret)
@@ -71,6 +72,7 @@ stages:
         artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 120
         testCommand: start:odspdf
+        skipTestResultPublishing: true
         env:
           login__microsoft__clientId: $(login-microsoft-clientId)
           login__microsoft__secret: $(login-microsoft-secret)
@@ -90,6 +92,7 @@ stages:
         artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 120
         testCommand: start:t9s
+        skipTestResultPublishing: true
         env:
           FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
           # Disable colorization for tinylicious logs (not useful when printing to a file)
@@ -112,9 +115,11 @@ stages:
         artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 120
         testCommand: start:frs
+        skipTestResultPublishing: true
         env:
           fluid__test__driver__frs: $(automation-fluid-test-driver-frs-stress-test)
           FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
+
   # stress tests frs canary
   - stage: stress_tests_frs_canary
     displayName: Stress tests - frs canary
@@ -131,6 +136,7 @@ stages:
         artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 120
         testCommand: start:frs:canary
+        skipTestResultPublishing: true
         env:
           fluid__test__driver__frsCanary: $(automation-fluid-driver-frs-canary-stress-test)
           FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject

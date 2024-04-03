@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
@@ -12,6 +13,7 @@ import {
 	DDSFuzzTestState,
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
+
 import { Anchor, UpPath, Value } from "../../../core/index.js";
 import {
 	cursorsFromContextualData,
@@ -20,6 +22,7 @@ import {
 } from "../../../feature-libraries/index.js";
 import { TreeContent } from "../../../shared-tree/index.js";
 import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils.js";
+
 import {
 	EditGeneratorOpWeights,
 	FuzzTestState,
@@ -76,6 +79,8 @@ describe("Fuzz - anchor stability", () => {
 	const runsPerBatch = 50;
 	describe("Anchors are unaffected by aborted transaction", () => {
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
+			set: 2,
+			clear: 1,
 			insert: 1,
 			remove: 2,
 			move: 2,
@@ -140,6 +145,8 @@ describe("Fuzz - anchor stability", () => {
 	});
 	describe("Anchors are stable", () => {
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
+			set: 2,
+			clear: 1,
 			insert: 2,
 			remove: 2,
 			move: 2,

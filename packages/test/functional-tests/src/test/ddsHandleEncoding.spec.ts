@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	type BuildNode,
 	Change,
@@ -12,21 +13,21 @@ import {
 	StablePlace,
 	type TraitLabel,
 } from "@fluid-experimental/tree";
-import { CellFactory } from "@fluidframework/cell";
-import { detectOutboundReferences } from "@fluidframework/container-runtime";
+import { CellFactory } from "@fluidframework/cell/internal";
+import { detectOutboundReferences } from "@fluidframework/container-runtime/internal";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
-import { DirectoryFactory, type ISharedDirectory, MapFactory } from "@fluidframework/map";
-import { SharedMatrixFactory } from "@fluidframework/matrix";
-import { ConsensusQueueFactory } from "@fluidframework/ordered-collection";
-import { ConsensusRegisterCollectionFactory } from "@fluidframework/register-collection";
-import { ReferenceType, SharedStringFactory } from "@fluidframework/sequence";
+import { SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { DirectoryFactory, type ISharedDirectory, MapFactory } from "@fluidframework/map/internal";
+import { SharedMatrixFactory } from "@fluidframework/matrix/internal";
+import { ConsensusQueueFactory } from "@fluidframework/ordered-collection/internal";
+import { ConsensusRegisterCollectionFactory } from "@fluidframework/register-collection/internal";
+import { ReferenceType, SharedStringFactory } from "@fluidframework/sequence/internal";
 import {
 	MockDeltaConnection,
 	MockFluidDataStoreRuntime,
 	MockHandle,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import { ITree, SchemaFactory, SharedTree, TreeConfiguration } from "@fluidframework/tree";
 
 /**

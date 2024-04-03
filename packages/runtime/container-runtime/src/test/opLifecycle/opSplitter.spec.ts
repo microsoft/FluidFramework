@@ -7,10 +7,12 @@
 
 import { strict as assert } from "assert";
 import * as crypto from "crypto";
-import { IBatchMessage } from "@fluidframework/container-definitions";
+
+import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import { ContainerMessageType } from "@fluidframework/container-runtime-previous";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+
 import { CompressionAlgorithms } from "../../containerRuntime.js";
 import {
 	BatchMessage,

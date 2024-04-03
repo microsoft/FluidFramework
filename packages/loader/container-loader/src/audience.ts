@@ -4,8 +4,8 @@
  */
 
 import { EventEmitter } from "@fluid-internal/client-utils";
-import { IAudienceOwner } from "@fluidframework/container-definitions";
-import { assert } from "@fluidframework/core-utils";
+import { IAudienceOwner } from "@fluidframework/container-definitions/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { IClient } from "@fluidframework/protocol-definitions";
 
 /**

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { ISubscribable } from "../../events/index.js";
 import { FieldKey, TreeStoredSchemaSubscription } from "../schema-stored/index.js";
 import {
@@ -16,6 +17,7 @@ import {
 	detachedFieldAsKey,
 	rootField,
 } from "../tree/index.js";
+
 import type { IEditableForest } from "./editableForest.js";
 
 /**

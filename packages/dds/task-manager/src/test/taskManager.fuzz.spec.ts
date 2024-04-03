@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import * as path from "path";
+
 import {
 	AsyncGenerator as Generator,
 	AsyncReducer as Reducer,
@@ -14,9 +15,11 @@ import {
 	takeAsync as take,
 } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+
 import { ITaskManager } from "../interfaces.js";
 import { TaskManagerFactory } from "../taskManagerFactory.js";
+
 import { _dirname } from "./dirname.cjs";
 
 type FuzzTestState = DDSFuzzTestState<TaskManagerFactory>;

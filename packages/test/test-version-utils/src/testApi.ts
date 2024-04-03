@@ -4,45 +4,45 @@
  */
 
 // Driver API
+import * as sequenceDeprecated from "@fluid-experimental/sequence-deprecated";
+import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { DriverApi } from "@fluid-private/test-drivers";
 
 // Loader API
-import { Loader } from "@fluidframework/container-loader";
-
-// ContainerRuntime API
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-
-// Data Runtime API
-import * as agentScheduler from "@fluidframework/agent-scheduler";
-import * as cell from "@fluidframework/cell";
-import { SharedCell } from "@fluidframework/cell";
-import * as counter from "@fluidframework/counter";
-import { SharedCounter } from "@fluidframework/counter";
-import * as map from "@fluidframework/map";
-import { SharedDirectory, SharedMap } from "@fluidframework/map";
-import * as matrix from "@fluidframework/matrix";
-import { SharedMatrix } from "@fluidframework/matrix";
-import * as orderedCollection from "@fluidframework/ordered-collection";
-import { ConsensusQueue } from "@fluidframework/ordered-collection";
-import * as registerCollection from "@fluidframework/register-collection";
-import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import * as sequence from "@fluidframework/sequence";
-import { SharedString } from "@fluidframework/sequence";
-import { TestFluidObjectFactory } from "@fluidframework/test-utils";
-import * as datastore from "@fluidframework/datastore";
-import { FluidDataStoreRuntime } from "@fluidframework/datastore";
-
-// ContainerRuntime and Data Runtime API
+import * as agentScheduler from "@fluidframework/agent-scheduler/internal";
 import {
 	BaseContainerRuntimeFactory,
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import * as sequenceDeprecated from "@fluid-experimental/sequence-deprecated";
-import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
+} from "@fluidframework/aqueduct/internal";
+import * as cell from "@fluidframework/cell/internal";
+import { SharedCell } from "@fluidframework/cell/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
 
+// ContainerRuntime API
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+
+// Data Runtime API
+import * as counter from "@fluidframework/counter/internal";
+import { SharedCounter } from "@fluidframework/counter/internal";
+import * as datastore from "@fluidframework/datastore/internal";
+import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
+import * as map from "@fluidframework/map/internal";
+import { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
+import * as matrix from "@fluidframework/matrix/internal";
+import { SharedMatrix } from "@fluidframework/matrix/internal";
+import * as orderedCollection from "@fluidframework/ordered-collection/internal";
+import { ConsensusQueue } from "@fluidframework/ordered-collection/internal";
+import * as registerCollection from "@fluidframework/register-collection/internal";
+import { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
+import * as sequence from "@fluidframework/sequence/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
+import { TestFluidObjectFactory } from "@fluidframework/test-utils/internal";
+
+// ContainerRuntime and Data Runtime API
 import * as semver from "semver";
+
 import { pkgVersion } from "./packageVersion.js";
 import {
 	checkInstalled,
