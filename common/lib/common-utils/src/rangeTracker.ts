@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
-import cloneDeep from "lodash/cloneDeep";
+import structuredClone from "@ungap/structured-clone";
 import { assert } from "./assert";
 
 /**
@@ -76,7 +75,7 @@ export class RangeTracker {
 			this.lastPrimary = primary;
 			this.lastSecondary = secondary;
 		} else {
-			this.ranges = cloneDeep(primary.ranges);
+			this.ranges = structuredClone(primary.ranges);
 			this.lastPrimary = primary.lastPrimary;
 			this.lastSecondary = primary.lastSecondary;
 		}
@@ -89,7 +88,7 @@ export class RangeTracker {
 		return {
 			lastPrimary: this.lastPrimary,
 			lastSecondary: this.lastSecondary,
-			ranges: cloneDeep(this.ranges),
+			ranges: structuredClone(this.ranges),
 		};
 	}
 
