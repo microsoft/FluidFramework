@@ -80,6 +80,7 @@ export interface AnchorLocator {
 
 // @internal
 export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEvents> {
+    readonly anchorSet: AnchorSet;
     child(key: FieldKey, index: number): UpPath<AnchorNode>;
     getOrCreateChildRef(key: FieldKey, index: number): [Anchor, AnchorNode];
     readonly slots: BrandedMapSubset<AnchorSlot<any>>;
