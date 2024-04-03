@@ -907,7 +907,11 @@ export class MockFluidDataStoreRuntime
 
 	public async resolveHandle(request: IRequest): Promise<IResponse> {
 		if (request.url !== undefined) {
-			return request.url as any as IResponse;
+			return {
+				status: 200,
+				mimeType: "fluid/object",
+				value: request.url,
+			};
 		}
 		return this.request(request);
 	}

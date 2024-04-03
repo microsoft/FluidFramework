@@ -1162,6 +1162,7 @@ export function mixinHandle<
 	if (options.handleGenerationDisabled === true) {
 		return model;
 	}
+	const idValues = Array.from<string>({ length: 5 }).fill(uuid());
 
 	const generatorFactory: () => AsyncGenerator<
 		TOperation | HandlePicked | UseHandle,
@@ -1170,7 +1171,6 @@ export function mixinHandle<
 		const baseGenerator = model.generatorFactory();
 		return async (state): Promise<TOperation | HandlePicked | UseHandle | typeof done> => {
 			if (state.random.bool(0.5)) {
-				const idValues = Array.from<string>({ length: 5 }).fill(uuid());
 				return {
 					type: "handlePicked",
 					handleId: idValues[state.random.integer(0, idValues.length - 1)],

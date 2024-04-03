@@ -10,7 +10,7 @@ import { generateHandleContextPath } from "@fluidframework/runtime-utils/interna
  * @internal
  */
 export class DDSFuzzHandle implements IFluidHandle<string> {
-	private readonly attached: boolean = false;
+	private attached: boolean = false;
 
 	public get IFluidHandle(): IFluidHandle {
 		return this;
@@ -25,6 +25,7 @@ export class DDSFuzzHandle implements IFluidHandle<string> {
 	constructor(
 		public readonly id: string,
 		public readonly routeContext: IFluidHandleContext,
+		private readonly onAttachGraph?: () => void,
 	) {
 		this.absolutePath = generateHandleContextPath(id, this.routeContext);
 	}
@@ -35,7 +36,10 @@ export class DDSFuzzHandle implements IFluidHandle<string> {
 	}
 
 	public attachGraph(): void {
-		throw new Error("Method not implemented.");
+		if (!this.attached) {
+			this.attached = true;
+			this.onAttachGraph?.();
+		}
 	}
 
 	public bind(handle: IFluidHandle): void {
