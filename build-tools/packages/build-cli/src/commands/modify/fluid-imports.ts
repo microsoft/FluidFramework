@@ -26,6 +26,11 @@ const knownLevels = [publicLevel, alphaLevel, betaLevel, internalLevel] as const
 type ApiLevel = (typeof knownLevels)[number];
 
 /**
+ * FF packages that exist outside of a scope that starts with `@fluid`.
+ */
+const unscopedFFPackages = new Set(["fluid-framework", "tinylicious"]);
+
+/**
  * Rewrite imports for Fluid Framework APIs to use the correct subpath import (/alpha, /beta. etc.).
  */
 export default class UpdateFluidImportsCommand extends BaseCommand<
@@ -247,6 +252,15 @@ class FluidImportManager {
 		return true;
 	}
 
+	/**
+	 * Gets existing or creates new {@link FluidImportData} for given package,
+	 * level, and type-sense.
+	 *
+	 * When there isn't an existing {@link ImportDeclaration}, a pending object
+	 * is added to build up needed imports.
+	 *
+	 * @returns The {@link FluidImportData} for import case
+	 */
 	private ensureFluidImport({
 		packageName,
 		level,
@@ -273,6 +287,7 @@ class FluidImportManager {
 		}
 
 		const moduleSpecifier = level === publicLevel ? packageName : `${packageName}/${level}`;
+		// Order imports primarily by level then secondarily: type, untyped
 		const order = knownLevels.indexOf(level) * 2 + (isTypeOnly ? 0 : 1);
 		const { index, after } = this.findInsertionPoint(packageName, order);
 		const newFluidImport: FluidImportDataPending = {
@@ -447,10 +462,7 @@ function parseFluidImports(
 }
 
 function isFluidImport(packageName: string): boolean {
-	return (
-		packageName.startsWith("@fluid") ||
-		["fluid-framework", "tinylicious"].includes(packageName)
-	);
+	return packageName.startsWith("@fluid") || unscopedFFPackages.has(packageName);
 }
 
 function isImportUnassigned(importDeclaration: ImportDeclaration): boolean {
