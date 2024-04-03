@@ -7,11 +7,14 @@ import { spy, type Sinon } from "sinon";
 import { expect } from "chai";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions/internal";
-import { IContainer, IContainerEvents } from "@fluidframework/container-definitions/internal";
-import { startTelemetry, TelemetryConfig } from "../factory/index.js";
+import {
+	type IContainer,
+	type IContainerEvents,
+} from "@fluidframework/container-definitions/internal";
+import { startTelemetry, type TelemetryConfig } from "../factory/index.js";
 import { ApplicationInsights } from "@microsoft/applicationinsights-web";
 import { IFluidContainerSystemEventNames } from "../container/containerSystemEvents.js";
-import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import { type IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { IFluidContainer } from "@fluidframework/fluid-static";
 import { createFluidContainer, type IRootDataObject } from "@fluidframework/fluid-static/internal";
 import {
@@ -47,7 +50,9 @@ class MockContainer
 	}
 
 	public dispose(error?: ICriticalContainerError): void {
-		this.emit(IFluidContainerSystemEventNames.DISPOSED, error);
+		// IFluidContainer wraps the internal container events and emits its own events that aren't a 1:1 match.
+		// In this case, the "closed" event is instead wrapped on IFluidContainer which will emit "disposed" instead.
+		this.emit("closed", error);
 	}
 }
 
@@ -159,6 +164,8 @@ describe("External container telemetry", () => {
 		startTelemetry(telemetryConfig);
 
 		mockContainer.dispose();
+
+		expect(trackEventSpy.callCount).to.equal(1);
 
 		// Obtain the events from the method that the spy was called with
 		const actualTelemetryEvent = trackEventSpy.getCall(0).args[0];

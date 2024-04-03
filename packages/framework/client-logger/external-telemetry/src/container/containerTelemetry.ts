@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IExternalTelemetry } from "../common/index.js";
+import { type IExternalTelemetry } from "../common/index.js";
 import { type ICriticalContainerError } from "@fluidframework/container-definitions";
 
 /**

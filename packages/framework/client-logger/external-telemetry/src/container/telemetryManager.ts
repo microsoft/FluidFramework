@@ -4,11 +4,14 @@
  */
 
 import { type ICriticalContainerError } from "@fluidframework/container-definitions";
-import { IContainerTelemetry, type ContainerHeartbeatTelemetry } from "./containerTelemetry.js";
-import { ContainerEventTelemetryProducer } from "./telemetryProducer.js";
-import { ITelemetryConsumer } from "../common/index.js";
 import {
-	IFluidContainerSystemEventName,
+	type IContainerTelemetry,
+	type ContainerHeartbeatTelemetry,
+} from "./containerTelemetry.js";
+import { ContainerEventTelemetryProducer } from "./telemetryProducer.js";
+import { type ITelemetryConsumer } from "../common/index.js";
+import {
+	type IFluidContainerSystemEventName,
 	IFluidContainerSystemEventNames,
 } from "./containerSystemEvents.js";
 import type { IFluidContainer } from "@fluidframework/fluid-static";
