@@ -9,13 +9,13 @@ import { type ITelemetryConsumer } from "../common/index.js";
 import type { IFluidContainer } from "@fluidframework/fluid-static";
 
 /**
- * Configuration object for subscribing to {@link IExternalTelemetry} and consuming said telemetry via one or more {@link ITelemetryConsumer}
+ * Configuration object for subscribing to {@link @fluidframework/external-telemetry#IFluidTelemetry} and consuming said telemetry via one or more {@link ITelemetryConsumer}
  *
  * @beta
  */
 export interface TelemetryConfig {
 	/**
-	 * The container whose events should be monitored, transformed into external telemetry, and sent to a {@link ITelemetryConsumer}.
+	 * The container whose events should be monitored, transformed into Fluid telemetry, and sent to a {@link ITelemetryConsumer}.
 	 */
 	container: IFluidContainer;
 	/**
@@ -25,14 +25,14 @@ export interface TelemetryConfig {
 	 */
 	containerId: string;
 	/**
-	 * Conusmers take incoming produced {@link IExternalTelemetry} and do something of your choice with it.
+	 * Conusmers take incoming produced {@link IFluidTelemetry} and do something of your choice with it.
 	 * This could be sending the telemetry to a cloud platform or just console logging.
 	 */
 	consumers: ITelemetryConsumer[];
 }
 
 /**
- * Starts creating {@link IExternalTelemetry} by transforming raw system events emitted by the specified container
+ * Starts creating {@link IFluidTelemetry} by transforming raw system events emitted by the specified container
  * into said telemetry and passing it onto to the specified {@link ITelemetryConsumer}
  *
  * @beta

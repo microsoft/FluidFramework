@@ -22,7 +22,7 @@ import {
 	type ContainerConnectedTelemetry,
 	type ContainerDisconnectedTelemetry,
 	type ContainerDisposedTelemetry,
-	type IExternalTelemetry,
+	type IFluidTelemetry,
 	type ITelemetryConsumer,
 } from "../index.js";
 /**
@@ -95,7 +95,7 @@ describe("External container telemetry", () => {
 		class AppInsightsTelemetryConsumer implements ITelemetryConsumer {
 			constructor(private readonly appInsightsClient: ApplicationInsights) {}
 
-			consume(event: IExternalTelemetry) {
+			consume(event: IFluidTelemetry) {
 				this.appInsightsClient.trackEvent({
 					name: event.eventName,
 					properties: event,

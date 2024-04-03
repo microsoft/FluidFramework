@@ -4,8 +4,8 @@
  */
 
 export {
-	type IExternalTelemetry,
-	type ExternalTelemetryEventName,
+	type IFluidTelemetry,
+	type FluidTelemetryEventName,
 	type ITelemetryConsumer,
 } from "./common/index.js";
 export {

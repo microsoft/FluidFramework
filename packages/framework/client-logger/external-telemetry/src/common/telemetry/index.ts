@@ -6,13 +6,13 @@
 import type { ContainerTelemetryEventName } from "../../container/index.js";
 
 /**
- * The base interface extended by all external telemetry
+ * The base interface extended by all fluid telemetry
  *
  * @see {@link @fluidframework/external-telemetry#IContainerTelemetry} for an extension of this interface for all container related telemetry.
  *
  * @beta
  */
-export interface IExternalTelemetry {
+export interface IFluidTelemetry {
 	/**
 	 * The unique name of the telemetry event. The event name contains scope concatenated together
 	 * with periods to enable more granular log searching
@@ -20,14 +20,14 @@ export interface IExternalTelemetry {
 	 * @example
 	 * "fluidframework.container.connected"
 	 */
-	eventName: ExternalTelemetryEventName;
+	eventName: FluidTelemetryEventName;
 }
 
 /**
- * Aggregate type for all the different types of external telemetry event names.
+ * Aggregate type for all the different types of fluid telemetry event names.
  *
  * @privateremarks This only looks odd right now because {@link ContainerTelemetryEventName} is the only aggregation at the moment.
  *
  * @beta
  */
-export type ExternalTelemetryEventName = ContainerTelemetryEventName;
+export type FluidTelemetryEventName = ContainerTelemetryEventName;

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type IExternalTelemetry } from "../common/index.js";
+import { type IFluidTelemetry } from "../common/index.js";
 import { type ICriticalContainerError } from "@fluidframework/container-definitions";
 
 /**
@@ -47,9 +47,9 @@ export type ContainerTelemetryEventName =
  * The base interface for all Container telemetry
  * @beta
  */
-export interface IContainerTelemetry extends IExternalTelemetry {
+export interface IContainerTelemetry extends IFluidTelemetry {
 	/**
-	 * {@inheritdoc IExternalTelemetry.eventName}
+	 * {@inheritdoc IFluidTelemetry.eventName}
 	 */
 	eventName: ContainerTelemetryEventName;
 	/**
@@ -81,7 +81,7 @@ export interface IContainerTelemetry extends IExternalTelemetry {
  */
 export interface ContainerConnectedTelemetry extends IContainerTelemetry {
 	/**
-	 * {@inheritDoc IExternalTelemetry.eventName}
+	 * {@inheritDoc IFluidTelemetry.eventName}
 	 */
 	eventName: "fluidframework.container.connected";
 }
@@ -99,7 +99,7 @@ export interface ContainerConnectedTelemetry extends IContainerTelemetry {
  */
 export interface ContainerDisconnectedTelemetry extends IContainerTelemetry {
 	/**
-	 * {@inheritDoc IExternalTelemetry.eventName}
+	 * {@inheritDoc IFluidTelemetry.eventName}
 	 */
 	eventName: "fluidframework.container.disconnected";
 }
@@ -115,7 +115,7 @@ export interface ContainerDisconnectedTelemetry extends IContainerTelemetry {
  */
 export interface ContainerDisposedTelemetry extends IContainerTelemetry {
 	/**
-	 * {@inheritDoc IExternalTelemetry.eventName}
+	 * {@inheritDoc IFluidTelemetry.eventName}
 	 */
 	eventName: "fluidframework.container.disposed";
 	/**

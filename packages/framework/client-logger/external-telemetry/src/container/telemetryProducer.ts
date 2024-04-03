@@ -15,7 +15,7 @@ import {
 	IFluidContainerSystemEventNames,
 } from "./containerSystemEvents.js";
 import { v4 as uuid } from "uuid";
-import type { IExternalTelemetry } from "../index.js";
+import type { IFluidTelemetry } from "../index.js";
 
 /**
  * This class produces {@link IContainerTelemetry} from raw container system events {@link @fluidframework/fluid-static#IFluidContainerEvents}.
@@ -50,12 +50,12 @@ export class ContainerEventTelemetryProducer {
 		}
 	}
 
-	public produceHeartbeatTelemetry = (): IExternalTelemetry => {
+	public produceHeartbeatTelemetry = (): IFluidTelemetry => {
 		return {
 			eventName: "fluidframework.container.heartbeat",
 			containerId: this.containerId,
 			containerInstanceId: this.containerInstanceId,
-		} as unknown as IExternalTelemetry;
+		} as unknown as IFluidTelemetry;
 	};
 
 	private produceBaseContainerTelemetry = (

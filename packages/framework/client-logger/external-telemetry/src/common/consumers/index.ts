@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { IExternalTelemetry } from "../index.js";
+import type { IFluidTelemetry } from "../index.js";
 
 /**
  * Base interface for all telemetry consumers.
- * Conusmers are intended to take incoming produced {@link IExternalTelemetry} and do something of your choice with it.
+ * Conusmers are intended to take incoming produced {@link IFluidTelemetry} and do something of your choice with it.
  * This could be sending the telemetry to a cloud platform or just console logging.
  *
  * @example
@@ -16,7 +16,7 @@ import type { IExternalTelemetry } from "../index.js";
  * class AppInsightsTelemetryConsumer implements ITelemetryConsumer {
  *	   constructor(private readonly appInsightsClient: ApplicationInsights) {}
  *
- *	   consume(event: IExternalTelemetry) {
+ *	   consume(event: IFluidTelemetry) {
  *		   this.appInsightsClient.trackEvent({
  *			   name: event.eventName,
  *			   properties: event,
@@ -29,8 +29,8 @@ import type { IExternalTelemetry } from "../index.js";
  */
 export interface ITelemetryConsumer {
 	/**
-	 * This method is intended to take created {@link IExternalTelemetry} and do something with it.
+	 * This method is intended to take created {@link IFluidTelemetry} and do something with it.
 	 * This could be sending the telemetry to a cloud platform, just console logging or something else of your choice.
 	 */
-	consume(event: IExternalTelemetry);
+	consume(event: IFluidTelemetry);
 }

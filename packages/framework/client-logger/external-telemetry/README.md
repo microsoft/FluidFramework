@@ -4,7 +4,7 @@ This package contains code enabling the production and consumption of typed tele
 
 ### Telemetry Destinations
 
-At this time, Azure App Insights is the only available destination for Fluid external telemetry. Eventually, more destinations will be added.
+At this time, Azure App Insights is the only available destination for Fluid telemetry. Eventually, more destinations will be added.
 
 ### What is Application Insights?
 
@@ -13,7 +13,7 @@ You create an App Insights Instance and then configure your applications to send
 This could be general machine related health being automatically reported to the instance when you install a logging program on your service’s machines or custom metrics that you manually configure your applications to send. Keep in mind this logger is intended for use with browser based web applications, not pure nodeJS.
 In our case, we are sending custom metrics. [Learn more about Azure App Insights with their docs](https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview?tabs=net)
 
-### Areas currently supported for external telemetry
+### Areas currently supported for Fluid telemetry
 
 1. Containers
 
@@ -24,7 +24,7 @@ The core functionality of this package is exposed by the `createTelemetryManager
 ```ts
 import { ApplicationInsights } from "@microsoft/applicationinsights-web";
 import { IFluidContainer } from "@fluidframework/fluid-static";
-import { TelemetryConfig, startTelemetry } from "@fluidframework/external-telemetry"
+import { TelemetryConfig, startTelemetry, IFluidTelemetry } from "@fluidframework/external-telemetry"
 
 let myAppContainer: IFluidContainer;
 let myAppContainerId: string;
@@ -51,7 +51,7 @@ appInsightsClient.loadAppInsights();
 class AppInsightsTelemetryConsumer implements ITelemetryConsumer {
 	constructor(private readonly appInsightsClient: ApplicationInsights) {}
 
-	consume(event: Record<string, any>) {
+	consume(event: IFluidTelemetry) {
 		this.appInsightsClient.trackEvent({
 			name: event.eventName,
 			properties: event,

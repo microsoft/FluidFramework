@@ -34,23 +34,23 @@ export const ContainerTelemetryEventNames: {
 };
 
 // @beta
-export type ExternalTelemetryEventName = ContainerTelemetryEventName;
+export type FluidTelemetryEventName = ContainerTelemetryEventName;
 
 // @beta
-export interface IContainerTelemetry extends IExternalTelemetry {
+export interface IContainerTelemetry extends IFluidTelemetry {
     containerId?: string;
     containerInstanceId: string;
     eventName: ContainerTelemetryEventName;
 }
 
 // @beta
-export interface IExternalTelemetry {
-    eventName: ExternalTelemetryEventName;
+export interface IFluidTelemetry {
+    eventName: FluidTelemetryEventName;
 }
 
 // @beta
 export interface ITelemetryConsumer {
-    consume(event: IExternalTelemetry): any;
+    consume(event: IFluidTelemetry): any;
 }
 
 // @beta
