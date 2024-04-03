@@ -14,6 +14,12 @@ To best achieve this goal we plan to deliver a set of libraries that enable deve
     Using the libraries should teach what is needed when it's needed rather than requiring collaboration specific knowledge or experience as a prerequisite.
     The learning curve should be fast enough to be productive on day one, both for maintaining existing experiences or authoring new ones.
 
+-   Leverage existing tools, code and knowledge where practical.
+
+    When authoring an application using Shared Tree, it should be easy to interoperate with existing libraries and services.
+    Shared Tree's APIs should interoperate with existing common libraries, conventions, standards and data-models.
+    When multiple options are possible, Shared Tree should align with more popular established patterns and ecosystems for seamless integration while ensuring that other existing systems can still be used through additional customized adapters or interop logic as needed.
+
 -   Avoid common pitfalls of collaborative software.
 
     Collaboration often introduces subtle requirements, especially around compatibility, updates, offline use, error cases, persistence and concurrency.
@@ -40,11 +46,18 @@ To best achieve this goal we plan to deliver a set of libraries that enable deve
     Users of shared tree can start by authoring their own specialized version of any of these (if needed), and then consider generalizing them as either independent libraries or upstream contributions.
 
 Another way to describe these goals is that Shared Tree needs to be able to be **adopted with confidence**.
-Once adopted, it must be **easily learnable** and **productive** for developers new to collaborative application while being **flexible** in what it supports and produce **robust** and **high quality** collaborative experiences.
+Once adopted, it must **compatible with existing systems**, **easily learnable** and **productive** for developers new to collaborative application while being **flexible** in what it supports and produce **robust** and **high quality** collaborative experiences.
 
 In addition to these overall goals, Shared Tree also needs to provide an MVP early in the development and internally be **maintainable** and **extensible**.
 This allows it to deliver value early, but also continue to be developed to reduce the development effort required of application authors to improve the experience it enables for end users.
 These internal requirements mostly follow from the above flexibility requirement, but are worth the extra emphasis.
+
+# Balancing Conflicting Goals
+
+These goals are values which the Shared Tree tries to maximize.
+There are however cases where trad-offs must be made.
+For example, being compatible with existing libraries and conventions from non-collaborative applications can lead to APIs that lead to common collaboration pitfalls, like unclear merge behavior due to insufficient semantics captured through the editing APIs.
+Much of the design of Shared tree is to avoid having to make these tradeoffs and this is the preferred approach, however some can not be avoided, and they will be evaluated carefully.
 
 # Implications of these Goals
 
@@ -83,7 +96,7 @@ For example, the merge resolution logic for sequences is defined as a single com
 Additionally the Shared Tree architecture organizes these components such that if needed they can be replaced incrementally.
 For example, the tree reading and editing API is built on-top of cursors.
 A different version of this API can be authored, tested and adopted side by side with the old one with minimum difficulty.
-If the underlying tree storage (`forest`) changes, the tree API components (`editable-tree`) will not be impacted.
+If the underlying tree storage (`forest`) changes, the tree API components (`flex-tree` (internal) and `simple-tree` (public)) will not be impacted.
 Similarly if the cursor API needed to change, forest could add support for the new one (without dropping the old one), then users could migrate incrementally.
 This kind of concurrent multi-version support is extra important for cases which fall into category one above (impact data compatibility not just API compatibility).
 For example shared tree can introduce a new version of editing primitives and/or merge semantics for a field kind (for example sequence, see below),
@@ -92,12 +105,7 @@ which applications can opt into in their schema in a compatible way.
 Shared Tree is also designed to ensure applications using it can also adopt this same compatibility approach while minimizing the frequency and difficulty of doing so.
 For example the APIs Shared Tree exposes for working with schema are designed to help guide users of it into design patterns that are robust and maintainable even when faced with supporting large numbers of legacy schema.
 
-## Bipartite Tree and Field Kinds
-
-The Tree is made up of Nodes and Fields:
-
-1. Nodes are (shallowly) immutable and have a logical identity, a type and either a value (for leaf nodes) or fields under string keys (for non-leaf nodes).
-2. Fields are collaboratively editable collections of nodes.
+## Data Model and Editing
 
 When users edit documents, those high level semantic operations need to be encoded in a way that supports merges.
 Additionally this encoding needs to be deterministically applied in all clients, even if they are using different version of Shared Tree.
@@ -107,12 +115,12 @@ For example, new edit operations can be added or new configuration flags added t
 This can get complicated, so to keep it manageable, this problem was subdivided in a few different ways.
 
 The data-model for Shared Tree was selected to assist with subdividing this problem.
-The selected data-model consists of many small structures named "fields" where collaborative edits interact, and "nodes" which connect them into a hierarchy and assigns types to each of the fields.
+The selected data-model consists of many small structures named **fields** where collaborative edits interact, and **nodes** which connect them into a hierarchy and assigns types to each of the fields.
 
 The nodes have schema which define the schema for their fields.
-There are a few [kinds](<https://en.wikipedia.org/wiki/Kind_(type_theory)>) of nodes that configure their fields differently, for example structs (with a fixed set of mixed field types) or maps (with an extensible set of matching field types).
+There are a few [kinds](<https://en.wikipedia.org/wiki/Kind_(type_theory)>) of nodes that configure their fields differently, for example objects (with a fixed set of mixed field types) or maps (with an extensible set of matching field types).
 
-There are also a few kinds of fields which provide different collaborative data-structures (like `sequence`, or `optional`), each of which hold nodes.
+There are also a few kinds of fields which provide different collaborative data-structures (like `sequence`, or `optional`), each of which hold nodes and define what edits can be made to them.
 
 All of the editing is done in the fields via the `field kind`.
 This allows the editing logic, both API and merge policy, to be packaged together into minimal versionable units (`field kinds`).
@@ -122,6 +130,12 @@ This also leverages all the same collaboration as the rest of schema evolution, 
 This results in a tree where the overall shape is controlled by the application via its tree schema (for the nodes) and the alternating layers of fields provide all the complex logic, neatly separating the concerns.
 This can also be thought of as a tree of entities alternating between fields and nodes.
 As these two kinds of entities alternate and thus never touch, this resembles a [Bipartite Graph](https://en.wikipedia.org/wiki/Bipartite_graph), and can be called a Bipartite Tree.
+
+To better align this data-model with existing libraries, `simple-tree` abstracts fields in a way that depends on the kind of the node they are part of.
+For example the fields of object nodes are presented as JavaScript enumerable own properties.
+Additionally `simple-tree` restricts where different kinds of fields can be used to help with this.
+For example `sequence` fields are only permitted via `array` nodes, which present the node and its sequence field like an array.
+To assist with this `simple-tree` leverages view schema which allow the application to provide guidance on how to construct the API for each type of node.
 
 # Constraints
 
