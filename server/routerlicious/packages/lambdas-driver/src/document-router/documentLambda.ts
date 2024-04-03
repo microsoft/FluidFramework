@@ -38,7 +38,10 @@ export class DocumentLambda implements IPartitionLambda {
 		private readonly context: IContext,
 		private readonly documentLambdaServerConfiguration: IDocumentLambdaServerConfiguration,
 	) {
-		this.contextManager = new DocumentContextManager(context);
+		this.contextManager = new DocumentContextManager(
+			context,
+			documentLambdaServerConfiguration,
+		);
 		this.contextManager.on("error", (error, errorData: IContextErrorData) => {
 			context.error(error, errorData);
 		});

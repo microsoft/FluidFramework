@@ -11,6 +11,7 @@ import {
 	ILogger,
 	IContextErrorData,
 	IRoutingKey,
+	IDocumentLambdaServerConfiguration,
 } from "@fluidframework/server-services-core";
 
 /**
@@ -27,6 +28,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 	private contextError = undefined;
 
 	constructor(
+		private readonly documentLambdaServerConfiguration: IDocumentLambdaServerConfiguration,
 		private readonly routingKey: IRoutingKey,
 		head: IQueuedMessage,
 		public readonly log: ILogger | undefined,
@@ -81,6 +83,14 @@ export class DocumentContext extends EventEmitter implements IContext {
 
 		// Assert offset is between the current tail and head
 		const offset = message.offset;
+
+		if (
+			offset === this.tail.offset &&
+			this.documentLambdaServerConfiguration.ignoreDuplicateCheckpoint
+		) {
+			// offset is already set, and we are configured to ignore duplicate checkpoints
+			return;
+		}
 
 		assert(
 			offset > this.tail.offset && offset <= this.head.offset,

@@ -173,6 +173,9 @@ export interface IDocumentLambdaServerConfiguration {
 
 	// How often to check the partitions for inacitivty
 	partitionActivityCheckInterval: number;
+
+	// Ignore checkpoints that are duplicates of the last checkpoint
+	ignoreDuplicateCheckpoint: boolean;
 }
 
 // Moira lambda configuration
@@ -294,5 +297,6 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
 	documentLambda: {
 		partitionActivityTimeout: 10 * 60 * 1000,
 		partitionActivityCheckInterval: 60 * 1000,
+		ignoreDuplicateCheckpoint: false,
 	},
 };

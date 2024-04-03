@@ -10,6 +10,7 @@ import {
 	IContextErrorData,
 	IQueuedMessage,
 	IRoutingKey,
+	IDocumentLambdaServerConfiguration,
 } from "@fluidframework/server-services-core";
 import { DocumentContext } from "./documentContext";
 
@@ -37,7 +38,10 @@ export class DocumentContextManager extends EventEmitter {
 
 	private closed = false;
 
-	constructor(private readonly partitionContext: IContext) {
+	constructor(
+		private readonly partitionContext: IContext,
+		private readonly documentLambdaServerConfiguration: IDocumentLambdaServerConfiguration,
+	) {
 		super();
 	}
 
@@ -51,6 +55,7 @@ export class DocumentContextManager extends EventEmitter {
 
 		// Create the new context and register for listeners on it
 		const context = new DocumentContext(
+			this.documentLambdaServerConfiguration,
 			routingKey,
 			head,
 			this.partitionContext.log,
