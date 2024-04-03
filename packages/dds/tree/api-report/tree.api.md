@@ -1899,14 +1899,12 @@ export abstract class TreeNode implements WithType {
 
 // @public
 export interface TreeNodeApi {
-    child(node: TreeNode, storedKey: StoredKey): TreeNode | TreeLeafValue | undefined;
     is<TSchema extends TreeNodeSchema>(value: unknown, schema: TSchema): value is NodeFromSchema<TSchema>;
     key(node: TreeNode): string | number;
     on<K extends keyof TreeNodeEvents>(node: TreeNode, eventName: K, listener: TreeNodeEvents[K]): () => void;
     parent(node: TreeNode): TreeNode | undefined;
     schema<T extends TreeNode | TreeLeafValue>(node: T): TreeNodeSchema<string, NodeKind, unknown, T>;
     readonly status: (node: TreeNode) => TreeStatus;
-    storedKey(node: TreeNode): StoredKey | number;
 }
 
 // @public

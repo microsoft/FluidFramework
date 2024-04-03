@@ -107,29 +107,6 @@ describe("treeApi", () => {
 		assert.equal(Tree.parent(root[1].x), root[1]);
 	});
 
-	it("child", () => {
-		class Root extends schema.object("Root", {
-			x: schema.required(Point, { key: "xPos" }),
-		}) {}
-		const config = new TreeConfiguration(Root, () => ({ x: {} }));
-		const root = getView(config).root;
-
-		const child = Tree.child(root, "xPos");
-		assert.equal(child, root.x);
-	});
-
-	it("storedKey", () => {
-		class Root extends schema.object("Root", {
-			foo: schema.required(Point, { key: "storedFoo" }),
-			bar: Point,
-		}) {}
-		const config = new TreeConfiguration(Root, () => ({ foo: {}, bar: {} }));
-		const root = getView(config).root;
-
-		assert.equal(Tree.storedKey(root.foo), "storedFoo");
-		assert.equal(Tree.storedKey(root.bar), "bar");
-	});
-
 	it("treeStatus", () => {
 		class Root extends schema.object("Root", { x: Point }) {}
 		const config = new TreeConfiguration(Root, () => ({ x: {} }));

@@ -217,12 +217,8 @@ export enum NodeKind {
  * If not explicitly set via the schema, this is the same as the schema's property key.
  *
  * Specifying a stored key that differs from the property key is particularly useful in refactoring scenarios.
- * To update the developer-facing API, while maintain backwards compatibility with existing SharedTree data,
+ * To update the developer-facing API, while maintaining backwards compatibility with existing SharedTree data,
  * you can change the property key and specify the previous property key as the stored key.
- *
- * To query a node for its stored key via its property key, use {@link TreeNodeApi.storedKey}.
- * To access an object's child via its stored name instead of its property key, use {@link TreeNodeApi.child}.
- * These APIs can be useful when working with SharedTree data from a different version of the schema.
  *
  * Notes:
  *

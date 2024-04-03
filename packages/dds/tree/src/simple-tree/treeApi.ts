@@ -14,9 +14,9 @@ import {
 	isTreeValue,
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
-import { brand, fail } from "../util/index.js";
+import { fail } from "../util/index.js";
 
-import { getOrCreateNodeProxy, getProxyForField } from "./proxies.js";
+import { getOrCreateNodeProxy } from "./proxies.js";
 import { getFlexNode, tryGetFlexNode } from "./proxyBinding.js";
 import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
 import { schemaFromValue } from "./schemaFactory.js";
@@ -63,16 +63,6 @@ export interface TreeNodeApi {
 	): value is NodeFromSchema<TSchema>;
 
 	/**
-	 * Gets the child node based on its {@link StoredKey | stored key}, if it exists.
-	 *
-	 * @param node - The node whose child is being queried.
-	 * @param storedKey - The stored key whose associated child will be returned.
-	 *
-	 * @returns The associated child node, if it exists. Otherwise `undefined`.
-	 */
-	child(node: TreeNode, storedKey: StoredKey): TreeNode | TreeLeafValue | undefined;
-
-	/**
 	 * Return the node under which this node resides in the tree (or undefined if this is a root node of the tree).
 	 */
 	parent(node: TreeNode): TreeNode | undefined;
@@ -84,17 +74,6 @@ export interface TreeNodeApi {
 	 * Otherwise, this returns the key of the field that it is under (a `string`).
 	 */
 	key(node: TreeNode): string | number;
-
-	/**
-	 * Gets the {@link StoredKey | stored key} of the given node under its parent.
-	 *
-	 * @remarks
-	 * If one was not explicitly specified by the schema of the parent node, this will be the same as the
-	 * object property key.
-	 *
-	 * @param node - The node whose stored key is being queried.
-	 */
-	storedKey(node: TreeNode): StoredKey | number;
 
 	/**
 	 * Register an event listener on the given node.
@@ -116,12 +95,6 @@ export interface TreeNodeApi {
  * The `Tree` object holds various functions for analyzing {@link TreeNode}s.
  */
 export const treeNodeApi: TreeNodeApi = {
-	child: (node: TreeNode, storedKey: StoredKey) => {
-		const editNode = getFlexNode(node);
-		const flexField = editNode.tryGetField(brand(storedKey));
-
-		return flexField === undefined ? undefined : getProxyForField(flexField);
-	},
 	parent: (node: TreeNode): TreeNode | undefined => {
 		const editNode = getFlexNode(node).parentField.parent.parent;
 		if (editNode === undefined) {
@@ -146,22 +119,10 @@ export const treeNodeApi: TreeNodeApi = {
 		// The flex-domain strictly operates in terms of "stored keys".
 		// To find the associated developer-facing "view key", we need to look up the field associated with
 		// the stored key from the flex-domain, and get view key its simple-domain counterpart was created with.
-		const storedKey = treeNodeApi.storedKey(node);
+		const storedKey = getStoredKey(node);
 		const parentSchema = treeNodeApi.schema(parent);
 		const viewKey = getViewKeyFromStoredKey(parentSchema, storedKey);
 		return viewKey;
-	},
-	storedKey: (node: TreeNode): StoredKey | number => {
-		// Note: the flex domain strictly works with "stored keys", and knows nothing about the developer-facing
-		// "view keys".
-		const parentField = getFlexNode(node).parentField;
-		if (parentField.parent.schema.kind.multiplicity === Multiplicity.Sequence) {
-			// The parent of `node` is an array node
-			return parentField.index;
-		}
-
-		// The parent of `node` is an object, a map, or undefined (and therefore `node` is a root/detached node).
-		return parentField.parent.key;
 	},
 	on: <K extends keyof FlexTreeNodeEvents>(
 		node: TreeNode,
@@ -199,6 +160,22 @@ export const treeNodeApi: TreeNodeApi = {
 		>;
 	},
 };
+
+/**
+ * Gets the stored key with which the provided node is associated in the parent.
+ */
+function getStoredKey(node: TreeNode): StoredKey | number {
+	// Note: the flex domain strictly works with "stored keys", and knows nothing about the developer-facing
+	// "view keys".
+	const parentField = getFlexNode(node).parentField;
+	if (parentField.parent.schema.kind.multiplicity === Multiplicity.Sequence) {
+		// The parent of `node` is an array node
+		return parentField.index;
+	}
+
+	// The parent of `node` is an object, a map, or undefined (and therefore `node` is a root/detached node).
+	return parentField.parent.key;
+}
 
 /**
  * Given a node schema, gets the view key corresponding with the provided {@link StoredKey | stored key}.
