@@ -25,7 +25,7 @@ import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexLi
 import { TreeContent } from "../shared-tree/index.js";
 import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
 
-import { InsertableContent, extractFactoryContent } from "./proxies.js";
+import { InsertableContent, extractFactoryContent, getFlexKey } from "./proxies.js";
 import {
 	cachedFlexSchemaFromClassSchema,
 	setFlexSchemaFromClassSchema,
@@ -225,15 +225,9 @@ export function convertNodeSchema(
 				const info = schema.info as Record<string, ImplicitFieldSchema>;
 				const fields: Record<string, FlexFieldSchema> = Object.create(null);
 				for (const [viewKey, implicitFieldSchema] of Object.entries(info)) {
-					// If a `stableName` was provided, use it as the key in the flex schema.
-					// Otherwise, use the developer-facing key.
-					let flexKey: string = viewKey;
-					if (
-						implicitFieldSchema instanceof FieldSchema &&
-						implicitFieldSchema.props?.key !== undefined
-					) {
-						flexKey = implicitFieldSchema.props.key;
-					}
+					// If a `stored key` was provided, use it as the key in the flex schema.
+					// Otherwise, use the view key.
+					const flexKey = getFlexKey(viewKey, implicitFieldSchema);
 
 					// This code has to be careful to avoid assigning to __proto__ or similar built-in fields.
 					Object.defineProperty(fields, flexKey, {

@@ -25,7 +25,7 @@ import {
 import { brand, fail, isReadonlyArray } from "../util/index.js";
 
 import { nullSchema } from "./leafNodeSchema.js";
-import { InsertableContent } from "./proxies.js";
+import { InsertableContent, getFlexKey } from "./proxies.js";
 import {
 	FieldKind,
 	FieldSchema,
@@ -278,12 +278,7 @@ function objectToMapTree(
 		if (fieldValue !== undefined) {
 			const fieldSchema = getObjectFieldSchema(schema, viewKey);
 			const mappedChildTree = nodeDataToMapTree(fieldValue, fieldSchema.allowedTypeSet);
-
-			// If an explicit stored key was provided, we will use it as the key in the output.
-			// Otherwise, the stored key is derived from the view key.
-			// Note: the flex domain knows nothing of the ephemeral view schema keys, it strictly operates in terms
-			// of the persisted "stored" keys.
-			const flexKey: FieldKey = brand(fieldSchema.props?.key ?? viewKey);
+			const flexKey: FieldKey = getFlexKey(viewKey, fieldSchema);
 
 			// Note: SchemaFactory validates this at schema creation time, with a user-friendly error.
 			// So we don't expect to hit this, and if we do it is likely an internal bug.

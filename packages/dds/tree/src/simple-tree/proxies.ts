@@ -239,18 +239,24 @@ export function createObjectProxy(
 }
 
 /**
- * TODO
- * @param simpleKey - TODO
- * @param classSchema - TODO
+ * Gets the flex domain key (i.e. the "stored key") associated with the provided view key.
  */
-function getFlexObjectKey(simpleKey: string, classSchema: TreeNodeSchema): FieldKey {
+function getFlexObjectKey(viewKey: string, classSchema: TreeNodeSchema): FieldKey {
 	const fields = classSchema.info as Record<string, ImplicitFieldSchema>;
-	// TODO: Document when this can be undefined and what it means
-	const field = fields[simpleKey];
+	return getFlexKey(viewKey, fields[viewKey]);
+}
+
+/**
+ * Gets the flex domain key (i.e. the "stored key") associated with the provided view key in an object schema.
+ *
+ * If an explicit stored key was specified in the schema, it will be used. Otherwise,
+ * the stored key is the same as the view key.
+ */
+export function getFlexKey(viewKey: string, schema: ImplicitFieldSchema): FieldKey {
 	return brand(
-		field instanceof FieldSchema && field.props?.key !== undefined
-			? field.props.key
-			: simpleKey,
+		schema instanceof FieldSchema && schema.props?.key !== undefined
+			? schema.props.key
+			: viewKey,
 	);
 }
 
