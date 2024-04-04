@@ -1,6 +1,6 @@
 # Description
 
-This package contains code enabling the production and consumption of typed telemetry for Fluid Framework applications. The typed telemetry from this package is used as the backbone for different Fluid Framework cloud offerings such as dashboards and alarms for Fluid applications. This package can also be used as a reference for customizing and creating their own telemetry solution if desired.
+This package contains code enabling the production and consumption of typed telemetry for Fluid Framework applications. The typed telemetry from this package is used as the backbone for different Fluid Framework cloud offerings such as dashboards and alarms for Fluid applications. This package can also be used as a reference for customizing and creating your own telemetry solution if desired.
 
 At this time, the package enables collection of Fluid Container related telemetry. In the future more areas may be added as needed by customers.
 
@@ -47,8 +47,6 @@ if (containerExists) {
 
 // 2: This is our implementation of ITelemetryConsumer
 class MySimpleTelemetryConsumer implements ITelemetryConsumer {
-    constructor(private readonly appInsightsClient: ApplicationInsights) {}
-
     consume(event: IFluidTelemetry) {
         console.log(event);
     }
