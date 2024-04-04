@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITestDriver, TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import {
 	IContainer,
 	IFluidCodeDetails,
@@ -27,7 +28,6 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { type ITelemetryGenericEventExt } from "@fluidframework/telemetry-utils";
 import { createChildLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils/internal";
-import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { v4 as uuid } from "uuid";
 
 import { LoaderContainerTracker } from "./loaderContainerTracker.js";

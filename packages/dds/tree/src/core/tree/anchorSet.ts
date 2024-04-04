@@ -199,6 +199,11 @@ export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEven
 	readonly slots: BrandedMapSubset<AnchorSlot<any>>;
 
 	/**
+	 * The set this anchor node is part of.
+	 */
+	readonly anchorSet: AnchorSet;
+
+	/**
 	 * Gets a child of this node.
 	 *
 	 * @remarks

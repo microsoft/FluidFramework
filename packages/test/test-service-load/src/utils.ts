@@ -6,6 +6,12 @@
 import crypto from "crypto";
 import fs from "fs";
 
+import {
+	DriverEndpoint,
+	ITelemetryBufferedLogger,
+	ITestDriver,
+	TestDriverTypes,
+} from "@fluid-internal/test-driver-definitions";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	OdspTestDriver,
@@ -24,12 +30,6 @@ import {
 import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import {
-	DriverEndpoint,
-	ITelemetryBufferedLogger,
-	ITestDriver,
-	TestDriverTypes,
-} from "@fluidframework/test-driver-definitions";
 import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
 
 import { ILoadTest, createFluidExport } from "./loadTestDataStore.js";

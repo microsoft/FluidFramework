@@ -34,7 +34,7 @@ import {
 	createCacheSnapshotKey,
 	createOdspLogger,
 	getOdspResolvedUrl,
-	toInstrumentedOdspTokenFetcher,
+	toInstrumentedOdspStorageTokenFetcher,
 } from "./odspUtils.js";
 
 /**
@@ -86,11 +86,10 @@ export async function prefetchLatestSnapshot(
 		driveId: odspResolvedUrl.driveId,
 		itemId: odspResolvedUrl.itemId,
 	};
-	const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
+	const storageTokenFetcher = toInstrumentedOdspStorageTokenFetcher(
 		odspLogger,
 		resolvedUrlData,
 		getStorageToken,
-		true /* throwOnNullToken */,
 	);
 
 	const snapshotDownloader = async (
