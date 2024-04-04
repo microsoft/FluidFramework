@@ -128,7 +128,6 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"@ungap/structured-clone": "^1.2.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
