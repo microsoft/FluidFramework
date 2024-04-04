@@ -18,7 +18,7 @@
 		"build:local": "concurrently npm:build:local:api npm:build:md-magic && npm run hugo",
 		"build:local:api": "npm run build:local:rollup && npm run build:local:api-documentation",
 		"build:local:api-documentation": "node ./api-markdown-documenter/index.js true",
-		"build:local:rollup": "node ./api-rollup.js",
+		"build:local:rollup": "node ./local-api-rollup.js",
 		"build:md-magic": "markdown-magic",
 		"build:md-magic:code": "markdown-magic --files \"**/*.md\" !docs --workingDirectory ..",
 		"build:redirects": "node ./build-redirects.js",

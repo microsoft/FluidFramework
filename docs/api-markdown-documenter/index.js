@@ -6,6 +6,10 @@
 /*
  * This index script runs `render-api-documentation.js` using the version configurations described
  * in data/versions.json.
+ * 
+ * This script accepts a boolean parameter which is saved to the isLocal constant. Passing in true
+ * will configure the script to render docs for local api content instead of the docs versions
+ * specified in versions.json.
  */
 
 const chalk = require("chalk");

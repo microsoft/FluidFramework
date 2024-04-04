@@ -62,6 +62,26 @@ To strictly run documentation generation for the remainder of the repo (everythi
 npm run build:repo-docs
 ```
 
+## Building the documentation locally
+
+To build the website and run other repo-wide documentation generation, first run the `build` script in the root of the repo.
+This will generate local api docs in the `_api-extractor-temp` directory.
+
+```bash
+npm run build
+```
+
+Once the local api docs is generated, run the `build:local` script.
+The output will be in the `public/` folder.
+
+```bash
+npm run build:local
+```
+
+Note that this calls the `local-api-rollup` script which simulates the `download` process in the regular build.
+However, instead of downloading the api content, the `_doc-models` directory is populated by copying the models from `_api-extractor-temp`.
+
+
 ### Drafts
 
 Work-in-progress documents that are not ready for public consumption can be safely added by annotating them with the `draft` flag in their frontmatter.
