@@ -1,5 +1,5 @@
 ---
-"@fluidframework/test-driver-definitions": major
+"@fluid-internal/test-driver-definitions": major
 ---
 
 @fluidframework/test-driver-definitions moved to @fluid-internal/test-driver-definitions
