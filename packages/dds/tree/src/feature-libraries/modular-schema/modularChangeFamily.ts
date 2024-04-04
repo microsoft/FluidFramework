@@ -396,7 +396,7 @@ export class ModularChangeFamily
 							: undefined;
 
 					crossFieldTable.nodeIdPairs.push([taggedId1, taggedId2]);
-					if (child1 !== undefined && child2 !== undefined) {
+					if (child2 !== undefined) {
 						addToNestedSet(crossFieldTable.nodeIds, child2.revision, child2.localId);
 					}
 					return (
