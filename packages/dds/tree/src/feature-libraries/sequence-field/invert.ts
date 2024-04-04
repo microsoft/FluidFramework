@@ -93,8 +93,7 @@ function invertMark<TNodeChange>(
 	const type = mark.type;
 	switch (type) {
 		case NoopMarkType: {
-			const inverse = { ...mark };
-			return [inverse];
+			return [mark];
 		}
 		case "Remove": {
 			assert(revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);

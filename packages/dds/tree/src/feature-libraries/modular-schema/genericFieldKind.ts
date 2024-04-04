@@ -25,7 +25,7 @@ import {
 } from "./fieldChangeHandler.js";
 import { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 import { makeGenericChangeCodec } from "./genericFieldKindCodecs.js";
-import { GenericChange, GenericChangeset } from "./genericFieldKindTypes.js";
+import { GenericChangeset } from "./genericFieldKindTypes.js";
 import { NodeId } from "./modularChangeTypes.js";
 
 /**
@@ -73,12 +73,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			return composed;
 		},
 		invert: ({ change }: TaggedChange<GenericChangeset>): GenericChangeset => {
-			return change.map(
-				({ index, nodeChange }: GenericChange): GenericChange => ({
-					index,
-					nodeChange,
-				}),
-			);
+			return change;
 		},
 		rebase: rebaseGenericChange,
 		prune: pruneGenericChange,
