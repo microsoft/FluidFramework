@@ -291,7 +291,7 @@ export class ModularChangeFamily
 					return (
 						taggedOptAtomId(child1, fieldChange1.revision) ??
 						taggedOptAtomId(child2, fieldChange2.revision) ??
-						fail("Should have compose two undefined nodes")
+						fail("Should not compose two undefined nodes")
 					);
 				};
 
