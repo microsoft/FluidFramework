@@ -42,8 +42,6 @@ interface DeleteKey {
 	key: string;
 }
 
-const handleKey = "handleKey";
-
 type Operation = SetKey | DeleteKey | Clear | UseHandle;
 
 // This type gets used a lot as the state object of the suite; shorthand it here.
@@ -85,8 +83,9 @@ const reducer = combineReducers<Operation, State>({
 	deleteKey: ({ client }, { key }) => {
 		client.channel.delete(key);
 	},
-	useHandle: ({ client }, { handle }) => {
-		client.channel.set(handleKey, handle);
+	useHandle: ({ random, client }, { handle }) => {
+		const keyNames = Array.from({ length: defaultOptions.keyPoolSize }, (_, i) => `${i}`);
+		client.channel.set(random.pick(keyNames), handle);
 	},
 });
 
