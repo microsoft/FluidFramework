@@ -43,6 +43,8 @@ export interface IContainerTelemetry extends IFluidTelemetry {
     eventName: ContainerTelemetryEventName;
 }
 
+export { ICriticalContainerError }
+
 // @beta
 export interface IFluidTelemetry {
     eventName: FluidTelemetryEventName;
