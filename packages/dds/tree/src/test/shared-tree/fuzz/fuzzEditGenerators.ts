@@ -501,8 +501,26 @@ export function makeOpGenerator(
 		...defaultEditGeneratorOpWeights,
 		...weightsArg,
 	};
-	const { insert, remove, abort, commit, start, undo, redo } = weights;
-	const editWeight = sumWeights([remove, insert]);
+	const {
+		insert,
+		remove,
+		move,
+		set,
+		clear,
+		abort,
+		commit,
+		start,
+		undo,
+		redo,
+		fieldSelection,
+		schema,
+		synchronizeTrees,
+		...others
+	} = weights;
+	// This assert will trigger when new weights are added to EditGeneratorOpWeights but this function has not been
+	// updated to take into account the new weights.
+	assert(Object.keys(others).length === 0, "Unexpected weight");
+	const editWeight = sumWeights([insert, remove, move, set, clear]);
 	const transactionWeight = sumWeights([abort, commit, start]);
 	const undoRedoWeight = sumWeights([undo, redo]);
 

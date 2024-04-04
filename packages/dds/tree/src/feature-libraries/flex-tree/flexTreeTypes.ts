@@ -173,6 +173,17 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
 	tryGetField(key: FieldKey): undefined | FlexTreeField;
 
 	/**
+	 * Get the field for `key`.
+	 * @param key - which entry to look up.
+	 *
+	 * @remarks
+	 * All fields implicitly exist, so `getBoxed` can be called with any key and will always return a field.
+	 * Even if the field is empty, it will still be returned, and can be edited to insert content if allowed by the field kind.
+	 * See {@link FlexTreeNode.tryGetField} for a variant that does not allocate afield in the empty case.
+	 */
+	getBoxed(key: FieldKey): FlexTreeField;
+
+	/**
 	 * The field this tree is in, and the index within that field.
 	 */
 	readonly parentField: { readonly parent: FlexTreeField; readonly index: number };
@@ -592,6 +603,7 @@ export const reservedObjectNodeFieldPropertyNames = [
 	"localNodeKey",
 	"boxedIterator",
 	"iterator",
+	"getBoxed",
 ] as const;
 
 /**

@@ -253,6 +253,7 @@ export {
 	FlexTreeNodeEvents,
 	FlexTreeUnknownUnboxed,
 	isFlexTreeNode,
+	ContextSlot,
 
 	// Internal
 	FlexTreeTypedFieldInner,
