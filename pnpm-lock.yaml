@@ -31800,8 +31800,8 @@ packages:
       - encoding
     dev: false
 
-  /isomorphic-git/1.25.0:
-    resolution: {integrity: sha512-F8X7z74gL+jN4bd6qB6a3Z0QQzonWPkiQ3nK/oFWlrc2pIwVM9Uksl3YMFh99ltswsqoCoOthgasybX08/fiGg==}
+  /isomorphic-git/1.25.7:
+    resolution: {integrity: sha512-KE10ejaIsEpQ+I/apS33qqTjyzCXgOniEaL32DwNbXtboKG8H3cu+RiBcdp3G9w4MpOOTQfGPsWp4i8UxRfDLg==}
     engines: {node: '>=12'}
     hasBin: true
     dependencies:
@@ -41156,7 +41156,7 @@ packages:
       cors: 2.8.5
       detect-port: 1.5.1
       express: 4.18.2
-      isomorphic-git: 1.25.0
+      isomorphic-git: 1.25.7
       json-stringify-safe: 5.0.1
       level: 8.0.0
       level-sublevel: 6.6.4
