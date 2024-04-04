@@ -150,7 +150,7 @@ export class LeafNodeSchema<
  */
 export class IdentifierReferenceSchema<
 	const out Name extends string = string,
-	const out Specification extends Unenforced<ValueSchema> = ValueSchema.Number,
+	const out Specification extends Unenforced<ValueSchema> = ValueSchema.String,
 > extends TreeNodeSchemaBase<Name, Specification> {
 	public get identifierValue(): ValueSchema {
 		return this.info as ValueSchema;

@@ -966,7 +966,7 @@ export interface Identifier extends FlexFieldKind<"identifier", Multiplicity.Sin
 }
 
 // @internal (undocumented)
-export class IdentifierReferenceSchema<const out Name extends string = string, const out Specification extends Unenforced<ValueSchema> = ValueSchema.Number> extends TreeNodeSchemaBase<Name, Specification> {
+export class IdentifierReferenceSchema<const out Name extends string = string, const out Specification extends Unenforced<ValueSchema> = ValueSchema.String> extends TreeNodeSchemaBase<Name, Specification> {
     // (undocumented)
     static create<const Name extends string, const Specification extends ValueSchema>(builder: Named<string>, name: TreeNodeSchemaIdentifier<Name>, specification: Specification): IdentifierReferenceSchema<Name, Specification>;
     // (undocumented)
@@ -978,7 +978,7 @@ export class IdentifierReferenceSchema<const out Name extends string = string, c
 }
 
 // @internal
-export const identifierSchema: IdentifierReferenceSchema<"com.fluidframework.identifier.identifierReference", ValueSchema.Number>;
+export const identifierSchema: IdentifierReferenceSchema<"com.fluidframework.identifier.identifierReference", ValueSchema.String>;
 
 // @public
 export interface IDisposable {
@@ -1613,7 +1613,7 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<FluidObject<unknown> & IFluidLoadable>, IFluidHandle<FluidObject<unknown> & IFluidLoadable>>;
     identifier<const T extends ImplicitAllowedTypes>(t: T): FieldSchema<FieldKind.identifier, T>;
     // (undocumented)
-    readonly identifierReference: TreeNodeSchema<"com.fluidframework.identifier.identifierReference", NodeKind.IdentifierReference, number, number>;
+    readonly identifierReference: TreeNodeSchema<"com.fluidframework.identifier.identifierReference", NodeKind.IdentifierReference, string, string>;
     map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
     map<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
     namedArray_internal<Name extends TName | string, const T extends ImplicitAllowedTypes, const ImplicitlyConstructable extends boolean>(name: Name, allowedTypes: T, customizable: boolean, implicitlyConstructable: ImplicitlyConstructable): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Array, TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, ImplicitlyConstructable, T>;

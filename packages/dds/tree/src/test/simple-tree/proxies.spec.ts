@@ -131,7 +131,7 @@ describe("SharedTreeObject", () => {
 		const id = idCompressor.generateCompressedId();
 
 		const config = new TreeConfiguration(schemaWithIdentifier, () => ({
-			identifier: id as number,
+			identifier: id as unknown as string,
 		}));
 		const factory = new TreeFactory({
 			jsonValidator: typeboxValidator,

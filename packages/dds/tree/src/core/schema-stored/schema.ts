@@ -256,14 +256,14 @@ export class IdentifierReferenceStoredSchema extends TreeNodeStoredSchema {
 	 * @param identifier -
 	 * The local node key used as the identifier for the node.
 	 */
-	public readonly identifier: ValueSchema = ValueSchema.Number;
+	public readonly identifier: ValueSchema = ValueSchema.String;
 	public constructor() {
 		super();
 	}
 
 	public override encode(): ErasedTreeNodeSchemaDataFormat {
 		return brandErased<BrandedTreeNodeSchemaDataFormat>({
-			leaf: encodeValueSchema(ValueSchema.Number),
+			leaf: encodeValueSchema(ValueSchema.String),
 		});
 	}
 }

@@ -15,5 +15,5 @@ const identifierReferenceBuilder = new SchemaBuilderInternal({
  */
 export const identifierSchema = identifierReferenceBuilder.identifierReference(
 	"identifierReference",
-	ValueSchema.Number,
+	ValueSchema.String,
 );
