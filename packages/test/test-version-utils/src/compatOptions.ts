@@ -6,7 +6,7 @@
 import type {
 	RouterliciousEndpoint,
 	TestDriverTypes,
-} from "@fluidframework/test-driver-definitions";
+} from "@fluid-internal/test-driver-definitions";
 import nconf from "nconf";
 
 /**

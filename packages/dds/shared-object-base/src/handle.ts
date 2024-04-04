@@ -4,7 +4,7 @@
  */
 
 import { IFluidHandleContext } from "@fluidframework/core-interfaces";
-import { FluidObjectHandle } from "@fluidframework/datastore";
+import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 
 import { ISharedObject } from "./types.js";
 

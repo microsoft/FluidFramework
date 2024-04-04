@@ -5,12 +5,12 @@
 
 import { strict as assert } from "assert";
 
+import { pkgVersion } from "../packageVersion.js";
 import {
 	DocumentsSchemaController,
 	type IDocumentSchemaCurrent,
 	type IDocumentSchemaFeatures,
 } from "../summary/index.js";
-import { pkgVersion } from "../packageVersion.js";
 
 function boolToProp(b: boolean) {
 	return b ? true : undefined;

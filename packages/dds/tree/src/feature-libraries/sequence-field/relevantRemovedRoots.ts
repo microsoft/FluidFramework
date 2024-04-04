@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import { DeltaDetachedNodeId, TaggedChange, offsetDetachId } from "../../core/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";

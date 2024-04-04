@@ -44,7 +44,6 @@ export {
 export {
 	typeNameSymbol,
 	valueSymbol,
-	isTreeValue,
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
@@ -63,7 +62,7 @@ export {
 	getAllowedTypes,
 } from "./contextuallyTyped.js";
 
-export { allowsValue, assertAllowedValue, isFluidHandle } from "./valueUtilities.js";
+export { allowsValue, assertAllowedValue, isFluidHandle, isTreeValue } from "./valueUtilities.js";
 
 export { FieldGenerator, TreeDataContext } from "./fieldGenerator.js";
 
@@ -126,8 +125,6 @@ export {
 	FieldKindConfiguration,
 	FieldKindConfigurationEntry,
 } from "./modular-schema/index.js";
-
-export { Multiplicity } from "./multiplicity.js";
 
 export {
 	FlexTreeNodeSchema,
@@ -193,7 +190,6 @@ export {
 	makeTreeChunker,
 	makeFieldBatchCodec,
 	FieldBatchEncodingContext,
-	SchemaAndPolicy,
 } from "./chunked-forest/index.js";
 
 export {
@@ -257,6 +253,7 @@ export {
 	FlexTreeNodeEvents,
 	FlexTreeUnknownUnboxed,
 	isFlexTreeNode,
+	ContextSlot,
 
 	// Internal
 	FlexTreeTypedFieldInner,

@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory, type IDataObjectProps } from "@fluidframework/aqueduct";
+import {
+	DataObject,
+	DataObjectFactory,
+	type IDataObjectProps,
+} from "@fluidframework/aqueduct/internal";
 
 /**
  * Mock {@link @fluidframework/aqueduct#DataObject} for use in tests.

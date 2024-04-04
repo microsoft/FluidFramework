@@ -30,16 +30,16 @@ import {
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { unreachableCase } from "@fluidframework/core-utils";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
-import type { IMockContainerRuntimeOptions } from "@fluidframework/test-runtime-utils";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
+import type { IMockContainerRuntimeOptions } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type Client,
@@ -264,7 +264,7 @@ export interface DDSFuzzModel<
 	validateConsistency: (
 		channelA: ReturnType<TChannelFactory["create"]>,
 		channelB: ReturnType<TChannelFactory["create"]>,
-	) => void;
+	) => void | Promise<void>;
 
 	/**
 	 * An array of transforms used during fuzz test minimization to reduce test
@@ -781,7 +781,7 @@ export function mixinAttach<
 				options,
 			);
 
-			model.validateConsistency(clientA.channel, summarizerClient.channel);
+			await model.validateConsistency(clientA.channel, summarizerClient.channel);
 
 			return {
 				...state,
@@ -981,7 +981,7 @@ export function mixinSynchronization<
 			if (connectedClients.length > 0) {
 				const readonlyChannel = state.summarizerClient.channel;
 				for (const { channel } of connectedClients) {
-					model.validateConsistency(readonlyChannel, channel);
+					await model.validateConsistency(readonlyChannel, channel);
 				}
 			}
 

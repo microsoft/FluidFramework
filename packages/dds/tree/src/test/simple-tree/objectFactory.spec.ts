@@ -211,7 +211,13 @@ describe("SharedTreeObject factories", () => {
 		getFlexNode(root).on("beforeChange", () => {
 			readData();
 		});
-		Tree.on(root, "afterChange", () => {
+		getFlexNode(root).on("afterChange", () => {
+			readData();
+		});
+		Tree.on(root, "treeChanged", () => {
+			readData();
+		});
+		Tree.on(root, "nodeChanged", () => {
 			readData();
 		});
 

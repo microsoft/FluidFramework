@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { MockHandle } from "@fluidframework/test-runtime-utils";
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 import { NodeFromSchema, SchemaFactory, TreeArrayNode } from "../../simple-tree/index.js";
 // TODO: test other things from "proxies" file.
@@ -18,7 +18,7 @@ describe("simple-tree proxies", () => {
 	const sb = new SchemaFactory("test");
 
 	const childSchema = sb.object("object", {
-		content: sb.number,
+		content: sb.required(sb.number, { key: "storedContentKey" }),
 	});
 
 	const schema = sb.object("parent", {
@@ -84,7 +84,7 @@ describe("SharedTreeObject", () => {
 	const schema = sb.object("parent", {
 		content: sb.number,
 		child: numberChild,
-		optional: sb.optional(numberChild),
+		optional: sb.optional(numberChild, { key: "storedOptionalKey" }),
 		polyValue: [sb.number, sb.string],
 		polyChild: [numberChild, stringChild],
 		polyValueChild: [sb.number, numberChild],

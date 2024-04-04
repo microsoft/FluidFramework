@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITestDriver, TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import {
 	IContainer,
 	IFluidCodeDetails,
@@ -14,7 +15,7 @@ import {
 	Loader,
 	waitContainerToCatchUp as waitContainerToCatchUp_original,
 } from "@fluidframework/container-loader/internal";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import {
 	IRequestHeader,
 	ITelemetryBaseEvent,
@@ -25,12 +26,8 @@ import {
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	type ITelemetryGenericEventExt,
-	createChildLogger,
-	createMultiSinkLogger,
-} from "@fluidframework/telemetry-utils";
-import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { type ITelemetryGenericEventExt } from "@fluidframework/telemetry-utils";
+import { createChildLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { LoaderContainerTracker } from "./loaderContainerTracker.js";

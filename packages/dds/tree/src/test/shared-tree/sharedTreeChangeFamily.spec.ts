@@ -61,7 +61,7 @@ const stDataChange2: SharedTreeChange = {
 const emptySchema: TreeStoredSchema = {
 	nodeSchema: new Map(),
 	rootFieldSchema: {
-		kind: forbidden,
+		kind: forbidden.identifier,
 	},
 };
 const stSchemaChange: SharedTreeChange = {

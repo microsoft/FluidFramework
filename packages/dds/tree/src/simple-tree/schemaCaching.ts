@@ -3,15 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
 	type FlexFieldSchema,
 	type FlexTreeNodeSchema,
 	TreeNodeSchemaBase,
 } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
+
 import {
-	type FieldSchema,
+	FieldSchema,
 	type ImplicitFieldSchema,
 	TreeNodeSchema,
 	normalizeFieldSchema,

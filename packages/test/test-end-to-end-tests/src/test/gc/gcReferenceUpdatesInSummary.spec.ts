@@ -7,20 +7,23 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import {
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { SharedMatrix } from "@fluidframework/matrix";
-import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree";
+import type { SharedMatrix } from "@fluidframework/matrix/internal";
+import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import type { SharedString } from "@fluidframework/sequence";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import type { SharedString } from "@fluidframework/sequence/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
-import { UndoRedoStackManager } from "@fluidframework/undo-redo";
+} from "@fluidframework/test-utils/internal";
+import { UndoRedoStackManager } from "@fluidframework/undo-redo/internal";
 
 /**
  * Validates this scenario: When all references to a data store are deleted, the data store is marked as unreferenced
