@@ -8,11 +8,12 @@ import { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions/internal"
 // Centralized store for all ODC/SPO logic
 
 /**
- * Checks whether or not the given URL origin is an ODC origin
- * @param origin - The URL origin to check
+ * Checks whether or not the given URL has an ODC origin
+ * @param url - The URL to check
  * @internal
  */
-export function isOdcOrigin(origin: string): boolean {
+export function hasOdcOrigin(url: URL): boolean {
+	const origin = url.origin;
 	return (
 		// Primary API endpoint and several test endpoints
 		origin.includes("onedrive.com") ||
@@ -27,16 +28,16 @@ export function isOdcOrigin(origin: string): boolean {
 
 /**
  * Gets the correct API root for the given ODSP url, e.g. 'https://foo-my.sharepoint.com/_api/v2.1'
- * @param origin - The URL origin
+ * @param url - The URL
  * @internal
  */
-export function getApiRoot(origin: string): string {
+export function getApiRoot(url: URL): string {
 	let prefix = "_api/";
-	if (isOdcOrigin(origin)) {
+	if (hasOdcOrigin(url)) {
 		prefix = "";
 	}
 
-	return `${origin}/${prefix}v2.1`;
+	return `${url.origin}/${prefix}v2.1`;
 }
 
 /**
@@ -58,7 +59,7 @@ export function isSpoUrl(url: URL): boolean {
  * @internal
  */
 export function isOdcUrl(url: URL): boolean {
-	if (!isOdcOrigin(url.origin)) {
+	if (!hasOdcOrigin(url)) {
 		return false;
 	}
 
@@ -71,7 +72,7 @@ export function isOdcUrl(url: URL): boolean {
 	// Format: /v2.1/drives('ABC123')/items('ABC123!123')
 	const odcODataRegex = /\/v2.1\/drives\('[^/]+'\)\/items\('[\da-z]+!\d+'\)/;
 
-	return !!(odcRegex.exec(path) ?? odcODataRegex.exec(path));
+	return odcRegex.test(path) || odcODataRegex.test(path);
 }
 
 /**
@@ -87,7 +88,7 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 	// Pick a regex based on the hostname
 	// TODO This will only support ODC using api.onedrive.com, update to handle the future (share links etc)
 	let joinSessionMatch: RegExpExecArray | null;
-	if (isOdcOrigin(url.origin)) {
+	if (hasOdcOrigin(url)) {
 		// Capture groups:
 		// 0: match
 		// 1: origin
