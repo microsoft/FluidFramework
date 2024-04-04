@@ -18,7 +18,7 @@ In this example, you'll walk through the basic setup process to start getting co
 import { ITelemetryConsumer } from "@fluidframework/fluid-telemetry";
 
 class MySimpleTelemetryConsumer implements ITelemetryConsumer {
-	consume(event: IExternalTelemetry) {
+	consume(event: IFluidTelemetry) {
 		console.log(event);
 	}
 }
@@ -45,7 +45,7 @@ if (containerExists) {
 class MySimpleTelemetryConsumer implements ITelemetryConsumer {
     constructor(private readonly appInsightsClient: ApplicationInsights) {}
 
-    consume(event: IExternalTelemetry) {
+    consume(event: IFluidTelemetry) {
         console.log(event);
     }
 }
