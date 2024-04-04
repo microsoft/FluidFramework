@@ -78,7 +78,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@babel/runtime": "^7.13.7",
+		"@babel/runtime": "^7.24.4",
 		"@fluid-experimental/property-changeset": "workspace:~",
 		"@fluid-experimental/property-dds": "workspace:~",
 		"@fluid-experimental/property-properties": "workspace:~",
@@ -87,11 +87,11 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
-		"@babel/core": "^7.13.0",
-		"@babel/eslint-parser": "^7.22.15",
-		"@babel/plugin-proposal-decorators": "^7.20.4",
-		"@babel/plugin-transform-runtime": "^7.2.0",
-		"@babel/preset-env": "^7.2.0",
+		"@babel/core": "^7.24.4",
+		"@babel/eslint-parser": "^7.24.1",
+		"@babel/plugin-proposal-decorators": "^7.24.1",
+		"@babel/plugin-transform-runtime": "^7.24.3",
+		"@babel/preset-env": "^7.24.4",
 		"@biomejs/biome": "^1.6.2",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
