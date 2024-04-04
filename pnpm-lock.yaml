@@ -150,6 +150,7 @@ importers:
     specifiers:
       '@biomejs/biome': ^1.6.2
       '@fluid-internal/client-utils': workspace:~
+      '@fluid-internal/test-driver-definitions': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/azure-client': workspace:~
@@ -166,7 +167,6 @@ importers:
       '@fluidframework/matrix': workspace:~
       '@fluidframework/sequence': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
-      '@fluidframework/test-driver-definitions': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/test-utils': workspace:~
       '@types/js-yaml': ^4.0.5
@@ -192,6 +192,7 @@ importers:
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../../../packages/common/client-utils
+      '@fluid-internal/test-driver-definitions': link:../../../../packages/test/test-driver-definitions
       '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
       '@fluidframework/azure-client': link:../../../../packages/service-clients/azure-client
       '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
@@ -204,7 +205,6 @@ importers:
       '@fluidframework/matrix': link:../../../../packages/dds/matrix
       '@fluidframework/sequence': link:../../../../packages/dds/sequence
       '@fluidframework/telemetry-utils': link:../../../../packages/utils/telemetry-utils
-      '@fluidframework/test-driver-definitions': link:../../../../packages/test/test-driver-definitions
       '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../../../../packages/test/test-utils
       commander: 5.1.0
@@ -7859,6 +7859,57 @@ importers:
       tslib: 1.14.1
       typescript: 5.1.6
 
+  packages/framework/client-logger/fluid-telemetry:
+    specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
+      '@fluid-internal/client-utils': workspace:~
+      '@fluid-internal/mocha-test-setup': workspace:~
+      '@fluid-tools/build-cli': ^0.34.0
+      '@fluidframework/build-tools': ^0.34.0
+      '@fluidframework/container-definitions': workspace:~
+      '@fluidframework/container-loader': workspace:~
+      '@fluidframework/fluid-static': workspace:~
+      '@microsoft/api-extractor': ^7.42.3
+      '@microsoft/applicationinsights-web': ^2.8.11
+      '@types/chai': ^4.0.0
+      '@types/mocha': ^9.1.1
+      '@types/sinon': ^17.0.3
+      '@types/uuid': ^9.0.2
+      chai: ^4.2.0
+      eslint: ~8.55.0
+      mocha: ^10.2.0
+      prettier: ~3.0.3
+      rimraf: ^4.4.0
+      sinon: ^17.0.1
+      tslib: ^1.10.0
+      typescript: ~5.1.6
+      uuid: ^9.0.0
+    dependencies:
+      '@fluidframework/container-definitions': link:../../../common/container-definitions
+      '@fluidframework/container-loader': link:../../../loader/container-loader
+      '@fluidframework/fluid-static': link:../../fluid-static
+      uuid: 9.0.1
+    devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
+      '@fluid-internal/client-utils': link:../../../common/client-utils
+      '@fluid-internal/mocha-test-setup': link:../../../test/mocha-test-setup
+      '@fluid-tools/build-cli': 0.34.0_bpztyfltmpuv6lhsgzfwtmxhte
+      '@fluidframework/build-tools': 0.34.0
+      '@microsoft/api-extractor': 7.42.3
+      '@microsoft/applicationinsights-web': 2.8.16_tslib@1.14.1
+      '@types/chai': 4.3.11
+      '@types/mocha': 9.1.1
+      '@types/sinon': 17.0.3
+      '@types/uuid': 9.0.7
+      chai: 4.3.10
+      eslint: 8.55.0
+      mocha: 10.2.0
+      prettier: 3.0.3
+      rimraf: 4.4.1
+      sinon: 17.0.1
+      tslib: 1.14.1
+      typescript: 5.1.6
+
   packages/framework/data-object-base:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
@@ -9671,12 +9722,12 @@ importers:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
       '@biomejs/biome': ^1.6.2
+      '@fluid-internal/test-driver-definitions': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/test-driver-definitions': workspace:~
       '@microsoft/api-extractor': ^7.42.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
@@ -9688,8 +9739,8 @@ importers:
       source-map-support: ^0.5.21
       typescript: ~5.1.6
     dependencies:
+      '@fluid-internal/test-driver-definitions': link:../test-driver-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
-      '@fluidframework/test-driver-definitions': link:../test-driver-definitions
       mocha: 10.2.0
       source-map-support: 0.5.21
     devDependencies:
@@ -9852,12 +9903,12 @@ importers:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
       '@biomejs/biome': ^1.6.2
+      '@fluid-internal/test-driver-definitions': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/test-driver-definitions': workspace:~
       applicationinsights: ^2.1.9
       copyfiles: ^2.4.1
       eslint: ~8.55.0
@@ -9865,8 +9916,8 @@ importers:
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
+      '@fluid-internal/test-driver-definitions': link:../test-driver-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
-      '@fluidframework/test-driver-definitions': link:../test-driver-definitions
       applicationinsights: 2.9.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -9892,7 +9943,6 @@ importers:
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/protocol-definitions': ^3.2.0
-      '@fluidframework/test-driver-definitions-previous': npm:@fluidframework/test-driver-definitions@2.0.0-internal.8.0.0
       '@microsoft/api-extractor': ^7.42.3
       copyfiles: ^2.4.1
       eslint: ~8.55.0
@@ -9910,7 +9960,6 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@fluidframework/test-driver-definitions-previous': /@fluidframework/test-driver-definitions/2.0.0-internal.8.0.0
       '@microsoft/api-extractor': 7.42.3
       copyfiles: 2.4.1
       eslint: 8.55.0
@@ -9922,6 +9971,7 @@ importers:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
       '@biomejs/biome': ^1.6.2
+      '@fluid-internal/test-driver-definitions': workspace:~
       '@fluid-private/test-pairwise-generator': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/build-common': ^2.0.3
@@ -9939,7 +9989,6 @@ importers:
       '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/server-local-server': ^4.0.0
-      '@fluidframework/test-driver-definitions': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/tinylicious-driver': workspace:~
       '@fluidframework/tool-utils': workspace:~
@@ -9956,6 +10005,7 @@ importers:
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
+      '@fluid-internal/test-driver-definitions': link:../test-driver-definitions
       '@fluid-private/test-pairwise-generator': link:../test-pairwise-generator
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
@@ -9969,7 +10019,6 @@ importers:
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/routerlicious-driver': link:../../drivers/routerlicious-driver
       '@fluidframework/server-local-server': 4.0.0
-      '@fluidframework/test-driver-definitions': link:../test-driver-definitions
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@fluidframework/tinylicious-driver': link:../../drivers/tinylicious-driver
       '@fluidframework/tool-utils': link:../../utils/tool-utils
@@ -10001,6 +10050,7 @@ importers:
       '@fluid-experimental/tree': workspace:~
       '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
+      '@fluid-internal/test-driver-definitions': workspace:~
       '@fluid-private/test-drivers': workspace:~
       '@fluid-private/test-loader-utils': workspace:~
       '@fluid-private/test-pairwise-generator': workspace:~
@@ -10039,7 +10089,6 @@ importers:
       '@fluidframework/sequence': workspace:~
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
-      '@fluidframework/test-driver-definitions': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/test-utils': workspace:~
       '@fluidframework/tree': workspace:~
@@ -10071,6 +10120,7 @@ importers:
       '@fluid-experimental/tree': link:../../../experimental/dds/tree
       '@fluid-internal/client-utils': link:../../common/client-utils
       '@fluid-internal/mocha-test-setup': link:../mocha-test-setup
+      '@fluid-internal/test-driver-definitions': link:../test-driver-definitions
       '@fluid-private/test-drivers': link:../test-drivers
       '@fluid-private/test-loader-utils': link:../../loader/test-loader-utils
       '@fluid-private/test-pairwise-generator': link:../test-pairwise-generator
@@ -10105,7 +10155,6 @@ importers:
       '@fluidframework/sequence': link:../../dds/sequence
       '@fluidframework/shared-object-base': link:../../dds/shared-object-base
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      '@fluidframework/test-driver-definitions': link:../test-driver-definitions
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../test-utils
       '@fluidframework/tree': link:../../dds/tree
@@ -10186,6 +10235,7 @@ importers:
       '@biomejs/biome': ^1.6.2
       '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
+      '@fluid-internal/test-driver-definitions': workspace:~
       '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-private/test-drivers': workspace:~
       '@fluid-private/test-pairwise-generator': workspace:~
@@ -10209,7 +10259,6 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/task-manager': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
-      '@fluidframework/test-driver-definitions': workspace:~
       '@fluidframework/test-utils': workspace:~
       '@fluidframework/tool-utils': workspace:~
       '@types/mocha': ^9.1.1
@@ -10228,6 +10277,7 @@ importers:
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluid-internal/test-driver-definitions': link:../test-driver-definitions
       '@fluid-private/stochastic-test-utils': link:../stochastic-test-utils
       '@fluid-private/test-drivers': link:../test-drivers
       '@fluid-private/test-pairwise-generator': link:../test-pairwise-generator
@@ -10247,7 +10297,6 @@ importers:
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/task-manager': link:../../dds/task-manager
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      '@fluidframework/test-driver-definitions': link:../test-driver-definitions
       '@fluidframework/test-utils': link:../test-utils
       '@fluidframework/tool-utils': link:../../utils/tool-utils
       commander: 5.1.0
@@ -10277,6 +10326,7 @@ importers:
       '@arethetypeswrong/cli': ^0.13.3
       '@biomejs/biome': ^1.6.2
       '@fluid-internal/mocha-test-setup': workspace:~
+      '@fluid-internal/test-driver-definitions': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -10300,7 +10350,6 @@ importers:
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
-      '@fluidframework/test-driver-definitions': workspace:~
       '@fluidframework/test-utils-previous': npm:@fluidframework/test-utils@2.0.0-internal.8.0.0
       '@microsoft/api-extractor': ^7.42.3
       '@types/debug': ^4.1.5
@@ -10324,6 +10373,7 @@ importers:
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
+      '@fluid-internal/test-driver-definitions': link:../test-driver-definitions
       '@fluidframework/aqueduct': link:../../framework/aqueduct
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
@@ -10343,7 +10393,6 @@ importers:
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      '@fluidframework/test-driver-definitions': link:../test-driver-definitions
       best-random: 1.0.3
       debug: 4.3.4
       mocha: 10.2.0
@@ -10380,6 +10429,7 @@ importers:
       '@fluid-experimental/attributor': workspace:~
       '@fluid-experimental/sequence-deprecated': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
+      '@fluid-internal/test-driver-definitions': workspace:~
       '@fluid-private/test-drivers': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluid-tools/version-tools': ^0.34.0
@@ -10408,7 +10458,6 @@ importers:
       '@fluidframework/sequence': workspace:~
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
-      '@fluidframework/test-driver-definitions': workspace:~
       '@fluidframework/test-utils': workspace:~
       '@microsoft/api-extractor': ^7.42.3
       '@types/mocha': ^9.1.1
@@ -10438,6 +10487,7 @@ importers:
     dependencies:
       '@fluid-experimental/attributor': link:../../framework/attributor
       '@fluid-experimental/sequence-deprecated': link:../../../experimental/dds/sequence-deprecated
+      '@fluid-internal/test-driver-definitions': link:../test-driver-definitions
       '@fluid-private/test-drivers': link:../test-drivers
       '@fluid-tools/version-tools': 0.34.0
       '@fluidframework/agent-scheduler': link:../../framework/agent-scheduler
@@ -10462,7 +10512,6 @@ importers:
       '@fluidframework/sequence': link:../../dds/sequence
       '@fluidframework/shared-object-base': link:../../dds/shared-object-base
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      '@fluidframework/test-driver-definitions': link:../test-driver-definitions
       '@fluidframework/test-utils': link:../test-utils
       nconf: 0.12.1
       proper-lockfile: 4.1.2

@@ -6,12 +6,12 @@
 import child_process from "child_process";
 import fs from "fs";
 
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	DriverEndpoint,
 	ITestDriver,
 	TestDriverTypes,
-} from "@fluidframework/test-driver-definitions";
+} from "@fluid-internal/test-driver-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import commander from "commander";
 import ps from "ps-node";
 
