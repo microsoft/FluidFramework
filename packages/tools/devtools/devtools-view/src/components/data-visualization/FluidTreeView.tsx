@@ -16,7 +16,9 @@ import { TreeItem } from "./TreeItem.js";
  */
 export interface FluidTreeViewProps
 	extends HasContainerKey,
-		DataVisualizationTreeProps<FluidObjectTreeNode> {}
+		DataVisualizationTreeProps<FluidObjectTreeNode> {
+	root?: boolean;
+}
 
 /**
  * Render data with type VisualNodeKind.FluidTreeNode and render its children.
@@ -31,6 +33,7 @@ export function FluidTreeView(props: FluidTreeViewProps): React.ReactElement {
 	const metadata = JSON.stringify(node.metadata);
 	const header = (
 		<TreeHeader
+			containerKey={containerKey}
 			label={label}
 			nodeTypeMetadata={node.typeMetadata}
 			metadata={metadata}

@@ -7,15 +7,15 @@ import { tokens } from "@fluentui/react-components";
 import React from "react";
 
 import { InfoLabel } from "@fluentui/react-components/unstable";
-import type { IToolTipContents } from "@fluidframework/devtools-core";
+import type { HasContainerKey, VisualChildNode } from "@fluidframework/devtools-core";
 import { ThemeContext, ThemeOption } from "../../ThemeHelper.js";
-import { TooltipContentsHelper } from "./TooltipContents.js";
 import type { HasLabel } from "./CommonInterfaces.js";
+import { TreeDataView } from "./TreeDataView.js";
 
 /**
  * Input props to {@link TreeHeader}
  */
-export interface TreeHeaderProps extends HasLabel {
+export interface TreeHeaderProps extends HasLabel, HasContainerKey {
 	/**
 	 * Type of the object.
 	 */
@@ -31,15 +31,28 @@ export interface TreeHeaderProps extends HasLabel {
 	/**
 	 * Visual Tree data rendered in the tooltip.
 	 */
-	tooltipContents?: IToolTipContents;
+	tooltipContents?: Record<string, VisualChildNode>;
 }
 
 /**
  * Renders the header of the item.
  */
 export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
-	const { label, nodeTypeMetadata, inlineValue, metadata, tooltipContents } = props;
+	const { containerKey, label, nodeTypeMetadata, inlineValue, metadata, tooltipContents } = props;
 	const { themeInfo } = React.useContext(ThemeContext);
+
+	const toolTipContentsNode =
+		tooltipContents === undefined
+			? undefined
+			: Object.entries(tooltipContents).map(([key, fluidObject]) => (
+					<TreeDataView
+						key={key}
+						containerKey={containerKey}
+						label={key}
+						node={fluidObject}
+						root={true}
+					/>
+			  ));
 
 	return (
 		<div style={{ width: "auto" }}>
@@ -71,10 +84,7 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 			{tooltipContents === undefined ? (
 				""
 			) : (
-				<InfoLabel
-					info={TooltipContentsHelper({ contents: tooltipContents })}
-					style={{ whiteSpace: "nowrap" }}
-				/>
+				<InfoLabel info={toolTipContentsNode} style={{ whiteSpace: "nowrap" }} />
 			)}
 
 			{inlineValue === undefined ? "" : ": "}

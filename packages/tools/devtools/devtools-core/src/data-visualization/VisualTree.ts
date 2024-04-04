@@ -45,11 +45,6 @@ export type Primitive = number | boolean | null | string | undefined;
 /**
  * @internal
  */
-export interface IToolTipContents {
-	name: string;
-	schemaType: string;
-	allowedTypes?: string | Record<string | number, string>;
-}
 
 /**
  * Base interface for all {@link VisualNode}s.
@@ -90,7 +85,7 @@ export interface VisualNodeBase {
 	 *
 	 * TODO: Change this to accept VisualTree.
 	 */
-	tooltipContents?: IToolTipContents;
+	tooltipContents?: Record<string, VisualChildNode>;
 }
 
 /**

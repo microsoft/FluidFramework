@@ -423,16 +423,6 @@ export interface ITimestampedTelemetryEvent {
     timestamp: number;
 }
 
-// @internal (undocumented)
-export interface IToolTipContents {
-    // (undocumented)
-    allowedTypes?: string | Record<string | number, string>;
-    // (undocumented)
-    name: string;
-    // (undocumented)
-    schemaType: string;
-}
-
 // @internal
 export interface LogEntry {
     timestamp: number;
@@ -528,7 +518,7 @@ export interface VisualNodeBase {
     };
     metadata?: Record<string, Primitive>;
     nodeKind: VisualNodeKind | string;
-    tooltipContents?: IToolTipContents;
+    tooltipContents?: Record<string, VisualChildNode>;
     typeMetadata?: string;
 }
 

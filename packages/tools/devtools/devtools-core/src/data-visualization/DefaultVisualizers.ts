@@ -264,6 +264,7 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	// Maps the `visualTreeRepresentation` in the format compatible to {@link visualizeChildData} function.
 	const visualTree = toVisualTree(visualTreeRepresentation);
 
+	console.log(visualTree);
 	return {
 		fluidObjectId: sharedTree.id,
 		children: {

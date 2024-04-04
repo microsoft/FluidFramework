@@ -19,6 +19,9 @@ export type TreeItemProps = React.PropsWithChildren<{
 	 */
 	header: React.ReactElement | string;
 
+	// TODO
+	root?: boolean;
+
 	// TODO: startOpen
 }>;
 
@@ -28,12 +31,17 @@ export type TreeItemProps = React.PropsWithChildren<{
  * Intended to be used inside an outer {@link @fluentui/react-components/unstable#Tree} context.
  */
 export function TreeItem(props: TreeItemProps): React.ReactElement {
-	const { children, header } = props;
+	const { children, header, root } = props;
 
+	const level = root === true ? 0 : undefined;
 	const isLeaf = React.Children.count(children) === 0;
 
 	return (
-		<FluentTreeItem leaf={isLeaf} data-testid="tree-button">
+		<FluentTreeItem
+			leaf={isLeaf}
+			data-testid="tree-button"
+			style={{ "--fluent-TreeItem--level": level }}
+		>
 			<FluentTreeItemLayout>{header}</FluentTreeItemLayout>
 
 			<FluentTree>{children}</FluentTree>

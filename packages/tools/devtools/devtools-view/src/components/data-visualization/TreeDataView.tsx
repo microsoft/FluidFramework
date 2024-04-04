@@ -18,50 +18,71 @@ import { ValueView } from "./ValueView.js";
 /**
  * {@link TreeDataView} input props.
  */
-export interface TreeDataViewProps extends HasContainerKey, DataVisualizationTreeProps {}
+export interface TreeDataViewProps extends HasContainerKey, DataVisualizationTreeProps {
+	// TODO
+	root?: boolean;
+}
 
 /**
  * Displays visual summary trees for DDS_s within the container based on the current node's type.
  */
 export function TreeDataView(props: TreeDataViewProps): React.ReactElement {
-	const { containerKey, label, node } = props;
+	const { containerKey, label, node, root } = props;
 
 	switch (node.nodeKind) {
 		/**
 		 * Node with children.
 		 */
 		case VisualNodeKind.TreeNode: {
-			return <TreeView containerKey={containerKey} label={label} node={node} />;
+			return <TreeView containerKey={containerKey} label={label} node={node} root={root} />;
 		}
 		/**
 		 * FluidObjectNode with children.
 		 */
 		case VisualNodeKind.FluidTreeNode: {
-			return <FluidTreeView containerKey={containerKey} label={label} node={node} />;
+			return (
+				<FluidTreeView containerKey={containerKey} label={label} node={node} root={root} />
+			);
 		}
 		/**
 		 * Node with primitive value.
 		 */
 		case VisualNodeKind.ValueNode: {
-			return <ValueView label={label} node={node} />;
+			return <ValueView label={label} node={node} containerKey={containerKey} root={root} />;
 		}
 		/**
 		 * FluidObjectNode with primitive value.
 		 */
 		case VisualNodeKind.FluidValueNode: {
-			return <FluidValueView containerKey={containerKey} label={label} node={node} />;
+			return (
+				<FluidValueView containerKey={containerKey} label={label} node={node} root={root} />
+			);
 		}
 		/**
 		 * Unknown data type.
 		 */
 		case VisualNodeKind.UnknownObjectNode: {
-			return <UnknownDataView label={label} node={node} />;
+			return (
+				<UnknownDataView
+					label={label}
+					node={node}
+					containerKey={containerKey}
+					root={root}
+				/>
+			);
 		}
 		/**
 		 * Unknown SharedObject data type.
 		 */
 		case VisualNodeKind.FluidUnknownObjectNode: {
-			return <UnknownFluidObjectView label={label} node={node} />;
+			return (
+				<UnknownFluidObjectView
+					label={label}
+					node={node}
+					containerKey={containerKey}
+					root={root}
+				/>
+			);
 		}
 		/**
 		 * POST request to FluidClientDebugger.
@@ -72,6 +93,7 @@ export function TreeDataView(props: TreeDataViewProps): React.ReactElement {
 					containerKey={containerKey}
 					fluidObjectId={node.fluidObjectId}
 					label={label}
+					root={root}
 				/>
 			);
 		}

@@ -84,10 +84,22 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 	}, [containerKey, setVisualTree, fluidObjectId, messageRelay]);
 
 	if (visualTree === undefined) {
-		const header = <TreeHeader label={label} inlineValue={<Spinner size="tiny" />} />;
+		const header = (
+			<TreeHeader
+				containerKey={containerKey}
+				label={label}
+				inlineValue={<Spinner size="tiny" />}
+			/>
+		);
 		return <TreeItem header={header} />;
 	} else {
-		const header = <TreeHeader label={label} nodeTypeMetadata={"FluidHandle"} />;
+		const header = (
+			<TreeHeader
+				containerKey={containerKey}
+				label={label}
+				nodeTypeMetadata={"FluidHandle"}
+			/>
+		);
 
 		return (
 			<TreeItem header={header}>

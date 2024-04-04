@@ -15,9 +15,58 @@ import {
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
 } from "@fluidframework/tree/internal";
-import type { SharedTreeLeafNode, VisualSharedTreeNode } from "./VisualSharedTreeTypes.js";
+import type {
+	SharedTreeLeafNode,
+	VisualSharedTreeNode,
+	SharedTreeSchemaNode,
+} from "./VisualSharedTreeTypes.js";
 import { SharedTreeSchemaType, VisualSharedTreeNodeKind } from "./VisualSharedTreeTypes.js";
-import { type VisualChildNode, VisualNodeKind, type VisualValueNode } from "./VisualTree.js";
+import {
+	type VisualChildNode,
+	VisualNodeKind,
+	type VisualValueNode,
+	type VisualTreeNode,
+} from "./VisualTree.js";
+
+function createAllowedTypesVisualTree(
+	allowedTypes: string | Record<string, string>,
+): VisualChildNode {
+	if (typeof allowedTypes === "string") {
+		return {
+			value: allowedTypes,
+			nodeKind: VisualNodeKind.ValueNode,
+		};
+	}
+
+	const result: Record<string, VisualValueNode> = {};
+	for (const [allowedTypeKey, allowedType] of Object.entries(allowedTypes)) {
+		result[allowedTypeKey] = {
+			nodeKind: VisualNodeKind.ValueNode,
+			value: allowedType,
+		};
+	}
+
+	return {
+		children: result,
+		nodeKind: VisualNodeKind.TreeNode,
+	};
+}
+
+function createToolTipContents(tree: SharedTreeSchemaNode): VisualTreeNode {
+	const children: Record<string, VisualChildNode> = {
+		name: {
+			nodeKind: VisualNodeKind.ValueNode,
+			value: tree.name,
+		},
+	};
+	if (tree.allowedTypes !== undefined) {
+		children.allowedTypes = createAllowedTypesVisualTree(tree.allowedTypes);
+	}
+	return {
+		nodeKind: VisualNodeKind.TreeNode,
+		children,
+	};
+}
 
 /**
  * Converts the output of {@link sharedTreeVisualizer} to {@link VisualChildNode} type containing `schema` and `children` fields.
@@ -28,8 +77,7 @@ export function toVisualTree(tree: VisualSharedTreeNode): VisualChildNode {
 			value: tree.value,
 			nodeKind: VisualNodeKind.ValueNode,
 			tooltipContents: {
-				name: tree.schema.name,
-				schemaType: tree.schema.schemaType,
+				schema: createToolTipContents(tree.schema),
 			},
 		};
 		return result;
@@ -45,9 +93,7 @@ export function toVisualTree(tree: VisualSharedTreeNode): VisualChildNode {
 			children,
 			nodeKind: VisualNodeKind.TreeNode,
 			tooltipContents: {
-				name: tree.schema.name,
-				schemaType: tree.schema.schemaType,
-				allowedTypes: tree.schema.allowedTypes,
+				schema: createToolTipContents(tree.schema),
 			},
 		};
 	}
