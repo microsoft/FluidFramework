@@ -122,8 +122,8 @@ export function nodeDataToMapTree(
 }
 
 /**
- * Maps a primitive value.
- * @param data - The value to be transformed. Must be a leaf value.
+ * Transforms data under a Leaf schema.
+ * @param data - The tree data to be transformed. Must be a {@link TreeValue}.
  * @param schema - The schema associated with the value.
  * @param allowedTypes - The allowed types specified by the parent.
  * Used to determine which fallback values may be appropriate.
@@ -210,6 +210,13 @@ function arrayToMapTreeFields(
 	return mappedData;
 }
 
+/**
+ * Transforms data under an Array schema.
+ * @param data - The tree data to be transformed. Must be an array.
+ * @param schema - The schema associated with the value.
+ * @param allowedTypes - The allowed types specified by the parent.
+ * Used to determine which fallback values may be appropriate.
+ */
 function arrayToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree {
 	assert(schema.kind === NodeKind.Array, "Expected an array schema.");
 	if (!isReadonlyArray(data)) {
@@ -233,30 +240,53 @@ function arrayToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTre
 	};
 }
 
+/**
+ * Transforms data under a Map schema.
+ * @param data - The tree data to be transformed. Must be either a TypeScript Map or a Record-like object.
+ * @param schema - The schema associated with the value.
+ * @param allowedTypes - The allowed types specified by the parent.
+ * Used to determine which fallback values may be appropriate.
+ */
 function mapToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree {
 	assert(schema.kind === NodeKind.Map, "Expected a map schema.");
-	if (!(data instanceof Map)) {
-		throw new UsageError(`${getDataTypeForError(data)} data is incompatible with map schema.`);
-	}
 
 	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
 
-	const fields = new Map<FieldKey, MapTree[]>();
-	for (const [key, value] of data) {
-		assert(!fields.has(brand(key)), 0x84c /* Keys should not be duplicated */);
+	let fields: [string, InsertableContent][] = [];
+	if (data instanceof Map) {
+		fields = [...data.entries()];
+	} else if (typeof data === "object" && data !== null) {
+		fields = Object.entries(data);
+	} else {
+		throw new UsageError(
+			`${getDataTypeForError(data)} data is incompatible with array schema.`,
+		);
+	}
+
+	const transformedFields = new Map<FieldKey, MapTree[]>();
+	for (const [key, value] of fields) {
+		assert(!transformedFields.has(brand(key)), 0x84c /* Keys should not be duplicated */);
 
 		// Omit undefined values - an entry with an undefined value is equivalent to one that has been removed or omitted
 		if (value !== undefined) {
 			const mappedField = nodeDataToMapTree(value, allowedChildTypes);
-			fields.set(brand(key), [mappedField]);
+			transformedFields.set(brand(key), [mappedField]);
 		}
 	}
+
 	return {
 		type: brand(schema.identifier),
-		fields,
+		fields: transformedFields,
 	};
 }
 
+/**
+ * Transforms data under an Object schema.
+ * @param data - The tree data to be transformed. Must be a Record-like object.
+ * @param schema - The schema associated with the value.
+ * @param allowedTypes - The allowed types specified by the parent.
+ * Used to determine which fallback values may be appropriate.
+ */
 function objectToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree {
 	assert(schema.kind === NodeKind.Object, "Expected an object schema.");
 	if (typeof data !== "object" || data === null) {
@@ -414,6 +444,7 @@ function shallowCompatibilityTest(
 		return data[typeNameSymbol] === schema.identifier;
 	}
 
+	// Array schemas strictly allow array data as input
 	if (isReadonlyArray(data)) {
 		return schema.kind === NodeKind.Array;
 	}
@@ -421,11 +452,12 @@ function shallowCompatibilityTest(
 		return false;
 	}
 
+	// Map schemas allow TypeScript maps and Record-like objects as input
 	if (data instanceof Map) {
 		return schema.kind === NodeKind.Map;
 	}
 	if (schema.kind === NodeKind.Map) {
-		return false;
+		return typeof data === "object" && data !== null;
 	}
 
 	// Assume record-like object
