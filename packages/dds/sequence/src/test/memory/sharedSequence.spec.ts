@@ -31,10 +31,8 @@ describe("SharedSequence memory usage", () => {
 			title = "Create empty SharedSequence";
 			minSampleCount = 500;
 
-			private segment = new SubSequence<number>([]);
 
 			async run() {
-				this.segment = new SubSequence<number>([]);
 			}
 		})(),
 	);

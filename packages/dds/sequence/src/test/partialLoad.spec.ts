@@ -52,7 +52,6 @@ function generateSummaryTree(
 	const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 	dataStoreRuntime1.options = options;
 	// Connect the first SharedString.
-	const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 	const services1: IChannelServices = {
 		deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 		objectStorage: new MockStorage(),
@@ -68,7 +67,6 @@ function generateSummaryTree(
 	// Create and connect a second SharedString.
 	const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
 	dataStoreRuntime2.options = options;
-	const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 	const sharedString2 = new SharedString(
 		dataStoreRuntime2,
 		"shared-string",

@@ -38,10 +38,8 @@ describe("SharedString memory usage", () => {
 			title = "Create empty SharedString";
 			minSampleCount = 500;
 
-			private sharedString = createLocalSharedString("testSharedString");
 
 			async run() {
-				this.sharedString = createLocalSharedString("testSharedString");
 			}
 		})(),
 	);

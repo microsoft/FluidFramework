@@ -9,7 +9,6 @@ import path from "path";
 
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
 import {
-	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
@@ -78,9 +77,7 @@ describe("SharedString Snapshot Version", () => {
 	});
 
 	async function loadSharedString(id: string, serializedSnapshot: string): Promise<SharedString> {
-		const containerRuntimeFactory = new MockContainerRuntimeFactory();
 		const dataStoreRuntime = new MockFluidDataStoreRuntime();
-		const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 		const services = {
 			deltaConnection: dataStoreRuntime.createDeltaConnection(),
 			objectStorage: new MockStorage(JSON.parse(serializedSnapshot)),
