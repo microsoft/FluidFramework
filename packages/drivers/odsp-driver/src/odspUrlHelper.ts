@@ -67,10 +67,10 @@ export function isOdcUrl(url: URL): boolean {
 
 	// Splitting the regexes so we don't have regex soup
 	// Format: /v2.1/drive/items/ABC123!123 and /v2.1/drives/ABC123/items/ABC123!123
-	const odcRegex = /\/v2.1\/(drive|drives\/[^/]+)\/items\/([\da-z]+)!(\d+)/;
+	const odcRegex = /^\/v2\.1\/(drive|drives\/[^/]+)\/items\/([\dA-Za-z]+)!(\d+)/;
 
 	// Format: /v2.1/drives('ABC123')/items('ABC123!123')
-	const odcODataRegex = /\/v2.1\/drives\('[^/]+'\)\/items\('[\da-z]+!\d+'\)/;
+	const odcODataRegex = /^\/v2\.1\/drives\('[^/]+'\)\/items\('[\dA-Za-z]+!\d+'\)/;
 
 	return odcRegex.test(path) || odcODataRegex.test(path);
 }
@@ -117,7 +117,7 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 
 		return { siteUrl: `${url.origin}${url.pathname}`, driveId, itemId };
 	} else {
-		joinSessionMatch = /(.*)\/_api\/v2.1\/drives\/([^/]*)\/items\/([^/]*)(.*)/.exec(pathname);
+		joinSessionMatch = /(.*)\/_api\/v2\.1\/drives\/([^/]*)\/items\/([^/]*)(.*)/.exec(pathname);
 
 		if (joinSessionMatch === null) {
 			return undefined;
