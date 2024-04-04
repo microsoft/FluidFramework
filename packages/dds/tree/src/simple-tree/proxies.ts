@@ -124,6 +124,9 @@ export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeVal
 
 /**
  * Maps from simple field keys ("view" keys) to their flex field counterparts ("stored" keys).
+ *
+ * @remarks
+ * A missing entry for a given view key indicates that the view and stored keys are the same for that field.
  */
 type SimpleKeyToFlexKeyMap = Map<FieldKey, FieldKey>;
 
@@ -143,8 +146,12 @@ function getOrCreateFlexKeyMapping(
 	if (keyMap === undefined) {
 		keyMap = new Map<FieldKey, FieldKey>();
 		for (const [viewKey, fieldSchema] of Object.entries(fields)) {
+			// Only specify mapping if the stored key differs from the view key.
+			// No entry in this map will indicate that the two keys are the same.
 			const storedKey = getStoredKey(viewKey, fieldSchema);
-			keyMap.set(brand(viewKey), brand(storedKey));
+			if (viewKey !== storedKey) {
+				keyMap.set(brand(viewKey), brand(storedKey));
+			}
 		}
 		simpleKeyToFlexKeyCache.set(nodeSchema, keyMap);
 	}
@@ -169,12 +176,7 @@ export function createObjectProxy(
 	);
 
 	function getFlexKey(viewKey: FieldKey): FieldKey {
-		return (
-			flexKeyMap.get(viewKey) ??
-			fail(
-				`No stored key mapping found for view key "${viewKey}" in schema "${schema.identifier}".`,
-			)
-		);
+		return flexKeyMap.get(viewKey) ?? viewKey;
 	}
 
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
