@@ -10,20 +10,7 @@ import type { IFluidTelemetry } from "../index.js";
  * Conusmers are intended to take incoming produced {@link IFluidTelemetry} and do something of your choice with it.
  * This could be sending the telemetry to a cloud platform or just console logging.
  *
- * @example
- * Here is an example of how we construct a consumer to send telemetry to Azure App Insights, a cloud logging platform:
- * ```ts
- * class AppInsightsTelemetryConsumer implements ITelemetryConsumer {
- *	   constructor(private readonly appInsightsClient: ApplicationInsights) {}
- *
- *	   consume(event: IFluidTelemetry) {
- *		   this.appInsightsClient.trackEvent({
- *			   name: event.eventName,
- *			   properties: event,
- *		   });
- *	   }
- * }
- *```
+ * @see {@link @fluidframework/fluid-telemetry/app-insights#AppInsightsTelemetryConsumer}
  *
  * @beta
  */
