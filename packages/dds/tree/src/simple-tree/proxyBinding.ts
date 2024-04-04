@@ -19,9 +19,9 @@ import {
 } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
 import { RawTreeNode } from "./rawNode.js";
-import { TreeMapNode } from "./schemaTypes.js";
+import { TreeMapNode, WithType } from "./schemaTypes.js";
 import { TreeArrayNode } from "./treeArrayNode.js";
-import { TreeNode, TypedNode } from "./types.js";
+import { TreeNode } from "./types.js";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
 import { makeTree } from "../feature-libraries/flex-tree/lazyNode.js";
@@ -171,3 +171,8 @@ function bindProxyToAnchorNode(proxy: TreeNode, anchorNode: AnchorNode): void {
 	// However, it's fine for an anchor node to rotate through different proxies when the content at that place in the tree is replaced.
 	anchorNode.slots.set(proxySlot, proxy);
 }
+
+/**
+ * Given a node's schema, return the corresponding object in the proxy-based API.
+ */
+type TypedNode<TSchema extends FlexTreeNodeSchema> = TreeNode & WithType<TSchema["name"]>;
