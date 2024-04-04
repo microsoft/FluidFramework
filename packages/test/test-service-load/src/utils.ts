@@ -5,31 +5,33 @@
 
 import crypto from "crypto";
 import fs from "fs";
+
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	OdspTestDriver,
 	createFluidTestDriver,
 	generateOdspHostStoragePolicy,
 } from "@fluid-private/test-drivers";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader/internal";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
 	ITelemetryBaseEvent,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
-import { assert, LazyPromise } from "@fluidframework/core-utils";
+import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	DriverEndpoint,
 	ITelemetryBufferedLogger,
 	ITestDriver,
 	TestDriverTypes,
 } from "@fluidframework/test-driver-definitions";
-import { LocalCodeLoader } from "@fluidframework/test-utils";
+import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
+
 import { ILoadTest, createFluidExport } from "./loadTestDataStore.js";
 import {
 	generateConfigurations,
@@ -45,8 +47,8 @@ const packageName = `${pkgName}@${pkgVersion}`;
 class FileLogger implements ITelemetryBufferedLogger {
 	private static readonly loggerP = (minLogLevel?: LogLevel) =>
 		new LazyPromise<FileLogger>(async () => {
-			if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
-				await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
+			if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER !== undefined) {
+				await import(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
 				const logger = getTestLogger?.();
 				assert(logger !== undefined, "Expected getTestLogger to return something");
 				return new FileLogger(logger, minLogLevel);

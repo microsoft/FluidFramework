@@ -4,9 +4,9 @@
 
 ```ts
 
-import { AttributionInfo } from '@fluidframework/runtime-definitions';
-import { AttributionKey } from '@fluidframework/runtime-definitions';
-import { ContainerRuntime } from '@fluidframework/container-runtime';
+import { AttributionInfo } from '@fluidframework/runtime-definitions/internal';
+import { AttributionKey } from '@fluidframework/runtime-definitions/internal';
+import { ContainerRuntime } from '@fluidframework/container-runtime/internal';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';

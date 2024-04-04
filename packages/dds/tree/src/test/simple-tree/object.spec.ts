@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	ImplicitFieldSchema,
 	NodeKind,
@@ -11,6 +12,7 @@ import {
 	TreeFieldFromImplicitField,
 	TreeNodeSchema,
 } from "../../simple-tree/index.js";
+
 import { hydrate, pretty } from "./utils.js";
 
 const schemaFactory = new SchemaFactory("Test");
@@ -258,6 +260,25 @@ const tcs: TestCase[] = [
 			});
 		})(),
 		initialTree: { nested: {} },
+	},
+	// Case with explicit stored keys
+	{
+		schema: (() => {
+			const schemaFactoryInner = new SchemaFactory("testE");
+			return schemaFactoryInner.object("object", {
+				foo: schemaFactoryInner.optional(schemaFactoryInner.number),
+				bar: schemaFactoryInner.optional(schemaFactoryInner.string, { key: "stable-bar" }),
+				baz: schemaFactoryInner.required(
+					[schemaFactoryInner.boolean, schemaFactoryInner.null],
+					{ key: "stable-baz" },
+				),
+			});
+		})(),
+		initialTree: {
+			foo: 42,
+			bar: "hello world",
+			baz: null,
+		},
 	},
 	{
 		schema: (() => {

@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { CursorLocationType, EmptyKey, Value, mapCursorField } from "../../../core/index.js";
 import { SchemaBuilder, jsonObject, leaf } from "../../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -36,6 +37,7 @@ import {
 	jsonableTreeFromCursor,
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
+
 import {
 	assertChunkCursorEquals,
 	jsonableTreesFromFieldCursor,
@@ -314,7 +316,7 @@ describe("chunkTree", () => {
 			const info = tryShapeFromFieldSchema(
 				schema,
 				defaultSchemaPolicy,
-				valueField,
+				valueField.stored,
 				brand("key"),
 				new Map(),
 			);
@@ -324,7 +326,7 @@ describe("chunkTree", () => {
 			const info = tryShapeFromFieldSchema(
 				schema,
 				defaultSchemaPolicy,
-				optionalField,
+				optionalField.stored,
 				brand("key"),
 				new Map(),
 			);

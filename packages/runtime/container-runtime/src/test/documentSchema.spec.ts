@@ -2,7 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
+
+import { pkgVersion } from "../packageVersion.js";
 import {
 	DocumentsSchemaController,
 	type IDocumentSchemaCurrent,
@@ -30,6 +33,7 @@ describe("Runtime", () => {
 		compressionLz4: true,
 		opGroupingEnabled: false,
 		idCompressorMode: "delayed",
+		disallowedVersions: [],
 	};
 
 	function createController(config: unknown) {
@@ -96,6 +100,94 @@ describe("Runtime", () => {
 		testWrongConfig({ ...validConfig, runtime: { ...validConfig.runtime, foo: 5 } });
 	});
 
+	it("disallowed versions", () => {
+		const controller = createController({
+			...validConfig,
+			runtime: { ...validConfig.runtime, disallowedVersions: [] },
+		});
+		assert(controller.sessionSchema.runtime.disallowedVersions === undefined);
+		assert(controller.maybeSendSchemaMessage() === undefined);
+
+		createController({
+			...validConfig,
+			runtime: { ...validConfig.runtime, disallowedVersions: ["aaa"] },
+		});
+		testWrongConfig({
+			...validConfig,
+			runtime: { ...validConfig.runtime, disallowedVersions: [pkgVersion] },
+		});
+		testWrongConfig({
+			...validConfig,
+			runtime: { ...validConfig.runtime, disallowedVersions: ["aaa", pkgVersion, "bbb"] },
+		});
+	});
+
+	it("change disallowed versions", () => {
+		const controller = new DocumentsSchemaController(
+			true, // existing,
+			// old schema
+			{
+				...validConfig,
+				runtime: { ...validConfig.runtime, explicitSchemaControl: true },
+			},
+			// features requested
+			{
+				...features,
+				disallowedVersions: ["aaa", "bbb"],
+			},
+			// onSchemaChange
+			() => {},
+		);
+		assert.deepEqual(controller.sessionSchema.runtime.disallowedVersions, ["aaa", "bbb"]);
+		let message = controller.maybeSendSchemaMessage();
+		assert(message !== undefined);
+		controller.processDocumentSchemaOp(message, true /* local */, 100 /* sequenceNumber */);
+		assert.deepEqual(controller.sessionSchema.runtime.disallowedVersions, ["aaa", "bbb"]);
+
+		// Some runtime that drops one version, and adds another version to disallowed list
+		const controller2 = new DocumentsSchemaController(
+			true, // existing,
+			// old schema
+			controller.summarizeDocumentSchema(300),
+			// features requested
+			{
+				...features,
+				disallowedVersions: ["ccc", "aaa"],
+			},
+			// onSchemaChange
+			() => {},
+		);
+		assert.deepEqual(controller2.sessionSchema.runtime.disallowedVersions, [
+			"aaa",
+			"bbb",
+			"ccc",
+		]);
+		message = controller2.maybeSendSchemaMessage();
+		assert(message !== undefined);
+		controller2.processDocumentSchemaOp(message, true /* local */, 400 /* sequenceNumber */);
+		assert.deepEqual(controller2.sessionSchema.runtime.disallowedVersions, [
+			"aaa",
+			"bbb",
+			"ccc",
+		]);
+
+		// Some runtime that only processes document schema op
+		const controller3 = new DocumentsSchemaController(
+			true, // existing,
+			// old schema
+			controller.summarizeDocumentSchema(300),
+			features,
+			// onSchemaChange
+			() => {},
+		);
+		controller3.processDocumentSchemaOp(message, true /* local */, 400 /* sequenceNumber */);
+		assert.deepEqual(controller3.sessionSchema.runtime.disallowedVersions, [
+			"aaa",
+			"bbb",
+			"ccc",
+		]);
+	});
+
 	it("wrong values for known properties", () => {
 		testWrongConfig({
 			...validConfig,
@@ -151,9 +243,10 @@ describe("Runtime", () => {
 
 		if (!existing || !explicitSchemaControl) {
 			controller.onDisconnect();
-			controller.onMessageSent(() => {
-				assert(false, "no messages should be sent!");
-			});
+			assert(
+				controller.maybeSendSchemaMessage() === undefined,
+				"no messages should be sent!",
+			);
 		}
 
 		// get rid of all properties with undefined values.
@@ -219,9 +312,7 @@ describe("Runtime", () => {
 		);
 
 		controller.onDisconnect();
-		controller.onMessageSent(() => {
-			assert(false, "no messages should be sent!");
-		});
+		assert(controller.maybeSendSchemaMessage() === undefined, "no messages should be sent!");
 	}
 
 	it("Existing document with existing schema, no changes", () => {
@@ -240,10 +331,7 @@ describe("Runtime", () => {
 			() => {}, // onSchemaChange
 		);
 
-		let message: IDocumentSchemaCurrent | undefined;
-		controller.onMessageSent((msg) => {
-			message = msg as IDocumentSchemaCurrent;
-		});
+		const message = controller.maybeSendSchemaMessage();
 
 		assert(message !== undefined);
 		assert(message.runtime.opGroupingEnabled === true);
@@ -325,9 +413,7 @@ describe("Runtime", () => {
 			}, // onSchemaChange
 		);
 
-		controller.onMessageSent(() => {
-			assert(false, "no messages should be sent!");
-		});
+		assert(controller.maybeSendSchemaMessage() === undefined);
 
 		/**
 		 * validate that we can summarize, load new client from that summary and it also will not send any ops
@@ -342,9 +428,7 @@ describe("Runtime", () => {
 			}, // onSchemaChange
 		);
 
-		controller2.onMessageSent(() => {
-			assert(false, "no messages should be sent!");
-		});
+		assert(controller2.maybeSendSchemaMessage() === undefined);
 
 		/**
 		 * Summarize from that new client and ensure we are getting exactly same summary, thus getting to same state.
@@ -368,12 +452,9 @@ describe("Runtime", () => {
 		// setting is not on yet
 		assert(controller3.sessionSchema.runtime.idCompressorMode === undefined);
 
-		let message: IDocumentSchemaCurrent | undefined;
-		controller3.onMessageSent((msg) => {
-			message = msg as IDocumentSchemaCurrent;
-			assert(message.runtime.idCompressorMode === "on");
-		});
+		const message = controller3.maybeSendSchemaMessage();
 		assert(message !== undefined, "message sent");
+		assert(message.runtime.idCompressorMode === "on");
 
 		controller3.processDocumentSchemaOp(
 			message,
@@ -385,9 +466,7 @@ describe("Runtime", () => {
 		const schema = controller3.summarizeDocumentSchema(200) as IDocumentSchemaCurrent;
 		assert(schema.runtime.idCompressorMode === "on", "now on");
 
-		controller3.onMessageSent(() => {
-			assert(false, "no more messages to send");
-		});
+		assert(controller3.maybeSendSchemaMessage() === undefined);
 
 		/**
 		 * Validate now that another client that was observing schema changes (not initiating them) will arrive to same state
@@ -412,12 +491,10 @@ describe("Runtime", () => {
 		); // sequenceNumber
 		assert(schemaChanged, "schema changed");
 		assert(controller4.sessionSchema.runtime.idCompressorMode === "on");
-		controller4.onMessageSent(() => {
-			assert(
-				false,
-				"no messages should be sent - it lost a race and will not attempt to change file format.",
-			);
-		});
+		assert(
+			controller4.maybeSendSchemaMessage() === undefined,
+			"no messages should be sent - it lost a race and will not attempt to change file format.",
+		);
 
 		// Validate same summaries by two clients.
 		const schema2 = controller3.summarizeDocumentSchema(200) as IDocumentSchemaCurrent;

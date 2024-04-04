@@ -17,6 +17,7 @@ import { EditRegular, Person12Regular, Search12Regular } from "@fluentui/react-i
 import React from "react";
 
 import { ThemeContext, ThemeOption } from "../ThemeHelper.js";
+
 import { type TransformedAudienceStateData } from "./AudienceView.js";
 import {
 	clientIdTooltipText,

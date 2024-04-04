@@ -4,8 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import sinon from "sinon";
+
 import { ISummaryConfiguration, ISummaryConfigurationHeuristics } from "../../containerRuntime.js";
 import {
 	ISummarizeAttempt,

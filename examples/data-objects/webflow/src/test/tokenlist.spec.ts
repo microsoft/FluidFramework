@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { TokenList, findToken } from "../util/index.js";
 
 describe("TokenList", () => {

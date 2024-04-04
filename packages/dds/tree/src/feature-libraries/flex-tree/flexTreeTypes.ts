@@ -29,6 +29,7 @@ import {
 	LazyItem,
 	LeafNodeSchema,
 } from "../typed-schema/index.js";
+
 import { FlexTreeContext } from "./context.js";
 import { FlexTreeNodeEvents } from "./treeEvents.js";
 
@@ -172,6 +173,17 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
 	tryGetField(key: FieldKey): undefined | FlexTreeField;
 
 	/**
+	 * Get the field for `key`.
+	 * @param key - which entry to look up.
+	 *
+	 * @remarks
+	 * All fields implicitly exist, so `getBoxed` can be called with any key and will always return a field.
+	 * Even if the field is empty, it will still be returned, and can be edited to insert content if allowed by the field kind.
+	 * See {@link FlexTreeNode.tryGetField} for a variant that does not allocate afield in the empty case.
+	 */
+	getBoxed(key: FieldKey): FlexTreeField;
+
+	/**
 	 * The field this tree is in, and the index within that field.
 	 */
 	readonly parentField: { readonly parent: FlexTreeField; readonly index: number };
@@ -185,6 +197,11 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
 
 	/**
 	 * The anchor node associated with this node
+	 *
+	 * @remarks
+	 * The ref count keeping this alive is owned by the FlexTreeNode:
+	 * if holding onto this anchor for longer than the FlexTreeNode might be alive,
+	 * a separate Anchor (and thus ref count) must be allocated to keep it alive.
 	 */
 	readonly anchorNode: AnchorNode;
 }
@@ -242,6 +259,18 @@ export interface FlexTreeField extends FlexTreeEntity<FlexFieldSchema> {
 	 * Implementing this will require some care to preserve lazy-ness and work efficiently (without leaks) for empty fields, particularly on MapNodes.
 	 */
 	isSameAs(other: FlexTreeField): boolean;
+
+	/**
+	 * Gets a node of this field by its index without unboxing.
+	 * @param index - Zero-based index of the item to retrieve. Negative values are interpreted from the end of the sequence.
+	 *
+	 * @returns The element in the sequence matching the given index. Always returns undefined if index \< -sequence.length
+	 * or index \>= sequence.length.
+	 *
+	 * @remarks
+	 * Semantics match {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at | Array.at}.
+	 */
+	boxedAt(index: number): FlexTreeNode | undefined;
 }
 
 // #region Node Kinds
@@ -574,6 +603,7 @@ export const reservedObjectNodeFieldPropertyNames = [
 	"localNodeKey",
 	"boxedIterator",
 	"iterator",
+	"getBoxed",
 ] as const;
 
 /**
@@ -710,14 +740,7 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	at(index: number): FlexTreeUnboxNodeUnion<TTypes> | undefined;
 
 	/**
-	 * Gets a node of this field by its index without unboxing.
-	 * @param index - Zero-based index of the item to retrieve. Negative values are interpreted from the end of the sequence.
-	 *
-	 * @returns The element in the sequence matching the given index. Always returns undefined if index \< -sequence.length
-	 * or index \>= array.length.
-	 *
-	 * @remarks
-	 * Semantics match {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at | Array.at}.
+	 * {@inheritdoc FlexTreeField.boxedAt}
 	 */
 	boxedAt(index: number): FlexTreeTypedNodeUnion<TTypes> | undefined;
 

@@ -5,14 +5,14 @@
 ```ts
 
 import { ConnectionMode } from '@fluidframework/protocol-definitions';
-import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
+import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils/internal';
 import { IAnyDriverError } from '@fluidframework/driver-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IConnect } from '@fluidframework/protocol-definitions';
 import { IConnected } from '@fluidframework/protocol-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
-import { IDocumentDeltaConnection } from '@fluidframework/driver-definitions';
-import { IDocumentDeltaConnectionEvents } from '@fluidframework/driver-definitions';
+import { IDocumentDeltaConnection } from '@fluidframework/driver-definitions/internal';
+import { IDocumentDeltaConnectionEvents } from '@fluidframework/driver-definitions/internal';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalClient } from '@fluidframework/protocol-definitions';

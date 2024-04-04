@@ -5,6 +5,7 @@
 
 import { promises as fs, mkdirSync, writeFileSync } from "fs";
 import path from "path";
+
 import { combineReducers, combineReducersAsync } from "./combineReducers.js";
 import {
 	AsyncGenerator,
@@ -61,8 +62,8 @@ export async function performFuzzActionsAsync<
  * this parameter might look like:
  * ```typescript
  * {
- *   add: (state, index) => { myList.insert(index); return state; },
- *   delete: (state, index) => { myList.delete(index); return state; }
+ * add: (state, index) => { myList.insert(index); return state; },
+ * delete: (state, index) => { myList.delete(index); return state; }
  * }
  * ```
  * @param initialState - Initial state for the test
@@ -188,8 +189,8 @@ export function performFuzzActions<
  * this parameter might look like:
  * ```typescript
  * {
- *   add: (state, index) => { myList.insert(index); return state; },
- *   delete: (state, index) => { myList.delete(index); return state; }
+ * add: (state, index) => { myList.insert(index); return state; },
+ * delete: (state, index) => { myList.delete(index); return state; }
  * }
  * ```
  * @param initialState - Initial state for the test

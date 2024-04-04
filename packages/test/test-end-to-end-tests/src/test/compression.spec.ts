@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-nodejs-modules
 import * as crypto from "crypto";
+
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import {
 	describeCompat,
@@ -15,7 +16,7 @@ import {
 import {
 	CompressionAlgorithms,
 	type IContainerRuntimeOptions,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 // TODO:AB#6558: This should be provided based on the compatibility configuration.
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -25,7 +26,8 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
+
 import { pkgVersion } from "../packageVersion.js";
 
 const compressionSuite = (getProvider) => {

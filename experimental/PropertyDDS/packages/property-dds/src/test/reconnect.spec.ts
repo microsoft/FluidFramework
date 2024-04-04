@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { DeterministicRandomGenerator } from "@fluid-experimental/property-common";
 import {
 	Float64Property,
@@ -15,9 +16,10 @@ import {
 	MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import { expect } from "chai";
 import { v5 as uuidv5 } from "uuid";
+
 import { SharedPropertyTree } from "../propertyTree.js";
 import { PropertyTreeFactory } from "../propertyTreeFactory.js";
 

@@ -5,19 +5,21 @@
 
 import fs from "fs";
 import path from "path";
-import { IFluidPackage } from "@fluidframework/container-definitions";
-import { assert } from "@fluidframework/core-utils";
+
+import { IFluidPackage } from "@fluidframework/container-definitions/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { IOdspTokens, getServer } from "@fluidframework/odsp-doclib-utils/internal";
 import {
 	OdspTokenConfig,
 	OdspTokenManager,
 	getMicrosoftConfiguration,
 	odspTokensCache,
-} from "@fluidframework/tool-utils";
+} from "@fluidframework/tool-utils/internal";
 import Axios from "axios";
 import express from "express";
 import nconf from "nconf";
 import WebpackDevServer from "webpack-dev-server";
+
 import { createManifestResponse } from "./bohemiaIntercept.js";
 import { tinyliciousUrls } from "./getUrlResolver.js";
 import { RouteOptions } from "./loader.js";

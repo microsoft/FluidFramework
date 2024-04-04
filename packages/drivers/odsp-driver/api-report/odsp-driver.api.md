@@ -4,35 +4,35 @@
 
 ```ts
 
-import { DriverPreCheckInfo } from '@fluidframework/driver-definitions';
-import { HostStoragePolicy } from '@fluidframework/odsp-driver-definitions';
-import { IContainerPackageInfo } from '@fluidframework/driver-definitions';
-import { IdentityType } from '@fluidframework/odsp-driver-definitions';
-import { IDocumentService } from '@fluidframework/driver-definitions';
-import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
-import { IEntry } from '@fluidframework/odsp-driver-definitions';
-import { IFileEntry } from '@fluidframework/odsp-driver-definitions';
-import { IOdspResolvedUrl } from '@fluidframework/odsp-driver-definitions';
-import { IOdspUrlParts } from '@fluidframework/odsp-driver-definitions';
-import { IPersistedCache } from '@fluidframework/odsp-driver-definitions';
-import { IRelaySessionAwareDriverFactory } from '@fluidframework/odsp-driver-definitions';
+import { DriverPreCheckInfo } from '@fluidframework/driver-definitions/internal';
+import { HostStoragePolicy } from '@fluidframework/odsp-driver-definitions/internal';
+import { IContainerPackageInfo } from '@fluidframework/driver-definitions/internal';
+import { IdentityType } from '@fluidframework/odsp-driver-definitions/internal';
+import { IDocumentService } from '@fluidframework/driver-definitions/internal';
+import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
+import { IEntry } from '@fluidframework/odsp-driver-definitions/internal';
+import { IFileEntry } from '@fluidframework/odsp-driver-definitions/internal';
+import { IOdspResolvedUrl } from '@fluidframework/odsp-driver-definitions/internal';
+import { IOdspUrlParts } from '@fluidframework/odsp-driver-definitions/internal';
+import { IPersistedCache } from '@fluidframework/odsp-driver-definitions/internal';
+import { IRelaySessionAwareDriverFactory } from '@fluidframework/odsp-driver-definitions/internal';
 import { IRequest } from '@fluidframework/core-interfaces';
-import { IResolvedUrl } from '@fluidframework/driver-definitions';
+import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISharingLinkKind } from '@fluidframework/odsp-driver-definitions';
-import { ISnapshot } from '@fluidframework/driver-definitions';
-import { ISnapshotOptions } from '@fluidframework/odsp-driver-definitions';
+import { ISharingLinkKind } from '@fluidframework/odsp-driver-definitions/internal';
+import { ISnapshot } from '@fluidframework/driver-definitions/internal';
+import { ISnapshotOptions } from '@fluidframework/odsp-driver-definitions/internal';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
-import { ISocketStorageDiscovery } from '@fluidframework/odsp-driver-definitions';
+import { ISocketStorageDiscovery } from '@fluidframework/odsp-driver-definitions/internal';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { IUrlResolver } from '@fluidframework/driver-definitions';
-import { OdspResourceTokenFetchOptions } from '@fluidframework/odsp-driver-definitions';
-import { PromiseCache } from '@fluidframework/core-utils';
-import { RateLimiter } from '@fluidframework/driver-utils';
-import { TokenFetcher } from '@fluidframework/odsp-driver-definitions';
+import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
+import { OdspResourceTokenFetchOptions } from '@fluidframework/odsp-driver-definitions/internal';
+import { PromiseCache } from '@fluidframework/core-utils/internal';
+import { RateLimiter } from '@fluidframework/driver-utils/internal';
+import { TokenFetcher } from '@fluidframework/odsp-driver-definitions/internal';
 
 // @alpha
 export function checkUrl(documentUrl: URL): DriverPreCheckInfo | undefined;

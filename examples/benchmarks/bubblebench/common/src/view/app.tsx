@@ -4,8 +4,10 @@
  */
 
 import React, { useEffect, useState } from "react";
+
 import { Stats } from "../stats.js";
 import { IAppState, IBubble } from "../types.js";
+
 import { StageView } from "./stage.js";
 import { useResizeObserver } from "./useResizeObserver.cjs";
 

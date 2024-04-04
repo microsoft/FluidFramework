@@ -24,6 +24,7 @@ import {
 	XAxis,
 	YAxis,
 } from "recharts";
+
 import { ThemeOption, useThemeContext } from "../../ThemeHelper.js";
 
 /**

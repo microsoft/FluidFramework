@@ -3,11 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-	FlexFieldNodeSchema,
-	FlexMapNodeSchema,
-	FlexObjectNodeSchema,
-} from "../feature-libraries/index.js";
+import { FlexTreeNodeSchema } from "../feature-libraries/index.js";
+
 import { WithType, type } from "./schemaTypes.js";
 import { IterableTreeArrayContent } from "./treeArrayNode.js";
 
@@ -237,6 +234,4 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 /**
  * Given a node's schema, return the corresponding object in the proxy-based API.
  */
-export type TypedNode<
-	TSchema extends FlexObjectNodeSchema | FlexFieldNodeSchema | FlexMapNodeSchema,
-> = TreeNode & WithType<TSchema["name"]>;
+export type TypedNode<TSchema extends FlexTreeNodeSchema> = TreeNode & WithType<TSchema["name"]>;

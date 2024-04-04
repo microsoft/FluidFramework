@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Timer } from "@fluidframework/core-utils";
+import { Timer } from "@fluidframework/core-utils/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+
 import { ISummaryConfigurationHeuristics } from "../containerRuntime.js";
+
 import {
 	ISummarizeAttempt,
 	ISummarizeHeuristicData,

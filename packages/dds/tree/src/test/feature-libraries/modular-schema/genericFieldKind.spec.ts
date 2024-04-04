@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import { SessionId } from "@fluidframework/id-compressor";
+
 import { IJsonCodec } from "../../../codec/index.js";
 import {
 	ChangeEncodingContext,
@@ -34,6 +36,7 @@ import {
 	makeEncodingTestSuite,
 	testRevisionTagCodec,
 } from "../../utils.js";
+
 import { ValueChangeset, valueField, valueHandler } from "./basicRebasers.js";
 import { testSnapshots } from "./genericFieldSnapshots.test.js";
 

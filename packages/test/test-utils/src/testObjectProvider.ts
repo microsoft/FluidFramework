@@ -8,13 +8,13 @@ import {
 	IFluidCodeDetails,
 	IHostLoader,
 	ILoader,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import {
 	ILoaderProps,
 	Loader,
 	waitContainerToCatchUp as waitContainerToCatchUp_original,
-} from "@fluidframework/container-loader";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+} from "@fluidframework/container-loader/internal";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import {
 	IRequestHeader,
 	ITelemetryBaseEvent,
@@ -24,14 +24,12 @@ import {
 	IDocumentServiceFactory,
 	IResolvedUrl,
 	IUrlResolver,
-} from "@fluidframework/driver-definitions";
-import {
-	type ITelemetryGenericEventExt,
-	createChildLogger,
-	createMultiSinkLogger,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/driver-definitions/internal";
+import { type ITelemetryGenericEventExt } from "@fluidframework/telemetry-utils";
+import { createChildLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils/internal";
 import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { v4 as uuid } from "uuid";
+
 import { LoaderContainerTracker } from "./loaderContainerTracker.js";
 import { LocalCodeLoader, fluidEntryPoint } from "./localCodeLoader.js";
 import { createAndAttachContainer } from "./localLoader.js";
