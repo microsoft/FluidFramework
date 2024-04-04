@@ -244,7 +244,7 @@ export const visualizeSharedString: VisualizeSharedObject = async (
 export const visualizeSharedTree: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
 	visualizeChildData: VisualizeChildData,
-): Promise<FluidObjectTreeNode> => {
+): Promise<FluidObjectNode> => {
 	const sharedTree = sharedObject as ISharedTree;
 	const contentSnapshot = sharedTree.contentSnapshot();
 
@@ -264,14 +264,18 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	// Maps the `visualTreeRepresentation` in the format compatible to {@link visualizeChildData} function.
 	const visualTree = toVisualTree(visualTreeRepresentation);
 
-	return {
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	const visualTreeResult: FluidObjectNode = {
+		...visualTree,
 		fluidObjectId: sharedTree.id,
-		children: {
-			tree: visualTree,
-		},
 		typeMetadata: "SharedTree",
-		nodeKind: VisualNodeKind.FluidTreeNode,
-	};
+		nodeKind:
+			visualTree.nodeKind === VisualNodeKind.TreeNode
+				? VisualNodeKind.FluidTreeNode
+				: VisualNodeKind.FluidValueNode,
+	} as FluidObjectNode;
+
+	return visualTreeResult;
 };
 
 /**

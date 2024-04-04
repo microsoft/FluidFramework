@@ -17,12 +17,17 @@ import {
 } from "@fluidframework/tree/internal";
 import type { SharedTreeLeafNode, VisualSharedTreeNode } from "./VisualSharedTreeTypes.js";
 import { SharedTreeSchemaType, VisualSharedTreeNodeKind } from "./VisualSharedTreeTypes.js";
-import { type VisualChildNode, VisualNodeKind, type VisualValueNode } from "./VisualTree.js";
+import {
+	type VisualChildNode,
+	VisualNodeKind,
+	type VisualValueNode,
+	type VisualTreeNode,
+} from "./VisualTree.js";
 
 /**
  * Converts the output of {@link sharedTreeVisualizer} to {@link VisualChildNode} type containing `schema` and `children` fields.
  */
-export function toVisualTree(tree: VisualSharedTreeNode): VisualChildNode {
+export function toVisualTree(tree: VisualSharedTreeNode): VisualValueNode | VisualTreeNode {
 	if (tree.kind === VisualSharedTreeNodeKind.LeafNode) {
 		const result: VisualValueNode = {
 			value: tree.value,
