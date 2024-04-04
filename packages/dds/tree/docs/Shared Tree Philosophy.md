@@ -55,7 +55,7 @@ These internal requirements mostly follow from the above flexibility requirement
 # Balancing Conflicting Goals
 
 These goals are values which the Shared Tree tries to maximize.
-There are however cases where trad-offs must be made.
+There are however cases where trade-offs must be made.
 For example, being compatible with existing libraries and conventions from non-collaborative applications can lead to APIs that lead to common collaboration pitfalls, like unclear merge behavior due to insufficient semantics captured through the editing APIs.
 Much of the design of Shared tree is to avoid having to make these tradeoffs and this is the preferred approach, however some can not be avoided, and they will be evaluated carefully.
 
@@ -103,7 +103,7 @@ For example shared tree can introduce a new version of editing primitives and/or
 which applications can opt into in their schema in a compatible way.
 
 Shared Tree is also designed to ensure applications using it can also adopt this same compatibility approach while minimizing the frequency and difficulty of doing so.
-For example the APIs Shared Tree exposes for working with schema are designed to help guide users of it into design patterns that are robust and maintainable even when faced with supporting large numbers of legacy schema.
+For example the APIs Shared Tree exposes for working with schema are designed to help guide their users into design patterns that are robust and maintainable even when faced with supporting large numbers of legacy schema.
 
 ## Data Model and Editing
 
@@ -129,7 +129,7 @@ This also leverages all the same collaboration as the rest of schema evolution, 
 
 This results in a tree where the overall shape is controlled by the application via its tree schema (for the nodes) and the alternating layers of fields provide all the complex logic, neatly separating the concerns.
 This can also be thought of as a tree of entities alternating between fields and nodes.
-As these two kinds of entities alternate and thus never touch, this resembles a [Bipartite Graph](https://en.wikipedia.org/wiki/Bipartite_graph), and can be called a Bipartite Tree.
+As these two kinds of entities alternate and thus never touch, this resembles a [bipartite graph](https://en.wikipedia.org/wiki/Bipartite_graph), and can be called a bipartite tree.
 
 To better align this data-model with existing libraries, `simple-tree` abstracts fields in a way that depends on the kind of the node they are part of.
 For example the fields of object nodes are presented as JavaScript enumerable own properties.
@@ -157,7 +157,7 @@ This general purpose no-concurrency constraint is unfortunately not great for th
 This can be addressed by providing more specific constraints, and designing the editing APIs so constraints are needed in less cases.
 For example allowing a constraint that only rejects a transaction if a field or subtree was concurrently edited, or providing a field kind with higher level editing operations like a set or counter with appropriate editing methods.
 
-This design pattern ensures there is always a way for the application author to ensure correctness, and by a little doing more work to be less conservative with the constraints, the application can improve the merge granularity when needed.
+This design pattern ensures there is always a way for the application author to ensure correctness, and to improve the merge granularity when needed by doing more work to be less conservative with the constraints.
 
 Additionally, even higher merge fidelity can be achieved by adding new field kinds as application needs for them arise, and this work can be shared among all users of SharedTree.
 
@@ -166,13 +166,13 @@ Note that the current implementation does not yet provide access to constraints,
 # Sub-Trees
 
 To help applications scale to larger schema and more complex documents, SharedTree is designed to enable applications to process different subtrees independently.
-If the application aligns their data model with this, keeping invariants and operations as local to a given subtree as possible, then can benefit in several ways.
+If the application aligns their data model with this, keeping invariants and operations as local to a given subtree as possible, they can benefit in several ways.
 It allows for easy to express but still fine grained constraints, using subtree constraint (which reject concurrent edits to the same subtree),
 as well as more efficient and simple application logic for things like producing and updating a user interface for a given subtree's content.
 The part of an application which handles a given subtree can be though of as a mini application which can be nested in a larger one:
 this can both be great for reuse of logic, as well as integration into other tree structured systems, like [React](https://react.dev/) or even just the [DOM](https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Introduction.)
 
-When operations need to span different subtrees, they can be though of as an operation at (or above) the level of their common parent, and can be constrained according when needed.
+When operations need to span different subtrees, they can be thought of as an operation at (or above) the level of their common parent, and can be constrained accordingly when needed.
 
 ---
 
@@ -180,7 +180,7 @@ When operations need to span different subtrees, they can be though of as an ope
 
 This is part of why SHaredTree is a tree, and not a graph.
 When dealing with mutable content, its really useful to be clear about what the invariants of any given data are.
-Having these comes from its schema is ideal, but in the cases where thats insufficient for constraints be contextually applied by the parents.
+Having these comes from its schema is ideal, but in the cases where that's insufficient, constraints can be contextually applied by the parents.
 This approach is most practical when any given data only has a single context (based on its single parentage path).
 In a graph, data can have many parents, so they either need to not put constraints on the child (which makes it hard to have any application invariants which the schema language can't express),
 or all need to be accounted for (which doesn't scale to complex applications well).
@@ -210,7 +210,7 @@ To ensure content from a document is not misinterpreted, the document carries wi
 This can be checked against the "view schema" which defines the types the application is programmed against.
 If they match, the application can safely work on the document as is.
 If they do not match, the application needs to take some corrective action.
-The set of possible corrective actions generally includes raising a compatibility error, updating or adapting the document to a supported format.
+The set of possible corrective actions generally includes raising a compatibility error, updating the document's schema, or adapting the document's content to a supported format.
 In the general case these compatibility fixes can be done in a composable subtree local way, and form a general approach for handling schema evolution.
 This approach is designed to enable separating the portion of the application that deals with compatibility, keeping the main logic of the app as clean as possible, as suggested in [SchemaVersioning](packages/dds/SchemaVersioning.md).
 
