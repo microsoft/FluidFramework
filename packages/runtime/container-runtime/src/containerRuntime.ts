@@ -4304,11 +4304,6 @@ export class ContainerRuntime
 			const pending = this.pendingStateManager.getLocalState();
 			const sessionExpiryTimerStarted =
 				props?.sessionExpiryTimerStarted ?? this.garbageCollector.sessionExpiryTimerStarted;
-			if (pendingAttachmentBlobs === undefined && !this.hasPendingMessages()) {
-				return {
-					sessionExpiryTimerStarted,
-				};
-			}
 
 			const pendingIdCompressorState = this._idCompressor?.serialize(true);
 
