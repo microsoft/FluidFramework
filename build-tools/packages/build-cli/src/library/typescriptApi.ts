@@ -4,13 +4,13 @@
  */
 
 import type { SourceFile, ExportedDeclarations } from "ts-morph";
-import { Node, SyntaxKind } from "ts-morph";
+import { Node } from "ts-morph";
 
 import { ApiLevel, isKnownApiLevel } from "./apiLevel.js";
 
 interface ExportRecord {
 	name: string;
-	type: string;
+	isTypeOnly: boolean;
 }
 export interface ExportRecords {
 	public: ExportRecord[];
@@ -20,9 +20,13 @@ export interface ExportRecords {
 	unknown: { name: string; decl: ExportedDeclarations }[];
 }
 
-function isTypeExport(decl: ExportedDeclarations): boolean {
-	console.log(`${decl.getStartLineNumber()}: ${decl.getKindName()}: "${decl.getFullText()}"`);
-	return decl.isKind(SyntaxKind.ExportDeclaration);
+/**
+ * This function is a placeholder for functionality that could
+ * be very useful to have when working with multiple exports
+ * using the same name (basically both a type and value export).
+ */
+function isTypeExport(_decl: ExportedDeclarations): boolean {
+	return false;
 }
 
 /**
@@ -51,6 +55,10 @@ function getNodeLevel(node: Node): ApiLevel | undefined {
 	return undefined;
 }
 
+/**
+ * Given a source file extracts all of the named exports and associated API level.
+ * Named exports without a recognized level are placed in unknown array.
+ */
 export function getApiExports(sourceFile: SourceFile): ExportRecords {
 	const exported = sourceFile.getExportedDeclarations();
 	const records: ExportRecords = {
@@ -60,13 +68,27 @@ export function getApiExports(sourceFile: SourceFile): ExportRecords {
 		internal: [],
 		unknown: [],
 	};
+	// We can't (don't know how to) distinguish duplication in exports
+	// from a type and a value export. We expect however that those will
+	// share the same level. Track and throw if there are different levels.
+	const foundNameLevels = new Map<string, ApiLevel>();
 	for (const [name, exportedDecls] of exported.entries()) {
 		for (const exportedDecl of exportedDecls) {
 			const level = getNodeLevel(exportedDecl);
 			if (level === undefined) {
 				records.unknown.push({ name, decl: exportedDecl });
 			} else {
-				records[level].push({ name, type: isTypeExport(exportedDecl) ? "type" : "value" });
+				const existingLevel = foundNameLevels.get(name);
+				if (existingLevel === undefined) {
+					records[level].push({ name, isTypeOnly: isTypeExport(exportedDecl) });
+					foundNameLevels.set(name, level);
+				} else if (level !== existingLevel) {
+					throw new Error(
+						`${name} has been exported twice with different api levels.\nFirst as ${existingLevel} and now as ${level} from ${exportedDecl
+							.getSourceFile()
+							.getFilePath()}:${exportedDecl.getStartLineNumber()}.`,
+					);
+				}
 			}
 		}
 	}

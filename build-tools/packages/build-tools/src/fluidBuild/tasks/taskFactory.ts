@@ -6,6 +6,7 @@
 import { getExecutableFromCommand } from "../../common/utils";
 import { BuildPackage } from "../buildGraph";
 import { ApiExtractorTask } from "./leaf/apiExtractorTask";
+import { GenerateApiTask } from "./leaf/generateApiTask";
 import { LeafTask, UnknownLeafTask } from "./leaf/leafTask";
 import { EsLintTask, TsLintTask } from "./leaf/lintTasks";
 import {
@@ -49,6 +50,7 @@ const executableToLeafTask: {
 	"flub list": FlubListTask,
 	"flub check layers": FlubCheckLayerTask,
 	"flub check policy": FlubCheckPolicyTask,
+	"flub generate api": GenerateApiTask,
 	"flub generate typetests": TypeValidationTask,
 	"fluid-type-test-generator": TypeValidationTask,
 	"depcruise": DepCruiseTask,
