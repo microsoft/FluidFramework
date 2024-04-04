@@ -49,11 +49,7 @@ export function toVisualTree(tree: VisualSharedTreeNode): VisualChildNode {
 /**
  * Concatenrate allowed types for `ObjectNodeStoredSchema` and `MapNodeStoredSchema`.
  */
-function concatenateAllowedTypes(
-	fieldKey: string,
-	fieldTypes: TreeTypeSet | undefined,
-	endFlag: boolean,
-): string {
+function concatenateTypes(fieldKey: string, fieldTypes: TreeTypeSet | undefined): string {
 	let fieldAllowedType = fieldKey === EmptyKey ? "" : `${fieldKey} : `;
 
 	if (fieldTypes === undefined) {
@@ -63,10 +59,6 @@ function concatenateAllowedTypes(
 		fieldAllowedType += `${allowedTypes}`;
 	}
 
-	if (!endFlag) {
-		fieldAllowedType += ", ";
-	}
-
 	return fieldAllowedType;
 }
 
@@ -74,25 +66,22 @@ function concatenateAllowedTypes(
  * Returns the allowed fields & types for the object fields (e.g., `foo : string | number, bar: boolean`)
  */
 function getObjectAllowedTypes(schema: ObjectNodeStoredSchema): string {
-	let result = "";
-
-	// Checks if the field is the last field in the map to prevent adding a trailing comma.
-	let idx = 0;
-	const objectSize = schema.objectNodeFields.size;
+	const result: string[] = [];
 
 	for (const [fieldKey, treeFieldStoredSchema] of schema.objectNodeFields) {
 		// Set of allowed tree types `TreeTypeSet`.
 		const fieldTypes = treeFieldStoredSchema.types;
 
-		result += concatenateAllowedTypes(fieldKey, fieldTypes, idx === objectSize - 1);
-		idx += 1;
+		result.push(concatenateTypes(fieldKey, fieldTypes));
 
+		// If the field key is `EmptyKey`, then it is an array field.
+		// Return the allowed types in string format, instead of JSON format.
 		if (fieldKey === EmptyKey) {
-			return result;
+			return result.join("");
 		}
 	}
 
-	return `{ ${result} }`;
+	return `{ ${result.join(", ")} }`;
 }
 
 /**
@@ -108,18 +97,13 @@ function getMapAllowedTypes(
 
 	const mapFieldAllowedTypes = schema.mapFields.types;
 
-	let result = "";
-
-	// Checks if the field is the last field in the map to prevent adding a trailing comma.
-	let idx = 0;
-	const mapSize = Object.keys(fields).length;
+	const result: string[] = [];
 
 	for (const [fieldKey] of Object.entries(fields)) {
-		result += concatenateAllowedTypes(fieldKey, mapFieldAllowedTypes, idx === mapSize - 1);
-		idx += 1;
+		result.push(concatenateTypes(fieldKey, mapFieldAllowedTypes));
 	}
 
-	return `{ ${result} }`;
+	return `{ ${result.join(", ")} }`;
 }
 
 /**
