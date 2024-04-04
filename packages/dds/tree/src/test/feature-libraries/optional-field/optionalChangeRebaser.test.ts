@@ -37,7 +37,6 @@ import {
 } from "../../../feature-libraries/optional-field/index.js";
 import {
 	brand,
-	fail,
 	forEachInNestedMap,
 	idAllocatorFromMaxId,
 	setInNestedMap,
@@ -213,46 +212,6 @@ function rebaseWrappedTagged(
 	return tagChange(rebaseWrapped(change.change, base), change.revision);
 }
 
-function rebaseTagged(
-	change: TaggedChange<OptionalChangeset>,
-	...baseChanges: TaggedChange<OptionalChangeset>[]
-): TaggedChange<OptionalChangeset> {
-	let currChange = change;
-	for (const base of baseChanges) {
-		currChange = tagChange(rebase(currChange.change, base), currChange.revision);
-		verifyContextChain(base, currChange);
-	}
-
-	return currChange;
-}
-
-function rebaseComposed(
-	metadata: RebaseRevisionMetadata,
-	change: OptionalChangeset,
-	...baseChanges: TaggedChange<OptionalChangeset>[]
-): OptionalChangeset {
-	baseChanges.forEach((base) => deepFreeze(base));
-	deepFreeze(change);
-
-	const composed = composeList(baseChanges, metadata);
-	const moveEffects = failCrossFieldManager;
-	const idAllocator = idAllocatorFromMaxId(getMaxId(composed));
-	const rebased = optionalChangeRebaser.rebase(
-		change,
-		makeAnonChange(composed),
-		(id, baseId) => id,
-		idAllocator,
-		moveEffects,
-		metadata,
-		undefined,
-	);
-	const lastBase = baseChanges.at(-1);
-	if (lastBase !== undefined) {
-		verifyContextChain(lastBase, makeAnonChange(rebased));
-	}
-	return rebased;
-}
-
 function rebaseComposedWrapped(
 	metadata: RebaseRevisionMetadata,
 	change: WrappedChangeset,
@@ -264,29 +223,6 @@ function rebaseComposedWrapped(
 	);
 
 	return rebaseWrapped(change, composed, metadata);
-}
-
-function composeList(
-	changes: TaggedChange<OptionalChangeset>[],
-	metadata?: RevisionMetadataSource,
-): OptionalChangeset {
-	const moveEffects = failCrossFieldManager;
-	const idAllocator = idAllocatorFromMaxId(getMaxId(...changes.map((c) => c.change)));
-	let composed: OptionalChangeset = Change.empty();
-	const metadataOrDefault = metadata ?? defaultRevisionMetadataFromChanges(changes);
-
-	for (const change of changes) {
-		verifyContextChain(makeAnonChange(composed), change);
-		composed = optionalChangeRebaser.compose(
-			makeAnonChange(composed),
-			change,
-			(id1, id2) => id1 ?? id2 ?? fail("Should not compose two undefined nodes"),
-			idAllocator,
-			moveEffects,
-			metadataOrDefault,
-		);
-	}
-	return composed;
 }
 
 function compose(
@@ -318,24 +254,8 @@ function composeWrapped(
 	);
 }
 
-// This is only valid for optional changesets for childchanges of type TestChange
-function isChangeEmpty(change: OptionalChangeset): boolean {
-	const delta = toDelta(change);
-	return !isDeltaVisible(delta);
-}
-
 function isWrappedChangeEmpty(change: WrappedChangeset): boolean {
 	return !isDeltaVisible(toDeltaWrapped(makeAnonChange(change)));
-}
-
-function assertChangesetsEquivalent(
-	change1: TaggedChange<OptionalChangeset>,
-	change2: TaggedChange<OptionalChangeset>,
-) {
-	assert.deepEqual(
-		toDelta(change1.change, change1.revision),
-		toDelta(change2.change, change2.revision),
-	);
 }
 
 function assertWrappedChangesetsEquivalent(

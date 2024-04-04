@@ -28,21 +28,3 @@ export function testTreeCursor(s: string): ITreeCursorSynchronous {
 }
 
 export const fooKey: FieldKey = brand("foo");
-
-/**
- * Create a NodeChangeset with a child change to the foo field.
- */
-// XXX
-// export function changesetForChild(change: unknown): NodeChangeset {
-// 	return {
-// 		fieldChanges: new Map([
-// 			[
-// 				fooKey,
-// 				{
-// 					fieldKind: FieldKinds.optional.identifier,
-// 					change: brand(change),
-// 				},
-// 			],
-// 		]),
-// 	};
-// }

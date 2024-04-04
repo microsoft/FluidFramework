@@ -17,12 +17,7 @@ import {
 	makeAnonChange,
 	tagChange,
 } from "../../../core/index.js";
-import {
-	FieldChange,
-	FieldKinds,
-	NodeId,
-	SequenceField as SF,
-} from "../../../feature-libraries/index.js";
+import { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { assertFieldChangesEqual, deepFreeze, mintRevisionTag } from "../../utils.js";
@@ -286,14 +281,6 @@ export function testToDelta() {
 		});
 
 		it("insert and modify w/ move-in => insert", () => {
-			const nestedChange: FieldChange = {
-				fieldKind: FieldKinds.sequence.identifier,
-				change: brand([Mark.moveIn(42, moveId)]),
-			};
-			const nodeChange = {
-				fieldChanges: new Map([[fooField, nestedChange]]),
-			};
-
 			const nodeId: NodeId = { localId: brand(0) };
 
 			const changeset = [Mark.insert(1, brand(0), { changes: nodeId })];
