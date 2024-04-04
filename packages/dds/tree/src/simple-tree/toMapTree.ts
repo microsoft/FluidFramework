@@ -20,7 +20,6 @@ import {
 	isTreeValue,
 	typeNameSymbol,
 	valueSchemaAllows,
-	isFluidHandle,
 } from "../feature-libraries/index.js";
 import { brand, fail, isReadonlyArray } from "../util/index.js";
 
@@ -135,7 +134,8 @@ function leafToMapTree(
 ): MapTree {
 	assert(schema.kind === NodeKind.Leaf, "Expected a leaf schema.");
 	if (!isTreeValue(data)) {
-		throw new UsageError(`${getDataTypeForError(data)} data is incompatible with leaf schema.`);
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
+		throw new UsageError(`Input data is incompatible with leaf schema: ${data}`);
 	}
 
 	const mappedValue = mapValueWithFallbacks(data, allowedTypes);
@@ -220,9 +220,7 @@ function arrayToMapTreeFields(
 function arrayToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree {
 	assert(schema.kind === NodeKind.Array, "Expected an array schema.");
 	if (!isReadonlyArray(data)) {
-		throw new UsageError(
-			`${getDataTypeForError(data)} data is incompatible with array schema.`,
-		);
+		throw new UsageError(`Input data is incompatible with Array schema: ${data}`);
 	}
 
 	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
@@ -248,7 +246,7 @@ function arrayToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTre
  * Used to determine which fallback values may be appropriate.
  */
 function mapToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree {
-	assert(schema.kind === NodeKind.Map, "Expected a map schema.");
+	assert(schema.kind === NodeKind.Map, "Expected a Map schema.");
 
 	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
 
@@ -258,9 +256,7 @@ function mapToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree 
 	} else if (typeof data === "object" && data !== null) {
 		fields = Object.entries(data);
 	} else {
-		throw new UsageError(
-			`${getDataTypeForError(data)} data is incompatible with array schema.`,
-		);
+		throw new UsageError(`Input data is incompatible with Map schema: ${data}`);
 	}
 
 	const transformedFields = new Map<FieldKey, MapTree[]>();
@@ -288,11 +284,9 @@ function mapToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree 
  * Used to determine which fallback values may be appropriate.
  */
 function objectToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree {
-	assert(schema.kind === NodeKind.Object, "Expected an object schema.");
+	assert(schema.kind === NodeKind.Object, "Expected an Object schema.");
 	if (typeof data !== "object" || data === null) {
-		throw new UsageError(
-			`${getDataTypeForError(data)} data is incompatible with object schema.`,
-		);
+		throw new UsageError(`Input data is incompatible with Object schema: ${data}`);
 	}
 
 	const fields = new Map<FieldKey, MapTree[]>();
@@ -323,7 +317,7 @@ function objectToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTr
 }
 
 function getObjectFieldSchema(schema: TreeNodeSchema, key: FieldKey): FieldSchema {
-	assert(schema.kind === NodeKind.Object, "Expected an object schema.");
+	assert(schema.kind === NodeKind.Object, "Expected an Object schema.");
 	const fields = schema.info as Record<string, ImplicitFieldSchema>;
 	if (fields[key] === undefined) {
 		fail(`Field "${key}" not found in schema "${schema.identifier}".`);
@@ -359,31 +353,6 @@ Explicitly construct an unhydrated node of the desired type to disambiguate.
 For class-based schema, this can be done by replacing an expression like "{foo: 1}" with "new MySchema({foo: 1})".`,
 	);
 	return possibleTypes[0];
-}
-
-function getDataTypeForError(data: InsertableContent): string {
-	if (data === null) {
-		return "null";
-	}
-	switch (typeof data) {
-		case "number":
-			return "number";
-		case "string":
-			return "string";
-		case "boolean":
-			return "boolean";
-		default: {
-			if (isFluidHandle(data)) {
-				return "FluidHandle";
-			} else if (isReadonlyArray(data)) {
-				return "Array";
-			} else if (data instanceof Map) {
-				return "Map";
-			} else {
-				return "Object";
-			}
-		}
-	}
 }
 
 /**
