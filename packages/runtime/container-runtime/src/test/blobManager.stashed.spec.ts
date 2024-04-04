@@ -1,7 +1,7 @@
 import { strict as assert } from "assert";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import { Deferred } from "@fluidframework/core-utils";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
 import { BlobManager, IBlobManagerRuntime } from "../blobManager.js";
 
@@ -71,7 +71,51 @@ describe("BlobManager.stashed", () => {
 			blobManager.trackPendingStashedUploads(),
 		]);
 		assert.strictEqual(blobManager.hasPendingStashedUploads(), false);
+	});
 
-		await blobManager.
+	it("Stashed blob with upload older than TTL", async () => {
+		const createResponse = new Deferred<ICreateBlobResponse>();
+		const blobManager = createBlobManager({
+			stashedBlobs: {
+				a: {
+					blob: "a",
+					minTTLInSeconds: 100,
+					uploadTime: Date.now() - 100 * 1000,
+				},
+			},
+			getStorage: () =>
+				failProxy<IDocumentStorageService>({
+					createBlob: async () => {
+						return createResponse.promise;
+					},
+				}),
+		});
+		assert.strictEqual(blobManager.hasPendingStashedUploads(), true);
+		await Promise.race([
+			new Promise<void>((resolve) => setTimeout(() => resolve(), 10)),
+			blobManager.trackPendingStashedUploads(),
+		]);
+		assert.strictEqual(blobManager.hasPendingStashedUploads(), true);
+		createResponse.resolve({
+			id: "a",
+		});
+		await Promise.race([
+			new Promise<void>((resolve) => setTimeout(() => resolve(), 10)),
+			blobManager.trackPendingStashedUploads(),
+		]);
+		assert.strictEqual(blobManager.hasPendingStashedUploads(), false);
+	});
+
+	it("Stashed blob with upload within TTL half-life", async () => {
+		const blobManager = createBlobManager({
+			stashedBlobs: {
+				a: {
+					blob: "a",
+					minTTLInSeconds: 100,
+					uploadTime: Date.now() - 25 * 1000,
+				},
+			},
+		});
+		assert.strictEqual(blobManager.hasPendingStashedUploads(), false);
 	});
 });
