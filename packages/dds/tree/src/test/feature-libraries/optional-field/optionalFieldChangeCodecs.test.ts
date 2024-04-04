@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import { SessionId } from "@fluidframework/id-compressor";
 
-import { JsonCompatibleReadOnly, brand } from "../../../util/index.js";
+import { brand } from "../../../util/index.js";
 import { EncodingTestData, makeEncodingTestSuite, testRevisionTagCodec } from "../../utils.js";
 import {
 	OptionalChangeset,
@@ -15,32 +13,12 @@ import {
 	optionalFieldEditor,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
-import { IJsonCodec } from "../../../codec/index.js";
-import { ChangeEncodingContext } from "../../../core/index.js";
-import { FieldChangeEncodingContext, NodeId } from "../../../feature-libraries/index.js";
+import { FieldChangeEncodingContext } from "../../../feature-libraries/index.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { TestChange } from "../../testChange.js";
 import { Change } from "./optionalFieldUtils.js";
 
 const nodeChange1: TestNodeId = TestNodeId.create({ localId: brand(0) }, TestChange.mint([], 1));
-
-const encodedChild = "encoded child";
-
-const childCodec1: IJsonCodec<
-	NodeId,
-	JsonCompatibleReadOnly,
-	JsonCompatibleReadOnly,
-	ChangeEncodingContext
-> = {
-	encode: (change: NodeId) => {
-		assert.deepEqual(change, nodeChange1);
-		return encodedChild;
-	},
-	decode: (encodedChange: JsonCompatibleReadOnly) => {
-		assert.equal(encodedChange, encodedChild);
-		return nodeChange1;
-	},
-};
 
 const change1 = Change.atOnce(Change.reserve("self", brand(1)), Change.move(brand(41), "self"));
 
