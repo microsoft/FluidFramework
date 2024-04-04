@@ -1,6 +1,6 @@
 # Shared Tree Design Philosophy
 
-The goal of the shared tree project is empower developers to create and maintain better collaborative experiences.
+The goal of the SharedTree project is empower developers to create and maintain better collaborative experiences.
 
 To best achieve this goal we plan to deliver a set of libraries that enable developers to:
 
