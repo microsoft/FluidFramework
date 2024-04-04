@@ -71,7 +71,7 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "echo 'Disabled until typetest infrastructure supports subpath exports.'",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
@@ -110,11 +110,7 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"FunctionDeclaration_generateToken": {
-				"forwardCompat": false,
-				"backCompat": false
-			}
-		}
+		"disabled": true,
+		"broken": {}
 	}
 }
