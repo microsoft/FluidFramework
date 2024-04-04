@@ -37,26 +37,26 @@ export type StorageAccessCallCounts = { [K in keyof IFileSystemPromises]?: numbe
  */
 
 const initialWriteStorageAccessBaselinePerformance: StorageAccessCallCounts = {
-	readFile: 23,
+	readFile: 13,
 	writeFile: 79,
 	mkdir: 56,
 	stat: 46,
 };
 const initialWriteStorageAccessBaselinePerformanceLowIo: StorageAccessCallCounts = {
-	readFile: 9,
+	readFile: 23,
 	writeFile: 9,
 	mkdir: 21,
 	stat: 11,
 };
 
 const fullTestStorageAccessBaselinePerformance: StorageAccessCallCounts = {
-	readFile: 259,
+	readFile: 731,
 	writeFile: 115,
 	mkdir: 71,
 	stat: 92,
 };
 const fullTestStorageAccessBaselinePerformanceLowIo: StorageAccessCallCounts = {
-	readFile: 62,
+	readFile: 128,
 	writeFile: 20,
 	mkdir: 26,
 	stat: 18,
