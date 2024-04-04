@@ -3,12 +3,35 @@
 
 Generate commands are used to create/update code, docs, readmes, etc.
 
+* [`flub generate api`](#flub-generate-api)
 * [`flub generate assertTags`](#flub-generate-asserttags)
 * [`flub generate buildVersion`](#flub-generate-buildversion)
 * [`flub generate bundleStats`](#flub-generate-bundlestats)
 * [`flub generate changelog`](#flub-generate-changelog)
 * [`flub generate changeset`](#flub-generate-changeset)
 * [`flub generate upcoming`](#flub-generate-upcoming)
+
+## `flub generate api`
+
+Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.)
+
+```
+USAGE
+  $ flub generate api [-v | --quiet] [--mainEntrypoint <value>] [--outDir <value>]
+
+FLAGS
+  --mainEntrypoint=<value>  [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
+  --outDir=<value>          [default: ./lib] Directory to emit entrypoint declaration files.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
+
+DESCRIPTION
+  Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.)
+```
+
+_See code: [src/commands/generate/api.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/api.ts)_
 
 ## `flub generate assertTags`
 
