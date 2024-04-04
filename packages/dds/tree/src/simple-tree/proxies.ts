@@ -8,8 +8,12 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import { EmptyKey, FieldKey, IForestSubscription, TreeValue, UpPath } from "../core/index.js";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
-// eslint-disable-next-line import/no-internal-modules
-import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/lazyNode.js";
+import {
+	LazyIdentifierReference,
+	LazyObjectNode,
+	getBoxedField,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../feature-libraries/flex-tree/lazyNode.js";
 import {
 	FieldKinds,
 	FlexAllowedTypes,
@@ -21,6 +25,7 @@ import {
 	FlexTreeRequiredField,
 	FlexTreeSequenceField,
 	FlexTreeTypedField,
+	IdentifierReferenceSchema,
 	isFluidHandle,
 	typeNameSymbol,
 } from "../feature-libraries/index.js";
@@ -44,6 +49,8 @@ import {
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree.js";
 import { IterableTreeArrayContent, TreeArrayNode } from "./treeArrayNode.js";
 import { TreeNode, Unhydrated } from "./types.js";
+// eslint-disable-next-line import/no-internal-modules
+import { schemaIsIdentifierNode } from "../feature-libraries/typed-schema/typedTreeSchema.js";
 
 /**
  * Detects if the given 'candidate' is a TreeNode.
@@ -98,6 +105,17 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 			// 'getProxyForNode' handles FieldNodes by unconditionally creating a array node proxy, making
 			// this case unreachable as long as users follow the 'array recipe'.
 			fail("'sequence' field is unexpected.");
+		}
+		case FieldKinds.identifier: {
+			const asValue = field as FlexTreeTypedField<
+				FlexFieldSchema<typeof FieldKinds.required>
+			>;
+			const identifier = asValue.boxedContent;
+			assert(
+				schemaIsIdentifierNode(identifier.schema),
+				"node must be of type identifierReference",
+			);
+			return (identifier as LazyIdentifierReference<IdentifierReferenceSchema>).uuid();
 		}
 		default:
 			fail("invalid field kind");

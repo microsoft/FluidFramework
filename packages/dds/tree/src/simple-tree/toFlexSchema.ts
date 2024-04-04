@@ -43,6 +43,7 @@ import {
 } from "./schemaTypes.js";
 import { cursorFromNodeData } from "./toMapTree.js";
 import { TreeConfiguration } from "./tree.js";
+import { schemaIsIdentifierNode } from "../feature-libraries/typed-schema/typedTreeSchema.js";
 
 /**
  * Returns a cursor (in nodes mode) for the root node.
@@ -146,6 +147,7 @@ export function convertField(schemaMap: SchemaMap, schema: ImplicitFieldSchema):
 const convertFieldKind = new Map<FieldKind, FlexFieldKind>([
 	[FieldKind.Optional, FieldKinds.optional],
 	[FieldKind.Required, FieldKinds.required],
+	[FieldKind.identifier, FieldKinds.identifier],
 ]);
 
 /**
@@ -197,6 +199,13 @@ export function convertNodeSchema(
 					cachedFlexSchemaFromClassSchema(schema) ??
 					fail("leaf schema should be pre-cached");
 				assert(schemaIsLeaf(cached), 0x840 /* expected leaf */);
+				return cached;
+			}
+			case NodeKind.IdentifierReference: {
+				const cached =
+					cachedFlexSchemaFromClassSchema(schema) ??
+					fail("identifier schema should be pre-cached");
+				assert(schemaIsIdentifierNode(cached), 0x840 /* expected leaf */);
 				return cached;
 			}
 			case NodeKind.Map: {

@@ -476,6 +476,7 @@ export type FieldKey = Brand<string, "tree.FieldKey">;
 
 // @public
 export enum FieldKind {
+    identifier = 2,
     Optional = 0,
     Required = 1
 }
@@ -497,6 +498,7 @@ export const FieldKinds: {
     readonly optional: Optional;
     readonly sequence: Sequence;
     readonly nodeKey: NodeKeyFieldKind;
+    readonly identifier: Identifier;
     readonly forbidden: Forbidden;
 };
 
@@ -688,6 +690,21 @@ export interface FlexTreeFieldNode<in out TSchema extends FlexFieldNodeSchema> e
 }
 
 // @internal
+export interface FlexTreeIdentifierField<in out TTypes extends FlexAllowedTypes> extends FlexTreeField {
+    // (undocumented)
+    get identifier(): FlexTreeUnboxNodeUnion<TTypes>;
+}
+
+// @internal (undocumented)
+export interface FlexTreeIdentifierReference<in out TSchema extends IdentifierReferenceSchema> extends FlexTreeNode {
+    // (undocumented)
+    readonly schema: TSchema;
+    // (undocumented)
+    uuid(): StableId;
+    readonly value: TreeValue<TSchema["info"]>;
+}
+
+// @internal
 export interface FlexTreeLeafNode<in out TSchema extends LeafNodeSchema> extends FlexTreeNode {
     // (undocumented)
     readonly schema: TSchema;
@@ -843,10 +860,10 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes> e
 export type FlexTreeTypedField<TSchema extends FlexFieldSchema> = FlexTreeTypedFieldInner<TSchema["kind"], TSchema["allowedTypes"]>;
 
 // @internal
-export type FlexTreeTypedFieldInner<Kind extends FlexFieldKind, Types extends FlexAllowedTypes> = Kind extends typeof FieldKinds.sequence ? FlexTreeSequenceField<Types> : Kind extends typeof FieldKinds.required ? FlexTreeRequiredField<Types> : Kind extends typeof FieldKinds.optional ? FlexTreeOptionalField<Types> : Kind extends typeof FieldKinds.nodeKey ? FlexTreeNodeKeyField : FlexTreeField;
+export type FlexTreeTypedFieldInner<Kind extends FlexFieldKind, Types extends FlexAllowedTypes> = Kind extends typeof FieldKinds.sequence ? FlexTreeSequenceField<Types> : Kind extends typeof FieldKinds.required ? FlexTreeRequiredField<Types> : Kind extends typeof FieldKinds.optional ? FlexTreeOptionalField<Types> : Kind extends typeof FieldKinds.nodeKey ? FlexTreeNodeKeyField : Kind extends typeof FieldKinds.identifier ? FlexTreeIdentifierField<Types> : FlexTreeField;
 
 // @internal
-export type FlexTreeTypedNode<TSchema extends FlexTreeNodeSchema> = TSchema extends LeafNodeSchema ? FlexTreeLeafNode<TSchema> : TSchema extends FlexMapNodeSchema ? FlexTreeMapNode<TSchema> : TSchema extends FlexFieldNodeSchema ? FlexTreeFieldNode<TSchema> : TSchema extends FlexObjectNodeSchema ? FlexTreeObjectNodeTyped<TSchema> : FlexTreeNode;
+export type FlexTreeTypedNode<TSchema extends FlexTreeNodeSchema> = TSchema extends LeafNodeSchema ? FlexTreeLeafNode<TSchema> : TSchema extends FlexMapNodeSchema ? FlexTreeMapNode<TSchema> : TSchema extends FlexFieldNodeSchema ? FlexTreeFieldNode<TSchema> : TSchema extends FlexObjectNodeSchema ? FlexTreeObjectNodeTyped<TSchema> : TSchema extends IdentifierReferenceSchema ? FlexTreeIdentifierReference<TSchema> : FlexTreeNode;
 
 // @internal
 export type FlexTreeTypedNodeUnion<T extends FlexAllowedTypes> = T extends FlexList<FlexTreeNodeSchema> ? FlexTreeTypedNode<Assume<FlexListToUnion<T>, FlexTreeNodeSchema>> : FlexTreeNode;
@@ -858,7 +875,7 @@ export type FlexTreeUnboxField<TSchema extends FlexFieldSchema, Emptiness extend
 export type FlexTreeUnboxFieldInner<Kind extends FlexFieldKind, TTypes extends FlexAllowedTypes, Emptiness extends "maybeEmpty" | "notEmpty"> = Kind extends typeof FieldKinds.sequence ? FlexTreeSequenceField<TTypes> : Kind extends typeof FieldKinds.required ? FlexTreeUnboxNodeUnion<TTypes> : Kind extends typeof FieldKinds.optional ? FlexTreeUnboxNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined) : Kind extends typeof FieldKinds.nodeKey ? FlexTreeNodeKeyField : unknown;
 
 // @internal
-export type FlexTreeUnboxNode<TSchema extends FlexTreeNodeSchema> = TSchema extends LeafNodeSchema ? TreeValue<TSchema["info"]> : TSchema extends FlexMapNodeSchema ? FlexTreeMapNode<TSchema> : TSchema extends FlexFieldNodeSchema ? FlexTreeFieldNode<TSchema> : TSchema extends FlexObjectNodeSchema ? FlexTreeObjectNodeTyped<TSchema> : FlexTreeUnknownUnboxed;
+export type FlexTreeUnboxNode<TSchema extends FlexTreeNodeSchema> = TSchema extends LeafNodeSchema ? TreeValue<TSchema["info"]> : TSchema extends FlexMapNodeSchema ? FlexTreeMapNode<TSchema> : TSchema extends FlexFieldNodeSchema ? FlexTreeFieldNode<TSchema> : TSchema extends FlexObjectNodeSchema ? FlexTreeObjectNodeTyped<TSchema> : TSchema extends IdentifierReferenceSchema ? FlexTreeIdentifierReference<TSchema> : FlexTreeUnknownUnboxed;
 
 // @internal
 export type FlexTreeUnboxNodeUnion<TTypes extends FlexAllowedTypes> = TTypes extends readonly [
@@ -942,6 +959,22 @@ export interface IDefaultEditBuilder {
     sequenceField(field: FieldUpPath): SequenceFieldEditBuilder;
     // (undocumented)
     valueField(field: FieldUpPath): ValueFieldEditBuilder;
+}
+
+// @internal (undocumented)
+export interface Identifier extends FlexFieldKind<"identifier", Multiplicity.Single> {
+}
+
+// @internal (undocumented)
+export class IdentifierReferenceSchema<const out Name extends string = string, const out Specification extends Unenforced<ValueSchema> = ValueSchema.Number> extends TreeNodeSchemaBase<Name, Specification> {
+    // (undocumented)
+    static create<const Name extends string, const Specification extends ValueSchema>(builder: Named<string>, name: TreeNodeSchemaIdentifier<Name>, specification: Specification): IdentifierReferenceSchema<Name, Specification>;
+    // (undocumented)
+    getFieldSchema(field: FieldKey): FlexFieldSchema;
+    // (undocumented)
+    get identifierValue(): ValueSchema;
+    // (undocumented)
+    protected _typeCheck2?: MakeNominal;
 }
 
 // @public
@@ -1328,6 +1361,7 @@ export interface NodeKeys {
 // @public
 export enum NodeKind {
     Array = 1,
+    IdentifierReference = 4,
     Leaf = 3,
     Map = 0,
     Object = 2
@@ -1574,6 +1608,9 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     // @deprecated
     fixRecursiveReference<T extends AllowedTypes>(...types: T): void;
     readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<FluidObject<unknown> & IFluidLoadable>, IFluidHandle<FluidObject<unknown> & IFluidLoadable>>;
+    identifier<const T extends ImplicitAllowedTypes>(t: T): FieldSchema<FieldKind.identifier, T>;
+    // (undocumented)
+    readonly identifierReference: TreeNodeSchema<"com.fluidframework.identifier.identifierReference", NodeKind.IdentifierReference, number, number>;
     map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
     map<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
     namedArray_internal<Name extends TName | string, const T extends ImplicitAllowedTypes, const ImplicitlyConstructable extends boolean>(name: Name, allowedTypes: T, customizable: boolean, implicitlyConstructable: ImplicitlyConstructable): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Array, TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, ImplicitlyConstructable, T>;
@@ -1905,6 +1942,8 @@ export interface TreeNodeApi {
     on<K extends keyof TreeChangeEvents>(node: TreeNode, eventName: K, listener: TreeChangeEvents[K]): () => void;
     parent(node: TreeNode): TreeNode | undefined;
     schema<T extends TreeNode | TreeLeafValue>(node: T): TreeNodeSchema<string, NodeKind, unknown, T>;
+    // (undocumented)
+    shortID(node: TreeNode): number | undefined;
     readonly status: (node: TreeNode) => TreeStatus;
 }
 

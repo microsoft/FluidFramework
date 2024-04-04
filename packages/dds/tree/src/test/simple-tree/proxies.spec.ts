@@ -5,14 +5,23 @@
 
 import { strict as assert } from "assert";
 
-import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
+import { MockFluidDataStoreRuntime, MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
-import { NodeFromSchema, SchemaFactory, TreeArrayNode } from "../../simple-tree/index.js";
+import {
+	NodeFromSchema,
+	SchemaFactory,
+	TreeArrayNode,
+	TreeConfiguration,
+	treeNodeApi,
+} from "../../simple-tree/index.js";
 // TODO: test other things from "proxies" file.
 // eslint-disable-next-line import/no-internal-modules
 import { isTreeNode } from "../../simple-tree/proxies.js";
 
 import { hydrate, pretty } from "./utils.js";
+import { TreeFactory } from "../../treeFactory.js";
+import { ForestType, typeboxValidator } from "../../index.js";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
 describe("simple-tree proxies", () => {
 	const sb = new SchemaFactory("test");
@@ -112,6 +121,32 @@ describe("SharedTreeObject", () => {
 		const root = hydrate(schema, initialTree());
 		assert.equal(root.content, 42);
 		assert.equal(root.child.content, 42);
+	});
+
+	it("can add identifiers under the identifier field kind", () => {
+		const schemaWithIdentifier = sb.object("parent", {
+			identifier: sb.identifier(sb.identifierReference),
+		});
+		const idCompressor = createIdCompressor();
+		const id = idCompressor.generateCompressedId();
+
+		const config = new TreeConfiguration(schemaWithIdentifier, () => ({
+			identifier: id as number,
+		}));
+		const factory = new TreeFactory({
+			jsonValidator: typeboxValidator,
+			forest: ForestType.Reference,
+		});
+
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({
+				idCompressor,
+			}),
+			"tree",
+		);
+		const root = tree.schematize(config).root;
+		assert.equal(root.identifier, "2fdabf35-a1b9-480d-afcf-b72e72340817");
+		assert.equal(treeNodeApi.shortID(root), id);
 	});
 
 	it("can read lists", () => {

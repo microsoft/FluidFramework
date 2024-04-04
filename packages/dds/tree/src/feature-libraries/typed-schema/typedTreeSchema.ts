@@ -34,6 +34,8 @@ import { FlexFieldKind, FullSchemaPolicy } from "../modular-schema/index.js";
 
 import { LazyItem } from "./flexList.js";
 import { ObjectToMap, objectToMapTyped } from "./typeUtils.js";
+// eslint-disable-next-line import/no-internal-modules
+import { IdentifierReferenceStoredSchema } from "../../core/schema-stored/schema.js";
 
 /**
  * @internal
@@ -135,6 +137,36 @@ export class LeafNodeSchema<
 			name,
 			specification,
 			new LeafNodeStoredSchema(specification),
+		);
+	}
+
+	public override getFieldSchema(field: FieldKey): FlexFieldSchema {
+		return FlexFieldSchema.empty;
+	}
+}
+
+/**
+ * @internal
+ */
+export class IdentifierReferenceSchema<
+	const out Name extends string = string,
+	const out Specification extends Unenforced<ValueSchema> = ValueSchema.Number,
+> extends TreeNodeSchemaBase<Name, Specification> {
+	public get identifierValue(): ValueSchema {
+		return this.info as ValueSchema;
+	}
+
+	protected _typeCheck2?: MakeNominal;
+	public static create<const Name extends string, const Specification extends ValueSchema>(
+		builder: Named<string>,
+		name: TreeNodeSchemaIdentifier<Name>,
+		specification: Specification,
+	): IdentifierReferenceSchema<Name, Specification> {
+		return new IdentifierReferenceSchema(
+			builder,
+			name,
+			specification,
+			new IdentifierReferenceStoredSchema(),
 		);
 	}
 
@@ -610,4 +642,14 @@ export function schemaIsFieldNode(schema: FlexTreeNodeSchema): schema is FlexFie
  */
 export function schemaIsObjectNode(schema: FlexTreeNodeSchema): schema is FlexObjectNodeSchema {
 	return schema instanceof FlexObjectNodeSchema;
+}
+
+/**
+ * Checks if a {@link FlexTreeNodeSchema} is a {@link ObjectNodeSchema}.
+ * @internal
+ */
+export function schemaIsIdentifierNode(
+	schema: FlexTreeNodeSchema,
+): schema is IdentifierReferenceSchema {
+	return schema instanceof IdentifierReferenceSchema;
 }

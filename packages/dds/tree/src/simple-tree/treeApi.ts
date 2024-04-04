@@ -20,6 +20,10 @@ import { schemaFromValue } from "./schemaFactory.js";
 import { NodeFromSchema, NodeKind, TreeLeafValue, TreeNodeSchema } from "./schemaTypes.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { TreeNode } from "./types.js";
+// eslint-disable-next-line import/no-internal-modules
+import { schemaIsIdentifierNode } from "../feature-libraries/typed-schema/typedTreeSchema.js";
+// eslint-disable-next-line import/no-internal-modules
+import { identifier } from "../feature-libraries/default-schema/defaultFieldKinds.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -82,6 +86,7 @@ export interface TreeNodeApi {
 	 * Returns the {@link TreeStatus} of the given node.
 	 */
 	readonly status: (node: TreeNode) => TreeStatus;
+	shortID(node: TreeNode): number | undefined;
 }
 
 /**
@@ -163,6 +168,19 @@ export const treeNodeApi: TreeNodeApi = {
 			unknown,
 			T
 		>;
+	},
+	shortID(node: TreeNode): number | undefined {
+		const flexNode = getFlexNode(node);
+		for (const field of flexNode.boxedIterator()) {
+			if (field.schema.kind === identifier) {
+				for (const child of field.boxedIterator()) {
+					if (schemaIsIdentifierNode(child.schema)) {
+						return child.value as number;
+					}
+				}
+			}
+		}
+		return;
 	},
 };
 

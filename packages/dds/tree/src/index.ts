@@ -197,6 +197,7 @@ export {
 	TreeNodeSchemaBase,
 	FlexFieldNodeSchema,
 	LeafNodeSchema,
+	IdentifierReferenceSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
 	CheckTypesOverlap,
@@ -234,6 +235,8 @@ export {
 	reservedObjectNodeFieldPropertyNames,
 	reservedObjectNodeFieldPropertyNamePrefixes,
 	FlexTreeObjectNodeFieldsInner,
+	FlexTreeIdentifierField,
+	FlexTreeIdentifierReference,
 } from "./feature-libraries/index.js";
 
 export {
@@ -387,6 +390,7 @@ export {
 	Required,
 	Optional,
 	NodeKeyFieldKind,
+	Identifier,
 	Forbidden,
 	Sequence,
 } from "./feature-libraries/index.js";

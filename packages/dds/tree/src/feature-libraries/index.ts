@@ -138,6 +138,7 @@ export {
 	SchemaLintConfiguration,
 	FlexFieldNodeSchema,
 	LeafNodeSchema,
+	IdentifierReferenceSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
 	schemaIsFieldNode,
@@ -210,6 +211,7 @@ export {
 	Optional,
 	Sequence,
 	NodeKeyFieldKind,
+	Identifier,
 	Forbidden,
 	DefaultChangeset,
 	DefaultChangeFamily,
@@ -275,6 +277,8 @@ export {
 	FlexTreeObjectNodeFieldsInner,
 	assertFlexTreeEntityNotFreed,
 	flexTreeSlot,
+	FlexTreeIdentifierField,
+	FlexTreeIdentifierReference,
 } from "./flex-tree/index.js";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema.js";

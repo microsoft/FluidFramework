@@ -35,6 +35,8 @@ export {
 	reservedObjectNodeFieldPropertyNamePrefixes,
 	FlexTreeObjectNodeFieldsInner,
 	flexTreeSlot,
+	FlexTreeIdentifierField,
+	FlexTreeIdentifierReference,
 } from "./flexTreeTypes.js";
 
 export {

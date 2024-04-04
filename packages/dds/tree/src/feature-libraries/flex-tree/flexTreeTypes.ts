@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { StableId } from "@fluidframework/id-compressor";
 import {
 	AnchorNode,
 	FieldKey,
@@ -29,6 +30,8 @@ import {
 	LazyItem,
 	LeafNodeSchema,
 } from "../typed-schema/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { IdentifierReferenceSchema } from "../typed-schema/typedTreeSchema.js";
 
 import { FlexTreeContext } from "./context.js";
 import { FlexTreeNodeEvents } from "./treeEvents.js";
@@ -395,6 +398,21 @@ export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema> exten
 }
 
 /**
+ * @internal
+ */
+export interface FlexTreeIdentifierReference<in out TSchema extends IdentifierReferenceSchema>
+	extends FlexTreeNode {
+	readonly schema: TSchema;
+
+	/**
+	 * Local node key
+	 */
+	readonly value: TreeValue<TSchema["info"]>;
+
+	uuid(): StableId;
+}
+
+/**
  * A {@link FlexTreeNode} that wraps a single {@link FlexTreeField} (which is placed under the {@link EmptyKey}).
  *
  * @remarks
@@ -535,6 +553,15 @@ export type FlexTreeObjectNodeFields<TFields extends FlexObjectNodeFields> =
 			}
 		>
 	>;
+
+/**
+ * Field that contains an immutable {@link StableNodeKey} identifying this node.
+ * @internal
+ */
+export interface FlexTreeIdentifierField<in out TTypes extends FlexAllowedTypes>
+	extends FlexTreeField {
+	get identifier(): FlexTreeUnboxNodeUnion<TTypes>;
+}
 
 /**
  * Properties to access an object node's fields. See {@link FlexTreeObjectNodeTyped}.
@@ -984,6 +1011,8 @@ export type FlexTreeTypedFieldInner<
 	? FlexTreeOptionalField<Types>
 	: Kind extends typeof FieldKinds.nodeKey
 	? FlexTreeNodeKeyField
+	: Kind extends typeof FieldKinds.identifier
+	? FlexTreeIdentifierField<Types>
 	: FlexTreeField;
 
 /**
@@ -1007,6 +1036,8 @@ export type FlexTreeTypedNode<TSchema extends FlexTreeNodeSchema> = TSchema exte
 	? FlexTreeFieldNode<TSchema>
 	: TSchema extends FlexObjectNodeSchema
 	? FlexTreeObjectNodeTyped<TSchema>
+	: TSchema extends IdentifierReferenceSchema
+	? FlexTreeIdentifierReference<TSchema>
 	: FlexTreeNode;
 
 // #endregion
@@ -1093,6 +1124,8 @@ export type FlexTreeUnboxNode<TSchema extends FlexTreeNodeSchema> = TSchema exte
 	? FlexTreeFieldNode<TSchema>
 	: TSchema extends FlexObjectNodeSchema
 	? FlexTreeObjectNodeTyped<TSchema>
+	: TSchema extends IdentifierReferenceSchema
+	? FlexTreeIdentifierReference<TSchema>
 	: FlexTreeUnknownUnboxed;
 
 /**

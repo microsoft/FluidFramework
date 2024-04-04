@@ -135,6 +135,26 @@ export const nodeKey = new FieldKindWithEditor(
 	new Set(),
 );
 
+// TODO: This name was to be consistent with the naming conventions of other field kind identifier names.
+// We may or may not rename this in the future.
+const identifierIdentifier = "identifier";
+
+/**
+ * Exactly one identifier.
+ */
+export const identifier = new FieldKindWithEditor(
+	identifierIdentifier,
+	Multiplicity.Single,
+	noChangeHandler,
+	(types, other) =>
+		(other.kind === sequence.identifier ||
+			other.kind === requiredIdentifier ||
+			other.kind === optional.identifier ||
+			other.kind === identifierIdentifier) &&
+		allowsTreeSchemaIdentifierSuperset(types, other.types),
+	new Set(),
+);
+
 /**
  * Exactly 0 items.
  *
@@ -177,6 +197,7 @@ export const fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration
 		0,
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
 			[nodeKey.identifier, { kind: nodeKey, formatVersion: 0 }],
+			[identifier.identifier, { kind: nodeKey, formatVersion: 0 }],
 			[required.identifier, { kind: required, formatVersion: 0 }],
 			[optional.identifier, { kind: optional, formatVersion: 0 }],
 			[sequence.identifier, { kind: sequence, formatVersion: 0 }],
@@ -193,7 +214,7 @@ export const fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration
  * code which uses this should be audited for compatibility considerations.
  */
 export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
-	[required, optional, sequence, nodeKey, forbidden].map((s) => [s.identifier, s]),
+	[required, optional, sequence, nodeKey, forbidden, identifier].map((s) => [s.identifier, s]),
 );
 
 // Create named Aliases for nicer intellisense.
@@ -217,6 +238,11 @@ export interface Sequence extends FlexFieldKind<"Sequence", Multiplicity.Sequenc
  * @internal
  */
 export interface NodeKeyFieldKind extends FlexFieldKind<"NodeKey", Multiplicity.Single> {}
+
+/**
+ * @internal
+ */
+export interface Identifier extends FlexFieldKind<"identifier", Multiplicity.Single> {}
 /**
  * @internal
  */
@@ -233,5 +259,6 @@ export const FieldKinds: {
 	readonly optional: Optional;
 	readonly sequence: Sequence;
 	readonly nodeKey: NodeKeyFieldKind;
+	readonly identifier: Identifier;
 	readonly forbidden: Forbidden;
-} = { required, optional, sequence, nodeKey, forbidden };
+} = { required, optional, sequence, nodeKey, identifier, forbidden };

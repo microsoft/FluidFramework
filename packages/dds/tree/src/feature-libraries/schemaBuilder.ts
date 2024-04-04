@@ -8,6 +8,8 @@ import { ValueSchema } from "../core/index.js";
 import { FieldKinds } from "./default-schema/index.js";
 import { SchemaBuilderBase, SchemaBuilderOptions } from "./schemaBuilderBase.js";
 import { LeafNodeSchema } from "./typed-schema/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { IdentifierReferenceSchema } from "./typed-schema/typedTreeSchema.js";
 
 /**
  * Extends {@link SchemaBuilderBase} with functionality only used to create built in special libraries.
@@ -39,6 +41,14 @@ export class SchemaBuilderInternal<
 		t: T,
 	): LeafNodeSchema<`${TScope}.${Name}`, T> {
 		const schema = LeafNodeSchema.create(this, this.scoped(name), t);
+		this.addNodeSchema(schema);
+		return schema;
+	}
+	public identifierReference<Name extends string, const T extends ValueSchema>(
+		name: Name,
+		t: T,
+	): IdentifierReferenceSchema<`${TScope}.${Name}`, T> {
+		const schema = IdentifierReferenceSchema.create(this, this.scoped(name), t);
 		this.addNodeSchema(schema);
 		return schema;
 	}

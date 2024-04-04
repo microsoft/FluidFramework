@@ -57,6 +57,7 @@ import {
 import { getFlexSchema } from "./toFlexSchema.js";
 import { TreeArrayNode } from "./treeArrayNode.js";
 import { TreeNode } from "./types.js";
+import { identifierSchema } from "./identifierReferenceSchema.js";
 
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
@@ -221,6 +222,8 @@ export class SchemaFactory<
 	 * {@link TreeNodeSchema} for holding an {@link @fluidframework/core-interfaces#(IFluidHandle:interface)}.
 	 */
 	public readonly handle = handleSchema;
+
+	public readonly identifierReference = identifierSchema;
 
 	/**
 	 * Construct a class that provides the common parts all TreeNodeSchemaClass share.
@@ -663,6 +666,17 @@ export class SchemaFactory<
 		t: T,
 	): FieldSchema<FieldKind.Optional, T> {
 		return new FieldSchema(FieldKind.Optional, t);
+	}
+
+	/**
+	 * Make a field of type identifier instead of the default which is required.
+	 * TODO: The type should be updated to a hardcoded allowedType which represents a identifier node type (i.e. object with compressedid and its uuid).
+	 * The user should not be able to specify the schema of the node identifier.
+	 */
+	public identifier<const T extends ImplicitAllowedTypes>(
+		t: T,
+	): FieldSchema<FieldKind.identifier, T> {
+		return new FieldSchema(FieldKind.identifier, t);
 	}
 
 	/**

@@ -183,6 +183,12 @@ export enum FieldKind {
 	 * Only allows exactly one child.
 	 */
 	Required,
+	/**
+	 * A special field used for node identifiers.
+	 * @remarks
+	 * Only allows exactly one child.
+	 */
+	identifier,
 }
 
 /**
@@ -208,6 +214,10 @@ export enum NodeKind {
 	 * A node which stores a single leaf value.
 	 */
 	Leaf,
+	/**
+	 * A node which stores the identifier of a node
+	 */
+	IdentifierReference,
 }
 
 /**
@@ -434,6 +444,10 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 	 * @param key - The key of the element to remove from the map.
 	 */
 	delete(key: string): void;
+}
+
+export interface IdentifierReferenceNode extends TreeNode {
+	uuid(key: string): string;
 }
 
 /**

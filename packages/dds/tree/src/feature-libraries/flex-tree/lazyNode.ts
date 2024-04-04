@@ -44,6 +44,7 @@ import {
 	FlexTreeEntityKind,
 	FlexTreeField,
 	FlexTreeFieldNode,
+	FlexTreeIdentifierReference,
 	FlexTreeLeafNode,
 	FlexTreeMapNode,
 	FlexTreeNode,
@@ -75,6 +76,11 @@ import { LazyNodeKeyField, makeField } from "./lazyField.js";
 import { FlexTreeNodeEvents, TreeEvent } from "./treeEvents.js";
 import { unboxedField } from "./unboxed.js";
 import { treeStatusFromAnchorCache } from "./utilities.js";
+import {
+	IdentifierReferenceSchema,
+	schemaIsIdentifierNode,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../typed-schema/typedTreeSchema.js";
 
 export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): LazyTreeNode {
 	const anchor = cursor.buildAnchor();
@@ -113,6 +119,9 @@ function buildSubclass(
 	}
 	if (schemaIsLeaf(schema)) {
 		return new LazyLeaf(context, schema, cursor, anchorNode, anchor);
+	}
+	if (schemaIsIdentifierNode(schema)) {
+		return new LazyIdentifierReference(context, schema, cursor, anchorNode, anchor);
 	}
 	if (schemaIsFieldNode(schema)) {
 		return new LazyFieldNode(context, schema, cursor, anchorNode, anchor);
@@ -528,6 +537,28 @@ export abstract class LazyObjectNode<TSchema extends FlexObjectNodeSchema>
 		}
 
 		return field.localNodeKey;
+	}
+}
+
+export class LazyIdentifierReference<TSchema extends IdentifierReferenceSchema>
+	extends LazyTreeNode<TSchema>
+	implements FlexTreeIdentifierReference<TSchema>
+{
+	public constructor(
+		context: Context,
+		schema: TSchema,
+		cursor: ITreeSubscriptionCursor,
+		anchorNode: AnchorNode,
+		anchor: Anchor,
+	) {
+		super(context, schema, cursor, anchorNode, anchor);
+	}
+	public override get value(): TreeValue<TSchema["info"]> {
+		return super.value as TreeValue<TSchema["info"]>;
+	}
+
+	public uuid() {
+		return this.context.nodeKeys.stabilize(this.value as unknown as LocalNodeKey);
 	}
 }
 

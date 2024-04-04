@@ -11,6 +11,7 @@ export {
 	FlexAllowedTypes,
 	LazyTreeNodeSchema,
 	LeafNodeSchema,
+	IdentifierReferenceSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
 	FlexFieldNodeSchema,

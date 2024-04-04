@@ -132,7 +132,8 @@ function valueToMapTree(value: TreeValue, allowedTypes: ReadonlySet<TreeNodeSche
 
 	const schema = getType(mappedValue, allowedTypes);
 	assert(
-		schema.kind === NodeKind.Leaf && allowsValue(schema, mappedValue),
+		(schema.kind === NodeKind.Leaf && allowsValue(schema, mappedValue)) ||
+			(schema.kind === NodeKind.IdentifierReference && allowsValue(schema, mappedValue)),
 		0x84a /* Unsupported schema for provided primitive. */,
 	);
 
@@ -424,7 +425,7 @@ function shallowCompatibilityTest(
 }
 
 function allowsValue(schema: TreeNodeSchema, value: TreeValue): boolean {
-	if (schema.kind === NodeKind.Leaf) {
+	if (schema.kind === NodeKind.Leaf || schema.kind === NodeKind.IdentifierReference) {
 		return valueSchemaAllows(schema.info as ValueSchema, value);
 	}
 	return false;

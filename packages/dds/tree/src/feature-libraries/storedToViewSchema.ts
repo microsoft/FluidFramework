@@ -27,6 +27,8 @@ import {
 	FlexTreeSchema,
 	LeafNodeSchema,
 } from "./typed-schema/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { IdentifierReferenceSchema } from "./typed-schema/typedTreeSchema.js";
 
 /**
  * Creates a new view schema using the stored schema.
@@ -47,6 +49,15 @@ export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): FlexTreeSc
 					{ name: "intoTypedSchema" },
 					identifier,
 					innerSchema.leafValue,
+				),
+			);
+		} else if (innerSchema instanceof IdentifierReferenceSchema) {
+			map.set(
+				identifier,
+				IdentifierReferenceSchema.create(
+					{ name: "intoTypedSchema" },
+					identifier,
+					innerSchema.identifierValue,
 				),
 			);
 		} else if (innerSchema instanceof MapNodeStoredSchema) {
