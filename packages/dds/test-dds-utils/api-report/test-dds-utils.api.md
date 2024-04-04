@@ -116,6 +116,9 @@ export interface DDSFuzzSuiteOptions {
     saveFailures: false | {
         directory: string;
     };
+    saveSuccesses: false | {
+        directory: string;
+    };
     skip: Iterable<number>;
     skipMinimization?: boolean;
     validationStrategy: {
