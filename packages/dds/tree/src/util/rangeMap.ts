@@ -276,6 +276,35 @@ export function getAllRangeSegments<T>(
 	return result;
 }
 
+export function mergeRangesWithinMap<T>(entries: RangeMap<T>): RangeMap<T> {
+	const result: RangeEntry<T>[] = [];
+
+	for (const entry of entries) {
+		const lastIndex = result.length - 1;
+		if (lastIndex >= 0 && result[lastIndex].value === entry.value) {
+			// Check if the current entry can be merged with the last entry
+			const lastEntry = result[lastIndex];
+			if (
+				lastEntry.start + lastEntry.length === entry.start &&
+				lastEntry.value === entry.value
+			) {
+				// Merge the current entry with the last entry
+				result[lastIndex] = {
+					start: lastEntry.start,
+					length: lastEntry.length + entry.length,
+					value: lastEntry.value,
+				};
+				continue; // Skip adding the current entry separately
+			}
+		}
+
+		// If the current entry cannot be merged, add it to the result array
+		result.push(entry);
+	}
+
+	return result;
+}
+
 export interface FullQueryResult<T> {
 	value: T | undefined;
 	start: number;

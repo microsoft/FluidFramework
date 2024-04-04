@@ -432,14 +432,22 @@ function buildTrees(
 	config: PassConfig,
 	visitor: DeltaVisitor,
 ) {
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const rangeQueryResults = config.detachedFieldIndex.getAllDetachedRanges(id, trees.length)!;
-	for (const { value, start, length } of rangeQueryResults) {
-		if (value === undefined) {
-			const offsettedId = offsetDetachId(id, start - id.minor);
-			const root = config.detachedFieldIndex.createEntry(offsettedId, length);
-			const field = config.detachedFieldIndex.toFieldKey(root);
-			visitor.create(trees.slice(start, start + length), field);
+	const rangeQueryResults = config.detachedFieldIndex.getAllDetachedRanges(id, trees.length);
+
+	if (rangeQueryResults === undefined) {
+		const root = config.detachedFieldIndex.createEntry(id, trees.length);
+		const field = config.detachedFieldIndex.toFieldKey(root);
+		visitor.create(trees, field);
+	} else {
+		let i = 0; // index for trees
+		for (const { value, start, length } of rangeQueryResults) {
+			if (value === undefined) {
+				const offsettedId = offsetDetachId(id, start - id.minor);
+				const root = config.detachedFieldIndex.createEntry(offsettedId, length);
+				const field = config.detachedFieldIndex.toFieldKey(root);
+				visitor.create(trees.slice(i, i + length), field);
+			}
+			i += length;
 		}
 	}
 	/*
@@ -488,16 +496,22 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 		let index = 0;
 		for (const mark of delta.local) {
 			if (isAttachMark(mark) || isReplaceMark(mark)) {
-				/*
 				// break and find all ranges
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const rangeQueryResults = config.detachedFieldIndex.getAllDetachedRanges(mark.attach!, mark.count);
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				for (const { value, start, length } of rangeQueryResults!) {
+				assert(mark.attach !== undefined, "mark attach should not be undefined");
+				let rangeQueryResults = config.detachedFieldIndex.getAllDetachedRanges(
+					mark.attach,
+					mark.count,
+				);
+				if (rangeQueryResults === undefined) {
+					rangeQueryResults = [
+						{ value: undefined, start: mark.attach.minor, length: mark.count },
+					];
+				}
+				let i = 0;
+				for (const { value, start, length } of rangeQueryResults) {
 					let sourceRoot = value;
+					const offsetAttachId = offsetDetachId(mark.attach, start - mark.attach.minor);
 					if (sourceRoot === undefined) {
-						assert(mark.attach);
-						const offsetAttachId = offsetDetachId(mark.attach, start - mark.attach.minor);
 						const trees = [];
 						for (let offset = 0; offset < length; offset++) {
 							const tree = tryGetFromNestedMap(
@@ -505,30 +519,15 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 								offsetAttachId.major,
 								offsetAttachId.minor + offset,
 							);
+							assert(tree !== undefined, "refresher data not found");
 							trees.push(tree);
 						}
-						buildTrees(offsetAttachId, trees as readonly ITreeCursorSynchronous[], config, visitor);
-						sourceRoot = config.detachedFieldIndex.getEntry(offsetAttachId);
-					}
-					const sourceField = config.detachedFieldIndex.toFieldKey(sourceRoot);
-					const offsetIndex = index + start;
-					// TODO: need some clear 
-					if (isReplaceMark(mark)) {
-						const rootDestination = 
-					}
-				} */
-				for (let i = 0; i < mark.count; i += 1) {
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					const offsetAttachId = offsetDetachId(mark.attach!, i);
-					let sourceRoot = config.detachedFieldIndex.tryGetEntry(offsetAttachId);
-					if (sourceRoot === undefined) {
-						const tree = tryGetFromNestedMap(
-							config.refreshers,
-							offsetAttachId.major,
-							offsetAttachId.minor,
+						buildTrees(
+							offsetAttachId,
+							trees as readonly ITreeCursorSynchronous[],
+							config,
+							visitor,
 						);
-						assert(tree !== undefined, "refresher data not found");
-						buildTrees(offsetAttachId, [tree], config, visitor);
 						sourceRoot = config.detachedFieldIndex.getEntry(offsetAttachId);
 					}
 					const sourceField = config.detachedFieldIndex.toFieldKey(sourceRoot);
@@ -542,7 +541,7 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 							config.detachedFieldIndex.toFieldKey(rootDestination);
 						visitor.replace(
 							sourceField,
-							{ start: offsetIndex, end: offsetIndex + 1 },
+							{ start: offsetIndex, end: offsetIndex + length },
 							destinationField,
 						);
 						// We may need to do a second pass on the detached nodes
@@ -551,9 +550,11 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 						}
 					} else {
 						// This a simple attach
-						visitor.attach(sourceField, 1, offsetIndex);
+						visitor.attach(sourceField, length, offsetIndex);
 					}
-					config.detachedFieldIndex.deleteEntry(offsetAttachId);
+					i += length;
+
+					config.detachedFieldIndex.deleteEntry(offsetAttachId, length);
 					const fields = config.attachPassRoots.get(sourceRoot);
 					if (fields !== undefined) {
 						config.attachPassRoots.delete(sourceRoot);

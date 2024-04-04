@@ -116,6 +116,7 @@ export {
 	deleteFromRangeMap,
 	getAllRangeSegments,
 	FullQueryResult,
+	mergeRangesWithinMap,
 } from "./rangeMap.js";
 
 export {

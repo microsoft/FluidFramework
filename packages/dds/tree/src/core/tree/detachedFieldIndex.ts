@@ -22,6 +22,7 @@ import {
 	tryGetFromNestedMap,
 	type RangeMap,
 	FullQueryResult,
+	mergeRangesWithinMap,
 } from "../../util/index.js";
 import { RevisionTagCodec } from "../rebase/index.js";
 import { FieldKey } from "../schema-stored/index.js";
@@ -238,6 +239,14 @@ export class DetachedFieldIndex {
 			detachedFieldIndex.maxId,
 		) as IdAllocator<ForestRootId>;
 		this.detachedNodeToField = detachedFieldIndex.data;
-		// TODO: Need to build the rangemap
+
+		// build the rangemap
+		for (const [major, innerMap] of this.detachedNodeToField) {
+			const rangeEntries = [];
+			for (const [minor, entry] of innerMap) {
+				rangeEntries.push({ start: minor, length: 1, value: entry });
+			}
+			this.detachedNodeRange.set(major, mergeRangesWithinMap(rangeEntries));
+		}
 	}
 }

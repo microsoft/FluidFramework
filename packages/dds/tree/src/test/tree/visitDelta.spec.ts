@@ -196,8 +196,8 @@ describe("visitDelta", () => {
 			delta,
 			[
 				["enterField", rootKey],
-				["detach", { start: 1, end: 2 }, field0],
-				["detach", { start: 1, end: 2 }, field1],
+				["detach", { start: 1, end: 3 }, field0],
+				// ["detach", { start: 1, end: 2 }, field1],
 				["exitField", rootKey],
 				["enterField", rootKey],
 				["exitField", rootKey],
@@ -206,7 +206,7 @@ describe("visitDelta", () => {
 		);
 		assert.deepEqual(Array.from(index.entries()), [
 			{ id: { minor: 42 }, root: 0 },
-			{ id: { minor: 43 }, root: 1 },
+			{ id: { minor: 43 }, root: 0 },
 		]);
 	});
 	it("remove child", () => {
@@ -325,16 +325,17 @@ describe("visitDelta", () => {
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["detach", { start: 5, end: 6 }, field0],
-			["detach", { start: 5, end: 6 }, field1],
+			["detach", { start: 5, end: 7 }, field0],
+			// ["detach", { start: 5, end: 6 }, field1],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", rootKey],
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["attach", field0, 1, 2],
-			["attach", field1, 1, 3],
+			["attach", field0, 2, 2],
+			// ["attach", field1, 1, 3],
+			// ["attach", field0, 1, 3],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", rootKey],
@@ -476,7 +477,8 @@ describe("visitDelta", () => {
 		};
 		const expected: VisitScript = [
 			["destroy", field0, 1],
-			["destroy", field1, 1],
+			// ["destroy", field1, 1],
+			["destroy", field0, 1],
 		];
 		testVisit(delta, expected, index);
 		assert.equal(index.entries().next().done, true);
@@ -622,13 +624,15 @@ describe("visitDelta", () => {
 		};
 
 		const expected: VisitScript = [
-			["create", [content], field0],
-			["create", [content], field1],
+			// ["create", [content], field0],
+			// ["create", [content], field1],
+			["create", [content, content], field0],
 			["enterField", rootKey],
 			["exitField", rootKey],
 			["enterField", rootKey],
-			["replace", field0, { start: 0, end: 1 }, field2],
-			["replace", field1, { start: 1, end: 2 }, field3],
+			["replace", field0, { start: 0, end: 2 }, field2],
+			// ["replace", field0, { start: 1, end: 2 }, field3],
+			// ["replace", field1, { start: 1, end: 2 }, field3],
 			["exitField", rootKey],
 		];
 
