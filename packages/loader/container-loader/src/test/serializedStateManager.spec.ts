@@ -666,4 +666,84 @@ describe("serializedStateManager", () => {
 		const parsed = JSON.parse(state) as IPendingContainerState;
 		assert.strictEqual(parsed.baseSnapshot.id, "fromPending");
 	});
+
+	it("no session expiry time when snapshot is not refreshed", async () => {
+		const pending: IPendingContainerState = {
+			...pendingLocalState,
+			baseSnapshot: { ...snapshot, id: "fromPending" },
+		};
+		const storageAdapter = new MockStorageAdapter();
+		const getLatestSnapshotInfoP = new Deferred<void>();
+		const newSnapshotFetched = () => {
+			getLatestSnapshotInfoP.resolve();
+		};
+		const serializedStateManager = new SerializedStateManager(
+			pending,
+			logger.toTelemetryLogger(),
+			storageAdapter,
+			true,
+			newSnapshotFetched,
+		);
+
+		await serializedStateManager.fetchSnapshot(undefined, false);
+		await getLatestSnapshotInfoP.promise;
+
+		const mockRuntime: ISerializedStateManagerRuntime = {
+			getPendingLocalState: (props) => {
+				return props;
+			},
+		};
+		const state = await serializedStateManager.getPendingLocalStateCore(
+			{ notifyImminentClosure: false },
+			"clientId",
+			mockRuntime,
+			resolvedUrl,
+		);
+		const parsed = JSON.parse(state);
+		assert.strictEqual(parsed.pendingRuntimeState.sessionExpiryTimerStarted, undefined);
+	});
+
+	it("session expiry time is passsed when snapshot is refreshed", async () => {
+		const pending: IPendingContainerState = {
+			...pendingLocalState,
+			baseSnapshot: { ...snapshot, id: "fromPending" },
+		};
+		const storageAdapter = new MockStorageAdapter();
+		const getLatestSnapshotInfoP = new Deferred<void>();
+		const newSnapshotFetched = () => {
+			getLatestSnapshotInfoP.resolve();
+		};
+		const serializedStateManager = new SerializedStateManager(
+			pending,
+			logger.toTelemetryLogger(),
+			storageAdapter,
+			true,
+			newSnapshotFetched,
+		);
+
+		const lastProcessedOpSequenceNumber = 10;
+		let seq = 1;
+		while (seq <= lastProcessedOpSequenceNumber) {
+			serializedStateManager.addProcessedOp(generateSavedOp(seq++));
+		}
+		const snapshotSequenceNumber = 5;
+		storageAdapter.uploadSummary(snapshotSequenceNumber);
+
+		await serializedStateManager.fetchSnapshot(undefined, false);
+		await getLatestSnapshotInfoP.promise;
+
+		const mockRuntime: ISerializedStateManagerRuntime = {
+			getPendingLocalState: (props) => {
+				return props;
+			},
+		};
+		const state = await serializedStateManager.getPendingLocalStateCore(
+			{ notifyImminentClosure: false },
+			"clientId",
+			mockRuntime,
+			resolvedUrl,
+		);
+		const parsed = JSON.parse(state);
+		assert.ok(parsed.pendingRuntimeState.sessionExpiryTimerStarted);
+	});
 });
