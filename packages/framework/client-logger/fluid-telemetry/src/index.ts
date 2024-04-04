@@ -7,7 +7,7 @@
  * This package provides an implementation and types for producing and consuming telemetry for Fluid Framework applications
  * @packageDocumentation
  */
-
+export { type ICriticalContainerError } from "@fluidframework/container-definitions";
 export {
 	type IFluidTelemetry,
 	type FluidTelemetryEventName,
