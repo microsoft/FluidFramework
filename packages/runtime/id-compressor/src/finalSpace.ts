@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { FinalCompressedId } from "./identifiers.js";
 import { IdCluster, clustersEqual, lastAllocatedFinal, lastFinalizedFinal } from "./sessions.js";
 

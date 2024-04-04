@@ -4,8 +4,10 @@
  */
 
 import { strict as assert } from "assert";
+
 import { TrackingGroup } from "../mergeTreeTracking.js";
 import { ReferenceType } from "../ops.js";
+
 import { TestClient } from "./testClient.js";
 
 describe("MergeTree.tracking", () => {

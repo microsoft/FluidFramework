@@ -14,6 +14,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { compress, decompress } from "lz4js";
 import { deflate, inflate } from "pako";
+
 import {
 	IPropertyTreeConfig,
 	IPropertyTreeMessage,

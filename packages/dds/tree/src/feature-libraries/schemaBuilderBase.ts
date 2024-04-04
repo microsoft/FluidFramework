@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { Adapters, TreeNodeSchemaIdentifier } from "../core/index.js";
 import { Assume, RestrictiveReadonlyRecord, transformObjectMap } from "../util/index.js";
+
 import { defaultSchemaPolicy } from "./default-schema/index.js";
 import { FlexFieldKind } from "./modular-schema/index.js";
 import {

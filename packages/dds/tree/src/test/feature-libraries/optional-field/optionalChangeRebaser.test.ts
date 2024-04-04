@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import { describeStress } from "@fluid-private/stochastic-test-utils";
+
 import {
 	ChangesetLocalId,
 	DeltaFieldChanges,
@@ -49,6 +51,7 @@ import {
 	defaultRevisionMetadataFromChanges,
 	isDeltaVisible,
 } from "../../utils.js";
+
 import { Change, assertTaggedEqual, verifyContextChain } from "./optionalFieldUtils.js";
 
 type RevisionTagMinter = () => RevisionTag;
@@ -285,9 +288,7 @@ function computeChildChangeInputContext(inputState: OptionalFieldTestState): num
 			currentContent === finalContent &&
 			state.mostRecentEdit.changeset.change.childChanges.length > 0
 		) {
-			if (state.mostRecentEdit.changeset.change.childChanges !== undefined) {
-				intentions.push(state.mostRecentEdit.intention);
-			}
+			intentions.push(state.mostRecentEdit.intention);
 		}
 
 		currentContent = state.content;

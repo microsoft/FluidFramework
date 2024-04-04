@@ -4,6 +4,7 @@
  */
 
 import { OdspClientProps, OdspConnectionConfig } from "@fluid-experimental/odsp-client";
+
 import { OdspTestTokenProvider } from "./tokenProvider.js";
 
 export interface OdspTestCredentials {

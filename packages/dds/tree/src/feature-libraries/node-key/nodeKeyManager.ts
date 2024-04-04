@@ -3,14 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IIdCompressor,
 	SessionSpaceCompressedId,
 	StableId,
 	assertIsStableId,
-} from "@fluidframework/id-compressor";
+} from "@fluidframework/id-compressor/internal";
+
 import { brand, extractFromOpaque } from "../../util/index.js";
+
 import { LocalNodeKey, StableNodeKey } from "./nodeKey.js";
 
 /**

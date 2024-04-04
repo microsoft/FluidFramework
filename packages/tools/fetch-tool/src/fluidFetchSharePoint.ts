@@ -4,6 +4,7 @@
  */
 
 import child_process from "child_process";
+
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
 	IClientConfig,
@@ -20,7 +21,8 @@ import {
 	OdspTokenManager,
 	getMicrosoftConfiguration,
 	odspTokensCache,
-} from "@fluidframework/tool-utils";
+} from "@fluidframework/tool-utils/internal";
+
 import { getForceTokenReauth } from "./fluidFetchArgs.js";
 
 export async function resolveWrapper<T>(

@@ -3,18 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ICodecFamily, IJsonCodec, makeCodecFamily, unitCodec } from "../../codec/index.js";
+import { ICodecFamily, IJsonCodec, makeCodecFamily } from "../../codec/index.js";
 import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
 import { JsonCompatibleReadOnly } from "../../util/index.js";
 import type { NodeChangeset } from "../modular-schema/index.js";
+
 import type { OptionalChangeset } from "./optionalFieldChangeTypes.js";
 import { makeOptionalFieldCodec as makeV0Codec } from "./optionalFieldCodecV0.js";
 import { makeOptionalFieldCodec as makeV1Codec } from "./optionalFieldCodecV1.js";
-
-export const noChangeCodecFamily: ICodecFamily<0, ChangeEncodingContext> = makeCodecFamily<
-	0,
-	ChangeEncodingContext
->([[0, unitCodec]]);
 
 export const makeOptionalFieldCodecFamily = <TChildChange = NodeChangeset>(
 	childCodec: IJsonCodec<

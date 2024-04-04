@@ -4,13 +4,15 @@
  */
 
 import { strict as assert } from "node:assert";
-import { FlushMode } from "@fluidframework/runtime-definitions";
+
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockContainerRuntime,
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	IDirectory,
 	type ISharedDirectory,

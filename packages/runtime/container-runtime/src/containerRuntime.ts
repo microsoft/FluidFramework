@@ -7,19 +7,21 @@ import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	IAudience,
-	IBatchMessage,
-	IContainerContext,
 	ICriticalContainerError,
 	IDeltaManager,
+} from "@fluidframework/container-definitions";
+import {
+	IBatchMessage,
+	IContainerContext,
 	IGetPendingLocalStateProps,
 	ILoader,
 	IRuntime,
 	LoaderHeader,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
-} from "@fluidframework/container-runtime-definitions";
+} from "@fluidframework/container-runtime-definitions/internal";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -27,24 +29,30 @@ import {
 	IProvideFluidHandleContext,
 	IRequest,
 	IResponse,
-	ISignalEnvelope,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { assert, Deferred, LazyPromise, PromiseCache, delay } from "@fluidframework/core-utils";
+import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import {
+	assert,
+	Deferred,
+	LazyPromise,
+	PromiseCache,
+	delay,
+} from "@fluidframework/core-utils/internal";
 import {
 	DriverHeader,
 	FetchSource,
 	IDocumentStorageService,
 	type ISnapshot,
-} from "@fluidframework/driver-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-definitions/internal";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
-	IIdCompressor,
 	IIdCompressorCore,
 	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
-} from "@fluidframework/id-compressor";
+} from "@fluidframework/id-compressor/internal";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -58,6 +66,12 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
+	IGarbageCollectionData,
+	IInboundSignalMessage,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+} from "@fluidframework/runtime-definitions";
+import {
 	CreateChildSummarizerNodeParam,
 	FlushMode,
 	FlushModeExperimental,
@@ -65,17 +79,13 @@ import {
 	IEnvelope,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreRegistry,
-	IGarbageCollectionData,
-	IInboundSignalMessage,
 	ISummarizeInternalResult,
-	ISummaryTreeWithStats,
-	ITelemetryContext,
 	InboundAttachMessage,
 	NamedFluidDataStoreRegistryEntries,
 	SummarizeInternalFn,
 	channelsTreeName,
 	gcTreeKey,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
 	ReadAndParseBlob,
@@ -88,17 +98,20 @@ import {
 	exceptionToResponse,
 	responseToException,
 	seqFromTree,
-} from "@fluidframework/runtime-utils";
+} from "@fluidframework/runtime-utils/internal";
+import {
+	type ITelemetryGenericEventExt,
+	ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils";
 import {
 	DataCorruptionError,
 	DataProcessingError,
 	GenericError,
 	IEventSampler,
-	type ITelemetryGenericEventExt,
-	ITelemetryLoggerExt,
 	LoggingError,
 	MonitoringContext,
 	PerformanceEvent,
+	// eslint-disable-next-line import/no-deprecated
 	TaggedLoggerAdapter,
 	UsageError,
 	createChildLogger,
@@ -107,8 +120,9 @@ import {
 	loggerToMonitoringContext,
 	raiseConnectedEvent,
 	wrapError,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
+
 import { BindBatchTracker } from "./batchTracker.js";
 import { BlobManager, IBlobManagerLoadInfo, IPendingBlobs } from "./blobManager.js";
 import { ChannelCollection, getSummaryForDatastores, wrapContext } from "./channelCollection.js";
@@ -163,7 +177,6 @@ import {
 	IConnectableRuntime,
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,
-	IDocumentSchemaChangeMessage,
 	type IDocumentSchemaCurrent,
 	IEnqueueSummarizeOptions,
 	IGenerateSummaryTreeResult,
@@ -770,6 +783,7 @@ export class ContainerRuntime
 		const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;
 		const passLogger =
 			backCompatContext.taggedLogger ??
+			// eslint-disable-next-line import/no-deprecated
 			new TaggedLoggerAdapter((backCompatContext as OldContainerContextWithLogger).logger);
 		const logger = createChildLogger({
 			logger: passLogger,
@@ -900,7 +914,7 @@ export class ContainerRuntime
 
 		const createIdCompressorFn = async () => {
 			const { createIdCompressor, deserializeIdCompressor, createSessionId } = await import(
-				"@fluidframework/id-compressor"
+				"@fluidframework/id-compressor/internal"
 			);
 
 			/**
@@ -956,6 +970,7 @@ export class ContainerRuntime
 				compressionLz4,
 				idCompressorMode,
 				opGroupingEnabled,
+				disallowedVersions: [],
 			},
 			(schema) => {
 				runtime.onSchemaChange(schema);
@@ -1581,7 +1596,7 @@ export class ContainerRuntime
 		// Due to a mismatch between different layers in terms of
 		// what is the interface of passing signals, we need the
 		// downstream stores to wrap the signal.
-		parentContext.submitSignal = (type: string, content: any, targetClientId?: string) => {
+		parentContext.submitSignal = (type: string, content: unknown, targetClientId?: string) => {
 			const envelope1 = content as IEnvelope;
 			const envelope2 = this.createNewSignalEnvelope(
 				envelope1.address,
@@ -2314,6 +2329,15 @@ export class ContainerRuntime
 			case ContainerMessageType.Alias:
 				return this.channelCollection.applyStashedOp(opContents);
 			case ContainerMessageType.IdAllocation:
+				// IDs allocation ops in stashed state are ignored because the tip state of the compressor
+				// is serialized into the pending state. This is done because generation of new IDs during
+				// stashed op application (or, later, resubmit) must generate new IDs and if the compressor
+				// was loaded from a state serialized at the same time as the summary tree in the stashed state
+				// then it would generate IDs that collide with any in later stashed ops.
+				// In the future, IdCompressor could be extended to have an "applyStashedOp" or similar method
+				// and the runtime could filter out all ID allocation ops from the stashed state and apply them
+				// before applying the rest of the stashed ops. This would accomplish the same thing but with
+				// better performance in future incremental stashed state creation.
 				assert(
 					this.idCompressorMode !== undefined,
 					0x8f1 /* ID compressor should be in use */,
@@ -2365,6 +2389,7 @@ export class ContainerRuntime
 			this._loadIdCompressor = this.createIdCompressor()
 				.then((compressor) => {
 					this._idCompressor = compressor;
+					// Finalize any ranges we received while the compressor was turned off.
 					for (const range of this.pendingIdCompressorOps) {
 						this._idCompressor.finalizeCreationRange(range);
 					}
@@ -2612,6 +2637,8 @@ export class ContainerRuntime
 					)
 				) {
 					const range = messageWithContext.message.contents;
+					// Some other client turned on the id compressor. If we have not turned it on,
+					// put it in a pending queue and delay finalization.
 					if (this._idCompressor === undefined) {
 						this.pendingIdCompressorOps.push(range);
 					} else {
@@ -2991,10 +3018,10 @@ export class ContainerRuntime
 	/**
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
-	 * @param content - Content of the signal.
+	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(type: string, content: any, targetClientId?: string) {
+	public submitSignal(type: string, content: unknown, targetClientId?: string) {
 		this.verifyNotClosed();
 		const envelope = this.createNewSignalEnvelope(undefined /* address */, type, content);
 		return this.submitSignalFn(envelope, targetClientId);
@@ -3039,6 +3066,10 @@ export class ContainerRuntime
 		// We can finalize any allocated IDs since we're the only client
 		const idRange = this._idCompressor?.takeNextCreationRange();
 		if (idRange !== undefined) {
+			assert(
+				idRange.ids === undefined || idRange.ids.firstGenCount === 1,
+				"No other ranges should be taken while container is detached.",
+			);
 			this._idCompressor?.finalizeCreationRange(idRange);
 		}
 
@@ -3866,18 +3897,17 @@ export class ContainerRuntime
 				// Allow document schema controller to send a message if it needs to propose change in document schema.
 				// If it needs to send a message, it will call provided callback with payload of such message and rely
 				// on this callback to do actual sending.
-				this.documentsSchemaController.onMessageSent(
-					(contents: IDocumentSchemaChangeMessage) => {
-						const msg: ContainerRuntimeDocumentSchemaMessage = {
-							type: ContainerMessageType.DocumentSchemaChange,
-							contents,
-						};
-						this.outbox.submit({
-							contents: JSON.stringify(msg),
-							referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-						});
-					},
-				);
+				const contents = this.documentsSchemaController.maybeSendSchemaMessage();
+				if (contents) {
+					const msg: ContainerRuntimeDocumentSchemaMessage = {
+						type: ContainerMessageType.DocumentSchemaChange,
+						contents,
+					};
+					this.outbox.submit({
+						contents: JSON.stringify(msg),
+						referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+					});
+				}
 
 				// If this is attach message for new data store, and we are in a batch, send this op out of order
 				// Is it safe:

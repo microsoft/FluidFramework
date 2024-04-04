@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ISnapshot } from "@fluidframework/driver-definitions";
-import { HostStoragePolicy } from "@fluidframework/odsp-driver-definitions";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import { HostStoragePolicy } from "@fluidframework/odsp-driver-definitions/internal";
 import * as api from "@fluidframework/protocol-definitions";
+
 // eslint-disable-next-line import/no-deprecated
 import { ISnapshotContents } from "./odspPublicUtils.js";
 

@@ -62,6 +62,7 @@
 	},
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
+		"@fluid-internal/test-driver-definitions": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/azure-client": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
@@ -74,7 +75,6 @@
 		"@fluidframework/matrix": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"@fluidframework/test-driver-definitions": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"commander": "^5.1.0",

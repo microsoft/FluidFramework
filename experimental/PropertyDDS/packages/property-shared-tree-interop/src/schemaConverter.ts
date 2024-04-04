@@ -5,7 +5,7 @@
 
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	Any,
 	FlexFieldKind as FieldKind,

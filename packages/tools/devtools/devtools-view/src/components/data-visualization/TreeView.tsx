@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { HasContainerKey, VisualTreeNode } from "@fluidframework/devtools-core/internal";
 import React from "react";
-
-import type { HasContainerKey, VisualTreeNode } from "@fluidframework/devtools-core";
 
 import type { DataVisualizationTreeProps } from "./CommonInterfaces.js";
 import { TreeDataView } from "./TreeDataView.js";

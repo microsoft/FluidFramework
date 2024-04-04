@@ -4,24 +4,24 @@
  */
 
 import { IRequest } from "@fluidframework/core-interfaces";
-import { assert, LazyPromise, Timer } from "@fluidframework/core-utils";
+import { assert, LazyPromise, Timer } from "@fluidframework/core-utils/internal";
+import { IGarbageCollectionData, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import {
-	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
-	ITelemetryContext,
 	gcTreeKey,
-} from "@fluidframework/runtime-definitions";
-import { createResponseError, responseToException } from "@fluidframework/runtime-utils";
+} from "@fluidframework/runtime-definitions/internal";
+import { createResponseError, responseToException } from "@fluidframework/runtime-utils/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	DataProcessingError,
-	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
 	createChildLogger,
 	createChildMonitoringContext,
 	tagCodeArtifacts,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
+
 import { BlobManager } from "../blobManager.js";
 import {
 	InactiveResponseHeaderKey,
@@ -31,6 +31,7 @@ import {
 import { ClientSessionExpiredError } from "../error.js";
 import { ContainerMessageType, ContainerRuntimeGCMessage } from "../messageTypes.js";
 import { IRefreshSummaryResult } from "../summary/index.js";
+
 import { generateGCConfigs } from "./gcConfigs.js";
 import {
 	GCNodeType,

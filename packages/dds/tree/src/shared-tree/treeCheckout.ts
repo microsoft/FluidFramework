@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { IIdCompressor } from "@fluidframework/id-compressor";
+
 import { noopValidator } from "../codec/index.js";
 import {
 	Anchor,
@@ -13,6 +14,7 @@ import {
 	AnchorSet,
 	AnchorSetRootEvents,
 	ChangeFamily,
+	CommitKind,
 	CommitMetadata,
 	DeltaVisitor,
 	DetachedFieldIndex,
@@ -20,12 +22,15 @@ import {
 	IForestSubscription,
 	JsonableTree,
 	Revertible,
+	RevertibleStatus,
+	RevisionTag,
 	RevisionTagCodec,
 	TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	TreeStoredSchemaSubscription,
 	combineVisitors,
 	makeDetachedFieldIndex,
+	rebaseChange,
 	tagChange,
 	visitDelta,
 } from "../core/index.js";
@@ -39,7 +44,8 @@ import {
 	makeFieldBatchCodec,
 } from "../feature-libraries/index.js";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core/index.js";
-import { TransactionResult, fail } from "../util/index.js";
+import { IDisposable, TransactionResult, disposeSymbol, fail } from "../util/index.js";
+
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
@@ -191,6 +197,7 @@ export interface ITreeCheckout extends AnchorLocator {
  */
 export function createTreeCheckout(
 	idCompressor: IIdCompressor,
+	mintRevisionTag: () => RevisionTag,
 	revisionTagCodec: RevisionTagCodec,
 	args?: {
 		branch?: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>;
@@ -208,11 +215,13 @@ export function createTreeCheckout(
 	const forest = args?.forest ?? buildForest();
 	const schema = args?.schema ?? new TreeStoredSchemaRepository();
 	const defaultCodecOptions = { jsonValidator: noopValidator };
+	const defaultFieldBatchVersion = 1;
 	const changeFamily =
 		args?.changeFamily ??
 		new SharedTreeChangeFamily(
 			revisionTagCodec,
-			args?.fieldBatchCodec ?? makeFieldBatchCodec(defaultCodecOptions),
+			args?.fieldBatchCodec ??
+				makeFieldBatchCodec(defaultCodecOptions, defaultFieldBatchVersion),
 			{ jsonValidator: noopValidator },
 			args?.chunkCompressionStrategy,
 		);
@@ -237,6 +246,7 @@ export function createTreeCheckout(
 		schema,
 		forest,
 		events,
+		mintRevisionTag,
 		revisionTagCodec,
 		args?.removedRoots,
 	);
@@ -317,7 +327,7 @@ class Transaction implements ITransaction {
  * {@link ITreeCheckout} that has forked off of the main trunk/branch.
  * @internal
  */
-export interface ITreeCheckoutFork extends ITreeCheckout {
+export interface ITreeCheckoutFork extends ITreeCheckout, IDisposable {
 	/**
 	 * Rebase the changes that have been applied to this view over all the new changes in the given view.
 	 * @param view - Either the root view or a view that was created by a call to `fork()`. It is not modified by this operation.
@@ -329,6 +339,23 @@ export interface ITreeCheckoutFork extends ITreeCheckout {
  * An implementation of {@link ITreeCheckoutFork}.
  */
 export class TreeCheckout implements ITreeCheckoutFork {
+	private isDisposed = false;
+
+	/**
+	 * Set of revertibles maintained for automatic disposal
+	 */
+	private readonly revertibles = new Set<DisposableRevertible>();
+
+	/**
+	 * Each branch's head commit corresponds to a revertible commit.
+	 * Maintaining a whole branch ensures the commit graph is not pruned in a way that would prevent the commit from
+	 * being reverted.
+	 */
+	private readonly revertibleCommitBranches = new Map<
+		RevisionTag,
+		SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>
+	>();
+
 	public constructor(
 		public readonly transaction: ITransaction,
 		private readonly branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
@@ -338,6 +365,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		public readonly events: ISubscribable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>,
+		private readonly mintRevisionTag: () => RevisionTag,
 		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly removedRoots: DetachedFieldIndex = makeDetachedFieldIndex(
 			"repair",
@@ -389,18 +417,55 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				}
 			}
 		});
-		branch.on("commitApplied", (data, getRevertible) => {
-			this.events.emit(
-				"commitApplied",
-				data,
-				// Commits that contain schema changes are not revertible.
-				// Allowing a schema change to be reverted could render some of the forest content out-of-schema.
-				hasSchemaChange(branch.getHead().change) ? undefined : getRevertible,
-			);
-		});
-		branch.on("revertibleDisposed", (revertible, revision) => {
-			// We do not expose the revision in this API
-			this.events.emit("revertibleDisposed", revertible);
+		branch.on("commitApplied", (data) => {
+			const commit = branch.getHead();
+			const { change, revision } = commit;
+			let withinEventContext = true;
+
+			const getRevertible = hasSchemaChange(change)
+				? undefined
+				: () => {
+						assert(
+							withinEventContext,
+							0x902 /* cannot get a revertible outside of the context of a commitApplied event */,
+						);
+						assert(
+							this.revertibleCommitBranches.get(revision) === undefined,
+							0x903 /* cannot get the revertible more than once */,
+						);
+
+						const revertibleCommits = this.revertibleCommitBranches;
+						const revertible: DisposableRevertible = {
+							get status(): RevertibleStatus {
+								const revertibleCommit = revertibleCommits.get(revision);
+								return revertibleCommit === undefined
+									? RevertibleStatus.Disposed
+									: RevertibleStatus.Valid;
+							},
+							revert: () => {
+								assert(
+									revertible.status === RevertibleStatus.Valid,
+									0x904 /* a disposed revertible cannot be reverted */,
+								);
+								this.revertRevertible(revision, data.kind);
+							},
+							release: () => revertible.dispose(),
+							dispose: () => {
+								assert(
+									revertible.status === RevertibleStatus.Valid,
+									"a disposed revertible cannot be disposed",
+								);
+								this.disposeRevertible(revertible, revision);
+							},
+						};
+
+						this.revertibleCommitBranches.set(revision, branch.fork());
+						this.revertibles.add(revertible);
+						return revertible;
+				  };
+
+			this.events.emit("commitApplied", data, getRevertible);
+			withinEventContext = false;
 		});
 	}
 
@@ -414,19 +479,26 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		combinedVisitor.free();
 	}
 
+	private checkNotDisposed(): void {
+		assert(!this.isDisposed, "Invalid operation on a disposed TreeCheckout");
+	}
+
 	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
 		return this.forest.anchors;
 	}
 
 	public get editor(): ISharedTreeEditor {
+		this.checkNotDisposed();
 		return this.branch.editor;
 	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
+		this.checkNotDisposed();
 		return this.forest.anchors.locate(anchor);
 	}
 
 	public fork(): TreeCheckout {
+		this.checkNotDisposed();
 		const anchors = new AnchorSet();
 		const branch = this.branch.fork();
 		const storedSchema = this.storedSchema.clone();
@@ -439,22 +511,26 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			storedSchema,
 			forest,
 			createEmitter(),
+			this.mintRevisionTag,
 			this.revisionTagCodec,
 			this.removedRoots.clone(),
 		);
 	}
 
 	public rebase(view: TreeCheckout): void {
+		this.checkNotDisposed();
 		view.branch.rebaseOnto(this.branch);
 	}
 
 	public rebaseOnto(view: ITreeCheckout): void {
+		this.checkNotDisposed();
 		view.rebase(this);
 	}
 
 	public merge(view: TreeCheckout): void;
 	public merge(view: TreeCheckout, disposeView: boolean): void;
 	public merge(view: TreeCheckout, disposeView = true): void {
+		this.checkNotDisposed();
 		assert(
 			!this.transaction.inProgress() || disposeView,
 			0x710 /* A view that is merged into an in-progress transaction must be disposed */,
@@ -464,19 +540,19 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		}
 		this.branch.merge(view.branch);
 		if (disposeView) {
-			view.dispose();
+			view[disposeSymbol]();
 		}
 	}
 
 	public updateSchema(newSchema: TreeStoredSchema): void {
+		this.checkNotDisposed();
 		this.editor.schema.setStoredSchema(this.storedSchema.clone(), newSchema);
 	}
 
-	/**
-	 * Dispose this view, freezing its state and allowing the SharedTree to release resources required by it.
-	 * Attempts to further mutate or dispose this view will error.
-	 */
-	public dispose(): void {
+	public [disposeSymbol](): void {
+		this.checkNotDisposed();
+		this.isDisposed = true;
+		this.purgeRevertibles();
 		this.branch.dispose();
 	}
 
@@ -501,6 +577,55 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		cursor.free();
 		return trees;
 	}
+
+	private purgeRevertibles(): void {
+		for (const revertible of this.revertibles) {
+			revertible.dispose();
+		}
+	}
+
+	private disposeRevertible(revertible: DisposableRevertible, revision: RevisionTag): void {
+		this.revertibleCommitBranches.get(revision)?.dispose();
+		this.revertibleCommitBranches.delete(revision);
+		this.revertibles.delete(revertible);
+		this.events.emit("revertibleDisposed", revertible);
+	}
+
+	private revertRevertible(revision: RevisionTag, kind: CommitKind): void {
+		assert(
+			!this.branch.isTransacting(),
+			0x7cb /* Undo is not yet supported during transactions */,
+		);
+
+		const revertibleBranch = this.revertibleCommitBranches.get(revision);
+		assert(revertibleBranch !== undefined, 0x7cc /* expected to find a revertible commit */);
+		const commitToRevert = revertibleBranch.getHead();
+
+		let change = this.changeFamily.rebaser.invert(
+			tagChange(commitToRevert.change, revision),
+			false,
+		);
+
+		const headCommit = this.branch.getHead();
+		// Rebase the inverted change onto any commits that occurred after the undoable commits.
+		if (commitToRevert !== headCommit) {
+			change = rebaseChange(
+				this.changeFamily.rebaser,
+				change,
+				commitToRevert,
+				headCommit,
+				this.mintRevisionTag,
+			);
+		}
+
+		this.branch.apply(
+			change,
+			this.mintRevisionTag(),
+			kind === CommitKind.Default || kind === CommitKind.Redo
+				? CommitKind.Undo
+				: CommitKind.Redo,
+		);
+	}
 }
 
 /**
@@ -521,4 +646,8 @@ export function runSynchronous(
 	return result === TransactionResult.Abort
 		? view.transaction.abort()
 		: view.transaction.commit();
+}
+
+interface DisposableRevertible extends Revertible {
+	dispose: () => void;
 }

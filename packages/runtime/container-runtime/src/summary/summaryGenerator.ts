@@ -5,21 +5,18 @@
 
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
-	ITelemetryLoggerExt,
-	LoggingError,
-	PerformanceEvent,
-} from "@fluidframework/telemetry-utils";
-
-import {
 	assert,
 	Deferred,
 	IPromiseTimer,
 	IPromiseTimerResult,
 	Timer,
-} from "@fluidframework/core-utils";
+} from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
-import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils";
+import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils/internal";
 import { MessageType } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { LoggingError, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	IAckSummaryResult,
 	IBroadcastSummaryResult,

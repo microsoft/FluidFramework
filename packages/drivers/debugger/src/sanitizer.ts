@@ -18,9 +18,10 @@
  * Messages must match known structures when scrubbing for Fluid Preview.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import * as Validator from "jsonschema";
+
 import {
 	attachContentsSchema,
 	chunkedOpContentsSchema,

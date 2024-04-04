@@ -16,8 +16,9 @@ import type { IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import execa from "execa";
+
 import { type Client, hasStashData } from "../clientLoading.js";
 import type {
 	BaseOperation,
@@ -41,6 +42,7 @@ import {
 	mixinSynchronization,
 	runTestForSeed,
 } from "../ddsFuzzHarness.js";
+
 import { _dirname } from "./dirname.cjs";
 import type { Operation, SharedNothingFactory } from "./sharedNothing.js";
 import { baseModel, isNoopOp } from "./sharedNothing.js";

@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { Spinner } from "@fluentui/react-components";
+import { type SharedCell } from "@fluidframework/cell/internal";
+import { type IFluidHandle } from "@fluidframework/core-interfaces";
+import { type SharedMatrix } from "@fluidframework/matrix/internal";
 import React from "react";
 
-import { Spinner } from "@fluentui/react-components";
-
-import { type SharedCell } from "@fluidframework/cell";
-import { type IFluidHandle } from "@fluidframework/core-interfaces";
-import { type SharedMatrix } from "@fluidframework/matrix";
 import { EmojiButton } from "./EmojiButton.js";
 
 /**

@@ -32,12 +32,13 @@ import {
 	TelemetryEvent,
 	TelemetryHistory,
 	handleIncomingMessage,
-} from "@fluidframework/devtools-core";
+} from "@fluidframework/devtools-core/internal";
 import React, { useState, useRef } from "react";
 
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
 import { ThemeOption, useThemeContext } from "../ThemeHelper.js";
+
 import { SplitPane } from "./SplitPane.cjs";
 import { Waiting } from "./Waiting.js";
 

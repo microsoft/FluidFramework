@@ -5,8 +5,10 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { IFluidSerializer, ValueType, bindHandles } from "@fluidframework/shared-object-base";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { ValueType, bindHandles } from "@fluidframework/shared-object-base/internal";
+
 import { ISharedMapEvents } from "./interfaces.js";
 import {
 	IMapClearLocalOpMetadata,

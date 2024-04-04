@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import nconf from "nconf";
-
 import type {
 	RouterliciousEndpoint,
 	TestDriverTypes,
-} from "@fluidframework/test-driver-definitions";
+} from "@fluid-internal/test-driver-definitions";
+import nconf from "nconf";
 
 /**
  * Different kind of compat version config

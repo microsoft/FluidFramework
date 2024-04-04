@@ -10,6 +10,7 @@ import type {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
+
 import { SharedDirectory as SharedDirectoryInternal } from "./directory.js";
 import type { ISharedDirectory } from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";

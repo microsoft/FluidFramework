@@ -4,9 +4,11 @@
  */
 
 import { strict as assert } from 'assert';
-import { validateAssertionError } from '@fluidframework/test-runtime-utils';
+
+import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
+
 import { StableRange } from '../ChangeTypes.js';
 import { copyPropertyIfDefined, fail } from '../Common.js';
 import { EditLog } from '../EditLog.js';
@@ -34,6 +36,7 @@ import {
 	SetValueInternal,
 	StablePlaceInternal,
 } from '../persisted-types/index.js';
+
 import { expectDefined } from './utilities/TestCommon.js';
 import { TestTree, buildLeaf } from './utilities/TestNode.js';
 import { refreshTestTree, testTraitLabel } from './utilities/TestUtilities.js';

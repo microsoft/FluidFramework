@@ -6,14 +6,15 @@
 import { type EventEmitterEventType } from '@fluid-internal/client-utils';
 import { AttachState } from '@fluidframework/container-definitions';
 import { type IEvent, type IFluidHandle, type IFluidLoadable } from '@fluidframework/core-interfaces';
-import { assert } from '@fluidframework/core-utils';
+import { assert } from '@fluidframework/core-utils/internal';
 import {
 	type IChannelAttributes,
 	IChannelFactory,
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
 } from '@fluidframework/datastore-definitions';
-import type { IIdCompressorCore, SessionId } from '@fluidframework/id-compressor';
+import type { SessionId } from '@fluidframework/id-compressor';
+import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
 import { type ISequencedDocumentMessage, MessageType } from '@fluidframework/protocol-definitions';
 import {
 	type IExperimentalIncrementalSummaryContext,
@@ -21,12 +22,14 @@ import {
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
 } from '@fluidframework/runtime-definitions';
-import { DataProcessingError, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
+import { DataProcessingError, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils/internal';
 import { type ITree } from '@fluidframework/tree';
+
 import {
 	type SharedTree as LegacySharedTree,
 	type SharedTreeFactory as LegacySharedTreeFactory,
 } from '../SharedTree.js';
+
 import { MigrationShimDeltaHandler } from './migrationDeltaHandler.js';
 import { type IShimChannelServices, NoDeltasChannelServices } from './shimChannelServices.js';
 import { PreMigrationDeltaConnection, StampDeltaConnection } from './shimDeltaConnection.js';
