@@ -10,6 +10,13 @@ import {
 import { type TelemetryEventCategory } from "@fluidframework/telemetry-utils";
 import { type ApplicationInsights } from "@microsoft/applicationinsights-web";
 import structuredClone from "@ungap/structured-clone";
+import { type IFluidTelemetry, type ITelemetryConsumer } from "@fluidframework/fluid-telemetry";
+
+class TestConsumer implements ITelemetryConsumer {
+	public consume(event: IFluidTelemetry): void {
+		console.log(event);
+	}
+}
 
 /**
  * The configuration object for creating the logger via {@link createLogger}.

@@ -1805,6 +1805,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
       '@fluidframework/eslint-config-fluid': ^5.1.0
+      '@fluidframework/fluid-telemetry': workspace:2.0.0-rc.3.0.0
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
@@ -1833,6 +1834,7 @@ importers:
     dependencies:
       '@fluid-example/example-utils': link:../../utils/example-utils
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
+      '@fluidframework/fluid-telemetry': link:../../../packages/framework/client-logger/fluid-telemetry
       '@fluidframework/map': link:../../../packages/dds/map
       react: 17.0.2
     devDependencies:
@@ -7806,6 +7808,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
       '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/fluid-telemetry': workspace:2.0.0-rc.3.0.0
       '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.42.3
       '@microsoft/applicationinsights-web': ^2.8.11
@@ -7829,6 +7832,7 @@ importers:
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
+      '@fluidframework/fluid-telemetry': link:../fluid-telemetry
       '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
       '@microsoft/applicationinsights-web': 2.8.16_tslib@1.14.1
       '@ungap/structured-clone': 1.2.0
