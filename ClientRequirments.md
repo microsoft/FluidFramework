@@ -1,11 +1,11 @@
 # Platform Requirements for Fluid Framework Client Packages
 
 These are the platform requirements for the current version of Fluid Framework Client Packages.
-These are intentionally quite strict as they have to be supported for the entire LTS timeline for LTS versions.
+These are intentionally quite strict as they have to be supported for the entire Long Term Support (LTS) timeline for LTS versions.
 These restrictions can be loosened over time, adding support for specific configurations desired by users of the client packages.
 
-It is likely the other configurations will work, but there are not "supported" and thus if they stop working it is not considered a breaking change.
-If you would benefit from support for something not listed here, file an issue and the request will be evaluated.
+It is likely that other configurations will work, but as they are not supported, if they stop working, that is not a breaking change.
+If you would benefit from support for something not listed here, file an issue and the product team will evaluate your request.
 When making such a request please include if such a configuration already works (and thus the request is just that it becomes officially supported), or if changes are required to get it working.
 
 ## Supported Runtimes
