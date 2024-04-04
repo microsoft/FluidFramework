@@ -41,7 +41,6 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
 
 // @internal
 export interface IContainerExperimental extends IContainer {
-    closeAndGetPendingLocalState?(stopBlobAttachingSignal?: AbortSignal): Promise<string>;
     getPendingLocalState?(): Promise<string>;
 }
 

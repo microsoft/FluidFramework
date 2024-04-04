@@ -158,8 +158,9 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			await args.ensureSynchronized();
 			container.close();
 		} else {
-			// pendingState = await container.serialize({});
-			pendingState = await container.closeAndGetPendingLocalState?.();
+			// eslint-disable-next-line @typescript-eslint/await-thenable
+			pendingState = await container.serialize({});
+			// pendingState = await container.closeAndGetPendingLocalState?.();
 		}
 
 		args.opProcessingController.resumeProcessing();

@@ -436,7 +436,10 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 */
 	serialize(): string;
 
-	serialize(closeProps: { dispose?: boolean; stopBlobAttachingSignal?: AbortSignal }): Promise<string>;
+	serialize(closeProps: {
+		dispose?: boolean;
+		stopBlobAttachingSignal?: AbortSignal;
+	}): Promise<string>;
 
 	/**
 	 * Get an absolute URL for a provided container-relative request URL.

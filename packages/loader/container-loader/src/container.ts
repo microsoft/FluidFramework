@@ -1096,20 +1096,6 @@ export class Container
 		}
 	}
 
-	public async closeAndGetPendingLocalState(
-		stopBlobAttachingSignal?: AbortSignal,
-	): Promise<string> {
-		// runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
-		// container at the same time we get pending state, otherwise this container could reconnect and resubmit with
-		// a new clientId and a future container using stale pending state without the new clientId would resubmit them
-		const pendingState = await this.getPendingLocalStateCore({
-			notifyImminentClosure: true,
-			stopBlobAttachingSignal,
-		});
-		this.close();
-		return pendingState;
-	}
-
 	public async getPendingLocalState(): Promise<string> {
 		return this.getPendingLocalStateCore({ notifyImminentClosure: false });
 	}
@@ -2477,10 +2463,4 @@ export interface IContainerExperimental extends IContainer {
 	 * @returns serialized blob that can be passed to Loader.resolve()
 	 */
 	getPendingLocalState?(): Promise<string>;
-
-	/**
-	 * Closes the container and returns serialized local state intended to be
-	 * given to a newly loaded container.
-	 */
-	closeAndGetPendingLocalState?(stopBlobAttachingSignal?: AbortSignal): Promise<string>;
 }

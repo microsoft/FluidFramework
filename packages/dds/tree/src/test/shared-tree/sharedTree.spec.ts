@@ -1453,13 +1453,14 @@ describe("SharedTree", () => {
 			const view1 = schematizeFlexTree(provider.trees[0], config);
 			await provider.ensureSynchronized();
 
-			const pausedContainer: IContainerExperimental = provider.containers[0];
+			const pausedContainer = provider.containers[0];
 			const url = (await pausedContainer.getAbsoluteUrl("")) ?? fail("didn't get url");
 			const pausedTree = view1;
 			await provider.opProcessingController.pauseProcessing(pausedContainer);
 			pausedTree.flexTree.insertAt(1, ["b"]);
 			pausedTree.flexTree.insertAt(2, ["c"]);
-			const pendingOps = await pausedContainer.closeAndGetPendingLocalState?.();
+			// eslint-disable-next-line @typescript-eslint/await-thenable
+			const pendingOps = await pausedContainer.serialize();
 			provider.opProcessingController.resumeProcessing();
 
 			const otherLoadedTree = assertSchema(
@@ -1669,12 +1670,13 @@ describe("SharedTree", () => {
 		it("can apply and resubmit stashed schema ops", async () => {
 			const provider = await TestTreeProvider.create(2);
 
-			const pausedContainer: IContainerExperimental = provider.containers[0];
+			const pausedContainer = provider.containers[0];
 			const url = (await pausedContainer.getAbsoluteUrl("")) ?? fail("didn't get url");
 			const pausedTree = provider.trees[0];
 			await provider.opProcessingController.pauseProcessing(pausedContainer);
 			pausedTree.checkout.updateSchema(intoStoredSchema(stringSequenceRootSchema));
-			const pendingOps = await pausedContainer.closeAndGetPendingLocalState?.();
+			// eslint-disable-next-line @typescript-eslint/await-thenable
+			const pendingOps = await pausedContainer.serialize();
 			provider.opProcessingController.resumeProcessing();
 
 			const loader = provider.makeTestLoader();

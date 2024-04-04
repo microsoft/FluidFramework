@@ -693,7 +693,8 @@ export async function withContainerOffline<TReturn>(
 	await provider.ensureSynchronized();
 	await provider.opProcessingController.pauseProcessing(container);
 	const actionReturn = action();
-	const pendingLocalState = await container.closeAndGetPendingLocalState?.();
+	// eslint-disable-next-line @typescript-eslint/await-thenable
+	const pendingLocalState = await container.serialize();
 	assert(pendingLocalState !== undefined, 0x726 /* pendingLocalState should be defined */);
 	return { actionReturn, pendingLocalState };
 }
