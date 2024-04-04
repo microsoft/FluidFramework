@@ -1060,7 +1060,7 @@ export function testSandwichComposing() {
 		);
 		it("[move, move, modify, move] ↷ [del]", () =>
 			withConfig(() => {
-				const nodeId: NodeId = { localId: brand(3) };
+				const nodeId: NodeId = { localId: brand(4) };
 				const [mo1, mi1] = Mark.move(1, brand(1));
 				const move1 = tagChange([mi1, mo1], tag1);
 				const [mo2, mi2] = Mark.move(1, brand(2));
