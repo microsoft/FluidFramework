@@ -16,13 +16,13 @@ export function hasOdcOrigin(url: URL): boolean {
 	const origin = url.origin;
 	return (
 		// Primary API endpoint and several test endpoints
-		origin.includes("onedrive.com") ||
+		origin.endsWith("onedrive.com") ||
 		// *storage.live.com hostnames
-		origin.includes("storage.live.com") ||
+		origin.endsWith("storage.live.com") ||
 		// live-int
-		origin.includes("storage.live-int.com") ||
+		origin.endsWith("storage.live-int.com") ||
 		// Test endpoints
-		origin.includes("onedrive-tst.com")
+		origin.endsWith("onedrive-tst.com")
 	);
 }
 
