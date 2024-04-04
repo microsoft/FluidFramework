@@ -7,7 +7,7 @@
 @fluidframework/devtools
 @fluidframework/test-utils
 @fluid-internal/test-service-load
-@fluidframework/test-driver-definitions
+@fluid-internal/test-driver-definitions
 @fluid-internal/test-app-insights-logger
 @fluid-internal/mocha-test-setup
 @fluidframework/tinylicious-client

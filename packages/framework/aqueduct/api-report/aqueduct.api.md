@@ -4,36 +4,36 @@
 
 ```ts
 
-import { AsyncFluidObjectProvider } from '@fluidframework/synthesize';
-import { ContainerRuntime } from '@fluidframework/container-runtime';
-import { FluidDataStoreRuntime } from '@fluidframework/datastore';
+import { AsyncFluidObjectProvider } from '@fluidframework/synthesize/internal';
+import { ContainerRuntime } from '@fluidframework/container-runtime/internal';
+import { FluidDataStoreRuntime } from '@fluidframework/datastore/internal';
 import { FluidObject } from '@fluidframework/core-interfaces';
-import { FluidObjectSymbolProvider } from '@fluidframework/synthesize';
+import { FluidObjectSymbolProvider } from '@fluidframework/synthesize/internal';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions/internal';
-import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
-import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
-import { IContainerRuntimeOptions } from '@fluidframework/container-runtime';
-import { IDataStore } from '@fluidframework/runtime-definitions';
+import { IContainerRuntime } from '@fluidframework/container-runtime-definitions/internal';
+import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions/internal';
+import { IContainerRuntimeOptions } from '@fluidframework/container-runtime/internal';
+import { IDataStore } from '@fluidframework/runtime-definitions/internal';
 import { IEvent } from '@fluidframework/core-interfaces';
-import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions';
-import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
-import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
-import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
-import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
+import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions/internal';
+import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions/internal';
+import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions/internal';
+import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
+import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidDependencySynthesizer } from '@fluidframework/synthesize';
+import { IFluidDependencySynthesizer } from '@fluidframework/synthesize/internal';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
+import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
 import { IProvideFluidHandle } from '@fluidframework/core-interfaces';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISharedDirectory } from '@fluidframework/map/internal';
-import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions';
-import { NamedFluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions';
-import { RuntimeFactoryHelper } from '@fluidframework/runtime-utils';
-import { RuntimeRequestHandler } from '@fluidframework/request-handler';
+import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions/internal';
+import { NamedFluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions/internal';
+import { RuntimeFactoryHelper } from '@fluidframework/runtime-utils/internal';
+import { RuntimeRequestHandler } from '@fluidframework/request-handler/internal';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @alpha

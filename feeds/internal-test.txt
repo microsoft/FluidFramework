@@ -11,7 +11,7 @@
 @fluid-private/test-pairwise-generator
 @fluid-private/test-end-to-end-tests
 @fluid-private/test-drivers
-@fluidframework/test-driver-definitions
+@fluid-internal/test-driver-definitions
 @fluid-internal/test-app-insights-logger
 @fluid-private/stochastic-test-utils
 @fluid-internal/mocha-test-setup

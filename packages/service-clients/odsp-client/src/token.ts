@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TokenResponse } from "@fluidframework/odsp-driver-definitions";
+import { TokenResponse } from "@fluidframework/odsp-driver-definitions/internal";
 
 /**
  * Abstracts the token fetching mechanism for a hosting application.

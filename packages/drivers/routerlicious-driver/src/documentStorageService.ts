@@ -11,7 +11,7 @@ import {
 import {
 	DocumentStorageServiceProxy,
 	PrefetchDocumentStorageService,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import { ISubscribable, createEmitter } from "../../events/index.js";
 import {
@@ -88,6 +88,11 @@ export interface AnchorEvents {
 	 * @remarks
 	 * When this happens depends entirely on how the anchorSet is used.
 	 * It's possible nodes removed from the tree will be kept indefinitely, and thus never trigger this event, or they may be discarded immediately.
+	 *
+	 * @privateRemarks
+	 * The specifics of the delta visit algorithm can impact the behavior of these events.
+	 * Refer to the privateRemarks of specific events and/or the documentation of the delta visit algorithm (as of
+	 * 2024-04-02, src/core/tree/visitDelta.ts) for more information.
 	 */
 	afterDestroy(anchor: AnchorNode): void;
 
@@ -132,6 +137,27 @@ export interface AnchorEvents {
 	subtreeChanging(anchor: AnchorNode): PathVisitor | void;
 
 	/**
+	 * Emitted after the subtree rooted at `anchor` may have been changed.
+	 *
+	 * @remarks
+	 * While this event is always emitted in the presence of changes to the subtree,
+	 * it may also be emitted even though no changes have been made to the subtree.
+	 * It may be emitted multiple times within the application of a single edit or transaction.
+	 *
+	 * If this event is emitted by a node, it will later be emitted by all its ancestors up to the root as well, at
+	 * least once on each ancestor.
+	 *
+	 * @privateRemarks
+	 * The delta visit algorithm is complicated and it may fire this event multiple times for the same change to a node.
+	 * The change to the tree may not be visible until the event fires for the last time.
+	 * Refer to the documentation of the delta visit algorithm for more details.
+	 *
+	 * TODO: can we make it so this event is guaranteed to only fire once during the delta visit? Specifically when
+	 * changes to the tree did happen and are visible to the listener.
+	 */
+	subtreeChanged(anchor: AnchorNode): void;
+
+	/**
 	 * Value on this node is changing.
 	 */
 	valueChanging(anchor: AnchorNode, value: Value): void;
@@ -171,6 +197,11 @@ export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEven
 	 * Use {@link anchorSlot} to create slots.
 	 */
 	readonly slots: BrandedMapSubset<AnchorSlot<any>>;
+
+	/**
+	 * The set this anchor node is part of.
+	 */
+	readonly anchorSet: AnchorSet;
 
 	/**
 	 * Gets a child of this node.
@@ -967,6 +998,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 			exitNode(index: number): void {
 				assert(this.parent !== undefined, 0x3ac /* Must have parent node */);
 				this.maybeWithNode((p) => {
+					p.events.emit("subtreeChanged", p);
 					// Remove subtree path visitors added at this node if there are any
 					this.pathVisitors.delete(p);
 				});

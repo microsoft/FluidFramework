@@ -13,7 +13,7 @@ import {
 	performFuzzActions,
 	take,
 } from "@fluid-private/stochastic-test-utils";
-import { AttributionKey } from "@fluidframework/runtime-definitions";
+import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
 import {
 	AttributionCollection,
