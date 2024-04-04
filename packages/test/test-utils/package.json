@@ -100,6 +100,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
+		"@fluid-internal/test-driver-definitions": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
@@ -119,7 +120,6 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"@fluidframework/test-driver-definitions": "workspace:~",
 		"best-random": "^1.0.0",
 		"debug": "^4.3.4",
 		"mocha": "^10.2.0",
