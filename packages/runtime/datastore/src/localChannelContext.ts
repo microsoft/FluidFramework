@@ -342,10 +342,7 @@ export class LocalChannelContext extends LocalChannelContextBase {
  * which are ArrayBuffer data types.
  */
 function cloneSnapshotTree(tree: ISnapshotTree): ISnapshotTree {
-	const clone = { ...tree, blobs: {}, trees: {} };
-	for (const [k, v] of Object.entries(tree.blobs)) {
-		clone.blobs[k] = v;
-	}
+	const clone = { ...tree, blobs: { ...tree.blobs }, trees: {} };
 	for (const [k, v] of Object.entries(tree.trees)) {
 		clone.trees[k] = cloneSnapshotTree(v);
 	}
