@@ -25,10 +25,9 @@ import {
 	FlexObjectNodeSchema,
 	FlexTreeNodeSchema,
 	FlexTreeSchema,
+	IdentifierReferenceSchema,
 	LeafNodeSchema,
 } from "./typed-schema/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { IdentifierReferenceSchema } from "./typed-schema/typedTreeSchema.js";
 
 /**
  * Creates a new view schema using the stored schema.

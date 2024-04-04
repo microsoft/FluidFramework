@@ -27,11 +27,10 @@ import {
 	FlexObjectNodeFields,
 	FlexObjectNodeSchema,
 	FlexTreeNodeSchema,
+	IdentifierReferenceSchema,
 	LazyItem,
 	LeafNodeSchema,
 } from "../typed-schema/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { IdentifierReferenceSchema } from "../typed-schema/typedTreeSchema.js";
 
 import { FlexTreeContext } from "./context.js";
 import { FlexTreeNodeEvents } from "./treeEvents.js";

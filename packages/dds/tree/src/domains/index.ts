@@ -16,3 +16,5 @@ export {
 export { nodeKeyField, nodeKeySchema, nodeKeyTreeSchema } from "./nodeKey/index.js";
 
 export { leaf } from "./leafDomain.js";
+
+export { identifierSchema } from "./identifierDomain.js";

@@ -7,9 +7,7 @@ import { ValueSchema } from "../core/index.js";
 
 import { FieldKinds } from "./default-schema/index.js";
 import { SchemaBuilderBase, SchemaBuilderOptions } from "./schemaBuilderBase.js";
-import { LeafNodeSchema } from "./typed-schema/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { IdentifierReferenceSchema } from "./typed-schema/typedTreeSchema.js";
+import { IdentifierReferenceSchema, LeafNodeSchema } from "./typed-schema/index.js";
 
 /**
  * Extends {@link SchemaBuilderBase} with functionality only used to create built in special libraries.

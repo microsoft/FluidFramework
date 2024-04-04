@@ -130,6 +130,8 @@ export {
 
 export { leaf } from "./domains/index.js";
 
+export { identifierSchema } from "./domains/index.js";
+
 export {
 	FlexFieldKind,
 	isNeverField,

@@ -4,26 +4,15 @@
  */
 
 import {
+	IdentifierReferenceSchema as FlexIdentifierReferenceSchema,
 	NodeKind,
 	TreeNodeSchema,
 	TreeNodeSchemaIdentifier,
 	TreeNodeSchemaNonClass,
 	TreeValue,
-	ValueSchema,
+	identifierSchema,
 } from "../index.js";
 import { setFlexSchemaFromClassSchema } from "./schemaCaching.js";
-// eslint-disable-next-line import/no-internal-modules
-import { IdentifierReferenceSchema as FlexIdentifierReferenceSchema } from "../feature-libraries/typed-schema/typedTreeSchema.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SchemaBuilderInternal } from "../feature-libraries/schemaBuilder.js";
-
-const identifierReferenceBuilder = new SchemaBuilderInternal({
-	scope: "com.fluidframework.identifier",
-});
-const identifier = identifierReferenceBuilder.identifierReference(
-	"identifierReference",
-	ValueSchema.Number,
-);
 
 type UnbrandedIdentifierName<T extends FlexIdentifierReferenceSchema> =
 	T["name"] extends TreeNodeSchemaIdentifier<infer Name extends string> ? Name : T["name"];
@@ -62,4 +51,4 @@ function makeIdentifier<T extends FlexIdentifierReferenceSchema>(
 	return new IdentifierReferenceSchema(schema);
 }
 
-export const identifierSchema = makeIdentifier(identifier);
+export const identifierTreeNodeSchema = makeIdentifier(identifierSchema);

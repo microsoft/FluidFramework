@@ -977,6 +977,9 @@ export class IdentifierReferenceSchema<const out Name extends string = string, c
     protected _typeCheck2?: MakeNominal;
 }
 
+// @internal
+export const identifierSchema: IdentifierReferenceSchema<"com.fluidframework.identifier.identifierReference", ValueSchema.Number>;
+
 // @public
 export interface IDisposable {
     [disposeSymbol](): void;

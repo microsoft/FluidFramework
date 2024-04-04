@@ -57,7 +57,7 @@ import {
 import { getFlexSchema } from "./toFlexSchema.js";
 import { TreeArrayNode } from "./treeArrayNode.js";
 import { TreeNode } from "./types.js";
-import { identifierSchema } from "./identifierReferenceSchema.js";
+import { identifierTreeNodeSchema } from "./identifierReferenceSchema.js";
 
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
@@ -223,7 +223,7 @@ export class SchemaFactory<
 	 */
 	public readonly handle = handleSchema;
 
-	public readonly identifierReference = identifierSchema;
+	public readonly identifierReference = identifierTreeNodeSchema;
 
 	/**
 	 * Construct a class that provides the common parts all TreeNodeSchemaClass share.
