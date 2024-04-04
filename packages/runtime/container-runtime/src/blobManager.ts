@@ -130,6 +130,16 @@ export interface IBlobManagerEvents {
 	(event: "noPendingBlobs", listener: () => void);
 }
 
+const stashedPendingBlobOverrides: Pick<
+	PendingBlob,
+	"stashedUpload" | "storageId" | "minTTLInSeconds" | "uploadTime"
+> = {
+	stashedUpload: true,
+	storageId: undefined,
+	minTTLInSeconds: undefined,
+	uploadTime: undefined,
+} as const;
+
 export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	public static readonly basePath = "_blobs";
 	private static readonly redirectTableBlobName = ".redirectTable";
@@ -246,15 +256,19 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			};
 			this.pendingBlobs.set(localId, pendingEntry);
 
-			if (minTTLInSeconds && uploadTime) {
+			if (storageId !== undefined && minTTLInSeconds && uploadTime) {
 				const timeLapseSinceLocalUpload = (Date.now() - uploadTime) / 1000;
 				// stashed entries with more than half-life in storage will not be reuploaded
 				if (minTTLInSeconds - timeLapseSinceLocalUpload > minTTLInSeconds / 2) {
 					return;
 				}
 			}
-			pendingEntry.uploadP = this.uploadBlob(localId, blob);
-			pendingEntry.stashedUpload = true;
+
+			this.pendingBlobs.set(localId, {
+				...pendingEntry,
+				...stashedPendingBlobOverrides,
+				uploadP: this.uploadBlob(localId, blob),
+			});
 		});
 
 		this.sendBlobAttachOp = (localId: string, blobId?: string) => {
