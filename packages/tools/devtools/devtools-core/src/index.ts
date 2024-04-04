@@ -53,6 +53,7 @@ export type {
 	VisualNodeBase,
 	VisualTreeNode,
 	VisualValueNode,
+	IToolTipContents,
 	UnknownObjectNode,
 } from "./data-visualization/index.js";
 export { VisualNodeKind } from "./data-visualization/index.js";

@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { Tooltip, tokens } from "@fluentui/react-components";
-import { DocumentEdit20Regular } from "@fluentui/react-icons";
+import { tokens } from "@fluentui/react-components";
 import React from "react";
 
+import { InfoLabel } from "@fluentui/react-components/unstable";
+import type { IToolTipContents } from "@fluidframework/devtools-core";
 import { ThemeContext, ThemeOption } from "../../ThemeHelper.js";
-
+import { TooltipContentsHelper } from "./TooltipContents.js";
 import type { HasLabel } from "./CommonInterfaces.js";
 
 /**
@@ -30,7 +31,7 @@ export interface TreeHeaderProps extends HasLabel {
 	/**
 	 * Visual Tree data rendered in the tooltip.
 	 */
-	tooltipContents?: string | Record<string | number, string>;
+	tooltipContents?: IToolTipContents;
 }
 
 /**
@@ -70,20 +71,10 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 			{tooltipContents === undefined ? (
 				""
 			) : (
-				<Tooltip content={JSON.stringify(tooltipContents)} relationship="description">
-					<span
-						style={{
-							color:
-								themeInfo.name === ThemeOption.HighContrast
-									? undefined
-									: tokens.colorPalettePlatinumBorderActive,
-							fontStyle: "oblique",
-							fontSize: "10px",
-						}}
-					>
-						<DocumentEdit20Regular />
-					</span>
-				</Tooltip>
+				<InfoLabel
+					info={TooltipContentsHelper({ contents: tooltipContents })}
+					style={{ whiteSpace: "nowrap" }}
+				/>
 			)}
 
 			{inlineValue === undefined ? "" : ": "}

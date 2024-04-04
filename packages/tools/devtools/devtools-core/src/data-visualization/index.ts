@@ -35,6 +35,7 @@ export type {
 	RootHandleNode,
 	TreeNodeBase,
 	VisualChildNode,
+	IToolTipContents,
 	ValueNodeBase,
 	VisualNodeBase,
 	VisualNode,

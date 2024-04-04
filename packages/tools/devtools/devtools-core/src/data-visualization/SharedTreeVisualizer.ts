@@ -27,7 +27,10 @@ export function toVisualTree(tree: VisualSharedTreeNode): VisualChildNode {
 		const result: VisualValueNode = {
 			value: tree.value,
 			nodeKind: VisualNodeKind.ValueNode,
-			tooltipContents: tree.schema.name,
+			tooltipContents: {
+				name: tree.schema.name,
+				schemaType: tree.schema.schemaType,
+			},
 		};
 		return result;
 	} else {
@@ -41,7 +44,11 @@ export function toVisualTree(tree: VisualSharedTreeNode): VisualChildNode {
 		return {
 			children,
 			nodeKind: VisualNodeKind.TreeNode,
-			tooltipContents: tree.schema.allowedTypes,
+			tooltipContents: {
+				name: tree.schema.name,
+				schemaType: tree.schema.schemaType,
+				allowedTypes: tree.schema.allowedTypes,
+			},
 		};
 	}
 }
@@ -49,39 +56,34 @@ export function toVisualTree(tree: VisualSharedTreeNode): VisualChildNode {
 /**
  * Concatenrate allowed types for `ObjectNodeStoredSchema` and `MapNodeStoredSchema`.
  */
-function concatenateTypes(fieldKey: string, fieldTypes: TreeTypeSet | undefined): string {
-	let fieldAllowedType = fieldKey === EmptyKey ? "" : `${fieldKey} : `;
-
-	if (fieldTypes === undefined) {
-		fieldAllowedType += "any";
-	} else {
-		const allowedTypes = [...fieldTypes].join(" | ");
-		fieldAllowedType += `${allowedTypes}`;
-	}
-
-	return fieldAllowedType;
+function concatenateTypes(fieldTypes: TreeTypeSet | undefined): string {
+	return fieldTypes === undefined ? "any" : [...fieldTypes].join(" | ");
 }
 
 /**
  * Returns the allowed fields & types for the object fields (e.g., `foo : string | number, bar: boolean`)
  */
-function getObjectAllowedTypes(schema: ObjectNodeStoredSchema): string {
-	const result: string[] = [];
+function getObjectAllowedTypes(
+	schema: ObjectNodeStoredSchema,
+): Record<string | number, string> | string {
+	const resultRecord: Record<string | number, string> = {};
 
 	for (const [fieldKey, treeFieldStoredSchema] of schema.objectNodeFields) {
 		// Set of allowed tree types `TreeTypeSet`.
 		const fieldTypes = treeFieldStoredSchema.types;
 
-		result.push(concatenateTypes(fieldKey, fieldTypes));
+		const concatenatedTypeResult = concatenateTypes(fieldTypes);
 
 		// If the field key is `EmptyKey`, then it is an array field.
 		// Return the allowed types in string format, instead of JSON format.
 		if (fieldKey === EmptyKey) {
-			return result.join("");
+			return concatenatedTypeResult;
 		}
+
+		resultRecord[fieldKey] = concatenatedTypeResult;
 	}
 
-	return `{ ${result.join(", ")} }`;
+	return resultRecord;
 }
 
 /**
@@ -90,20 +92,20 @@ function getObjectAllowedTypes(schema: ObjectNodeStoredSchema): string {
 function getMapAllowedTypes(
 	fields: FieldMapObject<JsonableTree> | undefined,
 	schema: MapNodeStoredSchema,
-): string {
+): Record<string | number, string> {
 	if (fields === undefined) {
 		throw new TypeError("Fields should not be undefined.");
 	}
 
 	const mapFieldAllowedTypes = schema.mapFields.types;
 
-	const result: string[] = [];
+	const resultRecord: Record<string | number, string> = {};
 
 	for (const [fieldKey] of Object.entries(fields)) {
-		result.push(concatenateTypes(fieldKey, mapFieldAllowedTypes));
+		resultRecord[fieldKey] = concatenateTypes(mapFieldAllowedTypes);
 	}
 
-	return `{ ${result.join(", ")} }`;
+	return resultRecord;
 }
 
 /**
