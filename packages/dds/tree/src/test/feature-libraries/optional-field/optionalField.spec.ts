@@ -7,8 +7,6 @@ import { strict as assert } from "assert";
 
 import {
 	DeltaFieldChanges,
-	DeltaFieldMap,
-	FieldKey,
 	TaggedChange,
 	makeAnonChange,
 	makeDetachedNodeId,
@@ -37,7 +35,6 @@ import {
 	defaultRevisionMetadataFromChanges,
 	mintRevisionTag,
 } from "../../utils.js";
-import { fooKey } from "../fieldKindTestUtils.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { TestChange } from "../../testChange.js";
 import { Change, assertEqual } from "./optionalFieldUtils.js";
@@ -63,25 +60,6 @@ const failCrossFieldManager: CrossFieldManager = {
 };
 
 const failingDelegate = (): never => assert.fail("Should not be called");
-
-const deltaFromChild2 = (nodeId: NodeId): DeltaFieldMap => {
-	assert.deepEqual(nodeId, nodeId2);
-	const buildId = makeDetachedNodeId(nodeId.revision, 1);
-	return new Map<FieldKey, DeltaFieldChanges>([
-		[
-			fooKey,
-			{
-				local: [
-					{
-						count: 1,
-						detach: makeDetachedNodeId(nodeId.revision, 0),
-						attach: buildId,
-					},
-				],
-			},
-		],
-	]);
-};
 
 const tag = mintRevisionTag();
 const change1 = tagChange(
