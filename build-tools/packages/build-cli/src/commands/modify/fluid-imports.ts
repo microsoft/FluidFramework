@@ -8,10 +8,11 @@
 import { Flags } from "@oclif/core";
 import { existsSync, readFile } from "fs-extra";
 import * as JSON5 from "json5";
-import path from "node:path";
-import { Project, type ImportDeclaration, type SourceFile } from "ts-morph";
+import { Project, type ImportDeclaration, SourceFile, ModuleKind, Node } from "ts-morph";
 import { BaseCommand } from "../../base";
 import type { CommandLogger } from "../../logging";
+
+const maxConcurrency = 4;
 
 // These types are very similar to those defined and used in the `release setPackageTypesField` command, but that
 // command is likely to be deprecated soon, so no effort has been made to unify them.
@@ -40,13 +41,18 @@ export default class UpdateFluidImportsCommand extends BaseCommand<
 		`Rewrite imports for Fluid Framework APIs to use the correct subpath import (/alpha, /beta. etc.)`;
 
 	static readonly flags = {
-		tsconfig: Flags.file({
-			description: "Path to a tsconfig file that will be used to load project files.",
-			default: "./tsconfig.json",
-			exists: true,
+		tsconfigs: Flags.file({
+			description:
+				"Tsconfig file paths that will be used to load project files. When multiple are given all must depend on the same version of packages; otherwise results are unstable.",
+			default: ["./tsconfig.json"],
+			multiple: true,
+		}),
+		packageRegex: Flags.string({
+			description: "Regular expression filtering import packages to adjust",
 		}),
 		data: Flags.file({
-			description: "Path to a data file containing raw API level data.",
+			description:
+				"Optional path to a data file containing raw API level data. Overrides API levels extracted from package data.",
 			exists: true,
 		}),
 		onlyInternal: Flags.boolean({
@@ -56,20 +62,52 @@ export default class UpdateFluidImportsCommand extends BaseCommand<
 	};
 
 	public async run(): Promise<void> {
-		const { tsconfig, data, onlyInternal } = this.flags;
+		const { tsconfigs, packageRegex, data, onlyInternal } = this.flags;
 
-		if (!existsSync(tsconfig)) {
-			this.error(`Can't find config file: ${tsconfig}`, { exit: 0 });
+		const foundConfigs = tsconfigs.filter((file) => {
+			const exists = existsSync(file);
+			if (!exists) {
+				this.warning(`Can't find config file: ${file}`);
+			}
+			return exists;
+		});
+
+		if (foundConfigs.length === 0) {
+			this.error(`No config files found.`, { exit: 1 });
 		}
-		const dataFilePath = data ?? path.join(__dirname, "../../../data/rawApiLevels.jsonc");
-		const apiLevelData = await loadData(dataFilePath);
-		await updateImports(tsconfig, apiLevelData, onlyInternal, this.logger);
+
+		const apiLevelData = data === undefined ? undefined : await loadData(data);
+		const packagesRegex = new RegExp(packageRegex ?? "");
+		const apiMap = new ApiLevelReader(this.logger, packagesRegex, apiLevelData);
+
+		// Note that while there is a queue here it is only really a queue for file saves
+		// which are the only async aspect currently and aren't expected to take so long.
+		// If more aspects are done concurrently, make maxConcurrency an option.
+		const queue: Promise<void>[] = [];
+		for (const { tsConfigFilePath, sources } of getSourceFiles(foundConfigs)) {
+			this.info(
+				`Processing ${tsConfigFilePath} and ${sources.length} source${
+					sources.length === 1 ? "" : "s"
+				}.`,
+			);
+			if (sources.length > 0) {
+				queue.push(updateImports(sources, apiMap, onlyInternal, this.logger));
+				if (queue.length >= maxConcurrency) {
+					// naively wait for the first scheduled to finish
+					// eslint-disable-next-line no-await-in-loop
+					await queue.shift();
+				}
+			}
+		}
+		await Promise.all(queue);
 	}
 }
 
+type PackageName = string;
+
 interface FluidImportDataBase {
 	index: number;
-	packageName: string;
+	packageName: PackageName;
 	level: ApiLevel;
 	/**
 	 * package relative ordinal for levels (alphabetically) ("public" is really "" so first)
@@ -106,7 +144,7 @@ class FluidImportManager {
 
 	constructor(
 		private readonly sourceFile: SourceFile,
-		private readonly mappingData: MapData,
+		private readonly apiMap: ApiLevelReader,
 		private readonly log: CommandLogger,
 	) {
 		this.fluidImports = parseFluidImports(sourceFile, log);
@@ -120,21 +158,24 @@ class FluidImportManager {
 		let modificationsRequired = false;
 
 		// Collect the existing declarations
-		for (const { importDeclaration, packageName, level } of this.fluidImports) {
-			const data = this.mappingData.get(packageName);
+		for (const {
+			importDeclaration,
+			packageName,
+			level,
+			declaration: { moduleSpecifier },
+		} of this.fluidImports) {
+			const data = this.apiMap.get(packageName);
 
 			// Skip modules with no mapping
 			if (data === undefined) {
-				this.log.verbose(
-					`Skipping (no entry in data file): ${importDeclaration.getModuleSpecifierValue()}`,
-				);
+				this.log.verbose(`Skipping: ${moduleSpecifier}`);
 				continue;
 			}
 
 			const namedImports = importDeclaration.getNamedImports();
 			const isTypeOnly = importDeclaration.isTypeOnly();
 
-			this.log.logIndent(`Iterating named imports...`, 2);
+			this.log.verbose(`Reviewing: ${moduleSpecifier}...`);
 			for (const importSpecifier of namedImports) {
 				const name = importSpecifier.getName();
 
@@ -153,9 +194,8 @@ class FluidImportManager {
 					onlyInternal,
 				);
 
-				this.log.logIndent(
-					`Found import named: '${fullImportSpecifierText}' (${expectedLevel})`,
-					4,
+				this.log.verbose(
+					`\t\tFound import named: '${fullImportSpecifierText}' (${expectedLevel})`,
 				);
 
 				const properImport = this.ensureFluidImport({
@@ -266,7 +306,7 @@ class FluidImportManager {
 		level,
 		isTypeOnly,
 	}: {
-		packageName: string;
+		packageName: PackageName;
 		level: ApiLevel;
 		isTypeOnly: boolean;
 	}): FluidImportData {
@@ -308,7 +348,7 @@ class FluidImportManager {
 	}
 
 	private findInsertionPoint(
-		packageName: string,
+		packageName: PackageName,
 		order: number,
 	): { index: number; after: boolean } {
 		const references = this.fluidImports.filter((v) => v.packageName === packageName);
@@ -345,20 +385,45 @@ function getApiLevelForImportName(
 	return defaultValue;
 }
 
+function* getSourceFiles(
+	tsconfigFilePaths: string[],
+): IterableIterator<{ tsConfigFilePath: string; sources: SourceFile[] }> {
+	// ts-morph processing will pull sources from references and caller may very well have specified project
+	// files that reference one another. Each source should only be processed once. So build a unique
+	// SourceFile list from full paths.
+	const sources = new Set<string>();
+
+	for (const tsConfigFilePath of tsconfigFilePaths) {
+		const project = new Project({
+			tsConfigFilePath,
+		});
+		yield {
+			tsConfigFilePath,
+			sources: project
+				.getSourceFiles(
+					// Limit to sources in the current working directory
+					"./**",
+				)
+				// Filter out type files - this may not be correct in projects with manually defined declarations.
+				.filter((source) => source.getExtension() !== ".d.ts")
+				.filter((source) => {
+					const fullPath = source.getFilePath();
+					const alreadyVisiting = sources.has(fullPath);
+					if (!alreadyVisiting) {
+						sources.add(fullPath);
+					}
+					return !alreadyVisiting;
+				}),
+		};
+	}
+}
+
 async function updateImports(
-	tsConfigFilePath: string,
-	mappingData: MapData,
+	sourceFiles: SourceFile[],
+	apiMap: ApiLevelReader,
 	onlyInternal: boolean,
 	log: CommandLogger,
 ): Promise<void> {
-	const project = new Project({
-		tsConfigFilePath,
-	});
-	const sourceFiles = project
-		.getSourceFiles()
-		// Filter out type files - this may not be correct in projects with manually defined declarations.
-		.filter((sourceFile) => sourceFile.getExtension() !== ".d.ts");
-
 	/**
 	 * List of source file save promises. Used to collect modified source file save promises so we can await them all at
 	 * once.
@@ -367,7 +432,7 @@ async function updateImports(
 
 	// Iterate over each source file, looking for Fluid imports
 	for (const sourceFile of sourceFiles) {
-		log.verbose(`Source file: ${sourceFile.getBaseName()}`);
+		log.info(`Processing: ${sourceFile.getFilePath()}`);
 
 		// Delete any header comments at the beginning of the file. Save the text so we can re-insert it at the end of
 		// processing. Note that this does modify the source file, but we only save changes if the imports are updated, so
@@ -375,7 +440,7 @@ async function updateImports(
 		// save. Therefore it's safe to remove the header here even before we know if we need to write the file.
 		const headerText = removeFileHeaderComment(sourceFile);
 
-		const importManager = new FluidImportManager(sourceFile, mappingData, log);
+		const importManager = new FluidImportManager(sourceFile, apiMap, log);
 		if (importManager.process(onlyInternal)) {
 			// Manually re-insert the header at the top of the file
 			sourceFile.insertText(0, headerText);
@@ -461,7 +526,7 @@ function parseFluidImports(
 		) /* no undefined elements remain */ as FluidImportDataPresent[];
 }
 
-function isFluidImport(packageName: string): boolean {
+function isFluidImport(packageName: PackageName): boolean {
 	return packageName.startsWith("@fluid") || unscopedFFPackages.has(packageName);
 }
 
@@ -482,8 +547,110 @@ interface MemberDataRaw {
 type MemberData = Partial<Record<ApiLevel, string[]>>;
 type MapData = Map<string, MemberData>;
 
+class ApiLevelReader {
+	private readonly project = new Project({
+		skipAddingFilesFromTsConfig: true,
+		compilerOptions: {
+			module: ModuleKind.Node16,
+		},
+	});
+
+	private readonly tempSource = this.project.createSourceFile("flub-fluid-importer-temp.ts");
+	private readonly map: Map<PackageName, MemberData | undefined>;
+
+	constructor(
+		private readonly log: CommandLogger,
+		private readonly packagesRegex: RegExp,
+		initialMap?: MapData,
+	) {
+		this.map = new Map<PackageName, MemberData>(initialMap);
+		for (const k of this.map.keys()) {
+			if (!this.packagesRegex.test(k)) {
+				this.map.set(k, undefined);
+			}
+		}
+	}
+
+	public get(packageName: PackageName): MemberData | undefined {
+		if (this.map.has(packageName)) {
+			return this.map.get(packageName);
+		}
+		const loadResult = this.packagesRegex.test(packageName)
+			? this.loadPackageData(packageName)
+			: undefined;
+		this.map.set(packageName, loadResult);
+		return loadResult;
+	}
+
+	private loadPackageData(packageName: PackageName): MemberData | undefined {
+		const internalImport = this.tempSource.addImportDeclaration({
+			moduleSpecifier: `${packageName}/internal`,
+		});
+		const internalSource = internalImport.getModuleSpecifierSourceFile();
+		if (internalSource === undefined) {
+			this.log.warning(`no /internal export from ${packageName}`);
+			return undefined;
+		}
+		this.log.verbose(`\tLoading ${packageName} API data from ${internalSource.getFilePath()}`);
+
+		const exported = internalSource.getExportedDeclarations();
+		const memberData: Required<MemberData> = { public: [], beta: [], alpha: [], internal: [] };
+		for (const [name, exportedDecls] of exported.entries()) {
+			let foundLevel = false;
+			// A single export name may exist as both a type and a value. This is common pattern for enum-like
+			// constructs where an object exists with properties evaluating to values and a type that is union of values.
+			// Assume consistency for these cases.
+			if (exportedDecls.length > 1) {
+				this.log.verbose(
+					`\t\t${packageName} ${name} has ${exportedDecls.length} export declarations. Choosing API level for both from first recognized tag.`,
+				);
+			}
+			for (const exportedDecl of exportedDecls) {
+				const level = getNodeLevel(exportedDecl);
+				if (level !== undefined) {
+					this.log.verbose(`\t\t${packageName} ${name} is ${level}.`);
+					memberData[level].push(name);
+					foundLevel = true;
+					break;
+				}
+			}
+			if (!foundLevel) {
+				this.log.warning(`\t\t${packageName} ${name} API level was not recognized.`);
+			}
+		}
+
+		return memberData;
+	}
+}
+
 function isKnownLevel(level: string): level is ApiLevel {
 	return (knownLevels as readonly string[]).includes(level);
+}
+
+/**
+ * Searches given Node's JSDocs for known {@link ApiLevel} tag.
+ *
+ * @returns Recognized {@link ApiLevel} from JSDocs or undefined.
+ */
+function getNodeLevel(node: Node): ApiLevel | undefined {
+	if (Node.isJSDocable(node)) {
+		for (const jsdoc of node.getJsDocs()) {
+			for (const tag of jsdoc.getTags()) {
+				const tagName = tag.getTagName();
+				if (isKnownLevel(tagName)) {
+					return tagName;
+				}
+			}
+		}
+	} else {
+		// Some nodes like `VariableDeclaration`s as not JSDocable, but an ancestor
+		// like `VariableStatement` is and may contain tag.
+		const parent = node.getParent();
+		if (parent !== undefined) {
+			return getNodeLevel(parent);
+		}
+	}
+	return undefined;
 }
 
 function ensureLevel(entry: MemberData, level: keyof MemberData): string[] {
