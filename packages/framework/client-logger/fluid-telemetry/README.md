@@ -12,7 +12,11 @@ Let's walk through some simple examples for getting started with Fluid telemetry
 
 In this example, you'll walk through the basic setup process to start getting container telemetry to be produced and logging it to the console.
 
-### Step 1: First, we'll have to create our own telemetry consumer which extends the ITelemetryConsumer interface. Let's look at an example that will simply console.log the telemetry.
+### Step 1: Install the @fluidframework/fluid-telemetry package dependency
+
+-   Using NPM: `npm install @fluidframework/fluid-telemetry`
+
+### Step 2: First, we'll have to create our own telemetry consumer which extends the ITelemetryConsumer interface. Let's look at an example that will simply console.log the telemetry.
 
 ```ts
 import { ITelemetryConsumer, IFluidTelemetry } from "@fluidframework/fluid-telemetry";
@@ -24,7 +28,7 @@ class MySimpleTelemetryConsumer implements ITelemetryConsumer {
 }
 ```
 
-### Step 2: Now, let's start the telemetry production and hook in our telemetry consumer from step 1. We will be initializing our telemetry collection where we initialize our containers:
+### Step 3: Now, let's start the telemetry production and hook in our telemetry consumer from step 2. We will be initializing our telemetry collection where we initialize our containers:
 
 ```ts
 import { IFluidContainer } from "@fluidframework/fluid-static";
@@ -68,7 +72,11 @@ startTelemetry(telemetryConfig);
 
 Before you can get telemetry sent to Azure App Insights, you'll need to create an Instance of App Insights on Azure. Then you'll be able to create an Azure App Insights client that you can easily turn into a ITelemetryConsumer and finally hook it up to container telemetry. [Learn more about Azure App Insights](https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview)
 
-### Step 1: First, we'll have to create our own telemetry consumer which extends the ITelemetryConsumer interface using our Azure App Insights client:
+### Step 1: Install the @fluidframework/fluid-telemetry package and Azure App Insights package dependencies
+
+-   Using NPM: `npm install @fluidframework/fluid-telemetry @microsoft/applicationinsights-web`
+
+### Step 2: First, we'll have to create our own telemetry consumer which extends the ITelemetryConsumer interface using our Azure App Insights client:
 
 ```ts
 import { ApplicationInsights } from "@microsoft/applicationinsights-web";
@@ -86,7 +94,7 @@ class AppInsightsTelemetryConsumer implements ITelemetryConsumer {
 }
 ```
 
-#### Step 2: Now, let's start the telemetry production and hook in our telemetry consumer from step 1. We will be initializing our telemetry collection where we initialize our containers:
+#### Step 3: Now, let's start the telemetry production and hook in our telemetry consumer from step 2. We will be initializing our telemetry collection where we initialize our containers:
 
 ```ts
 import { ApplicationInsights } from "@microsoft/applicationinsights-web";
