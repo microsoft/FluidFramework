@@ -4,16 +4,16 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { PromiseCache } from "@fluidframework/core-utils";
+import { PromiseCache } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	getDocAttributesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import {
 	HostStoragePolicy,
 	IFileEntry,
@@ -27,9 +27,9 @@ import {
 	SharingLinkScope,
 	TokenFetchOptions,
 	TokenFetcher,
-} from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/odsp-driver-definitions/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { ICacheAndTracker, createOdspCacheAndTracker } from "./epochTracker.js";
@@ -47,6 +47,7 @@ import {
 	getJoinSessionCacheKey,
 	getOdspResolvedUrl,
 	isNewFileInfo,
+	toInstrumentedOdspStorageTokenFetcher,
 	toInstrumentedOdspTokenFetcher,
 } from "./odspUtils.js";
 
@@ -167,11 +168,10 @@ export class OdspDocumentServiceFactoryCore
 					this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
 			},
 			async (event) => {
-				const getStorageToken = toInstrumentedOdspTokenFetcher(
+				const getStorageToken = toInstrumentedOdspStorageTokenFetcher(
 					odspLogger,
 					resolvedUrlData,
 					this.getStorageToken,
-					true /* throwOnNullToken */,
 				);
 				// We can delay load this module as this path will not be executed in load flows and create flow
 				// while only happens once in lifetime of a document happens in the background after creation of
@@ -295,11 +295,10 @@ export class OdspDocumentServiceFactoryCore
 				this.hostPolicy,
 			);
 
-		const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
+		const storageTokenFetcher = toInstrumentedOdspStorageTokenFetcher(
 			extLogger,
 			resolvedUrlData,
 			this.getStorageToken,
-			true /* throwOnNullToken */,
 		);
 
 		const webSocketTokenFetcher =

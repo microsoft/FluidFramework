@@ -51,8 +51,8 @@
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
+		"@fluid-internal/test-driver-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/test-driver-definitions": "workspace:~",
 		"mocha": "^10.2.0",
 		"source-map-support": "^0.5.21"
 	},

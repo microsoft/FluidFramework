@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentService, IDocumentStorageService } from "@fluidframework/driver-definitions";
+import {
+	IDocumentService,
+	IDocumentStorageService,
+} from "@fluidframework/driver-definitions/internal";
 
 import { DocumentServiceProxy } from "../../documentServiceProxy.js";
 

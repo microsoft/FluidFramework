@@ -10,17 +10,17 @@ import {
 	TestDataObjectType,
 	describeCompat,
 } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { type FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map";
-import { responseToException } from "@fluidframework/runtime-utils";
+import { responseToException } from "@fluidframework/runtime-utils/internal";
 import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 async function resolveHandleWithoutWait(
 	containerRuntime: ContainerRuntime,

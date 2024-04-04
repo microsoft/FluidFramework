@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map";
-import type { IConsensusRegisterCollection } from "@fluidframework/register-collection";
+import type { IConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -16,7 +16,7 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 const mapId = "mapKey";
 

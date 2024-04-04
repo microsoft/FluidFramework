@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { ICodecOptions } from "../../../codec/index.js";
 import { rootFieldKey } from "../../../core/index.js";
@@ -33,7 +33,7 @@ import { brand } from "../../../util/index.js";
 import { emptySchema } from "../../cursorTestSuite.js";
 
 const codecOptions: ICodecOptions = { jsonValidator: typeboxValidator };
-const fieldBatchCodec = makeFieldBatchCodec(codecOptions);
+const fieldBatchCodec = makeFieldBatchCodec(codecOptions, 1);
 const context = {
 	encodeType: TreeCompressionStrategy.Uncompressed,
 };

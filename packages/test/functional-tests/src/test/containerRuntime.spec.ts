@@ -25,7 +25,7 @@ import {
 	ISequencedDocumentSystemMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 describe("Container Runtime", () => {
 	/**

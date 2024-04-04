@@ -11,7 +11,7 @@ import { type ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 // import { ConnectionState } from "@fluidframework/container-loader";
 // import { timeoutPromise } from "@fluidframework/test-utils";
-import type { MonitoringContext } from "@fluidframework/telemetry-utils";
+import type { MonitoringContext } from "@fluidframework/telemetry-utils/internal";
 
 import { OdspConnectionConfig } from "../interfaces.js";
 import { OdspClient } from "../odspClient.js";

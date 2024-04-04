@@ -4,36 +4,36 @@
 
 ```ts
 
-import * as agentScheduler from '@fluidframework/agent-scheduler';
-import { BaseContainerRuntimeFactory } from '@fluidframework/aqueduct';
-import * as cell from '@fluidframework/cell';
-import { ContainerRuntime } from '@fluidframework/container-runtime';
-import { ContainerRuntimeFactoryWithDefaultDataStore } from '@fluidframework/aqueduct';
-import * as counter from '@fluidframework/counter';
-import { DataObject } from '@fluidframework/aqueduct';
-import { DataObjectFactory } from '@fluidframework/aqueduct';
-import * as datastore from '@fluidframework/datastore';
+import * as agentScheduler from '@fluidframework/agent-scheduler/internal';
+import { BaseContainerRuntimeFactory } from '@fluidframework/aqueduct/internal';
+import * as cell from '@fluidframework/cell/internal';
+import { ContainerRuntime } from '@fluidframework/container-runtime/internal';
+import { ContainerRuntimeFactoryWithDefaultDataStore } from '@fluidframework/aqueduct/internal';
+import * as counter from '@fluidframework/counter/internal';
+import { DataObject } from '@fluidframework/aqueduct/internal';
+import { DataObjectFactory } from '@fluidframework/aqueduct/internal';
+import * as datastore from '@fluidframework/datastore/internal';
 import { DriverApi } from '@fluid-private/test-drivers';
 import { FluidTestDriverConfig } from '@fluid-private/test-drivers';
-import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
-import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
+import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions/internal';
+import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { ISharedDirectory } from '@fluidframework/map';
+import { ISharedDirectory } from '@fluidframework/map/internal';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base';
 import { ITelemetryGenericEventExt } from '@fluidframework/telemetry-utils';
-import { ITestContainerConfig } from '@fluidframework/test-utils';
-import { ITestObjectProvider } from '@fluidframework/test-utils';
-import { Loader } from '@fluidframework/container-loader';
-import * as map from '@fluidframework/map';
-import * as matrix from '@fluidframework/matrix';
-import * as orderedCollection from '@fluidframework/ordered-collection';
-import * as registerCollection from '@fluidframework/register-collection';
-import * as sequence from '@fluidframework/sequence';
+import { ITestContainerConfig } from '@fluidframework/test-utils/internal';
+import { ITestObjectProvider } from '@fluidframework/test-utils/internal';
+import { Loader } from '@fluidframework/container-loader/internal';
+import * as map from '@fluidframework/map/internal';
+import * as matrix from '@fluidframework/matrix/internal';
+import * as orderedCollection from '@fluidframework/ordered-collection/internal';
+import * as registerCollection from '@fluidframework/register-collection/internal';
+import * as sequence from '@fluidframework/sequence/internal';
 import * as sequenceDeprecated from '@fluid-experimental/sequence-deprecated';
-import { TestDriverTypes } from '@fluidframework/test-driver-definitions';
-import { TestFluidObjectFactory } from '@fluidframework/test-utils';
-import { TestObjectProvider } from '@fluidframework/test-utils';
+import { TestDriverTypes } from '@fluid-internal/test-driver-definitions';
+import { TestFluidObjectFactory } from '@fluidframework/test-utils/internal';
+import { TestObjectProvider } from '@fluidframework/test-utils/internal';
 
 // @internal (undocumented)
 export function assertDocumentTypeInfo(info: DocumentTypeInfo, type: DocumentType_2): asserts info is DocumentMapInfo | DocumentMultipleDataStoresInfo;

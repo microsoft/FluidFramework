@@ -66,4 +66,5 @@ export {
 	intoDelta,
 	relevantRemovedRoots,
 } from "./modularChangeFamily.js";
-export { makeV0Codec } from "./modularChangeCodecs.js";
+export { makeModularChangeCodecFamily } from "./modularChangeCodecs.js";
+export { FieldKindConfiguration, FieldKindConfigurationEntry } from "./fieldKindConfiguration.js";
