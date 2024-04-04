@@ -170,8 +170,8 @@ describe("serializedStateManager", () => {
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			false,
-			false,
 		);
+		serializedStateManager.setSupportGetSnapshotApi(false);
 
 		await assert.rejects(
 			async () =>
@@ -197,8 +197,9 @@ describe("serializedStateManager", () => {
 				loadedGroupIdSnapshots: {},
 			}), // no calls to storage expected
 			true,
-			false,
 		);
+		serializedStateManager.setSupportGetSnapshotApi(false);
+
 		// equivalent to attach
 		serializedStateManager.setSnapshot({
 			baseSnapshot: { trees: {}, blobs: {} },
@@ -223,8 +224,9 @@ describe("serializedStateManager", () => {
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
-			false,
 		);
+		serializedStateManager.setSupportGetSnapshotApi(false);
+
 		const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(undefined);
 		assert(baseSnapshot);
 		assert.strictEqual(version, undefined);
@@ -244,8 +246,9 @@ describe("serializedStateManager", () => {
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
-			false,
 		);
+		serializedStateManager.setSupportGetSnapshotApi(false);
+
 		const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(undefined);
 		assert(baseSnapshot);
 		assert.strictEqual(version?.id, "fromStorage");
@@ -274,8 +277,9 @@ describe("serializedStateManager", () => {
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
-			false,
 		);
+		serializedStateManager.setSupportGetSnapshotApi(false);
+
 		let seq = 1;
 		while (seq < 10) {
 			serializedStateManager.addProcessedOp(generateSavedOp(seq++));
@@ -319,8 +323,8 @@ describe("serializedStateManager", () => {
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
-			false,
 		);
+		serializedStateManager.setSupportGetSnapshotApi(false);
 
 		const firstProcessedOpSequenceNumber = 13; // greater than snapshotSequenceNumber + 1
 		const lastProcessedOpSequenceNumber = 40;
@@ -361,8 +365,8 @@ describe("serializedStateManager", () => {
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
-			false,
 		);
+		serializedStateManager.setSupportGetSnapshotApi(false);
 
 		const lastProcessedOpSequenceNumber = 20;
 		let seq = 1;
@@ -414,8 +418,9 @@ describe("serializedStateManager", () => {
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
-			false,
 		);
+		serializedStateManager.setSupportGetSnapshotApi(false);
+
 		const snapshotSequenceNumber = 11;
 		storageAdapter.uploadSummary(snapshotSequenceNumber);
 
@@ -443,8 +448,9 @@ describe("serializedStateManager", () => {
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
-			false,
 		);
+		serializedStateManager.setSupportGetSnapshotApi(false);
+
 		let seq = 1;
 		let lastProcessedOpSequenceNumber = 20;
 		while (seq <= lastProcessedOpSequenceNumber) {
@@ -502,8 +508,9 @@ describe("serializedStateManager", () => {
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
-			false,
 		);
+		serializedStateManager.setSupportGetSnapshotApi(false);
+
 		let seq = 1;
 		let lastProcessedOpSequenceNumber = 20;
 		while (seq <= lastProcessedOpSequenceNumber) {
@@ -548,8 +555,9 @@ describe("serializedStateManager", () => {
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
-			false,
 		);
+		serializedStateManager.setSupportGetSnapshotApi(false);
+
 		let seq = 1;
 		let lastProcessedOpSequenceNumber = 20;
 		while (seq <= 20) {
@@ -610,8 +618,9 @@ describe("serializedStateManager", () => {
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
-			false,
 		);
+		serializedStateManager.setSupportGetSnapshotApi(false);
+
 		const lastProcessedOpSequenceNumber = 20;
 		let seq = 1;
 		while (seq <= lastProcessedOpSequenceNumber) {

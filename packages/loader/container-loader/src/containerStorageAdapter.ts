@@ -48,7 +48,7 @@ export interface ISerializableBlobContents {
  * container attach state.
  */
 export class ContainerStorageAdapter
-	implements ISerializedStateManagerDocumentStorageService, IDisposable
+	implements ISerializedStateManagerDocumentStorageService, IDocumentStorageService, IDisposable
 {
 	private _storageService: IDocumentStorageService & Partial<IDisposable>;
 

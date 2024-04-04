@@ -929,15 +929,11 @@ export class Container
 			(this.isInteractiveClient &&
 				this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad")) ??
 			options.enableOfflineLoad === true;
-		const supportGetSnapshotApi: boolean =
-			this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch") ===
-				true && this.service?.policies?.supportGetSnapshotApi === true;
 		this.serializedStateManager = new SerializedStateManager(
 			pendingLocalState,
 			this.subLogger,
 			this.storageAdapter,
 			offlineLoadEnabled,
-			supportGetSnapshotApi,
 		);
 
 		const isDomAvailable =
@@ -1551,6 +1547,11 @@ export class Container
 
 		timings.phase2 = performance.now();
 
+		// We need to wait for the service to be substantiated before figuring out the type of fetch we use
+		const supportGetSnapshotApi: boolean =
+			this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch") ===
+				true && this.service.policies?.supportGetSnapshotApi === true;
+		this.serializedStateManager.setSupportGetSnapshotApi(supportGetSnapshotApi);
 		// Fetch specified snapshot.
 		const { baseSnapshot, version } =
 			await this.serializedStateManager.fetchSnapshot(specifiedVersion);

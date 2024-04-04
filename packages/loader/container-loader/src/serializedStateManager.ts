@@ -94,13 +94,13 @@ export class SerializedStateManager {
 	private readonly mc: MonitoringContext;
 	private latestSnapshot: ISnapshotInfo | undefined;
 	private _initialRefreshSnapshot: Promise<void> | undefined;
+	private _supportGetSnapshotApi: boolean | undefined;
 
 	constructor(
 		private readonly pendingLocalState: IPendingContainerState | undefined,
 		subLogger: ITelemetryLoggerExt,
 		private readonly storageAdapter: ISerializedStateManagerDocumentStorageService,
 		public readonly offlineLoadEnabled: boolean,
-		private readonly supportGetSnapshotApi: boolean,
 	) {
 		this.mc = createChildMonitoringContext({
 			logger: subLogger,
@@ -111,11 +111,22 @@ export class SerializedStateManager {
 	public get initialRefreshSnapshot() {
 		return this._initialRefreshSnapshot;
 	}
+
+	public get supportGetSnapshotApi() {
+		// We expect this to be set by the time we need it, which is when we are making fetch snapshot calls
+		assert(this._supportGetSnapshotApi !== undefined, "supportGetSnapshotApi is undefined");
+		return this._supportGetSnapshotApi;
+	}
 	public addProcessedOp(message: ISequencedDocumentMessage) {
 		if (this.offlineLoadEnabled) {
 			this.processedOps.push(message);
 			this.updateSnapshotAndProcessedOpsMaybe();
 		}
+	}
+
+	public setSupportGetSnapshotApi(supportGetSnapshotApi: boolean) {
+		assert(this._supportGetSnapshotApi === undefined, "supportGetSnapshotApi is already set");
+		this._supportGetSnapshotApi = supportGetSnapshotApi;
 	}
 
 	public async fetchSnapshot(specifiedVersion: string | undefined) {
