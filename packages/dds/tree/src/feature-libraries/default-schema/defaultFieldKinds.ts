@@ -135,8 +135,6 @@ export const nodeKey = new FieldKindWithEditor(
 	new Set(),
 );
 
-// TODO: This name was to be consistent with the naming conventions of other field kind identifier names.
-// We may or may not rename this in the future.
 const identifierIdentifier = "identifier";
 
 /**

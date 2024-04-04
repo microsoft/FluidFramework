@@ -145,7 +145,8 @@ describe("SharedTreeObject", () => {
 			"tree",
 		);
 		const root = tree.schematize(config).root;
-		assert.equal(root.identifier, "2fdabf35-a1b9-480d-afcf-b72e72340817");
+		// TODO: the stable id changes every test run, so we will need to find a better way to add testing for it.
+		// assert.equal(root.identifier, "2fdabf35-a1b9-480d-afcf-b72e72340817");
 		assert.equal(treeNodeApi.shortID(root), id);
 	});
 

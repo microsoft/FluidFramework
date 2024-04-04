@@ -24,6 +24,7 @@ export {
 	FlexObjectNodeFields,
 	schemaIsFieldNode,
 	schemaIsLeaf,
+	schemaIsIdentifierNode,
 	schemaIsMap,
 	schemaIsObjectNode,
 	NormalizeObjectNodeFields,

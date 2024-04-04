@@ -32,8 +32,10 @@ import {
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
 	FlexTreeNodeSchema,
+	IdentifierReferenceSchema,
 	LeafNodeSchema,
 	schemaIsFieldNode,
+	schemaIsIdentifierNode,
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsObjectNode,
@@ -76,11 +78,6 @@ import { LazyNodeKeyField, makeField } from "./lazyField.js";
 import { FlexTreeNodeEvents, TreeEvent } from "./treeEvents.js";
 import { unboxedField } from "./unboxed.js";
 import { treeStatusFromAnchorCache } from "./utilities.js";
-import {
-	IdentifierReferenceSchema,
-	schemaIsIdentifierNode,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../typed-schema/typedTreeSchema.js";
 
 export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): LazyTreeNode {
 	const anchor = cursor.buildAnchor();

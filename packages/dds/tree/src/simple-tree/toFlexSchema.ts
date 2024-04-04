@@ -19,6 +19,7 @@ import {
 	FlexTreeSchema,
 	TreeNodeSchemaBase,
 	defaultSchemaPolicy,
+	schemaIsIdentifierNode,
 	schemaIsLeaf,
 } from "../feature-libraries/index.js";
 import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList.js";
@@ -43,7 +44,6 @@ import {
 } from "./schemaTypes.js";
 import { cursorFromNodeData } from "./toMapTree.js";
 import { TreeConfiguration } from "./tree.js";
-import { schemaIsIdentifierNode } from "../feature-libraries/typed-schema/typedTreeSchema.js";
 
 /**
  * Returns a cursor (in nodes mode) for the root node.

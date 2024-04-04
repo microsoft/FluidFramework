@@ -645,7 +645,7 @@ export function schemaIsObjectNode(schema: FlexTreeNodeSchema): schema is FlexOb
 }
 
 /**
- * Checks if a {@link FlexTreeNodeSchema} is a {@link ObjectNodeSchema}.
+ * Checks if a {@link FlexTreeNodeSchema} is a {@link IdentifierReferenceSchema}.
  * @internal
  */
 export function schemaIsIdentifierNode(

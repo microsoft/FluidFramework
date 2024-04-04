@@ -1648,6 +1648,9 @@ export interface SchemaIncompatible {
 export function schemaIsFieldNode(schema: FlexTreeNodeSchema): schema is FlexFieldNodeSchema;
 
 // @internal
+export function schemaIsIdentifierNode(schema: FlexTreeNodeSchema): schema is IdentifierReferenceSchema;
+
+// @internal
 export function schemaIsLeaf(schema: FlexTreeNodeSchema): schema is LeafNodeSchema;
 
 // @internal

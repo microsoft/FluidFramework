@@ -207,6 +207,7 @@ export {
 	Unenforced,
 	schemaIsFieldNode,
 	schemaIsLeaf,
+	schemaIsIdentifierNode,
 	schemaIsMap,
 	schemaIsObjectNode,
 	AllowedTypeSet,

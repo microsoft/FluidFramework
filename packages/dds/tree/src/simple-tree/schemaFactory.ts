@@ -670,7 +670,6 @@ export class SchemaFactory<
 
 	/**
 	 * Make a field of type identifier instead of the default which is required.
-	 * TODO: The type should be updated to a hardcoded allowedType which represents a identifier node type (i.e. object with compressedid and its uuid).
 	 * The user should not be able to specify the schema of the node identifier.
 	 */
 	public identifier<const T extends ImplicitAllowedTypes>(

@@ -27,6 +27,7 @@ import {
 	FlexTreeTypedField,
 	IdentifierReferenceSchema,
 	isFluidHandle,
+	schemaIsIdentifierNode,
 	typeNameSymbol,
 } from "../feature-libraries/index.js";
 import { Mutable, brand, fail, isReadonlyArray } from "../util/index.js";
@@ -49,8 +50,6 @@ import {
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree.js";
 import { IterableTreeArrayContent, TreeArrayNode } from "./treeArrayNode.js";
 import { TreeNode, Unhydrated } from "./types.js";
-// eslint-disable-next-line import/no-internal-modules
-import { schemaIsIdentifierNode } from "../feature-libraries/typed-schema/typedTreeSchema.js";
 
 /**
  * Detects if the given 'candidate' is a TreeNode.

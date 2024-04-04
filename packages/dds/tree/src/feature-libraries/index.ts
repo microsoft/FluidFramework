@@ -143,6 +143,7 @@ export {
 	FlexObjectNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
+	schemaIsIdentifierNode,
 	schemaIsMap,
 	schemaIsObjectNode,
 	Unenforced,
