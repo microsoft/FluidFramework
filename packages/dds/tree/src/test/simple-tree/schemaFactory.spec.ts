@@ -7,7 +7,11 @@ import { strict as assert } from "node:assert";
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { MockFluidDataStoreRuntime, MockHandle } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockFluidDataStoreRuntime,
+	MockHandle,
+	validateAssertionError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { TreeStatus } from "../../feature-libraries/index.js";
 import { treeNodeApi as Tree, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
@@ -227,6 +231,56 @@ describe("schemaFactory", () => {
 			assert.equal(root.increment(), 1);
 			assert.equal(root.increment(), 2);
 			assert.deepEqual(values, [2, 3]);
+		});
+
+		it("Stored key collision", () => {
+			const schema = new SchemaFactory("com.example");
+			assert.throws(
+				() =>
+					schema.object("Point", {
+						x: schema.required(schema.number, { key: "foo" }),
+						y: schema.required(schema.number, { key: "foo" }),
+					}),
+				(error: Error) =>
+					validateAssertionError(error, /Duplicate stored key "foo" in schema "Point"/),
+			);
+		});
+
+		it("Stored key collides with view key", () => {
+			const schema = new SchemaFactory("com.example");
+			assert.throws(
+				() =>
+					schema.object("Object", {
+						foo: schema.number,
+						bar: schema.required(schema.string, { key: "foo" }),
+					}),
+				(error: Error) =>
+					validateAssertionError(
+						error,
+						/Stored key "foo" in schema "Object" conflicts with a property key of the same name/,
+					),
+			);
+		});
+
+		// This is a somewhat neurotic test case, and likely not something we would expect a user to do.
+		// But just in case, we should ensure it is handled correctly.
+		it("Stored key / view key swap", () => {
+			const schema = new SchemaFactory("com.example");
+			assert.doesNotThrow(() =>
+				schema.object("Object", {
+					foo: schema.optional(schema.number, { key: "bar" }),
+					bar: schema.required(schema.string, { key: "foo" }),
+				}),
+			);
+		});
+
+		it("Explicit stored key === view key", () => {
+			const schema = new SchemaFactory("com.example");
+			assert.doesNotThrow(() =>
+				schema.object("Object", {
+					foo: schema.optional(schema.string, { key: "foo" }),
+				}),
+			);
 		});
 
 		describe("deep equality", () => {
