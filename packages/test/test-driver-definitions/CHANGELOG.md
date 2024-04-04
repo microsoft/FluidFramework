@@ -1,4 +1,4 @@
-# @fluidframework/test-driver-definitions
+# @fluid-internal/test-driver-definitions
 
 ## 2.0.0-rc.2.0.0
 

@@ -8,8 +8,8 @@ import {
 	MountableView,
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
-import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import React from "react";
 

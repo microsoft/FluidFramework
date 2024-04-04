@@ -12,7 +12,7 @@ import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { JSONOp } from 'ot-json1';
 import { Path } from 'ot-json1';
-import { Serializable } from '@fluidframework/datastore-definitions';
+import { Serializable } from '@fluidframework/datastore-definitions/internal';
 import { SharedOT } from '@fluid-experimental/ot';
 
 // @internal (undocumented)

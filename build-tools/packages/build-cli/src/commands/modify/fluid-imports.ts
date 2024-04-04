@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable max-depth */
+/* eslint-disable unicorn/no-array-callback-reference */
 
 import { Flags } from "@oclif/core";
 import { existsSync, readFile } from "fs-extra";
@@ -19,8 +19,16 @@ const publicLevel = "public";
 const betaLevel = "beta";
 const alphaLevel = "alpha";
 const internalLevel = "internal";
-const knownLevels = [publicLevel, betaLevel, alphaLevel, internalLevel] as const;
+// Note: this is sorted by the preferred order that respective imports would exist.
+// public is effectively "" for sorting purposes and then arranged alphabetically
+// as most formatters would prefer.
+const knownLevels = [publicLevel, alphaLevel, betaLevel, internalLevel] as const;
 type ApiLevel = (typeof knownLevels)[number];
+
+/**
+ * FF packages that exist outside of a scope that starts with `@fluid`.
+ */
+const unscopedFFPackages = new Set(["fluid-framework", "tinylicious"]);
 
 /**
  * Rewrite imports for Fluid Framework APIs to use the correct subpath import (/alpha, /beta. etc.).
@@ -41,10 +49,6 @@ export default class UpdateFluidImportsCommand extends BaseCommand<
 			description: "Path to a data file containing raw API level data.",
 			exists: true,
 		}),
-		organize: Flags.boolean({
-			description:
-				"Organize the imports in any file that is modified. Note that this can make it more difficult to see the rewritten import changes.",
-		}),
 		onlyInternal: Flags.boolean({
 			description: "Use /internal for all non-public APIs instead of /alpha or /beta.",
 		}),
@@ -52,14 +56,276 @@ export default class UpdateFluidImportsCommand extends BaseCommand<
 	};
 
 	public async run(): Promise<void> {
-		const { tsconfig, data, onlyInternal, organize } = this.flags;
+		const { tsconfig, data, onlyInternal } = this.flags;
 
 		if (!existsSync(tsconfig)) {
 			this.error(`Can't find config file: ${tsconfig}`, { exit: 0 });
 		}
 		const dataFilePath = data ?? path.join(__dirname, "../../../data/rawApiLevels.jsonc");
 		const apiLevelData = await loadData(dataFilePath);
-		await updateImports(tsconfig, apiLevelData, onlyInternal, organize, this.logger);
+		await updateImports(tsconfig, apiLevelData, onlyInternal, this.logger);
+	}
+}
+
+interface FluidImportDataBase {
+	index: number;
+	packageName: string;
+	level: ApiLevel;
+	/**
+	 * package relative ordinal for levels (alphabetically) ("public" is really "" so first)
+	 * and type-only before not.
+	 */
+	order: number;
+	/**
+	 * structured to match ts-morph ImportDeclarationStructure
+	 */
+	declaration: {
+		isTypeOnly: boolean;
+		moduleSpecifier: string;
+		/**
+		 * additions only
+		 */
+		namedImports: string[];
+	};
+}
+interface FluidImportDataPresent extends FluidImportDataBase {
+	importDeclaration: ImportDeclaration;
+	originallyUnassigned: boolean;
+}
+interface FluidImportDataPending extends FluidImportDataBase {
+	/**
+	 * when true, should be inserted after the index stored.
+	 */
+	insertAfterIndex: boolean;
+}
+type FluidImportData = FluidImportDataPresent | FluidImportDataPending;
+
+class FluidImportManager {
+	private readonly fluidImports: FluidImportDataPresent[];
+	private readonly missingImports: FluidImportDataPending[] = [];
+
+	constructor(
+		private readonly sourceFile: SourceFile,
+		private readonly mappingData: MapData,
+		private readonly log: CommandLogger,
+	) {
+		this.fluidImports = parseFluidImports(sourceFile, log);
+	}
+
+	public process(onlyInternal: boolean): boolean {
+		if (this.fluidImports.length === 0) {
+			return false;
+		}
+
+		let modificationsRequired = false;
+
+		// Collect the existing declarations
+		for (const { importDeclaration, packageName, level } of this.fluidImports) {
+			const data = this.mappingData.get(packageName);
+
+			// Skip modules with no mapping
+			if (data === undefined) {
+				this.log.verbose(
+					`Skipping (no entry in data file): ${importDeclaration.getModuleSpecifierValue()}`,
+				);
+				continue;
+			}
+
+			const namedImports = importDeclaration.getNamedImports();
+			const isTypeOnly = importDeclaration.isTypeOnly();
+
+			this.log.logIndent(`Iterating named imports...`, 2);
+			for (const importSpecifier of namedImports) {
+				const name = importSpecifier.getName();
+
+				/**
+				 * fullImportSpecifierText includes surrounding text like "type" and whitespace. The surrounding whitespace is
+				 * trimmed, but leading or trailing text like "type" or "as foo" (an alias) is still included. This is the
+				 * string that will be used in the new imports.
+				 *
+				 * This ensures aliases and individual type-only imports are maintained when rewritten.
+				 */
+				const fullImportSpecifierText = importSpecifier.getFullText().trim();
+				const expectedLevel = getApiLevelForImportName(
+					name,
+					data,
+					/* default */ publicLevel,
+					onlyInternal,
+				);
+
+				this.log.logIndent(
+					`Found import named: '${fullImportSpecifierText}' (${expectedLevel})`,
+					4,
+				);
+
+				const properImport = this.ensureFluidImport({
+					packageName,
+					level: expectedLevel,
+					isTypeOnly,
+				});
+
+				if (level !== expectedLevel) {
+					modificationsRequired = true;
+					importSpecifier.remove();
+					properImport.declaration.namedImports.push(fullImportSpecifierText);
+				}
+			}
+		} /* Collection */
+
+		if (!modificationsRequired) return false;
+
+		// Make modifications to existing imports
+		for (const fluidImport of this.fluidImports) {
+			// 1. add new import
+			if (fluidImport.declaration.namedImports.length > 0) {
+				fluidImport.importDeclaration.addNamedImports(fluidImport.declaration.namedImports);
+			}
+			//  2. or if not see if there are new imports that would like to take over
+			//     which helps preserve comments and vertical spacing.
+			else if (
+				!fluidImport.originallyUnassigned &&
+				isImportUnassigned(fluidImport.importDeclaration)
+			) {
+				const takeOverProspects = this.missingImports
+					.filter((v) => v.index === fluidImport.index)
+					.sort((a, b) => b.order - a.order);
+				if (takeOverProspects.length > 0) {
+					const replacement = takeOverProspects[0];
+					this.log.verbose(
+						`\tReplacing ${fluidImport.declaration.moduleSpecifier} with ${replacement.declaration.moduleSpecifier}`,
+					);
+					fluidImport.importDeclaration.setModuleSpecifier(
+						replacement.declaration.moduleSpecifier,
+					);
+					fluidImport.importDeclaration.addNamedImports(replacement.declaration.namedImports);
+					fluidImport.importDeclaration.setIsTypeOnly(replacement.declaration.isTypeOnly);
+					// Any other prospects should be inserted after this now.
+					for (const otherProspects of takeOverProspects.slice(1)) {
+						otherProspects.insertAfterIndex = true;
+					}
+					// Remove the missing as it is now in place.
+					this.missingImports.splice(this.missingImports.indexOf(replacement), 1);
+					// We could remove the existing entry now, but that would
+					// alter the array being iterated. No further meaningful use is expected.
+					// The later removal check will skip as it now has imports.
+					// Set originallyUnassigned as an ounce of precaution.
+					fluidImport.originallyUnassigned = true;
+				}
+			}
+		}
+
+		const reverseSortedAdditions = this.missingImports.sort((a, b) => {
+			const indexDelta = b.index - a.index;
+			if (indexDelta) return indexDelta;
+			return b.order - a.order;
+		});
+		for (const addition of reverseSortedAdditions) {
+			// Note that ts-morph will not preserve blank lines that may have existed
+			// near the insertion point.
+			// When inserting before it is likely desirable to capture any for the
+			// leading trivia (comments included) and "move" them to the inserted
+			// import. Likewise for inserting after the leading trivia of the next
+			// import should be moved to the trailing trivia of the inserted.
+			// ts-morph has some fairly unexpected results with manipulations so
+			// some trial and error may be required to get desired behavior.
+			this.log.verbose(
+				`\tInjecting ${addition.declaration.moduleSpecifier} ${
+					addition.insertAfterIndex ? "after" : "before"
+				} ${this.sourceFile
+					.getImportDeclarations()
+					[addition.index].getModuleSpecifierValue()}`,
+			);
+			this.sourceFile.insertImportDeclaration(
+				addition.index + (addition.insertAfterIndex ? 1 : 0),
+				addition.declaration,
+			);
+		}
+
+		// Check for import that has no imports, default or named, that has been
+		// modified. And only after insertions have been taken care of.
+		for (const { importDeclaration, originallyUnassigned } of this.fluidImports) {
+			if (!originallyUnassigned && isImportUnassigned(importDeclaration)) {
+				importDeclaration.remove();
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Gets existing or creates new {@link FluidImportData} for given package,
+	 * level, and type-sense.
+	 *
+	 * When there isn't an existing {@link ImportDeclaration}, a pending object
+	 * is added to build up needed imports.
+	 *
+	 * @returns The {@link FluidImportData} for import case
+	 */
+	private ensureFluidImport({
+		packageName,
+		level,
+		isTypeOnly,
+	}: {
+		packageName: string;
+		level: ApiLevel;
+		isTypeOnly: boolean;
+	}): FluidImportData {
+		const match = (element: FluidImportData): boolean =>
+			element.packageName === packageName &&
+			element.level === level &&
+			element.declaration.isTypeOnly === isTypeOnly;
+
+		const preexisting = this.fluidImports.find(match);
+		if (preexisting !== undefined) {
+			return preexisting;
+		}
+
+		// Check for a pending import
+		const existing = this.missingImports.find(match);
+		if (existing !== undefined) {
+			return existing;
+		}
+
+		const moduleSpecifier = level === publicLevel ? packageName : `${packageName}/${level}`;
+		// Order imports primarily by level then secondarily: type, untyped
+		const order = knownLevels.indexOf(level) * 2 + (isTypeOnly ? 0 : 1);
+		const { index, after } = this.findInsertionPoint(packageName, order);
+		const newFluidImport: FluidImportDataPending = {
+			declaration: {
+				isTypeOnly,
+				moduleSpecifier,
+				namedImports: [],
+			},
+			index,
+			packageName,
+			level,
+			order,
+			insertAfterIndex: after,
+		};
+		this.missingImports.push(newFluidImport);
+
+		return newFluidImport;
+	}
+
+	private findInsertionPoint(
+		packageName: string,
+		order: number,
+	): { index: number; after: boolean } {
+		const references = this.fluidImports.filter((v) => v.packageName === packageName);
+		if (references.length === 1) {
+			const ref = references[0];
+			return {
+				index: ref.index,
+				after: order > ref.order,
+			};
+		}
+		references.sort((a, b) => b.order - a.order);
+		for (const ref of references) {
+			if (order > ref.order) {
+				return { index: ref.index, after: true };
+			}
+		}
+		return { index: references[0].index, after: false };
 	}
 }
 
@@ -83,7 +349,6 @@ async function updateImports(
 	tsConfigFilePath: string,
 	mappingData: MapData,
 	onlyInternal: boolean,
-	organizeImports: boolean,
 	log: CommandLogger,
 ): Promise<void> {
 	const project = new Project({
@@ -110,177 +375,10 @@ async function updateImports(
 		// save. Therefore it's safe to remove the header here even before we know if we need to write the file.
 		const headerText = removeFileHeaderComment(sourceFile);
 
-		/**
-		 * All of the import declarations. This is basically every `import foo from bar` statement in the file.
-		 */
-		const imports = sourceFile.getImportDeclarations();
-
-		// Skip source files with no imports.
-		if (imports.length === 0) {
-			continue;
-		}
-
-		/**
-		 * True if the sourceFile has changed.
-		 */
-		let sourceFileChanged = false;
-
-		/**
-		 * We'll populate the maps defined below this as we scan the existing imports, then write new remapped imports to
-		 * the file.
-		 */
-
-		/**
-		 * A mapping of new module specifier to named import. This map only contains "regular" imports; that it, it excludes
-		 * type-only imports.
-		 */
-		const newRegularImports: Map<string, Set<string>> = new Map();
-
-		/**
-		 * A mapping of new module specifier to named import. This map only contains type-only imports.
-		 */
-		const newTypeOnlyImports: Map<string, Set<string>> = new Map();
-
-		// FIRST PASS: collect the existing declarations
-		for (const importDeclaration of imports) {
-			// Skip non-Fluid imports
-			if (!isFluidImport(importDeclaration)) {
-				continue;
-			}
-			const [moduleName] = parseImport(importDeclaration);
-			const data = mappingData.get(moduleName);
-
-			// Skip modules with no mapping
-			if (data === undefined) {
-				log.verbose(
-					`Skipping (no entry in data file): ${importDeclaration.getModuleSpecifierValue()}`,
-				);
-			} else {
-				// TODO: Handle default import.
-				const defaultImport = importDeclaration.getDefaultImport();
-				if (defaultImport !== undefined) {
-					log.warning(
-						`Found a default import (not yet implemented): ${defaultImport.getText().trim()}`,
-					);
-					continue;
-				}
-				const namedImports = importDeclaration.getNamedImports();
-				const isTypeOnly = importDeclaration.isTypeOnly();
-
-				log.logIndent(`Iterating named imports...`, 2);
-				for (const importSpecifier of namedImports) {
-					const name = importSpecifier.getName();
-
-					/**
-					 * fullImportSpecifierText includes surrounding text like "type" and whitespace. The surrounding whitespace is
-					 * trimmed, but leading or trailing text like "type" or "as foo" (an alias) is still included. This is the
-					 * string that will be used in the new imports.
-					 *
-					 * This ensures aliases and individual type-only imports are maintained when rewritten.
-					 */
-					const fullImportSpecifierText = importSpecifier.getFullText().trim();
-					const expectedLevel = getApiLevelForImportName(
-						name,
-						data,
-						/* default */ publicLevel,
-						onlyInternal,
-					);
-
-					log.logIndent(
-						`Found import named: '${fullImportSpecifierText}' (${expectedLevel})`,
-						4,
-					);
-					const newSpecifier =
-						expectedLevel === publicLevel ? moduleName : `${moduleName}/${expectedLevel}`;
-
-					// Track the type-only and regular imports separately. In the second pass through the imports, we'll
-					// create new type-only imports for the ones that were originally type-only. Using separate lists is a little
-					// more verbose but easier to reason about.
-					if (isTypeOnly) {
-						if (!newTypeOnlyImports.has(newSpecifier)) {
-							newTypeOnlyImports.set(newSpecifier, new Set());
-						}
-						newTypeOnlyImports.get(newSpecifier)?.add(fullImportSpecifierText);
-					} else {
-						if (!newRegularImports.has(newSpecifier)) {
-							newRegularImports.set(newSpecifier, new Set());
-						}
-						newRegularImports.get(newSpecifier)?.add(fullImportSpecifierText);
-					}
-				}
-			}
-		} /* FIRST PASS */
-
-		// SECOND PASS: Update existing imports and add any missing ones
-		for (const importDeclaration of imports) {
-			// Skip non-Fluid imports
-			if (!isFluidImport(importDeclaration)) {
-				continue;
-			}
-
-			const [moduleName] = parseImport(importDeclaration);
-			const moduleSpecifier = importDeclaration.getModuleSpecifierValue();
-			const isTypeOnly = importDeclaration.isTypeOnly();
-
-			// Skip Fluid imports that aren't in the data file
-			if (!mappingData.has(moduleName)) {
-				continue;
-			}
-
-			// Check if there are supposed to be any new imports from the module specifier
-			const newImportNames = isTypeOnly
-				? newTypeOnlyImports.get(moduleSpecifier)
-				: newRegularImports.get(moduleSpecifier);
-
-			// Since there are no imports from this module specifier, remove it.
-			if (newImportNames === undefined) {
-				importDeclaration.remove();
-				sourceFileChanged = true;
-				continue;
-			}
-
-			// There are new named imports for this module specifier, so remove all individual named imports and immediately
-			// add the new ones.
-			if (newImportNames.size > 0) {
-				importDeclaration.removeNamedImports();
-				importDeclaration.addNamedImports([...newImportNames]);
-				// We need to set this because we completely removed the declaration earlier, so this is effectively now a new declaration
-				importDeclaration.setIsTypeOnly(isTypeOnly);
-				// Need to clear the list of new named imports since we just added them.
-				newImportNames.clear();
-				sourceFileChanged = true;
-			}
-		} /* SECOND PASS */
-
-		// Add any imports from a specifier that wasn't already in the file
-		for (const [importSpecifier, newImportNames] of newRegularImports) {
-			if (newImportNames.size > 0) {
-				sourceFile.addImportDeclaration({
-					moduleSpecifier: importSpecifier,
-					namedImports: [...newImportNames],
-				});
-				sourceFileChanged = true;
-			}
-		}
-		for (const [importSpecifier, newImportNames] of newTypeOnlyImports) {
-			if (newImportNames.size > 0) {
-				sourceFile.addImportDeclaration({
-					moduleSpecifier: importSpecifier,
-					namedImports: [...newImportNames],
-					isTypeOnly: true,
-				});
-				sourceFileChanged = true;
-			}
-		}
-
-		if (sourceFileChanged) {
+		const importManager = new FluidImportManager(sourceFile, mappingData, log);
+		if (importManager.process(onlyInternal)) {
 			// Manually re-insert the header at the top of the file
 			sourceFile.insertText(0, headerText);
-
-			if (organizeImports) {
-				log.info(`Organized imports in: ${sourceFile.getBaseName()}`);
-				sourceFile.organizeImports();
-			}
 
 			fileSavePromises.push(sourceFile.save());
 		}
@@ -292,24 +390,86 @@ async function updateImports(
 }
 
 /**
- * Parses an import declaration into its module specifier and subpath.
+ * Parses an import declaration for processing as a Fluid Framework basic import.
+ * Non-FF and complex imports are ignored (returns undefined).
  *
  * @param importDeclaration - the import declaration to check.
- * @returns a tuple of `[module specifier, subpath]`
+ * @param index - the current index of import block array.
+ * @param log - logger.
+ * @returns a {@link FluidImportDataPresent} metadata object
  */
-function parseImport(importDeclaration: ImportDeclaration): [string, string] {
+function parseImport(
+	importDeclaration: ImportDeclaration,
+	index: number,
+	log: CommandLogger,
+): FluidImportDataPresent | undefined {
 	const moduleSpecifier = importDeclaration.getModuleSpecifierValue();
 	const modulePieces = moduleSpecifier.split("/");
-	const moduleName = modulePieces.slice(0, 2).join("/");
-	const subpath = modulePieces.length === 3 ? modulePieces[2] : "public";
-	return [moduleName, subpath];
+	const levelIndex = moduleSpecifier.startsWith("@") ? 2 : 1;
+	const packageName = modulePieces.slice(0, levelIndex).join("/");
+	const level = modulePieces.length > levelIndex ? modulePieces[levelIndex] : "public";
+	if (!isKnownLevel(level)) {
+		return undefined;
+	}
+	// Check for complicated path - beyond basic leveled import
+	if (modulePieces.length > levelIndex + 1) {
+		return undefined;
+	}
+	// Check for Fluid import
+	if (!isFluidImport(packageName)) {
+		return undefined;
+	}
+	// Check namespace imports which are checked trivially for API level use.
+	if (importDeclaration.getNamespaceImport() !== undefined) {
+		log.verbose(`\tSkipping namespace import of ${moduleSpecifier}`);
+		return undefined;
+	}
+
+	const order = knownLevels.indexOf(level) * 2 + (importDeclaration.isTypeOnly() ? 0 : 1);
+	return {
+		importDeclaration,
+		declaration: {
+			isTypeOnly: importDeclaration.isTypeOnly(),
+			moduleSpecifier,
+			namedImports: [],
+		},
+		index,
+		packageName,
+		level,
+		order,
+		originallyUnassigned: isImportUnassigned(importDeclaration),
+	};
 }
 
-function isFluidImport(importDeclaration: ImportDeclaration): boolean {
-	const moduleSpecifier = importDeclaration.getModuleSpecifierValue();
+/**
+ * Parses a source file for basic static Fluid Framework imports.
+ * Non-FF and complex imports are excluded.
+ *
+ * @param sourceFile - the ${@link SourceFile} to parse.
+ * @param log - logger.
+ * @returns an array of {@link FluidImportDataPresent} metadata objects
+ */
+function parseFluidImports(
+	sourceFile: SourceFile,
+	log: CommandLogger,
+): FluidImportDataPresent[] {
+	return sourceFile
+		.getImportDeclarations()
+		.map((importDecl, index) => parseImport(importDecl, index, log))
+		.filter(
+			(v) => v !== undefined,
+		) /* no undefined elements remain */ as FluidImportDataPresent[];
+}
+
+function isFluidImport(packageName: string): boolean {
+	return packageName.startsWith("@fluid") || unscopedFFPackages.has(packageName);
+}
+
+function isImportUnassigned(importDeclaration: ImportDeclaration): boolean {
 	return (
-		moduleSpecifier.startsWith("@fluid") ||
-		["fluid-framework", "tinylicious"].includes(moduleSpecifier)
+		importDeclaration.getNamedImports().length === 0 &&
+		importDeclaration.getDefaultImport() === undefined &&
+		importDeclaration.getNamespaceImport() === undefined
 	);
 }
 
@@ -363,16 +523,12 @@ async function loadData(dataFile: string): Promise<MapData> {
  */
 function removeFileHeaderComment(sourceFile: SourceFile): string {
 	const firstNode = sourceFile.getChildAtIndex(0);
+	const start = sourceFile.getPos(); // should be 0
+	const end = start + sourceFile.getLeadingTriviaWidth();
 
-	// Joins the comment ranges with double new lines so there is an empty line between each comment. This does mean that
-	// the ranges may be output in a slightly different way than it was ingested. However, there does not appear to be a
-	// way to get the text of multiple ranges, so the spacing information between the nodes seems to be lost.
-	//
-	// This has to be done before the sourceFile is modified, because after that the comment ranges become invalid and
-	// ts-morph throws an exception.
-	const headerComments = firstNode.getLeadingCommentRanges();
-	const headerText = `${headerComments.map((comment) => comment.getText()).join("\n\n")}\n\n`;
-	const [start, end] = [firstNode.getPos(), firstNode.getEnd()];
-	sourceFile.replaceText([start, end], sourceFile.getChildAtIndex(0).getText());
+	// This has to be done before the sourceFile is modified, because after that the ranges
+	// become invalid and ts-morph throws an exception.
+	const headerText = firstNode.getFullText().slice(start, end);
+	sourceFile.removeText(start, end);
 	return headerText;
 }

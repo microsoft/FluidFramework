@@ -12,7 +12,7 @@ import {
 	MockDeltaConnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { SharedMatrix, SharedMatrixFactory } from "../index.js";
 

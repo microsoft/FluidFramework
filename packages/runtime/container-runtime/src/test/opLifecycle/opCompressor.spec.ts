@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { ContainerMessageType } from "../../index.js";
 import { BatchMessage, IBatch, OpCompressor } from "../../opLifecycle/index.js";

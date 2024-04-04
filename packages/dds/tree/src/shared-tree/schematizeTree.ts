@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
 	AllowedUpdateType,
@@ -55,7 +55,7 @@ export function initializeContent(
 
 	const schema = intoStoredSchema(newSchema);
 	const rootSchema = schema.rootFieldSchema;
-	const rootKind = rootSchema.kind.identifier;
+	const rootKind = rootSchema.kind;
 
 	// To keep the data in schema during the update, first define a schema that tolerates the current (empty) tree as well as the final (initial) tree.
 	let incrementalSchemaUpdate: TreeStoredSchema;
@@ -71,7 +71,7 @@ export function initializeContent(
 		incrementalSchemaUpdate = {
 			nodeSchema: schema.nodeSchema,
 			rootFieldSchema: {
-				kind: FieldKinds.optional,
+				kind: FieldKinds.optional.identifier,
 				types: rootSchema.types,
 			},
 		};
@@ -207,7 +207,7 @@ export function ensureSchema(
 					treeContent.schema.rootFieldSchema,
 					treeContent.initialTree,
 				);
-				switch (checkout.storedSchema.rootFieldSchema.kind.identifier) {
+				switch (checkout.storedSchema.rootFieldSchema.kind) {
 					case FieldKinds.optional.identifier: {
 						const fieldEditor = checkout.editor.optionalField(field);
 						assert(

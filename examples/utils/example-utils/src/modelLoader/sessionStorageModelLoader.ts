@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeDetailsLoader } from "@fluidframework/container-definitions";
+import { ICodeDetailsLoader } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
 	LocalSessionStorageDbFactory,
 	createLocalResolverCreateNewRequest,
-} from "@fluidframework/local-driver";
+} from "@fluidframework/local-driver/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,

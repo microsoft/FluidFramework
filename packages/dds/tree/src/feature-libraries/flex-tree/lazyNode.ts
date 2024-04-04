@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
 	Anchor,
@@ -65,6 +65,7 @@ import {
 } from "./flexTreeTypes.js";
 import {
 	LazyEntity,
+	anchorSymbol,
 	cursorSymbol,
 	forgetAnchorSymbol,
 	isFreedSymbol,
@@ -75,6 +76,9 @@ import { FlexTreeNodeEvents, TreeEvent } from "./treeEvents.js";
 import { unboxedField } from "./unboxed.js";
 import { treeStatusFromAnchorCache } from "./utilities.js";
 
+/**
+ * @param cursor - This does not take ownership of this cursor: Node will fork it as needed.
+ */
 export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): LazyTreeNode {
 	const anchor = cursor.buildAnchor();
 	const anchorNode =
@@ -172,19 +176,18 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 	}
 
 	protected override [tryMoveCursorToAnchorSymbol](
-		anchor: Anchor,
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
-		return this.context.forest.tryMoveCursorToNode(anchor, cursor);
+		return this.context.forest.tryMoveCursorToNode(this[anchorSymbol], cursor);
 	}
 
-	protected override [forgetAnchorSymbol](anchor: Anchor): void {
+	protected override [forgetAnchorSymbol](): void {
 		// This type unconditionally has an anchor, so `forgetAnchor` is always called and cleanup can be done here:
 		// After this point this node will not be usable,
 		// so remove it from the anchor incase a different context (or the same context later) uses this AnchorSet.
 		this.anchorNode.slots.delete(flexTreeSlot);
 		this.#removeDeleteCallback();
-		this.context.forest.anchors.forget(anchor);
+		this.context.forest.anchors.forget(this[anchorSymbol]);
 	}
 
 	public get value(): Value {
@@ -199,6 +202,12 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 			}
 			return makeField(this.context, schema, cursor);
 		});
+	}
+
+	public getBoxed(key: FieldKey): FlexTreeField {
+		return inCursorField(this[cursorSymbol], brand(key), (cursor) =>
+			makeField(this.context, this.schema.getFieldSchema(key), cursor),
+		);
 	}
 
 	public boxedIterator(): IterableIterator<FlexTreeField> {
@@ -403,10 +412,8 @@ export class LazyMap<TSchema extends FlexMapNodeSchema>
 		) as FlexTreeUnboxField<TSchema["info"]>;
 	}
 
-	public getBoxed(key: string): FlexTreeTypedField<TSchema["info"]> {
-		return inCursorField(this[cursorSymbol], brand(key), (cursor) =>
-			makeField(this.context, this.schema.info, cursor),
-		) as FlexTreeTypedField<TSchema["info"]>;
+	public override getBoxed(key: string): FlexTreeTypedField<TSchema["info"]> {
+		return super.getBoxed(brand(key)) as FlexTreeTypedField<TSchema["info"]>;
 	}
 
 	public set(key: string, content: FlexibleFieldContent<TSchema["info"]> | undefined): void {

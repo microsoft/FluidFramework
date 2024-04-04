@@ -4,7 +4,7 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import { EmptyKey, FieldKey, IForestSubscription, TreeValue, UpPath } from "../core/index.js";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
@@ -17,7 +17,6 @@ import {
 	FlexObjectNodeSchema,
 	FlexTreeField,
 	FlexTreeNode,
-	FlexTreeNodeSchema,
 	FlexTreeOptionalField,
 	FlexTreeRequiredField,
 	FlexTreeSequenceField,
@@ -30,10 +29,18 @@ import { Mutable, brand, fail, isReadonlyArray } from "../util/index.js";
 import { anchorProxy, getFlexNode, tryGetFlexNode, tryGetProxy } from "./proxyBinding.js";
 import { extractRawNodeContent } from "./rawNode.js";
 import {
+	getSimpleFieldSchema,
+	getSimpleNodeSchema,
+	tryGetSimpleNodeSchema,
+} from "./schemaCaching.js";
+import {
+	type ImplicitAllowedTypes,
+	type ImplicitFieldSchema,
 	type InsertableTypedNode,
 	NodeKind,
 	TreeMapNode,
 	type TreeNodeSchema,
+	getStoredKey,
 } from "./schemaTypes.js";
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree.js";
 import { IterableTreeArrayContent, TreeArrayNode } from "./treeArrayNode.js";
@@ -98,18 +105,6 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 	}
 }
 
-/**
- * A symbol for storing TreeNodeSchema on FlexTreeNode's schema.
- */
-export const simpleSchemaSymbol: unique symbol = Symbol(`simpleSchema`);
-
-export function getSimpleSchema(schema: FlexTreeNodeSchema): TreeNodeSchema | undefined {
-	if (simpleSchemaSymbol in schema) {
-		return schema[simpleSchemaSymbol] as TreeNodeSchema;
-	}
-	return undefined;
-}
-
 export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeValue {
 	const cachedProxy = tryGetProxy(flexNode);
 	if (cachedProxy !== undefined) {
@@ -117,7 +112,7 @@ export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeVal
 	}
 
 	const schema = flexNode.schema;
-	const classSchema = getSimpleSchema(schema);
+	const classSchema = tryGetSimpleNodeSchema(schema);
 	assert(classSchema !== undefined, "node without schema");
 	if (typeof classSchema === "function") {
 		const simpleSchema = classSchema as unknown as new (dummy: FlexTreeNode) => TreeNode;
@@ -128,16 +123,62 @@ export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeVal
 }
 
 /**
+ * Maps from simple field keys ("view" keys) to their flex field counterparts ("stored" keys).
+ *
+ * @remarks
+ * A missing entry for a given view key indicates that the view and stored keys are the same for that field.
+ */
+type SimpleKeyToFlexKeyMap = Map<FieldKey, FieldKey>;
+
+/**
+ * Caches a {@link SimpleKeyToFlexKeyMap} for a given {@link TreeNodeSchema}.
+ */
+const simpleKeyToFlexKeyCache = new WeakMap<TreeNodeSchema, SimpleKeyToFlexKeyMap>();
+
+/**
+ * Caches the mappings from view keys to stored keys for the provided object field schemas in {@link simpleKeyToFlexKeyCache}.
+ */
+function getOrCreateFlexKeyMapping(
+	nodeSchema: TreeNodeSchema,
+	fields: Record<string, ImplicitFieldSchema>,
+): SimpleKeyToFlexKeyMap {
+	let keyMap = simpleKeyToFlexKeyCache.get(nodeSchema);
+	if (keyMap === undefined) {
+		keyMap = new Map<FieldKey, FieldKey>();
+		for (const [viewKey, fieldSchema] of Object.entries(fields)) {
+			// Only specify mapping if the stored key differs from the view key.
+			// No entry in this map will indicate that the two keys are the same.
+			const storedKey = getStoredKey(viewKey, fieldSchema);
+			if (viewKey !== storedKey) {
+				keyMap.set(brand(viewKey), brand(storedKey));
+			}
+		}
+		simpleKeyToFlexKeyCache.set(nodeSchema, keyMap);
+	}
+	return keyMap;
+}
+
+/**
  * @param allowAdditionalProperties - If true, setting of unexpected properties will be forwarded to the target object.
  * Otherwise setting of unexpected properties will error.
  * @param customTargetObject - Target object of the proxy.
  * If not provided `{}` is used for the target.
  */
-export function createObjectProxy<TSchema extends FlexObjectNodeSchema>(
-	schema: TSchema,
+export function createObjectProxy(
+	schema: TreeNodeSchema,
 	allowAdditionalProperties: boolean,
 	targetObject: object = {},
 ): TreeNode {
+	// Performance optimization: cache view key => stored key mapping.
+	const flexKeyMap: SimpleKeyToFlexKeyMap = getOrCreateFlexKeyMapping(
+		schema,
+		schema.info as Record<string, ImplicitFieldSchema>,
+	);
+
+	function getFlexKey(viewKey: FieldKey): FieldKey {
+		return flexKeyMap.get(viewKey) ?? viewKey;
+	}
+
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
 	// prototype as an object literal '{}'.  This is because 'deepEquals' uses 'Object.getPrototypeOf'
 	// as a way to quickly reject objects with different prototype chains.
@@ -148,29 +189,44 @@ export function createObjectProxy<TSchema extends FlexObjectNodeSchema>(
 	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
 	// a dispatch object to see if it improves performance.
 	const proxy = new Proxy(targetObject, {
-		get(target, key): unknown {
-			const field = getFlexNode(proxy).tryGetField(key as FieldKey);
+		get(target, viewKey): unknown {
+			const flexKey = getFlexKey(viewKey as FieldKey);
+			const field = getFlexNode(proxy).tryGetField(flexKey);
+
 			if (field !== undefined) {
 				return getProxyForField(field);
 			}
 
 			// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
-			return Reflect.get(target, key, proxy);
+			return Reflect.get(target, viewKey, proxy);
 		},
-		set(target, key, value: InsertableContent) {
+		set(target, viewKey, value: InsertableContent) {
 			const flexNode = getFlexNode(proxy);
 			const flexNodeSchema = flexNode.schema;
 			assert(flexNodeSchema instanceof FlexObjectNodeSchema, 0x888 /* invalid schema */);
-			const fieldSchema = flexNodeSchema.objectNodeFields.get(key as FieldKey);
 
-			if (fieldSchema === undefined) {
-				return allowAdditionalProperties ? Reflect.set(target, key, value) : false;
+			const flexKey: FieldKey = getFlexKey(viewKey as FieldKey);
+			const flexFieldSchema = flexNodeSchema.objectNodeFields.get(flexKey);
+
+			if (flexFieldSchema === undefined) {
+				return allowAdditionalProperties ? Reflect.set(target, viewKey, value) : false;
 			}
 
 			// TODO: Is it safe to assume 'content' is a LazyObjectNode?
 			assert(flexNode instanceof LazyObjectNode, 0x7e0 /* invalid content */);
-			assert(typeof key === "string", 0x7e1 /* invalid key */);
-			const field = getBoxedField(flexNode, brand(key), fieldSchema);
+			assert(typeof viewKey === "string", 0x7e1 /* invalid key */);
+			const field = getBoxedField(flexNode, flexKey, flexFieldSchema);
+
+			const simpleNodeSchema = getSimpleNodeSchema(flexNodeSchema);
+			const simpleNodeFields = simpleNodeSchema.info as Record<string, ImplicitFieldSchema>;
+			if (simpleNodeFields[viewKey] === undefined) {
+				fail(`Field key '${viewKey}' not found in schema.`);
+			}
+
+			const simpleFieldSchema = getSimpleFieldSchema(
+				flexFieldSchema,
+				simpleNodeFields[viewKey],
+			);
 
 			switch (field.schema.kind) {
 				case FieldKinds.required:
@@ -180,11 +236,7 @@ export function createObjectProxy<TSchema extends FlexObjectNodeSchema>(
 						| FlexTreeOptionalField<FlexAllowedTypes>;
 
 					const content = prepareContentForInsert(value, flexNode.context.forest);
-					const cursor = cursorFromNodeData(
-						content,
-						flexNode.context.schema,
-						fieldSchema.allowedTypeSet,
-					);
+					const cursor = cursorFromNodeData(content, simpleFieldSchema.allowedTypes);
 					typedField.content = cursor;
 					break;
 				}
@@ -195,24 +247,27 @@ export function createObjectProxy<TSchema extends FlexObjectNodeSchema>(
 
 			return true;
 		},
-		has: (target, key) => {
+		has: (target, viewKey) => {
+			const fields = schema.info as Record<string, ImplicitFieldSchema>;
 			return (
-				schema.objectNodeFields.has(key as FieldKey) ||
-				(allowAdditionalProperties ? Reflect.has(target, key) : false)
+				fields[viewKey as FieldKey] !== undefined ||
+				(allowAdditionalProperties ? Reflect.has(target, viewKey) : false)
 			);
 		},
 		ownKeys: (target) => {
+			const fields = schema.info as Record<string, ImplicitFieldSchema>;
 			return [
-				...schema.objectNodeFields.keys(),
+				...Object.keys(fields),
 				...(allowAdditionalProperties ? Reflect.ownKeys(target) : []),
 			];
 		},
-		getOwnPropertyDescriptor: (target, key) => {
-			const field = getFlexNode(proxy).tryGetField(key as FieldKey);
+		getOwnPropertyDescriptor: (target, viewKey) => {
+			const flexKey = getFlexKey(viewKey as FieldKey);
+			const field = getFlexNode(proxy).tryGetField(flexKey);
 
 			if (field === undefined) {
 				return allowAdditionalProperties
-					? Reflect.getOwnPropertyDescriptor(target, key)
+					? Reflect.getOwnPropertyDescriptor(target, viewKey)
 					: undefined;
 			}
 
@@ -232,8 +287,11 @@ export function createObjectProxy<TSchema extends FlexObjectNodeSchema>(
 /**
  * Given a array node proxy, returns its underlying LazySequence field.
  */
-export const getSequenceField = <TTypes extends FlexAllowedTypes>(arrayNode: TreeArrayNode) =>
-	getFlexNode(arrayNode).content as FlexTreeSequenceField<TTypes>;
+export function getSequenceField<TTypes extends FlexAllowedTypes>(
+	arrayNode: TreeArrayNode,
+): FlexTreeSequenceField<TTypes> {
+	return getFlexNode(arrayNode).getBoxed(EmptyKey) as FlexTreeSequenceField<TTypes>;
+}
 
 // Used by 'insert*()' APIs to converts new content (expressed as a proxy union) to contextually
 // typed data prior to forwarding to 'LazySequence.insert*()'.
@@ -281,12 +339,20 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 			index: number,
 			...value: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[]
 		): void {
+			const sequenceNode = getFlexNode(this);
 			const sequenceField = getSequenceField(this);
+
 			const content = contextualizeInsertedArrayContent(value, sequenceField);
-			sequenceField.insertAt(
-				index,
-				cursorFromFieldData(content, sequenceField.context.schema, sequenceField.schema),
+
+			const simpleNodeSchema = getSimpleNodeSchema(sequenceNode.schema);
+			assert(simpleNodeSchema.kind === NodeKind.Array, "Expected array schema");
+
+			const simpleFieldSchema = getSimpleFieldSchema(
+				sequenceField.schema,
+				simpleNodeSchema.info as ImplicitFieldSchema,
 			);
+
+			sequenceField.insertAt(index, cursorFromFieldData(content, simpleFieldSchema));
 		},
 	},
 	insertAtStart: {
@@ -294,11 +360,20 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 			this: TreeArrayNode,
 			...value: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[]
 		): void {
+			const sequenceNode = getFlexNode(this);
 			const sequenceField = getSequenceField(this);
+
 			const content = contextualizeInsertedArrayContent(value, sequenceField);
-			sequenceField.insertAtStart(
-				cursorFromFieldData(content, sequenceField.context.schema, sequenceField.schema),
+
+			const simpleNodeSchema = getSimpleNodeSchema(sequenceNode.schema);
+			assert(simpleNodeSchema.kind === NodeKind.Array, "Expected array schema");
+
+			const simpleFieldSchema = getSimpleFieldSchema(
+				sequenceField.schema,
+				simpleNodeSchema.info as ImplicitFieldSchema,
 			);
+
+			sequenceField.insertAtStart(cursorFromFieldData(content, simpleFieldSchema));
 		},
 	},
 	insertAtEnd: {
@@ -306,11 +381,20 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 			this: TreeArrayNode,
 			...value: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[]
 		): void {
+			const sequenceNode = getFlexNode(this);
 			const sequenceField = getSequenceField(this);
+
 			const content = contextualizeInsertedArrayContent(value, sequenceField);
-			sequenceField.insertAtEnd(
-				cursorFromFieldData(content, sequenceField.context.schema, sequenceField.schema),
+
+			const simpleNodeSchema = getSimpleNodeSchema(sequenceNode.schema);
+			assert(simpleNodeSchema.kind === NodeKind.Array, "Expected array schema");
+
+			const simpleFieldSchema = getSimpleFieldSchema(
+				sequenceField.schema,
+				simpleNodeSchema.info as ImplicitFieldSchema,
 			);
+
+			sequenceField.insertAtEnd(cursorFromFieldData(content, simpleFieldSchema));
 		},
 	},
 	removeAt: {
@@ -678,11 +762,9 @@ export const mapStaticDispatchMap: PropertyDescriptorMap = {
 				node.context.forest,
 			);
 
-			const cursor = cursorFromNodeData(
-				content,
-				node.context.schema,
-				node.schema.mapFields.allowedTypeSet,
-			);
+			const classSchema = getSimpleNodeSchema(node.schema);
+			const cursor = cursorFromNodeData(content, classSchema.info as ImplicitAllowedTypes);
+
 			node.set(key, cursor);
 			return this;
 		},
@@ -927,7 +1009,7 @@ export function extractFactoryContent(
 
 	if (rawFlexNode !== undefined) {
 		const kindFromSchema =
-			getSimpleSchema(rawFlexNode.schema)?.kind ??
+			tryGetSimpleNodeSchema(rawFlexNode.schema)?.kind ??
 			fail("NodeBase should always have class schema");
 
 		assert(kindFromSchema === type, 0x845 /* kind of data should match kind of schema */);

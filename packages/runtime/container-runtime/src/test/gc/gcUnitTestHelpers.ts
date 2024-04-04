@@ -4,7 +4,7 @@
  */
 
 import { ConfigTypes } from "@fluidframework/core-interfaces";
-import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
+import { ReadAndParseBlob } from "@fluidframework/runtime-utils/internal";
 
 /**
  * Creates a test config provider with the ability to set configs values and clear all config values.

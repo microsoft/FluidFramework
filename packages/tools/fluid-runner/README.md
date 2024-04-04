@@ -27,7 +27,7 @@ and provide a [`IFluidFileConverter`](./src/codeLoaderBundle.ts) implementation 
 ```typescript
 import { fluidRunner } from "@fluidframework/fluid-runner";
 
-fluidRunner({
+await fluidRunner({
 	/* IFluidFileConverter implementation here */
 });
 ```

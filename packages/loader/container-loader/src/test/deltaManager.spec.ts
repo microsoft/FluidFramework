@@ -7,18 +7,15 @@ import { strict as assert } from "assert";
 
 import { EventEmitter } from "@fluid-internal/client-utils";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-private/test-loader-utils";
-import { IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
+import { IDocumentDeltaStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	IClient,
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import {
-	ITelemetryLoggerExt,
-	MockLogger,
-	createChildLogger,
-} from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 
 import { ConnectionManager } from "../connectionManager.js";
