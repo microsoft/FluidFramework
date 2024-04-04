@@ -32,7 +32,7 @@ export function toVisualTree(tree: VisualSharedTreeNode): VisualValueNode | Visu
 		const result: VisualValueNode = {
 			value: tree.value,
 			nodeKind: VisualNodeKind.ValueNode,
-			tooltipContents: tree.schema.name,
+			tooltipContents: tree.schema.schemaName,
 		};
 		return result;
 	} else {
@@ -117,7 +117,7 @@ function getMapAllowedTypes(
 function visualizeLeafNode(tree: JsonableTree): SharedTreeLeafNode {
 	return {
 		schema: {
-			name: tree.type,
+			schemaName: tree.type,
 		},
 		value: JSON.stringify(tree.value), // TODO: Change to VisualizeChildData.
 		kind: VisualSharedTreeNodeKind.LeafNode,
@@ -137,7 +137,7 @@ function visualizeObjectNode(
 	if (treeFields === undefined || Object.keys(treeFields).length === 0) {
 		return {
 			schema: {
-				name: tree.type,
+				schemaName: tree.type,
 				allowedTypes: getObjectAllowedTypes(schema),
 			},
 			fields: {},
@@ -173,7 +173,7 @@ function visualizeObjectNode(
 
 	return {
 		schema: {
-			name: tree.type,
+			schemaName: tree.type,
 			allowedTypes: getObjectAllowedTypes(schema),
 		},
 		fields,
@@ -194,7 +194,7 @@ function visualizeMapNode(
 	if (treeFields === undefined || Object.keys(treeFields).length === 0) {
 		return {
 			schema: {
-				name: tree.type,
+				schemaName: tree.type,
 				allowedTypes: getMapAllowedTypes(treeFields, schema),
 			},
 			fields: {},
@@ -216,7 +216,7 @@ function visualizeMapNode(
 
 	return {
 		schema: {
-			name: tree.type,
+			schemaName: tree.type,
 			allowedTypes: getMapAllowedTypes(treeFields, schema),
 		},
 		fields,

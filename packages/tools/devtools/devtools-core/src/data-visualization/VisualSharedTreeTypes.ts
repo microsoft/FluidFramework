@@ -26,7 +26,7 @@ interface SharedTreeSchemaNode {
 	/**
 	 * Name of the SharedTree schema.
 	 */
-	name: string;
+	schemaName: string;
 
 	/**
 	 * Types allowed (e.g., string, number, boolean, handle & etc.) inside the node.
