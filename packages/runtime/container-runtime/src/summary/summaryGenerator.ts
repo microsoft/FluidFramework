@@ -439,7 +439,7 @@ export class SummaryGenerator {
 			// includesProtocolTree property represents the summary was generated using single-commit summary pattern
 			// thus there is no need to wait for ack/nacks and we can simply use the summarizeOp to extract the summary handle.
 			if (summarizeOp.contents.details?.includesProtocolTree) {
-				afterSuccessfullSummary(summarizeOp);
+				await afterSuccessfullSummary(summarizeOp);
 			} else {
 				// Wait for ack/nack
 				const waitAckNackResult = await raceTimer(
@@ -464,7 +464,7 @@ export class SummaryGenerator {
 					...summarizeTelemetryProps,
 				};
 				if (ackNackOp.type === MessageType.SummaryAck) {
-					afterSuccessfullSummary(ackNackOp);
+					await afterSuccessfullSummary(ackNackOp);
 				} else {
 					// Check for retryDelay in summaryNack response.
 					assert(ackNackOp.type === MessageType.SummaryNack, 0x274 /* "type check" */);
