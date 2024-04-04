@@ -504,7 +504,8 @@ export function makeOpGenerator(
 	const {
 		insert,
 		remove,
-		move,
+		intraFieldMove,
+		crossFieldMove,
 		set,
 		clear,
 		abort,
@@ -520,7 +521,7 @@ export function makeOpGenerator(
 	// This assert will trigger when new weights are added to EditGeneratorOpWeights but this function has not been
 	// updated to take into account the new weights.
 	assert(Object.keys(others).length === 0, "Unexpected weight");
-	const editWeight = sumWeights([insert, remove, move, set, clear]);
+	const editWeight = sumWeights([insert, remove, intraFieldMove, crossFieldMove, set, clear]);
 	const transactionWeight = sumWeights([abort, commit, start]);
 	const undoRedoWeight = sumWeights([undo, redo]);
 
