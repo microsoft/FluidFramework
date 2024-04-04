@@ -15,7 +15,7 @@ In this example, you'll walk through the basic setup process to start getting co
 ### Step 1: First, we'll have to create our own telemetry consumer which extends the ITelemetryConsumer interface. Let's look at an example that will simply console.log the telemetry.
 
 ```ts
-import { ITelemetryConsumer } from "@fluidframework/fluid-telemetry";
+import { ITelemetryConsumer, IFluidTelemetry } from "@fluidframework/fluid-telemetry";
 
 class MySimpleTelemetryConsumer implements ITelemetryConsumer {
 	consume(event: IFluidTelemetry) {
@@ -72,7 +72,7 @@ Before you can get telemetry sent to Azure App Insights, you'll need to create a
 
 ```ts
 import { ApplicationInsights } from "@microsoft/applicationinsights-web";
-import { ITelemetryConsumer } from "@fluidframework/fluid-telemetry";
+import { ITelemetryConsumer, IFluidTelemetry } from "@fluidframework/fluid-telemetry";
 
 class AppInsightsTelemetryConsumer implements ITelemetryConsumer {
 	constructor(private readonly appInsightsClient: ApplicationInsights) {}
