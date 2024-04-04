@@ -725,6 +725,9 @@ export type FactoryContent =
  */
 export type InsertableContent = Unhydrated<TreeNode> | FactoryContent;
 
+/**
+ * Brand `copy` with the type (under {@link typeNameSymbol}) to avoid ambiguity when inferring types from this data.
+ */
 export function markContentType(typeName: TreeNodeSchemaIdentifier, copy: object): void {
 	Object.defineProperty(copy, typeNameSymbol, { value: typeName });
 }
