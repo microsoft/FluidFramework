@@ -57,7 +57,7 @@ export class OdspUrlResolver implements IUrlResolver {
  *
  * @internal
  */
-export const isOdspUrl = (url: string): boolean => {
+const isOdspUrl = (url: string): boolean => {
 	return isSpoUrl(url) || isOdcUrl(url);
 };
 

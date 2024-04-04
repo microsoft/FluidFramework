@@ -112,6 +112,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedVariableDeclaration_isOdspUrl": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		}
 	}
 }
