@@ -1519,19 +1519,11 @@ function treeChunkFromCursor(cursor: ITreeCursorSynchronous): TreeChunk {
 }
 
 function normalizeChangeset(change: ModularChangeset): ModularChangeset {
-	// const idMappings: ChangeAtomIdMap<NodeId> = new Map();
 	const idAllocator = idAllocatorFromMaxId();
 
 	const nodeChanges: ChangeAtomIdMap<NodeChangeset> = new Map();
 
 	const normalizeNodeChanges = (nodeId: NodeId): NodeId | undefined => {
-		// assert(
-		// 	tryGetFromNestedMap(idMappings, nodeId.revision, nodeId.localId) === undefined,
-		// 	"Found duplicate node ID",
-		// );
-
-		// setInNestedMap(idMappings, nodeId.revision, nodeId.localId, newId);
-
 		const nodeChangeset = tryGetFromNestedMap(
 			change.nodeChanges,
 			nodeId.revision,
