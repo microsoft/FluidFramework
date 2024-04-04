@@ -300,7 +300,7 @@ export const makeTreeEditGenerator = (
 		fieldInfo: TFuzzField;
 	}
 
-	const sequenceFieldEditGenerator = createWeightedGenerator<
+	const sequenceFieldEditGenerator = createWeightedGeneratorWithBailout<
 		SequenceFieldEdit["edit"],
 		FuzzTestStateForFieldEdit<SequenceFuzzField>
 	>([
@@ -388,17 +388,20 @@ export const makeTreeEditGenerator = (
 		value: jsonableTree(state),
 	});
 
-	function fieldEditChangeGenerator(state: FuzzTestStateForFieldEdit): FieldEdit["change"] {
+	function fieldEditChangeGenerator(
+		state: FuzzTestStateForFieldEdit,
+	): FieldEdit["change"] | "no-valid-selections" {
 		switch (state.fieldInfo.type) {
-			case "sequence":
-				return {
-					type: "sequence",
-					edit: assertNotDone(
+			case "sequence": {
+				return mapBailout(
+					assertNotDone(
 						sequenceFieldEditGenerator(
 							state as FuzzTestStateForFieldEdit<SequenceFuzzField>,
 						),
 					),
-				};
+					(edit) => ({ type: "sequence", edit }),
+				);
+			}
 			case "optional":
 				return {
 					type: "optional",
@@ -423,12 +426,18 @@ export const makeTreeEditGenerator = (
 	}
 
 	return (state) => {
-		const fieldInfo = selectTreeField(
-			viewFromState(state),
-			state.random,
-			weights.fieldSelection,
-		);
-		const change = fieldEditChangeGenerator({ ...state, fieldInfo });
+		let fieldInfo: FuzzField;
+		let change: ReturnType<typeof fieldEditChangeGenerator>;
+		// This could be surfaced as a config option if desired. In practice, the corresponding assert is most
+		// likely to be hit during when a test is badly configured, in which case the remedy is to fix the config,
+		// as opposed to increasing the number of attempts.
+		let attemptsRemaining = 20;
+		do {
+			fieldInfo = selectTreeField(viewFromState(state), state.random, weights.fieldSelection);
+			change = fieldEditChangeGenerator({ ...state, fieldInfo });
+			attemptsRemaining -= 1;
+		} while (change === "no-valid-selections" && attemptsRemaining > 0);
+		assert(change !== "no-valid-selections", "No valid field edit found");
 		return {
 			type: "treeEdit",
 			edit: {
@@ -793,6 +802,13 @@ function createWeightedGeneratorWithBailout<T, TState extends BaseFuzzTestState>
 		selectedIndices.clear();
 		return result;
 	};
+}
+
+function mapBailout<T, U>(
+	input: T | "no-valid-selections",
+	delegate: (t: T) => U,
+): U | "no-valid-selections" {
+	return input === "no-valid-selections" ? "no-valid-selections" : delegate(input);
 }
 
 function assertNotDone<T>(input: T | typeof done): T {

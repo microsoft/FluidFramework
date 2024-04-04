@@ -89,8 +89,11 @@ describe("Fuzz - move", () => {
 	};
 
 	const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
-	emitter.on("testStart", (initialState: FuzzTestState) => {
-		viewFromState(initialState, initialState.clients[0], config.initialTree);
+	emitter.on("testStart", (state: FuzzTestState) => {
+		viewFromState(state, state.clients[0], config.initialTree);
+	});
+	emitter.on("testEnd", (state: FuzzTestState) => {
+		viewFromState(state, state.clients[0], config.initialTree);
 	});
 
 	const options: Partial<DDSFuzzSuiteOptions> = {
@@ -98,7 +101,7 @@ describe("Fuzz - move", () => {
 		numberOfClients: 1,
 		clientJoinOptions: {
 			maxNumberOfClients: 6,
-			clientAddProbability: 0.2,
+			clientAddProbability: 0.4,
 		},
 		defaultTestCount: runsPerBatch,
 		saveFailures: {
