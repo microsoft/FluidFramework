@@ -833,6 +833,10 @@ export class ModularChangeFamily
 				crossFieldTable.nodeIdPairs.push([child, taggedBase, stateChange]);
 				return (
 					child ??
+					// The fact `child` is undefined means that the changeset to rebase does not include changes for
+					// this node or its descendants. However, it's possible that it will after rebasing.
+					// In that case, we will need a NodeId to represent these changes under in the rebased changeset.
+					// We adopt `baseChild` for this purpose.
 					taggedAtomId(
 						baseChild ?? fail("Should not have two undefined node IDs"),
 						over.revision,
