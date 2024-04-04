@@ -10,7 +10,6 @@ import { typeOnly } from "./compatibility";
 import {
 	ensureDevDependencyExists,
 	tryGetPreviousPackageJsonPath,
-	getTypeRollupPathFromExtractorConfig,
 	getTypeDefinitionFilePath,
 	typeDataFromFile,
 	generateCompatibilityTestCases,
@@ -18,7 +17,6 @@ import {
 	initializeProjectsAndLoadFiles,
 } from "./typeTestUtils";
 import { PackageJson } from "../common/npmPackage";
-import { ExtractorConfig } from "@microsoft/api-extractor";
 
 // Do not check that file exists before opening:
 // Doing so is a time of use vs time of check issue so opening the file could fail anyway.
@@ -38,31 +36,11 @@ if (packageObject.typeValidation?.disabled) {
 	rmSync(filePath, { force: true });
 	process.exit(0);
 }
-const extractorConfigOptions = ExtractorConfig.tryLoadForFolder({
-	startingFolder: previousBasePath,
-});
 
-let typeRollupPaths: string | undefined;
-
-if (!extractorConfigOptions || !extractorConfigOptions.configObject) {
-	console.log("API Extractor configuration not found. Falling back to default behavior.");
-} else {
-	typeRollupPaths = getTypeRollupPathFromExtractorConfig("alpha", extractorConfigOptions);
-}
-
-let typeDefinitionFilePath: string | undefined;
-
-// Check if a specified typeRollupFile exists
-if (typeRollupPaths) {
-	typeDefinitionFilePath = typeRollupPaths;
-} else {
-	typeDefinitionFilePath = getTypeDefinitionFilePath(previousBasePath);
-}
+const typeDefinitionFilePath: string | undefined = getTypeDefinitionFilePath(previousBasePath);
 
 if (typeDefinitionFilePath === undefined) {
-	throw Error(
-		"Could not determine the type definition file path from API Extractor config or package.json",
-	);
+	throw Error("Could not determine the type definition file path from package.json");
 }
 
 const { currentFile, previousFile } = initializeProjectsAndLoadFiles(
