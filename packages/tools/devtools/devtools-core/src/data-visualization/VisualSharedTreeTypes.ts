@@ -12,20 +12,6 @@ interface SharedTreeNodeBase {
 }
 
 /**
- * List of possible SharedTree schemaType for {@link SharedTreeSchemaNode}.
- */
-export const SharedTreeSchemaType = {
-	MapNodeStoredSchema: "MapNodeStoredSchema",
-	ObjectNodeStoredSchema: "ObjectNodeStoredSchema",
-	LeafNodeStoredSchema: "LeafNodeStoredSchema",
-} as const;
-
-/**
- * Use a Union of Literal Types to represent the SharedTree schema type.
- */
-type SharedTreeSchemaType = (typeof SharedTreeSchemaType)[keyof typeof SharedTreeSchemaType];
-
-/**
  * The kind of {@link VisualSharedTreeNode}.
  */
 export const VisualSharedTreeNodeKind = {
@@ -41,14 +27,6 @@ interface SharedTreeSchemaNode {
 	 * Name of the SharedTree schema.
 	 */
 	name: string;
-
-	/**
-	 * A type of schema. Should be one of the following:
-	 * - MapNodeStoredSchema
-	 * - ObjectNodeStoredSchema
-	 * - LeafNodeStoredSchema
-	 */
-	schemaType: SharedTreeSchemaType;
 
 	/**
 	 * Types allowed (e.g., string, number, boolean, handle & etc.) inside the node.

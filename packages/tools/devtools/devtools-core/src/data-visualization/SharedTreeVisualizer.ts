@@ -16,7 +16,7 @@ import {
 	ObjectNodeStoredSchema,
 } from "@fluidframework/tree/internal";
 import type { SharedTreeLeafNode, VisualSharedTreeNode } from "./VisualSharedTreeTypes.js";
-import { SharedTreeSchemaType, VisualSharedTreeNodeKind } from "./VisualSharedTreeTypes.js";
+import { VisualSharedTreeNodeKind } from "./VisualSharedTreeTypes.js";
 import {
 	type VisualChildNode,
 	VisualNodeKind,
@@ -118,7 +118,6 @@ function visualizeLeafNode(tree: JsonableTree): SharedTreeLeafNode {
 	return {
 		schema: {
 			name: tree.type,
-			schemaType: SharedTreeSchemaType.LeafNodeStoredSchema,
 		},
 		value: JSON.stringify(tree.value), // TODO: Change to VisualizeChildData.
 		kind: VisualSharedTreeNodeKind.LeafNode,
@@ -139,7 +138,6 @@ function visualizeObjectNode(
 		return {
 			schema: {
 				name: tree.type,
-				schemaType: SharedTreeSchemaType.ObjectNodeStoredSchema,
 				allowedTypes: getObjectAllowedTypes(schema),
 			},
 			fields: {},
@@ -176,7 +174,6 @@ function visualizeObjectNode(
 	return {
 		schema: {
 			name: tree.type,
-			schemaType: SharedTreeSchemaType.ObjectNodeStoredSchema,
 			allowedTypes: getObjectAllowedTypes(schema),
 		},
 		fields,
@@ -198,7 +195,6 @@ function visualizeMapNode(
 		return {
 			schema: {
 				name: tree.type,
-				schemaType: SharedTreeSchemaType.MapNodeStoredSchema,
 				allowedTypes: getMapAllowedTypes(treeFields, schema),
 			},
 			fields: {},
@@ -221,7 +217,6 @@ function visualizeMapNode(
 	return {
 		schema: {
 			name: tree.type,
-			schemaType: SharedTreeSchemaType.MapNodeStoredSchema,
 			allowedTypes: getMapAllowedTypes(treeFields, schema),
 		},
 		fields,
