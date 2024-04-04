@@ -334,16 +334,15 @@ export class LocalChannelContext extends LocalChannelContextBase {
 
 /**
  * Deep clones a snapshot tree.
- * 
+ *
  * TODO: Investigate replacing this with a deep clone utility.
  * This is a temporary solution to avoid issues with lodash deepClone and ungap structuredClone.
  * Using lodash caused a significant bundle size regression. structuredClone cannot be used since
- * it does not support ArrayBuffer data types, and ISnapshotTree can contain blobContents properties, 
+ * it does not support ArrayBuffer data types, and ISnapshotTree can contain blobContents properties,
  * which are ArrayBuffer data types.
  */
 function cloneSnapshotTree(tree: ISnapshotTree): ISnapshotTree {
 	const clone = { ...tree, blobs: {}, trees: {} };
-	clone.blobs = {};
 	for (const [k, v] of Object.entries(tree.blobs)) {
 		clone.blobs[k] = v;
 	}
