@@ -565,30 +565,14 @@ export interface FieldPathWithCount {
 }
 
 function isField1UnderField2(field1: FlexTreeField, field2: FlexTreeField): boolean {
-	const f1Path = fieldDownPathFromField(field1);
-	const f2Path = fieldDownPathFromField(field2);
-	if (f1Path.key !== f2Path.key) {
-		return false;
+	let parentField = field1.parent?.parentField?.parent;
+	while (parentField !== undefined) {
+		if (parentField.isSameAs(field2)) {
+			return true;
+		}
+		parentField = parentField.parent?.parentField?.parent;
 	}
-	if (f1Path.parent === undefined) {
-		return false;
-	}
-	if (f2Path.parent === undefined) {
-		return true;
-	}
-	if (f1Path.parent.length <= f2Path.parent.length) {
-		return false;
-	}
-	f1Path.parent.length = f2Path.parent.length;
-	return JSON.stringify(f1Path.parent) === JSON.stringify(f2Path.parent);
-	// let parentField = field1.parent?.parentField?.parent;
-	// while (parentField !== undefined) {
-	// 	if (parentField === field2) {
-	// 		return true;
-	// 	}
-	// 	parentField = parentField.parent?.parentField?.parent;
-	// }
-	// return false;
+	return false;
 }
 
 function upPathFromNode(node: FlexTreeNode): UpPath {
