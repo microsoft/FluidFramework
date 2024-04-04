@@ -45,12 +45,11 @@ export function getApiRoot(origin: string): string {
  * @internal
  */
 export function isSpoUrl(url: URL): boolean {
-	const urlString = url.href;
-	const urlLower = urlString.toLowerCase();
-
 	// Format: foo.sharepoint.com/_api/v2.1./drives/bar/items/baz and foo.sharepoint-df.com/...
-	const spoRegex = /(.*\.sharepoint(-df)*\.com)\/_api\/v2.1\/drives\/([^/]*)\/items\/([^/]*)/;
-	return spoRegex.test(urlLower);
+	const hostRegex = /\.sharepoint(?:-df)?\.com$/;
+	const pathRegex = /^\/_api\/v2\.1\/drives\/[^/]+\/items\/[^/]+/;
+
+	return hostRegex.test(url.host.toLowerCase()) && pathRegex.test(url.pathname.toLowerCase());
 }
 
 /**
