@@ -72,7 +72,7 @@ importers:
       '@oclif/plugin-commands': ^3.2.2
       '@oclif/plugin-help': ^6.0.20
       '@oclif/plugin-not-found': ^3.1.1
-      '@oclif/plugin-plugins': ^5.0.4
+      '@oclif/plugin-plugins': ^5.0.5
       '@oclif/test': ~2.3.33
       '@octokit/core': ^4.2.4
       '@rushstack/node-core-library': ^3.59.5
@@ -122,7 +122,7 @@ importers:
       moment: ^2.29.4
       node-fetch: ^2.6.9
       npm-check-updates: ^16.10.15
-      oclif: ^4.7.5
+      oclif: ^4.7.6
       prettier: ~3.2.4
       prompts: ^2.4.2
       read-pkg-up: ^7.0.1
@@ -150,7 +150,7 @@ importers:
       '@oclif/plugin-commands': 3.2.2
       '@oclif/plugin-help': 6.0.20
       '@oclif/plugin-not-found': 3.1.1
-      '@oclif/plugin-plugins': 5.0.4
+      '@oclif/plugin-plugins': 5.0.5
       '@octokit/core': 4.2.4
       '@rushstack/node-core-library': 3.59.5_@types+node@18.18.6
       async: 3.2.4
@@ -170,7 +170,7 @@ importers:
       minimatch: 7.4.6
       node-fetch: 2.6.9
       npm-check-updates: 16.10.15
-      oclif: 4.7.5
+      oclif: 4.7.6
       prettier: 3.2.5
       prompts: 2.4.2
       read-pkg-up: 7.0.1
@@ -357,7 +357,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^5.2.0
       '@oclif/core': ^3.26.0
       '@oclif/plugin-help': ^6.0.20
-      '@oclif/plugin-plugins': ^5.0.4
+      '@oclif/plugin-plugins': ^5.0.5
       '@oclif/test': ~2.3.33
       '@types/chai': ^4.3.5
       '@types/chai-arrays': ^2.0.0
@@ -370,7 +370,7 @@ importers:
       eslint-config-oclif: ^5.1.1
       eslint-config-oclif-typescript: ^3.1.3
       eslint-config-prettier: ~9.1.0
-      oclif: ^4.7.5
+      oclif: ^4.7.6
       rimraf: ^4.4.1
       semver: ^7.5.4
       ts-node: ^10.9.1
@@ -379,8 +379,8 @@ importers:
     dependencies:
       '@oclif/core': 3.26.0
       '@oclif/plugin-help': 6.0.20
-      '@oclif/plugin-plugins': 5.0.4
-      oclif: 4.7.5
+      '@oclif/plugin-plugins': 5.0.5
+      oclif: 4.7.6
       semver: 7.5.4
     devDependencies:
       '@fluidframework/build-common': 2.0.3
@@ -413,7 +413,7 @@ importers:
       '@oclif/plugin-commands': ^3.2.2
       '@oclif/plugin-help': ^6.0.20
       '@oclif/plugin-not-found': ^3.1.1
-      '@oclif/plugin-plugins': ^5.0.4
+      '@oclif/plugin-plugins': ^5.0.5
       '@oclif/test': ~2.3.33
       '@types/chai': ^4.3.5
       '@types/mocha': ^9.1.1
@@ -431,7 +431,7 @@ importers:
       mocha-json-output-reporter: ^2.1.0
       mocha-multi-reporters: ^1.5.1
       moment: ^2.29.4
-      oclif: ^4.7.5
+      oclif: ^4.7.6
       rimraf: ^4.4.1
       semver: ^7.5.4
       table: ^6.8.1
@@ -444,7 +444,7 @@ importers:
       '@oclif/plugin-commands': 3.2.2
       '@oclif/plugin-help': 6.0.20
       '@oclif/plugin-not-found': 3.1.1
-      '@oclif/plugin-plugins': 5.0.4
+      '@oclif/plugin-plugins': 5.0.5
       chalk: 2.4.2
       semver: 7.5.4
       table: 6.8.1
@@ -469,7 +469,7 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      oclif: 4.7.5
+      oclif: 4.7.6
       rimraf: 4.4.1
       ts-node: 10.9.1_6aghfyf5eabo7u6nxooxqsbtpq
       tslib: 2.6.0
@@ -1595,7 +1595,7 @@ packages:
       minimatch: 7.4.6
       node-fetch: 2.6.9
       npm-check-updates: 16.10.15
-      oclif: 4.7.5
+      oclif: 4.7.6
       prettier: 3.0.3
       prompts: 2.4.2
       read-pkg-up: 7.0.1
@@ -1988,27 +1988,8 @@ packages:
     resolution: {integrity: sha512-nH5mxoTEoqk6WpoBz80GMpDSm9jH5V9AF8n+JZAZfMzd9gHeEG9w1o3KawPRR72lfzpP+QxBHLkOKLEApwhDiQ==}
     engines: {node: '>=18'}
     dependencies:
-      '@inquirer/core': 7.1.0
+      '@inquirer/core': 7.1.1
       '@inquirer/type': 1.2.1
-
-  /@inquirer/core/7.1.0:
-    resolution: {integrity: sha512-FRCiDiU54XHt5B/D8hX4twwZuzSP244ANHbu3R7CAsJfiv1dUOz24ePBgCZjygEjDUi6BWIJuk4eWLKJ7LATUw==}
-    engines: {node: '>=18'}
-    dependencies:
-      '@inquirer/type': 1.2.1
-      '@types/mute-stream': 0.0.4
-      '@types/node': 20.11.30
-      '@types/wrap-ansi': 3.0.0
-      ansi-escapes: 4.3.2
-      chalk: 4.1.2
-      cli-spinners: 2.9.2
-      cli-width: 4.1.0
-      figures: 3.2.0
-      mute-stream: 1.0.0
-      run-async: 3.0.0
-      signal-exit: 4.1.0
-      strip-ansi: 6.0.1
-      wrap-ansi: 6.2.0
 
   /@inquirer/core/7.1.1:
     resolution: {integrity: sha512-rD1UI3eARN9qJBcLRXPOaZu++Bg+xsk0Tuz1EUOXEW+UbYif1sGjr0Tw7lKejHzKD9IbXE1CEtZ+xR/DrNlQGQ==}
@@ -2506,14 +2487,14 @@ packages:
       - typescript
     dev: true
 
-  /@oclif/plugin-plugins/5.0.4:
-    resolution: {integrity: sha512-wtO10MH4vKkyXx97n+S/ZJU/fS9YbYbBN/Ku0BOcbeRH0f+CXcPK7pe6SR4AdnTBRb8BmhESrS3+FKfgTCcBXA==}
+  /@oclif/plugin-plugins/5.0.5:
+    resolution: {integrity: sha512-2Mi87LYSj8LBPXR/j+DffFoyaTmaWiKXayyomyA3Q/TOk8/FkMSNzaUxYzno3sFXy/LsPRd9DZXm+UO1dHV1jw==}
     engines: {node: '>=18.0.0'}
     dependencies:
       '@oclif/core': 3.26.0
       chalk: 5.3.0
       debug: 4.3.4
-      npm: 10.5.0
+      npm: 10.2.4
       npm-package-arg: 11.0.1
       npm-run-path: 5.3.0
       semver: 7.6.0
@@ -9068,8 +9049,8 @@ packages:
       path-key: 4.0.0
     dev: false
 
-  /npm/10.5.0:
-    resolution: {integrity: sha512-Ejxwvfh9YnWVU2yA5FzoYLTW52vxHCz+MHrOFg9Cc8IFgF/6f5AGPAvb5WTay5DIUP1NIfN3VBZ0cLlGO0Ys+A==}
+  /npm/10.2.4:
+    resolution: {integrity: sha512-umEuYneVEYO9KoEEI8n2sSGmNQeqco/3BSeacRlqIkCzw4E7XGtYSWMeJobxzr6hZ2n9cM+u5TsMTcC5bAgoWA==}
     engines: {node: ^18.17.0 || >=20.5.0}
     hasBin: true
     dev: false
@@ -9136,6 +9117,7 @@ packages:
       - semver
       - spdx-expression-parse
       - ssri
+      - strip-ansi
       - supports-color
       - tar
       - text-table
@@ -9299,8 +9281,8 @@ packages:
       es-abstract: 1.22.2
     dev: true
 
-  /oclif/4.7.5:
-    resolution: {integrity: sha512-bXxT81jGcr7lI3OzxDpcGTV9bkxwV5ZiikZsN05WrC/GKCqYPSYGb5M/u35bcyt9Ez860wtj5wNuOaCiL/pmow==}
+  /oclif/4.7.6:
+    resolution: {integrity: sha512-R2Fdef6R8n1UIVAJTCP0oEIRkExMniei4QqmK7ue9iN8PTf+6q5ROrl7/pxMH/DzDCKnkTsi5mBhyT3HqFAZ1w==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     dependencies:
@@ -10197,10 +10179,6 @@ packages:
 
   /run-async/2.4.1:
     resolution: {integrity: sha512-tvVnVv01b8c1RrA6Ep7JkStj85Guv/YrMcwqYQnwjsAS2cTmmPGBBjAjpCW7RrSodNSoE2/qg9O4bceNvUuDgQ==}
-    engines: {node: '>=0.12.0'}
-
-  /run-async/3.0.0:
-    resolution: {integrity: sha512-540WwVDOMxA6dN6We19EcT9sc3hkXPw5mzRNGM3FkdN/vtE9NFvj5lFAPNwUDmJjXidm3v7TC1cTE7t17Ulm1Q==}
     engines: {node: '>=0.12.0'}
 
   /run-parallel/1.2.0:

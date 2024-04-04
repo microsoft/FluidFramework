@@ -40,8 +40,8 @@
 	"dependencies": {
 		"@oclif/core": "^3.26.0",
 		"@oclif/plugin-help": "^6.0.20",
-		"@oclif/plugin-plugins": "^5.0.4",
-		"oclif": "^4.7.5",
+		"@oclif/plugin-plugins": "^5.0.5",
+		"oclif": "^4.7.6",
 		"semver": "^7.5.4"
 	},
 	"devDependencies": {
