@@ -264,7 +264,7 @@ export interface DDSFuzzModel<
 	validateConsistency: (
 		channelA: ReturnType<TChannelFactory["create"]>,
 		channelB: ReturnType<TChannelFactory["create"]>,
-	) => void;
+	) => void | Promise<void>;
 
 	/**
 	 * An array of transforms used during fuzz test minimization to reduce test
@@ -781,7 +781,7 @@ export function mixinAttach<
 				options,
 			);
 
-			model.validateConsistency(clientA.channel, summarizerClient.channel);
+			await model.validateConsistency(clientA.channel, summarizerClient.channel);
 
 			return {
 				...state,
@@ -981,7 +981,7 @@ export function mixinSynchronization<
 			if (connectedClients.length > 0) {
 				const readonlyChannel = state.summarizerClient.channel;
 				for (const { channel } of connectedClients) {
-					model.validateConsistency(readonlyChannel, channel);
+					await model.validateConsistency(readonlyChannel, channel);
 				}
 			}
 

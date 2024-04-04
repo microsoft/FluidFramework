@@ -76,7 +76,7 @@ export {
 	UpPathDefault,
 	AnchorEvents,
 	AnchorSetRootEvents,
-	FieldKindSpecifier,
+	FieldKindData,
 	AllowedUpdateType,
 	PathVisitor,
 	Adapters,
@@ -92,6 +92,7 @@ export {
 	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
 	LeafNodeStoredSchema,
+	Multiplicity,
 } from "./core/index.js";
 
 export {
@@ -131,7 +132,6 @@ export { leaf } from "./domains/index.js";
 
 export {
 	FlexFieldKind,
-	Multiplicity,
 	isNeverField,
 	FullSchemaPolicy,
 	typeNameSymbol,
@@ -278,7 +278,7 @@ export {
 	TreeNodeApi,
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
-	TreeNodeEvents,
+	TreeChangeEvents,
 	NodeFromSchema,
 	TreeMapNode,
 	InsertableTreeNodeFromImplicitAllowedTypes,
@@ -319,6 +319,7 @@ export {
 	InsertableTypedNodeUnsafe,
 	NodeBuilderDataUnsafe,
 	NodeFromSchemaUnsafe,
+	type FieldProps,
 
 	// experimental @internal APIs:
 	adaptEnum,

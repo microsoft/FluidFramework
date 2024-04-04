@@ -5,7 +5,7 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
-import { ISharedCell, SharedCell } from "@fluidframework/cell";
+import { ISharedCell, SharedCell } from "@fluidframework/cell/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { type ISharedMap, SharedMap } from "@fluidframework/map";

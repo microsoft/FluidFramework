@@ -13,7 +13,7 @@ import {
 	StablePlace,
 	type TraitLabel,
 } from "@fluid-experimental/tree";
-import { CellFactory } from "@fluidframework/cell";
+import { CellFactory } from "@fluidframework/cell/internal";
 import { detectOutboundReferences } from "@fluidframework/container-runtime/internal";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";

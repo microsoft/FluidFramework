@@ -5,7 +5,7 @@
 
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { validateMessages } from "@fluidframework/driver-base";
+import { validateMessages } from "@fluidframework/driver-base/internal";
 import {
 	IDeltasFetchResult,
 	IDocumentDeltaStorageService,
@@ -108,7 +108,6 @@ export class OdspDeltaStorageService {
 							: (deltaStorageResponse.value as ISequencedDocumentMessage[]);
 
 					event.end({
-						headers: Object.keys(headers).length > 0 ? true : undefined,
 						length: messages.length,
 						...response.propsToLog,
 					});
