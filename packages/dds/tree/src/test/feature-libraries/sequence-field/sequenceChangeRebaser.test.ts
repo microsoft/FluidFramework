@@ -772,7 +772,7 @@ export function testStateBasedRebaserAxioms() {
 				generateChildStates,
 				fieldRebaser,
 				{
-					groupSubSuites: false,
+					groupSubSuites: true,
 					numberOfEditsToVerifyAssociativity: isStress ? 4 : 3,
 					skipRebaseOverCompose: false,
 				},
@@ -798,7 +798,7 @@ export function testStateBasedRebaserAxioms() {
 				generateChildStates,
 				fieldRebaser,
 				{
-					groupSubSuites: false,
+					groupSubSuites: true,
 					numberOfEditsToVerifyAssociativity: isStress ? 4 : 3,
 					skipRebaseOverCompose: false,
 				},
