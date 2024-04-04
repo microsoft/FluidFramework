@@ -17,10 +17,10 @@ import {
 	type CursorWithNode,
 	cursorForMapTreeField,
 	cursorForMapTreeNode,
-	isFluidHandle,
 	isTreeValue,
 	typeNameSymbol,
 	valueSchemaAllows,
+	isFluidHandle,
 } from "../feature-libraries/index.js";
 import { brand, fail, isReadonlyArray } from "../util/index.js";
 
@@ -96,7 +96,7 @@ export function cursorFromFieldData(
  *
  * * `-0` =\> `+0`
  *
- * @param globalSchema - Schema for the whole tree for interperting `Any`.
+ * @param data - The tree data being transformed.
  * @param allowedTypes - The set of types allowed by the parent context. Used to validate the input tree.
  */
 export function nodeDataToMapTree(
@@ -105,41 +105,50 @@ export function nodeDataToMapTree(
 ): MapTree {
 	assert(data !== undefined, 0x846 /* Cannot map undefined tree. */);
 
-	if (data === null) {
-		return valueToMapTree(data, allowedTypes);
-	}
-	switch (typeof data) {
-		case "number":
-		case "string":
-		case "boolean":
-			return valueToMapTree(data, allowedTypes);
-		default: {
-			if (isFluidHandle(data)) {
-				return valueToMapTree(data, allowedTypes);
-			} else if (Array.isArray(data)) {
-				return arrayToMapTree(data, allowedTypes);
-			} else if (data instanceof Map) {
-				return mapToMapTree(data, allowedTypes);
-			} else {
-				// Assume record-like object
-				return objectToMapTree(data as Record<string, InsertableContent>, allowedTypes);
-			}
-		}
+	const schema = getType(data, allowedTypes);
+
+	switch (schema.kind) {
+		case NodeKind.Leaf:
+			return leafToMapTree(data, schema, allowedTypes);
+		case NodeKind.Array:
+			return arrayToMapTree(data, schema);
+		case NodeKind.Map:
+			return mapToMapTree(data, schema);
+		case NodeKind.Object:
+			return objectToMapTree(data, schema);
+		default:
+			fail(`Unrecognized schema kind: ${schema.kind}.`);
 	}
 }
 
-function valueToMapTree(value: TreeValue, allowedTypes: ReadonlySet<TreeNodeSchema>): MapTree {
-	const mappedValue = mapValueWithFallbacks(value, allowedTypes);
+/**
+ * Maps a primitive value.
+ * @param data - The value to be transformed. Must be a leaf value.
+ * @param schema - The schema associated with the value.
+ * @param allowedTypes - The allowed types specified by the parent.
+ * Used to determine which fallback values may be appropriate.
+ */
+function leafToMapTree(
+	data: InsertableContent,
+	schema: TreeNodeSchema,
+	allowedTypes: ReadonlySet<TreeNodeSchema>,
+): MapTree {
+	assert(schema.kind === NodeKind.Leaf, "Expected a leaf schema.");
+	if (!isTreeValue(data)) {
+		throw new UsageError(`${getDataTypeForError(data)} data is incompatible with leaf schema.`);
+	}
 
-	const schema = getType(mappedValue, allowedTypes);
+	const mappedValue = mapValueWithFallbacks(data, allowedTypes);
+	const mappedSchema = getType(mappedValue, allowedTypes);
+
 	assert(
-		schema.kind === NodeKind.Leaf && allowsValue(schema, mappedValue),
+		allowsValue(mappedSchema, mappedValue),
 		0x84a /* Unsupported schema for provided primitive. */,
 	);
 
 	return {
 		value: mappedValue,
-		type: brand(schema.identifier),
+		type: brand(mappedSchema.identifier),
 		fields: new Map(),
 	};
 }
@@ -179,7 +188,7 @@ function mapValueWithFallbacks(
 }
 
 function arrayToMapTreeFields(
-	data: InsertableContent[],
+	data: readonly InsertableContent[],
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
 ): MapTree[] {
 	const mappedData: MapTree[] = [];
@@ -201,20 +210,17 @@ function arrayToMapTreeFields(
 	return mappedData;
 }
 
-function arrayToMapTree(
-	data: InsertableContent[],
-	allowedTypes: ReadonlySet<TreeNodeSchema>,
-): MapTree {
-	const schema = getType(data, allowedTypes);
-	if (schema.kind !== NodeKind.Array) {
+function arrayToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree {
+	assert(schema.kind === NodeKind.Array, "Expected an array schema.");
+	if (!isReadonlyArray(data)) {
 		throw new UsageError(
-			`Provided array input is incompatible with schema "${schema.identifier}".`,
+			`${getDataTypeForError(data)} data is incompatible with array schema.`,
 		);
 	}
 
-	const childSchema = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
+	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
 
-	const mappedData = arrayToMapTreeFields(data, childSchema);
+	const mappedData = arrayToMapTreeFields(data, allowedChildTypes);
 
 	// Array node children are represented as a single field entry denoted with `EmptyKey`
 	const fieldsEntries: [FieldKey, MapTree[]][] =
@@ -227,18 +233,13 @@ function arrayToMapTree(
 	};
 }
 
-function mapToMapTree(
-	data: Map<string, InsertableContent>,
-	allowedTypes: ReadonlySet<TreeNodeSchema>,
-): MapTree {
-	const schema = getType(data, allowedTypes);
-	if (schema.kind !== NodeKind.Map) {
-		throw new UsageError(
-			`Provided map input is incompatible with schema "${schema.identifier}".`,
-		);
+function mapToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree {
+	assert(schema.kind === NodeKind.Map, "Expected a map schema.");
+	if (!(data instanceof Map)) {
+		throw new UsageError(`${getDataTypeForError(data)} data is incompatible with map schema.`);
 	}
 
-	const childSchema = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
+	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
 
 	const fields = new Map<FieldKey, MapTree[]>();
 	for (const [key, value] of data) {
@@ -246,7 +247,7 @@ function mapToMapTree(
 
 		// Omit undefined values - an entry with an undefined value is equivalent to one that has been removed or omitted
 		if (value !== undefined) {
-			const mappedField = nodeDataToMapTree(value, childSchema);
+			const mappedField = nodeDataToMapTree(value, allowedChildTypes);
 			fields.set(brand(key), [mappedField]);
 		}
 	}
@@ -256,14 +257,11 @@ function mapToMapTree(
 	};
 }
 
-function objectToMapTree(
-	data: Record<string | number | symbol, InsertableContent>,
-	allowedTypes: ReadonlySet<TreeNodeSchema>,
-): MapTree {
-	const schema = getType(data, allowedTypes);
-	if (schema.kind !== NodeKind.Object) {
+function objectToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree {
+	assert(schema.kind === NodeKind.Object, "Expected an object schema.");
+	if (typeof data !== "object" || data === null) {
 		throw new UsageError(
-			`Provided object input is incompatible with schema "${schema.identifier}".`,
+			`${getDataTypeForError(data)} data is incompatible with object schema.`,
 		);
 	}
 
@@ -273,7 +271,7 @@ function objectToMapTree(
 	const keys = Reflect.ownKeys(data).filter((key) => typeof key === "string") as FieldKey[];
 
 	for (const viewKey of keys) {
-		const fieldValue = data[viewKey];
+		const fieldValue = (data as Record<FieldKey, InsertableContent>)[viewKey];
 
 		// Omit undefined record entries - an entry with an undefined key is equivalent to no entry
 		if (fieldValue !== undefined) {
@@ -333,6 +331,31 @@ For class-based schema, this can be done by replacing an expression like "{foo: 
 	return possibleTypes[0];
 }
 
+function getDataTypeForError(data: InsertableContent): string {
+	if (data === null) {
+		return "null";
+	}
+	switch (typeof data) {
+		case "number":
+			return "number";
+		case "string":
+			return "string";
+		case "boolean":
+			return "boolean";
+		default: {
+			if (isFluidHandle(data)) {
+				return "FluidHandle";
+			} else if (isReadonlyArray(data)) {
+				return "Array";
+			} else if (data instanceof Map) {
+				return "Map";
+			} else {
+				return "Object";
+			}
+		}
+	}
+}
+
 /**
  * An invalid tree has been provided, presumably by the user of this package.
  * Throw and an error that properly preserves the message (unlike asserts which will get hard to read short codes intended for package internal logic errors).
@@ -374,6 +397,7 @@ function shallowCompatibilityTest(
 	schema: TreeNodeSchema,
 	data: ContextuallyTypedNodeData,
 ): boolean {
+	// TODO: update this to switch first on schema, then validate kinds of data allowed beneath.
 	assert(
 		data !== undefined,
 		0x889 /* undefined cannot be used as contextually typed data. Use ContextuallyTypedFieldData. */,
