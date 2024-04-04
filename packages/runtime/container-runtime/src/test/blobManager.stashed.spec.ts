@@ -8,6 +8,8 @@ import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
+import { bufferToString } from "@fluid-internal/client-utils";
 import { BlobManager, IBlobManagerRuntime, type IPendingBlobs } from "../blobManager.js";
 
 export const failProxy = <T extends object>(handler: Partial<T> = {}) => {
@@ -29,12 +31,13 @@ export const failProxy = <T extends object>(handler: Partial<T> = {}) => {
 function createBlobManager(overrides?: Partial<ConstructorParameters<typeof BlobManager>[0]>) {
 	return new BlobManager(
 		failProxy({
+			// defaults, these can still be overridden below
+			runtime: failProxy<IBlobManagerRuntime>({ logger: createChildLogger() }),
+			snapshot: {},
+			stashedBlobs: undefined,
+
+			// overrides
 			...overrides,
-			runtime:
-				overrides?.runtime ??
-				failProxy<IBlobManagerRuntime>({ logger: createChildLogger() }),
-			snapshot: overrides?.snapshot ?? {},
-			stashedBlobs: overrides?.stashedBlobs,
 		}),
 	);
 }
@@ -53,8 +56,8 @@ const withinTTLHalfLife: IPendingBlobs[string] = {
 };
 
 const storageIdWithoutUploadTime: IPendingBlobs[string] = {
-	blob: "withinTTLHalfLife",
-	storageId: "withinTTLHalfLife",
+	blob: "storageIdWithoutUploadTime",
+	storageId: "storageIdWithoutUploadTime",
 };
 
 describe("BlobManager.stashed", () => {
@@ -94,6 +97,7 @@ describe("BlobManager.stashed", () => {
 			blobManager.trackPendingStashedUploads(),
 		]);
 		assert.strictEqual(blobManager.hasPendingStashedUploads(), false);
+		assert.strictEqual(blobManager.allBlobsAttached, true);
 	});
 
 	it("Stashed blob with upload older than TTL", async () => {
@@ -123,6 +127,7 @@ describe("BlobManager.stashed", () => {
 			blobManager.trackPendingStashedUploads(),
 		]);
 		assert.strictEqual(blobManager.hasPendingStashedUploads(), false);
+		assert.strictEqual(blobManager.allBlobsAttached, true);
 	});
 
 	it("Stashed blob with upload within TTL half-life", async () => {
@@ -136,11 +141,11 @@ describe("BlobManager.stashed", () => {
 		assert.strictEqual(blobManager.hasPendingStashedUploads(), false);
 	});
 
-	it("Stashed blob with upload without upload time", async () => {
+	it("Stashed blob without upload time", async () => {
 		const createResponse = new Deferred<ICreateBlobResponse>();
 		const blobManager = createBlobManager({
 			stashedBlobs: {
-				storageIdWithoutTTL: storageIdWithoutUploadTime,
+				storageIdWithoutUploadTime,
 			},
 			getStorage: () =>
 				failProxy<IDocumentStorageService>({
@@ -163,23 +168,34 @@ describe("BlobManager.stashed", () => {
 			blobManager.trackPendingStashedUploads(),
 		]);
 		assert.strictEqual(blobManager.hasPendingStashedUploads(), false);
+		assert.strictEqual(blobManager.allBlobsAttached, true);
 	});
 
 	it("Mixed stashed blobs", async () => {
-		const createResponse = new Deferred<ICreateBlobResponse>();
+		const letUploadsComplete = new Deferred<void>();
+
+		const stashedBlobs = generatePairwiseOptions<IPendingBlobs[string]>({
+			acked: [undefined, true, false],
+			blob: ["content"],
+			minTTLInSeconds: [undefined, 100],
+			storageId: [undefined, "id"],
+			uploadTime: [Date.now() - 100 * 1000, Date.now() - 25 * 1000, undefined],
+		}).reduce<IPendingBlobs>((pv, cv, i) => {
+			if (cv.storageId) {
+				cv.storageId += i.toString();
+			}
+			cv.blob = i.toString();
+			pv[i] = cv;
+			return pv;
+		}, {});
+
 		const blobManager = createBlobManager({
-			stashedBlobs: {
-				olderThanTTL,
-				withinTTLHalfLife,
-				storageIdWithoutUploadTime,
-				a: {
-					blob: "a",
-				},
-			},
+			stashedBlobs,
 			getStorage: () =>
 				failProxy<IDocumentStorageService>({
-					createBlob: async () => {
-						return createResponse.promise;
+					createBlob: async (b) => {
+						await letUploadsComplete.promise;
+						return { id: `id:${bufferToString(b, "utf8")}` };
 					},
 				}),
 		});
@@ -189,13 +205,14 @@ describe("BlobManager.stashed", () => {
 			blobManager.trackPendingStashedUploads(),
 		]);
 		assert.strictEqual(blobManager.hasPendingStashedUploads(), true);
-		createResponse.resolve({
-			id: "a",
-		});
+		letUploadsComplete.resolve();
+
 		await Promise.race([
 			new Promise<void>((resolve) => setTimeout(() => resolve(), 10)),
 			blobManager.trackPendingStashedUploads(),
 		]);
 		assert.strictEqual(blobManager.hasPendingStashedUploads(), false);
+
+		assert.strictEqual(blobManager.allBlobsAttached, true);
 	});
 });

@@ -121,7 +121,6 @@ export interface IPendingBlobs {
 		storageId?: string;
 		uploadTime?: number;
 		minTTLInSeconds?: number;
-		attached?: boolean;
 		acked?: boolean;
 	};
 }
@@ -241,7 +240,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 		// Begin uploading stashed blobs from previous container instance
 		Object.entries(stashedBlobs ?? {}).forEach(([localId, entry]) => {
-			const { attached, acked, storageId, minTTLInSeconds, uploadTime } = entry;
+			const { acked, storageId, minTTLInSeconds, uploadTime } = entry;
 			const blob = stringToBuffer(entry.blob, "base64");
 			const pendingEntry: PendingBlob = {
 				blob,
@@ -251,7 +250,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				uploadP: undefined,
 				uploadTime,
 				minTTLInSeconds,
-				attached,
+				attached: true,
 				acked,
 			};
 			this.pendingBlobs.set(localId, pendingEntry);
@@ -963,7 +962,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					blobs[id] = {
 						blob: bufferToString(entry.blob, "base64"),
 						storageId: entry.storageId,
-						attached: entry.attached,
 						acked: entry.acked,
 						minTTLInSeconds: entry.minTTLInSeconds,
 						uploadTime: entry.uploadTime,

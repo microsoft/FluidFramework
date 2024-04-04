@@ -69,15 +69,30 @@ describe("treeApi", () => {
 		assert.equal(Tree.schema(root), Point);
 		assert.equal(Tree.schema(5), schema.number);
 	});
+
 	it("key", () => {
-		class Child extends schema.object("Child", { x: Point }) {}
+		class Child extends schema.object("Child", {
+			x: Point,
+			y: schema.optional(Point, { key: "stable-y" }),
+		}) {}
 		const Root = schema.array(Child);
-		const config = new TreeConfiguration(Root, () => [{ x: {} }, { x: {} }]);
+		const config = new TreeConfiguration(Root, (): Child[] => [
+			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+			{
+				x: {},
+				y: undefined,
+			} as Child,
+			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+			{ x: {}, y: {} } as Child,
+		]);
 		const root = getView(config).root;
 		assert.equal(Tree.key(root), rootFieldKey);
 		assert.equal(Tree.key(root[0]), 0);
+		assert.equal(Tree.key(root[0].x), "x");
 		assert.equal(Tree.key(root[1]), 1);
 		assert.equal(Tree.key(root[1].x), "x");
+		assert(root[1].y !== undefined);
+		assert.equal(Tree.key(root[1].y), "y");
 	});
 
 	it("parent", () => {
