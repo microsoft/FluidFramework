@@ -1559,5 +1559,6 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 	}
 
 	const fieldChanges = normalizeFieldChanges(change.fieldChanges);
+	assert(nodeChanges.size === change.nodeChanges.size);
 	return { ...change, nodeChanges, fieldChanges };
 }
