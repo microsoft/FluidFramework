@@ -44,8 +44,9 @@ export function getApiRoot(origin: string): string {
  * @param url - The URL to check
  * @internal
  */
-export function isSpoUrl(url: string): boolean {
-	const urlLower = url.toLowerCase();
+export function isSpoUrl(url: URL): boolean {
+	const urlString = url.href;
+	const urlLower = urlString.toLowerCase();
 
 	// Format: foo.sharepoint.com/_api/v2.1./drives/bar/items/baz and foo.sharepoint-df.com/...
 	const spoRegex = /(.*\.sharepoint(-df)*\.com)\/_api\/v2.1\/drives\/([^/]*)\/items\/([^/]*)/;
@@ -57,14 +58,12 @@ export function isSpoUrl(url: string): boolean {
  * @param url - The URL to check
  * @internal
  */
-export function isOdcUrl(url: string | URL): boolean {
-	const urlObj = typeof url === "string" ? new URL(url) : url;
-
-	if (!isOdcOrigin(urlObj.origin)) {
+export function isOdcUrl(url: URL): boolean {
+	if (!isOdcOrigin(url.origin)) {
 		return false;
 	}
 
-	const path = urlObj.pathname.toLowerCase();
+	const path = url.pathname.toLowerCase();
 
 	// Splitting the regexes so we don't have regex soup
 	// Format: /v2.1/drive/items/ABC123!123 and /v2.1/drives/ABC123/items/ABC123!123

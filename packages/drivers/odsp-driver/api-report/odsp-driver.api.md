@@ -190,13 +190,13 @@ export interface ISnapshotContentsWithProps extends ISnapshot {
 }
 
 // @internal
-export function isOdcUrl(url: string | URL): boolean;
+export function isOdcUrl(url: URL): boolean;
 
 // @internal
 export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOdspResolvedUrl;
 
 // @internal
-export function isSpoUrl(url: string): boolean;
+export function isSpoUrl(url: URL): boolean;
 
 // @alpha
 export const locatorQueryParamName = "nav";
