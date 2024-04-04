@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	FieldKey,
 	ForestEvents,
 	IForestSubscription,
 	TreeFieldStoredSchema,
+	anchorSlot,
 	moveToDetachedField,
 } from "../../core/index.js";
 import { ISubscribable } from "../../events/index.js";
@@ -54,6 +55,15 @@ export interface FlexTreeContext extends ISubscribable<ForestEvents> {
 }
 
 /**
+ * Creating multiple flex tree contexts for the same branch, and thus with the same underlying AnchorSet does not work due to how TreeNode caching works.
+ * This slot is used to detect if one already exists and error if creating a second.
+ *
+ * TODO:
+ * 1. API docs need to reflect this limitation or the limitation has to be removed.
+ */
+export const ContextSlot = anchorSlot<Context>();
+
+/**
  * Implementation of `FlexTreeContext`.
  *
  * @remarks An editor is required to edit the FlexTree.
@@ -84,6 +94,12 @@ export class Context implements FlexTreeContext, IDisposable {
 				this.prepareForEdit();
 			}),
 		];
+
+		assert(
+			!this.forest.anchors.slots.has(ContextSlot),
+			"Cannot create second flex-tree from checkout",
+		);
+		this.forest.anchors.slots.set(ContextSlot, this);
 	}
 
 	/**
@@ -106,6 +122,9 @@ export class Context implements FlexTreeContext, IDisposable {
 			unregister();
 		}
 		this.eventUnregister.length = 0;
+
+		const deleted = this.forest.anchors.slots.delete(ContextSlot);
+		assert(deleted, 0x8c4 /* unexpected dispose */);
 	}
 
 	/**

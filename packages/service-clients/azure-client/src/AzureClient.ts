@@ -10,12 +10,12 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { type FluidObject, type IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type IDocumentServiceFactory,
 	type IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import { applyStorageCompression } from "@fluidframework/driver-utils";
+import { applyStorageCompression } from "@fluidframework/driver-utils/internal";
 import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import {
 	type IRootDataObject,
@@ -24,8 +24,8 @@ import {
 	createServiceAudience,
 } from "@fluidframework/fluid-static/internal";
 import { type IClient, SummaryType } from "@fluidframework/protocol-definitions";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
+import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 
 import { createAzureAudienceMember } from "./AzureAudience.js";
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver.js";

@@ -7,7 +7,6 @@
 
 import { strict as assert, fail } from "assert";
 
-import { noopValidator } from "../../../codec/index.js";
 import {
 	Anchor,
 	AnchorNode,
@@ -51,12 +50,7 @@ import {
 } from "../../../feature-libraries/index.js";
 import { TreeContent } from "../../../shared-tree/index.js";
 import { brand, capitalize } from "../../../util/index.js";
-import {
-	failCodec,
-	flexTreeViewWithContent,
-	forestWithContent,
-	testRevisionTagCodec,
-} from "../../utils.js";
+import { failCodecFamily, flexTreeViewWithContent, forestWithContent } from "../../utils.js";
 
 import { contextWithContentReadonly } from "./utils.js";
 
@@ -326,9 +320,7 @@ describe("LazyNode", () => {
 		});
 
 		const editBuilder = new DefaultEditBuilder(
-			new DefaultChangeFamily(testRevisionTagCodec, failCodec, {
-				jsonValidator: noopValidator,
-			}),
+			new DefaultChangeFamily(failCodecFamily),
 			(change: DefaultChangeset) => {
 				editCallCount++;
 			},
@@ -426,9 +418,7 @@ describe("LazyNode", () => {
 		});
 
 		const editBuilder = new DefaultEditBuilder(
-			new DefaultChangeFamily(testRevisionTagCodec, failCodec, {
-				jsonValidator: noopValidator,
-			}),
+			new DefaultChangeFamily(failCodecFamily),
 			(change: DefaultChangeset) => {
 				editCallCount++;
 			},

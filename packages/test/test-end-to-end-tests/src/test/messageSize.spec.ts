@@ -9,21 +9,20 @@ import * as crypto from "crypto";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { CompressionAlgorithms, ContainerMessageType } from "@fluidframework/container-runtime";
 import {
-	ConfigTypes,
-	FluidErrorTypes,
-	IConfigProviderBase,
-	IErrorBase,
-} from "@fluidframework/core-interfaces";
+	CompressionAlgorithms,
+	ContainerMessageType,
+} from "@fluidframework/container-runtime/internal";
+import { ConfigTypes, IConfigProviderBase, IErrorBase } from "@fluidframework/core-interfaces";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import type { ISharedMap } from "@fluidframework/map";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { FlushMode } from "@fluidframework/runtime-definitions";
-import { GenericError } from "@fluidframework/telemetry-utils";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import { GenericError } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -31,7 +30,7 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;

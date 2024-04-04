@@ -6,7 +6,7 @@
 import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-example/example-utils";
 import { Signaler } from "@fluid-experimental/data-objects";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { createServiceAudience } from "@fluidframework/fluid-static/internal";
 
 import { createMockServiceMember } from "./Audience.js";

@@ -5,13 +5,13 @@
 
 import fs from "fs";
 
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	getUnexpectedLogErrorException,
 	ITestObjectProvider,
 	TestObjectProvider,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 import { testBaseVersion } from "./baseVersion.js";
 import { configList } from "./compatConfig.js";
