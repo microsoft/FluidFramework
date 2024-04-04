@@ -14,7 +14,7 @@ import {
 	RevisionTag,
 	TaggedChange,
 } from "../../core/index.js";
-import { IdAllocator, Invariant, JsonCompatibleReadOnly } from "../../util/index.js";
+import { IdAllocator, Invariant } from "../../util/index.js";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 
 import { CrossFieldManager } from "./crossFieldQueries.js";
@@ -219,7 +219,7 @@ export interface RebaseRevisionMetadata extends RevisionMetadataSource {
 
 export interface FieldChangeEncodingContext {
 	readonly baseContext: ChangeEncodingContext;
-	encodeNode(nodeId: NodeId): JsonCompatibleReadOnly;
+	encodeNode(nodeId: NodeId): EncodedNodeChangeset;
 	decodeNode(encodedNode: EncodedNodeChangeset): NodeId;
 }
 

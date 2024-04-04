@@ -166,7 +166,7 @@ function makeModularChangeCodec(
 		const fieldContext: FieldChangeEncodingContext = {
 			baseContext: context,
 
-			encodeNode: (nodeId: NodeId): JsonCompatibleReadOnly => {
+			encodeNode: (nodeId: NodeId): EncodedNodeChangeset => {
 				const node = tryGetFromNestedMap(nodeChanges, nodeId.revision, nodeId.localId);
 				assert(node !== undefined, "Unknown node ID");
 				return encodeNodeChangesForJson(node, fieldContext);
