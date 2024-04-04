@@ -211,76 +211,22 @@ export enum NodeKind {
 }
 
 /**
- * The unique identifier of a field, used in the persisted form of the tree.
- *
- * @remarks
- * If not explicitly set via the schema, this is the same as the schema's property key.
- *
- * Specifying a stored key that differs from the property key is particularly useful in refactoring scenarios.
- * To update the developer-facing API, while maintaining backwards compatibility with existing SharedTree data,
- * you can change the property key and specify the previous property key as the stored key.
- *
- * Notes:
- *
- * - Stored keys have no impact on standard JavaScript behavior, on tree nodes. For example, `Object.keys`
- * will always return the property keys specified in the schema, ignoring any stored keys that differ from
- * the property keys.
- *
- * - When specifying stored keys in an object schema, you must ensure that the final set of stored keys
- * (accounting for those implicitly derived from property keys) contains no duplicates.
- * This is validated at runtime.
- *
- * @example Refactoring code without breaking compatibility with existing data
- *
- * Consider some existing object schema:
- *
- * ```TypeScript
- * class Point extends schemaFactory.object("Point", {
- * 	xPosition: schemaFactory.number,
- * 	yPosition: schemaFactory.number,
- * 	zPosition: schemaFactory.optional(schemaFactory.number),
- * });
- * ```
- *
- * Developers using nodes of this type would access the the `xPosition` property as `point.xPosition`.
- *
- * We would like to refactor the schema to omit "Position" from the property keys, but application data has
- * already been persisted using the original property keys. To maintain compatibility with existing data,
- * we can refactor the schema as follows:
- *
- * ```TypeScript
- * class Point extends schemaFactory.object("Point", {
- * 	x: schemaFactory.required(schemaFactory.number, { key: "xPosition" }),
- * 	y: schemaFactory.required(schemaFactory.number, { key: "yPosition" }),
- * 	z: schemaFactory.optional(schemaFactory.number, { key: "zPosition" }),
- * });
- * ```
- *
- * Now, developers can access the `x` property as `point.x`, while existing data can still be collaborated on.
- *
- * @example
- *
- * @public
- */
-export type StoredFieldKey = string;
-
-/**
- * Maps from a view key to its corresponding {@link StoredKey | stored key} for the provided
+ * Maps from a view key to its corresponding {@link FieldProps.key | stored key} for the provided
  * {@link ImplicitFieldSchema | field schema}.
  *
  * @remarks
  * If an explicit stored key was specified in the schema, it will be used.
  * Otherwise, the stored key is the same as the view key.
  */
-export function getStoredKey(viewKey: string, fieldSchema: ImplicitFieldSchema): StoredFieldKey {
+export function getStoredKey(viewKey: string, fieldSchema: ImplicitFieldSchema): string {
 	return getExplicitStoredKey(fieldSchema) ?? viewKey;
 }
 
 /**
- * Gets the {@link StoredKey | stored key} specified by the schema, if one was explicitly specified.
+ * Gets the {@link FieldProps.key | stored key} specified by the schema, if one was explicitly specified.
  * Otherwise, returns undefined.
  */
-export function getExplicitStoredKey(fieldSchema: ImplicitFieldSchema): StoredFieldKey | undefined {
+export function getExplicitStoredKey(fieldSchema: ImplicitFieldSchema): string | undefined {
 	return fieldSchema instanceof FieldSchema ? fieldSchema.props?.key : undefined;
 }
 
@@ -291,10 +237,56 @@ export function getExplicitStoredKey(fieldSchema: ImplicitFieldSchema): StoredFi
  */
 export interface FieldProps {
 	/**
-	 * {@inheritDoc StoredFieldKey}
+	 * The unique identifier of a field, used in the persisted form of the tree.
+	 *
+	 * @remarks
+	 * If not explicitly set via the schema, this is the same as the schema's property key.
+	 *
+	 * Specifying a stored key that differs from the property key is particularly useful in refactoring scenarios.
+	 * To update the developer-facing API, while maintaining backwards compatibility with existing SharedTree data,
+	 * you can change the property key and specify the previous property key as the stored key.
+	 *
+	 * Notes:
+	 *
+	 * - Stored keys have no impact on standard JavaScript behavior, on tree nodes. For example, `Object.keys`
+	 * will always return the property keys specified in the schema, ignoring any stored keys that differ from
+	 * the property keys.
+	 *
+	 * - When specifying stored keys in an object schema, you must ensure that the final set of stored keys
+	 * (accounting for those implicitly derived from property keys) contains no duplicates.
+	 * This is validated at runtime.
+	 *
+	 * @example Refactoring code without breaking compatibility with existing data
+	 *
+	 * Consider some existing object schema:
+	 *
+	 * ```TypeScript
+	 * class Point extends schemaFactory.object("Point", {
+	 * 	xPosition: schemaFactory.number,
+	 * 	yPosition: schemaFactory.number,
+	 * 	zPosition: schemaFactory.optional(schemaFactory.number),
+	 * });
+	 * ```
+	 *
+	 * Developers using nodes of this type would access the the `xPosition` property as `point.xPosition`.
+	 *
+	 * We would like to refactor the schema to omit "Position" from the property keys, but application data has
+	 * already been persisted using the original property keys. To maintain compatibility with existing data,
+	 * we can refactor the schema as follows:
+	 *
+	 * ```TypeScript
+	 * class Point extends schemaFactory.object("Point", {
+	 * 	x: schemaFactory.required(schemaFactory.number, { key: "xPosition" }),
+	 * 	y: schemaFactory.required(schemaFactory.number, { key: "yPosition" }),
+	 * 	z: schemaFactory.optional(schemaFactory.number, { key: "zPosition" }),
+	 * });
+	 * ```
+	 *
+	 * Now, developers can access the `x` property as `point.x`, while existing data can still be collaborated on.
+	 *
 	 * @defaultValue If not specified, the key that is persisted is the property key that was specified in the schema.
 	 */
-	readonly key?: StoredFieldKey;
+	readonly key?: string;
 }
 
 /**

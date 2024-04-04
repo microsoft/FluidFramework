@@ -54,7 +54,6 @@ import {
 	WithType,
 	type,
 	type FieldProps,
-	type StoredFieldKey,
 	getExplicitStoredKey,
 	getStoredKey,
 } from "./schemaTypes.js";
@@ -360,7 +359,7 @@ export class SchemaFactory<
 		const Fields extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 	>(schemaName: Name, fields: Fields): void {
 		// Verify that there are no duplicates among the explicitly specified stored keys.
-		const explicitStoredKeys = new Set<StoredFieldKey>();
+		const explicitStoredKeys = new Set<string>();
 		for (const schema of Object.values(fields)) {
 			const storedKey = getExplicitStoredKey(schema);
 			if (storedKey === undefined) {
@@ -376,7 +375,7 @@ export class SchemaFactory<
 
 		// Verify that there are no duplicates among the derived
 		// (including those implicitly derived from view keys) stored keys.
-		const derivedStoredKeys = new Set<StoredFieldKey>();
+		const derivedStoredKeys = new Set<string>();
 		for (const [viewKey, schema] of Object.entries(fields)) {
 			const storedKey = getStoredKey(viewKey, schema);
 			if (derivedStoredKeys.has(storedKey)) {
