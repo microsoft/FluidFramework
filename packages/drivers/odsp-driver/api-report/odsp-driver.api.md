@@ -97,9 +97,6 @@ export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "
 // @alpha (undocumented)
 export type FetchTypeInternal = FetchType | "cache";
 
-// @internal
-export function getApiRoot(origin: string): string;
-
 // @alpha
 export function getHashedDocumentId(driveId: string, itemId: string): Promise<string>;
 
@@ -191,9 +188,6 @@ export interface ISnapshotContentsWithProps extends ISnapshot {
     // (undocumented)
     telemetryProps: Record<string, number>;
 }
-
-// @internal
-export function isOdcOrigin(origin: string): boolean;
 
 // @internal
 export function isOdcUrl(url: string | URL): boolean;
