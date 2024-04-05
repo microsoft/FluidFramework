@@ -36,7 +36,7 @@
 		"test:jest:coverage": "jest --detectOpenHandles --coverage --ci",
 		"tsc:watch": "tsc --watch",
 		"watch:devtools-core": "tsc --watch --project ../devtools-core/tsconfig.json --preserveWatchOutput",
-		"watch:devtools-view": "tsc --watch --project ../devtools-view/tsconfig.json --preserveWatchOutput",
+		"watch:devtools-view": "tsc --watch --project ../devtools-view/tsconfig.esm.json --preserveWatchOutput",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},
