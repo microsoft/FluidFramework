@@ -6,9 +6,8 @@
 import { Package } from "@fluidframework/build-tools";
 import path from "node:path";
 import { filterFlags, selectionFlags } from "./flags";
-import { Repository } from "./library";
+import { Context, Repository } from "./library";
 import { knownReleaseGroups, ReleaseGroup } from "./releaseGroups";
-import { Context } from "./library";
 
 /**
  * The criteria that should be used for selecting package-like objects from a collection.
@@ -34,7 +33,10 @@ export interface PackageSelectionCriteria {
 	 */
 	directory?: string;
 
-	changedSinceBranch: string | undefined;
+	/**
+	 * If set, only selects packages that have changes when compared with the branch of this name.
+	 */
+	changedSinceBranch?: string;
 }
 
 /**
@@ -83,6 +85,7 @@ export const parsePackageSelectionFlags = (
 					releaseGroups: (flags.releaseGroup as ReleaseGroup[]) ?? [],
 					releaseGroupRoots: (flags.releaseGroupRoot as ReleaseGroup[]) ?? [],
 					directory: flags.dir,
+					changedSinceBranch: flags.branch,
 				};
 
 	return options;
