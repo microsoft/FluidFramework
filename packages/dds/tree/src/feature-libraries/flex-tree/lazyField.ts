@@ -523,10 +523,6 @@ export class LazyIdentifierField<TTypes extends FlexAllowedTypes>
 		super(context, schema, cursor, fieldAnchor);
 	}
 
-	public override get content(): FlexTreeUnboxNodeUnion<TTypes> {
-		return this.atIndex(0);
-	}
-
 	public uuid(): string {
 		const identifier = this.context.nodeKeys.stabilize(
 			this.atIndex(0) as unknown as LocalNodeKey,
