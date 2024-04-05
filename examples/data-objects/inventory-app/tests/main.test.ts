@@ -24,10 +24,6 @@ describe.skip("Integration Tests", () => {
 	it("The page loads", async () => {
 		// await expect(page).toClick("button", { text: "Roll" });
 	});
-
-	it("works with container schema", async () => {
-		// await expect(page).toClick("button", { text: "Roll" });
-	});
 });
 
 describe("Unit tests", () => {
