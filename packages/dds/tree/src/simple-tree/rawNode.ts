@@ -5,23 +5,18 @@
 
 import { Anchor, AnchorNode, FieldKey, TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
-	FlexFieldNodeSchema,
 	FlexMapNodeSchema,
-	FlexObjectNodeSchema,
 	FlexTreeContext,
 	FlexTreeEntityKind,
 	FlexTreeField,
-	FlexTreeFieldNode,
 	FlexTreeMapNode,
 	FlexTreeNode,
 	FlexTreeNodeEvents,
 	FlexTreeNodeSchema,
-	FlexTreeObjectNode,
 	FlexTreeTypedField,
 	FlexTreeTypedNode,
 	FlexTreeUnboxField,
 	FlexibleFieldContent,
-	LocalNodeKey,
 	TreeStatus,
 	flexTreeMarker,
 } from "../feature-libraries/index.js";
@@ -63,14 +58,8 @@ export function createRawNode(
 	schema: FlexTreeNodeSchema,
 	content: InsertableContent,
 ): RawTreeNode<FlexTreeNodeSchema, InsertableContent> {
-	if (schema instanceof FlexObjectNodeSchema) {
-		return new RawObjectNode(schema, content as object);
-	}
 	if (schema instanceof FlexMapNodeSchema) {
 		return new RawMapNode(schema, content as ReadonlyMap<string, InsertableContent>);
-	}
-	if (schema instanceof FlexFieldNodeSchema) {
-		return new RawFieldNode(schema, content);
 	}
 	fail("Unrecognized schema");
 }
@@ -141,18 +130,6 @@ export abstract class RawTreeNode<TSchema extends FlexTreeNodeSchema, TContent>
 }
 
 /**
- * The implementation of an object node created by {@link createRawNode}.
- */
-export class RawObjectNode<TSchema extends FlexObjectNodeSchema, TContent extends object>
-	extends RawTreeNode<TSchema, TContent>
-	implements FlexTreeObjectNode
-{
-	public get localNodeKey(): LocalNodeKey | undefined {
-		throw rawError("Reading local node keys");
-	}
-}
-
-/**
  * The implementation of a map node created by {@link createRawNode}.
  */
 export class RawMapNode<TSchema extends FlexMapNodeSchema>
@@ -213,23 +190,7 @@ export class RawMapNode<TSchema extends FlexMapNodeSchema>
 	}
 }
 
-/**
- * The implementation of a field node created by {@link createRawNode}.
- */
-export class RawFieldNode<TSchema extends FlexFieldNodeSchema>
-	extends RawTreeNode<TSchema, InsertableContent>
-	implements FlexTreeFieldNode<TSchema>
-{
-	public get content(): FlexTreeUnboxField<TSchema["info"]> {
-		throw rawError("Reading content of an array node");
-	}
-
-	public get boxedContent(): FlexTreeTypedField<TSchema["info"]> {
-		throw rawError("Reading boxed content of an array node");
-	}
-}
-
-function rawError(message?: string): Error {
+export function rawError(message?: string): Error {
 	return new Error(
 		`${
 			message ?? "Operation"

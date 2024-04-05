@@ -72,7 +72,6 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluentui/react": "^8.109.4",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-internal/devtools-view": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
