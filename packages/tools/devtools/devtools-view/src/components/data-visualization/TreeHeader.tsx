@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { tokens } from "@fluentui/react-components";
+import { Tooltip, tokens } from "@fluentui/react-components";
+import { DocumentEdit20Regular } from "@fluentui/react-icons";
 import React from "react";
 
 import { ThemeContext, ThemeOption } from "../../ThemeHelper.js";
@@ -19,21 +20,24 @@ export interface TreeHeaderProps extends HasLabel {
 	 */
 	nodeTypeMetadata?: string | undefined;
 
+	metadata?: string | undefined;
+
 	/**
 	 * Inline value to display alongside the metadata.
 	 */
 	inlineValue?: React.ReactElement | string;
 
-	// TODO: metadata
-	metadata?: string | undefined;
+	/**
+	 * Visual Tree data rendered in the tooltip.
+	 */
+	tooltipContents?: string | Record<string | number, string>;
 }
 
 /**
  * Renders the header of the item.
  */
 export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
-	const { label, nodeTypeMetadata, inlineValue, metadata } = props;
-
+	const { label, nodeTypeMetadata, inlineValue, metadata, tooltipContents } = props;
 	const { themeInfo } = React.useContext(ThemeContext);
 
 	return (
@@ -62,6 +66,26 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 			>
 				{metadata === undefined ? "" : ` ${metadata}`}
 			</span>
+
+			{tooltipContents === undefined ? (
+				""
+			) : (
+				<Tooltip content={JSON.stringify(tooltipContents)} relationship="description">
+					<span
+						style={{
+							color:
+								themeInfo.name === ThemeOption.HighContrast
+									? undefined
+									: tokens.colorPalettePlatinumBorderActive,
+							fontStyle: "oblique",
+							fontSize: "10px",
+						}}
+					>
+						<DocumentEdit20Regular />
+					</span>
+				</Tooltip>
+			)}
+
 			{inlineValue === undefined ? "" : ": "}
 			{inlineValue}
 		</div>
