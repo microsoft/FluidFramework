@@ -10615,7 +10615,6 @@ importers:
   packages/tools/devtools/devtools-browser-extension:
     specifiers:
       '@biomejs/biome': ^1.6.2
-      '@fluentui/react': ^8.109.4
       '@fluid-example/example-utils': workspace:~
       '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/devtools-view': workspace:~
@@ -10686,7 +10685,6 @@ importers:
       webpack: ^5.82.0
       webpack-cli: ^4.9.2
     dependencies:
-      '@fluentui/react': 8.112.9_z2l4bd7d7kzuhnbxbmhiesmtme
       '@fluid-internal/client-utils': link:../../../common/client-utils
       '@fluid-internal/devtools-view': link:../devtools-view
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
