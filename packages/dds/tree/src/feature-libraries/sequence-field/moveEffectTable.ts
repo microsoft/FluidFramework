@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import { ChangeAtomId, RevisionTag, TaggedChange } from "../../core/index.js";
 import { RangeQueryResult, brand } from "../../util/index.js";

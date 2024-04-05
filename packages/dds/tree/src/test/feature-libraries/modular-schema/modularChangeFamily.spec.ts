@@ -23,6 +23,7 @@ import {
 	makeDetachedNodeId,
 	revisionMetadataSourceFromInfo,
 	tagChange,
+	Multiplicity,
 } from "../../../core/index.js";
 import { jsonObject, singleJsonCursor } from "../../../domains/index.js";
 import {
@@ -30,9 +31,10 @@ import {
 	FieldChangeHandler,
 	FieldChangeRebaser,
 	FieldEditor,
+	FieldKindConfiguration,
+	FieldKindConfigurationEntry,
 	FieldKindWithEditor,
 	ModularChangeset,
-	Multiplicity,
 	NodeChangeset,
 	RelevantRemovedRootsFromChild,
 	TreeChunk,
@@ -42,6 +44,7 @@ import {
 	defaultChunkPolicy,
 	genericFieldKind,
 	makeFieldBatchCodec,
+	makeModularChangeCodecFamily,
 } from "../../../feature-libraries/index.js";
 import {
 	ModularChangeFamily,
@@ -102,6 +105,14 @@ const singleNodeField = new FieldKindWithEditor(
 	new Set(),
 );
 
+export const fieldKindConfiguration: FieldKindConfiguration = new Map<
+	FieldKindIdentifier,
+	FieldKindConfigurationEntry
+>([
+	[singleNodeField.identifier, { kind: singleNodeField, formatVersion: 0 }],
+	[valueField.identifier, { kind: valueField, formatVersion: 0 }],
+]);
+
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
 	[singleNodeField, valueField].map((field) => [field.identifier, field]),
 );
@@ -109,12 +120,14 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Ma
 const codecOptions: ICodecOptions = {
 	jsonValidator: ajvValidator,
 };
-const family = new ModularChangeFamily(
-	fieldKinds,
+
+const codec = makeModularChangeCodecFamily(
+	new Map([[0, fieldKindConfiguration]]),
 	testRevisionTagCodec,
-	makeFieldBatchCodec(codecOptions),
+	makeFieldBatchCodec(codecOptions, 1),
 	codecOptions,
 );
+const family = new ModularChangeFamily(fieldKinds, codec);
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
@@ -1232,6 +1245,24 @@ describe("ModularChangeFamily", () => {
 
 			const filtered = updateRefreshers(makeAnonChange(input), getDetachedNode, []);
 			assert.deepEqual(filtered, expected);
+		});
+
+		it("recognizes chunks in the builds array with length longer than one", () => {
+			assert.equal(nodesChunk.topLevelLength, 2);
+			const input: ModularChangeset = {
+				fieldChanges: new Map([]),
+				builds: new Map([[aMajor, new Map([[brand(3), nodesChunk]])]]),
+			};
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map([]),
+				builds: new Map([[aMajor, new Map([[brand(3), nodesChunk]])]]),
+			};
+
+			const withBuilds = updateRefreshers(makeAnonChange(input), getDetachedNode, [
+				{ major: aMajor, minor: 4 },
+			]);
+			assert.deepEqual(withBuilds, expected);
 		});
 
 		describe("attempts to add relevant refreshers that are missing from the input", () => {

@@ -147,3 +147,98 @@ Snapshot tests are effective at catching changes which inadvertently modify the 
 
 Tree2's full-scale snapshot tests can be found at [experimental/dds/tree2/src/test/snapshots/summary.spec.ts](../../src/test/snapshots/summary.spec.ts),
 with smaller-scale snapshot tests (e.g. snapshot testing just the SchemaIndex format) nearby.
+
+# Implementation Specifics
+
+SharedTree's codecs are frequently composed over each other in a manner consistent with SharedTree's layering.
+This conveniently allows unit testing only portions of the persisted data.
+As a downside, it makes maintaining backwards compatibility with the format somewhat more complex, because not all codecs in this composition provide explicit versions for the portion of data they encode.
+The following diagram shows _runtime dependencies_ of the codec hierarchy for SharedTree's original persisted format.
+
+```mermaid
+flowchart TD
+    RevisionTagCodec
+    SchemaCodec
+    FieldBatchCodec
+    ForestCodec-->FieldBatchCodec
+    MessageCodec-->SharedTreeChangeFamilyCodec
+    EditManagerCodec-->SharedTreeChangeFamilyCodec
+    SharedTreeChangeFamilyCodec-->FieldBatchCodec
+    SharedTreeChangeFamilyCodec-->ModularChangeFamilyCodec
+    SharedTreeChangeFamilyCodec-->SchemaChangeCodec
+    SchemaChangeCodec-->SchemaCodec
+    ModularChangeFamilyCodec-->OptionalFieldCodec
+    ModularChangeFamilyCodec-->SequenceFieldCodec
+    ModularChangeFamilyCodec-->NodeKeyFieldCodec
+    ModularChangeFamilyCodec-->ForbiddenFieldCodec
+    SharedTreeChangeFamilyCodec-->RevisionTagCodec
+    DetachedNodeToFieldCodec-->RevisionTagCodec
+    OptionalFieldCodec-->RevisionTagCodec
+    SequenceFieldCodec-->RevisionTagCodec
+    OptionalFieldCodec-->FieldBatchCodec
+    SequenceFieldCodec-->FieldBatchCodec
+
+    classDef summarizable stroke-width:8px
+    classDef op stroke-width:8px
+    classDef versioned fill:#f96
+    class ForestCodec,EditManagerCodec,DetachedNodeToFieldCodec,SchemaCodec summarizable
+    class MessageCodec op
+    class FieldBatchCodec,SchemaCodec,ForestCodec,MessageCodec,EditManagerCodec,DetachedNodeToFieldCodec versioned
+```
+
+In this diagram, large borders represent 'top-level codecs', i.e. codecs which directly define the data format for a summary blob or op.
+Orange codecs provide explicit versions to the data they encode.
+
+> Field kind codecs are actually corecursive with ModularChangeset's codec with respect to the encoded data. That doesn't significantly affect guidance around updating the persisted format.
+
+Entries in this diagram align with the following in code:
+
+| Codec (chart entry)                                                                           | In-memory type                  |
+| --------------------------------------------------------------------------------------------- | ------------------------------- |
+| [RevisionTagCodec](../../src/core/rebase/revisionTagCodec.ts)                                 | RevisionTag                     |
+| [SchemaCodec](../../src/feature-libraries/schema-index/codec.ts)                              | TreeStoredSchema                |
+| [SchemaChangeCodec](../../src/feature-libraries/schema-edits/schemaChangeCodecs.ts)           | SchemaChange                    |
+| [FieldBatchCodec](../../src/feature-libraries/chunked-forest/codec/codecs.ts)                 | FieldBatch                      |
+| [ForestCodec](../../src/feature-libraries/forest-summary/codec.ts)                            | FieldSet                        |
+| [MessageCodec](../../src/shared-tree-core/messageCodecs.ts)                                   | DecodedMessage<TChangeset>      |
+| [SharedTreeChangeFamilyCodec](../../src/shared-tree/sharedTreeChangeCodecs.ts)                | SharedTreeChange                |
+| [EditManagerCodec](../../src/shared-tree-core/editManagerCodecs.ts)                           | SummaryData<TChangeset>         |
+| [ModularChangeFamilyCodec](../../src/feature-libraries/modular-schema/modularChangeCodecs.ts) | ModularChange                   |
+| [OptionalFieldCodec](../../src/feature-libraries/optional-field/optionalFieldCodecs.ts)       | OptionalChangeset<TChildChange> |
+| [SequenceFieldCodec](../../src/feature-libraries/sequence-field/sequenceFieldCodecs.ts)       | Changeset<TChildChange>         |
+| [NodeKeyFieldCodec](../../src/feature-libraries/default-schema/noChangeCodecs.ts)             | N/A                             |
+| [ForbiddenFieldCodec](../../src/feature-libraries/default-schema/noChangeCodecs.ts)           | N/A                             |
+| [DetachedNodeToFieldCodec](../../src/core/tree/detachedFieldIndexCodec.ts)                    | DetachedFieldSummaryData        |
+
+Because all data is versioned at the top level, we can conceptually extend that version to include all other non-explicitly versioned containing data, even if that data isn't explicitly written by the same codec.
+For example, a format change in `SchemaChangeCodec` could be implemented by adding support for a new version on each of its nearest explicitly versioned consumers, i.e. `MessageCodec` and `EditManagerCodec`.
+This new version would use the same code for all bits of `MessageCodec`, `EditManagerCodec`, and `SharedTreeChangeFamilyCodec`, but pass enough context down to `SchemaChangeCodec` to resolve to the newer format.
+In this manner, the mapping between explicitly versioned data and implicitly versioned data for composed codecs is managed in code.
+
+## Current code guidelines
+
+Codecs which explicitly version their data should export a codec which takes in a write version and supports reading all supported versions.
+The write version will ultimately come from the user of SharedTree
+
+Codecs which do not explicitly version their data should export a codec family.
+This ensures that the consumer of the codec can use their versioning information to resolve the appropriate implicit version.
+
+Using the same example as above, under these guidelines `SharedTreeChangeFamilyCodec` and `SchemaChangeCodec` should export codec families for composition purposes.
+To make a breaking change in `SchemaChangeCodec`,
+
+-   Add support for the new version in `SchemaChangeCodec`, adding it to the exposed codec family
+-   Add a new version for `SharedTreeChangeFamilyCodec` which leverages the new `SchemaChangeCodec`
+-   Add a new version for `EditManagerCodec` which leverages the new `SharedTreeChangeFamilyCodec`
+-   Add a new version for `MessageCodec` which leverages the new `SharedTreeChangeFamilyCodec`
+-   Add an option to `SharedTreeFormatVersion` as a new write version
+    -   Make this write version create edit manager & message codecs of the appropriate versions
+    -   Be sure to document code saturation requirements which must be met before the new version can be used
+
+## Possible Improvements
+
+As can be seen by the example above, under current guidelines, the size of the code change for a new format will vary depending on how deeply nested the implicitly versioned codec is (through codec composition layers).
+We could restructure the general approach taken to 'resolve all implicitly versioned codecs' immediately and pass this information through to all codecs.
+This would remove the need for intermediate map entries, but it would make re-layering the way codecs compose more difficult.
+
+Another improvement we may want to consider is lazily creating codecs for a given version.
+This should be relatively straightforward by tweaking `makeCodecFamily`'s API.

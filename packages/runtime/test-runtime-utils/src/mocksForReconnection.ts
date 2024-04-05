@@ -4,7 +4,7 @@
  */
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { createChildLogger, raiseConnectedEvent } from "@fluidframework/telemetry-utils";
+import { createChildLogger, raiseConnectedEvent } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import {
@@ -46,8 +46,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 				this.process(remoteMessage);
 			}
 			this.pendingRemoteMessages.length = 0;
-			// ! TODO AB#7512
-			this.deltaManager.clientSequenceNumber = -1;
+			this.deltaManager.clientSequenceNumber = 0;
 			// We should get a new clientId on reconnection.
 			this.clientId = uuid();
 			// Update the clientId in FluidDataStoreRuntime.
@@ -61,6 +60,14 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			// On disconnection, clear any outstanding messages for this client because it will be resent.
 			this.factory.clearOutstandingClientMessages(this.clientId);
 			this.factory.quorum.removeMember(this.clientId);
+			for (const message of this.outbox) {
+				this.addPendingMessage(
+					message.content,
+					message.localOpMetadata,
+					++this.deltaManager.clientSequenceNumber,
+				);
+			}
+			this.outbox.length = 0;
 		}
 
 		// Let the DDSes know that the connection state changed.
@@ -103,8 +110,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 	public async initializeWithStashedOps(
 		fromContainerRuntime: MockContainerRuntimeForReconnection,
 	) {
-		// ! TODO AB#7512
-		if (this.pendingMessages.length !== 0 || this.deltaManager.clientSequenceNumber !== -1) {
+		if (this.pendingMessages.length !== 0 || this.deltaManager.clientSequenceNumber !== 0) {
 			throw new Error("applyStashedOps must be called first, and once.");
 		}
 

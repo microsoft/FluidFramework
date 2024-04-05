@@ -12,7 +12,7 @@ import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	validateAssertionError,
-} from '@fluidframework/test-runtime-utils';
+} from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 
 import { BuildNode, Change, ChangeType, StablePlace, StableRange } from '../../ChangeTypes.js';

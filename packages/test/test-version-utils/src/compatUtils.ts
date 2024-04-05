@@ -4,28 +4,28 @@
  */
 
 import { mixinAttributor } from "@fluid-experimental/attributor";
+import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/test-drivers";
 import {
 	IContainerRuntimeOptions,
 	DefaultSummaryConfiguration,
 	CompressionAlgorithms,
 	ICompressionRuntimeOptions,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import {
 	FluidObject,
 	IFluidHandleContext,
 	IFluidLoadable,
 	IRequest,
 } from "@fluidframework/core-interfaces";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ISharedDirectory } from "@fluidframework/map/internal";
 import {
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestContainerConfig,
 	DataObjectFactoryType,
@@ -33,7 +33,7 @@ import {
 	createTestContainerRuntimeFactory,
 	TestObjectProvider,
 	TestObjectProviderWithVersionedLoad,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import * as semver from "semver";
 
 import { pkgVersion } from "./packageVersion.js";
@@ -333,7 +333,14 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 	assert(versionForLoading !== undefined, "versionForLoading");
 
 	const minVersion =
-		semver.compare(versionForCreating, versionForLoading) < 0
+		// First, check if any of the versions is current version of the package.
+		// Current versions show up in the form of "2.0.0-dev-rc.3.0.0.251800", and semver.compare()
+		// incorrectly compares them with prior minors, like "2.0.0-rc.2.0.1"
+		versionForLoading === pkgVersion
+			? versionForCreating
+			: versionForCreating === pkgVersion
+			? versionForLoading
+			: semver.compare(versionForCreating, versionForLoading) < 0
 			? versionForCreating
 			: versionForLoading;
 

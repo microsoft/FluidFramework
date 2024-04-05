@@ -14,7 +14,7 @@ import {
 	ReferenceType,
 	TextSegment,
 	refHasTileLabel,
-} from "@fluidframework/merge-tree";
+} from "@fluidframework/merge-tree/internal";
 
 import { SharedSegmentSequence } from "./sequence.js";
 import { SharedStringFactory } from "./sequenceFactory.js";

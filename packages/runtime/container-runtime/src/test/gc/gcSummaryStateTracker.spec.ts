@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { SummaryType } from "@fluidframework/protocol-definitions";
-import { gcDeletedBlobKey, gcTombstoneBlobKey } from "@fluidframework/runtime-definitions";
+import { gcDeletedBlobKey, gcTombstoneBlobKey } from "@fluidframework/runtime-definitions/internal";
 
 import {
 	GCSummaryStateTracker,
