@@ -208,32 +208,34 @@ export class FuzzTestMinimizer<
 				this.ddsModel,
 				this.seed,
 				this.operations,
-				{
-					saveOnFailure: false,
-					filepath: this.saveInfo?.filepath,
-				},
+				undefined,
 				this.providedOptions,
 			);
 			return false;
 		} catch (error: unknown) {
-			if (!error || !(error instanceof Error) || error instanceof ReducerPreconditionError) {
+			if (
+				!error ||
+				!(error instanceof Error) ||
+				error instanceof ReducerPreconditionError ||
+				error.stack === undefined
+			) {
 				return false;
 			}
 
-			// reproduce based on the final line+col of the error
-			const message = error.stack
-				?.split("\n")
-				.map((s) => s.trim())
-				.find((s) => s.startsWith("at"));
+			const stackLines = error.stack.split("\n").map((s) => s.trim());
 
-			if (this.initialError === undefined && message !== undefined) {
+			const stackTop = stackLines.findIndex((s) => s.startsWith("at"));
+
+			// reproduce based on the final two lines+col of the error
+			const message = stackLines.slice(stackTop, stackTop + 2).join("\n");
+
+			if (this.initialError === undefined) {
 				this.initialError = { message, op: lastOp };
 				return true;
 			}
 
 			return (
-				message === this.initialError?.message &&
-				this.initialError?.op?.type === lastOp.type
+				message === this.initialError.message && this.initialError.op.type === lastOp.type
 			);
 		} finally {
 			emitter.off("operation", lastOpTracker);
