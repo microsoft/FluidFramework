@@ -4,6 +4,7 @@
 
 ```ts
 
+// Why are these not reexported?
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import type { IErrorBase } from '@fluidframework/core-interfaces';
@@ -40,7 +41,6 @@ export enum CommitKind {
 }
 
 // @public
-// TODO: this being mutable seems bad.
 export interface CommitMetadata {
     readonly isLocal: boolean;
     readonly kind: CommitKind;
