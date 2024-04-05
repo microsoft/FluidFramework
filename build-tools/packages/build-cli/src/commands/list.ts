@@ -3,14 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { writeFileSync } from "node:fs";
-import { Package, PackageNamePolicyConfig } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 
+import { writeFileSync } from "node:fs";
+import { Package, PackageNamePolicyConfig } from "@fluidframework/build-tools";
 import { BaseCommand } from "../base";
 import { filterPackages, parsePackageFilterFlags } from "../filter";
 import { filterFlags, releaseGroupFlag } from "../flags";
-import { type Feed, feeds, isFeed, packagePublishesToFeed } from "../library";
+import {
+	type Feed,
+	feeds,
+	isFeed,
+	packagePublishesToFeed,
+	// eslint-disable-next-line import/no-internal-modules -- the policy-related stuff will eventually be moved into this package
+} from "../library/repoPolicyCheck/npmPackages";
 import { PnpmListEntry, pnpmList } from "../pnpm";
 
 interface ListItem extends PnpmListEntry {

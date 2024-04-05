@@ -21,7 +21,6 @@ import {
 import { BuildGraph } from "./buildGraph";
 import { NpmDepChecker } from "./npmDepChecker";
 import { ISymlinkOptions, symlinkPackage } from "./symlinkUtils";
-
 const traceInit = registerDebug("fluid-build:init");
 
 const { log } = defaultLogger;

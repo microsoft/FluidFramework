@@ -5,7 +5,6 @@
 
 import { existsSync } from "fs";
 import path from "path";
-
 import { GitRepo } from "../../../common/gitRepo";
 import { readFileAsync } from "../../../common/utils";
 import { LeafWithDoneFileTask } from "./leafTask";

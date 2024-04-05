@@ -7,7 +7,6 @@ import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { readJsonSync } from "fs-extra";
 import { Project, SourceFile } from "ts-morph";
-
 import { BrokenCompatTypes } from "../common/fluidRepo";
 import { PackageJson } from "../common/npmPackage";
 import { TestCaseTypeData, buildTestCase } from "../typeValidator/testGeneration";

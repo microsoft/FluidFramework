@@ -4,8 +4,6 @@
  */
 
 import path from "path";
-import findUp from "find-up";
-
 import { getResolvedFluidRoot } from "../../../common/fluidUtils";
 import { GitRepo } from "../../../common/gitRepo";
 import { LeafWithFileStatDoneFileTask } from "./leafTask";

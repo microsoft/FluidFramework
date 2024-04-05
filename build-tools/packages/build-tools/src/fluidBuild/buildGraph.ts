@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
 import { AsyncPriorityQueue } from "async";
 import chalk from "chalk";
-import registerDebug from "debug";
 import * as semver from "semver";
+
+import * as assert from "assert";
+import registerDebug from "debug";
 import { FileHashCache } from "../common/fileHashCache";
 import {
 	TaskDefinition,

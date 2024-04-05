@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import chalk from "chalk";
 import prompts from "prompts";
 import stripAnsi from "strip-ansi";
+
+import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args";
 import { BaseCommand } from "../../base";

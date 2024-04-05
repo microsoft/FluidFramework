@@ -6,9 +6,10 @@
 import * as fs from "node:fs";
 import { EOL as newline } from "node:os";
 import * as path from "node:path";
-import { loadFluidBuildConfig } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { readJson } from "fs-extra";
+
+import { loadFluidBuildConfig } from "@fluidframework/build-tools";
 
 import { BaseCommand } from "../../base";
 import { Context, Handler, Repository, policyHandlers } from "../../library";

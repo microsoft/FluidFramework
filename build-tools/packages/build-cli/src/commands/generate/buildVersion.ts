@@ -5,8 +5,9 @@
 
 import * as childProcess from "node:child_process";
 import * as fs from "node:fs";
-import { getIsLatest, getSimpleVersion } from "@fluid-tools/version-tools";
 import { Flags } from "@oclif/core";
+
+import { getIsLatest, getSimpleVersion } from "@fluid-tools/version-tools";
 
 import { BaseCommand } from "../../base";
 

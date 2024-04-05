@@ -5,7 +5,6 @@
 
 import path from "node:path";
 import { Package } from "@fluidframework/build-tools";
-
 import { filterFlags, selectionFlags } from "./flags";
 import { Context } from "./library";
 import { ReleaseGroup, knownReleaseGroups } from "./releaseGroups";

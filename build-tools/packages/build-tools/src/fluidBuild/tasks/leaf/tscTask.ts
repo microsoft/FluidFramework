@@ -6,9 +6,10 @@
 import * as assert from "assert";
 import * as fs from "fs";
 import path from "path";
-import { readFileSync } from "fs-extra";
 import isEqual from "lodash.isequal";
 import * as tsTypes from "typescript";
+
+import { readFileSync } from "fs-extra";
 import { getInstalledPackageVersion, getRecursiveFiles } from "../../../common/taskUtils";
 import { TscUtil, getTscUtils } from "../../../common/tscUtils";
 import { existsSync, readFileAsync } from "../../../common/utils";

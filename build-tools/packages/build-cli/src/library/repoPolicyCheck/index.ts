@@ -30,4 +30,3 @@ export const policyHandlers: Handler[] = [
 ];
 
 export { type Handler } from "./common";
-export { type Feed, feeds, isFeed, packagePublishesToFeed } from "./npmPackages";

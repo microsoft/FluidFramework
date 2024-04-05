@@ -4,11 +4,12 @@
  */
 
 import { strict as assert } from "node:assert";
-import { bumpVersionScheme } from "@fluid-tools/version-tools";
-import { FluidRepo } from "@fluidframework/build-tools";
 import execa from "execa";
 import inquirer from "inquirer";
 import { Machine } from "jssm";
+
+import { bumpVersionScheme } from "@fluid-tools/version-tools";
+import { FluidRepo } from "@fluidframework/build-tools";
 
 import {
 	generateBumpDepsBranchName,

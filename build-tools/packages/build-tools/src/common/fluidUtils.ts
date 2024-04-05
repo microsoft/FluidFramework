@@ -6,8 +6,10 @@
 import * as childProcess from "node:child_process";
 import { existsSync } from "node:fs";
 import * as path from "node:path";
-import { getPackages } from "@manypkg/get-packages";
 import { cosmiconfigSync } from "cosmiconfig";
+
+import { getPackages } from "@manypkg/get-packages";
+import { readJson } from "fs-extra";
 import { commonOptions } from "./commonOptions";
 import { IFluidBuildConfig } from "./fluidRepo";
 import { realpathAsync } from "./utils";

@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
 import { AsyncPriorityQueue, priorityQueue } from "async";
+
+import * as assert from "assert";
 import registerDebug from "debug";
 import { BuildPackage, BuildResult } from "../buildGraph";
 import { options } from "../options";

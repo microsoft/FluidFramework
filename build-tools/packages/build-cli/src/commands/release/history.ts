@@ -3,13 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { detectBumpType } from "@fluid-tools/version-tools";
 import { Flags } from "@oclif/core";
 import chalk from "chalk";
 import { table } from "table";
 
-import { findPackageOrReleaseGroup } from "../../args";
-import { packageSelectorFlag, releaseGroupFlag } from "../../flags";
 import {
 	ReleaseReport,
 	VersionDetails,
@@ -17,6 +14,11 @@ import {
 	getDisplayDateRelative,
 	sortVersions,
 } from "../../library";
+
+import { detectBumpType } from "@fluid-tools/version-tools";
+
+import { findPackageOrReleaseGroup } from "../../args";
+import { packageSelectorFlag, releaseGroupFlag } from "../../flags";
 import { ReleaseGroup, ReleasePackage } from "../../releaseGroups";
 import { ReleaseReportBaseCommand, ReleaseSelectionMode } from "./report";
 

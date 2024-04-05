@@ -8,7 +8,6 @@ import { isInternalVersionRange } from "@fluid-tools/version-tools";
 import { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import fetch from "node-fetch";
-
 import { BaseCommand } from "../../base";
 import { PackageVersionList } from "../../library";
 

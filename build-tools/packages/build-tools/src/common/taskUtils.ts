@@ -6,7 +6,6 @@
 import { existsSync } from "node:fs";
 import { readdir } from "node:fs/promises";
 import * as path from "path";
-
 import type { PackageJson } from "./npmPackage";
 import { lookUpDirSync, readFileAsync } from "./utils";
 
