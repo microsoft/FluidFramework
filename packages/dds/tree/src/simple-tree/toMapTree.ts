@@ -249,20 +249,14 @@ function arrayToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTre
  */
 function mapToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree {
 	assert(schema.kind === NodeKind.Map, "Expected a Map schema.");
-
-	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
-
-	let fields: [string, InsertableContent][] = [];
-	if (data instanceof Map) {
-		fields = [...data.entries()];
-	} else if (typeof data === "object" && data !== null) {
-		fields = Object.entries(data);
-	} else {
+	if (!(data instanceof Map) || typeof data !== "object" || data === null) {
 		throw new UsageError(`Input data is incompatible with Map schema: ${data}`);
 	}
 
+	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
+
 	const transformedFields = new Map<FieldKey, MapTree[]>();
-	for (const [key, value] of fields) {
+	for (const [key, value] of data as Iterable<[string, InsertableContent]>) {
 		assert(!transformedFields.has(brand(key)), 0x84c /* Keys should not be duplicated */);
 
 		// Omit undefined values - an entry with an undefined value is equivalent to one that has been removed or omitted
