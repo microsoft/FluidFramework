@@ -274,7 +274,7 @@ export function objectSchema<
 ) {
 	// Ensure no collisions between final set of view keys, and final set of stored keys (including those
 	// implicitly derived from view keys)
-	assertUniqueKeys(base.name, base.info);
+	assertUniqueKeys(base.identifier, base.info);
 	class schema extends base {
 		public constructor(input: InsertableObjectFromSchemaRecord<T>) {
 			super(input);
