@@ -69,5 +69,5 @@ export {
 	RecursiveObjectPojoMode as test_RecursiveObjectPojoMode,
 } from "./testRecursiveDomain.js";
 
-export { TreeNode, Unhydrated, TreeArrayNodeBase } from "./types.js";
-export { TreeArrayNode, IterableTreeArrayContent } from "./treeArrayNode.js";
+export { TreeNode, Unhydrated } from "./types.js";
+export { TreeArrayNode, IterableTreeArrayContent, TreeArrayNodeBase } from "./treeArrayNode.js";
