@@ -66,7 +66,7 @@ export function isOdcUrl(url: URL): boolean {
 
 	// Splitting the regexes so we don't have regex soup
 	// Format: /v2.1/drive/items/ABC123!123 and /v2.1/drives/ABC123/items/ABC123!123
-	const odcRegex = /^\/v2\.1\/(drive|drives\/[^/]+)\/items\/([\dA-Za-z]+)!(\d+)/;
+	const odcRegex = /^\/v2\.1\/(?:drive|drives\/[^/]+)\/items\/[\dA-Za-z]+!\d+/;
 
 	// Format: /v2.1/drives('ABC123')/items('ABC123!123')
 	const odcODataRegex = /^\/v2\.1\/drives\('[^/]+'\)\/items\('[\dA-Za-z]+!\d+'\)/;
