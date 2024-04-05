@@ -319,7 +319,7 @@ describe("sharedTreeView", () => {
 			const anchor = cursor.buildAnchor();
 			cursor.clear();
 			insertFirstNode(view, "B");
-			undoStack.pop()?.revert();
+			undoStack.pop()?.revert(true);
 			cursor = view.forest.allocateCursor();
 			view.forest.tryMoveCursorToNode(anchor, cursor);
 			assert.equal(cursor.value, "A");
@@ -595,13 +595,13 @@ describe("sharedTreeView", () => {
 
 		checkout1.editor.sequenceField(rootField).remove(0, 1); // Remove "A"
 		checkout1.editor.sequenceField(rootField).remove(0, 1); // Remove 1
-		checkout1Revertibles.undoStack.pop()?.revert(); // Restore 1
+		checkout1Revertibles.undoStack.pop()?.revert(true); // Restore 1
 		provider.processMessages();
 
 		const checkout2Revertibles = createTestUndoRedoStacks(checkout2.events);
 		checkout2.editor.sequenceField(rootField).remove(1, 1); // Remove "B"
 		checkout2.editor.sequenceField(rootField).remove(1, 1); // Remove 2
-		checkout2Revertibles.undoStack.pop()?.revert(); // Restore 2
+		checkout2Revertibles.undoStack.pop()?.revert(true); // Restore 2
 		provider.processMessages();
 
 		const expectedContent = {

@@ -1483,7 +1483,7 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
 // @public
 export interface Revertible {
     release(): void;
-    revert(): void;
+    revert(release: boolean): void;
     readonly status: RevertibleStatus;
 }
 

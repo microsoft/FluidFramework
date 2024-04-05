@@ -189,9 +189,9 @@ describe("Branches", () => {
 		// It should still be possible to revert the the child branch's revertibles
 		assert.equal(stacks.undoStack.length, 2);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		stacks.undoStack.pop()!.revert();
+		stacks.undoStack.pop()!.revert(true);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		stacks.undoStack.pop()!.revert();
+		stacks.undoStack.pop()!.revert(true);
 
 		stacks.unsubscribe();
 	});
@@ -645,7 +645,7 @@ describe("Branches", () => {
 			assert.equal(revertiblesCreated.length, 2);
 
 			// Each revert also leads to the creation of a revertible event
-			revertiblesCreated[1].revert();
+			revertiblesCreated[1].revert(true);
 
 			assert.equal(revertiblesCreated.length, 3);
 
@@ -679,9 +679,11 @@ describe("Branches", () => {
 			assert.equal(revertiblesDisposed.length, 1);
 			assert.equal(revertiblesDisposed[0], revertiblesCreated[0]);
 
-			// reverting does not release the revertible
-			revertiblesCreated[1].revert();
+			revertiblesCreated[1].revert(false);
 			assert.equal(revertiblesDisposed.length, 1);
+
+			revertiblesCreated[1].revert(true);
+			assert.equal(revertiblesDisposed.length, 2);
 
 			unsubscribe1();
 			unsubscribe2();
@@ -742,7 +744,7 @@ describe("Branches", () => {
 			assert.equal(revertible.status, RevertibleStatus.Disposed);
 
 			assert.throws(() => revertible.release());
-			assert.throws(() => revertible.revert());
+			assert.throws(() => revertible.revert(false));
 
 			assert.equal(revertible.status, RevertibleStatus.Disposed);
 			unsubscribe();
@@ -762,8 +764,8 @@ describe("Branches", () => {
 			});
 
 			change(branch);
-			revertiblesCreated[0].revert();
-			revertiblesCreated[1].revert();
+			revertiblesCreated[0].revert(true);
+			revertiblesCreated[1].revert(true);
 
 			assert.deepEqual(commitKinds, [CommitKind.Default, CommitKind.Undo, CommitKind.Redo]);
 

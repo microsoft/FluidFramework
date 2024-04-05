@@ -79,10 +79,10 @@ describe("treeApi", () => {
 			});
 			assert.equal(view.root.content, 44);
 			assert.equal(undoStack.length, 1);
-			undoStack[0].revert();
+			undoStack[0].revert(true);
 			assert.equal(view.root.content, 42);
 			assert.equal(redoStack.length, 1);
-			redoStack[0].revert();
+			redoStack[0].revert(true);
 			assert.equal(view.root.content, 44);
 		});
 	});
@@ -152,10 +152,10 @@ describe("treeApi", () => {
 			});
 			assert.equal(view.root.content, 44);
 			assert.equal(undoStack.length, 1);
-			undoStack[0].revert();
+			undoStack[0].revert(true);
 			assert.equal(view.root.content, 42);
 			assert.equal(redoStack.length, 1);
-			redoStack[0].revert();
+			redoStack[0].revert(true);
 			assert.equal(view.root.content, 44);
 		});
 

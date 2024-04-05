@@ -666,7 +666,7 @@ describe("SharedTree", () => {
 
 		const revertible = undoStack.pop();
 		assert(revertible !== undefined, "expected undo stack to have an entry");
-		revertible.revert();
+		revertible.revert(true);
 
 		validateTreeContent(summarizingTree.checkout, {
 			schema: stringSequenceRootSchema,
@@ -845,14 +845,14 @@ describe("SharedTree", () => {
 			assert.deepEqual([...tree2.flexTree], [value]);
 
 			// Undo node insertion
-			undoStack.pop()?.revert();
+			undoStack.pop()?.revert(true);
 			provider.processMessages();
 
 			assert.deepEqual([...tree1.flexTree], []);
 			assert.deepEqual([...tree2.flexTree], []);
 
 			// Redo node insertion
-			redoStack.pop()?.revert();
+			redoStack.pop()?.revert(true);
 			provider.processMessages();
 
 			assert.deepEqual([...tree1.flexTree], [value]);
@@ -884,28 +884,28 @@ describe("SharedTree", () => {
 			assert.deepEqual([...tree2.flexTree], [value, value2, value3]);
 
 			// Undo node insertion
-			undoStack.pop()?.revert();
+			undoStack.pop()?.revert(true);
 			provider.processMessages();
 
 			assert.deepEqual([...tree1.flexTree], [value2, value3]);
 			assert.deepEqual([...tree2.flexTree], [value2, value3]);
 
 			// Undo node insertion
-			undoStack.pop()?.revert();
+			undoStack.pop()?.revert(true);
 			provider.processMessages();
 
 			assert.deepEqual([...tree1.flexTree], [value3]);
 			assert.deepEqual([...tree2.flexTree], [value3]);
 
 			// Undo node insertion
-			undoStack.pop()?.revert();
+			undoStack.pop()?.revert(true);
 			provider.processMessages();
 
 			assert.deepEqual([...tree1.flexTree], []);
 			assert.deepEqual([...tree2.flexTree], []);
 
 			// Redo node insertion
-			redoStack.pop()?.revert();
+			redoStack.pop()?.revert(true);
 			provider.processMessages();
 
 			assert.deepEqual([...tree1.flexTree], [value3]);
@@ -952,10 +952,10 @@ describe("SharedTree", () => {
 			provider.processMessages();
 
 			// Undo node insertion on both trees
-			undoStack1.pop()?.revert();
+			undoStack1.pop()?.revert(true);
 			assert.deepEqual([...root1], ["A", "B", "C", "y", "D"]);
 
-			undoStack2.pop()?.revert();
+			undoStack2.pop()?.revert(true);
 			assert.deepEqual([...root2], ["A", "x", "B", "C", "D"]);
 
 			provider.processMessages();
@@ -968,10 +968,10 @@ describe("SharedTree", () => {
 
 			const expectedAfterRedo = ["0", "A", "x", "B", "C", "y", "D"];
 			// Redo node insertion on both trees
-			redoStack1.pop()?.revert();
+			redoStack1.pop()?.revert(true);
 			assert.deepEqual([...root1], ["0", "A", "x", "B", "C", "D"]);
 
-			redoStack2.pop()?.revert();
+			redoStack2.pop()?.revert(true);
 			assert.deepEqual([...root2], ["A", "B", "C", "y", "D"]);
 
 			provider.processMessages();
@@ -1027,14 +1027,14 @@ describe("SharedTree", () => {
 
 			// ensure the remove is out of the collab window
 			assert(removeSequenceNumber < provider.minimumSequenceNumber);
-			undoStack[0]?.revert();
+			undoStack[0]?.revert(true);
 
 			provider.processMessages();
 			assert.deepEqual([...root1], ["A", "B", "C", "D"]);
 			assert.deepEqual([...root2], ["A", "B", "C", "D"]);
 
 			assert.equal(redoStack.length, 1);
-			redoStack.pop()?.revert();
+			redoStack.pop()?.revert(true);
 
 			provider.processMessages();
 			assert.deepEqual([...root1], ["B", "C", "D"]);
@@ -1091,11 +1091,11 @@ describe("SharedTree", () => {
 					assert.deepEqual([...tree2.flexTree.content.content], []);
 
 					if (scenario === "restore then change") {
-						undoStack1.pop()?.revert();
-						undoStack2.pop()?.revert();
+						undoStack1.pop()?.revert(true);
+						undoStack2.pop()?.revert(true);
 					} else {
-						undoStack2.pop()?.revert();
-						undoStack1.pop()?.revert();
+						undoStack2.pop()?.revert(true);
+						undoStack1.pop()?.revert(true);
 					}
 
 					provider.processMessages();
@@ -1230,19 +1230,19 @@ describe("SharedTree", () => {
 
 					resubmitter.setConnected(false);
 
-					s2.revert();
-					s1.revert();
+					s2.revert(true);
+					s1.revert(true);
 					submitter.assertOuterListEquals([]);
 					submitter.assertInnerListEquals(["a", "r"]);
 
 					provider.processMessages();
 
 					if (scenario === "restore and edit") {
-						rRemove.revert();
-						rEdit.revert();
+						rRemove.revert(true);
+						rEdit.revert(true);
 					} else {
-						rEdit.revert();
-						rRemove.revert();
+						rEdit.revert(true);
+						rRemove.revert(true);
 					}
 					resubmitter.assertOuterListEquals([["a", "s1", "s2"]]);
 
@@ -1273,18 +1273,18 @@ describe("SharedTree", () => {
 					resubmitter.setConnected(false);
 
 					if (scenario === "restore and edit") {
-						sRemove.revert();
-						sEdit.revert();
+						sRemove.revert(true);
+						sEdit.revert(true);
 					} else {
-						sEdit.revert();
-						sRemove.revert();
+						sEdit.revert(true);
+						sRemove.revert(true);
 					}
 					submitter.assertOuterListEquals([["a", "r1", "r2"]]);
 
 					provider.processMessages();
 
-					r2.revert();
-					r1.revert();
+					r2.revert(true);
+					r1.revert(true);
 					resubmitter.assertOuterListEquals([]);
 					resubmitter.assertInnerListEquals(["a", "s"]);
 
@@ -1319,7 +1319,7 @@ describe("SharedTree", () => {
 				resubmitter.assertOuterListEquals([]);
 				resubmitter.assertInnerListEquals(["a", "f"]);
 
-				rRemove.revert();
+				rRemove.revert(true);
 				resubmitter.assertOuterListEquals([["a", "f"]]);
 
 				resubmitter.setConnected(true);
@@ -1367,7 +1367,7 @@ describe("SharedTree", () => {
 			assert.equal(undoStack1.length, 1);
 			assert.equal(undoStack2.length, 0);
 
-			undoStack1.pop()?.revert();
+			undoStack1.pop()?.revert(true);
 			provider.processMessages();
 
 			// Insert node
@@ -1379,7 +1379,7 @@ describe("SharedTree", () => {
 			assert.equal(undoStack2.length, 1);
 			assert.equal(redoStack2.length, 0);
 
-			redoStack1.pop()?.revert();
+			redoStack1.pop()?.revert(true);
 			provider.processMessages();
 
 			assert.equal(undoStack1.length, 1);
@@ -1652,7 +1652,7 @@ describe("SharedTree", () => {
 			expectSchemaEqual(tree.storedSchema, intoStoredSchema(jsonSequenceRootSchema));
 
 			const revertible = undoStack.pop();
-			revertible?.revert();
+			revertible?.revert(true);
 
 			expectSchemaEqual(tree.storedSchema, intoStoredSchema(stringSequenceRootSchema));
 		});
