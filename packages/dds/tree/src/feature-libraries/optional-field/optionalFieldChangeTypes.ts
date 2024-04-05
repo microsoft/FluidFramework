@@ -4,7 +4,7 @@
  */
 
 import { ChangeAtomId } from "../../core/index.js";
-import { NodeChangeset } from "../modular-schema/index.js";
+import { NodeId } from "../modular-schema/index.js";
 
 /**
  * Uniquely identifies a register within the scope of this changeset.
@@ -17,7 +17,7 @@ export type RegisterId = ChangeAtomId | "self";
 
 export type Move = readonly [src: ChangeAtomId, dst: ChangeAtomId];
 
-export type ChildChange<TChildChange = NodeChangeset> = readonly [
+export type ChildChange<TChildChange = NodeId> = readonly [
 	register: RegisterId,
 	childChange: TChildChange,
 ];
@@ -30,7 +30,7 @@ export type ChildChange<TChildChange = NodeChangeset> = readonly [
  * Each register is identified using a {@link RegisterId}.
  * The active register holds the current value of the field, and other registers hold detached roots.
  */
-export interface OptionalChangeset<TChildChange = NodeChangeset> {
+export interface OptionalChangeset<TChildChange = NodeId> {
 	/**
 	 * Each entry signifies the intent to move a node from `src` to `dst`.
 	 * Moves to or from the "self" register are represented in {@link valueReplace}.

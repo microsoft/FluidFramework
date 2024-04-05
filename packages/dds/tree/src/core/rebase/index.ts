@@ -19,6 +19,8 @@ export {
 	ChangeAtomId,
 	ChangeAtomIdMap,
 	SessionIdSchema,
+	taggedAtomId,
+	taggedOptAtomId,
 } from "./types.js";
 export { RevisionTagCodec } from "./revisionTagCodec.js";
 export {

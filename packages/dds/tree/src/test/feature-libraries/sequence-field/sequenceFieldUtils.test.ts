@@ -14,9 +14,8 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/utils.js";
 import { brand } from "../../../util/index.js";
-import { TestChange } from "../../testChange.js";
 import { deepFreeze, testIdCompressor } from "../../utils.js";
-
+import { TestNodeId } from "../../testNodeId.js";
 import { generatePopulatedMarks } from "./populatedMarks.js";
 import { describeForBothConfigs, withOrderingMethod } from "./utils.js";
 
@@ -38,7 +37,7 @@ export function testUtils() {
 			].forEach((mark, index) => {
 				it(`${index}: ${"type" in mark ? mark.type : "NoOp"}`, () =>
 					withConfig(() => {
-						const splitable: SF.Mark<TestChange> = { ...mark, count: 3 };
+						const splitable: SF.Mark<TestNodeId> = { ...mark, count: 3 };
 						delete splitable.changes;
 						deepFreeze(splitable);
 						const [part1, part2] = splitMark(splitable, 2);
