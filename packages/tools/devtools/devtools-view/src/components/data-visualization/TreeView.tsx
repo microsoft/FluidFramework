@@ -31,6 +31,7 @@ export function TreeView(props: TreeViewProps): React.ReactElement {
 
 	const header = (
 		<TreeHeader
+			containerKey={containerKey}
 			label={label}
 			nodeTypeMetadata={node.typeMetadata}
 			metadata={metadata}

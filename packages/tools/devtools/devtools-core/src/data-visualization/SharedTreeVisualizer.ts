@@ -15,7 +15,11 @@ import {
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
 } from "@fluidframework/tree/internal";
-import type { SharedTreeLeafNode, VisualSharedTreeNode } from "./VisualSharedTreeTypes.js";
+import type {
+	SharedTreeLeafNode,
+	VisualSharedTreeNode,
+	SharedTreeSchemaNode,
+} from "./VisualSharedTreeTypes.js";
 import { VisualSharedTreeNodeKind } from "./VisualSharedTreeTypes.js";
 import {
 	type VisualChildNode,
@@ -25,6 +29,52 @@ import {
 } from "./VisualTree.js";
 
 /**
+ * TODO
+ */
+function createAllowedTypesVisualTree(
+	allowedTypes: string | Record<string, string>,
+): VisualChildNode {
+	if (typeof allowedTypes === "string") {
+		return {
+			value: allowedTypes,
+			nodeKind: VisualNodeKind.ValueNode,
+		};
+	}
+
+	const result: Record<string, VisualValueNode> = {};
+	for (const [allowedTypeKey, allowedType] of Object.entries(allowedTypes)) {
+		result[allowedTypeKey] = {
+			nodeKind: VisualNodeKind.ValueNode,
+			value: allowedType,
+		};
+	}
+
+	return {
+		children: result,
+		nodeKind: VisualNodeKind.TreeNode,
+	};
+}
+
+/**
+ * TODO
+ */
+function createToolTipContents(tree: SharedTreeSchemaNode): VisualTreeNode {
+	const children: Record<string, VisualChildNode> = {
+		name: {
+			nodeKind: VisualNodeKind.ValueNode,
+			value: tree.schemaName,
+		},
+	};
+	if (tree.allowedTypes !== undefined) {
+		children.allowedTypes = createAllowedTypesVisualTree(tree.allowedTypes);
+	}
+	return {
+		nodeKind: VisualNodeKind.TreeNode,
+		children,
+	};
+}
+
+/**
  * Converts the output of {@link sharedTreeVisualizer} to {@link VisualChildNode} type containing `schema` and `children` fields.
  */
 export function toVisualTree(tree: VisualSharedTreeNode): VisualValueNode | VisualTreeNode {
@@ -32,7 +82,9 @@ export function toVisualTree(tree: VisualSharedTreeNode): VisualValueNode | Visu
 		const result: VisualValueNode = {
 			value: tree.value,
 			nodeKind: VisualNodeKind.ValueNode,
-			tooltipContents: tree.schema.schemaName,
+			tooltipContents: {
+				schema: createToolTipContents(tree.schema),
+			},
 		};
 		return result;
 	} else {
@@ -46,7 +98,9 @@ export function toVisualTree(tree: VisualSharedTreeNode): VisualValueNode | Visu
 		return {
 			children,
 			nodeKind: VisualNodeKind.TreeNode,
-			tooltipContents: tree.schema.allowedTypes,
+			tooltipContents: {
+				schema: createToolTipContents(tree.schema),
+			},
 		};
 	}
 }
