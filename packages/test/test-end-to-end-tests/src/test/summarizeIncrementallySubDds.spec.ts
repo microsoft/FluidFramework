@@ -4,9 +4,10 @@
  */
 
 import { strict as assert } from "assert";
+
 import { describeCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import {
 	IChannelAttributes,
 	IChannelFactory,
@@ -14,7 +15,7 @@ import {
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
 import {
 	ISequencedDocumentMessage,
 	MessageType,
@@ -25,17 +26,19 @@ import {
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-	channelsTreeName,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
+import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	TestFluidObjectFactory,
 	createSummarizerFromFactory,
 	summarizeNow,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
+
 import { pkgVersion } from "../packageVersion.js";
 
 // Test DDS factory for the blob dds
@@ -498,8 +501,7 @@ describeCompat(
 				container,
 				defaultFactory,
 				summaryVersion,
-				getContainerRuntimeApi(pkgVersion, pkgVersion)
-					.ContainerRuntimeFactoryWithDefaultDataStore,
+				getContainerRuntimeApi(pkgVersion).ContainerRuntimeFactoryWithDefaultDataStore,
 			);
 			return createSummarizerResult.summarizer;
 		}

@@ -5,10 +5,12 @@
 
 import { FlexListToUnion, Unenforced } from "../feature-libraries/index.js";
 import { RestrictiveReadonlyRecord } from "../util/index.js";
+
 import {
 	AllowedTypes,
 	ApplyKind,
 	FieldKind,
+	type FieldSchema,
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
 	NodeFromSchema,
@@ -17,8 +19,8 @@ import {
 	TreeNodeSchema,
 	WithType,
 } from "./schemaTypes.js";
-import { TreeArrayNode } from "./treeArrayNode.js";
-import { TreeArrayNodeBase, TreeNode, Unhydrated } from "./types.js";
+import { TreeArrayNodeBase, TreeArrayNode } from "./arrayNode.js";
+import { TreeNode, Unhydrated } from "./types.js";
 
 /*
  * TODO:
@@ -174,7 +176,17 @@ export type InsertableTreeFieldFromImplicitFieldUnsafe<
 export interface FieldSchemaUnsafe<
 	out Kind extends FieldKind,
 	out Types extends Unenforced<ImplicitAllowedTypes>,
-> {
+> extends FieldSchema<Kind, any> {
+	/**
+	 * {@inheritDoc FieldSchema.kind}
+	 */
 	readonly kind: Kind;
+	/**
+	 * {@inheritDoc FieldSchema.allowedTypes}
+	 */
 	readonly allowedTypes: Types;
+	/**
+	 * {@inheritDoc FieldSchema.allowedTypeSet}
+	 */
+	readonly allowedTypeSet: ReadonlySet<TreeNodeSchema>;
 }

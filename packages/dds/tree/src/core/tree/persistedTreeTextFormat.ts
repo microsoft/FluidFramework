@@ -4,6 +4,7 @@
  */
 
 import { Static, TSchema, Type } from "@sinclair/typebox";
+
 import { schemaFormat } from "../schema-stored/index.js";
 
 /**

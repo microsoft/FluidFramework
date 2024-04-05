@@ -7,6 +7,7 @@ import IconButton from "@material-ui/core/IconButton";
 import Snackbar, { type SnackbarProps } from "@material-ui/core/Snackbar";
 import { type WithStyles, createStyles, withStyles } from "@material-ui/core/styles";
 import * as React from "react";
+
 import { SvgIcon } from "./SVGIcon.js";
 import type { Omit } from "./constants.js";
 

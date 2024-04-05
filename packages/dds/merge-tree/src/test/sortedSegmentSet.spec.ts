@@ -4,11 +4,13 @@
  */
 
 import { strict as assert } from "assert";
+
 import { LocalReferencePosition } from "../localReference.js";
 import { ISegment } from "../mergeTreeNodes.js";
 import { TrackingGroup } from "../mergeTreeTracking.js";
 import { ReferenceType } from "../ops.js";
 import { SortedSegmentSet, SortedSegmentSetItem } from "../sortedSegmentSet.js";
+
 import { TestClient } from "./testClient.js";
 const segmentCount = 15;
 

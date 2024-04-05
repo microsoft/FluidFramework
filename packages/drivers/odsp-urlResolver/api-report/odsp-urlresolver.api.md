@@ -4,10 +4,10 @@
 
 ```ts
 
-import { IContainerPackageInfo } from '@fluidframework/driver-definitions';
+import { IContainerPackageInfo } from '@fluidframework/driver-definitions/internal';
 import { IRequest } from '@fluidframework/core-interfaces';
-import { IResolvedUrl } from '@fluidframework/driver-definitions';
-import { IUrlResolver } from '@fluidframework/driver-definitions';
+import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
+import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
 
 // @internal
 export class FluidAppOdspUrlResolver implements IUrlResolver {
@@ -16,9 +16,6 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
     // (undocumented)
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 }
-
-// @internal
-export const isOdspUrl: (url: string) => boolean;
 
 // @internal (undocumented)
 export class OdspUrlResolver implements IUrlResolver {

@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	type BuildNode,
 	Change,
@@ -18,9 +19,9 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { type EditLog } from "@fluid-experimental/tree/test/EditLog";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { LoaderHeader } from "@fluidframework/container-definitions";
-import { type IContainerExperimental } from "@fluidframework/container-loader";
-import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { type IContainerExperimental } from "@fluidframework/container-loader/internal";
+import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { type ConfigTypes, type IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { type IChannel } from "@fluidframework/datastore-definitions";
 import {
@@ -28,7 +29,7 @@ import {
 	createSummarizerFromFactory,
 	summarizeNow,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import {
 	ITree,
 	SchemaFactory,

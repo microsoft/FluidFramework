@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { bufferToString } from "@fluid-internal/client-utils";
 import {
 	ITestDataObject,
@@ -11,7 +12,7 @@ import {
 	describeCompat,
 	itExpects,
 } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
 	DefaultSummaryConfiguration,
@@ -19,17 +20,17 @@ import {
 	ISummarizer,
 	ISummaryRuntimeOptions,
 	SummaryCollection,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ISummaryContext } from "@fluidframework/driver-definitions";
+import { ISummaryContext } from "@fluidframework/driver-definitions/internal";
 import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	FlushMode,
 	IFluidDataStoreFactory,
 	channelsTreeName,
-} from "@fluidframework/runtime-definitions";
-import type { SharedString } from "@fluidframework/sequence";
-import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/runtime-definitions/internal";
+import type { SharedString } from "@fluidframework/sequence/internal";
+import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -42,7 +43,7 @@ import {
 	summarizeNow,
 	timeoutPromise,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
 const testContainerConfig: ITestContainerConfig = {

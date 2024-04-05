@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { noopValidator } from "../../../codec/index.js";
+
 import {
 	DeltaRoot,
 	FieldKey,
@@ -30,11 +30,14 @@ import {
 	jsonableTreeFromCursor,
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
-import { assertDeltaEqual, failCodec, mintRevisionTag, testRevisionTagCodec } from "../../utils.js";
+import {
+	assertDeltaEqual,
+	failCodecFamily,
+	mintRevisionTag,
+	testRevisionTagCodec,
+} from "../../utils.js";
 
-const defaultChangeFamily = new DefaultChangeFamily(testRevisionTagCodec, failCodec, {
-	jsonValidator: noopValidator,
-});
+const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily);
 const family = defaultChangeFamily;
 
 const rootKey = rootFieldKey;

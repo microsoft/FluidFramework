@@ -4,7 +4,9 @@
  */
 
 import path from "path";
+
 import { IIdCompressor } from "@fluidframework/id-compressor";
+
 import { ChangesetLocalId, RevisionTagCodec } from "../../../core/index.js";
 import {
 	OptionalChangeset,
@@ -15,8 +17,9 @@ import { brand } from "../../../util/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { createSnapshotCompressor } from "../../snapshots/testTrees.js";
-import { TestChange } from "../../testChange.js";
+import { TestNodeId } from "../../testNodeId.js";
 import { Change } from "./optionalFieldUtils.js";
+import { TestChange } from "../../testChange.js";
 
 function generateTestChangesets(
 	idCompressor: IIdCompressor,
@@ -49,6 +52,10 @@ function generateTestChangesets(
 			name: "with reserved detach",
 			change: Change.reserve("self", { revision, localId }),
 		},
+		{
+			name: "pin",
+			change: Change.pin({ revision, localId }),
+		},
 	];
 }
 
@@ -56,10 +63,13 @@ export function testSnapshots() {
 	describe("Snapshots", () => {
 		const snapshotCompressor = createSnapshotCompressor();
 		const changesets = generateTestChangesets(snapshotCompressor);
-		const family = makeOptionalFieldCodecFamily(
-			TestChange.codec,
+		const family = makeOptionalFieldCodecFamily<TestChange>(
 			new RevisionTagCodec(snapshotCompressor),
 		);
+
+		const baseContext = {
+			originatorId: snapshotCompressor.localSessionId,
+		};
 
 		for (const version of family.getSupportedFormats()) {
 			describe(`version ${version}`, () => {
@@ -69,7 +79,9 @@ export function testSnapshots() {
 				for (const { name, change } of changesets) {
 					it(name, () => {
 						const encoded = codec.json.encode(change, {
-							originatorId: snapshotCompressor.localSessionId,
+							baseContext,
+							encodeNode: (node) => TestNodeId.encode(node, baseContext),
+							decodeNode: (node) => TestNodeId.decode(node, baseContext),
 						});
 						takeJsonSnapshot(encoded);
 					});

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IClientConfig,
 	IOdspTokens,
@@ -16,6 +16,7 @@ import {
 } from "@fluidframework/odsp-doclib-utils/internal";
 import { Mutex } from "async-mutex";
 import { jwtDecode } from "jwt-decode";
+
 import { debug } from "./debug.js";
 import { IAsyncCache, loadRC, lockRC, saveRC } from "./fluidToolRC.js";
 import { endResponse, serverListenAndHandle } from "./httpHelpers.js";

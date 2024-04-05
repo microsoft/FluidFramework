@@ -5,13 +5,14 @@
 
 import { FlexTreeNode, Unenforced, isFlexTreeNode } from "../feature-libraries/index.js";
 import { RestrictiveReadonlyRecord } from "../util/index.js";
+import { InsertableObjectFromSchemaRecord } from "./objectNode.js";
+
 import { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 import {
 	FieldKind,
 	FieldSchema,
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
-	InsertableObjectFromSchemaRecord,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	NodeKind,
 	TreeNodeSchema,

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { TAnySchema, Type } from "@sinclair/typebox";
+import { TAnySchema } from "@sinclair/typebox";
+
 import { IJsonCodec } from "../../codec/index.js";
 import {
 	ChangeAtomId,
@@ -11,9 +12,15 @@ import {
 	EncodedRevisionTag,
 	RevisionTag,
 } from "../../core/index.js";
-import { JsonCompatibleReadOnly, Mutable } from "../../util/index.js";
+import { Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
-import type { EncodedChangeAtomId, NodeChangeset } from "../modular-schema/index.js";
+import {
+	EncodedNodeChangeset,
+	type EncodedChangeAtomId,
+	type FieldChangeEncodingContext,
+	type NodeId,
+} from "../modular-schema/index.js";
+
 import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormatV1.js";
 import type { OptionalChangeset, RegisterId, Replace } from "./optionalFieldChangeTypes.js";
 
@@ -42,13 +49,7 @@ function makeRegisterIdCodec(
 	};
 }
 
-export function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
-	childCodec: IJsonCodec<
-		TChildChange,
-		JsonCompatibleReadOnly,
-		JsonCompatibleReadOnly,
-		ChangeEncodingContext
-	>,
+export function makeOptionalFieldCodec<TChildChange = NodeId>(
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
@@ -59,29 +60,32 @@ export function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
 	OptionalChangeset<TChildChange>,
 	EncodedOptionalChangeset<TAnySchema>,
 	EncodedOptionalChangeset<TAnySchema>,
-	ChangeEncodingContext
+	FieldChangeEncodingContext
 > {
 	const changeAtomIdCodec = makeChangeAtomIdCodec(revisionTagCodec);
 	const registerIdCodec = makeRegisterIdCodec(changeAtomIdCodec);
 
 	return {
-		encode: (change: OptionalChangeset<TChildChange>, context: ChangeEncodingContext) => {
+		encode: (change: OptionalChangeset<TChildChange>, context: FieldChangeEncodingContext) => {
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
 
 			if (change.moves.length > 0) {
 				encoded.m = change.moves.map(([src, dst]) => [
-					changeAtomIdCodec.encode(src, context),
-					changeAtomIdCodec.encode(dst, context),
+					changeAtomIdCodec.encode(src, context.baseContext),
+					changeAtomIdCodec.encode(dst, context.baseContext),
 				]);
 			}
 
 			if (change.valueReplace !== undefined) {
 				encoded.r = {
 					e: change.valueReplace.isEmpty,
-					d: changeAtomIdCodec.encode(change.valueReplace.dst, context),
+					d: changeAtomIdCodec.encode(change.valueReplace.dst, context.baseContext),
 				};
 				if (change.valueReplace.src !== undefined) {
-					encoded.r.s = registerIdCodec.encode(change.valueReplace.src, context);
+					encoded.r.s = registerIdCodec.encode(
+						change.valueReplace.src,
+						context.baseContext,
+					);
 				}
 			}
 
@@ -89,8 +93,8 @@ export function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
 				encoded.c = [];
 				for (const [id, childChange] of change.childChanges) {
 					encoded.c.push([
-						registerIdCodec.encode(id, context),
-						childCodec.encode(childChange, context),
+						registerIdCodec.encode(id, context.baseContext),
+						context.encodeNode(childChange as NodeId),
 					]);
 				}
 			}
@@ -98,32 +102,35 @@ export function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
 			return encoded;
 		},
 
-		decode: (encoded: EncodedOptionalChangeset<TAnySchema>, context: ChangeEncodingContext) => {
+		decode: (
+			encoded: EncodedOptionalChangeset<TAnySchema>,
+			context: FieldChangeEncodingContext,
+		) => {
 			const decoded: Mutable<OptionalChangeset<TChildChange>> = {
 				moves:
 					encoded.m?.map(([encodedSrc, encodedDst]) => [
-						changeAtomIdCodec.decode(encodedSrc, context),
-						changeAtomIdCodec.decode(encodedDst, context),
+						changeAtomIdCodec.decode(encodedSrc, context.baseContext),
+						changeAtomIdCodec.decode(encodedDst, context.baseContext),
 					]) ?? [],
 				childChanges:
 					encoded.c?.map(([id, encodedChange]) => [
-						registerIdCodec.decode(id, context),
-						childCodec.decode(encodedChange, context),
+						registerIdCodec.decode(id, context.baseContext),
+						context.decodeNode(encodedChange) as TChildChange,
 					]) ?? [],
 			};
 
 			if (encoded.r !== undefined) {
 				const replace: Mutable<Replace> = {
 					isEmpty: encoded.r.e,
-					dst: changeAtomIdCodec.decode(encoded.r.d, context),
+					dst: changeAtomIdCodec.decode(encoded.r.d, context.baseContext),
 				};
 				if (encoded.r.s !== undefined) {
-					replace.src = registerIdCodec.decode(encoded.r.s, context);
+					replace.src = registerIdCodec.decode(encoded.r.s, context.baseContext);
 				}
 				decoded.valueReplace = replace;
 			}
 			return decoded;
 		},
-		encodedSchema: EncodedOptionalChangeset(childCodec.encodedSchema ?? Type.Any()),
+		encodedSchema: EncodedOptionalChangeset(EncodedNodeChangeset),
 	};
 }
