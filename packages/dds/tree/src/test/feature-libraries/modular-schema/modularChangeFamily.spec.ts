@@ -1381,11 +1381,13 @@ describe("ModularChangeFamily", () => {
 		it("recognizes chunks in the builds array with length longer than one", () => {
 			assert.equal(nodesChunk.topLevelLength, 2);
 			const input: ModularChangeset = {
+				nodeChanges: new Map(),
 				fieldChanges: new Map([]),
 				builds: new Map([[aMajor, new Map([[brand(3), nodesChunk]])]]),
 			};
 
 			const expected: ModularChangeset = {
+				nodeChanges: new Map(),
 				fieldChanges: new Map([]),
 				builds: new Map([[aMajor, new Map([[brand(3), nodesChunk]])]]),
 			};
