@@ -95,6 +95,20 @@ export function asChangeAtomId(id: ChangesetLocalId | ChangeAtomId): ChangeAtomI
 	return typeof id === "object" ? id : { localId: id };
 }
 
+export function taggedAtomId(id: ChangeAtomId, revision: RevisionTag | undefined): ChangeAtomId {
+	return makeChangeAtomId(id.localId, id.revision ?? revision);
+}
+
+export function taggedOptAtomId(
+	id: ChangeAtomId | undefined,
+	revision: RevisionTag | undefined,
+): ChangeAtomId | undefined {
+	if (id === undefined) {
+		return undefined;
+	}
+	return taggedAtomId(id, revision);
+}
+
 /**
  * A node in a graph of commits. A commit's parent is the commit on which it was based.
  */

@@ -6,7 +6,6 @@
 import { Anchor, AnchorNode, FieldKey, TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
 	FlexMapNodeSchema,
-	FlexObjectNodeSchema,
 	FlexTreeContext,
 	FlexTreeEntityKind,
 	FlexTreeField,
@@ -14,12 +13,10 @@ import {
 	FlexTreeNode,
 	FlexTreeNodeEvents,
 	FlexTreeNodeSchema,
-	FlexTreeObjectNode,
 	FlexTreeTypedField,
 	FlexTreeTypedNode,
 	FlexTreeUnboxField,
 	FlexibleFieldContent,
-	LocalNodeKey,
 	TreeStatus,
 	flexTreeMarker,
 } from "../feature-libraries/index.js";
@@ -61,9 +58,6 @@ export function createRawNode(
 	schema: FlexTreeNodeSchema,
 	content: InsertableContent,
 ): RawTreeNode<FlexTreeNodeSchema, InsertableContent> {
-	if (schema instanceof FlexObjectNodeSchema) {
-		return new RawObjectNode(schema, content as object);
-	}
 	if (schema instanceof FlexMapNodeSchema) {
 		return new RawMapNode(schema, content as ReadonlyMap<string, InsertableContent>);
 	}
@@ -132,18 +126,6 @@ export abstract class RawTreeNode<TSchema extends FlexTreeNodeSchema, TContent>
 
 	public get anchorNode(): AnchorNode {
 		throw rawError("Reading anchor node");
-	}
-}
-
-/**
- * The implementation of an object node created by {@link createRawNode}.
- */
-export class RawObjectNode<TSchema extends FlexObjectNodeSchema, TContent extends object>
-	extends RawTreeNode<TSchema, TContent>
-	implements FlexTreeObjectNode
-{
-	public get localNodeKey(): LocalNodeKey | undefined {
-		throw rawError("Reading local node keys");
 	}
 }
 

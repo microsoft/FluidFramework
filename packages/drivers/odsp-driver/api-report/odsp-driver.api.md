@@ -97,9 +97,6 @@ export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "
 // @alpha (undocumented)
 export type FetchTypeInternal = FetchType | "cache";
 
-// @internal
-export function getApiRoot(origin: string): string;
-
 // @alpha
 export function getHashedDocumentId(driveId: string, itemId: string): Promise<string>;
 
@@ -193,16 +190,13 @@ export interface ISnapshotContentsWithProps extends ISnapshot {
 }
 
 // @internal
-export function isOdcOrigin(origin: string): boolean;
-
-// @internal
-export function isOdcUrl(url: string | URL): boolean;
+export function isOdcUrl(url: URL): boolean;
 
 // @internal
 export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOdspResolvedUrl;
 
 // @internal
-export function isSpoUrl(url: string): boolean;
+export function isSpoUrl(url: URL): boolean;
 
 // @alpha
 export const locatorQueryParamName = "nav";

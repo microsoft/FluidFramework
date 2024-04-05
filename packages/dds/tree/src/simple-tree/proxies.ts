@@ -8,24 +8,17 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	EmptyKey,
-	FieldKey,
 	IForestSubscription,
 	TreeNodeSchemaIdentifier,
 	TreeValue,
 	UpPath,
 } from "../core/index.js";
-// TODO: decide how to deal with dependencies on flex-tree implementation.
-// eslint-disable-next-line import/no-internal-modules
-import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/lazyNode.js";
+
 import {
 	FieldKinds,
-	FlexAllowedTypes,
 	FlexFieldSchema,
-	FlexObjectNodeSchema,
 	FlexTreeField,
 	FlexTreeNode,
-	FlexTreeOptionalField,
-	FlexTreeRequiredField,
 	FlexTreeTypedField,
 	isFluidHandle,
 	typeNameSymbol,
@@ -34,19 +27,13 @@ import { Mutable, brand, fail, isReadonlyArray } from "../util/index.js";
 
 import { anchorProxy, getFlexNode, tryGetFlexNode, tryGetProxy } from "./proxyBinding.js";
 import { extractRawNodeContent } from "./rawNode.js";
-import {
-	getSimpleFieldSchema,
-	getSimpleNodeSchema,
-	tryGetSimpleNodeSchema,
-} from "./schemaCaching.js";
+import { getSimpleNodeSchema, tryGetSimpleNodeSchema } from "./schemaCaching.js";
 import {
 	type ImplicitAllowedTypes,
-	type ImplicitFieldSchema,
 	type InsertableTypedNode,
 	NodeKind,
 	TreeMapNode,
 	type TreeNodeSchema,
-	getStoredKey,
 } from "./schemaTypes.js";
 import { cursorFromNodeData } from "./toMapTree.js";
 import { TreeNode, Unhydrated } from "./types.js";
@@ -125,168 +112,6 @@ export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeVal
 	} else {
 		return (classSchema as { create(data: FlexTreeNode): TreeNode }).create(flexNode);
 	}
-}
-
-/**
- * Maps from simple field keys ("view" keys) to their flex field counterparts ("stored" keys).
- *
- * @remarks
- * A missing entry for a given view key indicates that the view and stored keys are the same for that field.
- */
-type SimpleKeyToFlexKeyMap = Map<FieldKey, FieldKey>;
-
-/**
- * Caches a {@link SimpleKeyToFlexKeyMap} for a given {@link TreeNodeSchema}.
- */
-const simpleKeyToFlexKeyCache = new WeakMap<TreeNodeSchema, SimpleKeyToFlexKeyMap>();
-
-/**
- * Caches the mappings from view keys to stored keys for the provided object field schemas in {@link simpleKeyToFlexKeyCache}.
- */
-function getOrCreateFlexKeyMapping(
-	nodeSchema: TreeNodeSchema,
-	fields: Record<string, ImplicitFieldSchema>,
-): SimpleKeyToFlexKeyMap {
-	let keyMap = simpleKeyToFlexKeyCache.get(nodeSchema);
-	if (keyMap === undefined) {
-		keyMap = new Map<FieldKey, FieldKey>();
-		for (const [viewKey, fieldSchema] of Object.entries(fields)) {
-			// Only specify mapping if the stored key differs from the view key.
-			// No entry in this map will indicate that the two keys are the same.
-			const storedKey = getStoredKey(viewKey, fieldSchema);
-			if (viewKey !== storedKey) {
-				keyMap.set(brand(viewKey), brand(storedKey));
-			}
-		}
-		simpleKeyToFlexKeyCache.set(nodeSchema, keyMap);
-	}
-	return keyMap;
-}
-
-/**
- * @param allowAdditionalProperties - If true, setting of unexpected properties will be forwarded to the target object.
- * Otherwise setting of unexpected properties will error.
- * @param customTargetObject - Target object of the proxy.
- * If not provided `{}` is used for the target.
- */
-export function createObjectProxy(
-	schema: TreeNodeSchema,
-	allowAdditionalProperties: boolean,
-	targetObject: object = {},
-): TreeNode {
-	// Performance optimization: cache view key => stored key mapping.
-	const flexKeyMap: SimpleKeyToFlexKeyMap = getOrCreateFlexKeyMapping(
-		schema,
-		schema.info as Record<string, ImplicitFieldSchema>,
-	);
-
-	function getFlexKey(viewKey: FieldKey): FieldKey {
-		return flexKeyMap.get(viewKey) ?? viewKey;
-	}
-
-	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
-	// prototype as an object literal '{}'.  This is because 'deepEquals' uses 'Object.getPrototypeOf'
-	// as a way to quickly reject objects with different prototype chains.
-	//
-	// (Note that the prototype of an object literal appears as '[Object: null prototype] {}', not because
-	// the prototype is null, but because the prototype object itself has a null prototype.)
-
-	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
-	// a dispatch object to see if it improves performance.
-	const proxy = new Proxy(targetObject, {
-		get(target, viewKey): unknown {
-			const flexKey = getFlexKey(viewKey as FieldKey);
-			const field = getFlexNode(proxy).tryGetField(flexKey);
-
-			if (field !== undefined) {
-				return getProxyForField(field);
-			}
-
-			// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
-			return Reflect.get(target, viewKey, proxy);
-		},
-		set(target, viewKey, value: InsertableContent) {
-			const flexNode = getFlexNode(proxy);
-			const flexNodeSchema = flexNode.schema;
-			assert(flexNodeSchema instanceof FlexObjectNodeSchema, 0x888 /* invalid schema */);
-
-			const flexKey: FieldKey = getFlexKey(viewKey as FieldKey);
-			const flexFieldSchema = flexNodeSchema.objectNodeFields.get(flexKey);
-
-			if (flexFieldSchema === undefined) {
-				return allowAdditionalProperties ? Reflect.set(target, viewKey, value) : false;
-			}
-
-			// TODO: Is it safe to assume 'content' is a LazyObjectNode?
-			assert(flexNode instanceof LazyObjectNode, 0x7e0 /* invalid content */);
-			assert(typeof viewKey === "string", 0x7e1 /* invalid key */);
-			const field = getBoxedField(flexNode, flexKey, flexFieldSchema);
-
-			const simpleNodeSchema = getSimpleNodeSchema(flexNodeSchema);
-			const simpleNodeFields = simpleNodeSchema.info as Record<string, ImplicitFieldSchema>;
-			if (simpleNodeFields[viewKey] === undefined) {
-				fail(`Field key '${viewKey}' not found in schema.`);
-			}
-
-			const simpleFieldSchema = getSimpleFieldSchema(
-				flexFieldSchema,
-				simpleNodeFields[viewKey],
-			);
-
-			switch (field.schema.kind) {
-				case FieldKinds.required:
-				case FieldKinds.optional: {
-					const typedField = field as
-						| FlexTreeRequiredField<FlexAllowedTypes>
-						| FlexTreeOptionalField<FlexAllowedTypes>;
-
-					const content = prepareContentForInsert(value, flexNode.context.forest);
-					const cursor = cursorFromNodeData(content, simpleFieldSchema.allowedTypes);
-					typedField.content = cursor;
-					break;
-				}
-
-				default:
-					fail("invalid FieldKind");
-			}
-
-			return true;
-		},
-		has: (target, viewKey) => {
-			const fields = schema.info as Record<string, ImplicitFieldSchema>;
-			return (
-				fields[viewKey as FieldKey] !== undefined ||
-				(allowAdditionalProperties ? Reflect.has(target, viewKey) : false)
-			);
-		},
-		ownKeys: (target) => {
-			const fields = schema.info as Record<string, ImplicitFieldSchema>;
-			return [
-				...Object.keys(fields),
-				...(allowAdditionalProperties ? Reflect.ownKeys(target) : []),
-			];
-		},
-		getOwnPropertyDescriptor: (target, viewKey) => {
-			const flexKey = getFlexKey(viewKey as FieldKey);
-			const field = getFlexNode(proxy).tryGetField(flexKey);
-
-			if (field === undefined) {
-				return allowAdditionalProperties
-					? Reflect.getOwnPropertyDescriptor(target, viewKey)
-					: undefined;
-			}
-
-			const p: PropertyDescriptor = {
-				value: getProxyForField(field),
-				writable: true,
-				enumerable: true,
-				configurable: true, // Must be 'configurable' if property is absent from proxy target.
-			};
-
-			return p;
-		},
-	}) as TreeNode;
-	return proxy;
 }
 
 // #region Create dispatch map for maps
