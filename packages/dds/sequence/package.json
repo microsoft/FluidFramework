@@ -33,7 +33,7 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./test/intervalCollection": {
+		"./internal/test/intervalCollection": {
 			"import": {
 				"types": "./lib/intervalCollection.d.ts",
 				"default": "./lib/intervalCollection.js"

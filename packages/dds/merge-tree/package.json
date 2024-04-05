@@ -43,7 +43,7 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./test": {
+		"./internal/test": {
 			"import": {
 				"types": "./lib/test/index.d.ts",
 				"default": "./lib/test/index.js"
