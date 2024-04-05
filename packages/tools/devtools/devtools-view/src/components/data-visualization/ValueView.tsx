@@ -13,8 +13,7 @@ import { TreeItem } from "./TreeItem.js";
 /**
  * {@link ValueView} input props.
  */
-export type ValueViewProps = DataVisualizationTreeProps<ValueNodeBase> &
-	HasContainerKey & { root: boolean };
+export type ValueViewProps = DataVisualizationTreeProps<ValueNodeBase> & HasContainerKey;
 
 /**
  * Render data with type VisualNodeKind.ValueNode and render its children.

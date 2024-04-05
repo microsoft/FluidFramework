@@ -50,7 +50,6 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 						containerKey={containerKey}
 						label={key}
 						node={fluidObject}
-						root={true}
 					/>
 			  ));
 
