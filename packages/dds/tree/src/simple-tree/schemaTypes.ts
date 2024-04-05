@@ -8,53 +8,9 @@ import { Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { FlexListToUnion, LazyItem, isLazy } from "../feature-libraries/index.js";
-import { MakeNominal, RestrictiveReadonlyRecord, isReadonlyArray } from "../util/index.js";
+import { MakeNominal, isReadonlyArray } from "../util/index.js";
 
 import { TreeNode, Unhydrated } from "./types.js";
-
-/**
- * Helper used to produce types for object nodes.
- * @public
- */
-export type ObjectFromSchemaRecord<
-	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-> = {
-	-readonly [Property in keyof T]: TreeFieldFromImplicitField<T[Property]>;
-};
-
-/**
- * A {@link TreeNode} which modules a JavaScript object.
- * @remarks
- * Object nodes consist of a type which specifies which {@link TreeNodeSchema} they use (see {@link TreeNodeApi.schema}), and a collections of fields, each with a distinct `key` and its own {@link FieldSchema} defining what can be placed under that key.
- *
- * All non-empty fields on an object node are exposed as enumerable own properties with string keys.
- * No other own `own` or `enumerable` properties are included on object nodes unless the user of the node manually adds custom session only state.
- * This allows a majority of general purpose JavaScript object processing operations (like `for...in`, `Reflect.ownKeys()` and `Object.entries()`) to enumerate all the children.
- * @public
- */
-export type TreeObjectNode<
-	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-	TypeName extends string = string,
-> = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName>;
-
-/**
- * Helper used to produce types for:
- *
- * 1. Insertable content which can be used to construct an object node.
- *
- * 2. Insertable content which is an unhydrated object node.
- *
- * 3. Union of 1 and 2.
- *
- * @privateRemarks TODO: consider separating these cases into different types.
- *
- * @public
- */
-export type InsertableObjectFromSchemaRecord<
-	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-> = {
-	readonly [Property in keyof T]: InsertableTreeFieldFromImplicitField<T[Property]>;
-};
 
 /**
  * Schema for a tree node.
