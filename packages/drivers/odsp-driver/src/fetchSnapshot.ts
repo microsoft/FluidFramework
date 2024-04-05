@@ -478,7 +478,7 @@ async function fetchLatestSnapshotCore(
 
 			event.end({
 				// trees, leafTrees, blobNodes, encodedBlobsSize,
-				// blobNodes - blobs tells us (roughtly) how many blobs are dedupped by service.
+				// blobNodes - blobs tells us (roughly) how many blobs are deduped by service.
 				...getTreeStats(snapshot),
 				blobs: snapshot.blobContents?.size ?? 0,
 				sequenceNumber,
@@ -604,12 +604,13 @@ export function validateBlobsAndTrees(snapshot: IOdspSnapshot): void {
 
 function getTreeStatsCore(snapshotTree: ISnapshotTree, stats: ITreeStats): void {
 	stats.blobNodes += Object.entries(snapshotTree.blobs).length;
+	stats.trees++;
 
 	const entries = Object.entries(snapshotTree.trees);
 	if (entries.length === 0) {
 		stats.leafTrees++;
 	} else {
-		for (const [_, tree] of Object.entries(snapshotTree.trees)) {
+		for (const [_, tree] of entries) {
 			stats.trees++;
 			getTreeStatsCore(tree, stats);
 		}

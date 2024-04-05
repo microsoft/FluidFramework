@@ -125,7 +125,7 @@ function readTreeSection(node: NodeCore): {
 		if (length > 0 && treeNode.getMaybeString(0) === "name") {
 			switch (length) {
 				case 2: {
-					// emptry tree case
+					// empty tree case
 					// "name": <node name>
 					trees[treeNode.getString(1)] = { blobs: {}, trees: {} };
 					continue;
