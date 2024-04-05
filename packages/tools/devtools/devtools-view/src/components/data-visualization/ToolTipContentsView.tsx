@@ -25,7 +25,7 @@ export function ToolTipContentsView(props: ToolTipContentsViewProps): React.Reac
 
 	const listItems: React.ReactElement[] = [];
 
-	for (const [, contentsValue] of Object.entries(contents)) {
+	for (const [contentsValue] of Object.values(contents)) {
 		if (contentsValue.nodeKind === VisualNodeKind.TreeNode) {
 			for (const [fieldKey, fieldValue] of Object.entries(contentsValue.children)) {
 				if (fieldValue.nodeKind === VisualNodeKind.ValueNode) {
