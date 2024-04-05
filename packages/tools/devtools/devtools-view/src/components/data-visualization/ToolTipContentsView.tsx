@@ -36,7 +36,7 @@ export function ToolTipContentsView(props: ToolTipContentsViewProps): React.Reac
 					);
 					listItems.push(listItem);
 				} else {
-					throw new Error("Invalid Node Kind. Need to be a VisualNodeKind.ValueNode.");
+					<li>Unsupported Data Structure!</li>;
 				}
 			}
 		} else {

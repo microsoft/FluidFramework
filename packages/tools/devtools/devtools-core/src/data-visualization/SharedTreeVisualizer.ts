@@ -29,7 +29,9 @@ import {
 } from "./VisualTree.js";
 
 /**
- * TODO
+ * Returns allowed types of the non-leaf nodes in the tree.
+ * - String: Allowed type for the array node.
+ * - `Record<string, string>`: Allowed types for the non-array nodes (e.g., object, map).
  */
 function createAllowedTypesVisualTree(
 	allowedTypes: string | Record<string, string>,
@@ -56,7 +58,7 @@ function createAllowedTypesVisualTree(
 }
 
 /**
- * TODO
+ * Creates a visual representation of the schema of the tree in {@link VisualTreeNode} format.
  */
 function createToolTipContents(tree: SharedTreeSchemaNode): VisualTreeNode {
 	const children: Record<string, VisualChildNode> = {
