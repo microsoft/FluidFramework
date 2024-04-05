@@ -218,11 +218,7 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 			onBlur={onBlur}
 			onClick={(event): void => event?.preventDefault()}
 		>
-			<TreeHeader
-				containerKey={containerKey}
-				label={label}
-				nodeTypeMetadata={node.typeMetadata}
-			/>
+			<TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} />
 			<Dropdown
 				size="small"
 				className={styles.dropdownStyle}

@@ -31,7 +31,6 @@ export function FluidTreeView(props: FluidTreeViewProps): React.ReactElement {
 	const metadata = JSON.stringify(node.metadata);
 	const header = (
 		<TreeHeader
-			containerKey={containerKey}
 			label={label}
 			nodeTypeMetadata={node.typeMetadata}
 			metadata={metadata}

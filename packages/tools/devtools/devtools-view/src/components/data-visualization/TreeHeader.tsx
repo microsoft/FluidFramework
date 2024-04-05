@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { tokens } from "@fluentui/react-components";
+import { Tooltip, makeStyles, tokens } from "@fluentui/react-components";
 import React from "react";
 
-import type { HasContainerKey, VisualChildNode } from "@fluidframework/devtools-core/internal";
-import { InfoLabel } from "@fluentui/react-components/unstable";
+import type { VisualChildNode } from "@fluidframework/devtools-core/internal";
+import { Info20Regular } from "@fluentui/react-icons";
 import { ThemeContext, ThemeOption } from "../../ThemeHelper.js";
 
 import type { HasLabel } from "./CommonInterfaces.js";
-import { TreeDataView } from "./TreeDataView.js";
+import { ToolTipContentsView } from "./ToolTipContentsView.js";
 
 /**
  * Input props to {@link TreeHeader}
  */
-export interface TreeHeaderProps extends HasLabel, HasContainerKey {
+export interface TreeHeaderProps extends HasLabel {
 	/**
 	 * Type of the object.
 	 */
@@ -35,24 +35,21 @@ export interface TreeHeaderProps extends HasLabel, HasContainerKey {
 	tooltipContents?: Record<string, VisualChildNode>;
 }
 
+const getStyles = makeStyles({
+	tooltip: {
+		color: tokens.colorNeutralForeground1Hover,
+		minWidth: "1000px",
+	},
+});
+
 /**
  * Renders the header of the item.
  */
 export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
-	const { containerKey, label, nodeTypeMetadata, inlineValue, metadata, tooltipContents } = props;
+	const { label, nodeTypeMetadata, inlineValue, metadata, tooltipContents } = props;
 	const { themeInfo } = React.useContext(ThemeContext);
 
-	const toolTipContentsNode =
-		tooltipContents === undefined
-			? undefined
-			: Object.entries(tooltipContents).map(([key, fluidObject]) => (
-					<TreeDataView
-						key={key}
-						containerKey={containerKey}
-						label={key}
-						node={fluidObject}
-					/>
-			  ));
+	const styles = getStyles();
 
 	return (
 		<div style={{ width: "auto" }}>
@@ -81,10 +78,16 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 				{metadata === undefined ? "" : ` ${metadata}`}
 			</span>
 
-			{tooltipContents === undefined ? (
-				""
-			) : (
-				<InfoLabel info={toolTipContentsNode} style={{ whiteSpace: "nowrap" }} />
+			{tooltipContents !== undefined && (
+				<Tooltip
+					content={{
+						children: <ToolTipContentsView contents={tooltipContents} />,
+						className: styles.tooltip,
+					}}
+					relationship="description"
+				>
+					<Info20Regular />
+				</Tooltip>
 			)}
 
 			{inlineValue === undefined ? "" : ": "}

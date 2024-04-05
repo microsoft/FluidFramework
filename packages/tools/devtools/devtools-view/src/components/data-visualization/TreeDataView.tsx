@@ -43,7 +43,7 @@ export function TreeDataView(props: TreeDataViewProps): React.ReactElement {
 		 * Node with primitive value.
 		 */
 		case VisualNodeKind.ValueNode: {
-			return <ValueView containerKey={containerKey} label={label} node={node} />;
+			return <ValueView label={label} node={node} />;
 		}
 		/**
 		 * FluidObjectNode with primitive value.
@@ -55,13 +55,13 @@ export function TreeDataView(props: TreeDataViewProps): React.ReactElement {
 		 * Unknown data type.
 		 */
 		case VisualNodeKind.UnknownObjectNode: {
-			return <UnknownDataView containerKey={containerKey} label={label} node={node} />;
+			return <UnknownDataView label={label} node={node} />;
 		}
 		/**
 		 * Unknown SharedObject data type.
 		 */
 		case VisualNodeKind.FluidUnknownObjectNode: {
-			return <UnknownFluidObjectView containerKey={containerKey} label={label} node={node} />;
+			return <UnknownFluidObjectView label={label} node={node} />;
 		}
 		/**
 		 * POST request to FluidClientDebugger.

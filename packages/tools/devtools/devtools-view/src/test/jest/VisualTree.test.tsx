@@ -33,7 +33,7 @@ describe("VisualTreeView component tests", () => {
 			nodeKind: VisualNodeKind.UnknownObjectNode,
 		};
 
-		render(<UnknownDataView label="test-label" node={input} containerKey="test-key" />);
+		render(<UnknownDataView label="test-label" node={input} />);
 
 		await screen.findByText(/Unrecognized kind of data./); // Will throw if exact text not found
 	});
@@ -45,7 +45,7 @@ describe("VisualTreeView component tests", () => {
 			nodeKind: VisualNodeKind.FluidUnknownObjectNode,
 		};
 
-		render(<UnknownFluidObjectView label="test-label" node={input} containerKey="test-key" />);
+		render(<UnknownFluidObjectView label="test-label" node={input} />);
 
 		await screen.findByText(/Unrecognized kind of Fluid Object./); // Will throw if exact text not found
 	});

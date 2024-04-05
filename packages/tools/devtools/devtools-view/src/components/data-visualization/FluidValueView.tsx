@@ -36,7 +36,6 @@ export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 				<EditableView label={label} containerKey={containerKey} node={node} />
 			) : (
 				<TreeHeader
-					containerKey={containerKey}
 					label={label}
 					nodeTypeMetadata={node.typeMetadata}
 					inlineValue={String(node.value)}
