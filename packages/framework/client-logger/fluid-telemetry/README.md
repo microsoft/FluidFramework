@@ -52,6 +52,7 @@ appInsightsClient.loadAppInsights();
 const telemetryConfig: TelemetryConfig = {
     container: myAppContainer,
     containerId: myAppContainerId,
+    // We import AppInsightsTelemetryConsumer from the fluid-telemetry package
     consumers: [new AppInsightsTelemetryConsumer(appInsightsClient)],
 };
 
@@ -63,9 +64,7 @@ startTelemetry(telemetryConfig);
 
 Congrats, that's it for now! If you've decided to use Azure App Insights, we have designed useful prebuilt queries for you that utilize the generated telemetry
 
-**It's important to note that while you can create your own custom implementation of `ITelemetryConsumer` for sending telemetry to App Insights, if you change the shape of the telemetry emitted from our implementation, `AppInsightsTelemetryConsumer`, we make no guarentess of our provided App Insights queries or dashboards working as expected.**
-
-## Example 2: Extending ITelemtryConsumer to send Fluid telemetry to a custom destination
+## Example 2: Extending ITelemetryConsumer to send Fluid telemetry to a custom destination
 
 In this example, you'll walk through the basic setup process to start getting container telemetry to be produced and logging it to the console.
 
@@ -90,8 +89,10 @@ class MySimpleTelemetryConsumer implements ITelemetryConsumer {
 ```ts
 import { IFluidContainer } from "@fluidframework/fluid-static";
 import { ITelemetryConsumer , TelemetryConfig, startTelemetry, IFluidTelemetry } from "@fluidframework/external-telemetry"
+// 1: import our implementation of MySimpleTelemetryConsumer from step 1
+import { MySimpleTelemetryConsumer } from "./mySimpleTelmetryConsumer"
 
-// 1: This is supposed to be your code for creating/loading a Fluid Container
+// 2: This is supposed to be your code for creating/loading a Fluid Container
 let myAppContainer: IFluidContainer;
 let myAppContainerId: string;
 if (containerExists) {
@@ -100,13 +101,6 @@ if (containerExists) {
 } else {
     myAppContainer = {...your code to create a new Fluid Container}
     myAppContainerId = await myAppContainer.attach();
-}
-
-// 2: This is our implementation of ITelemetryConsumer
-class MySimpleTelemetryConsumer implements ITelemetryConsumer {
-    consume(event: IFluidTelemetry) {
-        console.log(event);
-    }
 }
 
 // 3. Next, we'll create the telemetry config object.
