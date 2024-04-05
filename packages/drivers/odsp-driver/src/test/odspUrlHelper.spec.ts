@@ -88,7 +88,9 @@ describe("odspUrlHelper", () => {
 				false,
 			);
 			assert.equal(
-				isSpoUrl(new URL("https://foo.sharepoint-df-df.com/_api/v2.1/drives/bar/items/baz")),
+				isSpoUrl(
+					new URL("https://foo.sharepoint-df-df.com/_api/v2.1/drives/bar/items/baz"),
+				),
 				false,
 			);
 		});
