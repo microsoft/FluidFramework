@@ -241,8 +241,8 @@ export enum CommitKind {
 
 // @public
 export interface CommitMetadata {
-    isLocal: boolean;
-    kind: CommitKind;
+    readonly isLocal: boolean;
+    readonly kind: CommitKind;
 }
 
 // @internal
