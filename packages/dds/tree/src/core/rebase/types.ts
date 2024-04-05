@@ -146,11 +146,11 @@ export interface CommitMetadata {
 	/**
 	 * A {@link CommitKind} enum value describing whether the commit represents an Edit, an Undo, or a Redo.
 	 */
-	kind: CommitKind;
+	readonly kind: CommitKind;
 	/**
 	 * Indicates whether the commit is a local edit
 	 */
-	isLocal: boolean;
+	readonly isLocal: boolean;
 }
 
 /**

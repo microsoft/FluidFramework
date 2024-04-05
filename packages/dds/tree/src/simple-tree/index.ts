@@ -16,7 +16,6 @@ export {
 	ImplicitAllowedTypes,
 	TreeNodeFromImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
-	TreeMapNode,
 	TreeLeafValue,
 	type,
 	WithType,
@@ -73,3 +72,4 @@ export {
 	ObjectFromSchemaRecord,
 	TreeObjectNode,
 } from "./objectNode.js";
+export { TreeMapNode } from "./mapNode.js";
