@@ -9,7 +9,6 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
 import {
 	FlexMapNodeSchema,
-	FlexObjectNodeSchema,
 	FlexTreeNode,
 	isFlexTreeNode,
 	isFluidHandle,
@@ -25,13 +24,7 @@ import {
 	numberSchema,
 	stringSchema,
 } from "./leafNodeSchema.js";
-import {
-	createMapProxy,
-	createObjectProxy,
-	isTreeNode,
-	mapStaticDispatchMap,
-	markContentType,
-} from "./proxies.js";
+import { createMapProxy, isTreeNode, mapStaticDispatchMap, markContentType } from "./proxies.js";
 import { setFlexNode } from "./proxyBinding.js";
 import { createRawNode } from "./rawNode.js";
 import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
@@ -41,22 +34,19 @@ import {
 	FieldSchema,
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
-	InsertableObjectFromSchemaRecord,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	NodeKind,
 	TreeMapNode,
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
-	TreeObjectNode,
 	WithType,
 	type,
 	type FieldProps,
-	getExplicitStoredKey,
-	getStoredKey,
 } from "./schemaTypes.js";
 import { getFlexSchema } from "./toFlexSchema.js";
-import { TreeArrayNode, arraySchema } from "./treeArrayNode.js";
+import { TreeArrayNode, arraySchema } from "./arrayNode.js";
 import { TreeNode } from "./types.js";
+import { InsertableObjectFromSchemaRecord, TreeObjectNode, objectSchema } from "./objectNode.js";
 
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
@@ -291,97 +281,18 @@ export class SchemaFactory<
 	public object<
 		const Name extends TName,
 		const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-	>(name: Name, fields: T) {
-		// Ensure no collisions between final set of view keys, and final set of stored keys (including those
-		// implicitly derived from view keys)
-		SchemaFactory.assertUniqueKeys(name, fields);
-		class schema extends this.nodeSchema(name, NodeKind.Object, fields, true) {
-			public constructor(input: InsertableObjectFromSchemaRecord<T>) {
-				super(input);
-
-				// Differentiate between the following cases:
-				//
-				// Case 1: Direct construction (POJO emulation)
-				//
-				//     const Foo = schemaFactory.object("Foo", {bar: schemaFactory.number});
-				//
-				//     assert.deepEqual(new Foo({ bar: 42 }), { bar: 42 },
-				//		   "Prototype chain equivalent to POJO.");
-				//
-				// Case 2: Subclass construction (Customizable Object)
-				//
-				// 	   class Foo extends schemaFactory.object("Foo", {bar: schemaFactory.number}) {}
-				//
-				// 	   assert.notDeepEqual(new Foo({ bar: 42 }), { bar: 42 },
-				// 	       "Subclass prototype chain differs from POJO.");
-				//
-				// In Case 1 (POJO emulation), the prototype chain match '{}' (proxyTarget = undefined)
-				// In Case 2 (Customizable Object), the prototype chain include the user's subclass (proxyTarget = this)
-				const customizable = this.constructor !== schema;
-				const proxyTarget = customizable ? this : undefined;
-
-				const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
-				assert(flexSchema instanceof FlexObjectNodeSchema, "invalid flex schema");
-				const flexNode: FlexTreeNode = isFlexTreeNode(input)
-					? input
-					: createRawNode(flexSchema, copyContent(flexSchema.name, input) as object);
-
-				const proxy: TreeNode = createObjectProxy(
-					this.constructor as TreeNodeSchema,
-					customizable,
-					proxyTarget,
-				);
-				setFlexNode(proxy, flexNode);
-				return proxy as unknown as schema;
-			}
-		}
-
-		return schema as TreeNodeSchemaClass<
-			ScopedSchemaName<TScope, Name>,
-			NodeKind.Object,
-			TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
-			object & InsertableObjectFromSchemaRecord<T>,
-			true,
-			T
-		>;
-	}
-
-	/**
-	 * Ensures that the set of view keys in the schema is unique.
-	 * Also ensure that the final set of stored keys (including those implicitly derived from view keys) is unique.
-	 * @throws Throws a `UsageError` if either of the key uniqueness invariants is violated.
-	 */
-	private static assertUniqueKeys<
-		const Name extends number | string,
-		const Fields extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-	>(schemaName: Name, fields: Fields): void {
-		// Verify that there are no duplicates among the explicitly specified stored keys.
-		const explicitStoredKeys = new Set<string>();
-		for (const schema of Object.values(fields)) {
-			const storedKey = getExplicitStoredKey(schema);
-			if (storedKey === undefined) {
-				continue;
-			}
-			if (explicitStoredKeys.has(storedKey)) {
-				throw new UsageError(
-					`Duplicate stored key "${storedKey}" in schema "${schemaName}". Stored keys must be unique within an object schema.`,
-				);
-			}
-			explicitStoredKeys.add(storedKey);
-		}
-
-		// Verify that there are no duplicates among the derived
-		// (including those implicitly derived from view keys) stored keys.
-		const derivedStoredKeys = new Set<string>();
-		for (const [viewKey, schema] of Object.entries(fields)) {
-			const storedKey = getStoredKey(viewKey, schema);
-			if (derivedStoredKeys.has(storedKey)) {
-				throw new UsageError(
-					`Stored key "${storedKey}" in schema "${schemaName}" conflicts with a property key of the same name, which is not overridden by a stored key. The final set of stored keys in an object schema must be unique.`,
-				);
-			}
-			derivedStoredKeys.add(storedKey);
-		}
+	>(
+		name: Name,
+		fields: T,
+	): TreeNodeSchemaClass<
+		ScopedSchemaName<TScope, Name>,
+		NodeKind.Object,
+		TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
+		object & InsertableObjectFromSchemaRecord<T>,
+		true,
+		T
+	> {
+		return objectSchema(this.nodeSchema(name, NodeKind.Object, fields, true));
 	}
 
 	/**

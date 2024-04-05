@@ -31,8 +31,8 @@ const fluidOfficeAndOneNoteServers = new Set([
  */
 export class OdspUrlResolver implements IUrlResolver {
 	public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
-		if (isOdspUrl(request.url)) {
-			const reqUrl = new URL(request.url);
+		const reqUrl = new URL(request.url);
+		if (isOdspUrl(reqUrl)) {
 			const contents = await getOdspUrlParts(reqUrl);
 			if (!contents) {
 				return undefined;
@@ -57,7 +57,7 @@ export class OdspUrlResolver implements IUrlResolver {
  *
  * @internal
  */
-export const isOdspUrl = (url: string): boolean => {
+const isOdspUrl = (url: URL): boolean => {
 	return isSpoUrl(url) || isOdcUrl(url);
 };
 
