@@ -44,6 +44,7 @@ export enum CommitKind {
 }
 
 // @public
+// TODO: this being mutable seems bad.
 export interface CommitMetadata {
     isLocal: boolean;
     kind: CommitKind;
@@ -171,7 +172,6 @@ export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 export type FlexListToUnion<TList extends FlexList> = ExtractItemType<ArrayToUnion<TList>>;
 
 // @public
-// TODO: this being mutable seems bad.
 export interface IConnection {
     readonly id: string;
     readonly mode: "write" | "read";
@@ -212,8 +212,8 @@ export interface IFluidContainerEvents extends IEvent {
 }
 
 // @public
-// TODO: this being mutable seems bad.
 export interface IMember {
+    // TODO: this array being mutable seems bad.
     readonly connections: IConnection[];
     readonly userId: string;
 }
@@ -249,7 +249,6 @@ export type InsertableTypedNode<T extends TreeNodeSchema> = (T extends {
 } ? NodeBuilderData<T> : never) | Unhydrated<NodeFromSchema<T>>;
 
 // @public
-// TODO: Is returned map being mutable intended?
 export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents<M>> {
     getMembers(): ReadonlyMap<string, M>;
     getMyself(): Myself<M> | undefined;
@@ -299,7 +298,6 @@ export interface ITree extends IChannel {
 
 // @public @sealed
 // TODO: use of any is bad.
-// TODO: this being mutable seems bad.
 export interface IValueChanged {
     readonly key: string;
     readonly previousValue: any;
@@ -322,7 +320,6 @@ export interface MakeNominal {
 export type MemberChangedListener<M extends IMember> = (clientId: string, member: M) => void;
 
 // @public
-// TODO: this being mutable seems bad.
 export type Myself<M extends IMember = IMember> = M & {
     readonly currentConnection: string;
 };
