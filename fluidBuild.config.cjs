@@ -391,6 +391,7 @@ module.exports = {
 					"fluid-framework",
 					"@fluid-internal/client-utils",
 					"@fluid-internal/mocha-test-setup",
+					"@fluid-internal/test-driver-definitions",
 					"tinylicious",
 				],
 				// A list of packages published to our internal-build feed. Note that packages published
