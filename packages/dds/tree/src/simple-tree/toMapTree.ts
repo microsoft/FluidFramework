@@ -392,7 +392,6 @@ function shallowCompatibilityTest(
 	schema: TreeNodeSchema,
 	data: ContextuallyTypedNodeData,
 ): boolean {
-	// TODO: update this to switch first on schema, then validate kinds of data allowed beneath.
 	assert(
 		data !== undefined,
 		0x889 /* undefined cannot be used as contextually typed data. Use ContextuallyTypedFieldData. */,
