@@ -31,6 +31,7 @@ import {
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import { AttachState } from "@fluidframework/container-definitions";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -41,6 +42,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 import type { IMockContainerRuntimeOptions } from "@fluidframework/test-runtime-utils/internal";
+import { v4 as uuid } from "uuid";
 
 import {
 	type Client,
@@ -51,6 +53,7 @@ import {
 	createLoadDataFromStashData,
 	hasStashData,
 } from "./clientLoading.js";
+import { DDSFuzzHandle } from "./ddsFuzzHandle.js";
 import type { MinimizationTransform } from "./minification.js";
 import { FuzzTestMinimizer } from "./minification.js";
 
@@ -106,6 +109,22 @@ export interface ChangeConnectionState {
 export interface StashClient {
 	type: "stashClient";
 	clientId: string;
+}
+
+/**
+ * @internal
+ */
+export interface HandlePicked {
+	type: "handlePicked";
+	handleId: string;
+}
+
+/**
+ * @internal
+ */
+export interface UseHandle {
+	type: "useHandle";
+	handle: IFluidHandle;
 }
 
 /**
@@ -368,6 +387,11 @@ export interface DDSFuzzSuiteOptions {
 	};
 
 	/**
+	 * Defines whether or not ops can be submitted with handles.
+	 */
+	handleGenerationDisabled: boolean;
+
+	/**
 	 * Event emitter which allows hooking into interesting points of DDS harness execution.
 	 * Test authors that want to subscribe to any of these events should create a `TypedEventEmitter`,
 	 * do so, and pass it in when creating the suite.
@@ -512,6 +536,7 @@ export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	detachedStartOptions: {
 		numOpsBeforeAttach: 5,
 	},
+	handleGenerationDisabled: true,
 	emitter: new TypedEventEmitter(),
 	numberOfClients: 3,
 	only: [],
@@ -1132,6 +1157,61 @@ export function mixinStashedClient<
 	};
 }
 
+export function mixinHandle<
+	TChannelFactory extends IChannelFactory,
+	TOperation extends BaseOperation,
+	TState extends DDSFuzzTestState<TChannelFactory>,
+>(
+	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
+	options: DDSFuzzSuiteOptions,
+): DDSFuzzModel<TChannelFactory, TOperation, TState> {
+	if (options.handleGenerationDisabled === true) {
+		return model;
+	}
+	const idValues = Array.from<string>({ length: 5 }).fill(uuid());
+
+	const generatorFactory: () => AsyncGenerator<
+		TOperation | HandlePicked | UseHandle,
+		TState
+	> = () => {
+		const baseGenerator = model.generatorFactory();
+		return async (state): Promise<TOperation | HandlePicked | UseHandle | typeof done> => {
+			if (state.random.bool(0.5)) {
+				return {
+					type: "handlePicked",
+					handleId: idValues[state.random.integer(0, idValues.length - 1)],
+				};
+			}
+			return baseGenerator(state);
+		};
+	};
+
+	const reducer: AsyncReducer<TOperation | HandlePicked | UseHandle, TState> = async (
+		state,
+		operation,
+	) => {
+		if (isOperationType<HandlePicked>("handlePicked", operation)) {
+			const handle = new DDSFuzzHandle(
+				operation.handleId,
+				state.client.dataStoreRuntime.IFluidHandleContext,
+			);
+			const useHandle: UseHandle = { ...operation, type: "useHandle", handle };
+			// The cast is needed to allow types with handles to be passed through.
+			return model.reducer(state, useHandle as unknown as TOperation);
+		}
+		return model.reducer(state, operation as TOperation);
+	};
+
+	return {
+		...model,
+		generatorFactory: generatorFactory as () => AsyncGenerator<TOperation, TState>,
+		reducer,
+		minimizationTransforms: model.minimizationTransforms as MinimizationTransform<
+			TOperation | HandlePicked | UseHandle
+		>[],
+	};
+}
+
 /**
  * This modifies the value of "client" while callback is running, then restores it.
  * This is does instead of copying the state since the state object is mutable, and running callback might make changes to state (like add new members) which are lost if state is just copied.
@@ -1609,7 +1689,10 @@ const getFullModel = <TChannelFactory extends IChannelFactory, TOperation extend
 			mixinNewClient(
 				mixinStashedClient(
 					mixinClientSelection(
-						mixinReconnect(mixinRebase(ddsModel, options), options),
+						mixinHandle(
+							mixinReconnect(mixinRebase(ddsModel, options), options),
+							options,
+						),
 						options,
 					),
 					options,

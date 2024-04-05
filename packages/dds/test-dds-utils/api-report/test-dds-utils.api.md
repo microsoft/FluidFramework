@@ -8,6 +8,7 @@ import type { AsyncGenerator as AsyncGenerator_2 } from '@fluid-private/stochast
 import type { AsyncReducer } from '@fluid-private/stochastic-test-utils';
 import type { BaseFuzzTestState } from '@fluid-private/stochastic-test-utils';
 import type { IChannelFactory } from '@fluidframework/datastore-definitions';
+import type { IFluidHandle } from '@fluidframework/core-interfaces';
 import type { IIdCompressor } from '@fluidframework/id-compressor';
 import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
 import type { IMockContainerRuntimeOptions } from '@fluidframework/test-runtime-utils/internal';
@@ -105,6 +106,7 @@ export interface DDSFuzzSuiteOptions {
         attachingBeforeRehydrateDisable?: true;
     };
     emitter: TypedEventEmitter<DDSFuzzHarnessEvents>;
+    handleGenerationDisabled: boolean;
     idCompressorFactory?: (summary?: FuzzSerializedIdCompressor) => IIdCompressor & IIdCompressorCore;
     numberOfClients: number;
     only: Iterable<number>;
@@ -190,6 +192,14 @@ export interface Synchronize {
     clients?: string[];
     // (undocumented)
     type: "synchronize";
+}
+
+// @internal (undocumented)
+export interface UseHandle {
+    // (undocumented)
+    handle: IFluidHandle;
+    // (undocumented)
+    type: "useHandle";
 }
 
 // (No @packageDocumentation comment for this package)
