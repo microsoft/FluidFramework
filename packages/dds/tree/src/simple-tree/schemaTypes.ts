@@ -8,53 +8,9 @@ import { Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { FlexListToUnion, LazyItem, isLazy } from "../feature-libraries/index.js";
-import { MakeNominal, RestrictiveReadonlyRecord, isReadonlyArray } from "../util/index.js";
+import { MakeNominal, isReadonlyArray } from "../util/index.js";
 
-import { TreeNode, Unhydrated } from "./types.js";
-
-/**
- * Helper used to produce types for object nodes.
- * @public
- */
-export type ObjectFromSchemaRecord<
-	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-> = {
-	-readonly [Property in keyof T]: TreeFieldFromImplicitField<T[Property]>;
-};
-
-/**
- * A {@link TreeNode} which modules a JavaScript object.
- * @remarks
- * Object nodes consist of a type which specifies which {@link TreeNodeSchema} they use (see {@link TreeNodeApi.schema}), and a collections of fields, each with a distinct `key` and its own {@link FieldSchema} defining what can be placed under that key.
- *
- * All non-empty fields on an object node are exposed as enumerable own properties with string keys.
- * No other own `own` or `enumerable` properties are included on object nodes unless the user of the node manually adds custom session only state.
- * This allows a majority of general purpose JavaScript object processing operations (like `for...in`, `Reflect.ownKeys()` and `Object.entries()`) to enumerate all the children.
- * @public
- */
-export type TreeObjectNode<
-	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-	TypeName extends string = string,
-> = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName>;
-
-/**
- * Helper used to produce types for:
- *
- * 1. Insertable content which can be used to construct an object node.
- *
- * 2. Insertable content which is an unhydrated object node.
- *
- * 3. Union of 1 and 2.
- *
- * @privateRemarks TODO: consider separating these cases into different types.
- *
- * @public
- */
-export type InsertableObjectFromSchemaRecord<
-	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-> = {
-	readonly [Property in keyof T]: InsertableTreeFieldFromImplicitField<T[Property]>;
-};
+import { Unhydrated } from "./types.js";
 
 /**
  * Schema for a tree node.
@@ -480,45 +436,6 @@ export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema
 >
 	? TBuild
 	: never;
-
-/**
- * A map of string keys to tree objects.
- *
- * @privateRemarks
- * Add support for `clear` once we have established merge semantics for it.
- *
- * @public
- */
-export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes>
-	extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>,
-		TreeNode {
-	/**
-	 * Adds or updates an entry in the map with a specified `key` and a `value`.
-	 *
-	 * @param key - The key of the element to add to the map.
-	 * @param value - The value of the element to add to the map.
-	 *
-	 * @remarks
-	 * Setting the value at a key to `undefined` is equivalent to calling {@link TreeMapNode.delete} with that key.
-	 */
-	set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T> | undefined): void;
-
-	/**
-	 * Removes the specified element from this map by its `key`.
-	 *
-	 * @remarks
-	 * Note: unlike JavaScript's Map API, this method does not return a flag indicating whether or not the value was
-	 * deleted.
-	 *
-	 * @privateRemarks
-	 * Regarding the choice to not return a boolean: Since this data structure is distributed in nature, it isn't
-	 * possible to tell whether or not the item was deleted as a result of this method call. Returning a "best guess"
-	 * is more likely to create issues / promote bad usage patterns than offer useful information.
-	 *
-	 * @param key - The key of the element to remove from the map.
-	 */
-	delete(key: string): void;
-}
 
 /**
  * Value that may be stored as a leaf node.

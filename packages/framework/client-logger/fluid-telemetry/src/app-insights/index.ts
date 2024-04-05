@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { FluidAppOdspUrlResolver, OdspUrlResolver } from "./urlResolver.js";
+export { AppInsightsTelemetryConsumer } from "./appInsightsTelemetryConsumer.js";
