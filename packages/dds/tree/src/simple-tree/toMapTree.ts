@@ -409,7 +409,6 @@ function shallowCompatibilityTest(
 		return data[typeNameSymbol] === schema.identifier;
 	}
 
-	// Array schemas strictly allow array data as input
 	if (isReadonlyArray(data)) {
 		return schema.kind === NodeKind.Array;
 	}
@@ -417,7 +416,6 @@ function shallowCompatibilityTest(
 		return false;
 	}
 
-	// Map schemas allow TypeScript maps and Record-like objects as input
 	if (data instanceof Map) {
 		return schema.kind === NodeKind.Map;
 	}
