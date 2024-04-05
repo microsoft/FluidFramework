@@ -87,7 +87,7 @@ export interface ITestObjectProvider {
 	/**
 	 * Logger used to track expected and unexpected events.
 	 */
-	tracker: EventAndErrorTrackingLogger;
+	tracker: IEventAndErrorTrackingLogger;
 
 	/**
 	 * Used to create a url for the created container with any data store path given in the relative url.
@@ -293,6 +293,15 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
 	}
 }
 
+/** @internal */
+export interface IEventAndErrorTrackingLogger {
+	registerExpectedEvent: (...orderedExpectedEvents: ITelemetryGenericEventExt[]) => void;
+	reportAndClearTrackedEvents: () => {
+		expectedNotFound: { index: number; event: ITelemetryGenericEventExt }[],
+		unexpectedErrors: ITelemetryBaseEvent[],
+	};
+}
+
 /**
  * This class tracks events. It allows specifying expected events, which will be looked for in order.
  * It also tracks all unexpected errors.
@@ -300,7 +309,7 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
  * any expected events that have not occurred.
  * @internal
  */
-export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger {
+export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger, IEventAndErrorTrackingLogger {
 	/**
 	 * Even if these error events are logged, tests should still be allowed to pass
 	 * Additionally, if downgrade is true, then log as generic (e.g. to avoid polluting the e2e test logs)
@@ -317,10 +326,7 @@ export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger {
 
 	constructor(private readonly baseLogger?: ITelemetryBaseLogger) {}
 
-	private readonly expectedEvents: (
-		| { index: number; event: ITelemetryGenericEventExt | undefined }
-		| undefined
-	)[] = [];
+	private readonly expectedEvents: { index: number; event: ITelemetryGenericEventExt } [] = [];
 	private readonly unexpectedErrors: ITelemetryBaseEvent[] = [];
 
 	public registerExpectedEvent(...orderedExpectedEvents: ITelemetryGenericEventExt[]) {
@@ -338,8 +344,8 @@ export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger {
 	}
 
 	send(event: ITelemetryBaseEvent): void {
-		const ee = this.expectedEvents[0]?.event;
-		if (ee?.eventName === event.eventName) {
+		const ee = this.expectedEvents[0].event;
+		if (ee.eventName === event.eventName) {
 			let matches = true;
 			for (const key of Object.keys(ee)) {
 				if (ee[key] !== event[key]) {
@@ -427,7 +433,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 	/**
 	 * {@inheritDoc ITestObjectProvider.logger}
 	 */
-	public get logger() {
+	public get logger(): ITelemetryBaseLogger {
 		if (this._logger === undefined) {
 			this._tracker = new EventAndErrorTrackingLogger(getTestLogger?.());
 			this._logger = createChildLogger({
@@ -1059,7 +1065,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
  * @internal
  */
 export function getUnexpectedLogErrorException(
-	logger: EventAndErrorTrackingLogger | undefined,
+	logger: IEventAndErrorTrackingLogger | undefined,
 	prefix?: string,
 ) {
 	if (logger === undefined) {

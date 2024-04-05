@@ -49,12 +49,8 @@ import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryGenericEventExt } from '@fluidframework/telemetry-utils';
-<<<<<<< HEAD
-import { ITelemetryLoggerPropertyBags } from '@fluidframework/telemetry-utils';
-import { ITestDriver } from '@fluidframework/test-driver-definitions';
-=======
+import { ITelemetryLoggerPropertyBags } from '@fluidframework/telemetry-utils/internal';
 import { ITestDriver } from '@fluid-internal/test-driver-definitions';
->>>>>>> 23652a094753dc7c32e41ec1aadcee081e977545
 import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
 import { Loader } from '@fluidframework/container-loader/internal';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions/internal';
@@ -131,16 +127,16 @@ export enum DataObjectFactoryType {
 export const defaultTimeoutDurationMs = 250;
 
 // @internal
-export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger {
+export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger, IEventAndErrorTrackingLogger {
     constructor(baseLogger?: ITelemetryBaseLogger | undefined);
     // (undocumented)
     registerExpectedEvent(...orderedExpectedEvents: ITelemetryGenericEventExt[]): void;
     // (undocumented)
     reportAndClearTrackedEvents(): {
-        expectedNotFound: ({
+        expectedNotFound: {
             index: number;
-            event: ITelemetryGenericEventExt | undefined;
-        } | undefined)[];
+            event: ITelemetryGenericEventExt;
+        }[];
         unexpectedErrors: ITelemetryBaseEvent[];
     };
     // (undocumented)
@@ -157,13 +153,27 @@ export function getContainerEntryPointBackCompat<T>(container: IContainer): Prom
 export function getDataStoreEntryPointBackCompat<T>(dataStore: IDataStore): Promise<T>;
 
 // @internal (undocumented)
-export function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger | undefined, prefix?: string): Error | undefined;
+export function getUnexpectedLogErrorException(logger: IEventAndErrorTrackingLogger | undefined, prefix?: string): Error | undefined;
 
 // @internal
 export interface IDocumentIdStrategy {
     get(): string;
     reset(): void;
     update(resolvedUrl?: IResolvedUrl): void;
+}
+
+// @internal (undocumented)
+export interface IEventAndErrorTrackingLogger {
+    // (undocumented)
+    registerExpectedEvent: (...orderedExpectedEvents: ITelemetryGenericEventExt[]) => void;
+    // (undocumented)
+    reportAndClearTrackedEvents: () => {
+        expectedNotFound: {
+            index: number;
+            event: ITelemetryGenericEventExt;
+        }[];
+        unexpectedErrors: ITelemetryBaseEvent[];
+    };
 }
 
 // @alpha (undocumented)
@@ -234,7 +244,7 @@ export interface ITestObjectProvider {
     opProcessingController: IOpProcessingController;
     reset(): void;
     resetLoaderContainerTracker(syncSummarizerClients?: boolean): any;
-    tracker: EventAndErrorTrackingLogger;
+    tracker: IEventAndErrorTrackingLogger;
     type: "TestObjectProvider" | "TestObjectProviderWithVersionedLoad";
     updateDocumentId(url: IResolvedUrl | undefined): void;
     urlResolver: IUrlResolver;
