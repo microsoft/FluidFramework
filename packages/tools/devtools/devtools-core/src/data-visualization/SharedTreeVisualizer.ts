@@ -78,6 +78,7 @@ function createToolTipContents(tree: SharedTreeSchemaNode): VisualTreeNode {
 
 /**
  * Converts the output of {@link sharedTreeVisualizer} to {@link VisualChildNode} type containing `schema` and `children` fields.
+ * Constructs a VisualTree of the input tree's schema fields in {@link VisualTreeNode} or {@link VisualValueNode}.
  */
 export function toVisualTree(tree: VisualSharedTreeNode): VisualValueNode | VisualTreeNode {
 	if (tree.kind === VisualSharedTreeNodeKind.LeafNode) {
