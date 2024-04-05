@@ -6,7 +6,14 @@
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { EmptyKey, FieldKey, IForestSubscription, TreeValue, UpPath } from "../core/index.js";
+import {
+	EmptyKey,
+	FieldKey,
+	IForestSubscription,
+	TreeNodeSchemaIdentifier,
+	TreeValue,
+	UpPath,
+} from "../core/index.js";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
 import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/lazyNode.js";
@@ -19,7 +26,6 @@ import {
 	FlexTreeNode,
 	FlexTreeOptionalField,
 	FlexTreeRequiredField,
-	FlexTreeSequenceField,
 	FlexTreeTypedField,
 	isFluidHandle,
 	typeNameSymbol,
@@ -42,8 +48,7 @@ import {
 	type TreeNodeSchema,
 	getStoredKey,
 } from "./schemaTypes.js";
-import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree.js";
-import { IterableTreeArrayContent, TreeArrayNode } from "./treeArrayNode.js";
+import { cursorFromNodeData } from "./toMapTree.js";
 import { TreeNode, Unhydrated } from "./types.js";
 
 /**
@@ -281,431 +286,6 @@ export function createObjectProxy(
 			return p;
 		},
 	}) as TreeNode;
-	return proxy;
-}
-
-/**
- * Given a array node proxy, returns its underlying LazySequence field.
- */
-export function getSequenceField<TTypes extends FlexAllowedTypes>(
-	arrayNode: TreeArrayNode,
-): FlexTreeSequenceField<TTypes> {
-	return getFlexNode(arrayNode).getBoxed(EmptyKey) as FlexTreeSequenceField<TTypes>;
-}
-
-// Used by 'insert*()' APIs to converts new content (expressed as a proxy union) to contextually
-// typed data prior to forwarding to 'LazySequence.insert*()'.
-function contextualizeInsertedArrayContent(
-	content: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[],
-	sequenceField: FlexTreeSequenceField<FlexAllowedTypes>,
-): FactoryContent {
-	return prepareContentForInsert(
-		content.flatMap((c): InsertableContent[] =>
-			c instanceof IterableTreeArrayContent ? Array.from(c) : [c],
-		),
-		sequenceField.context.forest,
-	);
-}
-
-// #region Create dispatch map for array nodes
-
-// TODO: Experiment with alternative dispatch methods to see if we can improve performance.
-
-/**
- * PropertyDescriptorMap used to build the prototype for our array node dispatch object.
- */
-export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
-	// We manually add [Symbol.iterator] to the dispatch map rather than use '[fn.name] = fn' as
-	// below when adding 'Array.prototype.*' properties to this map because 'Array.prototype[Symbol.iterator].name'
-	// returns "values" (i.e., Symbol.iterator is an alias for the '.values()' function.)
-	[Symbol.iterator]: {
-		value: Array.prototype[Symbol.iterator],
-	},
-	at: {
-		value(this: TreeArrayNode, index: number): TreeNode | TreeValue | undefined {
-			const field = getSequenceField(this);
-			const val = field.boxedAt(index);
-
-			if (val === undefined) {
-				return val;
-			}
-
-			return getOrCreateNodeProxy(val);
-		},
-	},
-	insertAt: {
-		value(
-			this: TreeArrayNode,
-			index: number,
-			...value: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[]
-		): void {
-			const sequenceNode = getFlexNode(this);
-			const sequenceField = getSequenceField(this);
-
-			const content = contextualizeInsertedArrayContent(value, sequenceField);
-
-			const simpleNodeSchema = getSimpleNodeSchema(sequenceNode.schema);
-			assert(simpleNodeSchema.kind === NodeKind.Array, "Expected array schema");
-
-			const simpleFieldSchema = getSimpleFieldSchema(
-				sequenceField.schema,
-				simpleNodeSchema.info as ImplicitFieldSchema,
-			);
-
-			sequenceField.insertAt(index, cursorFromFieldData(content, simpleFieldSchema));
-		},
-	},
-	insertAtStart: {
-		value(
-			this: TreeArrayNode,
-			...value: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[]
-		): void {
-			const sequenceNode = getFlexNode(this);
-			const sequenceField = getSequenceField(this);
-
-			const content = contextualizeInsertedArrayContent(value, sequenceField);
-
-			const simpleNodeSchema = getSimpleNodeSchema(sequenceNode.schema);
-			assert(simpleNodeSchema.kind === NodeKind.Array, "Expected array schema");
-
-			const simpleFieldSchema = getSimpleFieldSchema(
-				sequenceField.schema,
-				simpleNodeSchema.info as ImplicitFieldSchema,
-			);
-
-			sequenceField.insertAtStart(cursorFromFieldData(content, simpleFieldSchema));
-		},
-	},
-	insertAtEnd: {
-		value(
-			this: TreeArrayNode,
-			...value: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[]
-		): void {
-			const sequenceNode = getFlexNode(this);
-			const sequenceField = getSequenceField(this);
-
-			const content = contextualizeInsertedArrayContent(value, sequenceField);
-
-			const simpleNodeSchema = getSimpleNodeSchema(sequenceNode.schema);
-			assert(simpleNodeSchema.kind === NodeKind.Array, "Expected array schema");
-
-			const simpleFieldSchema = getSimpleFieldSchema(
-				sequenceField.schema,
-				simpleNodeSchema.info as ImplicitFieldSchema,
-			);
-
-			sequenceField.insertAtEnd(cursorFromFieldData(content, simpleFieldSchema));
-		},
-	},
-	removeAt: {
-		value(this: TreeArrayNode, index: number): void {
-			getSequenceField(this).removeAt(index);
-		},
-	},
-	removeRange: {
-		value(this: TreeArrayNode, start?: number, end?: number): void {
-			getSequenceField(this).removeRange(start, end);
-		},
-	},
-	moveToStart: {
-		value(this: TreeArrayNode, sourceIndex: number, source?: TreeArrayNode): void {
-			if (source !== undefined) {
-				getSequenceField(this).moveToStart(sourceIndex, getSequenceField(source));
-			} else {
-				getSequenceField(this).moveToStart(sourceIndex);
-			}
-		},
-	},
-	moveToEnd: {
-		value(this: TreeArrayNode, sourceIndex: number, source?: TreeArrayNode): void {
-			if (source !== undefined) {
-				getSequenceField(this).moveToEnd(sourceIndex, getSequenceField(source));
-			} else {
-				getSequenceField(this).moveToEnd(sourceIndex);
-			}
-		},
-	},
-	moveToIndex: {
-		value(
-			this: TreeArrayNode,
-			index: number,
-			sourceIndex: number,
-			source?: TreeArrayNode,
-		): void {
-			if (source !== undefined) {
-				getSequenceField(this).moveToIndex(index, sourceIndex, getSequenceField(source));
-			} else {
-				getSequenceField(this).moveToIndex(index, sourceIndex);
-			}
-		},
-	},
-	moveRangeToStart: {
-		value(
-			this: TreeArrayNode,
-			sourceStart: number,
-			sourceEnd: number,
-			source?: TreeArrayNode,
-		): void {
-			if (source !== undefined) {
-				getSequenceField(this).moveRangeToStart(
-					sourceStart,
-					sourceEnd,
-					getSequenceField(source),
-				);
-			} else {
-				getSequenceField(this).moveRangeToStart(sourceStart, sourceEnd);
-			}
-		},
-	},
-	moveRangeToEnd: {
-		value(
-			this: TreeArrayNode,
-			sourceStart: number,
-			sourceEnd: number,
-			source?: TreeArrayNode,
-		): void {
-			if (source !== undefined) {
-				getSequenceField(this).moveRangeToEnd(
-					sourceStart,
-					sourceEnd,
-					getSequenceField(source),
-				);
-			} else {
-				getSequenceField(this).moveRangeToEnd(sourceStart, sourceEnd);
-			}
-		},
-	},
-	moveRangeToIndex: {
-		value(
-			this: TreeArrayNode,
-			index: number,
-			sourceStart: number,
-			sourceEnd: number,
-			source?: TreeArrayNode,
-		): void {
-			if (source !== undefined) {
-				getSequenceField(this).moveRangeToIndex(
-					index,
-					sourceStart,
-					sourceEnd,
-					getSequenceField(source),
-				);
-			} else {
-				getSequenceField(this).moveRangeToIndex(index, sourceStart, sourceEnd);
-			}
-		},
-	},
-};
-
-/* eslint-disable @typescript-eslint/unbound-method */
-
-// For compatibility, we are initially implement 'readonly T[]' by applying the Array.prototype methods
-// to the array node proxy.  Over time, we should replace these with efficient implementations on LazySequence
-// to avoid re-entering the proxy as these methods access 'length' and the indexed properties.
-//
-// For brevity, the current implementation dynamically builds a property descriptor map from a list of
-// Array functions we want to re-expose via the proxy.
-
-// TODO: This assumes 'Function.name' matches the property name on 'Array.prototype', which may be
-// dubious across JS engines.
-[
-	Array.prototype.concat,
-	// Array.prototype.copyWithin,
-	Array.prototype.entries,
-	Array.prototype.every,
-	// Array.prototype.fill,
-	Array.prototype.filter,
-	Array.prototype.find,
-	Array.prototype.findIndex,
-	Array.prototype.flat,
-	Array.prototype.flatMap,
-	Array.prototype.forEach,
-	Array.prototype.includes,
-	Array.prototype.indexOf,
-	Array.prototype.join,
-	Array.prototype.keys,
-	Array.prototype.lastIndexOf,
-	// Array.prototype.length,
-	Array.prototype.map,
-	// Array.prototype.pop,
-	// Array.prototype.push,
-	Array.prototype.reduce,
-	Array.prototype.reduceRight,
-	// Array.prototype.reverse,
-	// Array.prototype.shift,
-	Array.prototype.slice,
-	Array.prototype.some,
-	// Array.prototype.sort,
-	// Array.prototype.splice,
-	Array.prototype.toLocaleString,
-	Array.prototype.toString,
-	// Array.prototype.unshift,
-	Array.prototype.values,
-].forEach((fn) => {
-	arrayNodePrototypeProperties[fn.name] = { value: fn };
-});
-
-/* eslint-enable @typescript-eslint/unbound-method */
-
-const arrayNodePrototype = Object.create(Object.prototype, arrayNodePrototypeProperties);
-
-// #endregion
-
-/**
- * Helper to coerce property keys to integer indexes (or undefined if not an in-range integer).
- */
-function asIndex(key: string | symbol, length: number) {
-	if (typeof key === "string") {
-		// TODO: It may be worth a '0' <= ch <= '9' check before calling 'Number' to quickly
-		// reject 'length' as an index, or even parsing integers ourselves.
-		const asNumber = Number(key);
-
-		// TODO: See 'matrix/range.ts' for fast integer coercing + range check.
-		if (Number.isInteger(asNumber)) {
-			return 0 <= asNumber && asNumber < length ? asNumber : undefined;
-		}
-	}
-}
-
-/**
- * @param allowAdditionalProperties - If true, setting of unexpected properties will be forwarded to the target object.
- * Otherwise setting of unexpected properties will error.
- * @param customTargetObject - Target object of the proxy.
- * If not provided `[]` is used for the target and a separate object created to dispatch array methods.
- * If provided, the customTargetObject will be used as both the dispatch object and the proxy target, and therefor must provide an own `length` value property
- * (which is not used but must exist for getOwnPropertyDescriptor invariants) and the array functionality from {@link arrayNodePrototype}.
- */
-export function createArrayNodeProxy(
-	allowAdditionalProperties: boolean,
-	customTargetObject?: object,
-): TreeArrayNode {
-	const targetObject = customTargetObject ?? [];
-
-	// Create a 'dispatch' object that this Proxy forwards to instead of the proxy target, because we need
-	// the proxy target to be a plain JS array (see comments below when we instantiate the Proxy).
-	// Own properties on the dispatch object are surfaced as own properties of the proxy.
-	// (e.g., 'length', which is defined below).
-	//
-	// Properties normally inherited from 'Array.prototype' are surfaced via the prototype chain.
-	const dispatch: object =
-		customTargetObject ??
-		Object.create(arrayNodePrototype, {
-			// This dispatch object's set of keys is used to implement `has` (for the `in` operator) for the non-numeric cases, and therefor must include `length`.
-			length: {
-				get(this: TreeArrayNode) {
-					fail("Proxy should intercept length");
-				},
-				set() {
-					fail("Proxy should intercept length");
-				},
-				enumerable: false,
-				configurable: false,
-			},
-		});
-
-	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an array literal in order
-	// to pass 'Object.getPrototypeOf'.  It also satisfies 'Array.isArray' and 'Object.prototype.toString'
-	// requirements without use of Array[Symbol.species], which is potentially on a path ot deprecation.
-	const proxy: TreeArrayNode = new Proxy<TreeArrayNode>(targetObject as any, {
-		get: (target, key) => {
-			const field = getSequenceField(proxy);
-			const maybeIndex = asIndex(key, field.length);
-
-			if (maybeIndex === undefined) {
-				if (key === "length") {
-					return field.length;
-				}
-
-				// Pass the proxy as the receiver here, so that any methods on
-				// the prototype receive `proxy` as `this`.
-				return Reflect.get(dispatch, key, proxy) as unknown;
-			}
-
-			const value = field.boxedAt(maybeIndex);
-
-			if (value === undefined) {
-				return undefined;
-			}
-
-			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
-			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
-			//       inner field.
-			return getOrCreateNodeProxy(value);
-		},
-		set: (target, key, newValue, receiver) => {
-			if (key === "length") {
-				// To allow "length" to look like "length" on an array, getOwnPropertyDescriptor has to report it as a writable value.
-				// This means the proxy target must provide a length value, but since it can't use getters and setters, it can't be correct.
-				// Therefor length has to be handled in this proxy.
-				// Since its not actually mutable, return false so setting it will produce a type error.
-				return false;
-			}
-
-			// 'Symbol.isConcatSpreadable' may be set on an Array instance to modify the behavior of
-			// the concat method.  We allow this property to be added to the dispatch object.
-			if (key === Symbol.isConcatSpreadable) {
-				return Reflect.set(dispatch, key, newValue, proxy);
-			}
-
-			const field = getSequenceField(proxy);
-			const maybeIndex = asIndex(key, field.length);
-			if (maybeIndex !== undefined) {
-				// For MVP, we otherwise disallow setting properties (mutation is only available via the array node mutation APIs).
-				return false;
-			}
-			return allowAdditionalProperties ? Reflect.set(target, key, newValue) : false;
-		},
-		has: (target, key) => {
-			const field = getSequenceField(proxy);
-			const maybeIndex = asIndex(key, field.length);
-			return maybeIndex !== undefined || Reflect.has(dispatch, key);
-		},
-		ownKeys: (target) => {
-			const field = getSequenceField(proxy);
-
-			// TODO: Would a lazy iterator to produce the indexes work / be more efficient?
-			// TODO: Need to surface 'Symbol.isConcatSpreadable' as an own key.
-			const keys: (string | symbol)[] = Array.from(
-				{ length: field.length },
-				(_, index) => `${index}`,
-			);
-
-			if (allowAdditionalProperties) {
-				keys.push(...Reflect.ownKeys(target));
-			} else {
-				keys.push("length");
-			}
-			return keys;
-		},
-		getOwnPropertyDescriptor: (target, key) => {
-			const field = getSequenceField(proxy);
-			const maybeIndex = asIndex(key, field.length);
-			if (maybeIndex !== undefined) {
-				const val = field.boxedAt(maybeIndex);
-				// To satisfy 'deepEquals' level scrutiny, the property descriptor for indexed properties must
-				// be a simple value property (as opposed to using getter) and declared writable/enumerable/configurable.
-				return {
-					// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
-					//       as simple as calling '.at' since this skips the node and returns the FieldNode's
-					//       inner field.
-					value: val === undefined ? val : getOrCreateNodeProxy(val),
-					writable: true, // For MVP, disallow setting indexed properties.
-					enumerable: true,
-					configurable: true,
-				};
-			} else if (key === "length") {
-				// To satisfy 'deepEquals' level scrutiny, the property descriptor for 'length' must be a simple
-				// value property (as opposed to using getter) and be declared writable / non-configurable.
-				return {
-					value: field.length,
-					writable: true,
-					enumerable: false,
-					configurable: false,
-				};
-			}
-			return Reflect.getOwnPropertyDescriptor(dispatch, key);
-		},
-	});
 	return proxy;
 }
 
@@ -1144,3 +724,10 @@ export type FactoryContent =
  * Content which can be inserted into a tree.
  */
 export type InsertableContent = Unhydrated<TreeNode> | FactoryContent;
+
+/**
+ * Brand `copy` with the type (under {@link typeNameSymbol}) to avoid ambiguity when inferring types from this data.
+ */
+export function markContentType(typeName: TreeNodeSchemaIdentifier, copy: object): void {
+	Object.defineProperty(copy, typeNameSymbol, { value: typeName });
+}

@@ -52,11 +52,6 @@ import { pkgVersion as driverVersion } from "./packageVersion.js";
 export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRepeat";
 
 /**
- * Parse the given url and return the origin (host name)
- */
-export const getOrigin = (url: string): string => new URL(url).origin;
-
-/**
  * @alpha
  */
 export interface IOdspResponse<T> {
