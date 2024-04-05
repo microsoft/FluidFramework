@@ -114,7 +114,6 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"lodash": "^4.17.21",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
