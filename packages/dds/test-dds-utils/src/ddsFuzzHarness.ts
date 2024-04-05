@@ -44,6 +44,7 @@ import {
 import type { IMockContainerRuntimeOptions } from "@fluidframework/test-runtime-utils/internal";
 import { v4 as uuid } from "uuid";
 
+import { FluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
 	type Client,
 	type ClientLoadData,
@@ -63,9 +64,18 @@ const isOperationType = <O extends BaseOperation>(type: O["type"], op: BaseOpera
 /**
  * @internal
  */
+export interface DDSRandom extends IRandom {
+	handle(): IFluidHandle;
+}
+
+/**
+ * @internal
+ */
 export interface DDSFuzzTestState<TChannelFactory extends IChannelFactory>
 	extends BaseFuzzTestState {
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
+
+	random: DDSRandom;
 
 	/**
 	 * Client which is responsible for summarizing. This client remains connected and read-only
@@ -1468,24 +1478,51 @@ export async function runTestForSeed<
 				),
 		  );
 	const summarizerClient = initialClient;
+	const handles = Array.from({ length: 5 }).map(() => uuid());
+	let handleGenerated = false;
 	const initialState: DDSFuzzTestState<TChannelFactory> = {
 		clients,
 		summarizerClient,
 		containerRuntimeFactory,
-		random,
+		random: {
+			...random,
+			handle: () => {
+				handleGenerated = true;
+				return new DDSFuzzHandle(
+					random.pick(handles),
+					// this is wonky, as get on this handle will always resolve via
+					// the summarizer client, but since we just return the absolute path
+					// it doesn't really matter, and remote handles will use
+					// the right handle context when they are deserialized
+					// by the dds.
+					//
+					// we re-used this hack a few time below, because
+					// we don't have the real client
+					initialState.summarizerClient.dataStoreRuntime,
+				);
+			},
+		},
 		client: makeUnreachableCodePathProxy("client"),
 		isDetached: startDetached,
 	};
 
 	options.emitter.emit("testStart", initialState);
 
+	const serializer = new FluidSerializer(initialState.summarizerClient.dataStoreRuntime);
+	const bind = new DDSFuzzHandle("", initialState.summarizerClient.dataStoreRuntime);
+
 	let operationCount = 0;
+	const generator = model.generatorFactory();
 	const finalState = await performFuzzActionsAsync(
-		model.generatorFactory(),
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+		async (state) => serializer.encode(await generator(state), bind),
 		async (state, operation) => {
-			options.emitter.emit("operation", operation);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			const decodedHandles = serializer.decode(operation);
+			options.emitter.emit("operation", decodedHandles);
 			operationCount++;
-			return model.reducer(state, operation);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+			return model.reducer(state, decodedHandles);
 		},
 		initialState,
 		saveInfo,
@@ -1494,6 +1531,13 @@ export async function runTestForSeed<
 	// Sanity-check that the generator produced at least one operation. If it failed to do so,
 	// this usually indicates an error on the part of the test author.
 	assert(operationCount > 0, "Generator should have produced at least one operation.");
+
+	if (options.handleGenerationDisabled !== true) {
+		assert(
+			handleGenerated,
+			"no handles were generated; tests should generate and use handle via random.handle, or disable handles for the test",
+		);
+	}
 
 	options.emitter.emit("testEnd", finalState);
 
@@ -1542,7 +1586,6 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 			const minimizer = new FuzzTestMinimizer(model, options, operations, seed, saveInfo, 3);
 
 			const minimized = await minimizer.minimize();
-
 			await saveOpsToFile(savePath, minimized);
 
 			throw error;

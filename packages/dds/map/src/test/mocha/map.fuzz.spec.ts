@@ -13,16 +13,11 @@ import {
 	createWeightedGenerator,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
-import {
-	DDSFuzzModel,
-	DDSFuzzTestState,
-	createDDSFuzzSuite,
-	UseHandle,
-} from "@fluid-private/test-dds-utils";
-import { Jsonable } from "@fluidframework/datastore-definitions/internal";
+import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
+import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 import { ISharedMap, MapFactory } from "../../index.js";
 
 import { _dirname } from "./dirname.cjs";
@@ -34,7 +29,7 @@ interface Clear {
 interface SetKey {
 	type: "setKey";
 	key: string;
-	value: Jsonable<unknown>;
+	value: Serializable<unknown>;
 }
 
 interface DeleteKey {
@@ -42,7 +37,7 @@ interface DeleteKey {
 	key: string;
 }
 
-type Operation = SetKey | DeleteKey | Clear | UseHandle;
+type Operation = SetKey | DeleteKey | Clear;
 
 // This type gets used a lot as the state object of the suite; shorthand it here.
 type State = DDSFuzzTestState<MapFactory>;
@@ -83,10 +78,6 @@ const reducer = combineReducers<Operation, State>({
 	deleteKey: ({ client }, { key }) => {
 		client.channel.delete(key);
 	},
-	useHandle: ({ random, client }, { handle }) => {
-		const keyNames = Array.from({ length: defaultOptions.keyPoolSize }, (_, i) => `${i}`);
-		client.channel.set(random.pick(keyNames), handle);
-	},
 });
 
 interface GeneratorOptions {
@@ -114,7 +105,11 @@ function makeGenerator(optionsParam?: Partial<GeneratorOptions>): AsyncGenerator
 	const setKey: Generator<SetKey, State> = ({ random }) => ({
 		type: "setKey",
 		key: random.pick(keyNames),
-		value: random.bool() ? random.integer(1, 50) : random.string(random.integer(3, 7)),
+		value: random.pick([
+			(): number => random.integer(1, 50),
+			(): string => random.string(random.integer(3, 7)),
+			(): IFluidHandle => random.handle(),
+		])(),
 	});
 	const deleteKey: Generator<DeleteKey, State> = ({ random }) => ({
 		type: "deleteKey",
@@ -130,7 +125,7 @@ function makeGenerator(optionsParam?: Partial<GeneratorOptions>): AsyncGenerator
 	return async (state) => syncGenerator(state);
 }
 
-describe("Map fuzz tests", () => {
+describe.only("Map fuzz tests", () => {
 	const model: DDSFuzzModel<MapFactory, Operation> = {
 		workloadName: "default",
 		factory: new MapFactory(),
@@ -142,7 +137,6 @@ describe("Map fuzz tests", () => {
 	createDDSFuzzSuite(model, {
 		defaultTestCount: 100,
 		numberOfClients: 3,
-		handleGenerationDisabled: false,
 		clientJoinOptions: {
 			maxNumberOfClients: 6,
 			clientAddProbability: 0.1,
