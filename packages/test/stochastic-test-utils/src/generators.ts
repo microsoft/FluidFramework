@@ -62,7 +62,6 @@ export function createWeightedGenerator<T, TState extends BaseFuzzTestState>(
 		if (totalWeight === 0) {
 			throw new Error("createWeightedGenerator must have some positive weight");
 		}
-
 		const { random } = state;
 		const sample = () => {
 			const weightSelected = random.real(0, totalWeight);

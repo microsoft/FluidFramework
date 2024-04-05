@@ -5,13 +5,11 @@
 
 import { Anchor, AnchorNode, FieldKey, TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
-	FlexFieldNodeSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
 	FlexTreeContext,
 	FlexTreeEntityKind,
 	FlexTreeField,
-	FlexTreeFieldNode,
 	FlexTreeMapNode,
 	FlexTreeNode,
 	FlexTreeNodeEvents,
@@ -68,9 +66,6 @@ export function createRawNode(
 	}
 	if (schema instanceof FlexMapNodeSchema) {
 		return new RawMapNode(schema, content as ReadonlyMap<string, InsertableContent>);
-	}
-	if (schema instanceof FlexFieldNodeSchema) {
-		return new RawFieldNode(schema, content);
 	}
 	fail("Unrecognized schema");
 }
@@ -213,23 +208,7 @@ export class RawMapNode<TSchema extends FlexMapNodeSchema>
 	}
 }
 
-/**
- * The implementation of a field node created by {@link createRawNode}.
- */
-export class RawFieldNode<TSchema extends FlexFieldNodeSchema>
-	extends RawTreeNode<TSchema, InsertableContent>
-	implements FlexTreeFieldNode<TSchema>
-{
-	public get content(): FlexTreeUnboxField<TSchema["info"]> {
-		throw rawError("Reading content of an array node");
-	}
-
-	public get boxedContent(): FlexTreeTypedField<TSchema["info"]> {
-		throw rawError("Reading boxed content of an array node");
-	}
-}
-
-function rawError(message?: string): Error {
+export function rawError(message?: string): Error {
 	return new Error(
 		`${
 			message ?? "Operation"
