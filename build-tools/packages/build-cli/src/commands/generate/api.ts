@@ -20,7 +20,7 @@ import type { CommandLogger } from "../../logging.js";
 /**
  * Literal pattern to search for in file prefix to replace with unscoped package name.
  *
- * @privateRemarks api-extractor use <@..>, but <> is problematic for command line
+ * @privateRemarks api-extractor use `<@..>`, but `<>` is problematic for command line
  * specification. A policy incorrectly thinks an argument like that should not be quoted.
  * It is just easier to use an alternate bracket style.
  */
