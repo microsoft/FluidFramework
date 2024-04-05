@@ -280,9 +280,6 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 				const unsubscribeFromChildrenChange = this.anchorNode.on(
 					"childrenChanging",
 					(anchorNode: AnchorNode) =>
-						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
-						// the listener argument only needs to be an AnchorNode. Should go away if/when we make the listener signature
-						// for changing and subtreeChanging match the one for afterChange.
 						listener(anchorNode),
 				);
 				return unsubscribeFromChildrenChange;
@@ -291,9 +288,6 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 				const unsubscribeFromSubtreeChange = this.anchorNode.on(
 					"subtreeChanging",
 					(anchorNode: AnchorNode) =>
-						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
-						// the listener argument only needs to be an AnchorNode. Should go away if/when we make the listener signature
-						// for changing and subtreeChanging match the one for afterChange.
 						listener(anchorNode),
 				);
 				return unsubscribeFromSubtreeChange;
