@@ -11,7 +11,7 @@ The import/order rule is enabled with the following settings:
 		"newlines-between": "always",
 		"alphabetize": {
 			"order": "asc",
-			"caseInsensitive": true
+			"caseInsensitive": false
 		}
 	}
 ]
