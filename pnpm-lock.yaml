@@ -7860,6 +7860,7 @@ importers:
       '@fluidframework/container-definitions': link:../../../common/container-definitions
       '@fluidframework/container-loader': link:../../../loader/container-loader
       '@fluidframework/fluid-static': link:../../fluid-static
+      '@microsoft/applicationinsights-web': 2.8.16_tslib@1.14.1
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.15.2
@@ -7868,7 +7869,6 @@ importers:
       '@fluid-tools/build-cli': 0.34.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/build-tools': 0.34.0
       '@microsoft/api-extractor': 7.42.3
-      '@microsoft/applicationinsights-web': 2.8.16_tslib@1.14.1
       '@types/chai': 4.3.11
       '@types/mocha': 9.1.1
       '@types/sinon': 17.0.3

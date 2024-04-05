@@ -48,7 +48,7 @@ export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> =
  * @public
  */
 export type DataObjectClass<T extends IFluidLoadable = IFluidLoadable> = {
-	readonly factory: { IFluidDataStoreFactory: DataObjectClass<T>["factory"] };
+	readonly factory: { readonly IFluidDataStoreFactory: DataObjectClass<T>["factory"] };
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 } & (new (...args: any[]) => T);
 

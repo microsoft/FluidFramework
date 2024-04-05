@@ -44,7 +44,7 @@ import {
 	ISnapshotRequestAndResponseOptions,
 	SnapshotFormatSupportType,
 	downloadSnapshot,
-	evalBlobsAndTrees,
+	getTreeStats,
 	fetchSnapshot,
 	fetchSnapshotWithRedeem,
 } from "./fetchSnapshot.js";
@@ -409,7 +409,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 						snapshotFetchOptions.loadingGroupIds,
 					),
 					avoidPrefetchSnapshotCache: this.hostPolicy.avoidPrefetchSnapshotCache,
-					...evalBlobsAndTrees(retrievedSnapshot),
+					...getTreeStats(retrievedSnapshot),
 					cacheLookupTimeInSerialFetch,
 					prefetchSavedDuration:
 						prefetchStartTime !== undefined && method !== "cache"
