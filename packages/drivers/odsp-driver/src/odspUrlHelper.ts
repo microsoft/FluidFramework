@@ -13,16 +13,15 @@ import { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions/internal"
  * @internal
  */
 export function hasOdcOrigin(url: URL): boolean {
-	const origin = url.origin;
 	return (
 		// Primary API endpoint and several test endpoints
-		origin.endsWith("onedrive.com") ||
+		url.origin.endsWith("onedrive.com") ||
 		// *storage.live.com hostnames
-		origin.endsWith("storage.live.com") ||
+		url.origin.endsWith("storage.live.com") ||
 		// live-int
-		origin.endsWith("storage.live-int.com") ||
+		url.origin.endsWith("storage.live-int.com") ||
 		// Test endpoints
-		origin.endsWith("onedrive-tst.com")
+		url.origin.endsWith("onedrive-tst.com")
 	);
 }
 
