@@ -646,7 +646,17 @@
             "error"
         ],
         "import/order": [
-            "off"
+            "error",
+            {
+                "alphabetize": {
+                    "caseInsensitive": false,
+                    "order": "asc",
+                    "orderImportKind": "ignore"
+                },
+                "distinctGroup": true,
+                "newlines-between": "always",
+                "warnOnUnassignedImports": false
+            }
         ],
         "indent": [
             "off"

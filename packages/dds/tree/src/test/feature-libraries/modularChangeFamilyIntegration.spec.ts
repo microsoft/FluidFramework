@@ -37,7 +37,13 @@ import {
 } from "../../feature-libraries/modular-schema/modularChangeFamily.js";
 // eslint-disable-next-line import/no-internal-modules
 import { DetachIdOverrideType } from "../../feature-libraries/sequence-field/index.js";
-import { IdAllocator, Mutable, brand, idAllocatorFromMaxId } from "../../util/index.js";
+import {
+	IdAllocator,
+	Mutable,
+	brand,
+	idAllocatorFromMaxId,
+	nestedMapFromFlatList,
+} from "../../util/index.js";
 import {
 	assertDeltaEqual,
 	defaultRevisionMetadataFromChanges,
@@ -46,6 +52,11 @@ import {
 	testChangeReceiver,
 } from "../utils.js";
 
+import {
+	NodeChangeset,
+	NodeId,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../feature-libraries/modular-schema/modularChangeTypes.js";
 // eslint-disable-next-line import/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -172,15 +183,17 @@ describe("ModularChangeFamily integration", () => {
 				taggedMoves,
 				defaultRevisionMetadataFromChanges([taggedMoves]),
 			);
-			const fieldCExpected = [MarkMaker.remove(1, brand(2))];
-			const node2Expected = {
+			const fieldCExpected = [MarkMaker.remove(1, brand(3))];
+
+			const nodeId2: NodeId = { localId: brand(4) };
+			const node2Expected: NodeChangeset = {
 				fieldChanges: new Map([
-					[fieldC, { fieldKind: sequence.identifier, change: fieldCExpected }],
+					[fieldC, { fieldKind: sequence.identifier, change: brand(fieldCExpected) }],
 				]),
 			};
 
 			const fieldBExpected = purgeUnusedCellOrderingInfo([
-				{ count: 1, changes: node2Expected },
+				{ count: 1, changes: nodeId2 },
 				// The two marks below a not essential and only exist because we're currently using tombstone
 				{ count: 1 },
 				{
@@ -193,31 +206,36 @@ describe("ModularChangeFamily integration", () => {
 				},
 			]);
 
-			const node1Expected = {
+			const nodeId1: NodeId = { localId: brand(5) };
+			const node1Expected: NodeChangeset = {
 				fieldChanges: new Map([
-					[fieldB, { fieldKind: sequence.identifier, change: fieldBExpected }],
+					[fieldB, { fieldKind: sequence.identifier, change: brand(fieldBExpected) }],
 				]),
 			};
 
 			const fieldAExpected = purgeUnusedCellOrderingInfo([
-				{ count: 1, changes: node1Expected },
+				{ count: 1, changes: nodeId1 },
 				// The two marks below a not essential and only exist because we're currently using tombstones
 				{ count: 1 },
 				{
 					count: 1,
 					cellId: {
 						revision: tag1,
-						localId: brand(1),
-						adjacentCells: [{ id: brand(1), count: 1 }],
+						localId: brand(2),
+						adjacentCells: [{ id: brand(2), count: 1 }],
 					},
 				},
 			]);
 
 			const expected: ModularChangeset = {
+				nodeChanges: nestedMapFromFlatList([
+					[nodeId1.revision, nodeId1.localId, node1Expected],
+					[nodeId2.revision, nodeId2.localId, node2Expected],
+				]),
 				fieldChanges: new Map([
 					[fieldA, { fieldKind: sequence.identifier, change: brand(fieldAExpected) }],
 				]),
-				maxId: brand(2),
+				maxId: brand(5),
 			};
 
 			assert.deepEqual(rebased, expected);
@@ -326,7 +344,7 @@ describe("ModularChangeFamily integration", () => {
 			const remove = makeAnonChange(removeD);
 
 			const composed = family.compose([moves, remove]);
-			const composedDelta = intoDelta(makeAnonChange(composed), fieldKinds);
+			const composedDelta = normalizeDelta(intoDelta(makeAnonChange(composed), fieldKinds));
 
 			const nodeAChanges: DeltaFieldMap = new Map([
 				[fieldB, { local: [{ count: 1, attach: { minor: 1 } }] }],
@@ -354,9 +372,9 @@ describe("ModularChangeFamily integration", () => {
 				],
 			};
 
-			const expectedDelta: DeltaRoot = {
+			const expectedDelta: DeltaRoot = normalizeDelta({
 				fields: new Map([[fieldA, fieldAChanges]]),
-			};
+			});
 
 			assertDeltaEqual(composedDelta, expectedDelta);
 		});
@@ -522,6 +540,7 @@ describe("ModularChangeFamily integration", () => {
 
 		it("prunes its output", () => {
 			const a: ModularChangeset = {
+				nodeChanges: new Map(),
 				fieldChanges: new Map([
 					[
 						brand("foo"),
@@ -533,6 +552,7 @@ describe("ModularChangeFamily integration", () => {
 				]),
 			};
 			const b: ModularChangeset = {
+				nodeChanges: new Map(),
 				fieldChanges: new Map([
 					[
 						brand("bar"),
@@ -588,16 +608,18 @@ describe("ModularChangeFamily integration", () => {
 			]);
 
 			const inverse = family.invert(tagChange(moves, tag1), false);
-			const fieldCExpected = [MarkMaker.revive(1, { revision: tag1, localId: brand(2) })];
-			const node2Expected = {
+			const fieldCExpected = [MarkMaker.revive(1, { revision: tag1, localId: brand(3) })];
+
+			const nodeId2: NodeId = { localId: brand(4) };
+			const node2Expected: NodeChangeset = {
 				fieldChanges: new Map([
-					[fieldC, { fieldKind: sequence.identifier, change: fieldCExpected }],
+					[fieldC, { fieldKind: sequence.identifier, change: brand(fieldCExpected) }],
 				]),
 			};
 
 			const fieldBExpected = [
 				MarkMaker.moveOut(1, brand(1), {
-					changes: node2Expected,
+					changes: nodeId2,
 					idOverride: {
 						type: DetachIdOverrideType.Unattach,
 						id: { revision: tag1, localId: brand(1) },
@@ -607,15 +629,16 @@ describe("ModularChangeFamily integration", () => {
 				MarkMaker.returnTo(1, brand(1), { revision: tag1, localId: brand(1) }),
 			];
 
-			const node1Expected = {
+			const nodeId1: NodeId = { localId: brand(2) };
+			const node1Expected: NodeChangeset = {
 				fieldChanges: new Map([
-					[fieldB, { fieldKind: sequence.identifier, change: fieldBExpected }],
+					[fieldB, { fieldKind: sequence.identifier, change: brand(fieldBExpected) }],
 				]),
 			};
 
 			const fieldAExpected = [
 				MarkMaker.moveOut(1, brand(0), {
-					changes: node1Expected,
+					changes: nodeId1,
 					idOverride: {
 						type: DetachIdOverrideType.Unattach,
 						id: { revision: tag1, localId: brand(0) },
@@ -626,10 +649,14 @@ describe("ModularChangeFamily integration", () => {
 			];
 
 			const expected: ModularChangeset = {
+				nodeChanges: nestedMapFromFlatList([
+					[nodeId1.revision, nodeId1.localId, node1Expected],
+					[nodeId2.revision, nodeId2.localId, node2Expected],
+				]),
 				fieldChanges: new Map([
 					[fieldA, { fieldKind: sequence.identifier, change: brand(fieldAExpected) }],
 				]),
-				maxId: brand(2),
+				maxId: brand(5),
 			};
 
 			assert.deepEqual(inverse, expected);
@@ -639,6 +666,7 @@ describe("ModularChangeFamily integration", () => {
 	describe("toDelta", () => {
 		it("works when nested changes come from different revisions", () => {
 			const change: ModularChangeset = {
+				nodeChanges: new Map(),
 				fieldChanges: new Map([
 					[
 						brand("foo"),
