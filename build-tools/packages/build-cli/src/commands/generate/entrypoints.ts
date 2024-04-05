@@ -6,15 +6,13 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+import type { PackageJson } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import type { ExportSpecifierStructure } from "ts-morph";
 import { ModuleKind, Project, ScriptKind } from "ts-morph";
 
 import { BaseCommand } from "../../base.js";
-// eslint-disable-next-line import/no-internal-modules
-import { ApiLevel } from "../../library/apiLevel.js";
-// eslint-disable-next-line import/no-internal-modules
-import { getApiExports } from "../../library/typescriptApi.js";
+import { ApiLevel, getApiExports } from "../../library";
 import type { CommandLogger } from "../../logging.js";
 
 /**
@@ -89,8 +87,7 @@ async function getOutPathPrefix({
 
 async function getLocalUnscopedPackageName(): Promise<string> {
 	const packageJson = await fs.readFile("./package.json", { encoding: "utf8" });
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-	const packageName = JSON.parse(packageJson).name;
+	const packageName = (JSON.parse(packageJson) as PackageJson).name;
 	if (typeof packageName !== "string") {
 		// eslint-disable-next-line unicorn/prefer-type-error
 		throw new Error(`unable to read package name`);

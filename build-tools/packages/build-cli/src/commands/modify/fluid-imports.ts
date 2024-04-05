@@ -10,10 +10,7 @@ import { existsSync, readFile } from "fs-extra";
 import * as JSON5 from "json5";
 import { type ImportDeclaration, ModuleKind, Project, SourceFile } from "ts-morph";
 import { BaseCommand } from "../../base";
-// eslint-disable-next-line import/no-internal-modules
-import { ApiLevel, isKnownApiLevel, knownApiLevels } from "../../library/apiLevel.js";
-// eslint-disable-next-line import/no-internal-modules
-import { getApiExports } from "../../library/typescriptApi.js";
+import { ApiLevel, getApiExports, isKnownApiLevel, knownApiLevels } from "../../library";
 import type { CommandLogger } from "../../logging";
 
 const maxConcurrency = 4;
