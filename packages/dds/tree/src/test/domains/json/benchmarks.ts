@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { forEachNode, forEachField, ITreeCursor } from "../../../core/index.js";
+import { ITreeCursor, forEachField, forEachNode } from "../../../core/index.js";
 
 export function sum(cursor: ITreeCursor): number {
 	let total = 0;

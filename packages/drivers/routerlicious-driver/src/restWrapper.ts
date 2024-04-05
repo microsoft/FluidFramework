@@ -3,28 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import {
-	ITelemetryLoggerExt,
-	PerformanceEvent,
-	numberFromString,
-} from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/core-utils";
 import { fromUtf8ToBase64, performance } from "@fluid-internal/client-utils";
-import { GenericNetworkError, NonRetryableError, RateLimiter } from "@fluidframework/driver-utils";
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
+import {
+	GenericNetworkError,
+	NonRetryableError,
+	RateLimiter,
+} from "@fluidframework/driver-utils/internal";
 import {
 	CorrelationIdHeaderName,
 	DriverVersionHeaderName,
-	getAuthorizationTokenFromCredentials,
 	RestLessClient,
+	getAuthorizationTokenFromCredentials,
 } from "@fluidframework/server-services-client";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, numberFromString } from "@fluidframework/telemetry-utils/internal";
 import fetch from "cross-fetch";
-import type { AxiosRequestConfig, RawAxiosRequestHeaders } from "axios";
 import safeStringify from "json-stringify-safe";
-import { RouterliciousErrorTypes, throwR11sNetworkError } from "./errorUtils";
-import { ITokenProvider, ITokenResponse } from "./tokens";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { QueryStringType, RestWrapper } from "./restWrapperBase";
+
+import type { AxiosRequestConfig, RawAxiosRequestHeaders } from "./axios.cjs";
+import { RouterliciousErrorTypes, throwR11sNetworkError } from "./errorUtils.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { QueryStringType, RestWrapper } from "./restWrapperBase.js";
+import { ITokenProvider, ITokenResponse } from "./tokens.js";
 
 type AuthorizationHeaderGetter = (token: ITokenResponse) => string;
 export type TokenFetcher = (refresh?: boolean) => Promise<ITokenResponse>;

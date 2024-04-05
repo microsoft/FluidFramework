@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/core-utils';
+import { assert } from '@fluidframework/core-utils/internal';
+
 import { copyPropertyIfDefined, fail } from './Common.js';
-import { NodeId, TraitLabel } from './Identifiers.js';
 import { Delta, Forest, isParentedForestNode } from './Forest.js';
+import { NodeId, TraitLabel } from './Identifiers.js';
 import { NodeData, Side } from './persisted-types/index.js';
 
 /**
@@ -318,6 +319,5 @@ export abstract class TreeView {
 }
 
 function getIndex(side: Side, index: TraitNodeIndex): PlaceIndex {
-	// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 	return (side + index) as PlaceIndex;
 }

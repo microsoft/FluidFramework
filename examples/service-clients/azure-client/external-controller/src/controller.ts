@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import events_pkg from "events_pkg";
 
+import events_pkg from "events_pkg";
 import { IValueChanged } from "fluid-framework";
 
 /**

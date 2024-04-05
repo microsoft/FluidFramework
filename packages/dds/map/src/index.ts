@@ -16,32 +16,14 @@
  */
 
 export {
-	DirectoryFactory,
-	ICreateInfo,
-	IDirectoryClearOperation,
-	IDirectoryCreateSubDirectoryOperation,
-	IDirectoryDataObject,
-	IDirectoryDeleteOperation,
-	IDirectoryDeleteSubDirectoryOperation,
-	IDirectoryKeyOperation,
-	IDirectoryNewStorageFormat,
-	IDirectoryOperation,
-	IDirectorySetOperation,
-	IDirectoryStorageOperation,
-	IDirectorySubDirectoryOperation,
-	SharedDirectory,
-} from "./directory.js";
-export {
 	IDirectory,
 	IDirectoryEvents,
 	IDirectoryValueChanged,
-	ISerializableValue,
-	ISerializedValue,
 	ISharedDirectory,
 	ISharedDirectoryEvents,
 	ISharedMap,
 	ISharedMapEvents,
 	IValueChanged,
 } from "./interfaces.js";
-export { LocalValueMaker, ILocalValue } from "./localValues.js";
-export { MapFactory, SharedMap } from "./map.js";
+export { MapFactory, SharedMap } from "./mapFactory.js";
+export { DirectoryFactory, SharedDirectory } from "./directoryFactory.js";

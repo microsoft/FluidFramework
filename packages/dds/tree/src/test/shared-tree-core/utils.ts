@@ -2,9 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tree-core/index.js";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+
+import { ICodecOptions } from "../../codec/index.js";
+import { TreeStoredSchemaRepository, TreeStoredSchemaSubscription } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	DefaultChangeFamily,
@@ -12,11 +15,12 @@ import {
 	DefaultEditBuilder,
 	TreeCompressionStrategy,
 	defaultSchemaPolicy,
+	fieldKindConfigurations,
 	makeFieldBatchCodec,
+	makeModularChangeCodecFamily,
 } from "../../feature-libraries/index.js";
+import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tree-core/index.js";
 import { testRevisionTagCodec } from "../utils.js";
-import { ICodecOptions } from "../../codec/index.js";
-import { TreeStoredSchemaRepository, TreeStoredSchemaSubscription } from "../../core/index.js";
 
 /**
  * A `SharedTreeCore` with
@@ -37,16 +41,22 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		schema: TreeStoredSchemaSubscription = new TreeStoredSchemaRepository(),
 		chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Uncompressed,
 	) {
-		const codecOptions: ICodecOptions = { jsonValidator: typeboxValidator };
+		const codecOptions: ICodecOptions = {
+			jsonValidator: typeboxValidator,
+		};
+		const formatVersions = { editManager: 1, message: 1, fieldBatch: 1 };
+		const codec = makeModularChangeCodecFamily(
+			fieldKindConfigurations,
+			testRevisionTagCodec,
+			makeFieldBatchCodec(codecOptions, formatVersions.fieldBatch),
+			codecOptions,
+			chunkCompressionStrategy,
+		);
 		super(
 			summarizables,
-			new DefaultChangeFamily(
-				testRevisionTagCodec,
-				makeFieldBatchCodec(codecOptions),
-				codecOptions,
-				chunkCompressionStrategy,
-			),
+			new DefaultChangeFamily(codec),
 			codecOptions,
+			formatVersions,
 			id,
 			runtime,
 			TestSharedTreeCore.attributes,

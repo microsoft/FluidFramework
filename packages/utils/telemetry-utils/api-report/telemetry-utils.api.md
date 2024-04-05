@@ -11,14 +11,14 @@ import { IConfigProviderBase } from '@fluidframework/core-interfaces';
 import type { IDisposable } from '@fluidframework/core-interfaces';
 import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
-import { IGenericError } from '@fluidframework/core-interfaces';
-import { ILoggingError } from '@fluidframework/core-interfaces';
+import { IGenericError } from '@fluidframework/core-interfaces/internal';
+import type { ILoggingError } from '@fluidframework/core-interfaces/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
-import { IUsageError } from '@fluidframework/core-interfaces';
-import { Lazy } from '@fluidframework/core-utils';
+import { IUsageError } from '@fluidframework/core-interfaces/internal';
+import { Lazy } from '@fluidframework/core-utils/internal';
 import { LogLevel } from '@fluidframework/core-interfaces';
 import { Tagged } from '@fluidframework/core-interfaces';
 import { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
@@ -56,7 +56,7 @@ export class DataCorruptionError extends LoggingError implements IErrorBase, IFl
 export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
     // (undocumented)
     readonly canRetry = false;
-    static create(errorMessage: string, dataProcessingCodepath: string, sequencedMessage?: ISequencedDocumentMessage, props?: ITelemetryBaseProperties): IFluidErrorBase;
+    static create(errorMessage: string, dataProcessingCodepath: string, sequencedMessage?: ISequencedDocumentMessage, props?: ITelemetryPropertiesExt): IFluidErrorBase;
     readonly errorType: "dataProcessingError";
     static wrapIfUnrecognized(originalError: unknown, dataProcessingCodepath: string, messageLike?: Partial<Pick<ISequencedDocumentMessage, "clientId" | "sequenceNumber" | "clientSequenceNumber" | "referenceSequenceNumber" | "minimumSequenceNumber" | "timestamp">>): IFluidErrorBase;
 }
@@ -64,7 +64,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 // @internal (undocumented)
 export const disconnectedEventName = "disconnected";
 
-// @public
+// @alpha
 export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> extends TypedEventEmitter<TEvent> {
     constructor(errorHandler: (eventName: EventEmitterEventType, error: any) => void);
     // (undocumented)
@@ -146,7 +146,7 @@ export interface IFluidErrorAnnotations {
 
 // @internal
 export interface IFluidErrorBase extends Error {
-    addTelemetryProperties: (props: ITelemetryBaseProperties) => void;
+    addTelemetryProperties: (props: ITelemetryPropertiesExt) => void;
     readonly errorInstanceId: string;
     readonly errorType: string;
     getTelemetryProperties(): ITelemetryBaseProperties;
@@ -254,7 +254,7 @@ export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITele
 // @internal
 export class LoggingError extends Error implements ILoggingError, Omit<IFluidErrorBase, "errorType"> {
     constructor(message: string, props?: ITelemetryBaseProperties, omitPropsFromLogging?: Set<string>);
-    addTelemetryProperties(props: ITelemetryBaseProperties): void;
+    addTelemetryProperties(props: ITelemetryPropertiesExt): void;
     // (undocumented)
     get errorInstanceId(): string;
     getTelemetryProperties(): ITelemetryBaseProperties;

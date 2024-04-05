@@ -3,25 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-	IChannelServices,
 	IChannelFactory,
+	IChannelServices,
+	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import {
-	AttributionKey,
-	ISummaryTreeWithStats,
-	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
-import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { ISharedMap, ISharedMapEvents } from "./interfaces";
-import { IMapDataObjectSerializable, IMapOperation, AttributableMapKernel } from "./mapKernel";
-import { pkgVersion } from "./packageVersion";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
+import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { SharedObject } from "@fluidframework/shared-object-base/internal";
+
+import { ISharedMap, ISharedMapEvents } from "./interfaces.js";
+import { AttributableMapKernel, IMapDataObjectSerializable, IMapOperation } from "./mapKernel.js";
+import { pkgVersion } from "./packageVersion.js";
 
 interface IMapSerializationFormat {
 	blobs?: string[];
@@ -287,12 +286,21 @@ export class AttributableMap extends SharedObject<ISharedMapEvents> implements I
 
 		const data = this.kernel.getSerializedStorage(serializer);
 
-		// If single property exceeds this size, it goes into its own blob
-		const MinValueSizeSeparateSnapshotBlob = 8 * 1024;
+		// If single property exceeds this size, it goes into its own blob.
+		// Similar to below, there are no strict requirements for this value, but it should be reasonable.
+		// And similar, it does not impact much efficiency, other than small blobs add overhead.
+		const MinValueSizeSeparateSnapshotBlob = 128 * 1024;
 
 		// Maximum blob size for multiple map properties
 		// Should be bigger than MinValueSizeSeparateSnapshotBlob
-		const MaxSnapshotBlobSize = 16 * 1024;
+		// There is no strict requirement for this value, but it should be reasonable.
+		// Reasonably large, such that relative overhead of creating multiple blobs is not too high.
+		// Reasonably small, such that we don't create so large blobs that storage system has to split them.
+		// For example, ODSP stores content in 1Mb Azure blobs. That said, it stores compressed content, so the size of
+		// blobs has only indirect impact on storage size.
+		// Please note that smaller sizes increase the chances of blob reuse across summaries. That said
+		// we have no code on client side to do such dedupping. Service side blob dedupping does not help much (we still transfer bites over wire).
+		const MaxSnapshotBlobSize = 256 * 1024;
 
 		// Partitioning algorithm:
 		// 1) Split large (over MinValueSizeSeparateSnapshotBlob = 8K) properties into their own blobs.

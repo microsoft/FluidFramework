@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Static, Type, TSchema, TAnySchema } from "@sinclair/typebox";
+import { Static, TAnySchema, TSchema, Type } from "@sinclair/typebox";
 
 /**
  * Note: TS doesn't easily support extracting a generic function's return type until 4.7:

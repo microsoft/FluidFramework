@@ -3,39 +3,41 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { NonRetryableError } from "@fluidframework/driver-utils";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import {
-	InstrumentedStorageTokenFetcher,
+	IFileEntry,
 	IOdspResolvedUrl,
+	InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 	ShareLinkInfoType,
-	IFileEntry,
-} from "@fluidframework/odsp-driver-definitions";
-import { ISnapshot } from "@fluidframework/driver-definitions";
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+
 import { ICreateFileResponse } from "./contracts.js";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
-import {
-	buildOdspShareLinkReqParams,
-	createCacheSnapshotKey,
-	getWithRetryForTokenRefresh,
-	INewFileInfo,
-	getOrigin,
-} from "./odspUtils.js";
-import { createOdspUrl } from "./createOdspUrl.js";
-import { getApiRoot } from "./odspUrlHelper.js";
-import { EpochTracker } from "./epochTracker.js";
-import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
+import { ClpCompliantAppHeader } from "./contractsPublic.js";
 import {
 	convertCreateNewSummaryTreeToTreeAndBlobs,
 	convertSummaryIntoContainerSnapshot,
 	createNewFluidContainerCore,
 } from "./createNewUtils.js";
-import { runWithRetry } from "./retryUtils.js";
+import { createOdspUrl } from "./createOdspUrl.js";
+import { EpochTracker } from "./epochTracker.js";
+import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
+import { getApiRoot } from "./odspUrlHelper.js";
+import {
+	INewFileInfo,
+	buildOdspShareLinkReqParams,
+	createCacheSnapshotKey,
+	getOrigin,
+	getWithRetryForTokenRefresh,
+} from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
-import { ClpCompliantAppHeader } from "./contractsPublic.js";
+import { runWithRetry } from "./retryUtils.js";
 
 const isInvalidFileName = (fileName: string): boolean => {
 	const invalidCharsRegex = /["*/:<>?\\|]+/g;
@@ -212,7 +214,6 @@ export async function createNewEmptyFluidFile(
 					);
 				}
 				event.end({
-					headers: Object.keys(headers).length > 0 ? true : undefined,
 					...fetchResponse.propsToLog,
 				});
 				return content.id;

@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import path from "path";
 import { strict as assert } from "assert";
-import { existsSync, rmSync, mkdirSync, writeFileSync, readFileSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "fs";
+import path from "path";
+
 import { JsonCompatibleReadOnly } from "../../util/index.js";
+import { testSrcPath } from "../testSrcPath.cjs";
 
 const regenerateSnapshots = process.argv.includes("--snapshot");
 
@@ -70,8 +72,7 @@ let currentTestFile: string | undefined;
 // Simple filter to avoid tests with a name that would accidentally be parsed as directory traversal or other confusing things.
 const nameCheck = new RegExp(/^[^"/\\]+$/);
 
-assert(__dirname.match(/dist[/\\]test[/\\]snapshots$/));
-const snapshotsFolder = path.join(__dirname, `../../../src/test/snapshots`);
+const snapshotsFolder = path.join(testSrcPath, "snapshots");
 assert(existsSync(snapshotsFolder));
 
 /**

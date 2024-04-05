@@ -4,28 +4,21 @@
  */
 
 import { strict as assert } from "assert";
-import { CursorLocationType, EmptyKey, mapCursorField, Value } from "../../../core/index.js";
-import { jsonObject, leaf, SchemaBuilder } from "../../../domains/index.js";
-import {
-	defaultSchemaPolicy,
-	jsonableTreeFromCursor,
-	cursorForJsonableTreeNode,
-	TreeChunk,
-	cursorForJsonableTreeField,
-	intoStoredSchemaCollection,
-} from "../../../feature-libraries/index.js";
+
+import { CursorLocationType, EmptyKey, Value, mapCursorField } from "../../../core/index.js";
+import { SchemaBuilder, jsonObject, leaf } from "../../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
 // eslint-disable-next-line import/no-internal-modules
 import { tryGetChunk } from "../../../feature-libraries/chunked-forest/chunk.js";
 import {
-	basicOnlyChunkPolicy,
 	ChunkPolicy,
+	ShapeInfo,
+	basicOnlyChunkPolicy,
 	chunkRange,
 	defaultChunkPolicy,
 	insertValues,
 	polymorphic,
-	ShapeInfo,
 	tryShapeFromFieldSchema,
 	tryShapeFromSchema,
 	uniformChunkFromCursor,
@@ -35,7 +28,16 @@ import {
 import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
 // eslint-disable-next-line import/no-internal-modules
 import { TreeShape } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
+import {
+	TreeChunk,
+	cursorForJsonableTreeField,
+	cursorForJsonableTreeNode,
+	defaultSchemaPolicy,
+	intoStoredSchemaCollection,
+	jsonableTreeFromCursor,
+} from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
+
 import {
 	assertChunkCursorEquals,
 	jsonableTreesFromFieldCursor,
@@ -314,7 +316,7 @@ describe("chunkTree", () => {
 			const info = tryShapeFromFieldSchema(
 				schema,
 				defaultSchemaPolicy,
-				valueField,
+				valueField.stored,
 				brand("key"),
 				new Map(),
 			);
@@ -324,7 +326,7 @@ describe("chunkTree", () => {
 			const info = tryShapeFromFieldSchema(
 				schema,
 				defaultSchemaPolicy,
-				optionalField,
+				optionalField.stored,
 				brand("key"),
 				new Map(),
 			);

@@ -4,15 +4,17 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import {
 	ConfigTypes,
 	IConfigProviderBase,
 	ITelemetryBaseEvent,
 } from "@fluidframework/core-interfaces";
-import { IEventSampler, createSampledLogger } from "../utils.js";
-import { TelemetryDataTag, tagCodeArtifacts, tagData } from "../logger.js";
+
 import { mixinMonitoringContext } from "../config.js";
+import { TelemetryDataTag, tagCodeArtifacts, tagData } from "../logger.js";
 import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "../telemetryTypes.js";
+import { IEventSampler, createSampledLogger } from "../utils.js";
 
 describe("tagData", () => {
 	it("tagData with data", () => {

@@ -2,14 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "node:assert";
-import { DriverHeader } from "@fluidframework/driver-definitions";
+
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
-import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
-import { getHashedDocumentId } from "../odspPublicUtils.js";
+import { DriverHeader } from "@fluidframework/driver-definitions/internal";
+import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
+
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";
 import { createOdspUrl } from "../createOdspUrl.js";
+import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
+import { getHashedDocumentId } from "../odspPublicUtils.js";
 
 describe("Odsp Driver Resolver", () => {
 	const siteUrl = "https://localhost";

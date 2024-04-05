@@ -6,16 +6,17 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
+
 import {
+	TestOperation,
 	annotateRange,
 	applyMessages,
 	doOverRanges,
 	generateOperationMessagesForClients,
 	insertAtRefPos,
 	removeRange,
-	TestOperation,
 } from "./mergeTreeOperationRunner.js";
-import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger.js";
+import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger.js";
 
 const allOperations: TestOperation[] = [removeRange, annotateRange, insertAtRefPos];
 

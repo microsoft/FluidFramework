@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { RuntimeHeaders } from "@fluidframework/container-runtime";
+import { RuntimeHeaders } from "@fluidframework/container-runtime/internal";
 import {
+	FluidObject,
 	IFluidHandle,
 	IFluidHandleContext,
 	IRequest,
-	FluidObject,
 } from "@fluidframework/core-interfaces";
-import { responseToException } from "@fluidframework/runtime-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+import { responseToException } from "@fluidframework/runtime-utils/internal";
 
 /**
  * This handle is used to dynamically load a Fluid object on a remote client and is created on parsing a serialized

@@ -2,13 +2,20 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { performance } from "@fluid-internal/client-utils";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { assert, Deferred } from "@fluidframework/core-utils";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
+import {
+	IDeltasFetchResult,
+	IStream,
+	IStreamResult,
+} from "@fluidframework/driver-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IDeltasFetchResult, IStream, IStreamResult } from "@fluidframework/driver-definitions";
-import { getRetryDelayFromError, canRetryOnError, createGenericNetworkError } from "./network.js";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+
+import { canRetryOnError, createGenericNetworkError, getRetryDelayFromError } from "./network.js";
 import { logNetworkFailure } from "./networkUtils.js";
 // For now, this package is versioned and released in unison with the specific drivers
 import { pkgVersion as driverVersion } from "./packageVersion.js";

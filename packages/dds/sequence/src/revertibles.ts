@@ -5,28 +5,28 @@
 
 /* eslint-disable no-bitwise */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	appendToMergeTreeDeltaRevertibles,
-	discardMergeTreeDeltaRevertible,
-	isMergeTreeDeltaRevertible,
 	LocalReferencePosition,
 	MergeTreeDeltaOperationType,
 	MergeTreeDeltaRevertible,
 	MergeTreeDeltaType,
 	PropertySet,
 	ReferenceType,
+	SlidingPreference, // eslint-disable-next-line import/no-deprecated
+	SortedSet,
+	appendToMergeTreeDeltaRevertibles,
+	discardMergeTreeDeltaRevertible,
+	getSlideToSegoff,
+	isMergeTreeDeltaRevertible,
 	refTypeIncludesFlag,
 	revertMergeTreeDeltaRevertibles,
-	// eslint-disable-next-line import/no-deprecated
-	SortedSet,
-	getSlideToSegoff,
-	SlidingPreference,
-} from "@fluidframework/merge-tree";
-import { InteriorSequencePlace, Side } from "./intervalCollection";
-import { IntervalOpType, SequenceInterval } from "./intervals";
-import { SharedString, SharedStringSegment } from "./sharedString";
-import { ISequenceDeltaRange, SequenceDeltaEvent } from "./sequenceDeltaEvent";
+} from "@fluidframework/merge-tree/internal";
+
+import { InteriorSequencePlace, Side } from "./intervalCollection.js";
+import { IntervalOpType, SequenceInterval } from "./intervals/index.js";
+import { ISequenceDeltaRange, SequenceDeltaEvent } from "./sequenceDeltaEvent.js";
+import { SharedString, SharedStringSegment } from "./sharedString.js";
 
 /**
  * Data for undoing edits on SharedStrings and Intervals.

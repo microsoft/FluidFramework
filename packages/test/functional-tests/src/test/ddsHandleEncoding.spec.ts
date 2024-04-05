@@ -4,30 +4,31 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	type BuildNode,
 	Change,
 	SharedTree as LegacySharedTree,
+	MigrationShimFactory,
 	StablePlace,
 	type TraitLabel,
-	MigrationShimFactory,
 } from "@fluid-experimental/tree";
+import { CellFactory } from "@fluidframework/cell/internal";
+import { detectOutboundReferences } from "@fluidframework/container-runtime/internal";
+import { IChannelFactory } from "@fluidframework/datastore-definitions";
+import { SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { DirectoryFactory, type ISharedDirectory, MapFactory } from "@fluidframework/map/internal";
+import { SharedMatrixFactory } from "@fluidframework/matrix/internal";
+import { ConsensusQueueFactory } from "@fluidframework/ordered-collection/internal";
+import { ConsensusRegisterCollectionFactory } from "@fluidframework/register-collection/internal";
+import { ReferenceType, SharedStringFactory } from "@fluidframework/sequence/internal";
 import {
-	MockFluidDataStoreRuntime,
-	MockStorage,
 	MockDeltaConnection,
+	MockFluidDataStoreRuntime,
 	MockHandle,
-} from "@fluidframework/test-runtime-utils";
-import { CellFactory } from "@fluidframework/cell";
-import { DirectoryFactory, IDirectory, MapFactory } from "@fluidframework/map";
-import { SharedMatrixFactory, SharedMatrix } from "@fluidframework/matrix";
-import { SharedTree, SchemaFactory, ITree, TreeConfiguration } from "@fluidframework/tree";
-import { ConsensusQueueFactory } from "@fluidframework/ordered-collection";
-import { ReferenceType, SharedStringFactory } from "@fluidframework/sequence";
-import { IChannel, IChannelFactory } from "@fluidframework/datastore-definitions";
-import { ConsensusRegisterCollectionFactory } from "@fluidframework/register-collection";
-import { detectOutboundReferences } from "@fluidframework/container-runtime";
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
+import { ITree, SchemaFactory, SharedTree, TreeConfiguration } from "@fluidframework/tree";
 
 /**
  * The purpose of these tests is to demonstrate that DDSes do not do opaque encoding of handles
@@ -49,18 +50,11 @@ describe("DDS Handle Encoding", () => {
 	 * @returns The list of handles found in the given contents object
 	 */
 	function findAllHandles(contents: unknown) {
-		const envelope = { contents, address: "envelope" };
 		const handlesFound: string[] = [];
-		detectOutboundReferences(envelope, (from, to) => {
+		detectOutboundReferences("envelope", contents, (from, to) => {
 			handlesFound.push(to);
 		});
 		return handlesFound;
-	}
-
-	/** A "Mask" over IChannelFactory that specifies the return type of create */
-	interface IChannelFactoryWithCreatedType<T extends IChannel>
-		extends Omit<IChannelFactory, "create"> {
-		create: (...args: Parameters<IChannelFactory["create"]>) => T;
 	}
 
 	/** Each test case runs some code then declares the handles (if any) it expects to be included in the op payload */
@@ -71,8 +65,8 @@ describe("DDS Handle Encoding", () => {
 	}
 
 	/** This takes care of creating the DDS behind the scenes so the ITestCase's code is ready to invoke */
-	function createTestCase<T extends IChannel>(
-		factory: IChannelFactoryWithCreatedType<T>,
+	function createTestCase<T>(
+		factory: IChannelFactory<T>,
 		addHandleToDDS: (dds: T) => void,
 		expectedHandles: string[],
 		nameOverride?: string,
@@ -114,7 +108,7 @@ describe("DDS Handle Encoding", () => {
 		),
 		createTestCase(
 			new DirectoryFactory(),
-			(dds: IDirectory) => {
+			(dds: ISharedDirectory) => {
 				dds.set("whatever", handle);
 			},
 			[handle.absolutePath] /* expectedHandles */,
@@ -128,7 +122,7 @@ describe("DDS Handle Encoding", () => {
 		),
 		createTestCase(
 			new SharedMatrixFactory(),
-			(dds: SharedMatrix) => {
+			(dds) => {
 				dds.insertRows(0, 1);
 				dds.insertCols(0, 1);
 
@@ -137,7 +131,7 @@ describe("DDS Handle Encoding", () => {
 			[handle.absolutePath] /* expectedHandles */,
 		),
 		createTestCase(
-			SharedTree.getFactory() as any,
+			SharedTree.getFactory(),
 			(dds: ITree) => {
 				const builder = new SchemaFactory("test");
 				class Bar extends builder.object("bar", {

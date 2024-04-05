@@ -5,14 +5,14 @@
 
 import {
 	ICodeDetailsLoader,
-	IFluidModule,
-	IProvideRuntimeFactory,
 	IFluidCodeDetails,
 	IFluidCodeDetailsComparer,
+	IFluidModule,
 	IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions";
+	IProvideRuntimeFactory,
+} from "@fluidframework/container-definitions/internal";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
+import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 
 /**
  * URL Resolver for the replay tool.

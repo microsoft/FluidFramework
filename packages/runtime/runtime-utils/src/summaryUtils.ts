@@ -3,32 +3,36 @@
  * Licensed under the MIT License.
  */
 
-import type { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
 import {
-	bufferToString,
-	fromBase64ToUtf8,
 	IsoBuffer,
 	Uint8ArrayToString,
+	bufferToString,
+	fromBase64ToUtf8,
 } from "@fluid-internal/client-utils";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils";
+import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
+import type { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	ITree,
-	SummaryType,
-	ISummaryTree,
-	SummaryObject,
+	AttachmentTreeEntry,
+	BlobTreeEntry,
+	TreeTreeEntry,
+} from "@fluidframework/driver-utils/internal";
+import {
 	ISummaryBlob,
-	TreeEntry,
+	ISummaryTree,
+	ITree,
 	ITreeEntry,
+	SummaryObject,
+	SummaryType,
+	TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
+	IGarbageCollectionData,
 	ISummaryStats,
-	ISummarizeResult,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
-import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
+import { ISummarizeResult } from "@fluidframework/runtime-definitions/internal";
 
 /**
  * Combines summary stats by adding their totals together.
@@ -393,7 +397,7 @@ export function processAttachMessageGCData(
 
 	assert(
 		gcDataEntry.type === TreeEntry.Blob && gcDataEntry.value.encoding === "utf-8",
-		"GC data should be a utf-8-encoded blob",
+		0x8ff /* GC data should be a utf-8-encoded blob */,
 	);
 
 	const gcData = JSON.parse(gcDataEntry.value.contents) as IGarbageCollectionData;

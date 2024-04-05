@@ -3,20 +3,24 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import * as fs from "fs";
 import path from "path";
-import { strict as assert } from "assert";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { createContainerAndExecute, exportFile } from "../exportFile";
-import { getSnapshotFileContent } from "../utils";
+
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+
 /* eslint-disable import/no-internal-modules */
-import { executeResult, fluidExport } from "./sampleCodeLoaders/sampleCodeLoader";
-import { fluidExport as timeoutFluidExport } from "./sampleCodeLoaders/timeoutCodeLoader";
-import { fluidExport as networkFetchFluidExport } from "./sampleCodeLoaders/networkFetchCodeLoader";
+import { createContainerAndExecute, exportFile } from "../exportFile.js";
+import { getSnapshotFileContent } from "../utils.js";
+
+import { _dirname } from "./dirname.cjs";
+import { fluidExport as networkFetchFluidExport } from "./sampleCodeLoaders/networkFetchCodeLoader.js";
+import { executeResult, fluidExport } from "./sampleCodeLoaders/sampleCodeLoader.js";
+import { fluidExport as timeoutFluidExport } from "./sampleCodeLoaders/timeoutCodeLoader.js";
 /* eslint-enable import/no-internal-modules */
 
 describe("exportFile", () => {
-	const folderRoot = path.join(__dirname, "../../src/test");
+	const folderRoot = path.join(_dirname, "../../src/test");
 	const outputFolder = path.join(folderRoot, "outputFolder");
 	const outputFilePath = path.join(outputFolder, "result.txt");
 	const telemetryFile = path.join(outputFolder, "telemetry.txt");

@@ -3,14 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { createChildLogger, raiseConnectedEvent } from "@fluidframework/telemetry-utils/internal";
+import { v4 as uuid } from "uuid";
+
 import {
+	type IMockContainerRuntimeIdAllocationMessage,
+	IMockContainerRuntimeOptions,
 	MockContainerRuntime,
 	MockContainerRuntimeFactory,
-	IMockContainerRuntimeOptions,
 	MockFluidDataStoreRuntime,
-} from "./mocks";
+} from "./mocks.js";
 
 /**
  * Specialized implementation of MockContainerRuntime for testing ops during reconnection.
@@ -35,6 +38,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			return;
 		}
 
+		raiseConnectedEvent(createChildLogger(), this, connected);
 		this._connected = connected;
 
 		if (connected) {
@@ -42,7 +46,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 				this.process(remoteMessage);
 			}
 			this.pendingRemoteMessages.length = 0;
-			this.clientSequenceNumber = 0;
+			this.deltaManager.clientSequenceNumber = 0;
 			// We should get a new clientId on reconnection.
 			this.clientId = uuid();
 			// Update the clientId in FluidDataStoreRuntime.
@@ -56,6 +60,14 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			// On disconnection, clear any outstanding messages for this client because it will be resent.
 			this.factory.clearOutstandingClientMessages(this.clientId);
 			this.factory.quorum.removeMember(this.clientId);
+			for (const message of this.outbox) {
+				this.addPendingMessage(
+					message.content,
+					message.localOpMetadata,
+					++this.deltaManager.clientSequenceNumber,
+				);
+			}
+			this.outbox.length = 0;
 		}
 
 		// Let the DDSes know that the connection state changed.
@@ -98,7 +110,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 	public async initializeWithStashedOps(
 		fromContainerRuntime: MockContainerRuntimeForReconnection,
 	) {
-		if (this.pendingMessages.length !== 0 || this.clientSequenceNumber !== 0) {
+		if (this.pendingMessages.length !== 0 || this.deltaManager.clientSequenceNumber !== 0) {
 			throw new Error("applyStashedOps must be called first, and once.");
 		}
 
@@ -160,7 +172,13 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		const applyStashedOpsAtSeq = async (seq: number) => {
 			const pendingAtSeq = stashedOps.get(seq);
 			for (const message of pendingAtSeq ?? []) {
-				await this.dataStoreRuntime.applyStashedOp(message);
+				// As in production, do not locally apply any stashed ID allocation messages.
+				// Instead, simply resubmit them.
+				if ((message as IMockContainerRuntimeIdAllocationMessage).type === "idAllocation") {
+					this.submit(message, undefined);
+				} else {
+					await this.dataStoreRuntime.applyStashedOp(message);
+				}
 			}
 			stashedOps.delete(seq);
 		};

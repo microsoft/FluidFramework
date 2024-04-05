@@ -4,20 +4,21 @@
  */
 
 // Required for testing support of null values
+
 /* eslint-disable unicorn/no-null */
 
-import { expect } from "chai";
-
-import { SharedCell } from "@fluidframework/cell";
+import { SharedCell } from "@fluidframework/cell/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedCounter } from "@fluidframework/counter";
-import { SharedDirectory, SharedMap } from "@fluidframework/map";
-import { SharedMatrix } from "@fluidframework/matrix";
-import { SharedString } from "@fluidframework/sequence";
+import { SharedCounter } from "@fluidframework/counter/internal";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { SharedMap } from "@fluidframework/map";
+import { SharedDirectory } from "@fluidframework/map/internal";
+import { SharedMatrix } from "@fluidframework/matrix/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { SchemaFactory, TreeConfiguration, SharedTree, type ITree } from "@fluidframework/tree";
-import { createIdCompressor } from "@fluidframework/id-compressor";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+import { SchemaFactory, SharedTree, TreeConfiguration } from "@fluidframework/tree";
+import { expect } from "chai";
 
 import { EditType, type FluidObjectId } from "../CommonInterfaces.js";
 import {
@@ -25,6 +26,7 @@ import {
 	type FluidObjectValueNode,
 	type FluidUnknownObjectNode,
 	type VisualChildNode,
+	VisualNodeKind,
 	visualizeChildData as visualizeChildDataBase,
 	visualizeSharedCell,
 	visualizeSharedCounter,
@@ -34,7 +36,6 @@ import {
 	visualizeSharedString,
 	visualizeSharedTree,
 	visualizeUnknownSharedObject,
-	VisualNodeKind,
 } from "../data-visualization/index.js";
 
 /**
@@ -120,11 +121,8 @@ describe("DefaultVisualizers unit tests", () => {
 
 	it("SharedDirectory", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const sharedDirectory = new SharedDirectory(
-			"test-directory",
-			runtime,
-			SharedDirectory.getFactory().attributes,
-		);
+		const sharedDirectory = SharedDirectory.getFactory().create(runtime, "test-directory");
+
 		sharedDirectory.set("foo", 37);
 		sharedDirectory.set("bar", false);
 		sharedDirectory.set("baz", {
@@ -233,7 +231,7 @@ describe("DefaultVisualizers unit tests", () => {
 
 	it("SharedMap", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const sharedMap = new SharedMap("test-map", runtime, SharedMap.getFactory().attributes);
+		const sharedMap = SharedMap.getFactory().create(runtime, "test-map");
 		sharedMap.set("foo", 42);
 		sharedMap.set("bar", true);
 		sharedMap.set("baz", {
@@ -401,7 +399,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const sharedTree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"test",
-		) as ITree;
+		);
 
 		class ChildSchema extends builder.object("child-item", {
 			childField: [builder.boolean, builder.handle, builder.string],

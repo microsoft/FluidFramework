@@ -4,49 +4,26 @@
  */
 
 import assert from "assert";
-import { v4 as uuid } from "uuid";
-import { isFluidError } from "@fluidframework/telemetry-utils";
-import { FluidErrorTypes } from "@fluidframework/core-interfaces";
-import { ICreateBlobResponse, SummaryType } from "@fluidframework/protocol-definitions";
-import { AttachState, IRuntime } from "@fluidframework/container-definitions";
+
 import { stringToBuffer } from "@fluid-internal/client-utils";
+import { AttachState } from "@fluidframework/container-definitions";
+import { IRuntime } from "@fluidframework/container-definitions/internal";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	type IDocumentStorageService,
 	type IResolvedUrl,
 	type IUrlResolver,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { ICreateBlobResponse, SummaryType } from "@fluidframework/protocol-definitions";
+import { isFluidError } from "@fluidframework/telemetry-utils/internal";
+import { v4 as uuid } from "uuid";
+
 import { IDetachedBlobStorage, Loader } from "../loader.js";
-import { IPendingDetachedContainerState } from "../container.js";
+import type { IPendingDetachedContainerState } from "../serializedStateManager.js";
 
-const failProxy = <T extends object>() => {
-	const proxy = new Proxy<T>({} as any as T, {
-		get: (_, p) => {
-			if (p === "then") {
-				return undefined;
-			}
-			throw Error(`${p.toString()} not implemented`);
-		},
-	});
-	return proxy;
-};
-
-const failSometimeProxy = <T extends object>(handler: Partial<T>) => {
-	const proxy = new Proxy<T>(handler as T, {
-		get: (t, p, r) => {
-			if (p === "then") {
-				return undefined;
-			}
-			if (p in handler) {
-				return Reflect.get(t, p, r);
-			}
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-			return failProxy();
-		},
-	});
-	return proxy;
-};
+import { failProxy, failSometimeProxy } from "./failProxy.js";
 
 const codeLoader = {
 	load: async () => {

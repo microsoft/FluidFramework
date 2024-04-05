@@ -3,20 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
-	FieldKey,
-	TreeType,
-	UpPath,
 	CursorLocationType,
-	ITreeCursorSynchronous,
-	Value,
-	FieldUpPath,
-	PathRootPrefix,
 	CursorMarker,
 	DetachedField,
-	rootField,
+	FieldKey,
+	FieldUpPath,
+	ITreeCursorSynchronous,
+	PathRootPrefix,
+	TreeType,
+	UpPath,
+	Value,
 	detachedFieldAsKey,
+	rootField,
 } from "../core/index.js";
 import { fail } from "../util/index.js";
 

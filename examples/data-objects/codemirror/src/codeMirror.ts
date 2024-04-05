@@ -4,20 +4,24 @@
  */
 
 import { EventEmitter } from "@fluid-example/example-utils";
-import { IFluidLoadable, IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidLoadable, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import {
 	FluidDataStoreRuntime,
 	FluidObjectHandle,
 	mixinRequestHandler,
-} from "@fluidframework/datastore";
+} from "@fluidframework/datastore/internal";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { SharedString, ReferenceType, reservedTileLabelsKey } from "@fluidframework/sequence";
-import { create404Response } from "@fluidframework/runtime-utils";
+} from "@fluidframework/runtime-definitions/internal";
+import { create404Response } from "@fluidframework/runtime-utils/internal";
+import {
+	ReferenceType,
+	SharedString,
+	reservedTileLabelsKey,
+} from "@fluidframework/sequence/internal";
 
 import { PresenceManager } from "./presence.js";
 

@@ -19,8 +19,8 @@ import {
 } from "./sequenceChangeRebaser.test.js";
 import { testCodecs } from "./sequenceFieldCodecs.test.js";
 import { testEditor } from "./sequenceFieldEditor.test.js";
-import { testToDelta } from "./sequenceFieldToDelta.test.js";
 import { testSnapshots } from "./sequenceFieldSnapshots.test.js";
+import { testToDelta } from "./sequenceFieldToDelta.test.js";
 import { testUtils } from "./sequenceFieldUtils.test.js";
 
 describe("SequenceField", () => {

@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { type IContainerContext } from "@fluidframework/container-definitions";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { type IContainerContext } from "@fluidframework/container-definitions/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { type FluidObject } from "@fluidframework/core-interfaces";
-// eslint-disable-next-line import/no-deprecated
 import {
 	type RuntimeRequestHandler,
+	// eslint-disable-next-line import/no-deprecated
 	buildRuntimeRequestHandler,
-} from "@fluidframework/request-handler";
+} from "@fluidframework/request-handler/internal";
 import {
-	type NamedFluidDataStoreRegistryEntries,
 	type IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions";
-import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+	type NamedFluidDataStoreRegistryEntries,
+} from "@fluidframework/runtime-definitions/internal";
+import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
 
 const defaultStoreId = "" as const;
 

@@ -3,23 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import commander from "commander";
-import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import {
+	DriverEndpoint,
 	ITestDriver,
 	TestDriverTypes,
-	DriverEndpoint,
-} from "@fluidframework/test-driver-definitions";
-import { Loader, ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
+} from "@fluid-internal/test-driver-definitions";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader";
+import { IContainerExperimental, Loader } from "@fluidframework/container-loader/internal";
 import { IRequestHeader, LogLevel } from "@fluidframework/core-interfaces";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
-import { getRetryDelayFromError } from "@fluidframework/driver-utils";
-import { assert, delay } from "@fluidframework/core-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { assert, delay } from "@fluidframework/core-utils/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import { getRetryDelayFromError } from "@fluidframework/driver-utils/internal";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
-import { ILoadTest, IRunConfig } from "./loadTestDataStore";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import commander from "commander";
+
+import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver.js";
+import { ILoadTest, IRunConfig } from "./loadTestDataStore.js";
+import {
+	generateConfigurations,
+	generateLoaderOptions,
+	generateRuntimeOptions,
+	getOptionOverride,
+} from "./optionsMatrix.js";
 import {
 	configProvider,
 	createCodeLoader,
@@ -28,14 +37,7 @@ import {
 	getProfile,
 	globalConfigurations,
 	safeExit,
-} from "./utils";
-import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
-import {
-	generateConfigurations,
-	generateLoaderOptions,
-	generateRuntimeOptions,
-	getOptionOverride,
-} from "./optionsMatrix";
+} from "./utils.js";
 
 function printStatus(runConfig: IRunConfig, message: string) {
 	if (runConfig.verbose) {

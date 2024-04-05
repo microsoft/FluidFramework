@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISnapshot } from "@fluidframework/driver-definitions";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 
 /**

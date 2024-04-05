@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FluidErrorTypes } from "@fluidframework/core-interfaces";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 
 import type { IResolvedUrl } from "./urlResolver.js";
 
@@ -106,6 +106,7 @@ export const DriverErrorTypes = {
 	outOfStorageError: "outOfStorageError",
 } as const;
 /**
+ * {@inheritDoc (DriverErrorTypes:variable)}
  * @public
  */
 export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];

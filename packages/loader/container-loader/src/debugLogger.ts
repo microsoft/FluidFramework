@@ -3,20 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import { performance } from "@fluid-internal/client-utils";
 import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
-import { performance } from "@fluid-internal/client-utils";
-
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
-	ITelemetryLoggerExt,
 	ITelemetryLoggerPropertyBags,
 	createMultiSinkLogger,
 	eventNamespaceSeparator,
 	formatTick,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 
 // This import style is necessary to ensure the emitted JS code works in both CJS and ESM.
 import debugPkg from "debug";

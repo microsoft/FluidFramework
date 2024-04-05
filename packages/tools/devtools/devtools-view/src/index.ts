@@ -16,11 +16,11 @@
  * @packageDocumentation
  */
 
-export type { DevtoolsPanelProps } from "./DevtoolsPanel";
-export { DevtoolsPanel } from "./DevtoolsPanel";
-export { WindowMessageRelay } from "./WindowMessageRelay";
-export { isTelemetryOptInEnabled } from "./TelemetryUtils";
+export type { DevtoolsPanelProps } from "./DevtoolsPanel.js";
+export { DevtoolsPanel } from "./DevtoolsPanel.js";
+export { WindowMessageRelay } from "./WindowMessageRelay.js";
+export { isTelemetryOptInEnabled } from "./TelemetryUtils.js";
 
 // Convenience re-exports
-export type { IMessageRelay } from "@fluidframework/devtools-core";
+export type { IMessageRelay } from "@fluidframework/devtools-core/internal";
 export type { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";

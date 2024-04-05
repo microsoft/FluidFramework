@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ISnapshotOptions } from "@fluidframework/odsp-driver-definitions";
+
+import { ISnapshotOptions } from "@fluidframework/odsp-driver-definitions/internal";
 
 /**
  * Generates query string from the given query parameters.

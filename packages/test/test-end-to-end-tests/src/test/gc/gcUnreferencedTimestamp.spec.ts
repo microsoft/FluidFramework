@@ -4,23 +4,25 @@
  */
 
 import { strict as assert } from "assert";
+
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { IContainer } from "@fluidframework/container-definitions";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { gcTreeKey } from "@fluidframework/runtime-definitions";
 import {
-	ITestObjectProvider,
-	createTestConfigProvider,
-	createSummarizer,
-	summarizeNow,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
-import {
-	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
+	describeCompat,
 } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
+import {
+	ITestObjectProvider,
+	createSummarizer,
+	createTestConfigProvider,
+	summarizeNow,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
+
 import { defaultGCConfig } from "./gcTestConfigs.js";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 

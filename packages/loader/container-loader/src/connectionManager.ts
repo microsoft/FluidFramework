@@ -3,30 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
-import { performance, TypedEventEmitter } from "@fluid-internal/client-utils";
+import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import {
 	ICriticalContainerError,
 	IDeltaQueue,
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
+import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
+import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions";
 import {
-	IAnyDriverError,
-	IDocumentService,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
-	DriverErrorTypes,
-} from "@fluidframework/driver-definitions";
+	IDocumentService,
+} from "@fluidframework/driver-definitions/internal";
 import {
-	canRetryOnError,
-	createWriteError,
-	createGenericNetworkError,
-	getRetryDelayFromError,
-	logNetworkFailure,
-	isRuntimeMessage,
 	calculateMaxWaitTime,
-} from "@fluidframework/driver-utils";
+	canRetryOnError,
+	createGenericNetworkError,
+	createWriteError,
+	getRetryDelayFromError,
+	isRuntimeMessage,
+	logNetworkFailure,
+} from "@fluidframework/driver-utils/internal";
 import {
 	ConnectionMode,
 	IClient,
@@ -36,27 +35,28 @@ import {
 	INack,
 	INackContent,
 	ISequencedDocumentMessage,
+	ISequencedDocumentSystemMessage,
 	ISignalClient,
 	ISignalMessage,
 	ITokenClaims,
 	MessageType,
 	ScopeType,
-	ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
-	formatTick,
 	GenericError,
-	isFluidError,
-	ITelemetryLoggerExt,
-	normalizeError,
 	UsageError,
-} from "@fluidframework/telemetry-utils";
+	formatTick,
+	isFluidError,
+	normalizeError,
+} from "@fluidframework/telemetry-utils/internal";
+
 import {
-	ReconnectMode,
+	IConnectionDetailsInternal,
 	IConnectionManager,
 	IConnectionManagerFactoryArgs,
-	IConnectionDetailsInternal,
 	IConnectionStateChangeReason,
+	ReconnectMode,
 } from "./contracts.js";
 import { DeltaQueue } from "./deltaQueue.js";
 import { SignalType } from "./protocol.js";
@@ -1069,7 +1069,7 @@ export class ConnectionManager implements IConnectionManager {
 		};
 	}
 
-	public submitSignal(content: any, targetClientId?: string) {
+	public submitSignal(content: string, targetClientId?: string) {
 		if (this.connection !== undefined) {
 			this.connection.submitSignal(content, targetClientId);
 		} else {

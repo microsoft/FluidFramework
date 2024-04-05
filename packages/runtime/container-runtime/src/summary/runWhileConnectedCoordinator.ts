@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Deferred } from "@fluidframework/core-utils";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
+
 import {
-	SummarizerStopReason,
 	IConnectableRuntime,
 	ISummaryCancellationToken,
+	SummarizerStopReason,
 } from "./summarizerTypes.js";
 
 /**

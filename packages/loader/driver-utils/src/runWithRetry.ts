@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, isFluidError } from "@fluidframework/telemetry-utils";
 import { performance } from "@fluid-internal/client-utils";
-import { delay } from "@fluidframework/core-utils";
+import { delay } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
-import { canRetryOnError, getRetryDelayFromError, NonRetryableError } from "./network.js";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { isFluidError } from "@fluidframework/telemetry-utils/internal";
+
+import { NonRetryableError, canRetryOnError, getRetryDelayFromError } from "./network.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**

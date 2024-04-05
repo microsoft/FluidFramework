@@ -4,12 +4,13 @@
  */
 
 import {
-	LoaderHeader,
 	type IContainer,
 	type IHostLoader,
-} from "@fluidframework/container-definitions";
-import { ILoaderProps, Loader } from "@fluidframework/container-loader";
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
+import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
+
 import type { IDetachedModel, IModelLoader } from "./interfaces.js";
 import { IModelContainerRuntimeEntryPoint } from "./modelContainerRuntimeFactory.js";
 

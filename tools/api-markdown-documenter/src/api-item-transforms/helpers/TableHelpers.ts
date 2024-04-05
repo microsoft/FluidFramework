@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
 	ApiDocumentedItem,
 	type ApiItem,
@@ -27,7 +28,7 @@ import {
 	TableHeaderCellNode,
 	TableHeaderRowNode,
 	TableNode,
-} from "../../documentation-domain";
+} from "../../documentation-domain/index.js";
 import {
 	type ApiFunctionLike,
 	type ApiModifier,
@@ -36,12 +37,12 @@ import {
 	getReleaseTag,
 	injectSeparator,
 	isDeprecated,
-} from "../../utilities";
-import { getLinkForApiItem } from "../ApiItemTransformUtilities";
-import { transformTsdocSection } from "../TsdocNodeTransforms";
-import { getTsdocNodeTransformationOptions } from "../Utilities";
-import { type ApiItemTransformationConfiguration } from "../configuration";
-import { createExcerptSpanWithHyperlinks } from "./Helpers";
+} from "../../utilities/index.js";
+import { getLinkForApiItem } from "../ApiItemTransformUtilities.js";
+import { transformTsdocSection } from "../TsdocNodeTransforms.js";
+import { getTsdocNodeTransformationOptions } from "../Utilities.js";
+import { type ApiItemTransformationConfiguration } from "../configuration/index.js";
+import { createExcerptSpanWithHyperlinks } from "./Helpers.js";
 
 /**
  * Input properties for creating a table of API members

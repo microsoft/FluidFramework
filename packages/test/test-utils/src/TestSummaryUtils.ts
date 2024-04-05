@@ -3,31 +3,36 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { assert } from "@fluidframework/core-utils";
-import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
+import {
+	IContainer,
+	IHostLoader,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
 import {
 	IOnDemandSummarizeOptions,
 	ISummarizer,
 	ISummaryRuntimeOptions,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import {
-	ITelemetryBaseLogger,
-	IRequest,
 	IConfigProviderBase,
+	IRequest,
 	IResponse,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { DriverHeader } from "@fluidframework/driver-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { DriverHeader } from "@fluidframework/driver-definitions/internal";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
-} from "@fluidframework/runtime-definitions";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider.js";
+} from "@fluidframework/runtime-definitions/internal";
+
 import { createTestConfigProvider } from "./TestConfigs.js";
 import { waitForContainerConnection } from "./containerUtils.js";
-import { timeoutAwait } from "./timeoutUtils.js";
 import { createContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
+import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider.js";
+import { timeoutAwait } from "./timeoutUtils.js";
 
 const summarizerClientType = "summarizer";
 
@@ -53,7 +58,8 @@ async function getSummarizerBackCompat(container: IContainer): Promise<ISummariz
 	return response.value as ISummarizer;
 }
 
-async function createSummarizerCore(
+/** @internal */
+export async function createSummarizerCore(
 	container: IContainer,
 	loader: IHostLoader,
 	summaryVersion?: string,

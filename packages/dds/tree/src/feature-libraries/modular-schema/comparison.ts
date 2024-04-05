@@ -3,19 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { compareSets, fail } from "../../util/index.js";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
-	TreeNodeStoredSchema,
-	ValueSchema,
-	TreeFieldStoredSchema,
-	TreeTypeSet,
-	TreeStoredSchema,
-	storedEmptyFieldSchema,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
+	TreeFieldStoredSchema,
+	TreeNodeStoredSchema,
+	TreeStoredSchema,
+	TreeTypeSet,
+	ValueSchema,
+	storedEmptyFieldSchema,
 } from "../../core/index.js";
+import { compareSets, fail } from "../../util/index.js";
+
 import { FullSchemaPolicy } from "./fieldKind.js";
 import { withEditor } from "./fieldKindWithEditor.js";
 import { isNeverTree } from "./isNeverTree.js";
@@ -138,7 +140,7 @@ export function allowsFieldSuperset(
 	superset: TreeFieldStoredSchema,
 ): boolean {
 	return withEditor(
-		policy.fieldKinds.get(original.kind.identifier) ?? fail("missing kind"),
+		policy.fieldKinds.get(original.kind) ?? fail("missing kind"),
 	).allowsFieldSuperset(policy, originalData, original.types, superset);
 }
 

@@ -3,21 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
+	FetchSource,
+	FiveDaysMs,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
-	ISummaryContext,
-	LoaderCachingPolicy,
-	FiveDaysMs,
-	FetchSource,
 	ISnapshot,
 	ISnapshotFetchOptions,
-} from "@fluidframework/driver-definitions";
+	ISummaryContext,
+	LoaderCachingPolicy,
+} from "@fluidframework/driver-definitions/internal";
+import { maximumCacheDurationMs } from "@fluidframework/odsp-driver-definitions/internal";
 import * as api from "@fluidframework/protocol-definitions";
-import { IConfigProvider } from "@fluidframework/telemetry-utils";
-
-const maximumCacheDurationMs: FiveDaysMs = 432000000; // 5 * 24 * 60 * 60 * 1000 = 5 days in ms
+import { IConfigProvider } from "@fluidframework/telemetry-utils/internal";
 
 class BlobCache {
 	// Save the timeout so we can cancel and reschedule it as needed

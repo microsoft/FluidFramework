@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
 	FluidErrorTypes,
 	IGenericError,
-	IErrorBase,
-	ITelemetryBaseProperties,
 	IUsageError,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 import {
@@ -20,6 +19,7 @@ import {
 	wrapError,
 } from "./errorLogging.js";
 import { IFluidErrorBase } from "./fluidErrorBase.js";
+import { ITelemetryPropertiesExt } from "./telemetryTypes.js";
 
 /**
  * Throws a UsageError with the given message if the condition is not met.
@@ -124,7 +124,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 		errorMessage: string,
 		dataProcessingCodepath: string,
 		sequencedMessage?: ISequencedDocumentMessage,
-		props: ITelemetryBaseProperties = {},
+		props: ITelemetryPropertiesExt = {},
 	): IFluidErrorBase {
 		const dataProcessingError = DataProcessingError.wrapIfUnrecognized(
 			errorMessage,

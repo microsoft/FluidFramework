@@ -3,50 +3,52 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseProperties, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IResolvedUrl, ISnapshot } from "@fluidframework/driver-definitions";
+import { performance } from "@fluid-internal/client-utils";
+import { ITelemetryBaseLogger, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IResolvedUrl, ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
-	isOnline,
+	type AuthorizationError,
+	NetworkErrorBasic,
+	NonRetryableError,
 	OnlineStatus,
 	RetryableError,
-	NonRetryableError,
-	NetworkErrorBasic,
-	type AuthorizationError,
-} from "@fluidframework/driver-utils";
-import { performance } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+	isOnline,
+} from "@fluidframework/driver-utils/internal";
 import {
-	ITelemetryLoggerExt,
+	fetchIncorrectResponse,
+	getSPOAndGraphRequestIdsFromResponse,
+	throwOdspNetworkError,
+} from "@fluidframework/odsp-doclib-utils/internal";
+import {
+	ICacheEntry,
+	IOdspResolvedUrl,
+	IOdspUrlParts,
+	ISharingLinkKind,
+	InstrumentedStorageTokenFetcher,
+	InstrumentedTokenFetcher,
+	OdspErrorTypes,
+	OdspResourceTokenFetchOptions,
+	TokenFetchOptions,
+	TokenFetcher,
+	isTokenFromCache,
+	snapshotKey,
+	tokenFromResponse,
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import {
+	type IFluidErrorBase,
 	PerformanceEvent,
 	TelemetryDataTag,
 	createChildLogger,
 	wrapError,
-	type IFluidErrorBase,
-} from "@fluidframework/telemetry-utils";
-import {
-	fetchIncorrectResponse,
-	throwOdspNetworkError,
-	getSPOAndGraphRequestIdsFromResponse,
-} from "@fluidframework/odsp-doclib-utils/internal";
-import {
-	IOdspResolvedUrl,
-	TokenFetchOptions,
-	OdspErrorTypes,
-	tokenFromResponse,
-	isTokenFromCache,
-	OdspResourceTokenFetchOptions,
-	ISharingLinkKind,
-	TokenFetcher,
-	ICacheEntry,
-	snapshotKey,
-	InstrumentedStorageTokenFetcher,
-	IOdspUrlParts,
-} from "@fluidframework/odsp-driver-definitions";
-import { fetch } from "./fetch.js";
-import { pkgVersion as driverVersion } from "./packageVersion.js";
+} from "@fluidframework/telemetry-utils/internal";
+
 import { IOdspSnapshot } from "./contracts.js";
+import { fetch } from "./fetch.js";
 // eslint-disable-next-line import/no-deprecated
 import { ISnapshotContents } from "./odspPublicUtils.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRepeat";
 
@@ -368,12 +370,36 @@ export function evalBlobsAndTrees(snapshot: IOdspSnapshot): {
 	return { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize };
 }
 
+/**
+ * Returns a function that can be used to fetch storage token.
+ * Storage token can not be empty - if original delegate (tokenFetcher argument) returns null result, exception will be thrown
+ */
+export function toInstrumentedOdspStorageTokenFetcher(
+	logger: ITelemetryLoggerExt,
+	resolvedUrlParts: IOdspUrlParts,
+	tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
+): InstrumentedStorageTokenFetcher {
+	const res = toInstrumentedOdspTokenFetcher(
+		logger,
+		resolvedUrlParts,
+		tokenFetcher,
+		true, // throwOnNullToken,
+	);
+	// Drop undefined from signature - we can do it safely due to throwOnNullToken == true above
+	return res as InstrumentedStorageTokenFetcher;
+}
+
+/**
+ * Returns a function that can be used to fetch storage or websocket token.
+ * There are scenarios where websocket token is not required / present (consumer stack and ordering service token),
+ * thus it could return null. Use toInstrumentedOdspStorageTokenFetcher if you deal with storage token.
+ */
 export function toInstrumentedOdspTokenFetcher(
 	logger: ITelemetryLoggerExt,
 	resolvedUrlParts: IOdspUrlParts,
 	tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
 	throwOnNullToken: boolean,
-): InstrumentedStorageTokenFetcher {
+): InstrumentedTokenFetcher {
 	return async (
 		options: TokenFetchOptions,
 		name: string,

@@ -3,40 +3,41 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITelemetryLoggerExt,
-	createChildMonitoringContext,
-	MonitoringContext,
-} from "@fluidframework/telemetry-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
 	IDocumentService,
-	IResolvedUrl,
-	IDocumentStorageService,
-	IDocumentServicePolicies,
 	IDocumentServiceEvents,
-} from "@fluidframework/driver-definitions";
-import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+	IDocumentServicePolicies,
+	IDocumentStorageService,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
 import {
-	IOdspResolvedUrl,
-	TokenFetchOptions,
-	IEntry,
 	HostStoragePolicy,
+	IEntry,
+	IOdspResolvedUrl,
 	InstrumentedStorageTokenFetcher,
-} from "@fluidframework/odsp-driver-definitions";
+	TokenFetchOptions,
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import {
+	MonitoringContext,
+	createChildMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
+
 import { HostStoragePolicyInternal } from "./contracts.js";
+import { EpochTracker } from "./epochTracker.js";
 import { IOdspCache } from "./odspCache.js";
+import type { OdspDelayLoadedDeltaStream } from "./odspDelayLoadedDeltaStream.js";
 import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "./odspDeltaStorageService.js";
 import { OdspDocumentStorageService } from "./odspDocumentStorageManager.js";
-import { getOdspResolvedUrl } from "./odspUtils.js";
 import { isOdcOrigin } from "./odspUrlHelper.js";
-import { EpochTracker } from "./epochTracker.js";
+import { getOdspResolvedUrl } from "./odspUtils.js";
 import { OpsCache } from "./opsCaching.js";
 import { RetryErrorsStorageAdapter } from "./retryErrorsStorageAdapter.js";
-import type { OdspDelayLoadedDeltaStream } from "./odspDelayLoadedDeltaStream.js";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected

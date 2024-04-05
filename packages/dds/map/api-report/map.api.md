@@ -4,38 +4,26 @@
 
 ```ts
 
-import { IChannelAttributes } from '@fluidframework/datastore-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IChannelServices } from '@fluidframework/datastore-definitions';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import type { IChannelAttributes } from '@fluidframework/datastore-definitions';
+import type { IChannelFactory } from '@fluidframework/datastore-definitions';
+import type { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidSerializer } from '@fluidframework/shared-object-base';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import type { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { SharedObject } from '@fluidframework/shared-object-base';
+import type { ISharedObjectKind } from '@fluidframework/shared-object-base';
 
 // @alpha @sealed
-export class DirectoryFactory implements IChannelFactory {
+export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
     static readonly Attributes: IChannelAttributes;
     get attributes(): IChannelAttributes;
     create(runtime: IFluidDataStoreRuntime, id: string): ISharedDirectory;
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedDirectory>;
     static readonly Type = "https://graph.microsoft.com/types/directory";
     get type(): string;
-}
-
-// @alpha
-export interface ICreateInfo {
-    ccIds: string[];
-    csn: number;
 }
 
 // @alpha
@@ -53,44 +41,6 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
 }
 
 // @alpha
-export interface IDirectoryClearOperation {
-    path: string;
-    type: "clear";
-}
-
-// @alpha
-export interface IDirectoryCreateSubDirectoryOperation {
-    path: string;
-    subdirName: string;
-    type: "createSubDirectory";
-}
-
-// @alpha
-export interface IDirectoryDataObject {
-    ci?: ICreateInfo;
-    storage?: {
-        [key: string]: ISerializableValue;
-    };
-    subdirectories?: {
-        [subdirName: string]: IDirectoryDataObject;
-    };
-}
-
-// @alpha
-export interface IDirectoryDeleteOperation {
-    key: string;
-    path: string;
-    type: "delete";
-}
-
-// @alpha
-export interface IDirectoryDeleteSubDirectoryOperation {
-    path: string;
-    subdirName: string;
-    type: "deleteSubDirectory";
-}
-
-// @alpha
 export interface IDirectoryEvents extends IEvent {
     (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
@@ -100,53 +50,8 @@ export interface IDirectoryEvents extends IEvent {
 }
 
 // @alpha
-export type IDirectoryKeyOperation = IDirectorySetOperation | IDirectoryDeleteOperation;
-
-// @internal
-export interface IDirectoryNewStorageFormat {
-    blobs: string[];
-    content: IDirectoryDataObject;
-}
-
-// @alpha
-export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOperation;
-
-// @alpha
-export interface IDirectorySetOperation {
-    key: string;
-    path: string;
-    type: "set";
-    value: ISerializableValue;
-}
-
-// @alpha
-export type IDirectoryStorageOperation = IDirectoryKeyOperation | IDirectoryClearOperation;
-
-// @alpha
-export type IDirectorySubDirectoryOperation = IDirectoryCreateSubDirectoryOperation | IDirectoryDeleteSubDirectoryOperation;
-
-// @alpha
 export interface IDirectoryValueChanged extends IValueChanged {
     path: string;
-}
-
-// @alpha
-export interface ILocalValue {
-    makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle): ISerializedValue;
-    readonly type: string;
-    readonly value: any;
-}
-
-// @alpha @deprecated
-export interface ISerializableValue {
-    type: string;
-    value: any;
-}
-
-// @alpha
-export interface ISerializedValue {
-    type: string;
-    value: string | undefined;
 }
 
 // @alpha
@@ -183,15 +88,8 @@ export interface IValueChanged {
     previousValue: any;
 }
 
-// @alpha
-export class LocalValueMaker {
-    constructor();
-    fromInMemory(value: unknown): ILocalValue;
-    fromSerializable(serializable: ISerializableValue, serializer: IFluidSerializer, bind: IFluidHandle): ILocalValue;
-}
-
 // @alpha @sealed
-export class MapFactory implements IChannelFactory {
+export class MapFactory implements IChannelFactory<ISharedMap> {
     static readonly Attributes: IChannelAttributes;
     get attributes(): IChannelAttributes;
     create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap;
@@ -201,71 +99,15 @@ export class MapFactory implements IChannelFactory {
 }
 
 // @alpha @sealed
-export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implements ISharedDirectory {
-    [Symbol.iterator](): IterableIterator<[string, any]>;
-    [Symbol.toStringTag]: string;
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    get absolutePath(): string;
-    protected applyStashedOp(op: unknown): void;
-    clear(): void;
-    countSubDirectory(): number;
-    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedDirectory;
-    createSubDirectory(subdirName: string): IDirectory;
-    delete(key: string): boolean;
-    deleteSubDirectory(subdirName: string): boolean;
-    // (undocumented)
-    dispose(error?: Error): void;
-    // (undocumented)
-    get disposed(): boolean;
-    entries(): IterableIterator<[string, any]>;
-    forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void;
-    get<T = any>(key: string): T | undefined;
-    static getFactory(): IChannelFactory;
-    getSubDirectory(subdirName: string): IDirectory | undefined;
-    getWorkingDirectory(relativePath: string): IDirectory | undefined;
-    has(key: string): boolean;
-    hasSubDirectory(subdirName: string): boolean;
-    keys(): IterableIterator<string>;
-    protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // (undocumented)
-    readonly localValueMaker: LocalValueMaker;
-    protected onDisconnect(): void;
-    protected populate(data: IDirectoryDataObject): void;
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
-    protected rollback(content: unknown, localOpMetadata: unknown): void;
-    set<T = unknown>(key: string, value: T): this;
-    get size(): number;
-    subdirectories(): IterableIterator<[string, IDirectory]>;
-    submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown): void;
-    protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
-    values(): IterableIterator<any>;
-}
+export const SharedDirectory: ISharedObjectKind<ISharedDirectory>;
+
+// @alpha @deprecated
+export type SharedDirectory = ISharedDirectory;
 
 // @public @deprecated
-export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
-    [Symbol.iterator](): IterableIterator<[string, any]>;
-    readonly [Symbol.toStringTag]: string;
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    protected applyStashedOp(content: unknown): void;
-    clear(): void;
-    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap;
-    delete(key: string): boolean;
-    entries(): IterableIterator<[string, any]>;
-    forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void;
-    get<T = any>(key: string): T | undefined;
-    static getFactory(): IChannelFactory;
-    has(key: string): boolean;
-    keys(): IterableIterator<string>;
-    protected loadCore(storage: IChannelStorageService): Promise<void>;
-    protected onDisconnect(): void;
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
-    protected rollback(content: unknown, localOpMetadata: unknown): void;
-    set(key: string, value: unknown): this;
-    get size(): number;
-    protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
-    values(): IterableIterator<any>;
-}
+export const SharedMap: ISharedObjectKind<ISharedMap>;
+
+// @public @deprecated
+export type SharedMap = ISharedMap;
 
 ```

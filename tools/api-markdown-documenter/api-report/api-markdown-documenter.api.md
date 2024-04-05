@@ -196,6 +196,7 @@ export interface DocumentationLiteralNode<TValue = unknown> extends Literal<TVal
 // @public
 export abstract class DocumentationLiteralNodeBase<TValue = unknown> implements DocumentationLiteralNode<TValue> {
     protected constructor(value: TValue);
+    abstract get isEmpty(): boolean;
     readonly isLiteral = true;
     readonly isParent = false;
     abstract get singleLine(): boolean;
@@ -205,6 +206,7 @@ export abstract class DocumentationLiteralNodeBase<TValue = unknown> implements 
 
 // @public
 export interface DocumentationNode<TData extends object = Data> extends Node_2<TData> {
+    readonly isEmpty: boolean;
     readonly isLiteral: boolean;
     readonly isParent: boolean;
     readonly singleLine: boolean;
@@ -246,6 +248,7 @@ export abstract class DocumentationParentNodeBase<TDocumentationNode extends Doc
     protected constructor(children: TDocumentationNode[]);
     readonly children: TDocumentationNode[];
     get hasChildren(): boolean;
+    get isEmpty(): boolean;
     readonly isLiteral = false;
     readonly isParent = true;
     get singleLine(): boolean;
@@ -389,6 +392,7 @@ export type HierarchyBoundaries = ApiMemberKind[];
 // @public
 export class HorizontalRuleNode implements MultiLineDocumentationNode {
     constructor();
+    readonly isEmpty = false;
     readonly isLiteral = true;
     readonly isParent = false;
     readonly singleLine = false;
@@ -458,6 +462,7 @@ export { LayoutUtilities }
 // @public
 export class LineBreakNode implements MultiLineDocumentationNode {
     constructor();
+    readonly isEmpty = false;
     readonly isLiteral = true;
     readonly isParent = false;
     readonly singleLine = false;
@@ -557,6 +562,7 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> implemen
     constructor(text: string, escaped?: boolean);
     static readonly Empty: PlainTextNode;
     readonly escaped: boolean;
+    get isEmpty(): boolean;
     readonly singleLine = true;
     get text(): string;
     readonly type = DocumentationNodeType.PlainText;

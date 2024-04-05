@@ -3,31 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	type IChannelAttributes,
-	type IFluidDataStoreRuntime,
-	type IChannelStorageService,
 	type IChannelFactory,
-	type Serializable,
+	type IChannelStorageService,
+	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import {
-	type AttributionKey,
-	type ISummaryTreeWithStats,
-} from "@fluidframework/runtime-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
-import {
-	createSingleBlobSummary,
-	type IFluidSerializer,
-	SharedObject,
-} from "@fluidframework/shared-object-base";
+import { type Serializable } from "@fluidframework/datastore-definitions/internal";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
+import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { type AttributionKey } from "@fluidframework/runtime-definitions/internal";
+import { type IFluidSerializer } from "@fluidframework/shared-object-base";
+import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+
 import { CellFactory } from "./cellFactory.js";
 import {
-	type ISharedCell,
-	type ISharedCellEvents,
 	type ICellLocalOpMetadata,
 	type ICellOptions,
+	type ISharedCell,
+	type ISharedCellEvents,
 } from "./interfaces.js";
 
 /**

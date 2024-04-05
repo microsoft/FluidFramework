@@ -5,19 +5,27 @@
 
 /* Utilities to manage finding, installing and loading legacy versions */
 
-import { existsSync, mkdirSync, rmdirSync, readdirSync, readFileSync, writeFileSync } from "fs";
-import { ExecOptions, exec, execSync } from "child_process";
-import * as path from "path";
+import { ExecOptions, exec, execSync } from "node:child_process";
+import {
+	existsSync,
+	mkdirSync,
+	rmdirSync,
+	readdirSync,
+	readFileSync,
+	writeFileSync,
+} from "node:fs";
+import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { detectVersionScheme, fromInternalScheme } from "@fluid-tools/version-tools";
+import { assert } from "@fluidframework/core-utils/internal";
 import { lock } from "proper-lockfile";
 import * as semver from "semver";
-import { assert } from "@fluidframework/core-utils";
+
 import { pkgVersion } from "./packageVersion.js";
 import { InstalledPackage } from "./testApi.js";
 
-// Assuming this file is in dist\test, so go to ..\node_modules\.legacy as the install location
+// Assuming this file is in `lib`, so go to `..\node_modules\.legacy` as the install location
 const baseModulePath = fileURLToPath(new URL("../node_modules/.legacy", import.meta.url));
 const installedJsonPath = path.join(baseModulePath, "installed.json");
 const getModulePath = (version: string) => path.join(baseModulePath, version);
@@ -25,7 +33,7 @@ const getModulePath = (version: string) => path.join(baseModulePath, version);
 const resolutionCache = new Map<string, string>();
 
 // Increment the revision if we want to force installation (e.g. package list changed)
-const revision = 1;
+const revision = 3;
 
 interface InstalledJson {
 	revision: number;

@@ -3,30 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
-	IAudience,
-	IContainerContext,
-	IDeltaManager,
-	ILoader,
-	ICriticalContainerError,
 	AttachState,
-	ILoaderOptions,
-	IFluidCodeDetails,
-	IBatchMessage,
+	IAudience,
+	ICriticalContainerError,
+	IDeltaManager,
 } from "@fluidframework/container-definitions";
-import { FluidObject } from "@fluidframework/core-interfaces";
-import { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions";
+import {
+	IBatchMessage,
+	IContainerContext,
+	ILoader,
+	ILoaderOptions,
+} from "@fluidframework/container-definitions/internal";
+import { type FluidObject } from "@fluidframework/core-interfaces";
+import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	IClientDetails,
 	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
 	ISnapshotTree,
+	ISummaryContent,
 	IVersion,
 	MessageType,
-	ISummaryContent,
 } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 
 /**
  * {@inheritDoc @fluidframework/container-definitions#IContainerContext}
@@ -85,7 +87,16 @@ export class ContainerContext implements IContainerContext {
 			batch: IBatchMessage[],
 			referenceSequenceNumber?: number,
 		) => number,
-		public readonly submitSignalFn: (content: any, targetClientId?: string) => void,
+
+		/**
+		 * `unknown` should be removed once `@alpha` tag is removed from IContainerContext
+		 * @see {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/7462}
+		 * Any changes to submitSignalFn `content` should be checked internally by temporarily changing IContainerContext and removing all `unknown`s
+		 */
+		public readonly submitSignalFn: (
+			content: unknown | ISignalEnvelope,
+			targetClientId?: string,
+		) => void,
 		public readonly disposeFn: (error?: ICriticalContainerError) => void,
 		public readonly closeFn: (error?: ICriticalContainerError) => void,
 		public readonly updateDirtyContainerState: (dirty: boolean) => void,
@@ -94,7 +105,6 @@ export class ContainerContext implements IContainerContext {
 		private readonly _getClientId: () => string | undefined,
 		private readonly _getAttachState: () => AttachState,
 		private readonly _getConnected: () => boolean,
-		public readonly getSpecifiedCodeDetails: () => IFluidCodeDetails | undefined,
 		public readonly clientDetails: IClientDetails,
 		public readonly existing: boolean,
 		public readonly taggedLogger: ITelemetryLoggerExt,

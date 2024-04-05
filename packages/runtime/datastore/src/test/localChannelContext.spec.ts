@@ -4,13 +4,15 @@
  */
 
 import { strict as assert } from "assert";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+
+import { IChannel } from "@fluidframework/datastore-definitions";
+import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockFluidDataStoreContext,
 	validateAssertionError,
-} from "@fluidframework/test-runtime-utils";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { IChannel } from "@fluidframework/datastore-definitions";
+} from "@fluidframework/test-runtime-utils/internal";
+
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime.js";
 import { LocalChannelContext, RehydratedLocalChannelContext } from "../localChannelContext.js";
 

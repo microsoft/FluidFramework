@@ -3,13 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+
 import { ChangeAtomId, RevisionTag, TaggedChange } from "../../core/index.js";
-import { CrossFieldManager, CrossFieldTarget } from "../modular-schema/index.js";
 import { RangeQueryResult, brand } from "../../util/index.js";
+import { CrossFieldManager, CrossFieldTarget } from "../modular-schema/index.js";
+
+import { MoveMarkEffect } from "./helperTypes.js";
 import { CellMark, Mark, MarkEffect, MoveId, MoveIn, MoveOut } from "./types.js";
 import { isAttachAndDetachEffect, splitMark, splitMarkEffect } from "./utils.js";
-import { MoveMarkEffect } from "./helperTypes.js";
 
 export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
 

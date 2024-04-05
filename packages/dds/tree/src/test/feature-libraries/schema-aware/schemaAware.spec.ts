@@ -7,32 +7,31 @@
 // Since "type" and "interface" type check slightly different, this file needs to create types when the linter recommends interfaces.
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
 
+import { TreeNodeSchemaIdentifier } from "../../../core/index.js";
+import { SchemaBuilder, leaf } from "../../../domains/index.js";
+import {
+	ContextuallyTypedNodeDataObject,
+	FieldKinds,
+	FlexAllowedTypes,
+	FlexFieldSchema,
+	FlexTreeNodeSchema,
+	typeNameSymbol,
+	valueSymbol,
+} from "../../../feature-libraries/index.js";
 import {
 	AllowedTypesToFlexInsertableTree,
-	InsertableFlexNode,
 	InsertableFlexField,
+	InsertableFlexNode,
 	TypedFields,
 	UnbrandedName,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/schema-aware/schemaAware.js";
-
-import { TreeNodeSchemaIdentifier } from "../../../core/index.js";
-import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../../util/index.js";
-import {
-	valueSymbol,
-	FieldKinds,
-	typeNameSymbol,
-	ContextuallyTypedNodeDataObject,
-	FlexTreeNodeSchema,
-	FlexFieldSchema,
-	FlexAllowedTypes,
-} from "../../../feature-libraries/index.js";
-import { leaf, SchemaBuilder } from "../../../domains/index.js";
 import {
 	FlexList,
 	FlexListToNonLazyArray,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/typed-schema/flexList.js";
+import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../../util/index.js";
 
 // Test UnbrandedName
 {

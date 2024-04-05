@@ -4,14 +4,14 @@
 
 ```ts
 
-import { ContainerKey } from '@fluidframework/devtools-core';
-import { createDevtoolsLogger } from '@fluidframework/devtools-core';
-import { HasContainerKey } from '@fluidframework/devtools-core';
-import { IDevtoolsLogger } from '@fluidframework/devtools-core';
+import { ContainerKey } from '@fluidframework/devtools-core/internal';
+import { createDevtoolsLogger } from '@fluidframework/devtools-core/internal';
+import { HasContainerKey } from '@fluidframework/devtools-core/internal';
+import { IDevtoolsLogger } from '@fluidframework/devtools-core/internal';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 
-// @alpha
+// @beta
 export interface ContainerDevtoolsProps extends HasContainerKey {
     container: IFluidContainer;
 }
@@ -20,7 +20,7 @@ export { ContainerKey }
 
 export { createDevtoolsLogger }
 
-// @alpha
+// @beta
 export interface DevtoolsProps {
     initialContainers?: ContainerDevtoolsProps[];
     logger?: IDevtoolsLogger;
@@ -28,7 +28,7 @@ export interface DevtoolsProps {
 
 export { HasContainerKey }
 
-// @alpha
+// @beta
 export interface IDevtools extends IDisposable {
     closeContainerDevtools(id: string): void;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
@@ -36,7 +36,9 @@ export interface IDevtools extends IDisposable {
 
 export { IDevtoolsLogger }
 
-// @alpha
+// @beta
 export function initializeDevtools(props: DevtoolsProps): IDevtools;
+
+// (No @packageDocumentation comment for this package)
 
 ```

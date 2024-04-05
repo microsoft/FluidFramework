@@ -2,9 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { IRequest } from "@fluidframework/core-interfaces";
-import { DriverHeader } from "@fluidframework/driver-definitions";
-import { ISharingLinkKind } from "@fluidframework/odsp-driver-definitions";
+import { DriverHeader } from "@fluidframework/driver-definitions/internal";
+import { ISharingLinkKind } from "@fluidframework/odsp-driver-definitions/internal";
+
 import { buildOdspShareLinkReqParams } from "./odspUtils.js";
 
 /**

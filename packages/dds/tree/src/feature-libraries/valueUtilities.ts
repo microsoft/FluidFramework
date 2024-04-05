@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { Value, ValueSchema, TreeValue } from "../core/index.js";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+
+import { TreeValue, Value, ValueSchema } from "../core/index.js";
 
 export function allowsValue(schema: ValueSchema | undefined, nodeValue: Value): boolean {
 	if (schema === undefined) {
@@ -75,19 +76,20 @@ export function isFluidHandle(value: unknown): value is IFluidHandle {
 
 export function assertAllowedValue(
 	value: undefined | FluidSerializableReadOnly,
-): asserts value is Value {
-	assert(isAllowedValue(value), 0x843 /* invalid value */);
+): asserts value is TreeValue {
+	assert(isTreeValue(value), 0x843 /* invalid value */);
 }
 
-export function isAllowedValue(value: undefined | FluidSerializableReadOnly): value is Value {
-	switch (typeof value) {
+/**
+ * Checks if a value is a {@link TreeValue}.
+ */
+export function isTreeValue(nodeValue: unknown): nodeValue is TreeValue {
+	switch (typeof nodeValue) {
 		case "string":
 		case "number":
 		case "boolean":
 			return true;
-		case "object":
-			return value === null || isFluidHandle(value);
 		default:
-			return false;
+			return nodeValue === null || isFluidHandle(nodeValue);
 	}
 }

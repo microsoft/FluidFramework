@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import { IUser } from "@fluidframework/protocol-definitions";
-import { Provider } from "nconf";
+
+import { Provider } from "./nconf.cjs";
 
 const r11sServers = [
 	"www.wu2-ppe.prague.office-int.com",

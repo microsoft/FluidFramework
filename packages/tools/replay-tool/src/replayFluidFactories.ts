@@ -4,33 +4,38 @@
  */
 
 import { Ink } from "@fluid-experimental/ink";
-import { SharedCell } from "@fluidframework/cell";
-import { IContainerContext } from "@fluidframework/container-definitions";
-import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { FluidDataStoreRuntime } from "@fluidframework/datastore";
+import {
+	SharedNumberSequence,
+	SharedObjectSequence,
+	SparseMatrix,
+} from "@fluid-experimental/sequence-deprecated";
+import { SharedCell } from "@fluidframework/cell/internal";
+import { IContainerContext } from "@fluidframework/container-definitions/internal";
+import {
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { SharedMap, SharedDirectory } from "@fluidframework/map";
-import { SharedMatrix } from "@fluidframework/matrix";
-import { ConsensusQueue } from "@fluidframework/ordered-collection";
-import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
+import { SharedMap } from "@fluidframework/map";
+import { SharedDirectory } from "@fluidframework/map/internal";
+import { SharedMatrix } from "@fluidframework/matrix/internal";
+import { ConsensusQueue } from "@fluidframework/ordered-collection/internal";
+import { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import {
 	FluidDataStoreRegistryEntry,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
 	NamedFluidDataStoreRegistryEntries,
-} from "@fluidframework/runtime-definitions";
-import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
-import { SharedIntervalCollection, SharedString } from "@fluidframework/sequence";
-import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
-import {
-	SharedNumberSequence,
-	SharedObjectSequence,
-	SparseMatrix,
-} from "@fluid-experimental/sequence-deprecated";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { UnknownChannelFactory } from "./unknownChannel";
-import { ReplayToolContainerEntryPoint } from "./helpers";
+} from "@fluidframework/runtime-definitions/internal";
+import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
+import { SharedIntervalCollection, SharedString } from "@fluidframework/sequence/internal";
+import { SharedSummaryBlock } from "@fluidframework/shared-summary-block/internal";
+
+import { ReplayToolContainerEntryPoint } from "./helpers.js";
+import { UnknownChannelFactory } from "./unknownChannel.js";
 
 /** Simple runtime factory that creates a container runtime */
 export class ReplayRuntimeFactory extends RuntimeFactoryHelper {

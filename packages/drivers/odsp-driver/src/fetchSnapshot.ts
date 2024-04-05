@@ -3,60 +3,61 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
-import {
-	ITelemetryLoggerExt,
-	isFluidError,
-	PerformanceEvent,
-	wrapError,
-} from "@fluidframework/telemetry-utils";
 import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
-import { getW3CData } from "@fluidframework/driver-base";
-import { ISnapshot } from "@fluidframework/driver-definitions";
-import {
-	IOdspResolvedUrl,
-	ISnapshotOptions,
-	OdspErrorTypes,
-	InstrumentedStorageTokenFetcher,
-	type IOdspError,
-} from "@fluidframework/odsp-driver-definitions";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { getW3CData } from "@fluidframework/driver-base/internal";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	DriverErrorTelemetryProps,
-	isRuntimeMessage,
 	NonRetryableError,
-} from "@fluidframework/driver-utils";
+	isRuntimeMessage,
+} from "@fluidframework/driver-utils/internal";
 import {
 	fetchIncorrectResponse,
 	throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils/internal";
+import {
+	type IOdspError,
+	IOdspResolvedUrl,
+	ISnapshotOptions,
+	InstrumentedStorageTokenFetcher,
+	OdspErrorTypes,
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import {
+	PerformanceEvent,
+	isFluidError,
+	wrapError,
+} from "@fluidframework/telemetry-utils/internal";
+import { v4 as uuid } from "uuid";
+
+import {
+	ISnapshotContentsWithProps,
+	currentReadVersion,
+	parseCompactSnapshotResponse,
+} from "./compactSnapshotParser.js";
 import {
 	IOdspSnapshot,
 	ISnapshotCachedEntry2,
 	IVersionedValueWithEpoch,
 	persistedCacheValueVersion,
 } from "./contracts.js";
+import { EpochTracker } from "./epochTracker.js";
 import { getQueryString } from "./getQueryString.js";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser.js";
 import {
+	IOdspResponse,
 	fetchAndParseAsJSONHelper,
 	fetchHelper,
 	getWithRetryForTokenRefresh,
 	getWithRetryForTokenRefreshRepeat,
-	IOdspResponse,
 	isSnapshotFetchForLoadingGroup,
 	measure,
 	measureP,
 	useLegacyFlowWithoutGroupsForSnapshotFetch,
 } from "./odspUtils.js";
-import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser.js";
-import {
-	currentReadVersion,
-	ISnapshotContentsWithProps,
-	parseCompactSnapshotResponse,
-} from "./compactSnapshotParser.js";
-import { EpochTracker } from "./epochTracker.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
@@ -82,7 +83,7 @@ export enum SnapshotFormatSupportType {
 export async function fetchSnapshot(
 	snapshotUrl: string,
 	// eslint-disable-next-line @rushstack/no-new-null
-	token: string | null,
+	token: string,
 	versionId: string,
 	fetchFullSnapshot: boolean,
 	forceAccessTokenViaAuthorizationHeader: boolean,
@@ -109,7 +110,6 @@ export async function fetchSnapshot(
 		logger,
 		{
 			eventName: "fetchSnapshot",
-			headers: Object.keys(headers).length > 0 ? true : undefined,
 		},
 		async () => snapshotDownloader(url, { headers }),
 	)) as IOdspResponse<IOdspSnapshot>;
@@ -271,7 +271,6 @@ async function fetchLatestSnapshotCore(
 		const fetchSnapshotForLoadingGroup = isSnapshotFetchForLoadingGroup(loadingGroupIds);
 		const eventName = fetchSnapshotForLoadingGroup ? "TreesLatestForGroup" : "TreesLatest";
 		const storageToken = await storageTokenFetcher(tokenFetchOptions, eventName, true);
-		assert(storageToken !== null, 0x1e5 /* "Storage token should not be null" */);
 
 		const perfEvent = {
 			eventName,
@@ -489,7 +488,6 @@ async function fetchLatestSnapshotCore(
 				useLegacyFlowWithoutGroups:
 					useLegacyFlowWithoutGroupsForSnapshotFetch(loadingGroupIds),
 				userOps: snapshot.ops?.filter((op) => isRuntimeMessage(op)).length ?? 0,
-				headers: Object.keys(response.requestHeaders).length > 0 ? true : undefined,
 				// Measures time to make fetch call. Should be similar to
 				// fetchStartToResponseEndTime - receiveContentTime, i.e. it looks like it's time till first byte /
 				// end of response headers

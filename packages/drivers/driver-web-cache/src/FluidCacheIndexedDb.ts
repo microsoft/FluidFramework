@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { openDB, DBSchema, DeleteDBCallbacks, IDBPDatabase, deleteDB } from "idb";
-import { ICacheEntry } from "@fluidframework/odsp-driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { ICacheEntry } from "@fluidframework/odsp-driver-definitions/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { DBSchema, DeleteDBCallbacks, IDBPDatabase, deleteDB, openDB } from "idb";
+
 import { FluidCacheErrorEvent } from "./fluidCacheTelemetry.js";
 
 // The name of the database that we use for caching Fluid info.

@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Deferred } from "@fluidframework/core-utils";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
+	IDocumentDeltaStorageService,
 	IDocumentService,
 	IDocumentStorageService,
-	IDocumentDeltaStorageService,
-} from "@fluidframework/driver-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-definitions/internal";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
 import {
 	IDocumentAttributes,
 	ISequencedDocumentMessage,
@@ -22,7 +22,8 @@ import {
 	ReadDocumentStorageServiceBase,
 	ReplayController,
 	SnapshotStorage,
-} from "@fluidframework/replay-driver";
+} from "@fluidframework/replay-driver/internal";
+
 import { IDebuggerController, IDebuggerUI } from "./fluidDebuggerUi.js";
 import { Sanitizer } from "./sanitizer.js";
 

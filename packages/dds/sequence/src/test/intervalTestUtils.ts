@@ -4,11 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils";
-import { SharedString } from "../sharedString";
-import { IIntervalCollection } from "../intervalCollection";
-import { SequenceInterval } from "../intervals";
-import { createOverlappingIntervalsIndex } from "../intervalIndex";
+
+import { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils/internal";
+
+import { IIntervalCollection } from "../intervalCollection.js";
+import { createOverlappingIntervalsIndex } from "../intervalIndex/index.js";
+import { SequenceInterval } from "../intervals/index.js";
+import { SharedString } from "../sharedString.js";
 
 export interface Client {
 	sharedString: SharedString;

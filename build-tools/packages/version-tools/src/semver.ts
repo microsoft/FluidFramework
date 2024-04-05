@@ -2,10 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import * as semver from "semver";
 
 import { ReleaseVersion, VersionBumpType, VersionBumpTypeExtended } from "./bumpTypes";
 import {
+	DEFAULT_PRERELEASE_IDENTIFIER,
+	RC_PRERELEASE_IDENTIFER,
 	bumpInternalVersion,
 	detectInternalVersionConstraintType,
 	fromInternalScheme,
@@ -50,8 +53,8 @@ export function bumpRange(
 				bumpType === "current"
 					? originalNoPrerelease
 					: scheme === "virtualPatch"
-					? bumpVersionScheme(originalNoPrerelease, bumpType, "virtualPatch")
-					: semver.inc(originalNoPrerelease, bumpType);
+						? bumpVersionScheme(originalNoPrerelease, bumpType, "virtualPatch")
+						: semver.inc(originalNoPrerelease, bumpType);
 			if (newVersion === null) {
 				throw new Error(`Failed to increment ${original}.`);
 			}
@@ -60,6 +63,9 @@ export function bumpRange(
 
 		case "internal": {
 			const constraintType = detectInternalVersionConstraintType(range);
+			if (constraintType === "exact") {
+				throw new Error(`Can't bump exact specification from ${range}`);
+			}
 			const original = semver.minVersion(range);
 			if (original === null) {
 				throw new Error(`Couldn't determine minVersion from ${range}.`);
@@ -115,7 +121,10 @@ export function detectBumpType(
 		v2PrereleaseId = prereleaseId;
 	}
 
-	if (v1PrereleaseId === "internal" && v2PrereleaseId === "rc") {
+	if (
+		v1PrereleaseId === DEFAULT_PRERELEASE_IDENTIFIER &&
+		v2PrereleaseId === RC_PRERELEASE_IDENTIFER
+	) {
 		// This is a special case for RC and internal builds. RC builds are always a
 		// major bump compared to an internal build.
 		return "major";

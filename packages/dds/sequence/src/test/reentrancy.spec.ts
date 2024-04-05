@@ -4,20 +4,22 @@
  */
 
 import { strict as assert } from "assert";
+
+import { AttachState } from "@fluidframework/container-definitions";
 import {
 	LocalReferenceCollection,
 	MergeTreeDeltaType,
 	ReferenceType,
-} from "@fluidframework/merge-tree";
+} from "@fluidframework/merge-tree/internal";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { AttachState } from "@fluidframework/container-definitions";
-import { SharedString } from "../sharedString";
-import { resetReentrancyLogCounter } from "../sequence";
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { resetReentrancyLogCounter } from "../sequence.js";
+import { SharedString } from "../sharedString.js";
 
 describe("SharedString op-reentrancy", () => {
 	/**

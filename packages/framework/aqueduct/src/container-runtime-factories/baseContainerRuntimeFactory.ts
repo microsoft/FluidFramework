@@ -3,30 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { type IContainerContext } from "@fluidframework/container-definitions";
+import { type IContainerContext } from "@fluidframework/container-definitions/internal";
 import {
-	type IContainerRuntimeOptions,
-	FluidDataStoreRegistry,
 	ContainerRuntime,
-} from "@fluidframework/container-runtime";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-// eslint-disable-next-line import/no-deprecated
+	FluidDataStoreRegistry,
+	type IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { type FluidObject } from "@fluidframework/core-interfaces";
 import {
 	type RuntimeRequestHandler,
+	// eslint-disable-next-line import/no-deprecated
 	buildRuntimeRequestHandler,
-} from "@fluidframework/request-handler";
+} from "@fluidframework/request-handler/internal";
 import {
 	type IFluidDataStoreRegistry,
 	type IProvideFluidDataStoreRegistry,
 	type NamedFluidDataStoreRegistryEntries,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
+import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
 import {
 	DependencyContainer,
 	type IFluidDependencySynthesizer,
 	type IProvideFluidDependencySynthesizer,
-} from "@fluidframework/synthesize";
-import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
-import { type FluidObject } from "@fluidframework/core-interfaces";
+} from "@fluidframework/synthesize/internal";
 
 /**
  * {@link BaseContainerRuntimeFactory} construction properties.

@@ -4,19 +4,21 @@
 
 ```ts
 
-import { AsyncGenerator as AsyncGenerator_2 } from '@fluid-private/stochastic-test-utils';
-import { AsyncReducer } from '@fluid-private/stochastic-test-utils';
-import { BaseFuzzTestState } from '@fluid-private/stochastic-test-utils';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IIdCompressor } from '@fluidframework/id-compressor';
-import { IIdCompressorCore } from '@fluidframework/id-compressor';
-import { IMockContainerRuntimeOptions } from '@fluidframework/test-runtime-utils';
-import { ISharedObject } from '@fluidframework/shared-object-base';
-import { MockContainerRuntimeFactoryForReconnection } from '@fluidframework/test-runtime-utils';
-import { MockContainerRuntimeForReconnection } from '@fluidframework/test-runtime-utils';
-import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
-import { SaveInfo } from '@fluid-private/stochastic-test-utils';
-import { SerializedIdCompressorWithNoSession } from '@fluidframework/id-compressor';
+import type { AsyncGenerator as AsyncGenerator_2 } from '@fluid-private/stochastic-test-utils';
+import type { AsyncReducer } from '@fluid-private/stochastic-test-utils';
+import type { BaseFuzzTestState } from '@fluid-private/stochastic-test-utils';
+import type { IChannelFactory } from '@fluidframework/datastore-definitions';
+import type { IFluidHandle } from '@fluidframework/core-interfaces';
+import type { IIdCompressor } from '@fluidframework/id-compressor';
+import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
+import type { IMockContainerRuntimeOptions } from '@fluidframework/test-runtime-utils/internal';
+import type { ISharedObject } from '@fluidframework/shared-object-base';
+import { MockContainerRuntimeFactoryForReconnection } from '@fluidframework/test-runtime-utils/internal';
+import type { MockContainerRuntimeForReconnection } from '@fluidframework/test-runtime-utils/internal';
+import type { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils/internal';
+import type { SaveInfo } from '@fluid-private/stochastic-test-utils';
+import type { SerializedIdCompressorWithNoSession } from '@fluidframework/id-compressor/internal';
+import type { SerializedIdCompressorWithOngoingSession } from '@fluidframework/id-compressor/internal';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @internal (undocumented)
@@ -64,8 +66,8 @@ export function createDDSFuzzSuite<TChannelFactory extends IChannelFactory, TOpe
 
 // @internal
 export namespace createDDSFuzzSuite {
-    const only: (...seeds: number[]) => <TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(ddsModel: DDSFuzzModel<TChannelFactory, TOperation, DDSFuzzTestState<TChannelFactory>>, providedOptions?: Partial<DDSFuzzSuiteOptions>) => void;
-    const skip: (...seeds: number[]) => <TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(ddsModel: DDSFuzzModel<TChannelFactory, TOperation, DDSFuzzTestState<TChannelFactory>>, providedOptions?: Partial<DDSFuzzSuiteOptions>) => void;
+    const only: (...seeds: number[]) => <TChannelFactory extends IChannelFactory<unknown>, TOperation extends BaseOperation>(ddsModel: DDSFuzzModel<TChannelFactory, TOperation, DDSFuzzTestState<TChannelFactory>>, providedOptions?: Partial<DDSFuzzSuiteOptions>) => void;
+    const skip: (...seeds: number[]) => <TChannelFactory extends IChannelFactory<unknown>, TOperation extends BaseOperation>(ddsModel: DDSFuzzModel<TChannelFactory, TOperation, DDSFuzzTestState<TChannelFactory>>, providedOptions?: Partial<DDSFuzzSuiteOptions>) => void;
 }
 
 // @internal
@@ -85,7 +87,7 @@ export interface DDSFuzzModel<TChannelFactory extends IChannelFactory, TOperatio
     generatorFactory: () => AsyncGenerator_2<TOperation, TState>;
     minimizationTransforms?: MinimizationTransform<TOperation>[];
     reducer: AsyncReducer<TOperation, TState>;
-    validateConsistency: (channelA: ReturnType<TChannelFactory["create"]>, channelB: ReturnType<TChannelFactory["create"]>) => void;
+    validateConsistency: (channelA: ReturnType<TChannelFactory["create"]>, channelB: ReturnType<TChannelFactory["create"]>) => void | Promise<void>;
     workloadName: string;
 }
 
@@ -104,7 +106,8 @@ export interface DDSFuzzSuiteOptions {
         attachingBeforeRehydrateDisable?: true;
     };
     emitter: TypedEventEmitter<DDSFuzzHarnessEvents>;
-    idCompressorFactory?: (summary?: SerializedIdCompressorWithNoSession) => IIdCompressor & IIdCompressorCore;
+    handleGenerationDisabled: boolean;
+    idCompressorFactory?: (summary?: FuzzSerializedIdCompressor) => IIdCompressor & IIdCompressorCore;
     numberOfClients: number;
     only: Iterable<number>;
     // (undocumented)
@@ -113,6 +116,9 @@ export interface DDSFuzzSuiteOptions {
     reconnectProbability: number;
     replay?: number;
     saveFailures: false | {
+        directory: string;
+    };
+    saveSuccesses: false | {
         directory: string;
     };
     skip: Iterable<number>;
@@ -146,6 +152,15 @@ export interface DDSFuzzTestState<TChannelFactory extends IChannelFactory> exten
 // @internal (undocumented)
 export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions;
 
+// @internal (undocumented)
+export type FuzzSerializedIdCompressor = {
+    withSession: false;
+    serializedCompressor: SerializedIdCompressorWithNoSession;
+} | {
+    withSession: true;
+    serializedCompressor: SerializedIdCompressorWithOngoingSession;
+};
+
 // @internal
 export interface IGCTestProvider {
     addNestedHandles(): Promise<void>;
@@ -177,6 +192,14 @@ export interface Synchronize {
     clients?: string[];
     // (undocumented)
     type: "synchronize";
+}
+
+// @internal (undocumented)
+export interface UseHandle {
+    // (undocumented)
+    handle: IFluidHandle;
+    // (undocumented)
+    type: "useHandle";
 }
 
 // (No @packageDocumentation comment for this package)

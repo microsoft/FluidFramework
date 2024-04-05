@@ -12,6 +12,7 @@ export {
 } from "./factory.js";
 export {
 	CacheContentType,
+	maximumCacheDurationMs,
 	getKeyForCacheEntry,
 	ICacheEntry,
 	IEntry,
@@ -31,6 +32,7 @@ export {
 export {
 	IdentityType,
 	InstrumentedStorageTokenFetcher,
+	InstrumentedTokenFetcher,
 	isTokenFromCache,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,

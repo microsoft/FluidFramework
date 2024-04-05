@@ -4,15 +4,17 @@
  */
 
 import { strict as assert } from "assert";
+
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AsyncGenerator, takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
+	DDSFuzzHarnessEvents,
 	DDSFuzzModel,
 	DDSFuzzTestState,
 	createDDSFuzzSuite,
-	DDSFuzzHarnessEvents,
 } from "@fluid-private/test-dds-utils";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { UpPath, Anchor, JsonableTree, Value } from "../../../core/index.js";
+
+import { Anchor, JsonableTree, UpPath, Value } from "../../../core/index.js";
 import {
 	SharedTreeTestFactory,
 	createTestUndoRedoStacks,
@@ -20,10 +22,11 @@ import {
 	validateTree,
 	validateTreeConsistency,
 } from "../../utils.js";
+
 import {
-	makeOpGenerator,
 	EditGeneratorOpWeights,
 	FuzzTestState,
+	makeOpGenerator,
 	viewFromState,
 } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
@@ -51,6 +54,8 @@ describe("Fuzz - undo/redo", () => {
 	const runsPerBatch = 20;
 
 	const undoRedoWeights: Partial<EditGeneratorOpWeights> = {
+		set: 2,
+		clear: 1,
 		insert: 1,
 		remove: 1,
 	};
@@ -227,6 +232,8 @@ describe("Fuzz - undo/redo", () => {
 	});
 
 	const unSequencedUndoRedoWeights: Partial<EditGeneratorOpWeights> = {
+		set: 2,
+		clear: 1,
 		insert: 1,
 		remove: 1,
 		undo: 1,

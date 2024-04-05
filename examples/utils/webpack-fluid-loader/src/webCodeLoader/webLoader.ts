@@ -4,16 +4,17 @@
  */
 
 import {
-	IFluidModule,
 	IFluidCodeResolver,
 	IResolvedFluidCodeDetails,
-	isFluidBrowserPackage,
-	IFluidCodeDetails,
 	ICodeDetailsLoader,
+	IFluidCodeDetails,
+	IFluidModule,
 	IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions";
-import { AllowList } from "./allowList";
-import { ScriptManager } from "./scriptManager";
+	isFluidBrowserPackage,
+} from "@fluidframework/container-definitions/internal";
+
+import { AllowList } from "./allowList.js";
+import { ScriptManager } from "./scriptManager.js";
 
 export class WebCodeLoader implements ICodeDetailsLoader {
 	private readonly loadedModules = new Map<

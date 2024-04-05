@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { retryWithEventualValue } from "@fluidframework/test-utils/internal";
 import { globals } from "../jest.config.cjs";
-import { retryWithEventualValue } from "@fluidframework/test-utils";
 
 describe("ToDo", () => {
 	const getItemUrl = async (index: number) =>

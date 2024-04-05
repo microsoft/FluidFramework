@@ -5,7 +5,8 @@
 
 import { expect } from "chai";
 
-import { type ContainerDevtoolsProps, ContainerDevtools } from "../ContainerDevtools.js";
+import { ContainerDevtools, type ContainerDevtoolsProps } from "../ContainerDevtools.js";
+
 import { addAudienceMember, createMockContainer, removeAudienceMember } from "./Utilities.js";
 
 // TODOs:
