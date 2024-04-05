@@ -4,7 +4,7 @@
  */
 
 import { IsoBuffer } from '@fluid-internal/client-utils';
-import { TestObjectProvider } from '@fluidframework/test-utils';
+import { TestObjectProvider } from '@fluidframework/test-utils/internal';
 import { expect } from 'chai';
 
 import { Change, StablePlace, StableRange } from '../../ChangeTypes.js';

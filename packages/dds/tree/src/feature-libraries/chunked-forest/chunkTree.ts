@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
@@ -19,10 +19,10 @@ import {
 	TreeValue,
 	Value,
 	mapCursorFields,
+	Multiplicity,
 } from "../../core/index.js";
 import { fail, getOrCreate } from "../../util/index.js";
 import { FullSchemaPolicy } from "../modular-schema/index.js";
-import { Multiplicity } from "../multiplicity.js";
 
 import { BasicChunk } from "./basicChunk.js";
 import { TreeChunk, tryGetChunk } from "./chunk.js";
@@ -265,7 +265,7 @@ export function tryShapeFromFieldSchema(
 	key: FieldKey,
 	shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
 ): FieldShape | undefined {
-	const kind = policy.fieldKinds.get(type.kind.identifier) ?? fail("missing FieldKind");
+	const kind = policy.fieldKinds.get(type.kind) ?? fail("missing FieldKind");
 	if (kind.multiplicity !== Multiplicity.Single) {
 		return undefined;
 	}

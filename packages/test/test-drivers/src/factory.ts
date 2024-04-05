@@ -5,8 +5,8 @@
 
 import http from "http";
 
-import { unreachableCase } from "@fluidframework/core-utils";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 import Agent from "agentkeepalive";
 
 import { LocalDriverApi, LocalDriverApiType } from "./localDriverApi.js";

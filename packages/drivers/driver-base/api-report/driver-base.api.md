@@ -5,7 +5,7 @@
 ```ts
 
 import { ConnectionMode } from '@fluidframework/protocol-definitions';
-import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
+import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils/internal';
 import { IAnyDriverError } from '@fluidframework/driver-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IConnect } from '@fluidframework/protocol-definitions';

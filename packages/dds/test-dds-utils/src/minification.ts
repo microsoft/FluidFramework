@@ -208,10 +208,7 @@ export class FuzzTestMinimizer<
 				this.ddsModel,
 				this.seed,
 				this.operations,
-				{
-					saveOnFailure: false,
-					filepath: this.saveInfo?.filepath,
-				},
+				undefined,
 				this.providedOptions,
 			);
 			return false;

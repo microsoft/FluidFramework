@@ -24,7 +24,7 @@ import {
 	ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
 import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
@@ -35,7 +35,7 @@ import {
 	TestFluidObjectFactory,
 	createAndAttachContainer,
 	createLoader,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import { expect } from "chai";
 import lodash from "lodash";
 import { v5 as uuidv5 } from "uuid";

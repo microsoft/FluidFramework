@@ -11,7 +11,7 @@ import {
 	type IDevtoolsMessage,
 	type InboundHandlers,
 	handleIncomingMessage,
-} from "@fluidframework/devtools-core";
+} from "@fluidframework/devtools-core/internal";
 import { type IClient } from "@fluidframework/protocol-definitions";
 import React from "react";
 

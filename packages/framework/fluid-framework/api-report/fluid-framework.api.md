@@ -6,7 +6,7 @@
 
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
-import { IErrorBase } from '@fluidframework/core-interfaces';
+import type { IErrorBase } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
@@ -143,14 +143,21 @@ export enum FieldKind {
     Required = 1
 }
 
+// @public
+export interface FieldProps {
+    readonly key?: string;
+}
+
 // @public @sealed
 export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types extends ImplicitAllowedTypes = ImplicitAllowedTypes> {
     constructor(
     kind: Kind,
-    allowedTypes: Types);
+    allowedTypes: Types,
+    props?: FieldProps | undefined);
     readonly allowedTypes: Types;
     get allowedTypeSet(): ReadonlySet<TreeNodeSchema>;
     readonly kind: Kind;
+    readonly props?: FieldProps | undefined;
     protected _typeCheck?: MakeNominal;
 }
 
@@ -166,8 +173,8 @@ export type FlexListToUnion<TList extends FlexList> = ExtractItemType<ArrayToUni
 // @public
 // TODO: this being mutable seems bad.
 export interface IConnection {
-    id: string;
-    mode: "write" | "read";
+    readonly id: string;
+    readonly mode: "write" | "read";
 }
 
 // @public
@@ -207,8 +214,8 @@ export interface IFluidContainerEvents extends IEvent {
 // @public
 // TODO: this being mutable seems bad.
 export interface IMember {
-    connections: IConnection[];
-    userId: string;
+    readonly connections: IConnection[];
+    readonly userId: string;
 }
 
 // @public
@@ -244,7 +251,7 @@ export type InsertableTypedNode<T extends TreeNodeSchema> = (T extends {
 // @public
 // TODO: Is returned map being mutable intended?
 export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents<M>> {
-    getMembers(): Map<string, M>;
+    getMembers(): ReadonlyMap<string, M>;
     getMyself(): Myself<M> | undefined;
 }
 
@@ -294,8 +301,8 @@ export interface ITree extends IChannel {
 // TODO: use of any is bad.
 // TODO: this being mutable seems bad.
 export interface IValueChanged {
-    key: string;
-    previousValue: any;
+    readonly key: string;
+    readonly previousValue: any;
 }
 
 // @public
@@ -317,7 +324,7 @@ export type MemberChangedListener<M extends IMember> = (clientId: string, member
 // @public
 // TODO: this being mutable seems bad.
 export type Myself<M extends IMember = IMember> = M & {
-    currentConnection: string;
+    readonly currentConnection: string;
 };
 
 // @public
@@ -365,7 +372,7 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     readonly boolean: TreeNodeSchema<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean>;
     // @deprecated
     fixRecursiveReference<T extends AllowedTypes>(...types: T): void;
-    readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<FluidObject & IFluidLoadable>, IFluidHandle<FluidObject & IFluidLoadable>>;
+    readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<FluidObject<unknown> & IFluidLoadable>, IFluidHandle<FluidObject<unknown> & IFluidLoadable>>;
     map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
     map<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
     namedArray_internal<Name extends TName | string, const T extends ImplicitAllowedTypes, const ImplicitlyConstructable extends boolean>(name: Name, allowedTypes: T, customizable: boolean, implicitlyConstructable: ImplicitlyConstructable): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Array, TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, ImplicitlyConstructable, T>;
@@ -373,7 +380,8 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     readonly null: TreeNodeSchema<"com.fluidframework.leaf.null", NodeKind.Leaf, null, null>;
     readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
     object<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, fields: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T>;
-    optional<const T extends ImplicitAllowedTypes>(t: T): FieldSchema<FieldKind.Optional, T>;
+    optional<const T extends ImplicitAllowedTypes>(t: T, props?: FieldProps): FieldSchema<FieldKind.Optional, T>;
+    required<const T extends ImplicitAllowedTypes>(t: T, props?: FieldProps): FieldSchema<FieldKind.Required, T>;
     // (undocumented)
     readonly scope: TScope;
     readonly string: TreeNodeSchema<"com.fluidframework.leaf.string", NodeKind.Leaf, string, string>;
@@ -437,6 +445,12 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends Readonl
 }
 
 // @public
+export interface TreeChangeEvents {
+    nodeChanged(): void;
+    treeChanged(): void;
+}
+
+// @public
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
     constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>);
     // (undocumented)
@@ -466,15 +480,10 @@ export abstract class TreeNode implements WithType {
 export interface TreeNodeApi {
     is<TSchema extends TreeNodeSchema>(value: unknown, schema: TSchema): value is NodeFromSchema<TSchema>;
     key(node: TreeNode): string | number;
-    on<K extends keyof TreeNodeEvents>(node: TreeNode, eventName: K, listener: TreeNodeEvents[K]): () => void;
+    on<K extends keyof TreeChangeEvents>(node: TreeNode, eventName: K, listener: TreeChangeEvents[K]): () => void;
     parent(node: TreeNode): TreeNode | undefined;
     schema<T extends TreeNode | TreeLeafValue>(node: T): TreeNodeSchema<string, NodeKind, unknown, T>;
     readonly status: (node: TreeNode) => TreeStatus;
-}
-
-// @public
-export interface TreeNodeEvents {
-    afterChange(): void;
 }
 
 // @public

@@ -53,6 +53,7 @@ export {
 	IRandom,
 	Reducer,
 	SaveInfo,
+	SaveDestination,
 	Weights,
 } from "./types.js";
 export { XSadd, XSaddCtor } from "./xsadd.js";

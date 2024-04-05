@@ -9,15 +9,19 @@ import {
 	FluidDataStoreRuntime,
 	FluidObjectHandle,
 	mixinRequestHandler,
-} from "@fluidframework/datastore";
+} from "@fluidframework/datastore/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions";
-import { create404Response } from "@fluidframework/runtime-utils";
-import { ReferenceType, SharedString, reservedTileLabelsKey } from "@fluidframework/sequence";
+} from "@fluidframework/runtime-definitions/internal";
+import { create404Response } from "@fluidframework/runtime-utils/internal";
+import {
+	ReferenceType,
+	SharedString,
+	reservedTileLabelsKey,
+} from "@fluidframework/sequence/internal";
 
 import { PresenceManager } from "./presence.js";
 
