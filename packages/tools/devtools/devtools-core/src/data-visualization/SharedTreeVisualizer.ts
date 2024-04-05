@@ -75,16 +75,42 @@ function createToolTipContents(tree: SharedTreeSchemaNode): VisualTreeNode {
 }
 
 /**
+ * TODO
+ */
+function createToolTipContentsString(tree: SharedTreeSchemaNode): string {
+	const allowedTypes = tree.allowedTypes;
+
+	// LeafNodeStoredSchema.
+	if (allowedTypes === undefined) {
+		return `name: ${tree.schemaName}`;
+	}
+
+	// Array type of ObjectNodeStoredSchema.
+	if (typeof allowedTypes === "string") {
+		return `name: ${tree.schemaName}\nallowedTypes: ${allowedTypes}`;
+	}
+
+	let allowedTypesString = "";
+
+	for (const [fieldKey, allowedType] of Object.entries(allowedTypes)) {
+		// Add 4 spaces for indentation.
+		allowedTypesString += `\u0020\u0020\u0020\u0020${fieldKey}: ${allowedType}\n`;
+	}
+
+	return `name: ${tree.schemaName}\nallowedTypes:\n${allowedTypesString}`;
+}
+
+/**
  * Converts the output of {@link sharedTreeVisualizer} to {@link VisualChildNode} type containing `schema` and `children` fields.
  */
 export function toVisualTree(tree: VisualSharedTreeNode): VisualValueNode | VisualTreeNode {
+	console.log(typeof createToolTipContents);
+
 	if (tree.kind === VisualSharedTreeNodeKind.LeafNode) {
 		const result: VisualValueNode = {
 			value: tree.value,
 			nodeKind: VisualNodeKind.ValueNode,
-			tooltipContents: {
-				schema: createToolTipContents(tree.schema),
-			},
+			tooltipContents: createToolTipContentsString(tree.schema),
 		};
 		return result;
 	} else {
@@ -98,9 +124,7 @@ export function toVisualTree(tree: VisualSharedTreeNode): VisualValueNode | Visu
 		return {
 			children,
 			nodeKind: VisualNodeKind.TreeNode,
-			tooltipContents: {
-				schema: createToolTipContents(tree.schema),
-			},
+			tooltipContents: createToolTipContentsString(tree.schema),
 		};
 	}
 }
@@ -108,39 +132,37 @@ export function toVisualTree(tree: VisualSharedTreeNode): VisualValueNode | Visu
 /**
  * Concatenrate allowed types for `ObjectNodeStoredSchema` and `MapNodeStoredSchema`.
  */
-function concatenateTypes(fieldKey: string, fieldTypes: TreeTypeSet | undefined): string {
-	let fieldAllowedType = fieldKey === EmptyKey ? "" : `${fieldKey} : `;
-
+function concatenateTypes(fieldTypes: TreeTypeSet | undefined): string {
 	if (fieldTypes === undefined) {
-		fieldAllowedType += "any";
-	} else {
-		const allowedTypes = [...fieldTypes].join(" | ");
-		fieldAllowedType += `${allowedTypes}`;
+		return "any";
 	}
 
-	return fieldAllowedType;
+	const allowedTypes = [...fieldTypes].join(" | ");
+	return allowedTypes;
 }
 
 /**
  * Returns the allowed fields & types for the object fields (e.g., `foo : string | number, bar: boolean`)
  */
-function getObjectAllowedTypes(schema: ObjectNodeStoredSchema): string {
-	const result: string[] = [];
+function getObjectAllowedTypes(schema: ObjectNodeStoredSchema): Record<string, string> | string {
+	const result: Record<string, string> = {};
 
 	for (const [fieldKey, treeFieldStoredSchema] of schema.objectNodeFields) {
 		// Set of allowed tree types `TreeTypeSet`.
 		const fieldTypes = treeFieldStoredSchema.types;
 
-		result.push(concatenateTypes(fieldKey, fieldTypes));
+		const concatenateTypeResult = concatenateTypes(fieldTypes);
 
 		// If the field key is `EmptyKey`, then it is an array field.
 		// Return the allowed types in string format, instead of JSON format.
 		if (fieldKey === EmptyKey) {
-			return result.join("");
+			return concatenateTypeResult;
 		}
+
+		result[fieldKey] = concatenateTypeResult;
 	}
 
-	return `{ ${result.join(", ")} }`;
+	return result;
 }
 
 /**
@@ -149,20 +171,20 @@ function getObjectAllowedTypes(schema: ObjectNodeStoredSchema): string {
 function getMapAllowedTypes(
 	fields: FieldMapObject<JsonableTree> | undefined,
 	schema: MapNodeStoredSchema,
-): string {
+): Record<string, string> {
 	if (fields === undefined) {
 		throw new TypeError("Fields should not be undefined.");
 	}
 
 	const mapFieldAllowedTypes = schema.mapFields.types;
 
-	const result: string[] = [];
+	const result: Record<string, string> = {};
 
 	for (const [fieldKey] of Object.entries(fields)) {
-		result.push(concatenateTypes(fieldKey, mapFieldAllowedTypes));
+		result[fieldKey] = concatenateTypes(mapFieldAllowedTypes);
 	}
 
-	return `{ ${result.join(", ")} }`;
+	return result;
 }
 
 /**

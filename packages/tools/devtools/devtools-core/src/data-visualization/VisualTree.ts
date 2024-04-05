@@ -81,7 +81,7 @@ export interface VisualNodeBase {
 	 *
 	 * TODO: Change this to accept VisualTree.
 	 */
-	tooltipContents?: Record<string, VisualChildNode>;
+	tooltipContents?: string;
 }
 
 /**

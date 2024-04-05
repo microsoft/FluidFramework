@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { tokens } from "@fluentui/react-components";
+import { Tooltip, tokens } from "@fluentui/react-components";
 import React from "react";
 
-import type { HasContainerKey, VisualChildNode } from "@fluidframework/devtools-core/internal";
-import { InfoLabel } from "@fluentui/react-components/unstable";
+import type { HasContainerKey } from "@fluidframework/devtools-core/internal";
+// import { InfoLabel } from "@fluentui/react-components/unstable";
+import { Info20Regular } from "@fluentui/react-icons";
 import { ThemeContext, ThemeOption } from "../../ThemeHelper.js";
 
 import type { HasLabel } from "./CommonInterfaces.js";
-import { TreeDataView } from "./TreeDataView.js";
 
 /**
  * Input props to {@link TreeHeader}
@@ -32,27 +32,18 @@ export interface TreeHeaderProps extends HasLabel, HasContainerKey {
 	/**
 	 * Visual Tree data rendered in the tooltip.
 	 */
-	tooltipContents?: Record<string, VisualChildNode>;
+	tooltipContents?: string;
 }
 
 /**
  * Renders the header of the item.
  */
 export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
-	const { containerKey, label, nodeTypeMetadata, inlineValue, metadata, tooltipContents } = props;
+	const { label, nodeTypeMetadata, inlineValue, metadata, tooltipContents } = props;
 	const { themeInfo } = React.useContext(ThemeContext);
 
-	const toolTipContentsNode =
-		tooltipContents === undefined
-			? undefined
-			: Object.entries(tooltipContents).map(([key, fluidObject]) => (
-					<TreeDataView
-						key={key}
-						containerKey={containerKey}
-						label={key}
-						node={fluidObject}
-					/>
-			  ));
+	const toolTipContentsNode = tooltipContents ?? undefined;
+	console.log(toolTipContentsNode);
 
 	return (
 		<div style={{ width: "auto" }}>
@@ -84,7 +75,9 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 			{tooltipContents === undefined ? (
 				""
 			) : (
-				<InfoLabel info={toolTipContentsNode} style={{ whiteSpace: "nowrap" }} />
+				<Tooltip content={<pre>{toolTipContentsNode}</pre>} relationship="description">
+					<Info20Regular />
+				</Tooltip>
 			)}
 
 			{inlineValue === undefined ? "" : ": "}
