@@ -30,10 +30,10 @@ export type TreeItemProps = React.PropsWithChildren<{
 export function TreeItem(props: TreeItemProps): React.ReactElement {
 	const { children, header } = props;
 
-	const isLeaf = React.Children.count(children) === 0;
+	const itemType = React.Children.count(children) === 0 ? "leaf" : "branch";
 
 	return (
-		<FluentTreeItem leaf={isLeaf} data-testid="tree-button">
+		<FluentTreeItem itemType={itemType} data-testid="tree-button">
 			<FluentTreeItemLayout>{header}</FluentTreeItemLayout>
 
 			<FluentTree>{children}</FluentTree>
