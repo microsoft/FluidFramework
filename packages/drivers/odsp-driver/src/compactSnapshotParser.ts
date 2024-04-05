@@ -103,7 +103,10 @@ function readOpsSection(node: NodeTypes): ISequencedDocumentMessage[] {
  * Recreates snapshot tree out of tree representation.
  * @param node - tree node to de-serialize from
  */
-function readTreeSection(node: NodeCore): {
+function readTreeSection(
+	node: NodeCore,
+	blobContents: Map<string, ArrayBuffer>,
+): {
 	snapshotTree: ISnapshotTree;
 	slowTreeStructureCount: number;
 } {
@@ -135,7 +138,7 @@ function readTreeSection(node: NodeCore): {
 					// "name": <node name>
 					// "children": <blob id>
 					if (content === "children") {
-						const result = readTreeSection(treeNode.getNode(3));
+						const result = readTreeSection(treeNode.getNode(3), blobContents);
 						trees[treeNode.getString(1)] = result.snapshotTree;
 						slowTreeStructureCount += result.slowTreeStructureCount;
 						continue;
@@ -143,7 +146,11 @@ function readTreeSection(node: NodeCore): {
 					// "name": <node name>
 					// "value": <blob id>
 					if (content === "value") {
-						snapshotTree.blobs[treeNode.getString(1)] = treeNode.getString(3);
+						const blobId = treeNode.getString(3);
+						snapshotTree.blobs[treeNode.getString(1)] = blobId;
+						if (!blobContents.has(blobId)) {
+							snapshotTree.omitted = true;
+						}
 						continue;
 					}
 					break;
@@ -156,7 +163,11 @@ function readTreeSection(node: NodeCore): {
 						treeNode.getMaybeString(2) === "nodeType" &&
 						treeNode.getMaybeString(4) === "value"
 					) {
-						snapshotTree.blobs[treeNode.getString(1)] = treeNode.getString(5);
+						const blobId = treeNode.getString(5);
+						snapshotTree.blobs[treeNode.getString(1)] = blobId;
+						if (!blobContents.has(blobId)) {
+							snapshotTree.omitted = true;
+						}
 						continue;
 					}
 
@@ -167,7 +178,7 @@ function readTreeSection(node: NodeCore): {
 						treeNode.getMaybeString(2) === "unreferenced" &&
 						treeNode.getMaybeString(4) === "children"
 					) {
-						const result = readTreeSection(treeNode.getNode(5));
+						const result = readTreeSection(treeNode.getNode(5), blobContents);
 						trees[treeNode.getString(1)] = result.snapshotTree;
 						slowTreeStructureCount += result.slowTreeStructureCount;
 						assert(
@@ -202,25 +213,17 @@ function readTreeSection(node: NodeCore): {
 			snapshotTree.groupId = groupId;
 		}
 
-		if (records.omitted !== undefined) {
-			assertBoolInstance(records.omitted, "omitted should be a boolean");
-			assert(
-				!records.omitted || snapshotTree.groupId !== undefined,
-				0x8df /* GroupId absent but omitted is true */,
-			);
-			snapshotTree.omitted = records.omitted;
-		}
-
 		const path = getStringInstance(records.name, "Path name should be string");
 		if (records.value !== undefined) {
-			snapshotTree.blobs[path] = getStringInstance(
-				records.value,
-				"Blob value should be string",
-			);
+			const blobId = getStringInstance(records.value, "Blob value should be string");
+			snapshotTree.blobs[path] = blobId;
+			if (!blobContents.has(blobId)) {
+				snapshotTree.omitted = true;
+			}
 			// eslint-disable-next-line unicorn/no-negated-condition
 		} else if (records.children !== undefined) {
 			assertNodeCoreInstance(records.children, "Trees should be of type NodeCore");
-			const result = readTreeSection(records.children);
+			const result = readTreeSection(records.children, blobContents);
 			trees[path] = result.snapshotTree;
 			slowTreeStructureCount += result.slowTreeStructureCount;
 		} else {
@@ -234,7 +237,10 @@ function readTreeSection(node: NodeCore): {
  * Recreates snapshot tree out of tree representation.
  * @param node - tree node to de-serialize from
  */
-function readSnapshotSection(node: NodeTypes): {
+function readSnapshotSection(
+	node: NodeTypes,
+	blobContents: Map<string, ArrayBuffer>,
+): {
 	sequenceNumber: number;
 	snapshotTree: ISnapshotTree;
 	slowTreeStructureCount: number;
@@ -244,7 +250,10 @@ function readSnapshotSection(node: NodeTypes): {
 
 	assertNodeCoreInstance(records.treeNodes, "TreeNodes should be of type NodeCore");
 	assertNumberInstance(records.sequenceNumber, "sequenceNumber should be of type number");
-	const { snapshotTree, slowTreeStructureCount } = readTreeSection(records.treeNodes);
+	const { snapshotTree, slowTreeStructureCount } = readTreeSection(
+		records.treeNodes,
+		blobContents,
+	);
 	snapshotTree.id = getStringInstance(records.id, "snapshotId should be string");
 	const sequenceNumber = records.sequenceNumber.valueOf();
 	return {
@@ -289,8 +298,10 @@ export function parseCompactSnapshotResponse(
 		0x2c2 /* "Create Version should be equal to currentReadVersion" */,
 	);
 
-	const [snapshot, durationSnapshotTree] = measure(() => readSnapshotSection(records.snapshot));
 	const [blobContents, durationBlobs] = measure(() => readBlobSection(records.blobs));
+	const [snapshot, durationSnapshotTree] = measure(() =>
+		readSnapshotSection(records.snapshot, blobContents.blobContents),
+	);
 
 	return {
 		...snapshot,
