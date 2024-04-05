@@ -532,6 +532,7 @@ export interface VisualNodeBase {
     };
     metadata?: Record<string, Primitive>;
     nodeKind: VisualNodeKind | string;
+    tooltipContents?: string | Record<string, string>;
     typeMetadata?: string;
 }
 
