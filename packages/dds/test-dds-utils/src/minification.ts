@@ -226,8 +226,12 @@ export class FuzzTestMinimizer<
 
 			const stackTop = stackLines.findIndex((s) => s.startsWith("at"));
 
-			// reproduce based on the final two lines+col of the error
-			const message = stackLines.slice(stackTop, stackTop + 2).join("\n");
+			const message = stackLines[stackTop].startsWith("at assert ")
+				? // Reproduce based on the final two lines+col of the error if it is an assert error
+				  // This ensures the same assert is triggered by the minified test
+				  stackLines.slice(stackTop, stackTop + 2).join("\n")
+				: // Otherwise the final line is sufficient
+				  stackLines[stackTop];
 
 			if (this.initialError === undefined) {
 				this.initialError = { message, op: lastOp };
