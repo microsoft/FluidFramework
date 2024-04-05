@@ -6,7 +6,7 @@
 import { getInstalledPackageVersion } from "../../../common/taskUtils";
 import { TscDependentTask } from "./tscTask";
 
-export class GenerateApiTask extends TscDependentTask {
+export class GenerateEntrypointsTask extends TscDependentTask {
 	protected get configFileFullPaths() {
 		// Add package.json, which tsc should also depend on, but currently doesn't.
 		return [this.node.pkg.packageJsonFileName];
