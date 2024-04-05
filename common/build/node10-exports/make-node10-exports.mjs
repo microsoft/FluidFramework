@@ -29,7 +29,7 @@ function writeStubs(mapEntry, folder) {
 	}
 
 	fs.mkdirSync(folder, { recursive: true });
-	fs.writeFileSync(path.join(folder, "index.js"), template(jsFile));
+	// fs.writeFileSync(path.join(folder, "index.js"), template(jsFile));
 	fs.writeFileSync(path.join(folder, "index.d.ts"), template(dtsFile));
 }
 
