@@ -22,7 +22,7 @@ Before you can get telemetry sent to Azure App Insights, you'll need to create a
 import { ApplicationInsights } from "@microsoft/applicationinsights-web";
 import { IFluidContainer } from "@fluidframework/fluid-static";
 import { ITelemetryConsumer , TelemetryConfig, startTelemetry, IFluidTelemetry } from "@fluidframework/fluid-telemetry"
-import { AppInsightsTelemetryConsumer } from "@fluidframework/fluid-telemetry/app-insights"
+import { AppInsightsTelemetryConsumer } from "@fluidframework/fluid-telemetry"
 
 // 1: This is supposed to be your code for creating/loading a Fluid Container
 let myAppContainer: IFluidContainer;
