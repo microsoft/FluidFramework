@@ -175,100 +175,42 @@ export class AppData extends DataObject {
 
 	private populateSharedTree(sharedTree: ITree): void {
 		// Set up SharedTree for visualization
-		const builder = new SchemaFactory("devtools-example");
+		const builder = new SchemaFactory("DefaultVisualizer_SharedTree_Test");
 
 		// TODO: Maybe include example handle
 
-		class BroccoliSchema extends builder.object("broccoli-object-schema", {
-			alpaca: builder.string,
+		class LeafSchema extends builder.object("leaf-item", {
+			leafField: [builder.boolean, builder.handle, builder.string],
 		}) {}
 
-		class AppleSchema extends builder.object("apple-object-schema", {
-			avocado: [builder.number, builder.string],
-			broccoli: builder.array(BroccoliSchema),
-		}) {}
-
-		class FooSchema extends builder.object("foo-item", {
-			apple: builder.array(AppleSchema),
-			banana: builder.object("banana-object", {
-				miniBanana: [builder.boolean, builder.string, builder.number],
-			}),
-			cherry: builder.optional(builder.number),
+		class ChildSchema extends builder.object("child-item", {
+			childField: [builder.string, builder.boolean],
+			childData: builder.optional(LeafSchema),
 		}) {}
 
 		class RootNodeSchema extends builder.object("root-item", {
-			foo: builder.array(FooSchema),
-			bar: builder.object("bar-item", {
-				americano: builder.boolean,
-				bubbleTea: builder.string,
-				chaiLatte: builder.object("chai-latte-object", {
-					appleCider: [builder.boolean, builder.string, builder.handle],
-				}),
-				dalgona: builder.array(
-					builder.object("dalgona-object", {
-						avengers: builder.boolean,
-					}),
-				),
-				espresso: builder.array([builder.number, builder.string]),
-			}),
-			baz: [builder.number, builder.string, builder.boolean],
-			foobar: builder.map([
-				builder.string,
-				builder.number,
-				builder.handle,
-				builder.object("map-object", { acorn: builder.boolean }),
-			]),
+			childrenOne: builder.array(ChildSchema),
+			childrenTwo: builder.number,
 		}) {}
 
-		sharedTree.schematize(
-			new TreeConfiguration(
-				RootNodeSchema,
-				() =>
-					new RootNodeSchema({
-						foo: [
-							{
-								apple: [
-									{ avocado: 16, broccoli: [{ alpaca: "Llama but cuter." }] },
-								],
-								banana: {
-									miniBanana: true,
-								},
-								cherry: 32,
-							},
-							{
-								apple: [
-									{
-										avocado: "Avacado Advocate.",
-										broccoli: [{ alpaca: "Llama but not LLM." }],
-									},
-								],
-								banana: {
-									miniBanana: false,
-								},
-								cherry: undefined,
-							},
-						],
-						bar: {
-							americano: false,
-							bubbleTea: "Taro Bubble Tea",
-							chaiLatte: {
-								appleCider: true,
-							},
-							dalgona: [
-								{
-									avengers: true,
-								},
-							],
-							espresso: [256, "FiveHundredTwelve"],
-						},
-						baz: 128,
-						foobar: new Map([
-							["anthropology", 1],
-							["biology", 2],
-							["choreography", 3],
-						]),
-					}),
-			),
-		);
+		const config = new TreeConfiguration(RootNodeSchema, () => ({
+			childrenOne: [
+				{
+					childField: "Hello world!",
+					childData: {
+						leafField: "Hello world again!",
+					},
+				},
+				{
+					childField: true,
+					childData: {
+						leafField: false,
+					},
+				},
+			],
+			childrenTwo: 32,
+		}));
+
+		sharedTree.schematize(config);
 	}
 }
