@@ -242,21 +242,21 @@ function arrayToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTre
 
 /**
  * Transforms data under a Map schema.
- * @param data - The tree data to be transformed. Must be either a TypeScript Map or a Record-like object.
+ * @param data - The tree data to be transformed. Must be a TypeScript Map.
  * @param schema - The schema associated with the value.
  * @param allowedTypes - The allowed types specified by the parent.
  * Used to determine which fallback values may be appropriate.
  */
 function mapToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree {
 	assert(schema.kind === NodeKind.Map, "Expected a Map schema.");
-	if (!(data instanceof Map) || typeof data !== "object" || data === null) {
+	if (!(data instanceof Map)) {
 		throw new UsageError(`Input data is incompatible with Map schema: ${data}`);
 	}
 
 	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
 
 	const transformedFields = new Map<FieldKey, MapTree[]>();
-	for (const [key, value] of data as Iterable<[string, InsertableContent]>) {
+	for (const [key, value] of data) {
 		assert(!transformedFields.has(brand(key)), 0x84c /* Keys should not be duplicated */);
 
 		// Omit undefined values - an entry with an undefined value is equivalent to one that has been removed or omitted
@@ -422,7 +422,7 @@ function shallowCompatibilityTest(
 		return schema.kind === NodeKind.Map;
 	}
 	if (schema.kind === NodeKind.Map) {
-		return typeof data === "object" && data !== null;
+		return false;
 	}
 
 	// Assume record-like object

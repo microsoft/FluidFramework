@@ -242,7 +242,7 @@ describe("toMapTree", () => {
 	});
 
 	describe("map", () => {
-		it("Non-empty map (input type: Map)", () => {
+		it("Non-empty map", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const childObjectSchema = schemaFactory.object("child-object", {
 				name: schemaFactory.string,
@@ -274,74 +274,6 @@ describe("toMapTree", () => {
 						[{ type: leaf.string.name, value: "Hello world", fields: new Map() }],
 					],
 					[brand("c"), [{ type: brand(leaf.null.name), value: null, fields: new Map() }]],
-				]),
-			};
-
-			assert.deepEqual(actual, expected);
-		});
-
-		it("Non-empty map (input type: Record)", () => {
-			const schemaFactory = new SchemaFactory("test");
-			const childObjectSchema = schemaFactory.object("child-object", {
-				name: schemaFactory.string,
-				age: schemaFactory.number,
-			});
-			const schema = schemaFactory.map("map", [
-				childObjectSchema,
-				schemaFactory.number,
-				schemaFactory.string,
-				schemaFactory.null,
-			]);
-
-			const tree: Record<string, InsertableContent> = {
-				a: 42,
-				b: "Hello world",
-				c: null,
-				d: undefined as unknown as InsertableContent, // Should be skipped in output
-				e: { age: 37, name: "Jill" },
-			};
-
-			const actual = nodeDataToMapTree(tree, [schema]);
-
-			const expected: MapTree = {
-				type: brand("test.map"),
-				fields: new Map<FieldKey, MapTree[]>([
-					[brand("a"), [{ type: leaf.number.name, value: 42, fields: new Map() }]],
-					[
-						brand("b"),
-						[{ type: leaf.string.name, value: "Hello world", fields: new Map() }],
-					],
-					[brand("c"), [{ type: brand(leaf.null.name), value: null, fields: new Map() }]],
-					[
-						brand("e"),
-						[
-							{
-								type: brand(childObjectSchema.identifier),
-								fields: new Map([
-									[
-										brand("name"),
-										[
-											{
-												type: leaf.string.name,
-												value: "Jill",
-												fields: new Map(),
-											},
-										],
-									],
-									[
-										brand("age"),
-										[
-											{
-												type: leaf.number.name,
-												value: 37,
-												fields: new Map(),
-											},
-										],
-									],
-								]),
-							},
-						],
-					],
 				]),
 			};
 
