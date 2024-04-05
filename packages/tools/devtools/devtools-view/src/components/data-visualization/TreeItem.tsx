@@ -7,7 +7,7 @@ import {
 	Tree as FluentTree,
 	TreeItem as FluentTreeItem,
 	TreeItemLayout as FluentTreeItemLayout,
-} from "@fluentui/react-components/unstable";
+} from "@fluentui/react-components";
 import React from "react";
 
 /**
@@ -25,7 +25,7 @@ export type TreeItemProps = React.PropsWithChildren<{
 /**
  * Constructs a tree element from the provided header and child contents.
  *
- * Intended to be used inside an outer {@link @fluentui/react-components/unstable#Tree} context.
+ * Intended to be used inside an outer {@link @fluentui/react-components#Tree} context.
  */
 export function TreeItem(props: TreeItemProps): React.ReactElement {
 	const { children, header } = props;
