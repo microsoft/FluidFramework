@@ -52,7 +52,7 @@ export interface SnapshotWithBlobs {
  *
  * @internal
  */
-export interface IPendingContainerState extends ISnapshotInfo {
+export interface IPendingContainerState extends SnapshotWithBlobs {
 	attached: true;
 	pendingRuntimeState: unknown;
 	/**
@@ -152,8 +152,13 @@ export class SerializedStateManager {
 			}
 			return { baseSnapshot, version };
 		} else {
-			const { baseSnapshot, snapshotBlobs, snapshotSequenceNumber } = this.pendingLocalState;
-			this.snapshot = { baseSnapshot, snapshotBlobs, snapshotSequenceNumber };
+			const { baseSnapshot, snapshotBlobs } = this.pendingLocalState;
+			const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshot);
+			this.snapshot = {
+				baseSnapshot,
+				snapshotBlobs,
+				snapshotSequenceNumber: attributes.sequenceNumber,
+			};
 			// This fires off a new promise that resolves once
 			this._initialRefreshSnapshot ??= (async () => {
 				await this.updateSnapshot();
@@ -270,7 +275,6 @@ export class SerializedStateManager {
 					pendingRuntimeState,
 					baseSnapshot: this.snapshot.baseSnapshot,
 					snapshotBlobs: this.snapshot.snapshotBlobs,
-					snapshotSequenceNumber: this.snapshot.snapshotSequenceNumber,
 					loadedGroupIdSnapshots: this.storageAdapter.loadedGroupIdSnapshots
 						? loadedGroupIdSnapshots
 						: undefined,

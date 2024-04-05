@@ -33,7 +33,7 @@ import type {
 	ISerializedStateManagerDocumentStorageService,
 	ISnapshotInfo,
 } from "./serializedStateManager.js";
-import { convertSnapshotInfoToSnapshot } from "./utils.js";
+import { convertSnapshotInfoToSnapshot, getDocumentAttributes } from "./utils.js";
 
 /**
  * Stringified blobs from a summary/snapshot tree.
@@ -155,7 +155,8 @@ export class ContainerStorageAdapter
 			const localSnapshot =
 				this.pendingLocalGroupIdSnapshots[snapshotFetchOptions.loadingGroupIds[0]];
 			assert(localSnapshot !== undefined, "Local snapshot must be present");
-			return convertSnapshotInfoToSnapshot(localSnapshot);
+			const attributes = await getDocumentAttributes(this, localSnapshot.baseSnapshot);
+			return convertSnapshotInfoToSnapshot(localSnapshot, attributes.sequenceNumber);
 		}
 
 		if (this._storageService.getSnapshot === undefined) {

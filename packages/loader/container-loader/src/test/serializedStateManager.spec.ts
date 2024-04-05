@@ -52,7 +52,6 @@ const pendingLocalState: IPendingContainerState = {
 	baseSnapshot: snapshot,
 	snapshotBlobs: { attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}' },
 	pendingRuntimeState: {},
-	snapshotSequenceNumber: 0,
 	savedOps: [],
 	url: "fluid",
 	loadedGroupIdSnapshots: {},

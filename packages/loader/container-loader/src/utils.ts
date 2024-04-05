@@ -200,7 +200,10 @@ export function convertSnapshotToSnapshotInfo(snapshot: ISnapshot): ISnapshotInf
  * Note, this assumes the ISnapshot sequence number is defined. Otherwise an assert will be thrown
  * @param snapshot - ISnapshot
  */
-export function convertSnapshotInfoToSnapshot(snapshotInfo: ISnapshotInfo): ISnapshot {
+export function convertSnapshotInfoToSnapshot(
+	snapshotInfo: ISnapshotInfo,
+	snapshotSequenceNumber: number,
+): ISnapshot {
 	const blobContents = new Map<string, ArrayBufferLike>();
 	for (const [blobId, serializedContent] of Object.entries(snapshotInfo.snapshotBlobs)) {
 		blobContents[blobId] = stringToBuffer(serializedContent, "utf8");
@@ -209,7 +212,7 @@ export function convertSnapshotInfoToSnapshot(snapshotInfo: ISnapshotInfo): ISna
 		snapshotTree: snapshotInfo.baseSnapshot,
 		blobContents,
 		ops: [],
-		sequenceNumber: snapshotInfo.snapshotSequenceNumber,
+		sequenceNumber: snapshotSequenceNumber,
 		latestSequenceNumber: undefined,
 		snapshotFormatV: 1,
 	};
