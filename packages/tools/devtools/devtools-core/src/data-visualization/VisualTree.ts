@@ -74,6 +74,14 @@ export interface VisualNodeBase {
 	 * Inside of the porperty is an array of possible EditTypes to inform devtools-view to only show the corresponding edit options for the types allowed
 	 */
 	editProps?: { editTypes?: EditType[] };
+
+	/**
+	 * Data to be rendered in a tooltip associated with this level in the tree.
+	 * @privateRemarks This is a temporary solution until we have a more robust way to render tooltips.
+	 *
+	 * TODO: Change this to accept VisualTree.
+	 */
+	tooltipContents?: string | Record<string, string>;
 }
 
 /**
