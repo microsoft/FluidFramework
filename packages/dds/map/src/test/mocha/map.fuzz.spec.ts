@@ -13,7 +13,12 @@ import {
 	createWeightedGenerator,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
-import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
+import {
+	DDSFuzzModel,
+	DDSFuzzTestState,
+	createDDSFuzzSuite,
+	UseHandle,
+} from "@fluid-private/test-dds-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
@@ -37,7 +42,7 @@ interface DeleteKey {
 	key: string;
 }
 
-type Operation = SetKey | DeleteKey | Clear;
+type Operation = SetKey | DeleteKey | Clear | UseHandle;
 
 // This type gets used a lot as the state object of the suite; shorthand it here.
 type State = DDSFuzzTestState<MapFactory>;
@@ -77,6 +82,10 @@ const reducer = combineReducers<Operation, State>({
 	},
 	deleteKey: ({ client }, { key }) => {
 		client.channel.delete(key);
+	},
+	useHandle: ({ random, client }, { handle }) => {
+		const keyNames = Array.from({ length: defaultOptions.keyPoolSize }, (_, i) => `${i}`);
+		client.channel.set(random.pick(keyNames), handle);
 	},
 });
 
@@ -133,6 +142,7 @@ describe("Map fuzz tests", () => {
 	createDDSFuzzSuite(model, {
 		defaultTestCount: 100,
 		numberOfClients: 3,
+		handleGenerationDisabled: false,
 		clientJoinOptions: {
 			maxNumberOfClients: 6,
 			clientAddProbability: 0.1,

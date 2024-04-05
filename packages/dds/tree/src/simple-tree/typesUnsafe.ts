@@ -19,8 +19,8 @@ import {
 	TreeNodeSchema,
 	WithType,
 } from "./schemaTypes.js";
-import { TreeArrayNode } from "./treeArrayNode.js";
-import { TreeArrayNodeBase, TreeNode, Unhydrated } from "./types.js";
+import { TreeArrayNodeBase, TreeArrayNode } from "./treeArrayNode.js";
+import { TreeNode, Unhydrated } from "./types.js";
 
 /*
  * TODO:

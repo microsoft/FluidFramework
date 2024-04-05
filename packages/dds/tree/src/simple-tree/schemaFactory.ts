@@ -8,7 +8,6 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
 import {
-	FlexFieldNodeSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
 	FlexTreeNode,
@@ -16,7 +15,6 @@ import {
 	isFluidHandle,
 	isLazy,
 	markEager,
-	typeNameSymbol,
 } from "../feature-libraries/index.js";
 import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
 
@@ -28,12 +26,11 @@ import {
 	stringSchema,
 } from "./leafNodeSchema.js";
 import {
-	arrayNodePrototypeProperties,
-	createArrayNodeProxy,
 	createMapProxy,
 	createObjectProxy,
 	isTreeNode,
 	mapStaticDispatchMap,
+	markContentType,
 } from "./proxies.js";
 import { setFlexNode } from "./proxyBinding.js";
 import { createRawNode } from "./rawNode.js";
@@ -58,7 +55,7 @@ import {
 	getStoredKey,
 } from "./schemaTypes.js";
 import { getFlexSchema } from "./toFlexSchema.js";
-import { TreeArrayNode } from "./treeArrayNode.js";
+import { TreeArrayNode, arraySchema } from "./treeArrayNode.js";
 import { TreeNode } from "./types.js";
 
 /**
@@ -654,54 +651,18 @@ export class SchemaFactory<
 		allowedTypes: T,
 		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
-	) {
-		// This class returns a proxy from its constructor to handle numeric indexing.
-		// Alternatively it could extend a normal class which gets tons of numeric properties added.
-		class schema extends this.nodeSchema(
-			name,
-			NodeKind.Array,
-			allowedTypes,
-			implicitlyConstructable,
-		) {
-			public constructor(input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>) {
-				super(input);
-
-				const proxyTarget = customizable ? this : undefined;
-
-				if (customizable) {
-					// Since proxy reports this as a "non-configurable" property, it must exist on the underlying object used as the proxy target, not as an inherited property.
-					// This should not get used as the proxy should intercept all use.
-					Object.defineProperty(this, "length", {
-						value: NaN,
-						writable: true,
-						enumerable: false,
-						configurable: false,
-					});
-				}
-
-				const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
-				assert(flexSchema instanceof FlexFieldNodeSchema, "invalid flex schema");
-				const flexNode: FlexTreeNode = isFlexTreeNode(input)
-					? input
-					: createRawNode(flexSchema, copyContent(flexSchema.name, input) as object);
-
-				const proxy: TreeNode = createArrayNodeProxy(customizable, proxyTarget);
-				setFlexNode(proxy, flexNode);
-				return proxy as unknown as schema;
-			}
-		}
-
-		// Setup array functionality
-		Object.defineProperties(schema.prototype, arrayNodePrototypeProperties);
-
-		return schema as TreeNodeSchemaClass<
-			ScopedSchemaName<TScope, Name>,
-			NodeKind.Array,
-			TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>>,
-			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-			ImplicitlyConstructable,
-			T
-		>;
+	): TreeNodeSchemaClass<
+		ScopedSchemaName<TScope, Name>,
+		NodeKind.Array,
+		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>>,
+		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+		ImplicitlyConstructable,
+		T
+	> {
+		return arraySchema(
+			this.nodeSchema(name, NodeKind.Array, allowedTypes, implicitlyConstructable),
+			customizable,
+		);
 	}
 
 	/**
@@ -794,6 +755,6 @@ function copyContent<T extends object>(typeName: TreeNodeSchemaIdentifier, conte
 			: Array.isArray(content)
 			? (content.slice() as T)
 			: { ...content };
-
-	return Object.defineProperty(copy, typeNameSymbol, { value: typeName });
+	markContentType(typeName, copy);
+	return copy;
 }
