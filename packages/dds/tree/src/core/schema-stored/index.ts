@@ -8,7 +8,7 @@ export {
 	ValueSchema,
 	TreeNodeStoredSchema,
 	TreeTypeSet,
-	FieldKindSpecifier,
+	FieldKindData,
 	TreeStoredSchema,
 	forbiddenFieldKindIdentifier,
 	storedEmptyFieldSchema,
@@ -21,6 +21,7 @@ export {
 	encodeFieldSchema,
 	storedSchemaDecodeDispatcher,
 	ErasedTreeNodeSchemaDataFormat,
+	SchemaAndPolicy,
 } from "./schema.js";
 export {
 	TreeStoredSchemaSubscription,
@@ -29,6 +30,7 @@ export {
 	schemaDataIsEmpty,
 	SchemaEvents,
 } from "./storedSchemaRepository.js";
+export { Multiplicity } from "./multiplicity.js";
 
 export { TreeNodeSchemaIdentifier, FieldKey, FieldKindIdentifier } from "./format.js";
 

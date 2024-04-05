@@ -126,7 +126,6 @@ export class OdspSummaryUploadManager {
 					attempt: options.refresh ? 2 : 1,
 					hasClaims: !!options.claims,
 					hasTenantId: !!options.tenantId,
-					headers: Object.keys(headers).length > 0 ? true : undefined,
 					blobs,
 					size: postBody.length,
 					referenceSequenceNumber,

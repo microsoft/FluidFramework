@@ -140,7 +140,7 @@ export function allowsFieldSuperset(
 	superset: TreeFieldStoredSchema,
 ): boolean {
 	return withEditor(
-		policy.fieldKinds.get(original.kind.identifier) ?? fail("missing kind"),
+		policy.fieldKinds.get(original.kind) ?? fail("missing kind"),
 	).allowsFieldSuperset(policy, originalData, original.types, superset);
 }
 

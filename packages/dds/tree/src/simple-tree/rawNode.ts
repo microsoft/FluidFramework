@@ -5,13 +5,11 @@
 
 import { Anchor, AnchorNode, FieldKey, TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
-	FlexFieldNodeSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
 	FlexTreeContext,
 	FlexTreeEntityKind,
 	FlexTreeField,
-	FlexTreeFieldNode,
 	FlexTreeMapNode,
 	FlexTreeNode,
 	FlexTreeNodeEvents,
@@ -69,9 +67,6 @@ export function createRawNode(
 	if (schema instanceof FlexMapNodeSchema) {
 		return new RawMapNode(schema, content as ReadonlyMap<string, InsertableContent>);
 	}
-	if (schema instanceof FlexFieldNodeSchema) {
-		return new RawFieldNode(schema, content);
-	}
 	fail("Unrecognized schema");
 }
 
@@ -111,6 +106,10 @@ export abstract class RawTreeNode<TSchema extends FlexTreeNodeSchema, TContent>
 
 	public tryGetField(key: FieldKey): FlexTreeField | undefined {
 		throw rawError("Reading fields");
+	}
+
+	public getBoxed(key: string): never {
+		throw rawError("Reading boxed fields");
 	}
 
 	public boxedIterator(): IterableIterator<FlexTreeField> {
@@ -164,9 +163,6 @@ export class RawMapNode<TSchema extends FlexMapNodeSchema>
 	public get(key: string): FlexTreeUnboxField<TSchema["info"]> {
 		return this[nodeContent].get(key) as FlexTreeUnboxField<TSchema["info"]>;
 	}
-	public getBoxed(key: string): FlexTreeTypedField<TSchema["info"]> {
-		throw rawError("Reading boxed map values");
-	}
 	public keys(): IterableIterator<FieldKey> {
 		return this[nodeContent].keys() as IterableIterator<FieldKey>;
 	}
@@ -212,23 +208,7 @@ export class RawMapNode<TSchema extends FlexMapNodeSchema>
 	}
 }
 
-/**
- * The implementation of a field node created by {@link createRawNode}.
- */
-export class RawFieldNode<TSchema extends FlexFieldNodeSchema>
-	extends RawTreeNode<TSchema, InsertableContent>
-	implements FlexTreeFieldNode<TSchema>
-{
-	public get content(): FlexTreeUnboxField<TSchema["info"]> {
-		throw rawError("Reading content of an array node");
-	}
-
-	public get boxedContent(): FlexTreeTypedField<TSchema["info"]> {
-		throw rawError("Reading boxed content of an array node");
-	}
-}
-
-function rawError(message?: string): Error {
+export function rawError(message?: string): Error {
 	return new Error(
 		`${
 			message ?? "Operation"

@@ -8,7 +8,6 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
 import {
-	FlexFieldNodeSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
 	FlexTreeNode,
@@ -16,7 +15,6 @@ import {
 	isFluidHandle,
 	isLazy,
 	markEager,
-	typeNameSymbol,
 } from "../feature-libraries/index.js";
 import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
 
@@ -28,12 +26,11 @@ import {
 	stringSchema,
 } from "./leafNodeSchema.js";
 import {
-	arrayNodePrototypeProperties,
-	createArrayNodeProxy,
 	createMapProxy,
 	createObjectProxy,
 	isTreeNode,
 	mapStaticDispatchMap,
+	markContentType,
 } from "./proxies.js";
 import { setFlexNode } from "./proxyBinding.js";
 import { createRawNode } from "./rawNode.js";
@@ -53,9 +50,12 @@ import {
 	TreeObjectNode,
 	WithType,
 	type,
+	type FieldProps,
+	getExplicitStoredKey,
+	getStoredKey,
 } from "./schemaTypes.js";
 import { getFlexSchema } from "./toFlexSchema.js";
-import { TreeArrayNode } from "./treeArrayNode.js";
+import { TreeArrayNode, arraySchema } from "./treeArrayNode.js";
 import { TreeNode } from "./types.js";
 
 /**
@@ -292,6 +292,9 @@ export class SchemaFactory<
 		const Name extends TName,
 		const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 	>(name: Name, fields: T) {
+		// Ensure no collisions between final set of view keys, and final set of stored keys (including those
+		// implicitly derived from view keys)
+		SchemaFactory.assertUniqueKeys(name, fields);
 		class schema extends this.nodeSchema(name, NodeKind.Object, fields, true) {
 			public constructor(input: InsertableObjectFromSchemaRecord<T>) {
 				super(input);
@@ -323,7 +326,11 @@ export class SchemaFactory<
 					? input
 					: createRawNode(flexSchema, copyContent(flexSchema.name, input) as object);
 
-				const proxy: TreeNode = createObjectProxy(flexSchema, customizable, proxyTarget);
+				const proxy: TreeNode = createObjectProxy(
+					this.constructor as TreeNodeSchema,
+					customizable,
+					proxyTarget,
+				);
 				setFlexNode(proxy, flexNode);
 				return proxy as unknown as schema;
 			}
@@ -337,6 +344,44 @@ export class SchemaFactory<
 			true,
 			T
 		>;
+	}
+
+	/**
+	 * Ensures that the set of view keys in the schema is unique.
+	 * Also ensure that the final set of stored keys (including those implicitly derived from view keys) is unique.
+	 * @throws Throws a `UsageError` if either of the key uniqueness invariants is violated.
+	 */
+	private static assertUniqueKeys<
+		const Name extends number | string,
+		const Fields extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+	>(schemaName: Name, fields: Fields): void {
+		// Verify that there are no duplicates among the explicitly specified stored keys.
+		const explicitStoredKeys = new Set<string>();
+		for (const schema of Object.values(fields)) {
+			const storedKey = getExplicitStoredKey(schema);
+			if (storedKey === undefined) {
+				continue;
+			}
+			if (explicitStoredKeys.has(storedKey)) {
+				throw new UsageError(
+					`Duplicate stored key "${storedKey}" in schema "${schemaName}". Stored keys must be unique within an object schema.`,
+				);
+			}
+			explicitStoredKeys.add(storedKey);
+		}
+
+		// Verify that there are no duplicates among the derived
+		// (including those implicitly derived from view keys) stored keys.
+		const derivedStoredKeys = new Set<string>();
+		for (const [viewKey, schema] of Object.entries(fields)) {
+			const storedKey = getStoredKey(viewKey, schema);
+			if (derivedStoredKeys.has(storedKey)) {
+				throw new UsageError(
+					`Stored key "${storedKey}" in schema "${schemaName}" conflicts with a property key of the same name, which is not overridden by a stored key. The final set of stored keys in an object schema must be unique.`,
+				);
+			}
+			derivedStoredKeys.add(storedKey);
+		}
 	}
 
 	/**
@@ -606,63 +651,48 @@ export class SchemaFactory<
 		allowedTypes: T,
 		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
-	) {
-		// This class returns a proxy from its constructor to handle numeric indexing.
-		// Alternatively it could extend a normal class which gets tons of numeric properties added.
-		class schema extends this.nodeSchema(
-			name,
-			NodeKind.Array,
-			allowedTypes,
-			implicitlyConstructable,
-		) {
-			public constructor(input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>) {
-				super(input);
-
-				const proxyTarget = customizable ? this : undefined;
-
-				if (customizable) {
-					// Since proxy reports this as a "non-configurable" property, it must exist on the underlying object used as the proxy target, not as an inherited property.
-					// This should not get used as the proxy should intercept all use.
-					Object.defineProperty(this, "length", {
-						value: NaN,
-						writable: true,
-						enumerable: false,
-						configurable: false,
-					});
-				}
-
-				const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
-				assert(flexSchema instanceof FlexFieldNodeSchema, "invalid flex schema");
-				const flexNode: FlexTreeNode = isFlexTreeNode(input)
-					? input
-					: createRawNode(flexSchema, copyContent(flexSchema.name, input) as object);
-
-				const proxy: TreeNode = createArrayNodeProxy(customizable, proxyTarget);
-				setFlexNode(proxy, flexNode);
-				return proxy as unknown as schema;
-			}
-		}
-
-		// Setup array functionality
-		Object.defineProperties(schema.prototype, arrayNodePrototypeProperties);
-
-		return schema as TreeNodeSchemaClass<
-			ScopedSchemaName<TScope, Name>,
-			NodeKind.Array,
-			TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>>,
-			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-			ImplicitlyConstructable,
-			T
-		>;
+	): TreeNodeSchemaClass<
+		ScopedSchemaName<TScope, Name>,
+		NodeKind.Array,
+		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>>,
+		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+		ImplicitlyConstructable,
+		T
+	> {
+		return arraySchema(
+			this.nodeSchema(name, NodeKind.Array, allowedTypes, implicitlyConstructable),
+			customizable,
+		);
 	}
 
 	/**
-	 * Make a field optional instead of the default which is required.
+	 * Make a field optional instead of the default, which is required.
+	 *
+	 * @param t - The types allowed under the field.
+	 * @param props - Optional properties to associate with the field.
 	 */
 	public optional<const T extends ImplicitAllowedTypes>(
 		t: T,
+		props?: FieldProps,
 	): FieldSchema<FieldKind.Optional, T> {
-		return new FieldSchema(FieldKind.Optional, t);
+		return new FieldSchema(FieldKind.Optional, t, props);
+	}
+
+	/**
+	 * Make a field explicitly required.
+	 *
+	 * @param t - The types allowed under the field.
+	 * @param props - Optional properties to associate with the field.
+	 *
+	 * @remarks
+	 * Fields are required by default, but this API can be used to make the required nature explicit in the schema,
+	 * and allows associating custom {@link FieldProps | properties} with the field.
+	 */
+	public required<const T extends ImplicitAllowedTypes>(
+		t: T,
+		props?: FieldProps,
+	): FieldSchema<FieldKind.Required, T> {
+		return new FieldSchema(FieldKind.Required, t, props);
 	}
 
 	/**
@@ -725,6 +755,6 @@ function copyContent<T extends object>(typeName: TreeNodeSchemaIdentifier, conte
 			: Array.isArray(content)
 			? (content.slice() as T)
 			: { ...content };
-
-	return Object.defineProperty(copy, typeNameSymbol, { value: typeName });
+	markContentType(typeName, copy);
+	return copy;
 }

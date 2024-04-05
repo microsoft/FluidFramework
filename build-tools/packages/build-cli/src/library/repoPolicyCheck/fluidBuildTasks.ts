@@ -303,18 +303,23 @@ function eslintGetScriptDependencies(
 	}
 
 	projects = Array.isArray(projects) ? projects : [projects];
-	return projects.map((project) => {
-		const found = findTscScripts(json, project);
+	return (
+		projects
+			// Projects with ".lint." in the name are not required to have other associated tasks.
+			.filter((project) => !project.includes(".lint."))
+			.map((project) => {
+				const found = findTscScripts(json, project);
 
-		// The main compile script is build:esnext, point eslint to it
-		if (found === undefined) {
-			throw new Error(
-				`Unable to find script for project ${project} specified in ${eslintConfig}`,
-			);
-		}
+				// The main compile script is build:esnext, point eslint to it
+				if (found === undefined) {
+					throw new Error(
+						`Unable to find script for project ${project} specified in ${eslintConfig}`,
+					);
+				}
 
-		return found;
-	});
+				return found;
+			})
+	);
 }
 
 /**

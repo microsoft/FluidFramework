@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "@fluid-example/example-utils";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
-import { SharedCell } from "@fluidframework/cell";
+import { SharedCell } from "@fluidframework/cell/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { v4 as uuid } from "uuid";
 
