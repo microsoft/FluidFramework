@@ -279,16 +279,14 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 			case "changing": {
 				const unsubscribeFromChildrenChange = this.anchorNode.on(
 					"childrenChanging",
-					(anchorNode: AnchorNode) =>
-						listener(anchorNode),
+					(anchorNode: AnchorNode) => listener(anchorNode),
 				);
 				return unsubscribeFromChildrenChange;
 			}
 			case "subtreeChanging": {
 				const unsubscribeFromSubtreeChange = this.anchorNode.on(
 					"subtreeChanging",
-					(anchorNode: AnchorNode) =>
-						listener(anchorNode),
+					(anchorNode: AnchorNode) => listener(anchorNode),
 				);
 				return unsubscribeFromSubtreeChange;
 			}
