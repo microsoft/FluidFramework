@@ -108,7 +108,7 @@ function makeGenerator(optionsParam?: Partial<GeneratorOptions>): AsyncGenerator
 		value: random.pick([
 			(): number => random.integer(1, 50),
 			(): string => random.string(random.integer(3, 7)),
-			(): IFluidHandle => random.handle(),
+			(): IFluidHandle | undefined => random.handle(),
 		])(),
 	});
 	const deleteKey: Generator<DeleteKey, State> = ({ random }) => ({
@@ -137,6 +137,7 @@ describe.only("Map fuzz tests", () => {
 	createDDSFuzzSuite(model, {
 		defaultTestCount: 100,
 		numberOfClients: 3,
+		handleGenerationDisabled: false,
 		clientJoinOptions: {
 			maxNumberOfClients: 6,
 			clientAddProbability: 0.1,

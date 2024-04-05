@@ -155,7 +155,7 @@ export interface DDSFuzzTestState<TChannelFactory extends IChannelFactory> exten
 // @internal (undocumented)
 export interface DDSRandom extends IRandom {
     // (undocumented)
-    handle(): IFluidHandle;
+    handle(): IFluidHandle | undefined;
 }
 
 // @internal (undocumented)
@@ -201,14 +201,6 @@ export interface Synchronize {
     clients?: string[];
     // (undocumented)
     type: "synchronize";
-}
-
-// @internal (undocumented)
-export interface UseHandle {
-    // (undocumented)
-    handle: IFluidHandle;
-    // (undocumented)
-    type: "useHandle";
 }
 
 // (No @packageDocumentation comment for this package)

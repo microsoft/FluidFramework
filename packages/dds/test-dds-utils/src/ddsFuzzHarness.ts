@@ -65,7 +65,7 @@ const isOperationType = <O extends BaseOperation>(type: O["type"], op: BaseOpera
  * @internal
  */
 export interface DDSRandom extends IRandom {
-	handle(): IFluidHandle;
+	handle(): IFluidHandle | undefined;
 }
 
 /**
@@ -127,14 +127,6 @@ export interface StashClient {
 export interface HandlePicked {
 	type: "handlePicked";
 	handleId: string;
-}
-
-/**
- * @internal
- */
-export interface UseHandle {
-	type: "useHandle";
-	handle: IFluidHandle;
 }
 
 /**
@@ -1167,61 +1159,6 @@ export function mixinStashedClient<
 	};
 }
 
-export function mixinHandle<
-	TChannelFactory extends IChannelFactory,
-	TOperation extends BaseOperation,
-	TState extends DDSFuzzTestState<TChannelFactory>,
->(
-	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
-	options: DDSFuzzSuiteOptions,
-): DDSFuzzModel<TChannelFactory, TOperation, TState> {
-	if (options.handleGenerationDisabled === true) {
-		return model;
-	}
-	const idValues = Array.from<string>({ length: 5 }).fill(uuid());
-
-	const generatorFactory: () => AsyncGenerator<
-		TOperation | HandlePicked | UseHandle,
-		TState
-	> = () => {
-		const baseGenerator = model.generatorFactory();
-		return async (state): Promise<TOperation | HandlePicked | UseHandle | typeof done> => {
-			if (state.random.bool(0.5)) {
-				return {
-					type: "handlePicked",
-					handleId: idValues[state.random.integer(0, idValues.length - 1)],
-				};
-			}
-			return baseGenerator(state);
-		};
-	};
-
-	const reducer: AsyncReducer<TOperation | HandlePicked | UseHandle, TState> = async (
-		state,
-		operation,
-	) => {
-		if (isOperationType<HandlePicked>("handlePicked", operation)) {
-			const handle = new DDSFuzzHandle(
-				operation.handleId,
-				state.client.dataStoreRuntime.IFluidHandleContext,
-			);
-			const useHandle: UseHandle = { ...operation, type: "useHandle", handle };
-			// The cast is needed to allow types with handles to be passed through.
-			return model.reducer(state, useHandle as unknown as TOperation);
-		}
-		return model.reducer(state, operation as TOperation);
-	};
-
-	return {
-		...model,
-		generatorFactory: generatorFactory as () => AsyncGenerator<TOperation, TState>,
-		reducer,
-		minimizationTransforms: model.minimizationTransforms as MinimizationTransform<
-			TOperation | HandlePicked | UseHandle
-		>[],
-	};
-}
-
 /**
  * This modifies the value of "client" while callback is running, then restores it.
  * This is does instead of copying the state since the state object is mutable, and running callback might make changes to state (like add new members) which are lost if state is just copied.
@@ -1487,19 +1424,21 @@ export async function runTestForSeed<
 		random: {
 			...random,
 			handle: () => {
-				handleGenerated = true;
-				return new DDSFuzzHandle(
-					random.pick(handles),
-					// this is wonky, as get on this handle will always resolve via
-					// the summarizer client, but since we just return the absolute path
-					// it doesn't really matter, and remote handles will use
-					// the right handle context when they are deserialized
-					// by the dds.
-					//
-					// we re-used this hack a few time below, because
-					// we don't have the real client
-					initialState.summarizerClient.dataStoreRuntime,
-				);
+				if (options.handleGenerationDisabled !== true) {
+					handleGenerated = true;
+					return new DDSFuzzHandle(
+						random.pick(handles),
+						// this is wonky, as get on this handle will always resolve via
+						// the summarizer client, but since we just return the absolute path
+						// it doesn't really matter, and remote handles will use
+						// the right handle context when they are deserialized
+						// by the dds.
+						//
+						// we re-used this hack a few time below, because
+						// we don't have the real client
+						initialState.summarizerClient.dataStoreRuntime,
+					);
+				}
 			},
 		},
 		client: makeUnreachableCodePathProxy("client"),
@@ -1732,10 +1671,7 @@ const getFullModel = <TChannelFactory extends IChannelFactory, TOperation extend
 			mixinNewClient(
 				mixinStashedClient(
 					mixinClientSelection(
-						mixinHandle(
-							mixinReconnect(mixinRebase(ddsModel, options), options),
-							options,
-						),
+						mixinReconnect(mixinRebase(ddsModel, options), options),
 						options,
 					),
 					options,
