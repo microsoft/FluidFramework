@@ -47,7 +47,7 @@ export interface SnapshotWithBlobs {
  * of the container to the same state
  * @internal
  */
-export interface IPendingContainerState extends SnapshotWithBlobs {
+export interface IPendingContainerState extends SnapshotInfo {
 	attached: true;
 	pendingRuntimeState: unknown;
 	/**
@@ -77,7 +77,7 @@ interface SnapshotInfo extends SnapshotWithBlobs {
 
 export class SerializedStateManager {
 	private readonly processedOps: ISequencedDocumentMessage[] = [];
-	private snapshot: SnapshotWithBlobs | undefined;
+	private snapshot: SnapshotInfo | undefined;
 	private readonly mc: MonitoringContext;
 	private latestSnapshot: SnapshotInfo | undefined;
 	private refreshSnapshot: Promise<void> | undefined;
@@ -126,12 +126,17 @@ export class SerializedStateManager {
 					baseSnapshot,
 					this.storageAdapter,
 				);
-				this.snapshot = { baseSnapshot, snapshotBlobs };
+				const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshot);
+				this.snapshot = {
+					baseSnapshot,
+					snapshotBlobs,
+					snapshotSequenceNumber: attributes.sequenceNumber,
+				};
 			}
 			return { baseSnapshot, version };
 		} else {
-			const { baseSnapshot, snapshotBlobs } = this.pendingLocalState;
-			this.snapshot = { baseSnapshot, snapshotBlobs };
+			const { baseSnapshot, snapshotBlobs, snapshotSequenceNumber } = this.pendingLocalState;
+			this.snapshot = { baseSnapshot, snapshotBlobs, snapshotSequenceNumber };
 			this.refreshSnapshot ??= (async () => {
 				this.latestSnapshot = await getLatestSnapshotInfo(
 					this.mc,
@@ -150,15 +155,10 @@ export class SerializedStateManager {
 	 * Updates class snapshot and processedOps if we have a new snapshot and it's among processedOps range.
 	 */
 	private updateSnapshotAndProcessedOpsMaybe() {
-		if (this.latestSnapshot === undefined) {
+		if (this.latestSnapshot === undefined || this.processedOps.length === 0) {
 			return;
 		}
-		const snapshotSequenceNumber = this.latestSnapshot?.snapshotSequenceNumber;
-		if (this.processedOps.length === 0) {
-			// can't refresh latest snapshot until we have processed the ops up to it.
-			// Pending state would be behind the latest snapshot.
-			return;
-		}
+		const snapshotSequenceNumber = this.latestSnapshot.snapshotSequenceNumber;
 		const firstProcessedOpSequenceNumber = this.processedOps[0].sequenceNumber;
 		const lastProcessedOpSequenceNumber =
 			this.processedOps[this.processedOps.length - 1].sequenceNumber;
@@ -174,6 +174,8 @@ export class SerializedStateManager {
 				eventName: "OldSnapshotFetchWhileRefreshing",
 				snapshotSequenceNumber,
 				firstProcessedOpSequenceNumber,
+				lastProcessedOpSequenceNumber,
+				stashedSnapshotSequenceNumber: this.snapshot?.snapshotSequenceNumber,
 			});
 			this.latestSnapshot = undefined;
 		} else if (snapshotSequenceNumber <= lastProcessedOpSequenceNumber) {
@@ -203,7 +205,12 @@ export class SerializedStateManager {
 	 * @param snapshot - snapshot and blobs collected while attaching
 	 */
 	public setSnapshot(snapshot: SnapshotWithBlobs | undefined) {
-		this.snapshot = snapshot;
+		this.snapshot = snapshot
+			? {
+					...snapshot,
+					snapshotSequenceNumber: 0,
+			  }
+			: undefined;
 	}
 
 	public async getPendingLocalStateCore(
@@ -233,6 +240,7 @@ export class SerializedStateManager {
 					pendingRuntimeState,
 					baseSnapshot: this.snapshot.baseSnapshot,
 					snapshotBlobs: this.snapshot.snapshotBlobs,
+					snapshotSequenceNumber: this.snapshot.snapshotSequenceNumber,
 					savedOps: this.processedOps,
 					url: resolvedUrl.url,
 					// no need to save this if there is no pending runtime state
