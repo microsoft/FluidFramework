@@ -47,7 +47,7 @@ export interface SnapshotWithBlobs {
  * of the container to the same state
  * @internal
  */
-export interface IPendingContainerState extends SnapshotInfo {
+export interface IPendingContainerState extends SnapshotWithBlobs {
 	attached: true;
 	pendingRuntimeState: unknown;
 	/**
@@ -135,8 +135,13 @@ export class SerializedStateManager {
 			}
 			return { baseSnapshot, version };
 		} else {
-			const { baseSnapshot, snapshotBlobs, snapshotSequenceNumber } = this.pendingLocalState;
-			this.snapshot = { baseSnapshot, snapshotBlobs, snapshotSequenceNumber };
+			const { baseSnapshot, snapshotBlobs } = this.pendingLocalState;
+			const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshot);
+			this.snapshot = {
+				baseSnapshot,
+				snapshotBlobs,
+				snapshotSequenceNumber: attributes.sequenceNumber,
+			};
 			this.refreshSnapshot ??= (async () => {
 				this.latestSnapshot = await getLatestSnapshotInfo(
 					this.mc,
@@ -242,7 +247,6 @@ export class SerializedStateManager {
 					pendingRuntimeState,
 					baseSnapshot: this.snapshot.baseSnapshot,
 					snapshotBlobs: this.snapshot.snapshotBlobs,
-					snapshotSequenceNumber: this.snapshot.snapshotSequenceNumber,
 					savedOps: this.processedOps,
 					url: resolvedUrl.url,
 					// no need to save this if there is no pending runtime state
