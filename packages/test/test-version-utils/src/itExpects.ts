@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import { type ITelemetryGenericEventExt } from "@fluidframework/telemetry-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import {
 	getUnexpectedLogErrorException,
 	TestObjectProvider,

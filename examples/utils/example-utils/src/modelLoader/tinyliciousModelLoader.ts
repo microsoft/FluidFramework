@@ -13,7 +13,7 @@ import {
 	InsecureTinyliciousTokenProvider,
 	InsecureTinyliciousUrlResolver,
 	createTinyliciousCreateNewRequest,
-} from "@fluidframework/tinylicious-driver";
+} from "@fluidframework/tinylicious-driver/internal";
 
 import { IDetachedModel, IModelLoader } from "./interfaces.js";
 import { ModelLoader } from "./modelLoader.js";

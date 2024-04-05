@@ -31,7 +31,7 @@ import * as orderedCollection from '@fluidframework/ordered-collection/internal'
 import * as registerCollection from '@fluidframework/register-collection/internal';
 import * as sequence from '@fluidframework/sequence/internal';
 import * as sequenceDeprecated from '@fluid-experimental/sequence-deprecated';
-import { TestDriverTypes } from '@fluidframework/test-driver-definitions';
+import { TestDriverTypes } from '@fluid-internal/test-driver-definitions';
 import { TestFluidObjectFactory } from '@fluidframework/test-utils/internal';
 import { TestObjectProvider } from '@fluidframework/test-utils/internal';
 

@@ -7,25 +7,24 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import { AnchorNode, AnchorSet, UpPath, anchorSlot } from "../core/index.js";
 import {
-	FlexFieldNodeSchema,
+	ContextSlot,
+	FlexTreeNodeSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
-	FlexTreeFieldNode,
 	FlexTreeMapNode,
 	FlexTreeNode,
 	FlexTreeObjectNode,
 	assertFlexTreeEntityNotFreed,
 	flexTreeSlot,
-	schemaIsFieldNode,
-	schemaIsMap,
-	schemaIsObjectNode,
 } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
-
 import { RawTreeNode } from "./rawNode.js";
-import { TreeMapNode, TreeObjectNode } from "./schemaTypes.js";
+import { TreeMapNode, WithType } from "./schemaTypes.js";
 import { TreeArrayNode } from "./treeArrayNode.js";
-import { TreeNode, TypedNode } from "./types.js";
+import { TreeNode } from "./types.js";
+// TODO: decide how to deal with dependencies on flex-tree implementation.
+// eslint-disable-next-line import/no-internal-modules
+import { makeTree } from "../feature-libraries/flex-tree/lazyNode.js";
 
 // This file contains various maps and helpers for supporting proxy binding (a.k.a. proxy hydration).
 // See ./ProxyBinding.md for a high-level overview of the process.
@@ -47,7 +46,7 @@ const proxyToAnchorNode = new WeakMap<TreeNode, AnchorNode>();
  * The raw node exists when the proxy is first created but before it has been associated with a real {@link FlexTreeNode}.
  * For example, after a user calls `const proxy = new Foo({})` but before `proxy` is inserted into the tree and queried.
  */
-const proxyToRawFlexNode = new WeakMap<TreeNode, RawTreeNode<FlexFieldNodeSchema, unknown>>();
+const proxyToRawFlexNode = new WeakMap<TreeNode, RawTreeNode<FlexTreeNodeSchema, unknown>>();
 /** Used by `anchorProxy` as an optimization to ensure that only one anchor is remembered at a time for a given anchor node */
 const anchorForgetters = new WeakMap<TreeNode, () => void>();
 
@@ -80,10 +79,7 @@ export function getFlexNode(
 	proxy: TypedNode<FlexObjectNodeSchema>,
 	allowFreed?: true,
 ): FlexTreeObjectNode;
-export function getFlexNode(
-	proxy: TreeArrayNode,
-	allowFreed?: true,
-): FlexTreeFieldNode<FlexFieldNodeSchema>;
+export function getFlexNode(proxy: TreeArrayNode, allowFreed?: true): FlexTreeNode;
 export function getFlexNode(
 	proxy: TreeMapNode,
 	allowFreed?: true,
@@ -96,8 +92,12 @@ export function getFlexNode(proxy: TreeNode, allowFreed = false): FlexTreeNode {
 		const flexNode = anchorNode.slots.get(flexTreeSlot);
 		if (flexNode !== undefined) {
 			return flexNode; // If it does have a flex node, return it...
-		} // ...otherwise, the flex node must be created by walking downwards from an existing ancestor
-		const newFlexNode = demandSpine(anchorNode);
+		} // ...otherwise, the flex node must be created
+		const context = anchorNode.anchorSet.slots.get(ContextSlot) ?? fail("missing context");
+		const cursor = context.forest.allocateCursor();
+		context.forest.moveCursorToPath(anchorNode, cursor);
+		const newFlexNode = makeTree(context, cursor);
+		cursor.free();
 		// Calling this is a performance improvement, however, do this only after demand to avoid momentarily having no anchors to anchorNode
 		anchorForgetters?.get(proxy)?.();
 		if (!allowFreed) {
@@ -107,56 +107,6 @@ export function getFlexNode(proxy: TreeNode, allowFreed = false): FlexTreeNode {
 	}
 
 	return proxyToRawFlexNode.get(proxy) ?? fail("Expected raw tree node for proxy");
-}
-
-/**
- * Walks up from the given anchor node until an anchor node that has an associated flex node is found.
- * Then, walks back down from that flex node so as to cause the original anchor node to generate a flex node.
- * Fails if there is no ancestor of `anchorNode` bound to a flex node.
- */
-function demandSpine(node: AnchorNode): FlexTreeNode {
-	const spine = getAnchorNodeSpine(node);
-	for (let i = spine.length - 1; i >= 1; i--) {
-		const parent = spine[i];
-		const child = spine[i - 1];
-		const parentFlexNode =
-			parent.slots.get(flexTreeSlot) ?? fail("Expected flex tree for anchor node");
-
-		const proxy = parent.slots.get(proxySlot) ?? fail("Expected proxy for anchor node");
-		if (schemaIsFieldNode(parentFlexNode.schema)) {
-			const array = proxy as TreeArrayNode;
-			const _ = array[child.parentIndex];
-		} else if (schemaIsMap(parentFlexNode.schema)) {
-			const map = proxy as TreeMapNode;
-			map.get(child.parentField);
-		} else if (schemaIsObjectNode(parentFlexNode.schema)) {
-			const obj = proxy as TreeObjectNode<any>;
-			const _ = obj[child.parentField];
-		} else {
-			fail("Unexpected flex node schema type");
-		}
-	}
-	return spine[0].slots.get(flexTreeSlot) ?? fail("Failed to demand flex node");
-}
-
-/**
- * Returns the ancestry of the given anchor node up to the first node which is bound to a flex node.
- * For example, given `node`, it might return:
- * ```
- * [node, nodeParent, nodeGrandparent, nodeGreatGrandparent]
- *   ^-------^-- no flex nodes --^       ^-- has a flex node
- * ```
- */
-function getAnchorNodeSpine(node: AnchorNode): readonly AnchorNode[] {
-	const spine: AnchorNode[] = [node];
-	while (spine[spine.length - 1].slots.get(flexTreeSlot) === undefined) {
-		const parent =
-			spine[spine.length - 1].parent ??
-			fail("Failed to hydrate proxy: tree root is unhydrated");
-
-		spine.push(parent);
-	}
-	return spine;
 }
 
 /**
@@ -221,3 +171,8 @@ function bindProxyToAnchorNode(proxy: TreeNode, anchorNode: AnchorNode): void {
 	// However, it's fine for an anchor node to rotate through different proxies when the content at that place in the tree is replaced.
 	anchorNode.slots.set(proxySlot, proxy);
 }
+
+/**
+ * Given a node's schema, return the corresponding object in the proxy-based API.
+ */
+type TypedNode<TSchema extends FlexTreeNodeSchema> = TreeNode & WithType<TSchema["name"]>;

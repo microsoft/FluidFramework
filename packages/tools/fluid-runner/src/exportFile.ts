@@ -11,13 +11,12 @@ import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driv
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 
-import { IFluidFileConverter } from "./codeLoaderBundle";
-import { FakeUrlResolver } from "./fakeUrlResolver";
+import { IFluidFileConverter } from "./codeLoaderBundle.js";
+import { FakeUrlResolver } from "./fakeUrlResolver.js";
 /* eslint-disable import/no-internal-modules */
-import { ITelemetryOptions } from "./logger/fileLogger";
-import { createLogger, getTelemetryFileValidationError } from "./logger/loggerUtils";
-import { getArgsValidationError, getSnapshotFileContent, timeoutPromise } from "./utils";
-
+import { ITelemetryOptions } from "./logger/fileLogger.js";
+import { createLogger, getTelemetryFileValidationError } from "./logger/loggerUtils.js";
+import { getArgsValidationError, getSnapshotFileContent, timeoutPromise } from "./utils.js";
 /* eslint-enable import/no-internal-modules */
 
 /**
@@ -25,11 +24,17 @@ import { getArgsValidationError, getSnapshotFileContent, timeoutPromise } from "
  */
 export type IExportFileResponse = IExportFileResponseSuccess | IExportFileResponseFailure;
 
-interface IExportFileResponseSuccess {
+/**
+ * @alpha
+ */
+export interface IExportFileResponseSuccess {
 	success: true;
 }
 
-interface IExportFileResponseFailure {
+/**
+ * @alpha
+ */
+export interface IExportFileResponseFailure {
 	success: false;
 	eventName: string;
 	errorMessage: string;
