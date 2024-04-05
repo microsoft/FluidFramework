@@ -134,6 +134,8 @@ function leafToMapTree(
 ): MapTree {
 	assert(schema.kind === NodeKind.Leaf, "Expected a leaf schema.");
 	if (!isTreeValue(data)) {
+		// This rule exists to protect against useless `toString` output like `[object Object]`.
+		// In this case, that's actually reasonable behavior, since object input is not compatible with Leaf schemas.
 		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		throw new UsageError(`Input data is incompatible with leaf schema: ${data}`);
 	}
