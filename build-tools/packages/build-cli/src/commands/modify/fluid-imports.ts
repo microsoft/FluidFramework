@@ -8,7 +8,7 @@
 import { Flags } from "@oclif/core";
 import { existsSync, readFile } from "fs-extra";
 import * as JSON5 from "json5";
-import { Project, type ImportDeclaration, SourceFile, ModuleKind, Node } from "ts-morph";
+import { type ImportDeclaration, ModuleKind, Node, Project, SourceFile } from "ts-morph";
 import { BaseCommand } from "../../base";
 import type { CommandLogger } from "../../logging";
 
