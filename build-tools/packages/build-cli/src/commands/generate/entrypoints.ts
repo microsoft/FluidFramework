@@ -11,9 +11,9 @@ import { Flags } from "@oclif/core";
 import type { ExportSpecifierStructure } from "ts-morph";
 import { ModuleKind, Project, ScriptKind } from "ts-morph";
 
-import { BaseCommand } from "../../base.js";
+import { BaseCommand } from "../../base";
 import { ApiLevel, getApiExports } from "../../library";
-import type { CommandLogger } from "../../logging.js";
+import type { CommandLogger } from "../../logging";
 
 /**
  * Literal pattern to search for in file prefix to replace with unscoped package name.

@@ -6,7 +6,7 @@
 import type { SourceFile, ExportedDeclarations } from "ts-morph";
 import { Node } from "ts-morph";
 
-import { ApiLevel, isKnownApiLevel } from "./apiLevel.js";
+import { ApiLevel, isKnownApiLevel } from "./apiLevel";
 
 interface ExportRecord {
 	name: string;
