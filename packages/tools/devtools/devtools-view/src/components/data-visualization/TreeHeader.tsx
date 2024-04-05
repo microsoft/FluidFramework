@@ -40,6 +40,9 @@ const getStyles = makeStyles({
 		color: tokens.colorNeutralForeground1Hover,
 		minWidth: "1000px",
 	},
+	iconContainer: {
+		marginLeft: "10px",
+	},
 });
 
 /**
@@ -86,7 +89,9 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 					}}
 					relationship="description"
 				>
-					<Info20Regular />
+					<span className={styles.iconContainer}>
+						<Info20Regular />
+					</span>
 				</Tooltip>
 			)}
 
