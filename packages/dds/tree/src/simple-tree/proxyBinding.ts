@@ -19,12 +19,13 @@ import {
 } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
 import { RawTreeNode } from "./rawNode.js";
-import { TreeMapNode, WithType } from "./schemaTypes.js";
+import { WithType } from "./schemaTypes.js";
 import { TreeArrayNode } from "./arrayNode.js";
 import { TreeNode } from "./types.js";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
 import { makeTree } from "../feature-libraries/flex-tree/lazyNode.js";
+import { TreeMapNode } from "./mapNode.js";
 
 // This file contains various maps and helpers for supporting proxy binding (a.k.a. proxy hydration).
 // See ./ProxyBinding.md for a high-level overview of the process.
