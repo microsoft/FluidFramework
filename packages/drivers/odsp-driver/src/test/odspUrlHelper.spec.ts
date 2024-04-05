@@ -36,47 +36,156 @@ describe("odspUrlHelper", () => {
 
 	describe("isSpoUrl", () => {
 		it("validates sharepoint.com hostname correctly", () => {
-			assert.equal(isSpoUrl(new URL("https://sharepoint.com/_api/v2.1/drives/bar/items/baz")), false);
-			assert.equal(isSpoUrl(new URL("https://foo.sharepoint.com/_api/v2.1/drives/bar/items/baz")), true);
-			assert.equal(isSpoUrl(new URL("https://foo.sharepoint.com.example.com/_api/v2.1/drives/bar/items/baz")), false);
-			assert.equal(isSpoUrl(new URL("https://example.com?url=https://foo.sharepoint.com/_api/v2.1/drives/bar/items/baz")), false);
+			assert.equal(
+				isSpoUrl(new URL("https://sharepoint.com/_api/v2.1/drives/bar/items/baz")),
+				false,
+			);
+			assert.equal(
+				isSpoUrl(new URL("https://foo.sharepoint.com/_api/v2.1/drives/bar/items/baz")),
+				true,
+			);
+			assert.equal(
+				isSpoUrl(
+					new URL(
+						"https://foo.sharepoint.com.example.com/_api/v2.1/drives/bar/items/baz",
+					),
+				),
+				false,
+			);
+			assert.equal(
+				isSpoUrl(
+					new URL(
+						"https://example.com?url=https://foo.sharepoint.com/_api/v2.1/drives/bar/items/baz",
+					),
+				),
+				false,
+			);
 		});
 
 		it("validates sharepoint-df.com hostname correctly", () => {
-			assert.equal(isSpoUrl(new URL("https://sharepoint-df.com/_api/v2.1/drives/bar/items/baz")), false);
-			assert.equal(isSpoUrl(new URL("https://foo.sharepoint-df.com/_api/v2.1/drives/bar/items/baz")), true);
-			assert.equal(isSpoUrl(new URL("https://foo.sharepoint-df.com.example.com/_api/v2.1/drives/bar/items/baz")), false);
-			assert.equal(isSpoUrl(new URL("https://example.com?url=https://foo.sharepoint-df.com/_api/v2.1/drives/bar/items/baz")), false);
-			assert.equal(isSpoUrl(new URL("https://sharepoint-df-df.com/_api/v2.1/drives/bar/items/baz")), false);
+			assert.equal(
+				isSpoUrl(new URL("https://sharepoint-df.com/_api/v2.1/drives/bar/items/baz")),
+				false,
+			);
+			assert.equal(
+				isSpoUrl(new URL("https://foo.sharepoint-df.com/_api/v2.1/drives/bar/items/baz")),
+				true,
+			);
+			assert.equal(
+				isSpoUrl(
+					new URL(
+						"https://foo.sharepoint-df.com.example.com/_api/v2.1/drives/bar/items/baz",
+					),
+				),
+				false,
+			);
+			assert.equal(
+				isSpoUrl(
+					new URL(
+						"https://example.com?url=https://foo.sharepoint-df.com/_api/v2.1/drives/bar/items/baz",
+					),
+				),
+				false,
+			);
+			assert.equal(
+				isSpoUrl(new URL("https://sharepoint-df-df.com/_api/v2.1/drives/bar/items/baz")),
+				false,
+			);
 		});
 
 		it("validates malformed paths correctly", () => {
-			assert.equal(isSpoUrl(new URL("https://foo.sharepoint.com/_api/v2x1/drives/bar/items/baz")), false);
-			assert.equal(isSpoUrl(new URL("https://foo.sharepoint.com/_api/v2.1/drives//items/baz")), false);
-			assert.equal(isSpoUrl(new URL("https://foo.sharepoint.com/_api/v2.1/drives/bar/items/")), false);
-			assert.equal(isSpoUrl(new URL("https://foo.sharepoint.com/qux/_api/v2.1/drives/bar/items/baz")), false);
+			assert.equal(
+				isSpoUrl(new URL("https://foo.sharepoint.com/_api/v2x1/drives/bar/items/baz")),
+				false,
+			);
+			assert.equal(
+				isSpoUrl(new URL("https://foo.sharepoint.com/_api/v2.1/drives//items/baz")),
+				false,
+			);
+			assert.equal(
+				isSpoUrl(new URL("https://foo.sharepoint.com/_api/v2.1/drives/bar/items/")),
+				false,
+			);
+			assert.equal(
+				isSpoUrl(new URL("https://foo.sharepoint.com/qux/_api/v2.1/drives/bar/items/baz")),
+				false,
+			);
 		});
 	});
 
 	describe("isOdcUrl", () => {
 		it("validates expected path formats correctly", async () => {
-			assert.equal(isOdcUrl(new URL("https://foo.onedrive.com/v2.1/drive/items/ABC123!123")), true);
-			assert.equal(isOdcUrl(new URL("https://foo.onedrive.com/v2.1/drives/ABC123/items/ABC123!123")), true);
-			assert.equal(isOdcUrl(new URL("https://foo.onedrive.com/v2.1/drives('ABC123')/items('ABC123!123')")), true);
+			assert.equal(
+				isOdcUrl(new URL("https://foo.onedrive.com/v2.1/drive/items/ABC123!123")),
+				true,
+			);
+			assert.equal(
+				isOdcUrl(new URL("https://foo.onedrive.com/v2.1/drives/ABC123/items/ABC123!123")),
+				true,
+			);
+			assert.equal(
+				isOdcUrl(
+					new URL("https://foo.onedrive.com/v2.1/drives('ABC123')/items('ABC123!123')"),
+				),
+				true,
+			);
 
-			assert.equal(isOdcUrl(new URL("https://foo.onedrive.com/v2.1/drive/items/abc123!123")), true);
-			assert.equal(isOdcUrl(new URL("https://foo.onedrive.com/v2.1/drives/abc123/items/abc123!123")), true);
-			assert.equal(isOdcUrl(new URL("https://foo.onedrive.com/v2.1/drives('abc123')/items('abc123!123')")), true);
+			assert.equal(
+				isOdcUrl(new URL("https://foo.onedrive.com/v2.1/drive/items/abc123!123")),
+				true,
+			);
+			assert.equal(
+				isOdcUrl(new URL("https://foo.onedrive.com/v2.1/drives/abc123/items/abc123!123")),
+				true,
+			);
+			assert.equal(
+				isOdcUrl(
+					new URL("https://foo.onedrive.com/v2.1/drives('abc123')/items('abc123!123')"),
+				),
+				true,
+			);
 		});
 
 		it("validates malformed paths correctly", async () => {
-			assert.equal(isOdcUrl(new URL("https://foo.onedrive.com/qux/v2.1/drives/ABC123/items/ABC123!123")), false);
-			assert.equal(isOdcUrl(new URL("https://foo.onedrive.com/_api/v2.1/drives/ABC123/items/ABC123!123")), false);
-			assert.equal(isOdcUrl(new URL("https://foo.onedrive.com/v2x1/drives/ABC123/items/ABC123!123")), false);
+			assert.equal(
+				isOdcUrl(
+					new URL("https://foo.onedrive.com/qux/v2.1/drives/ABC123/items/ABC123!123"),
+				),
+				false,
+			);
+			assert.equal(
+				isOdcUrl(
+					new URL("https://foo.onedrive.com/_api/v2.1/drives/ABC123/items/ABC123!123"),
+				),
+				false,
+			);
+			assert.equal(
+				isOdcUrl(new URL("https://foo.onedrive.com/v2x1/drives/ABC123/items/ABC123!123")),
+				false,
+			);
 
-			assert.equal(isOdcUrl(new URL("https://foo.onedrive.com/qux/v2.1/drives('ABC123')/items('ABC123!123')")), false);
-			assert.equal(isOdcUrl(new URL("https://foo.onedrive.com/_api/v2.1/drives('ABC123')/items('ABC123!123')")), false);
-			assert.equal(isOdcUrl(new URL("https://foo.onedrive.com/v2x1/drives('ABC123')/items('ABC123!123')")), false);
+			assert.equal(
+				isOdcUrl(
+					new URL(
+						"https://foo.onedrive.com/qux/v2.1/drives('ABC123')/items('ABC123!123')",
+					),
+				),
+				false,
+			);
+			assert.equal(
+				isOdcUrl(
+					new URL(
+						"https://foo.onedrive.com/_api/v2.1/drives('ABC123')/items('ABC123!123')",
+					),
+				),
+				false,
+			);
+			assert.equal(
+				isOdcUrl(
+					new URL("https://foo.onedrive.com/v2x1/drives('ABC123')/items('ABC123!123')"),
+				),
+				false,
+			);
 		});
 	});
 });
