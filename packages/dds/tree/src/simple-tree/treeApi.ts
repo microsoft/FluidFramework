@@ -7,6 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import { TreeValue, Multiplicity } from "../core/index.js";
 import {
+	FieldKinds,
 	LeafNodeSchema,
 	TreeStatus,
 	isTreeValue,
@@ -82,6 +83,7 @@ export interface TreeNodeApi {
 	 * Returns the {@link TreeStatus} of the given node.
 	 */
 	readonly status: (node: TreeNode) => TreeStatus;
+	shortID(node: TreeNode): number | undefined;
 }
 
 /**
@@ -163,6 +165,17 @@ export const treeNodeApi: TreeNodeApi = {
 			unknown,
 			T
 		>;
+	},
+	shortID(node: TreeNode): number | undefined {
+		const flexNode = getFlexNode(node);
+		for (const field of flexNode.boxedIterator()) {
+			if (field.schema.kind === FieldKinds.identifier) {
+				for (const child of field.boxedIterator()) {
+					return Number(child.value);
+				}
+			}
+		}
+		return;
 	},
 };
 

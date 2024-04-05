@@ -387,6 +387,7 @@ export {
 	Required,
 	Optional,
 	NodeKeyFieldKind,
+	Identifier,
 	Forbidden,
 	Sequence,
 } from "./feature-libraries/index.js";

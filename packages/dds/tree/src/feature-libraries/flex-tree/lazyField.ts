@@ -448,8 +448,33 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 	}
 }
 
-export class LazyValueField<TTypes extends FlexAllowedTypes>
+export class LazyValueFieldReadOnly<TTypes extends FlexAllowedTypes>
 	extends LazyField<typeof FieldKinds.required, TTypes>
+	implements FlexTreeRequiredField<TTypes>
+{
+	public constructor(
+		context: Context,
+		schema: FlexFieldSchema<typeof FieldKinds.required, TTypes>,
+		cursor: ITreeSubscriptionCursor,
+		fieldAnchor: FieldAnchor,
+	) {
+		super(context, schema, cursor, fieldAnchor);
+	}
+
+	public get content(): FlexTreeUnboxNodeUnion<TTypes> {
+		return this.atIndex(0);
+	}
+
+	public set content(newContent: FlexibleNodeContent<TTypes>) {
+		fail("cannot set newContent in readonly field");
+	}
+
+	public get boxedContent(): FlexTreeTypedNodeUnion<TTypes> {
+		return this.boxedAt(0) ?? fail("value node must have 1 item");
+	}
+}
+export class LazyValueField<TTypes extends FlexAllowedTypes>
+	extends LazyValueFieldReadOnly<TTypes>
 	implements FlexTreeRequiredField<TTypes>
 {
 	public constructor(
@@ -467,11 +492,11 @@ export class LazyValueField<TTypes extends FlexAllowedTypes>
 		return fieldEditor;
 	}
 
-	public get content(): FlexTreeUnboxNodeUnion<TTypes> {
+	public override get content(): FlexTreeUnboxNodeUnion<TTypes> {
 		return this.atIndex(0);
 	}
 
-	public set content(newContent: FlexibleNodeContent<TTypes>) {
+	public override set content(newContent: FlexibleNodeContent<TTypes>) {
 		const content: ITreeCursorSynchronous[] = isCursor(newContent)
 			? prepareNodeCursorForInsert(newContent)
 			: [cursorFromContextualData(this.context, this.schema.allowedTypeSet, newContent)];
@@ -480,8 +505,33 @@ export class LazyValueField<TTypes extends FlexAllowedTypes>
 		fieldEditor.set(content[0]);
 	}
 
-	public get boxedContent(): FlexTreeTypedNodeUnion<TTypes> {
+	public override get boxedContent(): FlexTreeTypedNodeUnion<TTypes> {
 		return this.boxedAt(0) ?? fail("value node must have 1 item");
+	}
+}
+
+export class LazyIdentifierField<TTypes extends FlexAllowedTypes>
+	extends LazyValueFieldReadOnly<TTypes>
+	implements FlexTreeRequiredField<TTypes>
+{
+	public constructor(
+		context: Context,
+		schema: FlexFieldSchema<typeof FieldKinds.required, TTypes>,
+		cursor: ITreeSubscriptionCursor,
+		fieldAnchor: FieldAnchor,
+	) {
+		super(context, schema, cursor, fieldAnchor);
+	}
+
+	public override get content(): FlexTreeUnboxNodeUnion<TTypes> {
+		return this.atIndex(0);
+	}
+
+	public uuid(): string {
+		const identifier = this.context.nodeKeys.stabilize(
+			this.atIndex(0) as unknown as LocalNodeKey,
+		);
+		return identifier as string;
 	}
 }
 
@@ -576,6 +626,7 @@ const builderList: [FlexFieldKind, Builder][] = [
 	[FieldKinds.optional, LazyOptionalField],
 	[FieldKinds.sequence, LazySequence],
 	[FieldKinds.required, LazyValueField],
+	[FieldKinds.identifier, LazyIdentifierField],
 ];
 
 const kindToClass: ReadonlyMap<FlexFieldKind, Builder> = new Map(builderList);

@@ -44,6 +44,8 @@ import {
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree.js";
 import { IterableTreeArrayContent, TreeArrayNode } from "./treeArrayNode.js";
 import { TreeNode, Unhydrated } from "./types.js";
+// eslint-disable-next-line import/no-internal-modules
+import { LazyIdentifierField } from "../feature-libraries/flex-tree/lazyField.js";
 
 /**
  * Detects if the given 'candidate' is a TreeNode.
@@ -98,6 +100,11 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 			// 'getProxyForNode' handles FieldNodes by unconditionally creating a array node proxy, making
 			// this case unreachable as long as users follow the 'array recipe'.
 			fail("'sequence' field is unexpected.");
+		}
+		case FieldKinds.identifier: {
+			if (field instanceof LazyIdentifierField) {
+				return field.uuid();
+			}
 		}
 		default:
 			fail("invalid field kind");

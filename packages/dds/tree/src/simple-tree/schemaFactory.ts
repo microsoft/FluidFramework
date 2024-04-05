@@ -666,6 +666,15 @@ export class SchemaFactory<
 	}
 
 	/**
+	 * Make a field of type identifier instead of the default which is required.
+	 */
+	public identifier<const T extends ImplicitAllowedTypes>(
+		t: T,
+	): FieldSchema<FieldKind.Identifier, T> {
+		return new FieldSchema(FieldKind.Identifier, t);
+	}
+
+	/**
 	 * Function which can be used for its compile time side-effects to tweak the evaluation order of recursive types to make them compile.
 	 * @remarks
 	 * Some related information in https://github.com/microsoft/TypeScript/issues/55758.

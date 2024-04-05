@@ -142,6 +142,25 @@ export class SchemaBuilder<
 	 * therefore this method is the same as the static version.
 	 */
 	public readonly sequence = SchemaBuilder.sequence;
+
+	/**
+	 * Define a schema for a {@link FieldKinds.identifier|identifier field}.
+	 * @remarks
+	 * Shorthand or passing `FieldKinds.identifier` to {@link TreeFieldSchema.create}.
+	 *
+	 * This method is also available as an instance method on {@link SchemaBuilder}
+	 */
+	public static identifier = fieldHelper(FieldKinds.identifier);
+
+	/**
+	 * Define a schema for a {@link FieldKinds.identifier|identifier field}.
+	 * @remarks
+	 * Shorthand or passing `FieldKinds.identifier` to {@link TreeFieldSchema.create}.
+	 *
+	 * Since this creates a {@link TreeFieldSchema} (and not a {@link FlexTreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
+	 * therefore this method is the same as the static version.
+	 */
+	public readonly identifier = SchemaBuilder.identifier;
 }
 
 /**
