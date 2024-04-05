@@ -12,11 +12,17 @@ interface ExportRecord {
 	name: string;
 	isTypeOnly: boolean;
 }
-export interface ExportRecords {
+interface ExportRecords {
 	public: ExportRecord[];
 	beta: ExportRecord[];
 	alpha: ExportRecord[];
 	internal: ExportRecord[];
+	/**
+	 * Entries here represent exports with unrecognized levels.
+	 * These may be errors or just concerns depending on context.
+	 * ExportedDeclarations provides context for the origin of
+	 * such cases.
+	 */
 	unknown: { name: string; decl: ExportedDeclarations }[];
 }
 
@@ -45,7 +51,7 @@ function getNodeLevel(node: Node): ApiLevel | undefined {
 			}
 		}
 	} else {
-		// Some nodes like `VariableDeclaration`s as not JSDocable, but an ancestor
+		// Some nodes like `VariableDeclaration`s are not JSDocable, but an ancestor
 		// like `VariableStatement` is and may contain tag.
 		const parent = node.getParent();
 		if (parent !== undefined) {

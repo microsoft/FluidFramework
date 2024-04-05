@@ -8,23 +8,15 @@
 import { Flags } from "@oclif/core";
 import { existsSync, readFile } from "fs-extra";
 import * as JSON5 from "json5";
-import { Project, type ImportDeclaration, SourceFile, ModuleKind, Node } from "ts-morph";
+import { type ImportDeclaration, ModuleKind, Project, SourceFile } from "ts-morph";
 import { BaseCommand } from "../../base";
+// eslint-disable-next-line import/no-internal-modules
+import { ApiLevel, isKnownApiLevel, knownApiLevels } from "../../library/apiLevel.js";
+// eslint-disable-next-line import/no-internal-modules
+import { getApiExports } from "../../library/typescriptApi.js";
 import type { CommandLogger } from "../../logging";
 
 const maxConcurrency = 4;
-
-// These types are very similar to those defined and used in the `release setPackageTypesField` command, but that
-// command is likely to be deprecated soon, so no effort has been made to unify them.
-const publicLevel = "public";
-const betaLevel = "beta";
-const alphaLevel = "alpha";
-const internalLevel = "internal";
-// Note: this is sorted by the preferred order that respective imports would exist.
-// public is effectively "" for sorting purposes and then arranged alphabetically
-// as most formatters would prefer.
-const knownLevels = [publicLevel, alphaLevel, betaLevel, internalLevel] as const;
-type ApiLevel = (typeof knownLevels)[number];
 
 /**
  * FF packages that exist outside of a scope that starts with `@fluid`.
@@ -190,8 +182,9 @@ class FluidImportManager {
 				const expectedLevel = getApiLevelForImportName(
 					name,
 					data,
-					/* default */ publicLevel,
+					/* default */ ApiLevel.public,
 					onlyInternal,
+					this.log,
 				);
 
 				this.log.verbose(
@@ -326,9 +319,10 @@ class FluidImportManager {
 			return existing;
 		}
 
-		const moduleSpecifier = level === publicLevel ? packageName : `${packageName}/${level}`;
+		const moduleSpecifier =
+			level === ApiLevel.public ? packageName : `${packageName}/${level}`;
 		// Order imports primarily by level then secondarily: type, untyped
-		const order = knownLevels.indexOf(level) * 2 + (isTypeOnly ? 0 : 1);
+		const order = knownApiLevels.indexOf(level) * 2 + (isTypeOnly ? 0 : 1);
 		const { index, after } = this.findInsertionPoint(packageName, order);
 		const newFluidImport: FluidImportDataPending = {
 			declaration: {
@@ -377,11 +371,13 @@ function getApiLevelForImportName(
 	data: MemberData,
 	defaultValue: ApiLevel,
 	onlyInternal: boolean,
+	log: CommandLogger,
 ): ApiLevel {
-	if (data.alpha?.includes(name) === true) return onlyInternal ? internalLevel : alphaLevel;
-	if (data.beta?.includes(name) === true) return onlyInternal ? internalLevel : alphaLevel;
-	if (data.public?.includes(name) === true) return publicLevel;
-	if (data.internal?.includes(name) === true) return internalLevel;
+	if (data.alpha?.has(name) === true) return onlyInternal ? ApiLevel.internal : ApiLevel.alpha;
+	if (data.beta?.has(name) === true) return onlyInternal ? ApiLevel.internal : ApiLevel.alpha;
+	if (data.public?.has(name) === true) return ApiLevel.public;
+	if (data.internal?.has(name) === true) return ApiLevel.internal;
+	log.warning(`\tassuming ${defaultValue} level for "${name}"`);
 	return defaultValue;
 }
 
@@ -473,7 +469,7 @@ function parseImport(
 	const levelIndex = moduleSpecifier.startsWith("@") ? 2 : 1;
 	const packageName = modulePieces.slice(0, levelIndex).join("/");
 	const level = modulePieces.length > levelIndex ? modulePieces[levelIndex] : "public";
-	if (!isKnownLevel(level)) {
+	if (!isKnownApiLevel(level)) {
 		return undefined;
 	}
 	// Check for complicated path - beyond basic leveled import
@@ -490,7 +486,7 @@ function parseImport(
 		return undefined;
 	}
 
-	const order = knownLevels.indexOf(level) * 2 + (importDeclaration.isTypeOnly() ? 0 : 1);
+	const order = knownApiLevels.indexOf(level) * 2 + (importDeclaration.isTypeOnly() ? 0 : 1);
 	return {
 		importDeclaration,
 		declaration: {
@@ -544,7 +540,7 @@ interface MemberDataRaw {
 	name: string;
 }
 
-type MemberData = Partial<Record<ApiLevel, string[]>>;
+type MemberData = Partial<Record<ApiLevel, Set<string>>>;
 type MapData = Map<string, MemberData>;
 
 class ApiLevelReader {
@@ -593,72 +589,31 @@ class ApiLevelReader {
 		}
 		this.log.verbose(`\tLoading ${packageName} API data from ${internalSource.getFilePath()}`);
 
-		const exported = internalSource.getExportedDeclarations();
-		const memberData: Required<MemberData> = { public: [], beta: [], alpha: [], internal: [] };
-		for (const [name, exportedDecls] of exported.entries()) {
-			let foundLevel = false;
-			// A single export name may exist as both a type and a value. This is common pattern for enum-like
-			// constructs where an object exists with properties evaluating to values and a type that is union of values.
-			// Assume consistency for these cases.
-			if (exportedDecls.length > 1) {
-				this.log.verbose(
-					`\t\t${packageName} ${name} has ${exportedDecls.length} export declarations. Choosing API level for both from first recognized tag.`,
-				);
-			}
-			for (const exportedDecl of exportedDecls) {
-				const level = getNodeLevel(exportedDecl);
-				if (level !== undefined) {
-					this.log.verbose(`\t\t${packageName} ${name} is ${level}.`);
-					memberData[level].push(name);
-					foundLevel = true;
-					break;
-				}
-			}
-			if (!foundLevel) {
+		const exports = getApiExports(internalSource);
+		for (const { name } of exports.unknown) {
+			// Suppress any warning for EventEmitter as this export is currently a special case.
+			// See AB#7377 for replacement status upon which this can be removed.
+			if (name !== "EventEmitter") {
 				this.log.warning(`\t\t${packageName} ${name} API level was not recognized.`);
 			}
 		}
 
+		const memberData: MemberData = {
+			public: new Set(exports.public.map((e) => e.name)),
+			beta: new Set(exports.beta.map((e) => e.name)),
+			alpha: new Set(exports.alpha.map((e) => e.name)),
+			internal: new Set(exports.internal.map((e) => e.name)),
+		};
 		return memberData;
 	}
 }
 
-function isKnownLevel(level: string): level is ApiLevel {
-	return (knownLevels as readonly string[]).includes(level);
-}
-
-/**
- * Searches given Node's JSDocs for known {@link ApiLevel} tag.
- *
- * @returns Recognized {@link ApiLevel} from JSDocs or undefined.
- */
-function getNodeLevel(node: Node): ApiLevel | undefined {
-	if (Node.isJSDocable(node)) {
-		for (const jsdoc of node.getJsDocs()) {
-			for (const tag of jsdoc.getTags()) {
-				const tagName = tag.getTagName();
-				if (isKnownLevel(tagName)) {
-					return tagName;
-				}
-			}
-		}
-	} else {
-		// Some nodes like `VariableDeclaration`s as not JSDocable, but an ancestor
-		// like `VariableStatement` is and may contain tag.
-		const parent = node.getParent();
-		if (parent !== undefined) {
-			return getNodeLevel(parent);
-		}
-	}
-	return undefined;
-}
-
-function ensureLevel(entry: MemberData, level: keyof MemberData): string[] {
+function ensureLevel(entry: MemberData, level: keyof MemberData): Set<string> {
 	const entryData = entry[level];
 	if (entryData !== undefined) {
 		return entryData;
 	}
-	const newData: string[] = [];
+	const newData = new Set<string>();
 	entry[level] = newData;
 	return newData;
 }
@@ -675,10 +630,10 @@ async function loadData(dataFile: string): Promise<MapData> {
 		const entry = apiLevelData.get(moduleName) ?? {};
 		for (const member of members) {
 			const { level } = member;
-			if (!isKnownLevel(level)) {
+			if (!isKnownApiLevel(level)) {
 				throw new Error(`Unknown API level: ${level}`);
 			}
-			ensureLevel(entry, level).push(member.name);
+			ensureLevel(entry, level).add(member.name);
 		}
 		apiLevelData.set(moduleName, entry);
 	}

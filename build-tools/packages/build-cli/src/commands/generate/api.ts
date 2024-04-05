@@ -18,6 +18,15 @@ import { getApiExports } from "../../library/typescriptApi.js";
 import type { CommandLogger } from "../../logging.js";
 
 /**
+ * Literal pattern to search for in file prefix to replace with unscoped package name.
+ *
+ * @privateRemarks api-extractor use <@..>, but <> is problematic for command line
+ * specification. A policy incorrectly thinks an argument like that should not be quoted.
+ * It is just easier to use an alternate bracket style.
+ */
+const unscopedPackageNameString = "{@unscopedPackageName}";
+
+/**
  * Generates type declarations files for Fluid Framework APIs to support API levels (/alpha, /beta. etc.).
  */
 export default class GenerateEntrypointsCommand extends BaseCommand<
@@ -37,31 +46,62 @@ export default class GenerateEntrypointsCommand extends BaseCommand<
 			default: "./lib",
 			exists: true,
 		}),
+		outFilePrefix: Flags.string({
+			description: `File name prefix for emitting entrypoint declaration files. Pattern of '${unscopedPackageNameString}' within value will be replaced with the unscoped name of this package.`,
+			default: "",
+		}),
+		outFileSuffix: Flags.string({
+			description:
+				"File name suffix including extension for emitting entrypoint declaration files.",
+			default: ".d.ts",
+		}),
 		...BaseCommand.flags,
 	};
 
 	public async run(): Promise<void> {
-		const { mainEntrypoint, outDir } = this.flags;
+		const { mainEntrypoint, outFileSuffix } = this.flags;
 
-		const packageJson = await fs.readFile("./package.json", { encoding: "utf8" });
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-		const packageName = JSON.parse(packageJson).name;
-		if (typeof packageName !== "string") {
-			this.errorLog(`unable to read package name`);
-			return;
-		}
-
-		const unscopedPackageName = /[^/]+$/.exec(packageName)?.[0];
-		if (unscopedPackageName === undefined) {
-			this.errorLog(`unable to parse package name`);
-			return;
-		}
 		return generateEntrypoints(
 			mainEntrypoint,
-			path.join(outDir, unscopedPackageName),
+			{ pathPrefix: await getOutPathPrefix(this.flags), pathSuffix: outFileSuffix },
 			this.logger,
 		);
 	}
+}
+
+async function getOutPathPrefix({
+	outDir,
+	outFilePrefix,
+}: { outDir: string; outFilePrefix: string }): Promise<string> {
+	if (!outFilePrefix) {
+		// If no other prefix, ensure a trailing path separator.
+		// The join with '.' will effectively trim a trailing / or \ from outDir.
+		return `${path.join(outDir, ".")}${path.sep}`;
+	}
+
+	return path.join(
+		outDir,
+		outFilePrefix.includes(unscopedPackageNameString)
+			? outFilePrefix.replace(unscopedPackageNameString, await getLocalUnscopedPackageName())
+			: outFilePrefix,
+	);
+}
+
+async function getLocalUnscopedPackageName(): Promise<string> {
+	const packageJson = await fs.readFile("./package.json", { encoding: "utf8" });
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+	const packageName = JSON.parse(packageJson).name;
+	if (typeof packageName !== "string") {
+		// eslint-disable-next-line unicorn/prefer-type-error
+		throw new Error(`unable to read package name`);
+	}
+
+	const unscopedPackageName = /[^/]+$/.exec(packageName)?.[0];
+	if (unscopedPackageName === undefined) {
+		throw new Error(`unable to parse package name`);
+	}
+
+	return unscopedPackageName;
 }
 
 const generatedHeader: string = `/*!
@@ -77,7 +117,7 @@ const generatedHeader: string = `/*!
 
 async function generateEntrypoints(
 	mainEntrypoint: string,
-	baseOutPath: string,
+	{ pathPrefix, pathSuffix }: { pathPrefix: string; pathSuffix: string },
 	log: CommandLogger,
 ): Promise<void> {
 	/**
@@ -88,9 +128,12 @@ async function generateEntrypoints(
 
 	log.info(`Processing: ${mainEntrypoint}`);
 
-	// Iterate over each source file, looking for Fluid imports
 	const project = new Project({
 		skipAddingFilesFromTsConfig: true,
+		// Note: it is likely better to leverage a tsconfig file from package rather than
+		// assume Node16 and no other special setup. However, currently configs are pretty
+		// standard with simple Node16 module specification and using a tsconfig for just
+		// part of its setting may be confusing to document and keep tidy with dual-emit.
 		compilerOptions: { module: ModuleKind.Node16 },
 	});
 	const mainSourceFile = project.addSourceFileAtPath(mainEntrypoint);
@@ -118,13 +161,15 @@ async function generateEntrypoints(
 		// Append this levels additional (or only) exports sorted by ascending case-sensitive name
 		const orgLength = namedExports.length;
 		const levelExports = [...exports[apiLevel]].sort((a, b) => (a.name > b.name ? 1 : -1));
-		namedExports.push(...levelExports);
+		for (const levelExport of levelExports) {
+			namedExports.push({ ...levelExport, leadingTrivia: "\n\t" });
+		}
 		if (namedExports.length > orgLength) {
-			namedExports[orgLength].leadingTrivia = `\n// ${apiLevel} APIs`;
+			namedExports[orgLength].leadingTrivia = `\n\t// ${apiLevel} APIs\n\t`;
 			namedExports[namedExports.length - 1].trailingTrivia = "\n";
 		}
 
-		const outFile = `${baseOutPath}-${apiLevel}.d.ts`;
+		const outFile = `${pathPrefix}${apiLevel}${pathSuffix}`;
 		log.info(`\tGenerating ${outFile}`);
 		const sourceFile = project.createSourceFile(outFile, undefined, {
 			overwrite: true,

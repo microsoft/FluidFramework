@@ -17,11 +17,17 @@ Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /
 
 ```
 USAGE
-  $ flub generate api [-v | --quiet] [--mainEntrypoint <value>] [--outDir <value>]
+  $ flub generate api [-v | --quiet] [--mainEntrypoint <value>] [--outDir <value>] [--outFilePrefix <value>]
+    [--outFileSuffix <value>]
 
 FLAGS
   --mainEntrypoint=<value>  [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
   --outDir=<value>          [default: ./lib] Directory to emit entrypoint declaration files.
+  --outFilePrefix=<value>   File name prefix for emitting entrypoint declaration files. Pattern of
+                            '{@unscopedPackageName}' within value will be replaced with the unscoped name of this
+                            package.
+  --outFileSuffix=<value>   [default: .d.ts] File name suffix including extension for emitting entrypoint declaration
+                            files.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
