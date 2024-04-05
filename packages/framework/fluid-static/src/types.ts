@@ -195,7 +195,7 @@ export interface IServiceAudience<M extends IMember>
 	 * member object.  The implementation may choose to exclude certain connections from the returned map.
 	 * E.g. ServiceAudience excludes non-interactive connections to represent only the roster of live users.
 	 */
-	getMembers(): Map<string, M>;
+	getMembers(): ReadonlyMap<string, M>;
 
 	/**
 	 * Returns the current active user on this client once they are connected. Otherwise, returns undefined.
@@ -213,12 +213,12 @@ export interface IConnection {
 	/**
 	 * A unique ID for the connection.  A single user may have multiple connections, each with a different ID.
 	 */
-	id: string;
+	readonly id: string;
 
 	/**
 	 * Whether the connection is in read or read/write mode.
 	 */
-	mode: "write" | "read";
+	readonly mode: "write" | "read";
 }
 
 /**
@@ -231,16 +231,16 @@ export interface IMember {
 	/**
 	 * An ID for the user, unique among each individual user connecting to the session.
 	 */
-	userId: string;
+	readonly userId: string;
 
 	/**
 	 * The set of connections the user has made, e.g. from multiple tabs or devices.
 	 */
-	connections: IConnection[];
+	readonly connections: IConnection[];
 }
 
 /**
  * An extended member object that includes currentConnection
  * @public
  */
-export type Myself<M extends IMember = IMember> = M & { currentConnection: string };
+export type Myself<M extends IMember = IMember> = M & { readonly currentConnection: string };
