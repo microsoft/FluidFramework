@@ -41,7 +41,13 @@ const getStyles = makeStyles({
 		minWidth: "1000px",
 	},
 	iconContainer: {
-		marginLeft: "10px",
+		paddingLeft: "3px",
+		paddingTop: "0.5px",
+	},
+	headerContainer: {
+		width: "auto",
+		display: "flex",
+		alignItems: "center",
 	},
 });
 
@@ -55,8 +61,10 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 	const styles = getStyles();
 
 	return (
-		<div style={{ width: "auto" }}>
-			{`${label}`}
+		<div className={styles.headerContainer}>
+			{" "}
+			{/* Adjusted for flex display */}
+			<span>{`${label}`}</span>
 			<span
 				style={{
 					color:
@@ -80,7 +88,6 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 			>
 				{metadata === undefined ? "" : ` ${metadata}`}
 			</span>
-
 			{tooltipContents !== undefined && (
 				<Tooltip
 					content={{
@@ -89,14 +96,10 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 					}}
 					relationship="description"
 				>
-					<span className={styles.iconContainer}>
-						<Info20Regular />
-					</span>
+					<Info20Regular className={styles.iconContainer} />
 				</Tooltip>
 			)}
-
-			{inlineValue === undefined ? "" : ": "}
-			{inlineValue}
+			{inlineValue !== undefined && <span>: {inlineValue}</span>}
 		</div>
 	);
 }
