@@ -109,8 +109,10 @@ function readTreeSection(
 ): {
 	snapshotTree: ISnapshotTree;
 	slowTreeStructureCount: number;
+	omittedTreesCount: number;
 } {
 	let slowTreeStructureCount = 0;
+	let omittedTreesCount = 0;
 	const trees: Record<string, ISnapshotTree> = {};
 	const snapshotTree: ISnapshotTree = {
 		blobs: {},
@@ -230,7 +232,10 @@ function readTreeSection(
 			trees[path] = { blobs: {}, trees: {} };
 		}
 	}
-	return { snapshotTree, slowTreeStructureCount };
+	if (snapshotTree.omitted) {
+		omittedTreesCount++;
+	}
+	return { snapshotTree, slowTreeStructureCount, omittedTreesCount };
 }
 
 /**
@@ -244,13 +249,14 @@ function readSnapshotSection(
 	sequenceNumber: number;
 	snapshotTree: ISnapshotTree;
 	slowTreeStructureCount: number;
+	omittedTreesCount: number;
 } {
 	assertNodeCoreInstance(node, "Snapshot should be of type NodeCore");
 	const records = getNodeProps(node);
 
 	assertNodeCoreInstance(records.treeNodes, "TreeNodes should be of type NodeCore");
 	assertNumberInstance(records.sequenceNumber, "sequenceNumber should be of type number");
-	const { snapshotTree, slowTreeStructureCount } = readTreeSection(
+	const { snapshotTree, slowTreeStructureCount, omittedTreesCount } = readTreeSection(
 		records.treeNodes,
 		blobContents,
 	);
@@ -260,6 +266,7 @@ function readSnapshotSection(
 		sequenceNumber,
 		snapshotTree,
 		slowTreeStructureCount,
+		omittedTreesCount,
 	};
 }
 
@@ -315,6 +322,7 @@ export function parseCompactSnapshotResponse(
 			durationBlobs,
 			slowTreeStructureCount: snapshot.slowTreeStructureCount,
 			slowBlobStructureCount: blobContents.slowBlobStructureCount,
+			omittedTreesCount: snapshot.omittedTreesCount,
 		},
 	};
 }
