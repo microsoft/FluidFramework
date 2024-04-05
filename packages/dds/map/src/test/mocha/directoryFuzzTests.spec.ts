@@ -18,6 +18,7 @@ import {
 	DDSFuzzModel,
 	DDSFuzzTestState,
 	createDDSFuzzSuite,
+	UseHandle,
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
@@ -58,7 +59,7 @@ interface DeleteSubDirectory {
 	name: string;
 }
 
-type KeyOperation = SetKey | DeleteKey | ClearKeys;
+type KeyOperation = SetKey | DeleteKey | ClearKeys | UseHandle;
 
 type SubDirectoryOperation = CreateSubDirectory | DeleteSubDirectory;
 
@@ -87,6 +88,25 @@ const defaultOptions: Required<OperationGenerationConfig> = {
 	createSubDirWeight: 2,
 	deleteSubDirWeight: 1,
 };
+
+function pickAbsolutePathForKeyOps(state: FuzzTestState, shouldHaveKey: boolean): string {
+	const { random, client } = state;
+	let parentDir: IDirectory = client.channel;
+	for (;;) {
+		assert(parentDir !== undefined, "Directory should be defined");
+		const subDirs: IDirectory[] = [];
+		for (const [_, b] of parentDir.subdirectories()) {
+			subDirs.push(b);
+		}
+		const subDir = random.pick<IDirectory | undefined>([undefined, ...subDirs]);
+		if (subDir !== undefined && (!shouldHaveKey || subDir.size > 0)) {
+			parentDir = subDir;
+		} else {
+			break;
+		}
+	}
+	return parentDir.absolutePath;
+}
 
 function makeOperationGenerator(
 	optionsParam?: OperationGenerationConfig,
@@ -141,25 +161,6 @@ function makeOperationGenerator(
 			} else {
 				parentDir = dirToDelete;
 				dirToDelete = subDir;
-			}
-		}
-		return parentDir.absolutePath;
-	}
-
-	function pickAbsolutePathForKeyOps(state: FuzzTestState, shouldHaveKey: boolean): string {
-		const { random, client } = state;
-		let parentDir: IDirectory = client.channel;
-		for (;;) {
-			assert(parentDir !== undefined, "Directory should be defined");
-			const subDirs: IDirectory[] = [];
-			for (const [_, b] of parentDir.subdirectories()) {
-				subDirs.push(b);
-			}
-			const subDir = random.pick<IDirectory | undefined>([undefined, ...subDirs]);
-			if (subDir !== undefined && (!shouldHaveKey || subDir.size > 0)) {
-				parentDir = subDir;
-			} else {
-				break;
 			}
 		}
 		return parentDir.absolutePath;
@@ -311,6 +312,13 @@ function makeReducer(loggingInfo?: LoggingInfo): AsyncReducer<Operation, FuzzTes
 			assert(dir);
 			dir.delete(key);
 		},
+		useHandle: async (state, { handle }) => {
+			const dir = state.client.channel.getWorkingDirectory(
+				pickAbsolutePathForKeyOps(state, true),
+			);
+			assert(dir);
+			dir.set(state.random.pick(defaultOptions.keyNamePool), handle);
+		},
 	});
 
 	return withLogging(reducer);
@@ -339,6 +347,7 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 		validationStrategy: { type: "fixedInterval", interval: defaultOptions.validateInterval },
 		reconnectProbability: 0.15,
 		numberOfClients: 3,
+		handleGenerationDisabled: false,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
 			clientAddProbability: 0.08,
@@ -359,6 +368,7 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 			},
 			rebaseProbability: 0.2,
 			reconnectProbability: 0.5,
+			handleGenerationDisabled: false,
 			containerRuntimeOptions: {
 				flushMode: FlushMode.TurnBased,
 				enableGroupedBatching: true,
@@ -392,6 +402,7 @@ describe("SharedDirectory fuzz", () => {
 		validationStrategy: { type: "fixedInterval", interval: defaultOptions.validateInterval },
 		reconnectProbability: 0.15,
 		numberOfClients: 3,
+		handleGenerationDisabled: false,
 		clientJoinOptions: {
 			// Note: if tests are slow, we may want to tune this down. This mimics behavior before this suite
 			// was refactored to use the DDS fuzz harness.
@@ -414,6 +425,7 @@ describe("SharedDirectory fuzz", () => {
 			},
 			rebaseProbability: 0.2,
 			reconnectProbability: 0.5,
+			handleGenerationDisabled: false,
 			containerRuntimeOptions: {
 				flushMode: FlushMode.TurnBased,
 				enableGroupedBatching: true,
