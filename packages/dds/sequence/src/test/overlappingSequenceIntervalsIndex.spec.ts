@@ -151,6 +151,7 @@ describe("findOverlappingIntervalsBySegoff", () => {
 			testSharedString.insertText(5, "fg");
 			interval1 = collection.add({ start: 1, end: 1 }).getIntervalId();
 			interval2 = collection.add({ start: 2, end: 3 }).getIntervalId();
+			collection.add({ start: 5, end: 6 });
 		});
 
 		it("when each interval is within a single segment", () => {

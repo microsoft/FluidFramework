@@ -385,6 +385,7 @@ describe("SharedString", () => {
 			// Load a new Ink in connected state from the snapshot of the first one.
 			const containerRuntimeFactory = new MockContainerRuntimeFactory();
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2: IChannelServices = {
 				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: MockStorage.createFromSummary(
@@ -401,6 +402,7 @@ describe("SharedString", () => {
 
 			// Now connect the first Ink
 			dataStoreRuntime1.setAttachState(AttachState.Attached);
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(undefined),
@@ -448,6 +450,7 @@ describe("SharedString", () => {
 
 			// Connect the first SharedString.
 			dataStoreRuntime1.setAttachState(AttachState.Attached);
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -457,6 +460,7 @@ describe("SharedString", () => {
 
 			// Create and connect a second SharedString.
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2 = {
 				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -672,6 +676,7 @@ describe("SharedString", () => {
 
 			// Create and connect a second SharedString.
 			const runtime2 = new MockFluidDataStoreRuntime();
+			containerRuntimeFactory.createContainerRuntime(runtime2);
 			sharedString2 = new SharedString(
 				runtime2,
 				"shared-string-2",

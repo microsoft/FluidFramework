@@ -8,6 +8,7 @@ import fs from "fs";
 import path from "path";
 
 import {
+	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
@@ -26,7 +27,9 @@ describe("SharedString Snapshot Version - Empty Props", () => {
 	});
 
 	async function loadSharedString(id: string, serializedSnapshot: string): Promise<SharedString> {
+		const containerRuntimeFactory = new MockContainerRuntimeFactory();
 		const dataStoreRuntime = new MockFluidDataStoreRuntime();
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 		const services = {
 			deltaConnection: dataStoreRuntime.createDeltaConnection(),
 			objectStorage: new MockStorage(JSON.parse(serializedSnapshot)),

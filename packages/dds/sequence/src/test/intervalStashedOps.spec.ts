@@ -10,6 +10,7 @@ import { strict as assert } from "assert";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IntervalType } from "@fluidframework/sequence-previous";
 import {
+	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
@@ -52,6 +53,7 @@ const assertIntervals = (
 describe("Interval Stashed Ops on client ", () => {
 	let sharedString: SharedString;
 	let dataStoreRuntime1: MockFluidDataStoreRuntime;
+	let containerRuntimeFactory: MockContainerRuntimeFactory;
 	beforeEach(() => {
 		dataStoreRuntime1 = new MockFluidDataStoreRuntime({ clientId: "1" });
 		sharedString = new SharedString(
@@ -59,9 +61,11 @@ describe("Interval Stashed Ops on client ", () => {
 			"shared-string-1",
 			SharedStringFactory.Attributes,
 		);
+		containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 		// Connect the first SharedString.
 		dataStoreRuntime1.setAttachState(AttachState.Attached);
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		const services1 = {
 			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 			objectStorage: new MockStorage(),
@@ -109,15 +113,56 @@ describe("Interval Stashed Ops on client ", () => {
 			]);
 		});
 		it("for delete interval", () => {
+			const opArgs: IMapOperation = {
+				key: label,
+				type: "act",
+				value: {
+					opName: IntervalOpType.DELETE,
+					value: {
+						properties: { intervalId },
+						sequenceNumber: sharedString.getCurrentSeq(),
+						intervalType: 2,
+					},
+				},
+			};
+			sharedString["applyStashedOp"](opArgs);
 			assertIntervals(sharedString, collection, []);
 			assert.equal(collection.getIntervalById(intervalId), undefined);
 		});
 		it("for change interval", () => {
+			const opArgs: IMapOperation = {
+				key: label,
+				type: "act",
+				value: {
+					opName: IntervalOpType.CHANGE,
+					value: {
+						start: 5,
+						end: 10,
+						properties: { intervalId },
+						sequenceNumber: sharedString.getCurrentSeq(),
+						intervalType: 2,
+					},
+				},
+			};
+			sharedString["applyStashedOp"](opArgs);
 			assertIntervals(sharedString, collection, [{ start: 5, end: 10 }]);
 		});
 		it("for interval property change", () => {
 			const interval = collection.getIntervalById(intervalId);
 			assert(interval !== undefined);
+			const opArgs: IMapOperation = {
+				key: label,
+				type: "act",
+				value: {
+					opName: IntervalOpType.CHANGE,
+					value: {
+						properties: { intervalId, a: 2 },
+						sequenceNumber: sharedString.getCurrentSeq(),
+						intervalType: 2,
+					},
+				},
+			};
+			sharedString["applyStashedOp"](opArgs);
 			assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
 			assert.equal(interval.properties.a, 2);
 		});
