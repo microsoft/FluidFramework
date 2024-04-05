@@ -155,8 +155,10 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		assert(handleB3 !== undefined, "handleB3 should not be undefined");
 
 		// loading group call
+		callCount = 0;
 		const dataObjectA3 = await handleA3.get();
 		const dataObjectB3 = await handleB3.get();
+		assert.equal(callCount, 0, "No network call should be made");
 		assert.equal(dataObjectA3._root.get("A"), "A", "A should be set");
 		assert.equal(dataObjectB3._root.get("B"), "B", "B should be set");
 	});
@@ -244,8 +246,10 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		assert(handleB3 !== undefined, "handleB3 should not be undefined");
 
 		// loading group call
+		callCount = 0;
 		const dataObjectA3 = await handleA3.get();
 		const dataObjectB3 = await handleB3.get();
+		assert.equal(callCount, 0, "No network call should be made after older snapshot");
 		assert.equal(dataObjectA3._root.get("A"), "A", "A should be set");
 		assert.equal(dataObjectA3._root.get("A2"), "A2", "A2 should be set");
 		assert.equal(dataObjectB3._root.get("B"), "B", "B should be set");
@@ -305,8 +309,10 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
 		const handleA2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
 		const handleB2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectB");
+		callCount = 0;
 		const dataObjectA2 = await handleA2?.get();
 		const dataObjectB2 = await handleB2?.get();
+		assert.equal(callCount, 1, "Should have made a network call");
 		assert(dataObjectA2 !== undefined, "dataObjectA2 should not be undefined");
 		assert(dataObjectB2 !== undefined, "dataObjectB2 should not be undefined");
 		dataObjectA2._root.set("A", "A");
