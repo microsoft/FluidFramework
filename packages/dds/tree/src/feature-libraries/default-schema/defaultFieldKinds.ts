@@ -135,22 +135,20 @@ export const nodeKey = new FieldKindWithEditor(
 	new Set(),
 );
 
-// TODO: This name was to be consistent with the naming conventions of other field kind identifier names.
-// We may or may not rename this in the future.
-const identifierIdentifier = "identifier";
+const identifierFieldIdentifier = "identifier";
 
 /**
  * Exactly one identifier.
  */
 export const identifier = new FieldKindWithEditor(
-	identifierIdentifier,
+	identifierFieldIdentifier,
 	Multiplicity.Single,
 	noChangeHandler,
 	(types, other) =>
 		(other.kind === sequence.identifier ||
 			other.kind === requiredIdentifier ||
 			other.kind === optional.identifier ||
-			other.kind === identifierIdentifier) &&
+			other.kind === identifierFieldIdentifier) &&
 		allowsTreeSchemaIdentifierSuperset(types, other.types),
 	new Set(),
 );

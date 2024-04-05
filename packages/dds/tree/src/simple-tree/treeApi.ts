@@ -83,6 +83,11 @@ export interface TreeNodeApi {
 	 * Returns the {@link TreeStatus} of the given node.
 	 */
 	readonly status: (node: TreeNode) => TreeStatus;
+
+	/**
+	 * Returns the {@link LocalNodeKey} of the given node if the identifier field kind exists.
+	 * Otherwise returns undefined.
+	 */
 	shortID(node: TreeNode): number | undefined;
 }
 
