@@ -626,7 +626,7 @@
             "error",
             {
                 "alphabetize": {
-                    "caseInsensitive": true,
+                    "caseInsensitive": false,
                     "order": "asc",
                     "orderImportKind": "ignore"
                 },
