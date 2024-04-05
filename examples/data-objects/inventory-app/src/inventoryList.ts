@@ -31,7 +31,7 @@ import { type Inventory, treeConfiguration } from "./schema.js";
 export const containerSchema = {
 	initialObjects: {
 		// TODO: it seems odd that DataObjects in container schema need both a key under initialObjects where they are,
-		// as well as a key under the root data object.
+		// as well as a key under the root data object, and SharedObjects only need one key.
 		tree: treeDataObject("tree", treeConfiguration),
 	},
 } satisfies ContainerSchema;
