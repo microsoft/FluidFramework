@@ -14,7 +14,7 @@ import {
 	IDocumentStorageService,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
-import { buildSnapshotTree } from "@fluidframework/driver-utils";
+import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
 import {
 	IClient,
 	ISnapshotTree,

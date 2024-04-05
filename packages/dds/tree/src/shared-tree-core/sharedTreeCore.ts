@@ -17,13 +17,19 @@ import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 
 import { ICodecOptions, IJsonCodec } from "../codec/index.js";
-import { ChangeFamily, ChangeFamilyEditor, GraphCommit, RevisionTagCodec } from "../core/index.js";
-import { SchemaAndPolicy } from "../feature-libraries/index.js";
+import {
+	ChangeFamily,
+	ChangeFamilyEditor,
+	GraphCommit,
+	RevisionTag,
+	RevisionTagCodec,
+	SchemaAndPolicy,
+} from "../core/index.js";
 import { JsonCompatibleReadOnly, brand } from "../util/index.js";
 
 import { SharedTreeBranch, getChangeReplaceType } from "./branch.js";
@@ -87,6 +93,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 	private readonly schemaAndPolicy: SchemaAndPolicy;
 
+	protected readonly mintRevisionTag: () => RevisionTag;
+
 	/**
 	 * @param summarizables - Summarizers for all indexes used by this tree
 	 * @param changeFamily - The change family
@@ -117,14 +125,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			0x886 /* IdCompressor must be enabled to use SharedTree */,
 		);
 		this.idCompressor = runtime.idCompressor;
-		const mintRevisionTag = () => this.idCompressor.generateCompressedId();
+		this.mintRevisionTag = () => this.idCompressor.generateCompressedId();
 		/**
 		 * A random ID that uniquely identifies this client in the collab session.
 		 * This is sent alongside every op to identify which client the op originated from.
 		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
 		 */
 		const localSessionId = runtime.idCompressor.localSessionId;
-		this.editManager = new EditManager(changeFamily, localSessionId, mintRevisionTag);
+		this.editManager = new EditManager(changeFamily, localSessionId, this.mintRevisionTag);
 		this.editManager.localBranch.on("afterChange", (args) => {
 			if (this.getLocalBranch().isTransacting()) {
 				// Avoid submitting ops for changes that are part of a transaction.

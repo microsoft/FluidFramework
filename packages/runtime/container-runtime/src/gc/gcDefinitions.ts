@@ -11,7 +11,7 @@ import {
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
 } from "@fluidframework/runtime-definitions/internal";
-import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
+import { ReadAndParseBlob } from "@fluidframework/runtime-utils/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 
 import { RuntimeHeaderData } from "../containerRuntime.js";

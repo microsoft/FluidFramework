@@ -15,16 +15,6 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./public": {
-			"import": {
 				"types": "./lib/undo-redo-public.d.ts",
 				"default": "./lib/index.js"
 			},
@@ -107,7 +97,7 @@
 		"@fluidframework/sequence": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.13.3",
+		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.6.2",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "^0.34.0",

@@ -20,7 +20,7 @@ import {
 	TestFluidObject,
 	TestFluidObjectFactory,
 	createDocumentId,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
 

@@ -5,7 +5,7 @@
 
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-example/example-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedCounter } from "@fluidframework/counter";
+import { SharedCounter } from "@fluidframework/counter/internal";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { type ISharedMap, SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence/internal";

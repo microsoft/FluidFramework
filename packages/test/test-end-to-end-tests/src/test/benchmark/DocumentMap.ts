@@ -12,7 +12,7 @@ import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
-} from "@fluidframework/aqueduct";
+} from "@fluidframework/aqueduct/internal";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
@@ -32,7 +32,7 @@ import {
 	ChannelFactoryRegistry,
 	createSummarizerFromFactory,
 	summarizeNow,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 import {
 	IDocumentLoaderAndSummarizer,

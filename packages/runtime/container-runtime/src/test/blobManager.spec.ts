@@ -31,7 +31,7 @@ import {
 	MonitoringContext,
 	createChildLogger,
 	mixinMonitoringContext,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager.js";
@@ -82,17 +82,18 @@ export class MockRuntime
 		super();
 		this.attachState = attached ? AttachState.Attached : AttachState.Detached;
 		this.ops = stashed[0];
-		this.blobManager = new BlobManager(
-			undefined as any, // routeContext
+		this.blobManager = new BlobManager({
+			routeContext: undefined as any,
 			snapshot,
-			() => this.getStorage(),
-			(localId: string, blobId?: string) => this.sendBlobAttachOp(localId, blobId),
-			() => undefined,
-			(blobPath: string) => this.isBlobDeleted(blobPath),
-			this,
-			stashed[1],
-			() => (this.closed = true),
-		);
+			getStorage: () => this.getStorage(),
+			sendBlobAttachOp: (localId: string, blobId?: string) =>
+				this.sendBlobAttachOp(localId, blobId),
+			blobRequested: () => undefined,
+			isBlobDeleted: (blobPath: string) => this.isBlobDeleted(blobPath),
+			runtime: this,
+			stashedBlobs: stashed[1],
+			closeContainer: () => (this.closed = true),
+		});
 	}
 
 	public get storage() {
@@ -238,7 +239,7 @@ export class MockRuntime
 	}
 
 	public async processStashed(processStashedWithRetry?: boolean) {
-		const uploadP = this.blobManager.processStashedChanges();
+		const uploadP = this.blobManager.trackPendingStashedUploads();
 		this.processing = true;
 		if (processStashedWithRetry) {
 			await this.processBlobs(false, false, 0);

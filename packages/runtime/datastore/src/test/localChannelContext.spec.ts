@@ -11,7 +11,7 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/inte
 import {
 	MockFluidDataStoreContext,
 	validateAssertionError,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime.js";
 import { LocalChannelContext, RehydratedLocalChannelContext } from "../localChannelContext.js";

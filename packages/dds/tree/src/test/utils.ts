@@ -22,7 +22,7 @@ import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	ITestContainerConfig,
@@ -34,7 +34,7 @@ import {
 	TestObjectProvider,
 	createSummarizer,
 	summarizeNow,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import {
@@ -674,7 +674,12 @@ export function checkoutWithContent(
 			HasListeners<CheckoutEvents>;
 	},
 ): TreeCheckout {
-	return flexTreeViewWithContent(content, args).checkout;
+	const forest = forestWithContent(content);
+	return createTreeCheckout(testIdCompressor, mintRevisionTag, testRevisionTagCodec, {
+		...args,
+		forest,
+		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
+	});
 }
 
 export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
@@ -687,12 +692,7 @@ export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 		nodeKeyFieldKey?: FieldKey;
 	},
 ): CheckoutFlexTreeView<TRoot> {
-	const forest = forestWithContent(content);
-	const view = createTreeCheckout(testIdCompressor, testRevisionTagCodec, {
-		...args,
-		forest,
-		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
-	});
+	const view = checkoutWithContent(content, args);
 	return new CheckoutFlexTreeView(
 		view,
 		content.schema,
@@ -728,7 +728,7 @@ export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 	},
 ): FlexTreeTypedField<TRoot> {
 	const forest = args?.forest ?? forestWithContent(content);
-	const branch = createTreeCheckout(testIdCompressor, testRevisionTagCodec, {
+	const branch = createTreeCheckout(testIdCompressor, mintRevisionTag, testRevisionTagCodec, {
 		...args,
 		forest,
 		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),

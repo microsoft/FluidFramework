@@ -9,7 +9,7 @@ import {
 	IDocumentService,
 	IDocumentStorageService,
 } from "@fluidframework/driver-definitions/internal";
-import { readAndParse } from "@fluidframework/driver-utils";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
 import {
 	IDocumentAttributes,
 	ISequencedDocumentMessage,
@@ -22,7 +22,7 @@ import {
 	ReadDocumentStorageServiceBase,
 	ReplayController,
 	SnapshotStorage,
-} from "@fluidframework/replay-driver";
+} from "@fluidframework/replay-driver/internal";
 
 import { IDebuggerController, IDebuggerUI } from "./fluidDebuggerUi.js";
 import { Sanitizer } from "./sanitizer.js";

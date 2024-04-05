@@ -12,7 +12,7 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
-import { UsageError } from "@fluidframework/telemetry-utils";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { ICodecOptions, noopValidator } from "../codec/index.js";
 import {
@@ -238,16 +238,21 @@ export class SharedTree
 		);
 		this._events = createEmitter<CheckoutEvents>();
 		const localBranch = this.getLocalBranch();
-		this.checkout = createTreeCheckout(runtime.idCompressor, revisionTagCodec, {
-			branch: localBranch,
-			changeFamily,
-			schema,
-			forest,
-			fieldBatchCodec,
-			events: this._events,
-			removedRoots,
-			chunkCompressionStrategy: options.treeEncodeType,
-		});
+		this.checkout = createTreeCheckout(
+			runtime.idCompressor,
+			this.mintRevisionTag,
+			revisionTagCodec,
+			{
+				branch: localBranch,
+				changeFamily,
+				schema,
+				forest,
+				fieldBatchCodec,
+				events: this._events,
+				removedRoots,
+				chunkCompressionStrategy: options.treeEncodeType,
+			},
+		);
 	}
 
 	public contentSnapshot(): SharedTreeContentSnapshot {

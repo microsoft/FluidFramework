@@ -7,16 +7,16 @@ import { type IContainerContext } from "@fluidframework/container-definitions/in
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { type FluidObject } from "@fluidframework/core-interfaces";
-// eslint-disable-next-line import/no-deprecated
 import {
 	type RuntimeRequestHandler,
+	// eslint-disable-next-line import/no-deprecated
 	buildRuntimeRequestHandler,
-} from "@fluidframework/request-handler";
+} from "@fluidframework/request-handler/internal";
 import {
 	type IFluidDataStoreFactory,
 	type NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
-import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
 
 const defaultStoreId = "" as const;
 

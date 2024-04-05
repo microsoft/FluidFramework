@@ -17,7 +17,7 @@ import {
 	createSummarizer,
 	getContainerEntryPointBackCompat,
 	summarizeNow,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 const stringId = "sharedStringKey";
 

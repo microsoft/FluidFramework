@@ -14,18 +14,18 @@ import {
 } from "@fluidframework/datastore/internal";
 import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
-import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
+import { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions/internal";
+import { type ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
-	type ITelemetryLoggerExt,
 	UsageError,
 	createChildLogger,
 	tagCodeArtifacts,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { IAgentScheduler, IAgentSchedulerEvents } from "./agent.js";

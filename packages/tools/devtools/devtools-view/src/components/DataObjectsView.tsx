@@ -12,7 +12,7 @@ import {
 	RootDataVisualizations,
 	type RootHandleNode,
 	handleIncomingMessage,
-} from "@fluidframework/devtools-core";
+} from "@fluidframework/devtools-core/internal";
 import React from "react";
 
 import { useMessageRelay } from "../MessageRelayContext.js";

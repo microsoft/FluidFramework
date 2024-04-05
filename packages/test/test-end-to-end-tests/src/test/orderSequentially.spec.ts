@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import type { SharedCell } from "@fluidframework/cell";
+import type { SharedCell } from "@fluidframework/cell/internal";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
@@ -20,7 +20,7 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 const stringId = "sharedStringKey";
 const string2Id = "sharedString2Key";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { HasContainerKey, VisualTreeNode } from "@fluidframework/devtools-core";
+import type { HasContainerKey, VisualTreeNode } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
 import type { DataVisualizationTreeProps } from "./CommonInterfaces.js";
@@ -30,7 +30,12 @@ export function TreeView(props: TreeViewProps): React.ReactElement {
 	));
 
 	const header = (
-		<TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} metadata={metadata} />
+		<TreeHeader
+			label={label}
+			nodeTypeMetadata={node.typeMetadata}
+			metadata={metadata}
+			tooltipContents={node.tooltipContents}
+		/>
 	);
 
 	return <TreeItem header={header}>{childNodes}</TreeItem>;

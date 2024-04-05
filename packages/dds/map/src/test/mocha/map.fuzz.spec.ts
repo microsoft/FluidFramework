@@ -13,10 +13,16 @@ import {
 	createWeightedGenerator,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
-import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
+import {
+	DDSFuzzModel,
+	DDSFuzzTestState,
+	createDDSFuzzSuite,
+	UseHandle,
+} from "@fluid-private/test-dds-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
+import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedMap, MapFactory } from "../../index.js";
 
 import { _dirname } from "./dirname.cjs";
@@ -36,17 +42,36 @@ interface DeleteKey {
 	key: string;
 }
 
-type Operation = SetKey | DeleteKey | Clear;
+type Operation = SetKey | DeleteKey | Clear | UseHandle;
 
 // This type gets used a lot as the state object of the suite; shorthand it here.
 type State = DDSFuzzTestState<MapFactory>;
 
-function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap): void {
+async function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap): Promise<void> {
 	assert.equal(a.size, b.size, `${a.id} and ${b.id} have different number of keys.`);
 	for (const key of a.keys()) {
 		const aVal: unknown = a.get(key);
 		const bVal: unknown = b.get(key);
-		assert.equal(aVal, bVal, `${a.id} and ${b.id} differ at ${key}: ${aVal} vs ${bVal}`);
+		if (
+			aVal !== null &&
+			typeof aVal === "object" &&
+			bVal !== null &&
+			typeof bVal === "object"
+		) {
+			const aObj: FluidObject<IFluidHandle> = aVal;
+			const bObj: FluidObject<IFluidHandle> = bVal;
+			const aHandle = aObj.IFluidHandle ? await aObj.IFluidHandle?.get() : aObj;
+			const bHandle = bObj.IFluidHandle ? await bObj.IFluidHandle?.get() : bObj;
+			assert.equal(
+				aHandle,
+				bHandle,
+				`${a.id} and ${b.id} differ at ${key}: ${JSON.stringify(
+					aHandle,
+				)} vs ${JSON.stringify(bHandle)}`,
+			);
+		} else {
+			assert.equal(aVal, bVal, `${a.id} and ${b.id} differ at ${key}: ${aVal} vs ${bVal}`);
+		}
 	}
 }
 
@@ -57,6 +82,10 @@ const reducer = combineReducers<Operation, State>({
 	},
 	deleteKey: ({ client }, { key }) => {
 		client.channel.delete(key);
+	},
+	useHandle: ({ random, client }, { handle }) => {
+		const keyNames = Array.from({ length: defaultOptions.keyPoolSize }, (_, i) => `${i}`);
+		client.channel.set(random.pick(keyNames), handle);
 	},
 });
 
@@ -113,6 +142,7 @@ describe("Map fuzz tests", () => {
 	createDDSFuzzSuite(model, {
 		defaultTestCount: 100,
 		numberOfClients: 3,
+		handleGenerationDisabled: false,
 		clientJoinOptions: {
 			maxNumberOfClients: 6,
 			clientAddProbability: 0.1,
