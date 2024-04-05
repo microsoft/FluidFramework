@@ -186,6 +186,11 @@ describe("Snapshot Format Conversion Tests", () => {
 			(result.snapshotTree.id = snapshotContents.snapshotTree.id),
 			"Snapshot id should match",
 		);
+
+		assert(result.telemetryProps.slowBlobStructureCount === 0);
+		// there is { name, unreferenced } structure (i.e. empty unreferenced tree) that we do not optimize
+		assert(result.telemetryProps.slowTreeStructureCount === 1);
+
 		// Convert to compact snapshot again and then match to previous one.
 		const compactSnapshot2 = convertToCompactSnapshot(result);
 		assert.deepStrictEqual(
@@ -217,6 +222,10 @@ describe("Snapshot Format Conversion Tests", () => {
 			(result.snapshotTree.id = snapshotContents.snapshotTree.id),
 			"Snapshot id should match",
 		);
+		assert(result.telemetryProps.slowBlobStructureCount === 0);
+		// there is { name, unreferenced } structure (i.e. empty unreferenced tree) that we do not optimize
+		assert(result.telemetryProps.slowTreeStructureCount === 1);
+
 		// Convert to compact snapshot again and then match to previous one.
 		const compactSnapshot2 = convertToCompactSnapshot(result);
 		assert.deepStrictEqual(
@@ -252,6 +261,10 @@ describe("Snapshot Format Conversion Tests", () => {
 			(result.snapshotTree.id = snapshotContents.snapshotTree.id),
 			"Snapshot id should match",
 		);
+		assert(result.telemetryProps.slowBlobStructureCount === 0);
+		// there is { name, unreferenced } structure (i.e. empty unreferenced tree) that we do not optimize
+		assert(result.telemetryProps.slowTreeStructureCount === 4);
+
 		// Convert to compact snapshot again and then match to previous one.
 		const compactSnapshot2 = convertToCompactSnapshot(result);
 		assert.deepStrictEqual(

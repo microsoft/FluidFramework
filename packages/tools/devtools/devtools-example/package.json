@@ -42,7 +42,7 @@
 	},
 	"dependencies": {
 		"@fluentui/react-components": "^9.47.5",
-		"@fluentui/react-icons": "^2.0.201",
+		"@fluentui/react-icons": "^2.0.233",
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-internal/devtools-view": "workspace:~",

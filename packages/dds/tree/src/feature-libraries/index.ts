@@ -250,7 +250,6 @@ export {
 	CheckTypesOverlap,
 	TreeStatus,
 	Context,
-	TreeEvent,
 	FlexTreeNodeEvents,
 	FlexTreeUnknownUnboxed,
 	isFlexTreeNode,

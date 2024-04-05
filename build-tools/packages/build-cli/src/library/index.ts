@@ -4,6 +4,11 @@
  */
 
 export {
+	ApiLevel,
+	knownApiLevels,
+	isKnownApiLevel,
+} from "./apiLevel";
+export {
 	generateBumpVersionBranchName,
 	generateBumpVersionCommitMessage,
 	generateBumpDepsBranchName,
@@ -32,6 +37,7 @@ export {
 } from "./package";
 export { difference } from "./sets";
 export { getIndent, indentString } from "./text";
+export { getApiExports } from "./typescriptApi";
 export { createPullRequest, getCommitInfo, pullRequestExists } from "./github";
 export {
 	getRanges,

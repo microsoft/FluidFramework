@@ -474,7 +474,7 @@ importers:
     specifiers:
       '@biomejs/biome': ^1.6.2
       '@fluentui/react-components': ^9.47.5
-      '@fluentui/react-icons': ^2.0.201
+      '@fluentui/react-icons': ^2.0.233
       '@fluid-example/clicker': workspace:~
       '@fluid-example/codemirror': workspace:~
       '@fluid-example/collaborative-textarea': workspace:~
@@ -535,7 +535,7 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluentui/react-components': 9.47.5_3eymgwxym437wpq7il2js5u6au
-      '@fluentui/react-icons': 2.0.223_react@17.0.2
+      '@fluentui/react-icons': 2.0.233_react@17.0.2
       '@fluid-example/clicker': link:../../data-objects/clicker
       '@fluid-example/codemirror': link:../../data-objects/codemirror
       '@fluid-example/collaborative-textarea': link:../collaborative-textarea
@@ -7860,6 +7860,7 @@ importers:
       '@fluidframework/container-definitions': link:../../../common/container-definitions
       '@fluidframework/container-loader': link:../../../loader/container-loader
       '@fluidframework/fluid-static': link:../../fluid-static
+      '@microsoft/applicationinsights-web': 2.8.16_tslib@1.14.1
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.15.2
@@ -7868,7 +7869,6 @@ importers:
       '@fluid-tools/build-cli': 0.34.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/build-tools': 0.34.0
       '@microsoft/api-extractor': 7.42.3
-      '@microsoft/applicationinsights-web': 2.8.16_tslib@1.14.1
       '@types/chai': 4.3.11
       '@types/mocha': 9.1.1
       '@types/sinon': 17.0.3
@@ -10822,7 +10822,7 @@ importers:
     specifiers:
       '@biomejs/biome': ^1.6.2
       '@fluentui/react-components': ^9.47.5
-      '@fluentui/react-icons': ^2.0.201
+      '@fluentui/react-icons': ^2.0.233
       '@fluid-example/example-utils': workspace:~
       '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/devtools-view': workspace:~
@@ -10886,7 +10886,7 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluentui/react-components': 9.47.5_3eymgwxym437wpq7il2js5u6au
-      '@fluentui/react-icons': 2.0.223_react@17.0.2
+      '@fluentui/react-icons': 2.0.233_react@17.0.2
       '@fluid-example/example-utils': link:../../../../examples/utils/example-utils
       '@fluid-internal/client-utils': link:../../../common/client-utils
       '@fluid-internal/devtools-view': link:../devtools-view
@@ -10957,7 +10957,7 @@ importers:
       '@fluentui/react': ^8.109.4
       '@fluentui/react-components': ^9.47.5
       '@fluentui/react-hooks': ^8.6.24
-      '@fluentui/react-icons': ^2.0.201
+      '@fluentui/react-icons': ^2.0.233
       '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -11023,7 +11023,7 @@ importers:
       '@fluentui/react': 8.112.9_z2l4bd7d7kzuhnbxbmhiesmtme
       '@fluentui/react-components': 9.47.5_3eymgwxym437wpq7il2js5u6au
       '@fluentui/react-hooks': 8.6.33_5n3si3aeogjujeu5eks6mxpsfi
-      '@fluentui/react-icons': 2.0.223_react@17.0.2
+      '@fluentui/react-icons': 2.0.233_react@17.0.2
       '@fluid-internal/client-utils': link:../../../common/client-utils
       '@fluidframework/container-definitions': link:../../../common/container-definitions
       '@fluidframework/container-loader': link:../../../loader/container-loader
@@ -11807,7 +11807,7 @@ packages:
       '@babel/core': 7.24.4
       '@babel/helper-compilation-targets': 7.23.6
       '@babel/helper-module-imports': 7.24.3
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
       '@babel/traverse': 7.24.1
       debug: 4.3.4
       lodash.debounce: 4.0.8
@@ -11902,6 +11902,11 @@ packages:
 
   /@babel/helper-plugin-utils/7.10.4:
     resolution: {integrity: sha512-O4KCvQA6lLiMU9l2eawBPMf1xPP8xPfB3iEQw150hOVTqj/rfXz0ThTb4HEzqQfs2Bmo5Ay8BzxfzVtBrr9dVg==}
+    dev: true
+
+  /@babel/helper-plugin-utils/7.22.5:
+    resolution: {integrity: sha512-uLls06UVKgFG9QD4OeFYLEGteMIAa5kpTPcFL28yuCIIzsf6ZyKZMllKVOCZFhiZ5ptnwX4mtKdWCBE/uT4amg==}
+    engines: {node: '>=6.9.0'}
     dev: true
 
   /@babel/helper-plugin-utils/7.24.0:
@@ -12076,7 +12081,7 @@ packages:
     dependencies:
       '@babel/core': 7.24.4
       '@babel/helper-create-class-features-plugin': 7.22.15_@babel+core@7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
     dev: true
 
   /@babel/plugin-proposal-decorators/7.24.1_@babel+core@7.24.4:
@@ -12098,7 +12103,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
       '@babel/plugin-syntax-export-default-from': 7.23.3_@babel+core@7.24.4
     dev: true
 
@@ -12110,7 +12115,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
       '@babel/plugin-syntax-nullish-coalescing-operator': 7.8.3_@babel+core@7.24.4
     dev: true
 
@@ -12121,7 +12126,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.12.9
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
       '@babel/plugin-syntax-object-rest-spread': 7.8.3_@babel+core@7.12.9
       '@babel/plugin-transform-parameters': 7.23.3_@babel+core@7.12.9
     dev: true
@@ -12136,7 +12141,7 @@ packages:
       '@babel/compat-data': 7.24.4
       '@babel/core': 7.24.4
       '@babel/helper-compilation-targets': 7.23.6
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
       '@babel/plugin-syntax-object-rest-spread': 7.8.3_@babel+core@7.24.4
       '@babel/plugin-transform-parameters': 7.23.3_@babel+core@7.24.4
     dev: true
@@ -12149,7 +12154,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
       '@babel/helper-skip-transparent-expression-wrappers': 7.22.5
       '@babel/plugin-syntax-optional-chaining': 7.8.3_@babel+core@7.24.4
     dev: true
@@ -12163,7 +12168,7 @@ packages:
     dependencies:
       '@babel/core': 7.24.4
       '@babel/helper-create-class-features-plugin': 7.22.15_@babel+core@7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
     dev: true
 
   /@babel/plugin-proposal-private-property-in-object/7.21.0-placeholder-for-preset-env.2_@babel+core@7.24.4:
@@ -12185,7 +12190,7 @@ packages:
       '@babel/core': 7.24.4
       '@babel/helper-annotate-as-pure': 7.22.5
       '@babel/helper-create-class-features-plugin': 7.22.15_@babel+core@7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
       '@babel/plugin-syntax-private-property-in-object': 7.14.5_@babel+core@7.24.4
     dev: true
 
@@ -12204,7 +12209,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
     dev: true
 
   /@babel/plugin-syntax-class-properties/7.12.13_@babel+core@7.24.4:
@@ -12252,7 +12257,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
     dev: true
 
   /@babel/plugin-syntax-export-namespace-from/7.8.3_@babel+core@7.24.4:
@@ -12271,7 +12276,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
     dev: true
 
   /@babel/plugin-syntax-import-assertions/7.24.1_@babel+core@7.24.4:
@@ -12318,7 +12323,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.12.9
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
     dev: true
 
   /@babel/plugin-syntax-jsx/7.23.3_@babel+core@7.24.4:
@@ -12328,7 +12333,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
     dev: true
 
   /@babel/plugin-syntax-logical-assignment-operators/7.10.4_@babel+core@7.24.4:
@@ -12421,7 +12426,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
     dev: true
 
   /@babel/plugin-syntax-unicode-sets-regex/7.18.6_@babel+core@7.24.4:
@@ -12442,7 +12447,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
     dev: true
 
   /@babel/plugin-transform-arrow-functions/7.24.1_@babel+core@7.24.4:
@@ -12497,7 +12502,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
     dev: true
 
   /@babel/plugin-transform-block-scoping/7.24.4_@babel+core@7.24.4:
@@ -12545,7 +12550,7 @@ packages:
       '@babel/helper-environment-visitor': 7.22.20
       '@babel/helper-function-name': 7.23.0
       '@babel/helper-optimise-call-expression': 7.22.5
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
       '@babel/helper-replace-supers': 7.22.20_@babel+core@7.24.4
       '@babel/helper-split-export-declaration': 7.22.6
       globals: 11.12.0
@@ -12586,7 +12591,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
     dev: true
 
   /@babel/plugin-transform-destructuring/7.24.1_@babel+core@7.24.4:
@@ -12660,7 +12665,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
       '@babel/plugin-syntax-flow': 7.23.3_@babel+core@7.24.4
     dev: true
 
@@ -12671,7 +12676,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
     dev: true
 
   /@babel/plugin-transform-for-of/7.24.1_@babel+core@7.24.4:
@@ -12758,7 +12763,7 @@ packages:
     dependencies:
       '@babel/core': 7.24.4
       '@babel/helper-module-transforms': 7.23.3_@babel+core@7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
       '@babel/helper-simple-access': 7.22.5
     dev: true
 
@@ -12895,7 +12900,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.12.9
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
     dev: true
 
   /@babel/plugin-transform-parameters/7.23.3_@babel+core@7.24.4:
@@ -12905,7 +12910,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
     dev: true
 
   /@babel/plugin-transform-parameters/7.24.1_@babel+core@7.24.4:
@@ -12959,7 +12964,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
     dev: true
 
   /@babel/plugin-transform-react-jsx-development/7.22.5_@babel+core@7.24.4:
@@ -12979,7 +12984,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
     dev: true
 
   /@babel/plugin-transform-react-jsx-source/7.23.3_@babel+core@7.24.4:
@@ -12989,7 +12994,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
     dev: true
 
   /@babel/plugin-transform-react-jsx/7.23.4_@babel+core@7.24.4:
@@ -13001,7 +13006,7 @@ packages:
       '@babel/core': 7.24.4
       '@babel/helper-annotate-as-pure': 7.22.5
       '@babel/helper-module-imports': 7.24.3
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
       '@babel/plugin-syntax-jsx': 7.23.3_@babel+core@7.24.4
       '@babel/types': 7.24.0
     dev: true
@@ -13014,7 +13019,7 @@ packages:
     dependencies:
       '@babel/core': 7.24.4
       '@babel/helper-annotate-as-pure': 7.22.5
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
     dev: true
 
   /@babel/plugin-transform-regenerator/7.24.1_@babel+core@7.24.4:
@@ -13045,7 +13050,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
     dev: true
 
   /@babel/plugin-transform-shorthand-properties/7.24.1_@babel+core@7.24.4:
@@ -13065,7 +13070,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
       '@babel/helper-skip-transparent-expression-wrappers': 7.22.5
     dev: true
 
@@ -13097,7 +13102,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
     dev: true
 
   /@babel/plugin-transform-template-literals/7.24.1_@babel+core@7.24.4:
@@ -13129,7 +13134,7 @@ packages:
       '@babel/core': 7.24.4
       '@babel/helper-annotate-as-pure': 7.22.5
       '@babel/helper-create-class-features-plugin': 7.22.15_@babel+core@7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
       '@babel/plugin-syntax-typescript': 7.23.3_@babel+core@7.24.4
     dev: true
 
@@ -13275,7 +13280,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
       '@babel/helper-validator-option': 7.23.5
       '@babel/plugin-transform-flow-strip-types': 7.23.3_@babel+core@7.24.4
     dev: true
@@ -13298,7 +13303,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
       '@babel/helper-validator-option': 7.23.5
       '@babel/plugin-transform-react-display-name': 7.23.3_@babel+core@7.24.4
       '@babel/plugin-transform-react-jsx': 7.23.4_@babel+core@7.24.4
@@ -13313,7 +13318,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
       '@babel/helper-validator-option': 7.23.5
       '@babel/plugin-syntax-jsx': 7.23.3_@babel+core@7.24.4
       '@babel/plugin-transform-modules-commonjs': 7.23.3_@babel+core@7.24.4
@@ -14598,16 +14603,6 @@ packages:
       '@fluentui/set-version': 8.2.12
       '@fluentui/utilities': 8.13.21_5n3si3aeogjujeu5eks6mxpsfi
       '@types/react': 17.0.71
-      react: 17.0.2
-      tslib: 2.6.2
-    dev: false
-
-  /@fluentui/react-icons/2.0.223_react@17.0.2:
-    resolution: {integrity: sha512-nKE4y2e9DilNfly2Z5CSMBG2aOFZlGG9SJsw7UZmZu00acqWKEO09YAuHIDXlp6moYgCHF96MpZFDPU9sjbrwg==}
-    peerDependencies:
-      react: '>=16.8.0 <19.0.0 || 17.0.2'
-    dependencies:
-      '@griffel/react': 1.5.18_react@17.0.2
       react: 17.0.2
       tslib: 2.6.2
     dev: false
@@ -24503,7 +24498,7 @@ packages:
     resolution: {integrity: sha512-Y1IQok9821cC9onCx5otgFfRm7Lm+I+wwxOx738M/WLPZ9Q42m4IG5W0FNX8WLL2gYMZo3JkuXIH2DOpWM+qwA==}
     engines: {node: '>=8'}
     dependencies:
-      '@babel/helper-plugin-utils': 7.24.0
+      '@babel/helper-plugin-utils': 7.22.5
       '@istanbuljs/load-nyc-config': 1.1.0
       '@istanbuljs/schema': 0.1.3
       istanbul-lib-instrument: 5.2.1
@@ -33301,7 +33296,7 @@ packages:
     resolution: {integrity: sha512-cqsOTS7jqPsPMjtKYDUpdFC0AbhYFLTcuGRqymgmdJIeQ8cH7+AgX7YSgQy79wXloZq2VvATYxUOUQEvS1V/Zw==}
     dependencies:
       '@babel/runtime': 7.24.4
-      csstype: 3.1.2
+      csstype: 3.1.3
       is-in-browser: 1.1.3
       tiny-warning: 1.0.3
     dev: false
@@ -42594,7 +42589,7 @@ packages:
     dependencies:
       '@types/node': 18.19.1
       esbuild: 0.18.20
-      postcss: 8.4.35
+      postcss: 8.4.31
       rollup: 3.29.4
     optionalDependencies:
       fsevents: 2.3.3
@@ -43016,7 +43011,7 @@ packages:
       compression: 1.7.4
       connect-history-api-fallback: 2.0.0
       default-gateway: 6.0.3
-      express: 4.19.2
+      express: 4.18.2
       graceful-fs: 4.2.11
       html-entities: 2.4.0
       http-proxy-middleware: 2.0.6_aovttl5m6henfs5czzx5zw2kbu
@@ -43068,7 +43063,7 @@ packages:
       compression: 1.7.4
       connect-history-api-fallback: 2.0.0
       default-gateway: 6.0.3
-      express: 4.19.2
+      express: 4.18.2
       graceful-fs: 4.2.11
       html-entities: 2.4.0
       http-proxy-middleware: 2.0.6_@types+express@4.17.21

@@ -6,9 +6,8 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
+import { TreeValue } from "../core/index.js";
 import {
-	FlexMapNodeSchema,
 	FlexTreeNode,
 	isFlexTreeNode,
 	isFluidHandle,
@@ -24,9 +23,7 @@ import {
 	numberSchema,
 	stringSchema,
 } from "./leafNodeSchema.js";
-import { createMapProxy, isTreeNode, mapStaticDispatchMap, markContentType } from "./proxies.js";
-import { setFlexNode } from "./proxyBinding.js";
-import { createRawNode } from "./rawNode.js";
+import { isTreeNode } from "./proxies.js";
 import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
 import {
 	AllowedTypes,
@@ -36,17 +33,16 @@ import {
 	ImplicitFieldSchema,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	NodeKind,
-	TreeMapNode,
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
 	WithType,
 	type,
 	type FieldProps,
 } from "./schemaTypes.js";
-import { getFlexSchema } from "./toFlexSchema.js";
 import { TreeArrayNode, arraySchema } from "./arrayNode.js";
 import { TreeNode } from "./types.js";
 import { InsertableObjectFromSchemaRecord, TreeObjectNode, objectSchema } from "./objectNode.js";
+import { TreeMapNode, mapSchema } from "./mapNode.js";
 
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
@@ -403,43 +399,18 @@ export class SchemaFactory<
 		allowedTypes: T,
 		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
-	) {
-		class schema extends this.nodeSchema(
-			name,
-			NodeKind.Map,
-			allowedTypes,
-			implicitlyConstructable,
-		) {
-			public constructor(
-				input: Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
-			) {
-				super(input);
-
-				const proxyTarget = customizable ? this : undefined;
-
-				const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
-				assert(flexSchema instanceof FlexMapNodeSchema, "invalid flex schema");
-				const flexNode: FlexTreeNode = isFlexTreeNode(input)
-					? input
-					: createRawNode(flexSchema, copyContent(flexSchema.name, input) as object);
-
-				const proxy: TreeNode = createMapProxy(customizable, proxyTarget);
-				setFlexNode(proxy, flexNode);
-				return proxy as unknown as schema;
-			}
-		}
-
-		// Setup map functionality
-		Object.defineProperties(schema.prototype, mapStaticDispatchMap);
-
-		return schema as TreeNodeSchemaClass<
-			ScopedSchemaName<TScope, Name>,
-			NodeKind.Map,
-			TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
-			Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
-			ImplicitlyConstructable,
-			T
-		>;
+	): TreeNodeSchemaClass<
+		ScopedSchemaName<TScope, Name>,
+		NodeKind.Map,
+		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
+		Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
+		ImplicitlyConstructable,
+		T
+	> {
+		return mapSchema(
+			this.nodeSchema(name, NodeKind.Map, allowedTypes, implicitlyConstructable),
+			customizable,
+		);
 	}
 
 	/**
@@ -657,15 +628,4 @@ export function structuralName<const T extends string>(
 		inner = JSON.stringify(names);
 	}
 	return `${collectionName}<${inner}>`;
-}
-
-function copyContent<T extends object>(typeName: TreeNodeSchemaIdentifier, content: T): T {
-	const copy =
-		content instanceof Map
-			? (new Map(content) as T)
-			: Array.isArray(content)
-			? (content.slice() as T)
-			: { ...content };
-	markContentType(typeName, copy);
-	return copy;
 }
