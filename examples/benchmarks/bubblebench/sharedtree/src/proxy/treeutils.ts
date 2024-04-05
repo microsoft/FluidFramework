@@ -4,7 +4,7 @@
  */
 
 import { ChangeNode, Definition, NodeIdContext } from "@fluid-experimental/tree";
-import { Serializable } from "@fluidframework/datastore-definitions";
+import { Serializable } from "@fluidframework/datastore-definitions/internal";
 
 export const enum NodeKind {
 	scalar = "s",

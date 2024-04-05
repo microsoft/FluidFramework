@@ -7,6 +7,7 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { SaveInfo } from "@fluid-private/stochastic-test-utils";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions";
+
 import type {
 	BaseOperation,
 	DDSFuzzHarnessEvents,
@@ -207,10 +208,7 @@ export class FuzzTestMinimizer<
 				this.ddsModel,
 				this.seed,
 				this.operations,
-				{
-					saveOnFailure: false,
-					filepath: this.saveInfo?.filepath,
-				},
+				undefined,
 				this.providedOptions,
 			);
 			return false;

@@ -45,7 +45,7 @@ export {
 	visitIterableTreeWithState,
 } from "./navigation.js";
 
-export { getTreeContext, FlexTreeContext, Context } from "./context.js";
+export { getTreeContext, FlexTreeContext, Context, ContextSlot } from "./context.js";
 
 export { TreeEvent, FlexTreeNodeEvents } from "./treeEvents.js";
 

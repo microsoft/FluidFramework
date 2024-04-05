@@ -4,6 +4,7 @@
  */
 
 import { ObjectOptions, Static, Type } from "@sinclair/typebox";
+
 import { unionOptions } from "../../codec/index.js";
 import { Brand, brandedStringType } from "../../util/index.js";
 

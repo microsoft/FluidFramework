@@ -3,15 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { UsageError } from "@fluidframework/telemetry-utils";
-import { AllowedUpdateType, Compatibility, FieldKey, anchorSlot } from "../core/index.js";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
+import { AllowedUpdateType, Compatibility, FieldKey } from "../core/index.js";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
 import {
 	FlexFieldSchema,
 	NodeKeyManager,
 	ViewSchema,
 	defaultSchemaPolicy,
+	ContextSlot,
 } from "../feature-libraries/index.js";
 import {
 	ImplicitFieldSchema,
@@ -24,6 +26,7 @@ import {
 	toFlexConfig,
 } from "../simple-tree/index.js";
 import { disposeSymbol } from "../util/index.js";
+
 import { TreeContent, UpdateType, ensureSchema, evaluateUpdate } from "./schematizeTree.js";
 import { TreeCheckout } from "./treeCheckout.js";
 import { CheckoutFlexTreeView } from "./treeView.js";
@@ -227,15 +230,6 @@ export class SchematizeError implements SchemaIncompatible {
 }
 
 /**
- * Creating multiple flex tree contexts for the same branch, and thus with the same underlying AnchorSet does not work due to how TreeNode caching works.
- * This slot is used to detect if one already exists and error if creating a second.
- *
- * TODO:
- * 1. API docs need to reflect this limitation or the limitation has to be removed.
- */
-const ViewSlot = anchorSlot<CheckoutFlexTreeView<any>>();
-
-/**
  * Flex-Tree schematizing layer.
  * Creates a view that self-disposes when stored schema becomes incompatible.
  * This may only be called when the schema is already known to be compatible (typically via ensureSchema).
@@ -248,7 +242,7 @@ export function requireSchema<TRoot extends FlexFieldSchema>(
 	nodeKeyFieldKey: FieldKey,
 ): CheckoutFlexTreeView<TRoot> {
 	const slots = checkout.forest.anchors.slots;
-	assert(!slots.has(ViewSlot), 0x8c2 /* Cannot create second view from checkout */);
+	assert(!slots.has(ContextSlot), 0x8c2 /* Cannot create second view from checkout */);
 
 	{
 		const compatibility = viewSchema.checkCompatibility(checkout.storedSchema);
@@ -264,14 +258,9 @@ export function requireSchema<TRoot extends FlexFieldSchema>(
 		viewSchema.schema,
 		nodeKeyManager,
 		nodeKeyFieldKey,
-		() => {
-			const deleted = slots.delete(ViewSlot);
-			assert(deleted, 0x8c4 /* unexpected dispose */);
-			onDispose();
-		},
+		onDispose,
 	);
-	assert(!slots.has(ViewSlot), 0x8c5 /* Cannot create second view from checkout */);
-	slots.set(ViewSlot, view);
+	assert(slots.has(ContextSlot), "Context should be tracked in slot");
 
 	const unregister = checkout.storedSchema.on("afterSchemaChange", () => {
 		const compatibility = viewSchema.checkCompatibility(checkout.storedSchema);

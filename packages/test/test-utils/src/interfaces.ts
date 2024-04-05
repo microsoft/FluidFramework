@@ -9,7 +9,7 @@ import { ISharedMap } from "@fluidframework/map";
 import {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 
 /**
  * @alpha

@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import Deque from "double-ended-queue";
-
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IDisposable } from "@fluidframework/core-interfaces";
-import { assert, Lazy } from "@fluidframework/core-utils";
+import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { DataProcessingError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
+import Deque from "double-ended-queue";
 
 import { InboundSequencedContainerRuntimeMessage } from "./messageTypes.js";
 import { IBatchMetadata } from "./metadata.js";

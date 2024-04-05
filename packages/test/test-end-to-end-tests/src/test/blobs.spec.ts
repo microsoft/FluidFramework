@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	ExpectedEvents,
@@ -16,26 +17,28 @@ import {
 	CompressionAlgorithms,
 	ContainerMessageType,
 	DefaultSummaryConfiguration,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
 	IErrorBase,
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
-import { Deferred } from "@fluidframework/core-utils";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
-import { ReferenceType } from "@fluidframework/merge-tree";
-import type { SharedString } from "@fluidframework/sequence";
+import { Deferred } from "@fluidframework/core-utils/internal";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import { ReferenceType } from "@fluidframework/merge-tree/internal";
+import type { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ChannelFactoryRegistry,
 	ITestContainerConfig,
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import { v4 as uuid } from "uuid";
+
 import { wrapObjectAndOverride } from "../mocking.js";
+
 import {
 	MockDetachedBlobStorage,
 	driverSupportsBlobs,

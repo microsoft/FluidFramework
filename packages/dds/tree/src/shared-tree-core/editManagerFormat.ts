@@ -5,6 +5,7 @@
 
 import { SessionId } from "@fluidframework/id-compressor";
 import { ObjectOptions, Static, TSchema, Type } from "@sinclair/typebox";
+
 import {
 	EncodedRevisionTag,
 	RevisionTag,

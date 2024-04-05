@@ -4,6 +4,7 @@
  */
 
 import assert from "assert";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedMap } from "@fluidframework/map";
 import {
@@ -12,7 +13,7 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	createAndAttachContainer,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 const mapId = "map";
 

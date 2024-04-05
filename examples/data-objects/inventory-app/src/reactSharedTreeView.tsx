@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject } from "@fluidframework/aqueduct";
+// Lint rule can be disabled once eslint config is upgraded to 5.3.0+
+// eslint-disable-next-line import/no-internal-modules
+import { DataObject } from "@fluidframework/aqueduct/internal";
 import { IFluidHandle, type IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import {

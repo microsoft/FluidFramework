@@ -5,20 +5,20 @@
 
 import { fromBase64ToUtf8 } from "@fluid-internal/client-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IContainerPackageInfo,
 	IResolvedUrl,
 	IUrlResolver,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	OdspDriverUrlResolver,
 	createOdspUrl,
 	getOdspUrlParts,
 	isOdcUrl,
 	isSpoUrl,
-} from "@fluidframework/odsp-driver";
-import { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/odsp-driver/internal";
+import { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions/internal";
 
 const fluidOfficeAndOneNoteServers = new Set([
 	"dev.fluidpreview.office.net",

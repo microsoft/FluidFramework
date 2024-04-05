@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	Anchor,
 	AnchorNode,
@@ -27,12 +28,18 @@ import {
 	clonePath,
 	getDetachedFieldContainingPath,
 	keyAsDetachedField,
+	makeDetachedFieldIndex,
 	rootFieldKey,
 } from "../../core/index.js";
 import { leaf } from "../../domains/index.js";
 import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
-import { announceTestDelta, applyTestDelta, expectEqualPaths } from "../utils.js";
+import {
+	announceTestDelta,
+	applyTestDelta,
+	expectEqualPaths,
+	testRevisionTagCodec,
+} from "../utils.js";
 
 const fieldFoo: FieldKey = brand("foo");
 const fieldBar: FieldKey = brand("bar");
@@ -237,6 +244,78 @@ describe("AnchorSet", () => {
 			makePath([fieldFoo, 4], [fieldBar, 3], [fieldBaz, 2]),
 		);
 		checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
+	});
+
+	it("can rebase over remove and restore", () => {
+		const [anchors, anchor1, anchor2, anchor3, anchor4] = setup();
+		const detachMark = {
+			count: 1,
+			detach: detachId,
+		};
+		const detachedFieldIndex = makeDetachedFieldIndex("repair", testRevisionTagCodec);
+
+		announceTestDelta(
+			makeDelta(detachMark, makePath([fieldFoo, 3])),
+			anchors,
+			detachedFieldIndex,
+		);
+		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 4]));
+		checkRemoved(anchors.locate(anchor2), brand("repair-0"));
+		checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
+		checkEquality(anchors.locate(anchor4), makePath([fieldFoo, 4]));
+
+		const restoreMark = {
+			count: 1,
+			attach: detachId,
+		};
+
+		announceTestDelta(
+			makeDelta(restoreMark, makePath([fieldFoo, 3])),
+			anchors,
+			detachedFieldIndex,
+		);
+		checkEquality(anchors.locate(anchor1), path1);
+		checkEquality(anchors.locate(anchor2), path2);
+		checkEquality(anchors.locate(anchor3), path3);
+		checkEquality(anchors.locate(anchor4), path4);
+	});
+
+	it("can rebase over removal of multiple nodes and restore of single node", () => {
+		const [anchors, anchor1, anchor2, anchor3, anchor4] = setup();
+		const detachMark = {
+			count: 3,
+			detach: detachId,
+		};
+		const detachedFieldIndex = makeDetachedFieldIndex("repair", testRevisionTagCodec);
+
+		announceTestDelta(
+			makeDelta(detachMark, makePath([fieldFoo, 3])),
+			anchors,
+			detachedFieldIndex,
+		);
+		checkRemoved(anchors.locate(anchor1), brand("repair-2"));
+		checkRemoved(anchors.locate(anchor2), brand("repair-0"));
+		checkRemoved(anchors.locate(anchor3), brand("repair-1"));
+		checkRemoved(anchors.locate(anchor4), brand("repair-2"));
+
+		const restoreMark = {
+			count: 1,
+			attach: { minor: 44 },
+		};
+
+		announceTestDelta(
+			makeDelta(restoreMark, makePath([fieldFoo, 3])),
+			anchors,
+			detachedFieldIndex,
+		);
+		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 3], [fieldBar, 4]));
+		checkRemoved(anchors.locate(anchor2), brand("repair-0"));
+		checkRemoved(anchors.locate(anchor3), brand("repair-1"));
+		checkEquality(anchors.locate(anchor4), makePath([fieldFoo, 3]));
+		assert.doesNotThrow(() => anchors.forget(anchor2));
+		assert.throws(() => anchors.locate(anchor2));
+		assert.doesNotThrow(() => anchors.forget(anchor3));
+		assert.throws(() => anchors.locate(anchor3));
 	});
 
 	describe("internalize path", () => {

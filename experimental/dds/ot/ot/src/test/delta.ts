@@ -10,6 +10,7 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import Delta from "quill-delta";
+
 import { SharedOT } from "../index.js";
 
 export class SharedDelta extends SharedOT<Delta, Delta> {

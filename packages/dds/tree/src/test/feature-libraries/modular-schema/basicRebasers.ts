@@ -4,13 +4,14 @@
  */
 
 import { TUnsafe, Type } from "@sinclair/typebox";
+
 import { makeCodecFamily } from "../../../codec/index.js";
 import {
 	ChangeEncodingContext,
 	DeltaFieldChanges,
 	makeDetachedNodeId,
+	Multiplicity,
 } from "../../../core/index.js";
-import { Multiplicity } from "../../../feature-libraries/index.js";
 import {
 	FieldChangeHandler,
 	FieldChangeRebaser,

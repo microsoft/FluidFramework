@@ -4,7 +4,7 @@
  */
 
 import { IEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IChannelStorageService,
@@ -19,18 +19,16 @@ import {
 	MergeTreeDeltaType,
 	ReferenceType,
 	SegmentGroup,
-} from "@fluidframework/merge-tree";
+} from "@fluidframework/merge-tree/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import {
-	IFluidSerializer,
-	ISharedObjectEvents,
-	SharedObject,
-} from "@fluidframework/shared-object-base";
-import { UsageError } from "@fluidframework/telemetry-utils";
+import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import { IFluidSerializer, ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import { SharedObject } from "@fluidframework/shared-object-base/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { IMatrixConsumer, IMatrixProducer, IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
 import Deque from "double-ended-queue";
+
 import { Handle, isHandleValid } from "./handletable.js";
 import {
 	ISetOp,
