@@ -108,7 +108,7 @@ function makeGenerator(optionsParam?: Partial<GeneratorOptions>): AsyncGenerator
 		value: random.pick([
 			(): number => random.integer(1, 50),
 			(): string => random.string(random.integer(3, 7)),
-			(): IFluidHandle | undefined => random.handle(),
+			(): IFluidHandle => random.handle(),
 		])(),
 	});
 	const deleteKey: Generator<DeleteKey, State> = ({ random }) => ({
@@ -125,7 +125,7 @@ function makeGenerator(optionsParam?: Partial<GeneratorOptions>): AsyncGenerator
 	return async (state) => syncGenerator(state);
 }
 
-describe.only("Map fuzz tests", () => {
+describe("Map fuzz tests", () => {
 	const model: DDSFuzzModel<MapFactory, Operation> = {
 		workloadName: "default",
 		factory: new MapFactory(),
@@ -137,7 +137,6 @@ describe.only("Map fuzz tests", () => {
 	createDDSFuzzSuite(model, {
 		defaultTestCount: 100,
 		numberOfClients: 3,
-		handleGenerationDisabled: false,
 		clientJoinOptions: {
 			maxNumberOfClients: 6,
 			clientAddProbability: 0.1,

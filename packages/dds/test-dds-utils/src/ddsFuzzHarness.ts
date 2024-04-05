@@ -65,7 +65,7 @@ const isOperationType = <O extends BaseOperation>(type: O["type"], op: BaseOpera
  * @internal
  */
 export interface DDSRandom extends IRandom {
-	handle(): IFluidHandle | undefined;
+	handle(): IFluidHandle;
 }
 
 /**
@@ -1424,21 +1424,19 @@ export async function runTestForSeed<
 		random: {
 			...random,
 			handle: () => {
-				if (options.handleGenerationDisabled !== true) {
-					handleGenerated = true;
-					return new DDSFuzzHandle(
-						random.pick(handles),
-						// this is wonky, as get on this handle will always resolve via
-						// the summarizer client, but since we just return the absolute path
-						// it doesn't really matter, and remote handles will use
-						// the right handle context when they are deserialized
-						// by the dds.
-						//
-						// we re-used this hack a few time below, because
-						// we don't have the real client
-						initialState.summarizerClient.dataStoreRuntime,
-					);
-				}
+				handleGenerated = true;
+				return new DDSFuzzHandle(
+					random.pick(handles),
+					// this is wonky, as get on this handle will always resolve via
+					// the summarizer client, but since we just return the absolute path
+					// it doesn't really matter, and remote handles will use
+					// the right handle context when they are deserialized
+					// by the dds.
+					//
+					// we re-used this hack a few time below, because
+					// we don't have the real client
+					initialState.summarizerClient.dataStoreRuntime,
+				);
 			},
 		},
 		client: makeUnreachableCodePathProxy("client"),
