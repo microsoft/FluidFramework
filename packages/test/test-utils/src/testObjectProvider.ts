@@ -297,8 +297,8 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
 export interface IEventAndErrorTrackingLogger {
 	registerExpectedEvent: (...orderedExpectedEvents: ITelemetryGenericEventExt[]) => void;
 	reportAndClearTrackedEvents: () => {
-		expectedNotFound: { index: number; event: ITelemetryGenericEventExt }[],
-		unexpectedErrors: ITelemetryBaseEvent[],
+		expectedNotFound: { index: number; event: ITelemetryGenericEventExt }[];
+		unexpectedErrors: ITelemetryBaseEvent[];
 	};
 }
 
@@ -309,7 +309,9 @@ export interface IEventAndErrorTrackingLogger {
  * any expected events that have not occurred.
  * @internal
  */
-export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger, IEventAndErrorTrackingLogger {
+export class EventAndErrorTrackingLogger
+	implements ITelemetryBaseLogger, IEventAndErrorTrackingLogger
+{
 	/**
 	 * Even if these error events are logged, tests should still be allowed to pass
 	 * Additionally, if downgrade is true, then log as generic (e.g. to avoid polluting the e2e test logs)
@@ -326,7 +328,7 @@ export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger, IEvent
 
 	constructor(private readonly baseLogger?: ITelemetryBaseLogger) {}
 
-	private readonly expectedEvents: { index: number; event: ITelemetryGenericEventExt } [] = [];
+	private readonly expectedEvents: { index: number; event: ITelemetryGenericEventExt }[] = [];
 	private readonly unexpectedErrors: ITelemetryBaseEvent[] = [];
 
 	public registerExpectedEvent(...orderedExpectedEvents: ITelemetryGenericEventExt[]) {
