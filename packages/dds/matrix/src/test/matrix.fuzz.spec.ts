@@ -18,6 +18,7 @@ import {
 	DDSFuzzSuiteOptions,
 	DDSFuzzTestState,
 	createDDSFuzzSuite,
+	type UseHandle,
 } from "@fluid-private/test-dds-utils";
 import {
 	IChannelAttributes,
@@ -26,6 +27,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
+import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedMatrix } from "../matrix.js";
 import { MatrixItem } from "../ops.js";
 import { SharedMatrixFactory } from "../runtime.js";
@@ -35,7 +37,7 @@ import { _dirname } from "./dirname.cjs";
 /**
  * Supported cell values used within the fuzz model.
  */
-type Value = string | number | undefined;
+type Value = string | number | undefined | IFluidHandle;
 
 interface RangeSpec {
 	start: number;
@@ -65,7 +67,7 @@ interface SetCell {
 	value: MatrixItem<Value>;
 }
 
-type Operation = InsertRows | InsertColumns | RemoveRows | RemoveColumns | SetCell;
+type Operation = InsertRows | InsertColumns | RemoveRows | RemoveColumns | SetCell | UseHandle;
 
 /**
  * @remarks - This makes the DDS fuzz harness typecheck state fields as SharedMatrix<Value> instead of IChannel,
@@ -89,18 +91,37 @@ class TypedMatrixFactory extends SharedMatrixFactory {
 // This type gets used a lot as the state object of the suite; shorthand it here.
 type State = DDSFuzzTestState<TypedMatrixFactory>;
 
-function assertMatricesAreEquivalent<T>(a: SharedMatrix<T>, b: SharedMatrix<T>) {
+async function assertMatricesAreEquivalent<T>(a: SharedMatrix<T>, b: SharedMatrix<T>) {
 	assert.equal(a.colCount, b.colCount, `${a.id} and ${b.id} have different number of columns.`);
 	assert.equal(a.rowCount, b.rowCount, `${a.id} and ${b.id} have different number of rows.`);
 	for (let row = 0; row < a.rowCount; row++) {
 		for (let col = 0; col < a.colCount; col++) {
 			const aVal = a.getCell(row, col);
 			const bVal = b.getCell(row, col);
-			assert.equal(
-				aVal,
-				bVal,
-				`${a.id} and ${b.id} differ at (${row}, ${col}): ${aVal} vs ${bVal}`,
-			);
+			if (
+				aVal !== null &&
+				typeof aVal === "object" &&
+				bVal !== null &&
+				typeof bVal === "object"
+			) {
+				const aObj: FluidObject<IFluidHandle> = aVal as FluidObject<IFluidHandle>;
+				const bObj: FluidObject<IFluidHandle> = bVal as FluidObject<IFluidHandle>;
+				const aHandle = aObj.IFluidHandle ? aObj.IFluidHandle?.get() : aObj;
+				const bHandle = bObj.IFluidHandle ? bObj.IFluidHandle?.get() : bObj;
+				assert.equal(
+					aHandle,
+					bHandle,
+					`${a.id} and ${b.id} differ at (${row}, ${col}): ${JSON.stringify(
+						aHandle,
+					)} vs ${JSON.stringify(bHandle)}`,
+				);
+			} else {
+				assert.equal(
+					aVal,
+					bVal,
+					`${a.id} and ${b.id} differ at (${row}, ${col}): ${aVal} vs ${bVal}`,
+				);
+			}
 		}
 	}
 }
@@ -120,6 +141,16 @@ const reducer = combineReducers<Operation, State>({
 	},
 	set: ({ client }, { row, col, value }) => {
 		client.channel.setCell(row, col, value);
+	},
+	useHandle: ({ random, client }, { handle }) => {
+		if (client.channel.rowCount >= 1 && client.channel.colCount >= 1 && random.bool(0.4)) {
+			const minRow = client.channel.rowCount - 1 > 0 ? client.channel.rowCount - 1 : 0;
+			const minCol = client.channel.colCount - 1 > 0 ? client.channel.colCount - 1 : 0;
+
+			const row = random.integer(0, minRow);
+			const col = random.integer(0, minCol);
+			client.channel.setCell(row, col, handle);
+		}
 	},
 });
 
@@ -207,7 +238,7 @@ function makeGenerator(optionsParam?: Partial<GeneratorOptions>): AsyncGenerator
 	return async (state) => syncGenerator(state);
 }
 
-describe("Matrix fuzz tests", function () {
+describe.only("Matrix fuzz tests", function () {
 	/**
 	 * SparseArray2D's clearRows / clearCols involves a loop over 64k elements and is called on row/col handle recycle.
 	 * This makes some seeds rather slow (since that cost is paid 3 times per recycled row/col per client).
@@ -235,6 +266,7 @@ describe("Matrix fuzz tests", function () {
 	const baseOptions: Partial<DDSFuzzSuiteOptions> = {
 		defaultTestCount: 100,
 		numberOfClients: 3,
+		handleGenerationDisabled: false,
 		clientJoinOptions: {
 			maxNumberOfClients: 6,
 			clientAddProbability: 0.1,
