@@ -156,6 +156,8 @@ export class SerializedStateManager {
 	 */
 	private updateSnapshotAndProcessedOpsMaybe() {
 		if (this.latestSnapshot === undefined || this.processedOps.length === 0) {
+			// can't refresh latest snapshot until we have processed the ops up to it.
+			// Pending state would be behind the latest snapshot.
 			return;
 		}
 		const snapshotSequenceNumber = this.latestSnapshot.snapshotSequenceNumber;
