@@ -10,7 +10,7 @@ import React from "react";
  * TODO
  */
 export interface ToolTipContentsViewProps {
-	contents: Record<string, VisualChildNode> | undefined;
+	contents: Record<string, VisualChildNode> | string;
 }
 
 /**
@@ -23,24 +23,28 @@ export function ToolTipContentsView(props: ToolTipContentsViewProps): React.Reac
 		return <></>;
 	}
 
-	const listItems: React.ReactElement[] = [];
+	if (typeof contents === "string") {
+		return <div> {contents} </div>;
+	}
 
-	for (const [contentsValue] of Object.values(contents)) {
+	const listItems: React.ReactElement[] = [];
+	let listItem: React.ReactElement;
+
+	for (const contentsValue of Object.values(contents)) {
 		if (contentsValue.nodeKind === VisualNodeKind.TreeNode) {
 			for (const [fieldKey, fieldValue] of Object.entries(contentsValue.children)) {
-				if (fieldValue.nodeKind === VisualNodeKind.ValueNode) {
-					const listItem = (
+				listItem =
+					fieldValue.nodeKind === VisualNodeKind.ValueNode ? (
 						<li key={fieldKey}>
 							{fieldKey} : {fieldValue.value}
 						</li>
+					) : (
+						<li>Unsupported Data Structure!</li>
 					);
-					listItems.push(listItem);
-				} else {
-					<li>Unsupported Data Structure!</li>;
-				}
+				listItems.push(listItem);
 			}
 		} else {
-			throw new Error("Invalid Node Kind. Need to be a VisualNodeKind.TreeNode");
+			listItem = <li>Unsupported VisualNodeKind!</li>;
 		}
 	}
 

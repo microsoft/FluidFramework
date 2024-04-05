@@ -32,7 +32,7 @@ export interface TreeHeaderProps extends HasLabel {
 	/**
 	 * Visual Tree data rendered in the tooltip.
 	 */
-	tooltipContents?: Record<string, VisualChildNode>;
+	tooltipContents?: string | Record<string, VisualChildNode>;
 }
 
 const getStyles = makeStyles({
