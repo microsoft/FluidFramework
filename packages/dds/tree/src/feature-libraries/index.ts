@@ -160,7 +160,6 @@ export {
 	FlexObjectNodeFields,
 	intoStoredSchema,
 	intoStoredSchemaCollection,
-	ArrayToUnion,
 	ExtractItemType,
 	NormalizeLazyItem,
 	FlexList,
