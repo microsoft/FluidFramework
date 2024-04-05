@@ -20,7 +20,7 @@ import {
 import { fail } from "../util/index.js";
 import { RawTreeNode } from "./rawNode.js";
 import { TreeMapNode, WithType } from "./schemaTypes.js";
-import { TreeArrayNode } from "./treeArrayNode.js";
+import { TreeArrayNode } from "./arrayNode.js";
 import { TreeNode } from "./types.js";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
