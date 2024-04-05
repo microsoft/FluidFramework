@@ -178,6 +178,14 @@
 			},
 			"ClassDeclaration_OdspDriverUrlResolverForShareLink": {
 				"forwardCompat": false
+			},
+			"RemovedFunctionDeclaration_getApiRoot": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedFunctionDeclaration_isOdcOrigin": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}
