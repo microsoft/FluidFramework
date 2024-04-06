@@ -8,7 +8,7 @@ import path from "node:path";
 
 import type { PackageJson } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
-import type { ExportSpecifierStructure } from "ts-morph";
+import type { ExportSpecifierStructure, Node } from "ts-morph";
 import { ModuleKind, Project, ScriptKind } from "ts-morph";
 
 import { BaseCommand } from "../../base";
@@ -101,6 +101,10 @@ async function getLocalUnscopedPackageName(): Promise<string> {
 	return unscopedPackageName;
 }
 
+function sourceContext(node: Node): string {
+	return `${node.getSourceFile().getFilePath()}:${node.getStartLineNumber()}`;
+}
+
 const generatedHeader: string = `/*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -136,14 +140,18 @@ async function generateEntrypoints(
 	const mainSourceFile = project.addSourceFileAtPath(mainEntrypoint);
 	const exports = getApiExports(mainSourceFile);
 
-	if (exports.unknown.length > 0) {
+	if (exports.unknown.size > 0) {
 		log.errorLog(
-			`${
-				exports.unknown.length
-			} export(s) found without a recognized API level:\n\t${exports.unknown.map(
-				({ name, decl }) =>
-					`${decl.getSourceFile().getFilePath()}:${decl.getStartLineNumber()}: ${name}`,
-			)}`,
+			`${exports.unknown.size} export(s) found without a recognized API level:\n\t${[
+				...exports.unknown.entries(),
+			]
+				.map(
+					([name, { exportedDecl, exportDecl }]) =>
+						`${name} from ${sourceContext(exportedDecl)}${
+							exportDecl === undefined ? "" : ` via ${sourceContext(exportDecl)}`
+						}`,
+				)
+				.join(`\n\t`)}`,
 		);
 	}
 
