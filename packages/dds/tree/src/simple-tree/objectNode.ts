@@ -11,6 +11,7 @@ import {
 	FieldKinds,
 	FlexAllowedTypes,
 	FlexObjectNodeSchema,
+	FlexTreeField,
 	FlexTreeNode,
 	FlexTreeObjectNode,
 	FlexTreeOptionalField,
@@ -25,7 +26,7 @@ import {
 	prepareContentForInsert,
 } from "./proxies.js";
 import { getFlexNode, setFlexNode } from "./proxyBinding.js";
-import { getSimpleFieldSchema, getSimpleNodeSchema } from "./schemaCaching.js";
+import { getSimpleFieldSchema } from "./schemaCaching.js";
 import {
 	NodeKind,
 	ImplicitFieldSchema,
@@ -36,6 +37,7 @@ import {
 	getExplicitStoredKey,
 	TreeFieldFromImplicitField,
 	InsertableTreeFieldFromImplicitField,
+	FieldSchema,
 } from "./schemaTypes.js";
 import { cursorFromNodeData } from "./toMapTree.js";
 import { TreeNode } from "./types.js";
@@ -44,7 +46,7 @@ import { getFlexSchema } from "./toFlexSchema.js";
 import { RawTreeNode, rawError } from "./rawNode.js";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
-import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/lazyNode.js";
+import { LazyObjectNode } from "../feature-libraries/flex-tree/lazyNode.js";
 
 /**
  * Helper used to produce types for object nodes.
@@ -96,7 +98,7 @@ export type InsertableObjectFromSchemaRecord<
  * @remarks
  * A missing entry for a given view key indicates that the view and stored keys are the same for that field.
  */
-type SimpleKeyToFlexKeyMap = Map<FieldKey, FieldKey>;
+type SimpleKeyToFlexKeyMap = Map<string, FieldKey>;
 
 /**
  * Caches a {@link SimpleKeyToFlexKeyMap} for a given {@link TreeNodeSchema}.
@@ -118,7 +120,7 @@ function getOrCreateFlexKeyMapping(
 			// No entry in this map will indicate that the two keys are the same.
 			const storedKey = getStoredKey(viewKey, fieldSchema);
 			if (viewKey !== storedKey) {
-				keyMap.set(brand(viewKey), brand(storedKey));
+				keyMap.set(viewKey, brand(storedKey));
 			}
 		}
 		simpleKeyToFlexKeyCache.set(nodeSchema, keyMap);
@@ -133,7 +135,7 @@ function getOrCreateFlexKeyMapping(
  * If not provided `{}` is used for the target.
  */
 function createObjectProxy(
-	schema: TreeNodeSchema,
+	schema: ObjectNodeSchema,
 	allowAdditionalProperties: boolean,
 	targetObject: object = {},
 ): TreeNode {
@@ -143,8 +145,8 @@ function createObjectProxy(
 		schema.info as Record<string, ImplicitFieldSchema>,
 	);
 
-	function getFlexKey(viewKey: FieldKey): FieldKey {
-		return flexKeyMap.get(viewKey) ?? viewKey;
+	function getFlexKey(viewKey: string): FieldKey {
+		return flexKeyMap.get(viewKey) ?? brand(viewKey);
 	}
 
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
@@ -173,45 +175,27 @@ function createObjectProxy(
 			const flexNodeSchema = flexNode.schema;
 			assert(flexNodeSchema instanceof FlexObjectNodeSchema, 0x888 /* invalid schema */);
 
-			const flexKey: FieldKey = getFlexKey(viewKey as FieldKey);
-			const flexFieldSchema = flexNodeSchema.objectNodeFields.get(flexKey);
+			const hasField = viewKey in schema.info;
 
-			if (flexFieldSchema === undefined) {
+			if (!hasField) {
 				return allowAdditionalProperties ? Reflect.set(target, viewKey, value) : false;
 			}
+			assert(typeof viewKey === "string", 0x7e1 /* invalid key */);
+			const flexKey: FieldKey | undefined = getFlexKey(viewKey);
 
 			// TODO: Is it safe to assume 'content' is a LazyObjectNode?
 			assert(flexNode instanceof LazyObjectNode, 0x7e0 /* invalid content */);
-			assert(typeof viewKey === "string", 0x7e1 /* invalid key */);
-			const field = getBoxedField(flexNode, flexKey, flexFieldSchema);
 
-			const simpleNodeSchema = getSimpleNodeSchema(flexNodeSchema);
-			const simpleNodeFields = simpleNodeSchema.info as Record<string, ImplicitFieldSchema>;
+			const field = flexNode.getBoxed(flexKey);
+
+			const simpleNodeFields = schema.info;
 			if (simpleNodeFields[viewKey] === undefined) {
 				fail(`Field key '${viewKey}' not found in schema.`);
 			}
 
-			const simpleFieldSchema = getSimpleFieldSchema(
-				flexFieldSchema,
-				simpleNodeFields[viewKey],
-			);
+			const simpleFieldSchema = getSimpleFieldSchema(field.schema, schema.info[viewKey]);
 
-			switch (field.schema.kind) {
-				case FieldKinds.required:
-				case FieldKinds.optional: {
-					const typedField = field as
-						| FlexTreeRequiredField<FlexAllowedTypes>
-						| FlexTreeOptionalField<FlexAllowedTypes>;
-
-					const content = prepareContentForInsert(value, flexNode.context.forest);
-					const cursor = cursorFromNodeData(content, simpleFieldSchema.allowedTypes);
-					typedField.content = cursor;
-					break;
-				}
-
-				default:
-					fail("invalid FieldKind");
-			}
+			setField(field, simpleFieldSchema, value);
 
 			return true;
 		},
@@ -252,6 +236,45 @@ function createObjectProxy(
 	return proxy;
 }
 
+export function setField(
+	field: FlexTreeField,
+	simpleFieldSchema: FieldSchema,
+	value: InsertableContent,
+): void {
+	switch (field.schema.kind) {
+		case FieldKinds.required:
+		case FieldKinds.optional: {
+			const typedField = field as
+				| FlexTreeRequiredField<FlexAllowedTypes>
+				| FlexTreeOptionalField<FlexAllowedTypes>;
+
+			const content = prepareContentForInsert(value, field.context.forest);
+			const cursor = cursorFromNodeData(content, simpleFieldSchema.allowedTypes);
+			typedField.content = cursor;
+			break;
+		}
+
+		default:
+			fail("invalid FieldKind");
+	}
+}
+
+type ObjectNodeSchema<
+	TName extends string = string,
+	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema> = RestrictiveReadonlyRecord<
+		string,
+		ImplicitFieldSchema
+	>,
+	ImplicitlyConstructable extends boolean = boolean,
+> = TreeNodeSchemaClass<
+	TName,
+	NodeKind.Object,
+	TreeNode & WithType<TName>,
+	InsertableObjectFromSchemaRecord<T>,
+	ImplicitlyConstructable,
+	T
+>;
+
 /**
  * Define a {@link TreeNodeSchema} for a {@link TreeObjectNode}.
  *
@@ -262,16 +285,7 @@ export function objectSchema<
 	TName extends string,
 	const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 	const ImplicitlyConstructable extends boolean,
->(
-	base: TreeNodeSchemaClass<
-		TName,
-		NodeKind.Object,
-		TreeNode & WithType<TName>,
-		InsertableObjectFromSchemaRecord<T>,
-		ImplicitlyConstructable,
-		T
-	>,
-) {
+>(base: ObjectNodeSchema<TName, T, ImplicitlyConstructable>) {
 	// Ensure no collisions between final set of view keys, and final set of stored keys (including those
 	// implicitly derived from view keys)
 	assertUniqueKeys(base.identifier, base.info);
@@ -307,7 +321,7 @@ export function objectSchema<
 				: new RawObjectNode(flexSchema, copyContent(flexSchema.name, input) as object);
 
 			const proxy: TreeNode = createObjectProxy(
-				this.constructor as TreeNodeSchema,
+				this.constructor as ObjectNodeSchema,
 				customizable,
 				proxyTarget,
 			);
