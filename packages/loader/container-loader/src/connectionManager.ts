@@ -61,6 +61,7 @@ import {
 import { DeltaQueue } from "./deltaQueue.js";
 import { SignalType } from "./protocol.js";
 import { isDeltaStreamConnectionForbiddenError } from "./utils.js";
+import type { PendingConnectionSteps } from "./container.js";
 
 // We double this value in first try in when we calculate time to wait for in "calculateMaxWaitTime" function.
 const InitialReconnectDelayInMs = 500;
@@ -185,26 +186,9 @@ interface IPendingConnection {
 	 */
 	connectionMode: ConnectionMode;
 
-	status: ConnectStatus;
-}
-
-interface ConnectStatus {
-	/** false means we're not trying to reconnect */
-	connecting: boolean;
-	/** covers the states traversed before reaching Connected. Redundant with stateTransitions but easy to use */
-	connectionState: "Disconnected" | "EstablishingConnection" | "CatchingUp";
-	/** For understanding macro time spent in these states */
-	stateTransitionTimes: {
-		Disconnected: Date;
-		EstablishingConnection?: Date;
-		CatchingUp?: Date;
-	};
-	steps: {
-		name: string; // Free-form, for telemetry only
-		type: "auth" | "socket.io" | "orderingService"; // unsure about this - part of public API, needs to be both stable and useful
-		durationMs: number; // N/A for the current step
-		retryableError?: Error; // with errorType (maybe AnyDriverError)
-	}[];
+	//* Rename?
+	/** Details for diagnosing the pending connection */
+	diagnostics: PendingConnectionSteps;
 }
 
 /**
@@ -530,7 +514,7 @@ export class ConnectionManager implements IConnectionManager {
 			return; // Connection attempt already completed successfully
 		}
 
-		let pendingConnectionMode;
+		let pendingConnectionMode: ConnectionMode | undefined;
 		if (this.pendingConnection !== undefined) {
 			pendingConnectionMode = this.pendingConnection.connectionMode;
 			this.cancelConnection(reason); // Throw out in-progress connection attempt in favor of new attempt
@@ -568,15 +552,7 @@ export class ConnectionManager implements IConnectionManager {
 		const connectStartTime = performance.now();
 		let lastError: any;
 
-		//* This needs to be created when Disconnecting, and included on the event
-		const status: ConnectStatus = {
-			connecting: true,
-			connectionState: "Disconnected",
-			stateTransitionTimes: {
-				Disconnected: new Date(),
-			},
-			steps: [],
-		};
+		const diagnostics: PendingConnectionSteps = [];
 
 		const abortController = new AbortController();
 		const abortSignal = abortController.signal;
@@ -585,13 +561,10 @@ export class ConnectionManager implements IConnectionManager {
 				abortController.abort();
 			},
 			connectionMode: requestedMode,
-			status,
+			diagnostics,
 		};
 
-		this.props.establishConnectionHandler(reason);
-		this.pendingConnection.status.connectionState = "EstablishingConnection";
-		this.pendingConnection.status.stateTransitionTimes.EstablishingConnection = new Date();
-
+		this.props.establishConnectionHandler(reason, diagnostics);
 		// This loop will keep trying to connect until successful, with a delay between each iteration.
 		while (connection === undefined) {
 			if (this._disposed) {
@@ -615,7 +588,7 @@ export class ConnectionManager implements IConnectionManager {
 						...this.client,
 						mode: requestedMode,
 					},
-					status,
+					diagnostics,
 				);
 
 				if (connection.disposed) {
@@ -803,7 +776,7 @@ export class ConnectionManager implements IConnectionManager {
 		this._outbound.clear();
 		connection.dispose();
 
-		this.props.disconnectHandler(reason);
+		this.props.disconnectHandler(reason, this.reconnectMode);
 
 		this._connectionVerboseProps = {};
 
@@ -821,10 +794,13 @@ export class ConnectionManager implements IConnectionManager {
 		this.pendingConnection.abort();
 		this.pendingConnection = undefined;
 		this.logger.sendTelemetryEvent({ eventName: "ConnectionCancelReceived" });
-		this.props.cancelConnectionHandler({
-			text: `Cancel Pending Connection due to ${reason.text}`,
-			error: reason.error,
-		});
+		this.props.cancelConnectionHandler(
+			{
+				text: `Cancel Pending Connection due to ${reason.text}`,
+				error: reason.error,
+			},
+			this.reconnectMode,
+		);
 	}
 
 	/**

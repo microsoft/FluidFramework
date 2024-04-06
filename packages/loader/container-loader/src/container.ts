@@ -571,7 +571,9 @@ export class Container
 	private get connectionMode() {
 		return this._deltaManager.connectionManager.connectionMode;
 	}
-	public connectionDiagnosticsLog: ConnectionDiagnostics[] = [];
+	public get connectionDiagnosticsLog() {
+		return this.connectionStateHandler.connectionDiagnosticsLog;
+	}
 
 	public get resolvedUrl(): IResolvedUrl | undefined {
 		/**
@@ -949,40 +951,8 @@ export class Container
 		oldState: ConnectionState,
 		reason?: IConnectionStateChangeReason,
 	) {
-		const state = ConnectionState[value] as keyof ConnectionDiagnostics["stateDetails"]; //* Can we move ConnectionState away from enum?
-
 		if (value === ConnectionState.Connected) {
 			this._clientId = this.connectionStateHandler.pendingClientId;
-		}
-
-		const diag = this.connectionDiagnosticsLog[0];
-		if (state === "disconnected") {
-			const newConnectionDiag: ConnectionDiagnostics = {
-				connectionMode: this.connectionMode, //* Correct?  Make it required?
-				state,
-				stateDetails: {
-					disconnected: {
-						time: Date.now(),
-						reason,
-						autoReconnect: false, //* unknown
-					},
-				},
-			};
-			this.connectionDiagnosticsLog.push(newConnectionDiag);
-		} else {
-			assert(
-				diag !== undefined,
-				"Connection diagnostics log should have been created from initial disconnect state",
-			);
-			//* Are these correct in all cases?
-			diag.clientId = this.connectionStateHandler.pendingClientId;
-			diag.connectionMode = this.connectionMode;
-
-			diag.state = state;
-			diag.stateDetails[state] = {
-				time: Date.now(),
-				reason,
-			};
 		}
 
 		this.logConnectionStateChangeTelemetry(value, oldState, reason);
@@ -2048,18 +2018,24 @@ export class Container
 			this.connectionStateHandler.receivedConnectEvent(details);
 		});
 
-		deltaManager.on("establishingConnection", (reason: IConnectionStateChangeReason) => {
-			this.connectionStateHandler.establishingConnection(reason);
-		});
+		deltaManager.on(
+			"establishingConnection",
+			(reason: IConnectionStateChangeReason, diagnostics: PendingConnectionSteps) => {
+				this.connectionStateHandler.establishingConnection(reason, diagnostics);
+			},
+		);
 
-		deltaManager.on("cancelEstablishingConnection", (reason: IConnectionStateChangeReason) => {
-			this.connectionStateHandler.cancelEstablishingConnection(reason);
-		});
+		deltaManager.on(
+			"cancelEstablishingConnection",
+			(reason: IConnectionStateChangeReason, reconnectMode: ReconnectMode) => {
+				this.connectionStateHandler.cancelEstablishingConnection(reason, reconnectMode);
+			},
+		);
 
-		deltaManager.on("disconnect", (text, error) => {
+		deltaManager.on("disconnect", (text, error, reconnectMode: ReconnectMode) => {
 			this.noopHeuristic?.notifyDisconnect();
 			if (!this.closed) {
-				this.connectionStateHandler.receivedDisconnectEvent({ text, error });
+				this.connectionStateHandler.receivedDisconnectEvent({ text, error }, reconnectMode);
 			}
 		});
 
@@ -2492,6 +2468,7 @@ export interface ConnectionDiagnostics {
 	 */
 	clientId?: string;
 
+	//* This is hard to compute at the right time.  Maybe can follow example of ReconnectMode below?
 	/** read-only v. read/write connection */
 	connectionMode?: ConnectionMode;
 
@@ -2507,14 +2484,14 @@ export interface ConnectionDiagnostics {
 			readonly time: number;
 			readonly reason?: IConnectionStateChangeReason;
 
-			autoReconnect: boolean;
+			readonly autoReconnect: ReconnectMode;
 		};
 		/** Details about the connection while establishingConnection */
 		establishingConnection?: {
 			readonly time: number;
 			readonly reason?: IConnectionStateChangeReason;
 
-			steps?: {
+			steps: {
 				// 0 is current step
 				name: string; // Free-form, for telemetry only
 				type: "auth" | "socket.io" | "orderingService"; // unsure about this - part of public API, needs to be both stable and useful
@@ -2534,6 +2511,7 @@ export interface ConnectionDiagnostics {
 		/** Details about the connection while connected */
 		connected?: {
 			readonly time: number;
+			//* not used?
 			readonly reason?: IConnectionStateChangeReason;
 
 			opsSent?: number;
@@ -2541,6 +2519,12 @@ export interface ConnectionDiagnostics {
 		};
 	};
 }
+
+//* Or invert this
+export type PendingConnectionSteps = Exclude<
+	ConnectionDiagnostics["stateDetails"]["establishingConnection"],
+	undefined
+>["steps"];
 
 /**
  * IContainer interface that includes beta features that are subject to change.

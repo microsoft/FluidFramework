@@ -16,8 +16,13 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor.js";
 import { ConnectionState } from "./connectionState.js";
-import { IConnectionDetailsInternal, IConnectionStateChangeReason } from "./contracts.js";
+import {
+	IConnectionDetailsInternal,
+	IConnectionStateChangeReason,
+	ReconnectMode,
+} from "./contracts.js";
 import { IProtocolHandler } from "./protocol.js";
+import type { ConnectionDiagnostics, PendingConnectionSteps } from "./container.js";
 
 // Based on recent data, it looks like majority of cases where we get stuck are due to really slow or
 // timing out ops fetches. So attempt recovery infrequently. Also fetch uses 30 second timeout, so
@@ -61,14 +66,26 @@ export interface IConnectionStateHandler {
 	dispose(): void;
 	initProtocol(protocol: IProtocolHandler): void;
 	receivedConnectEvent(details: IConnectionDetailsInternal): void;
-	receivedDisconnectEvent(reason: IConnectionStateChangeReason): void;
-	establishingConnection(reason: IConnectionStateChangeReason): void;
+	receivedDisconnectEvent(
+		reason: IConnectionStateChangeReason,
+		reconnectMode: ReconnectMode,
+	): void;
+	establishingConnection(
+		reason: IConnectionStateChangeReason,
+		diagnostics: PendingConnectionSteps,
+	): void;
 	/**
 	 * Switches state to disconnected when we are still establishing connection during container.load(),
 	 * container connect() or reconnect and the container gets closed or disposed or disconnect happens.
 	 * @param reason - reason for cancelling the connection.
 	 */
-	cancelEstablishingConnection(reason: IConnectionStateChangeReason): void;
+	cancelEstablishingConnection(
+		reason: IConnectionStateChangeReason,
+		//* doc comment
+		reconnectMode: ReconnectMode,
+	): void;
+
+	connectionDiagnosticsLog: ConnectionDiagnostics[];
 }
 
 export function createConnectionStateHandler(
@@ -140,6 +157,9 @@ class ConnectionStateHandlerPassThrough
 	public get pendingClientId() {
 		return this.pimpl.pendingClientId;
 	}
+	public get connectionDiagnosticsLog() {
+		return this.pimpl.connectionDiagnosticsLog;
+	}
 
 	public containerSaved() {
 		return this.pimpl.containerSaved();
@@ -150,16 +170,25 @@ class ConnectionStateHandlerPassThrough
 	public initProtocol(protocol: IProtocolHandler) {
 		return this.pimpl.initProtocol(protocol);
 	}
-	public receivedDisconnectEvent(reason: IConnectionStateChangeReason<IAnyDriverError>) {
-		return this.pimpl.receivedDisconnectEvent(reason);
+	public receivedDisconnectEvent(
+		reason: IConnectionStateChangeReason<IAnyDriverError>,
+		reconnectMode: ReconnectMode,
+	) {
+		return this.pimpl.receivedDisconnectEvent(reason, reconnectMode);
 	}
 
-	public establishingConnection(reason: IConnectionStateChangeReason) {
-		return this.pimpl.establishingConnection(reason);
+	public establishingConnection(
+		reason: IConnectionStateChangeReason,
+		diagnostics: PendingConnectionSteps,
+	) {
+		return this.pimpl.establishingConnection(reason, diagnostics);
 	}
 
-	public cancelEstablishingConnection(reason: IConnectionStateChangeReason) {
-		return this.pimpl.cancelEstablishingConnection(reason);
+	public cancelEstablishingConnection(
+		reason: IConnectionStateChangeReason,
+		reconnectMode: ReconnectMode,
+	) {
+		return this.pimpl.cancelEstablishingConnection(reason, reconnectMode);
 	}
 
 	public receivedConnectEvent(details: IConnectionDetailsInternal) {
@@ -346,6 +375,9 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		return this._pendingClientId;
 	}
 
+	//* Maybe put this in another layered ConnectionStateHandler for isolation?
+	public connectionDiagnosticsLog: [ConnectionDiagnostics, ...ConnectionDiagnostics[]];
+
 	constructor(
 		private readonly handler: IConnectionStateHandlerInputs,
 		private readonly readClientsWaitForJoinSignal: boolean,
@@ -382,6 +414,19 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 				this.handler.logConnectionIssue("NoJoinOp", "error", details);
 			},
 		);
+
+		this.connectionDiagnosticsLog = [
+			{
+				state: "disconnected",
+				stateDetails: {
+					disconnected: {
+						time: Date.now(),
+						reason: { text: "ConnectionStateHandler instantiated" },
+						autoReconnect: ReconnectMode.Enabled, //* need to pass in from Container
+					},
+				},
+			},
+		];
 	}
 
 	private startJoinOpTimer() {
@@ -504,25 +549,58 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		}
 	}
 
-	public receivedDisconnectEvent(reason: IConnectionStateChangeReason<IAnyDriverError>) {
+	public receivedDisconnectEvent(
+		reason: IConnectionStateChangeReason<IAnyDriverError>,
+		reconnectMode: ReconnectMode,
+	) {
 		this.connection = undefined;
-		this.setConnectionState(ConnectionState.Disconnected, reason);
+		this.setConnectionState(ConnectionState.Disconnected, reason, reconnectMode);
 	}
 
-	public cancelEstablishingConnection(reason: IConnectionStateChangeReason) {
+	public cancelEstablishingConnection(
+		reason: IConnectionStateChangeReason,
+		reconnectMode: ReconnectMode,
+	) {
 		assert(
 			this._connectionState === ConnectionState.EstablishingConnection,
 			0x6d3 /* Connection state should be EstablishingConnection */,
 		);
 		assert(this.connection === undefined, 0x6d4 /* No connetion should be present */);
+
+		//* Could assert that _connectionState === connectionDiagnosticsLog[0].state.
+		//* Or just use that instead. Or create the current diagnostics object on demand rather than maintaining an object
 		const oldState = this._connectionState;
 		this._connectionState = ConnectionState.Disconnected;
+
+		const newConnectionDiag: ConnectionDiagnostics = {
+			state: "disconnected",
+			stateDetails: {
+				disconnected: {
+					time: Date.now(),
+					reason,
+					autoReconnect: reconnectMode,
+				},
+			},
+		};
+		this.connectionDiagnosticsLog.unshift(newConnectionDiag);
+
 		this.handler.connectionStateChanged(ConnectionState.Disconnected, oldState, reason);
 	}
 
-	public establishingConnection(reason: IConnectionStateChangeReason) {
+	public establishingConnection(
+		reason: IConnectionStateChangeReason,
+		steps: PendingConnectionSteps,
+	) {
 		const oldState = this._connectionState;
 		this._connectionState = ConnectionState.EstablishingConnection;
+
+		const diag = this.connectionDiagnosticsLog[0];
+		diag.state = "establishingConnection";
+		diag.stateDetails.establishingConnection = {
+			time: Date.now(),
+			reason, //* Match extra verbage in reason text below?
+			steps,
+		};
 		this.handler.connectionStateChanged(ConnectionState.EstablishingConnection, oldState, {
 			text: `Establishing Connection due to ${reason.text}`,
 			error: reason.error,
@@ -540,7 +618,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 	/**
 	 * The "connect" event indicates the connection to the Relay Service is live.
 	 * However, some additional conditions must be met before we can fully transition to
-	 * "Connected" state. This function handles that interim period, known as "Connecting" state.
+	 * "Connected" state. This function handles that interim period, known as "catchingUp" state.
 	 * @param details - Connection details returned from the Relay Service
 	 * @param deltaManager - DeltaManager to be used for delaying Connected transition until caught up.
 	 * If it's undefined, then don't delay and transition to Connected as soon as Leave/Join op are accounted for
@@ -568,6 +646,16 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		// we know there can no longer be outstanding ops that we sent with the previous client id.
 		this._pendingClientId = details.clientId;
 
+		const diag = this.connectionDiagnosticsLog[0];
+		diag.clientId = details.clientId;
+		diag.state = "catchingUp";
+		diag.stateDetails.catchingUp = {
+			time: Date.now(),
+			reason: details.reason,
+			checkpointSequenceNumber: details.checkpointSequenceNumber,
+			//* Need to include in event -- initialProcessedSequenceNumber: ...
+		};
+
 		// IMPORTANT: Report telemetry after we set _pendingClientId, but before transitioning to Connected state
 		this.handler.connectionStateChanged(ConnectionState.CatchingUp, oldState, details.reason);
 
@@ -592,11 +680,13 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 	private setConnectionState(
 		value: ConnectionState.Disconnected,
 		reason: IConnectionStateChangeReason,
+		reconnectMode: ReconnectMode, //* Or pass in stateDetails instead of reason+reconnectMode
 	): void;
 	private setConnectionState(value: ConnectionState.Connected): void;
 	private setConnectionState(
 		value: ConnectionState.Disconnected | ConnectionState.Connected,
 		reason?: IConnectionStateChangeReason,
+		reconnectMode?: ReconnectMode,
 	): void {
 		if (this.connectionState === value) {
 			// Already in the desired state - exit early
@@ -624,6 +714,10 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 				this.handler.clientShouldHaveLeft(this._clientId!);
 			}
 			this._clientId = this.pendingClientId;
+			this.connectionDiagnosticsLog[0].state = "connected";
+			this.connectionDiagnosticsLog[0].stateDetails.connected = {
+				time: Date.now(),
+			};
 		} else if (value === ConnectionState.Disconnected) {
 			// Clear pending state immediately to prepare for reconnect
 			this._pendingClientId = undefined;
@@ -654,6 +748,20 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 					}),
 				});
 			}
+
+			//* Unify with cancel case?
+			const newConnectionDiag: ConnectionDiagnostics = {
+				state: "disconnected",
+				stateDetails: {
+					disconnected: {
+						time: Date.now(),
+						reason,
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						autoReconnect: reconnectMode!,
+					},
+				},
+			};
+			this.connectionDiagnosticsLog.unshift(newConnectionDiag);
 		}
 
 		// Report transition before we propagate event across layers
