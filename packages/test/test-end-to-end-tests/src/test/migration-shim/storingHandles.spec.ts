@@ -65,7 +65,7 @@ class HandleType extends builder.object("handleObj", {
 	handle: builder.optional(builder.handle),
 }) {}
 
-function getNewTreeView(tree: ITree): TreeView<HandleType> {
+function getNewTreeView(tree: ITree): TreeView<typeof HandleType> {
 	return tree.schematize(
 		new TreeConfiguration(HandleType, () => ({
 			handle: undefined,

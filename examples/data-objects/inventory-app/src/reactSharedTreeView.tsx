@@ -47,9 +47,9 @@ export const factory: IChannelFactory = SharedTree.getFactory();
 export abstract class TreeDataObject<
 	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
 > extends DataObject {
-	#tree?: TreeView<TreeFieldFromImplicitField<TSchema>>;
+	#tree?: TreeView<TSchema>;
 
-	public get tree(): TreeView<TreeFieldFromImplicitField<TSchema>> {
+	public get tree(): TreeView<TSchema> {
 		if (this.#tree === undefined) throw new Error(this.getUninitializedErrorString("tree"));
 		return this.#tree;
 	}
