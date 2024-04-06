@@ -30,6 +30,11 @@ interface ExportRecords {
  * This function is a placeholder for functionality that could
  * be very useful to have when working with multiple exports
  * using the same name (basically both a type and value export).
+ *
+ * This may be addressable by walking the various ExportDeclarations
+ * from the source. This is done for some special cases, but
+ * should reveal the type-only-ness and then records could be
+ * updated.
  */
 function isTypeExport(_decl: ExportedDeclarations): boolean {
 	return false;
@@ -128,7 +133,13 @@ export function getApiExports(sourceFile: SourceFile): ExportRecords {
 	// given file's export declarations.
 	const exportDeclarations = sourceFile.getExportDeclarations();
 	for (const exportDeclaration of exportDeclarations) {
-		// console.log(`export @ ${exportDeclaration.getStartLineNumber()} has children:\n\t${exportDeclaration.getChildren().map((c) => c.getKindName()).join('\n\t')}`);
+		// Uncomment below lines for some extra debugging help to show document structure:
+		// console.log(
+		// 	`export @ ${exportDeclaration.getStartLineNumber()} has children:\n\t${exportDeclaration
+		// 		.getChildren()
+		// 		.map((c) => c.getKindName())
+		// 		.join("\n\t")}`,
+		// );
 
 		// Look first for namespace exports like `export * as foo`.
 		for (const namespaceDecl of exportDeclaration.getChildrenOfKind(
