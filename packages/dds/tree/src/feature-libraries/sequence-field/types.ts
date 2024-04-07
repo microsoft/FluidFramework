@@ -25,8 +25,6 @@ export interface HasMoveId {
 	id: MoveId;
 }
 
-export type NodeChangeType = NodeId;
-
 /**
  * Represents a position within a contiguous range of nodes detached by a single changeset.
  * Note that `LineageEvent`s with the same revision are not necessarily referring to the same detach.
@@ -75,7 +73,7 @@ export interface CellId extends ChangeAtomId, HasLineage {
 /**
  * Mark which targets a range of existing cells instead of creating new cells.
  */
-export interface HasMarkFields<TNodeChange = never> {
+export interface HasMarkFields {
 	/**
 	 * Describes the detach which last emptied the target cells,
 	 * or the attach which allocated the cells if the cells have never been filled.
@@ -83,7 +81,7 @@ export interface HasMarkFields<TNodeChange = never> {
 	 */
 	cellId?: CellId;
 
-	changes?: TNodeChange;
+	changes?: NodeId;
 
 	count: CellCount;
 }
@@ -205,10 +203,10 @@ export interface AttachAndDetach {
 
 export type MarkEffect = NoopMark | Attach | Detach | AttachAndDetach;
 
-export type CellMark<TMark, TNodeChange> = TMark & HasMarkFields<TNodeChange>;
+export type CellMark<TMark> = TMark & HasMarkFields;
 
-export type Mark<TNodeChange = NodeChangeType> = CellMark<MarkEffect, TNodeChange>;
+export type Mark = CellMark<MarkEffect>;
 
-export type MarkList<TNodeChange = NodeChangeType> = Mark<TNodeChange>[];
+export type MarkList = Mark[];
 
-export type Changeset<TNodeChange = NodeChangeType> = MarkList<TNodeChange>;
+export type Changeset = MarkList;
