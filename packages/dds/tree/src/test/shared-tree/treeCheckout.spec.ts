@@ -381,7 +381,7 @@ describe("sharedTreeView", () => {
 			const anchor = cursor.buildAnchor();
 			cursor.clear();
 			insertFirstNode(view, "B");
-			undoStack.pop()?.revert();
+			undoStack.pop()?.revert(true);
 			cursor = view.forest.allocateCursor();
 			view.forest.tryMoveCursorToNode(anchor, cursor);
 			assert.equal(cursor.value, "A");
@@ -672,13 +672,13 @@ describe("sharedTreeView", () => {
 
 		checkout1.editor.sequenceField(rootField).remove(0, 1); // Remove "A"
 		checkout1.editor.sequenceField(rootField).remove(0, 1); // Remove 1
-		checkout1Revertibles.undoStack.pop()?.revert(); // Restore 1
+		checkout1Revertibles.undoStack.pop()?.revert(true); // Restore 1
 		provider.processMessages();
 
 		const checkout2Revertibles = createTestUndoRedoStacks(checkout2.events);
 		checkout2.editor.sequenceField(rootField).remove(1, 1); // Remove "B"
 		checkout2.editor.sequenceField(rootField).remove(1, 1); // Remove 2
-		checkout2Revertibles.undoStack.pop()?.revert(); // Restore 2
+		checkout2Revertibles.undoStack.pop()?.revert(true); // Restore 2
 		provider.processMessages();
 
 		const expectedContent = {
@@ -812,7 +812,7 @@ describe("sharedTreeView", () => {
 			assert.equal(revertiblesCreated.length, 2);
 
 			// Each revert also leads to the creation of a revertible event
-			revertiblesCreated[1].revert();
+			revertiblesCreated[1].revert(true);
 
 			assert.equal(revertiblesCreated.length, 3);
 
@@ -846,9 +846,11 @@ describe("sharedTreeView", () => {
 				assert.equal(revertiblesDisposed.length, 1);
 				assert.equal(revertiblesDisposed[0], revertiblesCreated[0]);
 
-				// reverting does not release the revertible
-				revertiblesCreated[1].revert();
+				revertiblesCreated[1].revert(false);
 				assert.equal(revertiblesDisposed.length, 1);
+
+				revertiblesCreated[1].revert(true);
+				assert.equal(revertiblesDisposed.length, 2);
 
 				unsubscribe1();
 				unsubscribe2();
@@ -907,7 +909,7 @@ describe("sharedTreeView", () => {
 			assert.equal(revertible.status, RevertibleStatus.Disposed);
 
 			assert.throws(() => revertible.release());
-			assert.throws(() => revertible.revert());
+			assert.throws(() => revertible.revert(false));
 
 			assert.equal(revertible.status, RevertibleStatus.Disposed);
 			unsubscribe();
@@ -925,8 +927,8 @@ describe("sharedTreeView", () => {
 			});
 
 			insertFirstNode(view, "A");
-			revertiblesCreated[0].revert();
-			revertiblesCreated[1].revert();
+			revertiblesCreated[0].revert(true);
+			revertiblesCreated[1].revert(true);
 
 			assert.deepEqual(commitKinds, [CommitKind.Default, CommitKind.Undo, CommitKind.Redo]);
 
@@ -978,10 +980,10 @@ describe("sharedTreeView", () => {
 			// It should still be possible to revert the the child branch's revertibles
 			assert.equal(stacks.undoStack.length, 2);
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			stacks.undoStack.pop()!.revert();
+			stacks.undoStack.pop()!.revert(true);
 			assert.equal(getTestValue(fork), "B");
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			stacks.undoStack.pop()!.revert();
+			stacks.undoStack.pop()!.revert(true);
 			assert.equal(getTestValue(fork), "A");
 
 			stacks.unsubscribe();

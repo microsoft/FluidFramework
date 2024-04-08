@@ -254,11 +254,11 @@ export function applyUndoRedoEdit(
 ): void {
 	switch (operation) {
 		case "undo": {
-			undoStack.pop()?.revert();
+			undoStack.pop()?.revert(true);
 			break;
 		}
 		case "redo": {
-			redoStack.pop()?.revert();
+			redoStack.pop()?.revert(true);
 			break;
 		}
 		default:

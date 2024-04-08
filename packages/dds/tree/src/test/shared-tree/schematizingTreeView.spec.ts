@@ -236,7 +236,7 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(undoStack.length, 1);
 		assert.equal(redoStack.length, 0);
 
-		undoStack.pop()?.revert();
+		undoStack.pop()?.revert(true);
 		assert.equal(undoStack.length, 0);
 		assert.equal(redoStack.length, 1);
 	});
