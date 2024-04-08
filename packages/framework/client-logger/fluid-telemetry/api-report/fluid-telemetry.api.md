@@ -4,8 +4,15 @@
 
 ```ts
 
+import { ApplicationInsights } from '@microsoft/applicationinsights-web';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import type { IFluidContainer } from '@fluidframework/fluid-static';
+
+// @beta
+export class AppInsightsTelemetryConsumer implements ITelemetryConsumer {
+    constructor(appInsightsClient: ApplicationInsights);
+    consume(event: IFluidTelemetry): void;
+}
 
 // @beta
 export interface ContainerConnectedTelemetry extends IContainerTelemetry {

@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { assert, expect } from "chai";
 import { ITypeValidationConfig, PackageJson } from "@fluidframework/build-tools";
+import { assert, expect } from "chai";
 
 import {
 	VersionOptions,
-	updateTypeTestDependency,
 	previousVersion,
 	resetBrokenTests,
+	updateTypeTestDependency,
 } from "../../src/commands/typetests";
 
 /**

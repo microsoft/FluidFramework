@@ -63,9 +63,7 @@ export type Anchor = Brand<number, "rebaser.Anchor">;
 
 // @internal
 export interface AnchorEvents {
-    afterChange(anchor: AnchorNode): void;
     afterDestroy(anchor: AnchorNode): void;
-    beforeChange(anchor: AnchorNode): void;
     childrenChanged(anchor: AnchorNode): void;
     childrenChanging(anchor: AnchorNode): void;
     subtreeChanged(anchor: AnchorNode): void;
@@ -157,9 +155,6 @@ export interface ArrayLikeMut<TGet, TSet extends TGet = TGet> extends ArrayLike<
     [n: number]: TSet;
 }
 
-// @public
-export type ArrayToUnion<T extends readonly unknown[]> = T[number];
-
 // @internal
 export type AssignableFieldKinds = typeof FieldKinds.optional | typeof FieldKinds.required;
 
@@ -241,8 +236,8 @@ export enum CommitKind {
 
 // @public
 export interface CommitMetadata {
-    isLocal: boolean;
-    kind: CommitKind;
+    readonly isLocal: boolean;
+    readonly kind: CommitKind;
 }
 
 // @internal
@@ -611,7 +606,7 @@ export type FlexImplicitFieldSchema = FlexFieldSchema | FlexImplicitAllowedTypes
 export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
 // @public
-export type FlexListToUnion<TList extends FlexList> = ExtractItemType<ArrayToUnion<TList>>;
+export type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
 // @internal
 export type FlexMapFieldSchema = FlexFieldSchema<typeof FieldKinds.optional | typeof FieldKinds.sequence>;
@@ -747,8 +742,6 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
 
 // @internal
 export interface FlexTreeNodeEvents {
-    afterChange(event: TreeEvent): void;
-    beforeChange(event: TreeEvent): void;
     changing(upPath: UpPath): void;
     subtreeChanging(upPath: UpPath): PathVisitor | void;
 }
@@ -1092,7 +1085,7 @@ export interface ITransaction {
 
 // @public
 export interface ITree extends IChannel {
-    schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TreeFieldFromImplicitField<TRoot>>;
+    schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TRoot>;
 }
 
 // @internal
@@ -1786,7 +1779,7 @@ export interface TreeAdapter {
 // @public
 export interface TreeApi extends TreeNodeApi {
     runTransaction<TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void | "rollback"): void;
-    runTransaction<TRoot>(tree: TreeView<TRoot>, transaction: (root: TRoot) => void | "rollback"): void;
+    runTransaction<TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void | "rollback"): void;
 }
 
 // @public
@@ -1853,11 +1846,6 @@ export interface TreeContent<TRoot extends FlexFieldSchema = FlexFieldSchema> ex
 export interface TreeDataContext {
     fieldSource?(key: FieldKey, schema: TreeFieldStoredSchema): undefined | FieldGenerator;
     readonly schema: FlexTreeSchema;
-}
-
-// @internal
-export interface TreeEvent {
-    readonly target: FlexTreeNode;
 }
 
 // @public
@@ -2020,10 +2008,11 @@ export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
 ][_InlineTrick];
 
 // @public
-export interface TreeView<in out TRoot> extends IDisposable {
+export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposable {
     readonly error?: SchemaIncompatible;
     readonly events: ISubscribable<TreeViewEvents>;
-    readonly root: TRoot;
+    get root(): TreeFieldFromImplicitField<TSchema>;
+    set root(newRoot: InsertableTreeFieldFromImplicitField<TSchema>);
     upgradeSchema(): void;
 }
 

@@ -55,7 +55,7 @@
 		}
 	},
 	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"types": "./dist/odsp-driver-public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
@@ -177,6 +177,14 @@
 				"forwardCompat": false
 			},
 			"ClassDeclaration_OdspDriverUrlResolverForShareLink": {
+				"forwardCompat": false
+			},
+			"RemovedFunctionDeclaration_getApiRoot": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedFunctionDeclaration_isOdcOrigin": {
+				"backCompat": false,
 				"forwardCompat": false
 			}
 		}
