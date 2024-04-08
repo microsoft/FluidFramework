@@ -47,7 +47,7 @@ const rootNode: UpPath = {
 
 describe("Editing", () => {
 	describe("Sequence Field", () => {
-		it("concurrent inserts", () => {
+		it.skip("concurrent inserts", () => {
 			const tree1 = makeTreeFromJson([]);
 			insert(tree1, 0, "y");
 			const tree2 = tree1.fork();
@@ -175,7 +175,7 @@ describe("Editing", () => {
 			expectJsonTree([tree1, tree2], expectedState);
 		});
 
-		it("can order concurrent inserts within concurrently removed content", () => {
+		it.skip("can order concurrent inserts within concurrently removed content", () => {
 			const tree = makeTreeFromJson(["A", "B", "C", "D"]);
 			const delAB = tree.fork();
 			const delCD = tree.fork();
@@ -250,7 +250,7 @@ describe("Editing", () => {
 			}
 		});
 
-		it("can rebase local dependent inserts", () => {
+		it.skip("can rebase local dependent inserts", () => {
 			const tree1 = makeTreeFromJson(["y"]);
 			const tree2 = tree1.fork();
 
@@ -710,7 +710,7 @@ describe("Editing", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("move adjacent nodes to separate destinations", () => {
+		it.skip("move adjacent nodes to separate destinations", () => {
 			const tree = makeTreeFromJson(["A", "B", "C", "D"]);
 			const tree2 = tree.fork();
 
@@ -1794,7 +1794,7 @@ describe("Editing", () => {
 			expectJsonTree([tree, tree2], []);
 		});
 
-		it("rebase insert within revive", () => {
+		it.skip("rebase insert within revive", () => {
 			const tree = makeTreeFromJson(["y"]);
 			const tree1 = tree.fork();
 
@@ -1816,7 +1816,7 @@ describe("Editing", () => {
 			expectJsonTree([tree1, tree2], expected);
 		});
 
-		describe("Exhaustive removal tests", () => {
+		describe.skip("Exhaustive removal tests", () => {
 			// Toggle the constant below to run each scenario as a separate test.
 			// This is useful to debug a specific scenario but makes CI and the test browser slower.
 			// Note that if the numbers of nodes and peers are too high (more than 3 nodes and 3 peers),

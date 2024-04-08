@@ -118,23 +118,23 @@ describe("beforeChange/afterChange events", () => {
 		// NOTE: events will fire for each node individually
 		root.myNumberSequence.insertAtStart([0, 1, 2, 3, 4]);
 
-		assert.strictEqual(rootBeforeChangeCount, 11);
-		assert.strictEqual(rootAfterChangeCount, 11);
+		assert.strictEqual(rootBeforeChangeCount, 7);
+		assert.strictEqual(rootAfterChangeCount, 7);
 
 		// Remove nodes into a sequence field - myNumberSequence; should fire events on the root node
 		// NOTE: events will fire for each node individually
 		root.myNumberSequence.removeRange(3);
 
-		assert.strictEqual(rootBeforeChangeCount, 13);
-		assert.strictEqual(rootAfterChangeCount, 13);
+		assert.strictEqual(rootBeforeChangeCount, 8);
+		assert.strictEqual(rootAfterChangeCount, 8);
 
 		// Move nodes in a sequence field - myNumberSequence; should fire events on the root node
 		// NOTE: events will fire for each node individually. Also this is a special case where the events are fired twice:
 		// once when detaching the nodes from the source location, and again when attaching them at the target location.
 		root.myNumberSequence.moveRangeToEnd(0, 2);
 
-		assert.strictEqual(rootBeforeChangeCount, 17);
-		assert.strictEqual(rootAfterChangeCount, 17);
+		assert.strictEqual(rootBeforeChangeCount, 10);
+		assert.strictEqual(rootAfterChangeCount, 10);
 	});
 
 	it("fire in the expected order and always together", () => {
@@ -187,8 +187,8 @@ describe("beforeChange/afterChange events", () => {
 		root.child.myInnerString = "new string in new child";
 
 		// Check the number of events fired is correct (otherwise the assertions in the listeners might not have ran)
-		assert.strictEqual(beforeCounter, 17);
-		assert.strictEqual(afterCounter, 17);
+		assert.strictEqual(beforeCounter, 10);
+		assert.strictEqual(afterCounter, 10);
 	});
 
 	it("event argument contains the expected node", () => {
@@ -246,8 +246,8 @@ describe("beforeChange/afterChange events", () => {
 		root.myNumberSequence.moveRangeToEnd(0, 2);
 
 		// Make sure the listeners fired (otherwise assertions might not have executed)
-		assert.strictEqual(rootBeforeCounter, 14);
-		assert.strictEqual(rootAfterCounter, 14);
+		assert.strictEqual(rootBeforeCounter, 7);
+		assert.strictEqual(rootAfterCounter, 7);
 
 		// Validate changes to fields of descendant nodes
 		// The listeners on the root node should still see the root node (not the child node, i.e., the one that changed)
@@ -256,8 +256,8 @@ describe("beforeChange/afterChange events", () => {
 		root.child.myInnerString = "new string in child";
 
 		// Make sure the listeners fired (otherwise assertions might not have executed)
-		assert.strictEqual(rootBeforeCounter, 15);
-		assert.strictEqual(rootAfterCounter, 15);
+		assert.strictEqual(rootBeforeCounter, 8);
+		assert.strictEqual(rootAfterCounter, 8);
 		assert.strictEqual(childBeforeCounter, 1);
 		assert.strictEqual(childAfterCounter, 1);
 	});
@@ -425,28 +425,12 @@ describe("beforeChange/afterChange events", () => {
 		});
 		root.on("afterChange", (args: unknown) => {
 			totalListenerCalls++;
-			switch (totalListenerCalls) {
-				case 2: {
-					// After inserting the first node
-					assert.deepEqual([...root.myNumberSequence], [0]);
-					break;
-				}
-				case 4: {
-					// After inserting the second node
-					assert.deepEqual([...root.myNumberSequence], [0, 1]);
-					break;
-				}
-				case 6: {
-					// After inserting the third node
-					assert.deepEqual([...root.myNumberSequence], [0, 1, 2]);
-					break;
-				}
-				// No default
-			}
+			assert.equal(totalListenerCalls, 2);
+			assert.deepEqual([...root.myNumberSequence], [0, 1, 2]);
 		});
 
 		root.myNumberSequence.insertAtStart([0, 1, 2]);
-		assert.strictEqual(totalListenerCalls, 6); // 3 inserted nodes * 2 events each
+		assert.strictEqual(totalListenerCalls, 2);
 	});
 
 	it("tree is in correct state when events fire - node removals from sequence fields", () => {
@@ -474,17 +458,12 @@ describe("beforeChange/afterChange events", () => {
 		});
 		root.on("afterChange", (args: unknown) => {
 			totalListenerCalls++;
-			if (totalListenerCalls === 2) {
-				// After removing the first node
-				assert.deepEqual([...root.myNumberSequence], [0, 2, 3, 4]);
-			} else if (totalListenerCalls === 4) {
-				// After removing the second node
-				assert.deepEqual([...root.myNumberSequence], [0, 3, 4]);
-			}
+			assert.equal(totalListenerCalls, 2);
+			assert.deepEqual([...root.myNumberSequence], [0, 3, 4]);
 		});
 
 		root.myNumberSequence.removeRange(1, 3);
-		assert.strictEqual(totalListenerCalls, 4); // 2 removed nodes * 2 events each
+		assert.strictEqual(totalListenerCalls, 2);
 	});
 
 	it("tree is in correct state when events fire - node moves in sequence fields", () => {
@@ -510,7 +489,7 @@ describe("beforeChange/afterChange events", () => {
 				}
 				case 3: {
 					// Before detaching the second node
-					assert.deepEqual([...root.myNumberSequence], [1, 2]);
+					assert.deepEqual([...root.myNumberSequence], [2]);
 					break;
 				}
 				case 5: {
@@ -528,33 +507,17 @@ describe("beforeChange/afterChange events", () => {
 		});
 		root.on("afterChange", (args: unknown) => {
 			totalListenerCalls++;
-			switch (totalListenerCalls) {
-				case 2: {
-					// After detaching the first node
-					assert.deepEqual([...root.myNumberSequence], [1, 2]);
-					break;
-				}
-				case 4: {
-					// After detaching the second node
-					assert.deepEqual([...root.myNumberSequence], [2]);
-					break;
-				}
-				case 6: {
-					// After re-attaching the first node
-					assert.deepEqual([...root.myNumberSequence], [2, 0]);
-					break;
-				}
-				case 8: {
-					// After re-attaching the second node
-					assert.deepEqual([...root.myNumberSequence], [2, 0, 1]);
-					break;
-				}
-				// No default
+			if (totalListenerCalls === 2) {
+				// After detaching two nodes
+				assert.deepEqual([...root.myNumberSequence], [2]);
+			} else if (totalListenerCalls === 4) {
+				// After re-attaching two nodes
+				assert.deepEqual([...root.myNumberSequence], [2, 0, 1]);
 			}
 		});
 
 		root.myNumberSequence.moveRangeToEnd(0, 2);
-		assert.strictEqual(totalListenerCalls, 8); // 2 moved nodes * 2 events each * 2 times fired (detach + attach)
+		assert.strictEqual(totalListenerCalls, 4);
 	});
 
 	it("not emitted by nodes when they are replaced", () => {

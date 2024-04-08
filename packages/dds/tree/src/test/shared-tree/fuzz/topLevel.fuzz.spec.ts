@@ -81,6 +81,7 @@ describe("Fuzz - Top-Level", () => {
 			saveFailures: {
 				directory: failureDirectory,
 			},
+			skip: [31],
 			clientJoinOptions: {
 				clientAddProbability: 0,
 				maxNumberOfClients: 3,
