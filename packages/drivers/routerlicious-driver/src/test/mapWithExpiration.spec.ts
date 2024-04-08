@@ -283,24 +283,24 @@ describe("MapWithExpiration", () => {
 			},
 		);
 
-		// In ESM the the 'this' value is 'undefined', but in CJS it is '{__esModule: true}'.
-		// Therefore, we exempt the test value 'undefined' from the below assertion.
-		if (this !== undefined) {
-			testForEachCases("Arrow functions don't pick up thisArg", (maps, thisArgs) => {
-				for (const thisArg of thisArgs) {
-					for (const map of maps) {
-						map.set(1, "one");
-						map.forEach(() => {
-							assert.notEqual(
-								this,
-								thisArg,
-								"Expected 'this' to be unchanged for arrow fn",
-							);
-						}, thisArg);
-					}
+		testForEachCases("Arrow functions don't pick up thisArg", (maps, thisArgs) => {
+			for (const thisArg of thisArgs) {
+				for (const map of maps) {
+					map.set(1, "one");
+
+					// eslint-disable-next-line @typescript-eslint/no-this-alias
+					const thisOutsideForEach = this;
+
+					map.forEach(() => {
+						assert.equal(
+							this,
+							thisOutsideForEach,
+							"Expected 'this' to be unchanged for arrow fn",
+						);
+					}, thisArg);
 				}
-			});
-		}
+			}
+		});
 	});
 
 	it("toString", () => {
