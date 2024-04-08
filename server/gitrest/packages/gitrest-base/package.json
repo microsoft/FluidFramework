@@ -1,5 +1,5 @@
 {
-	"name": "@fluidframework/gitrest-base",
+	"name": "@fluid-internal/gitrest-base",
 	"version": "1.0.0",
 	"description": "Git REST API base components",
 	"homepage": "https://fluidframework.com",
