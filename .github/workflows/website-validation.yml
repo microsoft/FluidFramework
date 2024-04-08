@@ -73,7 +73,7 @@ jobs:
           version: "^7"
       - uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7 # ratchet:actions/setup-node@v3
         with:
-          node-version: "16"
+          node-version: "18"
           cache: "pnpm"
           cache-dependency-path: docs/pnpm-lock.yaml
       - name: Create results folder
