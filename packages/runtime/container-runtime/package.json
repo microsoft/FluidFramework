@@ -43,7 +43,7 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./test/containerRuntime": {
+		"./internal/test/containerRuntime": {
 			"import": {
 				"types": "./lib/containerRuntime.d.ts",
 				"default": "./lib/containerRuntime.js"
@@ -53,7 +53,7 @@
 				"default": "./dist/containerRuntime.js"
 			}
 		},
-		"./test/deltaScheduler": {
+		"./internal/test/deltaScheduler": {
 			"import": {
 				"types": "./lib/deltaScheduler.d.ts",
 				"default": "./lib/deltaScheduler.js"
@@ -63,7 +63,7 @@
 				"default": "./dist/deltaScheduler.js"
 			}
 		},
-		"./test/scheduleManager": {
+		"./internal/test/scheduleManager": {
 			"import": {
 				"types": "./lib/scheduleManager.d.ts",
 				"default": "./lib/scheduleManager.js"
@@ -73,7 +73,7 @@
 				"default": "./dist/scheduleManager.js"
 			}
 		},
-		"./test/blobManager": {
+		"./internal/test/blobManager": {
 			"import": {
 				"types": "./lib/blobManager.d.ts",
 				"default": "./lib/blobManager.js"
@@ -83,7 +83,7 @@
 				"default": "./dist/blobManager.js"
 			}
 		},
-		"./test/summary": {
+		"./internal/test/summary": {
 			"import": {
 				"types": "./lib/summary/index.d.ts",
 				"default": "./lib/summary/index.js"
@@ -93,7 +93,7 @@
 				"default": "./dist/summary/index.js"
 			}
 		},
-		"./test/gc": {
+		"./internal/test/gc": {
 			"import": {
 				"types": "./lib/gc/index.d.ts",
 				"default": "./lib/gc/index.js"

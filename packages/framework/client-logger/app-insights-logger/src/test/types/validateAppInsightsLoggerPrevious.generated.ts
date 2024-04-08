@@ -96,30 +96,6 @@ use_old_InterfaceDeclaration_NamespaceFilter(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_TelemetryEventCategory": {"forwardCompat": false}
-*/
-declare function get_old_TypeAliasDeclaration_TelemetryEventCategory():
-    TypeOnly<old.TelemetryEventCategory>;
-declare function use_current_TypeAliasDeclaration_TelemetryEventCategory(
-    use: TypeOnly<current.TelemetryEventCategory>): void;
-use_current_TypeAliasDeclaration_TelemetryEventCategory(
-    get_old_TypeAliasDeclaration_TelemetryEventCategory());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_TelemetryEventCategory": {"backCompat": false}
-*/
-declare function get_current_TypeAliasDeclaration_TelemetryEventCategory():
-    TypeOnly<current.TelemetryEventCategory>;
-declare function use_old_TypeAliasDeclaration_TelemetryEventCategory(
-    use: TypeOnly<old.TelemetryEventCategory>): void;
-use_old_TypeAliasDeclaration_TelemetryEventCategory(
-    get_current_TypeAliasDeclaration_TelemetryEventCategory());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_TelemetryFilter": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_TelemetryFilter():
