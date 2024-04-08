@@ -1124,7 +1124,7 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 
 	// Called when refcount is set to 0.
 	// Node may be kept alive by children or events after this point.
-	protected dispose(): void {
+	protected onUnreferenced(): void {
 		this.considerDispose();
 	}
 
