@@ -13,10 +13,10 @@ import {
 	ContainerRuntime,
 	IGCRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
-// eslint-disable-next-line import/no-internal-modules
 import {
 	ISweepMessage,
 	disableDatastoreSweepKey,
+	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/gc";
 import {
 	ISummarizeEventProps,
