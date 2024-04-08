@@ -114,9 +114,9 @@ export {
 	RangeQueryResult,
 	setInRangeMap,
 	deleteFromRangeMap,
-	getAllRangeSegments,
-	FullQueryResult,
+	partitionAllRangesWithinMap,
 	mergeRangesWithinMap,
+	RangeFullQueryResult,
 } from "./rangeMap.js";
 
 export {

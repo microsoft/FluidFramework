@@ -229,14 +229,29 @@ export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: n
 	}
 }
 
-export function getAllRangeSegments<T>(
+/**
+ * Given a query range, partition the range map into multiple segments according to the following rules:
+ *
+ * 1. If a range entry overlaps with the query range, store the overlapping portion as a segment in the result.
+ * 2. If there is an "empty" space between two consecutive range entries, store the range between the end
+ * of the first entry and the start of the second entry as a new segment with an undefined value.
+ *
+ * For example, consider a range map:
+ *
+ * map = [[start: 1, length: 3, value: 'a'], [start: 6, length: 2, value: 'b']]
+ *
+ * When partitioning the range map within the query range [0, 7], the result will be:
+ *
+ * [[ start: 0, length: 1, value: undefined ], [ start: 1, length: 3, value: 'a' ],
+ * [ start: 4, length: 2, value: undefined ], [ start: 6, length: 1, value: 'b' ]]
+ */
+export function partitionAllRangesWithinMap<T>(
 	map: RangeMap<T>,
 	start: number,
 	length: number,
-): FullQueryResult<T>[] {
-	const result: FullQueryResult<T>[] = [];
+): RangeFullQueryResult<T>[] {
+	const result: RangeFullQueryResult<T>[] = [];
 	let currentStart = start;
-	// let currentIndex = 0;
 
 	// iterate over the entire range
 	while (currentStart < start + length) {
@@ -276,8 +291,16 @@ export function getAllRangeSegments<T>(
 	return result;
 }
 
+/**
+ * Traverse all range entries within the map and merge adjacent entries under two conditions:
+ *
+ * 1. The end point of the first entry matches the start point of the second entry.
+ * 2. The values of the two entries are identical.
+ *
+ * If both conditions are met, the adjacent entries are merged into a single entry.
+ */
 export function mergeRangesWithinMap<T>(entries: RangeMap<T>): RangeMap<T> {
-	const result: RangeEntry<T>[] = [];
+	const result: RangeMap<T> = [];
 
 	for (const entry of entries) {
 		const lastIndex = result.length - 1;
@@ -305,7 +328,7 @@ export function mergeRangesWithinMap<T>(entries: RangeMap<T>): RangeMap<T> {
 	return result;
 }
 
-export interface FullQueryResult<T> {
+export interface RangeFullQueryResult<T> {
 	value: T | undefined;
 	start: number;
 	length: number;

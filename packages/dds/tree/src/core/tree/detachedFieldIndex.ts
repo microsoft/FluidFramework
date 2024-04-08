@@ -14,14 +14,13 @@ import {
 	brand,
 	deleteFromNestedMap,
 	deleteFromRangeMap,
-	getAllRangeSegments,
+	partitionAllRangesWithinMap,
 	idAllocatorFromMaxId,
 	populateNestedMap,
 	setInNestedMap,
 	setInRangeMap,
 	tryGetFromNestedMap,
 	type RangeMap,
-	FullQueryResult,
 	mergeRangesWithinMap,
 } from "../../util/index.js";
 import { RevisionTagCodec } from "../rebase/index.js";
@@ -46,7 +45,8 @@ export type ForestRootId = Brand<number, "tree.ForestRootId">;
 export class DetachedFieldIndex {
 	// TODO: don't store the field key in the index, it can be derived from the root ID
 	private detachedNodeToField: NestedMap<Major, Minor, ForestRootId> = new Map();
-	private readonly detachedNodeRange: Map<Major, RangeMap<ForestRootId>> = new Map();
+	// The data structure designed to store a `contiguous` range of detached nodes sharing the same root.
+	private readonly detachedNodeRangeMap: Map<Major, RangeMap<ForestRootId>> = new Map();
 	private readonly codec: IJsonCodec<DetachedFieldSummaryData, Format>;
 	private readonly options: ICodecOptions;
 
@@ -113,13 +113,13 @@ export class DetachedFieldIndex {
 				}
 			}
 		}
-		// update the rangeMap
-		const currentRangeMap = this.detachedNodeRange.get(current);
+		// Update the detached node ranges accordingly
+		const currentRangeMap = this.detachedNodeRangeMap.get(current);
 		if (currentRangeMap !== undefined) {
-			this.detachedNodeRange.delete(current);
-			const updatedRangeMap = this.detachedNodeRange.get(updated);
+			this.detachedNodeRangeMap.delete(current);
+			const updatedRangeMap = this.detachedNodeRangeMap.get(updated);
 			if (updatedRangeMap === undefined) {
-				this.detachedNodeRange.set(updated, currentRangeMap);
+				this.detachedNodeRangeMap.set(updated, currentRangeMap);
 			} else {
 				for (const rangeEntry of currentRangeMap) {
 					const { start, length, value } = rangeEntry;
@@ -164,13 +164,12 @@ export class DetachedFieldIndex {
 			);
 			assert(found, 0x7ab /* Unable to delete unknown entry */);
 		}
-		if (this.detachedNodeRange.has(nodeId.major)) {
+		// Delete the detached node ranges accordingly
+		if (this.detachedNodeRangeMap.has(nodeId.major)) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const rangeMap = this.detachedNodeRange.get(nodeId.major)!;
+			const rangeMap = this.detachedNodeRangeMap.get(nodeId.major)!;
 			deleteFromRangeMap(rangeMap, nodeId.minor, count);
 		}
-		// const found = deleteFromNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor);
-		// assert(found, 0x7ab /* Unable to delete unknown entry */);
 	}
 
 	/**
@@ -188,10 +187,9 @@ export class DetachedFieldIndex {
 					) === undefined,
 					0x7ce /* Detached node ID already exists in index */,
 				);
-				// setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor + i, root + i);
 				setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor + i, root);
 			}
-			// set the range
+			// Update the detached node ranges accordingly
 			this.setDetachedNodeRange(nodeId, count, root);
 		}
 		return root;
@@ -202,24 +200,26 @@ export class DetachedFieldIndex {
 		count: number,
 		root: ForestRootId,
 	): void {
-		if (!this.detachedNodeRange.has(nodeId.major)) {
-			this.detachedNodeRange.set(nodeId.major, []);
+		if (!this.detachedNodeRangeMap.has(nodeId.major)) {
+			this.detachedNodeRangeMap.set(nodeId.major, []);
 		}
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const rangeMap = this.detachedNodeRange.get(nodeId.major)!;
+		const rangeMap = this.detachedNodeRangeMap.get(nodeId.major)!;
 		setInRangeMap(rangeMap, nodeId.minor, count, root);
 	}
 
-	public getAllDetachedRanges(
+	public partitionDetachedNodeRanges(
 		nodeId: Delta.DetachedNodeId,
 		count: number,
-	): FullQueryResult<ForestRootId>[] | undefined {
-		if (!this.detachedNodeRange.has(nodeId.major)) {
+	): { root: ForestRootId | undefined; start: number; length: number }[] | undefined {
+		const rangeMap = this.detachedNodeRangeMap.get(nodeId.major);
+		if (!rangeMap) {
 			return undefined;
 		}
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const rangeMap = this.detachedNodeRange.get(nodeId.major)!;
-		return getAllRangeSegments(rangeMap, nodeId.minor, count);
+		const results = partitionAllRangesWithinMap(rangeMap, nodeId.minor, count).map(
+			({ value, start, length }) => ({ root: value, start, length }),
+		);
+		return results;
 	}
 
 	public encode(): JsonCompatibleReadOnly {
@@ -240,13 +240,13 @@ export class DetachedFieldIndex {
 		) as IdAllocator<ForestRootId>;
 		this.detachedNodeToField = detachedFieldIndex.data;
 
-		// build the rangemap
+		// Build the detached node range accordingly
 		for (const [major, innerMap] of this.detachedNodeToField) {
 			const rangeEntries = [];
 			for (const [minor, entry] of innerMap) {
 				rangeEntries.push({ start: minor, length: 1, value: entry });
 			}
-			this.detachedNodeRange.set(major, mergeRangesWithinMap(rangeEntries));
+			this.detachedNodeRangeMap.set(major, mergeRangesWithinMap(rangeEntries));
 		}
 	}
 }

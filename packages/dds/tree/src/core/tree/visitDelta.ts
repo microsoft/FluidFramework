@@ -107,12 +107,15 @@ export function visitDelta(
 	fixedPointVisitOfRoots(visitor, attachPassRoots, attachConfig);
 	collectDestroys(delta.destroy, attachConfig);
 	for (const { id, count } of rootDestructions) {
-		for (let i = 0; i < count; i += 1) {
-			const offsetId = offsetDetachId(id, i);
-			const root = detachedFieldIndex.getEntry(offsetId);
-			const field = detachedFieldIndex.toFieldKey(root);
-			visitor.destroy(field, 1);
-			detachedFieldIndex.deleteEntry(offsetId);
+		const nodeRangeToDestruct = detachedFieldIndex.partitionDetachedNodeRanges(id, count);
+		if (nodeRangeToDestruct) {
+			for (const { root, start, length } of nodeRangeToDestruct) {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const field = detachedFieldIndex.toFieldKey(root!);
+				visitor.destroy(field, length);
+				const offsettedId = offsetDetachId(id, start - id.minor);
+				detachedFieldIndex.deleteEntry(offsettedId, length);
+			}
 		}
 	}
 }
@@ -401,24 +404,13 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 				visitNode(index, mark.fields, visitor, config);
 			}
 			if (isDetachMark(mark)) {
+				/* Create a single root for a contiguous range of detached nodes  */
 				const root = config.detachedFieldIndex.createEntry(mark.detach, mark.count);
 				if (mark.fields !== undefined) {
 					config.attachPassRoots.set(root, mark.fields);
 				}
 				const field = config.detachedFieldIndex.toFieldKey(root);
 				visitor.detach({ start: index, end: index + mark.count }, field);
-				/*
-				for (let i = 0; i < mark.count; i += 1) {
-					const root = config.detachedFieldIndex.createEntry(
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						offsetDetachId(mark.detach!, i),
-					);
-					if (mark.fields !== undefined) {
-						config.attachPassRoots.set(root, mark.fields);
-					}
-					const field = config.detachedFieldIndex.toFieldKey(root);
-					visitor.detach({ start: index, end: index + 1 }, field);
-				} */
 			} else if (!isAttachMark(mark)) {
 				index += mark.count;
 			}
@@ -426,42 +418,39 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 	}
 }
 
+/**
+ * For the non-atomization purpose of the tree delta visit behavior, we will partition the existing
+ * detached nodes into multiple segments. This partitioning is determined by whether the nodes within
+ * a segment share the same root or not. If the shared root is undefined, the tree-building process
+ * will be applied.
+ */
 function buildTrees(
 	id: Delta.DetachedNodeId,
 	trees: readonly ITreeCursorSynchronous[],
 	config: PassConfig,
 	visitor: DeltaVisitor,
 ) {
-	const rangeQueryResults = config.detachedFieldIndex.getAllDetachedRanges(id, trees.length);
+	const nodeRangeToBuildTrees = config.detachedFieldIndex.partitionDetachedNodeRanges(
+		id,
+		trees.length,
+	);
 
-	if (rangeQueryResults === undefined) {
+	if (nodeRangeToBuildTrees === undefined) {
 		const root = config.detachedFieldIndex.createEntry(id, trees.length);
 		const field = config.detachedFieldIndex.toFieldKey(root);
 		visitor.create(trees, field);
 	} else {
 		let i = 0; // index for trees
-		for (const { value, start, length } of rangeQueryResults) {
-			if (value === undefined) {
+		for (const { root, start, length } of nodeRangeToBuildTrees) {
+			if (root === undefined) {
 				const offsettedId = offsetDetachId(id, start - id.minor);
-				const root = config.detachedFieldIndex.createEntry(offsettedId, length);
-				const field = config.detachedFieldIndex.toFieldKey(root);
+				const newRoot = config.detachedFieldIndex.createEntry(offsettedId, length);
+				const field = config.detachedFieldIndex.toFieldKey(newRoot);
 				visitor.create(trees.slice(i, i + length), field);
 			}
 			i += length;
 		}
 	}
-	/*
-	for (let i = 0; i < trees.length; i += 1) {
-		const offsettedId = offsetDetachId(id, i);
-		let root = config.detachedFieldIndex.tryGetEntry(offsettedId);
-		// Tree building is idempotent. We can therefore ignore build instructions for trees that already exist.
-		// The idempotence is leveraged by undo/redo as well as sandwich rebasing.
-		if (root === undefined) {
-			root = config.detachedFieldIndex.createEntry(offsettedId);
-			const field = config.detachedFieldIndex.toFieldKey(root);
-			visitor.create([trees[i]], field);
-		}
-	} */
 }
 
 function processBuilds(
@@ -498,19 +487,19 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 			if (isAttachMark(mark) || isReplaceMark(mark)) {
 				// break and find all ranges
 				assert(mark.attach !== undefined, "mark attach should not be undefined");
-				let rangeQueryResults = config.detachedFieldIndex.getAllDetachedRanges(
+				let nodeRangeToAttach = config.detachedFieldIndex.partitionDetachedNodeRanges(
 					mark.attach,
 					mark.count,
 				);
-				if (rangeQueryResults === undefined) {
-					rangeQueryResults = [
-						{ value: undefined, start: mark.attach.minor, length: mark.count },
+				if (nodeRangeToAttach === undefined) {
+					nodeRangeToAttach = [
+						{ root: undefined, start: mark.attach.minor, length: mark.count },
 					];
 				}
 				let i = 0;
-				for (const { value, start, length } of rangeQueryResults) {
-					let sourceRoot = value;
+				for (const { root, start, length } of nodeRangeToAttach) {
 					const offsetAttachId = offsetDetachId(mark.attach, start - mark.attach.minor);
+					let sourceRoot = root;
 					if (sourceRoot === undefined) {
 						const trees = [];
 						for (let offset = 0; offset < length; offset++) {
