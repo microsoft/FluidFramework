@@ -74,7 +74,7 @@ function generateAdjacentCells(maxId: number): SF.IdRange[] {
 	return [{ id: brand(0), count: maxId + 1 }];
 }
 
-const hasAdjacentCells = (m: SF.Mark<unknown>): boolean => m.cellId?.adjacentCells !== undefined;
+const hasAdjacentCells = (m: SF.Mark): boolean => m.cellId?.adjacentCells !== undefined;
 function withAdjacentTombstones(marks: readonly SF.Mark[]): SF.Mark[] {
 	const output = [...marks];
 	let markIdx = marks.findIndex(hasAdjacentCells);
