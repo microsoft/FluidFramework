@@ -22,7 +22,7 @@ export const VisualSharedTreeNodeKind = {
 /**
  * Base schema interface.
  */
-interface SharedTreeSchemaNode {
+export interface SharedTreeSchemaNode {
 	/**
 	 * Name of the SharedTree schema.
 	 */
