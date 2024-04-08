@@ -20,18 +20,18 @@ import {
 import { type EditLog } from "@fluid-experimental/tree/test/EditLog";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { LoaderHeader } from "@fluidframework/container-definitions";
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	type ContainerRuntime,
 	type IContainerRuntimeOptions,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { type IChannel } from "@fluidframework/datastore-definitions";
 import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import {
 	type ITree,
 	SchemaFactory,
@@ -65,7 +65,7 @@ class HandleType extends builder.object("handleObj", {
 	handle: builder.optional(builder.handle),
 }) {}
 
-function getNewTreeView(tree: ITree): TreeView<HandleType> {
+function getNewTreeView(tree: ITree): TreeView<typeof HandleType> {
 	return tree.schematize(
 		new TreeConfiguration(HandleType, () => ({
 			handle: undefined,

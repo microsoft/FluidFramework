@@ -15,11 +15,11 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/index.d.ts",
+				"types": "./lib/container-loader-public.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/index.d.ts",
+				"types": "./dist/container-loader-public.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
@@ -71,16 +71,6 @@
 			"require": {
 				"types": "./dist/utils.d.ts",
 				"default": "./dist/utils.js"
-			}
-		},
-		"./public": {
-			"import": {
-				"types": "./lib/container-loader-public.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/container-loader-public.d.ts",
-				"default": "./dist/index.js"
 			}
 		},
 		"./alpha": {
@@ -177,7 +167,7 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.13.3",
+		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.6.2",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/test-loader-utils": "workspace:~",

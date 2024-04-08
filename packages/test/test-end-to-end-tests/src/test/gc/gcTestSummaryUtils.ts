@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	IGarbageCollectionState,
 	concatGarbageCollectionStates,
@@ -18,8 +18,8 @@ import {
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
-} from "@fluidframework/runtime-definitions";
-import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
+} from "@fluidframework/runtime-definitions/internal";
+import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base/internal";
 
 /**
  * Returns the garbage collection state from the GC tree in the summary.

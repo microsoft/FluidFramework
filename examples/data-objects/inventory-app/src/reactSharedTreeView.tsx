@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject } from "@fluidframework/aqueduct";
+// Lint rule can be disabled once eslint config is upgraded to 5.3.0+
+// eslint-disable-next-line import/no-internal-modules
+import { DataObject } from "@fluidframework/aqueduct/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
@@ -45,9 +47,9 @@ export const factory: IChannelFactory = SharedTree.getFactory();
 export abstract class TreeDataObject<
 	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
 > extends DataObject {
-	#tree?: TreeView<TreeFieldFromImplicitField<TSchema>>;
+	#tree?: TreeView<TSchema>;
 
-	public get tree(): TreeView<TreeFieldFromImplicitField<TSchema>> {
+	public get tree(): TreeView<TSchema> {
 		if (this.#tree === undefined) throw new Error(this.getUninitializedErrorString("tree"));
 		return this.#tree;
 	}

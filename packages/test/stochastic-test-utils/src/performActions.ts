@@ -62,8 +62,8 @@ export async function performFuzzActionsAsync<
  * this parameter might look like:
  * ```typescript
  * {
- *   add: (state, index) => { myList.insert(index); return state; },
- *   delete: (state, index) => { myList.delete(index); return state; }
+ * add: (state, index) => { myList.insert(index); return state; },
+ * delete: (state, index) => { myList.delete(index); return state; }
  * }
  * ```
  * @param initialState - Initial state for the test
@@ -97,7 +97,7 @@ export async function performFuzzActionsAsync<
 		| AsyncReducer<TOperation, TState>
 		| { [K in TOperation["type"]]: AsyncReducer<Extract<TOperation, { type: K }>, TState> },
 	initialState: TState,
-	saveInfo?: SaveInfo,
+	saveInfo: SaveInfo = { saveOnFailure: false, saveOnSuccess: false },
 ): Promise<TState> {
 	const operations: TOperation[] = [];
 	let state: TState = initialState;
@@ -118,14 +118,14 @@ export async function performFuzzActionsAsync<
 			state = (await applyOperation(operation)) ?? state;
 		}
 	} catch (err) {
-		if (saveInfo?.saveOnFailure === true) {
-			await saveOpsToFile(saveInfo.filepath, operations);
+		if (saveInfo.saveOnFailure !== false) {
+			await saveOpsToFile(saveInfo.saveOnFailure.path, operations);
 		}
 		throw err;
 	}
 
-	if (saveInfo?.saveOnSuccess === true) {
-		await saveOpsToFile(saveInfo.filepath, operations);
+	if (saveInfo.saveOnSuccess !== false) {
+		await saveOpsToFile(saveInfo.saveOnSuccess.path, operations);
 	}
 
 	return state;
@@ -189,8 +189,8 @@ export function performFuzzActions<
  * this parameter might look like:
  * ```typescript
  * {
- *   add: (state, index) => { myList.insert(index); return state; },
- *   delete: (state, index) => { myList.delete(index); return state; }
+ * add: (state, index) => { myList.insert(index); return state; },
+ * delete: (state, index) => { myList.delete(index); return state; }
  * }
  * ```
  * @param initialState - Initial state for the test
@@ -222,7 +222,7 @@ export function performFuzzActions<
 		| Reducer<TOperation, TState>
 		| { [K in TOperation["type"]]: Reducer<Extract<TOperation, { type: K }>, TState> },
 	initialState: TState,
-	saveInfo?: SaveInfo,
+	saveInfo: SaveInfo = { saveOnFailure: false, saveOnSuccess: false },
 ): TState {
 	const operations: TOperation[] = [];
 	let state: TState = initialState;
@@ -238,14 +238,14 @@ export function performFuzzActions<
 			state = applyOperation(operation);
 		}
 	} catch (err) {
-		if (saveInfo?.saveOnFailure === true) {
-			saveOpsToFileSync(saveInfo.filepath, operations);
+		if (saveInfo.saveOnFailure !== false) {
+			saveOpsToFileSync(saveInfo.saveOnFailure.path, operations);
 		}
 		throw err;
 	}
 
-	if (saveInfo?.saveOnSuccess === true) {
-		saveOpsToFileSync(saveInfo.filepath, operations);
+	if (saveInfo.saveOnSuccess !== false) {
+		saveOpsToFileSync(saveInfo.saveOnSuccess.path, operations);
 	}
 
 	return state;

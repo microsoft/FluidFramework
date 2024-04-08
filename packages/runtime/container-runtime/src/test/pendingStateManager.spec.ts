@@ -5,12 +5,10 @@
 
 import assert from "assert";
 
-import {
-	ContainerErrorTypes,
-	ICriticalContainerError,
-} from "@fluidframework/container-definitions";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { isILoggingError } from "@fluidframework/telemetry-utils";
+import { isILoggingError } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
 import type {

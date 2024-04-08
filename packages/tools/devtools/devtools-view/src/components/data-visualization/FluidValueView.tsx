@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { FluidObjectValueNode, HasContainerKey } from "@fluidframework/devtools-core";
+import type { FluidObjectValueNode, HasContainerKey } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
 import { useContainerFeaturesContext } from "../../ContainerFeatureFlagHelper.js";
@@ -39,6 +39,7 @@ export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 					label={label}
 					nodeTypeMetadata={node.typeMetadata}
 					inlineValue={String(node.value)}
+					tooltipContents={node.tooltipContents}
 				/>
 			)}
 		</>

@@ -9,7 +9,7 @@ import {
 	RBNode,
 	RBNodeActions,
 	RedBlackTree,
-} from "@fluidframework/merge-tree";
+} from "@fluidframework/merge-tree/internal";
 
 import { IInterval } from "./intervals/index.js";
 

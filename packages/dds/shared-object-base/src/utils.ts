@@ -5,7 +5,7 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
 import { IFluidSerializer } from "./serializer.js";
 

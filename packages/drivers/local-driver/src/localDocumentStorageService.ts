@@ -9,7 +9,7 @@ import {
 	bufferToString,
 	stringToBuffer,
 } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
@@ -17,7 +17,7 @@ import {
 	type ISnapshot,
 	type ISnapshotFetchOptions,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
 import {
 	ICreateBlobResponse,

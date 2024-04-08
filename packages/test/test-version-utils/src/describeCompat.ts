@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { getUnexpectedLogErrorException, ITestObjectProvider } from "@fluidframework/test-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	getUnexpectedLogErrorException,
+	ITestObjectProvider,
+} from "@fluidframework/test-utils/internal";
 
 import { testBaseVersion } from "./baseVersion.js";
 import {
@@ -104,7 +107,7 @@ function createCompatSuite(
 				}, apis);
 
 				afterEach(function (done: Mocha.Done) {
-					const logErrors = getUnexpectedLogErrorException(provider.logger);
+					const logErrors = getUnexpectedLogErrorException(provider.tracker);
 					// if the test failed for another reason
 					// then we don't need to check errors
 					// and fail the after each as well

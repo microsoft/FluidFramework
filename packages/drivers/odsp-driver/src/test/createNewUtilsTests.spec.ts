@@ -6,16 +6,16 @@
 import { strict as assert } from "node:assert";
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { ISnapshot } from "@fluidframework/driver-definitions";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	IFileEntry,
 	IOdspResolvedUrl,
 	ISharingLinkKind,
 	SharingLinkRole,
 	SharingLinkScope,
-} from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/odsp-driver-definitions/internal";
 import * as api from "@fluidframework/protocol-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { createNewFluidFile } from "../createFile.js";
 import { createNewContainerOnExistingFile } from "../createNewContainerOnExistingFile.js";

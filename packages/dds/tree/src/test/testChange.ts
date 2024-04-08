@@ -202,7 +202,10 @@ export interface AnchorRebaseData {
 	intentions: number[];
 }
 
-const emptyChange: TestChange = { intentions: [] };
+const emptyChange: TestChange = {
+	intentions: [],
+};
+
 const codec: IJsonCodec<
 	TestChange,
 	JsonCompatibleReadOnly,
@@ -225,6 +228,7 @@ export const TestChange = {
 	toDelta,
 	isEmpty,
 	codec,
+	codecs: makeCodecFamily([[0, codec]]),
 };
 deepFreeze(TestChange);
 
@@ -238,7 +242,11 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 	}
 
 	public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
-		return rebase(change, over.change) ?? { intentions: [] };
+		return (
+			rebase(change, over.change) ?? {
+				intentions: [],
+			}
+		);
 	}
 }
 
@@ -313,7 +321,7 @@ export function testChangeFamilyFactory(
 ): ChangeFamily<ChangeFamilyEditor, TestChange> {
 	const family = {
 		rebaser: rebaser ?? new TestChangeRebaser(),
-		codecs: makeCodecFamily<TestChange, ChangeEncodingContext>([[0, TestChange.codec]]),
+		codecs: TestChange.codecs,
 		buildEditor: () => ({
 			enterTransaction: () => assert.fail("Unexpected edit"),
 			exitTransaction: () => assert.fail("Unexpected edit"),

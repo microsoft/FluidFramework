@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { runWithRetry } from "../runWithRetry.js";
 

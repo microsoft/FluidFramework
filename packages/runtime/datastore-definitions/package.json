@@ -15,14 +15,6 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/index.d.ts"
-			},
-			"require": {
-				"types": "./dist/index.d.ts"
-			}
-		},
-		"./public": {
-			"import": {
 				"types": "./lib/datastore-definitions-public.d.ts"
 			},
 			"require": {
@@ -82,7 +74,7 @@
 		"@fluidframework/runtime-definitions": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.13.3",
+		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.6.2",
 		"@fluid-tools/build-cli": "^0.34.0",
 		"@fluidframework/build-common": "^2.0.3",

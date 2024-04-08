@@ -6,7 +6,7 @@
 import { type EventEmitterEventType } from '@fluid-internal/client-utils';
 import { AttachState } from '@fluidframework/container-definitions';
 import { type IEvent, type IFluidHandle, type IFluidLoadable } from '@fluidframework/core-interfaces';
-import { assert } from '@fluidframework/core-utils';
+import { assert } from '@fluidframework/core-utils/internal';
 import {
 	type IChannelAttributes,
 	IChannelFactory,
@@ -22,7 +22,7 @@ import {
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
 } from '@fluidframework/runtime-definitions';
-import { DataProcessingError, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
+import { DataProcessingError, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils/internal';
 import { type ITree } from '@fluidframework/tree';
 
 import {

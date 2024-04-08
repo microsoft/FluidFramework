@@ -12,7 +12,7 @@ import {
 	IFluidCodeDetailsComparer,
 	IFluidPackage,
 	isFluidPackage,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map";
 import {
 	ITestFluidObject,
@@ -22,7 +22,7 @@ import {
 	createAndAttachContainer,
 	createDocumentId,
 	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 interface ICodeProposalTestPackage extends IFluidPackage {
 	version: number;

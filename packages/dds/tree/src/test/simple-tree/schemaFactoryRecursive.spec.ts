@@ -8,7 +8,7 @@
 import { strict as assert } from "node:assert";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { FlexListToUnion } from "../../feature-libraries/index.js";
 import {
@@ -83,7 +83,7 @@ describe("SchemaFactoryRecursive", () => {
 				"tree",
 			);
 
-			const view: TreeView<Box> = tree.schematize(config);
+			const view: TreeView<typeof Box> = tree.schematize(config);
 			assert.equal(view.root?.text, "hi");
 
 			const stuff: undefined | Box = view.root.child;

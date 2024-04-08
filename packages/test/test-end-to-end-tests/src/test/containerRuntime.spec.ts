@@ -6,13 +6,13 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
-import { CompressionAlgorithms } from "@fluidframework/container-runtime";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { CompressionAlgorithms } from "@fluidframework/container-runtime/internal";
 import {
 	type ITestContainerConfig,
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
@@ -45,24 +45,6 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 		compression: boolean,
 		chunking: boolean,
 	) {
-		const options: ITestContainerConfig = {
-			runtimeOptions: {
-				explicitSchemaControl,
-				compressionOptions: {
-					minimumBatchSizeInBytes: compression ? 1000 : Infinity,
-					compressionAlgorithm: CompressionAlgorithms.lz4,
-				},
-				chunkSizeInBytes: chunking ? 200 : Infinity,
-			},
-		};
-		const container = await provider.makeTestContainer(options);
-		entry = await getentryPoint(container);
-
-		assert(entry);
-		entry.root.set("key", generateStringOfSize(10000));
-
-		await provider.ensureSynchronized();
-
 		let crash = false;
 		let crash2 = false;
 		if (provider.type === "TestObjectProviderWithVersionedLoad") {
@@ -71,17 +53,29 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 			// 1st container is defined by apis.containerRuntime, 2nd and 3rd are defined by apis.containerRuntimeForLoading.
 			// If first container is running 1.3, then it does not understand neither compression or document schema ops,
 			// and thus it will see either of those.
-			const version = apis.containerRuntime?.version;
-			const version2 = apis.containerRuntimeForLoading?.version;
+			const version = apis.containerRuntime.version;
+			const version2 = apis.containerRuntimeForLoading.version;
+
+			// RC2 behaves somewhere in between 1.x and latest 2.x, as not all the work in this area was completed in RC2.
+			// I.e. it will create documents with explicit schema, will not fail on copresssed ops, but will not understand (similar to 1.x)
+			// new summary format (when explicit schema is on) and thus will fail with "Summary metadata mismatch" error.
+			// It's a bit hard to incorporate all of that into the matrix as conditions become really weird and hard to follow.
+			// While it's important to test all these combos, we will limit only to one direction that is easy to test
+			// and will validate "Summary metadata mismatch" workflow (version2 == RC2), but will skip the other direction.
+			if (version.startsWith("2.0.0-rc.2")) {
+				return;
+			}
 
 			// Second container running 1.x should fail becausse of mismatch in metadata.message information.
 			// This validates that container does not go past loading stage.
-			if (explicitSchemaControl && version2?.startsWith("1.")) {
+			if (
+				explicitSchemaControl &&
+				(version2?.startsWith("1.") || version2?.startsWith("2.0.0-rc.2"))
+			) {
 				crash2 = true;
 				const error = "Summary metadata mismatch";
-				provider.logger?.registerExpectedEvent({
+				provider.tracker.registerExpectedEvent({
 					eventName: "fluid:telemetry:Container:ContainerClose",
-					category: "error",
 					error,
 					message: error,
 					errorType: "dataCorruptionError",
@@ -104,7 +98,7 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 					//       and thus fails on empty address property (of compressed op), after unchunking happens.
 					const error =
 						crash && explicitSchemaControl ? "0x122" : chunking ? "0x162" : "0x121";
-					provider.logger?.registerExpectedEvent({
+					provider.tracker.registerExpectedEvent({
 						eventName: "fluid:telemetry:Container:ContainerClose",
 						category: "error",
 						error,
@@ -115,6 +109,24 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 				}
 			}
 		}
+
+		const options: ITestContainerConfig = {
+			runtimeOptions: {
+				explicitSchemaControl,
+				compressionOptions: {
+					minimumBatchSizeInBytes: compression ? 1000 : Infinity,
+					compressionAlgorithm: CompressionAlgorithms.lz4,
+				},
+				chunkSizeInBytes: chunking ? 200 : Infinity,
+			},
+		};
+		const container = await provider.makeTestContainer(options);
+		entry = await getentryPoint(container);
+
+		assert(entry);
+		entry.root.set("key", generateStringOfSize(10000));
+
+		await provider.ensureSynchronized();
 
 		if (crash2) {
 			await assert.rejects(async () => loadContainer(options));
@@ -129,14 +141,14 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 		await provider.ensureSynchronized();
 
 		assert(!container2.closed);
-		assert(crash === container.closed);
+		assert.equal(crash, container.closed);
 		assert(crash || entry.root.get("key2").length === 5000);
 
 		const container3 = await loadContainer(options);
 		const entry3 = await getentryPoint(container3);
 		await provider.ensureSynchronized();
 
-		assert(crash === container.closed);
+		assert.equal(crash, container.closed);
 		assert(!container2.closed);
 		assert(!container3.closed);
 
@@ -153,7 +165,7 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 			assert(entry.root.get("key3").length === 15000);
 		}
 
-		provider.logger?.reportAndClearTrackedEvents();
+		provider.tracker.reportAndClearTrackedEvents();
 	}
 
 	const choices = [true, false];
