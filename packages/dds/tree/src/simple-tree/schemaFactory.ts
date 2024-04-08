@@ -668,9 +668,8 @@ export class SchemaFactory<
 	/**
 	 * Make a field of type identifier instead of the default which is required.
 	 */
-	public identifier<const T extends TreeNodeSchema>(t: T): FieldSchema<FieldKind.Identifier, T> {
-		assert(t.identifier === this.string.identifier, "identifier must be type string.");
-		return new FieldSchema(FieldKind.Identifier, t);
+	public identifier(): FieldSchema<FieldKind.Identifier> {
+		return new FieldSchema(FieldKind.Identifier, this.string);
 	}
 
 	/**

@@ -86,10 +86,10 @@ export interface TreeNodeApi {
 	readonly status: (node: TreeNode) => TreeStatus;
 
 	/**
-	 * Returns the {@link LocalNodeKey} of the given node if the identifier field kind exists.
+	 * If the given node has an identifier specified by a field of kind "identifier" then this returns the compressed form of that identifier.
 	 * Otherwise returns undefined.
 	 */
-	shortID(node: TreeNode): number | undefined;
+	shortId(node: TreeNode): number | undefined;
 }
 
 /**
@@ -172,15 +172,15 @@ export const treeNodeApi: TreeNodeApi = {
 			T
 		>;
 	},
-	shortID(node: TreeNode): number | undefined {
+	shortId(node: TreeNode): number | undefined {
 		const flexNode = getFlexNode(node);
 		for (const field of flexNode.boxedIterator()) {
 			if (field.schema.kind === FieldKinds.identifier) {
-				for (const child of field.boxedIterator()) {
-					return child.context.nodeKeys.localize(
-						child.value as StableNodeKey,
-					) as unknown as number;
-				}
+				const identifier = field.boxedAt(0);
+				assert(identifier !== undefined, "The identifier must exist");
+				return identifier.context.nodeKeys.localize(
+					identifier.value as StableNodeKey,
+				) as unknown as number;
 			}
 		}
 		return;

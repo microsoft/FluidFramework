@@ -448,7 +448,7 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 	}
 }
 
-export class LazyValueFieldReadOnly<TTypes extends FlexAllowedTypes>
+export class ReadonlyLazyValueField<TTypes extends FlexAllowedTypes>
 	extends LazyField<typeof FieldKinds.required, TTypes>
 	implements FlexTreeRequiredField<TTypes>
 {
@@ -466,15 +466,16 @@ export class LazyValueFieldReadOnly<TTypes extends FlexAllowedTypes>
 	}
 
 	public set content(newContent: FlexibleNodeContent<TTypes>) {
-		fail("cannot set newContent in readonly field");
+		fail("cannot set content in readonly field");
 	}
 
 	public get boxedContent(): FlexTreeTypedNodeUnion<TTypes> {
 		return this.boxedAt(0) ?? fail("value node must have 1 item");
 	}
 }
+
 export class LazyValueField<TTypes extends FlexAllowedTypes>
-	extends LazyValueFieldReadOnly<TTypes>
+	extends ReadonlyLazyValueField<TTypes>
 	implements FlexTreeRequiredField<TTypes>
 {
 	public constructor(
@@ -511,7 +512,7 @@ export class LazyValueField<TTypes extends FlexAllowedTypes>
 }
 
 export class LazyIdentifierField<TTypes extends FlexAllowedTypes>
-	extends LazyValueFieldReadOnly<TTypes>
+	extends ReadonlyLazyValueField<TTypes>
 	implements FlexTreeRequiredField<TTypes>
 {
 	public constructor(

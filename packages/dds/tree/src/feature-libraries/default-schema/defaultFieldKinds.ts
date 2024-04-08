@@ -135,7 +135,7 @@ export const nodeKey = new FieldKindWithEditor(
 	new Set(),
 );
 
-const identifierFieldIdentifier = "identifier";
+const identifierFieldIdentifier = "Identifier";
 
 /**
  * Exactly one identifier.
@@ -239,7 +239,7 @@ export interface NodeKeyFieldKind extends FlexFieldKind<"NodeKey", Multiplicity.
 /**
  * @internal
  */
-export interface Identifier extends FlexFieldKind<"identifier", Multiplicity.Single> {}
+export interface Identifier extends FlexFieldKind<"Identifier", Multiplicity.Single> {}
 /**
  * @internal
  */

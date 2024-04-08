@@ -111,7 +111,7 @@ describe("treeApi", () => {
 	describe("shortID", () => {
 		it("returns local id when an identifier fieldkind exists.", () => {
 			const schemaWithIdentifier = schema.object("parent", {
-				identifier: schema.identifier(schema.string),
+				identifier: schema.identifier(),
 			});
 			const nodeKeyManager = createMockNodeKeyManager();
 			const id = nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
@@ -121,17 +121,17 @@ describe("treeApi", () => {
 
 			const root = getView(config, nodeKeyManager).root;
 
-			assert.equal(Tree.shortID(root), nodeKeyManager.localizeNodeKey(id));
+			assert.equal(Tree.shortId(root), nodeKeyManager.localizeNodeKey(id));
 		});
 		it("returns undefined when an identifier fieldkind does not exist.", () => {
 			const schemaWithIdentifier = schema.object("parent", {
-				identifier: schema.optional(schema.string),
+				identifier: schema.string,
 			});
 			const config = new TreeConfiguration(schemaWithIdentifier, () => ({
 				identifier: "testID",
 			}));
 			const root = getView(config).root;
-			assert.equal(Tree.shortID(root), undefined);
+			assert.equal(Tree.shortId(root), undefined);
 		});
 	});
 

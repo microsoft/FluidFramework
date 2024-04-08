@@ -172,7 +172,7 @@ describe("SharedTreeObject", () => {
 
 	it("returns the stable id under the identifier field kind.", () => {
 		const schemaWithIdentifier = sb.object("parent", {
-			identifier: sb.identifier(sb.string),
+			identifier: sb.identifier(),
 		});
 		const idCompressor = createIdCompressor();
 		const id = idCompressor.decompress(idCompressor.generateCompressedId());
