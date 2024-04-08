@@ -76,6 +76,7 @@ importers:
         version: 5.1.6
 
   packages/historian:
+<<<<<<< HEAD
     dependencies:
       '@fluidframework/historian-base':
         specifier: ^0.0.1
@@ -116,6 +117,54 @@ importers:
       winston:
         specifier: ^3.6.0
         version: 3.8.2
+=======
+    specifiers:
+      '@fluid-internal/historian-base': workspace:~
+      '@fluidframework/eslint-config-fluid': ^4.0.0
+      '@fluidframework/server-services-shared': ^4.0.0
+      '@fluidframework/server-services-utils': ^4.0.0
+      '@types/compression': 0.0.36
+      '@types/cors': ^2.8.4
+      '@types/debug': ^4.1.5
+      '@types/lodash': ^4.14.119
+      '@types/nconf': 0.0.37
+      '@types/node': ^18.17.1
+      '@types/supertest': ^2.0.7
+      '@types/uuid': ^3.4.4
+      async: ^3.2.2
+      body-parser: ^1.17.2
+      compression: ^1.7.3
+      concurrently: ^8.2.1
+      cors: ^2.8.5
+      debug: ^4.3.4
+      eslint: ~8.55.0
+      eslint-config-prettier: ~9.0.0
+      express: ^4.19.2
+      ioredis: ^5.2.3
+      lodash: ^4.17.19
+      nconf: ^0.11.4
+      prettier: ~3.0.3
+      rimraf: ^3.0.2
+      supertest: ^3.3.0
+      tslint: ^5.12.0
+      typescript: ~4.5.5
+      uuid: ^3.3.2
+      winston: ^3.6.0
+    dependencies:
+      '@fluid-internal/historian-base': link:../historian-base
+      '@fluidframework/server-services-shared': 4.0.0
+      '@fluidframework/server-services-utils': 4.0.0
+      body-parser: 1.20.2
+      compression: 1.7.4
+      cors: 2.8.5
+      debug: 4.3.4
+      express: 4.19.2
+      ioredis: 5.2.3
+      lodash: 4.17.21
+      nconf: 0.11.4
+      uuid: 3.4.0
+      winston: 3.8.2
+>>>>>>> f7dab20933 (historian: use fluid-internal)
     devDependencies:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.1.0
