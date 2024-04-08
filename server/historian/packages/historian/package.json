@@ -28,9 +28,9 @@
 		"tslint": "tslint \"src/**/*.ts\""
 	},
 	"dependencies": {
-		"@fluid-internal/historian-base": "workspace:~",
-		"@fluidframework/server-services-shared": "workspace:~",
-		"@fluidframework/server-services-utils": "workspace:~",
+		"@fluid-internal/historian-base": "workspace:^",
+		"@fluidframework/server-services-shared": "workspace:^",
+		"@fluidframework/server-services-utils": "workspace:^",
 		"body-parser": "^1.17.2",
 		"compression": "^1.7.3",
 		"cors": "^2.8.5",
