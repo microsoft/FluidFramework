@@ -37,7 +37,7 @@ describeCompat("Storing handles detached", "2.0.0-rc.3.0.0", (getTestObjectProvi
 		handle: builder.optional(builder.handle),
 	}) {}
 
-	function getNewTreeView(tree: ITree): TreeView<HandleType> {
+	function getNewTreeView(tree: ITree): TreeView<typeof HandleType> {
 		return tree.schematize(
 			new TreeConfiguration(HandleType, () => ({
 				handle: undefined,

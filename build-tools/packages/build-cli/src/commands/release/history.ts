@@ -8,8 +8,8 @@ import chalk from "chalk";
 import { table } from "table";
 
 import {
-	VersionDetails,
 	ReleaseReport,
+	VersionDetails,
 	getDisplayDate,
 	getDisplayDateRelative,
 	sortVersions,
@@ -17,10 +17,10 @@ import {
 
 import { detectBumpType } from "@fluid-tools/version-tools";
 
+import { findPackageOrReleaseGroup } from "../../args";
 import { packageSelectorFlag, releaseGroupFlag } from "../../flags";
 import { ReleaseGroup, ReleasePackage } from "../../releaseGroups";
 import { ReleaseReportBaseCommand, ReleaseSelectionMode } from "./report";
-import { findPackageOrReleaseGroup } from "../../args";
 
 const DEFAULT_MIN_VERSION = "0.0.0";
 

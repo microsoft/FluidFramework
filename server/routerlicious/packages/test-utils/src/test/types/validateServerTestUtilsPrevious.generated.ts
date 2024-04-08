@@ -439,7 +439,6 @@ declare function get_old_ClassDeclaration_TestNotImplementedCheckpointService():
 declare function use_current_ClassDeclaration_TestNotImplementedCheckpointService(
     use: TypeOnly<current.TestNotImplementedCheckpointService>): void;
 use_current_ClassDeclaration_TestNotImplementedCheckpointService(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TestNotImplementedCheckpointService());
 
 /*
@@ -452,7 +451,6 @@ declare function get_current_ClassDeclaration_TestNotImplementedCheckpointServic
 declare function use_old_ClassDeclaration_TestNotImplementedCheckpointService(
     use: TypeOnly<old.TestNotImplementedCheckpointService>): void;
 use_old_ClassDeclaration_TestNotImplementedCheckpointService(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_TestNotImplementedCheckpointService());
 
 /*

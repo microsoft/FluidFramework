@@ -32,7 +32,7 @@ class RootType extends builder.object("abc", {
 	quantity: builder.number,
 }) {}
 
-function getNewTreeView(tree: ITree): TreeView<RootType> {
+function getNewTreeView(tree: ITree): TreeView<typeof RootType> {
 	return tree.schematize(new TreeConfiguration(RootType, () => ({ quantity: 0 })));
 }
 

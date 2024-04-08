@@ -10,21 +10,21 @@ import { createOdspUrl } from '@fluidframework/odsp-driver/internal';
 import { HostStoragePolicy } from '@fluidframework/odsp-driver-definitions/internal';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
 import { ILocalDeltaConnectionServer } from '@fluidframework/server-local-server';
-import { InsecureTinyliciousUrlResolver } from '@fluidframework/tinylicious-driver';
+import { InsecureTinyliciousUrlResolver } from '@fluidframework/tinylicious-driver/internal';
 import { InsecureUrlResolver } from '@fluidframework/driver-utils/internal';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
-import { ITestDriver } from '@fluidframework/test-driver-definitions';
+import { ITestDriver } from '@fluid-internal/test-driver-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
 import { LocalDeltaConnectionServer } from '@fluidframework/server-local-server';
 import { LocalDocumentServiceFactory } from '@fluidframework/local-driver/internal';
 import { LocalResolver } from '@fluidframework/local-driver/internal';
 import { OdspDocumentServiceFactory } from '@fluidframework/odsp-driver/internal';
 import { OdspDriverUrlResolver } from '@fluidframework/odsp-driver/internal';
-import { OdspEndpoint } from '@fluidframework/test-driver-definitions';
+import { OdspEndpoint } from '@fluid-internal/test-driver-definitions';
 import { RouterliciousDocumentServiceFactory } from '@fluidframework/routerlicious-driver/internal';
-import { RouterliciousEndpoint } from '@fluidframework/test-driver-definitions';
-import { TestDriverTypes } from '@fluidframework/test-driver-definitions';
+import { RouterliciousEndpoint } from '@fluid-internal/test-driver-definitions';
+import { TestDriverTypes } from '@fluid-internal/test-driver-definitions';
 
 // @internal (undocumented)
 export function assertOdspEndpoint(endpoint: string | undefined): asserts endpoint is OdspEndpoint | undefined;

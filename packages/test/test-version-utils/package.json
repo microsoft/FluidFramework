@@ -71,6 +71,7 @@
 	"dependencies": {
 		"@fluid-experimental/attributor": "workspace:~",
 		"@fluid-experimental/sequence-deprecated": "workspace:~",
+		"@fluid-internal/test-driver-definitions": "workspace:~",
 		"@fluid-private/test-drivers": "workspace:~",
 		"@fluid-tools/version-tools": "^0.34.0",
 		"@fluidframework/agent-scheduler": "workspace:~",
@@ -95,7 +96,6 @@
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"@fluidframework/test-driver-definitions": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"nconf": "^0.12.0",
 		"proper-lockfile": "^4.1.2",

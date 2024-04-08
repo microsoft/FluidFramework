@@ -11,11 +11,9 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-
-import { type ITree, SchemaFactory } from "../../index.js";
 import { SharedTree } from "../../treeFactory.js";
-
 import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools.js";
+import { ITree, SchemaFactory } from "../../simple-tree/index.js";
 
 /**
  * This suite provides some e2e snapshot coverage for how SharedTree ops look.

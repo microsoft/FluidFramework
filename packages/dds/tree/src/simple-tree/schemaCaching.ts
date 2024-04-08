@@ -13,7 +13,7 @@ import {
 import { fail } from "../util/index.js";
 
 import {
-	type FieldSchema,
+	FieldSchema,
 	type ImplicitFieldSchema,
 	TreeNodeSchema,
 	normalizeFieldSchema,

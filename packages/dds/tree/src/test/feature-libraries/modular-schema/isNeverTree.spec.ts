@@ -34,14 +34,13 @@ const emptyMap: ReadonlyMap<never, never> = new Map<never, never>();
 
 /**
  * Helper for building {@link TreeFieldStoredSchema}.
- * @internal
  */
 function fieldSchema(
 	kind: { identifier: FieldKindIdentifier },
 	types?: Iterable<TreeNodeSchemaIdentifier>,
 ): TreeFieldStoredSchema {
 	return {
-		kind,
+		kind: kind.identifier,
 		types: types === undefined ? undefined : new Set(types),
 	};
 }
