@@ -14,7 +14,7 @@ import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
 
 import {
-	PackageJson,
+	type PackageJson,
 	PackageNamePolicyConfig,
 	ScriptRequirement,
 	loadFluidBuildConfig,
@@ -1698,7 +1698,7 @@ function generateExportsFields(
 				? importTypes
 				: requireTypes;
 
-	let returnExports: typeof json.exports | undefined;
+	let returnExports: typeof json.exports;
 
 	if (isESMOnly) {
 		returnExports = isTypeOnly
