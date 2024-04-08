@@ -8,7 +8,7 @@ import path from "node:path";
 
 import type { PackageJson } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
-import type { ExportSpecifierStructure } from "ts-morph";
+import type { ExportSpecifierStructure, Node } from "ts-morph";
 import { ModuleKind, Project, ScriptKind } from "ts-morph";
 
 import { BaseCommand } from "../../base";
@@ -101,6 +101,10 @@ async function getLocalUnscopedPackageName(): Promise<string> {
 	return unscopedPackageName;
 }
 
+function sourceContext(node: Node): string {
+	return `${node.getSourceFile().getFilePath()}:${node.getStartLineNumber()}`;
+}
+
 const generatedHeader: string = `/*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -136,17 +140,6 @@ async function generateEntrypoints(
 	const mainSourceFile = project.addSourceFileAtPath(mainEntrypoint);
 	const exports = getApiExports(mainSourceFile);
 
-	if (exports.unknown.length > 0) {
-		log.errorLog(
-			`${
-				exports.unknown.length
-			} export(s) found without a recognized API level:\n\t${exports.unknown.map(
-				({ name, decl }) =>
-					`${decl.getSourceFile().getFilePath()}:${decl.getStartLineNumber()}: ${name}`,
-			)}`,
-		);
-	}
-
 	// This order is critical as public should include beta should include alpha.
 	const apiLevels: readonly Exclude<ApiLevel, typeof ApiLevel.internal>[] = [
 		ApiLevel.public,
@@ -154,6 +147,29 @@ async function generateEntrypoints(
 		ApiLevel.alpha,
 	] as const;
 	const namedExports: Omit<ExportSpecifierStructure, "kind">[] = [];
+
+	if (exports.unknown.size > 0) {
+		log.errorLog(
+			`${exports.unknown.size} export(s) found without a recognized API level:\n\t${[
+				...exports.unknown.entries(),
+			]
+				.map(
+					([name, { exportedDecl, exportDecl }]) =>
+						`${name} from ${sourceContext(exportedDecl)}${
+							exportDecl === undefined ? "" : ` via ${sourceContext(exportDecl)}`
+						}`,
+				)
+				.join(`\n\t`)}`,
+		);
+
+		// Export all unrecognized APIs preserving behavior of api-extractor roll-ups.
+		for (const name of [...exports.unknown.keys()].sort()) {
+			namedExports.push({ name, leadingTrivia: "\n\t" });
+		}
+		namedExports[0].leadingTrivia = `\n\t// Unrestricted APIs\n\t`;
+		namedExports[namedExports.length - 1].trailingTrivia = "\n";
+	}
+
 	for (const apiLevel of apiLevels) {
 		// Append this levels additional (or only) exports sorted by ascending case-sensitive name
 		const orgLength = namedExports.length;
@@ -174,12 +190,16 @@ async function generateEntrypoints(
 		});
 
 		sourceFile.insertText(0, generatedHeader);
-		sourceFile.addExportDeclaration({
-			moduleSpecifier: `./${mainSourceFile
-				.getBaseName()
-				.replace(/\.(?:d\.)?([cm]?)ts$/, ".$1js")}`,
-			namedExports,
-		});
+		// Avoid adding export declaration unless there are exports.
+		// Adding one without any named exports results in a * export (everything).
+		if (namedExports.length > 0) {
+			sourceFile.addExportDeclaration({
+				moduleSpecifier: `./${mainSourceFile
+					.getBaseName()
+					.replace(/\.(?:d\.)?([cm]?)ts$/, ".$1js")}`,
+				namedExports,
+			});
+		}
 
 		fileSavePromises.push(sourceFile.save());
 	}
