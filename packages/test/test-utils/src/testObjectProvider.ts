@@ -185,6 +185,7 @@ export interface ITestObjectProvider {
 	loadTestContainer(
 		testContainerConfig?: ITestContainerConfig,
 		requestHeader?: IRequestHeader,
+		pendingLocalState?: string,
 	): Promise<IContainer>;
 
 	/**
@@ -590,11 +591,18 @@ export class TestObjectProvider implements ITestObjectProvider {
 		return this.resolveContainer(loader, requestHeader);
 	}
 
-	private async resolveContainer(loader: ILoader, headers?: IRequestHeader) {
-		return loader.resolve({
-			url: await this.driver.createContainerUrl(this.documentId),
-			headers,
-		});
+	private async resolveContainer(
+		loader: ILoader,
+		headers?: IRequestHeader,
+		pendingLocalState?: string,
+	) {
+		return loader.resolve(
+			{
+				url: await this.driver.createContainerUrl(this.documentId),
+				headers,
+			},
+			pendingLocalState,
+		);
 	}
 
 	/**
@@ -637,10 +645,11 @@ export class TestObjectProvider implements ITestObjectProvider {
 	public async loadTestContainer(
 		testContainerConfig?: ITestContainerConfig,
 		requestHeader?: IRequestHeader,
+		pendingLocalState?: string,
 	): Promise<IContainer> {
 		const loader = this.makeTestLoader(testContainerConfig);
 
-		const container = await this.resolveContainer(loader, requestHeader);
+		const container = await this.resolveContainer(loader, requestHeader, pendingLocalState);
 		await this.waitContainerToCatchUp(container);
 
 		return container;
@@ -950,12 +959,16 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		loader: ILoader,
 		headers?: IRequestHeader,
 		driver?: ITestDriver,
+		pendingLocalState?: string,
 	) {
-		return loader.resolve({
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			url: await driver!.createContainerUrl(this.documentId),
-			headers,
-		});
+		return loader.resolve(
+			{
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				url: await driver!.createContainerUrl(this.documentId),
+				headers,
+			},
+			pendingLocalState,
+		);
 	}
 
 	/**
@@ -1002,11 +1015,17 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	public async loadTestContainer(
 		testContainerConfig?: ITestContainerConfig,
 		requestHeader?: IRequestHeader,
+		pendingLocalState?: string,
 	): Promise<IContainer> {
 		// Keep track of which Loader we are about to use so we can pass the correct driver through
 		const driver = this.useCreateApi ? this.driverForCreating : this.driverForLoading;
 		const loader = this.makeTestLoader(testContainerConfig);
-		const container = await this.resolveContainer(loader, requestHeader, driver);
+		const container = await this.resolveContainer(
+			loader,
+			requestHeader,
+			driver,
+			pendingLocalState,
+		);
 		await this.waitContainerToCatchUp(container);
 
 		return container;

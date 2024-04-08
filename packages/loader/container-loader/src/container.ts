@@ -1561,11 +1561,9 @@ export class Container
 		);
 
 		// If we saved ops, we will replay them and don't need DeltaManager to fetch them
-		const sequenceNumber =
-			pendingLocalState?.savedOps[pendingLocalState.savedOps.length - 1]?.sequenceNumber;
-		const dmAttributes =
-			sequenceNumber !== undefined ? { ...attributes, sequenceNumber } : attributes;
-
+		const lastProcessedSequenceNumber =
+			pendingLocalState?.savedOps[pendingLocalState.savedOps.length - 1]?.sequenceNumber ??
+			attributes.sequenceNumber;
 		let opsBeforeReturnP: Promise<void> | undefined;
 
 		if (loadMode.pauseAfterLoad === true) {
@@ -1578,7 +1576,7 @@ export class Container
 				// Note: It is possible that we think the latest snapshot is newer than the specified sequence number
 				// due to saved ops that may be replayed after the snapshot.
 				// https://dev.azure.com/fluidframework/internal/_workitems/edit/5055
-				if (dmAttributes.sequenceNumber > loadToSequenceNumber) {
+				if (lastProcessedSequenceNumber > loadToSequenceNumber) {
 					throw new Error(
 						"Cannot satisfy request to pause the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.",
 					);
@@ -1626,16 +1624,18 @@ export class Container
 				// Start prefetch, but not set opsBeforeReturnP - boot is not blocked by it!
 				// eslint-disable-next-line @typescript-eslint/no-floating-promises
 				this.attachDeltaManagerOpHandler(
-					dmAttributes,
+					attributes,
 					loadMode.deltaConnection !== "none" ? "all" : "none",
+					lastProcessedSequenceNumber,
 				);
 				break;
 			case "sequenceNumber":
 			case "cached":
 			case "all":
 				opsBeforeReturnP = this.attachDeltaManagerOpHandler(
-					dmAttributes,
+					attributes,
 					loadMode.opsBeforeReturn,
+					lastProcessedSequenceNumber,
 				);
 				break;
 			default:
@@ -2056,6 +2056,7 @@ export class Container
 	private async attachDeltaManagerOpHandler(
 		attributes: IDocumentAttributes,
 		prefetchType?: "sequenceNumber" | "cached" | "all" | "none",
+		lastProcessedSequenceNumber?: number,
 	) {
 		return this._deltaManager.attachOpHandler(
 			attributes.minimumSequenceNumber,
@@ -2067,6 +2068,7 @@ export class Container
 				},
 			},
 			prefetchType,
+			lastProcessedSequenceNumber,
 		);
 	}
 
