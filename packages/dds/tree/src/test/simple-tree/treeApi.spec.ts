@@ -111,7 +111,7 @@ describe("treeApi", () => {
 	describe("shortID", () => {
 		it("returns local id when an identifier fieldkind exists.", () => {
 			const schemaWithIdentifier = schema.object("parent", {
-				identifier: schema.identifier(),
+				identifier: schema.identifier,
 			});
 			const nodeKeyManager = createMockNodeKeyManager();
 			const id = nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());

@@ -22,6 +22,7 @@ import { schemaFromValue } from "./schemaFactory.js";
 import { NodeFromSchema, NodeKind, TreeLeafValue, TreeNodeSchema } from "./schemaTypes.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { TreeNode } from "./types.js";
+import { extractFromOpaque } from "../index.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -178,12 +179,12 @@ export const treeNodeApi: TreeNodeApi = {
 			if (field.schema.kind === FieldKinds.identifier) {
 				const identifier = field.boxedAt(0);
 				assert(identifier !== undefined, "The identifier must exist");
-				return identifier.context.nodeKeys.localize(
-					identifier.value as StableNodeKey,
-				) as unknown as number;
+
+				return extractFromOpaque(
+					identifier.context.nodeKeys.localize(identifier.value as StableNodeKey),
+				);
 			}
 		}
-		return;
 	},
 };
 
