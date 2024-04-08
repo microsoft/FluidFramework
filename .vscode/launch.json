@@ -54,7 +54,7 @@
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
-			"args": ["check", "policy"],
+			"args": ["check", "policy", "-v", "--excludeHandler", "assert-short-codes", "-d", "npm-package-exports-field"],
 		},
 		{
 			"name": "flub check policy --fix",
@@ -63,7 +63,7 @@
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
-			"args": ["check", "policy", "--fix", "-v", "--excludeHandler", "assert-short-codes"],
+			"args": ["check", "policy", "-v", "--excludeHandler", "assert-short-codes", "--fix"],
 		},
 		{
 			"name": "flub generate bundleStats",

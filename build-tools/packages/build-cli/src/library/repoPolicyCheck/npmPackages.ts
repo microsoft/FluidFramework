@@ -1372,57 +1372,94 @@ export const handlers: Handler[] = [
 				return "Missing 'main' entry in package.json.";
 			}
 
-			const isCJSOnly = json.module === undefined || json.type === "commonjs";
-			const isESMOnly = json.type === "module";
+			const buildsCJS = json.scripts.tsc !== undefined;
+			const buildsESM = json.scripts["build:esnext"] !== undefined;
+			const isCJSOnly = buildsCJS && !buildsESM;
+			const isESMOnly = buildsESM && !buildsCJS;
 
-			// CJS- and ESM-only packages should use default, not import or require.
-			const defaultField =
+			// Some packages are type-only and don't publish any JS. We use main === "" to detect such packages, but this
+			// could be changed or made into a configuration option in the future.
+			const isTypeOnly = json.main === "";
+
+			if (isCJSOnly && !isTypeOnly) {
+				const mainField = normalizePathField(json.main);
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				exportsRoot?.default?.default === undefined
-					? undefined
-					: // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
-						normalizePathField(exportsRoot?.default?.default);
-
-			// CJS-only packages should use default, not import or require.
-			if (isCJSOnly) {
-				const mainField = normalizePathField(json.main);
-				if (defaultField !== mainField) {
-					return `${json.name} is a CJS-only package. Incorrect 'default' entry in 'exports' field in package.json. Expected '${mainField}', got '${defaultField}'`;
+				if ((exportsRoot?.default ?? exportsRoot?.require) === undefined) {
+					return `${json.name} is a CJS-only package. Missing 'default' or 'require' entry in 'exports' field in package.json. Expected '${mainField}'`;
 				}
 			}
 
-			// ESM-only packages should use default, not import or require.
-			if (isESMOnly) {
-				const mainField = normalizePathField(json.main);
-				if (defaultField !== mainField) {
-					return `${json.name} is an ESM-only package. Incorrect 'default' entry in 'exports' field in package.json. Expected '${mainField}', got '${defaultField}'`;
+			if (isESMOnly && json.type !== "module") {
+				return `${json.name} is an ESM-only package. Missing 'type: module' in package.json.`;
+			}
+
+			if (isCJSOnly || isESMOnly) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				if (exportsRoot?.types === undefined) {
+					return `${json.name} doesn't have a 'types' condition specified in its 'exports' field.`;
+				}
+
+				// No more checks for CJS/ESM-only packages.
+				return undefined;
+			}
+
+			if (buildsESM && !isESMOnly) {
+				if (json.module !== undefined) {
+					return `${json.name} has a 'module' field defined. A package should not have both 'exports' and 'module' defined. Remove the 'module' field.`;
+				}
+
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				if (exportsRoot?.import === undefined) {
+					return `${json.name} builds ESM but doesn't have an 'import' condition specified in its 'exports' field.`;
+				}
+
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				if (exportsRoot?.import?.default === undefined && !isTypeOnly) {
+					return `${json.name} builds ESM but doesn't have an 'import.default' condition specified in its 'exports' field.`;
+				}
+
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				if (exportsRoot?.import?.types === undefined) {
+					return `${json.name} builds ESM but doesn't have an 'import.types' condition specified in its 'exports' field.`;
 				}
 			}
 
-			if (!isESMOnly && !isCJSOnly) {
-				// ESM exports in import field
-				const importField =
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-					exportsRoot?.import?.default === undefined
-						? undefined
-						: // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
-							normalizePathField(exportsRoot?.import?.default);
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const moduleField = normalizePathField(json.module!);
-				if (importField !== moduleField) {
-					return `${json.name} has both CJS and ESM entrypoints. Incorrect 'import' entry in 'exports' field in package.json. Expected '${moduleField}', got '${importField}'`;
+			if (buildsCJS && !isCJSOnly) {
+				if (!isTypeOnly) {
+					// CJS exports in require field
+					const requireField =
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+						exportsRoot?.require?.default === undefined
+							? undefined
+							: // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
+								normalizePathField(exportsRoot?.require?.default);
+					const mainField = normalizePathField(json.main);
+					if (requireField !== mainField) {
+						return `${json.name} has a mismatched 'main' and 'exports.require.default' field in package.json. main: '${mainField}', exports.require.default '${requireField}'`;
+					}
 				}
 
-				// CJS exports in require field
-				const requireField =
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-					exportsRoot?.require?.default === undefined
-						? undefined
-						: // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
-							normalizePathField(exportsRoot?.require?.default);
-				const mainField = normalizePathField(json.main);
-				if (requireField !== mainField) {
-					return `${json.name} has both CJS and ESM entrypoints. Incorrect 'require' entry in 'exports' field in package.json. Expected '${mainField}', got '${requireField}'`;
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				if (exportsRoot?.require?.types === undefined) {
+					return `${json.name} builds CJS but doesn't have an 'require.types' condition specified in its 'exports' field.`;
+				}
+			}
+
+			if (json.types !== undefined) {
+				const typesField = normalizePathField(json.types ?? json.typings);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+				const requireTypes = exportsRoot?.require?.types;
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+				const importTypes = exportsRoot?.import?.types;
+
+				// if building ESM only, the types field should match import.types
+				if (isESMOnly && importTypes !== typesField) {
+					return `${json.name} is an ESM-only package but the types field value (${typesField}) doesn't match import.types (${importTypes})`;
+				}
+
+				// otherwise the types field should match require.types
+				if (requireTypes !== typesField) {
+					return `${json.name} builds CJS but the types field value (${typesField}) doesn't match require.types (${requireTypes})`;
 				}
 			}
 		},
@@ -1431,11 +1468,16 @@ export const handlers: Handler[] = [
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				if (shouldCheckExportsField(json)) {
 					try {
-						const exportsField = generateExportsField(json);
-						json.exports = exportsField;
+						const [exportsField, typesField] = generateExportsFields(json);
+						// Skip overwriting the exports field if it already exists
+						json.exports ??= exportsField;
+						// Always update the types
+						if (json.types !== undefined && typesField !== normalizePathField(json.types)) {
+							json.types = typesField;
+						}
 					} catch (error: unknown) {
 						result.resolved = false;
-						result.message = (error as Error).message;
+						result.message = (error as Error).message + (error as Error).stack;
 					}
 				}
 			});
@@ -1607,10 +1649,11 @@ function missingCleanDirectories(scripts: { [key: string]: string | undefined })
 }
 
 /**
- * Generates an 'exports' field for a package based on the value of other fields in package.json.
+ * Generates 'exports' and 'types' fields for a package based on the value of other fields in package.json.
  */
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function generateExportsField(json: PackageJson) {
+function generateExportsFields(
+	json: Readonly<PackageJson>,
+): [PackageJson["exports"], PackageJson["types"]] {
 	if (json.types === undefined && json.typings === undefined) {
 		throw new Error(
 			"The 'types' and 'typings' field are both undefined. At least one must be defined (types is preferred).",
@@ -1621,59 +1664,114 @@ function generateExportsField(json: PackageJson) {
 		throw new Error("The 'main' field is undefined. It must have a value.");
 	}
 
-	// One of the values is guaranteed to be defined because of earlier checks
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const cjsTypes = normalizePathField((json.types ?? json.typings)!);
+	/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
+	const exportsRoot = (json.exports as any)?.["."];
+	const importTypes: string =
+		exportsRoot.types ?? exportsRoot?.default?.types ?? exportsRoot?.import?.types;
+	const importEntrypoint: string | undefined =
+		typeof exportsRoot.import === "string"
+			? exportsRoot.import
+			: exportsRoot?.default?.import ?? exportsRoot?.import?.default;
+	const requireTypes: string =
+		exportsRoot.types ?? exportsRoot?.default?.types ?? exportsRoot?.require?.types;
+	const requireEntrypoint: string | undefined =
+		typeof exportsRoot.require === "string"
+			? exportsRoot.require
+			: exportsRoot?.default?.require ?? exportsRoot?.require?.default;
+	/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
-	const isCJSOnly = json.module === undefined || json.type === "commonjs";
-	const isESMOnly = json.type === "module";
+	const buildsCJS = json.scripts.tsc !== undefined;
+	const buildsESM = json.scripts["build:esnext"] !== undefined;
+	const isCJSOnly = buildsCJS && !buildsESM;
+	const isESMOnly = buildsESM && !buildsCJS;
+
+	// Some packages are type-only and don't publish any JS. We use main === "" to detect such packages, but this
+	// could be changed or made into a configuration option in the future.
+	const isTypeOnly = json.main === "";
+
+	const expectedTypes =
+		exportsRoot === undefined
+			? // One of the values is guaranteed to be defined because of earlier checks
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				normalizePathField((json.types ?? json.typings)!)
+			: isESMOnly
+				? importTypes
+				: requireTypes;
+
+	let returnExports: typeof json.exports | undefined;
 
 	if (isESMOnly) {
-		return {
-			".": {
-				default: {
-					// Assume the types field is the ESM types since this is an ESM-only package.
-					types: cjsTypes,
-					default: normalizePathField(json.main),
-				},
-			},
-		};
+		returnExports = isTypeOnly
+			? {
+					".": {
+						// Assume the types field is the ESM types since this is an ESM-only package.
+						types: expectedTypes,
+					},
+				}
+			: {
+					".": {
+						// Assume the types field is the ESM types since this is an ESM-only package.
+						types: expectedTypes,
+						default: normalizePathField(importEntrypoint ?? json.main),
+					},
+				};
+	} else if (isCJSOnly) {
+		returnExports = isTypeOnly
+			? {
+					".": {
+						types: expectedTypes,
+					},
+				}
+			: {
+					".": {
+						types: expectedTypes,
+						default: normalizePathField(requireEntrypoint ?? json.main),
+					},
+				};
+	} else {
+		// Package has both CJS and ESM
+		// Assume ESM types are the same name as CJS, but in a different path.
+		const esmDir = json.module === undefined ? "lib" : path.dirname(json.module);
+		const typesFile = path.basename(expectedTypes);
+		const esmTypes = normalizePathField(path.join(esmDir, typesFile));
+
+		returnExports = isTypeOnly
+			? {
+					".": {
+						import: {
+							types: esmTypes,
+						},
+						require: {
+							types: expectedTypes,
+						},
+					},
+				}
+			: {
+					".": {
+						import: {
+							types: esmTypes,
+							default: normalizePathField(importEntrypoint ?? json.main),
+						},
+						require: {
+							types: expectedTypes,
+							default: normalizePathField(requireEntrypoint ?? json.main),
+						},
+					},
+				};
 	}
 
-	if (isCJSOnly) {
-		// This logic is the same as the ESM-only case, but it's separate intentionally to make it easier to refactor
-		// as we learn more about what our exports field should look like for different package types.
-		return {
-			".": {
-				default: {
-					types: cjsTypes,
-					default: normalizePathField(json.main),
-				},
-			},
-		};
+	// Add any other exports that are defined in the original json
+	if (json.exports !== undefined) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		for (const [k, v] of Object.entries(json.exports as Record<string, any>)) {
+			if (k !== ".") {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				returnExports[k] = v;
+			}
+		}
 	}
 
-	// Package has both CJS and ESM
-
-	// Assume esm types are the same name as cjs, but in a different path.
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- an earlier check guarantees module is defined
-	const esmDir = path.dirname(json.module!);
-	const typesFile = path.basename(cjsTypes.toString());
-	const esmTypes = normalizePathField(path.join(esmDir, typesFile));
-
-	const exports = {
-		".": {
-			import: {
-				types: esmTypes,
-				default: normalizePathField(json.module ?? json.main),
-			},
-			require: {
-				types: cjsTypes,
-				default: normalizePathField(json.main),
-			},
-		},
-	};
-	return exports;
+	return [returnExports, expectedTypes];
 }
 
 /**
