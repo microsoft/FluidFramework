@@ -49,6 +49,7 @@ import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryGenericEventExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryLoggerPropertyBags } from '@fluidframework/telemetry-utils/internal';
 import { ITestDriver } from '@fluid-internal/test-driver-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
 import { Loader } from '@fluidframework/container-loader/internal';
@@ -126,16 +127,16 @@ export enum DataObjectFactoryType {
 export const defaultTimeoutDurationMs = 250;
 
 // @internal
-export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger {
-    constructor(baseLogger: ITelemetryBaseLogger);
+export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger, IEventAndErrorTrackingLogger {
+    constructor(baseLogger?: ITelemetryBaseLogger | undefined);
     // (undocumented)
     registerExpectedEvent(...orderedExpectedEvents: ITelemetryGenericEventExt[]): void;
     // (undocumented)
     reportAndClearTrackedEvents(): {
-        expectedNotFound: ({
+        expectedNotFound: {
             index: number;
-            event: ITelemetryGenericEventExt | undefined;
-        } | undefined)[];
+            event: ITelemetryGenericEventExt;
+        }[];
         unexpectedErrors: ITelemetryBaseEvent[];
     };
     // (undocumented)
@@ -152,13 +153,27 @@ export function getContainerEntryPointBackCompat<T>(container: IContainer): Prom
 export function getDataStoreEntryPointBackCompat<T>(dataStore: IDataStore): Promise<T>;
 
 // @internal (undocumented)
-export function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger | undefined, prefix?: string): Error | undefined;
+export function getUnexpectedLogErrorException(logger: IEventAndErrorTrackingLogger | undefined, prefix?: string): Error | undefined;
 
 // @internal
 export interface IDocumentIdStrategy {
     get(): string;
     reset(): void;
     update(resolvedUrl?: IResolvedUrl): void;
+}
+
+// @internal (undocumented)
+export interface IEventAndErrorTrackingLogger {
+    // (undocumented)
+    registerExpectedEvent: (...orderedExpectedEvents: ITelemetryGenericEventExt[]) => void;
+    // (undocumented)
+    reportAndClearTrackedEvents: () => {
+        expectedNotFound: {
+            index: number;
+            event: ITelemetryGenericEventExt;
+        }[];
+        unexpectedErrors: ITelemetryBaseEvent[];
+    };
 }
 
 // @alpha (undocumented)
@@ -223,12 +238,13 @@ export interface ITestObjectProvider {
     ensureSynchronized(timeoutDuration?: number): Promise<void>;
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
     loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
-    logger: EventAndErrorTrackingLogger | undefined;
+    logger: ITelemetryBaseLogger;
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
     makeTestLoader(testContainerConfig?: ITestContainerConfig): IHostLoader;
     opProcessingController: IOpProcessingController;
     reset(): void;
     resetLoaderContainerTracker(syncSummarizerClients?: boolean): any;
+    tracker: IEventAndErrorTrackingLogger;
     type: "TestObjectProvider" | "TestObjectProviderWithVersionedLoad";
     updateDocumentId(url: IResolvedUrl | undefined): void;
     urlResolver: IUrlResolver;
@@ -336,12 +352,14 @@ export class TestObjectProvider implements ITestObjectProvider {
     ensureSynchronized(): Promise<void>;
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
     loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
-    get logger(): EventAndErrorTrackingLogger;
+    get logger(): ITelemetryBaseLogger;
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
     makeTestLoader(testContainerConfig?: ITestContainerConfig): Loader;
     get opProcessingController(): IOpProcessingController;
     reset(): void;
     resetLoaderContainerTracker(syncSummarizerClients?: boolean): void;
+    // (undocumented)
+    get tracker(): EventAndErrorTrackingLogger;
     readonly type = "TestObjectProvider";
     updateDocumentId(resolvedUrl: IResolvedUrl | undefined): void;
     get urlResolver(): IUrlResolver;
@@ -349,7 +367,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 
 // @internal
 export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider {
-    constructor(LoaderConstructorForCreating: typeof Loader, LoaderConstructorForLoading: typeof Loader, driverForCreating: ITestDriver, driverForLoading: ITestDriver, createFluidEntryPointForCreating: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint, createFluidEntryPointForLoading: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint);
+    constructor(LoaderConstructorForCreating: typeof Loader, LoaderConstructorForLoading: typeof Loader, driverForCreating: ITestDriver, driverForLoading: ITestDriver, createFluidEntryPointForCreating: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint, createFluidEntryPointForLoading: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint, telemetryProps?: ITelemetryLoggerPropertyBags | undefined);
     attachDetachedContainer(container: IContainer): Promise<void>;
     createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;
     createDetachedContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps> | undefined): Promise<IContainer>;
@@ -362,12 +380,14 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
     ensureSynchronized(): Promise<void>;
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
     loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
-    get logger(): EventAndErrorTrackingLogger;
+    get logger(): ITelemetryBaseLogger;
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
     makeTestLoader(testContainerConfig?: ITestContainerConfig): Loader;
     get opProcessingController(): IOpProcessingController;
     reset(): void;
     resetLoaderContainerTracker(syncSummarizerClients?: boolean): void;
+    // (undocumented)
+    get tracker(): EventAndErrorTrackingLogger;
     readonly type = "TestObjectProviderWithVersionedLoad";
     updateDocumentId(resolvedUrl: IResolvedUrl | undefined): void;
     get urlResolver(): IUrlResolver;

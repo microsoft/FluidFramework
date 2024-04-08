@@ -107,7 +107,7 @@ function createCompatSuite(
 				}, apis);
 
 				afterEach(function (done: Mocha.Done) {
-					const logErrors = getUnexpectedLogErrorException(provider.logger);
+					const logErrors = getUnexpectedLogErrorException(provider.tracker);
 					// if the test failed for another reason
 					// then we don't need to check errors
 					// and fail the after each as well

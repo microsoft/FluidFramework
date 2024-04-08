@@ -63,9 +63,7 @@ export type Anchor = Brand<number, "rebaser.Anchor">;
 
 // @internal
 export interface AnchorEvents {
-    afterChange(anchor: AnchorNode): void;
     afterDestroy(anchor: AnchorNode): void;
-    beforeChange(anchor: AnchorNode): void;
     childrenChanged(anchor: AnchorNode): void;
     childrenChanging(anchor: AnchorNode): void;
     subtreeChanged(anchor: AnchorNode): void;
@@ -157,9 +155,6 @@ export interface ArrayLikeMut<TGet, TSet extends TGet = TGet> extends ArrayLike<
     [n: number]: TSet;
 }
 
-// @public
-export type ArrayToUnion<T extends readonly unknown[]> = T[number];
-
 // @internal
 export type AssignableFieldKinds = typeof FieldKinds.optional | typeof FieldKinds.required;
 
@@ -241,8 +236,8 @@ export enum CommitKind {
 
 // @public
 export interface CommitMetadata {
-    isLocal: boolean;
-    kind: CommitKind;
+    readonly isLocal: boolean;
+    readonly kind: CommitKind;
 }
 
 // @internal
@@ -611,7 +606,7 @@ export type FlexImplicitFieldSchema = FlexFieldSchema | FlexImplicitAllowedTypes
 export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
 // @public
-export type FlexListToUnion<TList extends FlexList> = ExtractItemType<ArrayToUnion<TList>>;
+export type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
 // @internal
 export type FlexMapFieldSchema = FlexFieldSchema<typeof FieldKinds.optional | typeof FieldKinds.sequence>;
@@ -747,8 +742,6 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
 
 // @internal
 export interface FlexTreeNodeEvents {
-    afterChange(event: TreeEvent): void;
-    beforeChange(event: TreeEvent): void;
     changing(upPath: UpPath): void;
     subtreeChanging(upPath: UpPath): PathVisitor | void;
 }
@@ -1853,11 +1846,6 @@ export interface TreeContent<TRoot extends FlexFieldSchema = FlexFieldSchema> ex
 export interface TreeDataContext {
     fieldSource?(key: FieldKey, schema: TreeFieldStoredSchema): undefined | FieldGenerator;
     readonly schema: FlexTreeSchema;
-}
-
-// @internal
-export interface TreeEvent {
-    readonly target: FlexTreeNode;
 }
 
 // @public
