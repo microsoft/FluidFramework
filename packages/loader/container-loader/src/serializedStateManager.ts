@@ -174,10 +174,6 @@ export class SerializedStateManager {
 			// Snapshot seq number is older than our first processed op, which could mean we're fetching
 			// the same snapshot that we already have or snapshot is too old, implicating an unexpected behavior.
 			this.mc.logger.sendTelemetryEvent({
-				category:
-					snapshotSequenceNumber < firstProcessedOpSequenceNumber - 1
-						? "error"
-						: "generic",
 				eventName: "OldSnapshotFetchWhileRefreshing",
 				snapshotSequenceNumber,
 				firstProcessedOpSequenceNumber,
