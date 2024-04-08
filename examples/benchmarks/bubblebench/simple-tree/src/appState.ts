@@ -16,7 +16,7 @@ export class AppState implements IAppState {
 	readonly localClient: Client;
 
 	constructor(
-		private readonly tree: TreeView<App>,
+		private readonly tree: TreeView<typeof App>,
 		public width: number,
 		public height: number,
 		numBubbles: number,
