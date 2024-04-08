@@ -2651,7 +2651,10 @@ export class ContainerRuntime
 					// Some other client turned on the id compressor. If we have not turned it on,
 					// put it in a pending queue and delay finalization.
 					if (this._idCompressor === undefined) {
-						assert(this.idCompressorMode !== undefined, "id compressor should be enabled");
+						assert(
+							this.idCompressorMode !== undefined,
+							"id compressor should be enabled",
+						);
 						this.pendingIdCompressorOps.push(range);
 					} else {
 						this._idCompressor.finalizeCreationRange(range);
