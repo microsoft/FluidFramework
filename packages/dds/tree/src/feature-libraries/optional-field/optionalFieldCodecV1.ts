@@ -18,7 +18,6 @@ import {
 	EncodedNodeChangeset,
 	type EncodedChangeAtomId,
 	type FieldChangeEncodingContext,
-	type NodeId,
 } from "../modular-schema/index.js";
 
 import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormatV1.js";
@@ -49,7 +48,7 @@ function makeRegisterIdCodec(
 	};
 }
 
-export function makeOptionalFieldCodec<TChildChange = NodeId>(
+export function makeOptionalFieldCodec(
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
@@ -57,7 +56,7 @@ export function makeOptionalFieldCodec<TChildChange = NodeId>(
 		ChangeEncodingContext
 	>,
 ): IJsonCodec<
-	OptionalChangeset<TChildChange>,
+	OptionalChangeset,
 	EncodedOptionalChangeset<TAnySchema>,
 	EncodedOptionalChangeset<TAnySchema>,
 	FieldChangeEncodingContext
@@ -66,7 +65,7 @@ export function makeOptionalFieldCodec<TChildChange = NodeId>(
 	const registerIdCodec = makeRegisterIdCodec(changeAtomIdCodec);
 
 	return {
-		encode: (change: OptionalChangeset<TChildChange>, context: FieldChangeEncodingContext) => {
+		encode: (change: OptionalChangeset, context: FieldChangeEncodingContext) => {
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
 
 			if (change.moves.length > 0) {
@@ -94,7 +93,7 @@ export function makeOptionalFieldCodec<TChildChange = NodeId>(
 				for (const [id, childChange] of change.childChanges) {
 					encoded.c.push([
 						registerIdCodec.encode(id, context.baseContext),
-						context.encodeNode(childChange as NodeId),
+						context.encodeNode(childChange),
 					]);
 				}
 			}
@@ -106,7 +105,7 @@ export function makeOptionalFieldCodec<TChildChange = NodeId>(
 			encoded: EncodedOptionalChangeset<TAnySchema>,
 			context: FieldChangeEncodingContext,
 		) => {
-			const decoded: Mutable<OptionalChangeset<TChildChange>> = {
+			const decoded: Mutable<OptionalChangeset> = {
 				moves:
 					encoded.m?.map(([encodedSrc, encodedDst]) => [
 						changeAtomIdCodec.decode(encodedSrc, context.baseContext),
@@ -115,7 +114,7 @@ export function makeOptionalFieldCodec<TChildChange = NodeId>(
 				childChanges:
 					encoded.c?.map(([id, encodedChange]) => [
 						registerIdCodec.decode(id, context.baseContext),
-						context.decodeNode(encodedChange) as TChildChange,
+						context.decodeNode(encodedChange),
 					]) ?? [],
 			};
 

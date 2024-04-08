@@ -36,12 +36,12 @@
 		"test:jest:coverage": "jest --detectOpenHandles --coverage --ci",
 		"tsc:watch": "tsc --watch",
 		"watch:devtools-core": "tsc --watch --project ../devtools-core/tsconfig.json --preserveWatchOutput",
-		"watch:devtools-view": "tsc --watch --project ../devtools-view/tsconfig.json --preserveWatchOutput",
+		"watch:devtools-view": "tsc --watch --project ../devtools-view/tsconfig.esm.json --preserveWatchOutput",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
-		"@fluentui/react-components": "~9.19.1",
+		"@fluentui/react-components": "^9.47.5",
 		"@fluentui/react-icons": "^2.0.233",
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",

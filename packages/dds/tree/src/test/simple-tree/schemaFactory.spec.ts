@@ -364,7 +364,7 @@ describe("schemaFactory", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view: TreeView<Canvas> = tree.schematize(config);
+		const view: TreeView<typeof Canvas> = tree.schematize(config);
 		const stuff = view.root.stuff;
 		assert(stuff instanceof NodeList);
 		const item = stuff[0];
@@ -668,7 +668,7 @@ describe("schemaFactory", () => {
 		function test(
 			parentType: (typeof objectTypes)[number],
 			childType: (typeof objectTypes)[number],
-			validate: (view: TreeView<ComboRoot>, nodes: ComboNode[]) => void,
+			validate: (view: TreeView<typeof ComboRoot>, nodes: ComboNode[]) => void,
 		) {
 			const config = new TreeConfiguration(ComboRoot, () => ({ root: undefined }));
 			const factory = new TreeFactory({});
