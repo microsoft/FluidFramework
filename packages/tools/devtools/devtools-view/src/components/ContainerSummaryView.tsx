@@ -6,6 +6,7 @@
 import {
 	Badge,
 	Button,
+	InfoLabel,
 	Table,
 	TableBody,
 	TableCell,
@@ -19,7 +20,6 @@ import {
 	useTableColumnSizing_unstable,
 	useTableFeatures,
 } from "@fluentui/react-components";
-import { InfoLabel } from "@fluentui/react-components/unstable";
 import {
 	Delete20Regular,
 	PlugConnected20Regular,
