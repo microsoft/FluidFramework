@@ -28,6 +28,7 @@ import {
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { type IPendingContainerState, SerializedStateManager } from "../serializedStateManager.js";
+import { failProxy } from "./failProxy.js";
 
 type ISerializedStateManagerDocumentStorageService = Pick<
 	IDocumentStorageService,
@@ -188,7 +189,7 @@ describe("serializedStateManager", () => {
 		const serializedStateManager = new SerializedStateManager(
 			undefined,
 			logger.toTelemetryLogger(),
-			new MockStorageAdapter(),
+			failProxy(), // no calls to storage expected
 			true,
 		);
 		// equivalent to attach
