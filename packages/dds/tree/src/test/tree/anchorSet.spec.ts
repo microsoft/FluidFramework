@@ -318,6 +318,29 @@ describe("AnchorSet", () => {
 		assert.throws(() => anchors.locate(anchor3));
 	});
 
+	it("visitor increases references as it descends", () => {
+		const [anchors, anchor1, anchor2, anchor3, anchor4] = setup();
+
+		// This leaves anchor1 with no refs. It is kelp alive by anchor4 which is below it.
+		anchors.forget(anchor4);
+
+		withVisitor(anchors, (v) => {
+			v.enterField(fieldFoo);
+			v.enterNode(5);
+			v.enterField(fieldBar);
+			// This moves anchor4 out from under anchor1.
+			// If the visitor did not increase the ref count of anchor1 on its way down,
+			// anchor1 will be disposed as part of this operation.
+			v.detach({ start: 4, end: 5 }, detachedField);
+			v.exitField(fieldBar);
+			// If anchor1 is be disposed. This will throw.
+			v.exitNode(5);
+			v.exitField(fieldFoo);
+		});
+
+		checkRemoved(anchors.locate(anchor1), detachedField);
+	});
+
 	describe("internalize path", () => {
 		it("identity case", () => {
 			const anchors = new AnchorSet();
