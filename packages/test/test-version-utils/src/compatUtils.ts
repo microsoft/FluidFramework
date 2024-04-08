@@ -4,6 +4,7 @@
  */
 
 import { mixinAttributor } from "@fluid-experimental/attributor";
+import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/test-drivers";
 import {
 	IContainerRuntimeOptions,
@@ -25,7 +26,6 @@ import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/internal";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import {
 	ITestContainerConfig,
 	DataObjectFactoryType,
@@ -392,5 +392,14 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		driverForLoading,
 		createContainerFactoryFn,
 		loadContainerFactoryFn,
+		// telemetry props
+		{
+			all: {
+				testType: "TestObjectProviderWithVersionedLoad",
+				testCreateVersion: versionForCreating,
+				testLoadVersion: versionForLoading,
+				testRuntimeOptionsVersion: minVersion,
+			},
+		},
 	);
 }

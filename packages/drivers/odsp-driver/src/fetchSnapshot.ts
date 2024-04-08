@@ -83,7 +83,7 @@ export enum SnapshotFormatSupportType {
 export async function fetchSnapshot(
 	snapshotUrl: string,
 	// eslint-disable-next-line @rushstack/no-new-null
-	token: string | null,
+	token: string,
 	versionId: string,
 	fetchFullSnapshot: boolean,
 	forceAccessTokenViaAuthorizationHeader: boolean,
@@ -110,7 +110,6 @@ export async function fetchSnapshot(
 		logger,
 		{
 			eventName: "fetchSnapshot",
-			headers: Object.keys(headers).length > 0 ? true : undefined,
 		},
 		async () => snapshotDownloader(url, { headers }),
 	)) as IOdspResponse<IOdspSnapshot>;
@@ -272,7 +271,6 @@ async function fetchLatestSnapshotCore(
 		const fetchSnapshotForLoadingGroup = isSnapshotFetchForLoadingGroup(loadingGroupIds);
 		const eventName = fetchSnapshotForLoadingGroup ? "TreesLatestForGroup" : "TreesLatest";
 		const storageToken = await storageTokenFetcher(tokenFetchOptions, eventName, true);
-		assert(storageToken !== null, 0x1e5 /* "Storage token should not be null" */);
 
 		const perfEvent = {
 			eventName,
@@ -437,7 +435,6 @@ async function fetchLatestSnapshotCore(
 
 			assert(parsedSnapshotContents !== undefined, 0x312 /* snapshot should be parsed */);
 			const snapshot = parsedSnapshotContents.content;
-			const { trees, numBlobs, encodedBlobsSize } = evalBlobsAndTrees(snapshot);
 
 			// There are some scenarios in ODSP where we cannot cache, trees/latest will explicitly tell us when we
 			// cannot cache using an HTTP response header. Only cache snapshot if it is not for a loading group.
@@ -480,17 +477,16 @@ async function fetchLatestSnapshotCore(
 			}
 
 			event.end({
-				trees,
+				// trees, leafTrees, blobNodes, encodedBlobsSize,
+				// blobNodes - blobs tells us (roughly) how many blobs are deduped by service.
+				...getTreeStats(snapshot),
 				blobs: snapshot.blobContents?.size ?? 0,
-				leafNodes: numBlobs,
-				encodedBlobsSize,
 				sequenceNumber,
 				ops: snapshot.ops?.length ?? 0,
 				fetchSnapshotForLoadingGroup,
 				useLegacyFlowWithoutGroups:
 					useLegacyFlowWithoutGroupsForSnapshotFetch(loadingGroupIds),
 				userOps: snapshot.ops?.filter((op) => isRuntimeMessage(op)).length ?? 0,
-				headers: Object.keys(response.requestHeaders).length > 0 ? true : undefined,
 				// Measures time to make fetch call. Should be similar to
 				// fetchStartToResponseEndTime - receiveContentTime, i.e. it looks like it's time till first byte /
 				// end of response headers
@@ -575,18 +571,24 @@ function getFormBodyAndHeaders(
 	return { body: postBody, headers: header };
 }
 
-export function evalBlobsAndTrees(snapshot: ISnapshot): {
+interface ITreeStats {
 	trees: number;
-	numBlobs: number;
-	encodedBlobsSize: number;
-} {
-	const trees = countTreesInSnapshotTree(snapshot.snapshotTree);
-	const numBlobs = snapshot.blobContents.size;
+	leafTrees: number;
+	blobNodes: number;
+}
+
+export function getTreeStats(snapshot: ISnapshot): ITreeStats & { encodedBlobsSize: number } {
+	const stats: ITreeStats = {
+		trees: 0,
+		leafTrees: 0,
+		blobNodes: 0,
+	};
+	getTreeStatsCore(snapshot.snapshotTree, stats);
 	let encodedBlobsSize = 0;
 	for (const [_, blobContent] of snapshot.blobContents) {
 		encodedBlobsSize += blobContent.byteLength;
 	}
-	return { trees, numBlobs, encodedBlobsSize };
+	return { ...stats, encodedBlobsSize };
 }
 
 export function validateBlobsAndTrees(snapshot: IOdspSnapshot): void {
@@ -600,13 +602,19 @@ export function validateBlobsAndTrees(snapshot: IOdspSnapshot): void {
 	);
 }
 
-function countTreesInSnapshotTree(snapshotTree: ISnapshotTree): number {
-	let numTrees = 0;
-	for (const [_, tree] of Object.entries(snapshotTree.trees)) {
-		numTrees += 1;
-		numTrees += countTreesInSnapshotTree(tree);
+function getTreeStatsCore(snapshotTree: ISnapshotTree, stats: ITreeStats): void {
+	stats.blobNodes += Object.entries(snapshotTree.blobs).length;
+	stats.trees++;
+
+	const entries = Object.entries(snapshotTree.trees);
+	if (entries.length === 0) {
+		stats.leafTrees++;
+	} else {
+		for (const [_, tree] of entries) {
+			stats.trees++;
+			getTreeStatsCore(tree, stats);
+		}
 	}
-	return numTrees;
 }
 
 /**

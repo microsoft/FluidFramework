@@ -12,7 +12,7 @@ import {
 	TaggedChange,
 	asChangeAtomId,
 	makeAnonChange,
-	makeChangeAtomId,
+	taggedAtomId,
 } from "../../../core/index.js";
 import {
 	Move,
@@ -235,10 +235,6 @@ export function taggedRegister(id: RegisterId, revision: RevisionTag | undefined
 	}
 
 	return taggedAtomId(id, revision);
-}
-
-export function taggedAtomId(id: ChangeAtomId, revision: RevisionTag | undefined): ChangeAtomId {
-	return makeChangeAtomId(id.localId, id.revision ?? revision);
 }
 
 function getTouchedRegisters({ change, revision }: TaggedChange<OptionalChangeset>): {
