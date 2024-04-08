@@ -14,6 +14,7 @@ import { TreeItem } from "./TreeItem.js";
  * {@link UnknownFluidObjectView} input props.
  */
 export type UnknownFluidObjectViewProps = DataVisualizationTreeProps<FluidUnknownObjectNode>;
+
 /**
  * Render data with type VisualNodeKind.FluidUnknownObjectNode and render its children.
  */

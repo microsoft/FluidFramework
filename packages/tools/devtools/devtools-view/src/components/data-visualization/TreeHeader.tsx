@@ -42,12 +42,9 @@ const getStyles = makeStyles({
 	},
 	iconContainer: {
 		paddingLeft: "3px",
-		paddingTop: "0.5px",
-	},
-	headerContainer: {
-		width: "auto",
-		display: "flex",
-		alignItems: "center",
+		paddingRight: "3px",
+		paddingBottom: "2px",
+		verticalAlign: "middle",
 	},
 });
 
@@ -61,10 +58,8 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 	const styles = getStyles();
 
 	return (
-		<div className={styles.headerContainer}>
-			{" "}
-			{/* Adjusted for flex display */}
-			<span>{`${label}`}</span>
+		<div>
+			{`${label}`}
 			<span
 				style={{
 					color:

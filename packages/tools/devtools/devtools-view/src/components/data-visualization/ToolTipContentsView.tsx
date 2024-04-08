@@ -7,21 +7,19 @@ import { type VisualChildNode, VisualNodeKind } from "@fluidframework/devtools-c
 import React from "react";
 
 /**
- * TODO
+ * Interface for the props of {@link ToolTipContentsView}.
  */
 export interface ToolTipContentsViewProps {
 	contents: Record<string, VisualChildNode> | string;
 }
 
 /**
- * TODO
+ * Component to render the contents of a {@link ToolTipContentsViewProps}.
+ * @param props - {@link ToolTipContentsViewProps}
+ * @returns - a key-value pair of items as a list if `Record<string, VisualChildNode>`, a string otherwise.
  */
 export function ToolTipContentsView(props: ToolTipContentsViewProps): React.ReactElement {
 	const { contents } = props;
-
-	if (contents === undefined) {
-		return <></>;
-	}
 
 	if (typeof contents === "string") {
 		return <div> {contents} </div>;
@@ -30,6 +28,8 @@ export function ToolTipContentsView(props: ToolTipContentsViewProps): React.Reac
 	const listItems: React.ReactElement[] = [];
 	let listItem: React.ReactElement;
 
+	// TOOD: Fix the entire component's logic to handle recursive input data.
+	// Currently, it only supports a single level of data and it is a temporary solution.
 	for (const contentsValue of Object.values(contents)) {
 		if (contentsValue.nodeKind === VisualNodeKind.TreeNode) {
 			for (const [fieldKey, fieldValue] of Object.entries(contentsValue.children)) {
@@ -39,12 +39,18 @@ export function ToolTipContentsView(props: ToolTipContentsViewProps): React.Reac
 							{fieldKey} : {fieldValue.value}
 						</li>
 					) : (
-						<li>Unsupported Data Structure!</li>
+						<i>
+							<li>Unsupported Data Structure</li>
+						</i>
 					);
 				listItems.push(listItem);
 			}
 		} else {
-			listItem = <li>Unsupported VisualNodeKind!</li>;
+			listItem = (
+				<i>
+					<li>Unsupported VisualNodeKind</li>
+				</i>
+			);
 		}
 	}
 

@@ -30,8 +30,8 @@ import {
 
 /**
  * Returns allowed types of the non-leaf nodes in the tree.
- * - String: Allowed type for the array node.
- * - `Record<string, string>`: Allowed types for the non-array nodes (e.g., object, map).
+ * @param allowedTypes - a string if array node, `Record<string, string>` for non-array nodes.
+ * @returns - a VisualChildNode with the allowed type.
  */
 function createAllowedTypesVisualTree(
 	allowedTypes: string | Record<string, string>,
@@ -60,15 +60,15 @@ function createAllowedTypesVisualTree(
 /**
  * Creates a visual representation of the schema of the tree in {@link VisualTreeNode} format.
  */
-function createToolTipContents(tree: SharedTreeSchemaNode): VisualTreeNode {
+function createToolTipContents(schema: SharedTreeSchemaNode): VisualTreeNode {
 	const children: Record<string, VisualChildNode> = {
 		name: {
 			nodeKind: VisualNodeKind.ValueNode,
-			value: tree.schemaName,
+			value: schema.schemaName,
 		},
 	};
-	if (tree.allowedTypes !== undefined) {
-		children.allowedTypes = createAllowedTypesVisualTree(tree.allowedTypes);
+	if (schema.allowedTypes !== undefined) {
+		children.allowedTypes = createAllowedTypesVisualTree(schema.allowedTypes);
 	}
 	return {
 		nodeKind: VisualNodeKind.TreeNode,
@@ -77,7 +77,6 @@ function createToolTipContents(tree: SharedTreeSchemaNode): VisualTreeNode {
 }
 
 /**
- * Converts the output of {@link sharedTreeVisualizer} to {@link VisualChildNode} type containing `schema` and `children` fields.
  * Constructs a VisualTree of the input tree's schema fields in {@link VisualTreeNode} or {@link VisualValueNode}.
  */
 export function toVisualTree(tree: VisualSharedTreeNode): VisualValueNode | VisualTreeNode {
