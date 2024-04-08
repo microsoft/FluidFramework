@@ -106,6 +106,8 @@ describe("ObjectNode", () => {
 		const descriptor = Reflect.getOwnPropertyDescriptor(n, "foo") ?? assert.fail();
 		assert.equal(descriptor.enumerable, false);
 		assert.equal(descriptor.value, undefined);
+		const keys = Object.keys(n);
+		assert.deepEqual(keys, []);
 	});
 
 	it("full property enumerability", () => {
@@ -117,5 +119,7 @@ describe("ObjectNode", () => {
 		const descriptor = Reflect.getOwnPropertyDescriptor(n, "foo") ?? assert.fail();
 		assert.equal(descriptor.enumerable, true);
 		assert.equal(descriptor.value, 0);
+		const keys = Object.keys(n);
+		assert.deepEqual(keys, ["foo"]);
 	});
 });
