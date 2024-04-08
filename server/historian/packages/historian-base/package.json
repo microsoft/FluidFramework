@@ -1,5 +1,5 @@
 {
-	"name": "@fluidframework/historian-base",
+	"name": "@fluid-internal/historian-base",
 	"version": "0.0.1",
 	"description": "Base classes for historian",
 	"homepage": "https://fluidframework.com",

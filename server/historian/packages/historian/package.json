@@ -1,5 +1,5 @@
 {
-	"name": "@fluidframework/historian",
+	"name": "@fluid-internal/historian",
 	"version": "0.0.1",
 	"description": "Git REST API",
 	"homepage": "https://fluidframework.com",
@@ -28,7 +28,7 @@
 		"tslint": "tslint \"src/**/*.ts\""
 	},
 	"dependencies": {
-		"@fluidframework/historian-base": "^0.0.1",
+		"@fluid-internal/historian-base": "workspace:~",
 		"@fluidframework/server-services-shared": "^4.0.0",
 		"@fluidframework/server-services-utils": "^4.0.0",
 		"body-parser": "^1.17.2",
