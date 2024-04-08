@@ -23,6 +23,10 @@ When making such a request please include if such a configuration already works 
 -   [webpack](https://webpack.js.org/) 5:
     -   TODO: list requirements to make our client packages work with webpack (ex: what polyfills we need, etc.). Maybe we should publish a supported know to work config (ex: fully working source maps, all needed polyfills) which we can update as part of the client packages?
 
+## Module Resolution
+
+[`Node16`, `NodeNext`, or `Bundler`](https://www.typescriptlang.org/tsconfig#moduleResolution) resolution should be used with TypeScript compilerOptions to follow the [Node.js v12+ ESM Resolution and Loading algorithm](https://nodejs.github.io/nodejs.dev/en/api/v20/esm/#resolution-and-loading-algorithm). Node10 resolution is not supported as it does not support Fluid Framework's API structuring pattern that is used to distinguish stable APIs from those that are in development.
+
 ## Module Formats
 
 -   ES Modules:
