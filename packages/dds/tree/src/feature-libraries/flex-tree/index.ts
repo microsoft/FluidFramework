@@ -23,7 +23,6 @@ export {
 	FlexTreeTypedNodeUnion,
 	CheckTypesOverlap,
 	TreeStatus,
-	onNextChange,
 	FlexTreeUnknownUnboxed,
 	FlexTreeUnboxField,
 	flexTreeMarker,
@@ -35,6 +34,7 @@ export {
 	reservedObjectNodeFieldPropertyNames,
 	reservedObjectNodeFieldPropertyNamePrefixes,
 	FlexTreeObjectNodeFieldsInner,
+	flexTreeSlot,
 } from "./flexTreeTypes.js";
 
 export {
@@ -45,9 +45,9 @@ export {
 	visitIterableTreeWithState,
 } from "./navigation.js";
 
-export { getTreeContext, FlexTreeContext, Context } from "./context.js";
+export { getTreeContext, FlexTreeContext, Context, ContextSlot } from "./context.js";
 
-export { TreeEvent, EditableTreeEvents } from "./treeEvents.js";
+export { FlexTreeNodeEvents } from "./treeEvents.js";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
 export {

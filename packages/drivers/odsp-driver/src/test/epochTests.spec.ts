@@ -4,22 +4,25 @@
  */
 
 import { strict as assert } from "node:assert";
-import { IDocumentStorageServicePolicies } from "@fluidframework/driver-definitions";
-import { type NonRetryableError, ThrottlingError } from "@fluidframework/driver-utils";
+
+import { IDocumentStorageServicePolicies } from "@fluidframework/driver-definitions/internal";
+import { type NonRetryableError, ThrottlingError } from "@fluidframework/driver-utils/internal";
 import {
 	ICacheEntry,
 	IEntry,
 	IOdspResolvedUrl,
 	OdspErrorTypes,
 	maximumCacheDurationMs,
-} from "@fluidframework/odsp-driver-definitions";
-import { type IFluidErrorBase, createChildLogger } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { type IFluidErrorBase, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { stub } from "sinon";
+
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts.js";
 import { EpochTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
 import * as odspUtilsModule from "../odspUtils.js";
+
 import { createResponse, mockFetchOk, mockFetchSingle } from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();

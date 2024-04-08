@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
@@ -12,7 +13,8 @@ import {
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
+
 import { ISerializableValue, IValueChanged } from "../../interfaces.js";
 import {
 	IMapClearLocalOpMetadata,
@@ -277,9 +279,9 @@ describe("Map", () => {
 			it("new serialization format for big maps", async () => {
 				map.set("key", "value");
 
-				// 40K char string
+				// 160K char string
 				let longString = "01234567890";
-				for (let i = 0; i < 12; i++) {
+				for (let i = 0; i < 14; i++) {
 					longString = longString + longString;
 				}
 				map.set("longValue", longString);

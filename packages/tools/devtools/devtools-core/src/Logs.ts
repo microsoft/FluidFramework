@@ -4,6 +4,7 @@
  */
 
 import { type IClient } from "@fluidframework/protocol-definitions";
+
 import { type ContainerStateChangeKind } from "./Container.js";
 
 /**

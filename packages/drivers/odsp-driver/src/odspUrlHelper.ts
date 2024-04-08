@@ -3,40 +3,40 @@
  * Licensed under the MIT License.
  */
 
-import { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions";
+import { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions/internal";
 
 // Centralized store for all ODC/SPO logic
 
 /**
- * Checks whether or not the given URL origin is an ODC origin
- * @param origin - The URL origin to check
+ * Checks whether or not the given URL has an ODC origin
+ * @param url - The URL to check
  * @internal
  */
-export function isOdcOrigin(origin: string): boolean {
+export function hasOdcOrigin(url: URL): boolean {
 	return (
 		// Primary API endpoint and several test endpoints
-		origin.includes("onedrive.com") ||
+		url.origin.endsWith("onedrive.com") ||
 		// *storage.live.com hostnames
-		origin.includes("storage.live.com") ||
+		url.origin.endsWith("storage.live.com") ||
 		// live-int
-		origin.includes("storage.live-int.com") ||
+		url.origin.endsWith("storage.live-int.com") ||
 		// Test endpoints
-		origin.includes("onedrive-tst.com")
+		url.origin.endsWith("onedrive-tst.com")
 	);
 }
 
 /**
  * Gets the correct API root for the given ODSP url, e.g. 'https://foo-my.sharepoint.com/_api/v2.1'
- * @param origin - The URL origin
+ * @param url - The URL
  * @internal
  */
-export function getApiRoot(origin: string): string {
+export function getApiRoot(url: URL): string {
 	let prefix = "_api/";
-	if (isOdcOrigin(origin)) {
+	if (hasOdcOrigin(url)) {
 		prefix = "";
 	}
 
-	return `${origin}/${prefix}v2.1`;
+	return `${url.origin}/${prefix}v2.1`;
 }
 
 /**
@@ -44,12 +44,12 @@ export function getApiRoot(origin: string): string {
  * @param url - The URL to check
  * @internal
  */
-export function isSpoUrl(url: string): boolean {
-	const urlLower = url.toLowerCase();
-
+export function isSpoUrl(url: URL): boolean {
 	// Format: foo.sharepoint.com/_api/v2.1./drives/bar/items/baz and foo.sharepoint-df.com/...
-	const spoRegex = /(.*\.sharepoint(-df)*\.com)\/_api\/v2.1\/drives\/([^/]*)\/items\/([^/]*)/;
-	return spoRegex.test(urlLower);
+	const hostRegex = /\.sharepoint(?:-df)?\.com$/;
+	const pathRegex = /^\/_api\/v2\.1\/drives\/[^/]+\/items\/[^/]+/;
+
+	return hostRegex.test(url.host.toLowerCase()) && pathRegex.test(url.pathname.toLowerCase());
 }
 
 /**
@@ -57,23 +57,21 @@ export function isSpoUrl(url: string): boolean {
  * @param url - The URL to check
  * @internal
  */
-export function isOdcUrl(url: string | URL): boolean {
-	const urlObj = typeof url === "string" ? new URL(url) : url;
-
-	if (!isOdcOrigin(urlObj.origin)) {
+export function isOdcUrl(url: URL): boolean {
+	if (!hasOdcOrigin(url)) {
 		return false;
 	}
 
-	const path = urlObj.pathname.toLowerCase();
+	const path = url.pathname.toLowerCase();
 
 	// Splitting the regexes so we don't have regex soup
 	// Format: /v2.1/drive/items/ABC123!123 and /v2.1/drives/ABC123/items/ABC123!123
-	const odcRegex = /\/v2.1\/(drive|drives\/[^/]+)\/items\/([\da-z]+)!(\d+)/;
+	const odcRegex = /^\/v2\.1\/(?:drive|drives\/[^/]+)\/items\/[\dA-Za-z]+!\d+/;
 
 	// Format: /v2.1/drives('ABC123')/items('ABC123!123')
-	const odcODataRegex = /\/v2.1\/drives\('[^/]+'\)\/items\('[\da-z]+!\d+'\)/;
+	const odcODataRegex = /^\/v2\.1\/drives\('[^/]+'\)\/items\('[\dA-Za-z]+!\d+'\)/;
 
-	return !!(odcRegex.exec(path) ?? odcODataRegex.exec(path));
+	return odcRegex.test(path) || odcODataRegex.test(path);
 }
 
 /**
@@ -89,7 +87,7 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 	// Pick a regex based on the hostname
 	// TODO This will only support ODC using api.onedrive.com, update to handle the future (share links etc)
 	let joinSessionMatch: RegExpExecArray | null;
-	if (isOdcOrigin(url.origin)) {
+	if (hasOdcOrigin(url)) {
 		// Capture groups:
 		// 0: match
 		// 1: origin
@@ -118,7 +116,7 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 
 		return { siteUrl: `${url.origin}${url.pathname}`, driveId, itemId };
 	} else {
-		joinSessionMatch = /(.*)\/_api\/v2.1\/drives\/([^/]*)\/items\/([^/]*)(.*)/.exec(pathname);
+		joinSessionMatch = /(.*)\/_api\/v2\.1\/drives\/([^/]*)\/items\/([^/]*)(.*)/.exec(pathname);
 
 		if (joinSessionMatch === null) {
 			return undefined;

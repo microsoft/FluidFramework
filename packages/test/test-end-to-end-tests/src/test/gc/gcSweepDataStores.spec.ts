@@ -4,6 +4,14 @@
  */
 
 import { strict as assert } from "assert";
+
+import {
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+	itExpects,
+} from "@fluid-private/test-version-utils";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerMessageType,
 	ContainerRuntime,
@@ -12,35 +20,29 @@ import {
 	ISummarizeEventProps,
 	ISummarizer,
 	TombstoneResponseHeaderKey,
-} from "@fluidframework/container-runtime";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions";
+} from "@fluidframework/container-runtime/internal";
+// eslint-disable-next-line import/no-internal-modules
+import { ISweepMessage } from "@fluidframework/container-runtime/test/gc";
 import {
+	RetriableSummaryError,
+	defaultMaxAttemptsForSubmitFailures,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/container-runtime/test/summary";
+import { IErrorBase } from "@fluidframework/core-interfaces";
+import { delay } from "@fluidframework/core-utils/internal";
+import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
+import {
+	ITestContainerConfig,
 	ITestObjectProvider,
 	createSummarizer,
-	summarizeNow,
-	waitForContainerConnection,
-	ITestContainerConfig,
 	createTestConfigProvider,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
-} from "@fluidframework/test-utils";
-import {
-	describeCompat,
-	ITestDataObject,
-	itExpects,
-	TestDataObjectType,
-} from "@fluid-private/test-version-utils";
-import { delay } from "@fluidframework/core-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IErrorBase } from "@fluidframework/core-interfaces";
-import {
-	defaultMaxAttemptsForSubmitFailures,
-	RetriableSummaryError,
-	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-runtime/test/summary";
-// eslint-disable-next-line import/no-internal-modules
-import { ISweepMessage } from "@fluidframework/container-runtime/test/gc";
+	summarizeNow,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
+
 import {
 	getGCDeletedStateFromSummary,
 	getGCStateFromSummary,

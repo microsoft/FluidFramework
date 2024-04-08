@@ -18,8 +18,11 @@ export interface Revertible {
 	readonly status: RevertibleStatus;
 	/**
 	 * Reverts the associated change.
+	 * @param release - If true, the revertible will be released after being reverted.
+	 * If false, the revertible will remain valid. This can be useful for scenarios where the revert may be dropped
+	 * due to merge conflicts, and one wants to attempt reverting again.
 	 */
-	revert(): void;
+	revert(release: boolean): void;
 	/**
 	 * Releases this revertible so that it can no longer be used.
 	 */

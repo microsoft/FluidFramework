@@ -5,25 +5,25 @@
 
 import { strict as assert } from "assert";
 
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase, IFluidHandle } from "@fluidframework/core-interfaces";
+import type { ISharedMap } from "@fluidframework/map";
 import type {
 	IDirectory,
 	IDirectoryValueChanged,
 	ISharedDirectory,
-	ISharedMap,
 	SharedDirectory,
-} from "@fluidframework/map";
+} from "@fluidframework/map/internal";
 import {
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	ITestFluidObject,
 	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+} from "@fluidframework/test-utils/internal";
 
 describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap, SharedDirectory } = apis.dds;
@@ -848,7 +848,7 @@ describeCompat("SharedDirectory orderSequentially", "NoCompat", (getTestObjectPr
 
 	let container: IContainer;
 	let dataObject: ITestFluidObject;
-	let sharedDir: SharedDirectory;
+	let sharedDir: ISharedDirectory;
 	let containerRuntime: ContainerRuntime;
 	let clearEventCount: number;
 	let changedEventData: IDirectoryValueChanged[];
@@ -1027,7 +1027,7 @@ describeCompat("SharedDirectory orderSequentially", "NoCompat", (getTestObjectPr
 		assert.notEqual(error, undefined, "No error");
 		assert.equal(error?.message, errorMessage, "Unexpected error message");
 		assert.equal(containerRuntime.disposed, false);
-		assert.equal(sharedDir.countSubDirectory(), 0);
+		assert.equal(sharedDir.countSubDirectory?.(), 0);
 		assert.equal(subDirCreatedEventData.length, 1);
 		assert.equal(subDirCreatedEventData[0], "subDirName");
 		// rollback
@@ -1056,7 +1056,7 @@ describeCompat("SharedDirectory orderSequentially", "NoCompat", (getTestObjectPr
 		assert.notEqual(error, undefined, "No error");
 		assert.equal(error?.message, errorMessage, "Unexpected error message");
 		assert.equal(containerRuntime.disposed, false);
-		assert.equal(sharedDir.countSubDirectory(), 1);
+		assert.equal(sharedDir.countSubDirectory?.(), 1);
 		assert.notEqual(sharedDir.getSubDirectory("subDirName"), undefined);
 		assert.equal(subDirCreatedEventData.length, 1);
 		assert.equal(subDirCreatedEventData[0], "subDirName");
@@ -1083,7 +1083,7 @@ describeCompat("SharedDirectory orderSequentially", "NoCompat", (getTestObjectPr
 		assert.notEqual(error, undefined, "No error");
 		assert.equal(error?.message, errorMessage, "Unexpected error message");
 		assert.equal(containerRuntime.disposed, false);
-		assert.equal(sharedDir.countSubDirectory(), 0);
+		assert.equal(sharedDir.countSubDirectory?.(), 0);
 		assert.equal(
 			subDirCreatedEventData.length,
 			2,
@@ -1127,7 +1127,7 @@ describeCompat("SharedDirectory orderSequentially", "NoCompat", (getTestObjectPr
 		assert.notEqual(error, undefined, "No error");
 		assert.equal(error?.message, errorMessage, "Unexpected error message");
 		assert.equal(containerRuntime.disposed, false);
-		assert.equal(sharedDir.countSubDirectory(), 1);
+		assert.equal(sharedDir.countSubDirectory?.(), 1);
 		assert.notEqual(sharedDir.getSubDirectory("subDirName"), undefined);
 		assert.equal(subDirCreatedEventData.length, 2);
 		assert.equal(subDirCreatedEventData[0], "subDirName");
@@ -1154,7 +1154,7 @@ describeCompat("SharedDirectory orderSequentially", "NoCompat", (getTestObjectPr
 		assert.notEqual(error, undefined, "No error");
 		assert.equal(error?.message, errorMessage, "Unexpected error message");
 		assert.equal(containerRuntime.disposed, false);
-		assert.equal(sharedDir.countSubDirectory(), 0);
+		assert.equal(sharedDir.countSubDirectory?.(), 0);
 		assert.equal(subDirDeletedEventData.length, 0);
 		// rollback
 		assert.equal(subDirCreatedEventData.length, 0);
@@ -1183,7 +1183,7 @@ describeCompat("SharedDirectory orderSequentially", "NoCompat", (getTestObjectPr
 		assert.notEqual(error, undefined, "No error");
 		assert.equal(error?.message, errorMessage, "Unexpected error message");
 		assert.equal(containerRuntime.disposed, false);
-		assert.equal(sharedDir.countSubDirectory(), 1);
+		assert.equal(sharedDir.countSubDirectory?.(), 1);
 		const readSubdir = sharedDir.getSubDirectory("subDirName");
 		assert.equal(readSubdir, subdir);
 		assert.equal(subdir.size, 1);
@@ -1260,7 +1260,7 @@ describeCompat("SharedDirectory orderSequentially", "NoCompat", (getTestObjectPr
 		assert.equal(error?.message, errorMessage, "Unexpected error message");
 		assert.equal(containerRuntime.disposed, false);
 		// rollback
-		assert.equal(sharedDir.countSubDirectory(), 3);
+		assert.equal(sharedDir.countSubDirectory?.(), 3);
 		assert.equal(subDirCreatedEventData.length, 4);
 		assert.deepStrictEqual(subDirCreatedEventData, ["dir2", "dir3", "dir1", "dir3"]);
 		assert.equal(subDirDeletedEventData.length, 1);

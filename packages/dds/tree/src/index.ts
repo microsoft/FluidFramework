@@ -76,7 +76,7 @@ export {
 	UpPathDefault,
 	AnchorEvents,
 	AnchorSetRootEvents,
-	FieldKindSpecifier,
+	FieldKindData,
 	AllowedUpdateType,
 	PathVisitor,
 	Adapters,
@@ -92,6 +92,7 @@ export {
 	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
 	LeafNodeStoredSchema,
+	Multiplicity,
 } from "./core/index.js";
 
 export {
@@ -131,7 +132,6 @@ export { leaf } from "./domains/index.js";
 
 export {
 	FlexFieldKind,
-	Multiplicity,
 	isNeverField,
 	FullSchemaPolicy,
 	typeNameSymbol,
@@ -155,7 +155,7 @@ export {
 	stackTreeNodeCursor,
 	CursorAdapter,
 	CursorWithNode,
-	EditableTreeEvents,
+	FlexTreeNodeEvents,
 	ArrayLikeMut,
 	FieldKinds,
 	ContextuallyTypedFieldData,
@@ -210,7 +210,6 @@ export {
 	schemaIsObjectNode,
 	AllowedTypeSet,
 	SchemaBuilderOptions,
-	TreeEvent,
 	SchemaCollection,
 	TreeCompressionStrategy,
 	treeSchemaFromStoredSchema,
@@ -225,7 +224,6 @@ export {
 	NormalizeFieldSchema,
 	FlexObjectNodeFields,
 	FlexMapFieldSchema,
-	ArrayToUnion,
 	ExtractItemType,
 	LazyItem,
 	PropertyNameFromFieldKey,
@@ -256,6 +254,8 @@ export {
 	buildTreeConfiguration,
 	ISharedTreeEditor,
 	ISchemaEditor,
+	SharedTreeFormatOptions,
+	SharedTreeFormatVersion,
 	Tree,
 	TreeApi,
 } from "./shared-tree/index.js";
@@ -276,7 +276,7 @@ export {
 	TreeNodeApi,
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
-	TreeNodeEvents,
+	TreeChangeEvents,
 	NodeFromSchema,
 	TreeMapNode,
 	InsertableTreeNodeFromImplicitAllowedTypes,
@@ -294,6 +294,7 @@ export {
 	NodeBuilderData,
 	NodeKind,
 	ObjectFromSchemaRecord,
+	TreeObjectNode,
 	TreeNodeFromImplicitAllowedTypes,
 	TreeNodeSchemaClass,
 	TreeNodeSchemaCore,
@@ -304,6 +305,7 @@ export {
 	SchemaFactoryRecursive,
 	ValidateRecursiveSchema,
 	ObjectFromSchemaRecordUnsafe,
+	TreeObjectNodeUnsafe,
 	TreeFieldFromImplicitFieldUnsafe,
 	TreeNodeFromImplicitAllowedTypesUnsafe,
 	FieldSchemaUnsafe,
@@ -315,6 +317,7 @@ export {
 	InsertableTypedNodeUnsafe,
 	NodeBuilderDataUnsafe,
 	NodeFromSchemaUnsafe,
+	type FieldProps,
 
 	// experimental @internal APIs:
 	adaptEnum,
@@ -327,7 +330,7 @@ export {
 	test_RecursiveObject_base,
 	test_RecursiveObjectPojoMode,
 } from "./simple-tree/index.js";
-export { SharedTree, TreeFactory } from "./treeFactory.js";
+export { SharedTree, configuredSharedTree } from "./treeFactory.js";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec/index.js";
 export { noopValidator } from "./codec/index.js";

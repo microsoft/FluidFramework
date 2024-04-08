@@ -11,7 +11,7 @@ import {
 	ITestObjectProvider,
 	summarizeNow,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import {
 	describeCompat,
 	ITestDataObject,
@@ -22,8 +22,8 @@ import {
 	SummaryType,
 	type ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import type { ISnapshot } from "@fluidframework/driver-definitions";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 const interceptResult = <T>(

@@ -8,7 +8,7 @@ import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
 import {
 	ICreateBlobResponse,
@@ -17,19 +17,20 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
-	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
 	createChildMonitoringContext,
-} from "@fluidframework/telemetry-utils";
-import { ICache, InMemoryCache } from "./cache";
-import { ISnapshotTreeVersion } from "./definitions";
-import { GitManager } from "./gitManager";
-import { IRouterliciousDriverPolicies } from "./policies";
-import { RetriableGitManager } from "./retriableGitManager";
-import { ISummaryUploadManager } from "./storageContracts";
-import { SummaryTreeUploadManager } from "./summaryTreeUploadManager";
+} from "@fluidframework/telemetry-utils/internal";
+
+import { ICache, InMemoryCache } from "./cache.js";
+import { ISnapshotTreeVersion } from "./definitions.js";
+import { GitManager } from "./gitManager.js";
+import { IRouterliciousDriverPolicies } from "./policies.js";
+import { RetriableGitManager } from "./retriableGitManager.js";
+import { ISummaryUploadManager } from "./storageContracts.js";
+import { SummaryTreeUploadManager } from "./summaryTreeUploadManager.js";
 
 const isNode = typeof window === "undefined";
 

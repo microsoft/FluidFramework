@@ -6,8 +6,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "node:assert";
-import { createIdCompressor } from "@fluidframework/id-compressor";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+
 import { FlexListToUnion } from "../../feature-libraries/index.js";
 import {
 	ApplyKind,
@@ -33,6 +35,7 @@ import {
 } from "../../simple-tree/typesUnsafe.js";
 import { TreeFactory } from "../../treeFactory.js";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
+
 import { hydrate } from "./utils.js";
 
 // TODO:
@@ -80,7 +83,7 @@ describe("SchemaFactoryRecursive", () => {
 				"tree",
 			);
 
-			const view: TreeView<Box> = tree.schematize(config);
+			const view: TreeView<typeof Box> = tree.schematize(config);
 			assert.equal(view.root?.text, "hi");
 
 			const stuff: undefined | Box = view.root.child;

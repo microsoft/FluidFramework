@@ -6,8 +6,8 @@
 import assert from "node:assert";
 import { EOL as newline } from "node:os";
 import * as path from "node:path";
-import { readJsonSync } from "fs-extra";
 import { Package } from "@fluidframework/build-tools";
+import { readJsonSync } from "fs-extra";
 
 import registerDebug from "debug";
 const traceLayerCheck = registerDebug("layer-check");
@@ -452,9 +452,9 @@ export class LayerGraph {
 				const suffix = packageNode.indirectDependencies.has(depPackageNode)
 					? " [constraint=false color=lightgrey]"
 					: packageNode.layerNode !== depPackageNode.layerNode &&
-						  packageNode.level - depPackageNode.level > 3
-					  ? " [constraint=false]"
-					  : "";
+							packageNode.level - depPackageNode.level > 3
+						? " [constraint=false]"
+						: "";
 				dotEdges.push(`"${packageNode.dotName}"->"${depPackageNode.dotName}"${suffix}`);
 			}
 			return true;

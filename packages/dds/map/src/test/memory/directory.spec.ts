@@ -4,15 +4,12 @@
  */
 
 import { IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { DirectoryFactory, SharedDirectory } from "../../directory.js";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-function createLocalDirectory(id: string): SharedDirectory {
-	const directory = new SharedDirectory(
-		id,
-		new MockFluidDataStoreRuntime(),
-		DirectoryFactory.Attributes,
-	);
+import { ISharedDirectory, SharedDirectory } from "../../index.js";
+
+function createLocalDirectory(id: string): ISharedDirectory {
+	const directory = SharedDirectory.getFactory().create(new MockFluidDataStoreRuntime(), id);
 	return directory;
 }
 
@@ -40,7 +37,7 @@ describe("SharedDirectory memory usage", () => {
 			public readonly title = "Create empty directory";
 			public readonly minSampleCount = 500;
 
-			private dir: SharedDirectory = createLocalDirectory("testDirectory");
+			private dir: ISharedDirectory = createLocalDirectory("testDirectory");
 
 			public async run(): Promise<void> {
 				this.dir = createLocalDirectory("testDirectory");
@@ -54,7 +51,7 @@ describe("SharedDirectory memory usage", () => {
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
 				public readonly title = `Add ${x} integers to a local directory`;
-				private dir: SharedDirectory = createLocalDirectory("testDirectory");
+				private dir: ISharedDirectory = createLocalDirectory("testDirectory");
 
 				public async run(): Promise<void> {
 					for (let i = 0; i < x; i++) {
@@ -71,7 +68,7 @@ describe("SharedDirectory memory usage", () => {
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
 				public readonly title = `Add ${x} integers to a local directory, clear it`;
-				private dir: SharedDirectory = createLocalDirectory("testDirectory");
+				private dir: ISharedDirectory = createLocalDirectory("testDirectory");
 
 				public async run(): Promise<void> {
 					for (let i = 0; i < x; i++) {

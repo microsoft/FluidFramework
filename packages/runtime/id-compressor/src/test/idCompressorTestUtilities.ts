@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	BaseFuzzTestState,
 	Generator,
@@ -16,6 +17,8 @@ import {
 	take,
 } from "@fluid-private/stochastic-test-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+
+import { IdCompressor } from "../idCompressor.js";
 import {
 	type IIdCompressor,
 	type IIdCompressorCore,
@@ -27,9 +30,9 @@ import {
 	SessionSpaceCompressedId,
 	StableId,
 	createIdCompressor,
-} from "..//index.js";
-import { IdCompressor } from "../idCompressor.js";
-import { assertIsSessionId, createSessionId } from "../utilities.js";
+} from "../index.js";
+import { assertIsSessionId, createSessionId, localIdFromGenCount } from "../utilities.js";
+
 import {
 	FinalCompressedId,
 	ReadonlyIdCompressor,
@@ -135,6 +138,7 @@ export function buildHugeCompressor(
 				firstGenCount: Math.floor(i / numSessions) * capacity + 1,
 				count: capacity,
 				requestedClusterSize: capacity,
+				localIdRanges: [], // remote session, can safely ignore in tests
 			},
 		});
 	}
@@ -338,6 +342,7 @@ export class IdCompressorTestNetwork {
 						// eslint-disable-next-line @typescript-eslint/dot-notation
 						"nextRequestedClusterSize"
 					],
+					localIdRanges: [], // remote session, can safely ignore in tests
 				},
 			};
 			const opSpaceIds: OpSpaceCompressedId[] = [];
@@ -421,6 +426,29 @@ export class IdCompressorTestNetwork {
 		const sequencedLogs = Object.values(Client).map(
 			(client) => [this.compressors.get(client), this.getSequencedIdLog(client)] as const,
 		);
+
+		// Ensure creation ranges for clients we track contain the correct local ID ranges
+		this.serverOperations.forEach(([range, opSpaceIds, clientFrom]) => {
+			const localIdsInCreationRange = new Set<SessionSpaceCompressedId>();
+			if (clientFrom !== OriginatingClient.Remote) {
+				const ids = range.ids;
+				if (ids !== undefined) {
+					const { firstGenCount, localIdRanges } = ids;
+					for (const [genCount, count] of localIdRanges) {
+						for (let g = genCount; g < genCount + count; g++) {
+							const local = localIdFromGenCount(g);
+							assert.strictEqual(opSpaceIds[g - firstGenCount], local);
+							localIdsInCreationRange.add(local);
+						}
+					}
+				}
+				opSpaceIds.forEach((id) => {
+					if (isLocalId(id)) {
+						assert(localIdsInCreationRange.has(id), "Local ID not in creation range");
+					}
+				});
+			}
+		});
 
 		// First, ensure all clients each generated a unique ID for each of their own calls to generate.
 		for (const [compressor, ids] of sequencedLogs) {

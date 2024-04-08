@@ -4,7 +4,7 @@
  */
 
 import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IValueChanged } from "@fluidframework/map";
 
 const xKey = "x";

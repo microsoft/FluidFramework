@@ -13,7 +13,7 @@ import {
 	InsertableFlexNode,
 	SchemaBuilderBase,
 	leaf,
-} from "@fluidframework/tree";
+} from "@fluidframework/tree/internal";
 
 const builder = new SchemaBuilderBase(FieldKinds.required, { scope: "bubble-bench" });
 

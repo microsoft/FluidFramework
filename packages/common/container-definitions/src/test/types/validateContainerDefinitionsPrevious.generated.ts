@@ -319,6 +319,7 @@ declare function get_current_InterfaceDeclaration_IBatchMessage():
 declare function use_old_InterfaceDeclaration_IBatchMessage(
     use: TypeOnly<old.IBatchMessage>): void;
 use_old_InterfaceDeclaration_IBatchMessage(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IBatchMessage());
 
 /*
@@ -902,30 +903,6 @@ use_old_InterfaceDeclaration_IFluidPackageEnvironment(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IGenericError": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IGenericError():
-    TypeOnly<old.IGenericError>;
-declare function use_current_InterfaceDeclaration_IGenericError(
-    use: TypeOnly<current.IGenericError>): void;
-use_current_InterfaceDeclaration_IGenericError(
-    get_old_InterfaceDeclaration_IGenericError());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IGenericError": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IGenericError():
-    TypeOnly<current.IGenericError>;
-declare function use_old_InterfaceDeclaration_IGenericError(
-    use: TypeOnly<old.IGenericError>): void;
-use_old_InterfaceDeclaration_IGenericError(
-    get_current_InterfaceDeclaration_IGenericError());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IGetPendingLocalStateProps": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IGetPendingLocalStateProps():
@@ -1234,54 +1211,6 @@ declare function use_old_InterfaceDeclaration_ISnapshotTreeWithBlobContents(
     use: TypeOnly<old.ISnapshotTreeWithBlobContents>): void;
 use_old_InterfaceDeclaration_ISnapshotTreeWithBlobContents(
     get_current_InterfaceDeclaration_ISnapshotTreeWithBlobContents());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IThrottlingWarning": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IThrottlingWarning():
-    TypeOnly<old.IThrottlingWarning>;
-declare function use_current_InterfaceDeclaration_IThrottlingWarning(
-    use: TypeOnly<current.IThrottlingWarning>): void;
-use_current_InterfaceDeclaration_IThrottlingWarning(
-    get_old_InterfaceDeclaration_IThrottlingWarning());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IThrottlingWarning": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IThrottlingWarning():
-    TypeOnly<current.IThrottlingWarning>;
-declare function use_old_InterfaceDeclaration_IThrottlingWarning(
-    use: TypeOnly<old.IThrottlingWarning>): void;
-use_old_InterfaceDeclaration_IThrottlingWarning(
-    get_current_InterfaceDeclaration_IThrottlingWarning());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IUsageError": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IUsageError():
-    TypeOnly<old.IUsageError>;
-declare function use_current_InterfaceDeclaration_IUsageError(
-    use: TypeOnly<current.IUsageError>): void;
-use_current_InterfaceDeclaration_IUsageError(
-    get_old_InterfaceDeclaration_IUsageError());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IUsageError": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IUsageError():
-    TypeOnly<current.IUsageError>;
-declare function use_old_InterfaceDeclaration_IUsageError(
-    use: TypeOnly<old.IUsageError>): void;
-use_old_InterfaceDeclaration_IUsageError(
-    get_current_InterfaceDeclaration_IUsageError());
 
 /*
 * Validate forward compat by using old type in place of current type

@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { unreachableCase } from "@fluidframework/core-utils";
+
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
 	AnchorNode,
@@ -316,7 +317,7 @@ describe("Editing", () => {
 
 			expectJsonTree([tree1, tree2], []);
 
-			removal?.revert();
+			removal?.revert(true);
 
 			tree1.merge(tree2, false);
 			tree2.rebaseOnto(tree1);
@@ -691,7 +692,7 @@ describe("Editing", () => {
 			tree2.editor.sequenceField(rootField).remove(0, 1);
 
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			undoStack.pop()!.revert();
+			undoStack.pop()!.revert(true);
 
 			// This merge causes the move, remove, and restore to be composed and applied in one changeset on tree1
 			tree1.merge(tree2, false);
@@ -774,7 +775,7 @@ describe("Editing", () => {
 
 			expectJsonTree([tree, tree2], [{}]);
 
-			deletion?.revert();
+			deletion?.revert(true);
 			tree2.rebaseOnto(tree);
 
 			expectJsonTree([tree, tree2], [{}, { bar: ["a"] }]);
@@ -817,7 +818,7 @@ describe("Editing", () => {
 
 			expectJsonTree([tree, tree2], [{ bar: ["a"] }]);
 
-			deletion?.revert();
+			deletion?.revert(true);
 			tree2.rebaseOnto(tree);
 
 			expectJsonTree([tree, tree2], [{}, { bar: ["a"] }]);
@@ -845,7 +846,7 @@ describe("Editing", () => {
 			// Remove source's ancestor concurrently
 			sequence.remove(0, 1);
 			// Revive the ancestor
-			undoStack.pop()?.revert();
+			undoStack.pop()?.revert(true);
 
 			tree2.editor.move(
 				{ parent: first, field: brand("foo") },
@@ -883,7 +884,7 @@ describe("Editing", () => {
 			tree.editor.sequenceField(rootField).remove(0, 1);
 			expectJsonTree(tree, [{}]);
 			// Revive source's ancestor
-			undoStack.pop()?.revert();
+			undoStack.pop()?.revert(true);
 			expectJsonTree(tree, [{ foo: ["a"] }, {}]);
 			// Remove ["a"]
 			tree.editor.sequenceField({ parent: first, field: brand("foo") }).remove(0, 1);
@@ -924,7 +925,7 @@ describe("Editing", () => {
 			const sequence = tree2.editor.sequenceField(rootField);
 
 			sequence.remove(0, 1);
-			undoStack.pop()?.revert();
+			undoStack.pop()?.revert(true);
 			tree2.editor
 				.sequenceField({ parent: sequenceUpPath, field: EmptyKey })
 				.insert(1, cursorForJsonableTreeNode({ type: leaf.string.name, value: "c" }));
@@ -959,9 +960,9 @@ describe("Editing", () => {
 			const sequence = tree.editor.sequenceField(rootField);
 
 			sequence.remove(0, 1);
-			undoStack.pop()?.revert();
-			redoStack.pop()?.revert();
-			undoStack.pop()?.revert();
+			undoStack.pop()?.revert(true);
+			redoStack.pop()?.revert(true);
+			undoStack.pop()?.revert(true);
 			tree.editor
 				.sequenceField({ parent: sequenceUpPath, field: EmptyKey })
 				.insert(1, cursorForJsonableTreeNode({ type: leaf.string.name, value: "c" }));
@@ -997,7 +998,7 @@ describe("Editing", () => {
 			tree.editor.sequenceField({ parent: first, field: brand("foo") }).remove(0, 1);
 			expectJsonTree(tree, [{}, {}]);
 			// Revive ["a"]
-			undoStack.pop()?.revert();
+			undoStack.pop()?.revert(true);
 			expectJsonTree(tree, [{ foo: ["a"] }, {}]);
 			// Remove source's ancestor concurrently
 			tree.editor.sequenceField(rootField).remove(0, 1);
@@ -1051,7 +1052,7 @@ describe("Editing", () => {
 			// Remove ancestor of "a"
 			sequence.remove(1, 1);
 			// Undo move to bar
-			undoTree2.undoStack.pop()?.revert();
+			undoTree2.undoStack.pop()?.revert(true);
 
 			tree.merge(tree2, false);
 			tree2.rebaseOnto(tree);
@@ -1059,7 +1060,7 @@ describe("Editing", () => {
 			expectJsonTree([tree, tree2], [{}]);
 
 			// Undo deletion of ancestor of "a"
-			undoTree1.undoStack.pop()?.revert();
+			undoTree1.undoStack.pop()?.revert(true);
 			tree2.rebaseOnto(tree);
 
 			expectJsonTree([tree, tree2], [{}, { bar: ["a"] }]);
@@ -1099,7 +1100,7 @@ describe("Editing", () => {
 			// Remove destination ancestor
 			sequence.remove(0, 1);
 			// Undo move to bar
-			undoStack[0].revert();
+			undoStack[0].revert(true);
 
 			tree.merge(tree2, false);
 			tree2.rebaseOnto(tree);
@@ -1681,7 +1682,7 @@ describe("Editing", () => {
 
 			const tree3 = tree.fork();
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree3.events);
-			undoStack.pop()?.revert(); // Restores "43"
+			undoStack.pop()?.revert(true); // Restores "43"
 
 			tree.merge(tree3, false);
 			tree3.rebaseOnto(tree);
@@ -1803,7 +1804,7 @@ describe("Editing", () => {
 
 			const tree2 = tree1.fork();
 
-			undoStack.pop()?.revert(); // Restores ac
+			undoStack.pop()?.revert(true); // Restores ac
 			insert(tree1, 2, "b");
 			expectJsonTree(tree1, ["y", "a", "b", "c"]);
 
@@ -1813,6 +1814,41 @@ describe("Editing", () => {
 
 			const expected = ["x", "y", "a", "b", "c"];
 			expectJsonTree([tree1, tree2], expected);
+		});
+
+		it("repro scenario that requires correct rebase metadata", () => {
+			const startState = [{ seq: ["A"] }, { seq: [] }, { seq: ["B"] }];
+			const tree = makeTreeFromJson(startState);
+
+			const [root0Array, root1Array, root2Array]: FieldUpPath[] = makeArray(3, (i) => ({
+				parent: {
+					parent: {
+						parent: undefined,
+						parentField: rootFieldKey,
+						parentIndex: i,
+					},
+					parentField: brand("seq"),
+					parentIndex: 0,
+				},
+				field: brand(""),
+			}));
+
+			const treeA = tree.fork();
+			const treeC = tree.fork();
+			const treeD = tree.fork();
+
+			treeD.editor.move(root0Array, 0, 1, root1Array, 0);
+			tree.merge(treeD, false);
+			treeA.editor.sequenceField(root2Array).move(0, 1, 0);
+			tree.merge(treeA, false);
+			treeC.editor.sequenceField(root0Array).move(0, 1, 1);
+			tree.merge(treeC, false);
+			treeC.editor.sequenceField(rootField).move(1, 1, 1);
+			tree.merge(treeC, false);
+
+			treeC.rebaseOnto(treeD);
+			treeC.rebaseOnto(treeA);
+			expectJsonTree([tree, treeC], startState);
 		});
 
 		describe("Exhaustive removal tests", () => {
@@ -1989,7 +2025,7 @@ describe("Editing", () => {
 								break;
 							}
 							case StepType.Undo: {
-								peerUndoStacks[iPeer].undoStack.pop()?.revert();
+								peerUndoStacks[iPeer].undoStack.pop()?.revert(true);
 								presence = 1;
 								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 								affectedNode = undoQueues[iPeer].pop()!;
@@ -2032,6 +2068,111 @@ describe("Editing", () => {
 					}
 				}
 			}).timeout(5000);
+		});
+
+		describe("revert semantics", () => {
+			const fooField: FieldUpPath = { parent: rootNode, field: brand("foo") };
+			const barField: FieldUpPath = { parent: rootNode, field: brand("bar") };
+			const bazField: FieldUpPath = { parent: rootNode, field: brand("baz") };
+
+			const revertibleAction = [
+				{
+					title: "move from foo to bar",
+					delegate: (tree: ITreeCheckout) =>
+						tree.editor.move(fooField, 0, 1, barField, 0),
+					nodeDst: barField,
+				},
+				{
+					title: "remove from foo",
+					delegate: (tree: ITreeCheckout) =>
+						tree.editor.sequenceField(fooField).remove(0, 1),
+					nodeDst: undefined,
+				},
+			];
+			const disruptions = [
+				{
+					title: "moved to baz",
+					delegate: (tree: ITreeCheckout, srcField: FieldUpPath) =>
+						tree.editor.move(srcField, 0, 1, bazField, 0),
+				},
+				{
+					title: "removed",
+					delegate: (tree: ITreeCheckout, srcField: FieldUpPath) =>
+						tree.editor.sequenceField(srcField).remove(0, 1),
+				},
+			];
+
+			for (const action of revertibleAction) {
+				describe(`reverting [${action.title}] returns the content to foo`, () => {
+					for (const disruption of disruptions) {
+						if (action.nodeDst !== undefined) {
+							it(`even if it was ${disruption.title} before the revert`, () => {
+								const tree = makeTreeFromJson([{ foo: "X" }]);
+
+								const { undoStack, unsubscribe } = createTestUndoRedoStacks(
+									tree.events,
+								);
+								action.delegate(tree);
+								const revertibleMove = undoStack.pop();
+
+								disruption.delegate(tree, action.nodeDst);
+
+								revertibleMove?.revert(true);
+								expectJsonTree(tree, [{ foo: "X" }]);
+								unsubscribe();
+							});
+						}
+
+						it(`even if it was ${disruption.title} concurrently to (and sequenced before) the revert`, () => {
+							const tree1 = makeTreeFromJson([{ foo: "X" }]);
+							const tree2 = tree1.fork();
+
+							const { undoStack, unsubscribe } = createTestUndoRedoStacks(
+								tree1.events,
+							);
+							action.delegate(tree1);
+							const revertibleMove = undoStack.pop();
+
+							disruption.delegate(tree2, fooField);
+
+							tree1.merge(tree2, false);
+							tree2.rebaseOnto(tree1);
+
+							revertibleMove?.revert(true);
+							expectJsonTree(tree1, [{ foo: "X" }]);
+
+							tree1.merge(tree2, false);
+							tree2.rebaseOnto(tree1);
+							expectJsonTree([tree1, tree2], [{ foo: "X" }]);
+							unsubscribe();
+						});
+
+						it(`even if it was ${disruption.title} concurrently to (and sequenced before) the ${action.title}`, () => {
+							const tree1 = makeTreeFromJson([{ foo: "X" }]);
+							const tree2 = tree1.fork();
+
+							disruption.delegate(tree1, fooField);
+
+							const { undoStack, unsubscribe } = createTestUndoRedoStacks(
+								tree2.events,
+							);
+							action.delegate(tree2);
+							const revertibleMove = undoStack.pop();
+
+							tree1.merge(tree2, false);
+							tree2.rebaseOnto(tree1);
+
+							revertibleMove?.revert(true);
+							expectJsonTree(tree2, [{ foo: "X" }]);
+
+							tree1.merge(tree2, false);
+							tree2.rebaseOnto(tree1);
+							expectJsonTree([tree1, tree2], [{ foo: "X" }]);
+							unsubscribe();
+						});
+					}
+				});
+			}
 		});
 	});
 
@@ -2146,7 +2287,7 @@ describe("Editing", () => {
 
 			tree1.editor.optionalField(rootField).set(singleJsonCursor({ foo: "41" }), false);
 
-			undoStack.pop()?.revert();
+			undoStack.pop()?.revert(true);
 
 			const editor = tree2.editor.valueField({ parent: rootNode, field: brand("foo") });
 			editor.set(cursorForJsonableTreeNode({ type: leaf.string.name, value: "42" }));
@@ -2180,7 +2321,7 @@ describe("Editing", () => {
 
 			expectJsonTree(tree1, ["43"]);
 
-			undoStack.pop()?.revert();
+			undoStack.pop()?.revert(true);
 
 			expectJsonTree(tree1, ["42"]);
 			unsubscribe();
@@ -2208,24 +2349,125 @@ describe("Editing", () => {
 			expectJsonTree(tree2, [{ foo: "A", bar: "B" }]);
 		});
 
-		it("undo restores a removed node even when that node was not the one originally removed by the undone change", () => {
+		describe("revert semantics", () => {
+			const revertibleAction = [
+				{
+					title: "replace A with B",
+					delegate: (tree: ITreeCheckout) =>
+						tree.editor.optionalField(rootField).set(singleJsonCursor("B"), false),
+					isEmptyAfter: false,
+				},
+				{
+					title: "clear A",
+					delegate: (tree: ITreeCheckout) =>
+						tree.editor.optionalField(rootField).set(undefined, false),
+					isEmptyAfter: true,
+				},
+			];
+			const disruptions = [
+				{
+					title: "replaced with C",
+					delegate: (tree: ITreeCheckout, isEmpty: boolean) =>
+						tree.editor.optionalField(rootField).set(singleJsonCursor("C"), isEmpty),
+				},
+				{
+					title: "cleared",
+					delegate: (tree: ITreeCheckout, isEmpty: boolean) =>
+						tree.editor.optionalField(rootField).set(undefined, isEmpty),
+				},
+			];
+
+			for (const action of revertibleAction) {
+				describe(`reverting [${action.title}] restores A`, () => {
+					for (const disruption of disruptions) {
+						it(`even if it was ${disruption.title} before the revert`, () => {
+							const tree = makeTreeFromJson(["A"]);
+
+							const { undoStack, unsubscribe } = createTestUndoRedoStacks(
+								tree.events,
+							);
+							action.delegate(tree);
+							const revertible = undoStack.pop();
+
+							disruption.delegate(tree, action.isEmptyAfter);
+
+							revertible?.revert(true);
+							expectJsonTree(tree, ["A"]);
+							unsubscribe();
+						});
+
+						it(`even if it was ${disruption.title} concurrently to (and sequenced before) the revert`, () => {
+							const tree1 = makeTreeFromJson(["A"]);
+							const tree2 = tree1.fork();
+
+							const { undoStack, unsubscribe } = createTestUndoRedoStacks(
+								tree1.events,
+							);
+							action.delegate(tree1);
+							const revertible = undoStack.pop();
+
+							disruption.delegate(tree2, false);
+
+							tree1.merge(tree2, false);
+							tree2.rebaseOnto(tree1);
+
+							revertible?.revert(true);
+							expectJsonTree(tree1, ["A"]);
+
+							tree1.merge(tree2, false);
+							tree2.rebaseOnto(tree1);
+							expectJsonTree([tree1, tree2], ["A"]);
+							unsubscribe();
+						});
+
+						it(`even if it was ${disruption.title} concurrently to (and sequenced before) the ${action.title}`, () => {
+							const tree1 = makeTreeFromJson(["A"]);
+							const tree2 = tree1.fork();
+
+							disruption.delegate(tree1, false);
+
+							const { undoStack, unsubscribe } = createTestUndoRedoStacks(
+								tree2.events,
+							);
+							action.delegate(tree2);
+							const revertible = undoStack.pop();
+
+							tree1.merge(tree2, false);
+							tree2.rebaseOnto(tree1);
+
+							revertible?.revert(true);
+							expectJsonTree(tree2, ["A"]);
+
+							tree1.merge(tree2, false);
+							tree2.rebaseOnto(tree1);
+							expectJsonTree([tree1, tree2], ["A"]);
+							unsubscribe();
+						});
+					}
+				});
+			}
+		});
+
+		it("undo restores the removed node even when that node has been concurrently replaced", () => {
 			const tree = makeTreeFromJson(["42"]);
 			const tree2 = tree.fork();
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2.events);
 
 			tree.editor.optionalField(rootField).set(singleJsonCursor("43"), false);
 
+			// Replace 42 with undefined
 			tree2.editor.optionalField(rootField).set(undefined, false);
 
 			tree.merge(tree2, false);
 			tree2.rebaseOnto(tree);
 
-			undoStack.pop()?.revert();
+			// Restore 42
+			undoStack.pop()?.revert(true);
 
 			tree.merge(tree2, false);
 			tree2.rebaseOnto(tree);
 
-			expectJsonTree([tree, tree2], ["43"]);
+			expectJsonTree([tree, tree2], ["42"]);
 			unsubscribe();
 		});
 
@@ -2238,7 +2480,7 @@ describe("Editing", () => {
 
 			const tree3 = tree.fork();
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree3.events);
-			undoStack.pop()?.revert(); // Restores "43"
+			undoStack.pop()?.revert(true); // Restores "43"
 
 			tree.editor.optionalField(rootField).set(singleJsonCursor("45"), false);
 
@@ -2375,8 +2617,8 @@ describe("Editing", () => {
 
 			const { undoStack, redoStack } = createTestUndoRedoStacks(fork.events);
 			fork.editor.optionalField(rootField).set(undefined, false);
-			undoStack.pop()?.revert();
-			redoStack.pop()?.revert();
+			undoStack.pop()?.revert(true);
+			redoStack.pop()?.revert(true);
 
 			fork.rebaseOnto(tree);
 			tree.merge(fork, false);
@@ -2406,7 +2648,7 @@ describe("Editing", () => {
 				// Remove a
 				remove(tree, 0, 1);
 				// Undo remove of a
-				undoStack.pop()?.revert();
+				undoStack.pop()?.revert(true);
 
 				tree2.transaction.start();
 				// Put existence constraint on child field of a
@@ -2511,7 +2753,7 @@ describe("Editing", () => {
 
 				// Remove and revive second object in root sequence
 				remove(tree, 1, 1);
-				undoStack.pop()?.revert();
+				undoStack.pop()?.revert(true);
 
 				tree2.transaction.start();
 				tree2.editor.addNodeExistsConstraint(bPath);
@@ -2582,7 +2824,7 @@ describe("Editing", () => {
 				const tree2 = tree.fork();
 
 				optional.set(undefined, false);
-				undoStack.pop()?.revert();
+				undoStack.pop()?.revert(true);
 
 				tree2.transaction.start();
 				tree2.editor.addNodeExistsConstraint({
@@ -2844,7 +3086,7 @@ describe("Editing", () => {
 		tree.merge(restoreRoot, false);
 		expectJsonTree([tree, restoreRoot], []);
 
-		undoStack.pop()?.revert();
+		undoStack.pop()?.revert(true);
 		expectJsonTree(restoreRoot, [{ foo: "A" }]);
 
 		// Get access to the removed node
@@ -2970,5 +3212,24 @@ describe("Editing", () => {
 			const child = tree.fork();
 			abortTransaction(child);
 		});
+	});
+
+	it("invert a composite change that include a mix of nested changes in a field that requires an amend pass", () => {
+		const tree = makeTreeFromJson([{}]);
+
+		tree.transaction.start();
+		tree.transaction.start();
+		tree.editor
+			.optionalField({ parent: rootNode, field: brand("foo") })
+			.set(singleJsonCursor("A"), true);
+		tree.editor.sequenceField(rootField).move(0, 1, 0);
+		tree.editor.sequenceField(rootField).insert(0, singleJsonCursor({}));
+		tree.editor
+			.optionalField({ parent: rootNode, field: brand("bar") })
+			.set(singleJsonCursor("B"), true);
+		tree.transaction.commit();
+		tree.transaction.abort();
+
+		expectJsonTree(tree, [{}]);
 	});
 });

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
 	DetachedPlaceUpPath,
 	DetachedRangeUpPath,
@@ -17,6 +18,7 @@ import {
 } from "../core/index.js";
 import { Events, ISubscribable } from "../events/index.js";
 import { brand, getOrCreate } from "../util/index.js";
+
 import { FlexTreeNode } from "./flex-tree/index.js";
 
 // TODO:

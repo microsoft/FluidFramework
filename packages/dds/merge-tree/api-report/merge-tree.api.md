@@ -4,7 +4,7 @@
 
 ```ts
 
-import { AttributionKey } from '@fluidframework/runtime-definitions';
+import { AttributionKey } from '@fluidframework/runtime-definitions/internal';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
@@ -223,6 +223,12 @@ export function createMap<T>(): MapLike<T>;
 
 // @internal
 export function createObliterateRangeOp(start: number, end: number): IMergeTreeObliterateMsg;
+
+// @internal
+export function createPropertyTrackingAndInsertionAttributionPolicyFactory(...propNames: string[]): () => AttributionPolicy;
+
+// @internal (undocumented)
+export function createPropertyTrackingAttributionPolicyFactory(...propNames: string[]): () => AttributionPolicy;
 
 // @internal
 export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemoveMsg;

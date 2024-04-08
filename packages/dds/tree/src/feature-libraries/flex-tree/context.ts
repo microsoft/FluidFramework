@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
 	FieldKey,
 	ForestEvents,
 	IForestSubscription,
 	TreeFieldStoredSchema,
+	anchorSlot,
 	moveToDetachedField,
 } from "../../core/index.js";
 import { ISubscribable } from "../../events/index.js";
@@ -17,6 +19,7 @@ import { IDefaultEditBuilder } from "../default-schema/index.js";
 import { FieldGenerator } from "../fieldGenerator.js";
 import { NodeKeyIndex, NodeKeyManager } from "../node-key/index.js";
 import { FlexTreeSchema } from "../typed-schema/index.js";
+
 import { FlexTreeField } from "./flexTreeTypes.js";
 import { LazyEntity, prepareForEditSymbol } from "./lazyEntity.js";
 import { makeField } from "./lazyField.js";
@@ -44,7 +47,21 @@ export interface FlexTreeContext extends ISubscribable<ForestEvents> {
 	// - branching APIs
 
 	readonly nodeKeys: NodeKeys;
+
+	/**
+	 * The forest containing the tree data associated with this context
+	 */
+	readonly forest: IForestSubscription;
 }
+
+/**
+ * Creating multiple flex tree contexts for the same branch, and thus with the same underlying AnchorSet does not work due to how TreeNode caching works.
+ * This slot is used to detect if one already exists and error if creating a second.
+ *
+ * TODO:
+ * 1. API docs need to reflect this limitation or the limitation has to be removed.
+ */
+export const ContextSlot = anchorSlot<Context>();
 
 /**
  * Implementation of `FlexTreeContext`.
@@ -77,6 +94,12 @@ export class Context implements FlexTreeContext, IDisposable {
 				this.prepareForEdit();
 			}),
 		];
+
+		assert(
+			!this.forest.anchors.slots.has(ContextSlot),
+			"Cannot create second flex-tree from checkout",
+		);
+		this.forest.anchors.slots.set(ContextSlot, this);
 	}
 
 	/**
@@ -99,6 +122,9 @@ export class Context implements FlexTreeContext, IDisposable {
 			unregister();
 		}
 		this.eventUnregister.length = 0;
+
+		const deleted = this.forest.anchors.slots.delete(ContextSlot);
+		assert(deleted, 0x8c4 /* unexpected dispose */);
 	}
 
 	/**
@@ -143,7 +169,7 @@ export class Context implements FlexTreeContext, IDisposable {
  * @param nodeKeyManager - an object which handles node key generation and conversion.
  * @param nodeKeyFieldKey - an optional field key under which node keys are stored in this tree.
  * If present, clients may query the {@link LocalNodeKey} of a node directly via the {@link localNodeKeySymbol}.
- * @returns {@link EditableTreeContext} which is used to manage the cursors and anchors within the EditableTrees:
+ * @returns {@link FlexTreeContext} which is used to manage the cursors and anchors within the FlexTrees:
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
 export function getTreeContext(

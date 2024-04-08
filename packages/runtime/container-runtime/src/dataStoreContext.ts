@@ -14,9 +14,9 @@ import {
 	IResponse,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
-import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils";
+import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	IClientDetails,
@@ -26,6 +26,12 @@ import {
 	ISnapshotTree,
 	ITreeEntry,
 } from "@fluidframework/protocol-definitions";
+import {
+	IGarbageCollectionData,
+	IInboundSignalMessage,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+} from "@fluidframework/runtime-definitions";
 import {
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
@@ -37,20 +43,16 @@ import {
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreRegistry,
 	IFluidParentContext,
-	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
-	IInboundSignalMessage,
 	IProvideFluidDataStoreFactory,
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNodeWithGC,
-	ISummaryTreeWithStats,
-	ITelemetryContext,
 	SummarizeInternalFn,
 	channelsTreeName,
 	gcDataBlobKey,
-} from "@fluidframework/runtime-definitions";
-import { addBlobToSummary } from "@fluidframework/runtime-utils";
+} from "@fluidframework/runtime-definitions/internal";
+import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
 import {
 	DataCorruptionError,
 	DataProcessingError,
@@ -61,7 +63,8 @@ import {
 	extractSafePropertiesFromMessage,
 	generateStack,
 	tagCodeArtifacts,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
+
 import { detectOutboundRoutesViaDDSKey, sendGCUnexpectedUsageEvent } from "./gc/index.js";
 import {
 	ReadFluidDataStoreAttributes,
@@ -811,10 +814,10 @@ export abstract class FluidDataStoreContext
 	/**
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
-	 * @param content - Content of the signal.
+	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(type: string, content: any, targetClientId?: string) {
+	public submitSignal(type: string, content: unknown, targetClientId?: string) {
 		this.verifyNotClosed("submitSignal");
 
 		assert(!!this.channel, 0x147 /* "Channel must exist on submitting signal" */);

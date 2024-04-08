@@ -3,10 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { Context } from "../feature-libraries/index.js";
-import { TreeNode, TreeNodeApi, TreeView, getFlexNode, treeNodeApi } from "../simple-tree/index.js";
+import {
+	ImplicitFieldSchema,
+	TreeNode,
+	TreeNodeApi,
+	TreeView,
+	getFlexNode,
+	treeNodeApi,
+} from "../simple-tree/index.js";
 import { fail } from "../util/index.js";
+
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import { TreeCheckout } from "./treeCheckout.js";
 import { contextToTreeView } from "./treeView.js";
@@ -53,9 +62,9 @@ export interface TreeApi extends TreeNodeApi {
 	 * Local change events will be emitted for each change as the transaction is being applied.
 	 * If the transaction is cancelled and rolled back, a corresponding change event will also be emitted for the rollback.
 	 */
-	runTransaction<TRoot>(
-		tree: TreeView<TRoot>,
-		transaction: (root: TRoot) => void | "rollback",
+	runTransaction<TView extends TreeView<ImplicitFieldSchema>>(
+		tree: TView,
+		transaction: (root: TView["root"]) => void | "rollback",
 	): void;
 }
 
@@ -65,7 +74,7 @@ export interface TreeApi extends TreeNodeApi {
  */
 export const treeApi: TreeApi = {
 	...treeNodeApi,
-	runTransaction<TNode extends TreeNode, TRoot>(
+	runTransaction<TNode extends TreeNode, TRoot extends ImplicitFieldSchema>(
 		treeOrNode: TNode | TreeView<TRoot>,
 		transaction: ((node: TNode) => void | "rollback") | ((root: TRoot) => void | "rollback"),
 	) {

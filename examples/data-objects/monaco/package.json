@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/monaco",
-	"version": "2.0.0-rc.2.0.0",
+	"version": "2.0.0-rc.3.0.0",
 	"private": true,
 	"description": "Monaco code editor",
 	"homepage": "https://fluidframework.com",
@@ -17,13 +17,11 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.json",
-		"check:biome": "biome check .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "fluid-build --task format .",
-		"format:biome": "biome check --apply .",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
@@ -48,7 +46,7 @@
 		"react": "^17.0.1"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.6.1",
+		"@biomejs/biome": "^1.6.2",
 		"@fluid-example/webpack-fluid-loader": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
@@ -70,7 +68,7 @@
 		"url-loader": "^2.1.0",
 		"webpack": "^5.82.0",
 		"webpack-cli": "^4.9.2",
-		"webpack-dev-server": "~4.6.0",
+		"webpack-dev-server": "~4.15.1",
 		"webpack-merge": "^5.8.0"
 	},
 	"fluid": {

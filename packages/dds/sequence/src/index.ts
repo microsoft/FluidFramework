@@ -105,4 +105,4 @@ export {
 	reservedRangeLabelsKey,
 	TrackingGroup,
 	LocalReferencePosition,
-} from "@fluidframework/merge-tree";
+} from "@fluidframework/merge-tree/internal";

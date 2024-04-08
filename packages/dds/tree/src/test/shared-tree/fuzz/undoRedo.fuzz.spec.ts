@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AsyncGenerator, takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
@@ -12,6 +13,7 @@ import {
 	DDSFuzzTestState,
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
+
 import { Anchor, JsonableTree, UpPath, Value } from "../../../core/index.js";
 import {
 	SharedTreeTestFactory,
@@ -20,6 +22,7 @@ import {
 	validateTree,
 	validateTreeConsistency,
 } from "../../utils.js";
+
 import {
 	EditGeneratorOpWeights,
 	FuzzTestState,
@@ -51,6 +54,8 @@ describe("Fuzz - undo/redo", () => {
 	const runsPerBatch = 20;
 
 	const undoRedoWeights: Partial<EditGeneratorOpWeights> = {
+		set: 2,
+		clear: 1,
 		insert: 1,
 		remove: 1,
 	};
@@ -102,7 +107,7 @@ describe("Fuzz - undo/redo", () => {
 				 * Once the undo stack exposed, remove this array and use the stack to keep track instead.
 				 */
 				for (let j = 0; j < opsPerRun; j++) {
-					tree.undoStack.pop()?.revert();
+					tree.undoStack.pop()?.revert(true);
 				}
 			}
 
@@ -122,7 +127,7 @@ describe("Fuzz - undo/redo", () => {
 				const tree = viewFromState(finalState, client).checkout;
 				assert(isRevertibleSharedTreeView(tree));
 				for (let j = 0; j < opsPerRun; j++) {
-					tree.redoStack.pop()?.revert();
+					tree.redoStack.pop()?.revert(true);
 				}
 				validateTree(tree, finalTreeStates[i]);
 			}
@@ -192,7 +197,7 @@ describe("Fuzz - undo/redo", () => {
 			for (const clientIndex of undoOrderByClientIndex) {
 				const view = viewFromState(finalState, finalState.clients[clientIndex]).checkout;
 				assert(isRevertibleSharedTreeView(view));
-				view.undoStack.pop()?.revert();
+				view.undoStack.pop()?.revert(true);
 			}
 			// synchronize clients after undo
 			finalState.containerRuntimeFactory.processAllMessages();
@@ -227,6 +232,8 @@ describe("Fuzz - undo/redo", () => {
 	});
 
 	const unSequencedUndoRedoWeights: Partial<EditGeneratorOpWeights> = {
+		set: 2,
+		clear: 1,
 		insert: 1,
 		remove: 1,
 		undo: 1,

@@ -5,9 +5,8 @@
 
 import { Button, Text, Tooltip, makeStyles, shorthands } from "@fluentui/react-components";
 import { AddSquare24Regular, SubtractSquare24Regular } from "@fluentui/react-icons";
+import { type SharedCounter } from "@fluidframework/counter/internal";
 import React from "react";
-
-import { type SharedCounter } from "@fluidframework/counter";
 
 // TODOs:
 // - This seems like it might be worth sharing somewhere more general?

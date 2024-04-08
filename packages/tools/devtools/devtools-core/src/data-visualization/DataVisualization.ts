@@ -17,6 +17,7 @@ import {
 import { type ISharedObject } from "@fluidframework/shared-object-base";
 
 import { type FluidObjectId } from "../CommonInterfaces.js";
+
 import { type Edit, type EditSharedObject, type SharedObjectEdit } from "./DataEditing.js";
 import { visualizeUnknownSharedObject } from "./DefaultVisualizers.js";
 import {

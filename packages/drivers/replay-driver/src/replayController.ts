@@ -7,7 +7,7 @@ import {
 	IDocumentService,
 	IDocumentStorageService,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import * as api from "@fluidframework/protocol-definitions";
 
 /**

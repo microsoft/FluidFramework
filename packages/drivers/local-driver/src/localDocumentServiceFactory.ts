@@ -9,10 +9,11 @@ import {
 	IDocumentServiceFactory,
 	IDocumentServicePolicies,
 	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { ISummaryTree, NackErrorType } from "@fluidframework/protocol-definitions";
-import { DefaultTokenProvider } from "@fluidframework/routerlicious-driver";
+import { DefaultTokenProvider } from "@fluidframework/routerlicious-driver/internal";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+
 import { createDocument } from "./localCreateDocument.js";
 import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection.js";
 import { createLocalDocumentService } from "./localDocumentService.js";

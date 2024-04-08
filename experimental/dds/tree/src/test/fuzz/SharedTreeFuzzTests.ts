@@ -5,6 +5,7 @@
 
 import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
+
 import {
 	AsyncGenerator,
 	chainAsync as chain,
@@ -12,8 +13,10 @@ import {
 	makeRandom,
 	performFuzzActionsAsync as performFuzzActionsBase,
 	takeAsync as take,
+	type SaveInfo,
 } from '@fluid-private/stochastic-test-utils';
 import { expect } from 'chai';
+
 import { fail } from '../../Common.js';
 import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities.js';
 import { SharedTree } from '../../SharedTree.js';
@@ -23,6 +26,7 @@ import {
 	testDocumentsPathBase,
 	withContainerOffline,
 } from '../utilities/TestUtilities.js';
+
 import { makeOpGenerator } from './Generators.js';
 import { EditGenerationConfig, FuzzChange, FuzzTestState, Operation } from './Types.js';
 
@@ -46,7 +50,7 @@ export async function performFuzzActions(
 	generator: AsyncGenerator<Operation, FuzzTestState>,
 	seed: number,
 	synchronizeAtEnd: boolean = true,
-	saveInfo?: { saveAt?: number; saveOnFailure: boolean; filepath: string }
+	saveInfo?: SaveInfo
 ): Promise<Required<FuzzTestState>> {
 	const random = makeRandom(seed);
 
@@ -147,7 +151,7 @@ export async function performFuzzActions(
 	if (synchronizeAtEnd) {
 		if (finalState.testObjectProvider !== undefined) {
 			await finalState.testObjectProvider.ensureSynchronized();
-			const events = finalState.testObjectProvider.logger.reportAndClearTrackedEvents();
+			const events = finalState.testObjectProvider.tracker.reportAndClearTrackedEvents();
 			expect(events.expectedNotFound.length).to.equal(0);
 			for (const event of events.unexpectedErrors) {
 				switch (event.eventName) {
@@ -188,9 +192,12 @@ export function runSharedTreeFuzzTests(title: string): void {
 			saveOnFailure?: boolean
 		): void {
 			it(`with seed ${seed}`, async () => {
-				const saveInfo =
-					saveOnFailure !== undefined
-						? { filepath: join(directory, `test-history-${seed}.json`), saveOnFailure }
+				const saveInfo: SaveInfo | undefined =
+					saveOnFailure === true
+						? {
+								saveOnFailure: { path: join(directory, `test-history-${seed}.json`) },
+								saveOnSuccess: false,
+						  }
 						: undefined;
 				if (saveInfo !== undefined && !existsSync(directory)) {
 					mkdirSync(directory);

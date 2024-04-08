@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
 import {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,

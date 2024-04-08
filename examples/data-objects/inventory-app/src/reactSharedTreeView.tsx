@@ -3,24 +3,37 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject } from "@fluidframework/aqueduct";
+// Lint rule can be disabled once eslint config is upgraded to 5.3.0+
+// eslint-disable-next-line import/no-internal-modules
+import { DataObject } from "@fluidframework/aqueduct/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
 	ITree,
 	type ImplicitFieldSchema,
 	SchemaIncompatible,
-	SharedTree,
 	TreeConfiguration,
 	TreeFieldFromImplicitField,
 	TreeView,
 } from "@fluidframework/tree";
+import {
+	configuredSharedTree,
+	typeboxValidator,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/tree/internal";
 import * as React from "react";
 
 /**
  * This file contains logic not specific to this particular sample that other apps may want to use.
  * Eventually this should be published as part of a package apps can use.
  */
+
+/**
+ * Opt into extra validation to detect encoding bugs and data corruption.
+ */
+const SharedTree = configuredSharedTree({
+	jsonValidator: typeboxValidator,
+});
 
 /**
  * TODO: once we add options to factory (for example controlling the write format),
@@ -34,9 +47,9 @@ export const factory: IChannelFactory = SharedTree.getFactory();
 export abstract class TreeDataObject<
 	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
 > extends DataObject {
-	#tree?: TreeView<TreeFieldFromImplicitField<TSchema>>;
+	#tree?: TreeView<TSchema>;
 
-	public get tree(): TreeView<TreeFieldFromImplicitField<TSchema>> {
+	public get tree(): TreeView<TSchema> {
 		if (this.#tree === undefined) throw new Error(this.getUninitializedErrorString("tree"));
 		return this.#tree;
 	}

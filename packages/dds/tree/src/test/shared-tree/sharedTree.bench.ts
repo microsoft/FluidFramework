@@ -4,12 +4,14 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	BenchmarkTimer,
 	BenchmarkType,
 	benchmark,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
+
 import { rootFieldKey } from "../../core/index.js";
 import { singleJsonCursor } from "../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -32,10 +34,10 @@ import {
 	makeJsWideTreeWithEndValue,
 	makeWideContentWithEndValue,
 	readDeepCursorTree,
-	readDeepEditableTree,
+	readDeepFlexTree,
 	readDeepTreeAsJSObject,
 	readWideCursorTree,
-	readWideEditableTree,
+	readWideFlexTree,
 	readWideTreeAsJSObject,
 	wideRootSchema,
 	wideSchema,
@@ -189,17 +191,17 @@ describe("SharedTree benchmarks", () => {
 			});
 		}
 	});
-	describe("EditableTree bench", () => {
+	describe("FlexTree bench", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
 			let tree: FlexTreeView<typeof deepSchema.rootFieldSchema>;
 			benchmark({
 				type: benchmarkType,
-				title: `Deep Tree with Editable Tree: reads with ${numberOfNodes} nodes`,
+				title: `Deep Tree with Flex Tree: reads with ${numberOfNodes} nodes`,
 				before: () => {
 					tree = flexTreeViewWithContent(makeDeepContent(numberOfNodes));
 				},
 				benchmarkFn: () => {
-					const { depth, value } = readDeepEditableTree(tree);
+					const { depth, value } = readDeepFlexTree(tree);
 					assert.equal(depth, numberOfNodes);
 					assert.equal(value, 1);
 				},
@@ -210,7 +212,7 @@ describe("SharedTree benchmarks", () => {
 			let expected: number = 0;
 			benchmark({
 				type: benchmarkType,
-				title: `Wide Tree with Editable Tree: reads with ${numberOfNodes} nodes`,
+				title: `Wide Tree with Flex Tree: reads with ${numberOfNodes} nodes`,
 				before: () => {
 					const numbers = [];
 					for (let index = 0; index < numberOfNodes; index++) {
@@ -223,7 +225,7 @@ describe("SharedTree benchmarks", () => {
 					});
 				},
 				benchmarkFn: () => {
-					const { nodesCount, sum } = readWideEditableTree(tree);
+					const { nodesCount, sum } = readWideFlexTree(tree);
 					assert.equal(sum, expected);
 					assert.equal(nodesCount, numberOfNodes);
 					readWideCursorTree(tree);

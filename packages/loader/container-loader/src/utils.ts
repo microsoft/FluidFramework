@@ -4,24 +4,29 @@
  */
 
 import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils";
-import { DriverErrorTypes, IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils/internal";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	CombinedAppAndProtocolSummary,
 	DeltaStreamConnectionForbiddenError,
 	isCombinedAppAndProtocolSummary,
 	readAndParse,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import {
 	IDocumentAttributes,
 	ISnapshotTree,
 	ISummaryTree,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { LoggingError, UsageError } from "@fluidframework/telemetry-utils";
+import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
-import { IPendingDetachedContainerState } from "./container.js";
+
 import { ISerializableBlobContents } from "./containerStorageAdapter.js";
+import type {
+	IPendingDetachedContainerState,
+	SnapshotWithBlobs,
+} from "./serializedStateManager.js";
 
 // This is used when we rehydrate a container from the snapshot. Here we put the blob contents
 // in separate property: blobContents.
@@ -117,10 +122,7 @@ export function combineAppAndProtocolSummary(
  * to align detached container format with IPendingContainerState
  * @param summary - ISummaryTree
  */
-function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): {
-	tree: ISnapshotTree;
-	blobs: ISerializableBlobContents;
-} {
+function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBlobs {
 	let blobContents: ISerializableBlobContents = {};
 	const treeNode: ISnapshotTree = {
 		blobs: {},
@@ -135,9 +137,9 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): {
 
 		switch (summaryObject.type) {
 			case SummaryType.Tree: {
-				const { tree, blobs } = convertSummaryToSnapshotAndBlobs(summaryObject);
-				treeNode.trees[key] = tree;
-				blobContents = { ...blobContents, ...blobs };
+				const innerSnapshot = convertSummaryToSnapshotAndBlobs(summaryObject);
+				treeNode.trees[key] = innerSnapshot.baseSnapshot;
+				blobContents = { ...blobContents, ...innerSnapshot.snapshotBlobs };
 				break;
 			}
 			case SummaryType.Attachment:
@@ -163,7 +165,8 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): {
 			}
 		}
 	}
-	return { tree: treeNode, blobs: blobContents };
+	const pendingSnapshot = { baseSnapshot: treeNode, snapshotBlobs: blobContents };
+	return pendingSnapshot;
 }
 
 /**
@@ -174,7 +177,7 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): {
 function convertProtocolAndAppSummaryToSnapshotAndBlobs(
 	protocolSummaryTree: ISummaryTree,
 	appSummaryTree: ISummaryTree,
-): { tree: ISnapshotTree; blobs: ISerializableBlobContents } {
+): SnapshotWithBlobs {
 	const combinedSummary: ISummaryTree = {
 		type: SummaryType.Tree,
 		tree: { ...appSummaryTree.tree },
@@ -187,7 +190,7 @@ function convertProtocolAndAppSummaryToSnapshotAndBlobs(
 
 export const getSnapshotTreeAndBlobsFromSerializedContainer = (
 	detachedContainerSnapshot: ISummaryTree,
-): { tree: ISnapshotTree; blobs: ISerializableBlobContents } => {
+): SnapshotWithBlobs => {
 	assert(
 		isCombinedAppAndProtocolSummary(detachedContainerSnapshot),
 		0x8e6 /* Protocol and App summary trees should be present */,
@@ -270,12 +273,12 @@ export function getDetachedContainerStateFromSerializedContainer(
 	if (isPendingDetachedContainerState(parsedContainerState)) {
 		return parsedContainerState;
 	} else if (isCombinedAppAndProtocolSummary(parsedContainerState)) {
-		const { tree, blobs } =
+		const { baseSnapshot, snapshotBlobs } =
 			getSnapshotTreeAndBlobsFromSerializedContainer(parsedContainerState);
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
-			baseSnapshot: tree,
-			snapshotBlobs: blobs,
+			baseSnapshot,
+			snapshotBlobs,
 			hasAttachmentBlobs: parsedContainerState.tree[hasBlobsSummaryTree] !== undefined,
 		};
 		return detachedContainerState;
