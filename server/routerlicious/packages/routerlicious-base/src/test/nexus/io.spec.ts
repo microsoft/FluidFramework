@@ -18,7 +18,6 @@ import {
 	NackErrorType,
 	IClient,
 	IDocumentMessage,
-	type ISignalMessage,
 	type ISentSignalMessage,
 } from "@fluidframework/protocol-definitions";
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
