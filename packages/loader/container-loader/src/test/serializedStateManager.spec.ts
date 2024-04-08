@@ -29,8 +29,6 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { type IPendingContainerState, SerializedStateManager } from "../serializedStateManager.js";
 
-import { failProxy } from "./failProxy.js";
-
 type ISerializedStateManagerDocumentStorageService = Pick<
 	IDocumentStorageService,
 	"getSnapshot" | "getSnapshotTree" | "getVersions" | "readBlob"
@@ -190,13 +188,13 @@ describe("serializedStateManager", () => {
 		const serializedStateManager = new SerializedStateManager(
 			undefined,
 			logger.toTelemetryLogger(),
-			failProxy(), // no calls to storage expected
+			new MockStorageAdapter(),
 			true,
 		);
 		// equivalent to attach
-		serializedStateManager.setSnapshot({
-			baseSnapshot: { trees: {}, blobs: {} },
-			snapshotBlobs: {},
+		serializedStateManager.setInitialSnapshot({
+			baseSnapshot: snapshot,
+			snapshotBlobs: { attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}' },
 		});
 		await serializedStateManager.getPendingLocalStateCore(
 			{ notifyImminentClosure: false },

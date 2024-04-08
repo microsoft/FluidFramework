@@ -211,13 +211,19 @@ export class SerializedStateManager {
 	 * base snapshot when attaching.
 	 * @param snapshot - snapshot and blobs collected while attaching
 	 */
-	public setSnapshot(snapshot: SnapshotWithBlobs | undefined) {
-		this.snapshot = snapshot
-			? {
-					...snapshot,
-					snapshotSequenceNumber: 0,
-			  }
-			: undefined;
+	public setInitialSnapshot(snapshot: SnapshotWithBlobs | undefined) {
+		if (this.offlineLoadEnabled) {
+			assert(this.snapshot === undefined, "inital snapshot should only be defined once");
+			assert(snapshot !== undefined, "attachment snapshot should be defined");
+			const { baseSnapshot, snapshotBlobs } = snapshot;
+			const attributesHash =
+				".protocol" in baseSnapshot.trees
+					? baseSnapshot.trees[".protocol"].blobs.attributes
+					: baseSnapshot.blobs[".attributes"];
+			const attributes = JSON.parse(snapshotBlobs[attributesHash]);
+			assert(attributes.sequenceNumber === 0, "trying to set a non attachment snapshot");
+			this.snapshot = { ...snapshot, snapshotSequenceNumber: attributes.sequenceNumber };
+		}
 	}
 
 	public async getPendingLocalStateCore(

@@ -1281,8 +1281,8 @@ export class Container
 							throw normalizeErrorAndClose(error);
 						});
 					}
-
-					this.serializedStateManager.setSnapshot(await attachP);
+					const snapshotWithBlobs = await attachP;
+					this.serializedStateManager.setInitialSnapshot(snapshotWithBlobs);
 					if (!this.closed) {
 						this.handleDeltaConnectionArg(
 							{
