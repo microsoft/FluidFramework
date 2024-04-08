@@ -66,6 +66,20 @@ export interface TreeApi extends TreeNodeApi {
 		tree: TView,
 		transaction: (root: TView["root"]) => void | "rollback",
 	): void;
+
+	/**
+	 * Check if the subtree defined by `parent`	contains `child`.
+	 *
+	 * @returns true if and only if the subtree rooted at `parent` contains `child`.
+	 * @remarks
+	 * Parent is considered to contain itself, so the case where `parent === child` returns true.
+	 *
+	 * This is handy when checking if moving parent into child would create a cycle and thus is invalid.
+	 *
+	 * This check walks the parents of child looking for parent,
+	 * and thus runs in time proportional to the depth of child in the tree.
+	 */
+	contains(parent: TreeNode, child: TreeNode): boolean;
 }
 
 /**
@@ -92,6 +106,17 @@ export const treeApi: TreeApi = {
 
 			runTransaction(treeView.checkout, () => t(node));
 		}
+	},
+
+	contains(parent: TreeNode, child: TreeNode): boolean {
+		let toCheck: TreeNode | undefined = child;
+		while (toCheck !== undefined) {
+			if (toCheck === parent) {
+				return true;
+			}
+			toCheck = treeApi.parent(toCheck);
+		}
+		return false;
 	},
 };
 
