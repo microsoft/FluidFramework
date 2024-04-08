@@ -4,13 +4,13 @@
  */
 import { strict as assert } from "assert";
 import { describeCompat, type ITestDataObject } from "@fluid-private/test-version-utils";
-import type { IContainerExperimental } from "@fluidframework/container-loader";
+import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
 
 import {
 	type ITestObjectProvider,
 	ITestContainerConfig,
 	createTestConfigProvider,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 describeCompat("Create data store with group id", "NoCompat", (getTestObjectProvider, apis) => {
 	const configProvider = createTestConfigProvider();
@@ -58,9 +58,9 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			pendingState,
 		)) as IContainerExperimental;
 
-		// I expected container2 to have the same initial sequence number as container, this check asserts its not true so the PR passes
+		// Container2 to have the same initial sequence number as container as they loaded from the same base snapshot
 		assert(
-			container.deltaManager.initialSequenceNumber !==
+			container.deltaManager.initialSequenceNumber ===
 				container2.deltaManager.initialSequenceNumber,
 			"Initial sequence number should be the same",
 		);
