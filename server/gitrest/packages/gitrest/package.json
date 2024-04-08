@@ -1,5 +1,5 @@
 {
-	"name": "@fluidframework/gitrest",
+	"name": "@fluid-internal/gitrest",
 	"version": "1.0.0",
 	"description": "Entry point of the GitRest core services",
 	"homepage": "https://fluidframework.com",
@@ -27,7 +27,7 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
-		"@fluidframework/gitrest-base": "workspace:~",
+		"@fluid-internal/gitrest-base": "workspace:~",
 		"@fluidframework/server-services-shared": "^4.0.0",
 		"@fluidframework/server-services-utils": "^4.0.0",
 		"body-parser": "^1.17.2",

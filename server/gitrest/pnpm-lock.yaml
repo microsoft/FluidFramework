@@ -65,9 +65,9 @@ importers:
 
   packages/gitrest:
     specifiers:
+      '@fluid-internal/gitrest-base': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/eslint-config-fluid': ^4.0.0
-      '@fluidframework/gitrest-base': workspace:~
       '@fluidframework/server-services-shared': ^4.0.0
       '@fluidframework/server-services-utils': ^4.0.0
       '@types/async': ^3.2.9
@@ -98,7 +98,7 @@ importers:
       uuid: ^3.3.2
       winston: ^3.6.0
     dependencies:
-      '@fluidframework/gitrest-base': link:../gitrest-base
+      '@fluid-internal/gitrest-base': link:../gitrest-base
       '@fluidframework/server-services-shared': 4.0.0
       '@fluidframework/server-services-utils': 4.0.0
       body-parser: 1.20.1
