@@ -39,7 +39,7 @@
 		}
 	},
 	"main": "",
-	"types": "dist/index.d.ts",
+	"types": "./dist/container-runtime-definitions-public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",

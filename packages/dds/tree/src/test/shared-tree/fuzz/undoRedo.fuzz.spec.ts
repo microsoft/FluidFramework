@@ -107,7 +107,7 @@ describe("Fuzz - undo/redo", () => {
 				 * Once the undo stack exposed, remove this array and use the stack to keep track instead.
 				 */
 				for (let j = 0; j < opsPerRun; j++) {
-					tree.undoStack.pop()?.revert();
+					tree.undoStack.pop()?.revert(true);
 				}
 			}
 
@@ -127,7 +127,7 @@ describe("Fuzz - undo/redo", () => {
 				const tree = viewFromState(finalState, client).checkout;
 				assert(isRevertibleSharedTreeView(tree));
 				for (let j = 0; j < opsPerRun; j++) {
-					tree.redoStack.pop()?.revert();
+					tree.redoStack.pop()?.revert(true);
 				}
 				validateTree(tree, finalTreeStates[i]);
 			}
@@ -197,7 +197,7 @@ describe("Fuzz - undo/redo", () => {
 			for (const clientIndex of undoOrderByClientIndex) {
 				const view = viewFromState(finalState, finalState.clients[clientIndex]).checkout;
 				assert(isRevertibleSharedTreeView(view));
-				view.undoStack.pop()?.revert();
+				view.undoStack.pop()?.revert(true);
 			}
 			// synchronize clients after undo
 			finalState.containerRuntimeFactory.processAllMessages();
