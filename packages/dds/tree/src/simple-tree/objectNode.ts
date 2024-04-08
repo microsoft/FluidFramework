@@ -44,9 +44,6 @@ import { TreeNode } from "./types.js";
 import { RestrictiveReadonlyRecord, brand, fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { RawTreeNode, rawError } from "./rawNode.js";
-// TODO: decide how to deal with dependencies on flex-tree implementation.
-// eslint-disable-next-line import/no-internal-modules
-import { LazyObjectNode } from "../feature-libraries/flex-tree/lazyNode.js";
 
 /**
  * Helper used to produce types for object nodes.
@@ -182,9 +179,6 @@ function createObjectProxy(
 			}
 			assert(typeof viewKey === "string", 0x7e1 /* invalid key */);
 			const flexKey: FieldKey | undefined = getFlexKey(viewKey);
-
-			// TODO: Is it safe to assume 'content' is a LazyObjectNode?
-			assert(flexNode instanceof LazyObjectNode, 0x7e0 /* invalid content */);
 
 			const field = flexNode.getBoxed(flexKey);
 
