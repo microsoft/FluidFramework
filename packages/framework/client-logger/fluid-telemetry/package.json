@@ -52,16 +52,6 @@
 				"types": "./dist/index.d.ts",
 				"default": "./dist/index.js"
 			}
-		},
-		"./app-insights": {
-			"import": {
-				"types": "./lib/app-insights/index.d.ts",
-				"default": "./lib/app-insights/index.js"
-			},
-			"require": {
-				"types": "./dist/app-insights/index.d.ts",
-				"default": "./dist/app-insights/index.js"
-			}
 		}
 	},
 	"main": "dist/index.js",

@@ -115,9 +115,9 @@ export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = Impli
 {
 	public static readonly factory = dataObjectFactoryMarker;
 
-	#tree?: TreeView<TreeFieldFromImplicitField<TSchema>>;
+	#tree?: TreeView<TSchema>;
 
-	public get tree(): TreeView<TreeFieldFromImplicitField<TSchema>> {
+	public get tree(): TreeView<TSchema> {
 		if (this.#tree === undefined) throw new Error(this.getUninitializedErrorString("tree"));
 		return this.#tree;
 	}

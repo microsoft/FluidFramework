@@ -1085,7 +1085,7 @@ export interface ITransaction {
 
 // @public
 export interface ITree extends IChannel {
-    schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TreeFieldFromImplicitField<TRoot>>;
+    schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TRoot>;
 }
 
 // @internal
@@ -1491,7 +1491,7 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
 // @public
 export interface Revertible {
     release(): void;
-    revert(): void;
+    revert(release: boolean): void;
     readonly status: RevertibleStatus;
 }
 
@@ -1779,7 +1779,7 @@ export interface TreeAdapter {
 // @public
 export interface TreeApi extends TreeNodeApi {
     runTransaction<TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void | "rollback"): void;
-    runTransaction<TRoot>(tree: TreeView<TRoot>, transaction: (root: TRoot) => void | "rollback"): void;
+    runTransaction<TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void | "rollback"): void;
 }
 
 // @public
@@ -2008,10 +2008,11 @@ export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
 ][_InlineTrick];
 
 // @public
-export interface TreeView<in out TRoot> extends IDisposable {
+export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposable {
     readonly error?: SchemaIncompatible;
     readonly events: ISubscribable<TreeViewEvents>;
-    readonly root: TRoot;
+    get root(): TreeFieldFromImplicitField<TSchema>;
+    set root(newRoot: InsertableTreeFieldFromImplicitField<TSchema>);
     upgradeSchema(): void;
 }
 

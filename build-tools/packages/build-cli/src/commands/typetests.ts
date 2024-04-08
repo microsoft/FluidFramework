@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { Flags } from "@oclif/core";
 import {
 	ITypeValidationConfig,
 	Package,
 	PackageJson,
 	updatePackageJsonFile,
 } from "@fluidframework/build-tools";
+import { Flags } from "@oclif/core";
 
 import { PackageCommand } from "../BasePackageCommand";
 

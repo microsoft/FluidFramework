@@ -95,7 +95,7 @@ const config2 = new TreeConfiguration(
 );
 
 function setup(tree: ITree): Note[] {
-	const view: TreeView<Canvas> = tree.schematize(config1);
+	const view: TreeView<typeof Canvas> = tree.schematize(config1);
 	const stuff = view.root.stuff;
 	if (stuff instanceof NodeMap) {
 		return f(stuff);
@@ -129,6 +129,6 @@ describe("Class based end to end example", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view: TreeView<Canvas> = theTree.schematize(config2);
+		const view: TreeView<typeof Canvas> = theTree.schematize(config2);
 	});
 });

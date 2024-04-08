@@ -205,9 +205,7 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 	}
 
 	public getBoxed(key: FieldKey): FlexTreeField {
-		return inCursorField(this[cursorSymbol], brand(key), (cursor) =>
-			makeField(this.context, this.schema.getFieldSchema(key), cursor),
-		);
+		return getBoxedField(this, key, this.schema.getFieldSchema(key));
 	}
 
 	public boxedIterator(): IterableIterator<FlexTreeField> {
@@ -520,7 +518,7 @@ const cachedStructClasses = new WeakMap<
 	) => LazyObjectNode<FlexObjectNodeSchema>
 >();
 
-export function getBoxedField(
+function getBoxedField(
 	objectNode: LazyTreeNode,
 	key: FieldKey,
 	fieldSchema: FlexFieldSchema,

@@ -20,9 +20,7 @@ import { TestNodeId } from "../../testNodeId.js";
 import { Populated, brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 
-export type PopulatedMark<TNodeChange = TestNodeId> = Populated<
-	CellMark<Populated<MarkEffect>, TNodeChange>
->;
+export type PopulatedMark = Populated<CellMark<Populated<MarkEffect>>>;
 
 /**
  * Generates a list of marks with all fields populated.
