@@ -10,6 +10,7 @@ import {
 	IConnect,
 	IConnected,
 	ISequencedDocumentSystemMessage,
+	type ISignalMessage,
 	MessageType,
 	ScopeType,
 	INack,

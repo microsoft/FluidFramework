@@ -33,7 +33,6 @@ import {
 	INewFileInfo,
 	buildOdspShareLinkReqParams,
 	createCacheSnapshotKey,
-	getOrigin,
 	getWithRetryForTokenRefresh,
 } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
@@ -171,7 +170,7 @@ export async function createNewEmptyFluidFile(
 	const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
 	// add .tmp extension to empty file (host is expected to rename)
 	const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.tmp`);
-	const initialUrl = `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${
+	const initialUrl = `${getApiRoot(new URL(newFileInfo.siteUrl))}/drives/${
 		newFileInfo.driveId
 	}/items/root:/${filePath}/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
 
@@ -214,7 +213,6 @@ export async function createNewEmptyFluidFile(
 					);
 				}
 				event.end({
-					headers: Object.keys(headers).length > 0 ? true : undefined,
 					...fetchResponse.propsToLog,
 				});
 				return content.id;
@@ -235,7 +233,7 @@ export async function createNewFluidFileFromSummary(
 	const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
 	const encodedFilename = encodeURIComponent(newFileInfo.filename);
 	const baseUrl =
-		`${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
+		`${getApiRoot(new URL(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
 		`${filePath}/${encodedFilename}`;
 
 	const containerSnapshot = convertSummaryIntoContainerSnapshot(createNewSummary);

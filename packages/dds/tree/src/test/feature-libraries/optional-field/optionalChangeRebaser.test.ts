@@ -6,8 +6,9 @@
 import { strict as assert } from "assert";
 
 import { describeStress } from "@fluid-private/stochastic-test-utils";
-
+import { CrossFieldManager } from "../../../feature-libraries/index.js";
 import {
+	ChangeAtomIdMap,
 	ChangesetLocalId,
 	DeltaFieldChanges,
 	RevisionMetadataSource,
@@ -18,9 +19,12 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
-import { CrossFieldManager, NodeChangeset } from "../../../feature-libraries/index.js";
 import {
+	NodeChangeComposer,
+	NodeChangeRebaser,
+	NodeId,
 	RebaseRevisionMetadata,
+	ToDelta,
 	rebaseRevisionMetadataFromInfo,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
@@ -31,7 +35,12 @@ import {
 	optionalFieldIntoDelta,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
-import { brand, idAllocatorFromMaxId } from "../../../util/index.js";
+import {
+	brand,
+	forEachInNestedMap,
+	idAllocatorFromMaxId,
+	setInNestedMap,
+} from "../../../util/index.js";
 import {
 	ChildStateGenerator,
 	FieldStateTree,
@@ -51,8 +60,9 @@ import {
 	defaultRevisionMetadataFromChanges,
 	isDeltaVisible,
 } from "../../utils.js";
-
+import { TestNodeId } from "../../testNodeId.js";
 import { Change, assertTaggedEqual, verifyContextChain } from "./optionalFieldUtils.js";
+import { ChangesetWrapper } from "../../changesetWrapper.js";
 
 type RevisionTagMinter = () => RevisionTag;
 
@@ -82,8 +92,8 @@ const OptionalChange = {
 		return optionalFieldEditor.clear(wasEmpty, id);
 	},
 
-	buildChildChange(childChange: TestChange) {
-		return optionalFieldEditor.buildChildChange(0, childChange as NodeChangeset);
+	buildChildChange(childChange: NodeId) {
+		return optionalFieldEditor.buildChildChange(0, childChange);
 	},
 };
 
@@ -92,9 +102,17 @@ const failCrossFieldManager: CrossFieldManager = {
 	set: () => assert.fail("Should not modify CrossFieldManager"),
 };
 
-function toDelta(change: OptionalChangeset, revision?: RevisionTag): DeltaFieldChanges {
-	return optionalFieldIntoDelta(tagChange(change, revision), (childChange) =>
-		TestChange.toDelta(tagChange(childChange as TestChange, revision)),
+function toDelta(
+	change: OptionalChangeset,
+	revision?: RevisionTag,
+	deltaFromChild: ToDelta = TestNodeId.deltaFromChild,
+): DeltaFieldChanges {
+	return optionalFieldIntoDelta(tagChange(change, revision), deltaFromChild);
+}
+
+function toDeltaWrapped(change: TaggedChange<WrappedChangeset>) {
+	return ChangesetWrapper.toDelta(change.change, (c, deltaFromChild) =>
+		toDelta(c, change.revision, deltaFromChild),
 	);
 }
 
@@ -134,7 +152,6 @@ function getMaxId(...changes: OptionalChangeset[]): ChangesetLocalId | undefined
 function invert(change: TaggedChange<OptionalChangeset>, isRollback: boolean): OptionalChangeset {
 	const inverted = optionalChangeRebaser.invert(
 		change,
-		TestChange.invert as any,
 		isRollback,
 		idAllocatorFromMaxId(),
 		failCrossFieldManager,
@@ -144,10 +161,18 @@ function invert(change: TaggedChange<OptionalChangeset>, isRollback: boolean): O
 	return inverted;
 }
 
+function invertWrapped(
+	change: TaggedChange<WrappedChangeset>,
+	isRollback: boolean,
+): WrappedChangeset {
+	return ChangesetWrapper.invert(change, invert, isRollback);
+}
+
 function rebase(
 	change: OptionalChangeset,
 	base: TaggedChange<OptionalChangeset>,
 	metadataArg?: RebaseRevisionMetadata,
+	rebaseChild: NodeChangeRebaser = (id, baseId) => id,
 ): OptionalChangeset {
 	deepFreeze(change);
 	deepFreeze(base);
@@ -160,7 +185,7 @@ function rebase(
 	const rebased = optionalChangeRebaser.rebase(
 		change,
 		base,
-		TestChange.rebase as any,
+		rebaseChild,
 		idAllocator,
 		moveEffects,
 		metadata,
@@ -170,73 +195,41 @@ function rebase(
 	return rebased;
 }
 
-function rebaseTagged(
-	change: TaggedChange<OptionalChangeset>,
-	...baseChanges: TaggedChange<OptionalChangeset>[]
-): TaggedChange<OptionalChangeset> {
-	let currChange = change;
-	for (const base of baseChanges) {
-		currChange = tagChange(rebase(currChange.change, base), currChange.revision);
-		verifyContextChain(base, currChange);
-	}
-
-	return currChange;
-}
-
-function rebaseComposed(
-	metadata: RebaseRevisionMetadata,
-	change: OptionalChangeset,
-	...baseChanges: TaggedChange<OptionalChangeset>[]
-): OptionalChangeset {
-	baseChanges.forEach((base) => deepFreeze(base));
-	deepFreeze(change);
-
-	const composed = composeList(baseChanges, metadata);
-	const moveEffects = failCrossFieldManager;
-	const idAllocator = idAllocatorFromMaxId(getMaxId(composed));
-	const rebased = optionalChangeRebaser.rebase(
-		change,
-		makeAnonChange(composed),
-		TestChange.rebase as any,
-		idAllocator,
-		moveEffects,
-		metadata,
-		undefined,
+function rebaseWrapped(
+	change: WrappedChangeset,
+	base: TaggedChange<WrappedChangeset>,
+	metadataArg?: RebaseRevisionMetadata,
+): WrappedChangeset {
+	return ChangesetWrapper.rebase(change, base, (c, b, rebaseChild) =>
+		rebase(c, b, metadataArg, rebaseChild),
 	);
-	const lastBase = baseChanges.at(-1);
-	if (lastBase !== undefined) {
-		verifyContextChain(lastBase, makeAnonChange(rebased));
-	}
-	return rebased;
 }
 
-function composeList(
-	changes: TaggedChange<OptionalChangeset>[],
-	metadata?: RevisionMetadataSource,
-): OptionalChangeset {
-	const moveEffects = failCrossFieldManager;
-	const idAllocator = idAllocatorFromMaxId(getMaxId(...changes.map((c) => c.change)));
-	let composed: OptionalChangeset = Change.empty();
-	const metadataOrDefault = metadata ?? defaultRevisionMetadataFromChanges(changes);
+function rebaseWrappedTagged(
+	change: TaggedChange<WrappedChangeset>,
+	base: TaggedChange<WrappedChangeset>,
+): TaggedChange<WrappedChangeset> {
+	return tagChange(rebaseWrapped(change.change, base), change.revision);
+}
 
-	for (const change of changes) {
-		verifyContextChain(makeAnonChange(composed), change);
-		composed = optionalChangeRebaser.compose(
-			makeAnonChange(composed),
-			change,
-			TestChange.compose as any,
-			idAllocator,
-			moveEffects,
-			metadataOrDefault,
-		);
-	}
-	return composed;
+function rebaseComposedWrapped(
+	metadata: RebaseRevisionMetadata,
+	change: WrappedChangeset,
+	...baseChanges: TaggedChange<WrappedChangeset>[]
+): WrappedChangeset {
+	const composed = baseChanges.reduce(
+		(change1, change2) => makeAnonChange(composeWrapped(change1, change2)),
+		makeAnonChange(ChangesetWrapper.create(Change.empty())),
+	);
+
+	return rebaseWrapped(change, composed, metadata);
 }
 
 function compose(
 	change1: TaggedChange<OptionalChangeset>,
 	change2: TaggedChange<OptionalChangeset>,
 	metadata?: RevisionMetadataSource,
+	composeChild: NodeChangeComposer = TestNodeId.composeChild,
 ): OptionalChangeset {
 	verifyContextChain(change1, change2);
 	const moveEffects = failCrossFieldManager;
@@ -244,30 +237,35 @@ function compose(
 	return optionalChangeRebaser.compose(
 		change1,
 		change2,
-		TestChange.compose as any,
+		composeChild,
 		idAllocator,
 		moveEffects,
 		metadata ?? defaultRevisionMetadataFromChanges([change1, change2]),
 	);
 }
 
-// This is only valid for optional changesets for childchanges of type TestChange
-function isChangeEmpty(change: OptionalChangeset): boolean {
-	const delta = toDelta(change);
-	return !isDeltaVisible(delta);
-}
-
-function assertChangesetsEquivalent(
-	change1: TaggedChange<OptionalChangeset>,
-	change2: TaggedChange<OptionalChangeset>,
-) {
-	assert.deepEqual(
-		toDelta(change1.change, change1.revision),
-		toDelta(change2.change, change2.revision),
+function composeWrapped(
+	change1: TaggedChange<WrappedChangeset>,
+	change2: TaggedChange<WrappedChangeset>,
+	metadata?: RevisionMetadataSource,
+): WrappedChangeset {
+	return ChangesetWrapper.compose(change1, change2, (c1, c2, composeChild) =>
+		compose(c1, c2, metadata, composeChild),
 	);
 }
 
-type OptionalFieldTestState = FieldStateTree<string | undefined, OptionalChangeset>;
+function isWrappedChangeEmpty(change: WrappedChangeset): boolean {
+	return !isDeltaVisible(toDeltaWrapped(makeAnonChange(change)));
+}
+
+function assertWrappedChangesetsEquivalent(
+	change1: TaggedChange<WrappedChangeset>,
+	change2: TaggedChange<WrappedChangeset>,
+) {
+	assert.deepEqual(toDeltaWrapped(change1), toDeltaWrapped(change2));
+}
+
+type OptionalFieldTestState = FieldStateTree<string | undefined, WrappedChangeset>;
 
 function computeChildChangeInputContext(inputState: OptionalFieldTestState): number[] {
 	// This is effectively a filter of the intentions from all edits such that it only includes
@@ -286,11 +284,9 @@ function computeChildChangeInputContext(inputState: OptionalFieldTestState): num
 		if (
 			state.mostRecentEdit !== undefined &&
 			currentContent === finalContent &&
-			state.mostRecentEdit.changeset.change.childChanges.length > 0
+			state.mostRecentEdit.changeset.change.fieldChange.childChanges.length > 0
 		) {
-			if (state.mostRecentEdit.changeset.change.childChanges !== undefined) {
-				intentions.push(state.mostRecentEdit.intention);
-			}
+			intentions.push(state.mostRecentEdit.intention);
 		}
 
 		currentContent = state.content;
@@ -299,10 +295,12 @@ function computeChildChangeInputContext(inputState: OptionalFieldTestState): num
 	return intentions;
 }
 
+type WrappedChangeset = ChangesetWrapper<OptionalChangeset>;
+
 /**
  * See {@link ChildStateGenerator}
  */
-const generateChildStates: ChildStateGenerator<string | undefined, OptionalChangeset> = function* (
+const generateChildStates: ChildStateGenerator<string | undefined, WrappedChangeset> = function* (
 	state: OptionalFieldTestState,
 	tagFromIntention: (intention: number) => RevisionTag,
 	mintIntention: () => number,
@@ -311,16 +309,18 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 	const edits = getSequentialEdits(state);
 	if (state.content !== undefined) {
 		const changeChildIntention = mintIntention();
+		const nodeId: NodeId = { localId: brand(0) };
 		yield {
 			content: state.content,
 			mostRecentEdit: {
 				changeset: tagChange(
-					OptionalChange.buildChildChange(
+					ChangesetWrapper.create(OptionalChange.buildChildChange(nodeId), [
+						nodeId,
 						TestChange.mint(
 							computeChildChangeInputContext(state),
 							changeChildIntention,
 						),
-					),
+					]),
 					tagFromIntention(changeChildIntention),
 				),
 				intention: changeChildIntention,
@@ -334,7 +334,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 			content: undefined,
 			mostRecentEdit: {
 				changeset: tagChange(
-					OptionalChange.clear(false, mintId()),
+					ChangesetWrapper.create(OptionalChange.clear(false, mintId())),
 					tagFromIntention(setUndefinedIntention),
 				),
 				intention: setUndefinedIntention,
@@ -350,7 +350,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 			content: undefined,
 			mostRecentEdit: {
 				changeset: tagChange(
-					OptionalChange.clear(true, mintId()),
+					ChangesetWrapper.create(OptionalChange.clear(true, mintId())),
 					tagFromIntention(setUndefinedIntention),
 				),
 				intention: setUndefinedIntention,
@@ -371,10 +371,12 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 			content: newContents,
 			mostRecentEdit: {
 				changeset: tagChange(
-					OptionalChange.set(newContents, state.content === undefined, {
-						fill,
-						detach,
-					}),
+					ChangesetWrapper.create(
+						OptionalChange.set(newContents, state.content === undefined, {
+							fill,
+							detach,
+						}),
+					),
 					tagFromIntention(setIntention),
 				),
 				intention: setIntention,
@@ -400,14 +402,23 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 			return TestChange.emptyChange;
 		};
 
-		const inverseChangeset = optionalChangeRebaser.invert(
-			state.mostRecentEdit.changeset,
-			invertTestChangeViaNewIntention as any,
-			false,
-			idAllocatorFromMaxId(),
-			failCrossFieldManager,
-			defaultRevisionMetadataFromChanges([state.mostRecentEdit.changeset]),
-		);
+		const invertedNodeChanges: ChangeAtomIdMap<TestChange> = new Map();
+		forEachInNestedMap(state.mostRecentEdit.changeset.change.nodes, (node, revision, id) => {
+			const invertedNode = invertTestChangeViaNewIntention(node);
+			setInNestedMap(invertedNodeChanges, revision, id, invertedNode);
+		});
+
+		const inverseChangeset: WrappedChangeset = {
+			fieldChange: invert(
+				tagChange(
+					state.mostRecentEdit.changeset.change.fieldChange,
+					state.mostRecentEdit.changeset.revision,
+				),
+				false,
+			),
+			nodes: invertedNodeChanges,
+		};
+
 		yield {
 			content: state.parent?.content,
 			mostRecentEdit: {
@@ -435,9 +446,13 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 			for (const [{ description: name2, changeset: change2 }] of singleTestChanges("B")) {
 				const title = `(${name1} ↷ ${name2}) ↷ ${name2}⁻¹ => ${name1}`;
 				it(title, () => {
-					const inv = tagRollbackInverse(invert(change2, true), tag1, change2.revision);
-					const r1 = rebaseTagged(change1, change2);
-					const r2 = rebaseTagged(r1, inv);
+					const inv = tagRollbackInverse(
+						invertWrapped(change2, true),
+						tag1,
+						change2.revision,
+					);
+					const r1 = rebaseWrappedTagged(change1, change2);
+					const r2 = rebaseWrappedTagged(r1, inv);
 					assert.deepEqual(r2.change, change1.change);
 				});
 			}
@@ -455,9 +470,9 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 			for (const [{ description: name2, changeset: change2 }] of singleTestChanges("B")) {
 				const title = `${name1} ↷ [${name2}, undo(${name2})] => ${name1}`;
 				it(title, () => {
-					const inv = tagChange(invert(change2, false), tag1);
-					const r1 = rebaseTagged(change1, change2);
-					const r2 = rebaseTagged(r1, inv);
+					const inv = tagChange(invertWrapped(change2, false), tag1);
+					const r1 = rebaseWrappedTagged(change1, change2);
+					const r2 = rebaseWrappedTagged(r1, inv);
 					assert.deepEqual(r2.change, change1.change);
 				});
 			}
@@ -478,13 +493,13 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 				const title = `${name1} ↷ [${name2}, ${name2}⁻¹, ${name2}] => ${name1} ↷ ${name2}`;
 				it(title, () => {
 					const inverse2 = tagRollbackInverse(
-						invert(change2, true),
+						invertWrapped(change2, true),
 						tag1,
 						change2.revision,
 					);
-					const r1 = rebaseTagged(change1, change2);
-					const r2 = rebaseTagged(r1, inverse2);
-					const r3 = rebaseTagged(r2, change2);
+					const r1 = rebaseWrappedTagged(change1, change2);
+					const r2 = rebaseWrappedTagged(r1, inverse2);
+					const r3 = rebaseWrappedTagged(r2, change2);
 					assert.deepEqual(r3.change, r1.change);
 				});
 			}
@@ -494,9 +509,12 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 	describe("A ○ A⁻¹ === ε", () => {
 		for (const [{ description: name, changeset: change }] of singleTestChanges("A")) {
 			it(`${name} ○ ${name}⁻¹ === ε`, () => {
-				const inv = invert(change, true);
-				const actual = compose(change, tagRollbackInverse(inv, tag1, change.revision));
-				const delta = toDelta(actual);
+				const inv = invertWrapped(change, true);
+				const actual = composeWrapped(
+					change,
+					tagRollbackInverse(inv, tag1, change.revision),
+				);
+				const delta = toDeltaWrapped(makeAnonChange(actual));
 				assert.equal(isDeltaVisible(delta), false);
 			});
 		}
@@ -505,9 +523,9 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 	describe("A⁻¹ ○ A === ε", () => {
 		for (const [{ description: name, changeset: change }] of singleTestChanges("A")) {
 			it(`${name}⁻¹ ○ ${name} === ε`, () => {
-				const inv = tagRollbackInverse(invert(change, true), tag1, change.revision);
-				const actual = compose(inv, change);
-				const delta = toDelta(actual);
+				const inv = tagRollbackInverse(invertWrapped(change, true), tag1, change.revision);
+				const actual = composeWrapped(inv, change);
+				const delta = toDeltaWrapped(makeAnonChange(actual));
 				assert.equal(isDeltaVisible(delta), false);
 			});
 		}
@@ -529,14 +547,14 @@ export function testRebaserAxioms() {
 				[{ content: undefined }, { content: "A" }],
 				generateChildStates,
 				{
-					rebase,
-					rebaseComposed,
-					compose,
-					invert,
-					assertEqual: assertTaggedEqual,
-					createEmpty: Change.empty,
-					isEmpty: isChangeEmpty,
-					assertChangesetsEquivalent,
+					rebase: rebaseWrapped,
+					rebaseComposed: rebaseComposedWrapped,
+					compose: composeWrapped,
+					invert: invertWrapped,
+					assertEqual: assertWrappedEqual,
+					createEmpty: () => ChangesetWrapper.create(Change.empty()),
+					isEmpty: isWrappedChangeEmpty,
+					assertChangesetsEquivalent: assertWrappedChangesetsEquivalent,
 				},
 				{
 					numberOfEditsToRebase: 3,
@@ -546,4 +564,18 @@ export function testRebaserAxioms() {
 			);
 		});
 	});
+}
+
+function assertWrappedEqual(
+	a: TaggedChange<WrappedChangeset> | undefined,
+	b: TaggedChange<WrappedChangeset> | undefined,
+): void {
+	if (a === undefined || b === undefined) {
+		assert.equal(a, b);
+		return;
+	}
+
+	ChangesetWrapper.assertEqual(a.change, b.change, (fieldA, fieldB) =>
+		assertTaggedEqual({ ...a, change: fieldA }, { ...b, change: fieldB }),
+	);
 }
