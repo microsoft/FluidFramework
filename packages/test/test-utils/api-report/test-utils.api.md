@@ -351,8 +351,8 @@ export class TestObjectProvider implements ITestObjectProvider {
     readonly driver: ITestDriver;
     ensureSynchronized(): Promise<void>;
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
-    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
-    get logger(): EventAndErrorTrackingLogger;
+    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader, pendingLocalState?: string): Promise<IContainer>;
+    get logger(): ITelemetryBaseLogger;
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
     makeTestLoader(testContainerConfig?: ITestContainerConfig): Loader;
     get opProcessingController(): IOpProcessingController;
@@ -379,8 +379,8 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
     get driver(): ITestDriver;
     ensureSynchronized(): Promise<void>;
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
-    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
-    get logger(): EventAndErrorTrackingLogger;
+    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader, pendingLocalState?: string): Promise<IContainer>;
+    get logger(): ITelemetryBaseLogger;
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
     makeTestLoader(testContainerConfig?: ITestContainerConfig): Loader;
     get opProcessingController(): IOpProcessingController;
