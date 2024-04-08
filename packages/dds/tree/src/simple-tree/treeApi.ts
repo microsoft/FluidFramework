@@ -9,6 +9,7 @@ import { TreeValue, Multiplicity } from "../core/index.js";
 import {
 	FieldKinds,
 	LeafNodeSchema,
+	StableNodeKey,
 	TreeStatus,
 	isTreeValue,
 	valueSchemaAllows,
@@ -176,7 +177,9 @@ export const treeNodeApi: TreeNodeApi = {
 		for (const field of flexNode.boxedIterator()) {
 			if (field.schema.kind === FieldKinds.identifier) {
 				for (const child of field.boxedIterator()) {
-					return Number(child.value);
+					return child.context.nodeKeys.localize(
+						child.value as StableNodeKey,
+					) as unknown as number;
 				}
 			}
 		}

@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 import { type TreeChangeEvents } from "../../../dist/index.js";
 import { rootFieldKey } from "../../core/index.js";
-import { TreeStatus } from "../../feature-libraries/index.js";
+import { TreeStatus, createMockNodeKeyManager } from "../../feature-libraries/index.js";
 import {
 	NodeFromSchema,
 	SchemaFactory,
@@ -16,7 +16,6 @@ import {
 import { getView } from "../utils.js";
 
 import { hydrate } from "./utils.js";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
 const schema = new SchemaFactory("com.example");
 
@@ -109,18 +108,20 @@ describe("treeApi", () => {
 		// TODO: test Deleted status.
 	});
 
-	describe("shortId", () => {
+	describe("shortID", () => {
 		it("returns local id when an identifier fieldkind exists.", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				identifier: schema.identifier(schema.string),
 			});
-			const idCompressor = createIdCompressor();
-			const id = idCompressor.generateCompressedId();
+			const nodeKeyManager = createMockNodeKeyManager();
+			const id = nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
 			const config = new TreeConfiguration(schemaWithIdentifier, () => ({
-				identifier: (id as number).toString(),
+				identifier: id,
 			}));
-			const root = getView(config).root;
-			assert.equal(Tree.shortID(root), id);
+
+			const root = getView(config, nodeKeyManager).root;
+
+			assert.equal(Tree.shortID(root), nodeKeyManager.localizeNodeKey(id));
 		});
 		it("returns undefined when an identifier fieldkind does not exist.", () => {
 			const schemaWithIdentifier = schema.object("parent", {

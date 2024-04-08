@@ -175,10 +175,10 @@ describe("SharedTreeObject", () => {
 			identifier: sb.identifier(sb.string),
 		});
 		const idCompressor = createIdCompressor();
-		const id = idCompressor.generateCompressedId();
+		const id = idCompressor.decompress(idCompressor.generateCompressedId());
 
 		const config = new TreeConfiguration(schemaWithIdentifier, () => ({
-			identifier: (id as number).toString(),
+			identifier: id,
 		}));
 		const factory = new TreeFactory({
 			jsonValidator: typeboxValidator,
@@ -192,7 +192,7 @@ describe("SharedTreeObject", () => {
 			"tree",
 		);
 		const root = tree.schematize(config).root;
-		assert.equal(root.identifier, idCompressor.decompress(id));
+		assert.equal(root.identifier, id);
 	});
 });
 
