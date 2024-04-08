@@ -10,11 +10,7 @@ import { IJsonCodec } from "../../codec/index.js";
 import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
 import { Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
-import {
-	EncodedNodeChangeset,
-	type FieldChangeEncodingContext,
-	type NodeId,
-} from "../modular-schema/index.js";
+import { EncodedNodeChangeset, type FieldChangeEncodingContext } from "../modular-schema/index.js";
 
 import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormatV0.js";
 import type { Move, OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes.js";
@@ -45,7 +41,7 @@ function makeRegisterIdCodec(
 	};
 }
 
-export function makeOptionalFieldCodec<TChildChange = NodeId>(
+export function makeOptionalFieldCodec(
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
@@ -53,7 +49,7 @@ export function makeOptionalFieldCodec<TChildChange = NodeId>(
 		ChangeEncodingContext
 	>,
 ): IJsonCodec<
-	OptionalChangeset<TChildChange>,
+	OptionalChangeset,
 	EncodedOptionalChangeset<TAnySchema>,
 	EncodedOptionalChangeset<TAnySchema>,
 	FieldChangeEncodingContext
@@ -61,7 +57,7 @@ export function makeOptionalFieldCodec<TChildChange = NodeId>(
 	const registerIdCodec = makeRegisterIdCodec(revisionTagCodec);
 
 	return {
-		encode: (change: OptionalChangeset<TChildChange>, context: FieldChangeEncodingContext) => {
+		encode: (change: OptionalChangeset, context: FieldChangeEncodingContext) => {
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
 			encoded.m = [];
 
@@ -107,7 +103,7 @@ export function makeOptionalFieldCodec<TChildChange = NodeId>(
 				for (const [id, childChange] of change.childChanges) {
 					encoded.c.push([
 						registerIdCodec.encode(id, context.baseContext),
-						context.encodeNode(childChange as NodeId),
+						context.encodeNode(childChange),
 					]);
 				}
 			}
@@ -142,12 +138,12 @@ export function makeOptionalFieldCodec<TChildChange = NodeId>(
 					}
 				}
 			}
-			const decoded: Mutable<OptionalChangeset<TChildChange>> = {
+			const decoded: Mutable<OptionalChangeset> = {
 				moves,
 				childChanges:
 					encoded.c?.map(([id, encodedChange]) => [
 						registerIdCodec.decode(id, context.baseContext),
-						context.decodeNode(encodedChange) as TChildChange,
+						context.decodeNode(encodedChange),
 					]) ?? [],
 			};
 

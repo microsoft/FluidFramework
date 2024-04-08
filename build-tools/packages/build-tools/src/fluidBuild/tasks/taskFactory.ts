@@ -50,7 +50,7 @@ const executableToLeafTask: {
 	"flub list": FlubListTask,
 	"flub check layers": FlubCheckLayerTask,
 	"flub check policy": FlubCheckPolicyTask,
-	"flub generate entrypoint": GenerateEntrypointsTask,
+	"flub generate entrypoints": GenerateEntrypointsTask,
 	"flub generate typetests": TypeValidationTask,
 	"fluid-type-test-generator": TypeValidationTask,
 	"depcruise": DepCruiseTask,

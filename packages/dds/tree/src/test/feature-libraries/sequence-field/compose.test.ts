@@ -244,7 +244,11 @@ export function testCompose() {
 		it("remove ○ modify", () =>
 			withConfig(() => {
 				const deletion = Change.remove(0, 3);
-				const childChange = TestChange.mint([0, 1], 2);
+				const childChange = TestNodeId.create(
+					{ localId: brand(1) },
+					TestChange.mint([0, 1], 2),
+				);
+
 				const modify = Change.modify(0, childChange);
 				const expected = [Mark.remove(3, brand(0)), Mark.modify(childChange)];
 				const actual = shallowCompose([makeAnonChange(deletion), makeAnonChange(modify)]);
@@ -450,7 +454,11 @@ export function testCompose() {
 
 		it("modify ○ remove", () =>
 			withConfig(() => {
-				const changes = TestChange.mint([0, 1], 2);
+				const changes = TestNodeId.create(
+					{ localId: brand(1) },
+					TestChange.mint([0, 1], 2),
+				);
+
 				const modify = Change.modify(0, changes);
 				const deletion = Change.remove(0, 1);
 				const actual = shallowCompose([makeAnonChange(modify), makeAnonChange(deletion)]);
@@ -530,7 +538,11 @@ export function testCompose() {
 
 		it("modify ○ insert", () =>
 			withConfig(() => {
-				const childChange = TestChange.mint([0, 1], 2);
+				const childChange = TestNodeId.create(
+					{ localId: brand(3) },
+					TestChange.mint([0, 1], 2),
+				);
+
 				const modify = Change.modify(0, childChange);
 				const insert = Change.insert(0, 1, brand(2));
 				const expected = [Mark.insert(1, brand(2)), Mark.modify(childChange)];
@@ -594,7 +606,11 @@ export function testCompose() {
 
 		it("modify ○ revive", () =>
 			withConfig(() => {
-				const childChange = TestChange.mint([0, 1], 2);
+				const childChange = TestNodeId.create(
+					{ localId: brand(1) },
+					TestChange.mint([0, 1], 2),
+				);
+
 				const modify = Change.modify(0, childChange);
 				const revive = Change.revive(0, 2, { revision: tag1, localId: brand(0) });
 				const expected = [
@@ -782,7 +798,7 @@ export function testCompose() {
 		it("move ○ modify", () =>
 			withConfig(() => {
 				const move = Change.move(0, 1, 2);
-				const changes = TestChange.mint([], 42);
+				const changes = TestNodeId.create({ localId: brand(1) }, TestChange.mint([], 42));
 				const modify = Change.modify(1, changes);
 				const expected = [
 					Mark.moveOut(1, brand(0), { changes }),
@@ -796,7 +812,7 @@ export function testCompose() {
 		it("move ○ modify and return", () =>
 			withConfig(() => {
 				const move = [Mark.moveIn(1, brand(0)), { count: 1 }, Mark.moveOut(1, brand(0))];
-				const changes = TestChange.mint([], 42);
+				const changes = TestNodeId.create({ localId: brand(1) }, TestChange.mint([], 42));
 				const moveBack = [
 					Mark.moveOut(1, brand(0), { changes }),
 					{ count: 1 },
@@ -845,7 +861,7 @@ export function testCompose() {
 
 		it("modify ○ return", () =>
 			withConfig(() => {
-				const changes = TestChange.mint([], 42);
+				const changes = TestNodeId.create({ localId: brand(2) }, TestChange.mint([], 42));
 				const modify = tagChange(Change.modify(3, changes), tag3);
 				const ret = tagChange(
 					Change.return(3, 2, 0, { revision: tag1, localId: brand(0) }),
@@ -1015,8 +1031,8 @@ export function testCompose() {
 				// Revision 2 removes B
 				// Revision 3 modifies A
 				// Revision 4 modifies B
-				const nodeChange1 = "Change1";
-				const nodeChange2 = "Change2";
+				const nodeChange1: NodeId = { localId: brand(1) };
+				const nodeChange2: NodeId = { localId: brand(2) };
 				const lineage: SF.LineageEvent[] = [
 					{ revision: tag2, id: brand(0), count: 1, offset: 0 },
 				];
@@ -1042,8 +1058,8 @@ export function testCompose() {
 				// Revision 2 removes A
 				// Revision 3 modifies B
 				// Revision 4 modifies A
-				const nodeChange1 = "Change1";
-				const nodeChange2 = "Change2";
+				const nodeChange1: NodeId = { localId: brand(2) };
+				const nodeChange2: NodeId = { localId: brand(3) };
 				const lineage: SF.LineageEvent[] = [
 					{ revision: tag2, id: brand(0), count: 1, offset: 1 },
 				];
@@ -1069,8 +1085,8 @@ export function testCompose() {
 				// Revision 2 removes B
 				// Revision 3 modifies B
 				// Revision 4 modifies A
-				const nodeChange1 = "Change1";
-				const nodeChange2 = "Change2";
+				const nodeChange1: NodeId = { localId: brand(2) };
+				const nodeChange2: NodeId = { localId: brand(3) };
 				const lineage: SF.LineageEvent[] = [
 					{ revision: tag2, id: brand(0), count: 1, offset: 0 },
 				];
@@ -1096,8 +1112,8 @@ export function testCompose() {
 				// Revision 2 removes A
 				// Revision 3 modifies A
 				// Revision 4 modifies B
-				const nodeChange1 = "Change1";
-				const nodeChange2 = "Change2";
+				const nodeChange1: NodeId = { localId: brand(2) };
+				const nodeChange2: NodeId = { localId: brand(3) };
 
 				const lineage: SF.LineageEvent[] = [
 					{ revision: tag2, id: brand(0), count: 1, offset: 1 },
@@ -1401,7 +1417,7 @@ export function testCompose() {
 
 		it("move-in+remove ○ modify", () =>
 			withConfig(() => {
-				const changes = TestChange.mint([], 42);
+				const changes = TestNodeId.create({ localId: brand(5) }, TestChange.mint([], 42));
 				const [mo, mi] = Mark.move(1, { revision: tag1, localId: brand(1) });
 				const attachDetach = Mark.attachAndDetach(
 					mi,
@@ -1441,6 +1457,10 @@ export function testCompose() {
 			const tombB = Mark.tomb(tag1, brand(2));
 			const tombC = Mark.tomb(tag1, brand(3));
 
+			const nodeIdA: NodeId = { localId: brand(4) };
+			const nodeIdB: NodeId = { localId: brand(5) };
+			const nodeIdC: NodeId = { localId: brand(6) };
+
 			describe("cells named in the same earlier revision", () => {
 				it("A ○ A", () =>
 					withConfig(() => {
@@ -1476,12 +1496,12 @@ export function testCompose() {
 				it("A ○ B", () =>
 					withConfig(() => {
 						const adjacentCells: SF.IdRange[] = [{ id: brand(1), count: 2 }];
-						const markA = Mark.modify("A", {
+						const markA = Mark.modify(nodeIdA, {
 							revision: tag1,
 							localId: brand(1),
 							adjacentCells,
 						});
-						const markB = Mark.modify("B", {
+						const markB = Mark.modify(nodeIdB, {
 							revision: tag1,
 							localId: brand(2),
 							adjacentCells,
@@ -1498,12 +1518,12 @@ export function testCompose() {
 				it("B ○ A", () =>
 					withConfig(() => {
 						const adjacentCells: SF.IdRange[] = [{ id: brand(1), count: 2 }];
-						const markA = Mark.modify("A", {
+						const markA = Mark.modify(nodeIdA, {
 							revision: tag1,
 							localId: brand(1),
 							adjacentCells,
 						});
-						const markB = Mark.modify("B", {
+						const markB = Mark.modify(nodeIdB, {
 							revision: tag1,
 							localId: brand(2),
 							adjacentCells,
@@ -1521,12 +1541,12 @@ export function testCompose() {
 			describe("cells named in different earlier revisions", () => {
 				it("older A ○ newer B", () =>
 					withConfig(() => {
-						const markA = Mark.modify("A", {
+						const markA = Mark.modify(nodeIdA, {
 							revision: tag1,
 							localId: brand(1),
 							lineage: [{ revision: tag2, id: brand(2), count: 1, offset: 0 }],
 						});
-						const markB = Mark.modify("B", {
+						const markB = Mark.modify(nodeIdB, {
 							revision: tag2,
 							localId: brand(2),
 						});
@@ -1541,11 +1561,11 @@ export function testCompose() {
 
 				it("newer A ○ older B", () =>
 					withConfig(() => {
-						const markA = Mark.modify("A", {
+						const markA = Mark.modify(nodeIdA, {
 							revision: tag2,
 							localId: brand(1),
 						});
-						const markB = Mark.modify("B", {
+						const markB = Mark.modify(nodeIdB, {
 							revision: tag1,
 							localId: brand(2),
 							lineage: [{ revision: tag2, id: brand(1), count: 1, offset: 1 }],
@@ -1561,12 +1581,12 @@ export function testCompose() {
 
 				it("older B ○ newer A", () =>
 					withConfig(() => {
-						const markB = Mark.modify("B", {
+						const markB = Mark.modify(nodeIdB, {
 							revision: tag1,
 							localId: brand(2),
 							lineage: [{ revision: tag2, id: brand(1), count: 1, offset: 1 }],
 						});
-						const markA = Mark.modify("A", {
+						const markA = Mark.modify(nodeIdA, {
 							revision: tag2,
 							localId: brand(1),
 						});
@@ -1581,11 +1601,11 @@ export function testCompose() {
 
 				it("newer B ○ older A", () =>
 					withConfig(() => {
-						const markB = Mark.modify("B", {
+						const markB = Mark.modify(nodeIdB, {
 							revision: tag2,
 							localId: brand(2),
 						});
-						const markA = Mark.modify("A", {
+						const markA = Mark.modify(nodeIdA, {
 							revision: tag1,
 							localId: brand(1),
 							lineage: [{ revision: tag2, id: brand(2), count: 1, offset: 0 }],
@@ -1605,17 +1625,17 @@ export function testCompose() {
 					withConfig(() => {
 						const changeX = tagChange(
 							[
-								Mark.modify("A", { revision: tag1, localId: brand(1) }),
+								Mark.modify(nodeIdA, { revision: tag1, localId: brand(1) }),
 								Mark.remove(
 									1,
 									{ revision: tag2, localId: brand(2) },
 									{ cellId: { revision: tag1, localId: brand(2) } },
 								),
-								Mark.modify("C", { revision: tag1, localId: brand(3) }),
+								Mark.modify(nodeIdC, { revision: tag1, localId: brand(3) }),
 							],
 							tag2,
 						);
-						const markB = Mark.modify("B", {
+						const markB = Mark.modify(nodeIdB, {
 							revision: tag2,
 							localId: brand(2),
 							adjacentCells: [{ id: brand(2), count: 1 }],
@@ -1625,13 +1645,13 @@ export function testCompose() {
 						const composedXY = shallowCompose([changeX, changeY]);
 
 						const expected = [
-							Mark.modify("A", { revision: tag1, localId: brand(1) }),
+							Mark.modify(nodeIdA, { revision: tag1, localId: brand(1) }),
 							Mark.remove(
 								1,
 								{ revision: tag2, localId: brand(2) },
-								{ cellId: { revision: tag1, localId: brand(2) }, changes: "B" },
+								{ cellId: { revision: tag1, localId: brand(2) }, changes: nodeIdB },
 							),
-							Mark.modify("C", { revision: tag1, localId: brand(3) }),
+							Mark.modify(nodeIdC, { revision: tag1, localId: brand(3) }),
 						];
 						assertChangesetsEqual(composedXY, expected);
 					}));
@@ -1748,7 +1768,7 @@ export function testCompose() {
 
 				it("C ○ A - with lineage for B on C", () =>
 					withConfig(() => {
-						const cellA = Mark.modify("A", { revision: tag2, localId: brand(1) });
+						const cellA = Mark.modify(nodeIdA, { revision: tag2, localId: brand(1) });
 						const cellC = Mark.insert(1, {
 							revision: tag3,
 							localId: brand(3),
@@ -1771,7 +1791,7 @@ export function testCompose() {
 				it("ABC ○ B", () =>
 					withConfig(() => {
 						const markABC = Mark.remove(3, { revision: tag1, localId: brand(1) });
-						const markB = Mark.modify("B", {
+						const markB = Mark.modify(nodeIdB, {
 							revision: tag1,
 							localId: brand(2),
 							adjacentCells: [{ id: brand(1), count: 3 }],
@@ -1783,7 +1803,11 @@ export function testCompose() {
 
 						const expected = [
 							Mark.remove(1, { revision: tag1, localId: brand(1) }),
-							Mark.remove(1, { revision: tag1, localId: brand(2) }, { changes: "B" }),
+							Mark.remove(
+								1,
+								{ revision: tag1, localId: brand(2) },
+								{ changes: nodeIdB },
+							),
 							Mark.remove(1, { revision: tag1, localId: brand(3) }),
 						];
 						assertChangesetsEqual(composedXY, expected);
@@ -1794,7 +1818,7 @@ export function testCompose() {
 				// This case requires Tiebreak.Right to be supported.
 				it.skip("A ○ B", () =>
 					withConfig(() => {
-						const markA = Mark.modify("A", {
+						const markA = Mark.modify(nodeIdA, {
 							revision: tag1,
 							localId: brand(1),
 						});
@@ -1813,7 +1837,7 @@ export function testCompose() {
 					}));
 				it("B ○ A", () =>
 					withConfig(() => {
-						const markB = Mark.modify("B", {
+						const markB = Mark.modify(nodeIdB, {
 							revision: tag1,
 							localId: brand(2),
 						});
@@ -1835,7 +1859,7 @@ export function testCompose() {
 				describe("cell for later change named through removal", () => {
 					it("A ○ B", () =>
 						withConfig(() => {
-							const markA = Mark.modify("A", {
+							const markA = Mark.modify(nodeIdA, {
 								revision: tag1,
 								localId: brand(1),
 							});
@@ -1843,7 +1867,7 @@ export function testCompose() {
 								revision: tag3,
 								localId: brand(2),
 							});
-							const markB = Mark.modify("B", {
+							const markB = Mark.modify(nodeIdB, {
 								revision: tag3,
 								localId: brand(2),
 							});
@@ -1853,13 +1877,13 @@ export function testCompose() {
 							const change4 = tagChange([markB], tag4);
 							const composedXY = shallowCompose([change2, change3, change4]);
 
-							const expected = [markA, { ...markNamesB, changes: "B" }];
+							const expected = [markA, { ...markNamesB, changes: nodeIdB }];
 							assertChangesetsEqual(composedXY, expected);
 						}));
 
 					it("B ○ A", () =>
 						withConfig(() => {
-							const markB = Mark.modify("B", {
+							const markB = Mark.modify(nodeIdB, {
 								revision: tag1,
 								localId: brand(2),
 							});
@@ -1867,7 +1891,7 @@ export function testCompose() {
 								revision: tag3,
 								localId: brand(1),
 							});
-							const markA = Mark.modify("A", {
+							const markA = Mark.modify(nodeIdA, {
 								revision: tag3,
 								localId: brand(1),
 							});
@@ -1877,7 +1901,7 @@ export function testCompose() {
 							const change4 = tagChange([markA], tag4);
 							const composedXY = shallowCompose([change2, change3, change4]);
 
-							const expected = [{ ...markNamesA, changes: "A" }, markB];
+							const expected = [{ ...markNamesA, changes: nodeIdA }, markB];
 							assertChangesetsEqual(composedXY, expected);
 						}));
 				});
@@ -1886,7 +1910,7 @@ export function testCompose() {
 					// This case requires Tiebreak.Right to be supported.
 					it.skip("A ○ B", () =>
 						withConfig(() => {
-							const markA = Mark.modify("A", {
+							const markA = Mark.modify(nodeIdA, {
 								revision: tag1,
 								localId: brand(1),
 							});
@@ -1898,7 +1922,7 @@ export function testCompose() {
 								}),
 								Mark.remove(1, { revision: tag3, localId: brand(2) }),
 							);
-							const markB = Mark.modify("B", {
+							const markB = Mark.modify(nodeIdB, {
 								revision: tag3,
 								localId: brand(2),
 							});
@@ -1908,13 +1932,13 @@ export function testCompose() {
 							const change4 = tagChange([markB], tag4);
 							const composedXY = shallowCompose([change2, change3, change4]);
 
-							const expected = [markA, { ...markNamesB, changes: "B" }];
+							const expected = [markA, { ...markNamesB, changes: nodeIdB }];
 							assertChangesetsEqual(composedXY, expected);
 						}));
 
 					it("B ○ A", () =>
 						withConfig(() => {
-							const markB = Mark.modify("B", {
+							const markB = Mark.modify(nodeIdB, {
 								revision: tag1,
 								localId: brand(2),
 							});
@@ -1922,7 +1946,7 @@ export function testCompose() {
 								Mark.insert(1, { revision: tag3, localId: brand(1) }),
 								Mark.remove(1, { revision: tag3, localId: brand(1) }),
 							);
-							const markA = Mark.modify("A", {
+							const markA = Mark.modify(nodeIdA, {
 								revision: tag3,
 								localId: brand(1),
 							});
@@ -1932,7 +1956,7 @@ export function testCompose() {
 							const change4 = tagChange([markA], tag4);
 							const composedXY = shallowCompose([change2, change3, change4]);
 
-							const expected = [{ ...markNamesA, changes: "A" }, markB];
+							const expected = [{ ...markNamesA, changes: nodeIdA }, markB];
 							assertChangesetsEqual(composedXY, expected);
 						}));
 				});
@@ -1945,7 +1969,7 @@ export function testCompose() {
 							Mark.insert(1, { revision: tag2, localId: brand(1) }),
 							Mark.remove(1, { revision: tag2, localId: brand(1) }),
 						);
-						const markB = Mark.modify("B", {
+						const markB = Mark.modify(nodeIdB, {
 							localId: brand(2),
 							revision: tag1,
 							lineage: [{ revision: tag2, id: brand(1), count: 1, offset: 1 }],
@@ -1964,7 +1988,7 @@ export function testCompose() {
 							Mark.insert(1, { revision: tag2, localId: brand(2) }),
 							Mark.remove(1, { revision: tag2, localId: brand(2) }),
 						);
-						const markA = Mark.modify("A", {
+						const markA = Mark.modify(nodeIdA, {
 							localId: brand(1),
 							revision: tag1,
 							lineage: [{ revision: tag2, id: brand(2), count: 1, offset: 0 }],
