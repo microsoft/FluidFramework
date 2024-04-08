@@ -16,7 +16,6 @@ export {
 	ImplicitAllowedTypes,
 	TreeNodeFromImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
-	TreeMapNode,
 	TreeLeafValue,
 	type,
 	WithType,
@@ -24,12 +23,9 @@ export {
 	ApplyKind,
 	FieldKind,
 	FieldSchema,
-	InsertableObjectFromSchemaRecord,
 	InsertableTreeFieldFromImplicitField,
 	InsertableTypedNode,
 	NodeBuilderData,
-	ObjectFromSchemaRecord,
-	TreeObjectNode,
 	type FieldProps,
 } from "./schemaTypes.js";
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
@@ -70,4 +66,10 @@ export {
 } from "./testRecursiveDomain.js";
 
 export { TreeNode, Unhydrated } from "./types.js";
-export { TreeArrayNode, IterableTreeArrayContent, TreeArrayNodeBase } from "./treeArrayNode.js";
+export { TreeArrayNode, IterableTreeArrayContent, TreeArrayNodeBase } from "./arrayNode.js";
+export {
+	InsertableObjectFromSchemaRecord,
+	ObjectFromSchemaRecord,
+	TreeObjectNode,
+} from "./objectNode.js";
+export { TreeMapNode } from "./mapNode.js";
