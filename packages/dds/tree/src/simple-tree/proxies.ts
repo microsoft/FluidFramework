@@ -68,7 +68,6 @@ export function isTreeNode(candidate: unknown): candidate is TreeNode | Unhydrat
  * */
 export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | undefined {
 	switch (field.schema.kind) {
-		case FieldKinds.identifier:
 		case FieldKinds.required: {
 			const asValue = field as FlexTreeTypedField<
 				FlexFieldSchema<typeof FieldKinds.required>
@@ -100,6 +99,12 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 			// this case unreachable as long as users follow the 'array recipe'.
 			fail("'sequence' field is unexpected.");
 		}
+		case FieldKinds.identifier: {
+			const identifier = field.boxedAt(0);
+			assert(identifier !== undefined, "identifier must exist");
+			return getOrCreateNodeProxy(identifier);
+		}
+
 		default:
 			fail("invalid field kind");
 	}
