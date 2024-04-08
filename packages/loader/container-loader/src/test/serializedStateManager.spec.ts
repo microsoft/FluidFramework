@@ -293,7 +293,6 @@ describe("serializedStateManager", () => {
 		await getLatestSnapshotInfoP.promise;
 		logger.assertMatchAny([
 			{
-				category: "generic",
 				eventName: "serializedStateManager:OldSnapshotFetchWhileRefreshing",
 				snapshotSequenceNumber: 0,
 				firstProcessedOpSequenceNumber: 1,
@@ -343,7 +342,6 @@ describe("serializedStateManager", () => {
 		await getLatestSnapshotInfoP.promise;
 		logger.assertMatchAny([
 			{
-				category: "error",
 				eventName: "serializedStateManager:OldSnapshotFetchWhileRefreshing",
 				snapshotSequenceNumber,
 				firstProcessedOpSequenceNumber,
