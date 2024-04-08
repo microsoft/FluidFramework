@@ -34,6 +34,7 @@ describe("SharedSequence memory usage", () => {
 			segment = new SubSequence<number>([]);
 
 			async run() {
+				this.segment = new SubSequence<number>([]);
 			}
 		})(),
 	);

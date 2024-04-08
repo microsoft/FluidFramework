@@ -41,6 +41,7 @@ describe("SharedString memory usage", () => {
 			sharedString = createLocalSharedString("testSharedString");
 
 			async run() {
+				this.sharedString = createLocalSharedString("testSharedString");
 			}
 		})(),
 	);
