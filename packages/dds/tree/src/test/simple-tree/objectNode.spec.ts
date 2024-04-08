@@ -88,4 +88,34 @@ describe("ObjectNode", () => {
 			assert.equal(x, 5);
 		});
 	});
+
+	it("empty property pofo deep equals", () => {
+		const Schema = schemaFactory.object("x", {
+			foo: schemaFactory.optional(schemaFactory.number),
+		});
+		const n = hydrate(Schema, { foo: undefined });
+		assert.deepEqual(n, {});
+	});
+
+	it("empty property enumerability", () => {
+		class Schema extends schemaFactory.object("x", {
+			foo: schemaFactory.optional(schemaFactory.number),
+		}) {}
+		const n = hydrate(Schema, { foo: undefined });
+		assert.deepEqual({ ...n }, {});
+		const descriptor = Reflect.getOwnPropertyDescriptor(n, "foo") ?? assert.fail();
+		assert.equal(descriptor.enumerable, false);
+		assert.equal(descriptor.value, undefined);
+	});
+
+	it("full property enumerability", () => {
+		class Schema extends schemaFactory.object("x", {
+			foo: schemaFactory.optional(schemaFactory.number),
+		}) {}
+		const n = hydrate(Schema, { foo: 0 });
+		assert.deepEqual({ ...n }, { foo: 0 });
+		const descriptor = Reflect.getOwnPropertyDescriptor(n, "foo") ?? assert.fail();
+		assert.equal(descriptor.enumerable, true);
+		assert.equal(descriptor.value, 0);
+	});
 });
