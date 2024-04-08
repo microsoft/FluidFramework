@@ -25,7 +25,7 @@ import {
 } from "./utils.js";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
 
-function invert<T>(change: SF.Changeset<T>, tag?: RevisionTag): SF.Changeset<T> {
+function invert(change: SF.Changeset, tag?: RevisionTag): SF.Changeset {
 	return invertChange(tagChange(change, tag ?? tag1));
 }
 

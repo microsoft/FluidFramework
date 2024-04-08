@@ -4,9 +4,9 @@
  */
 
 import path from "path";
+import { getResolvedFluidRoot } from "../../../common/fluidUtils";
 import { GitRepo } from "../../../common/gitRepo";
 import { LeafWithFileStatDoneFileTask } from "./leafTask";
-import { getResolvedFluidRoot } from "../../../common/fluidUtils";
 
 // switch to regular import once building ESM
 const findUp = import("find-up");

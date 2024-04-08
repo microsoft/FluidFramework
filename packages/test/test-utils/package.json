@@ -45,7 +45,7 @@
 		}
 	},
 	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"types": "./dist/test-utils-public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
@@ -171,12 +171,15 @@
 				"backCompat": false
 			},
 			"ClassDeclaration_TestObjectProvider": {
+				"backCompat": false,
 				"forwardCompat": false
 			},
 			"ClassDeclaration_TestObjectProviderWithVersionedLoad": {
+				"backCompat": false,
 				"forwardCompat": false
 			},
 			"InterfaceDeclaration_ITestObjectProvider": {
+				"backCompat": false,
 				"forwardCompat": false
 			},
 			"InterfaceDeclaration_ITestContainerConfig": {

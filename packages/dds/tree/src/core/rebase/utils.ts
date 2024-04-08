@@ -242,10 +242,9 @@ export function rebaseBranch<TChange>(
 	const revisionMetadata = revisionMetadataSourceFromInfo(revInfos);
 	let currentComposedEdit = makeAnonChange(changeRebaser.compose(targetRebasePath));
 	for (const c of sourcePath) {
-		const editsToCompose: TaggedChange<TChange>[] = [
-			tagRollbackInverse(changeRebaser.invert(c, true), mintRevisionTag(), c.revision),
-			currentComposedEdit,
-		];
+		const inverseTag = mintRevisionTag();
+		const inverse = tagRollbackInverse(changeRebaser.invert(c, true), inverseTag, c.revision);
+		const editsToCompose: TaggedChange<TChange>[] = [inverse, currentComposedEdit];
 		if (sourceSet.has(c.revision)) {
 			const change = changeRebaser.rebase(c.change, currentComposedEdit, revisionMetadata);
 			newHead = {
@@ -257,6 +256,8 @@ export function rebaseBranch<TChange>(
 			editsToCompose.push(tagChange(change, c.revision));
 		}
 		currentComposedEdit = makeAnonChange(changeRebaser.compose(editsToCompose));
+		revInfos.unshift({ revision: inverseTag, rollbackOf: inverse.rollbackOf });
+		revInfos.push({ revision: c.revision });
 	}
 
 	return {
