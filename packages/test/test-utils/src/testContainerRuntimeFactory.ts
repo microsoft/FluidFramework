@@ -89,7 +89,7 @@ export const createTestContainerRuntimeFactory = (
 			const rootContext =
 				"createDetachedRootDataStore" in runtime
 					? (runtime as any).createDetachedRootDataStore([this.type], "default")
-					: runtime.createDetachedDataStore([this.type], "default");
+					: runtime.createDetachedDataStore([this.type]);
 
 			const rootRuntime = await this.dataStoreFactory.instantiateDataStore(
 				rootContext,
