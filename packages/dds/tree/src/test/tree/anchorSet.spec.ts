@@ -318,7 +318,7 @@ describe("AnchorSet", () => {
 		assert.throws(() => anchors.locate(anchor3));
 	});
 
-	it("visitor increases references as it descends", () => {
+	it("visitor can descend in under anchors and detach all their remaining children", () => {
 		const [anchors, anchor1, anchor2, anchor3, anchor4] = setup();
 
 		// This leaves anchor1 with no refs. It is kelp alive by anchor4 which is below it.
@@ -328,7 +328,7 @@ describe("AnchorSet", () => {
 			v.enterField(fieldFoo);
 			v.enterNode(5);
 			v.enterField(fieldBar);
-			// This moves anchor4 out from under anchor1.
+			// This moves anchor4 (the only anchor under anchor1) out from under anchor1.
 			// If the visitor did not increase the ref count of anchor1 on its way down,
 			// anchor1 will be disposed as part of this operation.
 			v.detach({ start: 4, end: 5 }, detachedField);
