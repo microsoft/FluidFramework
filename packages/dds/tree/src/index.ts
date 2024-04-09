@@ -254,6 +254,7 @@ export {
 	buildTreeConfiguration,
 	ISharedTreeEditor,
 	ISchemaEditor,
+	RevertibleFactory,
 	SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
 	Tree,

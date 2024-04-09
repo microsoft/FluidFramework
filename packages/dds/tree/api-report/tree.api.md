@@ -202,8 +202,7 @@ export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 // @internal
 export interface CheckoutEvents {
     afterBatch(): void;
-    commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
-    revertibleDisposed(revertible: Revertible): void;
+    commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
 }
 
 // @internal
@@ -1503,6 +1502,9 @@ export interface Revertible {
 }
 
 // @public
+export type RevertibleFactory = (onRevertibleDisposed?: (revertible: Revertible) => void) => Revertible;
+
+// @public
 export enum RevertibleStatus {
     Disposed = 1,
     Valid = 0
@@ -2028,8 +2030,7 @@ export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposab
 // @public
 export interface TreeViewEvents {
     afterBatch(): void;
-    commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
-    revertibleDisposed(revertible: Revertible): void;
+    commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
     rootChanged(): void;
 }
 
