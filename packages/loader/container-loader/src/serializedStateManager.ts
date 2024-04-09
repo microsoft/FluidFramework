@@ -71,15 +71,15 @@ export interface IPendingDetachedContainerState extends SnapshotWithBlobs {
 	pendingRuntimeState?: unknown;
 }
 
-interface SnapshotInfo extends SnapshotWithBlobs {
+export interface ISnapshotInfo extends SnapshotWithBlobs {
 	snapshotSequenceNumber: number;
 }
 
 export class SerializedStateManager {
 	private readonly processedOps: ISequencedDocumentMessage[] = [];
-	private snapshot: SnapshotInfo | undefined;
+	private snapshot: ISnapshotInfo | undefined;
 	private readonly mc: MonitoringContext;
-	private latestSnapshot: SnapshotInfo | undefined;
+	private latestSnapshot: ISnapshotInfo | undefined;
 	private refreshSnapshot: Promise<void> | undefined;
 
 	constructor(
@@ -276,7 +276,7 @@ export async function getLatestSnapshotInfo(
 		"getSnapshot" | "getSnapshotTree" | "getVersions" | "readBlob"
 	>,
 	supportGetSnapshotApi: boolean,
-): Promise<SnapshotInfo | undefined> {
+): Promise<ISnapshotInfo | undefined> {
 	return PerformanceEvent.timedExecAsync(
 		mc.logger,
 		{ eventName: "GetLatestSnapshotInfo" },
