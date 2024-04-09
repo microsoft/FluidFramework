@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
@@ -59,7 +59,7 @@ export class BasicChunk extends ReferenceCountedBase implements TreeChunk {
 		return new BasicChunkCursor([this], [], [], [], [], [dummyRoot], 0, 0, 0, undefined);
 	}
 
-	protected dispose(): void {
+	protected onUnreferenced(): void {
 		for (const v of this.fields.values()) {
 			for (const child of v) {
 				child.referenceRemoved();

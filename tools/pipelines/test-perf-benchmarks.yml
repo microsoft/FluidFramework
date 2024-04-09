@@ -118,13 +118,18 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
-              echo "Unpack test files for ${{ testPackage }}"
-              TAR_FILE=${{ replace(replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
-              mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
-              mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
-              tar -xvf $(testFilesPath)/$TAR_FILE.test-files.tar -C $(testFilesPath)
-              mv $(testFilesPath)/dist/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
-              mv $(testFilesPath)/src/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
+              TAR_FILENAME=${{ replace(replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
+              TAR_PATH=$(testFilesPath)/$TAR_FILENAME.test-files.tar
+              cd ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+              echo "Unpacking test files for ${{ testPackage }} from file '$TAR_PATH' in '$(pwd)'"
+              # Note: we could skip the last argument and have it unpack everything at once, but if we later change
+              # the structure/contents of the tests tar file, the extraction could overwrite things we didn't intend to,
+              # so keeping the paths to extract explicit.
+              # Also, extracting is finicky with the exact format of the last argument, it needs to match how the
+              # tarfile was created (e.g. './lib/test' works here but 'lib/test' does not).
+              tar --extract --verbose --file $TAR_PATH ./lib/test
+              tar --extract --verbose --file $TAR_PATH ./dist/test
+              tar --extract --verbose --file $TAR_PATH ./src/test
 
         # Install package dependencies (this gets devDependencies installed so we can then run the package's tests).
         # Note: the required .npmrc file is created by the include-test-perf-benchmarks.yml template above.
@@ -237,13 +242,18 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
-              echo "Unpack test files for ${{ testPackage }}"
-              TAR_FILE=${{ replace(replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
-              mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
-              mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
-              tar -xvf $(testFilesPath)/$TAR_FILE.test-files.tar -C $(testFilesPath)
-              mv $(testFilesPath)/src/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
-              mv $(testFilesPath)/dist/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
+              TAR_FILENAME=${{ replace(replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
+              TAR_PATH=$(testFilesPath)/$TAR_FILENAME.test-files.tar
+              cd ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+              echo "Unpacking test files for ${{ testPackage }} from file '$TAR_PATH' in '$(pwd)'"
+              # Note: we could skip the last argument and have it unpack everything at once, but if we later change
+              # the structure/contents of the tests tar file, the extraction could overwrite things we didn't intend to,
+              # so keeping the paths to extract explicit.
+              # Also, extracting is finicky with the exact format of the last argument, it needs to match how the
+              # tarfile was created (e.g. './lib/test' works here but 'lib/test' does not).
+              tar --extract --verbose --file $TAR_PATH ./lib/test
+              tar --extract --verbose --file $TAR_PATH ./dist/test
+              tar --extract --verbose --file $TAR_PATH ./src/test
 
         # Install package dependencies (this gets devDependencies installed so we can then run the package's tests)
         # and run tests.

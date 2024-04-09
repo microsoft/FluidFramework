@@ -11,17 +11,17 @@ import {
 	describeCompat,
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ISummarizer } from "@fluidframework/container-runtime";
+import { ISummarizer } from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import/no-internal-modules
-import { IGarbageCollectionState } from "@fluidframework/container-runtime/test/gc";
+import { IGarbageCollectionState } from "@fluidframework/container-runtime/internal/test/gc";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
-import { gcBlobPrefix, gcTreeKey } from "@fluidframework/runtime-definitions";
+import { gcBlobPrefix, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestObjectProvider,
 	createSummarizer,
 	summarizeNow,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 import { defaultGCConfig } from "./gcTestConfigs.js";
 

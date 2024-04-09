@@ -12,8 +12,8 @@ import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils";
+} from "@fluidframework/test-runtime-utils/internal";
+import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils/internal";
 
 import {
 	AllowedUpdateType,

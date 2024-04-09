@@ -4,7 +4,7 @@
  */
 
 /* eslint-disable import/no-internal-modules */
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import { ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
@@ -40,6 +40,7 @@ import {
 	NodeKind,
 	TreeNodeSchema,
 	normalizeFieldSchema,
+	getStoredKey,
 } from "./schemaTypes.js";
 import { cursorFromNodeData } from "./toMapTree.js";
 import { TreeConfiguration } from "./tree.js";
@@ -146,6 +147,7 @@ export function convertField(schemaMap: SchemaMap, schema: ImplicitFieldSchema):
 const convertFieldKind = new Map<FieldKind, FlexFieldKind>([
 	[FieldKind.Optional, FieldKinds.optional],
 	[FieldKind.Required, FieldKinds.required],
+	[FieldKind.Identifier, FieldKinds.identifier],
 ]);
 
 /**
@@ -224,13 +226,17 @@ export function convertNodeSchema(
 			case NodeKind.Object: {
 				const info = schema.info as Record<string, ImplicitFieldSchema>;
 				const fields: Record<string, FlexFieldSchema> = Object.create(null);
-				for (const [key, value] of Object.entries(info)) {
+				for (const [viewKey, implicitFieldSchema] of Object.entries(info)) {
+					// If a `stored key` was provided, use it as the key in the flex schema.
+					// Otherwise, use the view key.
+					const flexKey = getStoredKey(viewKey, implicitFieldSchema);
+
 					// This code has to be careful to avoid assigning to __proto__ or similar built-in fields.
-					Object.defineProperty(fields, key, {
+					Object.defineProperty(fields, flexKey, {
 						enumerable: true,
 						configurable: false,
 						writable: false,
-						value: convertField(schemaMap, value),
+						value: convertField(schemaMap, implicitFieldSchema),
 					});
 				}
 				const cached = cachedFlexSchemaFromClassSchema(schema);

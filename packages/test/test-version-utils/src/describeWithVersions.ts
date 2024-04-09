@@ -7,7 +7,7 @@ import {
 	getUnexpectedLogErrorException,
 	ITestObjectProvider,
 	TestObjectProvider,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 import { driver, r11sEndpointName, tenantIndex } from "./compatOptions.js";
 import { getVersionedTestObjectProvider } from "./compatUtils.js";
@@ -108,7 +108,7 @@ function createTestSuiteWithInstalledVersion(
 		});
 
 		afterEach(function (done: Mocha.Done) {
-			const logErrors = getUnexpectedLogErrorException(defaultProvider.logger);
+			const logErrors = getUnexpectedLogErrorException(defaultProvider.tracker);
 			// if the test failed for another reason
 			// then we don't need to check errors
 			// and fail the after each as well

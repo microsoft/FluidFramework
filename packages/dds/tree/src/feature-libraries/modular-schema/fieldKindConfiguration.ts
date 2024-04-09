@@ -4,6 +4,7 @@
  */
 
 import { FieldKindIdentifier } from "../../core/index.js";
+
 import { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 
 /**

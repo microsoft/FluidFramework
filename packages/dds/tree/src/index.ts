@@ -76,7 +76,7 @@ export {
 	UpPathDefault,
 	AnchorEvents,
 	AnchorSetRootEvents,
-	FieldKindSpecifier,
+	FieldKindData,
 	AllowedUpdateType,
 	PathVisitor,
 	Adapters,
@@ -92,6 +92,7 @@ export {
 	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
 	LeafNodeStoredSchema,
+	Multiplicity,
 } from "./core/index.js";
 
 export {
@@ -131,7 +132,6 @@ export { leaf } from "./domains/index.js";
 
 export {
 	FlexFieldKind,
-	Multiplicity,
 	isNeverField,
 	FullSchemaPolicy,
 	typeNameSymbol,
@@ -210,7 +210,6 @@ export {
 	schemaIsObjectNode,
 	AllowedTypeSet,
 	SchemaBuilderOptions,
-	TreeEvent,
 	SchemaCollection,
 	TreeCompressionStrategy,
 	treeSchemaFromStoredSchema,
@@ -225,7 +224,6 @@ export {
 	NormalizeFieldSchema,
 	FlexObjectNodeFields,
 	FlexMapFieldSchema,
-	ArrayToUnion,
 	ExtractItemType,
 	LazyItem,
 	PropertyNameFromFieldKey,
@@ -256,6 +254,7 @@ export {
 	buildTreeConfiguration,
 	ISharedTreeEditor,
 	ISchemaEditor,
+	RevertibleFactory,
 	SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
 	Tree,
@@ -278,7 +277,7 @@ export {
 	TreeNodeApi,
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
-	TreeNodeEvents,
+	TreeChangeEvents,
 	NodeFromSchema,
 	TreeMapNode,
 	InsertableTreeNodeFromImplicitAllowedTypes,
@@ -327,6 +326,7 @@ export {
 	InsertableTypedNodeUnsafe,
 	NodeBuilderDataUnsafe,
 	NodeFromSchemaUnsafe,
+	type FieldProps,
 
 	// experimental @internal APIs:
 	adaptEnum,
@@ -395,6 +395,7 @@ export {
 	Required,
 	Optional,
 	NodeKeyFieldKind,
+	Identifier,
 	Forbidden,
 	Sequence,
 } from "./feature-libraries/index.js";

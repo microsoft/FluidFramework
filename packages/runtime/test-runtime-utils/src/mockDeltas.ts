@@ -10,7 +10,7 @@ import {
 	IDeltaQueue,
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IClientConfiguration,
 	IClientDetails,
@@ -165,8 +165,7 @@ export class MockDeltaManager
 		this.removeAllListeners();
 	}
 
-	// ! TODO AB#7512: attribution fuzz tests rely on csn starting at 0 (even though this is not how the normal flow works)
-	public clientSequenceNumber = -1;
+	public clientSequenceNumber = 0;
 
 	public process(message: ISequencedDocumentMessage): void {
 		assert(message.sequenceNumber !== undefined, "message missing sequenceNumber");
@@ -190,9 +189,8 @@ export class MockDeltaManager
 			messages.forEach((message: IDocumentMessage) => {
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				this._inbound.push({
-					// ! TODO AB#7512: attribution fuzz tests rely on this ordering
-					clientId: this.getClientId?.() ?? null,
 					...message,
+					clientId: this.getClientId?.() ?? null,
 					// ! sequenceNumber and minimumSequenceNumber should be added by MockContainerRuntimeFactory
 				} as ISequencedDocumentMessage);
 			});

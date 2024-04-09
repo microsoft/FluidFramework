@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { unreachableCase } from "@fluidframework/core-utils";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 import { EmptyKey, FieldKey } from "../../../core/index.js";
 import {
@@ -33,7 +33,6 @@ import {
 } from "../../../feature-libraries/flex-tree/flexTreeTypes.js";
 import {
 	Any,
-	ArrayToUnion,
 	FieldKinds,
 	FlexAllowedTypes,
 	FlexFieldNodeSchema,
@@ -343,8 +342,6 @@ describe("flexTreeTypes", () => {
 			type _6 = requireTrue<
 				areSafelyAssignable<FlexTreeTypedNodeUnion<FlexAllowedTypes>, FlexTreeNode>
 			>;
-
-			type z = ArrayToUnion<[FlexTreeNode]>;
 		}
 	}
 

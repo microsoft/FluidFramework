@@ -45,9 +45,9 @@ export {
 	visitIterableTreeWithState,
 } from "./navigation.js";
 
-export { getTreeContext, FlexTreeContext, Context } from "./context.js";
+export { getTreeContext, FlexTreeContext, Context, ContextSlot } from "./context.js";
 
-export { TreeEvent, FlexTreeNodeEvents } from "./treeEvents.js";
+export { FlexTreeNodeEvents } from "./treeEvents.js";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
 export {

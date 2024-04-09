@@ -15,16 +15,6 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./public": {
-			"import": {
 				"types": "./lib/test-utils-public.d.ts",
 				"default": "./lib/index.js"
 			},
@@ -55,7 +45,7 @@
 		}
 	},
 	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"types": "./dist/test-utils-public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
@@ -110,6 +100,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
+		"@fluid-internal/test-driver-definitions": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
@@ -129,14 +120,13 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"@fluidframework/test-driver-definitions": "workspace:~",
 		"best-random": "^1.0.0",
 		"debug": "^4.3.4",
 		"mocha": "^10.2.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.13.3",
+		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.6.2",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "^0.34.0",
@@ -181,12 +171,15 @@
 				"backCompat": false
 			},
 			"ClassDeclaration_TestObjectProvider": {
+				"backCompat": false,
 				"forwardCompat": false
 			},
 			"ClassDeclaration_TestObjectProviderWithVersionedLoad": {
+				"backCompat": false,
 				"forwardCompat": false
 			},
 			"InterfaceDeclaration_ITestObjectProvider": {
+				"backCompat": false,
 				"forwardCompat": false
 			},
 			"InterfaceDeclaration_ITestContainerConfig": {

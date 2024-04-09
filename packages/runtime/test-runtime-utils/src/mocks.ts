@@ -6,7 +6,7 @@
 import { EventEmitter, TypedEventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState, IAudience } from "@fluidframework/container-definitions";
 import { ILoader } from "@fluidframework/container-definitions/internal";
-import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
+import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -15,7 +15,7 @@ import {
 	IResponse,
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannel,
 	IChannelServices,
@@ -35,15 +35,17 @@ import {
 	MessageType,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
+import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
 	FlushMode,
 	IFluidDataStoreChannel,
-	IGarbageCollectionData,
-	ISummaryTreeWithStats,
 	VisibilityState,
-} from "@fluidframework/runtime-definitions";
-import { getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/runtime-definitions/internal";
+import {
+	getNormalizedObjectStoragePathParts,
+	mergeStats,
+} from "@fluidframework/runtime-utils/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { MockDeltaManager } from "./mockDeltas.js";
@@ -435,6 +437,10 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			localOpMetadata = pendingMessage.localOpMetadata;
 		}
 		return [local, localOpMetadata];
+	}
+
+	public async resolveHandle(handle: IFluidHandle) {
+		return this.dataStoreRuntime.resolveHandle({ url: handle.absolutePath });
 	}
 }
 
@@ -900,6 +906,13 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public async resolveHandle(request: IRequest): Promise<IResponse> {
+		if (request.url !== undefined) {
+			return {
+				status: 200,
+				mimeType: "fluid/object",
+				value: request.url,
+			};
+		}
 		return this.request(request);
 	}
 

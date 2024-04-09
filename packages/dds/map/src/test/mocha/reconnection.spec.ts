@@ -10,7 +10,7 @@ import {
 	MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { type ISharedDirectory, type ISharedMap, SharedDirectory, SharedMap } from "../../index.js";
 

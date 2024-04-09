@@ -8,13 +8,14 @@ import {
 	IOdspUrlParts,
 	ISocketStorageDiscovery,
 	InstrumentedStorageTokenFetcher,
-} from "@fluidframework/odsp-driver-definitions";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { EpochTracker } from "./epochTracker.js";
 import { getApiRoot } from "./odspUrlHelper.js";
-import { TokenFetchOptionsEx, getOrigin } from "./odspUtils.js";
+import { TokenFetchOptionsEx } from "./odspUtils.js";
 import { runWithRetry } from "./retryUtils.js";
 
 interface IJoinSessionBody {
@@ -72,7 +73,7 @@ export async function fetchJoinSession(
 			...tokenRefreshProps,
 		},
 		async (event) => {
-			const siteOrigin = getOrigin(urlParts.siteUrl);
+			const apiRoot = getApiRoot(new URL(urlParts.siteUrl));
 			const formBoundary = uuid();
 			let postBody = `--${formBoundary}\r\n`;
 			postBody += `Authorization: Bearer ${token}\r\n`;
@@ -98,9 +99,7 @@ export async function fetchJoinSession(
 			const response = await runWithRetry(
 				async () =>
 					epochTracker.fetchAndParseAsJSON<ISocketStorageDiscovery>(
-						`${getApiRoot(siteOrigin)}/drives/${urlParts.driveId}/items/${
-							urlParts.itemId
-						}/${path}?ump=1`,
+						`${apiRoot}/drives/${urlParts.driveId}/items/${urlParts.itemId}/${path}?ump=1`,
 						{ method, headers, body: postBody },
 						"joinSession",
 						true,

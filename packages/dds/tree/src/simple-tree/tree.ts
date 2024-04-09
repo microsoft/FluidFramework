@@ -5,8 +5,9 @@
 
 import { IChannel } from "@fluidframework/datastore-definitions";
 
-import { CommitMetadata, Revertible } from "../core/index.js";
+import { CommitMetadata } from "../core/index.js";
 import { ISubscribable } from "../events/index.js";
+import { RevertibleFactory } from "../shared-tree/index.js";
 import { IDisposable } from "../util/index.js";
 
 import {
@@ -56,9 +57,7 @@ export interface ITree extends IChannel {
 	 * Additionally, once out of schema content adapters are properly supported (with lazy document updates),
 	 * this initialization could become just another out of schema content adapter and this initialization is no longer a special case.
 	 */
-	viewWith<TRoot extends ImplicitFieldSchema>(
-		config: TreeConfiguration<TRoot>,
-	): TreeView<TreeFieldFromImplicitField<TRoot>>;
+	viewWith<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TRoot>;
 
 	/**
 	 * See {@link ITree.viewWith}.
@@ -66,7 +65,7 @@ export interface ITree extends IChannel {
 	 */
 	schematize<TRoot extends ImplicitFieldSchema>(
 		config: TreeConfiguration<TRoot>,
-	): TreeView<TreeFieldFromImplicitField<TRoot>>;
+	): TreeView<TRoot>;
 }
 
 /**
@@ -113,7 +112,7 @@ export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFie
  * it could be mitigated by adding a `rootOrError` member and deprecating `root` to give users a warning if they might be missing the error checking.
  * @public
  */
-export interface TreeView<in out TRoot> extends IDisposable {
+export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposable {
 	/**
 	 * The current root of the tree.
 	 *
@@ -126,7 +125,9 @@ export interface TreeView<in out TRoot> extends IDisposable {
 	 * To get notified about changes to stored schema (which may affect compatibility between this view's schema and
 	 * the stored schema), use {@link TreeViewEvents.schemaChanged} via `view.events.on("schemaChanged", callback)`.
 	 */
-	readonly root: TRoot;
+	get root(): TreeFieldFromImplicitField<TSchema>;
+
+	set root(newRoot: InsertableTreeFieldFromImplicitField<TSchema>);
 
 	/**
 	 * Description of the current compatibility status between the view schema and stord schema.
@@ -259,13 +260,6 @@ export interface TreeViewEvents {
 	schemaChanged(): void;
 
 	/**
-	 * Fired when a revertible made on this view is disposed.
-	 *
-	 * @param revertible - The revertible that was disposed.
-	 */
-	revertibleDisposed(revertible: Revertible): void;
-
-	/**
 	 * Fired when:
 	 * - a local commit is applied outside of a transaction
 	 * - a local transaction is committed
@@ -278,5 +272,5 @@ export interface TreeViewEvents {
 	 * @param getRevertible - a function provided that allows users to get a revertible for the commit that was applied. If not provided,
 	 * this commit is not revertible.
 	 */
-	commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
+	commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
 }

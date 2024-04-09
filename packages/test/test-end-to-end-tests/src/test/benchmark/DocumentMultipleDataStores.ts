@@ -13,13 +13,13 @@ import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
-} from "@fluidframework/aqueduct";
+} from "@fluidframework/aqueduct/internal";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 	ISummarizer,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -27,9 +27,9 @@ import {
 	IRequest,
 } from "@fluidframework/core-interfaces";
 import { type ISharedMap, SharedMap } from "@fluidframework/map";
-import { SharedString } from "@fluidframework/sequence";
+import { SharedString } from "@fluidframework/sequence/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils";
+import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils/internal";
 
 import {
 	IDocumentLoaderAndSummarizer,

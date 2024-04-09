@@ -94,7 +94,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 				getLumberBaseProperties(documentId, tenantId),
 			);
 			isEphemeral = isEphemeralContainer;
-			runWithRetry(
+			await runWithRetry(
 				async () => cache?.set(isEphemeralKey, isEphemeral) /* api */,
 				"utils.createGitService.set" /* callName */,
 				3 /* maxRetries */,
@@ -108,7 +108,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 				);
 			});
 		} else {
-			runWithRetry<boolean>(
+			await runWithRetry<boolean>(
 				async () => cache?.get(isEphemeralKey) /* api */,
 				"utils.createGitService.get" /* callName */,
 				3 /* maxRetries */,

@@ -15,14 +15,6 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/index.d.ts"
-			},
-			"require": {
-				"types": "./dist/index.d.ts"
-			}
-		},
-		"./public": {
-			"import": {
 				"types": "./lib/container-runtime-definitions-public.d.ts"
 			},
 			"require": {
@@ -47,7 +39,7 @@
 		}
 	},
 	"main": "",
-	"types": "dist/index.d.ts",
+	"types": "./dist/container-runtime-definitions-public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
@@ -82,7 +74,7 @@
 		"@fluidframework/runtime-definitions": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.13.3",
+		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.6.2",
 		"@fluid-tools/build-cli": "^0.34.0",
 		"@fluidframework/build-common": "^2.0.3",

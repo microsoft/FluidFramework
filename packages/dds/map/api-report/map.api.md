@@ -84,8 +84,8 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
 
 // @public @sealed
 export interface IValueChanged {
-    key: string;
-    previousValue: any;
+    readonly key: string;
+    readonly previousValue: any;
 }
 
 // @alpha @sealed

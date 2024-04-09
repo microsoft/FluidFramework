@@ -6,6 +6,7 @@
 import assert from "assert";
 import os from "os";
 
+import { ITestDriver, OdspEndpoint } from "@fluid-internal/test-driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import {
@@ -16,14 +17,13 @@ import {
 import type {
 	HostStoragePolicy,
 	OdspResourceTokenFetchOptions,
-} from "@fluidframework/odsp-driver-definitions";
-import { ITestDriver, OdspEndpoint } from "@fluidframework/test-driver-definitions";
+} from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	OdspTokenConfig,
 	OdspTokenManager,
 	getMicrosoftConfiguration,
 	odspTokensCache,
-} from "@fluidframework/tool-utils";
+} from "@fluidframework/tool-utils/internal";
 import { compare } from "semver";
 
 import { OdspDriverApi, OdspDriverApiType } from "./odspDriverApi.js";
