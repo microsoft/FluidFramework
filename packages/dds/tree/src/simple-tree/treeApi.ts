@@ -22,7 +22,7 @@ import { schemaFromValue } from "./schemaFactory.js";
 import { NodeFromSchema, NodeKind, TreeLeafValue, TreeNodeSchema } from "./schemaTypes.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { TreeNode } from "./types.js";
-import { extractFromOpaque } from "../index.js";
+import { extractFromOpaque } from "../util/index.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
