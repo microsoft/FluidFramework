@@ -17,45 +17,69 @@ import {
 import { FullSchemaPolicy } from "../modular-schema/index.js";
 import { allowsValue } from "../valueUtilities.js";
 
+export const enum SchemaValidationErrors {
+	NoError,
+	// Field errors
+	LeafNodeWithNoValue,
+	LeafNodeWithFields,
+	LeafNodeValueNotAllowed,
+	UnknownError,
+}
+
 export function isNodeInSchema(
 	node: MapTree,
 	schema: TreeNodeStoredSchema,
 	nodeSchemaCollection: StoredSchemaCollection,
 	schemaPolicy: FullSchemaPolicy,
-): boolean {
-	if (
-		schema instanceof LeafNodeStoredSchema &&
-		(node.value === undefined ||
-			node.fields.size !== 0 ||
-			!allowsValue(schema.leafValue, node.value))
-	) {
-		return false;
+): SchemaValidationErrors {
+	if (schema instanceof LeafNodeStoredSchema) {
+		if (node.value === undefined) {
+			return SchemaValidationErrors.LeafNodeWithNoValue;
+		}
+		if (node.fields.size !== 0) {
+			return SchemaValidationErrors.LeafNodeWithFields;
+		}
+		if (!allowsValue(schema.leafValue, node.value)) {
+			return SchemaValidationErrors.LeafNodeValueNotAllowed;
+		}
 	}
 
 	if (schema instanceof ObjectNodeStoredSchema) {
 		if (node.fields.size !== schema.objectNodeFields.size) {
-			return false;
+			return SchemaValidationErrors.UnknownError;
 		}
 		for (const [fieldKey, field] of node.fields) {
 			const fieldSchema = schema.objectNodeFields.get(fieldKey);
-			if (
-				fieldSchema === undefined ||
-				!isFieldInSchema(field, fieldSchema, nodeSchemaCollection, schemaPolicy)
-			) {
-				return false;
+			if (fieldSchema === undefined) {
+				return SchemaValidationErrors.UnknownError;
+			}
+			const fieldInSchemaResult = isFieldInSchema(
+				field,
+				fieldSchema,
+				nodeSchemaCollection,
+				schemaPolicy,
+			);
+			if (fieldInSchemaResult !== SchemaValidationErrors.NoError) {
+				return fieldInSchemaResult;
 			}
 		}
 	}
 
 	if (schema instanceof MapNodeStoredSchema) {
 		for (const field of node.fields.values()) {
-			if (!isFieldInSchema(field, schema.mapFields, nodeSchemaCollection, schemaPolicy)) {
-				return false;
+			const fieldInSchemaResult = isFieldInSchema(
+				field,
+				schema.mapFields,
+				nodeSchemaCollection,
+				schemaPolicy,
+			);
+			if (fieldInSchemaResult !== SchemaValidationErrors.NoError) {
+				return fieldInSchemaResult;
 			}
 		}
 	}
 
-	return true;
+	return SchemaValidationErrors.NoError;
 }
 
 // function export function isNodeUnionInSchema(
@@ -71,35 +95,41 @@ export function isFieldInSchema(
 	schema: TreeFieldStoredSchema,
 	nodeSchemaCollection: StoredSchemaCollection,
 	schemaPolicy: FullSchemaPolicy,
-): boolean {
+): SchemaValidationErrors {
 	// Validate that the field kind is handled by the schema policy
 	const kind = schemaPolicy.fieldKinds.get(schema.kind);
 	if (kind === undefined) {
-		return false;
+		return SchemaValidationErrors.UnknownError;
 	}
 
 	// Validate that the field doesn't contain more nodes than its type supports
 	if (!compliesWithMultiplicity(childNodes.length, kind.multiplicity)) {
-		return false;
+		return SchemaValidationErrors.UnknownError;
 	}
 
 	for (const node of childNodes) {
 		// Validate the type declared by the node is allowed in this field
 		if (schema.types !== undefined && !schema.types.has(node.type)) {
-			return false;
+			return SchemaValidationErrors.UnknownError;
 		}
 
 		// Validate the node complies with the type it declares to be.
 		const nodeSchema = nodeSchemaCollection.nodeSchema.get(node.type);
-		if (
-			nodeSchema === undefined ||
-			!isNodeInSchema(node, nodeSchema, nodeSchemaCollection, schemaPolicy)
-		) {
-			return false;
+		if (nodeSchema === undefined) {
+			return SchemaValidationErrors.UnknownError;
+		}
+		const nodeInSchemaResult = isNodeInSchema(
+			node,
+			nodeSchema,
+			nodeSchemaCollection,
+			schemaPolicy,
+		);
+		if (nodeInSchemaResult !== SchemaValidationErrors.NoError) {
+			return nodeInSchemaResult;
 		}
 	}
 
-	return true;
+	return SchemaValidationErrors.NoError;
 }
 
 /**

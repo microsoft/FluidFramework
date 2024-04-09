@@ -8,6 +8,7 @@ import { strict as assert } from "assert";
 import { Multiplicity } from "../../../../dist/index.js";
 // Reaching into internal module just to test it
 import {
+	SchemaValidationErrors,
 	compliesWithMultiplicity,
 	isFieldInSchema,
 	isNodeInSchema,
@@ -155,7 +156,12 @@ describe.only("schema validation", () => {
 			for (const [key, testCaseData] of Object.entries(testCases)) {
 				describe(`ValueSchema.${ValueSchema[parseInt(key, 10)]}`, () => {
 					for (const node of nodeCases) {
-						const expectedResult = testCaseData.positiveNodeType === node;
+						const expectedResult =
+							testCaseData.positiveNodeType === node
+								? SchemaValidationErrors.NoError
+								: node === undefinedNode
+								? SchemaValidationErrors.LeafNodeWithNoValue
+								: SchemaValidationErrors.LeafNodeValueNotAllowed;
 						it(`${node.type} is in schema: ${expectedResult}`, () => {
 							assert.equal(
 								isNodeInSchema(
@@ -172,7 +178,7 @@ describe.only("schema validation", () => {
 			}
 		});
 
-		describe.only("MapNodeStoredSchema", () => {
+		describe("MapNodeStoredSchema", () => {
 			const numberNode = createValueNode("myNumberNode", 1);
 			const stringNode = createValueNode("myStringNode", "string");
 			const booleanNode = createValueNode("myBooleanNode", false);
@@ -210,7 +216,7 @@ describe.only("schema validation", () => {
 						emptySchemaCollection,
 						emptySchemaPolicy,
 					),
-					false,
+					SchemaValidationErrors.UnknownError,
 				);
 			});
 
@@ -233,15 +239,24 @@ describe.only("schema validation", () => {
 				const mapNode = createMapNode("myNumberMapNode", new Map());
 
 				// In schema while empty
-				assert.equal(isNodeInSchema(mapNode, schema, schemaCollection, schemaPolicy), true);
+				assert.equal(
+					isNodeInSchema(mapNode, schema, schemaCollection, schemaPolicy),
+					SchemaValidationErrors.NoError,
+				);
 
 				// In schema after adding a valid number node
 				mapNode.fields.set(brand("prop1"), [numberNode]);
-				assert.equal(isNodeInSchema(mapNode, schema, schemaCollection, schemaPolicy), true);
+				assert.equal(
+					isNodeInSchema(mapNode, schema, schemaCollection, schemaPolicy),
+					SchemaValidationErrors.NoError,
+				);
 
 				// In schema after adding a second valid number node
 				mapNode.fields.set(brand("prop2"), [numberNode]);
-				assert.equal(isNodeInSchema(mapNode, schema, schemaCollection, schemaPolicy), true);
+				assert.equal(
+					isNodeInSchema(mapNode, schema, schemaCollection, schemaPolicy),
+					SchemaValidationErrors.NoError,
+				);
 			});
 
 			it(`mapNode not in schema if nodes are not allowed by field`, () => {
@@ -271,14 +286,14 @@ describe.only("schema validation", () => {
 				);
 				assert.equal(
 					isNodeInSchema(mapNode, mapNodeSchema, schemaCollection, schemaPolicy),
-					true,
+					SchemaValidationErrors.NoError,
 				);
 
 				// Not in schema after adding a string node
 				mapNode.fields.set(brand("prop2"), [stringNode]);
 				assert.equal(
 					isNodeInSchema(mapNode, mapNodeSchema, schemaCollection, schemaPolicy),
-					false,
+					SchemaValidationErrors.UnknownError,
 				);
 			});
 		});
