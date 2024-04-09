@@ -171,7 +171,7 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 	 * Schema for fields with keys scoped to this TreeNodeStoredSchema.
 	 * This refers to the TreeFieldStoredSchema directly
 	 * (as opposed to just supporting FieldSchemaIdentifier and having a central FieldKey -\> TreeFieldStoredSchema map).
-	 * This allows os short friendly field keys which can ergonomically used as field names in code.
+	 * This allows us short friendly field keys which can be ergonomically used as field names in code.
 	 * It also interoperates well with mapFields being used as a map with arbitrary data as keys.
 	 */
 	public constructor(
