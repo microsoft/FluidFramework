@@ -122,8 +122,15 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 			processPromises.push(this.processPackage(pkg));
 		}
 		const results = await Promise.allSettled(processPromises);
-		if (results.some((p) => p.status === "rejected")) {
-			this.error(`Error processing packages.`, { exit: 1 });
+		const failures = results.filter((p) => p.status === "rejected");
+		if (failures.length > 0) {
+			this.error(
+				`Error processing packages; failure reasons:\n${failures
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
+					.map((p) => (p as any).reason)
+					.join(", ")}`,
+				{ exit: 1 },
+			);
 		}
 
 		// git add the changelog changes
