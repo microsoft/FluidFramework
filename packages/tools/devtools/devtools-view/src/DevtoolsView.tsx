@@ -179,7 +179,7 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 
 	React.useEffect(() => {
 		const displayed = localStorage.getItem("telemetryModalDisplayed");
-		if (!displayed) {
+		if (displayed === null || !displayed) {
 			setModalVisible(true);
 			localStorage.setItem("telemetryModalDisplayed", "true");
 		}
