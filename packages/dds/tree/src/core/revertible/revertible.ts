@@ -20,6 +20,10 @@ export interface Revertible {
 	readonly status: RevertibleStatus;
 
 	/**
+	 * Reverts the associated change and disposes it.
+	 */
+	revert(): void;
+	/**
 	 * Reverts the associated change and optionally disposes it.
 	 *
 	 * @param dispose - If true, the revertible will be disposed after being reverted.
