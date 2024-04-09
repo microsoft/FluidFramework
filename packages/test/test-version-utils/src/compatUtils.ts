@@ -124,7 +124,9 @@ function filterRuntimeOptionsForVersion(
 		options = {
 			compressionOptions: compressorDisabled, // Can't use compression, need https://github.com/microsoft/FluidFramework/pull/20111 fix
 			enableGroupedBatching,
-			enableRuntimeIdCompressor,
+			// control over schema was generalized in RC3 - see https://github.com/microsoft/FluidFramework/pull/20174
+			// IdCompressor settings moved around - can't enable them across versions without tripping on asserts
+			enableRuntimeIdCompressor: undefined,
 			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disabled, need https://github.com/microsoft/FluidFramework/pull/20115 fix
 			...options,
 		};

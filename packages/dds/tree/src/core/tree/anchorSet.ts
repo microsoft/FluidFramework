@@ -637,6 +637,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 			0x767 /* Must release existing visitor before acquiring another */,
 		);
 
+		const referencedPathNodes: PathNode[] = [];
 		const visitor = {
 			anchorSet: this,
 			// Run `withNode` on anchorNode for parent if there is such an anchorNode.
@@ -651,6 +652,8 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					// Delta traversal should early out in this case because no work is needed (and all move outs are known to not contain anchors).
 					this.parent = this.anchorSet.internalizePath(this.parent);
 					if (this.parent instanceof PathNode) {
+						this.parent.addRef();
+						referencedPathNodes.push(this.parent);
 						withNode(this.parent);
 					}
 				}
@@ -666,6 +669,9 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					this.anchorSet.activeVisitor !== undefined,
 					0x768 /* Multiple free calls for same visitor */,
 				);
+				for (const node of referencedPathNodes) {
+					node.removeRef();
+				}
 				this.anchorSet.activeVisitor = undefined;
 			},
 			notifyChildrenChanging(): void {
@@ -1124,7 +1130,7 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 
 	// Called when refcount is set to 0.
 	// Node may be kept alive by children or events after this point.
-	protected dispose(): void {
+	protected onUnreferenced(): void {
 		this.considerDispose();
 	}
 
