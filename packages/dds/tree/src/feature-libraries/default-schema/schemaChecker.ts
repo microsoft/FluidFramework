@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	MapTree,
 	StoredSchemaCollection,
@@ -53,9 +53,7 @@ export function isNodeInSchema(
 		if (!allowsValue(schema.leafValue, node.value)) {
 			return SchemaValidationErrors.LeafNode_InvalidValue;
 		}
-	}
-
-	if (schema instanceof ObjectNodeStoredSchema) {
+	} else if (schema instanceof ObjectNodeStoredSchema) {
 		if (node.fields.size !== schema.objectNodeFields.size) {
 			return SchemaValidationErrors.ObjectNode_FieldCountMismatch;
 		}
@@ -74,9 +72,7 @@ export function isNodeInSchema(
 				return fieldInSchemaResult;
 			}
 		}
-	}
-
-	if (schema instanceof MapNodeStoredSchema) {
+	} else if (schema instanceof MapNodeStoredSchema) {
 		for (const field of node.fields.values()) {
 			const fieldInSchemaResult = isFieldInSchema(
 				field,
@@ -88,6 +84,8 @@ export function isNodeInSchema(
 				return fieldInSchemaResult;
 			}
 		}
+	} else {
+		assert(false, "Unknown TreeNodeStoredSchema type");
 	}
 
 	return SchemaValidationErrors.NoError;
