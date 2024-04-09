@@ -381,6 +381,7 @@ export const Tree: TreeApi;
 
 // @public
 export interface TreeApi extends TreeNodeApi {
+    contains(node: TreeNode, other: TreeNode): boolean;
     runTransaction<TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void | "rollback"): void;
     runTransaction<TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void | "rollback"): void;
 }
