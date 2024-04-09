@@ -8,7 +8,6 @@ import {
 	MapTree,
 	StoredSchemaCollection,
 	TreeFieldStoredSchema,
-	TreeNodeStoredSchema,
 	LeafNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
@@ -19,11 +18,10 @@ import { allowsValue } from "../valueUtilities.js";
 
 export const enum SchemaValidationErrors {
 	NoError,
-	// Field errors
 	LeafNodeWithNoValue,
 	LeafNodeWithFields,
 	LeafNodeValueNotAllowed,
-	SchemaNotInSchemaCollection,
+	NodeSchemaNotInSchemaCollection,
 	FieldKindNotInSchemaPolicy,
 	IncorrectMultiplicity,
 	NodeTypeNotAllowedInField,
@@ -32,10 +30,17 @@ export const enum SchemaValidationErrors {
 
 export function isNodeInSchema(
 	node: MapTree,
-	schema: TreeNodeStoredSchema,
 	nodeSchemaCollection: StoredSchemaCollection,
 	schemaPolicy: FullSchemaPolicy,
 ): SchemaValidationErrors {
+	// Validate the schema declared by the node exists
+	const schema = nodeSchemaCollection.nodeSchema.get(node.type);
+	if (schema === undefined) {
+		return SchemaValidationErrors.NodeSchemaNotInSchemaCollection;
+	}
+
+	// Validate the node complies with the schema it declares to be
+
 	if (schema instanceof LeafNodeStoredSchema) {
 		if (node.value === undefined) {
 			return SchemaValidationErrors.LeafNodeWithNoValue;
@@ -118,13 +123,8 @@ export function isFieldInSchema(
 		}
 
 		// Validate the node complies with the type it declares to be.
-		const nodeSchema = nodeSchemaCollection.nodeSchema.get(node.type);
-		if (nodeSchema === undefined) {
-			return SchemaValidationErrors.SchemaNotInSchemaCollection;
-		}
 		const nodeInSchemaResult = isNodeInSchema(
 			node,
-			nodeSchema,
 			nodeSchemaCollection,
 			schemaPolicy,
 		);

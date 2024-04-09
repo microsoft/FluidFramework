@@ -14,11 +14,6 @@ import {
 	isNodeInSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/default-schema/schemaChecker.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SchemaFactory } from "../../../simple-tree/schemaFactory.js";
-// eslint-disable-next-line import/no-internal-modules
-import { TreeConfiguration } from "../../../simple-tree/tree.js";
-import { getView } from "../../utils.js";
 import {
 	FieldKinds,
 	type FlexFieldKind,
@@ -34,11 +29,11 @@ import {
 	type StoredSchemaCollection,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
 	type Value,
 } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
 import type { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
-import { unreachableCase } from "../../../../../../common/core-utils/dist/unreachable.js";
 
 export class TestFluidHandle implements IFluidHandle {
 	public absolutePath: string = "fakePath";
@@ -178,11 +173,15 @@ describe.only("schema validation", () => {
 								? SchemaValidationErrors.LeafNodeWithNoValue
 								: SchemaValidationErrors.LeafNodeValueNotAllowed;
 						it(`${node.type} is in schema: ${expectedResult}`, () => {
+							const schemaCollection: StoredSchemaCollection = {
+								nodeSchema: new Map([
+									[node.type, testCaseData.schema],
+								]),
+							};
 							assert.equal(
 								isNodeInSchema(
 									node,
-									testCaseData.schema,
-									emptySchemaCollection,
+									schemaCollection,
 									emptySchemaPolicy,
 								),
 								expectedResult,
@@ -219,24 +218,18 @@ describe.only("schema validation", () => {
 				assert.equal(
 					isNodeInSchema(
 						mapNode_oneNumber,
-						schema,
 						emptySchemaCollection,
 						schemaPolicy,
 					),
-					SchemaValidationErrors.SchemaNotInSchemaCollection,
+					SchemaValidationErrors.NodeSchemaNotInSchemaCollection,
 				);
 			});
 
 			it(`not in schema due to missing FieldKind entry in schemaPolicy`, () => {
 				// Schema for a map node whose fields are required and must contain a number.
-				const mapNodeSchema = new MapNodeStoredSchema(
+				const mapNodeSchema: TreeNodeStoredSchema = new MapNodeStoredSchema(
 					getFieldSchema(FieldKinds.required, [numberNode.type]),
 				);
-				const schemaCollection = {
-					nodeSchema: new Map([
-						[numberNode.type, new LeafNodeStoredSchema(ValueSchema.Number)],
-					]),
-				};
 
 				// numberNode.type is not in the schema collection
 				const mapNode_oneNumber = getMapNode(
@@ -244,10 +237,16 @@ describe.only("schema validation", () => {
 					new Map([[brand("prop1"), [numberNode]]]),
 				);
 
+				const schemaCollection: StoredSchemaCollection = {
+					nodeSchema: new Map([
+						[numberNode.type, new LeafNodeStoredSchema(ValueSchema.Number)],
+						[mapNode_oneNumber.type, mapNodeSchema],
+					]),
+				};
+
 				assert.equal(
 					isNodeInSchema(
 						mapNode_oneNumber,
-						mapNodeSchema,
 						schemaCollection,
 						emptySchemaPolicy,
 					),
@@ -259,10 +258,12 @@ describe.only("schema validation", () => {
 				const fieldSchema_requiredNumberNode = getFieldSchema(FieldKinds.required, [
 					numberNode.type,
 				]);
-				const mapNodeSchema = new MapNodeStoredSchema(fieldSchema_requiredNumberNode);
+				const mapNodeSchema: TreeNodeStoredSchema = new MapNodeStoredSchema(fieldSchema_requiredNumberNode);
+				const mapNode = getMapNode("myNumberMapNode", new Map());
 				const schemaCollection = {
 					nodeSchema: new Map([
 						[numberNode.type, new LeafNodeStoredSchema(ValueSchema.Number)],
+						[mapNode.type, mapNodeSchema],
 					]),
 				};
 				const schemaPolicy = {
@@ -271,25 +272,23 @@ describe.only("schema validation", () => {
 					]),
 				};
 
-				const mapNode = getMapNode("myNumberMapNode", new Map());
-
 				// In schema while empty
 				assert.equal(
-					isNodeInSchema(mapNode, mapNodeSchema, schemaCollection, schemaPolicy),
+					isNodeInSchema(mapNode, schemaCollection, schemaPolicy),
 					SchemaValidationErrors.NoError,
 				);
 
 				// In schema after adding a valid number node
 				mapNode.fields.set(brand("prop1"), [numberNode]);
 				assert.equal(
-					isNodeInSchema(mapNode, mapNodeSchema, schemaCollection, schemaPolicy),
+					isNodeInSchema(mapNode, schemaCollection, schemaPolicy),
 					SchemaValidationErrors.NoError,
 				);
 
 				// In schema after adding a second valid number node
 				mapNode.fields.set(brand("prop2"), [numberNode]);
 				assert.equal(
-					isNodeInSchema(mapNode, mapNodeSchema, schemaCollection, schemaPolicy),
+					isNodeInSchema(mapNode, schemaCollection, schemaPolicy),
 					SchemaValidationErrors.NoError,
 				);
 			});
@@ -301,10 +300,16 @@ describe.only("schema validation", () => {
 				const fieldSchema_requiredStringNode = getFieldSchema(FieldKinds.required, [
 					stringNode.type,
 				]);
-				const mapNodeSchema = new MapNodeStoredSchema(fieldSchema_requiredNumberNode);
+				const mapNodeSchema: TreeNodeStoredSchema = new MapNodeStoredSchema(fieldSchema_requiredNumberNode);
+				const mapNode = getMapNode(
+					"myNumberMapNode",
+					new Map([[brand("prop1"), [numberNode]]]),
+				);
+
 				const schemaCollection = {
 					nodeSchema: new Map([
 						[numberNode.type, new LeafNodeStoredSchema(ValueSchema.Number)],
+						[mapNode.type, mapNodeSchema],
 					]),
 				};
 				const schemaPolicy = {
@@ -315,19 +320,15 @@ describe.only("schema validation", () => {
 				};
 
 				// In schema with one number node
-				const mapNode = getMapNode(
-					"myNumberMapNode",
-					new Map([[brand("prop1"), [numberNode]]]),
-				);
 				assert.equal(
-					isNodeInSchema(mapNode, mapNodeSchema, schemaCollection, schemaPolicy),
+					isNodeInSchema(mapNode, schemaCollection, schemaPolicy),
 					SchemaValidationErrors.NoError,
 				);
 
 				// Not in schema after adding a string node
 				mapNode.fields.set(brand("prop2"), [stringNode]);
 				assert.equal(
-					isNodeInSchema(mapNode, mapNodeSchema, schemaCollection, schemaPolicy),
+					isNodeInSchema(mapNode, schemaCollection, schemaPolicy),
 					SchemaValidationErrors.NodeTypeNotAllowedInField,
 				);
 			});
