@@ -6,6 +6,6 @@
 "@fluidframework/odsp-driver": minor
 ---
 
-update submitSignal content type to string
+driver-definitions: update submitSignal content type to string
 
 Change IDocumentDeltaConnection.submitSignal's content argument type to string which represents actual/known use.
