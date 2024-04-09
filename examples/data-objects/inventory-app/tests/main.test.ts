@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerSchema } from "fluid-framework";
-import { treeDataObject } from "../src/reactSharedTreeView.js";
-import { treeConfiguration } from "../src/schema.js";
 import { globals } from "../jest.config.cjs";
 
 describe.skip("Integration Tests", () => {
