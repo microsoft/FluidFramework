@@ -5,7 +5,7 @@
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { getW3CData } from "@fluidframework/driver-base";
+import { getW3CData } from "@fluidframework/driver-base/internal";
 import {
 	FiveDaysMs,
 	IDocumentService,

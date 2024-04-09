@@ -11,7 +11,6 @@ import {
 	FieldKey,
 	ITreeCursorSynchronous,
 	MapTree,
-	TreeValue,
 	Value,
 	isCursor,
 	Multiplicity,
@@ -97,20 +96,6 @@ export const typeNameSymbol: unique symbol = Symbol(`${scope}:typeName`);
  * @internal
  */
 export const valueSymbol: unique symbol = Symbol(`${scope}:value`);
-
-/**
- * Checks if a value is a {@link TreeValue}.
- */
-export function isTreeValue(nodeValue: unknown): nodeValue is TreeValue {
-	switch (typeof nodeValue) {
-		case "string":
-		case "number":
-		case "boolean":
-			return true;
-		default:
-			return nodeValue === null || isFluidHandle(nodeValue);
-	}
-}
 
 export function getFieldKind(fieldSchema: FlexFieldSchema): FlexFieldKind {
 	// TODO:

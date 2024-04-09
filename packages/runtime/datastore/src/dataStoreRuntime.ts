@@ -89,6 +89,7 @@ import {
 	LocalChannelContextBase,
 	RehydratedLocalChannelContext,
 } from "./localChannelContext.js";
+import { pkgVersion } from "./packageVersion.js";
 import { RemoteChannelContext } from "./remoteChannelContext.js";
 
 /**
@@ -246,7 +247,7 @@ export class FluidDataStoreRuntime
 			logger: dataStoreContext.logger,
 			namespace: "FluidDataStoreRuntime",
 			properties: {
-				all: { dataStoreId: uuid() },
+				all: { dataStoreId: uuid(), dataStoreVersion: pkgVersion },
 			},
 		});
 
@@ -974,10 +975,10 @@ export class FluidDataStoreRuntime
 	/**
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
-	 * @param content - Content of the signal.
+	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(type: string, content: any, targetClientId?: string) {
+	public submitSignal(type: string, content: unknown, targetClientId?: string) {
 		this.verifyNotClosed();
 		return this.dataStoreContext.submitSignal(type, content, targetClientId);
 	}

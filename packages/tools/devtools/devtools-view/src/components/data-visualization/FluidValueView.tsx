@@ -39,6 +39,7 @@ export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 					label={label}
 					nodeTypeMetadata={node.typeMetadata}
 					inlineValue={String(node.value)}
+					tooltipContents={node.tooltipContents}
 				/>
 			)}
 		</>

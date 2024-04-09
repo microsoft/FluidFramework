@@ -238,6 +238,7 @@ declare function get_current_InterfaceDeclaration_ITestObjectProvider():
 declare function use_old_InterfaceDeclaration_ITestObjectProvider(
     use: TypeOnly<old.ITestObjectProvider>): void;
 use_old_InterfaceDeclaration_ITestObjectProvider(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITestObjectProvider());
 
 /*
@@ -409,6 +410,7 @@ declare function get_current_ClassDeclaration_TestObjectProvider():
 declare function use_old_ClassDeclaration_TestObjectProvider(
     use: TypeOnly<old.TestObjectProvider>): void;
 use_old_ClassDeclaration_TestObjectProvider(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_TestObjectProvider());
 
 /*
@@ -434,6 +436,7 @@ declare function get_current_ClassDeclaration_TestObjectProviderWithVersionedLoa
 declare function use_old_ClassDeclaration_TestObjectProviderWithVersionedLoad(
     use: TypeOnly<old.TestObjectProviderWithVersionedLoad>): void;
 use_old_ClassDeclaration_TestObjectProviderWithVersionedLoad(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_TestObjectProviderWithVersionedLoad());
 
 /*

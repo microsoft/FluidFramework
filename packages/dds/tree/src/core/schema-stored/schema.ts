@@ -15,6 +15,7 @@ import {
 	TreeNodeSchemaDataFormat,
 	TreeNodeSchemaIdentifier,
 } from "./format.js";
+import { Multiplicity } from "./multiplicity.js";
 
 /**
  * Schema for what {@link TreeValue} is allowed on a Leaf node.

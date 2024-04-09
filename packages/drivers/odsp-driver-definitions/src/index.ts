@@ -32,6 +32,7 @@ export {
 export {
 	IdentityType,
 	InstrumentedStorageTokenFetcher,
+	InstrumentedTokenFetcher,
 	isTokenFromCache,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,

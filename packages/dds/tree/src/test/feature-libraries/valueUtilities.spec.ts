@@ -10,6 +10,7 @@ import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 import { ValueSchema } from "../../core/index.js";
 import {
 	allowsValue,
+	isTreeValue,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../feature-libraries/valueUtilities.js";
@@ -79,5 +80,19 @@ describe("valueUtilities", () => {
 		assert(!allowsValue(ValueSchema.String, null));
 		assert(!allowsValue(ValueSchema.Number, null));
 		assert(allowsValue(ValueSchema.Null, null));
+	});
+
+	it("isTreeValue", () => {
+		assert(isTreeValue(0));
+		assert(isTreeValue(0.001));
+		assert(isTreeValue(NaN));
+		assert(isTreeValue(true));
+		assert(isTreeValue(false));
+		assert(isTreeValue(""));
+		assert(!isTreeValue({}));
+		assert(!isTreeValue(undefined));
+		assert(isTreeValue(null));
+		assert(!isTreeValue([]));
+		assert(isTreeValue(new MockHandle(5)));
 	});
 });

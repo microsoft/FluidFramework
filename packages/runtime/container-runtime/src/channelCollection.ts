@@ -223,7 +223,7 @@ export function wrapContextForInnerChannel(
 		);
 	};
 
-	context.submitSignal = (type: string, contents: any, targetClientId?: string) => {
+	context.submitSignal = (type: string, contents: unknown, targetClientId?: string) => {
 		const envelope: IEnvelope = {
 			address: id,
 			contents,
@@ -270,6 +270,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	>();
 
 	protected readonly contexts: DataStoreContexts;
+	private readonly aliasedDataStores: Set<string>;
 
 	constructor(
 		protected readonly baseSnapshot: ISnapshotTree | undefined,
@@ -299,6 +300,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			"",
 			this.parentContext.IFluidHandleContext,
 		);
+		this.aliasedDataStores = new Set(aliasMap.values());
 
 		// Extract stores stored inside the snapshot
 		const fluidDataStores = new Map<string, ISnapshotTree>();
@@ -523,6 +525,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		this.parentContext.addedGCOutboundReference?.(this.containerRuntimeHandle, handle);
 
 		this.aliasMap.set(alias, context.id);
+		this.aliasedDataStores.add(context.id);
 		context.setInMemoryRoot();
 		return true;
 	}
@@ -1289,8 +1292,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 */
 	private async getOutboundRoutes(): Promise<string[]> {
 		const outboundRoutes: string[] = [];
+		// Getting this information is a performance optimization that reduces network calls for virtualized datastores
 		for (const [contextId, context] of this.contexts) {
-			const isRootDataStore = await context.isRoot();
+			const isRootDataStore = await context.isRoot(this.aliasedDataStores);
 			if (isRootDataStore) {
 				outboundRoutes.push(`/${contextId}`);
 			}

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { validateMessages } from "@fluidframework/driver-base";
+import { validateMessages } from "@fluidframework/driver-base/internal";
 import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions/internal";
 import { Queue, emptyMessageStream } from "@fluidframework/driver-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";

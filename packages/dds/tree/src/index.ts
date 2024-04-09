@@ -210,7 +210,6 @@ export {
 	schemaIsObjectNode,
 	AllowedTypeSet,
 	SchemaBuilderOptions,
-	TreeEvent,
 	SchemaCollection,
 	TreeCompressionStrategy,
 	treeSchemaFromStoredSchema,
@@ -225,7 +224,6 @@ export {
 	NormalizeFieldSchema,
 	FlexObjectNodeFields,
 	FlexMapFieldSchema,
-	ArrayToUnion,
 	ExtractItemType,
 	LazyItem,
 	PropertyNameFromFieldKey,
@@ -278,7 +276,7 @@ export {
 	TreeNodeApi,
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
-	TreeNodeEvents,
+	TreeChangeEvents,
 	NodeFromSchema,
 	TreeMapNode,
 	InsertableTreeNodeFromImplicitAllowedTypes,
@@ -319,6 +317,7 @@ export {
 	InsertableTypedNodeUnsafe,
 	NodeBuilderDataUnsafe,
 	NodeFromSchemaUnsafe,
+	type FieldProps,
 
 	// experimental @internal APIs:
 	adaptEnum,

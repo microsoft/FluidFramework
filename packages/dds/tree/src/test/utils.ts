@@ -128,7 +128,13 @@ import { SchematizingSimpleTreeView, requireSchema } from "../shared-tree/schema
 // eslint-disable-next-line import/no-internal-modules
 import { SharedTreeOptions } from "../shared-tree/sharedTree.js";
 import { ImplicitFieldSchema, TreeConfiguration, toFlexConfig } from "../simple-tree/index.js";
-import { JsonCompatible, Mutable, brand, nestedMapFromFlatList } from "../util/index.js";
+import {
+	JsonCompatible,
+	Mutable,
+	brand,
+	disposeSymbol,
+	nestedMapFromFlatList,
+} from "../util/index.js";
 
 // Testing utilities
 
@@ -674,7 +680,12 @@ export function checkoutWithContent(
 			HasListeners<CheckoutEvents>;
 	},
 ): TreeCheckout {
-	return flexTreeViewWithContent(content, args).checkout;
+	const forest = forestWithContent(content);
+	return createTreeCheckout(testIdCompressor, mintRevisionTag, testRevisionTagCodec, {
+		...args,
+		forest,
+		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
+	});
 }
 
 export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
@@ -687,12 +698,7 @@ export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 		nodeKeyFieldKey?: FieldKey;
 	},
 ): CheckoutFlexTreeView<TRoot> {
-	const forest = forestWithContent(content);
-	const view = createTreeCheckout(testIdCompressor, testRevisionTagCodec, {
-		...args,
-		forest,
-		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
-	});
+	const view = checkoutWithContent(content, args);
 	return new CheckoutFlexTreeView(
 		view,
 		content.schema,
@@ -728,7 +734,7 @@ export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 	},
 ): FlexTreeTypedField<TRoot> {
 	const forest = args?.forest ?? forestWithContent(content);
-	const branch = createTreeCheckout(testIdCompressor, testRevisionTagCodec, {
+	const branch = createTreeCheckout(testIdCompressor, mintRevisionTag, testRevisionTagCodec, {
 		...args,
 		forest,
 		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
@@ -1104,10 +1110,10 @@ export function createTestUndoRedoStacks(
 		unsubscribeFromNew();
 		unsubscribeFromDisposed();
 		for (const revertible of undoStack) {
-			revertible.release();
+			revertible[disposeSymbol]();
 		}
 		for (const revertible of redoStack) {
-			revertible.release();
+			revertible[disposeSymbol]();
 		}
 	};
 	return { undoStack, redoStack, unsubscribe };
