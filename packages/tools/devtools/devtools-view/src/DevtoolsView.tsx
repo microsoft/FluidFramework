@@ -43,6 +43,7 @@ import {
 	MenuSection,
 	NoDevtoolsErrorBar,
 	OpLatencyView,
+	PermissionModal,
 	SettingsView,
 	TelemetryView,
 	Waiting,
@@ -174,6 +175,16 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 	const [selectedTheme, setSelectedTheme] = React.useState(getFluentUIThemeToUse());
 
 	const [isMessageDismissed, setIsMessageDismissed] = React.useState(false);
+	const [modalVisible, setModalVisible] = React.useState(false);
+
+	React.useEffect(() => {
+		const displayed = localStorage.getItem('telemetryModalDisplayed');
+		if (!displayed) {
+			setModalVisible(true);
+			localStorage.setItem('telemetryModalDisplayed', 'true');
+		}
+	}, []);
+	
 	const queryTimeoutInMilliseconds = 30_000; // 30 seconds
 	const messageRelay = useMessageRelay();
 
@@ -272,7 +283,12 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 							<_DevtoolsView supportedFeatures={{}} />
 						</>
 					) : (
-						<_DevtoolsView supportedFeatures={supportedFeatures} />
+						<>
+							{modalVisible && (
+								<PermissionModal onClose={(): void => setModalVisible(false)} />
+							)}
+							<_DevtoolsView supportedFeatures={supportedFeatures} />
+						</>
 					)}
 				</FluentProvider>
 			</ThemeContext.Provider>
