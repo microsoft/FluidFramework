@@ -45,6 +45,9 @@ export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> =
  * constructor that will return the type of the `DataObject`.
  *
  * @typeParam T - The class of the `DataObject`.
+ * @privateRemarks
+ * Having both `factory` and `LoadableObjectCtor` is redundant, and having `factory` not actually work as a factory is also strange.
+ * This may need some refinement.
  * @public
  */
 export type DataObjectClass<T extends IFluidLoadable = IFluidLoadable> = {

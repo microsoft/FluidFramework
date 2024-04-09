@@ -9,17 +9,12 @@ import { DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { TreeDataObject, factory } from "./reactSharedTreeView.js";
 import { type Inventory, treeConfiguration } from "./schema.js";
 
-/**
- * @internal
- */
+// For use with lower level APIs, like ContainerViewRuntimeFactory from "@fluid-example/example-utils".
 export class InventoryList extends TreeDataObject<typeof Inventory> {
 	public readonly key = "tree";
 	public readonly config = treeConfiguration;
 }
 
-/**
- * @internal
- */
 export const InventoryListFactory = new DataObjectFactory(
 	"@fluid-experimental/inventory-list",
 	InventoryList,

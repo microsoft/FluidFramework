@@ -1885,6 +1885,7 @@ importers:
       cross-env: ^7.0.3
       eslint: ~8.55.0
       expect-puppeteer: ^9.0.2
+      fluid-framework: workspace:~
       jest: ^29.6.2
       jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
@@ -1907,6 +1908,7 @@ importers:
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
       '@fluidframework/tree': link:../../../packages/dds/tree
+      fluid-framework: link:../../../packages/framework/fluid-framework
       react: 17.0.2
     devDependencies:
       '@biomejs/biome': 1.6.2
