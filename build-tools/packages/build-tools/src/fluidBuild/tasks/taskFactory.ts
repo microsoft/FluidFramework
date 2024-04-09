@@ -5,27 +5,28 @@
 
 import { getExecutableFromCommand } from "../../common/utils";
 import { BuildPackage } from "../buildGraph";
+import { GroupTask } from "./groupTask";
 import { ApiExtractorTask } from "./leaf/apiExtractorTask";
+import { BiomeTask } from "./leaf/biomeTasks";
+import { FlubCheckLayerTask, FlubCheckPolicyTask, FlubListTask } from "./leaf/flubTasks";
+import { GenerateEntrypointsTask } from "./leaf/generateEntrypointsTask.js";
 import { LeafTask, UnknownLeafTask } from "./leaf/leafTask";
 import { EsLintTask, TsLintTask } from "./leaf/lintTasks";
 import {
 	CopyfilesTask,
+	DepCruiseTask,
 	EchoTask,
 	GenVerTask,
 	GoodFence,
 	LesscTask,
 	TypeValidationTask,
-	DepCruiseTask,
 } from "./leaf/miscTasks";
 import { PrettierTask } from "./leaf/prettierTask";
-import { TscMultiTask, TscTask } from "./leaf/tscTask";
-import { WebpackTask } from "./leaf/webpackTask";
-import { GroupTask } from "./groupTask";
-import { Task } from "./task";
-import { FlubListTask, FlubCheckLayerTask, FlubCheckPolicyTask } from "./leaf/flubTasks";
 import { RenameTypesTask } from "./leaf/renamerTask";
 import { Ts2EsmTask } from "./leaf/ts2EsmTask";
-import { BiomeTask } from "./leaf/biomeTasks";
+import { TscMultiTask, TscTask } from "./leaf/tscTask";
+import { WebpackTask } from "./leaf/webpackTask";
+import { Task } from "./task";
 
 // Map of executable name to LeafTasks
 const executableToLeafTask: {
@@ -49,6 +50,7 @@ const executableToLeafTask: {
 	"flub list": FlubListTask,
 	"flub check layers": FlubCheckLayerTask,
 	"flub check policy": FlubCheckPolicyTask,
+	"flub generate entrypoints": GenerateEntrypointsTask,
 	"flub generate typetests": TypeValidationTask,
 	"fluid-type-test-generator": TypeValidationTask,
 	"depcruise": DepCruiseTask,

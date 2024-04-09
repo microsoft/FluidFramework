@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import path from "node:path";
 import { assert, expect } from "chai";
 import { pathExistsSync } from "fs-extra";
-import path from "node:path";
 
 import {
 	flattenChangesets,

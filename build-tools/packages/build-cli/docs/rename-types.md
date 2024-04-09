@@ -15,7 +15,7 @@ USAGE
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
-  --quiet        Disable all logging.
+      --quiet    Disable all logging.
 
 DESCRIPTION
   Renames type declaration files from .d.ts to .d.mts.

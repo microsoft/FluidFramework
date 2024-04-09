@@ -442,14 +442,17 @@ export class TreeCheckout implements ITreeCheckoutFork {
 									? RevertibleStatus.Disposed
 									: RevertibleStatus.Valid;
 							},
-							revert: () => {
+							revert: (release: boolean) => {
 								assert(
 									revertible.status === RevertibleStatus.Valid,
 									0x904 /* a disposed revertible cannot be reverted */,
 								);
 								this.revertRevertible(revision, data.kind);
+								if (release) {
+									revertible[disposeSymbol]();
+								}
 							},
-							release: () => revertible.dispose(),
+							[disposeSymbol]: () => revertible.dispose(),
 							dispose: () => {
 								assert(
 									revertible.status === RevertibleStatus.Valid,

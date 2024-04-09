@@ -10,6 +10,7 @@ import {
 	IConnect,
 	IConnected,
 	ISequencedDocumentSystemMessage,
+	type ISignalMessage,
 	MessageType,
 	ScopeType,
 	INack,
@@ -333,6 +334,134 @@ describe("Routerlicious", () => {
 						assert.equal(systemLeaveMessage.type, MessageType.ClientLeave);
 						const clientId = JSON.parse(systemLeaveMessage.data) as string;
 						assert.equal(clientId, connectMessage.clientId);
+					});
+				});
+
+				describe("#submitSignal", () => {
+					it("Single Signal", async () => {
+						const signalContent = "TestSignal";
+
+						const firstSocket = webSocketServer.createConnection();
+
+						const firstConnectMessage = await connectToServer(
+							testId,
+							testTenantId,
+							testSecret,
+							firstSocket,
+						);
+
+						const secondSocket = webSocketServer.createConnection();
+
+						await connectToServer(testId, testTenantId, testSecret, secondSocket);
+
+						const promises = [
+							new Promise<void>((resolve) => {
+								firstSocket.on("signal", (signal: ISignalMessage) => {
+									assert.equal(
+										signalContent,
+										signal.content,
+										"Signal content mismatch",
+									);
+									assert.equal(
+										firstConnectMessage.clientId,
+										signal.clientId,
+										"Client ID mismatch",
+									);
+									resolve();
+								});
+							}),
+							new Promise<void>((resolve) => {
+								secondSocket.on("signal", (signal: ISignalMessage) => {
+									assert.equal(
+										signalContent,
+										signal.content,
+										"Signal content mismatch",
+									);
+									assert.equal(
+										firstConnectMessage.clientId,
+										signal.clientId,
+										"Client ID mismatch",
+									);
+									resolve();
+								});
+							}),
+						];
+
+						firstSocket.send("submitSignal", firstConnectMessage.clientId, [
+							signalContent,
+						]);
+						await Promise.all(promises);
+					});
+
+					it("Multiple Signals", async () => {
+						const signalContent1 = "TestSignal1";
+						const signalContent2 = "TestSignal2";
+
+						const firstSocket = webSocketServer.createConnection();
+
+						const firstConnectMessage = await connectToServer(
+							testId,
+							testTenantId,
+							testSecret,
+							firstSocket,
+						);
+
+						const secondSocket = webSocketServer.createConnection();
+
+						await connectToServer(testId, testTenantId, testSecret, secondSocket);
+
+						const promises = [
+							new Promise<void>((resolve) => {
+								let count = 0;
+
+								firstSocket.on("signal", (signal: ISignalMessage) => {
+									assert.equal(
+										count == 0 ? signalContent1 : signalContent2,
+										signal.content,
+										"Signal content mismatch",
+									);
+									assert.equal(
+										firstConnectMessage.clientId,
+										signal.clientId,
+										"Client ID mismatch",
+									);
+									count++;
+
+									if (count == 2) {
+										resolve();
+									}
+								});
+							}),
+							new Promise<void>((resolve) => {
+								let count = 0;
+
+								secondSocket.on("signal", (signal: ISignalMessage) => {
+									assert.equal(
+										count == 0 ? signalContent1 : signalContent2,
+										signal.content,
+										"Signal content mismatch",
+									);
+									assert.equal(
+										firstConnectMessage.clientId,
+										signal.clientId,
+										"Client ID mismatch",
+									);
+									count++;
+
+									if (count == 2) {
+										resolve();
+									}
+								});
+							}),
+						];
+
+						firstSocket.send("submitSignal", firstConnectMessage.clientId, [
+							signalContent1,
+						]);
+						firstSocket.send("submitSignal", firstConnectMessage.clientId, [
+							signalContent2,
+						]);
+						await Promise.all(promises);
 					});
 				});
 

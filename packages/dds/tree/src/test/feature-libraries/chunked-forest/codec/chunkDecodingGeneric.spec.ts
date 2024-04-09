@@ -65,7 +65,7 @@ class TestChunk1 extends ReferenceCountedBase implements TreeChunk {
 		fail("not implemented");
 	}
 
-	protected dispose(): void {}
+	protected onUnreferenced(): void {}
 }
 
 class TestChunk2 extends ReferenceCountedBase implements TreeChunk {
@@ -83,7 +83,7 @@ class TestChunk2 extends ReferenceCountedBase implements TreeChunk {
 		fail("not implemented");
 	}
 
-	protected dispose(): void {}
+	protected onUnreferenced(): void {}
 }
 
 const decoderLibrary = new DiscriminatedUnionDispatcher<

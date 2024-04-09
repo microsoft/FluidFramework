@@ -23,9 +23,6 @@ export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 export type ApplyKind<T, Kind extends FieldKind> = Kind extends FieldKind.Required ? T : undefined | T;
 
 // @public
-export type ArrayToUnion<T extends readonly unknown[]> = T[number];
-
-// @public
 export enum AttachState {
     Attached = "Attached",
     Attaching = "Attaching",
@@ -41,8 +38,8 @@ export enum CommitKind {
 
 // @public
 export interface CommitMetadata {
-    isLocal: boolean;
-    kind: CommitKind;
+    readonly isLocal: boolean;
+    readonly kind: CommitKind;
 }
 
 // @public
@@ -89,7 +86,7 @@ export interface ContainerSchema {
 // @public
 export type DataObjectClass<T extends IFluidLoadable = IFluidLoadable> = {
     readonly factory: {
-        IFluidDataStoreFactory: DataObjectClass<T>["factory"];
+        readonly IFluidDataStoreFactory: DataObjectClass<T>["factory"];
     };
 } & (new (...args: any[]) => T);
 
@@ -157,12 +154,12 @@ export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types exten
 export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
 // @public
-export type FlexListToUnion<TList extends FlexList> = ExtractItemType<ArrayToUnion<TList>>;
+export type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
 // @public
 export interface IConnection {
-    id: string;
-    mode: "write" | "read";
+    readonly id: string;
+    readonly mode: "write" | "read";
 }
 
 // @public
@@ -198,8 +195,8 @@ export interface IFluidContainerEvents extends IEvent {
 
 // @public
 export interface IMember {
-    connections: IConnection[];
-    userId: string;
+    readonly connections: IConnection[];
+    readonly userId: string;
 }
 
 // @public
@@ -231,7 +228,7 @@ export type InsertableTypedNode<T extends TreeNodeSchema> = (T extends {
 
 // @public
 export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents<M>> {
-    getMembers(): Map<string, M>;
+    getMembers(): ReadonlyMap<string, M>;
     getMyself(): Myself<M> | undefined;
 }
 
@@ -272,13 +269,13 @@ export class IterableTreeArrayContent<T> implements Iterable<T> {
 
 // @public
 export interface ITree extends IChannel {
-    schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TreeFieldFromImplicitField<TRoot>>;
+    schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TRoot>;
 }
 
 // @public @sealed
 export interface IValueChanged {
-    key: string;
-    previousValue: any;
+    readonly key: string;
+    readonly previousValue: any;
 }
 
 // @public
@@ -299,7 +296,7 @@ export type MemberChangedListener<M extends IMember> = (clientId: string, member
 
 // @public
 export type Myself<M extends IMember = IMember> = M & {
-    currentConnection: string;
+    readonly currentConnection: string;
 };
 
 // @public
@@ -328,8 +325,8 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
 
 // @public
 export interface Revertible {
-    release(): void;
-    revert(): void;
+    [disposeSymbol](): void;
+    revert(dispose: boolean): void;
     readonly status: RevertibleStatus;
 }
 
@@ -385,7 +382,7 @@ export const Tree: TreeApi;
 // @public
 export interface TreeApi extends TreeNodeApi {
     runTransaction<TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void | "rollback"): void;
-    runTransaction<TRoot>(tree: TreeView<TRoot>, transaction: (root: TRoot) => void | "rollback"): void;
+    runTransaction<TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void | "rollback"): void;
 }
 
 // @public
@@ -499,10 +496,11 @@ export enum TreeStatus {
 }
 
 // @public
-export interface TreeView<in out TRoot> extends IDisposable {
+export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposable {
     readonly error?: SchemaIncompatible;
     readonly events: ISubscribable<TreeViewEvents>;
-    readonly root: TRoot;
+    get root(): TreeFieldFromImplicitField<TSchema>;
+    set root(newRoot: InsertableTreeFieldFromImplicitField<TSchema>);
     upgradeSchema(): void;
 }
 

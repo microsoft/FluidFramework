@@ -10,7 +10,7 @@ import {
 	IContainerCreateProps,
 	IContainerLoadProps,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-loader/test/container";
+} from "@fluidframework/container-loader/internal/test/container";
 import { assert } from "@fluidframework/core-utils/internal";
 import { canBeCoalescedByService } from "@fluidframework/driver-utils/internal";
 import {

@@ -749,26 +749,14 @@ use_old_FunctionDeclaration_encodeOdspFluidDataStoreLocator(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_getApiRoot": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_getApiRoot": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_getApiRoot():
-    TypeOnly<typeof old.getApiRoot>;
-declare function use_current_FunctionDeclaration_getApiRoot(
-    use: TypeOnly<typeof current.getApiRoot>): void;
-use_current_FunctionDeclaration_getApiRoot(
-    get_old_FunctionDeclaration_getApiRoot());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_getApiRoot": {"backCompat": false}
+* "RemovedFunctionDeclaration_getApiRoot": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_getApiRoot():
-    TypeOnly<typeof current.getApiRoot>;
-declare function use_old_FunctionDeclaration_getApiRoot(
-    use: TypeOnly<typeof old.getApiRoot>): void;
-use_old_FunctionDeclaration_getApiRoot(
-    get_current_FunctionDeclaration_getApiRoot());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -845,26 +833,14 @@ use_old_FunctionDeclaration_getOdspUrlParts(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_isOdcOrigin": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_isOdcOrigin": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_isOdcOrigin():
-    TypeOnly<typeof old.isOdcOrigin>;
-declare function use_current_FunctionDeclaration_isOdcOrigin(
-    use: TypeOnly<typeof current.isOdcOrigin>): void;
-use_current_FunctionDeclaration_isOdcOrigin(
-    get_old_FunctionDeclaration_isOdcOrigin());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_isOdcOrigin": {"backCompat": false}
+* "RemovedFunctionDeclaration_isOdcOrigin": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_isOdcOrigin():
-    TypeOnly<typeof current.isOdcOrigin>;
-declare function use_old_FunctionDeclaration_isOdcOrigin(
-    use: TypeOnly<typeof old.isOdcOrigin>): void;
-use_old_FunctionDeclaration_isOdcOrigin(
-    get_current_FunctionDeclaration_isOdcOrigin());
 
 /*
 * Validate forward compat by using old type in place of current type

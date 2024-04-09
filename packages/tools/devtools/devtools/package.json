@@ -45,7 +45,7 @@
 		}
 	},
 	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"types": "./dist/devtools-public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
@@ -102,7 +102,7 @@
 		"@fluidframework/fluid-static": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.13.3",
+		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.6.2",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "^0.34.0",

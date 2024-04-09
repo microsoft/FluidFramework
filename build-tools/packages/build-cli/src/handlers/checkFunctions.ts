@@ -8,8 +8,8 @@ import execa from "execa";
 import inquirer from "inquirer";
 import { Machine } from "jssm";
 
-import { FluidRepo } from "@fluidframework/build-tools";
 import { bumpVersionScheme } from "@fluid-tools/version-tools";
+import { FluidRepo } from "@fluidframework/build-tools";
 
 import {
 	generateBumpDepsBranchName,
