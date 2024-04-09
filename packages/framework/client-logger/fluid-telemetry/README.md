@@ -104,7 +104,7 @@ class MySimpleTelemetryConsumer implements ITelemetryConsumer {
 }
 ```
 
-### Step 3: Setup the custom telemetry consumer
+### Step 3: Setup telemetry collection
 
 Now, let's start the telemetry production and loop in our telemetry consumer from step 2. We will be initializing our telemetry collection where we initialize our containers:
 
