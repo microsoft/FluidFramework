@@ -53,10 +53,16 @@
 	"dependencies": {
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
+		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/map": "workspace:~",
+		"@fluidframework/protocol-definitions": "^3.2.0",
+		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
+		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/tree": "workspace:~"
 	},
 	"devDependencies": {
