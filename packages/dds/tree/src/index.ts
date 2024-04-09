@@ -301,7 +301,15 @@ export {
 	TreeNodeSchemaClass,
 	TreeNodeSchemaCore,
 	TreeNodeSchemaNonClass,
-	SchemaIncompatible,
+	SchemaCompatibilityStatus,
+	NodeIncompatibility,
+	NodeFieldsIncompatibility,
+	NodeTypeIncompatibility,
+	SchemaFactoryNodeType,
+	SchemaFactoryFieldKind,
+	FieldIncompatibility,
+	FieldKindIncompatibility,
+	AllowedTypeIncompatibility,
 
 	// experimental @beta APIs:
 	SchemaFactoryRecursive,

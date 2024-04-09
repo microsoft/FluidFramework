@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
 
 import { AllowedUpdateType, Compatibility, FieldKey, anchorSlot } from "../core/index.js";
@@ -16,7 +16,7 @@ import {
 } from "../feature-libraries/index.js";
 import {
 	ImplicitFieldSchema,
-	SchemaIncompatible,
+	SchemaCompatibilityStatus,
 	TreeConfiguration,
 	TreeFieldFromImplicitField,
 	TreeView,
@@ -37,12 +37,16 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	implements TreeView<TreeFieldFromImplicitField<TRootSchema>>
 {
 	/**
-	 * In one of three states:
-	 * 1. Valid: A checkout is present, not disposed, and it's stored schema and view schema are compatible.
-	 * 2. SchematizeError: stored schema and view schema are not compatible.
-	 * 3. disposed: `view` is undefined, and using this object will error. Some methods also transiently leave view undefined.
+	 * The view is set to undefined when this object is disposed or the view schema does not support viewing the document's stored schema.
+	 *
+	 * The view schema may be incompatible with the stored schema. Use `compatibility` to check.
 	 */
-	private view: CheckoutFlexTreeView<FlexFieldSchema> | SchematizeError | undefined;
+	private view: CheckoutFlexTreeView<FlexFieldSchema> | undefined;
+
+	/**
+	 * Undefined iff uninitialized or disposed.
+	 */
+	private currentCompatibility: SchemaCompatibilityStatus | undefined;
 	private readonly flexConfig: TreeContent;
 	public readonly events: ISubscribable<TreeViewEvents> &
 		IEmitter<TreeViewEvents> &
@@ -61,6 +65,14 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	) {
 		this.flexConfig = toFlexConfig(config);
 		this.viewSchema = new ViewSchema(defaultSchemaPolicy, {}, this.flexConfig.schema);
+		this.currentCompatibility = {
+			canView: false,
+			canUpgrade: true,
+			isExactMatch: false,
+			canInitialize: true,
+			differences: [],
+			metadata: undefined,
+		};
 		this.update();
 
 		this.unregisterCallbacks.add(
@@ -75,145 +87,176 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		);
 	}
 
+	private midUpgrade = false;
 	public upgradeSchema(): void {
-		// Errors if disposed.
-		const error = this.error;
+		this.ensureUndisposed();
 
-		// No-op non error state.
-		if (error === undefined) {
+		const compatibility = this.compatibility;
+		if (compatibility.isExactMatch) {
+			// No-op
 			return;
 		}
 
-		if (this.error?.canUpgrade !== true) {
+		if (!compatibility.canUpgrade) {
 			throw new UsageError(
-				"Existing stored schema can not be upgraded (see TreeView.canUpgrade).",
+				"Existing stored schema can not be upgraded (see TreeView.compatibility.canUpgrade).",
 			);
 		}
 
-		const result = ensureSchema(
-			this.viewSchema,
-			// eslint-disable-next-line no-bitwise
-			AllowedUpdateType.SchemaCompatible | AllowedUpdateType.Initialize,
-			this.checkout,
-			this.flexConfig,
-		);
-		assert(result, 0x8bf /* Schema upgrade should always work if canUpgrade is set. */);
+		this.midUpgrade = true;
+		try {
+			const result = ensureSchema(
+				this.viewSchema,
+				// eslint-disable-next-line no-bitwise
+				AllowedUpdateType.SchemaCompatible | AllowedUpdateType.Initialize,
+				this.checkout,
+				this.flexConfig,
+			);
+			assert(result, 0x8bf /* Schema upgrade should always work if canUpgrade is set. */);
+		} finally {
+			this.midUpgrade = false;
+		}
+		this.events.emit("schemaChanged");
+		this.events.emit("rootChanged");
 	}
 
 	/**
-	 * Gets the view is the stored schema is compatible with the view schema,
-	 * otherwise returns an error detailing the schema incompatibility.
+	 * Gets the view. Throws when disposed.
 	 */
-	public getViewOrError(): CheckoutFlexTreeView<FlexFieldSchema> | SchematizeError {
-		if (this.disposed) {
-			throw new UsageError("Accessed a disposed TreeView.");
-		}
+	public getView(): CheckoutFlexTreeView<FlexFieldSchema> {
+		this.ensureUndisposed();
 		assert(this.view !== undefined, 0x8c0 /* unexpected getViewOrError */);
 		return this.view;
+	}
+
+	private ensureUndisposed(): void {
+		if (this.disposed) {
+			this.failDisposed();
+		}
+	}
+
+	private failDisposed(): never {
+		throw new UsageError("Accessed a disposed TreeView.");
 	}
 
 	/**
 	 * Updates `this.view`.
 	 * Invoked during initialization and when `this.view` needs to be replaced due to stored schema changes.
-	 * Handled re-registering for events to call update in the future.
+	 * Handles re-registering for events to call update in the future.
 	 * @remarks
 	 * This does not check if the view needs to be replaced, it replaces it unconditionally:
-	 * callers should do any checking to detect if its really needed before calling `update`.
+	 * callers should do any checking to detect if it's really needed before calling `update`.
 	 */
 	private update(): void {
 		// This implementation avoids making any edits, which prevents it from being invoked reentrantly.
 		// If implicit initialization (or some other edit) is desired, it should be done outside of this method.
 
-		const compatibility = evaluateUpdate(
+		const updateType = evaluateUpdate(
 			this.viewSchema,
 			// eslint-disable-next-line no-bitwise
 			AllowedUpdateType.SchemaCompatible | AllowedUpdateType.Initialize,
 			this.checkout,
 		);
+		// TODO: At some point, dedupe many calls to checkCompatibility.
+		const result = this.viewSchema.checkCompatibility(this.checkout.storedSchema);
 		this.disposeView();
-		switch (compatibility) {
-			case UpdateType.None: {
-				// Remove event from checkout when view is disposed
-				this.view = requireSchema(
-					this.checkout,
-					this.viewSchema,
-					() => {
-						assert(cleanupCheckOutEvents !== undefined, 0x8c1 /* missing cleanup */);
-						cleanupCheckOutEvents();
-						this.view = undefined;
-						if (!this.disposed) {
-							this.update();
-						}
-					},
-					this.nodeKeyManager,
-					this.nodeKeyFieldKey,
-				);
 
-				// Trigger "rootChanged" if the root changes in the future.
-				// Currently there is no good way to do this as FlexTreeField has no events for changes.
-				// this.view.flexTree.on(????)
-				// As a workaround for the above, trigger "rootChanged" in "afterBatch"
-				// which isn't the correct time since we normally do events during the batch when the forest is modified, but its better than nothing.
-				// TODO: provide a better event: this.view.flexTree.on(????)
-				let lastRoot = this.root;
-				const cleanupCheckOutEvents = this.checkout.events.on("afterBatch", () => {
-					if (lastRoot !== this.root) {
-						lastRoot = this.root;
-						this.events.emit("rootChanged");
+		const compatibility: SchemaCompatibilityStatus = {
+			canView: result.write === Compatibility.Compatible,
+			canUpgrade:
+				result.read === Compatibility.Compatible ||
+				// Seems kinda weird that we need to 'or' here, but maybe ok.
+				updateType === UpdateType.Initialize,
+			isExactMatch:
+				result.write === Compatibility.Compatible &&
+				result.read === Compatibility.Compatible,
+			canInitialize: updateType === UpdateType.Initialize,
+			differences: [],
+			metadata: undefined,
+		};
+		let lastRoot =
+			this.compatibility.canView && this.view !== undefined ? this.root : undefined;
+		this.currentCompatibility = compatibility;
+
+		if (compatibility.canView) {
+			this.view = requireSchema(
+				this.checkout,
+				this.viewSchema,
+				() => {
+					assert(cleanupCheckOutEvents !== undefined, 0x8c1 /* missing cleanup */);
+					cleanupCheckOutEvents();
+					this.view = undefined;
+					if (!this.disposed) {
+						this.update();
 					}
-				});
-				break;
-			}
-			case UpdateType.Incompatible:
-			case UpdateType.Initialize:
-			case UpdateType.SchemaCompatible: {
-				this.view = new SchematizeError(compatibility);
-				const unregister = this.checkout.storedSchema.on("afterSchemaChange", () => {
-					unregister();
-					this.unregisterCallbacks.delete(unregister);
-					this.update();
-				});
-				this.unregisterCallbacks.add(unregister);
-				break;
-			}
-			default: {
-				unreachableCase(compatibility);
-			}
+				},
+				this.nodeKeyManager,
+				this.nodeKeyFieldKey,
+			);
+
+			// Trigger "rootChanged" if the root changes in the future.
+			// Currently there is no good way to do this as FlexTreeField has no events for changes.
+			// this.view.flexTree.on(????)
+			// As a workaround for the above, trigger "rootChanged" in "afterBatch"
+			// which isn't the correct time since we normally do events during the batch when the forest is modified, but its better than nothing.
+			// TODO: provide a better event: this.view.flexTree.on(????)
+			const cleanupCheckOutEvents = this.checkout.events.on("afterBatch", () => {
+				if (!this.midUpgrade && lastRoot !== this.root) {
+					lastRoot = this.root;
+					this.events.emit("rootChanged");
+				}
+			});
+		} else {
+			this.view = undefined;
+			const unregister = this.checkout.storedSchema.on("afterSchemaChange", () => {
+				unregister();
+				this.unregisterCallbacks.delete(unregister);
+				this.update();
+			});
+			this.unregisterCallbacks.add(unregister);
 		}
-		this.events.emit("rootChanged");
+
+		if (!this.midUpgrade) {
+			this.events.emit("rootChanged");
+			// TODO: Maybe not on initialization?
+			this.events.emit("schemaChanged");
+		}
 	}
 
 	private disposeView(): void {
-		if (this.view !== undefined && !(this.view instanceof SchematizeError)) {
+		if (this.view !== undefined) {
 			this.view[disposeSymbol]();
 			this.view = undefined;
 			this.unregisterCallbacks.forEach((unregister) => unregister());
 		}
 	}
 
-	public get error(): SchematizeError | undefined {
-		const view = this.getViewOrError();
-		return view instanceof SchematizeError ? view : undefined;
+	public get compatibility(): SchemaCompatibilityStatus {
+		if (!this.currentCompatibility) {
+			this.failDisposed();
+		}
+		return this.currentCompatibility;
 	}
 
 	public [disposeSymbol](): void {
-		this.getViewOrError();
+		this.ensureUndisposed();
 		this.disposed = true;
 		this.disposeView();
+		this.currentCompatibility = undefined;
 	}
 
 	public get root(): TreeFieldFromImplicitField<TRootSchema> {
-		const view = this.getViewOrError();
-		if (view instanceof SchematizeError) {
+		if (!this.compatibility.canView) {
 			throw new UsageError(
-				"Document is out of schema. Check TreeView.error before accessing TreeView.root.",
+				"Document is out of schema. Check TreeView.compatibility before accessing TreeView.root.",
 			);
 		}
+		const view = this.getView();
 		return getProxyForField(view.flexTree) as TreeFieldFromImplicitField<TRootSchema>;
 	}
 }
 
-export class SchematizeError implements SchemaIncompatible {
+export class SchematizeError {
 	public constructor(public readonly updateType: UpdateType) {}
 
 	public get canUpgrade(): boolean {
@@ -239,8 +282,8 @@ const ViewSlot = anchorSlot<CheckoutFlexTreeView<any>>();
 
 /**
  * Flex-Tree schematizing layer.
- * Creates a view that self-disposes when stored schema becomes incompatible.
- * This may only be called when the schema is already known to be compatible (typically via ensureSchema).
+ * Creates a view that self-disposes whenenever the stored schema changes.
+ * This may only be called when the schema is already known to be read-compatible (typically via ensureSchema).
  */
 export function requireSchema<TRoot extends FlexFieldSchema>(
 	checkout: TreeCheckout,
@@ -255,8 +298,7 @@ export function requireSchema<TRoot extends FlexFieldSchema>(
 	{
 		const compatibility = viewSchema.checkCompatibility(checkout.storedSchema);
 		assert(
-			compatibility.write === Compatibility.Compatible &&
-				compatibility.read === Compatibility.Compatible,
+			compatibility.write === Compatibility.Compatible,
 			0x8c3 /* requireSchema invoked with incompatible schema */,
 		);
 	}
@@ -276,14 +318,8 @@ export function requireSchema<TRoot extends FlexFieldSchema>(
 	slots.set(ViewSlot, view);
 
 	const unregister = checkout.storedSchema.on("afterSchemaChange", () => {
-		const compatibility = viewSchema.checkCompatibility(checkout.storedSchema);
-		if (
-			compatibility.write !== Compatibility.Compatible ||
-			compatibility.read !== Compatibility.Compatible
-		) {
-			unregister();
-			view[disposeSymbol]();
-		}
+		unregister();
+		view[disposeSymbol]();
 	});
 
 	return view;

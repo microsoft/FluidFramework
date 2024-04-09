@@ -18,8 +18,6 @@ import {
 	intoStoredSchema,
 	nodeKeyFieldKey,
 } from "../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { UpdateType } from "../../shared-tree/schematizeTree.js";
 import {
 	SchematizeError,
 	SchematizingSimpleTreeView,
@@ -34,8 +32,10 @@ import { checkoutWithContent, createTestUndoRedoStacks, insert } from "../utils.
 const schema = new SchemaFactory("com.example");
 const config = new TreeConfiguration(schema.number, () => 5);
 const configGeneralized = new TreeConfiguration([schema.number, schema.string], () => 6);
+const configGeneralized2 = new TreeConfiguration([schema.number, schema.boolean], () => false);
 const flexConfig = toFlexConfig(config);
 const flexConfigGeneralized = toFlexConfig(configGeneralized);
+const flexConfigGeneralized2 = toFlexConfig(configGeneralized);
 
 // Schema for tree that must always be empty.
 const emptySchema = new SchemaBuilderBase(FieldKinds.required, {
@@ -60,15 +60,29 @@ describe("SchematizingSimpleTreeView", () => {
 			brand(nodeKeyFieldKey),
 		);
 
-		const error: SchematizeError | undefined = view.error;
-		assert(error instanceof SchematizeError);
-		assert(error.canInitialize === true);
-		assert(error.canUpgrade === true);
-		assert(error.updateType === UpdateType.Initialize);
+		assert.throws(
+			() => view.root,
+			(e) => e instanceof UsageError,
+		);
+		const { compatibility } = view;
+		assert.equal(compatibility.canView, false);
+		assert.equal(compatibility.canUpgrade, true);
+		// TODO: This test needs updated expectations when tweaking the API to have explicit initialize.
+		// const error: SchematizeError | undefined = view.error;
+		// assert(error instanceof SchematizeError);
+		// assert(error.canInitialize === true);
+		// assert(error.canUpgrade === true);
+		// assert(error.updateType === UpdateType.Initialize);
 
 		view.upgradeSchema();
 		assert.equal(view.root, 5);
 	});
+
+	const getChangeData = (view: SchematizingSimpleTreeView<any>) => {
+		return view.compatibility.canView
+			? view.root
+			: `SchemaCompatibilityStatus canView: ${view.compatibility.canView} canUpgrade: ${view.compatibility.canUpgrade}`;
+	};
 
 	it("Open and close existing document", () => {
 		const checkout = checkoutWithContent(flexConfig);
@@ -78,12 +92,12 @@ describe("SchematizingSimpleTreeView", () => {
 			createMockNodeKeyManager(),
 			brand(nodeKeyFieldKey),
 		);
-		assert.equal(view.error, undefined);
+		assert.equal(view.compatibility.isExactMatch, true);
 		const root = view.root;
 		assert.equal(root, 5);
 		const log: [string, unknown][] = [];
-		const unsubscribe = view.events.on("rootChanged", () =>
-			log.push(["rootChanged", view.error ?? view.root]),
+		const unsubscribe = view.events.on("schemaChanged", () =>
+			log.push(["schemaChanged", getChangeData(view)]),
 		);
 		const unsubscribe2 = view.events.on("afterBatch", () =>
 			log.push(["afterBatch", view.root]),
@@ -112,13 +126,14 @@ describe("SchematizingSimpleTreeView", () => {
 			createMockNodeKeyManager(),
 			brand(nodeKeyFieldKey),
 		);
-		view.events.on("rootChanged", () => log.push(["rootChanged", view.error ?? view.root]));
+		view.events.on("schemaChanged", () => log.push(["schemaChanged", getChangeData(view)]));
+		view.events.on("rootChanged", () => log.push(["rootChanged", getChangeData(view)]));
 		view.events.on("afterBatch", () => log.push(["afterBatch", view.root]));
 		assert.equal(view.root, 5);
 		const log: [string, unknown][] = [];
 
 		// Currently there is no way to edit the root using the simple-tree API, so use flex-tree to do it:
-		const flexView = view.getViewOrError();
+		const flexView = view.getView();
 		assert(!(flexView instanceof SchematizeError));
 		assert(flexView.flexTree.is(FlexFieldSchema.create(required, [leaf.number])));
 		flexView.flexTree.content = 6;
@@ -130,6 +145,7 @@ describe("SchematizingSimpleTreeView", () => {
 		]);
 	});
 
+	// TODO: Update test case name.
 	it("Schema becomes incompatible then comparable", () => {
 		const checkout = checkoutWithContent(flexConfig);
 		const view = new SchematizingSimpleTreeView(
@@ -140,23 +156,20 @@ describe("SchematizingSimpleTreeView", () => {
 		);
 		assert.equal(view.root, 5);
 		const log: [string, unknown][] = [];
-		view.events.on("rootChanged", () => log.push(["rootChanged", view.error ?? view.root]));
+		view.events.on("schemaChanged", () => log.push(["schemaChanged", getChangeData(view)]));
 
 		// Modify schema to invalidate view
 		checkout.updateSchema(intoStoredSchema(toFlexSchema([schema.number, schema.string])));
 
-		// typecast is needed here to remove narrowing from previous assert.
-		const error: SchematizeError | undefined = view.error;
-		assert(error instanceof SchematizeError);
-		assert.deepEqual(log, [["rootChanged", error]]);
+		assert.deepEqual(log, [["schemaChanged", 5]]);
 		log.length = 0;
-		assert(error.canInitialize === false);
-		assert(error.canUpgrade === false);
-		assert(error.updateType === UpdateType.Incompatible);
-		assert.throws(
-			() => view.root,
-			(e) => e instanceof UsageError,
-		);
+		assert.equal(view.compatibility.isExactMatch, false);
+		assert.equal(view.compatibility.canUpgrade, false);
+		assert.equal(view.compatibility.canView, true);
+		// assert.throws(
+		// 	() => view.root,
+		// 	(e) => e instanceof UsageError,
+		// );
 
 		assert.throws(
 			() => view.upgradeSchema(),
@@ -165,7 +178,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 		// Modify schema to be compatible again
 		checkout.updateSchema(intoStoredSchema(toFlexSchema([schema.number])));
-		assert.deepEqual(log, [["rootChanged", 5]]);
+		assert.deepEqual(log, [["schemaChanged", 5]]);
 		assert.equal(view.root, 5);
 		view[disposeSymbol]();
 	});
@@ -179,13 +192,11 @@ describe("SchematizingSimpleTreeView", () => {
 			brand(nodeKeyFieldKey),
 		);
 		const log: [string, unknown][] = [];
-		view.events.on("rootChanged", () => log.push(["rootChanged", view.error ?? view.root]));
+		view.events.on("rootChanged", () => log.push(["rootChanged", getChangeData(view)]));
 
-		const error: SchematizeError | undefined = view.error;
-		assert(error instanceof SchematizeError);
-		assert(error.canInitialize === false);
-		assert(error.canUpgrade === true);
-		assert(error.updateType === UpdateType.SchemaCompatible);
+		assert.equal(view.compatibility.canView, false);
+		assert.equal(view.compatibility.canUpgrade, true);
+		assert.equal(view.compatibility.isExactMatch, false);
 		assert.throws(
 			() => view.root,
 			(e) => e instanceof UsageError,
@@ -195,11 +206,11 @@ describe("SchematizingSimpleTreeView", () => {
 
 		assert.deepEqual(log, [["rootChanged", 5]]);
 
-		assert.equal(view.error, undefined);
+		assert.equal(view.compatibility.isExactMatch, true);
 		assert.equal(view.root, 5);
 	});
 
-	it("Open incompatible document", () => {
+	it("Open document using view schema that allows a subset of stored schema documents", () => {
 		const checkout = checkoutWithContent(flexConfigGeneralized);
 		const view = new SchematizingSimpleTreeView(
 			checkout,
@@ -208,11 +219,29 @@ describe("SchematizingSimpleTreeView", () => {
 			brand(nodeKeyFieldKey),
 		);
 
-		const error: SchematizeError | undefined = view.error;
-		assert(error instanceof SchematizeError);
-		assert(error.canInitialize === false);
-		assert(error.canUpgrade === false);
-		assert(error.updateType === UpdateType.Incompatible);
+		assert.equal(view.compatibility.canView, true);
+		assert.equal(view.compatibility.canUpgrade, false);
+		assert.equal(view.compatibility.isExactMatch, false);
+		assert.equal(view.root, 6);
+
+		assert.throws(
+			() => view.upgradeSchema(),
+			(e) => e instanceof UsageError,
+		);
+	});
+
+	it("Open incompatible document", () => {
+		const checkout = checkoutWithContent(flexConfigGeneralized);
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			configGeneralized2,
+			createMockNodeKeyManager(),
+			brand(nodeKeyFieldKey),
+		);
+
+		assert.equal(view.compatibility.canView, false);
+		assert.equal(view.compatibility.canUpgrade, false);
+		assert.equal(view.compatibility.isExactMatch, false);
 		assert.throws(
 			() => view.root,
 			(e) => e instanceof UsageError,

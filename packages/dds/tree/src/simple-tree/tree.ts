@@ -7,7 +7,7 @@ import { IChannel } from "@fluidframework/datastore-definitions";
 
 import { CommitMetadata, Revertible } from "../core/index.js";
 import { ISubscribable } from "../events/index.js";
-import { IDisposable, type JsonCompatibleReadOnly } from "../util/index.js";
+import { IDisposable } from "../util/index.js";
 
 import {
 	ImplicitFieldSchema,
@@ -59,6 +59,14 @@ export interface ITree extends IChannel {
 	viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeConfiguration<TRoot>,
 	): TreeView<TreeFieldFromImplicitField<TRoot>>;
+
+	/**
+	 * See {@link ITree.viewWith}.
+	 * @deprecated - Renamed to {@link ITree.viewWith}. Use that method instead.
+	 */
+	schematize<TRoot extends ImplicitFieldSchema>(
+		config: TreeConfiguration<TRoot>,
+	): TreeView<TreeFieldFromImplicitField<TRoot>>;
 }
 
 /**
@@ -68,20 +76,21 @@ export interface ITree extends IChannel {
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
 	/**
 	 * @param schema - The schema which the application wants to view the tree with.
+	 * @param initialTree - A function that returns the default tree content to initialize the tree with iff the tree is uninitialized
+	 * (meaning it does not even have any schema set at all).
+	 * If `initialTree` returns any actual node instances, they should be recreated each time `initialTree` runs.
+	 * This is because if the config is used a second time any nodes that were not recreated could error since nodes cannot be inserted into the tree multiple times.
 	 * @param metadata - Application-defined metadata to associate with the schema.
 	 * This metadata is intended to help the application reason about compatibility between `schema` (the view schema) and the stored schema.
 	 * It is not used by SharedTree, but is stored alongside the schema and provided to the application as part of {@link TreeView.compatibility}.
 	 * For example, this could be used to store a schema version number, a location to dynamically load the schema from, or a hash of the schema.
 	 * Passing `undefined` will store no metadata.
-	 * @param initialTree - A function that returns the default tree content to initialize the tree with iff the tree is uninitialized
-	 * (meaning it does not even have any schema set at all).
-	 * If `initialTree` returns any actual node instances, they should be recreated each time `initialTree` runs.
-	 * This is because if the config is used a second time any nodes that were not recreated could error since nodes cannot be inserted into the tree multiple times.
+	 * Contents must be JSON-serializable.
 	 */
 	public constructor(
 		public readonly schema: TSchema,
-		public readonly metadata: JsonCompatibleReadOnly | undefined,
 		public readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>,
+		public readonly metadata?: unknown,
 	) {}
 }
 
@@ -89,7 +98,7 @@ export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFie
  * An editable view of a branch of a shared tree based on some schema.
  *
  * This schema--known as the view schema--may or may not align the stored schema of the document.
- * Information about discrepancies between the two schemas is available via {@link compatibility}.
+ * Information about discrepancies between the two schemas is available via {@link TreeView.compatibility|compatibility}.
  *
  * Application authors are encouraged to read [schema-compatibility.md](TODO: Write application-author-facing document) and
  * choose a schema compatibility policy that aligns with their application's needs.
@@ -109,7 +118,7 @@ export interface TreeView<in out TRoot> extends IDisposable {
 	 * The current root of the tree.
 	 *
 	 * If in the out of schema state, accessing this will throw.
-	 * To handle this case, check {@link compatibility}'s {@link SchemaCompatibilityStatus.canView|canView} before using.
+	 * To handle this case, check {@link TreeView.compatibility|compatibility}'s {@link SchemaCompatibilityStatus.canView|canView} before using.
 	 *
 	 * To get notified about changes to this field,
 	 * use {@link TreeViewEvents.rootChanged} via `view.events.on("rootChanged", callback)`.
@@ -148,83 +157,54 @@ export interface TreeView<in out TRoot> extends IDisposable {
 	readonly events: ISubscribable<TreeViewEvents>;
 }
 
-export const SchemaCompatibilityType = {
-	/**
-	 * The view schema and stored schema are an exact match. There are no compatibility concerns.
-	 */
-	ExactMatch: 0,
-
-	/**
-	 * The view schema supports a subset of allowed documents that the stored schema supports.
-	 *
-	 * @remarks SharedTree can open such documents, but beware that application logic might not function correctly!
-	 *
-	 * TODO: Elaborate more with references to more informative properties.
-	 */
-	AllowsSubsetOfDocuments: 1,
-
-	/**
-	 * The view schema supports a superset of allowed documents when compared to the stored schema.
-	 * In order to use this view schema with the document, first call {@link ITree.upgdateSchema} to update the stored schema to match.
-	 *
-	 * @remarks
-	 * SharedTree may choose to support a notion of a readonly TreeView in the future,
-	 * in which case it would be safe it would be safe to open the document with such a concept.
-	 */
-	AllowsSupersetOfDocuments: 2,
-
-	/**
-	 * The view schema and stored schema are incompatible
-	 * (i.e. the set of documents allowed by one is not a subset of those allowed by the other).
-	 *
-	 * For the same reasons as {@link AllowsSupersetOfDocuments}, the tree cannot be viewed using this schema.
-	 * Unlike {@link AllowsSupersetOfDocuments}, the stored schema cannot be updated to match the view schema,
-	 * since the document may contain data which is unreadable using the view schema.
-	 */
-	Incompatible: 3,
-} as const;
-
-export type SchemaCompatibilityType = typeof SchemaCompatibilityType;
-
 /**
  * Information about a view schema's compatibility with the document's stored schema.
  * @public
  */
 export interface SchemaCompatibilityStatus {
 	/**
-	 *
+	 * Whether the view schema is an exact match to the stored schema.
 	 */
-	readonly type: SchemaCompatibilityType[keyof SchemaCompatibilityType];
+	readonly isExactMatch: boolean;
 
 	/**
-	 * Whether the current view schema is sufficiently compatible with the stored schema to allow viewing
-	 * tree data. If false, {@link TreeView.root} will throw upon access.
+	 * Whether the current view schema is sufficiently compatible with the stored schema to allow viewing tree data.
+	 * This is true when the documents allowed by the view schema are a subset of those allowed by the stored schema.
+	 * If false, {@link TreeView.root} will throw upon access.
+	 *
+	 * Be aware that even when this is true, application logic may not correctly tolerate the documents allowable by the stored schema!
+	 * For example, if the stored schema allows types that the view schema does not, and the application doesn't have fallback logic
+	 * for unrecognized types as part of a field, it may throw when trying to read the document!
+	 * Application authors are encouraged to read docs/user-facing/schema-evolution.md and choose a schema compatibility policy that
+	 * aligns with their application's needs.
 	 *
 	 * @remarks
 	 * When the view schema is a strict superset of the stored schema, this is false because writes to the document using the view
-	 * chema could make the document violate its stored schema.
+	 * schema could make the document violate its stored schema.
 	 * In this case, the stored schema could be updated to match the provided view schema, allowing read write access to the tree.
+	 * See {@link SchemaCompatibilityStatus.canUpgrade}.
 	 *
-	 * Future version of SharedTree may provide readonly access to the document in this case because that would be safe:
+	 * Future version of SharedTree may provide readonly access to the document in this case because that would be safe,
 	 * but this is not currently supported.
-	 *
-	 * @privateRemarks
-	 * Synonymous with type === SchemaCompatibilityType.ExactMatch || type === SchemaCompatibilityType.AllowsSubsetOfDocuments
-	 * Open question on if we want to allow both, one or the other, etc.
-	 * It seems potentially easier to document compatibility flows on the enum fields of SchemaCompatibilityType,
-	 * but most code that works with compatibility status probably wants either these booleans or more details (ex: to decide
-	 * policies like "proceed when missing some optional fields OR a field which has a known fallback has additional allowed types").
 	 */
 	readonly canView: boolean;
 
 	/**
 	 * True iff the view schema supports all possible documents permitted by the stored schema.
-	 *
-	 * @privateRemarks
-	 * Synonymous with type === SchemaCompatibilityType.AllowsSupersetOfDocuments || type === SchemaCompatibilityType.ExactMatch
-	 * See private remarks on canView
+	 * When true, it is valid to call {@link TreeView.upgradeSchema} (though if the stored schema is already an exact match, this is a no-op).
 	 */
 	readonly canUpgrade: boolean;
+
+	/**
+	 * True iff the document is uninitialized (i.e. it has no schema or content).
+	 *
+	 * To initialize the document, call {@link ITree.initialize}.
+	 *
+	 * @privateRemarks
+	 * Lots of users of SharedTree probably don't need this API as they know from context whether they've just created a new tree
+	 * or loaded an existing one.
+	 */
+	readonly canInitialize: boolean;
 
 	/**
 	 * Contains details about incompatibilities between the view schema and the stored schema.
@@ -238,7 +218,7 @@ export interface SchemaCompatibilityStatus {
 	 * The "loose" API would allow applications to open documents when the stored schema aligned with the view schema EXCEPT:
 	 * - The stored schema might have additional optional fields on object nodes
 	 * - The stored schema might allow additional types on some explicitly provided fields (typically arrays)
-	 * 		- The understanding here is that the application will have allow-listed a predefined set of fields which they know they have "forward-compatible" fallbacks for (ex: render placeholder for unknown types)
+	 * - The understanding here is that the application will have allow-listed a predefined set of fields which they know they have "forward-compatible" fallbacks for (ex: render placeholder for unknown types)
 	 *
 	 * Applications using strict/loose policies would have different expectations around what sort of code they must saturate before upgrading to a new schema version.
 	 */
@@ -250,7 +230,7 @@ export interface SchemaCompatibilityStatus {
 	 * This metadata reflects the metadata provided in the {@link TreeConfiguration} which last updated the schema
 	 * (either via {@link ITree.initialize} or {@link TreeView.upgradeSchema})
 	 */
-	readonly metadata: JsonCompatibleReadOnly;
+	readonly metadata: unknown;
 }
 
 /**
@@ -273,6 +253,8 @@ export interface TreeViewEvents {
 	/**
 	 * The stored schema for the document has changed.
 	 * This may affect the compatibility between the view schema and the stored schema, and thus the ability to use the view.
+	 *
+	 * This event implies that the old {@link TreeView.root} is no longer valid.
 	 */
 	schemaChanged(): void;
 

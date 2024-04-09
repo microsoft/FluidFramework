@@ -1,6 +1,8 @@
+// TODO: Implement comparisons which actually produce this diff.
+
 // Gives an idea of data that might be computed by diffing two schemas.
 // This exact diff is not intended to be possible for a particular set of two schemas or a reasonable update scenario.
-const foo: NodeIncompatibility[] = [
+const _foo: NodeIncompatibility[] = [
 	{
 		identifier: "Point",
 		mismatch: "nodeType",
@@ -33,7 +35,10 @@ const foo: NodeIncompatibility[] = [
 	},
 ];
 
-interface AllowedTypeIncompatibility {
+/**
+ * @public
+ */
+export interface AllowedTypeIncompatibility {
 	identifier: string;
 	mismatch: "allowedTypes";
 	/**
@@ -46,9 +51,15 @@ interface AllowedTypeIncompatibility {
 	stored: string[];
 }
 
-type SchemaFactoryFieldKind = "required" | "optional" | "array";
+/**
+ * @public
+ */
+export type SchemaFactoryFieldKind = "required" | "optional" | "array";
 
-interface FieldKindIncompatibility {
+/**
+ * @public
+ */
+export interface FieldKindIncompatibility {
 	identifier: string;
 	mismatch: "fieldKind";
 	// undefined allows representing that the field doesn't exist in either view or stored schema.
@@ -56,23 +67,38 @@ interface FieldKindIncompatibility {
 	stored: SchemaFactoryFieldKind | undefined;
 }
 
-type FieldIncompatibility = AllowedTypeIncompatibility | FieldKindIncompatibility;
+/**
+ * @public
+ */
+export type FieldIncompatibility = AllowedTypeIncompatibility | FieldKindIncompatibility;
 
 // TODO: I think "leaf" is not necessary here because SchemaFactory doesn't let you create leaf types.
 // This should be confirmed.
-type SchemaFactoryNodeType = "object" | "array" | "map";
+/**
+ * @public
+ */
+export type SchemaFactoryNodeType = "object" | "array" | "map";
 
-interface NodeTypeIncompatibility {
+/**
+ * @public
+ */
+export interface NodeTypeIncompatibility {
 	identifier: string;
 	mismatch: "nodeType";
 	view: SchemaFactoryNodeType;
 	stored: SchemaFactoryNodeType;
 }
 
-interface NodeFieldsIncompatibility {
+/**
+ * @public
+ */
+export interface NodeFieldsIncompatibility {
 	identifier: string;
 	mismatch: "fields";
 	differences: FieldIncompatibility[];
 }
 
+/**
+ * @public
+ */
 export type NodeIncompatibility = NodeTypeIncompatibility | NodeFieldsIncompatibility;

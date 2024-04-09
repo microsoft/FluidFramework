@@ -34,6 +34,16 @@ export interface Adapters {
     readonly tree?: readonly TreeAdapter[];
 }
 
+// @public (undocumented)
+export interface AllowedTypeIncompatibility {
+    // (undocumented)
+    identifier: string;
+    // (undocumented)
+    mismatch: "allowedTypes";
+    stored: string[];
+    view: string[];
+}
+
 // @public
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
@@ -470,6 +480,9 @@ export interface FieldAnchor {
 // @internal
 export type FieldGenerator = () => MapTree[];
 
+// @public (undocumented)
+export type FieldIncompatibility = AllowedTypeIncompatibility | FieldKindIncompatibility;
+
 // @internal
 export type FieldKey = Brand<string, "tree.FieldKey">;
 
@@ -481,6 +494,18 @@ export enum FieldKind {
 
 // @internal
 export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
+
+// @public (undocumented)
+export interface FieldKindIncompatibility {
+    // (undocumented)
+    identifier: string;
+    // (undocumented)
+    mismatch: "fieldKind";
+    // (undocumented)
+    stored: SchemaFactoryFieldKind | undefined;
+    // (undocumented)
+    view: SchemaFactoryFieldKind | undefined;
+}
 
 // @internal
 export const FieldKinds: {
@@ -1077,7 +1102,11 @@ export interface ITransaction {
 
 // @public
 export interface ITree extends IChannel {
+    // (undocumented)
+    initialize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): void;
+    // @deprecated
     schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TreeFieldFromImplicitField<TRoot>>;
+    viewWith<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TreeFieldFromImplicitField<TRoot>>;
 }
 
 // @internal
@@ -1295,11 +1324,24 @@ export interface NodeExistsConstraint {
     violated: boolean;
 }
 
+// @public (undocumented)
+export interface NodeFieldsIncompatibility {
+    // (undocumented)
+    differences: FieldIncompatibility[];
+    // (undocumented)
+    identifier: string;
+    // (undocumented)
+    mismatch: "fields";
+}
+
 // @public
 export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<string, NodeKind, infer TNode> ? TNode : never;
 
 // @beta
 export type NodeFromSchemaUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchema<string, NodeKind, infer TNode> ? TNode : never;
+
+// @public (undocumented)
+export type NodeIncompatibility = NodeTypeIncompatibility | NodeFieldsIncompatibility;
 
 // @internal
 export type NodeIndex = number;
@@ -1325,6 +1367,18 @@ export enum NodeKind {
     Leaf = 3,
     Map = 0,
     Object = 2
+}
+
+// @public (undocumented)
+export interface NodeTypeIncompatibility {
+    // (undocumented)
+    identifier: string;
+    // (undocumented)
+    mismatch: "nodeType";
+    // (undocumented)
+    stored: SchemaFactoryNodeType;
+    // (undocumented)
+    view: SchemaFactoryNodeType;
 }
 
 // @internal
@@ -1548,6 +1602,16 @@ export interface SchemaCollection {
     readonly nodeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, FlexTreeNodeSchema>;
 }
 
+// @public
+export interface SchemaCompatibilityStatus {
+    readonly canInitialize: boolean;
+    readonly canUpgrade: boolean;
+    readonly canView: boolean;
+    readonly differences: NodeIncompatibility[];
+    readonly isExactMatch: boolean;
+    readonly metadata: unknown;
+}
+
 // @internal
 export interface SchemaConfiguration<TRoot extends FlexFieldSchema = FlexFieldSchema> {
     readonly schema: FlexTreeSchema<TRoot>;
@@ -1581,6 +1645,12 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     readonly string: TreeNodeSchema<"com.fluidframework.leaf.string", NodeKind.Leaf, string, string>;
 }
 
+// @public (undocumented)
+export type SchemaFactoryFieldKind = "required" | "optional" | "array";
+
+// @public (undocumented)
+export type SchemaFactoryNodeType = "object" | "array" | "map";
+
 // @beta @sealed
 export class SchemaFactoryRecursive<TScope extends string, TName extends number | string = string> extends SchemaFactory<TScope, TName> {
     arrayRecursive<const Name extends TName, const T extends Unenforced<ImplicitAllowedTypes>>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Array, TreeArrayNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>>, {
@@ -1594,11 +1664,6 @@ export class SchemaFactoryRecursive<TScope extends string, TName extends number 
     }, false, T>;
     objectRecursive<const Name extends TName, const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>>(name: Name, t: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecordUnsafe<T>, false, T>;
     optionalRecursive<const T extends Unenforced<readonly (() => TreeNodeSchema)[]>>(t: T): FieldSchemaUnsafe<FieldKind.Optional, T>;
-}
-
-// @public
-export interface SchemaIncompatible {
-    readonly canUpgrade: boolean;
 }
 
 // @internal
@@ -1815,9 +1880,11 @@ export enum TreeCompressionStrategy {
 
 // @public
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
-    constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>);
+    constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>, metadata?: unknown);
     // (undocumented)
     readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>;
+    // (undocumented)
+    readonly metadata?: unknown;
     // (undocumented)
     readonly schema: TSchema;
 }
@@ -2004,7 +2071,7 @@ export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
 
 // @public
 export interface TreeView<in out TRoot> extends IDisposable {
-    readonly error?: SchemaIncompatible;
+    readonly compatibility: SchemaCompatibilityStatus;
     readonly events: ISubscribable<TreeViewEvents>;
     readonly root: TRoot;
     upgradeSchema(): void;
@@ -2016,6 +2083,7 @@ export interface TreeViewEvents {
     commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
     revertibleDisposed(revertible: Revertible): void;
     rootChanged(): void;
+    schemaChanged(): void;
 }
 
 // @public

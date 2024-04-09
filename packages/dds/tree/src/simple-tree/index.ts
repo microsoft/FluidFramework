@@ -3,7 +3,23 @@
  * Licensed under the MIT License.
  */
 
-export { ITree, TreeView, TreeViewEvents, TreeConfiguration, SchemaIncompatible } from "./tree.js";
+export {
+	ITree,
+	TreeView,
+	TreeViewEvents,
+	TreeConfiguration,
+	SchemaCompatibilityStatus,
+} from "./tree.js";
+export {
+	NodeIncompatibility,
+	NodeFieldsIncompatibility,
+	NodeTypeIncompatibility,
+	SchemaFactoryNodeType,
+	SchemaFactoryFieldKind,
+	FieldIncompatibility,
+	FieldKindIncompatibility,
+	AllowedTypeIncompatibility,
+} from "./treeDiscrepancies.js";
 export {
 	TreeNodeSchema,
 	NodeFromSchema,

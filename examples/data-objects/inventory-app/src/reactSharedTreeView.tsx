@@ -9,7 +9,6 @@ import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
 	ITree,
 	type ImplicitFieldSchema,
-	SchemaIncompatible,
 	TreeConfiguration,
 	TreeFieldFromImplicitField,
 	TreeView,
@@ -17,6 +16,7 @@ import {
 import {
 	configuredSharedTree,
 	typeboxValidator,
+	SchemaCompatibilityStatus,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/internal";
 import * as React from "react";
@@ -122,13 +122,15 @@ function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 	tree: TreeDataObject<TSchema>;
 	viewComponent: React.FC<{ root: TreeFieldFromImplicitField<TSchema> }>;
 	errorComponent?: React.FC<{
-		error: SchemaIncompatible;
+		compatibility: SchemaCompatibilityStatus;
 		upgradeSchema: () => void;
 	}>;
 }) {
 	const view = tree.tree;
 
-	const [error, setError] = React.useState<null | SchemaIncompatible>(null);
+	const [compatibility, setCompatibility] = React.useState<null | SchemaCompatibilityStatus>(
+		null,
+	);
 	const [root, setRoot] = React.useState<null | TreeFieldFromImplicitField<TSchema>>(null);
 
 	React.useEffect(() => {
@@ -136,18 +138,18 @@ function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 
 		const update = () => {
 			if (!ignore) {
-				if (view.error !== undefined) {
-					setError(view.error);
-					setRoot(null);
-				} else {
-					setError(null);
+				setCompatibility(view.compatibility);
+				if (view.compatibility.canView) {
 					setRoot(view.root);
+				} else {
+					setRoot(null);
 				}
 			}
 		};
 
 		update();
 		view.events.on("rootChanged", update);
+		view.events.on("schemaChanged", update);
 
 		return () => {
 			ignore = true;
@@ -155,9 +157,9 @@ function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 		};
 	}, [view]);
 
-	if (error !== null) {
+	if (compatibility !== null && !compatibility.canView) {
 		return React.createElement(errorComponent ?? TreeErrorComponent, {
-			error,
+			compatibility,
 			upgradeSchema: () => view.upgradeSchema(),
 		});
 	}
@@ -173,14 +175,14 @@ function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
  * React component which displays schema errors and allows upgrading schema when possible.
  */
 function TreeErrorComponent({
-	error,
+	compatibility,
 	upgradeSchema,
 }: {
-	error: SchemaIncompatible;
+	compatibility: SchemaCompatibilityStatus;
 	upgradeSchema: () => void;
 }) {
 	// eslint-disable-next-line unicorn/prefer-ternary
-	if (error.canUpgrade) {
+	if (compatibility.canUpgrade) {
 		return (
 			<div>
 				<div>

@@ -526,7 +526,8 @@ describe("SharedTree", () => {
 				await provider.ensureSynchronized();
 				await provider.summarize();
 
-				const view1 = assertSchema(tree1, stringSequenceRootSchema);
+				// TODO: Why wasn't this disposing before? Is that OK?
+				const view1 = assertSchema(tree1, stringSequenceRootSchema, () => {});
 				view1.flexTree.insertAt(0, ["A"]);
 
 				await provider.ensureSynchronized();

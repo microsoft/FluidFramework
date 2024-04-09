@@ -61,6 +61,7 @@ describe("SharedTree op format snapshots", () => {
 		const messages = spyOnFutureMessages(containerRuntime);
 		tree.schematize({
 			schema: Point,
+			metadata: undefined,
 			initialTree: () => new Point({ x: 0, y: 0 }),
 		});
 
@@ -70,6 +71,7 @@ describe("SharedTree op format snapshots", () => {
 	it("field change", () => {
 		const view = tree.schematize({
 			schema: Point,
+			metadata: undefined,
 			initialTree: () => new Point({ x: 0, y: 2 }),
 		});
 

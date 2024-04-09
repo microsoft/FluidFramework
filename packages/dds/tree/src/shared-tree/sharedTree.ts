@@ -49,7 +49,7 @@ import {
 	TreeFieldFromImplicitField,
 	TreeView,
 } from "../simple-tree/index.js";
-import { brand } from "../util/index.js";
+import { brand, disposeSymbol } from "../util/index.js";
 
 import { InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
 import { SchematizingSimpleTreeView, requireSchema } from "./schematizingTreeView.js";
@@ -102,7 +102,7 @@ export interface ISharedTree extends ISharedObject, ITree {
 	contentSnapshot(): SharedTreeContentSnapshot;
 
 	/**
-	 * Like {@link ITree.schematize}, but uses the flex-tree schema system and exposes the tree as a flex-tree.
+	 * Like {@link ITree.viewWith}, but uses the flex-tree schema system and exposes the tree as a flex-tree.
 	 *
 	 * Returned view is disposed when the stored schema becomes incompatible with the view schema.
 	 * Undefined is returned if the stored data could not be made compatible with the view schema.
@@ -282,7 +282,19 @@ export class SharedTree
 		);
 	}
 
+	// TODO: Use other proposed API. Way less awkward.
+	public initialize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): void {
+		const view = this.viewWith(config);
+		view[disposeSymbol]();
+	}
+
 	public schematize<TRoot extends ImplicitFieldSchema>(
+		config: TreeConfiguration<TRoot>,
+	): TreeView<TreeFieldFromImplicitField<TRoot>> {
+		return this.viewWith(config);
+	}
+
+	public viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeConfiguration<TRoot>,
 	): TreeView<TreeFieldFromImplicitField<TRoot>> {
 		const view = new SchematizingSimpleTreeView(
@@ -292,7 +304,7 @@ export class SharedTree
 			brand(defaultNodeKeyFieldKey),
 		);
 		// As a subjective API design choice, we initialize the tree here if it is not already initialized.
-		if (view.error?.canInitialize === true) {
+		if (view.compatibility.canInitialize === true) {
 			view.upgradeSchema();
 		}
 		return view;
