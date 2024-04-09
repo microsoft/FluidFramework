@@ -7,7 +7,9 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import { Multiplicity, rootFieldKey } from "../core/index.js";
 import {
+	FieldKinds,
 	LeafNodeSchema,
+	StableNodeKey,
 	TreeStatus,
 	isTreeValue,
 	valueSchemaAllows,
@@ -28,6 +30,7 @@ import {
 } from "./schemaTypes.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { TreeNode } from "./types.js";
+import { extractFromOpaque } from "../util/index.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -91,6 +94,12 @@ export interface TreeNodeApi {
 	 * Returns the {@link TreeStatus} of the given node.
 	 */
 	readonly status: (node: TreeNode) => TreeStatus;
+
+	/**
+	 * If the given node has an identifier specified by a field of kind "identifier" then this returns the compressed form of that identifier.
+	 * Otherwise returns undefined.
+	 */
+	shortId(node: TreeNode): number | undefined;
 }
 
 /**
@@ -180,6 +189,19 @@ export const treeNodeApi: TreeNodeApi = {
 			unknown,
 			T
 		>;
+	},
+	shortId(node: TreeNode): number | undefined {
+		const flexNode = getFlexNode(node);
+		for (const field of flexNode.boxedIterator()) {
+			if (field.schema.kind === FieldKinds.identifier) {
+				const identifier = field.boxedAt(0);
+				assert(identifier !== undefined, "The identifier must exist");
+
+				return extractFromOpaque(
+					identifier.context.nodeKeys.localize(identifier.value as StableNodeKey),
+				);
+			}
+		}
 	},
 };
 

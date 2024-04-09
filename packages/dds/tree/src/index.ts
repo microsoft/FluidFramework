@@ -254,6 +254,7 @@ export {
 	buildTreeConfiguration,
 	ISharedTreeEditor,
 	ISchemaEditor,
+	RevertibleFactory,
 	SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
 	Tree,
@@ -386,6 +387,7 @@ export {
 	Required,
 	Optional,
 	NodeKeyFieldKind,
+	Identifier,
 	Forbidden,
 	Sequence,
 } from "./feature-libraries/index.js";

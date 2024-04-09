@@ -22,6 +22,7 @@ export {
 	CheckoutEvents,
 	ITransaction,
 	ITreeCheckoutFork,
+	RevertibleFactory,
 } from "./treeCheckout.js";
 
 export {

@@ -114,6 +114,7 @@ import {
 	ISharedTree,
 	ITreeCheckout,
 	InitializeAndSchematizeConfiguration,
+	RevertibleFactory,
 	SharedTree,
 	SharedTreeContentSnapshot,
 	SharedTreeFactory,
@@ -1070,12 +1071,7 @@ export function rootFromDeltaFieldMap(
 	return rootDelta;
 }
 
-export function createTestUndoRedoStacks(
-	events: ISubscribable<{
-		commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
-		revertibleDisposed(revertible: Revertible, revision: RevisionTag): void;
-	}>,
-): {
+export function createTestUndoRedoStacks(events: ISubscribable<CheckoutEvents>): {
 	undoStack: Revertible[];
 	redoStack: Revertible[];
 	unsubscribe: () => void;
@@ -1083,32 +1079,32 @@ export function createTestUndoRedoStacks(
 	const undoStack: Revertible[] = [];
 	const redoStack: Revertible[] = [];
 
-	const unsubscribeFromNew = events.on("commitApplied", ({ kind }, getRevertible) => {
+	function onDispose(disposed: Revertible): void {
+		const redoIndex = redoStack.indexOf(disposed);
+		if (redoIndex !== -1) {
+			redoStack.splice(redoIndex, 1);
+		} else {
+			const undoIndex = undoStack.indexOf(disposed);
+			if (undoIndex !== -1) {
+				undoStack.splice(undoIndex, 1);
+			}
+		}
+	}
+
+	function onNewCommit(commit: CommitMetadata, getRevertible?: RevertibleFactory): void {
 		if (getRevertible !== undefined) {
-			const revertible = getRevertible();
-			if (kind === CommitKind.Undo) {
+			const revertible = getRevertible(onDispose);
+			if (commit.kind === CommitKind.Undo) {
 				redoStack.push(revertible);
 			} else {
 				undoStack.push(revertible);
 			}
 		}
-	});
+	}
 
-	const unsubscribeFromDisposed = events.on("revertibleDisposed", (revertible) => {
-		const redoIndex = redoStack.indexOf(revertible);
-		if (redoIndex !== -1) {
-			redoStack.splice(redoIndex, 1);
-		} else {
-			const undoIndex = undoStack.indexOf(revertible);
-			if (undoIndex !== -1) {
-				undoStack.splice(undoIndex, 1);
-			}
-		}
-	});
-
+	const unsubscribeFromCommitApplied = events.on("commitApplied", onNewCommit);
 	const unsubscribe = () => {
-		unsubscribeFromNew();
-		unsubscribeFromDisposed();
+		unsubscribeFromCommitApplied();
 		for (const revertible of undoStack) {
 			revertible[disposeSymbol]();
 		}
@@ -1199,13 +1195,14 @@ export function treeTestFactory(
  */
 export function getView<TSchema extends ImplicitFieldSchema>(
 	config: TreeConfiguration<TSchema>,
+	nodeKeyManager?: NodeKeyManager,
 ): SchematizingSimpleTreeView<TSchema> {
 	const flexConfig = toFlexConfig(config);
 	const checkout = checkoutWithContent(flexConfig);
 	return new SchematizingSimpleTreeView<TSchema>(
 		checkout,
 		config,
-		createMockNodeKeyManager(),
+		nodeKeyManager ?? createMockNodeKeyManager(),
 		brand(defaultNodeKeyFieldKey),
 	);
 }
