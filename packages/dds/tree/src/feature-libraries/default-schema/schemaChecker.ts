@@ -23,6 +23,10 @@ export const enum SchemaValidationErrors {
 	LeafNodeWithNoValue,
 	LeafNodeWithFields,
 	LeafNodeValueNotAllowed,
+	SchemaNotInSchemaCollection,
+	FieldKindNotInSchemaPolicy,
+	IncorrectMultiplicity,
+	NodeTypeNotAllowedInField,
 	UnknownError,
 }
 
@@ -99,24 +103,24 @@ export function isFieldInSchema(
 	// Validate that the field kind is handled by the schema policy
 	const kind = schemaPolicy.fieldKinds.get(schema.kind);
 	if (kind === undefined) {
-		return SchemaValidationErrors.UnknownError;
+		return SchemaValidationErrors.FieldKindNotInSchemaPolicy;
 	}
 
 	// Validate that the field doesn't contain more nodes than its type supports
 	if (!compliesWithMultiplicity(childNodes.length, kind.multiplicity)) {
-		return SchemaValidationErrors.UnknownError;
+		return SchemaValidationErrors.IncorrectMultiplicity;
 	}
 
 	for (const node of childNodes) {
 		// Validate the type declared by the node is allowed in this field
 		if (schema.types !== undefined && !schema.types.has(node.type)) {
-			return SchemaValidationErrors.UnknownError;
+			return SchemaValidationErrors.NodeTypeNotAllowedInField;
 		}
 
 		// Validate the node complies with the type it declares to be.
 		const nodeSchema = nodeSchemaCollection.nodeSchema.get(node.type);
 		if (nodeSchema === undefined) {
-			return SchemaValidationErrors.UnknownError;
+			return SchemaValidationErrors.SchemaNotInSchemaCollection;
 		}
 		const nodeInSchemaResult = isNodeInSchema(
 			node,
