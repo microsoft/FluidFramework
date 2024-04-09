@@ -449,10 +449,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 								);
 								this.revertRevertible(revision, data.kind);
 								if (release) {
-									revertible.release();
+									revertible[disposeSymbol]();
 								}
 							},
-							release: () => revertible.dispose(),
+							[disposeSymbol]: () => revertible.dispose(),
 							dispose: () => {
 								assert(
 									revertible.status === RevertibleStatus.Valid,
