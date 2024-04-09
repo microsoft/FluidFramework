@@ -18,7 +18,6 @@ import {
 	DDSFuzzSuiteOptions,
 	DDSFuzzTestState,
 	createDDSFuzzSuite,
-	type UseHandle,
 } from "@fluid-private/test-dds-utils";
 import {
 	IChannelAttributes,
@@ -28,6 +27,7 @@ import {
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
+import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 import { SharedMatrix } from "../matrix.js";
 import { MatrixItem } from "../ops.js";
 import { SharedMatrixFactory } from "../runtime.js";
@@ -37,7 +37,7 @@ import { _dirname } from "./dirname.cjs";
 /**
  * Supported cell values used within the fuzz model.
  */
-type Value = string | number | undefined | IFluidHandle;
+type Value = string | number | undefined | Serializable<unknown>;
 
 interface RangeSpec {
 	start: number;
@@ -67,7 +67,7 @@ interface SetCell {
 	value: MatrixItem<Value>;
 }
 
-type Operation = InsertRows | InsertColumns | RemoveRows | RemoveColumns | SetCell | UseHandle;
+type Operation = InsertRows | InsertColumns | RemoveRows | RemoveColumns | SetCell;
 
 /**
  * @remarks - This makes the DDS fuzz harness typecheck state fields as SharedMatrix<Value> instead of IChannel,
@@ -108,7 +108,7 @@ async function assertMatricesAreEquivalent<T>(a: SharedMatrix<T>, b: SharedMatri
 				const bObj: FluidObject<IFluidHandle> = bVal as FluidObject<IFluidHandle>;
 				const aHandle = aObj.IFluidHandle ? aObj.IFluidHandle?.get() : aObj;
 				const bHandle = bObj.IFluidHandle ? bObj.IFluidHandle?.get() : bObj;
-				assert.equal(
+				assert.deepEqual(
 					aHandle,
 					bHandle,
 					`${a.id} and ${b.id} differ at (${row}, ${col}): ${JSON.stringify(
@@ -141,16 +141,6 @@ const reducer = combineReducers<Operation, State>({
 	},
 	set: ({ client }, { row, col, value }) => {
 		client.channel.setCell(row, col, value);
-	},
-	useHandle: ({ random, client }, { handle }) => {
-		if (client.channel.rowCount >= 1 && client.channel.colCount >= 1 && random.bool(0.4)) {
-			const minRow = client.channel.rowCount - 1 > 0 ? client.channel.rowCount - 1 : 0;
-			const minCol = client.channel.colCount - 1 > 0 ? client.channel.colCount - 1 : 0;
-
-			const row = random.integer(0, minRow);
-			const col = random.integer(0, minCol);
-			client.channel.setCell(row, col, handle);
-		}
 	},
 });
 
@@ -220,7 +210,11 @@ function makeGenerator(optionsParam?: Partial<GeneratorOptions>): AsyncGenerator
 		type: "set",
 		row: random.integer(0, client.channel.rowCount - 1),
 		col: random.integer(0, client.channel.colCount - 1),
-		value: random.bool() ? random.integer(1, 50) : random.string(random.integer(1, 2)),
+		value: random.pick([
+			(): number => random.integer(1, 50),
+			(): string => random.string(random.integer(1, 2)),
+			(): IFluidHandle => random.handle(),
+		])(),
 	});
 
 	const syncGenerator = createWeightedGenerator<Operation, State>([
@@ -266,7 +260,6 @@ describe.only("Matrix fuzz tests", function () {
 	const baseOptions: Partial<DDSFuzzSuiteOptions> = {
 		defaultTestCount: 100,
 		numberOfClients: 3,
-		handleGenerationDisabled: false,
 		clientJoinOptions: {
 			maxNumberOfClients: 6,
 			clientAddProbability: 0.1,

@@ -18,10 +18,11 @@ import {
 	DDSFuzzModel,
 	DDSFuzzTestState,
 	createDDSFuzzSuite,
-	UseHandle,
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
+import type { Serializable } from "@fluidframework/datastore-definitions/internal";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { DirectoryFactory, IDirectory } from "../../index.js";
 
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
@@ -33,7 +34,7 @@ interface SetKey {
 	type: "set";
 	path: string;
 	key: string;
-	value: string;
+	value: Serializable<unknown>;
 }
 
 interface ClearKeys {
@@ -59,7 +60,7 @@ interface DeleteSubDirectory {
 	name: string;
 }
 
-type KeyOperation = SetKey | DeleteKey | ClearKeys | UseHandle;
+type KeyOperation = SetKey | DeleteKey | ClearKeys;
 
 type SubDirectoryOperation = CreateSubDirectory | DeleteSubDirectory;
 
@@ -200,7 +201,10 @@ function makeOperationGenerator(
 			type: "set",
 			key: random.pick(options.keyNamePool),
 			path: pickAbsolutePathForKeyOps(state, false),
-			value: random.string(random.integer(0, 4)),
+			value: random.pick([
+				(): string => random.string(random.integer(0, 4)),
+				(): IFluidHandle => random.handle(),
+			])(),
 		};
 	}
 
@@ -312,13 +316,6 @@ function makeReducer(loggingInfo?: LoggingInfo): AsyncReducer<Operation, FuzzTes
 			assert(dir);
 			dir.delete(key);
 		},
-		useHandle: async (state, { handle }) => {
-			const dir = state.client.channel.getWorkingDirectory(
-				pickAbsolutePathForKeyOps(state, true),
-			);
-			assert(dir);
-			dir.set(state.random.pick(defaultOptions.keyNamePool), handle);
-		},
 	});
 
 	return withLogging(reducer);
@@ -347,7 +344,7 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 		validationStrategy: { type: "fixedInterval", interval: defaultOptions.validateInterval },
 		reconnectProbability: 0.15,
 		numberOfClients: 3,
-		handleGenerationDisabled: false,
+		handleGenerationDisabled: true,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
 			clientAddProbability: 0.08,
@@ -368,7 +365,7 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 			},
 			rebaseProbability: 0.2,
 			reconnectProbability: 0.5,
-			handleGenerationDisabled: false,
+			handleGenerationDisabled: true,
 			containerRuntimeOptions: {
 				flushMode: FlushMode.TurnBased,
 				enableGroupedBatching: true,
@@ -402,7 +399,6 @@ describe("SharedDirectory fuzz", () => {
 		validationStrategy: { type: "fixedInterval", interval: defaultOptions.validateInterval },
 		reconnectProbability: 0.15,
 		numberOfClients: 3,
-		handleGenerationDisabled: false,
 		clientJoinOptions: {
 			// Note: if tests are slow, we may want to tune this down. This mimics behavior before this suite
 			// was refactored to use the DDS fuzz harness.
@@ -425,7 +421,6 @@ describe("SharedDirectory fuzz", () => {
 			},
 			rebaseProbability: 0.2,
 			reconnectProbability: 0.5,
-			handleGenerationDisabled: false,
 			containerRuntimeOptions: {
 				flushMode: FlushMode.TurnBased,
 				enableGroupedBatching: true,
