@@ -183,8 +183,6 @@ describe.only("schema validation", () => {
 						const expectedResult =
 							testCaseData.positiveNodeType === node
 								? SchemaValidationErrors.NoError
-								: node === undefinedNode
-								? SchemaValidationErrors.LeafNode_MissingValue
 								: SchemaValidationErrors.LeafNode_InvalidValue;
 						const title =
 							expectedResult === SchemaValidationErrors.NoError

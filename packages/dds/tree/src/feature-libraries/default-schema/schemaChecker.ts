@@ -21,7 +21,6 @@ export const enum SchemaValidationErrors {
 	Field_KindNotInSchemaPolicy,
 	Field_IncorrectMultiplicity,
 	Field_NodeTypeNotAllowed,
-	LeafNode_MissingValue,
 	LeafNode_InvalidValue,
 	LeafNode_FieldsNotAllowed,
 	ObjectNode_FieldCountMismatch,
@@ -44,9 +43,6 @@ export function isNodeInSchema(
 	// Validate the node is well formed according to its schema
 
 	if (schema instanceof LeafNodeStoredSchema) {
-		if (node.value === undefined) {
-			return SchemaValidationErrors.LeafNode_MissingValue;
-		}
 		if (node.fields.size !== 0) {
 			return SchemaValidationErrors.LeafNode_FieldsNotAllowed;
 		}
