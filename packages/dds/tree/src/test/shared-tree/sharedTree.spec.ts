@@ -1146,7 +1146,7 @@ describe("SharedTree", () => {
 					"commitApplied",
 					({ kind }, getRevertible) => {
 						if (kind !== CommitKind.Undo && getRevertible !== undefined) {
-							undos.push(getRevertible(() => {}));
+							undos.push(getRevertible());
 						}
 					},
 				);

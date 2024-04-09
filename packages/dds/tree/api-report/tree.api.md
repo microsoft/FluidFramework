@@ -1499,7 +1499,7 @@ export interface Revertible {
 export type RevertibleDisposedCallback = (disposed: Revertible) => void;
 
 // @public
-export type RevertibleFactory = (onRevertibleDisposed: RevertibleDisposedCallback) => Revertible;
+export type RevertibleFactory = (onRevertibleDisposed?: RevertibleDisposedCallback) => Revertible;
 
 // @public
 export enum RevertibleStatus {

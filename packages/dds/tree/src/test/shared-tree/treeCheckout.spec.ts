@@ -798,7 +798,7 @@ describe("sharedTreeView", () => {
 			const revertiblesCreated: Revertible[] = [];
 			const unsubscribe = view.events.on("commitApplied", (_, getRevertible) => {
 				assert(getRevertible !== undefined, "commit should be revertible");
-				const revertible = getRevertible(() => {});
+				const revertible = getRevertible();
 				assert.equal(revertible.status, RevertibleStatus.Valid);
 				revertiblesCreated.push(revertible);
 			});
@@ -870,7 +870,7 @@ describe("sharedTreeView", () => {
 
 				insertFirstNode(view, "A");
 				assert(acquireRevertible !== undefined);
-				assert.throws(() => acquireRevertible?.(() => {}));
+				assert.throws(() => acquireRevertible?.());
 				unsubscribe();
 			},
 		);
@@ -879,13 +879,13 @@ describe("sharedTreeView", () => {
 			const revertiblesCreated: Revertible[] = [];
 			const unsubscribe1 = view.events.on("commitApplied", (_, getRevertible) => {
 				assert(getRevertible !== undefined, "commit should be revertible");
-				const revertible = getRevertible(() => {});
+				const revertible = getRevertible();
 				assert.equal(revertible.status, RevertibleStatus.Valid);
 				revertiblesCreated.push(revertible);
 			});
 			const unsubscribe2 = view.events.on("commitApplied", (_, getRevertible) => {
 				assert(getRevertible !== undefined, "commit should be revertible");
-				assert.throws(() => getRevertible(() => {}));
+				assert.throws(() => getRevertible());
 			});
 
 			insertFirstNode(view, "A");
@@ -897,7 +897,7 @@ describe("sharedTreeView", () => {
 			const revertiblesCreated: Revertible[] = [];
 			const unsubscribe = view.events.on("commitApplied", (_, getRevertible) => {
 				assert(getRevertible !== undefined, "commit should be revertible");
-				const r = getRevertible(() => {});
+				const r = getRevertible();
 				assert.equal(r.status, RevertibleStatus.Valid);
 				revertiblesCreated.push(r);
 			});
@@ -922,7 +922,7 @@ describe("sharedTreeView", () => {
 			const commitKinds: CommitKind[] = [];
 			const unsubscribe = view.events.on("commitApplied", ({ kind }, getRevertible) => {
 				assert(getRevertible !== undefined, "commit should be revertible");
-				const revertible = getRevertible(() => {});
+				const revertible = getRevertible();
 				assert.equal(revertible.status, RevertibleStatus.Valid);
 				revertiblesCreated.push(revertible);
 				commitKinds.push(kind);
