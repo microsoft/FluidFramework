@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { ParallelRequests } from "../parallelRequests.js";
 

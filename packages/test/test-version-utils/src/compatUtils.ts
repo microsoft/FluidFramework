@@ -4,6 +4,7 @@
  */
 
 import { mixinAttributor } from "@fluid-experimental/attributor";
+import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/test-drivers";
 import {
 	IContainerRuntimeOptions,
@@ -25,7 +26,6 @@ import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/internal";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import {
 	ITestContainerConfig,
 	DataObjectFactoryType,
@@ -33,7 +33,7 @@ import {
 	createTestContainerRuntimeFactory,
 	TestObjectProvider,
 	TestObjectProviderWithVersionedLoad,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import * as semver from "semver";
 
 import { pkgVersion } from "./packageVersion.js";
@@ -124,8 +124,9 @@ function filterRuntimeOptionsForVersion(
 		options = {
 			compressionOptions: compressorDisabled, // Can't use compression, need https://github.com/microsoft/FluidFramework/pull/20111 fix
 			enableGroupedBatching,
-			// Can't track it down, but enabling Id Compressor for this config results in small number of t9s tests to timeout.
-			enableRuntimeIdCompressor,
+			// control over schema was generalized in RC3 - see https://github.com/microsoft/FluidFramework/pull/20174
+			// IdCompressor settings moved around - can't enable them across versions without tripping on asserts
+			enableRuntimeIdCompressor: undefined,
 			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disabled, need https://github.com/microsoft/FluidFramework/pull/20115 fix
 			...options,
 		};
@@ -334,7 +335,14 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 	assert(versionForLoading !== undefined, "versionForLoading");
 
 	const minVersion =
-		semver.compare(versionForCreating, versionForLoading) < 0
+		// First, check if any of the versions is current version of the package.
+		// Current versions show up in the form of "2.0.0-dev-rc.3.0.0.251800", and semver.compare()
+		// incorrectly compares them with prior minors, like "2.0.0-rc.2.0.1"
+		versionForLoading === pkgVersion
+			? versionForCreating
+			: versionForCreating === pkgVersion
+			? versionForLoading
+			: semver.compare(versionForCreating, versionForLoading) < 0
 			? versionForCreating
 			: versionForLoading;
 
@@ -386,5 +394,14 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		driverForLoading,
 		createContainerFactoryFn,
 		loadContainerFactoryFn,
+		// telemetry props
+		{
+			all: {
+				testType: "TestObjectProviderWithVersionedLoad",
+				testCreateVersion: versionForCreating,
+				testLoadVersion: versionForLoading,
+				testRuntimeOptionsVersion: minVersion,
+			},
+		},
 	);
 }

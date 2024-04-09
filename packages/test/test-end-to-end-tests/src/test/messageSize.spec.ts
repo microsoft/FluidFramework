@@ -22,7 +22,7 @@ import {
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
-import { GenericError } from "@fluidframework/telemetry-utils";
+import { GenericError } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -30,7 +30,7 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
@@ -639,7 +639,8 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 
 			it("Reconnects while sending chunks", async function () {
 				// This is not supported by the local server. See ADO:2690
-				if (provider.driver.type === "local") {
+				// This test is flaky on tinylicious. See ADO:7669
+				if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
 					this.skip();
 				}
 

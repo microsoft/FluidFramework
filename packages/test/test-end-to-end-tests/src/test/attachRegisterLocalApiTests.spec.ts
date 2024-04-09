@@ -24,7 +24,7 @@ import {
 	TestFluidObject,
 	TestFluidObjectFactory,
 	createDocumentId,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 /*
 Context no longer provides observability point to when context changes its attach states

@@ -5,7 +5,7 @@
 
 import { IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
 import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree/internal";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { SharedStringFactory } from "../../sequenceFactory.js";
 import { SharedString } from "../../sharedString.js";
@@ -38,7 +38,7 @@ describe("SharedString memory usage", () => {
 			title = "Create empty SharedString";
 			minSampleCount = 500;
 
-			private sharedString = createLocalSharedString("testSharedString");
+			sharedString = createLocalSharedString("testSharedString");
 
 			async run() {
 				this.sharedString = createLocalSharedString("testSharedString");

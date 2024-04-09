@@ -4,7 +4,7 @@
  */
 
 import { assert, Timer } from "@fluidframework/core-utils/internal";
-import { validatePrecondition } from "@fluidframework/telemetry-utils";
+import { validatePrecondition } from "@fluidframework/telemetry-utils/internal";
 
 import { UnreferencedState } from "./gcDefinitions.js";
 

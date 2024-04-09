@@ -13,7 +13,7 @@ import {
 	IPersistedCache,
 	ISocketStorageDiscovery,
 	getKeyForCacheEntry,
-} from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/odsp-driver-definitions/internal";
 
 /**
  * Similar to IPersistedCache, but exposes cache interface for single file

@@ -22,7 +22,7 @@ import {
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
 } from '@fluidframework/runtime-definitions';
-import { DataProcessingError, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
+import { DataProcessingError, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils/internal';
 import { type ITree } from '@fluidframework/tree';
 
 import {

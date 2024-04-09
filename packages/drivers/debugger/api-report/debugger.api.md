@@ -11,8 +11,8 @@ import { IDocumentStorageService } from '@fluidframework/driver-definitions/inte
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
-import { ReadDocumentStorageServiceBase } from '@fluidframework/replay-driver';
-import { ReplayController } from '@fluidframework/replay-driver';
+import { ReadDocumentStorageServiceBase } from '@fluidframework/replay-driver/internal';
+import { ReplayController } from '@fluidframework/replay-driver/internal';
 
 // @internal (undocumented)
 export class DebuggerUI {

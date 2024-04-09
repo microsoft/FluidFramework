@@ -12,7 +12,7 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
-import { UsageError } from "@fluidframework/telemetry-utils";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { ICodecOptions, noopValidator } from "../codec/index.js";
 import {
@@ -42,13 +42,7 @@ import {
 	makeTreeChunker,
 } from "../feature-libraries/index.js";
 import { ExplicitCoreCodecVersions, SharedTreeCore } from "../shared-tree-core/index.js";
-import {
-	ITree,
-	ImplicitFieldSchema,
-	TreeConfiguration,
-	TreeFieldFromImplicitField,
-	TreeView,
-} from "../simple-tree/index.js";
+import { ITree, ImplicitFieldSchema, TreeConfiguration, TreeView } from "../simple-tree/index.js";
 import { brand } from "../util/index.js";
 
 import { InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
@@ -238,16 +232,21 @@ export class SharedTree
 		);
 		this._events = createEmitter<CheckoutEvents>();
 		const localBranch = this.getLocalBranch();
-		this.checkout = createTreeCheckout(runtime.idCompressor, revisionTagCodec, {
-			branch: localBranch,
-			changeFamily,
-			schema,
-			forest,
-			fieldBatchCodec,
-			events: this._events,
-			removedRoots,
-			chunkCompressionStrategy: options.treeEncodeType,
-		});
+		this.checkout = createTreeCheckout(
+			runtime.idCompressor,
+			this.mintRevisionTag,
+			revisionTagCodec,
+			{
+				branch: localBranch,
+				changeFamily,
+				schema,
+				forest,
+				fieldBatchCodec,
+				events: this._events,
+				removedRoots,
+				chunkCompressionStrategy: options.treeEncodeType,
+			},
+		);
 	}
 
 	public contentSnapshot(): SharedTreeContentSnapshot {
@@ -284,7 +283,7 @@ export class SharedTree
 
 	public schematize<TRoot extends ImplicitFieldSchema>(
 		config: TreeConfiguration<TRoot>,
-	): TreeView<TreeFieldFromImplicitField<TRoot>> {
+	): TreeView<TRoot> {
 		const view = new SchematizingSimpleTreeView(
 			this.checkout,
 			config,

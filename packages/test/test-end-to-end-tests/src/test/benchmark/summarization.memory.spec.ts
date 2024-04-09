@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
-import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
+import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 const defaultDataStoreId = "default";
 const testContainerConfig: ITestContainerConfig = {

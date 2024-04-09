@@ -10,7 +10,7 @@ import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { SharedSegmentSequenceUndoRedoHandler } from "../sequenceHandler.js";
 import { UndoRedoStackManager } from "../undoRedoStackManager.js";

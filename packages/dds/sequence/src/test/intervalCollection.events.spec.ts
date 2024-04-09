@@ -12,7 +12,7 @@ import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { IIntervalCollection } from "../intervalCollection.js";
 import { SequenceInterval } from "../intervals/index.js";
@@ -44,7 +44,7 @@ describe("SharedString interval collection event spec", () => {
 
 		// Connect the first SharedString.
 		dataStoreRuntime1.setAttachState(AttachState.Attached);
-		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		const services1 = {
 			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 			objectStorage: new MockStorage(),
@@ -54,7 +54,7 @@ describe("SharedString interval collection event spec", () => {
 
 		// Create and connect a second SharedString.
 		const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-		const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 		const services2 = {
 			deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 			objectStorage: new MockStorage(),

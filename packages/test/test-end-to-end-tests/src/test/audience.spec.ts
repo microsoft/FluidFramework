@@ -13,7 +13,7 @@ import {
 	getContainerEntryPointBackCompat,
 	timeoutPromise,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, apis) => {
 	class TestDataObject extends apis.dataRuntime.DataObject {

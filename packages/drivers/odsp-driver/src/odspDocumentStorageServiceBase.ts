@@ -14,9 +14,9 @@ import {
 	ISummaryContext,
 	LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions/internal";
-import { maximumCacheDurationMs } from "@fluidframework/odsp-driver-definitions";
+import { maximumCacheDurationMs } from "@fluidframework/odsp-driver-definitions/internal";
 import * as api from "@fluidframework/protocol-definitions";
-import { IConfigProvider } from "@fluidframework/telemetry-utils";
+import { IConfigProvider } from "@fluidframework/telemetry-utils/internal";
 
 class BlobCache {
 	// Save the timeout so we can cancel and reschedule it as needed

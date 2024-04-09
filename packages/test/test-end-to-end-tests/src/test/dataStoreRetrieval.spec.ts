@@ -12,7 +12,7 @@ import {
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 /**
  * These tests retrieve a data store after its creation but at different stages of visibility.

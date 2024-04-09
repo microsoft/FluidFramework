@@ -14,7 +14,10 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { type IChannel } from "@fluidframework/datastore-definitions";
-import { type ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
+import {
+	type ITestObjectProvider,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 import {
 	type ITree,
 	SchemaFactory,
@@ -34,7 +37,7 @@ describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider, a
 		handle: builder.optional(builder.handle),
 	}) {}
 
-	function getNewTreeView(tree: ITree): TreeView<HandleType> {
+	function getNewTreeView(tree: ITree): TreeView<typeof HandleType> {
 		return tree.schematize(
 			new TreeConfiguration(HandleType, () => ({
 				handle: undefined,

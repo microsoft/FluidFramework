@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ValueNodeBase } from "@fluidframework/devtools-core";
+import type { ValueNodeBase } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
 import type { DataVisualizationTreeProps } from "./CommonInterfaces.js";
@@ -27,6 +27,7 @@ export function ValueView(props: ValueViewProps): React.ReactElement {
 			label={label}
 			nodeTypeMetadata={node.typeMetadata}
 			inlineValue={String(node.value)}
+			tooltipContents={node.tooltipContents}
 			metadata={metadata}
 		/>
 	);

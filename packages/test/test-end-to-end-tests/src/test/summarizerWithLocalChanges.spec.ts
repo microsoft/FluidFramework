@@ -17,7 +17,7 @@ import {
 	ISummarizeEventProps,
 	defaultMaxAttemptsForSubmitFailures,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-runtime/test/summary";
+} from "@fluidframework/container-runtime/internal/test/summary";
 import {
 	IFluidHandle,
 	ITelemetryBaseEvent,
@@ -27,7 +27,7 @@ import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
 	createSummarizer,
@@ -36,7 +36,7 @@ import {
 	summarizeNow,
 	timeoutAwait,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 const configProvider = createTestConfigProvider();
 

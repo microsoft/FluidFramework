@@ -11,7 +11,7 @@
 @fluid-private/test-pairwise-generator
 @fluid-private/test-end-to-end-tests
 @fluid-private/test-drivers
-@fluidframework/test-driver-definitions
+@fluid-internal/test-driver-definitions
 @fluid-internal/test-app-insights-logger
 @fluid-private/stochastic-test-utils
 @fluid-internal/mocha-test-setup
@@ -39,6 +39,7 @@
 fluid-framework
 @fluid-experimental/dds-interceptions
 @fluid-experimental/data-object-base
+@fluidframework/fluid-telemetry
 @fluidframework/app-insights-logger
 @fluid-experimental/attributor
 @fluidframework/aqueduct

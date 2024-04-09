@@ -3,28 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { Uint8ArrayToString, bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentStorageService,
+	type ISnapshot,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	CombinedAppAndProtocolSummary,
 	DeltaStreamConnectionForbiddenError,
 	isCombinedAppAndProtocolSummary,
 	readAndParse,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import {
 	IDocumentAttributes,
 	ISnapshotTree,
 	ISummaryTree,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { LoggingError, UsageError } from "@fluidframework/telemetry-utils";
+import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { ISerializableBlobContents } from "./containerStorageAdapter.js";
 import type {
 	IPendingDetachedContainerState,
+	ISnapshotInfo,
 	SnapshotWithBlobs,
 } from "./serializedStateManager.js";
 
@@ -167,6 +171,51 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBl
 	}
 	const pendingSnapshot = { baseSnapshot: treeNode, snapshotBlobs: blobContents };
 	return pendingSnapshot;
+}
+
+/**
+ * Converts a snapshot to snapshotInfo with its blob contents
+ * to align detached container format with IPendingContainerState
+ *
+ * Note, this assumes the ISnapshot sequence number is defined. Otherwise an assert will be thrown
+ * @param snapshot - ISnapshot
+ */
+export function convertSnapshotToSnapshotInfo(snapshot: ISnapshot): ISnapshotInfo {
+	assert(snapshot.sequenceNumber !== undefined, "Snapshot sequence number is missing");
+	const snapshotBlobs: ISerializableBlobContents = {};
+	for (const [blobId, arrayBufferLike] of snapshot.blobContents.entries()) {
+		snapshotBlobs[blobId] = bufferToString(arrayBufferLike, "utf8");
+	}
+	return {
+		baseSnapshot: snapshot.snapshotTree,
+		snapshotBlobs,
+		snapshotSequenceNumber: snapshot.sequenceNumber,
+	};
+}
+
+/**
+ * Converts a snapshot to snapshotInfo with its blob contents
+ * to align detached container format with IPendingContainerState
+ *
+ * Note, this assumes the ISnapshot sequence number is defined. Otherwise an assert will be thrown
+ * @param snapshot - ISnapshot
+ */
+export function convertSnapshotInfoToSnapshot(
+	snapshotInfo: ISnapshotInfo,
+	snapshotSequenceNumber: number,
+): ISnapshot {
+	const blobContents = new Map<string, ArrayBufferLike>();
+	for (const [blobId, serializedContent] of Object.entries(snapshotInfo.snapshotBlobs)) {
+		blobContents.set(blobId, stringToBuffer(serializedContent, "utf8"));
+	}
+	return {
+		snapshotTree: snapshotInfo.baseSnapshot,
+		blobContents,
+		ops: [],
+		sequenceNumber: snapshotSequenceNumber,
+		latestSequenceNumber: undefined,
+		snapshotFormatV: 1,
+	};
 }
 
 /**

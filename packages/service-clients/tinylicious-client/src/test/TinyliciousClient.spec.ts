@@ -23,8 +23,8 @@ import { type ContainerSchema, type IFluidContainer } from "@fluidframework/flui
 import { SharedMap } from "@fluidframework/map";
 import { SharedDirectory } from "@fluidframework/map/internal";
 import { type ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
-import { timeoutPromise } from "@fluidframework/test-utils";
-import { InsecureTinyliciousTokenProvider } from "@fluidframework/tinylicious-driver";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
+import { InsecureTinyliciousTokenProvider } from "@fluidframework/tinylicious-driver/internal";
 
 import { TinyliciousClient } from "../index.js";
 

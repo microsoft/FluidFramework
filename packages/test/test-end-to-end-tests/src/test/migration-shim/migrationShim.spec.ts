@@ -26,7 +26,7 @@ import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import {
 	type ITree,
 	SchemaFactory,
@@ -43,7 +43,7 @@ const builder = new SchemaFactory("test");
 class RootType extends builder.object("abc", {
 	quantity: builder.number,
 }) {}
-function getNewTreeView(tree: ITree): TreeView<RootType> {
+function getNewTreeView(tree: ITree): TreeView<typeof RootType> {
 	return tree.schematize(
 		new TreeConfiguration(RootType, () => ({
 			quantity: 0,

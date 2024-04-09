@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { MockHandle, validateAssertionError } from "@fluidframework/test-runtime-utils";
+import { MockHandle, validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import type { ImplicitAllowedTypes } from "../../../dist/index.js";
 import { EmptyKey, type FieldKey, type MapTree } from "../../core/index.js";
@@ -329,6 +329,24 @@ describe("toMapTree", () => {
 	});
 
 	describe("object", () => {
+		it("Empty object", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const schema = schemaFactory.object("object", {
+				a: schemaFactory.optional(schemaFactory.number),
+			});
+
+			const tree = {};
+
+			const actual = nodeDataToMapTree(tree, [schema]);
+
+			const expected: MapTree = {
+				type: brand("test.object"),
+				fields: new Map<FieldKey, MapTree[]>(),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
 		it("Non-empty object", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const schema = schemaFactory.object("object", {
@@ -362,19 +380,35 @@ describe("toMapTree", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("Empty object", () => {
+		it("Object with stored field keys specified", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const schema = schemaFactory.object("object", {
-				a: schemaFactory.optional(schemaFactory.number),
+				a: schemaFactory.required(schemaFactory.string, { key: "foo" }),
+				b: schemaFactory.optional(schemaFactory.number, { key: "bar" }),
+				c: schemaFactory.boolean,
+				d: schemaFactory.optional(schemaFactory.number),
 			});
 
-			const tree = {};
+			const tree = {
+				a: "Hello world",
+				b: 42,
+				c: false,
+				d: 37,
+			};
 
 			const actual = nodeDataToMapTree(tree, [schema]);
 
 			const expected: MapTree = {
 				type: brand("test.object"),
-				fields: new Map<FieldKey, MapTree[]>(),
+				fields: new Map<FieldKey, MapTree[]>([
+					[
+						brand("foo"),
+						[{ type: leaf.string.name, value: "Hello world", fields: new Map() }],
+					],
+					[brand("bar"), [{ type: leaf.number.name, value: 42, fields: new Map() }]],
+					[brand("c"), [{ type: leaf.boolean.name, value: false, fields: new Map() }]],
+					[brand("d"), [{ type: leaf.number.name, value: 37, fields: new Map() }]],
+				]),
 			};
 
 			assert.deepEqual(actual, expected);

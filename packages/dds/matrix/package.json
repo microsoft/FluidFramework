@@ -45,7 +45,7 @@
 		}
 	},
 	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"types": "./dist/matrix-public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
@@ -72,7 +72,7 @@
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"postpack": "tar -cf ./matrix.test-files.tar ./src/test ./dist/test",
+		"postpack": "tar -cf ./matrix.test-files.tar ./src/test ./dist/test ./lib/test",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
 		"test:memory": "mocha --config src/test/memory/.mocharc.cjs",
@@ -118,7 +118,7 @@
 		"tslib": "^1.10.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.13.3",
+		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.6.2",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",

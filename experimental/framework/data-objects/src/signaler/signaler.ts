@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter, TypedEventEmitter } from "@fluid-internal/client-utils";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IErrorEvent } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { Jsonable } from "@fluidframework/datastore-definitions/internal";

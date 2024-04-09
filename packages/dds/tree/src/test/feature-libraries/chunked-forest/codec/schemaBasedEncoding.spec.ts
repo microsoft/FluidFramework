@@ -82,7 +82,7 @@ describe("schemaBasedEncoding", () => {
 						return onlyTypeShape;
 					},
 				},
-				FlexFieldSchema.create(FieldKinds.required, [minimal]),
+				FlexFieldSchema.create(FieldKinds.required, [minimal]).stored,
 				cache,
 			);
 			// This is expected since this case should be optimized to just encode the inner shape.
@@ -109,7 +109,7 @@ describe("schemaBasedEncoding", () => {
 						return onlyTypeShape;
 					},
 				},
-				FlexFieldSchema.create(FieldKinds.required, [minimal, leaf.number]),
+				FlexFieldSchema.create(FieldKinds.required, [minimal, leaf.number]).stored,
 				cache,
 			);
 			// There are multiple choices about how this case should be optimized, but the current implementation does this:
@@ -132,7 +132,7 @@ describe("schemaBasedEncoding", () => {
 						return onlyTypeShape;
 					},
 				},
-				FlexFieldSchema.create(FieldKinds.sequence, [minimal]),
+				FlexFieldSchema.create(FieldKinds.sequence, [minimal]).stored,
 				cache,
 			);
 			// There are multiple choices about how this case should be optimized, but the current implementation does this:

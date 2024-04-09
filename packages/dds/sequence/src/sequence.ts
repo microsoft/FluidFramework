@@ -41,10 +41,10 @@ import {
 } from "@fluidframework/merge-tree/internal";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
-import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { IFluidSerializer, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
-import { LoggingError, createChildLogger } from "@fluidframework/telemetry-utils";
+import { LoggingError, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
 import { IIntervalCollection, SequenceIntervalCollectionValueType } from "./intervalCollection.js";

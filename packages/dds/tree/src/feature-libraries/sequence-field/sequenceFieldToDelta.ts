@@ -9,7 +9,6 @@ import {
 	DeltaDetachedNodeChanges,
 	DeltaDetachedNodeRename,
 	DeltaFieldChanges,
-	DeltaFieldMap,
 	DeltaMark,
 	TaggedChange,
 	areEqualChangeAtomIds,
@@ -29,12 +28,11 @@ import {
 	getOutputCellId,
 	isAttachAndDetachEffect,
 } from "./utils.js";
+import { ToDelta } from "../modular-schema/index.js";
 
-export type ToDelta<TNodeChange> = (child: TNodeChange) => DeltaFieldMap;
-
-export function sequenceFieldToDelta<TNodeChange>(
-	{ change, revision }: TaggedChange<MarkList<TNodeChange>>,
-	deltaFromChild: ToDelta<TNodeChange>,
+export function sequenceFieldToDelta(
+	{ change, revision }: TaggedChange<MarkList>,
+	deltaFromChild: ToDelta,
 ): DeltaFieldChanges {
 	const local: DeltaMark[] = [];
 	const global: DeltaDetachedNodeChanges[] = [];

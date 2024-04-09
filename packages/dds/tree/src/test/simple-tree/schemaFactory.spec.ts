@@ -7,7 +7,11 @@ import { strict as assert } from "node:assert";
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { MockFluidDataStoreRuntime, MockHandle } from "@fluidframework/test-runtime-utils";
+import {
+	MockFluidDataStoreRuntime,
+	MockHandle,
+	validateAssertionError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { TreeStatus } from "../../feature-libraries/index.js";
 import { treeNodeApi as Tree, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
@@ -171,7 +175,7 @@ describe("schemaFactory", () => {
 			assert.equal(root.y, 2);
 
 			const values: number[] = [];
-			Tree.on(root, "afterChange", () => {
+			Tree.on(root, "nodeChanged", () => {
 				values.push(root.x);
 			});
 			root.x = 5;
@@ -207,7 +211,7 @@ describe("schemaFactory", () => {
 			assert.equal(root.x, 1);
 
 			const values: number[] = [];
-			Tree.on(root, "afterChange", () => {
+			Tree.on(root, "nodeChanged", () => {
 				values.push(root.x);
 			});
 
@@ -227,6 +231,59 @@ describe("schemaFactory", () => {
 			assert.equal(root.increment(), 1);
 			assert.equal(root.increment(), 2);
 			assert.deepEqual(values, [2, 3]);
+		});
+
+		it("Stored key collision", () => {
+			const schema = new SchemaFactory("com.example");
+			assert.throws(
+				() =>
+					schema.object("Point", {
+						x: schema.required(schema.number, { key: "foo" }),
+						y: schema.required(schema.number, { key: "foo" }),
+					}),
+				(error: Error) =>
+					validateAssertionError(
+						error,
+						/Duplicate stored key "foo" in schema "com.example.Point"/,
+					),
+			);
+		});
+
+		it("Stored key collides with view key", () => {
+			const schema = new SchemaFactory("com.example");
+			assert.throws(
+				() =>
+					schema.object("Object", {
+						foo: schema.number,
+						bar: schema.required(schema.string, { key: "foo" }),
+					}),
+				(error: Error) =>
+					validateAssertionError(
+						error,
+						/Stored key "foo" in schema "com.example.Object" conflicts with a property key of the same name/,
+					),
+			);
+		});
+
+		// This is a somewhat neurotic test case, and likely not something we would expect a user to do.
+		// But just in case, we should ensure it is handled correctly.
+		it("Stored key / view key swap", () => {
+			const schema = new SchemaFactory("com.example");
+			assert.doesNotThrow(() =>
+				schema.object("Object", {
+					foo: schema.optional(schema.number, { key: "bar" }),
+					bar: schema.required(schema.string, { key: "foo" }),
+				}),
+			);
+		});
+
+		it("Explicit stored key === view key", () => {
+			const schema = new SchemaFactory("com.example");
+			assert.doesNotThrow(() =>
+				schema.object("Object", {
+					foo: schema.optional(schema.string, { key: "foo" }),
+				}),
+			);
 		});
 
 		describe("deep equality", () => {
@@ -307,7 +364,7 @@ describe("schemaFactory", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view: TreeView<Canvas> = tree.schematize(config);
+		const view: TreeView<typeof Canvas> = tree.schematize(config);
 		const stuff = view.root.stuff;
 		assert(stuff instanceof NodeList);
 		const item = stuff[0];
@@ -611,7 +668,7 @@ describe("schemaFactory", () => {
 		function test(
 			parentType: (typeof objectTypes)[number],
 			childType: (typeof objectTypes)[number],
-			validate: (view: TreeView<ComboRoot>, nodes: ComboNode[]) => void,
+			validate: (view: TreeView<typeof ComboRoot>, nodes: ComboNode[]) => void,
 		) {
 			const config = new TreeConfiguration(ComboRoot, () => ({ root: undefined }));
 			const factory = new TreeFactory({});
@@ -626,7 +683,10 @@ describe("schemaFactory", () => {
 			});
 
 			// Ensure that the proxies can be read during the change, as well as after
-			Tree.on(view.root, "afterChange", () => validate(view, nodes));
+			// Note: as of 2024-03-28, we can't easily test 'treeChanged' because it can fire at a time where the changes
+			// to the tree are not visible in the listener. 'nodeChanged' only fires once we confirmed that a
+			// relevant change was actually applied to the tree so the side effects this test validates already happened.
+			Tree.on(view.root, "nodeChanged", () => validate(view, nodes));
 			view.events.on("afterBatch", () => validate(view, nodes));
 			view.root.root = parent;
 			validate(view, nodes);

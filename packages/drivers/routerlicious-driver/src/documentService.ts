@@ -6,9 +6,14 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import * as api from "@fluidframework/driver-definitions/internal";
-import { NetworkErrorBasic, RateLimiter, canRetryOnError } from "@fluidframework/driver-utils";
+import {
+	NetworkErrorBasic,
+	RateLimiter,
+	canRetryOnError,
+} from "@fluidframework/driver-utils/internal";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils/internal";
 import io from "socket.io-client";
 
 import { ICache } from "./cache.js";

@@ -22,7 +22,11 @@ import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
 } from "@fluidframework/driver-definitions/internal";
-import { MessageType2, NonRetryableError, isRuntimeMessage } from "@fluidframework/driver-utils";
+import {
+	MessageType2,
+	NonRetryableError,
+	isRuntimeMessage,
+} from "@fluidframework/driver-utils/internal";
 import {
 	ConnectionMode,
 	IDocumentMessage,
@@ -31,17 +35,19 @@ import {
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 import {
-	DataCorruptionError,
-	DataProcessingError,
 	type ITelemetryErrorEventExt,
 	type ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils";
+import {
+	DataCorruptionError,
+	DataProcessingError,
 	UsageError,
 	extractSafePropertiesFromMessage,
 	isFluidError,
 	normalizeError,
 	safeRaiseEvent,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import {
@@ -536,18 +542,22 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	/**
 	 * Sets the sequence number from which inbound messages should be returned
+	 * @param snapshotSequenceNumber - The sequence number of the snapshot at which the document loaded from.
+	 * @param lastProcessedSequenceNumber - The last processed sequence number, for offline, it should be greater than the sequence number.
+	 * Setting lastProcessedSequenceNumber allows the DeltaManager to skip downloading and processing ops that have already been processed.
 	 */
 	public async attachOpHandler(
 		minSequenceNumber: number,
-		sequenceNumber: number,
+		snapshotSequenceNumber: number,
 		handler: IDeltaHandlerStrategy,
 		prefetchType: "sequenceNumber" | "cached" | "all" | "none" = "none",
+		lastProcessedSequenceNumber: number = snapshotSequenceNumber,
 	) {
-		this.initSequenceNumber = sequenceNumber;
-		this.lastProcessedSequenceNumber = sequenceNumber;
+		this.initSequenceNumber = snapshotSequenceNumber;
+		this.lastProcessedSequenceNumber = lastProcessedSequenceNumber;
 		this.minSequenceNumber = minSequenceNumber;
-		this.lastQueuedSequenceNumber = sequenceNumber;
-		this.lastObservedSeqNumber = sequenceNumber;
+		this.lastQueuedSequenceNumber = lastProcessedSequenceNumber;
+		this.lastObservedSeqNumber = lastProcessedSequenceNumber;
 
 		// We will use same check in other places to make sure all the seq number above are set properly.
 		assert(

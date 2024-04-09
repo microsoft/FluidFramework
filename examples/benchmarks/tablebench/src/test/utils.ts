@@ -12,7 +12,7 @@ import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 
 export function create(factory: IChannelFactory) {
 	const runtimeFactory = new MockContainerRuntimeFactory();

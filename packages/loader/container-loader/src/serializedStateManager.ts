@@ -13,20 +13,20 @@ import {
 	IResolvedUrl,
 	ISnapshot,
 } from "@fluidframework/driver-definitions/internal";
-import { isInstanceOfISnapshot } from "@fluidframework/driver-utils";
+import { isInstanceOfISnapshot } from "@fluidframework/driver-utils/internal";
 import {
 	type IDocumentAttributes,
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
-	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
 	UsageError,
 	createChildMonitoringContext,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 
 import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter.js";
 import { getDocumentAttributes } from "./utils.js";
@@ -71,15 +71,15 @@ export interface IPendingDetachedContainerState extends SnapshotWithBlobs {
 	pendingRuntimeState?: unknown;
 }
 
-interface SnapshotInfo extends SnapshotWithBlobs {
+export interface ISnapshotInfo extends SnapshotWithBlobs {
 	snapshotSequenceNumber: number;
 }
 
 export class SerializedStateManager {
 	private readonly processedOps: ISequencedDocumentMessage[] = [];
-	private snapshot: SnapshotWithBlobs | undefined;
+	private snapshot: ISnapshotInfo | undefined;
 	private readonly mc: MonitoringContext;
-	private latestSnapshot: SnapshotInfo | undefined;
+	private latestSnapshot: ISnapshotInfo | undefined;
 	private refreshSnapshot: Promise<void> | undefined;
 
 	constructor(
@@ -126,12 +126,22 @@ export class SerializedStateManager {
 					baseSnapshot,
 					this.storageAdapter,
 				);
-				this.snapshot = { baseSnapshot, snapshotBlobs };
+				const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshot);
+				this.snapshot = {
+					baseSnapshot,
+					snapshotBlobs,
+					snapshotSequenceNumber: attributes.sequenceNumber,
+				};
 			}
 			return { baseSnapshot, version };
 		} else {
 			const { baseSnapshot, snapshotBlobs } = this.pendingLocalState;
-			this.snapshot = { baseSnapshot, snapshotBlobs };
+			const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshot);
+			this.snapshot = {
+				baseSnapshot,
+				snapshotBlobs,
+				snapshotSequenceNumber: attributes.sequenceNumber,
+			};
 			this.refreshSnapshot ??= (async () => {
 				this.latestSnapshot = await getLatestSnapshotInfo(
 					this.mc,
@@ -150,15 +160,12 @@ export class SerializedStateManager {
 	 * Updates class snapshot and processedOps if we have a new snapshot and it's among processedOps range.
 	 */
 	private updateSnapshotAndProcessedOpsMaybe() {
-		if (this.latestSnapshot === undefined) {
-			return;
-		}
-		const snapshotSequenceNumber = this.latestSnapshot?.snapshotSequenceNumber;
-		if (this.processedOps.length === 0) {
+		if (this.latestSnapshot === undefined || this.processedOps.length === 0) {
 			// can't refresh latest snapshot until we have processed the ops up to it.
 			// Pending state would be behind the latest snapshot.
 			return;
 		}
+		const snapshotSequenceNumber = this.latestSnapshot.snapshotSequenceNumber;
 		const firstProcessedOpSequenceNumber = this.processedOps[0].sequenceNumber;
 		const lastProcessedOpSequenceNumber =
 			this.processedOps[this.processedOps.length - 1].sequenceNumber;
@@ -167,13 +174,11 @@ export class SerializedStateManager {
 			// Snapshot seq number is older than our first processed op, which could mean we're fetching
 			// the same snapshot that we already have or snapshot is too old, implicating an unexpected behavior.
 			this.mc.logger.sendTelemetryEvent({
-				category:
-					snapshotSequenceNumber < firstProcessedOpSequenceNumber - 1
-						? "error"
-						: "generic",
 				eventName: "OldSnapshotFetchWhileRefreshing",
 				snapshotSequenceNumber,
 				firstProcessedOpSequenceNumber,
+				lastProcessedOpSequenceNumber,
+				stashedSnapshotSequenceNumber: this.snapshot?.snapshotSequenceNumber,
 			});
 			this.latestSnapshot = undefined;
 		} else if (snapshotSequenceNumber <= lastProcessedOpSequenceNumber) {
@@ -202,8 +207,19 @@ export class SerializedStateManager {
 	 * base snapshot when attaching.
 	 * @param snapshot - snapshot and blobs collected while attaching
 	 */
-	public setSnapshot(snapshot: SnapshotWithBlobs | undefined) {
-		this.snapshot = snapshot;
+	public setInitialSnapshot(snapshot: SnapshotWithBlobs | undefined) {
+		if (this.offlineLoadEnabled) {
+			assert(this.snapshot === undefined, "inital snapshot should only be defined once");
+			assert(snapshot !== undefined, "attachment snapshot should be defined");
+			const { baseSnapshot, snapshotBlobs } = snapshot;
+			const attributesHash =
+				".protocol" in baseSnapshot.trees
+					? baseSnapshot.trees[".protocol"].blobs.attributes
+					: baseSnapshot.blobs[".attributes"];
+			const attributes = JSON.parse(snapshotBlobs[attributesHash]);
+			assert(attributes.sequenceNumber === 0, "trying to set a non attachment snapshot");
+			this.snapshot = { ...snapshot, snapshotSequenceNumber: attributes.sequenceNumber };
+		}
 	}
 
 	public async getPendingLocalStateCore(
@@ -260,7 +276,7 @@ export async function getLatestSnapshotInfo(
 		"getSnapshot" | "getSnapshotTree" | "getVersions" | "readBlob"
 	>,
 	supportGetSnapshotApi: boolean,
-): Promise<SnapshotInfo | undefined> {
+): Promise<ISnapshotInfo | undefined> {
 	return PerformanceEvent.timedExecAsync(
 		mc.logger,
 		{ eventName: "GetLatestSnapshotInfo" },

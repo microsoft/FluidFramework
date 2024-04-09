@@ -25,7 +25,7 @@ import {
 	ISummaryTree,
 	NackErrorType,
 } from "@fluidframework/protocol-definitions";
-import { LoggingError, UsageError, wrapError } from "@fluidframework/telemetry-utils";
+import { LoggingError, UsageError, wrapError } from "@fluidframework/telemetry-utils/internal";
 
 export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFactory {
 	private readonly _documentServices = new Map<IResolvedUrl, FaultInjectionDocumentService>();

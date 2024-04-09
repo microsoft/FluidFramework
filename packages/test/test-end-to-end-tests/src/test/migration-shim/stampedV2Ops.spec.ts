@@ -28,7 +28,7 @@ import {
 	createSummarizerFromFactory,
 	summarizeNow,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import {
 	type ITree,
 	SchemaFactory,
@@ -62,7 +62,7 @@ class QuantityType extends builder.object("quantityObj", {
 	quantity: builder.number,
 }) {}
 
-function getNewTreeView(tree: ITree): TreeView<QuantityType> {
+function getNewTreeView(tree: ITree): TreeView<typeof QuantityType> {
 	return tree.schematize(new TreeConfiguration(QuantityType, () => ({ quantity: 0 })));
 }
 

@@ -6,16 +6,16 @@
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { ISummaryContext } from "@fluidframework/driver-definitions/internal";
-import { isCombinedAppAndProtocolSummary } from "@fluidframework/driver-utils";
-import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
+import { isCombinedAppAndProtocolSummary } from "@fluidframework/driver-utils/internal";
+import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
 import { getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
-	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
 	loggerToMonitoringContext,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 
 import {
 	IOdspSummaryPayload,
@@ -126,7 +126,6 @@ export class OdspSummaryUploadManager {
 					attempt: options.refresh ? 2 : 1,
 					hasClaims: !!options.claims,
 					hasTenantId: !!options.tenantId,
-					headers: Object.keys(headers).length > 0 ? true : undefined,
 					blobs,
 					size: postBody.length,
 					referenceSequenceNumber,

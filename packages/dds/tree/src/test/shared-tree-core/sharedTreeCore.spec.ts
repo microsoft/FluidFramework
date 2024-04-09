@@ -21,7 +21,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	AllowedUpdateType,

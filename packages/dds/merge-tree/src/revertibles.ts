@@ -4,7 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { DoublyLinkedList } from "./collections/index.js";
 import { EndOfTreeSegment } from "./endOfTreeSegment.js";

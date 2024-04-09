@@ -28,9 +28,9 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { SharedObject } from "@fluidframework/shared-object-base/internal";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import axios from "axios";
 import { copy as cloneDeep } from "fastest-json-copy";
 import { Packr } from "msgpackr";

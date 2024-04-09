@@ -6,10 +6,10 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import type { SharedCell } from "@fluidframework/cell";
+import type { SharedCell } from "@fluidframework/cell/internal";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
-import type { SharedCounter } from "@fluidframework/counter";
+import type { SharedCounter } from "@fluidframework/counter/internal";
 import type { ISharedMap } from "@fluidframework/map";
 import type { SharedDirectory } from "@fluidframework/map/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
@@ -21,7 +21,7 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 describeCompat(
 	"Op reentry and rebasing during pending batches",

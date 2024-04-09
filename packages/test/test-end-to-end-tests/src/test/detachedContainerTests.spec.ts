@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import type { SharedCell } from "@fluidframework/cell";
+import type { SharedCell } from "@fluidframework/cell/internal";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	IContainer,
@@ -24,11 +24,11 @@ import type { ISharedMap } from "@fluidframework/map";
 import type { SharedDirectory } from "@fluidframework/map/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree/internal";
-import type { ConsensusQueue } from "@fluidframework/ordered-collection";
-import type { ConsensusRegisterCollection } from "@fluidframework/register-collection";
+import type { ConsensusQueue } from "@fluidframework/ordered-collection/internal";
+import type { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
-import { createChildLogger, isFluidError } from "@fluidframework/telemetry-utils";
+import { createChildLogger, isFluidError } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -42,7 +42,7 @@ import {
 	getDataStoreEntryPointBackCompat,
 	timeoutPromise,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
 
