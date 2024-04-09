@@ -66,7 +66,7 @@
 		"@fluidframework/matrix": "^1.4.0",
 		"@fluidframework/mocha-test-setup": "^1.4.0",
 		"@fluidframework/sequence": "^1.4.0",
-		"@fluidframework/server-services-client": "^0.1036.5000",
+		"@fluidframework/server-services-client": "^0.1036.5002",
 		"@fluidframework/telemetry-utils": "^1.4.0",
 		"@fluidframework/test-client-utils": "1.4.0",
 		"@fluidframework/test-runtime-utils": "^1.4.0",
