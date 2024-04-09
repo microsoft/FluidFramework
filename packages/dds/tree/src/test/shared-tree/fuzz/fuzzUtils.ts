@@ -186,23 +186,23 @@ export const populatedInitialState: TreeContent<typeof fuzzSchema.rootFieldSchem
 		sequenceChildren: [
 			{
 				[typeNameSymbol]: fuzzNode.name,
-				sequenceChildren: [11, 12, 13],
-				requiredChild: 1,
+				sequenceChildren: ["AA", "AB", "AC"],
+				requiredChild: "A",
 				optionalChild: undefined,
 			},
 			{
 				[typeNameSymbol]: fuzzNode.name,
-				sequenceChildren: [21, 22, 23],
-				requiredChild: 2,
+				sequenceChildren: ["BA", "BB", "BC"],
+				requiredChild: "B",
 				optionalChild: undefined,
 			},
 			{
 				[typeNameSymbol]: fuzzNode.name,
-				sequenceChildren: [31, 32, 33],
-				requiredChild: 3,
+				sequenceChildren: ["CA", "CB", "CC"],
+				requiredChild: "C",
 				optionalChild: undefined,
 			},
 		],
-		requiredChild: 0,
+		requiredChild: "R",
 		optionalChild: undefined,
 	};

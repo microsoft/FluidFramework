@@ -55,6 +55,7 @@ export function createWeightedGenerator<T, TState extends BaseFuzzTestState>(
 		}
 		totalWeight = cumulativeWeight;
 	}
+
 	// Note: if this is a perf bottleneck in usage, the cumulative weights array could be
 	// binary searched, and for small likelihood of acceptance (i.e. disproportional weights)
 	// we could pre-filter the acceptance conditions rather than rejection sample the outcome.
