@@ -66,6 +66,23 @@ export interface TreeApi extends TreeNodeApi {
 		tree: TView,
 		transaction: (root: TView["root"]) => void | "rollback",
 	): void;
+
+	/**
+	 * Check if the subtree defined by `node` contains `other`.
+	 *
+	 * @returns true if `other` is an inclusive descendant of `node`, and false otherwise.
+	 * @remarks
+	 * This includes direct and indirect children:
+	 * as long as `node` is an ancestor of `other` (occurs in its parentage chain), this returns true, regardless of the number of levels of the tree between.
+	 *
+	 * `node` is considered to contain itself, so the case where `node === other` returns true.
+	 *
+	 * This is handy when checking if moving `node` into `other` would create a cycle and thus is invalid.
+	 *
+	 * This check walks the parents of `other` looking for `node`,
+	 * and thus runs in time proportional to the depth of child in the tree.
+	 */
+	contains(node: TreeNode, other: TreeNode): boolean;
 }
 
 /**
@@ -92,6 +109,17 @@ export const treeApi: TreeApi = {
 
 			runTransaction(treeView.checkout, () => t(node));
 		}
+	},
+
+	contains(parent: TreeNode, child: TreeNode): boolean {
+		let toCheck: TreeNode | undefined = child;
+		while (toCheck !== undefined) {
+			if (toCheck === parent) {
+				return true;
+			}
+			toCheck = treeApi.parent(toCheck);
+		}
+		return false;
 	},
 };
 
