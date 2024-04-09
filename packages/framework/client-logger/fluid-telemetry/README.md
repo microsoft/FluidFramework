@@ -75,7 +75,7 @@ startTelemetry(telemetryConfig);
 
 That's it for now! If you've decided to use Azure App Insights, we have designed useful prebuilt queries that utilize the generated telemetry. You can try out these queries after running your application with above code for a little duration.
 
-You can find these queries [here](#telemetry_visualization).
+You can find these queries [in the "Interpreting Telemetry Data" section below.](#telemetry_visualization).
 
 ## Use Case 2: Setup a custom telemetry consumer
 
