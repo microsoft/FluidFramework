@@ -11,9 +11,13 @@ import {
 	SchemaFactory,
 	type TreeChangeEvents,
 	TreeConfiguration,
+	SchemaFactoryRecursive,
+	ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
 import { createTestUndoRedoStacks, getView } from "../utils.js";
 import { brand, cursorForJsonableTreeNode, leaf, rootFieldKey, type UpPath } from "../../index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { hydrate } from "../simple-tree/utils.js";
 
 const rootNode: UpPath = {
 	parent: undefined,
@@ -21,7 +25,7 @@ const rootNode: UpPath = {
 	parentIndex: 0,
 };
 
-const schema = new SchemaFactory("com.example");
+const schema = new SchemaFactoryRecursive("com.example");
 class TestObject extends schema.object("TestObject", { content: schema.number }) {}
 
 describe("treeApi", () => {
@@ -645,5 +649,37 @@ describe("treeApi", () => {
 			assert.equal(deepChanges, 2, "'treeChanged' should fire twice");
 			assert.equal(shallowChanges, 1, "'nodeChanged' should only fire once");
 		});
+	});
+
+	it("contains", () => {
+		class Node extends schema.objectRecursive("Node", {
+			child: schema.optionalRecursive([() => Node]),
+		}) {}
+		{
+			type _check = ValidateRecursiveSchema<typeof Node>;
+		}
+
+		const level1 = hydrate(
+			Node,
+			new Node({ child: new Node({ child: new Node({ child: undefined }) }) }),
+		);
+
+		const level2 = level1.child ?? assert.fail();
+		const level3 = level2.child ?? assert.fail();
+
+		// equal case
+		assert(Tree.contains(level1, level1));
+		// direct child
+		assert(Tree.contains(level1, level2));
+		// indirect child
+		assert(Tree.contains(level1, level3));
+
+		// non-root
+		assert(Tree.contains(level2, level3));
+
+		// false cases
+		assert.equal(Tree.contains(level3, level1), false);
+		assert.equal(Tree.contains(level3, level2), false);
+		assert.equal(Tree.contains(level2, level1), false);
 	});
 });

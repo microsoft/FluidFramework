@@ -27,7 +27,7 @@ async function loadSharedString(
 	summary: ISummaryTree,
 ): Promise<SharedString> {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	dataStoreRuntime.deltaManager.lastSequenceNumber = containerRuntimeFactory.sequenceNumber;
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
