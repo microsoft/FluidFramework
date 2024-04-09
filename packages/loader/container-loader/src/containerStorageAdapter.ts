@@ -147,6 +147,10 @@ export class ContainerStorageAdapter
 	}
 
 	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
+		if (this._loadedGroupIdSnapshots === undefined) {
+			this._loadedGroupIdSnapshots = {};
+		}
+		let snapshot: ISnapshot;
 		if (
 			this.pendingLocalGroupIdSnapshots !== undefined &&
 			snapshotFetchOptions?.loadingGroupIds !== undefined
@@ -159,23 +163,20 @@ export class ContainerStorageAdapter
 				this.pendingLocalGroupIdSnapshots[snapshotFetchOptions.loadingGroupIds[0]];
 			assert(localSnapshot !== undefined, "Local snapshot must be present");
 			const attributes = await getDocumentAttributes(this, localSnapshot.baseSnapshot);
-			return convertSnapshotInfoToSnapshot(localSnapshot, attributes.sequenceNumber);
+			snapshot = convertSnapshotInfoToSnapshot(localSnapshot, attributes.sequenceNumber);
+		} else {
+			if (this._storageService.getSnapshot === undefined) {
+				throw new UsageError(
+					"getSnapshot api should exist in internal storage in ContainerStorageAdapter",
+				);
+			}
+			snapshot = await this._storageService.getSnapshot(snapshotFetchOptions);
 		}
-
-		if (this._storageService.getSnapshot === undefined) {
-			throw new UsageError(
-				"getSnapshot api should exist in internal storage in ContainerStorageAdapter",
-			);
-		}
-		const snapshot = await this._storageService.getSnapshot(snapshotFetchOptions);
 
 		// Track the latest snapshot for each loading group id
 		const loadingGroupIds = snapshotFetchOptions?.loadingGroupIds;
 		assert(snapshot.sequenceNumber !== undefined, "Snapshot must have sequence number");
 		if (loadingGroupIds !== undefined) {
-			if (this._loadedGroupIdSnapshots === undefined) {
-				this._loadedGroupIdSnapshots = {};
-			}
 			for (const loadingGroupId of loadingGroupIds) {
 				// Do we actually want to update the stored snapshot?
 				// What if the incoming snapshot is way newer than the stored snapshot?
