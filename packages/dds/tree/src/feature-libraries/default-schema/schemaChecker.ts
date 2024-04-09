@@ -25,6 +25,8 @@ export const enum SchemaValidationErrors {
 	FieldKindNotInSchemaPolicy,
 	IncorrectMultiplicity,
 	NodeTypeNotAllowedInField,
+	ObjectNodeFieldCountMismatch,
+	UndefinedSchemaForObjectNodeField,
 	UnknownError,
 }
 
@@ -55,12 +57,12 @@ export function isNodeInSchema(
 
 	if (schema instanceof ObjectNodeStoredSchema) {
 		if (node.fields.size !== schema.objectNodeFields.size) {
-			return SchemaValidationErrors.UnknownError;
+			return SchemaValidationErrors.ObjectNodeFieldCountMismatch;
 		}
 		for (const [fieldKey, field] of node.fields) {
 			const fieldSchema = schema.objectNodeFields.get(fieldKey);
 			if (fieldSchema === undefined) {
-				return SchemaValidationErrors.UnknownError;
+				return SchemaValidationErrors.UndefinedSchemaForObjectNodeField;
 			}
 			const fieldInSchemaResult = isFieldInSchema(
 				field,
