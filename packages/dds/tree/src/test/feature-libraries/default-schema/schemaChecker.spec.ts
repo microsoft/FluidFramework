@@ -206,10 +206,6 @@ describe.only("schema validation", () => {
 		describe("MapNodeStoredSchema", () => {
 			const numberNode = getValueNode("myNumberNode", 1);
 			const stringNode = getValueNode("myStringNode", "string");
-			const booleanNode = getValueNode("myBooleanNode", false);
-			const nullNode = getValueNode("myNullNode", null);
-			const undefinedNode = getValueNode("myUndefinedNode", undefined);
-			const fluidHandleNode = getValueNode("myFluidHandleNode", new TestFluidHandle());
 
 			it(`not in schema due to missing schema entry in schemaCollection`, () => {
 				// Schema for a map node whose fields are required and must contain a number.
@@ -391,7 +387,41 @@ describe.only("schema validation", () => {
 			);
 		});
 
-		const multiplicityTestCasesInner: [
+		it(`fail if child node is of type not supported by field`, () => {
+			const numberNode = getValueNode("myNumberNode", 1);
+			const stringNode = getValueNode("myStringNode", "myStringValue");
+			const fieldSchema = getFieldSchema(FieldKinds.sequence, [numberNode.type]);
+			const schemaCollection = {
+				nodeSchema: new Map([
+					[numberNode.type, new LeafNodeStoredSchema(ValueSchema.Number)],
+				]),
+			};
+			const schemaPolicy = {
+				fieldKinds: new Map([
+					[fieldSchema.kind, FieldKinds.sequence],
+				]),
+			};
+
+			// Confirm that the field supports number nodes
+			assert.equal(
+				isFieldInSchema([numberNode], fieldSchema, schemaCollection, schemaPolicy),
+				SchemaValidationErrors.NoError,
+			);
+
+			// Field does not support string nodes
+			assert.equal(
+				isFieldInSchema([stringNode], fieldSchema, schemaCollection, schemaPolicy),
+				SchemaValidationErrors.NodeTypeNotAllowedInField,
+			);
+
+			// Still fails even if there are other valid nodes for the field
+			assert.equal(
+				isFieldInSchema([numberNode, stringNode, numberNode], fieldSchema, schemaCollection, schemaPolicy),
+				SchemaValidationErrors.NodeTypeNotAllowedInField,
+			);
+		});
+
+		const isFieldInSchema_multiplicityTestCases: [
 			kind: FlexFieldKind,
 			numberToTest: number,
 			expectedResult: SchemaValidationErrors,
@@ -411,7 +441,7 @@ describe.only("schema validation", () => {
 			[FieldKinds.nodeKey, 1, SchemaValidationErrors.NoError],
 			[FieldKinds.nodeKey, 2, SchemaValidationErrors.IncorrectMultiplicity],
 		];
-		for (const [kind, howManyChildNodes, expectedResult] of multiplicityTestCasesInner) {
+		for (const [kind, howManyChildNodes, expectedResult] of isFieldInSchema_multiplicityTestCases) {
 			it(`correctly validates for field multiplicity: (${kind.identifier}, ${howManyChildNodes}) => ${expectedResult}`, () => {
 				const numberNode = getValueNode("myNumberNode", 1);
 				const fieldSchema = getFieldSchema(kind, [numberNode.type]);
