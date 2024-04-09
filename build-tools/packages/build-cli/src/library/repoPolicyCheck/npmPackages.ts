@@ -1433,9 +1433,8 @@ export const handlers: Handler[] = [
 							? undefined
 							: // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
 								normalizePathField(exportsRoot?.require?.default);
-					const mainField = normalizePathField(json.main);
-					if (requireField !== mainField) {
-						return `${json.name} has a mismatched 'main' and 'exports.require.default' field in package.json. main: '${mainField}', exports.require.default '${requireField}'`;
+					if (requireField !== json.main) {
+						return `${json.name} has a mismatched 'main' and 'exports.require.default' field in package.json. main: '${json.main}', exports.require.default '${requireField}'`;
 					}
 				}
 
@@ -1468,13 +1467,14 @@ export const handlers: Handler[] = [
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				if (shouldCheckExportsField(json)) {
 					try {
-						const [exportsField, typesField] = generateExportsFields(json);
+						const newFields = generateExportsFields(json);
 						// Skip overwriting the exports field if it already exists
-						json.exports ??= exportsField;
-						// Always update the types
-						if (json.types !== undefined && typesField !== normalizePathField(json.types)) {
-							json.types = typesField;
-						}
+						json.exports ??= newFields.exports;
+						json.exports = newFields.exports;
+
+						// Always update the types and main field
+						json.types = newFields.types;
+						json.main = newFields.main;
 					} catch (error: unknown) {
 						result.resolved = false;
 						result.message = (error as Error).message + (error as Error).stack;
@@ -1649,11 +1649,11 @@ function missingCleanDirectories(scripts: { [key: string]: string | undefined })
 }
 
 /**
- * Generates 'exports' and 'types' fields for a package based on the value of other fields in package.json.
+ * Generates 'exports', 'main', and 'types' fields for a package based on the value of other fields in package.json.
  */
 function generateExportsFields(
 	json: Readonly<PackageJson>,
-): [PackageJson["exports"], PackageJson["types"]] {
+): Required<Pick<PackageJson, "exports" | "main" | "types">> {
 	if (json.types === undefined && json.typings === undefined) {
 		throw new Error(
 			"The 'types' and 'typings' field are both undefined. At least one must be defined (types is preferred).",
@@ -1667,16 +1667,16 @@ function generateExportsFields(
 	/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 	const exportsRoot = (json.exports as any)?.["."];
 	const importTypes: string =
-		exportsRoot.types ?? exportsRoot?.default?.types ?? exportsRoot?.import?.types;
+		exportsRoot?.types ?? exportsRoot?.default?.types ?? exportsRoot?.import?.types;
 	const importEntrypoint: string | undefined =
-		typeof exportsRoot.import === "string"
-			? exportsRoot.import
+		typeof exportsRoot?.import === "string"
+			? exportsRoot?.import
 			: exportsRoot?.default?.import ?? exportsRoot?.import?.default;
 	const requireTypes: string =
-		exportsRoot.types ?? exportsRoot?.default?.types ?? exportsRoot?.require?.types;
+		exportsRoot?.types ?? exportsRoot?.default?.types ?? exportsRoot?.require?.types;
 	const requireEntrypoint: string | undefined =
-		typeof exportsRoot.require === "string"
-			? exportsRoot.require
+		typeof exportsRoot?.require === "string"
+			? exportsRoot?.require
 			: exportsRoot?.default?.require ?? exportsRoot?.require?.default;
 	/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
@@ -1689,6 +1689,8 @@ function generateExportsFields(
 	// could be changed or made into a configuration option in the future.
 	const isTypeOnly = json.main === "";
 
+	const expectedImportEntrypoint = normalizePathField(importEntrypoint ?? json.main);
+	const expectedRequireEntrypoint = normalizePathField(requireEntrypoint ?? json.main);
 	const expectedTypes =
 		exportsRoot === undefined
 			? // One of the values is guaranteed to be defined because of earlier checks
@@ -1697,37 +1699,34 @@ function generateExportsFields(
 			: isESMOnly
 				? importTypes
 				: requireTypes;
+	const expectedMain = isTypeOnly
+		? ""
+		: isESMOnly
+			? expectedImportEntrypoint
+			: expectedRequireEntrypoint;
 
 	let returnExports: typeof json.exports;
 
-	if (isESMOnly) {
-		returnExports = isTypeOnly
-			? {
-					".": {
-						// Assume the types field is the ESM types since this is an ESM-only package.
-						types: expectedTypes,
-					},
-				}
-			: {
-					".": {
-						// Assume the types field is the ESM types since this is an ESM-only package.
-						types: expectedTypes,
-						default: normalizePathField(importEntrypoint ?? json.main),
-					},
-				};
-	} else if (isCJSOnly) {
+	if (isESMOnly || isCJSOnly) {
 		returnExports = isTypeOnly
 			? {
 					".": {
 						types: expectedTypes,
 					},
 				}
-			: {
-					".": {
-						types: expectedTypes,
-						default: normalizePathField(requireEntrypoint ?? json.main),
-					},
-				};
+			: isESMOnly
+				? {
+						".": {
+							types: expectedTypes,
+							default: expectedImportEntrypoint,
+						},
+					}
+				: {
+						".": {
+							types: expectedTypes,
+							default: expectedRequireEntrypoint,
+						},
+					};
 	} else {
 		// Package has both CJS and ESM
 		// Assume ESM types are the same name as CJS, but in a different path.
@@ -1750,11 +1749,11 @@ function generateExportsFields(
 					".": {
 						import: {
 							types: esmTypes,
-							default: normalizePathField(importEntrypoint ?? json.main),
+							default: expectedImportEntrypoint,
 						},
 						require: {
 							types: expectedTypes,
-							default: normalizePathField(requireEntrypoint ?? json.main),
+							default: expectedRequireEntrypoint,
 						},
 					},
 				};
@@ -1771,7 +1770,11 @@ function generateExportsFields(
 		}
 	}
 
-	return [returnExports, expectedTypes];
+	return {
+		exports: returnExports,
+		types: expectedTypes,
+		main: expectedMain,
+	};
 }
 
 /**
