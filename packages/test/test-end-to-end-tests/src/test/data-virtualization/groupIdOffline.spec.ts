@@ -327,7 +327,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		// Container layer Refresh
 		// Network call refreshing the base snapshot
 		const serializedStateManager = (container2 as any).serializedStateManager;
-		await serializedStateManager.updateSnapshot();
+		await serializedStateManager.refreshLatestSnapshot();
 
 		// Update the latestSequenceNumber so that the reference sequence number is beyond the snapshot
 		await provider.ensureSynchronized();
