@@ -442,7 +442,9 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	}
 
 	public async resolveHandle(handle: IFluidHandle) {
-		return this.dataStoreRuntime.resolveHandle({ url: handle.absolutePath });
+		return this.dataStoreRuntime.resolveHandle({
+			url: toFluidHandleInternal(handle).absolutePath,
+		});
 	}
 }
 
