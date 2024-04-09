@@ -33,8 +33,9 @@ import {
 	LeafNodeSchema,
 	SchemaLibrary,
 	intoStoredSchema,
+	typeNameSymbol,
 } from "../../../feature-libraries/index.js";
-import { ITreeCheckout, SharedTree } from "../../../shared-tree/index.js";
+import { ITreeCheckout, SharedTree, TreeContent } from "../../../shared-tree/index.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
 import { expectEqualPaths } from "../../utils.js";
 
@@ -156,6 +157,7 @@ export function isRevertibleSharedTreeView(s: ITreeCheckout): s is RevertibleSha
 }
 
 export const failureDirectory = pathJoin(testSrcPath, "shared-tree/fuzz/failures");
+export const successesDirectory = pathJoin(testSrcPath, "shared-tree/fuzz/successes");
 
 export const createOrDeserializeCompressor = (
 	sessionId: SessionId,
@@ -177,3 +179,30 @@ export const deterministicIdCompressorFactory: (
 		return createOrDeserializeCompressor(sessionId, summary);
 	};
 };
+
+export const populatedInitialState: TreeContent<typeof fuzzSchema.rootFieldSchema>["initialTree"] =
+	{
+		[typeNameSymbol]: fuzzNode.name,
+		sequenceChildren: [
+			{
+				[typeNameSymbol]: fuzzNode.name,
+				sequenceChildren: [11, 12, 13],
+				requiredChild: 1,
+				optionalChild: undefined,
+			},
+			{
+				[typeNameSymbol]: fuzzNode.name,
+				sequenceChildren: [21, 22, 23],
+				requiredChild: 2,
+				optionalChild: undefined,
+			},
+			{
+				[typeNameSymbol]: fuzzNode.name,
+				sequenceChildren: [31, 32, 33],
+				requiredChild: 3,
+				optionalChild: undefined,
+			},
+		],
+		requiredChild: 0,
+		optionalChild: undefined,
+	};

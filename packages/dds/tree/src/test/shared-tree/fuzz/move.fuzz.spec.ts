@@ -12,8 +12,6 @@ import {
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 
-import { typeNameSymbol } from "../../../feature-libraries/index.js";
-import { TreeContent } from "../../../shared-tree/index.js";
 import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils.js";
 
 import {
@@ -26,44 +24,14 @@ import { fuzzReducer } from "./fuzzEditReducers.js";
 import {
 	deterministicIdCompressorFactory,
 	failureDirectory,
-	fuzzNode,
-	initialFuzzSchema,
+	populatedInitialState,
 } from "./fuzzUtils.js";
 import { Operation } from "./operationTypes.js";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 
-const config = {
-	schema: initialFuzzSchema,
-	initialTree: {
-		[typeNameSymbol]: fuzzNode.name,
-		sequenceChildren: [
-			{
-				[typeNameSymbol]: fuzzNode.name,
-				sequenceChildren: [11, 12, 13],
-				requiredChild: 1,
-				optionalChild: undefined,
-			},
-			{
-				[typeNameSymbol]: fuzzNode.name,
-				sequenceChildren: [21, 22, 23],
-				requiredChild: 2,
-				optionalChild: undefined,
-			},
-			{
-				[typeNameSymbol]: fuzzNode.name,
-				sequenceChildren: [31, 32, 33],
-				requiredChild: 3,
-				optionalChild: undefined,
-			},
-		],
-		requiredChild: 0,
-		optionalChild: undefined,
-	},
-} satisfies TreeContent;
-
 describe("Fuzz - move", () => {
-	const opsPerRun = 20;
 	const runsPerBatch = 50;
+	const opsPerRun = 30;
 	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 		intraFieldMove: 1,
 		crossFieldMove: 3,
@@ -90,18 +58,16 @@ describe("Fuzz - move", () => {
 
 	const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 	emitter.on("testStart", (state: FuzzTestState) => {
-		viewFromState(state, state.clients[0], config.initialTree);
-	});
-	emitter.on("testEnd", (state: FuzzTestState) => {
-		viewFromState(state, state.clients[0], config.initialTree);
+		viewFromState(state, state.clients[0], populatedInitialState);
 	});
 
 	const options: Partial<DDSFuzzSuiteOptions> = {
+		// replay: 566,
 		emitter,
 		numberOfClients: 1,
 		clientJoinOptions: {
-			maxNumberOfClients: 6,
-			clientAddProbability: 0.4,
+			maxNumberOfClients: 4,
+			clientAddProbability: 1,
 		},
 		defaultTestCount: runsPerBatch,
 		saveFailures: {
