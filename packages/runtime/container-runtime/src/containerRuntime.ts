@@ -790,6 +790,7 @@ export class ContainerRuntime
 			properties: {
 				all: {
 					runtimeVersion: pkgVersion,
+					initialSequenceNumber: () => context.deltaManager.initialSequenceNumber,
 				},
 			},
 		});
@@ -1378,6 +1379,11 @@ export class ContainerRuntime
 			supportedFeatures,
 		} = context;
 
+		this.mc = createChildMonitoringContext({
+			logger: this.logger,
+			namespace: "ContainerRuntime",
+		});
+
 		// If we support multiple algorithms in the future, then we would need to manage it here carefully.
 		// We can use runtimeOptions.compressionOptions.compressionAlgorithm, but only if it's in the schema list!
 		// If it's not in the list, then we will need to either use no compression, or fallback to some other (supported by format)
@@ -1391,16 +1397,6 @@ export class ContainerRuntime
 
 		this.innerDeltaManager = deltaManager;
 		this.deltaManager = new DeltaManagerSummarizerProxy(this.innerDeltaManager);
-
-		this.mc = createChildMonitoringContext({
-			logger: this.logger,
-			namespace: "ContainerRuntime",
-			properties: {
-				all: {
-					initialSequenceNumber: () => this.deltaManager.initialSequenceNumber,
-				},
-			},
-		});
 
 		// Here we could wrap/intercept on these functions to block/modify outgoing messages if needed.
 		// This makes ContainerRuntime the final gatekeeper for outgoing messages.
