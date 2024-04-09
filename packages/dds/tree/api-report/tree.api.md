@@ -903,7 +903,7 @@ export enum ForestType {
 }
 
 // @internal
-export interface FullSchemaPolicy {
+export interface FullSchemaPolicy extends SchemaPolicy {
     readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>;
 }
 
@@ -1651,6 +1651,11 @@ export interface SchemaLintConfiguration {
     readonly rejectEmpty: boolean;
     // (undocumented)
     readonly rejectForbidden: boolean;
+}
+
+// @internal
+export interface SchemaPolicy {
+    readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindData>;
 }
 
 // @internal

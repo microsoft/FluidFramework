@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKindIdentifier, FieldKindData, Multiplicity } from "../../core/index.js";
+import {
+	FieldKindIdentifier,
+	FieldKindData,
+	Multiplicity,
+	SchemaPolicy,
+} from "../../core/index.js";
 
 /**
  * Functionality for FieldKinds that is stable,
@@ -45,23 +50,7 @@ export abstract class FlexFieldKind<
  * The app must ensure consistency for all users of the document.
  * @internal
  */
-export interface FullSchemaPolicy {
-	/**
-	 * Policy information about FieldKinds:
-	 * This is typically stored as code, not in documents, and defines how to handles fields based on their kind.
-	 * It is assumed that all users of a document will have exactly the same FieldKind policies,
-	 * though older applications might be missing some,
-	 * and will be unable to process any changes that use those FieldKinds.
-	 */
-	readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>;
-}
-
-/**
- * Policy from the app for interpreting the stored schema.
- * The app must ensure consistency for all users of the document.
- * @internal
- */
-export interface SchemaPolicy {
+export interface FullSchemaPolicy extends SchemaPolicy {
 	/**
 	 * Policy information about FieldKinds:
 	 * This is typically stored as code, not in documents, and defines how to handles fields based on their kind.
