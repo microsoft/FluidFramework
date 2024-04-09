@@ -644,10 +644,8 @@ export class ConnectionManager implements IConnectionManager {
 
 				lastError = origError;
 
-				// We will not perform retries if the container disconnected, so break out of the while loop after first attempt to connect
-				if (this.reconnectMode == ReconnectMode.Disabled) {
-					break;
-				} else {
+				// We will not perform retries if the container ReconnectMode is Enabled
+				if (this.reconnectMode == ReconnectMode.Enabled) {
 					const waitStartTime = performance.now();
 					const retryDelayFromError = getRetryDelayFromError(origError);
 					// If the error told us to wait or browser signals us that we are offline, then calculate the time we
@@ -683,6 +681,10 @@ export class ConnectionManager implements IConnectionManager {
 							delayMs,
 						}),
 					});
+				} else {
+					// We will not perform retries if the container disconnected and the ReconnectMode is set to Disabled or Never
+					// so break out of the re-connecting while-loop after first attempt
+					break;
 				}
 			}
 		}
