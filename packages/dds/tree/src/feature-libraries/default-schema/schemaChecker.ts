@@ -18,15 +18,15 @@ import { allowsValue } from "../valueUtilities.js";
 
 export const enum SchemaValidationErrors {
 	NoError,
-	LeafNodeWithNoValue,
-	LeafNodeWithFields,
-	LeafNodeValueNotAllowed,
-	NodeSchemaNotInSchemaCollection,
-	FieldKindNotInSchemaPolicy,
-	IncorrectMultiplicity,
-	NodeTypeNotAllowedInField,
-	ObjectNodeFieldCountMismatch,
-	UndefinedSchemaForObjectNodeField,
+	Field_KindNotInSchemaPolicy,
+	Field_IncorrectMultiplicity,
+	Field_NodeTypeNotAllowed,
+	LeafNode_MissingValue,
+	LeafNode_InvalidValue,
+	LeafNode_FieldsNotAllowed,
+	ObjectNode_FieldCountMismatch,
+	ObjectNode_FieldNotInSchema,
+	Node_MissingSchema,
 	UnknownError,
 }
 
@@ -38,31 +38,31 @@ export function isNodeInSchema(
 	// Validate the schema declared by the node exists
 	const schema = nodeSchemaCollection.nodeSchema.get(node.type);
 	if (schema === undefined) {
-		return SchemaValidationErrors.NodeSchemaNotInSchemaCollection;
+		return SchemaValidationErrors.Node_MissingSchema;
 	}
 
 	// Validate the node is well formed according to its schema
 
 	if (schema instanceof LeafNodeStoredSchema) {
 		if (node.value === undefined) {
-			return SchemaValidationErrors.LeafNodeWithNoValue;
+			return SchemaValidationErrors.LeafNode_MissingValue;
 		}
 		if (node.fields.size !== 0) {
-			return SchemaValidationErrors.LeafNodeWithFields;
+			return SchemaValidationErrors.LeafNode_FieldsNotAllowed;
 		}
 		if (!allowsValue(schema.leafValue, node.value)) {
-			return SchemaValidationErrors.LeafNodeValueNotAllowed;
+			return SchemaValidationErrors.LeafNode_InvalidValue;
 		}
 	}
 
 	if (schema instanceof ObjectNodeStoredSchema) {
 		if (node.fields.size !== schema.objectNodeFields.size) {
-			return SchemaValidationErrors.ObjectNodeFieldCountMismatch;
+			return SchemaValidationErrors.ObjectNode_FieldCountMismatch;
 		}
 		for (const [fieldKey, field] of node.fields) {
 			const fieldSchema = schema.objectNodeFields.get(fieldKey);
 			if (fieldSchema === undefined) {
-				return SchemaValidationErrors.UndefinedSchemaForObjectNodeField;
+				return SchemaValidationErrors.ObjectNode_FieldNotInSchema;
 			}
 			const fieldInSchemaResult = isFieldInSchema(
 				field,
@@ -102,18 +102,18 @@ export function isFieldInSchema(
 	// Validate that the field kind is handled by the schema policy
 	const kind = schemaPolicy.fieldKinds.get(schema.kind);
 	if (kind === undefined) {
-		return SchemaValidationErrors.FieldKindNotInSchemaPolicy;
+		return SchemaValidationErrors.Field_KindNotInSchemaPolicy;
 	}
 
 	// Validate that the field doesn't contain more nodes than its type supports
 	if (!compliesWithMultiplicity(childNodes.length, kind.multiplicity)) {
-		return SchemaValidationErrors.IncorrectMultiplicity;
+		return SchemaValidationErrors.Field_IncorrectMultiplicity;
 	}
 
 	for (const node of childNodes) {
 		// Validate the type declared by the node is allowed in this field
 		if (schema.types !== undefined && !schema.types.has(node.type)) {
-			return SchemaValidationErrors.NodeTypeNotAllowedInField;
+			return SchemaValidationErrors.Field_NodeTypeNotAllowed;
 		}
 
 		// Validate the node complies with the type it declares to be.

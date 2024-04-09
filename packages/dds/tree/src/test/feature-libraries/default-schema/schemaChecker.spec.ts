@@ -184,8 +184,8 @@ describe.only("schema validation", () => {
 							testCaseData.positiveNodeType === node
 								? SchemaValidationErrors.NoError
 								: node === undefinedNode
-								? SchemaValidationErrors.LeafNodeWithNoValue
-								: SchemaValidationErrors.LeafNodeValueNotAllowed;
+								? SchemaValidationErrors.LeafNode_MissingValue
+								: SchemaValidationErrors.LeafNode_InvalidValue;
 						const title =
 							expectedResult === SchemaValidationErrors.NoError
 								? "in schema"
@@ -206,7 +206,7 @@ describe.only("schema validation", () => {
 			it(`not in schema due to missing schema entry in schemaCollection`, () => {
 				assert.equal(
 					isNodeInSchema(numberNode, emptySchemaCollection, emptySchemaPolicy),
-					SchemaValidationErrors.NodeSchemaNotInSchemaCollection,
+					SchemaValidationErrors.Node_MissingSchema,
 				);
 			});
 
@@ -220,7 +220,7 @@ describe.only("schema validation", () => {
 				numberNodeWithFields.fields.set(brand("prop1"), [stringNode]);
 				assert.equal(
 					isNodeInSchema(numberNodeWithFields, schemaCollection, emptySchemaPolicy),
-					SchemaValidationErrors.LeafNodeWithFields,
+					SchemaValidationErrors.LeafNode_FieldsNotAllowed,
 				);
 			});
 		});
@@ -324,7 +324,7 @@ describe.only("schema validation", () => {
 
 				assert.equal(
 					isNodeInSchema(mapNode_oneNumber, emptySchemaCollection, schemaPolicy),
-					SchemaValidationErrors.NodeSchemaNotInSchemaCollection,
+					SchemaValidationErrors.Node_MissingSchema,
 				);
 			});
 
@@ -349,7 +349,7 @@ describe.only("schema validation", () => {
 
 				assert.equal(
 					isNodeInSchema(mapNode_oneNumber, schemaCollection, emptySchemaPolicy),
-					SchemaValidationErrors.FieldKindNotInSchemaPolicy,
+					SchemaValidationErrors.Field_KindNotInSchemaPolicy,
 				);
 			});
 
@@ -391,7 +391,7 @@ describe.only("schema validation", () => {
 				mapNode.fields.set(brand("prop2"), [stringNode]);
 				assert.equal(
 					isNodeInSchema(mapNode, schemaCollection, schemaPolicy),
-					SchemaValidationErrors.NodeTypeNotAllowedInField,
+					SchemaValidationErrors.Field_NodeTypeNotAllowed,
 				);
 			});
 		});
@@ -452,7 +452,7 @@ describe.only("schema validation", () => {
 				// Not in schema before the node has any fields defined (thus doesn't match the schema)
 				assert.equal(
 					isNodeInSchema(objectNode, schemaCollection, schemaPolicy),
-					SchemaValidationErrors.ObjectNodeFieldCountMismatch,
+					SchemaValidationErrors.ObjectNode_FieldCountMismatch,
 				);
 
 				// In schema after setting fields of all kinds to empty
@@ -510,7 +510,7 @@ describe.only("schema validation", () => {
 
 				assert.equal(
 					isNodeInSchema(objectNode, emptySchemaCollection, schemaPolicy),
-					SchemaValidationErrors.NodeSchemaNotInSchemaCollection,
+					SchemaValidationErrors.Node_MissingSchema,
 				);
 			});
 
@@ -536,7 +536,7 @@ describe.only("schema validation", () => {
 
 				assert.equal(
 					isNodeInSchema(objectNode, schemaCollection, emptySchemaPolicy),
-					SchemaValidationErrors.FieldKindNotInSchemaPolicy,
+					SchemaValidationErrors.Field_KindNotInSchemaPolicy,
 				);
 			});
 
@@ -560,7 +560,7 @@ describe.only("schema validation", () => {
 
 				assert.equal(
 					isNodeInSchema(objectNode, schemaCollection, emptySchemaPolicy),
-					SchemaValidationErrors.UndefinedSchemaForObjectNodeField,
+					SchemaValidationErrors.ObjectNode_FieldNotInSchema,
 				);
 			});
 
@@ -587,7 +587,7 @@ describe.only("schema validation", () => {
 
 				assert.equal(
 					isNodeInSchema(objectNode, schemaCollection, emptySchemaPolicy),
-					SchemaValidationErrors.ObjectNodeFieldCountMismatch,
+					SchemaValidationErrors.ObjectNode_FieldCountMismatch,
 				);
 			});
 		});
@@ -606,7 +606,7 @@ describe.only("schema validation", () => {
 			// FieldKinds.required is used above but missing in the schema policy
 			assert.equal(
 				isFieldInSchema([numberNode], fieldSchema, schemaCollection, emptySchemaPolicy),
-				SchemaValidationErrors.FieldKindNotInSchemaPolicy,
+				SchemaValidationErrors.Field_KindNotInSchemaPolicy,
 			);
 		});
 
@@ -632,7 +632,7 @@ describe.only("schema validation", () => {
 			// Field does not support string nodes
 			assert.equal(
 				isFieldInSchema([stringNode], fieldSchema, schemaCollection, schemaPolicy),
-				SchemaValidationErrors.NodeTypeNotAllowedInField,
+				SchemaValidationErrors.Field_NodeTypeNotAllowed,
 			);
 
 			// Still fails even if there are other valid nodes for the field
@@ -643,7 +643,7 @@ describe.only("schema validation", () => {
 					schemaCollection,
 					schemaPolicy,
 				),
-				SchemaValidationErrors.NodeTypeNotAllowedInField,
+				SchemaValidationErrors.Field_NodeTypeNotAllowed,
 			);
 		});
 
@@ -652,20 +652,20 @@ describe.only("schema validation", () => {
 			numberToTest: number,
 			expectedResult: SchemaValidationErrors,
 		][] = [
-			[FieldKinds.required, 0, SchemaValidationErrors.IncorrectMultiplicity],
+			[FieldKinds.required, 0, SchemaValidationErrors.Field_IncorrectMultiplicity],
 			[FieldKinds.required, 1, SchemaValidationErrors.NoError],
-			[FieldKinds.required, 2, SchemaValidationErrors.IncorrectMultiplicity],
+			[FieldKinds.required, 2, SchemaValidationErrors.Field_IncorrectMultiplicity],
 			[FieldKinds.forbidden, 0, SchemaValidationErrors.NoError],
-			[FieldKinds.forbidden, 1, SchemaValidationErrors.IncorrectMultiplicity],
+			[FieldKinds.forbidden, 1, SchemaValidationErrors.Field_IncorrectMultiplicity],
 			[FieldKinds.optional, 0, SchemaValidationErrors.NoError],
 			[FieldKinds.optional, 1, SchemaValidationErrors.NoError],
-			[FieldKinds.optional, 2, SchemaValidationErrors.IncorrectMultiplicity],
+			[FieldKinds.optional, 2, SchemaValidationErrors.Field_IncorrectMultiplicity],
 			[FieldKinds.sequence, 0, SchemaValidationErrors.NoError],
 			[FieldKinds.sequence, 1, SchemaValidationErrors.NoError],
 			[FieldKinds.sequence, 2, SchemaValidationErrors.NoError],
-			[FieldKinds.nodeKey, 0, SchemaValidationErrors.IncorrectMultiplicity],
+			[FieldKinds.nodeKey, 0, SchemaValidationErrors.Field_IncorrectMultiplicity],
 			[FieldKinds.nodeKey, 1, SchemaValidationErrors.NoError],
-			[FieldKinds.nodeKey, 2, SchemaValidationErrors.IncorrectMultiplicity],
+			[FieldKinds.nodeKey, 2, SchemaValidationErrors.Field_IncorrectMultiplicity],
 		];
 		for (const [
 			fieldKind,
