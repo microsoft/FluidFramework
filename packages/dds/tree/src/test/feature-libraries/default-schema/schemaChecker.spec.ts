@@ -154,7 +154,7 @@ describe.only("schema validation", () => {
 
 			// Making the key of the record a ValueSchema ensures that we'll get compile-time errors if we add new
 			// ValueSchema values but forget to add test cases for them.
-			const testCases: Record<ValueSchema, any> = {
+			const testCases = {
 				[ValueSchema.Number]: {
 					schema: new LeafNodeStoredSchema(ValueSchema.Number),
 					positiveNodeType: numberNode,
@@ -175,7 +175,7 @@ describe.only("schema validation", () => {
 					schema: new LeafNodeStoredSchema(ValueSchema.FluidHandle),
 					positiveNodeType: fluidHandleNode,
 				},
-			};
+			} satisfies Record<ValueSchema, unknown>;
 
 			for (const [key, testCaseData] of Object.entries(testCases)) {
 				describe(`ValueSchema.${ValueSchema[parseInt(key, 10)]}`, () => {
