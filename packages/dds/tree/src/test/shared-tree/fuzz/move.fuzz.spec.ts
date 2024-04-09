@@ -62,7 +62,6 @@ describe("Fuzz - move", () => {
 	});
 
 	const options: Partial<DDSFuzzSuiteOptions> = {
-		// replay: 566,
 		emitter,
 		numberOfClients: 1,
 		clientJoinOptions: {
@@ -73,8 +72,6 @@ describe("Fuzz - move", () => {
 		saveFailures: {
 			directory: failureDirectory,
 		},
-		// AB#7162: enabling rehydrate in these tests hits 0x744 and 0x79d. Disabling rehydrate for now
-		// and using the default number of ops before attach.
 		detachedStartOptions: {
 			numOpsBeforeAttach: 5,
 			rehydrateDisabled: true,
