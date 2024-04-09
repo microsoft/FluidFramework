@@ -504,7 +504,9 @@ describe("serializedStateManager", () => {
 			storageAdapter,
 			true,
 		);
-		serializedStateManager.waitForInitialRefresh?.then(() => getLatestSnapshotInfoP.resolve());
+		void serializedStateManager.waitForInitialRefresh?.then(() =>
+			getLatestSnapshotInfoP.resolve(),
+		);
 		let seq = 1;
 		let lastProcessedOpSequenceNumber = 20;
 		while (seq <= lastProcessedOpSequenceNumber) {
