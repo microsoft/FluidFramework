@@ -2,7 +2,7 @@
 
 This package contains code enabling the production and consumption of typed telemetry for Fluid Framework applications. The typed telemetry from this package is used as the backbone for different Fluid Framework cloud offerings such as dashboards and alarms for Fluid applications. This package can also be used as a reference for customizing and creating your own telemetry solution if desired.
 
-At this time, the package enables collection of Fluid Container related telemetry. In the future, more areas would be added as needs evolve.
+At this time, the package enables collection of telemetry related to the Fluid Container only. In the future, more areas would be added as needs evolve.
 
 # Getting Started
 
