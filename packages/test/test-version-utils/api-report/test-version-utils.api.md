@@ -31,7 +31,7 @@ import * as orderedCollection from '@fluidframework/ordered-collection/internal'
 import * as registerCollection from '@fluidframework/register-collection/internal';
 import * as sequence from '@fluidframework/sequence/internal';
 import * as sequenceDeprecated from '@fluid-experimental/sequence-deprecated';
-import { TestDriverTypes } from '@fluidframework/test-driver-definitions';
+import { TestDriverTypes } from '@fluid-internal/test-driver-definitions';
 import { TestFluidObjectFactory } from '@fluidframework/test-utils/internal';
 import { TestObjectProvider } from '@fluidframework/test-utils/internal';
 
@@ -64,6 +64,9 @@ export interface CompatApis {
     // (undocumented)
     loaderForLoading?: ReturnType<typeof getLoaderApi>;
 }
+
+// @internal (undocumented)
+export type CompatType = "FullCompat" | "LoaderCompat" | "NoCompat";
 
 // @internal (undocumented)
 export const ContainerRuntimeApi: {
@@ -116,7 +119,7 @@ export type DescribeCompat = DescribeCompatSuite & {
 export const describeCompat: DescribeCompat;
 
 // @internal (undocumented)
-export type DescribeCompatSuite = (name: string, compatVersion: string, tests: (this: Mocha.Suite, provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider, apis: CompatApis) => void) => Mocha.Suite | void;
+export type DescribeCompatSuite = (name: string, compatVersion: CompatType, tests: (this: Mocha.Suite, provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider, apis: CompatApis) => void) => Mocha.Suite | void;
 
 // @internal (undocumented)
 export interface DescribeE2EDocInfo {

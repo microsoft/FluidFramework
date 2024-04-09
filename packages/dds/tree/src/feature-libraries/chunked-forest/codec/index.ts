@@ -5,9 +5,4 @@
 
 export { EncodedFieldBatch } from "./format.js";
 export { FieldBatch } from "./fieldBatch.js";
-export {
-	FieldBatchCodec,
-	makeFieldBatchCodec,
-	FieldBatchEncodingContext,
-	SchemaAndPolicy,
-} from "./codecs.js";
+export { FieldBatchCodec, makeFieldBatchCodec, FieldBatchEncodingContext } from "./codecs.js";

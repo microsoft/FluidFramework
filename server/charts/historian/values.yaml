@@ -74,7 +74,7 @@ gitrest:
     enableRedisFsOptimizedStat: false
     redisApiMetricsSamplingPeriod: 0
   redis:
-    host: redis
+    url: redis_url
     port: 6379
     connectTimeout: 10000
     maxRetriesPerRequest: 20

@@ -10,7 +10,7 @@ import {
 	ConsensusRegisterCollection,
 	IConsensusRegisterCollection,
 } from "@fluidframework/register-collection/internal";
-import { ITaskManager, TaskManager } from "@fluidframework/task-manager";
+import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
 
 import type { IMigrationTool, MigrationState } from "../migrationInterfaces/index.js";
 

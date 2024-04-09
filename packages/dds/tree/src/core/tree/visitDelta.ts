@@ -5,8 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { NestedMap } from "../../index.js";
-import { setInNestedMap, tryGetFromNestedMap } from "../../util/index.js";
+import { NestedMap, setInNestedMap, tryGetFromNestedMap } from "../../util/index.js";
 import { FieldKey } from "../schema-stored/index.js";
 
 import { ITreeCursorSynchronous } from "./cursor.js";
@@ -54,6 +53,13 @@ import { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
  *
  * After the attach phase, roots destruction is carried out.
  * This needs to happen last to allow modifications to detached roots to be applied before they are destroyed.
+ *
+ * The details of the delta visit algorithm can impact how/when events are emitted by the objects that own the visitors.
+ * For example, as of 2024-03-27, the subtreecChanged event of an AnchorNode is emitted when exiting a node during a
+ * delta visit, and thus the two-pass nature of the algorithm means the event fires twice for any given change.
+ * This two-pass nature also means that the event may fire at a time where no change is visible in the tree. E.g.,
+ * if a node is being replaced, when the event fires during the detach pass no change in the tree has happened so the
+ * listener won't see any; then when it fires during the attach pass, the change will be visible in the event listener.
  */
 
 /**
@@ -429,13 +435,10 @@ function buildTrees(
 	for (let i = 0; i < trees.length; i += 1) {
 		const offsettedId = offsetDetachId(id, i);
 		let root = config.detachedFieldIndex.tryGetEntry(offsettedId);
-		// Tree building is idempotent. We can therefore ignore build instructions for trees that already exist.
-		// The idempotence is leveraged by undo/redo as well as sandwich rebasing.
-		if (root === undefined) {
-			root = config.detachedFieldIndex.createEntry(offsettedId);
-			const field = config.detachedFieldIndex.toFieldKey(root);
-			visitor.create([trees[i]], field);
-		}
+		assert(root === undefined, "Unable to build tree that already exists");
+		root = config.detachedFieldIndex.createEntry(offsettedId);
+		const field = config.detachedFieldIndex.toFieldKey(root);
+		visitor.create([trees[i]], field);
 	}
 }
 

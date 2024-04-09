@@ -20,14 +20,14 @@ export interface IValueChanged {
 	/**
 	 * The key storing the value that changed.
 	 */
-	key: string;
+	readonly key: string;
 
 	/**
 	 * The value that was stored at the key prior to the change.
 	 */
 	// TODO: Use `unknown` instead (breaking change).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	previousValue: any;
+	readonly previousValue: any;
 }
 
 /**

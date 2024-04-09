@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import * as fs from "fs";
+import * as path from "path";
 import { PackageName } from "@rushstack/node-core-library";
 import { queue } from "async";
 import * as chalk from "chalk";
 import detectIndent from "detect-indent";
-import * as fs from "fs";
 import { readFileSync, readJsonSync, writeJsonSync } from "fs-extra";
-import * as path from "path";
 import sortPackageJson from "sort-package-json";
 
-import type { PackageJson as StandardPackageJson, SetRequired } from "type-fest";
+import type { SetRequired, PackageJson as StandardPackageJson } from "type-fest";
 
 import { options } from "../fluidBuild/options";
 import { type IFluidBuildConfig, type ITypeValidationConfig } from "./fluidRepo";

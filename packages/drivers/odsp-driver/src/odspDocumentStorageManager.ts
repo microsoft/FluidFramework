@@ -6,7 +6,7 @@
 import { performance } from "@fluid-internal/client-utils";
 import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
-import { promiseRaceWithWinner } from "@fluidframework/driver-base";
+import { promiseRaceWithWinner } from "@fluidframework/driver-base/internal";
 import {
 	FetchSource,
 	ISnapshot,
@@ -44,7 +44,7 @@ import {
 	ISnapshotRequestAndResponseOptions,
 	SnapshotFormatSupportType,
 	downloadSnapshot,
-	evalBlobsAndTrees,
+	getTreeStats,
 	fetchSnapshot,
 	fetchSnapshotWithRedeem,
 } from "./fetchSnapshot.js";
@@ -178,7 +178,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					eventName: "readDataBlob",
 					blobId,
 					evicted,
-					headers: Object.keys(headers).length > 0 ? true : undefined,
 					waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
 				},
 				async (event) => {
@@ -410,7 +409,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 						snapshotFetchOptions.loadingGroupIds,
 					),
 					avoidPrefetchSnapshotCache: this.hostPolicy.avoidPrefetchSnapshotCache,
-					...evalBlobsAndTrees(retrievedSnapshot),
+					...getTreeStats(retrievedSnapshot),
 					cacheLookupTimeInSerialFetch,
 					prefetchSavedDuration:
 						prefetchStartTime !== undefined && method !== "cache"
@@ -491,7 +490,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				this.logger,
 				{
 					eventName: "getVersions",
-					headers: Object.keys(headers).length > 0 ? true : undefined,
 				},
 				async () =>
 					this.epochTracker.fetchAndParseAsJSON<IDocumentStorageGetVersionsResponse>(

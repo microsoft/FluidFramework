@@ -10,7 +10,7 @@ import {
 	InsecureTinyliciousTokenProvider,
 	InsecureTinyliciousUrlResolver,
 	createTinyliciousCreateNewRequest,
-} from "@fluidframework/tinylicious-driver";
+} from "@fluidframework/tinylicious-driver/internal";
 import React from "react";
 import ReactDOM from "react-dom";
 

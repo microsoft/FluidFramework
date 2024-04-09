@@ -11,10 +11,13 @@ import {
 	IOdspResolvedUrl,
 	OdspResourceTokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { FluidAppOdspUrlResolver, OdspUrlResolver } from "@fluidframework/odsp-urlresolver";
+import {
+	FluidAppOdspUrlResolver,
+	OdspUrlResolver,
+} from "@fluidframework/odsp-urlresolver/internal";
 import * as r11s from "@fluidframework/routerlicious-driver/internal";
-import { RouterliciousUrlResolver } from "@fluidframework/routerlicious-urlresolver";
-import { getMicrosoftConfiguration } from "@fluidframework/tool-utils";
+import { RouterliciousUrlResolver } from "@fluidframework/routerlicious-urlresolver/internal";
+import { getMicrosoftConfiguration } from "@fluidframework/tool-utils/internal";
 
 import { localDataOnly, paramJWT } from "./fluidFetchArgs.js";
 import { resolveWrapper } from "./fluidFetchSharePoint.js";
