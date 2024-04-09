@@ -156,6 +156,7 @@ export function isRevertibleSharedTreeView(s: ITreeCheckout): s is RevertibleSha
 }
 
 export const failureDirectory = pathJoin(testSrcPath, "shared-tree/fuzz/failures");
+export const successDirectory = pathJoin(testSrcPath, "shared-tree/fuzz/successes");
 
 export const createOrDeserializeCompressor = (
 	sessionId: SessionId,
