@@ -80,7 +80,7 @@ You can find these queries [here]().
 
 ## Use Case 2: Setup a custom telemetry consumer
 
-To use a custom telemetry consumer and integrate with a cloud provider or custom dashboard solution, you need to extend the ITelemetryConsumer package.
+To use a custom telemetry consumer and integrate with a cloud provider or custom dashboard solution, you need to implement the `ITelemetryConsumer` interface.
 
 In this example, you'll walk through the basic setup process to start getting container telemetry to be produced and log it to the console.
 
