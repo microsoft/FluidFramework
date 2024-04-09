@@ -332,6 +332,12 @@ export interface Revertible {
 }
 
 // @public
+export type RevertibleDisposedCallback = (disposed: Revertible) => void;
+
+// @public
+export type RevertibleFactory = (onRevertibleDisposed: RevertibleDisposedCallback) => Revertible;
+
+// @public
 export enum RevertibleStatus {
     Disposed = 1,
     Valid = 0
@@ -508,8 +514,7 @@ export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposab
 // @public
 export interface TreeViewEvents {
     afterBatch(): void;
-    commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
-    revertibleDisposed(revertible: Revertible): void;
+    commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
     rootChanged(): void;
 }
 

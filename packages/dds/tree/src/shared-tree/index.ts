@@ -22,6 +22,8 @@ export {
 	CheckoutEvents,
 	ITransaction,
 	ITreeCheckoutFork,
+	RevertibleDisposedCallback,
+	RevertibleFactory,
 } from "./treeCheckout.js";
 
 export {
