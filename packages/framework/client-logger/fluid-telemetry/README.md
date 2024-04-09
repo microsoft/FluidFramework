@@ -154,17 +154,17 @@ Going into more detail, A “Session” or “Collaborative Session” is define
 
 ### Accessing App Insights Portal
 
-Before we can query, we must first navigate to your Azure App Insights telemetry page. To do this, go to your Azure App Insights Instance and Click on the “Logs” tab under Monitoring
+Before we can query, we must first navigate to your Azure App Insights telemetry page. To do this, go to your Azure App Insights Instance and click on the “Logs” tab under Monitoring.
 
 ![Logs on App Insights Portal](readme_images/telemetry_1.png)
 
-Now, close out the “Queries” pane if it showed up for you and you will be in the view where we can now execute our queries. Note that if you are using the Fluid Azure App Insights logger, your telemetry data will be available in the “customEvents” table. 
+Now, close out the “Queries” pane if it showed up for you and you will be in the view where we can execute our queries. Note that if you are using the Fluid Azure App Insights logger, your telemetry data will be available in the “customEvents” table. 
 
 ### Queries and results
 
 1. Session information
 
-The following query provides a table of data that can give you a quick overview of information about sessions for your application. It includes the Id of the document being interacted with, the number of collaborators and the length of each session. Note that query provides session id’s but these values do not actually exist in the telemetry, it is a concept we have derived from the data; See the intro paragraph for more information on sessions.
+The following query provides a table of data that can give you a quick overview of information about sessions for your application. It includes the Id of the container being interacted with, the number of collaborators and the length of each session. Note that query provides session id’s but these values do not actually exist in the telemetry, it is a concept we have derived from the data; see the intro paragraph for more information on sessions.
 
 ```sql
 let sessionGap = 5m; 
@@ -214,7 +214,7 @@ customEvents
 
 3. Average number of sessions over time period
 
-The following query provides the average number of total sessions occurring over 1-hour intervals. The query logic first sums up the total number of sessions occurring over 10-minute data points denoted by the variable named summedDataPointInterval. It then averages these data points over 1-hour intervals denoted by the averagedTimeInterval variable.
+The following query provides the average number of sessions occurring over 1-hour intervals. The query logic first sums up the total number of sessions occurring over 10-minute data points denoted by the variable named `summedDataPointInterval`. It then averages these data points over 1-hour intervals denoted by the `averagedTimeInterval` variable.
 
 Both variables can be adjusted to your preference, For example, replace `let summedDataPointInterval = 10m;` with `let summedDataPointInterval = 1hr;` for 1-hour data points and replace `let averagedTimeInterval = 1hr;` with `let averagedTimeInterval = 1d`; for 1 hour data points averaged over 1 day time intervals.
 
@@ -243,7 +243,7 @@ customEvents
 
 4. Average number of containers per session over a time period
 
-The following query will provide you with the approximate average number of containers per sessions over 1 hour time intervals. The query logic first sums up the total number of collaborators per sessions occurring over 10-minute data points denoted by the variable named `summedDataPointInterval`. It then averages these datapoints over 1-hour intervals denoted by the `averagedTimeInterval` variable.
+The following query will provide you with the approximate average number of containers per session over 1 hour time intervals. The query logic first sums up the total number of containers per sessions occurring over 10-minute data points denoted by the variable named `summedDataPointInterval`. It then averages these datapoints over 1-hour intervals denoted by the `averagedTimeInterval` variable.
 
 Both variables can be adjusted to your preference, For example, replace `let summedDataPointInterval = 10m;` with `let summedDataPointInterval = 1hr;` for 1-hour data points and replace `let averagedTimeInterval = 1hr;` with `let averagedTimeInterval = 1d;` for 1 hour data points averaged over 1 day time intervals.
 
@@ -272,7 +272,7 @@ customEvents
 
 5. Length of Individual Sessions in Minutes
 
-This query provides you with the length of time of individual sessions, graphed by putting them into time bins increasing in 2.5 minute increments. The query logic calculates the length of time of each session that occurs and then sorts them into time bins going up in 2.5 minute increments denoted by the `let sessionLengthMinuteBins = 2.5;` variable. To adjust the 2.5 minute time bins, simply modify the `sessionLengthMinuteBins` variable, note that this number represents minutes.
+This query provides you with the length of time of individual sessions, graphed by putting them into time bins increasing in 2.5 minute increments. The query logic calculates the length of time of each session that occurs and then sorts them into time bins going up in 2.5 minute increments denoted by the `let sessionLengthMinuteBins = 2.5;` variable. To adjust the 2.5 minute time bins, simply modify the `sessionLengthMinuteBins` variable. Note that this number represents minutes.
 
 ```sql
 let sessionLengthMinuteBins = 2.5;
@@ -312,7 +312,7 @@ To adjust the time span of this query, simply use the Time Range dropdown provid
 
 2. Adjusting the gap of time that defines a session
 
-By default, we identify each session has a period of 5 minutes of inactivity before and after. However, you may want to adjust this time period. To do so, modify the value of the variable named sessionGap to be your desired time length.
+By default, we identify each session has a period of 5 minutes of inactivity before and after. However, you may want to adjust this time period. To do so, modify the value of the variable named `sessionGap` to be your desired time length.
 
 3. Adjusting the title of your graphs 
 
