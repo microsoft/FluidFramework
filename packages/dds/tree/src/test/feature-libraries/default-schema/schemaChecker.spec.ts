@@ -190,6 +190,17 @@ describe.only("schema validation", () => {
 					}
 				});
 			}
+
+			it(`not in schema due to missing schema entry in schemaCollection`, () => {
+				assert.equal(
+					isNodeInSchema(
+						numberNode,
+						emptySchemaCollection,
+						emptySchemaPolicy,
+					),
+					SchemaValidationErrors.NodeSchemaNotInSchemaCollection,
+				);
+			});
 		});
 
 		describe("MapNodeStoredSchema", () => {
