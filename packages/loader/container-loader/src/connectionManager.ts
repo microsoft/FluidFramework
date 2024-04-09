@@ -702,19 +702,21 @@ export class ConnectionManager implements IConnectionManager {
 			);
 		}
 
-		// Check for abort signal after while loop as well or we've been disposed
-		if (abortSignal.aborted === true || this._disposed) {
-			connection.dispose();
-			this.logger.sendTelemetryEvent({
-				eventName: "ConnectionAttemptCancelled",
-				attempts: connectRepeatCount,
-				duration: formatTick(performance.now() - connectStartTime),
-				connectionEstablished: true,
-			});
-			return;
-		}
+		if (connection) {
+			// Check for abort signal after while loop as well or we've been disposed
+			if (abortSignal.aborted === true || this._disposed) {
+				connection.dispose();
+				this.logger.sendTelemetryEvent({
+					eventName: "ConnectionAttemptCancelled",
+					attempts: connectRepeatCount,
+					duration: formatTick(performance.now() - connectStartTime),
+					connectionEstablished: true,
+				});
+				return;
+			}
 
-		this.setupNewSuccessfulConnection(connection, requestedMode, reason);
+			this.setupNewSuccessfulConnection(connection, requestedMode, reason);
+		}
 	}
 
 	/**
