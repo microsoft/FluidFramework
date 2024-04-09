@@ -280,7 +280,10 @@ export type ValidateRecursiveSchema<
 		// TInsertable: What can be passed to the constructor. This should be enough to catch most issues with incorrect schema.
 		// These match whats defined in the methods on `SchemaFactoryRecursive` except they do not use `Unenforced`.
 		{
-			[NodeKind.Object]: T["info"] extends RestrictiveReadonlyRecord<string, FieldSchema>
+			[NodeKind.Object]: T["info"] extends RestrictiveReadonlyRecord<
+				string,
+				ImplicitFieldSchema
+			>
 				? InsertableObjectFromSchemaRecord<T["info"]>
 				: unknown;
 			[NodeKind.Array]: T["info"] extends ImplicitAllowedTypes
@@ -294,7 +297,7 @@ export type ValidateRecursiveSchema<
 		false,
 		// Info: What's passed to the method to create the schema. Constraining these here should be about as effective as if the actual constraints existed on the actual method itself.
 		{
-			[NodeKind.Object]: RestrictiveReadonlyRecord<string, FieldSchema>;
+			[NodeKind.Object]: RestrictiveReadonlyRecord<string, ImplicitFieldSchema>;
 			[NodeKind.Array]: ImplicitAllowedTypes;
 			[NodeKind.Map]: ImplicitAllowedTypes;
 		}[T["kind"]]
