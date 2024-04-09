@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
+import { isObject } from "@fluidframework/core-utils/internal";
 import { IDirectory } from "../../interfaces.js";
 
 export async function assertEquivalentDirectories(
@@ -37,18 +38,19 @@ async function assertEventualConsistencyCore(
 	for (const key of first.keys()) {
 		const firstVal: unknown = first.get(key);
 		const secondVal: unknown = second.get(key);
-		const firstObj: FluidObject<IFluidHandle> = firstVal as FluidObject<IFluidHandle>;
-		const secondObj: FluidObject<IFluidHandle> = secondVal as FluidObject<IFluidHandle>;
-		const firstHandle = firstObj.IFluidHandle ? await firstObj.IFluidHandle?.get() : firstObj;
-		const secondHandle = secondObj.IFluidHandle
-			? await secondObj.IFluidHandle?.get()
-			: secondObj;
-		if (
-			firstHandle !== null &&
-			firstHandle !== firstObj &&
-			secondHandle !== null &&
-			secondHandle !== secondObj
-		) {
+		if (isObject(firstVal) === true) {
+			const firstObj: FluidObject<IFluidHandle> = firstVal as FluidObject<IFluidHandle>;
+			assert(
+				isObject(secondVal),
+				`Values differ at key ${key}: first is an object, second is not`,
+			);
+			const secondObj: FluidObject<IFluidHandle> = secondVal as FluidObject<IFluidHandle>;
+			const firstHandle = firstObj.IFluidHandle
+				? await firstObj.IFluidHandle?.get()
+				: firstObj;
+			const secondHandle = secondObj.IFluidHandle
+				? await secondObj.IFluidHandle?.get()
+				: secondObj;
 			assert.equal(
 				firstHandle,
 				secondHandle,

@@ -28,6 +28,7 @@ import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
+import { isObject } from "@fluidframework/core-utils/internal";
 import { SharedMatrix } from "../matrix.js";
 import { MatrixItem } from "../ops.js";
 import { SharedMatrixFactory } from "../runtime.js";
@@ -98,16 +99,15 @@ async function assertMatricesAreEquivalent<T>(a: SharedMatrix<T>, b: SharedMatri
 		for (let col = 0; col < a.colCount; col++) {
 			const aVal = a.getCell(row, col);
 			const bVal = b.getCell(row, col);
-			if (
-				aVal !== null &&
-				typeof aVal === "object" &&
-				bVal !== null &&
-				typeof bVal === "object"
-			) {
+			if (isObject(aVal) === true) {
 				const aObj: FluidObject<IFluidHandle> = aVal as FluidObject<IFluidHandle>;
+				assert(
+					isObject(bVal),
+					`${a.id} and ${b.id} differ at (${row}, ${col}): a is an object, b is not`,
+				);
 				const bObj: FluidObject<IFluidHandle> = bVal as FluidObject<IFluidHandle>;
-				const aHandle = aObj.IFluidHandle ? aObj.IFluidHandle?.get() : aObj;
-				const bHandle = bObj.IFluidHandle ? bObj.IFluidHandle?.get() : bObj;
+				const aHandle = aObj.IFluidHandle ? await aObj.IFluidHandle?.get() : aObj;
+				const bHandle = bObj.IFluidHandle ? await bObj.IFluidHandle?.get() : bObj;
 				assert.deepEqual(
 					aHandle,
 					bHandle,
@@ -260,7 +260,7 @@ describe("Matrix fuzz tests", function () {
 	const baseOptions: Partial<DDSFuzzSuiteOptions> = {
 		defaultTestCount: 100,
 		numberOfClients: 3,
-		clientJoinOptions: {
+				clientJoinOptions: {
 			maxNumberOfClients: 6,
 			clientAddProbability: 0.1,
 		},
