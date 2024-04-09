@@ -72,6 +72,9 @@ describe("SchemaFactoryRecursive", () => {
 				 */
 				child: schema.optionalRecursive([() => Box]),
 			}) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof Box>;
+			}
 
 			const config = new TreeConfiguration(
 				Box,
@@ -109,6 +112,9 @@ describe("SchemaFactoryRecursive", () => {
 			class ObjectRecursive extends sf.objectRecursive("Object", {
 				x: sf.optionalRecursive([() => ObjectRecursive]),
 			}) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof ObjectRecursive>;
+			}
 
 			type XSchema = typeof ObjectRecursive.info.x;
 			type Field2 = XSchema extends FieldSchema<infer Kind, infer Types>
@@ -170,6 +176,9 @@ describe("SchemaFactoryRecursive", () => {
 				d: sf.optional(Other),
 				e: sf.optional([() => Other]),
 			}) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof ObjectRecursive>;
+			}
 
 			const tree2 = hydrate(
 				ObjectRecursive,
@@ -188,6 +197,9 @@ describe("SchemaFactoryRecursive", () => {
 			class ObjectRecursive extends sf.objectRecursive("Object", {
 				x: sf.optionalRecursive([() => ObjectRecursive]),
 			}) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof ObjectRecursive>;
+			}
 
 			{
 				const field = ObjectRecursive.info.x;
@@ -220,6 +232,9 @@ describe("SchemaFactoryRecursive", () => {
 			class A extends sf.objectRecursive("A", {
 				a: sf.optionalRecursive([() => B]),
 			}) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof A>;
+			}
 
 			class B extends sf.object("B", {
 				// Implicit required field
@@ -256,6 +271,9 @@ describe("SchemaFactoryRecursive", () => {
 			class A extends sf.objectRecursive("A", {
 				a: sf.optionalRecursive([() => B]),
 			}) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof A>;
+			}
 
 			class B extends sf.object("B", {
 				b: sf.optional(A),
@@ -291,6 +309,9 @@ describe("SchemaFactoryRecursive", () => {
 			class A extends sf.objectRecursive("A", {
 				a: [() => B, sf.number],
 			}) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof A>;
+			}
 
 			class B extends sf.object("B", {
 				b: sf.optional(A),
@@ -359,6 +380,9 @@ describe("SchemaFactoryRecursive", () => {
 	describe("arrayRecursive", () => {
 		it("simple", () => {
 			class ArrayRecursive extends sf.arrayRecursive("List", [() => ArrayRecursive]) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof ArrayRecursive>;
+			}
 			// Explicit constructor call
 			{
 				const data: ArrayRecursive = hydrate(ArrayRecursive, new ArrayRecursive([]));
@@ -389,6 +413,9 @@ describe("SchemaFactoryRecursive", () => {
 	describe("mapRecursive", () => {
 		it("simple", () => {
 			class MapRecursive extends sf.mapRecursive("Map", [() => MapRecursive]) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof MapRecursive>;
+			}
 			const node = hydrate(MapRecursive, new MapRecursive([]));
 			const data = [...node];
 			assert.deepEqual(data, []);
@@ -409,6 +436,9 @@ describe("SchemaFactoryRecursive", () => {
 
 	it("recursive under non-recursive", () => {
 		class ArrayRecursive extends sf.arrayRecursive("List", [() => ArrayRecursive]) {}
+		{
+			type _check = ValidateRecursiveSchema<typeof ArrayRecursive>;
+		}
 		class Root extends sf.object("Root", {
 			r: ArrayRecursive,
 		}) {}
