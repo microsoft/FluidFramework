@@ -75,8 +75,7 @@ startTelemetry(telemetryConfig);
 
 That's it for now! If you've decided to use Azure App Insights, we have designed useful prebuilt queries that utilize the generated telemetry. You can try out these queries after running your application with above code for a little duration.
 
-You can find these queries [here]().
-// TODO: rohandubal:Fix me
+You can find these queries [here](#telemetry_visualization).
 
 ## Use Case 2: Setup a custom telemetry consumer
 
@@ -140,3 +139,182 @@ startTelemetry(telemetryConfig);
 ```
 
 You can now run the app and see the telemetry being printed on your console.
+
+## <a name="telemetry_visualization">Interpreting telemetry data</a>
+
+This section provides a set of Azure App Insights queries related to collaborative sessions within a Fluid Framework application. It is intended to be used with the telemetry generated from @fluidframework/fluid-telemetry package whose integration steps are outline above.
+
+### Understanding container telemetry
+
+Before we dive into the queries, we will walk through what a “session” or “collaborative session” is in the context of the following queries. Currently, the concept of a "session” or “collaborative session” does not actually exist within telemetry itself. At a high level, we identify a session by finding a set of container telemetry being emitted with the same container ID within a specific time frame.
+
+Going into more detail, A “Session” or “Collaborative Session” is defined as a period in which we see a continuous stream of container telemetry being emitted with a unique container Id. For a given set of telemetry with the same container Id, if this stream of telemetry stops for longer than a specified period of time then we consider that the end of the session. Each session is differentiated from each other because it has no telemetry (no user activity) emitted for a defined amount of time prior to the start and after the end of emitted telemetry. For each of these queries you can also adjust the time gap that defines a session based on your preference. 
+
+> Note: All telemetry being visualized below is generated from clients without any intervention from the server. The accuracy might be impacted due to inherent nature of client telemetry and data being lost due to faulty clients or lack of connectivity before the telemetry is fully pushed out. We recommend not using this telemetry for business metrics, but rather use it for operational metrics and diagnosis of issues.
+
+### Accessing App Insights Portal
+
+Before we can query, we must first navigate to your Azure App Insights telemetry page. To do this, go to your Azure App Insights Instance and Click on the “Logs” tab under Monitoring
+
+![Logs on App Insights Portal](readme_images/telemetry_1.png)
+
+Now, close out the “Queries” pane if it showed up for you and you will be in the view where we can now execute our queries. Note that if you are using the Fluid Azure App Insights logger, your telemetry data will be available in the “customEvents” table. 
+
+### Queries and results
+
+1. Session information
+
+The following query provides a table of data that can give you a quick overview of information about sessions for your application. It includes the Id of the document being interacted with, the number of collaborators and the length of each session. Note that query provides session id’s but these values do not actually exist in the telemetry, it is a concept we have derived from the data; See the intro paragraph for more information on sessions.
+
+```sql
+let sessionGap = 5m; 
+let sessionGapSeconds = toint(sessionGap / 1s); 
+customEvents 
+| extend containerId = tostring(customDimensions.containerId), containerInstanceId = tostring(customDimensions.containerInstanceId ) 
+| where name startswith "fluidframework.container"
+| extend containerIdTimestamp = strcat(containerId, timestamp) 
+| sort by containerIdTimestamp asc 
+| extend prevTimestamp = prev(timestamp), prevContainerId = prev(containerId) 
+| extend Diff = datetime_diff("second", timestamp, prevTimestamp) 
+| extend IsNewPeriod = iif(prevContainerId != containerId or Diff > (sessionGapSeconds) or isnull(Diff), 1, 0) 
+| extend SessionId = row_cumsum(IsNewPeriod) 
+| summarize NumCollaborators = dcount(containerInstanceId), StartTime = min(timestamp), EndTime = max(timestamp) by SessionId, containerId 
+| extend PeriodDurationInMinutes = datetime_diff("minute", EndTime, StartTime) 
+| project SessionId, containerId , NumCollaborators, PeriodDurationInMinutes, StartTime, EndTime 
+```
+![Query result](readme_images/telemetry_2.png)
+
+2. Total number of sessions over time period
+
+The following query provides the average number of total sessions occurring over 10-minute intervals. The query logic graphs the total number of sessions occurring over 10-minute data points denoted by the variable named summedDataPointInterval. 
+
+This variable can be adjusted to your liking, for example, replace `let summedDataPointInterval = 10m;` with `let summedDataPointInterval = 1hr;` for 1hr data points.
+
+```sql
+let summedDataPointInterval = 10m;
+let averagedTimeInterval = 1hr; 
+let sessionGap = 5m; 
+let sessionGapSeconds = toint(sessionGap / 1s); 
+let minTimestamp = toscalar(customEvents | where name startswith "fluidframework.container" | summarize min(timestamp)); 
+let maxTimestamp = toscalar(customEvents | where name startswith "fluidframework.container" | summarize max(timestamp)); 
+customEvents 
+| extend containerId = tostring(customDimensions.containerId) 
+| where name startswith "fluidframework.container" 
+| extend docIdTimestamp = strcat(containerId, timestamp) 
+| sort by docIdTimestamp asc 
+| extend prevTimestamp = prev(timestamp), prevContainerId = prev(containerId) 
+| extend Diff = datetime_diff("second", timestamp, prevTimestamp) 
+| extend IsNewPeriod = iif(prevContainerId != containerId or Diff > (sessionGapSeconds) or isnull(Diff), 1, 0) 
+| extend SessionId = row_cumsum(IsNewPeriod) 
+| summarize by SessionId, containerId, bin(timestamp, summedDataPointInterval) 
+| make-series sumSessions = dcount(SessionId) on timestamp from minTimestamp to maxTimestamp step averagedTimeInterval 
+| render timechart with (title = "Total Number of Sessions Occurring Over 1 Hour Intervals") 
+```
+![Total sessions over time period](readme_images/telemetry_3.png)
+
+3. Average number of sessions over time period
+
+The following query provides the average number of total sessions occurring over 1-hour intervals. The query logic first sums up the total number of sessions occurring over 10-minute data points denoted by the variable named summedDataPointInterval. It then averages these data points over 1-hour intervals denoted by the averagedTimeInterval variable.
+
+Both variables can be adjusted to your preference, For example, replace `let summedDataPointInterval = 10m;` with `let summedDataPointInterval = 1hr;` for 1-hour data points and replace `let averagedTimeInterval = 1hr;` with `let averagedTimeInterval = 1d`; for 1 hour data points averaged over 1 day time intervals.
+
+```sql
+let summedDataPointInterval = 5m;
+let averagedTimeInterval = 20m; 
+let sessionGap = 5m; 
+let sessionGapSeconds = toint(sessionGap / 1s); 
+let minTimestamp = toscalar(customEvents | where name startswith "fluidframework.container" | summarize min(timestamp)); 
+let maxTimestamp = toscalar(customEvents | where name startswith "fluidframework.container" | summarize max(timestamp)); 
+customEvents 
+| extend containerId = tostring(customDimensions.containerId)
+| where name startswith "fluidframework.container"
+| extend containerIdTimestamp = strcat(containerId, timestamp) 
+| sort by containerIdTimestamp asc 
+| extend prevTimestamp = prev(timestamp), prevContainerId = prev(containerId) 
+| extend Diff = datetime_diff("second", timestamp, prevTimestamp) 
+| extend IsNewPeriod = iif(prevContainerId != containerId or Diff > (sessionGapSeconds) or isnull(Diff), 1, 0) 
+| extend SessionId = row_cumsum(IsNewPeriod) 
+| summarize sumSessions = dcount(SessionId) by bin(timestamp, summedDataPointInterval)
+| make-series avgSessions = avg(sumSessions) on timestamp from minTimestamp to maxTimestamp step averagedTimeInterval 
+| render timechart with (title = "Average Number of Sessions Occurring Over 1 Hour Intervals")
+```
+
+![Average number of sessions over time period](readme_images/telemetry_4.png)
+
+4. Average number of containers per session over a time period
+
+The following query will provide you with the approximate average number of containers per sessions over 1 hour time intervals. The query logic first sums up the total number of collaborators per sessions occurring over 10-minute data points denoted by the variable named `summedDataPointInterval`. It then averages these datapoints over 1-hour intervals denoted by the `averagedTimeInterval` variable.
+
+Both variables can be adjusted to your preference, For example, replace `let summedDataPointInterval = 10m;` with `let summedDataPointInterval = 1hr;` for 1-hour data points and replace `let averagedTimeInterval = 1hr;` with `let averagedTimeInterval = 1d;` for 1 hour data points averaged over 1 day time intervals.
+
+```sql
+let summedDataPointInterval = 10m;
+let averagedTimeInterval = 1hr; 
+let sessionGap = 5m; 
+let sessionGapSeconds = toint(sessionGap / 1s); 
+let minTimestamp = toscalar(customEvents | where name startswith "fluidframework.container" | summarize min(timestamp)); 
+let maxTimestamp = toscalar(customEvents | where name startswith "fluidframework.container" | summarize max(timestamp)); 
+customEvents 
+| extend containerId = tostring(customDimensions.containerId), containerInstanceId = tostring(customDimensions.containerInstanceId) 
+| where name startswith "fluidframework.container"
+| extend docIdTimestamp = strcat(containerId, timestamp) 
+| sort by docIdTimestamp asc 
+| extend prevTimestamp = prev(timestamp), prevContainerId = prev(containerId) 
+| extend Diff = datetime_diff("second", timestamp, prevTimestamp) 
+| extend IsNewPeriod = iif(prevContainerId != containerId or Diff > (sessionGapSeconds) or isnull(Diff), 1, 0) 
+| extend SessionId = row_cumsum(IsNewPeriod) 
+| summarize sumCollaborators = dcount(containerInstanceId) by SessionId, containerId, bin(timestamp, summedDataPointInterval)
+| make-series avgCollaborators = avg(sumCollaborators) on timestamp from minTimestamp to maxTimestamp step averagedTimeInterval
+| render timechart with (title = "Approximate Average Number Of Container Per Session Over 1 Hour Intervals")
+```
+
+![Average number of containers per session over time period](readme_images/telemetry_5.png)
+
+5. Length of Individual Sessions in Minutes
+
+This query provides you with the length of time of individual sessions, graphed by putting them into time bins increasing in 2.5 minute increments. The query logic calculates the length of time of each session that occurs and then sorts them into time bins going up in 2.5 minute increments denoted by the `let sessionLengthMinuteBins = 2.5;` variable. To adjust the 2.5 minute time bins, simply modify the `sessionLengthMinuteBins` variable, note that this number represents minutes.
+
+```sql
+let sessionLengthMinuteBins = 2.5;
+let sessionGap = 5m; 
+let sessionGapSeconds = toint(sessionGap / 1s); 
+let minTimestamp = toscalar(customEvents | where name startswith "fluidframework.container" | summarize min(timestamp)); 
+let maxTimestamp = toscalar(customEvents | where name startswith "fluidframework.container" | summarize max(timestamp)); 
+customEvents 
+| extend containerId = tostring(customDimensions.containerId)
+| where name startswith "fluidframework.container" 
+| extend docIdTimestamp = strcat(containerId, timestamp) 
+| sort by docIdTimestamp asc 
+| extend prevTimestamp = prev(timestamp), prevContainerId = prev(containerId) 
+| extend Diff = datetime_diff("second", timestamp, prevTimestamp) 
+| extend IsNewPeriod = iif(prevContainerId != containerId or Diff > (sessionGapSeconds) or isnull(Diff), 1, 0) 
+| extend SessionId = row_cumsum(IsNewPeriod) 
+| summarize StartTime = min(timestamp), EndTime = max(timestamp) by SessionId, containerId 
+| extend SessionDurationInMinutes = datetime_diff("minute", EndTime, StartTime)
+| make-series numSessions = dcount(SessionId) default=0 on sessionLengthBin = bin(SessionDurationInMinutes, sessionLengthMinuteBins) step sessionLengthMinuteBins
+| mvexpand sessionLengthBin, numSessions
+| extend numSessionsLong = tolong(numSessions), sessionLengthBinDouble = todouble(sessionLengthBin)
+| project LengthOfSession = sessionLengthBinDouble, NumberOfSessions = numSessionsLong
+| sort by LengthOfSession asc
+| render columnchart with (title = "Length Of Sessions Separated Into 2.5 Minute Time Bins") 
+
+```
+
+![Length of Individual Sessions in Minutes](readme_images/telemetry_6.png)
+
+#### General Query Adjustments
+
+1. Adjusting the date span of the query 
+
+To adjust the time span of this query, simply use the Time Range dropdown provided by azure. You do not need to modify the query directly. By default, these queries will query against all logs you have available.
+
+![Adjusting date](readme_images/telemetry_time_period.png)
+
+2. Adjusting the gap of time that defines a session
+
+By default, we identify each session has a period of 5 minutes of inactivity before and after. However, you may want to adjust this time period. To do so, modify the value of the variable named sessionGap to be your desired time length.
+
+3. Adjusting the title of your graphs 
+
+For all queries, you can modify the title of your graph using the last line of the query, for example, replace `render columnchart with (title = "Approximate Length Of Sessions Separated Into 2.5 Minute Time Bins")` query, `with render columnchart with (title = "Approximate Length Of Sessions Separated Into 10 Minute Time Bins")`
+
