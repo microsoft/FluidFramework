@@ -68,18 +68,21 @@ export interface TreeApi extends TreeNodeApi {
 	): void;
 
 	/**
-	 * Check if the subtree defined by `parent`	contains `child`.
+	 * Check if the subtree defined by `node` contains `other`.
 	 *
-	 * @returns true if and only if the subtree rooted at `parent` contains `child`.
+	 * @returns true if `other` is an inclusive descendant of `node`, and false otherwise.
 	 * @remarks
-	 * Parent is considered to contain itself, so the case where `parent === child` returns true.
+	 * This includes direct and indirect children:
+	 * as long as `node` is an ancestor of `other` (occurs in its parentage chain), this returns true, regardless of the number of levels of the tree between.
 	 *
-	 * This is handy when checking if moving parent into child would create a cycle and thus is invalid.
+	 * `node` is considered to contain itself, so the case where `node === other` returns true.
 	 *
-	 * This check walks the parents of child looking for parent,
+	 * This is handy when checking if moving `node` into `other` would create a cycle and thus is invalid.
+	 *
+	 * This check walks the parents of `other` looking for `node`,
 	 * and thus runs in time proportional to the depth of child in the tree.
 	 */
-	contains(parent: TreeNode, child: TreeNode): boolean;
+	contains(node: TreeNode, other: TreeNode): boolean;
 }
 
 /**
