@@ -42,12 +42,14 @@ describe("Unit tests", () => {
 		// TODO:
 		// The commonly used boilerplate for setting up a ContainerSchema based application configures the dev-tools, which would be great to include in this example,
 		// but can't be included due to dependency layering issues.
-		const containerSchema = {
-			initialObjects: {
-				// TODO: it seems odd that DataObjects in container schema need both a key under initialObjects where they are,
-				// as well as a key under the root data object, and SharedObjects only need one key.
-				tree: treeDataObject("tree", treeConfiguration),
-			},
-		} satisfies ContainerSchema;
+		//
+		// TODO: THis test setup fails to import files from src, and also errors on unused values, so this can't be enabled.
+		// const containerSchema = {
+		// 	initialObjects: {
+		// 		// TODO: it seems odd that DataObjects in container schema need both a key under initialObjects where they are,
+		// 		// as well as a key under the root data object, and SharedObjects only need one key.
+		// 		tree: treeDataObject("tree", treeConfiguration),
+		// 	},
+		// } satisfies ContainerSchema;
 	});
 });

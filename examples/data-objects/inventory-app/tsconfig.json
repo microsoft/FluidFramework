@@ -12,8 +12,6 @@
 			"jest-environment-puppeteer",
 			"expect-puppeteer",
 		],
-		// For some cases (like type assertions and some type related testing) its nice to have this off, and there isn't a separate config for tests.
-		"noUnusedLocals": false,
 	},
 	"include": ["src/**/*"],
 }
