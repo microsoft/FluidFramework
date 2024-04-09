@@ -12,6 +12,7 @@ import type { IFluidHandle } from '@fluidframework/core-interfaces';
 import type { IIdCompressor } from '@fluidframework/id-compressor';
 import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
 import type { IMockContainerRuntimeOptions } from '@fluidframework/test-runtime-utils/internal';
+import type { IRandom } from '@fluid-private/stochastic-test-utils';
 import type { ISharedObject } from '@fluidframework/shared-object-base';
 import { MockContainerRuntimeFactoryForReconnection } from '@fluidframework/test-runtime-utils/internal';
 import type { MockContainerRuntimeForReconnection } from '@fluidframework/test-runtime-utils/internal';
@@ -146,7 +147,15 @@ export interface DDSFuzzTestState<TChannelFactory extends IChannelFactory> exten
     containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
     // (undocumented)
     isDetached: boolean;
+    // (undocumented)
+    random: DDSRandom;
     summarizerClient: Client<TChannelFactory>;
+}
+
+// @internal (undocumented)
+export interface DDSRandom extends IRandom {
+    // (undocumented)
+    handle(): IFluidHandle;
 }
 
 // @internal (undocumented)
@@ -192,14 +201,6 @@ export interface Synchronize {
     clients?: string[];
     // (undocumented)
     type: "synchronize";
-}
-
-// @internal (undocumented)
-export interface UseHandle {
-    // (undocumented)
-    handle: IFluidHandle;
-    // (undocumented)
-    type: "useHandle";
 }
 
 // (No @packageDocumentation comment for this package)
