@@ -52,12 +52,12 @@ this compatibility across this boundary is important.  Currently Fluid maintains
 backwards *and* forwards compatible with the runtime by at least 1 version.  For a given driver or loader version `2.x`,
 it should be compatible with runtime versions `1.x`, `2.x`, and `3.x`.  This is illustrated by the table below:
 
-Driver/Loader | | 1.x | 2.x | 3.x
--------------:|-|:---:|:---:|:---:
-Runtime       | |     |     |
-1.x           | | C   | BC  | X
-2.x           | | FC  | C   | BC
-3.x           | | X   | FC  | C
+| Driver/Loader | | 1.x | 2.x | 3.x |
+|--------------:|-|:---:|:---:|:---:|
+| Runtime       | |     |     |     |
+| 1.x           | | C   | BC  | X   |
+| 2.x           | | FC  | C   | BC  |
+| 3.x           | | X   | FC  | C   |
 
 -   C - Fully compatible
 -   BC - Driver/loader backwards compatible with runtime
