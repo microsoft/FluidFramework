@@ -92,7 +92,7 @@ Install the Fluid Framework telemetry package dependency
 
 ### Step 2: Setup a custom telemetry consumer
 
-Here we'll create our own telemetry consumer which extends the ITelemetryConsumer interface. Let's look at an example that will simply log the telemetry into console.
+Here we'll create our own telemetry consumer which extends the `ITelemetryConsumer` interface. Let's look at an example that will simply log the telemetry to console.
 
 ```ts
 import { ITelemetryConsumer, IFluidTelemetry } from "@fluidframework/fluid-telemetry";
