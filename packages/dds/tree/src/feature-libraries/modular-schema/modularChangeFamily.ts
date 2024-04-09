@@ -547,7 +547,7 @@ export class ModularChangeFamily
 				localId,
 				this.invertNodeChange(
 					// TODO: This does not allow inheriting revision from parent
-					tagChange(nodeChangeset, revision ?? change.revision),
+					tagChange(nodeChangeset, change.revision),
 					isRollback,
 					genId,
 					crossFieldTable,
