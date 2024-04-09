@@ -39,7 +39,7 @@ export function isNodeInSchema(
 		return SchemaValidationErrors.NodeSchemaNotInSchemaCollection;
 	}
 
-	// Validate the node complies with the schema it declares to be
+	// Validate the node is well formed according to its schema
 
 	if (schema instanceof LeafNodeStoredSchema) {
 		if (node.value === undefined) {
@@ -90,14 +90,6 @@ export function isNodeInSchema(
 
 	return SchemaValidationErrors.NoError;
 }
-
-// function export function isNodeUnionInSchema(
-// 	node: MapTree,
-// 	allowedTypes: TreeTypeSet,
-// 	nodeSchemaCollection: StoredSchemaCollection,
-// 	schemaPolicy: FullSchemaPolicy,
-// ): boolean {
-// }
 
 export function isFieldInSchema(
 	childNodes: MapTree[],
