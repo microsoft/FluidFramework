@@ -920,6 +920,7 @@ export class Container
 			detachedBlobStorage,
 			this.mc.logger,
 			pendingLocalState?.snapshotBlobs,
+			pendingLocalState?.loadedGroupIdSnapshots,
 			addProtocolSummaryIfMissing,
 			forceEnableSummarizeProtocolTree,
 		);
