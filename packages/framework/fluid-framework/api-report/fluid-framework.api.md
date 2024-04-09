@@ -332,10 +332,7 @@ export interface Revertible {
 }
 
 // @public
-export type RevertibleDisposedCallback = (disposed: Revertible) => void;
-
-// @public
-export type RevertibleFactory = (onRevertibleDisposed?: RevertibleDisposedCallback) => Revertible;
+export type RevertibleFactory = (onRevertibleDisposed?: (revertible: Revertible) => void) => Revertible;
 
 // @public
 export enum RevertibleStatus {
