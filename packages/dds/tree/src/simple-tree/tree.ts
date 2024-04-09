@@ -24,7 +24,6 @@ import type { NodeIncompatibility } from "./treeDiscrepancies.js";
  * @public
  */
 export interface ITree extends IChannel {
-	initialize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): void;
 	/**
 	 * Returns a {@link TreeView} using the provided schema.
 	 * If the stored schema is compatible with the view schema specified by `config`,
@@ -32,8 +31,8 @@ export interface ITree extends IChannel {
 	 * If the provided schema is incompatible with the stored schema, the view will instead expose a status indicating the incompatibility.
 	 *
 	 * @remarks
-	 * If the tree is uninitialized (has no schema and no content), use {@link ITree.initialize} to set the schema and content together.
-	 * Using this followed by {@link TreeView.upgradeSchema} to initialize only the schema for a document is technically valid when the schema
+	 * If the tree is uninitialized (has no schema and no content), use {@link TreeView.initialize} on the returned view to set the schema and content together.
+	 * Using `viewWith` followed by {@link TreeView.upgradeSchema} to initialize only the schema for a document is technically valid when the schema
 	 * permits trees with no content.
 	 *
 	 * Note that other clients can modify the document at any time, causing the view to change its compatibility status: see {@link TreeView.events} for how to handle invalidation in these cases.
@@ -60,8 +59,20 @@ export interface ITree extends IChannel {
 	viewWith<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TRoot>;
 
 	/**
-	 * See {@link ITree.viewWith}.
-	 * @deprecated - Renamed to {@link ITree.viewWith}. Use that method instead.
+	 * Returns a {@link TreeView} using the provided schema.
+	 * If the stored schema is compatible with the view schema specified by `config`,
+	 * the returned {@link TreeView} will expose the root with a schema-aware API based on the provided view schema.
+	 * If the provided schema is incompatible with the stored schema, the view will instead expose a status indicating the incompatibility.
+	 *
+	 * @remarks
+	 * If the tree is uninitialized, it will be implicitly initialized by this function.
+	 *
+	 * Note that other clients can modify the document at any time, causing the view to change its compatibility status: see {@link TreeView.events} for how to handle invalidation in these cases.
+	 *
+	 * Only one schematized view may exist for a given ITree at a time.
+	 * If creating a second, the first must be disposed before calling `schematize` again.
+	 * @deprecated - Replaced by {@link ITree.viewWith}. Use that method instead. Note that `viewWith` does not implicitly initialize the tree:
+	 * to initialize it, call {@link TreeView.initialize} on the returned view.
 	 */
 	schematize<TRoot extends ImplicitFieldSchema>(
 		config: TreeConfiguration<TRoot>,
@@ -153,6 +164,16 @@ export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposab
 	upgradeSchema(): void;
 
 	/**
+	 * Initialize the tree, setting the stored schema to match this view's schema and setting the tree content.
+	 *
+	 * Only valid to call when this view's {@link SchemaCompatibilityStatus.canInitialize} is true.
+	 *
+	 * Applications should typically call this function before attaching a `SharedTree`.
+	 * @param content - The content to initialize the tree with.
+	 */
+	initialize(content: InsertableTreeFieldFromImplicitField<TSchema>): void;
+
+	/**
 	 * Events for the tree.
 	 */
 	readonly events: ISubscribable<TreeViewEvents>;
@@ -197,13 +218,13 @@ export interface SchemaCompatibilityStatus {
 	readonly canUpgrade: boolean;
 
 	/**
-	 * True iff the document is uninitialized (i.e. it has no schema or content).
+	 * True iff the document is uninitialized (i.e. it has no schema and no content).
 	 *
-	 * To initialize the document, call {@link ITree.initialize}.
+	 * To initialize the document, call {@link TreeView.initialize}.
 	 *
-	 * @privateRemarks
-	 * Lots of users of SharedTree probably don't need this API as they know from context whether they've just created a new tree
-	 * or loaded an existing one.
+	 * @remarks
+	 * It's not necessary to check this field before calling {@link TreeView.initialize} in most scenarios; application authors typically know from
+	 * context that they're in a flow which creates a new `SharedTree` and would like to set up its initial content.
 	 */
 	readonly canInitialize: boolean;
 
@@ -229,7 +250,7 @@ export interface SchemaCompatibilityStatus {
 	 * Application-defined metadata associated with the schema.
 	 *
 	 * This metadata reflects the metadata provided in the {@link TreeConfiguration} which last updated the schema
-	 * (either via {@link ITree.initialize} or {@link TreeView.upgradeSchema})
+	 * (either via {@link TreeView.initialize} or {@link TreeView.upgradeSchema})
 	 */
 	readonly metadata: unknown;
 }

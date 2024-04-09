@@ -227,6 +227,10 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		}
 	}
 
+	public initialize(_content: InsertableTreeFieldFromImplicitField<TRootSchema>): void {
+		// Not yet implemented. `viewWith` currently implicitly initializes the tree.
+	}
+
 	private disposeView(): void {
 		if (this.view !== undefined) {
 			this.view[disposeSymbol]();

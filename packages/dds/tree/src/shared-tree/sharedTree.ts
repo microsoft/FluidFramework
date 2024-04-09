@@ -43,7 +43,7 @@ import {
 } from "../feature-libraries/index.js";
 import { ExplicitCoreCodecVersions, SharedTreeCore } from "../shared-tree-core/index.js";
 import { ITree, ImplicitFieldSchema, TreeConfiguration, TreeView } from "../simple-tree/index.js";
-import { brand, disposeSymbol } from "../util/index.js";
+import { brand } from "../util/index.js";
 
 import { InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
 import { SchematizingSimpleTreeView, requireSchema } from "./schematizingTreeView.js";
@@ -279,12 +279,6 @@ export class SharedTree
 			createNodeKeyManager(this.runtime.idCompressor),
 			brand(defaultNodeKeyFieldKey),
 		);
-	}
-
-	// TODO: Use other proposed API. Way less awkward.
-	public initialize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): void {
-		const view = this.viewWith(config);
-		view[disposeSymbol]();
 	}
 
 	public schematize<TRoot extends ImplicitFieldSchema>(
