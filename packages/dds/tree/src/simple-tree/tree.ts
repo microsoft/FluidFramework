@@ -60,7 +60,7 @@ export interface ITree extends IChannel {
 	 */
 	schematize<TRoot extends ImplicitFieldSchema>(
 		config: TreeConfiguration<TRoot>,
-	): TreeView<TreeFieldFromImplicitField<TRoot>>;
+	): TreeView<TRoot>;
 }
 
 /**
@@ -98,7 +98,7 @@ export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFie
  * it could be mitigated by adding a `rootOrError` member and deprecating `root` to give users a warning if they might be missing the error checking.
  * @public
  */
-export interface TreeView<in out TRoot> extends IDisposable {
+export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposable {
 	/**
 	 * The current root of the tree.
 	 *
@@ -108,7 +108,9 @@ export interface TreeView<in out TRoot> extends IDisposable {
 	 * To get notified about changes to this field (including to it being in an `error` state),
 	 * use {@link TreeViewEvents.rootChanged} via `view.events.on("rootChanged", callback)`.
 	 */
-	readonly root: TRoot;
+	get root(): TreeFieldFromImplicitField<TSchema>;
+
+	set root(newRoot: InsertableTreeFieldFromImplicitField<TSchema>);
 
 	/**
 	 * Description of the error state, if any.

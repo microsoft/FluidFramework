@@ -16,7 +16,6 @@ export {
 	ImplicitAllowedTypes,
 	TreeNodeFromImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
-	TreeMapNode,
 	TreeLeafValue,
 	type,
 	WithType,
@@ -24,13 +23,11 @@ export {
 	ApplyKind,
 	FieldKind,
 	FieldSchema,
-	InsertableObjectFromSchemaRecord,
 	InsertableTreeFieldFromImplicitField,
 	InsertableTypedNode,
 	NodeBuilderData,
-	ObjectFromSchemaRecord,
-	TreeObjectNode,
 	type FieldProps,
+	normalizeFieldSchema,
 } from "./schemaTypes.js";
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 export { getFlexNode } from "./proxyBinding.js";
@@ -52,7 +49,7 @@ export {
 	NodeFromSchemaUnsafe,
 } from "./typesUnsafe.js";
 export { SchemaFactoryRecursive, ValidateRecursiveSchema } from "./schemaFactoryRecursive.js";
-export { getProxyForField } from "./proxies.js";
+export { getProxyForField, InsertableContent } from "./proxies.js";
 
 export {
 	adaptEnum,
@@ -69,5 +66,12 @@ export {
 	RecursiveObjectPojoMode as test_RecursiveObjectPojoMode,
 } from "./testRecursiveDomain.js";
 
-export { TreeNode, Unhydrated, TreeArrayNodeBase } from "./types.js";
-export { TreeArrayNode, IterableTreeArrayContent } from "./treeArrayNode.js";
+export { TreeNode, Unhydrated } from "./types.js";
+export { TreeArrayNode, IterableTreeArrayContent, TreeArrayNodeBase } from "./arrayNode.js";
+export {
+	InsertableObjectFromSchemaRecord,
+	ObjectFromSchemaRecord,
+	TreeObjectNode,
+	setField,
+} from "./objectNode.js";
+export { TreeMapNode } from "./mapNode.js";

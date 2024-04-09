@@ -128,7 +128,13 @@ import { SchematizingSimpleTreeView, requireSchema } from "../shared-tree/schema
 // eslint-disable-next-line import/no-internal-modules
 import { SharedTreeOptions } from "../shared-tree/sharedTree.js";
 import { ImplicitFieldSchema, TreeConfiguration, toFlexConfig } from "../simple-tree/index.js";
-import { JsonCompatible, Mutable, brand, nestedMapFromFlatList } from "../util/index.js";
+import {
+	JsonCompatible,
+	Mutable,
+	brand,
+	disposeSymbol,
+	nestedMapFromFlatList,
+} from "../util/index.js";
 
 // Testing utilities
 
@@ -1104,10 +1110,10 @@ export function createTestUndoRedoStacks(
 		unsubscribeFromNew();
 		unsubscribeFromDisposed();
 		for (const revertible of undoStack) {
-			revertible.release();
+			revertible[disposeSymbol]();
 		}
 		for (const revertible of redoStack) {
-			revertible.release();
+			revertible[disposeSymbol]();
 		}
 	};
 	return { undoStack, redoStack, unsubscribe };

@@ -438,6 +438,10 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		}
 		return [local, localOpMetadata];
 	}
+
+	public async resolveHandle(handle: IFluidHandle) {
+		return this.dataStoreRuntime.resolveHandle({ url: handle.absolutePath });
+	}
 }
 
 /**
@@ -902,6 +906,13 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public async resolveHandle(request: IRequest): Promise<IResponse> {
+		if (request.url !== undefined) {
+			return {
+				status: 200,
+				mimeType: "fluid/object",
+				value: request.url,
+			};
+		}
 		return this.request(request);
 	}
 

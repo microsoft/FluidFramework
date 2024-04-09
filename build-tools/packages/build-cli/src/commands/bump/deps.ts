@@ -21,17 +21,17 @@ import {
 	testModeFlag,
 } from "../../flags";
 import {
+	// eslint-disable-next-line import/no-deprecated
+	MonoRepoKind,
 	generateBumpDepsBranchName,
 	generateBumpDepsCommitMessage,
 	indentString,
 	isDependencyUpdateType,
 	npmCheckUpdates,
-	// eslint-disable-next-line import/no-deprecated
-	MonoRepoKind,
 } from "../../library";
-import { ReleaseGroup } from "../../releaseGroups";
 // eslint-disable-next-line import/no-internal-modules
 import { npmCheckUpdatesHomegrown } from "../../library/package";
+import { ReleaseGroup } from "../../releaseGroups";
 
 /**
  * Update the dependency version of a specified package or release group. That is, if one or more packages in the repo

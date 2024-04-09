@@ -45,7 +45,7 @@
 		}
 	},
 	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"types": "./dist/devtools-core-public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
@@ -75,6 +75,7 @@
 		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
 		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.*js\" --exit",
 		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit",
+		"test:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha --",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
 		"tsc:watch": "tsc --watch",
 		"typetests:gen": "fluid-type-test-generator",
@@ -117,7 +118,7 @@
 		"@fluidframework/tree": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.13.3",
+		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.6.2",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "^0.34.0",

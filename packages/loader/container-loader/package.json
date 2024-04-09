@@ -23,7 +23,7 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./test/container": {
+		"./internal/test/container": {
 			"import": {
 				"types": "./lib/container.d.ts",
 				"default": "./lib/container.js"
@@ -33,7 +33,7 @@
 				"default": "./dist/container.js"
 			}
 		},
-		"./test/contracts": {
+		"./internal/test/contracts": {
 			"import": {
 				"types": "./lib/contracts.d.ts",
 				"default": "./lib/contracts.js"
@@ -43,7 +43,7 @@
 				"default": "./dist/contracts.js"
 			}
 		},
-		"./test/connectionManager": {
+		"./internal/test/connectionManager": {
 			"import": {
 				"types": "./lib/connectionManager.d.ts",
 				"default": "./lib/connectionManager.js"
@@ -53,7 +53,7 @@
 				"default": "./dist/connectionManager.js"
 			}
 		},
-		"./test/deltaManager": {
+		"./internal/test/deltaManager": {
 			"import": {
 				"types": "./lib/deltaManager.d.ts",
 				"default": "./lib/deltaManager.js"
@@ -63,7 +63,7 @@
 				"default": "./dist/deltaManager.js"
 			}
 		},
-		"./test/utils": {
+		"./internal/test/utils": {
 			"import": {
 				"types": "./lib/utils.d.ts",
 				"default": "./lib/utils.js"
@@ -95,7 +95,7 @@
 		}
 	},
 	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"types": "./dist/container-loader-public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
@@ -167,7 +167,7 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.13.3",
+		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.6.2",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/test-loader-utils": "workspace:~",

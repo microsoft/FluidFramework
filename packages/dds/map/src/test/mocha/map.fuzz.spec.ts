@@ -14,10 +14,10 @@ import {
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
-import { Jsonable } from "@fluidframework/datastore-definitions/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
+import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 import { ISharedMap, MapFactory } from "../../index.js";
 
 import { _dirname } from "./dirname.cjs";
@@ -29,7 +29,7 @@ interface Clear {
 interface SetKey {
 	type: "setKey";
 	key: string;
-	value: Jsonable<unknown>;
+	value: Serializable<unknown>;
 }
 
 interface DeleteKey {
@@ -105,7 +105,11 @@ function makeGenerator(optionsParam?: Partial<GeneratorOptions>): AsyncGenerator
 	const setKey: Generator<SetKey, State> = ({ random }) => ({
 		type: "setKey",
 		key: random.pick(keyNames),
-		value: random.bool() ? random.integer(1, 50) : random.string(random.integer(3, 7)),
+		value: random.pick([
+			(): number => random.integer(1, 50),
+			(): string => random.string(random.integer(3, 7)),
+			(): IFluidHandle => random.handle(),
+		])(),
 	});
 	const deleteKey: Generator<DeleteKey, State> = ({ random }) => ({
 		type: "deleteKey",

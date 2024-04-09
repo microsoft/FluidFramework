@@ -30,7 +30,12 @@ export function TreeView(props: TreeViewProps): React.ReactElement {
 	));
 
 	const header = (
-		<TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} metadata={metadata} />
+		<TreeHeader
+			label={label}
+			nodeTypeMetadata={node.typeMetadata}
+			metadata={metadata}
+			tooltipContents={node.tooltipContents}
+		/>
 	);
 
 	return <TreeItem header={header}>{childNodes}</TreeItem>;

@@ -841,14 +841,16 @@ describe("sharedTreeView", () => {
 				assert.equal(revertiblesCreated.length, 2);
 				assert.equal(revertiblesDisposed.length, 0);
 
-				revertiblesCreated[0].release();
+				revertiblesCreated[0][disposeSymbol]();
 
 				assert.equal(revertiblesDisposed.length, 1);
 				assert.equal(revertiblesDisposed[0], revertiblesCreated[0]);
 
-				// reverting does not release the revertible
-				revertiblesCreated[1].revert();
+				revertiblesCreated[1].revert(false);
 				assert.equal(revertiblesDisposed.length, 1);
+
+				revertiblesCreated[1].revert();
+				assert.equal(revertiblesDisposed.length, 2);
 
 				unsubscribe1();
 				unsubscribe2();
@@ -903,11 +905,11 @@ describe("sharedTreeView", () => {
 			assert.equal(revertiblesCreated.length, 1);
 			const revertible = revertiblesCreated[0];
 
-			revertible.release();
+			revertible[disposeSymbol]();
 			assert.equal(revertible.status, RevertibleStatus.Disposed);
 
-			assert.throws(() => revertible.release());
-			assert.throws(() => revertible.revert());
+			assert.throws(() => revertible[disposeSymbol]());
+			assert.throws(() => revertible.revert(false));
 
 			assert.equal(revertible.status, RevertibleStatus.Disposed);
 			unsubscribe();
