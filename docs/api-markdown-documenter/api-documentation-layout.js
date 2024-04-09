@@ -134,7 +134,7 @@ export function layoutContent(apiItem, itemSpecificContent, config) {
 						ApiItemUtilities.getHeadingForApiItem(apiItem, config),
 					),
 				),
-		  ];
+			];
 }
 
 /**

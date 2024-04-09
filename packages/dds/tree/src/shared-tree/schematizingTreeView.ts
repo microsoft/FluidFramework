@@ -16,7 +16,9 @@ import {
 	ContextSlot,
 } from "../feature-libraries/index.js";
 import {
+	FieldSchema,
 	ImplicitFieldSchema,
+	InsertableTreeFieldFromImplicitField,
 	SchemaIncompatible,
 	TreeConfiguration,
 	TreeFieldFromImplicitField,
@@ -24,6 +26,9 @@ import {
 	TreeViewEvents,
 	getProxyForField,
 	toFlexConfig,
+	setField,
+	normalizeFieldSchema,
+	InsertableContent,
 } from "../simple-tree/index.js";
 import { disposeSymbol } from "../util/index.js";
 
@@ -35,7 +40,7 @@ import { CheckoutFlexTreeView } from "./treeView.js";
  * Implementation of TreeView wrapping a FlexTreeView.
  */
 export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitFieldSchema>
-	implements TreeView<TreeFieldFromImplicitField<TRootSchema>>
+	implements TreeView<TRootSchema>
 {
 	/**
 	 * In one of three states:
@@ -54,12 +59,15 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	private readonly unregisterCallbacks = new Set<() => void>();
 	private disposed = false;
 
+	private readonly rootFieldSchema: FieldSchema;
+
 	public constructor(
 		public readonly checkout: TreeCheckout,
 		public readonly config: TreeConfiguration<TRootSchema>,
 		public readonly nodeKeyManager: NodeKeyManager,
 		public readonly nodeKeyFieldKey: FieldKey,
 	) {
+		this.rootFieldSchema = normalizeFieldSchema(config.schema);
 		this.flexConfig = toFlexConfig(config);
 		this.viewSchema = new ViewSchema(defaultSchemaPolicy, {}, this.flexConfig.schema);
 		this.update();
@@ -211,6 +219,17 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 			);
 		}
 		return getProxyForField(view.flexTree) as TreeFieldFromImplicitField<TRootSchema>;
+	}
+
+	public set root(newRoot: InsertableTreeFieldFromImplicitField<TRootSchema>) {
+		const view = this.getViewOrError();
+		if (view instanceof SchematizeError) {
+			throw new UsageError(
+				"Document is out of schema. Check TreeView.error before accessing TreeView.root.",
+			);
+		}
+
+		setField(view.context.root, this.rootFieldSchema, newRoot as InsertableContent);
 	}
 }
 

@@ -23,7 +23,7 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./test/utils": {
+		"./internal/test/utils": {
 			"import": {
 				"types": "./lib/test/utils.d.ts",
 				"default": "./lib/test/utils.js"

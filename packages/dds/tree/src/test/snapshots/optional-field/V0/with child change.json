@@ -11,13 +11,16 @@
             "fieldKey": "",
             "fieldKind": "",
             "change": {
-              "inputContext": [],
-              "intentions": [
-                1
-              ],
-              "outputContext": [
-                1
-              ]
+              "localId": 5,
+              "testChange": {
+                "inputContext": [],
+                "intentions": [
+                  1
+                ],
+                "outputContext": [
+                  1
+                ]
+              }
             }
           }
         ]
@@ -31,13 +34,16 @@
             "fieldKey": "",
             "fieldKind": "",
             "change": {
-              "inputContext": [],
-              "intentions": [
-                1
-              ],
-              "outputContext": [
-                1
-              ]
+              "localId": 5,
+              "testChange": {
+                "inputContext": [],
+                "intentions": [
+                  1
+                ],
+                "outputContext": [
+                  1
+                ]
+              }
             }
           }
         ]
@@ -51,13 +57,16 @@
             "fieldKey": "",
             "fieldKind": "",
             "change": {
-              "inputContext": [],
-              "intentions": [
-                1
-              ],
-              "outputContext": [
-                1
-              ]
+              "localId": 5,
+              "testChange": {
+                "inputContext": [],
+                "intentions": [
+                  1
+                ],
+                "outputContext": [
+                  1
+                ]
+              }
             }
           }
         ]

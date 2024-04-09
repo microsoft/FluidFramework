@@ -55,7 +55,7 @@
 		}
 	},
 	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"types": "./dist/azure-client-public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
@@ -79,7 +79,7 @@
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"postpack": "tar -cf ./azure-client.test-files.tar ./dist/test",
+		"postpack": "tar -cf ./azure-client.test-files.tar ./dist/test ./lib/test",
 		"start:tinylicious:test": "npx @fluidframework/azure-local-service > tinylicious.log 2>&1",
 		"test": "npm run test:realsvc",
 		"test:realsvc": "npm run test:realsvc:tinylicious",

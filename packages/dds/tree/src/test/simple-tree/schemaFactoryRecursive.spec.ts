@@ -83,7 +83,7 @@ describe("SchemaFactoryRecursive", () => {
 				"tree",
 			);
 
-			const view: TreeView<Box> = tree.schematize(config);
+			const view: TreeView<typeof Box> = tree.schematize(config);
 			assert.equal(view.root?.text, "hi");
 
 			const stuff: undefined | Box = view.root.child;
