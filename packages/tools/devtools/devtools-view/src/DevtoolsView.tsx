@@ -178,13 +178,13 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 	const [modalVisible, setModalVisible] = React.useState(false);
 
 	React.useEffect(() => {
-		const displayed = localStorage.getItem('telemetryModalDisplayed');
+		const displayed = localStorage.getItem("telemetryModalDisplayed");
 		if (!displayed) {
 			setModalVisible(true);
-			localStorage.setItem('telemetryModalDisplayed', 'true');
+			localStorage.setItem("telemetryModalDisplayed", "true");
 		}
 	}, []);
-	
+
 	const queryTimeoutInMilliseconds = 30_000; // 30 seconds
 	const messageRelay = useMessageRelay();
 
