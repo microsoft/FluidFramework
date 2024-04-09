@@ -459,28 +459,10 @@ export class DocumentsSchemaController {
 			"not supported",
 		);
 
-		this.documentSchema =
-			(documentMetadataSchema as IDocumentSchemaCurrent) ??
-			({
-				version: currentDocumentVersionSchema,
-				// see comment in summarizeDocumentSchema() on why it has to stay zero
-				refSeq: 0,
-				// If it's existing document and it has no schema, then it was written by legacy client.
-				// If it's a new document, then we define it's legacy-related behaviors.
-				runtime: {
-					explicitSchemaControl: boolToProp(!existing && features.explicitSchemaControl),
-				},
-			} satisfies IDocumentSchemaCurrent);
-
-		// Use legacy behavior only if both document and options tell us to use legacy.
-		// Otherwise it's no longer legacy time!
-		this.explicitSchemaControl =
-			this.documentSchema.runtime.explicitSchemaControl === true ||
-			features.explicitSchemaControl;
-
+		// Desired schema by this session - almost all props are coming from arguments
 		this.desiredSchema = {
 			version: currentDocumentVersionSchema,
-			refSeq: this.documentSchema.refSeq,
+			refSeq: documentMetadataSchema?.refSeq ?? 0,
 			runtime: {
 				explicitSchemaControl: boolToProp(features.explicitSchemaControl),
 				compressionLz4: boolToProp(features.compressionLz4),
@@ -490,6 +472,34 @@ export class DocumentsSchemaController {
 			},
 		};
 
+		// Schema coming from document (summary). If it's a new container, make sure that it's
+		// equal to desired / session schema (it's one and the same in such case), as that's what will
+		// go into summary.
+		this.documentSchema = !existing
+			? this.desiredSchema
+			: (documentMetadataSchema as IDocumentSchemaCurrent) ??
+			  ({
+					version: currentDocumentVersionSchema,
+					// see comment in summarizeDocumentSchema() on why it has to stay zero
+					refSeq: 0,
+					// If it's existing document and it has no schema, then it was written by legacy client.
+					// If it's a new document, then we define it's legacy-related behaviors.
+					runtime: {
+						explicitSchemaControl: boolToProp(
+							!existing && features.explicitSchemaControl,
+						),
+					},
+			  } satisfies IDocumentSchemaCurrent);
+
+		// Use legacy behavior only if both document and options tell us to use legacy.
+		// Otherwise it's no longer legacy time!
+		this.explicitSchemaControl =
+			this.documentSchema.runtime.explicitSchemaControl === true ||
+			features.explicitSchemaControl;
+
+		// Calculate
+		// - current session schema (overlap of document schema and desired schema)
+		// - future schema to propose (concatination of document schema and desired schema)
 		if (!this.explicitSchemaControl || !existing) {
 			this.sessionSchema = this.desiredSchema;
 			assert(

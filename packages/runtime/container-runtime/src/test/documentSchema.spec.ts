@@ -16,6 +16,10 @@ function boolToProp(b: boolean) {
 	return b ? true : undefined;
 }
 
+function arrayToProp(arr: string[]) {
+	return arr.length === 0 ? undefined : arr;
+}
+
 describe("Runtime", () => {
 	const validConfig: IDocumentSchemaCurrent = {
 		version: 1,
@@ -208,10 +212,11 @@ describe("Runtime", () => {
 	});
 
 	function testSimpleCases(explicitSchemaControl: boolean, existing: boolean) {
+		const featuresModified = { ...features, explicitSchemaControl };
 		const controller = new DocumentsSchemaController(
 			existing, // existing,
 			undefined, // old schema,
-			{ ...features, explicitSchemaControl },
+			featuresModified,
 			() => assert(false, "no schema changes!"), // onSchemaChange
 		);
 
@@ -255,13 +260,30 @@ describe("Runtime", () => {
 		);
 		if (!explicitSchemaControl) {
 			assert.deepEqual(summarySchema, validConfig, "summarized schema as expected");
-		} else {
+		} else if (existing) {
 			const expected = {
 				version: 1,
 				refSeq: 0,
 				runtime: {
 					// Existing files without any schema are considered to be in legacy mode.
-					explicitSchemaControl: boolToProp(!existing),
+					explicitSchemaControl: undefined,
+				},
+			};
+			assert.deepEqual(
+				summarySchema,
+				JSON.parse(JSON.stringify(expected)),
+				"summarized schema as expected",
+			);
+		} else {
+			const expected = {
+				version: 1,
+				refSeq: 0,
+				runtime: {
+					explicitSchemaControl: boolToProp(features.explicitSchemaControl),
+					compressionLz4: boolToProp(features.compressionLz4),
+					idCompressorMode: features.idCompressorMode,
+					opGroupingEnabled: boolToProp(features.opGroupingEnabled),
+					disallowedVersions: arrayToProp(features.disallowedVersions),
 				},
 			};
 			assert.deepEqual(
