@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { readJsonSync } from "fs-extra";
-import { PackageName } from "@rushstack/node-core-library";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import { IExtractorConfigPrepareOptions } from "@microsoft/api-extractor";
-import { existsSync } from "node:fs";
+import { PackageName } from "@rushstack/node-core-library";
+import { readJsonSync } from "fs-extra";
 import { Project, SourceFile } from "ts-morph";
 import { BrokenCompatTypes } from "../common/fluidRepo";
-import { buildTestCase, TestCaseTypeData } from "../typeValidator/testGeneration";
-import { getFullTypeName, getNodeTypeData, TypeData } from "../typeValidator/typeData";
 import { PackageJson } from "../common/npmPackage";
+import { TestCaseTypeData, buildTestCase } from "../typeValidator/testGeneration";
+import { TypeData, getFullTypeName, getNodeTypeData } from "../typeValidator/typeData";
 
 /**
  * The path to the test types directory

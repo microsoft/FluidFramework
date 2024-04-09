@@ -4,11 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import * as utils from "../type-test-generator/typeTestUtils";
 import * as fs from "fs";
 import * as path from "path";
-import { PackageJson } from "../common/npmPackage";
 import { IExtractorConfigPrepareOptions } from "@microsoft/api-extractor";
+import { PackageJson } from "../common/npmPackage";
+import * as utils from "../type-test-generator/typeTestUtils";
 
 /**
  * Mock package.json object for testing.

@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { readJsonSync } from "fs-extra";
-import { mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { readJsonSync } from "fs-extra";
+import { PackageJson } from "../common/npmPackage";
 import { typeOnly } from "./compatibility";
 import {
 	ensureDevDependencyExists,
-	tryGetPreviousPackageJsonPath,
-	getTypeDefinitionFilePath,
-	typeDataFromFile,
 	generateCompatibilityTestCases,
-	prepareFilepathForTests,
+	getTypeDefinitionFilePath,
 	initializeProjectsAndLoadFiles,
+	prepareFilepathForTests,
+	tryGetPreviousPackageJsonPath,
+	typeDataFromFile,
 } from "./typeTestUtils";
-import { PackageJson } from "../common/npmPackage";
 
 // Do not check that file exists before opening:
 // Doing so is a time of use vs time of check issue so opening the file could fail anyway.
