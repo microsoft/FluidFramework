@@ -128,6 +128,7 @@
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "fluid-build --task format .",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
+		"generate:typerollups": "flub generate entrypoints --outDir ./api-report --outFilePrefix {@unscopedPackageName}-",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",

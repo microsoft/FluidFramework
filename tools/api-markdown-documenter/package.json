@@ -37,6 +37,7 @@
 		"eslint:fix": "eslint src --fix",
 		"format": "npm run prettier:fix",
 		"format-and-build": "npm run format && npm run build",
+		"generate:typerollups": "flub generate entrypoints --outDir ./api-report --outFilePrefix {@unscopedPackageName}-",
 		"good-fences": "gf",
 		"lint": "npm run prettier && npm run good-fences && npm run eslint",
 		"lint:fences": "npm run good-fences",
