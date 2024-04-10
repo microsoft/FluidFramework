@@ -406,8 +406,41 @@ describe("schema validation", () => {
 					isNodeInSchema(mapNode, { schema: schemaCollection, policy: schemaPolicy }),
 					SchemaValidationErrors.Field_NodeTypeNotAllowed,
 				);
+			});
 
-				// mapNode.fields.set(brand("prop2"), []);
+			it(`not in schema if empty field is specified explicitly`, () => {
+				const fieldSchema_optionalNumberNode = getFieldSchema(FieldKinds.optional, [
+					numberNode.type,
+				]);
+				const mapNodeSchema: TreeNodeStoredSchema = new MapNodeStoredSchema(
+					fieldSchema_optionalNumberNode,
+				);
+				const mapNode = getMapNode("myNumberMapNode", new Map([]));
+
+				const schemaCollection = {
+					nodeSchema: new Map([
+						[numberNode.type, new LeafNodeStoredSchema(ValueSchema.Number)],
+						[mapNode.type, mapNodeSchema],
+					]),
+				};
+				const schemaPolicy = {
+					fieldKinds: new Map([
+						[fieldSchema_optionalNumberNode.kind, FieldKinds.optional],
+					]),
+				};
+
+				// In schema while empty
+				assert.equal(
+					isNodeInSchema(mapNode, { schema: schemaCollection, policy: schemaPolicy }),
+					SchemaValidationErrors.NoError,
+				);
+
+				// Not in schema after adding an empty field
+				mapNode.fields.set(brand("prop1"), []);
+				assert.equal(
+					isNodeInSchema(mapNode, { schema: schemaCollection, policy: schemaPolicy }),
+					SchemaValidationErrors.MapNode_EmptyFieldsMustBeImplicit,
+				);
 			});
 		});
 
