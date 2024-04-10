@@ -94,6 +94,12 @@ function submitDataStoreOp(
 	);
 }
 
+const changeConnectionState = (runtime: Omit<ContainerRuntime, "submit">, connected: boolean, clientId: string,) => {
+	const audience = runtime.getAudience() as MockAudience;
+	audience.setCurrentClientId(clientId);
+	runtime.setConnectionState(connected, clientId);
+};
+
 describe("Runtime", () => {
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 		getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -252,13 +258,13 @@ describe("Runtime", () => {
 					},
 				} as ChannelCollection;
 
-				containerRuntime.setConnectionState(false, mockClientId);
+				changeConnectionState(containerRuntime, false, mockClientId);
 
 				submitDataStoreOp(containerRuntime, "1", "test");
 				(containerRuntime as any).flush();
 
 				submitDataStoreOp(containerRuntime, "2", "test");
-				containerRuntime.setConnectionState(true, mockClientId);
+				changeConnectionState(containerRuntime,  true, mockClientId);
 				(containerRuntime as any).flush();
 
 				assert.strictEqual(submittedOps.length, 2);
@@ -499,7 +505,7 @@ describe("Runtime", () => {
 							},
 						} as ChannelCollection;
 
-						containerRuntime.setConnectionState(false, fakeClientId);
+						changeConnectionState(containerRuntime,  false, fakeClientId);
 
 						containerRuntime.orderSequentially(() => {
 							submitDataStoreOp(containerRuntime, "1", "test");
@@ -521,7 +527,7 @@ describe("Runtime", () => {
 							"no messages should be sent",
 						);
 
-						containerRuntime.setConnectionState(true, fakeClientId);
+						changeConnectionState(containerRuntime,  true, fakeClientId);
 
 						assert.strictEqual(
 							submittedOpsMetadata.length,
@@ -861,6 +867,7 @@ describe("Runtime", () => {
 			const getMockContextForPendingStateProgressTracking =
 				(): Partial<IContainerContext> => {
 					return {
+						connected: false,
 						clientId: fakeClientId,
 						attachState: AttachState.Attached,
 						deltaManager: new MockDeltaManager(),
@@ -945,8 +952,8 @@ describe("Runtime", () => {
 			}
 
 			const toggleConnection = (runtime: ContainerRuntime) => {
-				runtime.setConnectionState(false, fakeClientId);
-				runtime.setConnectionState(true, fakeClientId);
+				changeConnectionState(runtime, true, fakeClientId)
+				changeConnectionState(runtime, false, fakeClientId)
 			};
 
 			const addPendingMessage = (pendingStateManager: PendingStateManager): void =>
@@ -1064,7 +1071,7 @@ describe("Runtime", () => {
 					addPendingMessage(pendingStateManager);
 
 					for (let i = 0; i < maxReconnects; i++) {
-						containerRuntime.setConnectionState(
+						changeConnectionState(containerRuntime,  
 							!containerRuntime.connected,
 							fakeClientId,
 						);
@@ -1236,7 +1243,7 @@ describe("Runtime", () => {
 			it("Op with unrecognized type and 'Ignore' compat behavior is ignored by resubmit", async () => {
 				const patchedContainerRuntime = patchContainerRuntime();
 
-				patchedContainerRuntime.setConnectionState(false, mockClientId);
+				changeConnectionState(patchedContainerRuntime, false, mockClientId);
 
 				submitDataStoreOp(patchedContainerRuntime, "1", "test");
 				submitDataStoreOp(patchedContainerRuntime, "2", "test");
@@ -1254,7 +1261,7 @@ describe("Runtime", () => {
 				);
 
 				// Connect, which will trigger resubmit
-				patchedContainerRuntime.setConnectionState(true, mockClientId);
+				changeConnectionState(patchedContainerRuntime, true, mockClientId);
 
 				assert.strictEqual(
 					submittedOps.length,
@@ -1266,7 +1273,7 @@ describe("Runtime", () => {
 			it("Op with unrecognized type and no compat behavior causes resubmit to throw", async () => {
 				const patchedContainerRuntime = patchContainerRuntime();
 
-				patchedContainerRuntime.setConnectionState(false, mockClientId);
+				changeConnectionState(patchedContainerRuntime, false, mockClientId);
 
 				patchedContainerRuntime.submit({
 					type: "FUTURE_TYPE" as any,
@@ -1285,7 +1292,7 @@ describe("Runtime", () => {
 				// of the new op type.
 				assert.throws(() => {
 					// Connect, which will trigger resubmit
-					patchedContainerRuntime.setConnectionState(true, mockClientId);
+					changeConnectionState(patchedContainerRuntime, true, mockClientId);
 				}, "Expected resubmit to throw");
 			});
 
