@@ -256,11 +256,10 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	const treeSchema = contentSnapshot.schema.nodeSchema.get(treeView.type);
 
 	// Traverses the SharedTree and generates a visual representation of the tree and its schema.
-	const visualTreeRepresentation = await visualizeSharedTreeNodeBySchema(
+	const visualTreeRepresentation = visualizeSharedTreeNodeBySchema(
 		treeView,
 		treeSchema,
 		contentSnapshot,
-		visualizeChildData,
 	);
 
 	// Maps the `visualTreeRepresentation` in the format compatible to {@link visualizeChildData} function.

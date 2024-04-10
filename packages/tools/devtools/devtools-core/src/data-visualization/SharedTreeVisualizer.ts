@@ -26,10 +26,7 @@ import {
 	VisualNodeKind,
 	type VisualValueNode,
 	type VisualTreeNode,
-	type FluidHandleNode,
-	type UnknownObjectNode,
 } from "./VisualTree.js";
-import type { VisualizeChildData } from "./DataVisualization.js";
 
 /**
  * Returns allowed types of the non-leaf nodes in the tree.
@@ -82,54 +79,21 @@ function createToolTipContents(schema: SharedTreeSchemaNode): VisualTreeNode {
 /**
  * Constructs a VisualTree of the input tree's schema fields in {@link VisualTreeNode} or {@link VisualValueNode}.
  */
-export function toVisualTree(tree: VisualSharedTreeNode): VisualChildNode {
+export function toVisualTree(tree: VisualSharedTreeNode): VisualValueNode | VisualTreeNode {
 	if (tree.kind === VisualSharedTreeNodeKind.LeafNode) {
-		switch (tree.value.nodeKind) {
-			case VisualNodeKind.ValueNode: {
-				const result: VisualValueNode = {
-					value: tree.value.value,
-					nodeKind: VisualNodeKind.ValueNode,
-					tooltipContents: {
-						schema: createToolTipContents(tree.schema),
-					},
-				};
-				return result;
-			}
-			case VisualNodeKind.FluidHandleNode: {
-				const result: FluidHandleNode = {
-					fluidObjectId: tree.value.fluidObjectId,
-					nodeKind: VisualNodeKind.FluidHandleNode,
-					tooltipContents: {
-						schema: createToolTipContents(tree.schema),
-					},
-				};
-				return result;
-			}
-			case VisualNodeKind.TreeNode: {
-				const result: VisualTreeNode = {
-					children: tree.value.children,
-					nodeKind: VisualNodeKind.TreeNode,
-					tooltipContents: {
-						schema: createToolTipContents(tree.schema),
-					},
-				};
-				return result;
-			}
-			case VisualNodeKind.UnknownObjectNode: {
-				const result: UnknownObjectNode = {
-					nodeKind: VisualNodeKind.UnknownObjectNode,
-				};
-				return result;
-			}
-			default: {
-				throw new Error("Unrecognized node kind.");
-			}
-		}
+		const result: VisualValueNode = {
+			value: tree.value,
+			nodeKind: VisualNodeKind.ValueNode,
+			tooltipContents: {
+				schema: createToolTipContents(tree.schema),
+			},
+		};
+		return result;
 	} else {
 		const children: Record<string, VisualChildNode> = {};
 
 		for (const [key, value] of Object.entries(tree.fields)) {
-			const child = toVisualTree(value as unknown as VisualSharedTreeNode); // TODO: Fix this.
+			const child = toVisualTree(value);
 			children[key] = child;
 		}
 
@@ -206,15 +170,12 @@ function getMapAllowedTypes(
 /**
  * Returns the schema & leaf value of the node with type {@link LeafNodeStoredSchema}.
  */
-async function visualizeLeafNode(
-	tree: JsonableTree,
-	visualizeChildData: VisualizeChildData,
-): Promise<SharedTreeLeafNode> {
+function visualizeLeafNode(tree: JsonableTree): SharedTreeLeafNode {
 	return {
 		schema: {
 			schemaName: tree.type,
 		},
-		value: await visualizeChildData(tree.value),
+		value: JSON.stringify(tree.value), // TODO: Change to VisualizeChildData.
 		kind: VisualSharedTreeNodeKind.LeafNode,
 	};
 }
@@ -226,7 +187,6 @@ function visualizeObjectNode(
 	tree: JsonableTree,
 	schema: ObjectNodeStoredSchema,
 	contentSnapshot: SharedTreeContentSnapshot,
-	visualizeChildData: VisualizeChildData,
 ): VisualSharedTreeNode {
 	const treeFields = tree.fields;
 
@@ -241,7 +201,7 @@ function visualizeObjectNode(
 		};
 	}
 
-	const fields: Record<string | number, VisualSharedTreeNode | Promise<SharedTreeLeafNode>> = {};
+	const fields: Record<string | number, VisualSharedTreeNode> = {};
 
 	// `EmptyKey` indicates an array field (e.g., `schemabuilder.array()`).
 	// Hides level of indirection by omitting the empty key in the visual output.
@@ -253,12 +213,7 @@ function visualizeObjectNode(
 
 		for (let i = 0; i < children.length; i++) {
 			const childSchema = contentSnapshot.schema.nodeSchema.get(children[i].type);
-			fields[i] = visualizeSharedTreeNodeBySchema(
-				children[i],
-				childSchema,
-				contentSnapshot,
-				visualizeChildData,
-			);
+			fields[i] = visualizeSharedTreeNodeBySchema(children[i], childSchema, contentSnapshot);
 		}
 	} else {
 		for (const [fieldKey, childField] of Object.entries(treeFields)) {
@@ -268,7 +223,6 @@ function visualizeObjectNode(
 				childField[0],
 				childSchema,
 				contentSnapshot,
-				visualizeChildData,
 			);
 		}
 	}
@@ -290,7 +244,6 @@ function visualizeMapNode(
 	tree: JsonableTree,
 	schema: MapNodeStoredSchema,
 	contentSnapshot: SharedTreeContentSnapshot,
-	visualizeChildData: VisualizeChildData,
 ): VisualSharedTreeNode {
 	const treeFields = tree.fields;
 
@@ -305,7 +258,7 @@ function visualizeMapNode(
 		};
 	}
 
-	const fields: Record<string | number, VisualSharedTreeNode | Promise<SharedTreeLeafNode>> = {};
+	const fields: Record<string | number, VisualSharedTreeNode> = {};
 
 	for (const [fieldKey, childField] of Object.entries(treeFields)) {
 		const fieldSchema = contentSnapshot.schema.nodeSchema.get(childField[0].type);
@@ -314,7 +267,6 @@ function visualizeMapNode(
 			childField[0],
 			fieldSchema,
 			contentSnapshot,
-			visualizeChildData,
 		);
 	}
 
@@ -336,14 +288,13 @@ export function visualizeSharedTreeNodeBySchema(
 	tree: JsonableTree,
 	schema: TreeNodeStoredSchema | undefined,
 	contentSnapshot: SharedTreeContentSnapshot,
-	visualizeChildData: VisualizeChildData,
-): VisualSharedTreeNode | Promise<SharedTreeLeafNode> {
+): VisualSharedTreeNode {
 	if (schema instanceof LeafNodeStoredSchema) {
-		return visualizeLeafNode(tree, visualizeChildData);
+		return visualizeLeafNode(tree);
 	} else if (schema instanceof ObjectNodeStoredSchema) {
-		return visualizeObjectNode(tree, schema, contentSnapshot, visualizeChildData);
+		return visualizeObjectNode(tree, schema, contentSnapshot);
 	} else if (schema instanceof MapNodeStoredSchema) {
-		return visualizeMapNode(tree, schema, contentSnapshot, visualizeChildData);
+		return visualizeMapNode(tree, schema, contentSnapshot);
 	} else {
 		throw new TypeError("Unrecognized schema type.");
 	}
