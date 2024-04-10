@@ -23,7 +23,7 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./test/utils": {
+		"./internal/test/utils": {
 			"import": {
 				"types": "./lib/test/utils.d.ts",
 				"default": "./lib/test/utils.js"
@@ -99,7 +99,7 @@
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/benchmark": "^0.48.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.34.0",
+		"@fluidframework/build-tools": "^0.35.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@microsoft/api-extractor": "^7.42.3",
 		"@types/mocha": "^9.1.1",

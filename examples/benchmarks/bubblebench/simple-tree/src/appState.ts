@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
 	type IAppState,
 	type IBubble,
@@ -16,7 +17,7 @@ export class AppState implements IAppState {
 	readonly localClient: Client;
 
 	constructor(
-		private readonly tree: TreeView<App>,
+		private readonly tree: TreeView<typeof App>,
 		public width: number,
 		public height: number,
 		numBubbles: number,

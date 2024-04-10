@@ -5,11 +5,11 @@
 
 import {
 	ADOSizeComparator,
+	BundleComparison,
 	BundleComparisonResult,
+	BundleMetric,
 	bundlesContainNoChanges,
 	getAzureDevopsApi,
-	BundleComparison,
-	BundleMetric,
 	totalSizeMetricName,
 } from "@fluidframework/bundle-size-tools";
 

@@ -90,6 +90,7 @@ export interface SchemaAndPolicy {
 
 /**
  * Extra data needed to interpret schema.
+ * @internal
  */
 export interface SchemaPolicy {
 	/**

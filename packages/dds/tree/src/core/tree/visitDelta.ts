@@ -115,7 +115,7 @@ export function visitDelta(
 	collectDestroys(delta.destroy, attachConfig);
 	for (const { id, count } of rootDestructions) {
 		const nodeRangeToDestruct = detachedFieldIndex.partitionDetachedNodeRanges(id, count);
-		if (nodeRangeToDestruct) {
+		if (nodeRangeToDestruct.length > 0) {
 			for (const { root, start, length } of nodeRangeToDestruct) {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const field = detachedFieldIndex.toFieldKey(root!);
@@ -449,12 +449,11 @@ function buildTrees(
 	} else {
 		let i = 0; // index for trees
 		for (const { root, start, length } of nodeRangeToBuildTrees) {
-			if (root === undefined) {
-				const offsettedId = offsetDetachId(id, start - id.minor);
-				const newRoot = config.detachedFieldIndex.createEntry(offsettedId, length);
-				const field = config.detachedFieldIndex.toFieldKey(newRoot);
-				visitor.create(trees.slice(i, i + length), field);
-			}
+			assert(root === undefined, "Unable to build tree that already exists");
+			const offsettedId = offsetDetachId(id, start - id.minor);
+			const newRoot = config.detachedFieldIndex.createEntry(offsettedId, length);
+			const field = config.detachedFieldIndex.toFieldKey(newRoot);
+			visitor.create(trees.slice(i, i + length), field);
 			i += length;
 		}
 	}

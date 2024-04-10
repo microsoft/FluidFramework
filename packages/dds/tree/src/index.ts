@@ -93,6 +93,7 @@ export {
 	MapNodeStoredSchema,
 	LeafNodeStoredSchema,
 	Multiplicity,
+	SchemaPolicy,
 } from "./core/index.js";
 
 export {
@@ -254,6 +255,7 @@ export {
 	buildTreeConfiguration,
 	ISharedTreeEditor,
 	ISchemaEditor,
+	RevertibleFactory,
 	SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
 	Tree,
@@ -386,6 +388,7 @@ export {
 	Required,
 	Optional,
 	NodeKeyFieldKind,
+	Identifier,
 	Forbidden,
 	Sequence,
 } from "./feature-libraries/index.js";

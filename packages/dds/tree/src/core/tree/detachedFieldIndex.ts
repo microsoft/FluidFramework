@@ -214,7 +214,7 @@ export class DetachedFieldIndex {
 	): { root: ForestRootId | undefined; start: number; length: number }[] {
 		const rangeMap = this.detachedNodeRangeMap.get(nodeId.major);
 		if (!rangeMap) {
-			return undefined;
+			return [];
 		}
 		const results = partitionAllRangesWithinMap(rangeMap, nodeId.minor, count).map(
 			({ value, start, length }) => ({ root: value, start, length }),

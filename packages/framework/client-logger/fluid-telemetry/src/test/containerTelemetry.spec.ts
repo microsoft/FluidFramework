@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import type Sinon from "sinon";
 import { spy } from "sinon";
 import { expect } from "chai";
