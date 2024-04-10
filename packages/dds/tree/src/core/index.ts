@@ -143,6 +143,7 @@ export {
 	ErasedTreeNodeSchemaDataFormat,
 	SchemaAndPolicy,
 	Multiplicity,
+	SchemaPolicy,
 } from "./schema-stored/index.js";
 
 export {

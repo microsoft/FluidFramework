@@ -22,6 +22,7 @@ export {
 	storedSchemaDecodeDispatcher,
 	ErasedTreeNodeSchemaDataFormat,
 	SchemaAndPolicy,
+	SchemaPolicy,
 } from "./schema.js";
 export {
 	TreeStoredSchemaSubscription,
