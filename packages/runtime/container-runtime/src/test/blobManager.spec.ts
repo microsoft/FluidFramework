@@ -19,7 +19,7 @@ import {
 	IErrorBase,
 	IFluidHandle,
 	type IFluidHandleInternal,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {

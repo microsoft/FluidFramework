@@ -36,7 +36,7 @@ import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/int
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidHandleInternal } from '@fluidframework/core-interfaces';
-import { IFluidParentContext } from '@fluidframework/runtime-definitions';
+import { IFluidParentContext } from '@fluidframework/runtime-definitions/internal';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions/internal';
 import { IGetPendingLocalStateProps } from '@fluidframework/container-definitions/internal';
