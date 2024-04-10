@@ -1,12 +1,12 @@
 # Platform Requirements for Fluid Framework Client Packages
 
 These are the platform requirements for the current version of Fluid Framework Client Packages.
-These are intentionally quite strict as they have to be supported for the entire Long Term Support (LTS) timeline for LTS versions.
-These restrictions can be loosened over time, adding support for specific configurations desired by users of the client packages.
+These requirements error on the side of being too strict since within a major version they can be relaxed over time, but not made stricter.
+For Long Term Support (LTS) versions this can require supporting these platforms for several years.
 
-It is likely that other configurations will work, but as they are not supported, if they stop working, that is not a breaking change.
+It is likely that other configurations will work, but they are not supported: if they stop working, that is not a breaking change.
 If you would benefit from support for something not listed here, file an issue and the product team will evaluate your request.
-When making such a request please include if such a configuration already works (and thus the request is just that it becomes officially supported), or if changes are required to get it working.
+When making such a request please include if the a configuration already works (and thus the request is just that it becomes officially supported), or if changes are required to get it working.
 
 ## Supported Runtimes
 
@@ -18,24 +18,22 @@ When making such a request please include if such a configuration already works 
 -   TypeScript 5.4:
     -   All [`strict`](https://www.typescriptlang.org/tsconfig) options are supported.
     -   [`strictNullChecks`](https://www.typescriptlang.org/tsconfig) is required.
-    -   ["Backwards Compatibility"](https://www.typescriptlang.org/tsconfig) options are not supported.
-    -   TODO: "Interop Constraints" requirements.
--   [webpack](https://webpack.js.org/) 5:
-    -   TODO: list requirements to make our client packages work with webpack (ex: what polyfills we need, etc.). Maybe we should publish a supported know to work config (ex: fully working source maps, all needed polyfills) which we can update as part of the client packages?
+    -   [Configuration options deprecated in 5.0](https://github.com/microsoft/TypeScript/issues/51909) are not supported.
+-   [webpack](https://webpack.js.org/) 5
 
 ## Module Resolution
 
-[`Node16`, `NodeNext`, or `Bundler`](https://www.typescriptlang.org/tsconfig#moduleResolution) resolution should be used with TypeScript compilerOptions to follow the [Node.js v12+ ESM Resolution and Loading algorithm](https://nodejs.github.io/nodejs.dev/en/api/v20/esm/#resolution-and-loading-algorithm). Node10 resolution is not supported as it does not support Fluid Framework's API structuring pattern that is used to distinguish stable APIs from those that are in development.
+[`Node16`, `NodeNext`, or `Bundler`](https://www.typescriptlang.org/tsconfig#moduleResolution) resolution should be used with TypeScript compilerOptions to follow the [Node.js v12+ ESM Resolution and Loading algorithm](https://nodejs.github.io/nodejs.dev/en/api/v20/esm/#resolution-and-loading-algorithm).
+Node10 resolution is not supported as it does not support Fluid Framework's API structuring pattern that is used to distinguish stable APIs from those that are in development.
 
 ## Module Formats
 
 -   ES Modules:
     ES Modules are the preferred way to consume our client packages (including in NodeJs) and consuming our client packages from ES Modules is fully supported.
-    TODO: details. Module resolution etc?
 -   CommonJs:
-    Consuming our client packages as CommonJs is supported only in NodeJS and only for development and testing. This is done to accommodate some workflows without good ES Module support.
-    These workflows are listed below.
+    Consuming our client packages as CommonJs is supported only in NodeJS and only for the cases listed below.
+    This is done to accommodate some workflows without good ES Module support.
     If you have a workflow you would like included in this list, file an issue.
-    Once this list of workflows motivating CommonJS support is empty, we may drop support for CommonJS one year of notice of the change is posted here.
+    Once this list of workflows motivating CommonJS support is empty, we may drop support for CommonJS one year after notice of the change is posted here.
 
     -   Testing with Jest (Which lacks [stable ESM support](https://jestjs.io/docs/ecmascript-modules) due to [unstable APIs in NodeJs](https://github.com/nodejs/node/issues/37648))
