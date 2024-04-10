@@ -4,12 +4,12 @@
 
 ```ts
 
-import type { DataObjectClass } from 'fluid-framework';
+import type { DataObjectClass } from '@fluidframework/fluid-static';
 import type { IFluidLoadable } from '@fluidframework/core-interfaces';
-import type { ImplicitFieldSchema } from 'fluid-framework';
+import { ImplicitFieldSchema } from '@fluidframework/tree/internal';
 import * as React_2 from 'react';
-import type { TreeConfiguration } from 'fluid-framework';
-import type { TreeFieldFromImplicitField } from 'fluid-framework';
+import { TreeConfiguration } from '@fluidframework/tree/internal';
+import { TreeFieldFromImplicitField } from '@fluidframework/tree/internal';
 
 // @public (undocumented)
 export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {

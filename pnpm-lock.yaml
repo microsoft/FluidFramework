@@ -5362,6 +5362,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
+      '@fluidframework/fluid-static': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/test-utils': workspace:~
       '@fluidframework/tree': workspace:~
@@ -5377,7 +5378,6 @@ importers:
       cross-env: ^7.0.3
       eslint: ~8.55.0
       eslint-config-prettier: ~9.0.0
-      fluid-framework: workspace:~
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
@@ -5390,8 +5390,8 @@ importers:
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
+      '@fluidframework/fluid-static': link:../../../packages/framework/fluid-static
       '@fluidframework/tree': link:../../../packages/dds/tree
-      fluid-framework: link:../../../packages/framework/fluid-framework
       react: 17.0.2
     devDependencies:
       '@arethetypeswrong/cli': 0.15.2

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type ContainerSchema, TreeConfiguration, SchemaFactory } from "fluid-framework";
+import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
+import type { ContainerSchema } from "@fluidframework/fluid-static";
 import { treeDataObject } from "../reactSharedTreeView.js";
 
 describe("useTree()", () => {
