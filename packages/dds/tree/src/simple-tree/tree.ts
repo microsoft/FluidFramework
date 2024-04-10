@@ -141,7 +141,7 @@ export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposab
 	set root(newRoot: InsertableTreeFieldFromImplicitField<TSchema>);
 
 	/**
-	 * Description of the current compatibility status between the view schema and stord schema.
+	 * Description of the current compatibility status between the view schema and stored schema.
 	 *
 	 * {@link TreeViewEvents.schemaChanged} is fired when the compatibility status changes.
 	 */
@@ -224,7 +224,7 @@ export interface SchemaCompatibilityStatus {
 	 *
 	 * @remarks
 	 * It's not necessary to check this field before calling {@link TreeView.initialize} in most scenarios; application authors typically know from
-	 * context that they're in a flow which creates a new `SharedTree` and would like to set up its initial content.
+	 * context that they're in a flow which creates a new `SharedTree` and would like to initialize it.
 	 */
 	readonly canInitialize: boolean;
 
@@ -266,8 +266,10 @@ export interface TreeViewEvents {
 	afterBatch(): void;
 
 	/**
-	 * {@link TreeView.root} has changed.
-	 * This includes changes to the field containing the root such as setting or clearing an optional root or changing which node is the root.
+	 * Raised whenever {@link TreeView.root} is invalidated.
+	 *
+	 * This includes changes to the document schema.
+	 * It also includes changes to the field containing the root such as setting or clearing an optional root or changing which node is the root.
 	 * This does NOT include changes to the content (fields/children) of the root node: for that case subscribe to events on the root node.
 	 */
 	rootChanged(): void;
@@ -276,7 +278,8 @@ export interface TreeViewEvents {
 	 * The stored schema for the document has changed.
 	 * This may affect the compatibility between the view schema and the stored schema, and thus the ability to use the view.
 	 *
-	 * This event implies that the old {@link TreeView.root} is no longer valid.
+	 * @remarks
+	 * This event implies that the old {@link TreeView.root} is no longer valid, but applications
 	 */
 	schemaChanged(): void;
 
