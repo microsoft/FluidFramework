@@ -79,6 +79,9 @@ export interface IAudience extends IEventProvider<IAudienceEvents> {
 
 	/**
 	 * Returns this client's clientId. undefined if this client has never connected to the ordering service.
+	 * It changes only when client has reconnected and caught up with latest ops.
+	 * In other words, the value k
+	 * 
 	 * @experimental
 	 *
 	 * @remarks
