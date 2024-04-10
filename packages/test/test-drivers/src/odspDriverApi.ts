@@ -14,13 +14,14 @@ import {
 	OdspDriverUrlResolver,
 	createOdspCreateContainerRequest,
 	createOdspUrl,
-} from "@fluidframework/odsp-driver";
+} from "@fluidframework/odsp-driver/internal";
 import {
 	HostStoragePolicy,
 	ICollabSessionOptions,
 	IOpsCachingPolicy,
 	ISnapshotOptions,
-} from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/odsp-driver-definitions/internal";
+
 import { pkgVersion } from "./packageVersion.js";
 
 /**

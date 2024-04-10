@@ -3,26 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
+import {
+	IContainer,
+	IHostLoader,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
 import {
 	IOnDemandSummarizeOptions,
 	ISummarizer,
 	ISummaryRuntimeOptions,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import {
 	IConfigProviderBase,
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
-import { DriverHeader } from "@fluidframework/driver-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { DriverHeader } from "@fluidframework/driver-definitions/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
+
 import { createTestConfigProvider } from "./TestConfigs.js";
 import { waitForContainerConnection } from "./containerUtils.js";
 import { createContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore.js";

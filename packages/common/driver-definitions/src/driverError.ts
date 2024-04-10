@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FluidErrorTypes } from "@fluidframework/core-interfaces";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 
 import type { IResolvedUrl } from "./urlResolver.js";
 

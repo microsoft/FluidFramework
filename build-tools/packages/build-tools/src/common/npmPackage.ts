@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import * as fs from "fs";
+import * as path from "path";
 import { PackageName } from "@rushstack/node-core-library";
 import { queue } from "async";
 import * as chalk from "chalk";
 import detectIndent from "detect-indent";
-import * as fs from "fs";
 import { readFileSync, readJsonSync, writeJsonSync } from "fs-extra";
-import * as path from "path";
 import sortPackageJson from "sort-package-json";
 
-import type { PackageJson as StandardPackageJson, SetRequired } from "type-fest";
+import type { SetRequired, PackageJson as StandardPackageJson } from "type-fest";
 
 import { options } from "../fluidBuild/options";
 import { type IFluidBuildConfig, type ITypeValidationConfig } from "./fluidRepo";
@@ -114,8 +114,8 @@ export class Package {
 		this.packageManager = existsSync(pnpmWorkspacePath)
 			? "pnpm"
 			: existsSync(yarnLockPath)
-			  ? "yarn"
-			  : "npm";
+				? "yarn"
+				: "npm";
 		traceInit(`${this.nameColored}: Package loaded`);
 		Object.assign(this, additionalProperties);
 	}
@@ -228,8 +228,8 @@ export class Package {
 		return this.packageManager === "pnpm"
 			? "pnpm i"
 			: this.packageManager === "yarn"
-			  ? "npm run install-strict"
-			  : "npm i";
+				? "npm run install-strict"
+				: "npm i";
 	}
 
 	private get color() {
@@ -362,7 +362,7 @@ async function queueExec<TItem, TResult>(
 					`[${++numDone}/${p.length}] ${messageCallback(item)} - ${elapsedTime.toFixed(3)}s`,
 				);
 				return result;
-		  }
+			}
 		: exec;
 	const q = queue(async (taskExec: TaskExec<TItem, TResult>) => {
 		try {

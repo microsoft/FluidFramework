@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { LocalReferencePosition, ReferencePosition } from "@fluidframework/sequence";
+import { LocalReferencePosition, ReferencePosition } from "@fluidframework/sequence/internal";
+
 import { DocSegmentKind, getDocSegmentKind } from "../document/index.js";
 import { Dom, TagName, clamp, hasTagName } from "../util/index.js";
 import { updateRef } from "../util/localref.js";
-
 import { Layout, eotSegment } from "../view/layout.js";
+
 import { debug } from "./debug.js";
 
 export class Caret {

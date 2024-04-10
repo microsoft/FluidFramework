@@ -3,11 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { getUnexpectedLogErrorException, TestObjectProvider } from "@fluidframework/test-utils";
+import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
+import { type ITelemetryGenericEventExt } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	getUnexpectedLogErrorException,
+	TestObjectProvider,
+} from "@fluidframework/test-utils/internal";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Context } from "mocha";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { createChildLogger, type ITelemetryGenericEventExt } from "@fluidframework/telemetry-utils";
 
 /**
  * @internal
@@ -30,7 +34,7 @@ export function createExpectsTest(orderedExpectedEvents: ExpectedEvents, test: M
 			: orderedExpectedEvents[provider.driver.type] ?? [];
 
 		try {
-			provider.logger.registerExpectedEvent(...orderedEvents);
+			provider.tracker.registerExpectedEvent(...orderedEvents);
 			await test.bind(this)();
 		} catch (error) {
 			// only use TestException if the event is provided.
@@ -44,7 +48,7 @@ export function createExpectsTest(orderedExpectedEvents: ExpectedEvents, test: M
 				throw error;
 			}
 		}
-		const err = getUnexpectedLogErrorException(provider.logger);
+		const err = getUnexpectedLogErrorException(provider.tracker);
 		if (err !== undefined) {
 			throw err;
 		}

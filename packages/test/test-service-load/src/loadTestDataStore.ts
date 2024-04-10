@@ -4,28 +4,31 @@
  */
 
 import * as crypto from "crypto";
+
 import { IRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { ILoaderOptions } from "@fluidframework/container-definitions";
+} from "@fluidframework/aqueduct/internal";
+import { ILoaderOptions } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 	UnknownContainerRuntimeMessage,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert, delay } from "@fluidframework/core-utils";
-import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
+import { assert, delay } from "@fluidframework/core-utils/internal";
+import { ISharedCounter, SharedCounter } from "@fluidframework/counter/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IDirectory, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframework/map";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
+import { IDirectory, ISharedDirectory } from "@fluidframework/map/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { ITaskManager, TaskManager } from "@fluidframework/task-manager";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
+import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ILoadTestConfig } from "./testConfigFile";
+
+import { ILoadTestConfig } from "./testConfigFile.js";
 
 export interface IRunConfig {
 	runId: number;

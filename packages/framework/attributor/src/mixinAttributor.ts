@@ -4,35 +4,38 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import {
-	type IAudience,
-	type IContainerContext,
-	type IDeltaManager,
-} from "@fluidframework/container-definitions";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { type IAudience, type IDeltaManager } from "@fluidframework/container-definitions";
+import { type IContainerContext } from "@fluidframework/container-definitions/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { type FluidObject, type IRequest, type IResponse } from "@fluidframework/core-interfaces";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	type IDocumentMessage,
 	type ISequencedDocumentMessage,
 	type ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 import {
-	type AttributionInfo,
-	type AttributionKey,
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
-	type NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTreeBuilder, addSummarizeResultToSummary } from "@fluidframework/runtime-utils";
+import {
+	type AttributionInfo,
+	type AttributionKey,
+	type NamedFluidDataStoreRegistryEntries,
+} from "@fluidframework/runtime-definitions/internal";
+import {
+	SummaryTreeBuilder,
+	addSummarizeResultToSummary,
+} from "@fluidframework/runtime-utils/internal";
 import {
 	PerformanceEvent,
 	UsageError,
 	createChildLogger,
 	loggerToMonitoringContext,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
+
 import { Attributor, type IAttributor, OpStreamAttributor } from "./attributor.js";
 import { AttributorSerializer, type Encoder, chain, deltaEncoder } from "./encoders.js";
 import { makeLZ4Encoder } from "./lz4Encoder.js";

@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
@@ -11,8 +12,9 @@ import {
 	MonitoringContext,
 	createChildLogger,
 	mixinMonitoringContext,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
+
 import {
 	GCNodeType,
 	GarbageCollector,

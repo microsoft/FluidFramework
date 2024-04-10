@@ -8,7 +8,7 @@ import {
 	type IEventProvider,
 	type IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import { type IChannelFactory } from "@fluidframework/datastore-definitions";
+import { type ISharedObjectKind } from "@fluidframework/shared-object-base";
 
 /**
  * A mapping of string identifiers to instantiated `DataObject`s or `SharedObject`s.
@@ -33,11 +33,11 @@ export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
  * There are some edge cases in TypeScript where the order of the members in a union matter.
  * Once such edge case is when multiple members of a generic union partially match, and the type parameter is being inferred.
  * In this case, its better to have the desired match and/or the simpler type first.
- * In this case placing SharedObjectClass fixed one usage and didn't break anything, and generally seems more likely to work than the reverse, so this is the order being used.
+ * In this case placing ISharedObjectKind fixed one usage and didn't break anything, and generally seems more likely to work than the reverse, so this is the order being used.
  * This is likely (a bug in TypeScript)[https://github.com/microsoft/TypeScript/issues/45809].
  */
 export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> =
-	| SharedObjectClass<T>
+	| ISharedObjectKind<T>
 	| DataObjectClass<T>;
 
 /**
@@ -45,33 +45,15 @@ export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> =
  * constructor that will return the type of the `DataObject`.
  *
  * @typeParam T - The class of the `DataObject`.
+ * @privateRemarks
+ * Having both `factory` and `LoadableObjectCtor` is redundant, and having `factory` not actually work as a factory is also strange.
+ * This may need some refinement.
  * @public
  */
-export type DataObjectClass<T extends IFluidLoadable> = {
-	readonly factory: { IFluidDataStoreFactory: DataObjectClass<T>["factory"] };
-} & LoadableObjectCtor<T>;
-
-/**
- * A factory that produces a factory that can create a DDSes (`SharedObject`s).
- *
- * @typeParam T - The class of the `SharedObject`.
- * @public
- */
-export interface SharedObjectClass<T extends IFluidLoadable> {
-	/**
-	 * Gets the factory this factory is a wrapper for.
-	 */
-	readonly getFactory: () => IChannelFactory<T>;
-}
-
-/**
- * An object with a constructor that will return an {@link @fluidframework/core-interfaces#IFluidLoadable}.
- *
- * @typeParam T - The class of the loadable object.
- * @public
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
+export type DataObjectClass<T extends IFluidLoadable = IFluidLoadable> = {
+	readonly factory: { readonly IFluidDataStoreFactory: DataObjectClass<T>["factory"] };
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+} & (new (...args: any[]) => T);
 
 /**
  * Represents properties that can be attached to a container.
@@ -213,7 +195,7 @@ export interface IServiceAudience<M extends IMember>
 	 * member object.  The implementation may choose to exclude certain connections from the returned map.
 	 * E.g. ServiceAudience excludes non-interactive connections to represent only the roster of live users.
 	 */
-	getMembers(): Map<string, M>;
+	getMembers(): ReadonlyMap<string, M>;
 
 	/**
 	 * Returns the current active user on this client once they are connected. Otherwise, returns undefined.
@@ -231,12 +213,12 @@ export interface IConnection {
 	/**
 	 * A unique ID for the connection.  A single user may have multiple connections, each with a different ID.
 	 */
-	id: string;
+	readonly id: string;
 
 	/**
 	 * Whether the connection is in read or read/write mode.
 	 */
-	mode: "write" | "read";
+	readonly mode: "write" | "read";
 }
 
 /**
@@ -249,16 +231,16 @@ export interface IMember {
 	/**
 	 * An ID for the user, unique among each individual user connecting to the session.
 	 */
-	userId: string;
+	readonly userId: string;
 
 	/**
 	 * The set of connections the user has made, e.g. from multiple tabs or devices.
 	 */
-	connections: IConnection[];
+	readonly connections: IConnection[];
 }
 
 /**
  * An extended member object that includes currentConnection
  * @public
  */
-export type Myself<M extends IMember = IMember> = M & { currentConnection: string };
+export type Myself<M extends IMember = IMember> = M & { readonly currentConnection: string };

@@ -4,6 +4,7 @@
  */
 
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
+
 import { baseModel, summarizerOperationGenerator } from "./fuzzUtils.js";
 import { createSummarizerFuzzSuite } from "./summarizerFuzzSuite.js";
 
@@ -22,17 +23,19 @@ describe("Summarizer fuzz testing", () => {
 		workloadName: "summarizer",
 		generatorFactory: () =>
 			takeAsync(
-				1,
+				1000,
 				summarizerOperationGenerator({
 					weights: {
-						reconnect: 2,
-						newSummarizer: 2,
-						summaryNack: 2,
-						submitOp: 2,
+						reconnect: 1,
+						newSummarizer: 1,
+						summaryNack: 1,
+						submitOp: 1,
 					},
 				}),
 			),
 	};
 
-	createSummarizerFuzzSuite(model);
+	createSummarizerFuzzSuite(model, {
+		defaultTestCount: 25,
+	});
 });

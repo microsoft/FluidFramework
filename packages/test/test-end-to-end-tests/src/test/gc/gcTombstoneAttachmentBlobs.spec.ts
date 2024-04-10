@@ -7,9 +7,9 @@ import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { ContainerRuntime, IGCRuntimeOptions } from "@fluidframework/container-runtime";
-import { delay } from "@fluidframework/core-utils";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { ContainerRuntime, IGCRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { delay } from "@fluidframework/core-utils/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -17,12 +17,14 @@ import {
 	createTestConfigProvider,
 	summarizeNow,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
+
 import {
 	MockDetachedBlobStorage,
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
 } from "../mockDetachedBlobStorage.js";
+
 import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils.js";
 
 /**

@@ -3,22 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import * as semver from "semver";
+import { mixinAttributor } from "@fluid-experimental/attributor";
+import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/test-drivers";
+import {
+	IContainerRuntimeOptions,
+	DefaultSummaryConfiguration,
+	CompressionAlgorithms,
+	ICompressionRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
 import {
 	FluidObject,
 	IFluidHandleContext,
 	IFluidLoadable,
 	IRequest,
 } from "@fluidframework/core-interfaces";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
+import { ISharedDirectory } from "@fluidframework/map/internal";
 import {
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
-import { ISharedDirectory } from "@fluidframework/map";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestContainerConfig,
 	DataObjectFactoryType,
@@ -26,15 +33,9 @@ import {
 	createTestContainerRuntimeFactory,
 	TestObjectProvider,
 	TestObjectProviderWithVersionedLoad,
-} from "@fluidframework/test-utils";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { mixinAttributor } from "@fluid-experimental/attributor";
-import {
-	IContainerRuntimeOptions,
-	DefaultSummaryConfiguration,
-	CompressionAlgorithms,
-	ICompressionRuntimeOptions,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/test-utils/internal";
+import * as semver from "semver";
+
 import { pkgVersion } from "./packageVersion.js";
 import {
 	getLoaderApi,
@@ -43,6 +44,7 @@ import {
 	getDriverApi,
 	CompatApis,
 } from "./testApi.js";
+import { getRequestedVersion } from "./versionUtils.js";
 
 /**
  * @internal
@@ -72,6 +74,7 @@ function filterRuntimeOptionsForVersion(
 			},
 		},
 	},
+	driverType: TestDriverTypes,
 ) {
 	let options = { ...optionsArg };
 
@@ -92,17 +95,22 @@ function filterRuntimeOptionsForVersion(
 		},
 		enableGroupedBatching = true,
 		enableRuntimeIdCompressor = "on",
-		// chunkSizeInBytes = 200,
+		// Some t9s tests timeout with small settings. This is likely due to too many ops going through.
+		// Reduce chunking cut-off for such tests.
+		chunkSizeInBytes = driverType === "local" ? 200 : 1000,
 	} = options;
 
 	if (version.startsWith("1.")) {
 		options = {
-			...options,
 			// None of these features are supported by 1.3
 			compressionOptions: undefined,
 			enableGroupedBatching: false,
 			enableRuntimeIdCompressor: undefined,
-			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disabled
+			// Enable chunking.
+			// We need to ensure that 1.x documents (that use chunking) can still be opened by 2.x.
+			// This options does nothing for 2.x builds as chunking is only enabled if compression is enabled.
+			chunkSizeInBytes,
+			...options,
 		};
 	} else if (version.startsWith("2.0.0-rc.1.")) {
 		options = {
@@ -116,10 +124,8 @@ function filterRuntimeOptionsForVersion(
 		options = {
 			compressionOptions: compressorDisabled, // Can't use compression, need https://github.com/microsoft/FluidFramework/pull/20111 fix
 			enableGroupedBatching,
-			// Can't track it down, but enabling Id Compressor for this config results in small number of t9s tests to timeout.
-			// This is very likely related to one of these bugfixes that missed that release:
-			// https://github.com/microsoft/FluidFramework/pull/20089
-			// https://github.com/microsoft/FluidFramework/pull/20080
+			// control over schema was generalized in RC3 - see https://github.com/microsoft/FluidFramework/pull/20174
+			// IdCompressor settings moved around - can't enable them across versions without tripping on asserts
 			enableRuntimeIdCompressor: undefined,
 			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disabled, need https://github.com/microsoft/FluidFramework/pull/20115 fix
 			...options,
@@ -129,8 +135,7 @@ function filterRuntimeOptionsForVersion(
 		options = {
 			compressionOptions,
 			enableGroupedBatching,
-			// need to investigate - some small number of t9s tests time out with this option on.
-			// chunkSizeInBytes,
+			chunkSizeInBytes,
 			enableRuntimeIdCompressor,
 			...options,
 		};
@@ -169,11 +174,15 @@ function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntime
 	function convertRegistry(registry: ChannelFactoryRegistry = []): ChannelFactoryRegistry {
 		const oldRegistry: [string | undefined, IChannelFactory][] = [];
 		for (const [key, factory] of registry) {
-			const oldFactory = registryMapping[factory.type];
-			if (oldFactory === undefined) {
-				throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
+			if (factory.type === "https://graph.microsoft.com/types/tree") {
+				oldRegistry.push([key, factory]);
+			} else {
+				const oldFactory = registryMapping[factory.type];
+				if (oldFactory === undefined) {
+					throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
+				}
+				oldRegistry.push([key, oldFactory]);
 			}
-			oldRegistry.push([key, oldFactory]);
 		}
 
 		return oldRegistry;
@@ -218,11 +227,9 @@ export async function getVersionedTestObjectProviderFromApis(
 		config?: FluidTestDriverConfig;
 	},
 ) {
-	const driver = await createFluidTestDriver(
-		driverConfig?.type ?? "local",
-		driverConfig?.config,
-		apis.driver,
-	);
+	const type = driverConfig?.type ?? "local";
+
+	const driver = await createFluidTestDriver(type, driverConfig?.config, apis.driver);
 
 	const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(apis.dataRuntime);
 	const containerFactoryFn = (containerOptions?: ITestContainerConfig) => {
@@ -238,6 +245,7 @@ export async function getVersionedTestObjectProviderFromApis(
 			filterRuntimeOptionsForVersion(
 				apis.containerRuntime.version,
 				containerOptions?.runtimeOptions,
+				type,
 			),
 		);
 	};
@@ -261,10 +269,12 @@ export async function getVersionedTestObjectProvider(
 ): Promise<TestObjectProvider> {
 	return getVersionedTestObjectProviderFromApis(
 		{
-			loader: getLoaderApi(baseVersion, loaderVersion),
-			containerRuntime: getContainerRuntimeApi(baseVersion, runtimeVersion),
-			dataRuntime: getDataRuntimeApi(baseVersion, dataRuntimeVersion),
-			driver: getDriverApi(baseVersion, driverConfig?.version),
+			loader: getLoaderApi(getRequestedVersion(baseVersion, loaderVersion)),
+			containerRuntime: getContainerRuntimeApi(
+				getRequestedVersion(baseVersion, runtimeVersion),
+			),
+			dataRuntime: getDataRuntimeApi(getRequestedVersion(baseVersion, dataRuntimeVersion)),
+			driver: getDriverApi(getRequestedVersion(baseVersion, driverConfig?.version)),
 		},
 		driverConfig,
 	);
@@ -325,7 +335,14 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 	assert(versionForLoading !== undefined, "versionForLoading");
 
 	const minVersion =
-		semver.compare(versionForCreating, versionForLoading) < 0
+		// First, check if any of the versions is current version of the package.
+		// Current versions show up in the form of "2.0.0-dev-rc.3.0.0.251800", and semver.compare()
+		// incorrectly compares them with prior minors, like "2.0.0-rc.2.0.1"
+		versionForLoading === pkgVersion
+			? versionForCreating
+			: versionForCreating === pkgVersion
+			? versionForLoading
+			: semver.compare(versionForCreating, versionForLoading) < 0
 			? versionForCreating
 			: versionForLoading;
 
@@ -337,7 +354,11 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		return new factoryCtor(
 			TestDataObjectType,
 			dataStoreFactory,
-			filterRuntimeOptionsForVersion(minVersion, containerOptions?.runtimeOptions),
+			filterRuntimeOptionsForVersion(
+				minVersion,
+				containerOptions?.runtimeOptions,
+				driverConfig.type,
+			),
 			[innerRequestHandler],
 		);
 	};
@@ -357,7 +378,11 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		return new factoryCtor(
 			TestDataObjectType,
 			dataStoreFactory,
-			filterRuntimeOptionsForVersion(minVersion, containerOptions?.runtimeOptions),
+			filterRuntimeOptionsForVersion(
+				minVersion,
+				containerOptions?.runtimeOptions,
+				driverConfig.type,
+			),
 			[innerRequestHandler],
 		);
 	};
@@ -369,5 +394,14 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		driverForLoading,
 		createContainerFactoryFn,
 		loadContainerFactoryFn,
+		// telemetry props
+		{
+			all: {
+				testType: "TestObjectProviderWithVersionedLoad",
+				testCreateVersion: versionForCreating,
+				testLoadVersion: versionForLoading,
+				testRuntimeOptionsVersion: minVersion,
+			},
+		},
 	);
 }

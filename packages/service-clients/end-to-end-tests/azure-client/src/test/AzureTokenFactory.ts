@@ -2,8 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { ITokenProvider, type ScopeType } from "@fluidframework/azure-client";
-import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 
 export function createAzureTokenProvider(
 	userId: string,

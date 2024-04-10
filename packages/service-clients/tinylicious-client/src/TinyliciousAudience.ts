@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { type IClient } from "@fluidframework/protocol-definitions";
+
 import { type TinyliciousMember, type TinyliciousUser } from "./interfaces.js";
 
 /**

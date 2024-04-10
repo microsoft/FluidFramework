@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { ContainerMessageType } from "../../messageTypes.js";
 import { BatchManager, BatchMessage, estimateSocketSize } from "../../opLifecycle/index.js";
 

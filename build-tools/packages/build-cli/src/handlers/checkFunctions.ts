@@ -8,8 +8,8 @@ import execa from "execa";
 import inquirer from "inquirer";
 import { Machine } from "jssm";
 
-import { FluidRepo } from "@fluidframework/build-tools";
 import { bumpVersionScheme } from "@fluid-tools/version-tools";
+import { FluidRepo } from "@fluidframework/build-tools";
 
 import {
 	generateBumpDepsBranchName,
@@ -238,7 +238,7 @@ export const checkDependenciesInstalled: StateHandlerFunction = async (
 	const packagesToCheck = isReleaseGroup(releaseGroup)
 		? context.packagesInReleaseGroup(releaseGroup)
 		: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		  [context.fullPackageMap.get(releaseGroup)!];
+			[context.fullPackageMap.get(releaseGroup)!];
 
 	const installed = await FluidRepo.ensureInstalled(packagesToCheck);
 

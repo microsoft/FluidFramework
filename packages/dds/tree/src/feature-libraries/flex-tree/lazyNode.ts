@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+
 import {
 	Anchor,
 	AnchorNode,
@@ -15,7 +16,6 @@ import {
 	TreeNodeSchemaIdentifier,
 	TreeValue,
 	Value,
-	anchorSlot,
 	forEachField,
 	inCursorField,
 	mapCursorFields,
@@ -38,6 +38,7 @@ import {
 	schemaIsMap,
 	schemaIsObjectNode,
 } from "../typed-schema/index.js";
+
 import { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
@@ -58,44 +59,48 @@ import {
 	PropertyNameFromFieldKey,
 	TreeStatus,
 	flexTreeMarker,
-	onNextChange,
+	flexTreeSlot,
 	reservedObjectNodeFieldPropertyNamePrefixes,
 	reservedObjectNodeFieldPropertyNames,
 } from "./flexTreeTypes.js";
 import {
 	LazyEntity,
+	anchorSymbol,
 	cursorSymbol,
 	forgetAnchorSymbol,
 	isFreedSymbol,
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity.js";
 import { LazyNodeKeyField, makeField } from "./lazyField.js";
-import { FlexTreeNodeEvents, TreeEvent } from "./treeEvents.js";
+import { FlexTreeNodeEvents } from "./treeEvents.js";
 import { unboxedField } from "./unboxed.js";
 import { treeStatusFromAnchorCache } from "./utilities.js";
 
-const lazyTreeSlot = anchorSlot<LazyTreeNode>();
-
+/**
+ * @param cursor - This does not take ownership of this cursor: Node will fork it as needed.
+ */
 export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): LazyTreeNode {
 	const anchor = cursor.buildAnchor();
 	const anchorNode =
 		context.forest.anchors.locate(anchor) ??
 		fail("cursor should point to a node that is not the root of the AnchorSet");
-	const cached = anchorNode.slots.get(lazyTreeSlot);
+	const cached = anchorNode.slots.get(flexTreeSlot);
 	if (cached !== undefined) {
 		context.forest.anchors.forget(anchor);
 		assert(cached.context === context, 0x782 /* contexts must match */);
-		return cached;
+		assert(cached instanceof LazyTreeNode, "Expected LazyTreeNode");
+		return cached as LazyTreeNode;
 	}
 	const schema = context.schema.nodeSchema.get(cursor.type) ?? fail("missing schema");
 	const output = buildSubclass(context, schema, cursor, anchorNode, anchor);
-	anchorNode.slots.set(lazyTreeSlot, output);
+	anchorNode.slots.set(flexTreeSlot, output);
 	anchorNode.on("afterDestroy", cleanupTree);
 	return output;
 }
 
 function cleanupTree(anchor: AnchorNode): void {
-	const cached = anchor.slots.get(lazyTreeSlot) ?? fail("tree should only be cleaned up once");
+	const cached = anchor.slots.get(flexTreeSlot) ?? fail("tree should only be cleaned up once");
+	assert(cached instanceof LazyTreeNode, "Expected LazyTreeNode");
 	cached[disposeSymbol]();
 }
 
@@ -140,22 +145,16 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 	// Using JS private here prevents it from showing up as a enumerable own property, or conflicting with struct fields.
 	readonly #removeDeleteCallback: () => void;
 
-	readonly #anchorNode: AnchorNode;
-
-	#removeNextChangeCallback: (() => void) | undefined;
-
 	public constructor(
 		context: Context,
 		schema: TSchema,
 		cursor: ITreeSubscriptionCursor,
-		anchorNode: AnchorNode,
+		public readonly anchorNode: AnchorNode,
 		anchor: Anchor,
 	) {
 		super(context, schema, cursor, anchor);
-		this.#anchorNode = anchorNode;
 		assert(cursor.mode === CursorLocationType.Nodes, 0x783 /* must be in nodes mode */);
-
-		anchorNode.slots.set(lazyTreeSlot, this);
+		anchorNode.slots.set(flexTreeSlot, this);
 		this.#removeDeleteCallback = anchorNode.on("afterDestroy", cleanupTree);
 
 		assert(
@@ -177,19 +176,18 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 	}
 
 	protected override [tryMoveCursorToAnchorSymbol](
-		anchor: Anchor,
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
-		return this.context.forest.tryMoveCursorToNode(anchor, cursor);
+		return this.context.forest.tryMoveCursorToNode(this[anchorSymbol], cursor);
 	}
 
-	protected override [forgetAnchorSymbol](anchor: Anchor): void {
+	protected override [forgetAnchorSymbol](): void {
 		// This type unconditionally has an anchor, so `forgetAnchor` is always called and cleanup can be done here:
 		// After this point this node will not be usable,
 		// so remove it from the anchor incase a different context (or the same context later) uses this AnchorSet.
-		this.#anchorNode.slots.delete(lazyTreeSlot);
+		this.anchorNode.slots.delete(flexTreeSlot);
 		this.#removeDeleteCallback();
-		this.context.forest.anchors.forget(anchor);
+		this.context.forest.anchors.forget(this[anchorSymbol]);
 	}
 
 	public get value(): Value {
@@ -206,6 +204,10 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 		});
 	}
 
+	public getBoxed(key: FieldKey): FlexTreeField {
+		return getBoxedField(this, key, this.schema.getFieldSchema(key));
+	}
+
 	public boxedIterator(): IterableIterator<FlexTreeField> {
 		return mapCursorFields(this[cursorSymbol], (cursor) =>
 			makeField(this.context, this.schema.getFieldSchema(cursor.getFieldKey()), cursor),
@@ -214,16 +216,16 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 
 	public get parentField(): { readonly parent: FlexTreeField; readonly index: number } {
 		const cursor = this[cursorSymbol];
-		const index = this.#anchorNode.parentIndex;
+		const index = this.anchorNode.parentIndex;
 		assert(cursor.fieldIndex === index, 0x786 /* mismatched indexes */);
-		const key = this.#anchorNode.parentField;
+		const key = this.anchorNode.parentField;
 
 		cursor.exitNode();
 		assert(key === cursor.getFieldKey(), 0x787 /* mismatched keys */);
 		let fieldSchema: FlexFieldSchema;
 
 		// Check if the current node is in a detached sequence.
-		if (this.#anchorNode.parent === undefined) {
+		if (this.anchorNode.parent === undefined) {
 			// Parent field is a detached sequence, and thus needs special handling for its schema.
 			// eslint-disable-next-line unicorn/prefer-ternary
 			if (key === rootFieldKey) {
@@ -264,7 +266,7 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 		if (this[isFreedSymbol]()) {
 			return TreeStatus.Deleted;
 		}
-		return treeStatusFromAnchorCache(this.context.forest.anchors, this.#anchorNode);
+		return treeStatusFromAnchorCache(this.context.forest.anchors, this.anchorNode);
 	}
 
 	public on<K extends keyof FlexTreeNodeEvents>(
@@ -273,85 +275,22 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 	): () => void {
 		switch (eventName) {
 			case "changing": {
-				const unsubscribeFromChildrenChange = this.#anchorNode.on(
+				const unsubscribeFromChildrenChange = this.anchorNode.on(
 					"childrenChanging",
-					(anchorNode: AnchorNode) =>
-						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
-						// the listener argument only needs to be an AnchorNode. Should go away if/when we make the listener signature
-						// for changing and subtreeChanging match the one for beforeChange and afterChange.
-						listener(anchorNode as unknown as AnchorNode & TreeEvent),
+					(anchorNode: AnchorNode) => listener(anchorNode),
 				);
 				return unsubscribeFromChildrenChange;
 			}
 			case "subtreeChanging": {
-				const unsubscribeFromSubtreeChange = this.#anchorNode.on(
+				const unsubscribeFromSubtreeChange = this.anchorNode.on(
 					"subtreeChanging",
-					(anchorNode: AnchorNode) =>
-						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
-						// the listener argument only needs to be an AnchorNode. Should go away if/when we make the listener signature
-						// for changing and subtreeChanging match the one for beforeChange and afterChange.
-						listener(anchorNode as unknown as AnchorNode & TreeEvent),
+					(anchorNode: AnchorNode) => listener(anchorNode),
 				);
 				return unsubscribeFromSubtreeChange;
-			}
-			case "beforeChange": {
-				const unsubscribeFromChildrenBeforeChange = this.#anchorNode.on(
-					"beforeChange",
-					(anchorNode: AnchorNode) => {
-						const treeNode = anchorNode.slots.get(lazyTreeSlot);
-						assert(
-							treeNode !== undefined,
-							0x7d3 /* tree node not found in anchor node slots */,
-						);
-						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
-						// the listener argument only needs to be a TreeEvent. Should go away if/when we make the listener signature
-						// for changing and subtreeChanging match the one for beforeChange and afterChange.
-						listener({ target: treeNode } as unknown as AnchorNode & TreeEvent);
-					},
-				);
-				return unsubscribeFromChildrenBeforeChange;
-			}
-			case "afterChange": {
-				const unsubscribeFromChildrenAfterChange = this.#anchorNode.on(
-					"afterChange",
-					(anchorNode: AnchorNode) => {
-						const treeNode = anchorNode.slots.get(lazyTreeSlot);
-						assert(
-							treeNode !== undefined,
-							0x7d4 /* tree node not found in anchor node slots */,
-						);
-						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
-						// the listener argument only needs to be a TreeEvent. Should go away if/when we make the listener signature
-						// for changing and subtreeChanging match the one for beforeChange and afterChange.
-						listener({ target: treeNode } as unknown as AnchorNode & TreeEvent);
-					},
-				);
-				return unsubscribeFromChildrenAfterChange;
 			}
 			default:
 				unreachableCase(eventName);
 		}
-	}
-
-	public [onNextChange](fn: (node: FlexTreeNode) => void): () => void {
-		assert(
-			this.#removeNextChangeCallback === undefined,
-			0x806 /* Only one subscriber may listen to next tree node change at a time */,
-		);
-		this.#removeNextChangeCallback = this.#anchorNode.on("childrenChanged", () => {
-			this.#removeNextChangeCallback?.();
-			this.#removeNextChangeCallback = undefined;
-			fn(this);
-		});
-		const removeNextChangeCallback = this.#removeNextChangeCallback;
-		return () => {
-			// Only reset our saved callback if it's the one we closed over in the first place.
-			// It will be different if this is being called after a subsequent registration.
-			if (this.#removeNextChangeCallback === removeNextChangeCallback) {
-				this.#removeNextChangeCallback();
-				this.#removeNextChangeCallback = undefined;
-			}
-		};
 	}
 }
 
@@ -429,10 +368,8 @@ export class LazyMap<TSchema extends FlexMapNodeSchema>
 		) as FlexTreeUnboxField<TSchema["info"]>;
 	}
 
-	public getBoxed(key: string): FlexTreeTypedField<TSchema["info"]> {
-		return inCursorField(this[cursorSymbol], brand(key), (cursor) =>
-			makeField(this.context, this.schema.info, cursor),
-		) as FlexTreeTypedField<TSchema["info"]>;
+	public override getBoxed(key: string): FlexTreeTypedField<TSchema["info"]> {
+		return super.getBoxed(brand(key)) as FlexTreeTypedField<TSchema["info"]>;
 	}
 
 	public set(key: string, content: FlexibleFieldContent<TSchema["info"]> | undefined): void {
@@ -581,7 +518,7 @@ const cachedStructClasses = new WeakMap<
 	) => LazyObjectNode<FlexObjectNodeSchema>
 >();
 
-export function getBoxedField(
+function getBoxedField(
 	objectNode: LazyTreeNode,
 	key: FieldKey,
 	fieldSchema: FlexFieldSchema,

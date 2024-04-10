@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
 	CursorLocationType,
 	DetachedField,
@@ -20,6 +21,7 @@ import {
 	rootField,
 	setGenericTreeField,
 } from "../core/index.js";
+
 import { CursorAdapter, stackTreeFieldCursor, stackTreeNodeCursor } from "./treeCursorUtils.js";
 
 /**

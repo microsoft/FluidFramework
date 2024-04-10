@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { ChangeRebaser, TaggedChange, noFailure, verifyChangeRebaser } from "../../core/index.js";
 
 const counterRebaser: ChangeRebaser<number> = {

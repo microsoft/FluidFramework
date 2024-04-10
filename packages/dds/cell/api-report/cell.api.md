@@ -4,7 +4,7 @@
 
 ```ts
 
-import { AttributionKey } from '@fluidframework/runtime-definitions';
+import { AttributionKey } from '@fluidframework/runtime-definitions/internal';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -15,8 +15,8 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { Serializable } from '@fluidframework/datastore-definitions';
-import { SharedObject } from '@fluidframework/shared-object-base';
+import { Serializable } from '@fluidframework/datastore-definitions/internal';
+import { SharedObject } from '@fluidframework/shared-object-base/internal';
 
 // @internal @sealed
 export class CellFactory implements IChannelFactory {
