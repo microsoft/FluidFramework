@@ -24,7 +24,6 @@ export const enum SchemaValidationErrors {
 	LeafNode_InvalidValue,
 	LeafNode_FieldsNotAllowed,
 	ObjectNode_FieldNotInSchema,
-	MapNode_EmptyFieldsMustBeImplicit,
 	Node_MissingSchema,
 	UnknownError,
 }
@@ -61,9 +60,6 @@ export function isNodeInSchema(
 		}
 	} else if (schema instanceof MapNodeStoredSchema) {
 		for (const field of node.fields.values()) {
-			if (field.length === 0) {
-				return SchemaValidationErrors.MapNode_EmptyFieldsMustBeImplicit;
-			}
 			const fieldInSchemaResult = isFieldInSchema(field, schema.mapFields, schemaAndPolicy);
 			if (fieldInSchemaResult !== SchemaValidationErrors.NoError) {
 				return fieldInSchemaResult;
