@@ -972,24 +972,42 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			return false;
 		}
 
-		const pkg = this.contexts.getRecentlyDeletedContextPath(id);
-
 		const idToLog =
 			originalRequest !== undefined
 				? urlToGCNodePath(originalRequest.url)
 				: dataStoreNodePath;
+
+		this.contexts
+			.getRecentlyDeletedContextPath(id)
+			.then<{ pkg?: string; error?: any }, { pkg?: string; error?: any }>(
+				(pkg) => ({ pkg }),
+				(error) => ({ error }),
+			)
+			.then(({ pkg, error }) => {
+				this.mc.logger.sendErrorEvent(
+					{
+						eventName: `GC_DeletedDataStore_PathInfo`,
+						...tagCodeArtifacts({
+							id: idToLog,
+							pkg,
+						}),
+						callSite,
+					},
+					error,
+				);
+			})
+			.catch(() => {});
+
 		this.mc.logger.sendErrorEvent({
 			eventName: `GC_Deleted_DataStore_${deletedLogSuffix}`,
-			...tagCodeArtifacts({
-				id: idToLog,
-				pkg,
-			}),
+			...tagCodeArtifacts({ id: idToLog }),
 			callSite,
 			headers: JSON.stringify(requestHeaderData),
 			exists: context !== undefined,
 			details: {
 				url: originalRequest?.url,
 				headers: JSON.stringify(originalRequest?.headers),
+				aliased: this.aliasedDataStores.has(id),
 			},
 		});
 		return true;
@@ -1236,6 +1254,16 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	public deleteChild(dataStoreId: string) {
 		const dataStoreContext = this.contexts.get(dataStoreId);
 		assert(dataStoreContext !== undefined, 0x2d7 /* No data store with specified id */);
+
+		if (dataStoreContext.isLoaded) {
+			this.mc.logger.sendErrorEvent({
+				eventName: "GC_DeletingLoadedDataStore",
+				...tagCodeArtifacts({
+					id: dataStoreId,
+					pkg: dataStoreContext.packagePath.join("/"),
+				}),
+			});
+		}
 
 		dataStoreContext.delete();
 		// Delete the contexts of unused data stores.
