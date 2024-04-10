@@ -22,7 +22,7 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./alpha": {
+		"./lib/alpha": {
 			"import": {
 				"types": "./lib/alpha.d.ts",
 				"default": "./lib/index.js"
@@ -43,11 +43,11 @@
 			}
 		}
 	},
-	"main": "dist/index.js",
+	"main": "./lib/index.js",
 	"browser": {
 		"moniker": "@fluidframework/server-services-client/dist/generateNames.js"
 	},
-	"types": "dist/index.d.ts",
+	"types": "./lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
@@ -60,7 +60,7 @@
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints . ./lib/alpha",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",

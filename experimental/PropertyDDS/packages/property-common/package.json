@@ -10,9 +10,9 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
-	"main": "dist/index.js",
+	"main": "./lib/index.js",
 	"module": "lib/index.js",
-	"types": "dist/index.d.ts",
+	"types": "./lib/public.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",

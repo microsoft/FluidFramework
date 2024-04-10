@@ -23,8 +23,8 @@
 			}
 		}
 	},
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"main": "./lib/index.js",
+	"types": "./lib/public.d.ts",
 	"files": [
 		"dist/**/*",
 		"lib/**/*",
@@ -38,7 +38,6 @@
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"coverage": "npx nyc --silent --cwd --nycrc-path `pwd`/.nycrc npm run test",

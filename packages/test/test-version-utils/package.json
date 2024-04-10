@@ -46,7 +46,8 @@
 		"test": "npm run test:mocha",
 		"test:mocha": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit --timeout=10000",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints ."
 	},
 	"c8": {
 		"all": true,

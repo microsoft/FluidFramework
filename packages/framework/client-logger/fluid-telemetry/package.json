@@ -33,7 +33,7 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./beta": {
+		"./lib/beta": {
 			"import": {
 				"types": "./lib/beta.d.ts",
 				"default": "./lib/index.js"
@@ -65,7 +65,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints . ./lib/beta",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob _api-extractor-temp coverage dist lib nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
