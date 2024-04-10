@@ -644,48 +644,44 @@ export class ConnectionManager implements IConnectionManager {
 
 				lastError = origError;
 
-				// We will not perform retries if the container ReconnectMode is Enabled
-				if (this.reconnectMode == ReconnectMode.Enabled) {
-					const waitStartTime = performance.now();
-					const retryDelayFromError = getRetryDelayFromError(origError);
-					// If the error told us to wait or browser signals us that we are offline, then calculate the time we
-					// want to wait for before retrying. then we wait for that time. If the error didn't tell us to wait,
-					// let's still wait a little bit before retrying. We can skip this delay if we're confident we're offline,
-					// because we probably just need to wait to come back online. But we never have strong signal of being
-					// offline, so we at least wait for sometime.
-					if (
-						retryDelayFromError !== undefined ||
-						globalThis.navigator?.onLine !== false
-					) {
-						delayMs = calculateMaxWaitTime(delayMs, origError);
-					}
-
-					// Raise event in case the delay was there from the error.
-					if (retryDelayFromError !== undefined) {
-						this.props.reconnectionDelayHandler(delayMs, origError);
-					}
-
-					await new Promise<void>((resolve) => {
-						setTimeout(resolve, delayMs);
-					});
-
-					// If we believe we're offline, we assume there's no point in trying until we at least think we're online.
-					// NOTE: This isn't strictly true for drivers that don't require network (e.g. local driver).  Really this logic
-					// should probably live in the driver.
-					await waitForOnline();
-					this.logger.sendPerformanceEvent({
-						eventName: "WaitBetweenConnectionAttempts",
-						duration: performance.now() - waitStartTime,
-						details: JSON.stringify({
-							retryDelayFromError,
-							delayMs,
-						}),
-					});
-				} else {
-					// We will not perform retries if the container disconnected and the ReconnectMode is set to Disabled or Never
-					// so break out of the re-connecting while-loop after first attempt
+				// We will not perform retries if the container disconnected and the ReconnectMode is set to Disabled or Never
+				// so break out of the re-connecting while-loop after first attempt
+				if (this.reconnectMode !== ReconnectMode.Enabled) {
 					break;
 				}
+
+				const waitStartTime = performance.now();
+				const retryDelayFromError = getRetryDelayFromError(origError);
+				// If the error told us to wait or browser signals us that we are offline, then calculate the time we
+				// want to wait for before retrying. then we wait for that time. If the error didn't tell us to wait,
+				// let's still wait a little bit before retrying. We can skip this delay if we're confident we're offline,
+				// because we probably just need to wait to come back online. But we never have strong signal of being
+				// offline, so we at least wait for sometime.
+				if (retryDelayFromError !== undefined || globalThis.navigator?.onLine !== false) {
+					delayMs = calculateMaxWaitTime(delayMs, origError);
+				}
+
+				// Raise event in case the delay was there from the error.
+				if (retryDelayFromError !== undefined) {
+					this.props.reconnectionDelayHandler(delayMs, origError);
+				}
+
+				await new Promise<void>((resolve) => {
+					setTimeout(resolve, delayMs);
+				});
+
+				// If we believe we're offline, we assume there's no point in trying until we at least think we're online.
+				// NOTE: This isn't strictly true for drivers that don't require network (e.g. local driver).  Really this logic
+				// should probably live in the driver.
+				await waitForOnline();
+				this.logger.sendPerformanceEvent({
+					eventName: "WaitBetweenConnectionAttempts",
+					duration: performance.now() - waitStartTime,
+					details: JSON.stringify({
+						retryDelayFromError,
+						delayMs,
+					}),
+				});
 			}
 		}
 
