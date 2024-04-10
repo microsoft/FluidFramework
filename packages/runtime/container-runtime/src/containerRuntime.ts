@@ -1033,7 +1033,7 @@ export class ContainerRuntime
 					runtime.delayedConnectionTransition = false;
 					// make sure we didn't reconnect before the promise resolved
 					if (delayed && !runtime.disposed && runtime.connected) {
-						runtime.setConnectionStateCore();
+						runtime.transitionToSendingOps();
 					}
 				},
 				(error) => runtime.closeFn(error),
@@ -1197,6 +1197,8 @@ export class ContainerRuntime
 
 	private consecutiveReconnects = 0;
 
+	private delayedConnectionTransition: boolean = false;
+
 	private ensureNoDataModelChangesCalls = 0;
 
 	/**
@@ -1304,8 +1306,6 @@ export class ContainerRuntime
 			? this.summaryConfiguration.initialSummarizerDelayMs
 			: 0;
 	}
-
-	private delayedConnectionTransition: boolean = false;
 
 	private readonly createContainerMetadata: ICreateContainerMetadata;
 	/**
@@ -2470,11 +2470,11 @@ export class ContainerRuntime
 		// propagation of the "connected" event until we have uploaded them to
 		// ensure we don't submit ops referencing a blob that has not been uploaded
 		if (connecting && !this.delayedConnectionTransition) {
-			this.setConnectionStateCore();
+			this.transitionToSendingOps();
 		}
 	}
 
-	private setConnectionStateCore() {
+	private transitionToSendingOps() {
 		assert(
 			!this.delayedConnectionTransition,
 			0x394 /* connect event delay must be cleared before propagating connect event */,
