@@ -55,7 +55,7 @@
 		}
 	},
 	"main": "dist/index.js",
-	"types": "dist/id-compressor-public.d.ts",
+	"types": "dist/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
