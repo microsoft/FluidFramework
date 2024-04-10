@@ -76,7 +76,6 @@ export default class GenerateEntrypointsCommand extends BaseCommand<
 			mainEntrypoint,
 			{ pathPrefix: await getOutPathPrefix(this.flags), pathSuffix: outFileSuffix },
 			(level: Exclude<ApiLevel, typeof ApiLevel.internal>): string => {
-				// eslint-disable-next-line default-case
 				switch (level) {
 					case ApiLevel.alpha: {
 						return outFileAlpha;
@@ -86,6 +85,9 @@ export default class GenerateEntrypointsCommand extends BaseCommand<
 					}
 					case ApiLevel.public: {
 						return outFilePublic;
+					}
+					default: {
+						this.error(`Unexpected ApiLevel value: ${level}`, { exit: 1 });
 					}
 				}
 			},
