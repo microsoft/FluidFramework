@@ -11,7 +11,6 @@ import {
 	SchemaFactory,
 	type TreeChangeEvents,
 	TreeConfiguration,
-	SchemaFactoryRecursive,
 	ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
 import { createTestUndoRedoStacks, getView } from "../utils.js";
@@ -25,7 +24,7 @@ const rootNode: UpPath = {
 	parentIndex: 0,
 };
 
-const schema = new SchemaFactoryRecursive("com.example");
+const schema = new SchemaFactory("com.example");
 class TestObject extends schema.object("TestObject", { content: schema.number }) {}
 
 describe("treeApi", () => {
