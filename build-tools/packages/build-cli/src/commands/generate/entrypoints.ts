@@ -122,8 +122,8 @@ async function generateEntrypoints(
 	log: CommandLogger,
 ): Promise<void> {
 	/**
-	 * List of source file save promises. Used to collect modified source file save promises so we can await them all at
-	 * once.
+	 * List of out file save promises. Used to collect generated file save
+	 * promises so we can await them all at once.
 	 */
 	const fileSavePromises: Promise<void>[] = [];
 
@@ -199,6 +199,15 @@ async function generateEntrypoints(
 					.replace(/\.(?:d\.)?([cm]?)ts$/, ".$1js")}`,
 				namedExports,
 			});
+		} else {
+			// Without any export this module is invalid.
+			// This is somewhat useful while standing up FF to recognize invalid/unused
+			// cases that should not be exported. In the future for deprecation support
+			// this could generate an empty export block when package.json lists this
+			// path.
+			// It is also good to generate a file versus not to avoid leaving stale
+			// files around. If avoiding generation in the future, then file existence
+			// should be checked and the file removed.
 		}
 
 		fileSavePromises.push(sourceFile.save());
