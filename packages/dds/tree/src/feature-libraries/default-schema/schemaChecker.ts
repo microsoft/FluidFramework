@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	type MapTree,
 	type TreeFieldStoredSchema,
@@ -14,6 +14,7 @@ import {
 	type SchemaAndPolicy,
 } from "../../core/index.js";
 import { allowsValue } from "../valueUtilities.js";
+import { fail } from "../../util/index.js";
 
 export const enum SchemaValidationErrors {
 	NoError,
@@ -69,7 +70,7 @@ export function isNodeInSchema(
 			}
 		}
 	} else {
-		assert(false, "Unknown TreeNodeStoredSchema type");
+		fail("Unknown TreeNodeStoredSchema type");
 	}
 
 	return SchemaValidationErrors.NoError;
