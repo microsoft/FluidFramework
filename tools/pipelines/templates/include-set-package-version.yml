@@ -114,27 +114,6 @@ steps:
       # These are referenced in following steps prefixed by this task name. E.g. SetVersion.version
       flub generate buildVersion
 
-- task: Bash@3
-  displayName: Generate manifest files
-  continueOnError: false
-  inputs:
-    targetType: 'inline'
-    workingDirectory: ${{ parameters.buildDirectory }}
-    script: |
-      flub release report -g client -o .
-
-- task: AzureCLI@2
-  displayName: 'Upload Manifest Files'
-  continueOnError: true
-  inputs:
-    azureSubscription: 'fluid-docs'
-    scriptType: bash
-    scriptLocation: inlineScript
-    inlineScript: |
-      for file in $(find . -type f \( -name '*.caret.json' -o -name '*.simple.json' \)); do
-          az storage blob upload -f "$file" -c 'manifest-files' -n "$(basename "$file")" --account-name $STORAGE_ACCOUNT --account-key $STORAGE_KEY --verbose
-      done
-
 # This check runs only when the value of `Change package types` is selected as `alpha` or `beta`
 - ${{ if ne(parameters.packageTypesOverride, 'none') }}:
   - task: Bash@3
@@ -157,6 +136,27 @@ steps:
     targetType: 'filePath'
     workingDirectory: ${{ parameters.buildDirectory }}
     filePath: $(Build.SourcesDirectory)/scripts/update-package-version.sh
+    
+- task: Bash@3
+  displayName: Generate manifest files
+  continueOnError: false
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.buildDirectory }}
+    script: |
+      flub release report -g client -o .
+
+- task: AzureCLI@2
+  displayName: 'Upload Manifest Files'
+  continueOnError: true
+  inputs:
+    azureSubscription: 'fluid-docs'
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: |
+      for file in $(find . -type f \( -name '*.caret.json' -o -name '*.simple.json' \)); do
+          az storage blob upload -f "$file" -c 'manifest-files' -n "$(basename "$file")" --account-name $STORAGE_ACCOUNT --account-key $STORAGE_KEY --verbose
+      done
 
 # This task is a last-minute verification that no Fluid internal versions show up with caret dependencies. This is to
 # help find and prevent bugs in the version bumping tools.
