@@ -88,7 +88,7 @@ module.exports = {
 			dependsOn: ["build:esnext"],
 			script: true,
 		},
-		"generate:entrypoints":  {
+		"generate:entrypoints": {
 			dependsOn: ["tsc", "build:esnext"],
 			script: true,
 		},
