@@ -26,6 +26,9 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
+import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
+import type { Serializable } from "@fluidframework/datastore-definitions/internal";
+import { isObject } from "@fluidframework/core-utils/internal";
 import { SharedMatrix } from "../matrix.js";
 import { MatrixItem } from "../ops.js";
 import { SharedMatrixFactory } from "../runtime.js";
@@ -35,7 +38,7 @@ import { _dirname } from "./dirname.cjs";
 /**
  * Supported cell values used within the fuzz model.
  */
-type Value = string | number | undefined;
+type Value = string | number | undefined | Serializable<unknown>;
 
 interface RangeSpec {
 	start: number;
@@ -89,18 +92,36 @@ class TypedMatrixFactory extends SharedMatrixFactory {
 // This type gets used a lot as the state object of the suite; shorthand it here.
 type State = DDSFuzzTestState<TypedMatrixFactory>;
 
-function assertMatricesAreEquivalent<T>(a: SharedMatrix<T>, b: SharedMatrix<T>) {
+async function assertMatricesAreEquivalent<T>(a: SharedMatrix<T>, b: SharedMatrix<T>) {
 	assert.equal(a.colCount, b.colCount, `${a.id} and ${b.id} have different number of columns.`);
 	assert.equal(a.rowCount, b.rowCount, `${a.id} and ${b.id} have different number of rows.`);
 	for (let row = 0; row < a.rowCount; row++) {
 		for (let col = 0; col < a.colCount; col++) {
 			const aVal = a.getCell(row, col);
 			const bVal = b.getCell(row, col);
-			assert.equal(
-				aVal,
-				bVal,
-				`${a.id} and ${b.id} differ at (${row}, ${col}): ${aVal} vs ${bVal}`,
-			);
+			if (isObject(aVal) === true) {
+				const aObj: FluidObject<IFluidHandle> = aVal as FluidObject<IFluidHandle>;
+				assert(
+					isObject(bVal),
+					`${a.id} and ${b.id} differ at (${row}, ${col}): a is an object, b is not`,
+				);
+				const bObj: FluidObject<IFluidHandle> = bVal as FluidObject<IFluidHandle>;
+				const aHandle = aObj.IFluidHandle ? await aObj.IFluidHandle?.get() : aObj;
+				const bHandle = bObj.IFluidHandle ? await bObj.IFluidHandle?.get() : bObj;
+				assert.deepEqual(
+					aHandle,
+					bHandle,
+					`${a.id} and ${b.id} differ at (${row}, ${col}): ${JSON.stringify(
+						aHandle,
+					)} vs ${JSON.stringify(bHandle)}`,
+				);
+			} else {
+				assert.equal(
+					aVal,
+					bVal,
+					`${a.id} and ${b.id} differ at (${row}, ${col}): ${aVal} vs ${bVal}`,
+				);
+			}
 		}
 	}
 }
@@ -189,7 +210,11 @@ function makeGenerator(optionsParam?: Partial<GeneratorOptions>): AsyncGenerator
 		type: "set",
 		row: random.integer(0, client.channel.rowCount - 1),
 		col: random.integer(0, client.channel.colCount - 1),
-		value: random.bool() ? random.integer(1, 50) : random.string(random.integer(1, 2)),
+		value: random.pick([
+			(): number => random.integer(1, 50),
+			(): string => random.string(random.integer(1, 2)),
+			(): IFluidHandle => random.handle(),
+		])(),
 	});
 
 	const syncGenerator = createWeightedGenerator<Operation, State>([

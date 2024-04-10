@@ -25,11 +25,11 @@
 		},
 		"./public": {
 			"import": {
-				"types": "./lib/test-dds-utils-public.d.ts",
+				"types": "./lib/public.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/test-dds-utils-public.d.ts",
+				"types": "./dist/public.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
@@ -48,11 +48,11 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
-		"api-extractor:esnext": "api-extractor run --local",
+		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "fluid-build . --task api",
+		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
@@ -139,14 +139,6 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:docs": {
-				"dependsOn": [
-					"...",
-					"api-extractor:commonjs",
-					"api-extractor:esnext"
-				],
-				"script": false
-			},
 			"build:test:cjs": [
 				"...",
 				"@fluid-private/stochastic-test-utils#build:test"

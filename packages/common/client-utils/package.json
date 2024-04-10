@@ -34,12 +34,12 @@
 	"types": "dist/indexNode.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
-		"api-extractor:esnext": "api-extractor run --local",
+		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "fluid-build . --task api",
+		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:test": "concurrently npm:build:test:mocha npm:build:test:jest npm:build:test:types",
 		"build:test:jest": "fluid-tsc commonjs --project ./src/test/jest/tsconfig.cjs.json",
@@ -148,14 +148,6 @@
 				"build:test:jest",
 				"build:test:types"
 			],
-			"build:docs": {
-				"dependsOn": [
-					"...",
-					"api-extractor:commonjs",
-					"api-extractor:esnext"
-				],
-				"script": false
-			},
 			"build:test:jest": [
 				"tsc"
 			],
