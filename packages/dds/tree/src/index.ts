@@ -93,6 +93,7 @@ export {
 	MapNodeStoredSchema,
 	LeafNodeStoredSchema,
 	Multiplicity,
+	SchemaPolicy,
 } from "./core/index.js";
 
 export {
