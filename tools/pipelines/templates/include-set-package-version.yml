@@ -32,6 +32,12 @@ parameters:
   type: string
   default: none
 
+- name: STORAGE_ACCOUNT
+  type: string
+
+- name: STORAGE_KEY
+  type: string
+
 # Set version
 steps:
 - ${{ if eq(parameters.buildToolsVersionToInstall, 'repo') }}:
@@ -155,7 +161,7 @@ steps:
     scriptLocation: inlineScript
     inlineScript: |
       for file in $(find . -type f \( -name '*.caret.json' -o -name '*.simple.json' \)); do
-          az storage blob upload -f "$file" -c 'manifest-files' -n "$(basename "$file")" --account-name $STORAGE_ACCOUNT --account-key $STORAGE_KEY --verbose
+          az storage blob upload -f "$file" -c 'manifest-files' -n "$(basename "$file")" --account-name ${{ parameters.STORAGE_ACCOUNT }} --account-key ${{ parameters.STORAGE_KEY }} --verbose
       done
 
 # This task is a last-minute verification that no Fluid internal versions show up with caret dependencies. This is to
