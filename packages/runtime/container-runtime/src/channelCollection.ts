@@ -994,7 +994,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 					(error) => ({ pkg: undefined, error }),
 				)
 				.then(({ pkg, error }) => {
-					this.mc.logger.sendErrorEvent(
+					this.mc.logger.sendTelemetryEvent(
 						{
 							eventName: `GC_DeletedDataStore_PathInfo`,
 							...tagCodeArtifacts({
