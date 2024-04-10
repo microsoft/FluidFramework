@@ -63,7 +63,11 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { RuntimeHeaderData, defaultRuntimeHeaderData } from "./containerRuntime.js";
+import {
+	DeletedResponseHeaderKey,
+	RuntimeHeaderData,
+	defaultRuntimeHeaderData,
+} from "./containerRuntime.js";
 import {
 	IDataStoreAliasMessage,
 	channelToDataStore,
@@ -908,7 +912,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			// The requested data store has been deleted by gc. Create a 404 response exception.
 			const request: IRequest = { url: id };
 			throw responseToException(
-				createResponseError(404, "DataStore was deleted", request),
+				createResponseError(404, "DataStore was deleted", request, {
+					[DeletedResponseHeaderKey]: true,
+				}),
 				request,
 			);
 		}
