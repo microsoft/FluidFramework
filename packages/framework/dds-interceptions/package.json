@@ -25,11 +25,11 @@
 		},
 		"./public": {
 			"import": {
-				"types": "./lib/dds-interceptions-public.d.ts",
+				"types": "./lib/public.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/dds-interceptions-public.d.ts",
+				"types": "./dist/public.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
@@ -48,13 +48,13 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
-		"api-extractor:esnext": "api-extractor run --local",
+		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:compile:min": "npm run build:compile",
-		"build:docs": "fluid-build . --task api",
+		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
@@ -132,18 +132,6 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6"
-	},
-	"fluidBuild": {
-		"tasks": {
-			"build:docs": {
-				"dependsOn": [
-					"...",
-					"api-extractor:commonjs",
-					"api-extractor:esnext"
-				],
-				"script": false
-			}
-		}
 	},
 	"typeValidation": {
 		"disabled": true,

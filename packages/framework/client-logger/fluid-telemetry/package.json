@@ -25,21 +25,21 @@
 		},
 		"./public": {
 			"import": {
-				"types": "./lib/fluid-telemetry-public.d.ts",
+				"types": "./lib/public.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/fluid-telemetry-public.d.ts",
+				"types": "./dist/public.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
 		"./beta": {
 			"import": {
-				"types": "./lib/fluid-telemetry-beta.d.ts",
+				"types": "./lib/beta.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/fluid-telemetry-beta.d.ts",
+				"types": "./dist/beta.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
@@ -58,12 +58,12 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
-		"api-extractor:esnext": "api-extractor run --local",
+		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "fluid-build . --task api",
+		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
@@ -114,14 +114,6 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:docs": {
-				"dependsOn": [
-					"...",
-					"api-extractor:commonjs",
-					"api-extractor:esnext"
-				],
-				"script": false
-			},
 			"tsc": [
 				"...",
 				"typetests:gen"
