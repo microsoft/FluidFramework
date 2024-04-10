@@ -13,7 +13,11 @@ import { type DocDeclarationReference } from "@microsoft/tsdoc";
 
 import { DocumentNode, type SectionNode } from "../documentation-domain/index.js";
 import { type Link } from "../Link.js";
-import { getDocumentPathForApiItem, getLinkForApiItem } from "./ApiItemTransformUtilities.js";
+import {
+	getDocumentPathForApiItem,
+	getLinkForApiItem,
+	shouldItemBeIncluded,
+} from "./ApiItemTransformUtilities.js";
 import { type TsdocNodeTransformOptions } from "./TsdocNodeTransforms.js";
 import { type ApiItemTransformationConfiguration } from "./configuration/index.js";
 import { wrapInSection } from "./helpers/index.js";
@@ -121,6 +125,12 @@ function resolveSymbolicLink(
 			resolvedReference.errorMessage,
 		);
 
+		return undefined;
+	}
+	const resolvedApiItem = resolvedReference.resolvedApiItem;
+
+	// Return undefined if the resolved API item should be excluded based on release tags
+	if (!shouldItemBeIncluded(resolvedApiItem, config)) {
 		return undefined;
 	}
 
