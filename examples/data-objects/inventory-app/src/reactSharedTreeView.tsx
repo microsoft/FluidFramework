@@ -155,8 +155,48 @@ export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = Impli
 	}) =>
 		TreeViewComponent<TSchema>({
 			tree: this,
-			viewComponent,
+			ViewComponent: viewComponent,
 		});
+}
+
+function useViewCompatibility<TSchema extends ImplicitFieldSchema>(
+	view: TreeView<TSchema>,
+): SchemaCompatibilityStatus {
+	const [compatibility, setCompatibility] = React.useState<SchemaCompatibilityStatus>(
+		view.compatibility,
+	);
+
+	React.useEffect(() => {
+		const updateCompatibility = () => {
+			setCompatibility(view.compatibility);
+		};
+
+		updateCompatibility();
+		return view.events.on("schemaChanged", updateCompatibility);
+	}, [view]);
+
+	return compatibility;
+}
+
+function useViewRoot<TSchema extends ImplicitFieldSchema>(
+	view: TreeView<TSchema>,
+): TreeFieldFromImplicitField<TSchema> | null {
+	const [root, setRoot] = React.useState<TreeFieldFromImplicitField<TSchema> | null>(null);
+
+	React.useEffect(() => {
+		const updateRoot = () => {
+			if (view.compatibility.canView) {
+				setRoot(view.root);
+			} else {
+				setRoot(null);
+			}
+		};
+
+		updateRoot();
+		return view.events.on("rootChanged", updateRoot);
+	}, [view]);
+
+	return root;
 }
 
 /**
@@ -165,59 +205,31 @@ export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = Impli
  */
 function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 	tree,
-	viewComponent,
-	errorComponent,
+	ViewComponent,
+	ErrorComponent,
 }: {
 	tree: TreeDataObject<TSchema>;
-	viewComponent: React.FC<{ root: TreeFieldFromImplicitField<TSchema> }>;
-	errorComponent?: React.FC<{
+	ViewComponent: React.FC<{ root: TreeFieldFromImplicitField<TSchema> }>;
+	ErrorComponent?: React.FC<{
 		compatibility: SchemaCompatibilityStatus;
 		upgradeSchema: () => void;
 	}>;
 }) {
 	const view = tree.tree;
 
-	const [compatibility, setCompatibility] = React.useState<null | SchemaCompatibilityStatus>(
-		null,
-	);
-	const [root, setRoot] = React.useState<null | TreeFieldFromImplicitField<TSchema>>(null);
+	const compatibility = useViewCompatibility(view);
+	const root = useViewRoot(view);
 
-	React.useEffect(() => {
-		let ignore = false;
-
-		const update = () => {
-			if (!ignore) {
-				setCompatibility(view.compatibility);
-				if (view.compatibility.canView) {
-					setRoot(view.root);
-				} else {
-					setRoot(null);
-				}
-			}
-		};
-
-		update();
-		view.events.on("rootChanged", update);
-		view.events.on("schemaChanged", update);
-
-		return () => {
-			ignore = true;
-			// View is owned by tree so its not disposed here.
-		};
-	}, [view]);
-
-	if (compatibility !== null && !compatibility.canView) {
-		return React.createElement(errorComponent ?? TreeErrorComponent, {
-			compatibility,
-			upgradeSchema: () => view.upgradeSchema(),
-		});
+	if (!compatibility.canView) {
+		const Error = ErrorComponent ?? TreeErrorComponent;
+		return <Error compatibility={compatibility} upgradeSchema={() => view.upgradeSchema()} />;
 	}
 
 	if (root === null) {
 		return <div>View not set</div>;
 	}
 
-	return React.createElement(viewComponent, { root });
+	return <ViewComponent root={root} />;
 }
 
 /**
