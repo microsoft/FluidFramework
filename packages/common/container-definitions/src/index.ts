@@ -75,4 +75,4 @@ export type {
 	 * @deprecated IUsageError is being deprecated as a public export is moving to "core-interfaces".
 	 */
 	IUsageError,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";

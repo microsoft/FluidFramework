@@ -8,14 +8,14 @@ import { strict as assert } from "assert";
 import { type SharedTreeShim, SharedTreeShimFactory } from "@fluid-experimental/tree";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
-import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { type IChannel } from "@fluidframework/datastore-definitions";
 import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import {
 	type ITree,
 	SchemaFactory,
@@ -32,7 +32,7 @@ class RootType extends builder.object("abc", {
 	quantity: builder.number,
 }) {}
 
-function getNewTreeView(tree: ITree): TreeView<RootType> {
+function getNewTreeView(tree: ITree): TreeView<typeof RootType> {
 	return tree.schematize(new TreeConfiguration(RootType, () => ({ quantity: 0 })));
 }
 

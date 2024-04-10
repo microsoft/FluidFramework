@@ -6,21 +6,21 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import type { PureDataObject } from "@fluidframework/aqueduct";
+import type { PureDataObject } from "@fluidframework/aqueduct/internal";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime";
+import { IContainerRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime/internal";
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
-import type { FluidDataStoreRuntime } from "@fluidframework/datastore";
+import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import type { ISharedMap } from "@fluidframework/map";
-import type { SharedMatrix } from "@fluidframework/matrix";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import type { SharedMatrix } from "@fluidframework/matrix/internal";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizerFromFactory,
 	summarizeNow,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 interface ProvideSearchContent {
 	SearchContent: SearchContent;

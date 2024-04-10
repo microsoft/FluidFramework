@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { isPromiseLike } from "@fluidframework/core-utils";
+import { isPromiseLike } from "@fluidframework/core-utils/internal";
 
 export type UnPromise<T> = T extends Promise<infer U> ? U : T;
 

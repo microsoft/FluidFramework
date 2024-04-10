@@ -207,6 +207,8 @@ module.exports = {
 				// eslint doesn't really depend on build. Doing so just slows down a package build.
 				"^packages/test/snapshots/package.json",
 				"^packages/test/test-utils/package.json",
+				// TODO: AB#7630 uses lint only ts projects for coverage which don't have representative tsc scripts
+				"^packages/tools/fluid-runner/package.json",
 			],
 			"fluid-build-tasks-tsc": [
 				// TODO: AB#7460 fix tsconfig reference path match on Windows
@@ -389,6 +391,7 @@ module.exports = {
 					"fluid-framework",
 					"@fluid-internal/client-utils",
 					"@fluid-internal/mocha-test-setup",
+					"@fluid-internal/test-driver-definitions",
 					"tinylicious",
 				],
 				// A list of packages published to our internal-build feed. Note that packages published

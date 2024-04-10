@@ -6,6 +6,12 @@
 import crypto from "crypto";
 import fs from "fs";
 
+import {
+	DriverEndpoint,
+	ITelemetryBufferedLogger,
+	ITestDriver,
+	TestDriverTypes,
+} from "@fluid-internal/test-driver-definitions";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	OdspTestDriver,
@@ -14,23 +20,17 @@ import {
 } from "@fluid-private/test-drivers";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader/internal";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
 	ITelemetryBaseEvent,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
-import { assert, LazyPromise } from "@fluidframework/core-utils";
+import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import {
-	DriverEndpoint,
-	ITelemetryBufferedLogger,
-	ITestDriver,
-	TestDriverTypes,
-} from "@fluidframework/test-driver-definitions";
-import { LocalCodeLoader } from "@fluidframework/test-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
 
 import { ILoadTest, createFluidExport } from "./loadTestDataStore.js";
 import {

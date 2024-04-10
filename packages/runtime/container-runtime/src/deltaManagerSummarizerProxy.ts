@@ -139,7 +139,7 @@ export class DeltaManagerSummarizerProxy
 		this.deltaManager.off("readonly", this.onReadonly);
 	}
 
-	public submitSignal(content: any, targetClientId?: string): void {
+	public submitSignal(content: string, targetClientId?: string): void {
 		return this.deltaManager.submitSignal(content, targetClientId);
 	}
 

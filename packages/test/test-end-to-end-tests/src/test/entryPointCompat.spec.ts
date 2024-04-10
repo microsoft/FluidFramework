@@ -16,11 +16,11 @@ import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
-} from "@fluidframework/aqueduct";
+} from "@fluidframework/aqueduct/internal";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 import { pkgVersion } from "../packageVersion.js";
 

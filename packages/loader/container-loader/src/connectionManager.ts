@@ -10,7 +10,7 @@ import {
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaConnection,
@@ -25,7 +25,7 @@ import {
 	getRetryDelayFromError,
 	isRuntimeMessage,
 	logNetworkFailure,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import {
 	ConnectionMode,
 	IClient,
@@ -42,14 +42,14 @@ import {
 	MessageType,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	GenericError,
-	ITelemetryLoggerExt,
 	UsageError,
 	formatTick,
 	isFluidError,
 	normalizeError,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 
 import {
 	IConnectionDetailsInternal,

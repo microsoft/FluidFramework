@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
-import type { SharedCell } from "@fluidframework/cell";
+import type { SharedCell } from "@fluidframework/cell/internal";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IContainer, type IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
@@ -15,7 +15,7 @@ import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 	IdCompressorMode,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import type { IChannel } from "@fluidframework/datastore-definitions";
 import { IIdCompressor, SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
@@ -33,11 +33,93 @@ import {
 	getContainerEntryPointBackCompat,
 	summarizeNow,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 function getIdCompressor(dds: IChannel): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;
 }
+
+describeCompat(
+	"Runtime IdCompressor - Schema changes",
+	"NoCompat",
+	(getTestObjectProvider, apis) => {
+		function runTests(explicitSchemaCreation: boolean, explicitSchemaLoading: boolean) {
+			let provider: ITestObjectProvider;
+
+			beforeEach("setupContainers", async () => {
+				provider = getTestObjectProvider();
+			});
+
+			const {
+				containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
+				dds: { SharedMap, SharedCell },
+			} = apis;
+
+			const containerConfigNoCompressor: ITestContainerConfig = {
+				registry: [
+					["mapId", SharedMap.getFactory()],
+					["cellId", SharedCell.getFactory()],
+				],
+				fluidDataObjectType: DataObjectFactoryType.Test,
+				loaderProps: {},
+				runtimeOptions: {
+					enableRuntimeIdCompressor: undefined,
+					explicitSchemaControl: explicitSchemaCreation,
+				},
+			};
+
+			const containerConfigWithCompressor: ITestContainerConfig = {
+				...containerConfigNoCompressor,
+				runtimeOptions: {
+					enableRuntimeIdCompressor: "on",
+					explicitSchemaControl: explicitSchemaLoading,
+				},
+			};
+
+			it("has no compressor if not enabled", async () => {
+				provider.reset();
+				const container = await provider.makeTestContainer(containerConfigNoCompressor);
+				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+				const map = await dataObject.getSharedObject<ISharedMap>("mapId");
+
+				assert(getIdCompressor(map) === undefined);
+			});
+
+			it("can't enable compressor on an existing container", async () => {
+				provider.reset();
+				const container = await provider.makeTestContainer(containerConfigNoCompressor);
+				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+				const map = await dataObject.getSharedObject<ISharedMap>("mapId");
+				assert(getIdCompressor(map) === undefined);
+
+				const enabledContainer = await provider.loadTestContainer(
+					containerConfigWithCompressor,
+				);
+				const enabledDataObject =
+					(await enabledContainer.getEntryPoint()) as ITestFluidObject;
+				const enabledMap = await enabledDataObject.getSharedObject<ISharedMap>("mapId");
+				assert(getIdCompressor(enabledMap) === undefined);
+			});
+
+			it("can't disable compressor if previously enabled on existing container", async () => {
+				const container = await provider.makeTestContainer(containerConfigWithCompressor);
+				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+				const map = await dataObject.getSharedObject<ISharedMap>("mapId");
+				assert(getIdCompressor(map) !== undefined);
+
+				const container2 = await provider.loadTestContainer(containerConfigNoCompressor);
+				const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
+				const map2 = await dataObject2.getSharedObject<ISharedMap>("mapId");
+				assert(getIdCompressor(map2) !== undefined);
+			});
+		}
+
+		describe("Explicit Schema", () => runTests(true, true));
+		describe("Implicit Schema", () => runTests(false, false));
+		describe("Explicit Schema on load", () => runTests(false, true));
+		describe("Implicit Schema on create", () => runTests(true, false));
+	},
+);
 
 describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis) => {
 	const {
@@ -153,51 +235,6 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 			enableRuntimeIdCompressor: "on",
 		},
 	};
-
-	it("has no compressor if not enabled", async () => {
-		provider.reset();
-		const container = await provider.makeTestContainer(containerConfigNoCompressor);
-		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-		const map = await dataObject.getSharedObject<ISharedMap>("mapId");
-
-		assert(getIdCompressor(map) === undefined);
-	});
-
-	it("can't enable compressor on an existing container", async () => {
-		provider.reset();
-		const container = await provider.makeTestContainer(containerConfigNoCompressor);
-		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-		const map = await dataObject.getSharedObject<ISharedMap>("mapId");
-		assert(getIdCompressor(map) === undefined);
-
-		const enabledContainer = await provider.loadTestContainer(containerConfigWithCompressor);
-		const enabledDataObject = (await enabledContainer.getEntryPoint()) as ITestFluidObject;
-		const enabledMap = await enabledDataObject.getSharedObject<ISharedMap>("mapId");
-		assert(getIdCompressor(enabledMap) === undefined);
-	});
-
-	it("can't disable compressor if previously enabled on existing container", async () => {
-		// Create a container without the runtime option to enable the compressor.
-		// The first container should set a metadata property that automatically should
-		// enable it for any other container runtimes that are created.
-		const runtimeFactoryWithoutCompressorEnabled =
-			createContainerRuntimeFactoryWithDefaultDataStore(
-				ContainerRuntimeFactoryWithDefaultDataStore,
-				{
-					defaultFactory,
-					registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-				},
-			);
-
-		const container4 = await provider.loadContainer(runtimeFactoryWithoutCompressorEnabled);
-		const container4MainDataStore = (await container4.getEntryPoint()) as TestDataObject;
-		const sharedMapContainer4 = container4MainDataStore.map;
-
-		assert(
-			getIdCompressor(sharedMapContainer4) !== undefined,
-			"Compressor should exist if it has ever been enabled",
-		);
-	});
 
 	it("can normalize session space IDs to op space", async () => {
 		// None of these clusters will be ack'd yet and as such they will all

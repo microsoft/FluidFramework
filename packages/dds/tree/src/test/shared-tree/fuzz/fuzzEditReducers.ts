@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { AsyncReducer, combineReducers } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-private/test-dds-utils";
-import { unreachableCase } from "@fluidframework/core-utils";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 import { Revertible, ValueSchema } from "../../../core/index.js";
 import {
@@ -46,6 +46,7 @@ import {
 	SchemaChange,
 	TransactionBoundary,
 	UndoRedo,
+	CrossFieldMove,
 } from "./operationTypes.js";
 
 const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFactory>>({
@@ -150,7 +151,7 @@ export function applyFieldEdit(tree: FuzzView, fieldEdit: FieldEdit): void {
 function applySequenceFieldEdit(
 	tree: FuzzView,
 	field: FlexTreeSequenceField<any>,
-	change: Insert | Remove | IntraFieldMove,
+	change: Insert | Remove | IntraFieldMove | CrossFieldMove,
 ): void {
 	switch (change.type) {
 		case "insert": {
@@ -163,6 +164,17 @@ function applySequenceFieldEdit(
 		}
 		case "intraFieldMove": {
 			field.moveRangeToIndex(change.dstIndex, change.range.first, change.range.last + 1);
+			break;
+		}
+		case "crossFieldMove": {
+			const dstField = navigateToField(tree, change.dstField);
+			assert(dstField.is(tree.currentSchema.objectNodeFieldsObject.sequenceChildren));
+			dstField.moveRangeToIndex(
+				change.dstIndex,
+				change.range.first,
+				change.range.last + 1,
+				field,
+			);
 			break;
 		}
 		default:

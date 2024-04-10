@@ -8,15 +8,15 @@ import chai, { assert, expect } from "chai";
 import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
 import assertArrays from "chai-arrays";
 
+import path from "path";
 import {
 	AllPackagesSelectionCriteria,
-	filterPackages,
 	PackageFilterOptions,
 	PackageSelectionCriteria,
+	filterPackages,
 	selectAndFilterPackages,
 } from "../src/filter";
 import { Context } from "../src/library";
-import path from "path";
 
 chai.use(assertArrays);
 

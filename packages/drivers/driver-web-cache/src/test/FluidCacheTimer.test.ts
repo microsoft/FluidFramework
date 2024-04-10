@@ -5,9 +5,9 @@
 
 /* eslint-disable @typescript-eslint/dot-notation */
 
-import { delay } from "@fluidframework/core-utils";
-import { ICacheEntry } from "@fluidframework/odsp-driver-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { delay } from "@fluidframework/core-utils/internal";
+import { ICacheEntry } from "@fluidframework/odsp-driver-definitions/internal";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { openDB } from "idb";
 
 import { FluidCache } from "../FluidCache.js";

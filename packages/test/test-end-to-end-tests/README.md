@@ -6,7 +6,7 @@ in much the same way a real application using Fluid would.
 
 These tests are additionally meaningfully parameterized over two dimensions
 
--   the underlying services the clients are using (see `@fluid-private/test-driver-definitions`, `@fluid-private/test-drivers`, and [its README](../test-drivers/README.md) for more information)
+-   the underlying services the clients are using (see `@fluid-internal/test-driver-definitions`, `@fluid-private/test-drivers`, and [its README](../test-drivers/README.md) for more information)
 -   a compatibility configuration determining which versions of packages should be used to create/load containers
 
 Testing against a variety of drivers helps catch server-specific bugs.

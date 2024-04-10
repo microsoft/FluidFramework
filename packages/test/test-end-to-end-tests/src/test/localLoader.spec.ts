@@ -6,14 +6,14 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import type { IDataObjectProps } from "@fluidframework/aqueduct";
+import type { IDataObjectProps } from "@fluidframework/aqueduct/internal";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { SharedCounter } from "@fluidframework/counter";
+import type { SharedCounter } from "@fluidframework/counter/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import type { SharedString } from "@fluidframework/sequence";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
+import type { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
@@ -23,7 +23,7 @@ import {
 	createDocumentId,
 	createLoader,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 const counterKey = "count";
 

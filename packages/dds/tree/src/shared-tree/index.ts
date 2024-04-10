@@ -10,6 +10,8 @@ export {
 	SharedTree,
 	ForestType,
 	SharedTreeContentSnapshot,
+	SharedTreeFormatOptions,
+	SharedTreeFormatVersion,
 } from "./sharedTree.js";
 
 export {
@@ -20,6 +22,7 @@ export {
 	CheckoutEvents,
 	ITransaction,
 	ITreeCheckoutFork,
+	RevertibleFactory,
 } from "./treeCheckout.js";
 
 export {

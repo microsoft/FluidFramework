@@ -22,7 +22,7 @@ import {
 import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
-} from "@fluidframework/container-runtime-definitions";
+} from "@fluidframework/container-runtime-definitions/internal";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -30,17 +30,23 @@ import {
 	IProvideFluidHandleContext,
 	IRequest,
 	IResponse,
-	ISignalEnvelope,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { assert, Deferred, LazyPromise, PromiseCache, delay } from "@fluidframework/core-utils";
+import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import {
+	assert,
+	Deferred,
+	LazyPromise,
+	PromiseCache,
+	delay,
+} from "@fluidframework/core-utils/internal";
 import {
 	DriverHeader,
 	FetchSource,
 	IDocumentStorageService,
 	type ISnapshot,
 } from "@fluidframework/driver-definitions/internal";
-import { readAndParse } from "@fluidframework/driver-utils";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IIdCompressorCore,
@@ -61,6 +67,12 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
+	IGarbageCollectionData,
+	IInboundSignalMessage,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+} from "@fluidframework/runtime-definitions";
+import {
 	CreateChildSummarizerNodeParam,
 	FlushMode,
 	FlushModeExperimental,
@@ -68,17 +80,13 @@ import {
 	IEnvelope,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreRegistry,
-	IGarbageCollectionData,
-	IInboundSignalMessage,
 	ISummarizeInternalResult,
-	ISummaryTreeWithStats,
-	ITelemetryContext,
 	InboundAttachMessage,
 	NamedFluidDataStoreRegistryEntries,
 	SummarizeInternalFn,
 	channelsTreeName,
 	gcTreeKey,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
 	ReadAndParseBlob,
@@ -91,17 +99,20 @@ import {
 	exceptionToResponse,
 	responseToException,
 	seqFromTree,
-} from "@fluidframework/runtime-utils";
+} from "@fluidframework/runtime-utils/internal";
+import {
+	type ITelemetryGenericEventExt,
+	ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils";
 import {
 	DataCorruptionError,
 	DataProcessingError,
 	GenericError,
 	IEventSampler,
-	type ITelemetryGenericEventExt,
-	ITelemetryLoggerExt,
 	LoggingError,
 	MonitoringContext,
 	PerformanceEvent,
+	// eslint-disable-next-line import/no-deprecated
 	TaggedLoggerAdapter,
 	UsageError,
 	createChildLogger,
@@ -110,7 +121,7 @@ import {
 	loggerToMonitoringContext,
 	raiseConnectedEvent,
 	wrapError,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { BindBatchTracker } from "./batchTracker.js";
@@ -167,7 +178,6 @@ import {
 	IConnectableRuntime,
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,
-	IDocumentSchemaChangeMessage,
 	type IDocumentSchemaCurrent,
 	IEnqueueSummarizeOptions,
 	IGenerateSummaryTreeResult,
@@ -774,6 +784,7 @@ export class ContainerRuntime
 		const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;
 		const passLogger =
 			backCompatContext.taggedLogger ??
+			// eslint-disable-next-line import/no-deprecated
 			new TaggedLoggerAdapter((backCompatContext as OldContainerContextWithLogger).logger);
 		const logger = createChildLogger({
 			logger: passLogger,
@@ -872,6 +883,19 @@ export class ContainerRuntime
 			}
 		}
 
+		let desiredIdCompressorMode: IdCompressorMode;
+		switch (mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled")) {
+			case true:
+				desiredIdCompressorMode = "on";
+				break;
+			case false:
+				desiredIdCompressorMode = undefined;
+				break;
+			default:
+				desiredIdCompressorMode = enableRuntimeIdCompressor;
+				break;
+		}
+
 		// Enabling the IdCompressor is a one-way operation and we only want to
 		// allow new containers to turn it on.
 		let idCompressorMode: IdCompressorMode;
@@ -883,23 +907,19 @@ export class ContainerRuntime
 			// 3) Same logic applies for "delayed" mode
 			// Maybe in the future we will need to enabled (and figure how to do it safely) "delayed" -> "on" change.
 			// We could do "off" -> "on" transition too, if all clients start loading compressor (but not using it initially) and
-			// do so for a while - this will allow clients to eventually to disregard "off" setting (when it's safe so) and start
+			// do so for a while - this will allow clients to eventually disregard "off" setting (when it's safe so) and start
 			// using compressor in future sessions.
 			// Everyting is possible, but it needs to be designed and executed carefully, when such need arises.
 			idCompressorMode = metadata?.documentSchema?.runtime
 				?.idCompressorMode as IdCompressorMode;
-		} else {
-			switch (mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled")) {
-				case true:
-					idCompressorMode = "on";
-					break;
-				case false:
-					idCompressorMode = undefined;
-					break;
-				default:
-					idCompressorMode = enableRuntimeIdCompressor;
-					break;
+
+			// This is the only exception to the rule above - we have proper plumbing to load ID compressor on schema change
+			// event. It is loaded async (relative to op processing), so this conversion is only safe for off -> delayed conversion!
+			if (idCompressorMode === undefined && desiredIdCompressorMode === "delayed") {
+				idCompressorMode = desiredIdCompressorMode;
 			}
+		} else {
+			idCompressorMode = desiredIdCompressorMode;
 		}
 
 		const createIdCompressorFn = async () => {
@@ -960,6 +980,7 @@ export class ContainerRuntime
 				compressionLz4,
 				idCompressorMode,
 				opGroupingEnabled,
+				disallowedVersions: [],
 			},
 			(schema) => {
 				runtime.onSchemaChange(schema);
@@ -1003,6 +1024,17 @@ export class ContainerRuntime
 			provideEntryPoint,
 			requestHandler,
 			undefined, // summaryConfiguration
+		);
+
+		runtime.blobManager.trackPendingStashedUploads().then(
+			() => {
+				// make sure we didn't reconnect before the promise resolved
+				if (runtime.delayConnectClientId !== undefined && !runtime.disposed) {
+					runtime.delayConnectClientId = undefined;
+					runtime.setConnectionStateCore(true, runtime.delayConnectClientId);
+				}
+			},
+			(error) => runtime.closeFn(error),
 		);
 
 		// Apply stashed ops with a reference sequence number equal to the sequence number of the snapshot,
@@ -1585,7 +1617,7 @@ export class ContainerRuntime
 		// Due to a mismatch between different layers in terms of
 		// what is the interface of passing signals, we need the
 		// downstream stores to wrap the signal.
-		parentContext.submitSignal = (type: string, content: any, targetClientId?: string) => {
+		parentContext.submitSignal = (type: string, content: unknown, targetClientId?: string) => {
 			const envelope1 = content as IEnvelope;
 			const envelope2 = this.createNewSignalEnvelope(
 				envelope1.address,
@@ -1620,11 +1652,11 @@ export class ContainerRuntime
 			async (runtime: ChannelCollection) => provideEntryPoint,
 		);
 
-		this.blobManager = new BlobManager(
-			this.handleContext,
-			blobManagerSnapshot,
-			() => this.storage,
-			(localId: string, blobId?: string) => {
+		this.blobManager = new BlobManager({
+			routeContext: this.handleContext,
+			snapshot: blobManagerSnapshot,
+			getStorage: () => this.storage,
+			sendBlobAttachOp: (localId: string, blobId?: string) => {
 				if (!this.disposed) {
 					this.submit(
 						{ type: ContainerMessageType.BlobAttach, contents: undefined },
@@ -1636,12 +1668,13 @@ export class ContainerRuntime
 					);
 				}
 			},
-			(blobPath: string) => this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
-			(blobPath: string) => this.garbageCollector.isNodeDeleted(blobPath),
-			this,
-			pendingRuntimeState?.pendingAttachmentBlobs,
-			(error?: ICriticalContainerError) => this.closeFn(error),
-		);
+			blobRequested: (blobPath: string) =>
+				this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
+			isBlobDeleted: (blobPath: string) => this.garbageCollector.isNodeDeleted(blobPath),
+			runtime: this,
+			stashedBlobs: pendingRuntimeState?.pendingAttachmentBlobs,
+			closeContainer: (error?: ICriticalContainerError) => this.closeFn(error),
+		});
 
 		this.scheduleManager = new ScheduleManager(
 			this.innerDeltaManager,
@@ -2437,23 +2470,13 @@ export class ContainerRuntime
 		// propagation of the "connected" event until we have uploaded them to
 		// ensure we don't submit ops referencing a blob that has not been uploaded
 		const connecting = connected && !this._connected;
-		if (connecting && this.blobManager.hasPendingStashedBlobs()) {
+		if (connecting && this.blobManager.hasPendingStashedUploads()) {
 			assert(
 				!this.delayConnectClientId,
 				0x791 /* Connect event delay must be canceled before subsequent connect event */,
 			);
 			assert(!!clientId, 0x792 /* Must have clientId when connecting */);
 			this.delayConnectClientId = clientId;
-			this.blobManager.processStashedChanges().then(
-				() => {
-					// make sure we didn't reconnect before the promise resolved
-					if (this.delayConnectClientId === clientId && !this.disposed) {
-						this.delayConnectClientId = undefined;
-						this.setConnectionStateCore(connected, clientId);
-					}
-				},
-				(error) => this.closeFn(error),
-			);
 			return;
 		}
 
@@ -2652,6 +2675,10 @@ export class ContainerRuntime
 					// Some other client turned on the id compressor. If we have not turned it on,
 					// put it in a pending queue and delay finalization.
 					if (this._idCompressor === undefined) {
+						assert(
+							this.idCompressorMode !== undefined,
+							"id compressor should be enabled",
+						);
 						this.pendingIdCompressorOps.push(range);
 					} else {
 						this._idCompressor.finalizeCreationRange(range);
@@ -3030,10 +3057,10 @@ export class ContainerRuntime
 	/**
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
-	 * @param content - Content of the signal.
+	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(type: string, content: any, targetClientId?: string) {
+	public submitSignal(type: string, content: unknown, targetClientId?: string) {
 		this.verifyNotClosed();
 		const envelope = this.createNewSignalEnvelope(undefined /* address */, type, content);
 		return this.submitSignalFn(envelope, targetClientId);
@@ -3909,18 +3936,17 @@ export class ContainerRuntime
 				// Allow document schema controller to send a message if it needs to propose change in document schema.
 				// If it needs to send a message, it will call provided callback with payload of such message and rely
 				// on this callback to do actual sending.
-				this.documentsSchemaController.onMessageSent(
-					(contents: IDocumentSchemaChangeMessage) => {
-						const msg: ContainerRuntimeDocumentSchemaMessage = {
-							type: ContainerMessageType.DocumentSchemaChange,
-							contents,
-						};
-						this.outbox.submit({
-							contents: JSON.stringify(msg),
-							referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-						});
-					},
-				);
+				const contents = this.documentsSchemaController.maybeSendSchemaMessage();
+				if (contents) {
+					const msg: ContainerRuntimeDocumentSchemaMessage = {
+						type: ContainerMessageType.DocumentSchemaChange,
+						contents,
+					};
+					this.outbox.submit({
+						contents: JSON.stringify(msg),
+						referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+					});
+				}
 
 				// If this is attach message for new data store, and we are in a batch, send this op out of order
 				// Is it safe:

@@ -9,9 +9,12 @@ import {
 	IRuntime,
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
+import {
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
 
 /**
  * @internal

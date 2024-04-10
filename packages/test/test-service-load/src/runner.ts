@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
+import {
+	DriverEndpoint,
+	ITestDriver,
+	TestDriverTypes,
+} from "@fluid-internal/test-driver-definitions";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IContainerExperimental, Loader } from "@fluidframework/container-loader/internal";
 import { IRequestHeader, LogLevel } from "@fluidframework/core-interfaces";
-import { assert, delay } from "@fluidframework/core-utils";
+import { assert, delay } from "@fluidframework/core-utils/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
-import { getRetryDelayFromError } from "@fluidframework/driver-utils";
+import { getRetryDelayFromError } from "@fluidframework/driver-utils/internal";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import {
-	DriverEndpoint,
-	ITestDriver,
-	TestDriverTypes,
-} from "@fluidframework/test-driver-definitions";
 import commander from "commander";
 
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver.js";

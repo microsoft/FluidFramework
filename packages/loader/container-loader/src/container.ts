@@ -32,11 +32,11 @@ import {
 	FluidObject,
 	IEvent,
 	IRequest,
-	type ISignalEnvelope,
 	ITelemetryBaseProperties,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
-import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils";
+import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
@@ -54,7 +54,7 @@ import {
 	isOnline,
 	readAndParse,
 	runWithRetry,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
 	IClient,
@@ -75,14 +75,13 @@ import {
 	MessageType,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt, type TelemetryEventCategory } from "@fluidframework/telemetry-utils";
 import {
 	EventEmitterWithErrorHandling,
 	GenericError,
 	IFluidErrorBase,
-	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
-	type TelemetryEventCategory,
 	UsageError,
 	connectedEventName,
 	createChildLogger,
@@ -91,7 +90,7 @@ import {
 	normalizeError,
 	raiseConnectedEvent,
 	wrapError,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import structuredClone from "@ungap/structured-clone";
 import { v4 as uuid } from "uuid";
 
@@ -1282,8 +1281,8 @@ export class Container
 							throw normalizeErrorAndClose(error);
 						});
 					}
-
-					this.serializedStateManager.setSnapshot(await attachP);
+					const snapshotWithBlobs = await attachP;
+					this.serializedStateManager.setInitialSnapshot(snapshotWithBlobs);
 					if (!this.closed) {
 						this.handleDeltaConnectionArg(
 							{
@@ -1562,11 +1561,9 @@ export class Container
 		);
 
 		// If we saved ops, we will replay them and don't need DeltaManager to fetch them
-		const sequenceNumber =
-			pendingLocalState?.savedOps[pendingLocalState.savedOps.length - 1]?.sequenceNumber;
-		const dmAttributes =
-			sequenceNumber !== undefined ? { ...attributes, sequenceNumber } : attributes;
-
+		const lastProcessedSequenceNumber =
+			pendingLocalState?.savedOps[pendingLocalState.savedOps.length - 1]?.sequenceNumber ??
+			attributes.sequenceNumber;
 		let opsBeforeReturnP: Promise<void> | undefined;
 
 		if (loadMode.pauseAfterLoad === true) {
@@ -1579,7 +1576,7 @@ export class Container
 				// Note: It is possible that we think the latest snapshot is newer than the specified sequence number
 				// due to saved ops that may be replayed after the snapshot.
 				// https://dev.azure.com/fluidframework/internal/_workitems/edit/5055
-				if (dmAttributes.sequenceNumber > loadToSequenceNumber) {
+				if (lastProcessedSequenceNumber > loadToSequenceNumber) {
 					throw new Error(
 						"Cannot satisfy request to pause the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.",
 					);
@@ -1627,16 +1624,18 @@ export class Container
 				// Start prefetch, but not set opsBeforeReturnP - boot is not blocked by it!
 				// eslint-disable-next-line @typescript-eslint/no-floating-promises
 				this.attachDeltaManagerOpHandler(
-					dmAttributes,
+					attributes,
 					loadMode.deltaConnection !== "none" ? "all" : "none",
+					lastProcessedSequenceNumber,
 				);
 				break;
 			case "sequenceNumber":
 			case "cached":
 			case "all":
 				opsBeforeReturnP = this.attachDeltaManagerOpHandler(
-					dmAttributes,
+					attributes,
 					loadMode.opsBeforeReturn,
+					lastProcessedSequenceNumber,
 				);
 				break;
 			default:
@@ -2070,6 +2069,7 @@ export class Container
 	private async attachDeltaManagerOpHandler(
 		attributes: IDocumentAttributes,
 		prefetchType?: "sequenceNumber" | "cached" | "all" | "none",
+		lastProcessedSequenceNumber?: number,
 	) {
 		return this._deltaManager.attachOpHandler(
 			attributes.minimumSequenceNumber,
@@ -2081,6 +2081,7 @@ export class Container
 				},
 			},
 			prefetchType,
+			lastProcessedSequenceNumber,
 		);
 	}
 

@@ -5,13 +5,13 @@
 
 import fs from "fs";
 
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	getUnexpectedLogErrorException,
 	ITestObjectProvider,
 	TestObjectProvider,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 import { testBaseVersion } from "./baseVersion.js";
 import { configList } from "./compatConfig.js";
@@ -412,7 +412,7 @@ function createE2EDocCompatSuite(
 						// then we don't need to check errors
 						// and fail the after each as well
 						if (this.currentTest?.state === "passed") {
-							const logErrors = getUnexpectedLogErrorException(provider.logger);
+							const logErrors = getUnexpectedLogErrorException(provider.tracker);
 							done(logErrors);
 						} else {
 							done();

@@ -4,7 +4,7 @@
  */
 
 /* eslint-disable no-bitwise */
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { v4 } from "uuid";
 
 import { LocalCompressedId, NumericUuid } from "./identifiers.js";

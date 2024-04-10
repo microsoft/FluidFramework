@@ -21,7 +21,7 @@ function addPoint(curve: Curve, x: number, y: number): Point {
 ## Implementation
 
 This feature is supported by doing some bookkeeping to ensure that the proxy objects,
-flex nodes and anchor nodes in the tree get associated and disassociated at the right times.
+flex tree nodes and anchor nodes in the tree get associated and disassociated at the right times.
 There are three states that a node proxy can be in: "raw", "marinated" and "cooked".
 
 ### Raw Proxies
@@ -79,9 +79,8 @@ This laziness prevents the proxy tree from generating unnecessary `FlexTreeNodes
 Cooking a marinated proxy works as follows:
 
 1. Get the `AnchorNode` associated with the marinated proxy.
-2. Walk up the `AnchorNode` ancestry (parent-by-parent) until an `AnchorNode` is found which already has a corresponding `FlexTreeNode`
-3. Walk back down the same path that was walked up in step 2, but this time via the `FlexTreeNode`s.
-   This will cause the `FlexTreeNode`s all along the way to be generated, down to and including the original target node.
+2. Get or create a `FlexTreeNode` for the anchor.
+3. This will cause the `FlexTreeNode` to be generated which corresponds to the proxy.
 
 ### Mappings
 
