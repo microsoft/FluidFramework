@@ -103,8 +103,8 @@
 		"typescript": "~4.5.5"
 	},
 	"engines": {
-		"node": ">=14.13.0",
-		"npm": "^6"
+		"node": ">=18.17.1",
+		"npm": "^6.14.18"
 	},
 	"fluidBuild": {
 		"branchReleaseTypes": {
