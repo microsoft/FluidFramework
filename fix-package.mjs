@@ -7,6 +7,7 @@ const pkgPath = path.resolve("./package.json");
 const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
 
 let testableEntryPoints = [];
+let hasNonDefaultExportMaps = false;
 
 // Insert '/lib' into export maps
 if (pkg.exports !== undefined) {
@@ -14,13 +15,17 @@ if (pkg.exports !== undefined) {
 	for (let [key, map] of Object.entries(pkg.exports)) {
 		if (key === "." || key === "./") {
 			testableEntryPoints.push(key);
-		} else if (key === "./alpha" || key === "./beta") {
-			const parts = key.split("/");
-			if (parts[1] !== "lib") {
-				parts.splice(/* start: */ 1, /* deleteCount: */ 0, "lib");
-				key = parts.join("/");
+		} else {
+			hasNonDefaultExportMaps = true;
+
+			if (key === "./alpha" || key === "./beta") {
+				const parts = key.split("/");
+				if (parts[1] !== "lib") {
+					parts.splice(/* start: */ 1, /* deleteCount: */ 0, "lib");
+					key = parts.join("/");
+				}
+				testableEntryPoints.push(key);
 			}
-			testableEntryPoints.push(key);
 		}
 
 		exportMap = { ...exportMap, [key]: map };
@@ -29,7 +34,7 @@ if (pkg.exports !== undefined) {
 }
 
 // Update ATTW
-if (testableEntryPoints.length > 0) {
+if (hasNonDefaultExportMaps) {
 	let attwScript = `attw --pack . --entrypoints ${testableEntryPoints.join(" ")}`;
 	pkg.scripts["check:are-the-types-wrong"] = attwScript;
 } else if (pkg.scripts) {
