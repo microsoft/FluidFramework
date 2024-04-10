@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 
 import {
+	ChangeAtomId,
 	DeltaFieldChanges,
 	TaggedChange,
 	makeAnonChange,
@@ -137,6 +138,24 @@ describe("optionalField", () => {
 			);
 
 			assertEqual(composed, change1And2);
+		});
+
+		it("pin ○ child change", () => {
+			const detach: ChangeAtomId = { localId: brand(42), revision: tag };
+			const pin = makeAnonChange(Change.pin(detach));
+			const withChild = makeAnonChange(Change.childAt(detach, nodeChange1));
+			const composed = optionalChangeRebaser.compose(
+				pin,
+				withChild,
+				TestNodeId.composeChild,
+				fakeIdAllocator,
+				failCrossFieldManager,
+				defaultRevisionMetadataFromChanges([pin, withChild]),
+			);
+
+			const expected = Change.atOnce(pin.change, withChild.change);
+
+			assertEqual(composed, expected);
 		});
 
 		it("can compose child changes", () => {
