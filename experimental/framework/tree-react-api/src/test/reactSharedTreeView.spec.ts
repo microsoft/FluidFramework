@@ -3,12 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
+import { TinyliciousClient } from "@fluidframework/tinylicious-client/internal";
 import type { ContainerSchema } from "@fluidframework/fluid-static";
 import { treeDataObject } from "../reactSharedTreeView.js";
 
 describe("useTree()", () => {
-	it("works", () => {
+	it("works", async () => {
 		const builder = new SchemaFactory("tree-react-api");
 
 		class Inventory extends builder.object("Contoso:InventoryItem-1.0.0", {
@@ -16,21 +19,6 @@ describe("useTree()", () => {
 			bolts: builder.number,
 		}) {}
 
-		// TODO: There is no service implementation agnostic client abstraction that can be referred to here (ex: shared by AzureClient and OdspClient).
-		// This makes documenting compatibility with that implicit common API difficult.
-		// It also makes writing service agnostic code at that abstraction level harder.
-		// This should be fixed.
-		//
-		// TODO:
-		// Writing an app at this abstraction level currently requires a lot of boilerplate which also requires extra dependencies.
-		// Since `@fluid-example/example-utils` doesn't provide that boilerplate and neither do the public packages, there isn't a concise way to actually use this container in this example.
-		// This should be fixed.
-		//
-		// TODO:
-		// The commonly used boilerplate for setting up a ContainerSchema based application configures the dev-tools, which would be great to include in this example,
-		// but can't be included due to dependency layering issues.
-		//
-		// TODO: THis test setup fails to import files from src, and also errors on unused values, so this can't be enabled.
 		const containerSchema = {
 			initialObjects: {
 				// TODO: it seems odd that DataObjects in container schema need both a key under initialObjects where they are,
@@ -41,5 +29,19 @@ describe("useTree()", () => {
 				),
 			},
 		} satisfies ContainerSchema;
+
+		// TODO: Ideally we would use a local-server service-client, but one does not appear to exist.
+		const tinyliciousClient = new TinyliciousClient();
+
+		const { container } = await tinyliciousClient.createContainer(containerSchema);
+		await container.attach();
+		await new Promise<void>((resolve, reject) => {
+			container.on("connected", () => {
+				resolve();
+			});
+		});
+
+		const tree = container.initialObjects.tree;
+		assert.equal(tree.tree.root.nuts, 5);
 	});
 });

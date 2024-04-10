@@ -5359,6 +5359,7 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/fluid-static': workspace:~
+      '@fluidframework/tinylicious-client': workspace:~
       '@fluidframework/tree': workspace:~
       '@microsoft/api-extractor': ^7.42.3
       '@types/mocha': ^9.1.1
@@ -5392,6 +5393,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.35.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
+      '@fluidframework/tinylicious-client': link:../../../packages/service-clients/tinylicious-client
       '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -41729,7 +41731,7 @@ packages:
       cookie-parser: 1.4.6
       cors: 2.8.5
       detect-port: 1.5.1
-      express: 4.18.2
+      express: 4.19.2
       isomorphic-git: 1.25.7
       json-stringify-safe: 5.0.1
       level: 8.0.0

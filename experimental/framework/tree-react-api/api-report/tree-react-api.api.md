@@ -10,11 +10,10 @@ import { ImplicitFieldSchema } from '@fluidframework/tree/internal';
 import * as React_2 from 'react';
 import { TreeConfiguration } from '@fluidframework/tree/internal';
 import { TreeFieldFromImplicitField } from '@fluidframework/tree/internal';
+import { TreeView } from '@fluidframework/tree/internal';
 
 // @public (undocumented)
-export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
-    readonly config: TreeConfiguration<TSchema>;
-    readonly key: string;
+export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> extends ITreeDataObject<TSchema> {
     readonly TreeViewComponent: ({ viewComponent, }: {
         viewComponent: React_2.FC<{
             root: TreeFieldFromImplicitField<TSchema>;
@@ -22,8 +21,15 @@ export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
     }) => React_2.JSX.Element;
 }
 
+// @public (undocumented)
+export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
+    readonly config: TreeConfiguration<TSchema>;
+    readonly key: string;
+    readonly tree: TreeView<TSchema>;
+}
+
 // @public
-export function treeDataObject<TSchema extends ImplicitFieldSchema>(key: string, treeConfiguration: TreeConfiguration<TSchema>): DataObjectClass<ITreeDataObject<TSchema> & IFluidLoadable>;
+export function treeDataObject<TSchema extends ImplicitFieldSchema>(key: string, treeConfiguration: TreeConfiguration<TSchema>): DataObjectClass<IReactTreeDataObject<TSchema> & IFluidLoadable>;
 
 // (No @packageDocumentation comment for this package)
 

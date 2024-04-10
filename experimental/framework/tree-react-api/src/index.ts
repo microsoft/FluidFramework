@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export type { ITreeDataObject } from "./reactSharedTreeView.js";
+export type { ITreeDataObject, IReactTreeDataObject } from "./reactSharedTreeView.js";
 export { treeDataObject } from "./reactSharedTreeView.js";

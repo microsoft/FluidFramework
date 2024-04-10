@@ -28,6 +28,7 @@ import * as React from "react";
 
 /**
  * Opt into extra validation to detect encoding bugs and data corruption.
+ * As long as this is an experimental package, opting into extra validation (at a small perf and bundle size cost) seems reasonable.
  */
 const SharedTree = configuredSharedTree({
 	jsonValidator: typeboxValidator,
@@ -60,7 +61,7 @@ const dataObjectFactoryMarker = {
 export function treeDataObject<TSchema extends ImplicitFieldSchema>(
 	key: string,
 	treeConfiguration: TreeConfiguration<TSchema>,
-): DataObjectClass<ITreeDataObject<TSchema> & IFluidLoadable> {
+): DataObjectClass<IReactTreeDataObject<TSchema> & IFluidLoadable> {
 	return class InventoryList extends TreeDataObject<TSchema> {
 		public readonly key = key;
 		public readonly config = treeConfiguration;
@@ -92,6 +93,17 @@ export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
 	readonly config: TreeConfiguration<TSchema>;
 
 	/**
+	 * The TreeView.
+	 */
+	readonly tree: TreeView<TSchema>;
+}
+
+/**
+ * @public
+ */
+export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema>
+	extends ITreeDataObject<TSchema> {
+	/**
 	 * React component which handles schematizing trees.
 	 * This includes displaying errors when the document can not be schematized.
 	 *
@@ -112,7 +124,7 @@ export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
  */
 export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema>
 	extends DataObject
-	implements ITreeDataObject<TSchema>
+	implements IReactTreeDataObject<TSchema>
 {
 	public static readonly factory = dataObjectFactoryMarker;
 
