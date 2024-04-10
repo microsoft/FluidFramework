@@ -2,22 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "node:assert";
 
-import {
-	AzureClient,
-	type AzureContainerServices,
-	type AzureUser,
-	ScopeType,
-} from "@fluidframework/azure-client";
+import { AzureClient, type AzureContainerServices, ScopeType } from "@fluidframework/azure-client";
+import type { AzureUser } from "@fluidframework/azure-client/internal";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
-import { timeoutPromise } from "@fluidframework/test-utils";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-import { createAzureClient } from "./AzureClientFactory";
-import { SignalerTestDataObject } from "./TestDataObject";
-import { configProvider } from "./utils";
+import { createAzureClient } from "./AzureClientFactory.js";
+import { SignalerTestDataObject } from "./TestDataObject.js";
+import { configProvider } from "./utils.js";
 
 async function createSignalListenerPromise<T>(
 	signaler: SignalerTestDataObject,
