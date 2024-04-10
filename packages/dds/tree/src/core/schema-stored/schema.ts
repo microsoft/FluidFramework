@@ -5,7 +5,6 @@
 
 import type { ErasedType } from "@fluidframework/core-interfaces";
 import { DiscriminatedUnionDispatcher } from "../../codec/index.js";
-import { Multiplicity } from "../../index.js";
 import { MakeNominal, brand, fail, invertMap } from "../../util/index.js";
 import {
 	FieldKey,

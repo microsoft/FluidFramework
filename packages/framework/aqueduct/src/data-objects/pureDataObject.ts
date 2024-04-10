@@ -11,7 +11,7 @@ import {
 	type IProvideFluidHandle,
 	type IRequest,
 	type IResponse,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { type IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
