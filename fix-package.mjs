@@ -29,7 +29,7 @@ if (pkg.exports !== undefined) {
 
 // Update ATTW
 if (hasNonDefaultExports) {
-	pkg.scripts["check:are-the-types-wrong"] = "--entrypoints . ./lib/alpha ./lib/beta";
+	pkg.scripts["check:are-the-types-wrong"] = "attw --pack . --entrypoints . ./lib/alpha ./lib/beta";
 } else if (pkg.scripts) {
 	delete pkg.scripts["check:are-the-types-wrong"];
 }
