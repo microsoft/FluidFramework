@@ -111,7 +111,7 @@ function getObjectNode(nodeSchemaIdentifier: string, fields: Map<FieldKey, MapTr
 	};
 }
 
-describe.only("schema validation", () => {
+describe("schema validation", () => {
 	const multiplicityTestCases: [
 		kind: Multiplicity,
 		numberToTest: number,
@@ -462,7 +462,12 @@ describe.only("schema validation", () => {
 					fieldKinds: new Map([
 						[fieldSchema_optionalNumberNode.kind, FieldKinds.optional],
 						[fieldSchema_optionalStringNode.kind, FieldKinds.optional],
-						[fieldSchema_sequenceBooleanNode.kind, FieldKinds.sequence as FieldKindData],
+						// Need the cast so the Map instantiation doesn't complain about
+						// the type for its values
+						[
+							fieldSchema_sequenceBooleanNode.kind,
+							FieldKinds.sequence as FieldKindData,
+						],
 						[fieldSchema_optionalNullNode.kind, FieldKinds.optional],
 						[fieldSchema_optionalFluidHandleNode.kind, FieldKinds.optional],
 					]),
@@ -548,7 +553,7 @@ describe.only("schema validation", () => {
 					new Map([[brand("prop1"), fieldSchema_optionalNumber]]),
 				);
 
-				// "prop2" is not a defined key in the object node schema
+				// "prop2" is not defined as a field in the object node schema
 				const objectNode = getObjectNode("myObjectNode", new Map([[brand("prop2"), []]]));
 
 				const schemaCollection: StoredSchemaCollection = {
@@ -557,13 +562,46 @@ describe.only("schema validation", () => {
 						[objectNode.type, nodeSchema_object],
 					]),
 				};
+				const schemaPolicy = {
+					fieldKinds: new Map([[fieldSchema_optionalNumber.kind, FieldKinds.optional]])
+				};
 
 				assert.equal(
 					isNodeInSchema(objectNode, {
 						schema: schemaCollection,
-						policy: emptySchemaPolicy,
+						policy: schemaPolicy,
 					}),
 					SchemaValidationErrors.ObjectNode_FieldNotInSchema,
+				);
+			});
+
+			it(`not in schema due to not having a required field from its defined schema`, () => {
+				const fieldSchema_requiredNumber = getFieldSchema(FieldKinds.required, [
+					numberNode.type,
+				]);
+				const nodeSchema_object: TreeNodeStoredSchema = new ObjectNodeStoredSchema(
+					new Map([[brand("requiredProp"), fieldSchema_requiredNumber]]),
+				);
+
+				// Create an object node with no fields at all; particularly it doesn't have the required 'requiredProp' field
+				const objectNode = getObjectNode("myObjectNode", new Map([]));
+
+				const schemaCollection: StoredSchemaCollection = {
+					nodeSchema: new Map([
+						[numberNode.type, new LeafNodeStoredSchema(ValueSchema.Number)],
+						[objectNode.type, nodeSchema_object],
+					]),
+				};
+				const schemaPolicy = {
+					fieldKinds: new Map([[fieldSchema_requiredNumber.kind, FieldKinds.required]])
+				};
+
+				assert.equal(
+					isNodeInSchema(objectNode, {
+						schema: schemaCollection,
+						policy: schemaPolicy,
+					}),
+					SchemaValidationErrors.Field_IncorrectMultiplicity,
 				);
 			});
 		});

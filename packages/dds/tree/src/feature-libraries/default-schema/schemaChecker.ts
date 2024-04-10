@@ -12,6 +12,7 @@ import {
 	MapNodeStoredSchema,
 	Multiplicity,
 	type SchemaAndPolicy,
+	getMapTreeField,
 } from "../../core/index.js";
 import { allowsValue } from "../valueUtilities.js";
 import { fail } from "../../util/index.js";
@@ -48,15 +49,18 @@ export function isNodeInSchema(
 			return SchemaValidationErrors.LeafNode_InvalidValue;
 		}
 	} else if (schema instanceof ObjectNodeStoredSchema) {
-		for (const [fieldKey, field] of node.fields) {
-			const fieldSchema = schema.objectNodeFields.get(fieldKey);
-			if (fieldSchema === undefined) {
-				return SchemaValidationErrors.ObjectNode_FieldNotInSchema;
-			}
-			const fieldInSchemaResult = isFieldInSchema(field, fieldSchema, schemaAndPolicy);
+		const fieldsActuallyInNode = new Set(node.fields.keys());
+		for (const [fieldKey, fieldSchema] of schema.objectNodeFields.entries()) {
+			const nodeField = getMapTreeField(node, fieldKey, false);
+			const fieldInSchemaResult = isFieldInSchema(nodeField, fieldSchema, schemaAndPolicy);
 			if (fieldInSchemaResult !== SchemaValidationErrors.NoError) {
 				return fieldInSchemaResult;
 			}
+			fieldsActuallyInNode.delete(fieldKey);
+		}
+		// The node has fields that we did not check as part of looking at every field defined in the node's schema
+		if (fieldsActuallyInNode.size !== 0) {
+			return SchemaValidationErrors.ObjectNode_FieldNotInSchema;
 		}
 	} else if (schema instanceof MapNodeStoredSchema) {
 		for (const field of node.fields.values()) {
