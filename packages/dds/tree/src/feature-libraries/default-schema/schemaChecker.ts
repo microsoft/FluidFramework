@@ -23,7 +23,6 @@ export const enum SchemaValidationErrors {
 	Field_NodeTypeNotAllowed,
 	LeafNode_InvalidValue,
 	LeafNode_FieldsNotAllowed,
-	ObjectNode_FieldCountMismatch,
 	ObjectNode_FieldNotInSchema,
 	MapNode_EmptyFieldsMustBeImplicit,
 	Node_MissingSchema,
@@ -50,9 +49,6 @@ export function isNodeInSchema(
 			return SchemaValidationErrors.LeafNode_InvalidValue;
 		}
 	} else if (schema instanceof ObjectNodeStoredSchema) {
-		if (node.fields.size !== schema.objectNodeFields.size) {
-			return SchemaValidationErrors.ObjectNode_FieldCountMismatch;
-		}
 		for (const [fieldKey, field] of node.fields) {
 			const fieldSchema = schema.objectNodeFields.get(fieldKey);
 			if (fieldSchema === undefined) {

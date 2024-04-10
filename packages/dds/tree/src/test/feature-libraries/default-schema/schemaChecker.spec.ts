@@ -25,6 +25,7 @@ import {
 	ObjectNodeStoredSchema,
 	ValueSchema,
 	type FieldKey,
+	type FieldKindData,
 	type FieldKindIdentifier,
 	type MapTree,
 	type StoredSchemaCollection,
@@ -110,7 +111,7 @@ function getObjectNode(nodeSchemaIdentifier: string, fields: Map<FieldKey, MapTr
 	};
 }
 
-describe("schema validation", () => {
+describe.only("schema validation", () => {
 	const multiplicityTestCases: [
 		kind: Multiplicity,
 		numberToTest: number,
@@ -452,13 +453,16 @@ describe("schema validation", () => {
 			const fluidHandleNode = getValueNode("myFluidHandleNode", new TestFluidHandle());
 
 			it(`in schema (children of every type)`, () => {
+				// Note there's a sequence field here to test that both optional and sequence fields
+				// can "not exist" in a node and it's still in schema, since both of those kinds of fields
+				// can be empty and when they are they shouldn't exist in the node.
 				const fieldSchema_optionalNumberNode = getFieldSchema(FieldKinds.optional, [
 					numberNode.type,
 				]);
 				const fieldSchema_optionalStringNode = getFieldSchema(FieldKinds.optional, [
 					stringNode.type,
 				]);
-				const fieldSchema_optionalBooleanNode = getFieldSchema(FieldKinds.optional, [
+				const fieldSchema_sequenceBooleanNode = getFieldSchema(FieldKinds.sequence, [
 					booleanNode.type,
 				]);
 				const fieldSchema_optionalNullNode = getFieldSchema(FieldKinds.optional, [
@@ -471,7 +475,7 @@ describe("schema validation", () => {
 					new Map([
 						[brand("numberProp"), fieldSchema_optionalNumberNode],
 						[brand("stringProp"), fieldSchema_optionalStringNode],
-						[brand("booleanProp"), fieldSchema_optionalBooleanNode],
+						[brand("booleanProp"), fieldSchema_sequenceBooleanNode],
 						[brand("nullProp"), fieldSchema_optionalNullNode],
 						[brand("fluidHandleProp"), fieldSchema_optionalFluidHandleNode],
 					]),
@@ -491,46 +495,24 @@ describe("schema validation", () => {
 					fieldKinds: new Map([
 						[fieldSchema_optionalNumberNode.kind, FieldKinds.optional],
 						[fieldSchema_optionalStringNode.kind, FieldKinds.optional],
-						[fieldSchema_optionalBooleanNode.kind, FieldKinds.optional],
+						[fieldSchema_sequenceBooleanNode.kind, FieldKinds.sequence as FieldKindData],
 						[fieldSchema_optionalNullNode.kind, FieldKinds.optional],
 						[fieldSchema_optionalFluidHandleNode.kind, FieldKinds.optional],
 					]),
 				};
 
-				// Not in schema before the node has any fields defined (thus doesn't match the schema)
-				assert.equal(
-					isNodeInSchema(objectNode, { schema: schemaCollection, policy: schemaPolicy }),
-					SchemaValidationErrors.ObjectNode_FieldCountMismatch,
-				);
-
-				// In schema after setting fields of all kinds to empty
-				objectNode.fields.set(brand("numberProp"), []);
-				objectNode.fields.set(brand("stringProp"), []);
-				objectNode.fields.set(brand("booleanProp"), []);
-				objectNode.fields.set(brand("nullProp"), []);
-				objectNode.fields.set(brand("fluidHandleProp"), []);
+				// In schema when empty optional and sequence fields don't exist
 				assert.equal(
 					isNodeInSchema(objectNode, { schema: schemaCollection, policy: schemaPolicy }),
 					SchemaValidationErrors.NoError,
 				);
 
-				// In schema after setting fields of all kinds to values
+				// In schema after adding optional and sequence fields with values
 				objectNode.fields.set(brand("numberProp"), [numberNode]);
 				objectNode.fields.set(brand("stringProp"), [stringNode]);
-				objectNode.fields.set(brand("booleanProp"), [booleanNode]);
+				objectNode.fields.set(brand("booleanProp"), [booleanNode, booleanNode]);
 				objectNode.fields.set(brand("nullProp"), [nullNode]);
 				objectNode.fields.set(brand("fluidHandleProp"), [fluidHandleNode]);
-				assert.equal(
-					isNodeInSchema(objectNode, { schema: schemaCollection, policy: schemaPolicy }),
-					SchemaValidationErrors.NoError,
-				);
-
-				// Still in schema after setting fields of all kinds to empty again
-				objectNode.fields.set(brand("numberProp"), []);
-				objectNode.fields.set(brand("stringProp"), []);
-				objectNode.fields.set(brand("booleanProp"), []);
-				objectNode.fields.set(brand("nullProp"), []);
-				objectNode.fields.set(brand("fluidHandleProp"), []);
 				assert.equal(
 					isNodeInSchema(objectNode, { schema: schemaCollection, policy: schemaPolicy }),
 					SchemaValidationErrors.NoError,
@@ -615,36 +597,6 @@ describe("schema validation", () => {
 						policy: emptySchemaPolicy,
 					}),
 					SchemaValidationErrors.ObjectNode_FieldNotInSchema,
-				);
-			});
-
-			it(`not in schema due to not having all fields declared in its defined schema`, () => {
-				const fieldSchema_optionalNumber = getFieldSchema(FieldKinds.optional, [
-					numberNode.type,
-				]);
-				const nodeSchema_object: TreeNodeStoredSchema = new ObjectNodeStoredSchema(
-					new Map([
-						[brand("prop1"), fieldSchema_optionalNumber],
-						[brand("prop2"), fieldSchema_optionalNumber],
-					]),
-				);
-
-				// "prop1" is a valid field key, but "prop2" is missing
-				const objectNode = getObjectNode("myObjectNode", new Map([[brand("prop1"), []]]));
-
-				const schemaCollection: StoredSchemaCollection = {
-					nodeSchema: new Map([
-						[numberNode.type, new LeafNodeStoredSchema(ValueSchema.Number)],
-						[objectNode.type, nodeSchema_object],
-					]),
-				};
-
-				assert.equal(
-					isNodeInSchema(objectNode, {
-						schema: schemaCollection,
-						policy: emptySchemaPolicy,
-					}),
-					SchemaValidationErrors.ObjectNode_FieldCountMismatch,
 				);
 			});
 		});
