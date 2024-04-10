@@ -77,7 +77,7 @@ module.exports = {
 		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
 		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
 		"api": {
-			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext", "generate:typerollups"],
+			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext", "generate:entrypoints"],
 			script: false,
 		},
 		"api-extractor:commonjs": {
@@ -88,7 +88,7 @@ module.exports = {
 			dependsOn: ["build:esnext"],
 			script: true,
 		},
-		"generate:typerollups":  {
+		"generate:entrypoints":  {
 			dependsOn: ["tsc", "build:esnext"],
 			script: true,
 		},

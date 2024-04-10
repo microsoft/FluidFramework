@@ -64,7 +64,7 @@
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
-		"generate:typerollups": "flub generate entrypoints --outDir ./api-report --outFilePrefix {@unscopedPackageName}-",
+		"generate:entrypoints": "flub generate entrypoints --outDir ./api-report --outFilePrefix {@unscopedPackageName}-",
 		"lint": "fluid-build . --task lint --task check:are-the-types-wrong",
 		"lint:fix": "fluid-build . --task lint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
