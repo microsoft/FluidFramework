@@ -3,13 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandleErased, IFluidHandleInternal } from "@fluidframework/core-interfaces";
+import type {
+	IFluidHandleErased,
+	IFluidHandleInternal,
+} from "@fluidframework/core-interfaces/internal";
 import {
 	FluidObject,
 	IFluidHandleContext,
 	fluidHandleSymbol,
 	toFluidHandleErased,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils/internal";
 
 /**

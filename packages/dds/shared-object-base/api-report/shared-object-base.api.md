@@ -43,7 +43,7 @@ export class FluidSerializer implements IFluidSerializer {
     // (undocumented)
     protected serializeHandle(handle: IFluidHandleInternal, bind: IFluidHandleInternal): {
         type: string;
-        url: string;
+        url: any;
     };
     // (undocumented)
     stringify(input: unknown, bind: IFluidHandle): string;
@@ -144,7 +144,7 @@ export class SummarySerializer extends FluidSerializer {
     // (undocumented)
     protected serializeHandle(handle: IFluidHandleInternal, bind: IFluidHandleInternal): {
         type: string;
-        url: string;
+        url: any;
     };
 }
 

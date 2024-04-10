@@ -332,12 +332,6 @@ export interface ILoggingError extends Error {
     getTelemetryProperties(): ITelemetryBaseProperties;
 }
 
-// @internal @deprecated (undocumented)
-export interface IProvideFluidCodeDetailsComparer {
-    // (undocumented)
-    readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
-}
-
 // @alpha @deprecated (undocumented)
 export interface IProvideFluidHandle {
     // @deprecated (undocumented)

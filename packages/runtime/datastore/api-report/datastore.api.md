@@ -5,8 +5,8 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
-import { fluidHandleSymbol } from '@fluidframework/core-interfaces';
-import { FluidObject } from '@fluidframework/core-interfaces';
+import { fluidHandleSymbol } from '@fluidframework/core-interfaces/internal';
+import { FluidObject } from '@fluidframework/core-interfaces/internal';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
@@ -17,16 +17,16 @@ import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions/inte
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntimeEvents } from '@fluidframework/datastore-definitions';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidHandleContext } from '@fluidframework/core-interfaces';
-import type { IFluidHandleErased } from '@fluidframework/core-interfaces';
-import type { IFluidHandleInternal } from '@fluidframework/core-interfaces';
+import { IFluidHandle } from '@fluidframework/core-interfaces/internal';
+import { IFluidHandleContext } from '@fluidframework/core-interfaces/internal';
+import type { IFluidHandleErased } from '@fluidframework/core-interfaces/internal';
+import type { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IIdCompressor } from '@fluidframework/id-compressor';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
-import { IRequest } from '@fluidframework/core-interfaces';
-import { IResponse } from '@fluidframework/core-interfaces';
+import { IRequest } from '@fluidframework/core-interfaces/internal';
+import { IResponse } from '@fluidframework/core-interfaces/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';

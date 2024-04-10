@@ -24,6 +24,7 @@ import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
+import { IDocumentStorageService as IDocumentStorageService_2 } from '@fluidframework/driver-definitions';
 import { IEnvelope } from '@fluidframework/runtime-definitions/internal';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
@@ -559,7 +560,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     // (undocumented)
     setTombstone(tombstone: boolean): void;
     // (undocumented)
-    readonly storage: IDocumentStorageService;
+    readonly storage: IDocumentStorageService_2;
     // (undocumented)
     submitMessage(type: string, content: any, localOpMetadata: unknown): void;
     submitSignal(type: string, content: unknown, targetClientId?: string): void;
@@ -820,7 +821,7 @@ export interface IFluidDataStoreContextProps {
     // (undocumented)
     readonly scope: FluidObject;
     // (undocumented)
-    readonly storage: IDocumentStorageService;
+    readonly storage: IDocumentStorageService_2;
 }
 
 // @alpha

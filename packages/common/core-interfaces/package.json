@@ -127,38 +127,6 @@
 				"backCompat": false,
 				"forwardCompat": false
 			},
-			"RemovedInterfaceDeclaration_IFluidCodeDetails": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedVariableDeclaration_IFluidCodeDetailsComparer": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedInterfaceDeclaration_IFluidCodeDetailsComparer": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedInterfaceDeclaration_IFluidCodeDetailsConfig": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedInterfaceDeclaration_IFluidPackage": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedInterfaceDeclaration_IFluidPackageEnvironment": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedInterfaceDeclaration_IProvideFluidCodeDetailsComparer": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedVariableDeclaration_isFluidCodeDetails": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
 			"RemovedVariableDeclaration_isFluidPackage": {
 				"backCompat": false,
 				"forwardCompat": false
@@ -192,10 +160,6 @@
 				"forwardCompat": false
 			},
 			"RemovedVariableDeclaration_isFluidCodeDetails": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedVariableDeclaration_isFluidPackage": {
 				"backCompat": false,
 				"forwardCompat": false
 			},
@@ -207,6 +171,10 @@
 				"forwardCompat": false
 			},
 			"InterfaceDeclaration_IProvideFluidLoadable": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IFluidLoadable": {
 				"forwardCompat": false,
 				"backCompat": false
 			}

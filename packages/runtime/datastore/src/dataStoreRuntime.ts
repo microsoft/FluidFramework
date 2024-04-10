@@ -12,8 +12,8 @@ import {
 	IRequest,
 	IResponse,
 	toFluidHandleInternal,
-} from "@fluidframework/core-interfaces";
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
 	Deferred,
