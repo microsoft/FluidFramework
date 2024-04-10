@@ -25,7 +25,7 @@
 	"types": "lib/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:esnext": "api-extractor run --local",
+		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
