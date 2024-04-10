@@ -238,15 +238,15 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 		assert(oldId !== undefined);
 		assert(oldId === container.clientId);
 
-		let newCLientId: string | undefined;
-		audience.on("clientIdChanged", (id) => {
-			newCLientId = id;
+		let newClientId: string | undefined;
+		audience.on("clientIdChanged", (_oldId, id) => {
+			newClientId = id;
 		});
 
 		container.connect();
 		await waitForContainerConnection(container);
 
-		assert(newCLientId === container.clientId);
+		assert(newClientId === container.clientId);
 		assert(audience.currentClientId === container.clientId);
 	});
 });

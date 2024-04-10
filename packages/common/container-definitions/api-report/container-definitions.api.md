@@ -80,7 +80,9 @@ export interface IAudience extends IEventProvider<IAudienceEvents> {
 // @public (undocumented)
 export interface IAudienceEvents extends IEvent {
     // (undocumented)
-    (event: "addMember" | "removeMember" | "clientIdChanged", listener: (clientId: string, client: IClient) => void): void;
+    (event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): void;
+    // (undocumented)
+    (event: "clientIdChanged", listener: (oldClientId: string | undefined, clientId: string) => void): void;
 }
 
 // @internal

@@ -1710,14 +1710,16 @@ export class ContainerRuntime
 				get: this._getClientId,
 			});
 
+			let oldClientId = this.clientId;
 			this.on("connected", () => {
 				const clientId = this.clientId;
 				assert(clientId !== undefined, "can't be undefined");
 				(audience as unknown as TypedEventEmitter<IAudienceEvents>).emit(
 					"clientIdChanged",
+					oldClientId,
 					clientId,
-					audience.getMember(clientId),
 				);
+				oldClientId = clientId;
 			});
 		}
 

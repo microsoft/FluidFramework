@@ -719,8 +719,9 @@ export class MockAudience extends TypedEventEmitter<IAudienceEvents> implements 
 
 	public setCurrentClientId(clientId: string | undefined): void {
 		if (this._currentClientId !== clientId) {
+			const oldId = this._currentClientId;
 			this._currentClientId = clientId;
-			this.emit("clientIdChanged");
+			this.emit("clientIdChanged", oldId, clientId);
 		}
 	}
 }

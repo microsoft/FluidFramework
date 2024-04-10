@@ -1905,9 +1905,9 @@ export class Container
 		// And it would be weird to have audience.currentClientId not match it at any point in time, including through loading process.
 		//
 		// I think the best course of action is to remove Container's mode that allows concurrent establishing of socket
-		// connection with loading runtime (as it brings these weird combos and we observed runtiem and developers get it wrong)
+		// connection with loading runtime (as it brings these weird combos and we observed runtime and developers get it wrong)
 		//
-		// For now the choise to keep currentClientId in sync with clientId properties.
+		// For now the choise is to keep currentClientId in sync with clientId properties.
 		this.protocolHandler.audience.setCurrentClientId(this._clientId);
 	}
 

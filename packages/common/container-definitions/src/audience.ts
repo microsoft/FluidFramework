@@ -32,10 +32,13 @@ export interface IAudienceOwner extends IAudience {
  * @public
  */
 export interface IAudienceEvents extends IEvent {
-	// eslint-disable-next-line @typescript-eslint/prefer-function-type
 	(
-		event: "addMember" | "removeMember" | "clientIdChanged",
+		event: "addMember" | "removeMember",
 		listener: (clientId: string, client: IClient) => void,
+	): void;
+	(
+		event: "clientIdChanged",
+		listener: (oldClientId: string | undefined, clientId: string) => void,
 	): void;
 }
 
@@ -77,12 +80,18 @@ export interface IAudience extends IEventProvider<IAudienceEvents> {
 	/**
 	 * Returns this client's clientId. undefined if this client has never connected to the ordering service.
 	 * @experimental
-	 * 
+	 *
 	 * @remarks
 	 * This API is experimental.
 	 *
+	 * It's guaranteed that these events happen at the same time (synchronously, one after another):
+	 * 1. "clientIdChanged" event on this object fires
+	 * 2. the change of current clientId
+	 * 3. current clientId is added to members of audience
+	 * If  "connected" event fires, it will fire at the same time. "connected" event may not fired at some layers (like container runtime layer)
+	 * in some cases (like user has read-only permissions to container).
+	 *
 	 * Whenever this property changes, the "clientIdChanged" event is fired on this object.
-	 * It's guaranteed that the "connected" event that fires at various layers, "clientIdChanged" event on this object, and the change of current clientId, all happen at the same time (synchronously, one after another).
 	 * That said, at the moment this is an experimental API. It depends on some experimental settings that might change in the future.
 	 * And application that deploy loader & container runtime bundles independently will see new (synchronized) behavior only when loader changes are deployed.
 	 * Newer runtimes will continue to observe old (non-synchronized) behavior when paired with older loader code.
