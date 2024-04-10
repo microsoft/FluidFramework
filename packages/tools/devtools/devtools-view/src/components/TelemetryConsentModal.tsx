@@ -49,7 +49,7 @@ interface ModalProps {
 /**
  * Modal component to display a message over the rest of the page.
  */
-export function PermissionModal(props: ModalProps): React.ReactElement {
+export function TelemetryConsentModal(props: ModalProps): React.ReactElement {
 	const { onClose } = props;
 	const styles = useStyles();
 	const [optedIn, setOptedIn] = useTelemetryOptIn();
@@ -62,8 +62,7 @@ export function PermissionModal(props: ModalProps): React.ReactElement {
 					To enhance your debugging experience, we collect anonymous usage data. <br />
 					This helps us understand how you use our tools and improve their performance.
 					<br />
-					Rest assured, your privacy is our priority. The data we collect is strictly
-					anonymized. <br />
+					Rest assured, your privacy is our priority. <br />
 					Thank you for helping us improve Fluid Framework Dev Tools!
 				</p>
 				<div className={styles.optOut}>

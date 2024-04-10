@@ -43,7 +43,7 @@ import {
 	MenuSection,
 	NoDevtoolsErrorBar,
 	OpLatencyView,
-	PermissionModal,
+	TelemetryConsentModal,
 	SettingsView,
 	TelemetryView,
 	Waiting,
@@ -283,14 +283,18 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 								/>
 							)}
 							{modalVisible && (
-								<PermissionModal onClose={(): void => setModalVisible(false)} />
+								<TelemetryConsentModal
+									onClose={(): void => setModalVisible(false)}
+								/>
 							)}
 							<_DevtoolsView supportedFeatures={{}} />
 						</>
 					) : (
 						<>
 							{modalVisible && (
-								<PermissionModal onClose={(): void => setModalVisible(false)} />
+								<TelemetryConsentModal
+									onClose={(): void => setModalVisible(false)}
+								/>
 							)}
 							<_DevtoolsView supportedFeatures={supportedFeatures} />
 						</>
