@@ -211,7 +211,7 @@ export class DetachedFieldIndex {
 	public partitionDetachedNodeRanges(
 		nodeId: Delta.DetachedNodeId,
 		count: number,
-	): { root: ForestRootId | undefined; start: number; length: number }[] | undefined {
+	): { root: ForestRootId | undefined; start: number; length: number }[] {
 		const rangeMap = this.detachedNodeRangeMap.get(nodeId.major);
 		if (!rangeMap) {
 			return undefined;
