@@ -77,12 +77,19 @@ module.exports = {
 		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
 		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
 		"api": {
-			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
+			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext", "generate:typerollups"],
 			script: false,
 		},
-		"api-extractor:commonjs": ["tsc"],
+		"api-extractor:commonjs": {
+			dependsOn: ["tsc"],
+			script: true,
+		},
 		"api-extractor:esnext": {
 			dependsOn: ["build:esnext"],
+			script: true,
+		},
+		"generate:typerollups":  {
+			dependsOn: ["tsc", "build:esnext"],
 			script: true,
 		},
 		// The package's local 'api-extractor.json' may use the entrypoint from either CJS or ESM,
