@@ -297,7 +297,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			invertedMoves.push([taggedDst, taggedSrc]);
 		}
 		if (change.valueReplace !== undefined) {
-			if (change.valueReplace.isEmpty === false) {
+			const effectfulDst = getEffectfulDst(change.valueReplace);
+			if (effectfulDst !== undefined) {
 				invertIdMap.set("self", tagAtomId(change.valueReplace.dst));
 			}
 			if (change.valueReplace.src !== undefined) {
@@ -365,7 +366,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			forwardMap.set(tagAtomId(src), tagAtomId(dst));
 		}
 		if (overChange.valueReplace !== undefined) {
-			if (overChange.valueReplace.isEmpty === false) {
+			const effectfulDst = getEffectfulDst(overChange.valueReplace);
+			if (effectfulDst !== undefined) {
 				forwardMap.set("self", tagAtomId(overChange.valueReplace.dst));
 			}
 			if (overChange.valueReplace.src !== undefined) {
