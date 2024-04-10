@@ -30,14 +30,14 @@ if (pkg.exports !== undefined) {
 // Update ATTW
 if (hasNonDefaultExports) {
 	pkg.scripts["check:are-the-types-wrong"] = "--entrypoints . ./lib/alpha ./lib/beta";
-} else {
+} else if (pkg.scripts) {
 	delete pkg.scripts["check:are-the-types-wrong"];
 }
 
 // Update node10 entry points to ESM
 if (fs.existsSync("./lib/index.js")) {
-	pkg.main = "./lib/index.js";
-	pkg.types = "./lib/public.d.ts";
+	if (pkg.main) { pkg.main = "./lib/index.js" };
+	if (pkg.types) { pkg.types = "./lib/public.d.ts" };
 }
 
 const pkgText = JSON.stringify(pkg, null, "\t");
