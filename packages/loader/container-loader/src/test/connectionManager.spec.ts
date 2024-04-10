@@ -226,14 +226,11 @@ describe("connectionManager", () => {
 		assert.strictEqual(disconnectCount, 1, "Expect 1 disconnect from emitting a Nack");
 
 		// Async test we aren't connected within 300 ms
-		let checkedTimeout = false;
-		setTimeout(() => {
-			assert.strictEqual(connectionCount, 1, "Expect there to still not be a connection yet");
-			checkedTimeout = true;
-		}, 300);
+		clock.tick(300);
+		assert.strictEqual(connectionCount, 1, "Expect there to still not be a connection yet");
+		clock.tick(200);
 		connection = await waitForConnection();
 		assert.strictEqual(connectionCount, 2, "Expect there to be a connection after waiting");
-		assert(checkedTimeout, "Expected to have checked 300ms timeout");
 	});
 
 	it("Does not re-try connection on error if ReconnectMode=Disabled", async () => {
@@ -244,20 +241,18 @@ describe("connectionManager", () => {
 		stubbedConnectToDeltaStream.throws(
 			// Throw retryable error
 			new RetryableError("Test message", NackErrorType.ThrottlingError, {
-				retryAfter: retryAfter,
+				retryAfterSeconds: retryAfter,
 				driverVersion: "1",
 			}),
 		);
 		// This step will also disconnect the connection.
 		connectionManager.setAutoReconnect(ReconnectMode.Disabled, { text: "Test" });
-
 		connectionManager.connect({ text: "Test reconnect" });
 		assert(
 			stubbedConnectToDeltaStream.calledOnce,
 			"Connection should have been attempted only once",
 		);
-		const safeTimeToCheckForReconnectRequest = retryAfter * 1000 + 10;
-		clock.tick(safeTimeToCheckForReconnectRequest);
+		clock.tick(retryAfter * 1000 + 10);
 
 		// Check if there has been any retry attempt after the retryAfter time as elapsed.
 		assert.equal(
@@ -276,18 +271,18 @@ describe("connectionManager", () => {
 		stubbedConnectToDeltaStream.throws(
 			// Throw retryable error
 			new RetryableError("Test message", NackErrorType.ThrottlingError, {
-				retryAfter: retryAfter,
+				retryAfterSeconds: retryAfter,
 				driverVersion: "1",
 			}),
 		);
 		connectionManager.setAutoReconnect(ReconnectMode.Enabled, { text: "Test" });
 		connectionManager.connect({ text: "Test reconnect" });
+
 		assert(
 			stubbedConnectToDeltaStream.calledOnce,
 			"Connection should have been attempted only once",
 		);
-		const safeTimeToCheckForReconnectRequest = retryAfter * 1000;
-		await clock.tickAsync(safeTimeToCheckForReconnectRequest);
+		await clock.tickAsync(retryAfter * 1000);
 
 		// Check if there has been any retry attempt after the retryAfter time as elapsed.
 		assert.equal(
