@@ -51,6 +51,8 @@ import {
 
 const loggingContext = "INLINE(DevtoolsView)";
 
+const telemetryConsentKey = "Fluid.Devtools.Telemetry.Consent";
+
 /**
  * Message sent to the webpage to query for the supported set of Devtools features.
  */
@@ -178,10 +180,10 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 	const [modalVisible, setModalVisible] = React.useState(false);
 
 	React.useEffect(() => {
-		const displayed = localStorage.getItem("telemetryModalDisplayed");
-		if (displayed === null || !displayed) {
+		const displayed = localStorage.getItem(telemetryConsentKey);
+		if (displayed === null || displayed !== "true") {
 			setModalVisible(true);
-			localStorage.setItem("telemetryModalDisplayed", "true");
+			localStorage.setItem(telemetryConsentKey, "true");
 		}
 	}, []);
 
@@ -279,6 +281,9 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 									dismiss={(): void => setIsMessageDismissed(true)}
 									retrySearch={(): void => retryQuery()}
 								/>
+							)}
+							{modalVisible && (
+								<PermissionModal onClose={(): void => setModalVisible(false)} />
 							)}
 							<_DevtoolsView supportedFeatures={{}} />
 						</>

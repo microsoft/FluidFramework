@@ -7,7 +7,7 @@ import React from "react";
 import { Button, Checkbox, makeStyles, shorthands, tokens } from "@fluentui/react-components";
 import { useTelemetryOptIn } from "../TelemetryUtils.js";
 
-const PermissionModalStyles = makeStyles({
+const useStyles = makeStyles({
 	root: {
 		position: "fixed",
 		top: 0,
@@ -51,7 +51,7 @@ interface ModalProps {
  */
 export function PermissionModal(props: ModalProps): React.ReactElement {
 	const { onClose } = props;
-	const styles = PermissionModalStyles();
+	const styles = useStyles();
 	const [optedIn, setOptedIn] = useTelemetryOptIn();
 
 	return (
@@ -75,7 +75,7 @@ export function PermissionModal(props: ModalProps): React.ReactElement {
 					<Checkbox
 						label={
 							optedIn
-								? "Done. You've opted in to usage telemetry tracking."
+								? "You've opted in to usage telemetry tracking."
 								: "Click here to opt in to usage telemetry tracking."
 						}
 						checked={optedIn}
