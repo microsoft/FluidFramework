@@ -9,27 +9,36 @@ const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
 let hasNonDefaultExports = false;
 
 // Insert '/lib' into export maps
-let exportMap = {};
-for (let [key, map] of Object.entries(pkg.exports)) {
-	// Skip root key.
-	if (key !== "." && key !== "./") {
-		hasNonDefaultExports = true;
-		const parts = key.split("/");
-		if (parts[1] !== "lib") {
-			parts.splice(/* start: */ 1, /* deleteCount: */ 0, "lib");
-			key = parts.join("/");
+if (pkg.exports !== undefined) {
+	let exportMap = {};
+	for (let [key, map] of Object.entries(pkg.exports)) {
+		// Skip root key.
+		if (key === "./alpha" || key === "./beta") {
+			hasNonDefaultExports = true;
+			const parts = key.split("/");
+			if (parts[1] !== "lib") {
+				parts.splice(/* start: */ 1, /* deleteCount: */ 0, "lib");
+				key = parts.join("/");
+			}
 		}
-	}
 
-	exportMap = { ...exportMap, [key]: map };
+		exportMap = { ...exportMap, [key]: map };
+	}
+	pkg.exports = exportMap;
 }
-pkg.exports = exportMap;
 
 // Update ATTW
 if (hasNonDefaultExports) {
-	pkg.scripts["check:are-the-types-wrong"] = "attw --pack";
+	pkg.scripts["check:are-the-types-wrong"] = "--entrypoints . ./lib/alpha ./lib/beta";
 } else {
 	delete pkg.scripts["check:are-the-types-wrong"];
 }
 
 // Update node10 entry points to ESM
+if (fs.existsSync("./lib/index.js")) {
+	pkg.main = "./lib/index.js";
+	pkg.types = "./lib/public.d.ts";
+}
+
+const pkgText = JSON.stringify(pkg, null, "\t");
+fs.writeFileSync(pkgPath, pkgText);
