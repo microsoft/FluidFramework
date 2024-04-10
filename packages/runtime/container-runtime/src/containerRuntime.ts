@@ -31,7 +31,7 @@ import {
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,

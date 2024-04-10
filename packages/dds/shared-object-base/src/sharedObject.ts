@@ -9,7 +9,7 @@ import {
 	IFluidHandle,
 	type IFluidHandleInternal,
 	ITelemetryBaseProperties,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,

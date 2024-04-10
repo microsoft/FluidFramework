@@ -16,9 +16,10 @@ import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidHandleContext } from '@fluidframework/core-interfaces';
-import { IFluidHandleInternal } from '@fluidframework/core-interfaces';
+import { IFluidHandle } from '@fluidframework/core-interfaces/internal';
+import { IFluidHandle as IFluidHandle_2 } from '@fluidframework/core-interfaces';
+import { IFluidHandleContext } from '@fluidframework/core-interfaces/internal';
+import { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
@@ -26,7 +27,7 @@ import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 
 // @internal
-export function bindHandles(value: any, serializer: IFluidSerializer, bind: IFluidHandle): void;
+export function bindHandles(value: any, serializer: IFluidSerializer, bind: IFluidHandle_2): void;
 
 // @internal
 export function createSingleBlobSummary(key: string, content: string | Uint8Array): ISummaryTreeWithStats;
@@ -43,7 +44,7 @@ export class FluidSerializer implements IFluidSerializer {
     // (undocumented)
     protected serializeHandle(handle: IFluidHandleInternal, bind: IFluidHandleInternal): {
         type: string;
-        url: any;
+        url: string;
     };
     // (undocumented)
     stringify(input: unknown, bind: IFluidHandle): string;
@@ -78,13 +79,13 @@ export interface ISharedObjectKind<TSharedObject> {
 }
 
 // @alpha
-export function makeHandlesSerializable(value: any, serializer: IFluidSerializer, bind: IFluidHandle): any;
+export function makeHandlesSerializable(value: any, serializer: IFluidSerializer, bind: IFluidHandle_2): any;
 
 // @alpha
 export function parseHandles(value: any, serializer: IFluidSerializer): any;
 
 // @internal
-export function serializeHandles(value: any, serializer: IFluidSerializer, bind: IFluidHandle): string | undefined;
+export function serializeHandles(value: any, serializer: IFluidSerializer, bind: IFluidHandle_2): string | undefined;
 
 // @alpha
 export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends SharedObjectCore<TEvent> {
@@ -144,7 +145,7 @@ export class SummarySerializer extends FluidSerializer {
     // (undocumented)
     protected serializeHandle(handle: IFluidHandleInternal, bind: IFluidHandleInternal): {
         type: string;
-        url: any;
+        url: string;
     };
 }
 

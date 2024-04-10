@@ -3,16 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import {
+	fluidHandleSymbol,
+	toFluidHandleErased,
+	type IFluidHandle,
+	type IFluidHandleContext,
+	type IFluidHandleErased,
+	type IFluidHandleInternal,
+} from "@fluidframework/core-interfaces/internal";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils/internal";
 
 /**
  * @internal
  */
-export class DDSFuzzHandle implements IFluidHandle<string> {
+export class DDSFuzzHandle implements IFluidHandleInternal<string> {
 	private attached: boolean = false;
 
-	public get IFluidHandle(): IFluidHandle {
+	public get IFluidHandle(): IFluidHandleInternal<string> {
 		return this;
 	}
 
@@ -41,4 +48,8 @@ export class DDSFuzzHandle implements IFluidHandle<string> {
 	}
 
 	public bind(handle: IFluidHandle): void {}
+
+	public get [fluidHandleSymbol](): IFluidHandleErased<string> {
+		return toFluidHandleErased(this);
+	}
 }

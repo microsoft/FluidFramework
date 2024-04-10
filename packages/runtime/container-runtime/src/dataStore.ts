@@ -4,7 +4,7 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { FluidObject, type IFluidHandleInternal } from "@fluidframework/core-interfaces";
+import { FluidObject, type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	AliasResult,

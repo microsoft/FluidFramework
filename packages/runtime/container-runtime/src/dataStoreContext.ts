@@ -8,16 +8,18 @@ import { AttachState, IAudience, IDeltaManager } from "@fluidframework/container
 import {
 	FluidObject,
 	IDisposable,
-	IEvent,
 	IRequest,
 	IResponse,
 	ITelemetryBaseProperties,
-	toFluidHandleInternal,
 } from "@fluidframework/core-interfaces";
-import type { IEvent, IFluidHandleInternal } from "@fluidframework/core-interfaces";
-import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils";
+import {
+	toFluidHandleInternal,
+	type IEvent,
+	type IFluidHandleInternal,
+} from "@fluidframework/core-interfaces/internal";
+import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	IClientDetails,

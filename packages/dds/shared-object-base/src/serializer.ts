@@ -12,7 +12,7 @@ import {
 	type IFluidHandleInternal,
 	isFluidHandle,
 	toFluidHandleInternal,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import {
 	generateHandleContextPath,
 	isSerializedHandle,

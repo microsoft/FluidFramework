@@ -11,7 +11,7 @@ import {
 	IResponse,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
