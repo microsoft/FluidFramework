@@ -110,7 +110,7 @@ function getObjectNode(nodeSchemaIdentifier: string, fields: Map<FieldKey, MapTr
 	};
 }
 
-describe.only("schema validation", () => {
+describe("schema validation", () => {
 	const multiplicityTestCases: [
 		kind: Multiplicity,
 		numberToTest: number,
