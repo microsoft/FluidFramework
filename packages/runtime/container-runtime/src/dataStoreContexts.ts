@@ -94,14 +94,8 @@ export class DataStoreContexts implements Iterable<[string, FluidDataStoreContex
 	private readonly _recentlyDeletedContexts: Map<string, FluidDataStoreContext | undefined> =
 		new Map();
 
-	public async getRecentlyDeletedContextPath(id: string): Promise<string | undefined> {
-		const context = this.get(id);
-		if (context === undefined) {
-			return undefined;
-		}
-
-		const { pkg } = await context.getInitialSnapshotDetails();
-		return pkg.join("/");
+	public getRecentlyDeletedContext(id: string) {
+		return this._recentlyDeletedContexts.get(id);
 	}
 
 	/**

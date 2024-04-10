@@ -19,7 +19,7 @@ import {
 	IOnDemandSummarizeOptions,
 	ISummarizeEventProps,
 	ISummarizer,
-	TombstoneResponseHeaderKey,
+	DeletedResponseHeaderKey,
 } from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { ISweepMessage } from "@fluidframework/container-runtime/internal/test/gc";
@@ -397,9 +397,9 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 					"Expected the Sweep error message",
 				);
 				assert.equal(
-					errorResponse.headers?.[TombstoneResponseHeaderKey],
-					undefined,
-					"DID NOT Expect tombstone header to be set on the response",
+					errorResponse.headers?.[DeletedResponseHeaderKey],
+					true,
+					"Expected 'deleted' header to be set on the response",
 				);
 
 				// This request fails since the datastore is swept
@@ -417,9 +417,9 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 					"Expected the Sweep error message",
 				);
 				assert.equal(
-					summarizerResponse.headers?.[TombstoneResponseHeaderKey],
-					undefined,
-					"DID NOT Expect tombstone header to be set on the response",
+					errorResponse.headers?.[DeletedResponseHeaderKey],
+					true,
+					"Expected 'deleted' header to be set on the response",
 				);
 			},
 		);
@@ -855,12 +855,14 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 					await assert.rejects(
 						async () => handle.get(),
 						(error: any) => {
+							// (see non-exported error interface IResponseException)
 							const correctErrorType = error.code === 404;
-							const correctErrorMessage = error.message as string;
-							return (
-								correctErrorType &&
-								correctErrorMessage.startsWith("DataStore was deleted:")
+							const correctErrorMessage = (error.message as string).startsWith(
+								"DataStore was deleted:",
 							);
+							const correctHeaders =
+								error.underlyingResponseHeaders[DeletedResponseHeaderKey] === true;
+							return correctErrorType && correctErrorMessage && correctHeaders;
 						},
 						`Should not be able to get deleted data store`,
 					);

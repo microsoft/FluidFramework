@@ -385,7 +385,7 @@ export class DataStoreContexts implements Iterable<[string, FluidDataStoreContex
     get(id: string): FluidDataStoreContext | undefined;
     getBoundOrRemoted(id: string, wait: boolean): Promise<FluidDataStoreContext | undefined>;
     // (undocumented)
-    getRecentlyDeletedContextPath(id: string): string | undefined;
+    getRecentlyDeletedContext(id: string): FluidDataStoreContext | undefined;
     getUnbound(id: string): LocalFluidDataStoreContext | undefined;
     // (undocumented)
     has(id: string): boolean;
@@ -399,6 +399,9 @@ export class DataStoreContexts implements Iterable<[string, FluidDataStoreContex
 
 // @alpha (undocumented)
 export const DefaultSummaryConfiguration: ISummaryConfiguration;
+
+// @alpha
+export const DeletedResponseHeaderKey = "wasDeleted";
 
 // @internal
 export function detectOutboundReferences(address: string, contents: unknown, addedOutboundReference: (fromNodePath: string, toNodePath: string) => void): void;

@@ -983,26 +983,31 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				? urlToGCNodePath(originalRequest.url)
 				: dataStoreNodePath;
 
-		this.contexts
-			.getRecentlyDeletedContextPath(id)
-			.then<{ pkg?: string; error?: any }, { pkg?: string; error?: any }>(
-				(pkg) => ({ pkg }),
-				(error) => ({ error }),
-			)
-			.then(({ pkg, error }) => {
-				this.mc.logger.sendErrorEvent(
-					{
-						eventName: `GC_DeletedDataStore_PathInfo`,
-						...tagCodeArtifacts({
-							id: idToLog,
-							pkg,
-						}),
-						callSite,
-					},
-					error,
-				);
-			})
-			.catch(() => {});
+		// Log the package details asynchronously since getInitialSnapshotDetails is async
+		const recentelyDeletedContext = this.contexts.getRecentlyDeletedContext(id);
+		if (recentelyDeletedContext !== undefined) {
+			recentelyDeletedContext
+				.getInitialSnapshotDetails()
+				.then((details) => details.pkg.join("/"))
+				.then(
+					(pkg) => ({ pkg, error: undefined }),
+					(error) => ({ pkg: undefined, error }),
+				)
+				.then(({ pkg, error }) => {
+					this.mc.logger.sendErrorEvent(
+						{
+							eventName: `GC_DeletedDataStore_PathInfo`,
+							...tagCodeArtifacts({
+								id: idToLog,
+								pkg,
+							}),
+							callSite,
+						},
+						error,
+					);
+				})
+				.catch(() => {});
+		}
 
 		this.mc.logger.sendErrorEvent({
 			eventName: `GC_Deleted_DataStore_${deletedLogSuffix}`,
