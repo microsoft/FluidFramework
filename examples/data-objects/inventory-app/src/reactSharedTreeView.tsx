@@ -124,9 +124,9 @@ export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = Impli
 
 	protected async initializingFirstTime() {
 		const tree = this.runtime.createChannel(undefined, factory.type) as ITree;
-		this.#tree = tree.schematize(this.config);
+		this.#tree = await tree.viewWith(this.config);
 		// Initialize the tree content and schema.
-		this.#tree.upgradeSchema();
+		this.#tree.initialize(this.config.initialTree());
 		this.root.set(this.key, tree.handle);
 	}
 
@@ -134,9 +134,10 @@ export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = Impli
 		const handle = this.root.get<IFluidHandle<ITree>>(this.key);
 		if (handle === undefined)
 			throw new Error("map should be populated on creation by 'initializingFirstTime'");
-		// If the tree is incompatible with the config's schema,
-		// the TreeView exposes an error which is explicitly handled by TreeViewComponent.
-		this.#tree = (await handle.get()).schematize(this.config);
+
+		// the TreeView exposes this via `compatibility` which is explicitly handled by TreeViewComponent.
+		const iTree = await handle.get();
+		this.#tree = await iTree.viewWith(this.config);
 	}
 
 	protected async hasInitialized() {
@@ -238,7 +239,7 @@ function TreeErrorComponent({
 					document format can be updated. This may prevent other versions of the
 					application from opening this document.
 				</div>
-				<button onClick={() => upgradeSchema()}>Upgrade</button>;
+				<button onClick={upgradeSchema}>Upgrade</button>;
 			</div>
 		);
 	} else {

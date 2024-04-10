@@ -284,12 +284,6 @@ export class SharedTree
 	public schematize<TRoot extends ImplicitFieldSchema>(
 		config: TreeConfiguration<TRoot>,
 	): TreeView<TRoot> {
-		return this.viewWith(config);
-	}
-
-	public viewWith<TRoot extends ImplicitFieldSchema>(
-		config: TreeConfiguration<TRoot>,
-	): TreeView<TRoot> {
 		const view = new SchematizingSimpleTreeView(
 			this.checkout,
 			config,
@@ -301,6 +295,12 @@ export class SharedTree
 			view.upgradeSchema();
 		}
 		return view;
+	}
+
+	public async viewWith<TRoot extends ImplicitFieldSchema>(
+		config: TreeConfiguration<TRoot>,
+	): Promise<TreeView<TRoot>> {
+		return this.schematize(config);
 	}
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {

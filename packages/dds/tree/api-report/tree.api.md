@@ -1117,7 +1117,7 @@ export interface ITransaction {
 export interface ITree extends IChannel {
     // @deprecated
     schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TRoot>;
-    viewWith<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TRoot>;
+    viewWith<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): Promise<TreeView<TRoot>>;
 }
 
 // @internal

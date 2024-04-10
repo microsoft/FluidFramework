@@ -56,7 +56,9 @@ export interface ITree extends IChannel {
 	 * Additionally, once out of schema content adapters are properly supported (with lazy document updates),
 	 * this initialization could become just another out of schema content adapter and this initialization is no longer a special case.
 	 */
-	viewWith<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TRoot>;
+	viewWith<TRoot extends ImplicitFieldSchema>(
+		config: TreeConfiguration<TRoot>,
+	): Promise<TreeView<TRoot>>;
 
 	/**
 	 * Returns a {@link TreeView} using the provided schema.
@@ -110,7 +112,7 @@ export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFie
  * This schema--known as the view schema--may or may not align the stored schema of the document.
  * Information about discrepancies between the two schemas is available via {@link TreeView.compatibility|compatibility}.
  *
- * Application authors are encouraged to read [schema-compatibility.md](TODO: Write application-author-facing document) and
+ * Application authors are encouraged to read [schema-evolution.md](../../docs/user-facing/schema-evolution.md) and
  * choose a schema compatibility policy that aligns with their application's needs.
  *
  * @privateRemarks
@@ -119,8 +121,6 @@ export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFie
  * Doing that would however complicate trivial "hello world" style example slightly, as well as be a breaking API change.
  * It also seems more complex to handle invalidation with that pattern.
  * Thus this design was chosen at the risk of apps blindly accessing `root` then breaking unexpectedly when the document is incompatible.
- * If this does become a problem,
- * it could be mitigated by adding a `rootOrError` member and deprecating `root` to give users a warning if they might be missing the error checking.
  * @public
  */
 export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposable {

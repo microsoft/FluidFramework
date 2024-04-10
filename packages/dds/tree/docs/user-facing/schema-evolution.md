@@ -155,8 +155,8 @@ Policies implemented here also upgrade a document's schema on open, which doesn'
 The simplest approach from a compatibility standpoint is to only open documents which exactly match the application's current view schema:
 
 ```typescript
-function render(tree: ITree) {
-	const view = tree.viewWith(configuration);
+async function render(tree: ITree) {
+	const view = await tree.viewWith(configuration);
 	const { compatibility } = view;
 	if (!compatibility.isExactMatch) {
 		if (compatibility.canUpgrade) {
@@ -222,8 +222,8 @@ function isApplicationLogicCompatible(compatibility: SchemaCompatibilityStatus):
 	return true;
 }
 
-function render(tree: ITree) {
-	const view = tree.viewWith(configuration);
+async function render(tree: ITree) {
+	const view = await tree.viewWith(configuration);
 	const { compatibility } = view;
 	if (!compatibility.canView) {
 		// View schema allows documents that stored schema does not.
@@ -263,14 +263,14 @@ It's worth noting the experience that an application author gets if they don't b
 In this case, their code likely looks something like this:
 
 ```typescript
-const view = tree.viewWith(configuration);
+const view = await tree.viewWith(configuration);
 renderApplication(view.root);
 ```
 
 When this code attempts to open an older document, accessing `view.root` will throw an error, which might prompt the change:
 
 ```typescript
-const view = tree.viewWith(configuration);
+const view = await tree.viewWith(configuration);
 if (view.compatibility.canUpgrade) {
 	view.upgradeSchema();
 }
@@ -280,7 +280,7 @@ renderApplication(view.root);
 This will allow the local client to open documents, but remote clients who receive the schema change won't react appropriately if they haven't subscribed to the `schemaChanged` event. This prompts:
 
 ```typescript
-const view = tree.viewWith(configuration);
+const view = await tree.viewWith(configuration);
 if (view.compatibility.canUpgrade) {
 	view.upgradeSchema();
 }
