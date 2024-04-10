@@ -38,7 +38,7 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
+		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
 		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib",
 		"bench": "mocha --recursive dist/test --timeout 999999 --perfMode --parentProcess --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js",
 		"build": "fluid-build . --task build",

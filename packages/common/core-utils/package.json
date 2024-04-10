@@ -48,7 +48,7 @@
 	"types": "./dist/core-utils-public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
+		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
 		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib",
 		"bench": "mocha --recursive \"lib/test/**/*.spec.*js\" --timeout 999999 --perfMode --parentProcess --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js",
 		"bench:profile": "mocha --recursive \"lib/test/**/*.spec.*js\" --v8-prof --v8-logfile=profile.log --v8-no-logfile-per-isolate --timeout 999999 --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js && node --prof-process profile.log > profile.txt && rimraf profile.log && echo See results in profile.txt",

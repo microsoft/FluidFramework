@@ -48,7 +48,7 @@
 	"types": "./dist/shared-object-base-public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
+		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
 		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib",
 		"bench": "ts-node bench/src/index.ts",
 		"build": "fluid-build . --task build",
