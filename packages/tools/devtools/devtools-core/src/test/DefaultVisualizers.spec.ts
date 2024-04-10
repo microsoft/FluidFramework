@@ -11,7 +11,7 @@ import { SharedCell } from "@fluidframework/cell/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { SharedMap } from "@fluidframework/map";
+import { SharedMap } from "@fluidframework/map/internal";
 import { SharedDirectory } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";

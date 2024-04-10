@@ -34,7 +34,7 @@ import {
 import { Deferred } from "@fluidframework/core-utils/internal";
 import type { SharedCounter } from "@fluidframework/counter/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
-import type { ISharedMap } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map/internal";
 import type { ISharedDirectory, SharedDirectory } from "@fluidframework/map/internal";
 import {
 	ReferenceType,
