@@ -5,15 +5,14 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	MapTree,
-	StoredSchemaCollection,
-	TreeFieldStoredSchema,
+	type MapTree,
+	type TreeFieldStoredSchema,
 	LeafNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
 	Multiplicity,
+	type SchemaAndPolicy,
 } from "../../core/index.js";
-import { FullSchemaPolicy } from "../modular-schema/index.js";
 import { allowsValue } from "../valueUtilities.js";
 
 export const enum SchemaValidationErrors {
@@ -31,11 +30,10 @@ export const enum SchemaValidationErrors {
 
 export function isNodeInSchema(
 	node: MapTree,
-	nodeSchemaCollection: StoredSchemaCollection,
-	schemaPolicy: FullSchemaPolicy,
+	schemaAndPolicy: SchemaAndPolicy,
 ): SchemaValidationErrors {
 	// Validate the schema declared by the node exists
-	const schema = nodeSchemaCollection.nodeSchema.get(node.type);
+	const schema = schemaAndPolicy.schema.nodeSchema.get(node.type);
 	if (schema === undefined) {
 		return SchemaValidationErrors.Node_MissingSchema;
 	}
@@ -58,24 +56,14 @@ export function isNodeInSchema(
 			if (fieldSchema === undefined) {
 				return SchemaValidationErrors.ObjectNode_FieldNotInSchema;
 			}
-			const fieldInSchemaResult = isFieldInSchema(
-				field,
-				fieldSchema,
-				nodeSchemaCollection,
-				schemaPolicy,
-			);
+			const fieldInSchemaResult = isFieldInSchema(field, fieldSchema, schemaAndPolicy);
 			if (fieldInSchemaResult !== SchemaValidationErrors.NoError) {
 				return fieldInSchemaResult;
 			}
 		}
 	} else if (schema instanceof MapNodeStoredSchema) {
 		for (const field of node.fields.values()) {
-			const fieldInSchemaResult = isFieldInSchema(
-				field,
-				schema.mapFields,
-				nodeSchemaCollection,
-				schemaPolicy,
-			);
+			const fieldInSchemaResult = isFieldInSchema(field, schema.mapFields, schemaAndPolicy);
 			if (fieldInSchemaResult !== SchemaValidationErrors.NoError) {
 				return fieldInSchemaResult;
 			}
@@ -90,11 +78,10 @@ export function isNodeInSchema(
 export function isFieldInSchema(
 	childNodes: MapTree[],
 	schema: TreeFieldStoredSchema,
-	nodeSchemaCollection: StoredSchemaCollection,
-	schemaPolicy: FullSchemaPolicy,
+	schemaAndPolicy: SchemaAndPolicy,
 ): SchemaValidationErrors {
 	// Validate that the field kind is handled by the schema policy
-	const kind = schemaPolicy.fieldKinds.get(schema.kind);
+	const kind = schemaAndPolicy.policy.fieldKinds.get(schema.kind);
 	if (kind === undefined) {
 		return SchemaValidationErrors.Field_KindNotInSchemaPolicy;
 	}
@@ -111,11 +98,7 @@ export function isFieldInSchema(
 		}
 
 		// Validate the node complies with the type it declares to be.
-		const nodeInSchemaResult = isNodeInSchema(
-			node,
-			nodeSchemaCollection,
-			schemaPolicy,
-		);
+		const nodeInSchemaResult = isNodeInSchema(node, schemaAndPolicy);
 		if (nodeInSchemaResult !== SchemaValidationErrors.NoError) {
 			return nodeInSchemaResult;
 		}

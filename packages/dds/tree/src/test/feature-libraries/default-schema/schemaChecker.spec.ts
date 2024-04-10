@@ -193,7 +193,10 @@ describe.only("schema validation", () => {
 								nodeSchema: new Map([[node.type, testCaseData.schema]]),
 							};
 							assert.equal(
-								isNodeInSchema(node, schemaCollection, emptySchemaPolicy),
+								isNodeInSchema(node, {
+									schema: schemaCollection,
+									policy: emptySchemaPolicy,
+								}),
 								expectedResult,
 							);
 						});
@@ -203,7 +206,10 @@ describe.only("schema validation", () => {
 
 			it(`not in schema due to missing schema entry in schemaCollection`, () => {
 				assert.equal(
-					isNodeInSchema(numberNode, emptySchemaCollection, emptySchemaPolicy),
+					isNodeInSchema(numberNode, {
+						schema: emptySchemaCollection,
+						policy: emptySchemaPolicy,
+					}),
 					SchemaValidationErrors.Node_MissingSchema,
 				);
 			});
@@ -217,7 +223,10 @@ describe.only("schema validation", () => {
 				};
 				numberNodeWithFields.fields.set(brand("prop1"), [stringNode]);
 				assert.equal(
-					isNodeInSchema(numberNodeWithFields, schemaCollection, emptySchemaPolicy),
+					isNodeInSchema(numberNodeWithFields, {
+						schema: schemaCollection,
+						policy: emptySchemaPolicy,
+					}),
 					SchemaValidationErrors.LeafNode_FieldsNotAllowed,
 				);
 			});
@@ -250,14 +259,14 @@ describe.only("schema validation", () => {
 
 				// In schema while empty
 				assert.equal(
-					isNodeInSchema(mapNode, schemaCollection, schemaPolicy),
+					isNodeInSchema(mapNode, { schema: schemaCollection, policy: schemaPolicy }),
 					SchemaValidationErrors.NoError,
 				);
 
 				// In schema after adding a number node
 				mapNode.fields.set(brand("prop1"), [numberNode]);
 				assert.equal(
-					isNodeInSchema(mapNode, schemaCollection, schemaPolicy),
+					isNodeInSchema(mapNode, { schema: schemaCollection, policy: schemaPolicy }),
 					SchemaValidationErrors.NoError,
 				);
 			});
@@ -286,21 +295,21 @@ describe.only("schema validation", () => {
 
 				// In schema while empty
 				assert.equal(
-					isNodeInSchema(mapNode, schemaCollection, schemaPolicy),
+					isNodeInSchema(mapNode, { schema: schemaCollection, policy: schemaPolicy }),
 					SchemaValidationErrors.NoError,
 				);
 
 				// In schema after adding a number node
 				mapNode.fields.set(brand("prop1"), [numberNode]);
 				assert.equal(
-					isNodeInSchema(mapNode, schemaCollection, schemaPolicy),
+					isNodeInSchema(mapNode, { schema: schemaCollection, policy: schemaPolicy }),
 					SchemaValidationErrors.NoError,
 				);
 
 				// In schema after adding a string node
 				mapNode.fields.set(brand("prop2"), [stringNode]);
 				assert.equal(
-					isNodeInSchema(mapNode, schemaCollection, schemaPolicy),
+					isNodeInSchema(mapNode, { schema: schemaCollection, policy: schemaPolicy }),
 					SchemaValidationErrors.NoError,
 				);
 			});
@@ -321,7 +330,10 @@ describe.only("schema validation", () => {
 				);
 
 				assert.equal(
-					isNodeInSchema(mapNode_oneNumber, emptySchemaCollection, schemaPolicy),
+					isNodeInSchema(mapNode_oneNumber, {
+						schema: emptySchemaCollection,
+						policy: schemaPolicy,
+					}),
 					SchemaValidationErrors.Node_MissingSchema,
 				);
 			});
@@ -346,7 +358,10 @@ describe.only("schema validation", () => {
 				};
 
 				assert.equal(
-					isNodeInSchema(mapNode_oneNumber, schemaCollection, emptySchemaPolicy),
+					isNodeInSchema(mapNode_oneNumber, {
+						schema: schemaCollection,
+						policy: emptySchemaPolicy,
+					}),
 					SchemaValidationErrors.Field_KindNotInSchemaPolicy,
 				);
 			});
@@ -381,16 +396,18 @@ describe.only("schema validation", () => {
 
 				// In schema with one number node
 				assert.equal(
-					isNodeInSchema(mapNode, schemaCollection, schemaPolicy),
+					isNodeInSchema(mapNode, { schema: schemaCollection, policy: schemaPolicy }),
 					SchemaValidationErrors.NoError,
 				);
 
 				// Not in schema after adding a string node
 				mapNode.fields.set(brand("prop2"), [stringNode]);
 				assert.equal(
-					isNodeInSchema(mapNode, schemaCollection, schemaPolicy),
+					isNodeInSchema(mapNode, { schema: schemaCollection, policy: schemaPolicy }),
 					SchemaValidationErrors.Field_NodeTypeNotAllowed,
 				);
+
+				// mapNode.fields.set(brand("prop2"), []);
 			});
 		});
 
@@ -449,7 +466,7 @@ describe.only("schema validation", () => {
 
 				// Not in schema before the node has any fields defined (thus doesn't match the schema)
 				assert.equal(
-					isNodeInSchema(objectNode, schemaCollection, schemaPolicy),
+					isNodeInSchema(objectNode, { schema: schemaCollection, policy: schemaPolicy }),
 					SchemaValidationErrors.ObjectNode_FieldCountMismatch,
 				);
 
@@ -460,7 +477,7 @@ describe.only("schema validation", () => {
 				objectNode.fields.set(brand("nullProp"), []);
 				objectNode.fields.set(brand("fluidHandleProp"), []);
 				assert.equal(
-					isNodeInSchema(objectNode, schemaCollection, schemaPolicy),
+					isNodeInSchema(objectNode, { schema: schemaCollection, policy: schemaPolicy }),
 					SchemaValidationErrors.NoError,
 				);
 
@@ -471,7 +488,7 @@ describe.only("schema validation", () => {
 				objectNode.fields.set(brand("nullProp"), [nullNode]);
 				objectNode.fields.set(brand("fluidHandleProp"), [fluidHandleNode]);
 				assert.equal(
-					isNodeInSchema(objectNode, schemaCollection, schemaPolicy),
+					isNodeInSchema(objectNode, { schema: schemaCollection, policy: schemaPolicy }),
 					SchemaValidationErrors.NoError,
 				);
 
@@ -482,7 +499,7 @@ describe.only("schema validation", () => {
 				objectNode.fields.set(brand("nullProp"), []);
 				objectNode.fields.set(brand("fluidHandleProp"), []);
 				assert.equal(
-					isNodeInSchema(objectNode, schemaCollection, schemaPolicy),
+					isNodeInSchema(objectNode, { schema: schemaCollection, policy: schemaPolicy }),
 					SchemaValidationErrors.NoError,
 				);
 			});
@@ -507,7 +524,7 @@ describe.only("schema validation", () => {
 				};
 
 				assert.equal(
-					isNodeInSchema(objectNode, emptySchemaCollection, schemaPolicy),
+					isNodeInSchema(objectNode, { schema: schemaCollection, policy: schemaPolicy }),
 					SchemaValidationErrors.Node_MissingSchema,
 				);
 			});
@@ -533,7 +550,10 @@ describe.only("schema validation", () => {
 				};
 
 				assert.equal(
-					isNodeInSchema(objectNode, schemaCollection, emptySchemaPolicy),
+					isNodeInSchema(objectNode, {
+						schema: schemaCollection,
+						policy: emptySchemaPolicy,
+					}),
 					SchemaValidationErrors.Field_KindNotInSchemaPolicy,
 				);
 			});
@@ -557,7 +577,10 @@ describe.only("schema validation", () => {
 				};
 
 				assert.equal(
-					isNodeInSchema(objectNode, schemaCollection, emptySchemaPolicy),
+					isNodeInSchema(objectNode, {
+						schema: schemaCollection,
+						policy: emptySchemaPolicy,
+					}),
 					SchemaValidationErrors.ObjectNode_FieldNotInSchema,
 				);
 			});
@@ -584,7 +607,10 @@ describe.only("schema validation", () => {
 				};
 
 				assert.equal(
-					isNodeInSchema(objectNode, schemaCollection, emptySchemaPolicy),
+					isNodeInSchema(objectNode, {
+						schema: schemaCollection,
+						policy: emptySchemaPolicy,
+					}),
 					SchemaValidationErrors.ObjectNode_FieldCountMismatch,
 				);
 			});
@@ -603,7 +629,10 @@ describe.only("schema validation", () => {
 
 			// FieldKinds.required is used above but missing in the schema policy
 			assert.equal(
-				isFieldInSchema([numberNode], fieldSchema, schemaCollection, emptySchemaPolicy),
+				isFieldInSchema([numberNode], fieldSchema, {
+					schema: schemaCollection,
+					policy: emptySchemaPolicy,
+				}),
 				SchemaValidationErrors.Field_KindNotInSchemaPolicy,
 			);
 		});
@@ -623,24 +652,28 @@ describe.only("schema validation", () => {
 
 			// Confirm that the field supports number nodes
 			assert.equal(
-				isFieldInSchema([numberNode], fieldSchema, schemaCollection, schemaPolicy),
+				isFieldInSchema([numberNode], fieldSchema, {
+					schema: schemaCollection,
+					policy: schemaPolicy,
+				}),
 				SchemaValidationErrors.NoError,
 			);
 
 			// Field does not support string nodes
 			assert.equal(
-				isFieldInSchema([stringNode], fieldSchema, schemaCollection, schemaPolicy),
+				isFieldInSchema([stringNode], fieldSchema, {
+					schema: schemaCollection,
+					policy: schemaPolicy,
+				}),
 				SchemaValidationErrors.Field_NodeTypeNotAllowed,
 			);
 
 			// Still fails even if there are other valid nodes for the field
 			assert.equal(
-				isFieldInSchema(
-					[numberNode, stringNode, numberNode],
-					fieldSchema,
-					schemaCollection,
-					schemaPolicy,
-				),
+				isFieldInSchema([numberNode, stringNode, numberNode], fieldSchema, {
+					schema: schemaCollection,
+					policy: schemaPolicy,
+				}),
 				SchemaValidationErrors.Field_NodeTypeNotAllowed,
 			);
 		});
@@ -687,7 +720,10 @@ describe.only("schema validation", () => {
 				}
 
 				assert.equal(
-					isFieldInSchema(childNodes, fieldSchema, schemaCollection, schemaPolicy),
+					isFieldInSchema(childNodes, fieldSchema, {
+						schema: schemaCollection,
+						policy: schemaPolicy,
+					}),
 					expectedResult,
 				);
 			});
