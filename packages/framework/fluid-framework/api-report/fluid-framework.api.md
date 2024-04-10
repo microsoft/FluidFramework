@@ -373,10 +373,10 @@ export interface SchemaIncompatible {
 // @public
 export type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
-// @public @deprecated
+// @alpha
 export const SharedMap: ISharedObjectKind<ISharedMap>;
 
-// @public @deprecated
+// @alpha
 export type SharedMap = ISharedMap;
 
 // @public
