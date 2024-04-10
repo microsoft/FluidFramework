@@ -401,7 +401,7 @@ describe("SharedDirectory fuzz", () => {
 		validationStrategy: { type: "fixedInterval", interval: defaultOptions.validateInterval },
 		reconnectProbability: 0.15,
 		numberOfClients: 3,
-				clientJoinOptions: {
+		clientJoinOptions: {
 			// Note: if tests are slow, we may want to tune this down. This mimics behavior before this suite
 			// was refactored to use the DDS fuzz harness.
 			maxNumberOfClients: Number.MAX_SAFE_INTEGER,
@@ -421,7 +421,7 @@ describe("SharedDirectory fuzz", () => {
 				type: "random",
 				probability: 0.4,
 			},
-						rebaseProbability: 0.2,
+			rebaseProbability: 0.2,
 			reconnectProbability: 0.5,
 			containerRuntimeOptions: {
 				flushMode: FlushMode.TurnBased,

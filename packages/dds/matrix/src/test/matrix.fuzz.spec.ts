@@ -260,7 +260,7 @@ describe("Matrix fuzz tests", function () {
 	const baseOptions: Partial<DDSFuzzSuiteOptions> = {
 		defaultTestCount: 100,
 		numberOfClients: 3,
-				clientJoinOptions: {
+		clientJoinOptions: {
 			maxNumberOfClients: 6,
 			clientAddProbability: 0.1,
 		},
