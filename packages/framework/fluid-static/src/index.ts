@@ -33,3 +33,4 @@ export {
 	type Myself,
 	type IProvideRootDataObject,
 } from "./types.js";
+export { type IServiceClient } from "./serviceClient.js";

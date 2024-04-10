@@ -117,6 +117,18 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 }
 
 // @public
+export interface IServiceClient<TServices> {
+    createContainer<const TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema): Promise<{
+        container: IFluidContainer<TContainerSchema>;
+        services: TServices;
+    }>;
+    getContainer<const TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema): Promise<{
+        container: IFluidContainer<TContainerSchema>;
+        services: TServices;
+    }>;
+}
+
+// @public
 export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> = ISharedObjectKind<T> | DataObjectClass<T>;
 
 // @public

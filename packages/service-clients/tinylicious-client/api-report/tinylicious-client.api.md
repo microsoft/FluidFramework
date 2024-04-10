@@ -8,6 +8,7 @@ import { ContainerSchema } from '@fluidframework/fluid-static';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 import { IMember } from '@fluidframework/fluid-static';
 import { IServiceAudience } from '@fluidframework/fluid-static';
+import { IServiceClient } from '@fluidframework/fluid-static';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
@@ -21,7 +22,7 @@ export { ITelemetryBaseLogger }
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
 
 // @internal
-class TinyliciousClient {
+class TinyliciousClient implements IServiceClient<TinyliciousContainerServices> {
     constructor(props?: TinyliciousClientProps | undefined);
     createContainer<TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema): Promise<{
         container: IFluidContainer<TContainerSchema>;

@@ -20,6 +20,7 @@ import {
 	ContainerAttachProps,
 	type ContainerSchema,
 	IFluidContainer,
+	type IServiceClient,
 } from "@fluidframework/fluid-static";
 import {
 	IRootDataObject,
@@ -109,7 +110,7 @@ function wrapConfigProvider(baseConfigProvider?: IConfigProviderBase): IConfigPr
  * @sealed
  * @beta
  */
-export class OdspClient {
+export class OdspClient implements IServiceClient<OdspContainerServices> {
 	private readonly documentServiceFactory: IDocumentServiceFactory;
 	private readonly urlResolver: OdspDriverUrlResolver;
 	private readonly configProvider: IConfigProviderBase | undefined;
@@ -124,6 +125,9 @@ export class OdspClient {
 		this.configProvider = wrapConfigProvider(properties.configProvider);
 	}
 
+	/**
+	 * {@inheritdoc @fluidframework/fluid-static#IServiceClient.createContainer}
+	 */
 	public async createContainer<T extends ContainerSchema>(
 		containerSchema: T,
 	): Promise<{
@@ -147,6 +151,9 @@ export class OdspClient {
 		return { container: fluidContainer as IFluidContainer<T>, services };
 	}
 
+	/**
+	 * {@inheritdoc @fluidframework/fluid-static#IServiceClient.getContainer}
+	 */
 	public async getContainer<T extends ContainerSchema>(
 		id: string,
 		containerSchema: T,

@@ -16,7 +16,11 @@ import {
 	type IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import { applyStorageCompression } from "@fluidframework/driver-utils/internal";
-import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
+import {
+	type ContainerSchema,
+	type IFluidContainer,
+	type IServiceClient,
+} from "@fluidframework/fluid-static";
 import {
 	type IRootDataObject,
 	createDOProviderContainerRuntimeFactory,
@@ -87,7 +91,7 @@ function wrapConfigProvider(baseConfigProvider?: IConfigProviderBase): IConfigPr
  * when running with local tenantId, have it be backed by a local Azure Fluid Relay instance.
  * @public
  */
-export class AzureClient {
+export class AzureClient implements IServiceClient<AzureContainerServices> {
 	private readonly documentServiceFactory: IDocumentServiceFactory;
 	private readonly urlResolver: IUrlResolver;
 	private readonly configProvider: IConfigProviderBase | undefined;
@@ -117,11 +121,7 @@ export class AzureClient {
 	}
 
 	/**
-	 * Creates a new detached container instance in the Azure Fluid Relay.
-	 * @typeparam TContainerSchema - Used to infer the the type of 'initialObjects' in the returned container.
-	 * (normally not explicitly specified.)
-	 * @param containerSchema - Container schema for the new container.
-	 * @returns New detached container instance along with associated services.
+	 * {@inheritdoc @fluidframework/fluid-static#IServiceClient.createContainer}
 	 */
 	public async createContainer<const TContainerSchema extends ContainerSchema>(
 		containerSchema: TContainerSchema,
@@ -198,12 +198,7 @@ export class AzureClient {
 	}
 
 	/**
-	 * Accesses the existing container given its unique ID in the Azure Fluid Relay.
-	 * @typeparam TContainerSchema - Used to infer the the type of 'initialObjects' in the returned container.
-	 * (normally not explicitly specified.)
-	 * @param id - Unique ID of the container in Azure Fluid Relay.
-	 * @param containerSchema - Container schema used to access data objects in the container.
-	 * @returns Existing container instance along with associated services.
+	 * {@inheritdoc @fluidframework/fluid-static#IServiceClient.getContainer}
 	 */
 	public async getContainer<TContainerSchema extends ContainerSchema>(
 		id: string,

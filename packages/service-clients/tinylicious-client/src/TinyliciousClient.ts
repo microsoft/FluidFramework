@@ -16,7 +16,11 @@ import {
 	type IDocumentServiceFactory,
 	type IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
+import {
+	type ContainerSchema,
+	type IFluidContainer,
+	type IServiceClient,
+} from "@fluidframework/fluid-static";
 import {
 	type IRootDataObject,
 	createDOProviderContainerRuntimeFactory,
@@ -41,7 +45,7 @@ import { type TinyliciousClientProps, type TinyliciousContainerServices } from "
  * @see {@link https://fluidframework.com/docs/testing/tinylicious/}
  * @internal
  */
-export class TinyliciousClient {
+export class TinyliciousClient implements IServiceClient<TinyliciousContainerServices> {
 	private readonly documentServiceFactory: IDocumentServiceFactory;
 	private readonly urlResolver: IUrlResolver;
 
@@ -61,9 +65,7 @@ export class TinyliciousClient {
 	}
 
 	/**
-	 * Creates a new detached container instance in Tinylicious server.
-	 * @param containerSchema - Container schema for the new container.
-	 * @returns New detached container instance along with associated services.
+	 * {@inheritdoc @fluidframework/fluid-static#IServiceClient.createContainer}
 	 */
 	public async createContainer<TContainerSchema extends ContainerSchema>(
 		containerSchema: TContainerSchema,
@@ -110,10 +112,7 @@ export class TinyliciousClient {
 	}
 
 	/**
-	 * Accesses the existing container given its unique ID in the tinylicious server.
-	 * @param id - Unique ID of the container.
-	 * @param containerSchema - Container schema used to access data objects in the container.
-	 * @returns Existing container instance along with associated services.
+	 * {@inheritdoc @fluidframework/fluid-static#IServiceClient.getContainer}
 	 */
 	public async getContainer<TContainerSchema extends ContainerSchema>(
 		id: string,
