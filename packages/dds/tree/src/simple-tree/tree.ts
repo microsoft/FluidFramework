@@ -5,8 +5,9 @@
 
 import { IChannel } from "@fluidframework/datastore-definitions";
 
-import { CommitMetadata, Revertible } from "../core/index.js";
+import { CommitMetadata } from "../core/index.js";
 import { ISubscribable } from "../events/index.js";
+import { RevertibleFactory } from "../shared-tree/index.js";
 import { IDisposable } from "../util/index.js";
 
 import {
@@ -178,13 +179,6 @@ export interface TreeViewEvents {
 	rootChanged(): void;
 
 	/**
-	 * Fired when a revertible made on this view is disposed.
-	 *
-	 * @param revertible - The revertible that was disposed.
-	 */
-	revertibleDisposed(revertible: Revertible): void;
-
-	/**
 	 * Fired when:
 	 * - a local commit is applied outside of a transaction
 	 * - a local transaction is committed
@@ -197,5 +191,5 @@ export interface TreeViewEvents {
 	 * @param getRevertible - a function provided that allows users to get a revertible for the commit that was applied. If not provided,
 	 * this commit is not revertible.
 	 */
-	commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
+	commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
 }

@@ -98,7 +98,8 @@ describe("Fuzz - composed vs individual changes", () => {
 		clear: 1,
 		insert: 1,
 		remove: 2,
-		move: 2,
+		intraFieldMove: 2,
+		crossFieldMove: 2,
 		fieldSelection: {
 			optional: 1,
 			required: 1,
