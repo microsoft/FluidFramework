@@ -179,14 +179,6 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:docs": {
-				"dependsOn": [
-					"...",
-					"api-extractor:commonjs",
-					"api-extractor:esnext"
-				],
-				"script": false
-			},
 			"build:test": [
 				"...",
 				"@fluidframework/merge-tree#build:test"

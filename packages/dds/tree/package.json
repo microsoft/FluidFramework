@@ -158,12 +158,6 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:docs": {
-				"dependsOn": [
-					"build:esnext"
-				],
-				"script": false
-			},
 			"build:test:cjs": [
 				"...",
 				"@fluidframework/id-compressor#build:test:cjs"

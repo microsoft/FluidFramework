@@ -154,13 +154,6 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:docs": {
-				"dependsOn": [
-					"...",
-					"api-extractor:commonjs"
-				],
-				"script": false
-			},
 			"build:test:jest:cjs": [
 				"tsc",
 				"build:test:utils:cjs"

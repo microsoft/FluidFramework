@@ -197,18 +197,6 @@
 		"sinon": "^17.0.1",
 		"typescript": "~5.1.6"
 	},
-	"fluidBuild": {
-		"tasks": {
-			"build:docs": {
-				"dependsOn": [
-					"...",
-					"api-extractor:commonjs",
-					"api-extractor:esnext"
-				],
-				"script": false
-			}
-		}
-	},
 	"typeValidation": {
 		"broken": {
 			"InterfaceDeclaration_IContainerExperimental": {
