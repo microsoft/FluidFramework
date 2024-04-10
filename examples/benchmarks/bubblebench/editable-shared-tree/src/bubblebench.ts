@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	AllowedUpdateType,
@@ -11,7 +11,8 @@ import {
 	ISharedTree,
 	SharedTreeFactory,
 	fail,
-} from "@fluidframework/tree";
+} from "@fluidframework/tree/internal";
+
 import { AppState } from "./appState.js";
 import { appSchemaData, rootAppStateSchema } from "./schema.js";
 

@@ -8,7 +8,7 @@ import { AttachState, ICriticalContainerError } from "@fluidframework/container-
 import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
-} from "@fluidframework/container-runtime-definitions";
+} from "@fluidframework/container-runtime-definitions/internal";
 import {
 	IFluidHandleContext,
 	type IFluidHandleErased,
@@ -16,8 +16,9 @@ import {
 	fluidHandleSymbol,
 	toFluidHandleErased,
 } from "@fluidframework/core-interfaces";
-import { assert, Deferred } from "@fluidframework/core-utils";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils/internal";
 import {
 	ICreateBlobResponse,
 	ISequencedDocumentMessage,
@@ -33,7 +34,7 @@ import {
 	createResponseError,
 	generateHandleContextPath,
 	responseToException,
-} from "@fluidframework/runtime-utils";
+} from "@fluidframework/runtime-utils/internal";
 import {
 	GenericError,
 	LoggingError,
@@ -41,10 +42,9 @@ import {
 	PerformanceEvent,
 	createChildMonitoringContext,
 	wrapError,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils";
 import { IBlobMetadata } from "./metadata.js";
 
 /**
@@ -113,7 +113,6 @@ type ICreateBlobResponseWithTTL = ICreateBlobResponse & Partial<Record<"minTTLIn
 
 interface PendingBlob {
 	blob: ArrayBufferLike;
-	uploading?: boolean;
 	opsent?: boolean;
 	storageId?: string;
 	handleP: Deferred<BlobHandle>;
@@ -123,7 +122,7 @@ interface PendingBlob {
 	attached?: boolean;
 	acked?: boolean;
 	abortSignal?: AbortSignal;
-	pendingStashed?: boolean;
+	stashedUpload?: boolean;
 }
 
 export interface IPendingBlobs {
@@ -132,7 +131,6 @@ export interface IPendingBlobs {
 		storageId?: string;
 		uploadTime?: number;
 		minTTLInSeconds?: number;
-		attached?: boolean;
 		acked?: boolean;
 	};
 }
@@ -140,6 +138,16 @@ export interface IPendingBlobs {
 export interface IBlobManagerEvents {
 	(event: "noPendingBlobs", listener: () => void);
 }
+
+const stashedPendingBlobOverrides: Pick<
+	PendingBlob,
+	"stashedUpload" | "storageId" | "minTTLInSeconds" | "uploadTime"
+> = {
+	stashedUpload: true,
+	storageId: undefined,
+	minTTLInSeconds: undefined,
+	uploadTime: undefined,
+} as const;
 
 export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	public static readonly basePath = "_blobs";
@@ -178,10 +186,21 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private readonly sendBlobAttachOp: (localId: string, storageId?: string) => void;
 	private stopAttaching: boolean = false;
 
-	constructor(
-		private readonly routeContext: IFluidHandleContext,
-		snapshot: IBlobManagerLoadInfo,
-		private readonly getStorage: () => IDocumentStorageService,
+	private readonly routeContext: IFluidHandleContext;
+	private readonly getStorage: () => IDocumentStorageService;
+	// Called when a blob node is requested. blobPath is the path of the blob's node in GC's graph.
+	// blobPath's format - `/<BlobManager.basePath>/<blobId>`.
+	private readonly blobRequested: (blobPath: string) => void;
+	// Called to check if a blob has been deleted by GC.
+	// blobPath's format - `/<BlobManager.basePath>/<blobId>`.
+	private readonly isBlobDeleted: (blobPath: string) => boolean;
+	private readonly runtime: IBlobManagerRuntime;
+	private readonly closeContainer: (error?: ICriticalContainerError) => void;
+
+	constructor(props: {
+		readonly routeContext: IFluidHandleContext;
+		snapshot: IBlobManagerLoadInfo;
+		readonly getStorage: () => IDocumentStorageService;
 		/**
 		 * Submit a BlobAttach op. When a blob is uploaded, there is a short grace period before which the blob is
 		 * deleted. The BlobAttach op notifies the server that blob is in use. The server will then not delete the
@@ -192,18 +211,36 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		 * knowledge of which they cannot request the blob from storage. It's important that this op is sequenced
 		 * before any ops that reference the local ID, otherwise, an invalid handle could be added to the document.
 		 */
-		sendBlobAttachOp: (localId: string, storageId?: string) => void,
+		sendBlobAttachOp: (localId: string, storageId?: string) => void;
 		// Called when a blob node is requested. blobPath is the path of the blob's node in GC's graph.
 		// blobPath's format - `/<BlobManager.basePath>/<blobId>`.
-		private readonly blobRequested: (blobPath: string) => void,
+		readonly blobRequested: (blobPath: string) => void;
 		// Called to check if a blob has been deleted by GC.
 		// blobPath's format - `/<BlobManager.basePath>/<blobId>`.
-		private readonly isBlobDeleted: (blobPath: string) => boolean,
-		private readonly runtime: IBlobManagerRuntime,
-		stashedBlobs: IPendingBlobs = {},
-		private readonly closeContainer: (error?: ICriticalContainerError) => void,
-	) {
+		readonly isBlobDeleted: (blobPath: string) => boolean;
+		readonly runtime: IBlobManagerRuntime;
+		stashedBlobs: IPendingBlobs | undefined;
+		readonly closeContainer: (error?: ICriticalContainerError) => void;
+	}) {
 		super();
+		const {
+			routeContext,
+			snapshot,
+			getStorage,
+			sendBlobAttachOp,
+			blobRequested,
+			isBlobDeleted,
+			runtime,
+			stashedBlobs,
+			closeContainer,
+		} = props;
+		this.routeContext = routeContext;
+		this.getStorage = getStorage;
+		this.blobRequested = blobRequested;
+		this.isBlobDeleted = isBlobDeleted;
+		this.runtime = runtime;
+		this.closeContainer = closeContainer;
+
 		this.mc = createChildMonitoringContext({
 			logger: this.runtime.logger,
 			namespace: "BlobManager",
@@ -212,39 +249,34 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		this.redirectTable = this.load(snapshot);
 
 		// Begin uploading stashed blobs from previous container instance
-		Object.entries(stashedBlobs).forEach(([localId, entry]) => {
+		Object.entries(stashedBlobs ?? {}).forEach(([localId, entry]) => {
+			const { acked, storageId, minTTLInSeconds, uploadTime } = entry;
 			const blob = stringToBuffer(entry.blob, "base64");
-			const attached = entry.attached;
-			const acked = entry.acked;
-			const storageId = entry.storageId; // entry.storageId = response.id
-			if (entry.minTTLInSeconds && entry.uploadTime) {
-				const timeLapseSinceLocalUpload = (Date.now() - entry.uploadTime) / 1000;
+			const pendingEntry: PendingBlob = {
+				blob,
+				opsent: true,
+				handleP: new Deferred(),
+				storageId,
+				uploadP: undefined,
+				uploadTime,
+				minTTLInSeconds,
+				attached: true,
+				acked,
+			};
+			this.pendingBlobs.set(localId, pendingEntry);
+
+			if (storageId !== undefined && minTTLInSeconds && uploadTime) {
+				const timeLapseSinceLocalUpload = (Date.now() - uploadTime) / 1000;
 				// stashed entries with more than half-life in storage will not be reuploaded
-				if (entry.minTTLInSeconds - timeLapseSinceLocalUpload > entry.minTTLInSeconds / 2) {
-					this.pendingBlobs.set(localId, {
-						blob,
-						uploading: false,
-						opsent: true,
-						handleP: new Deferred(),
-						storageId,
-						uploadP: undefined,
-						uploadTime: entry.uploadTime,
-						minTTLInSeconds: entry.minTTLInSeconds,
-						attached,
-						acked,
-					});
+				if (minTTLInSeconds - timeLapseSinceLocalUpload > minTTLInSeconds / 2) {
 					return;
 				}
 			}
+
 			this.pendingBlobs.set(localId, {
-				blob,
-				uploading: true,
-				handleP: new Deferred(),
+				...pendingEntry,
+				...stashedPendingBlobOverrides,
 				uploadP: this.uploadBlob(localId, blob),
-				attached,
-				acked,
-				opsent: true,
-				pendingStashed: true,
 			});
 		});
 
@@ -306,16 +338,19 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		});
 	}
 
-	public hasPendingStashedBlobs(): boolean {
-		return Array.from(this.pendingBlobs.values()).some((e) => e.pendingStashed === true);
+	public hasPendingStashedUploads(): boolean {
+		return Array.from(this.pendingBlobs.values()).some((e) => e.stashedUpload === true);
 	}
 	/**
 	 * Upload blobs added while offline. This must be completed before connecting and resubmitting ops.
 	 */
-	public async processStashedChanges() {
+	public async trackPendingStashedUploads(): Promise<void> {
 		const pendingUploads = Array.from(this.pendingBlobs.values())
-			.filter((e) => e.pendingStashed === true)
+			.filter((e) => e.stashedUpload === true)
 			.map(async (e) => e.uploadP);
+		if (pendingUploads.length === 0) {
+			return;
+		}
 		await PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{
@@ -442,7 +477,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		const localId = uuid();
 		const pendingEntry: PendingBlob = {
 			blob,
-			uploading: true,
 			handleP: new Deferred(),
 			uploadP: this.uploadBlob(localId, blob),
 			attached: false,
@@ -535,9 +569,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			return;
 		}
 		assert(
-			entry.uploading === true,
+			entry.storageId === undefined,
 			0x386 /* Must have pending blob entry for uploaded blob */,
 		);
+		entry.stashedUpload = undefined;
 		entry.storageId = response.id;
 		entry.uploadTime = Date.now();
 		entry.minTTLInSeconds = response.minTTLInSeconds;
@@ -599,9 +634,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			if (pendingEntry?.abortSignal?.aborted) {
 				this.deletePendingBlob(localId);
 				return;
-			}
-			if (pendingEntry?.pendingStashed) {
-				pendingEntry.pendingStashed = false;
 			}
 		}
 		assert(blobId !== undefined, 0x12a /* "Missing blob id on metadata" */);
@@ -940,7 +972,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					blobs[id] = {
 						blob: bufferToString(entry.blob, "base64"),
 						storageId: entry.storageId,
-						attached: entry.attached,
 						acked: entry.acked,
 						minTTLInSeconds: entry.minTTLInSeconds,
 						uploadTime: entry.uploadTime,

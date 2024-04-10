@@ -9,9 +9,9 @@ import { PropertyProxy } from "@fluid-experimental/property-proxy";
 import {
 	defaultInspectorTableChildGetter,
 	defaultInspectorTableNameGetter,
-} from "../src/InspectorTable";
-import { IColumns, IInspectorRow, IInspectorSearchMatch } from "../src/InspectorTableTypes";
-import { search, showNextResult } from "../src/utils";
+} from "../src/InspectorTable.js";
+import type { IColumns, IInspectorRow, IInspectorSearchMatch } from "../src/InspectorTableTypes.js";
+import { search, showNextResult } from "../src/utils.js";
 
 import {
 	dummyChild,
@@ -27,7 +27,7 @@ import {
 	getExpandedMap,
 	getHash,
 	initializeWorkspace,
-} from "./testUtils";
+} from "./testUtils.js";
 
 describe("InspectorTable", () => {
 	let workspace;

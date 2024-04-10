@@ -22,11 +22,12 @@ import {
 	PlugDisconnected20Regular,
 	Warning20Regular,
 } from "@fluentui/react-icons";
-import { type ConnectionStateChangeLogEntry } from "@fluidframework/devtools-core";
+import { type ConnectionStateChangeLogEntry } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
-import { ThemeContext, ThemeOption } from "../ThemeHelper";
-import { LabelCellLayout } from "./utility-components";
+import { ThemeContext, ThemeOption } from "../ThemeHelper.js";
+
+import { LabelCellLayout } from "./utility-components/index.js";
 
 /**
  * Returns the text color based on the current color theme of the devtools.

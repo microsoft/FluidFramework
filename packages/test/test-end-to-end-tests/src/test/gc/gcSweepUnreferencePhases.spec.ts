@@ -4,27 +4,29 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
-	createTestConfigProvider,
-	createSummarizer,
-	ITestContainerConfig,
-	ITestObjectProvider,
-	summarizeNow,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
-import {
-	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
+	describeCompat,
 } from "@fluid-private/test-version-utils";
-import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
-import { delay } from "@fluidframework/core-utils";
-import { gcTreeKey } from "@fluidframework/runtime-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { IGCRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { delay } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { IContainer } from "@fluidframework/container-definitions";
+import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import {
-	getGCStateFromSummary,
+	ITestContainerConfig,
+	ITestObjectProvider,
+	createSummarizer,
+	createTestConfigProvider,
+	summarizeNow,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
+
+import {
 	getGCDeletedStateFromSummary,
+	getGCStateFromSummary,
 	getGCTombstoneStateFromSummary,
 } from "./gcTestSummaryUtils.js";
 

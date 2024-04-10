@@ -11,6 +11,7 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"type": "module",
 	"scripts": {
 		"build": "concurrently npm:build:api npm:build:md-magic && npm run hugo",
 		"build:api": "npm run download:api && npm run build:api-documentation && npm run build:redirects",
@@ -40,50 +41,38 @@
 	"dependencies": {
 		"@fluid-tools/api-markdown-documenter": "^0.11.3",
 		"@fluid-tools/markdown-magic": "file:../tools/markdown-magic",
-		"@fluidframework/build-common": "^2.0.0",
-		"@rushstack/node-core-library": "^3.59.4",
-		"@tylerbu/dl-cli": "1.1.2-tylerbu-0",
-		"@vscode/codicons": "0.0.33",
-		"chalk": "^4.1.2",
-		"concurrently": "^8.2.1",
+		"@fluidframework/build-common": "^2.0.3",
+		"@rushstack/node-core-library": "^4.0.2",
+		"@vscode/codicons": "0.0.35",
+		"chalk": "^5.3.0",
+		"concurrently": "^8.2.2",
 		"deepdash": "^5.3.9",
 		"download": "8.0.0",
-		"fs-extra": "^11.1.1",
-		"glob": "^7.2.3",
+		"fs-extra": "^11.2.0",
+		"glob": "^10.3.12",
 		"http-server": "^14.1.1",
 		"hugo-extended": "^0.113.0",
 		"js-yaml": "^4.1.0",
-		"linkcheck-bin": "3.0.0-0",
+		"linkcheck-bin": "3.0.0-1",
 		"markdown-magic": "npm:@tylerbu/markdown-magic@2.4.0-tylerbu-1",
 		"markdown-magic-package-json": "^2.0.2",
 		"markdown-magic-package-scripts": "^1.2.2",
 		"markdown-magic-template": "^1.0.1",
-		"markdownlint-cli2": "^0.8.1",
+		"markdownlint-cli2": "^0.12.1",
 		"markdownlint-rule-emphasis-style": "^1.0.1",
 		"markdownlint-rule-github-internal-links": "^0.1.0",
-		"markdownlint-rule-helpers": "^0.20.0",
-		"node-fetch": "^2.6.9",
-		"prettier": "~2.8.8",
-		"prettier-plugin-go-template": "^0.0.13",
-		"rimraf": "^5.0.1",
-		"start-server-and-test": "^2.0.0"
+		"markdownlint-rule-helpers": "^0.25.0",
+		"node-fetch": "^3.3.2",
+		"prettier": "~3.2.5",
+		"prettier-plugin-go-template": "^0.0.15",
+		"rimraf": "^5.0.5",
+		"start-server-and-test": "^2.0.3"
 	},
 	"pnpm": {
-		"overrides": {
-			"qs": "^6.11.0"
-		},
 		"peerDependencyRules": {
 			"ignoreMissing": [
 				"eslint",
 				"typescript"
-			]
-		},
-		"updateConfig": {
-			"ignoreDependencies": [
-				"chalk",
-				"cpy",
-				"glob",
-				"node-fetch"
 			]
 		}
 	}

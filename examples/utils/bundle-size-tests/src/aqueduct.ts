@@ -7,10 +7,10 @@ import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { DirectoryFactory } from "@fluidframework/map";
-import { SharedStringFactory } from "@fluidframework/sequence";
+} from "@fluidframework/aqueduct/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { DirectoryFactory } from "@fluidframework/map/internal";
+import { SharedStringFactory } from "@fluidframework/sequence/internal";
 
 export function apisToBundle() {
 	class BundleTestDo extends DataObject {}

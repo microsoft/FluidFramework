@@ -4,17 +4,17 @@
  */
 
 import { performance } from "@fluid-internal/client-utils";
-import { ISignalEnvelope } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentDeltaConnection,
 	IDocumentServicePolicies,
 	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	DeltaStreamConnectionForbiddenError,
 	NonRetryableError,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils/internal";
 import {
 	HostStoragePolicy,
@@ -24,7 +24,7 @@ import {
 	InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 	TokenFetchOptions,
-} from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	IClient,
 	ISequencedDocumentMessage,
@@ -34,7 +34,8 @@ import {
 	IFluidErrorBase,
 	MonitoringContext,
 	normalizeError,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
+
 import { policyLabelsUpdatesSignalType } from "./contracts.js";
 import { EpochTracker } from "./epochTracker.js";
 import { IOdspCache } from "./odspCache.js";
@@ -219,9 +220,13 @@ export class OdspDelayLoadedDeltaStream {
 				this.currentConnection = connection;
 				return connection;
 			} catch (error) {
-				this.clearJoinSessionTimer();
-				this.cache.sessionJoinCache.remove(this.joinSessionKey);
-
+				// Remove join session information from cache only if it is an error related to connect_document and not a socket related error.
+				// Otherwise keep it in cache so that this session can be re-used after disconnection.
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+				if ((error as any).errorFrom === "connect_document_error") {
+					this.clearJoinSessionTimer();
+					this.cache.sessionJoinCache.remove(this.joinSessionKey);
+				}
 				const normalizedError = this.annotateConnectionError(
 					error,
 					"createDeltaConnection",

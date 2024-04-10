@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/client-utils",
-	"version": "2.0.0-rc.2.0.0",
+	"version": "2.0.0-rc.3.0.0",
 	"description": "Not intended for use outside the Fluid Framework.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -34,12 +34,12 @@
 	"types": "dist/indexNode.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
-		"api-extractor:esnext": "api-extractor run --local",
+		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "fluid-build . --task api",
+		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:test": "concurrently npm:build:test:mocha npm:build:test:jest npm:build:test:types",
 		"build:test:jest": "fluid-tsc commonjs --project ./src/test/jest/tsconfig.cjs.json",
@@ -48,7 +48,6 @@
 		"build:test:mocha:esm": "tsc --project ./src/test/mocha/tsconfig.json",
 		"build:test:types": "tsc --project ./src/test/types/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
-		"check:biome": "biome check .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
@@ -56,7 +55,6 @@
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "fluid-build --task format .",
-		"format:biome": "biome check --apply .",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
@@ -101,18 +99,18 @@
 		"sha.js": "^2.4.11"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.13.3",
-		"@biomejs/biome": "^1.6.1",
+		"@arethetypeswrong/cli": "^0.15.2",
+		"@biomejs/biome": "^1.6.2",
 		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.0.0-internal.8.0.0",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.34.0",
+		"@fluid-tools/build-cli": "^0.35.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.34.0",
+		"@fluidframework/build-tools": "^0.35.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@microsoft/api-extractor": "^7.42.3",
 		"@types/base64-js": "^1.3.0",
 		"@types/jest": "29.5.3",
-		"@types/jest-environment-puppeteer": "workspace:",
+		"@types/jest-environment-puppeteer": "workspace:~",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"@types/rewire": "^2.5.28",
@@ -150,14 +148,6 @@
 				"build:test:jest",
 				"build:test:types"
 			],
-			"build:docs": {
-				"dependsOn": [
-					"...",
-					"api-extractor:commonjs",
-					"api-extractor:esnext"
-				],
-				"script": false
-			},
 			"build:test:jest": [
 				"tsc"
 			],

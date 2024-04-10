@@ -4,7 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { unreachableCase } from "@fluidframework/core-utils";
+
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+
+import { EmptyKey, FieldKey } from "../../../core/index.js";
 import {
 	SchemaBuilder,
 	jsonArray,
@@ -13,8 +16,6 @@ import {
 	jsonSchema,
 	leaf,
 } from "../../../domains/index.js";
-
-import { EmptyKey, FieldKey } from "../../../core/index.js";
 import {
 	FlexTreeField,
 	FlexTreeMapNode,
@@ -32,7 +33,6 @@ import {
 } from "../../../feature-libraries/flex-tree/flexTreeTypes.js";
 import {
 	Any,
-	ArrayToUnion,
 	FieldKinds,
 	FlexAllowedTypes,
 	FlexFieldNodeSchema,
@@ -52,7 +52,7 @@ import {
 	requireTrue,
 } from "../../../util/index.js";
 
-describe("editableTreeTypes", () => {
+describe("flexTreeTypes", () => {
 	/**
 	 * Example showing narrowing and exhaustive matches.
 	 */
@@ -342,8 +342,6 @@ describe("editableTreeTypes", () => {
 			type _6 = requireTrue<
 				areSafelyAssignable<FlexTreeTypedNodeUnion<FlexAllowedTypes>, FlexTreeNode>
 			>;
-
-			type z = ArrayToUnion<[FlexTreeNode]>;
 		}
 	}
 

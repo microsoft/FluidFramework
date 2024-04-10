@@ -4,13 +4,13 @@
  */
 
 import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { unreachableCase } from "@fluidframework/core-utils";
-import { ISnapshot } from "@fluidframework/driver-definitions";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	getDocAttributesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
-} from "@fluidframework/driver-utils";
-import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/driver-utils/internal";
+import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
 import { getGitType } from "@fluidframework/protocol-base";
 import {
 	ISnapshotTree,
@@ -19,8 +19,10 @@ import {
 	type SummaryObject,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
+
 import {
 	IOdspSummaryPayload,
 	IOdspSummaryTree,
@@ -281,7 +283,6 @@ export async function createNewFluidContainerCore<T>(args: {
 				validateResponseCallback?.(fetchResponse.content);
 
 				event.end({
-					headers: Object.keys(headers).length > 0 ? true : undefined,
 					attempts: options.refresh ? 2 : 1,
 					...fetchResponse.propsToLog,
 				});

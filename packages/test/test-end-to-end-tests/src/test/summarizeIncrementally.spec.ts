@@ -4,8 +4,19 @@
  */
 
 import { strict as assert } from "assert";
+
+import {
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+} from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ISummarizer } from "@fluidframework/container-runtime/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { IContainerRuntimeBase, channelsTreeName } from "@fluidframework/runtime-definitions";
+import {
+	IContainerRuntimeBase,
+	channelsTreeName,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestObjectProvider,
 	createSummarizer,
@@ -13,14 +24,7 @@ import {
 	getDataStoreEntryPointBackCompat,
 	summarizeNow,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
-import {
-	ITestDataObject,
-	TestDataObjectType,
-	describeCompat,
-} from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
-import { ISummarizer } from "@fluidframework/container-runtime";
+} from "@fluidframework/test-utils/internal";
 
 /**
  * Validates that the data store summary is as expected.
@@ -99,7 +103,7 @@ function validateDDSStateInSummary(
  */
 describeCompat(
 	"Incremental summaries for data store and DDS",
-	"1.3.7" /** equivalent to FullCompat. Currently used for testing purposes on ADO pipelines */,
+	"FullCompat",
 	(getTestObjectProvider, apis) => {
 		const { SharedDirectory } = apis.dds;
 		let provider: ITestObjectProvider;

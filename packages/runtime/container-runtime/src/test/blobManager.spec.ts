@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { v4 as uuid } from "uuid";
 
 import {
 	IsoBuffer,
@@ -13,7 +12,7 @@ import {
 	gitHashFile,
 } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
+import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -21,8 +20,8 @@ import {
 	IFluidHandle,
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces";
-import { Deferred } from "@fluidframework/core-utils";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { Deferred } from "@fluidframework/core-utils/internal";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	IClientDetails,
 	ISequencedDocumentMessage,
@@ -33,7 +32,9 @@ import {
 	MonitoringContext,
 	createChildLogger,
 	mixinMonitoringContext,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
+import { v4 as uuid } from "uuid";
+
 import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager.js";
 
 const MIN_TTL = 24 * 60 * 60; // same as ODSP
@@ -82,17 +83,18 @@ export class MockRuntime
 		super();
 		this.attachState = attached ? AttachState.Attached : AttachState.Detached;
 		this.ops = stashed[0];
-		this.blobManager = new BlobManager(
-			undefined as any, // routeContext
+		this.blobManager = new BlobManager({
+			routeContext: undefined as any,
 			snapshot,
-			() => this.getStorage(),
-			(localId: string, blobId?: string) => this.sendBlobAttachOp(localId, blobId),
-			() => undefined,
-			(blobPath: string) => this.isBlobDeleted(blobPath),
-			this,
-			stashed[1],
-			() => (this.closed = true),
-		);
+			getStorage: () => this.getStorage(),
+			sendBlobAttachOp: (localId: string, blobId?: string) =>
+				this.sendBlobAttachOp(localId, blobId),
+			blobRequested: () => undefined,
+			isBlobDeleted: (blobPath: string) => this.isBlobDeleted(blobPath),
+			runtime: this,
+			stashedBlobs: stashed[1],
+			closeContainer: () => (this.closed = true),
+		});
 	}
 
 	public get storage() {
@@ -238,7 +240,7 @@ export class MockRuntime
 	}
 
 	public async processStashed(processStashedWithRetry?: boolean) {
-		const uploadP = this.blobManager.processStashedChanges();
+		const uploadP = this.blobManager.trackPendingStashedUploads();
 		this.processing = true;
 		if (processStashedWithRetry) {
 			await this.processBlobs(false, false, 0);

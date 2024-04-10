@@ -15,6 +15,7 @@ import {
 	storedSchemaDecodeDispatcher,
 } from "../../core/index.js";
 import { brand, fail, fromErased } from "../../util/index.js";
+
 import { Format } from "./format.js";
 
 export function encodeRepo(repo: TreeStoredSchema): Format {

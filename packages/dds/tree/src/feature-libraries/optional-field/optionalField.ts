@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
 	ChangeAtomId,
 	ChangeAtomIdMap,
@@ -16,6 +17,8 @@ import {
 	TaggedChange,
 	areEqualChangeAtomIds,
 	makeChangeAtomId,
+	taggedAtomId,
+	taggedOptAtomId,
 } from "../../core/index.js";
 import {
 	IdAllocator,
@@ -31,14 +34,14 @@ import {
 	FieldChangeRebaser,
 	FieldEditor,
 	NodeChangeComposer,
-	NodeChangeInverter,
 	NodeChangePruner,
 	NodeChangeRebaser,
-	NodeChangeset,
 	NodeExistenceState,
+	NodeId,
 	RelevantRemovedRootsFromChild,
 	ToDelta,
 } from "../modular-schema/index.js";
+
 import {
 	ChildChange,
 	Move,
@@ -153,7 +156,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	): OptionalChangeset => {
 		const { srcToDst, dstToSrc } = getBidirectionalMaps(change1.moves, revision1);
 		const change1FieldSrc = taggedOptRegister(change1.valueReplace?.src, revision1);
-		const change1FieldDst = taggedOptAtomId(change1.valueReplace?.dst, revision1);
+		const change1FieldDst = taggedOptAtomId(getEffectfulDst(change1.valueReplace), revision1);
 
 		const change2FieldSrc = taggedOptRegister(change2.valueReplace?.src, revision2);
 		let composedFieldSrc: RegisterId | undefined;
@@ -161,10 +164,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			if (change2FieldSrc === "self") {
 				composedFieldSrc = change1FieldSrc ?? change2FieldSrc;
 			} else if (
-				change1.valueReplace !== undefined &&
-				isReplaceEffectful(change1.valueReplace) &&
 				change1FieldDst !== undefined &&
-				areEqualRegisterIds(change2FieldSrc, change1FieldDst)
+				areEqualRegisterIds(change1FieldDst, change2FieldSrc)
 			) {
 				composedFieldSrc = "self";
 			} else {
@@ -179,7 +180,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			composedFieldSrc = change1FieldSrc;
 		}
 
-		const childChanges2ByOriginalId = new RegisterMap<NodeChangeset>();
+		const childChanges2ByOriginalId = new RegisterMap<NodeId>();
 		for (const [id, change] of change2.childChanges) {
 			if (id === "self") {
 				if (change1FieldSrc !== undefined) {
@@ -280,7 +281,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 	invert: (
 		{ revision, change }: TaggedChange<OptionalChangeset>,
-		invertChild: NodeChangeInverter,
 		isRollback: boolean,
 		genId: IdAllocator<ChangesetLocalId>,
 	): OptionalChangeset => {
@@ -297,7 +297,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			invertedMoves.push([taggedDst, taggedSrc]);
 		}
 		if (change.valueReplace !== undefined) {
-			if (change.valueReplace.isEmpty === false) {
+			const effectfulDst = getEffectfulDst(change.valueReplace);
+			if (effectfulDst !== undefined) {
 				invertIdMap.set("self", tagAtomId(change.valueReplace.dst));
 			}
 			if (change.valueReplace.src !== undefined) {
@@ -309,7 +310,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			moves: invertedMoves,
 			childChanges: childChanges.map(([id, childChange]) => {
 				const taggedId = tagRegister(id);
-				return [invertIdMap.get(taggedId) ?? taggedId, invertChild(childChange)];
+				return [invertIdMap.get(taggedId) ?? taggedId, childChange];
 			}),
 		};
 
@@ -365,7 +366,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			forwardMap.set(tagAtomId(src), tagAtomId(dst));
 		}
 		if (overChange.valueReplace !== undefined) {
-			if (overChange.valueReplace.isEmpty === false) {
+			const effectfulDst = getEffectfulDst(overChange.valueReplace);
+			if (effectfulDst !== undefined) {
 				forwardMap.set("self", tagAtomId(overChange.valueReplace.dst));
 			}
 			if (overChange.valueReplace.src !== undefined) {
@@ -379,7 +381,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			rebasedMoves.push([src, newDst ?? dst]);
 		}
 
-		const overChildChangesBySrc = new RegisterMap<NodeChangeset>();
+		const overChildChangesBySrc = new RegisterMap<NodeId>();
 		for (const [id, childChange] of overChange.childChanges) {
 			overChildChangesBySrc.set(tagRegister(id) ?? id, childChange);
 		}
@@ -530,25 +532,17 @@ function isReplaceEffectful(replace: Replace): replace is EffectfulReplace {
 	return !replace.isEmpty || replace.src !== undefined;
 }
 
+function getEffectfulDst(replace: Replace | undefined): ChangeAtomId | undefined {
+	return replace === undefined || replace.isEmpty || replace.src === "self"
+		? undefined
+		: replace.dst;
+}
+
 function taggedOptRegister(
 	id: RegisterId | undefined,
 	revision: RevisionTag | undefined,
 ): RegisterId | undefined {
 	return id !== undefined ? taggedRegister(id, revision) : undefined;
-}
-
-export function taggedAtomId(id: ChangeAtomId, revision: RevisionTag | undefined): ChangeAtomId {
-	return makeChangeAtomId(id.localId, id.revision ?? revision);
-}
-
-export function taggedOptAtomId(
-	id: ChangeAtomId | undefined,
-	revision: RevisionTag | undefined,
-): ChangeAtomId | undefined {
-	if (id === undefined) {
-		return undefined;
-	}
-	return taggedAtomId(id, revision);
 }
 
 export function taggedRegister(id: RegisterId, revision: RevisionTag | undefined): RegisterId {
@@ -610,7 +604,7 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 		},
 	}),
 
-	buildChildChange: (index: number, childChange: NodeChangeset): OptionalChangeset => {
+	buildChildChange: (index: number, childChange: NodeId): OptionalChangeset => {
 		assert(index === 0, 0x404 /* Optional fields only support a single child node */);
 		return {
 			moves: [],

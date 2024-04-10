@@ -3,25 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+
 import { ChangeAtomId, RevisionTag, TaggedChange } from "../../core/index.js";
 import { RangeQueryResult, brand } from "../../util/index.js";
-import { CrossFieldManager, CrossFieldTarget } from "../modular-schema/index.js";
+import { CrossFieldManager, CrossFieldTarget, NodeId } from "../modular-schema/index.js";
+
 import { MoveMarkEffect } from "./helperTypes.js";
 import { CellMark, Mark, MarkEffect, MoveId, MoveIn, MoveOut } from "./types.js";
 import { isAttachAndDetachEffect, splitMark, splitMarkEffect } from "./utils.js";
 
-export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
+export type MoveEffectTable = CrossFieldManager<MoveEffect>;
 
 /**
  * Changes to be applied to a move mark.
  */
-export interface MoveEffect<T> {
+export interface MoveEffect {
 	/**
 	 * Node changes which should be applied to this mark.
 	 * If this mark already has node changes, `modifyAfter` should be composed as later changes.
 	 */
-	modifyAfter?: T;
+	modifyAfter?: NodeId;
 
 	/**
 	 * Only used during rebasing.
@@ -32,7 +34,7 @@ export interface MoveEffect<T> {
 	/**
 	 * Rebased changes for a node which has been moved to the position of this mark.
 	 */
-	rebasedChanges?: T;
+	rebasedChanges?: NodeId;
 
 	/**
 	 * The ID of the new endpoint associated with this mark.
@@ -40,7 +42,7 @@ export interface MoveEffect<T> {
 	endpoint?: ChangeAtomId;
 }
 
-interface MoveEffectWithBasis<T> extends MoveEffect<T> {
+interface MoveEffectWithBasis extends MoveEffect {
 	/**
 	 * The ID for the start of the range this MoveEffect was created for.
 	 * This is used, for example, to correctly interpret `MoveEffect.endpoint` field.
@@ -53,43 +55,43 @@ export enum MoveEnd {
 	Dest,
 }
 
-export interface MovePartition<TNodeChange> {
+export interface MovePartition {
 	id: MoveId;
 
 	// Undefined means the partition is the same size as the input.
 	count?: number;
-	replaceWith?: Mark<TNodeChange>[];
-	modifyAfter?: TaggedChange<TNodeChange>;
+	replaceWith?: Mark[];
+	modifyAfter?: TaggedChange<NodeId>;
 }
 
-export function setMoveEffect<T>(
-	moveEffects: MoveEffectTable<T>,
+export function setMoveEffect(
+	moveEffects: MoveEffectTable,
 	target: CrossFieldTarget,
 	revision: RevisionTag | undefined,
 	id: MoveId,
 	count: number,
-	effect: MoveEffect<T>,
+	effect: MoveEffect,
 	invalidate: boolean = true,
 ) {
-	(effect as MoveEffectWithBasis<T>).basis = id;
+	(effect as MoveEffectWithBasis).basis = id;
 	moveEffects.set(target, revision, id, count, effect, invalidate);
 }
 
-export function getMoveEffect<T>(
-	moveEffects: MoveEffectTable<T>,
+export function getMoveEffect(
+	moveEffects: MoveEffectTable,
 	target: CrossFieldTarget,
 	revision: RevisionTag | undefined,
 	id: MoveId,
 	count: number,
 	addDependency: boolean = true,
-): RangeQueryResult<MoveEffect<T>> {
+): RangeQueryResult<MoveEffect> {
 	const result = moveEffects.get(target, revision, id, count, addDependency);
 	return result.value !== undefined
-		? { ...result, value: adjustMoveEffectBasis(result.value as MoveEffectWithBasis<T>, id) }
+		? { ...result, value: adjustMoveEffectBasis(result.value as MoveEffectWithBasis, id) }
 		: result;
 }
 
-export type MoveMark<T> = CellMark<MoveMarkEffect, T>;
+export type MoveMark = CellMark<MoveMarkEffect>;
 
 export function isMoveMark(effect: MarkEffect): effect is MoveMarkEffect {
 	return isMoveOut(effect) || isMoveIn(effect);
@@ -114,7 +116,7 @@ export function getMoveIn(effect: MarkEffect): MoveIn | undefined {
 	}
 }
 
-function adjustMoveEffectBasis<T>(effect: MoveEffectWithBasis<T>, newBasis: MoveId): MoveEffect<T> {
+function adjustMoveEffectBasis(effect: MoveEffectWithBasis, newBasis: MoveId): MoveEffect {
 	if (effect.basis === newBasis) {
 		return effect;
 	}
@@ -138,11 +140,11 @@ function adjustMoveEffectBasis<T>(effect: MoveEffectWithBasis<T>, newBasis: Move
 	return adjusted;
 }
 
-export function splitMarkForMoveEffects<T>(
-	mark: Mark<T>,
+export function splitMarkForMoveEffects(
+	mark: Mark,
 	revision: RevisionTag | undefined,
-	effects: MoveEffectTable<T>,
-): Mark<T>[] {
+	effects: MoveEffectTable,
+): Mark[] {
 	const length = getFirstMoveEffectLength(mark, mark.count, revision, effects);
 	return length < mark.count ? splitMark(mark, length) : [mark];
 }
@@ -151,7 +153,7 @@ function getFirstMoveEffectLength(
 	markEffect: MarkEffect,
 	count: number,
 	revision: RevisionTag | undefined,
-	effects: MoveEffectTable<unknown>,
+	effects: MoveEffectTable,
 ): number {
 	if (isMoveMark(markEffect)) {
 		return getMoveEffect(

@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-
 import {
 	Button,
 	FluentProvider,
@@ -14,7 +12,6 @@ import {
 	tokens,
 } from "@fluentui/react-components";
 import { ArrowSync24Regular } from "@fluentui/react-icons";
-
 import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	type ContainerKey,
@@ -27,17 +24,18 @@ import {
 	type ISourcedDevtoolsMessage,
 	type InboundHandlers,
 	handleIncomingMessage,
-} from "@fluidframework/devtools-core";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/devtools-core/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import React from "react";
 
-import { useMessageRelay } from "./MessageRelayContext";
+import { useMessageRelay } from "./MessageRelayContext.js";
 import {
 	ConsoleVerboseLogger,
 	LoggerContext,
 	TelemetryOptInLogger,
 	useLogger,
-} from "./TelemetryUtils";
-import { ThemeContext, getFluentUIThemeToUse } from "./ThemeHelper";
+} from "./TelemetryUtils.js";
+import { ThemeContext, getFluentUIThemeToUse } from "./ThemeHelper.js";
 import {
 	ContainerDevtoolsView,
 	LandingView,
@@ -48,7 +46,7 @@ import {
 	SettingsView,
 	TelemetryView,
 	Waiting,
-} from "./components";
+} from "./components/index.js";
 
 const loggingContext = "INLINE(DevtoolsView)";
 

@@ -22,6 +22,7 @@ export {
 	DescribeCompatSuite,
 	describeCompat,
 	ITestObjectProviderOptions,
+	type CompatType,
 } from "./describeCompat.js";
 export {
 	DescribeE2EDocSuite,
@@ -64,3 +65,4 @@ export {
 	SkippedTestWithDriverType,
 	SkippedErrorExpectingTestWithDriverType,
 } from "./itSkipsOnFailure.js";
+export { getRequestedVersion } from "./versionUtils.js";

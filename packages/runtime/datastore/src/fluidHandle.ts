@@ -10,7 +10,7 @@ import {
 	fluidHandleSymbol,
 	toFluidHandleErased,
 } from "@fluidframework/core-interfaces";
-import { generateHandleContextPath } from "@fluidframework/runtime-utils";
+import { generateHandleContextPath } from "@fluidframework/runtime-utils/internal";
 
 /**
  * Handle for a shared {@link @fluidframework/core-interfaces#FluidObject}.

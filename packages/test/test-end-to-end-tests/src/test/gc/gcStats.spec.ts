@@ -4,24 +4,30 @@
  */
 
 import { strict as assert } from "assert";
+
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { delay } from "@fluidframework/core-utils";
-import { ContainerRuntime, IGCRuntimeOptions, IGCStats } from "@fluidframework/container-runtime";
+import {
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+} from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import {
+	ContainerRuntime,
+	IGCRuntimeOptions,
+	IGCStats,
+} from "@fluidframework/container-runtime/internal";
+import { delay } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
-import { calculateStats, mergeStats } from "@fluidframework/runtime-utils";
+import { calculateStats, mergeStats } from "@fluidframework/runtime-utils/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
 	createTestConfigProvider,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
-import {
-	describeCompat,
-	ITestDataObject,
-	TestDataObjectType,
-} from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+} from "@fluidframework/test-utils/internal";
+
 import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils.js";
 
 /**

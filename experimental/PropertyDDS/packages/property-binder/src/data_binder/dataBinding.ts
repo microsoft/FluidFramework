@@ -666,7 +666,7 @@ export class DataBinding {
 					referencedPathTokenTypes.shift();
 				}
 				let absolutePathTokenTypes = [];
-				console.assert(in_referenceProperty);
+				console.assert(in_referenceProperty !== undefined);
 				// the path to which the referenced path is relative to is actually the _parent_ of the referenceProperty!
 				let absolutePath = in_referenceProperty!.getParent()!.getAbsolutePath().substr(1);
 				let tokenizedAbsolutePath = PathHelper.tokenizePathString(

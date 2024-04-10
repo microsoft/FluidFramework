@@ -3,26 +3,28 @@
  * Licensed under the MIT License.
  */
 
+import { IContainer } from '@fluidframework/container-definitions/internal';
+import { TestObjectProvider } from '@fluidframework/test-utils/internal';
 import { expect } from 'chai';
-import { IContainer } from '@fluidframework/container-definitions';
-import { TestObjectProvider } from '@fluidframework/test-utils';
-import { fail } from '../../Common.js';
-import { ChangeInternal, Edit, WriteFormat } from '../../persisted-types/index.js';
-import type { EditLog } from '../../EditLog.js';
-import { SharedTree } from '../../SharedTree.js';
+
 import { Change, StablePlace } from '../../ChangeTypes.js';
-import { TreeView } from '../../TreeView.js';
+import { fail } from '../../Common.js';
+import type { EditLog } from '../../EditLog.js';
 import { EditId, NodeId, TraitLabel } from '../../Identifiers.js';
+import { SharedTree } from '../../SharedTree.js';
+import { TreeView } from '../../TreeView.js';
+import { ChangeInternal, Edit, WriteFormat } from '../../persisted-types/index.js';
+
+import { SimpleTestTree } from './TestNode.js';
 import {
-	applyNoop,
-	getEditLogInternal,
 	LocalServerSharedTreeTestingComponents,
 	LocalServerSharedTreeTestingOptions,
+	applyNoop,
+	getEditLogInternal,
 	setUpTestTree,
 	stabilizeEdit,
 	withContainerOffline,
 } from './TestUtilities.js';
-import { SimpleTestTree } from './TestNode.js';
 
 /**
  * Runs a test suite for SharedTree's ability to apply pending local state stashed by the host.
@@ -48,7 +50,7 @@ export function runPendingLocalStateTests(
 			const testObjectProvider = await applyStashedOp(WriteFormat.v0_1_1, WriteFormat.v0_0_2);
 
 			// https://dev.azure.com/fluidframework/internal/_workitems/edit/3347
-			const events = testObjectProvider.logger.reportAndClearTrackedEvents();
+			const events = testObjectProvider.tracker.reportAndClearTrackedEvents();
 			expect(events.unexpectedErrors.length).to.equal(1);
 			expect(events.unexpectedErrors[0].eventName).to.equal(
 				'fluid:telemetry:ContainerRuntime:Outbox:ReferenceSequenceNumberMismatch'

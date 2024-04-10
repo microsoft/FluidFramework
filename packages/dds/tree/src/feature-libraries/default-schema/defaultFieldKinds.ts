@@ -9,25 +9,28 @@ import {
 	DeltaFieldChanges,
 	FieldKindIdentifier,
 	forbiddenFieldKindIdentifier,
+	Multiplicity,
 } from "../../core/index.js";
 import { fail } from "../../util/index.js";
 import {
 	FieldChangeHandler,
 	FieldEditor,
+	FieldKindConfiguration,
+	FieldKindConfigurationEntry,
 	FieldKindWithEditor,
 	FlexFieldKind,
 	ToDelta,
 	allowsTreeSchemaIdentifierSuperset,
 	referenceFreeFieldChangeRebaser,
 } from "../modular-schema/index.js";
-import { Multiplicity } from "../multiplicity.js";
 import {
 	OptionalChangeset,
-	noChangeCodecFamily,
 	optionalChangeHandler,
 	optionalFieldEditor,
 } from "../optional-field/index.js";
 import { sequenceFieldChangeHandler } from "../sequence-field/index.js";
+
+import { noChangeCodecFamily } from "./noChangeCodecs.js";
 
 /**
  * ChangeHandler that only handles no-op / identity changes.
@@ -65,8 +68,7 @@ export const optional = new FieldKindWithEditor(
 	Multiplicity.Optional,
 	optionalChangeHandler,
 	(types, other) =>
-		(other.kind.identifier === sequence.identifier ||
-			other.kind.identifier === optionalIdentifier) &&
+		(other.kind === sequence.identifier || other.kind === optionalIdentifier) &&
 		allowsTreeSchemaIdentifierSuperset(types, other.types),
 	new Set([]),
 );
@@ -92,10 +94,10 @@ export const required = new FieldKindWithEditor(
 	Multiplicity.Single,
 	valueChangeHandler,
 	(types, other) =>
-		(other.kind.identifier === sequence.identifier ||
-			other.kind.identifier === requiredIdentifier ||
-			other.kind.identifier === optional.identifier ||
-			other.kind.identifier === nodeKey.identifier) &&
+		(other.kind === sequence.identifier ||
+			other.kind === requiredIdentifier ||
+			other.kind === optional.identifier ||
+			other.kind === nodeKey.identifier) &&
 		allowsTreeSchemaIdentifierSuperset(types, other.types),
 	new Set(),
 );
@@ -110,8 +112,7 @@ export const sequence = new FieldKindWithEditor(
 	Multiplicity.Sequence,
 	sequenceFieldChangeHandler,
 	(types, other) =>
-		other.kind.identifier === sequenceIdentifier &&
-		allowsTreeSchemaIdentifierSuperset(types, other.types),
+		other.kind === sequenceIdentifier && allowsTreeSchemaIdentifierSuperset(types, other.types),
 	// TODO: add normalizer/importers for handling ops from other kinds.
 	new Set([]),
 );
@@ -126,10 +127,28 @@ export const nodeKey = new FieldKindWithEditor(
 	Multiplicity.Single,
 	noChangeHandler,
 	(types, other) =>
-		(other.kind.identifier === sequence.identifier ||
-			other.kind.identifier === requiredIdentifier ||
-			other.kind.identifier === optional.identifier ||
-			other.kind.identifier === nodeKeyIdentifier) &&
+		(other.kind === sequence.identifier ||
+			other.kind === requiredIdentifier ||
+			other.kind === optional.identifier ||
+			other.kind === nodeKeyIdentifier) &&
+		allowsTreeSchemaIdentifierSuperset(types, other.types),
+	new Set(),
+);
+
+const identifierFieldIdentifier = "Identifier";
+
+/**
+ * Exactly one identifier.
+ */
+export const identifier = new FieldKindWithEditor(
+	identifierFieldIdentifier,
+	Multiplicity.Single,
+	noChangeHandler,
+	(types, other) =>
+		(other.kind === sequence.identifier ||
+			other.kind === requiredIdentifier ||
+			other.kind === optional.identifier ||
+			other.kind === identifierFieldIdentifier) &&
 		allowsTreeSchemaIdentifierSuperset(types, other.types),
 	new Set(),
 );
@@ -167,15 +186,33 @@ export const forbidden = new FieldKindWithEditor(
 	Multiplicity.Forbidden,
 	noChangeHandler,
 	// All multiplicities other than Value support empty.
-	(types, other) => fieldKinds.get(other.kind.identifier)?.multiplicity !== Multiplicity.Single,
+	(types, other) => fieldKinds.get(other.kind)?.multiplicity !== Multiplicity.Single,
 	new Set(),
 );
 
+export const fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration> = new Map([
+	[
+		0,
+		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
+			[nodeKey.identifier, { kind: nodeKey, formatVersion: 0 }],
+			[required.identifier, { kind: required, formatVersion: 0 }],
+			[optional.identifier, { kind: optional, formatVersion: 0 }],
+			[sequence.identifier, { kind: sequence, formatVersion: 0 }],
+			[forbidden.identifier, { kind: forbidden, formatVersion: 0 }],
+			[identifier.identifier, { kind: identifier, formatVersion: 0 }],
+		]),
+	],
+]);
+
 /**
- * Default field kinds by identifier
+ * All supported field kinds.
+ *
+ * @privateRemarks
+ * Before making a SharedTree format change which impacts which set of field kinds are allowed,
+ * code which uses this should be audited for compatibility considerations.
  */
 export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
-	[required, optional, sequence, nodeKey, forbidden].map((s) => [s.identifier, s]),
+	[required, optional, sequence, nodeKey, identifier, forbidden].map((s) => [s.identifier, s]),
 );
 
 // Create named Aliases for nicer intellisense.
@@ -202,6 +239,10 @@ export interface NodeKeyFieldKind extends FlexFieldKind<"NodeKey", Multiplicity.
 /**
  * @internal
  */
+export interface Identifier extends FlexFieldKind<"Identifier", Multiplicity.Single> {}
+/**
+ * @internal
+ */
 export interface Forbidden
 	extends FlexFieldKind<typeof forbiddenFieldKindIdentifier, Multiplicity.Forbidden> {}
 
@@ -215,5 +256,6 @@ export const FieldKinds: {
 	readonly optional: Optional;
 	readonly sequence: Sequence;
 	readonly nodeKey: NodeKeyFieldKind;
+	readonly identifier: Identifier;
 	readonly forbidden: Forbidden;
-} = { required, optional, sequence, nodeKey, forbidden };
+} = { required, optional, sequence, nodeKey, identifier, forbidden };

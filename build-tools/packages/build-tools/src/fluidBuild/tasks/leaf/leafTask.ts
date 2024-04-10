@@ -4,11 +4,11 @@
  */
 
 import * as assert from "assert";
+import crypto from "crypto";
+import * as path from "path";
 import { AsyncPriorityQueue } from "async";
 import chalk from "chalk";
-import crypto from "crypto";
 import registerDebug from "debug";
-import * as path from "path";
 
 import { defaultLogger } from "../../../common/logging";
 import {
@@ -225,7 +225,7 @@ export abstract class LeafTask extends Task {
 									message: "Worker error",
 									cmd: this.executionCommand,
 									code: workerResult.code,
-							  },
+								},
 					stdout: workerResult.stdout ?? "",
 					stderr: workerResult.stderr ?? "",
 					worker: true,
@@ -384,6 +384,12 @@ export abstract class LeafTask extends Task {
 		return summarizeBuildResult(await Promise.all(p));
 	}
 
+	/**
+	 * Returns the absolute path to a package-relative path within the repo.
+	 *
+	 * @param filePath - a path relative to the package being processed by this task.
+	 * @returns An absolute path to the file.
+	 */
 	protected getPackageFileFullPath(filePath: string): string {
 		if (path.isAbsolute(filePath)) {
 			return filePath;

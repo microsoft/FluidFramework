@@ -6,15 +6,18 @@
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import {
 	AttachState,
-	ContainerWarning,
 	IAudience,
+	ICriticalContainerError,
+	IDeltaManager,
+	ReadOnlyInfo,
+} from "@fluidframework/container-definitions";
+import {
+	ContainerWarning,
 	IBatchMessage,
 	ICodeDetailsLoader,
 	IContainer,
 	IContainerEvents,
 	IContainerLoadMode,
-	ICriticalContainerError,
-	IDeltaManager,
 	IFluidCodeDetails,
 	IFluidCodeDetailsComparer,
 	IFluidModuleWithDetails,
@@ -23,9 +26,8 @@ import {
 	IProvideFluidCodeDetailsComparer,
 	IProvideRuntimeFactory,
 	IRuntime,
-	ReadOnlyInfo,
 	isFluidCodeDetails,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IEvent,
@@ -33,7 +35,8 @@ import {
 	ITelemetryBaseProperties,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
-import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils";
+import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
@@ -42,7 +45,7 @@ import {
 	ISnapshot,
 	IThrottlingWarning,
 	IUrlResolver,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	MessageType2,
 	OnlineStatus,
@@ -51,7 +54,7 @@ import {
 	isOnline,
 	readAndParse,
 	runWithRetry,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
 	IClient,
@@ -72,14 +75,13 @@ import {
 	MessageType,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt, type TelemetryEventCategory } from "@fluidframework/telemetry-utils";
 import {
 	EventEmitterWithErrorHandling,
 	GenericError,
 	IFluidErrorBase,
-	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
-	type TelemetryEventCategory,
 	UsageError,
 	connectedEventName,
 	createChildLogger,
@@ -88,16 +90,17 @@ import {
 	normalizeError,
 	raiseConnectedEvent,
 	wrapError,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import structuredClone from "@ungap/structured-clone";
 import { v4 as uuid } from "uuid";
+
 import { AttachProcessProps, AttachmentData, runRetriableAttachProcess } from "./attachment.js";
 import { Audience } from "./audience.js";
 import { ConnectionManager } from "./connectionManager.js";
 import { ConnectionState } from "./connectionState.js";
 import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler.js";
 import { ContainerContext } from "./containerContext.js";
-import { ContainerStorageAdapter, ISerializableBlobContents } from "./containerStorageAdapter.js";
+import { ContainerStorageAdapter } from "./containerStorageAdapter.js";
 import {
 	IConnectionDetailsInternal,
 	IConnectionManagerFactoryArgs,
@@ -116,12 +119,17 @@ import {
 	protocolHandlerShouldProcessSignal,
 } from "./protocol.js";
 import { initQuorumValuesFromCodeDetails } from "./quorum.js";
-import { SerializedStateManager } from "./serializedStateManager.js";
+import {
+	type IPendingContainerState,
+	type IPendingDetachedContainerState,
+	SerializedStateManager,
+} from "./serializedStateManager.js";
 import {
 	ISnapshotTreeWithBlobContents,
 	combineAppAndProtocolSummary,
 	combineSnapshotTreeAndSnapshotBlobs,
 	getDetachedContainerStateFromSerializedContainer,
+	getDocumentAttributes,
 	getProtocolSnapshotTree,
 	getSnapshotTreeAndBlobsFromSerializedContainer,
 	runSingle,
@@ -333,46 +341,6 @@ export async function ReportIfTooLong(
 	if (event.duration > 200) {
 		event.end(props);
 	}
-}
-
-/**
- * State saved by a container at close time, to be used to load a new instance
- * of the container to the same state
- * @internal
- */
-export interface IPendingContainerState {
-	attached: true;
-	pendingRuntimeState: unknown;
-	/**
-	 * Snapshot from which container initially loaded.
-	 */
-	baseSnapshot: ISnapshotTree;
-	/**
-	 * Serializable blobs from the base snapshot. Used to load offline since
-	 * storage is not available.
-	 */
-	snapshotBlobs: ISerializableBlobContents;
-	/**
-	 * All ops since base snapshot sequence number up to the latest op
-	 * seen when the container was closed. Used to apply stashed (saved pending)
-	 * ops at the same sequence number at which they were made.
-	 */
-	savedOps: ISequencedDocumentMessage[];
-	url: string;
-	clientId?: string;
-}
-
-/**
- * State saved by a container in detached state, to be used to load a new instance
- * of the container to the same state (rehydrate)
- * @internal
- */
-export interface IPendingDetachedContainerState {
-	attached: false;
-	baseSnapshot: ISnapshotTree;
-	snapshotBlobs: ISerializableBlobContents;
-	hasAttachmentBlobs: boolean;
-	pendingRuntimeState?: unknown;
 }
 
 const summarizerClientType = "summarizer";
@@ -1188,17 +1156,16 @@ export class Container
 				this.captureProtocolSummary(),
 			);
 
-		const { tree: snapshot, blobs } =
+		const { baseSnapshot, snapshotBlobs } =
 			getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
-
 		const pendingRuntimeState =
 			attachingData !== undefined ? this.runtime.getPendingLocalState() : undefined;
 		assert(!isPromiseLike(pendingRuntimeState), 0x8e3 /* should not be a promise */);
 
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
-			baseSnapshot: snapshot,
-			snapshotBlobs: blobs,
+			baseSnapshot,
+			snapshotBlobs,
 			pendingRuntimeState,
 			hasAttachmentBlobs: !!this.detachedBlobStorage && this.detachedBlobStorage.size > 0,
 		};
@@ -1314,8 +1281,8 @@ export class Container
 							throw normalizeErrorAndClose(error);
 						});
 					}
-
-					this.serializedStateManager.setSnapshot(await attachP);
+					const snapshotWithBlobs = await attachP;
+					this.serializedStateManager.setInitialSnapshot(snapshotWithBlobs);
 					if (!this.closed) {
 						this.handleDeltaConnectionArg(
 							{
@@ -1578,23 +1545,25 @@ export class Container
 		};
 
 		timings.phase2 = performance.now();
+
+		const supportGetSnapshotApi: boolean =
+			this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch") ===
+				true && this.service?.policies?.supportGetSnapshotApi === true;
 		// Fetch specified snapshot.
-		const { snapshotTree, version } = await this.serializedStateManager.fetchSnapshot(
+		const { baseSnapshot, version } = await this.serializedStateManager.fetchSnapshot(
 			specifiedVersion,
-			this.service?.policies?.supportGetSnapshotApi,
+			supportGetSnapshotApi,
 		);
 		this._loadedFromVersion = version;
-		const attributes: IDocumentAttributes = await this.getDocumentAttributes(
+		const attributes: IDocumentAttributes = await getDocumentAttributes(
 			this.storageAdapter,
-			snapshotTree,
+			baseSnapshot,
 		);
 
 		// If we saved ops, we will replay them and don't need DeltaManager to fetch them
-		const sequenceNumber =
-			pendingLocalState?.savedOps[pendingLocalState.savedOps.length - 1]?.sequenceNumber;
-		const dmAttributes =
-			sequenceNumber !== undefined ? { ...attributes, sequenceNumber } : attributes;
-
+		const lastProcessedSequenceNumber =
+			pendingLocalState?.savedOps[pendingLocalState.savedOps.length - 1]?.sequenceNumber ??
+			attributes.sequenceNumber;
 		let opsBeforeReturnP: Promise<void> | undefined;
 
 		if (loadMode.pauseAfterLoad === true) {
@@ -1607,7 +1576,7 @@ export class Container
 				// Note: It is possible that we think the latest snapshot is newer than the specified sequence number
 				// due to saved ops that may be replayed after the snapshot.
 				// https://dev.azure.com/fluidframework/internal/_workitems/edit/5055
-				if (dmAttributes.sequenceNumber > loadToSequenceNumber) {
+				if (lastProcessedSequenceNumber > loadToSequenceNumber) {
 					throw new Error(
 						"Cannot satisfy request to pause the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.",
 					);
@@ -1655,16 +1624,18 @@ export class Container
 				// Start prefetch, but not set opsBeforeReturnP - boot is not blocked by it!
 				// eslint-disable-next-line @typescript-eslint/no-floating-promises
 				this.attachDeltaManagerOpHandler(
-					dmAttributes,
+					attributes,
 					loadMode.deltaConnection !== "none" ? "all" : "none",
+					lastProcessedSequenceNumber,
 				);
 				break;
 			case "sequenceNumber":
 			case "cached":
 			case "all":
 				opsBeforeReturnP = this.attachDeltaManagerOpHandler(
-					dmAttributes,
+					attributes,
 					loadMode.opsBeforeReturn,
+					lastProcessedSequenceNumber,
 				);
 				break;
 			default:
@@ -1676,17 +1647,17 @@ export class Container
 		await this.initializeProtocolStateFromSnapshot(
 			attributes,
 			this.storageAdapter,
-			snapshotTree,
+			baseSnapshot,
 		);
 
 		timings.phase3 = performance.now();
 		const codeDetails = this.getCodeDetailsFromQuorum();
 		await this.instantiateRuntime(
 			codeDetails,
-			snapshotTree,
+			baseSnapshot,
 			// give runtime a dummy value so it knows we're loading from a stash blob
 			pendingLocalState ? pendingLocalState?.pendingRuntimeState ?? {} : undefined,
-			isInstanceOfISnapshot(snapshotTree) ? snapshotTree : undefined,
+			isInstanceOfISnapshot(baseSnapshot) ? baseSnapshot : undefined,
 		);
 
 		// replay saved ops
@@ -1814,7 +1785,7 @@ export class Container
 		const snapshotTreeWithBlobContents: ISnapshotTreeWithBlobContents =
 			combineSnapshotTreeAndSnapshotBlobs(baseSnapshot, snapshotBlobs);
 		this.storageAdapter.loadSnapshotFromSnapshotBlobs(snapshotBlobs);
-		const attributes = await this.getDocumentAttributes(
+		const attributes = await getDocumentAttributes(
 			this.storageAdapter,
 			snapshotTreeWithBlobContents,
 		);
@@ -1844,28 +1815,6 @@ export class Container
 		);
 
 		this.setLoaded();
-	}
-
-	private async getDocumentAttributes(
-		storage: IDocumentStorageService,
-		tree: ISnapshotTree | undefined,
-	): Promise<IDocumentAttributes> {
-		if (tree === undefined) {
-			return {
-				minimumSequenceNumber: 0,
-				sequenceNumber: 0,
-			};
-		}
-
-		// Backward compatibility: old docs would have ".attributes" instead of "attributes"
-		const attributesHash =
-			".protocol" in tree.trees
-				? tree.trees[".protocol"].blobs.attributes
-				: tree.blobs[".attributes"];
-
-		const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
-
-		return attributes;
 	}
 
 	private async initializeProtocolStateFromSnapshot(
@@ -2107,6 +2056,7 @@ export class Container
 	private async attachDeltaManagerOpHandler(
 		attributes: IDocumentAttributes,
 		prefetchType?: "sequenceNumber" | "cached" | "all" | "none",
+		lastProcessedSequenceNumber?: number,
 	) {
 		return this._deltaManager.attachOpHandler(
 			attributes.minimumSequenceNumber,
@@ -2118,6 +2068,7 @@ export class Container
 				},
 			},
 			prefetchType,
+			lastProcessedSequenceNumber,
 		);
 	}
 
@@ -2341,7 +2292,8 @@ export class Container
 		this.emit("op", message);
 	}
 
-	private submitSignal(content: any, targetClientId?: string) {
+	// unknown should be removed once `@alpha` tag is removed from IContainerContext
+	private submitSignal(content: unknown | ISignalEnvelope, targetClientId?: string) {
 		this._deltaManager.submitSignal(JSON.stringify(content), targetClientId);
 	}
 
@@ -2389,10 +2341,6 @@ export class Container
 			throw new Error(packageNotFactoryError);
 		}
 
-		const getSpecifiedCodeDetails = () =>
-			(this.protocolHandler.quorum.get("code") ??
-				this.protocolHandler.quorum.get("code2")) as IFluidCodeDetails | undefined;
-
 		const existing = snapshotTree !== undefined;
 
 		const context = new ContainerContext(
@@ -2420,7 +2368,6 @@ export class Container
 			() => this.clientId,
 			() => this.attachState,
 			() => this.connected,
-			getSpecifiedCodeDetails,
 			this._deltaManager.clientDetails,
 			existing,
 			this.subLogger,

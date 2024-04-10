@@ -44,7 +44,6 @@ export {
 export {
 	typeNameSymbol,
 	valueSymbol,
-	isTreeValue,
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
@@ -63,7 +62,7 @@ export {
 	getAllowedTypes,
 } from "./contextuallyTyped.js";
 
-export { allowsValue, assertAllowedValue, isFluidHandle } from "./valueUtilities.js";
+export { allowsValue, assertAllowedValue, isFluidHandle, isTreeValue } from "./valueUtilities.js";
 
 export { FieldGenerator, TreeDataContext } from "./fieldGenerator.js";
 
@@ -99,15 +98,16 @@ export {
 	FieldChangeHandler,
 	FieldChangeRebaser,
 	FieldEditor,
-	NodeChangeset,
 	FieldChangeMap,
 	FieldChange,
 	FieldChangeset,
 	ToDelta,
 	ModularChangeset,
+	makeModularChangeCodecFamily,
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
+	NodeChangePruner,
 	CrossFieldManager,
 	CrossFieldTarget,
 	FlexFieldKind,
@@ -120,12 +120,13 @@ export {
 	NodeExistenceState,
 	FieldKindWithEditor,
 	ModularChangeFamily,
-	makeV0Codec,
 	RelevantRemovedRootsFromChild,
 	EncodedModularChangeset,
+	NodeId,
+	FieldChangeEncodingContext,
+	FieldKindConfiguration,
+	FieldKindConfigurationEntry,
 } from "./modular-schema/index.js";
-
-export { Multiplicity } from "./multiplicity.js";
 
 export {
 	FlexTreeNodeSchema,
@@ -159,7 +160,6 @@ export {
 	FlexObjectNodeFields,
 	intoStoredSchema,
 	intoStoredSchemaCollection,
-	ArrayToUnion,
 	ExtractItemType,
 	NormalizeLazyItem,
 	FlexList,
@@ -191,7 +191,6 @@ export {
 	makeTreeChunker,
 	makeFieldBatchCodec,
 	FieldBatchEncodingContext,
-	SchemaAndPolicy,
 } from "./chunked-forest/index.js";
 
 export {
@@ -212,6 +211,7 @@ export {
 	Optional,
 	Sequence,
 	NodeKeyFieldKind,
+	Identifier,
 	Forbidden,
 	DefaultChangeset,
 	DefaultChangeFamily,
@@ -222,6 +222,7 @@ export {
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
 	fieldKinds,
+	fieldKindConfigurations,
 	intoDelta,
 	relevantRemovedRoots,
 } from "./default-schema/index.js";
@@ -250,11 +251,10 @@ export {
 	CheckTypesOverlap,
 	TreeStatus,
 	Context,
-	TreeEvent,
-	EditableTreeEvents,
+	FlexTreeNodeEvents,
 	FlexTreeUnknownUnboxed,
-	onNextChange,
 	isFlexTreeNode,
+	ContextSlot,
 
 	// Internal
 	FlexTreeTypedFieldInner,
@@ -276,6 +276,7 @@ export {
 	reservedObjectNodeFieldPropertyNamePrefixes,
 	FlexTreeObjectNodeFieldsInner,
 	assertFlexTreeEntityNotFreed,
+	flexTreeSlot,
 } from "./flex-tree/index.js";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema.js";
@@ -299,6 +300,6 @@ export {
 
 export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer.js";
 
-export { SchemaChange, makeSchemaChangeCodec, EncodedSchemaChange } from "./schema-edits/index.js";
+export { SchemaChange, makeSchemaChangeCodecs, EncodedSchemaChange } from "./schema-edits/index.js";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";

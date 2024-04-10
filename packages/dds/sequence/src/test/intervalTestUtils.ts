@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils";
+
+import { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils/internal";
+
 import { IIntervalCollection } from "../intervalCollection.js";
 import { createOverlappingIntervalsIndex } from "../intervalIndex/index.js";
 import { SequenceInterval } from "../intervals/index.js";

@@ -4,21 +4,21 @@
  */
 
 import {
-	ArrayProperty,
-	NodeProperty,
+	type ArrayProperty,
+	type NodeProperty,
 	PropertyFactory,
 } from "@fluid-experimental/property-properties";
 import { PropertyProxy } from "@fluid-experimental/property-proxy";
 import { Tooltip } from "@material-ui/core";
-import { ReactWrapper } from "enzyme";
+import type { ReactWrapper } from "enzyme";
 import React from "react";
 import { useFakeTimers } from "sinon";
-import { Empty } from "../src/Empty";
-import { IDataGetterParameter } from "../src/InspectorTableTypes";
-import { NameCell } from "../src/NameCell";
-import { fetchRegisteredTemplates } from "../src/PropertyDataCreationHandlers";
-import { BooleanView, EnumView, NumberView, StringView } from "../src/PropertyViews";
-import { InspectorMessages } from "../src/constants";
+import { Empty } from "../src/Empty.js";
+import type { IDataGetterParameter } from "../src/InspectorTableTypes.js";
+import { NameCell } from "../src/NameCell.js";
+import { fetchRegisteredTemplates } from "../src/PropertyDataCreationHandlers.js";
+import { BooleanView, EnumView, NumberView, StringView } from "../src/PropertyViews/index.js";
+import { InspectorMessages } from "../src/constants.js";
 import {
 	coordinateSystem3DSchema,
 	enumUnoDosTresSchema,
@@ -29,7 +29,7 @@ import {
 	primitiveCollectionsSchema,
 	sampleConstCollectionSchema,
 	sampleConstSchema,
-} from "./schemas";
+} from "./schemas.js";
 import {
 	addProperty,
 	changeBoolValue,
@@ -48,7 +48,7 @@ import {
 	typeNewName,
 	updateEditableValueCellSelectValue,
 	updateEditableValueCellValue,
-} from "./testUtils";
+} from "./testUtils.js";
 
 const changeSearchInput = (wrapper, value, clock?) => {
 	wrapper.find("SearchBox").simulate("click");

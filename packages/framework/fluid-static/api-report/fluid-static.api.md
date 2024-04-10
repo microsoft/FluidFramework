@@ -6,14 +6,14 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionState } from '@fluidframework/container-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
-import { IContainer } from '@fluidframework/container-definitions';
+import { IContainer } from '@fluidframework/container-definitions/internal';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { IRuntimeFactory } from '@fluidframework/container-definitions';
+import { IRuntimeFactory } from '@fluidframework/container-definitions/internal';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base';
 
 // @public
 export type ContainerAttachProps<T = unknown> = T;
@@ -42,16 +42,16 @@ export function createServiceAudience<TMember extends IMember = IMember>(props: 
 }): IServiceAudience<TMember>;
 
 // @public
-export type DataObjectClass<T extends IFluidLoadable> = {
+export type DataObjectClass<T extends IFluidLoadable = IFluidLoadable> = {
     readonly factory: {
-        IFluidDataStoreFactory: DataObjectClass<T>["factory"];
+        readonly IFluidDataStoreFactory: DataObjectClass<T>["factory"];
     };
-} & LoadableObjectCtor<T>;
+} & (new (...args: any[]) => T);
 
 // @public
 export interface IConnection {
-    id: string;
-    mode: "write" | "read";
+    readonly id: string;
+    readonly mode: "write" | "read";
 }
 
 // @public @sealed
@@ -79,8 +79,8 @@ export interface IFluidContainerEvents extends IEvent {
 
 // @public
 export interface IMember {
-    connections: IConnection[];
-    userId: string;
+    readonly connections: IConnection[];
+    readonly userId: string;
 }
 
 // @public
@@ -102,7 +102,7 @@ export interface IRootDataObject extends IProvideRootDataObject {
 
 // @public
 export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents<M>> {
-    getMembers(): Map<string, M>;
+    getMembers(): ReadonlyMap<string, M>;
     getMyself(): Myself<M> | undefined;
 }
 
@@ -117,13 +117,10 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 }
 
 // @public
-export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> = SharedObjectClass<T> | DataObjectClass<T>;
+export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> = ISharedObjectKind<T> | DataObjectClass<T>;
 
 // @public
 export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
-
-// @public
-export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
 
 // @internal
 export type LoadableObjectRecord = Record<string, IFluidLoadable>;
@@ -133,12 +130,7 @@ export type MemberChangedListener<M extends IMember> = (clientId: string, member
 
 // @public
 export type Myself<M extends IMember = IMember> = M & {
-    currentConnection: string;
+    readonly currentConnection: string;
 };
-
-// @public
-export interface SharedObjectClass<T extends IFluidLoadable> {
-    readonly getFactory: () => IChannelFactory<T>;
-}
 
 ```

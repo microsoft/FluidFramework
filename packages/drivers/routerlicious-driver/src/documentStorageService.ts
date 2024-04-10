@@ -7,20 +7,21 @@ import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	LoaderCachingPolicy,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	DocumentStorageServiceProxy,
 	PrefetchDocumentStorageService,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ICache } from "./cache";
-import { INormalizedWholeSnapshot } from "./contracts";
-import { ISnapshotTreeVersion } from "./definitions";
-import { GitManager } from "./gitManager";
-import { IRouterliciousDriverPolicies } from "./policies";
-import { ShreddedSummaryDocumentStorageService } from "./shreddedSummaryDocumentStorageService";
-import { WholeSummaryDocumentStorageService } from "./wholeSummaryDocumentStorageService";
+
+import { ICache } from "./cache.js";
+import { INormalizedWholeSnapshot } from "./contracts.js";
+import { ISnapshotTreeVersion } from "./definitions.js";
+import { GitManager } from "./gitManager.js";
+import { IRouterliciousDriverPolicies } from "./policies.js";
+import { ShreddedSummaryDocumentStorageService } from "./shreddedSummaryDocumentStorageService.js";
+import { WholeSummaryDocumentStorageService } from "./wholeSummaryDocumentStorageService.js";
 
 export class DocumentStorageService extends DocumentStorageServiceProxy {
 	private _logTailSha: string | undefined = undefined;

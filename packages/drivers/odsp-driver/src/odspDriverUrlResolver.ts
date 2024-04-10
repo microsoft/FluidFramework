@@ -4,15 +4,16 @@
  */
 
 import { IRequest } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	DriverHeader,
 	IContainerPackageInfo,
 	IResolvedUrl,
 	IUrlResolver,
-} from "@fluidframework/driver-definitions";
-import { NonRetryableError } from "@fluidframework/driver-utils";
-import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { NonRetryableError } from "@fluidframework/driver-utils/internal";
+import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
+
 import { ClpCompliantAppHeader } from "./contractsPublic.js";
 import { createOdspUrl } from "./createOdspUrl.js";
 import { getHashedDocumentId } from "./odspPublicUtils.js";
@@ -26,9 +27,8 @@ function getUrlBase(
 	itemId: string,
 	fileVersion?: string,
 ): string {
-	const siteOrigin = new URL(siteUrl).origin;
 	const version = fileVersion ? `versions/${fileVersion}/` : "";
-	return `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/${version}`;
+	return `${getApiRoot(new URL(siteUrl))}/drives/${driveId}/items/${itemId}/${version}`;
 }
 
 function getSnapshotUrl(

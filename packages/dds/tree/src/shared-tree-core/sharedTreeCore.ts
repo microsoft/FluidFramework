@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IChannelStorageService,
@@ -17,23 +17,36 @@ import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { SharedObject } from "@fluidframework/shared-object-base/internal";
+
 import { ICodecOptions, IJsonCodec } from "../codec/index.js";
-import { ChangeFamily, ChangeFamilyEditor, GraphCommit, RevisionTagCodec } from "../core/index.js";
-import { SchemaAndPolicy } from "../feature-libraries/index.js";
+import {
+	ChangeFamily,
+	ChangeFamilyEditor,
+	GraphCommit,
+	RevisionTag,
+	RevisionTagCodec,
+	SchemaAndPolicy,
+} from "../core/index.js";
 import { JsonCompatibleReadOnly, brand } from "../util/index.js";
+
 import { SharedTreeBranch, getChangeReplaceType } from "./branch.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
+import { makeEditManagerCodec } from "./editManagerCodecs.js";
 import { SeqNumber } from "./editManagerFormat.js";
 import { EditManagerSummarizer } from "./editManagerSummarizer.js";
 import { MessageEncodingContext, makeMessageCodec } from "./messageCodecs.js";
 import { DecodedMessage } from "./messageTypes.js";
 
-// TODO: How should the format version be determined?
-const formatVersion = 0;
 // TODO: Organize this to be adjacent to persisted types.
 const summarizablesTreeKey = "indexes";
+
+export interface ExplicitCoreCodecVersions {
+	editManager: number;
+	message: number;
+}
 
 /**
  * Generic shared tree, which needs to be configured with indexes, field kinds and a history policy to be used.
@@ -80,6 +93,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 	private readonly schemaAndPolicy: SchemaAndPolicy;
 
+	protected readonly mintRevisionTag: () => RevisionTag;
+
 	/**
 	 * @param summarizables - Summarizers for all indexes used by this tree
 	 * @param changeFamily - The change family
@@ -93,6 +108,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		summarizables: readonly Summarizable[],
 		changeFamily: ChangeFamily<TEditor, TChange>,
 		options: ICodecOptions,
+		formatOptions: ExplicitCoreCodecVersions,
 		// Base class arguments
 		id: string,
 		runtime: IFluidDataStoreRuntime,
@@ -109,14 +125,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			0x886 /* IdCompressor must be enabled to use SharedTree */,
 		);
 		this.idCompressor = runtime.idCompressor;
-		const mintRevisionTag = () => this.idCompressor.generateCompressedId();
+		this.mintRevisionTag = () => this.idCompressor.generateCompressedId();
 		/**
 		 * A random ID that uniquely identifies this client in the collab session.
 		 * This is sent alongside every op to identify which client the op originated from.
 		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
 		 */
 		const localSessionId = runtime.idCompressor.localSessionId;
-		this.editManager = new EditManager(changeFamily, localSessionId, mintRevisionTag);
+		this.editManager = new EditManager(changeFamily, localSessionId, this.mintRevisionTag);
 		this.editManager.localBranch.on("afterChange", (args) => {
 			if (this.getLocalBranch().isTransacting()) {
 				// Avoid submitting ops for changes that are part of a transaction.
@@ -139,13 +155,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		});
 
 		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
+		const editManagerCodec = makeEditManagerCodec(
+			this.editManager.changeFamily.codecs,
+			revisionTagCodec,
+			options,
+			formatOptions.editManager,
+		);
 		this.summarizables = [
-			new EditManagerSummarizer(
-				this.editManager,
-				revisionTagCodec,
-				options,
-				this.schemaAndPolicy,
-			),
+			new EditManagerSummarizer(this.editManager, editManagerCodec, this.schemaAndPolicy),
 			...summarizables,
 		];
 		assert(
@@ -154,9 +171,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		);
 
 		this.messageCodec = makeMessageCodec(
-			changeFamily.codecs.resolve(formatVersion).json,
+			changeFamily.codecs,
 			new RevisionTagCodec(runtime.idCompressor),
 			options,
+			formatOptions.message,
 		);
 	}
 

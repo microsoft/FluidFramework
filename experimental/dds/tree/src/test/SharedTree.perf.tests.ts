@@ -4,10 +4,13 @@
  */
 
 import { strict as assert } from 'assert';
-import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
-import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils';
+
+import { BenchmarkType, benchmark } from '@fluid-tools/benchmark';
+import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils/internal';
+
 import { EditLog } from '../EditLog.js';
 import { SharedTree } from '../SharedTree.js';
+
 import { runSummaryLoadPerfTests } from './utilities/SummaryLoadPerfTests.js';
 import { createStableEdits, setUpTestSharedTree } from './utilities/TestUtilities.js';
 

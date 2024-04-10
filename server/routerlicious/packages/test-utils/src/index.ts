@@ -21,3 +21,4 @@ export { TestTenant, TestTenantManager } from "./testTenantManager";
 export { TestThrottleAndUsageStorageManager } from "./testThrottleAndUsageStorageManager";
 export { TestThrottler } from "./testThrottler";
 export { TestThrottlerHelper } from "./testThrottlerHelper";
+export { TestRedisClientConnectionManager } from "./testRedisClientConnectionManager";

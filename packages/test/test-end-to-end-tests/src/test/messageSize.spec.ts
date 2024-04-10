@@ -3,34 +3,34 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-nodejs-modules
 import * as crypto from "crypto";
-import { strict as assert } from "assert";
-import type { ISharedMap } from "@fluidframework/map";
-import {
-	ITestFluidObject,
-	ChannelFactoryRegistry,
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
-	ConfigTypes,
-	FluidErrorTypes,
-	IConfigProviderBase,
-	IErrorBase,
-} from "@fluidframework/core-interfaces";
-import { FlushMode } from "@fluidframework/runtime-definitions";
-import { CompressionAlgorithms, ContainerMessageType } from "@fluidframework/container-runtime";
+	CompressionAlgorithms,
+	ContainerMessageType,
+} from "@fluidframework/container-runtime/internal";
+import { ConfigTypes, IConfigProviderBase, IErrorBase } from "@fluidframework/core-interfaces";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
+import type { ISharedMap } from "@fluidframework/map";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { GenericError } from "@fluidframework/telemetry-utils";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import { GenericError } from "@fluidframework/telemetry-utils/internal";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
@@ -639,7 +639,8 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 
 			it("Reconnects while sending chunks", async function () {
 				// This is not supported by the local server. See ADO:2690
-				if (provider.driver.type === "local") {
+				// This test is flaky on tinylicious. See ADO:7669
+				if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
 					this.skip();
 				}
 

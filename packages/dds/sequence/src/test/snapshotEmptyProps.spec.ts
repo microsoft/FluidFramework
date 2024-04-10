@@ -6,13 +6,16 @@
 import { strict as assert } from "assert";
 import fs from "fs";
 import path from "path";
+
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
+
 import { SharedStringFactory } from "../sequenceFactory.js";
 import { SharedString } from "../sharedString.js";
+
 import { _dirname } from "./dirname.cjs";
 import { LocationBase } from "./generateSharedStrings.js";
 
@@ -26,7 +29,7 @@ describe("SharedString Snapshot Version - Empty Props", () => {
 	async function loadSharedString(id: string, serializedSnapshot: string): Promise<SharedString> {
 		const containerRuntimeFactory = new MockContainerRuntimeFactory();
 		const dataStoreRuntime = new MockFluidDataStoreRuntime();
-		const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 		const services = {
 			deltaConnection: dataStoreRuntime.createDeltaConnection(),
 			objectStorage: new MockStorage(JSON.parse(serializedSnapshot)),

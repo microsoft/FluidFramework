@@ -4,9 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { SharedNumberSequence } from "../sharedNumberSequence.js";
+
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+
 import { SharedNumberSequenceFactory } from "../sequenceFactory.js";
+import { SharedNumberSequence } from "../sharedNumberSequence.js";
 
 describe("SharedNumberSequence", () => {
 	const documentId = "fakeId";

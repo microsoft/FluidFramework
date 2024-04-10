@@ -12,6 +12,7 @@ import {
 	Tagged,
 	TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
+
 import {
 	CachedConfigProvider,
 	loggerIsMonitoringContext,

@@ -9,16 +9,17 @@ import TextField from "@material-ui/core/TextField";
 import { makeStyles } from "@material-ui/styles";
 import classNames from "classnames";
 import * as React from "react";
+
 import { SvgIcon } from "./SVGIcon";
 import {
-	Omit,
+	type Omit,
 	backGroundDarkColor,
 	backGroundLightColor,
 	iconBaseColor,
 	iconHeight,
 	iconHoverColor,
 	iconWidth,
-} from "./constants";
+} from "./constants.js";
 
 export interface ISearchBoxProps extends Omit<React.HTMLProps<HTMLInputElement>, "value"> {
 	searchExpression: string;

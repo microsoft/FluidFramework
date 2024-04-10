@@ -4,28 +4,31 @@
  */
 
 import { strict as assert } from 'assert';
+
+import { LoaderHeader } from '@fluidframework/container-definitions/internal';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
-import { LoaderHeader } from '@fluidframework/container-definitions';
-import { MockFluidDataStoreRuntime, validateAssertionError } from '@fluidframework/test-runtime-utils';
+import { MockFluidDataStoreRuntime, validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
-import { StableRange, StablePlace, BuildNode, Change } from '../../ChangeTypes.js';
+
+import { BuildNode, Change, StablePlace, StableRange } from '../../ChangeTypes.js';
 import { Mutable } from '../../Common.js';
 import { EditLog } from '../../EditLog.js';
 import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities.js';
 import { SharedTreeDiagnosticEvent } from '../../EventTypes.js';
 import { NodeId, StableNodeId, TraitLabel } from '../../Identifiers.js';
-import { SharedTreeOpType, SharedTreeUpdateOp, TreeNodeSequence, WriteFormat } from '../../persisted-types/index.js';
 import { SharedTree } from '../../SharedTree.js';
 import { TreeNodeHandle } from '../../TreeNodeHandle.js';
 import { nilUuid } from '../../UuidUtilities.js';
+import { SharedTreeOpType, SharedTreeUpdateOp, TreeNodeSequence, WriteFormat } from '../../persisted-types/index.js';
 import { applyTestEdits } from '../Summary.tests.js';
+
 import { buildLeaf } from './TestNode.js';
 import {
+	SharedTreeTestingComponents,
+	SharedTreeTestingOptions,
 	applyNoop,
 	setUpLocalServerTestSharedTree,
 	setUpTestTree,
-	SharedTreeTestingComponents,
-	SharedTreeTestingOptions,
 	spyOnSubmittedOps,
 	testTrait,
 	waitForSummary,

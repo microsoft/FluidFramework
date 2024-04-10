@@ -9,8 +9,9 @@ import {
 	appendToMergeTreeDeltaRevertibles,
 	discardMergeTreeDeltaRevertible,
 	revertMergeTreeDeltaRevertibles,
-} from "@fluidframework/merge-tree";
-import { SequenceDeltaEvent, SharedSegmentSequence } from "@fluidframework/sequence";
+} from "@fluidframework/merge-tree/internal";
+import { SequenceDeltaEvent, SharedSegmentSequence } from "@fluidframework/sequence/internal";
+
 import { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager.js";
 
 /**

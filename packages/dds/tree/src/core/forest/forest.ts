@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { ISubscribable } from "../../events/index.js";
 import { FieldKey, TreeStoredSchemaSubscription } from "../schema-stored/index.js";
 import {
@@ -16,6 +17,7 @@ import {
 	detachedFieldAsKey,
 	rootField,
 } from "../tree/index.js";
+
 import type { IEditableForest } from "./editableForest.js";
 
 /**
@@ -34,6 +36,11 @@ import type { IEditableForest } from "./editableForest.js";
  * @internal
  */
 export interface ForestEvents {
+	/**
+	 * A new root field was just created in this forest.
+	 */
+	afterRootFieldCreated(key: FieldKey): void;
+
 	/**
 	 * The forest is about to be changed.
 	 * Emitted before the first change in a batch of changes.

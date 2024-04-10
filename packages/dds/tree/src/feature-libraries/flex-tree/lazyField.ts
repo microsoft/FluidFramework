@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { StableId } from "@fluidframework/id-compressor";
+
 import {
 	CursorLocationType,
 	FieldAnchor,
@@ -37,6 +38,7 @@ import { cursorForMapTreeField } from "../mapTreeCursor.js";
 import { FlexFieldKind } from "../modular-schema/index.js";
 import { LocalNodeKey, StableNodeKey, nodeKeyTreeIdentifier } from "../node-key/index.js";
 import { FlexAllowedTypes, FlexFieldSchema } from "../typed-schema/index.js";
+
 import { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
@@ -103,17 +105,6 @@ export function makeField(
 		cursor,
 		fieldAnchor,
 	);
-
-	// Fields currently live as long as their parent does.
-	// For root fields, this means forever, but other cases can be cleaned up when their parent anchor is deleted.
-	if (fieldAnchor.parent !== undefined) {
-		const anchorNode =
-			context.forest.anchors.locate(fieldAnchor.parent) ??
-			fail("parent anchor node should always exist since field is under a node");
-		anchorNode.on("afterDestroy", () => {
-			field[disposeSymbol]();
-		});
-	}
 	return field;
 }
 
@@ -130,6 +121,12 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 	}
 	public readonly key: FieldKey;
 
+	/**
+	 * If this field ends its lifetime before the Anchor does, this needs to be invoked to avoid a double free
+	 * if/when the Anchor is destroyed.
+	 */
+	private readonly offAfterDestroy?: () => void;
+
 	public constructor(
 		context: Context,
 		schema: FlexFieldSchema<TKind, TTypes>,
@@ -139,6 +136,16 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 		super(context, schema, cursor, fieldAnchor);
 		assert(cursor.mode === CursorLocationType.Fields, 0x77b /* must be in fields mode */);
 		this.key = cursor.getFieldKey();
+		// Fields currently live as long as their parent does.
+		// For root fields, this means forever, but other cases can be cleaned up when their parent anchor is deleted.
+		if (fieldAnchor.parent !== undefined) {
+			const anchorNode =
+				context.forest.anchors.locate(fieldAnchor.parent) ??
+				fail("parent anchor node should always exist since field is under a node");
+			this.offAfterDestroy = anchorNode.on("afterDestroy", () => {
+				this[disposeSymbol]();
+			});
+		}
 	}
 
 	public is<TSchema extends FlexFieldSchema>(
@@ -155,7 +162,7 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 	public isSameAs(other: FlexTreeField): boolean {
 		assert(
 			other.context === this.context,
-			0x77d /* Content from different editable trees should not be used together */,
+			0x77d /* Content from different flex trees should not be used together */,
 		);
 		return this.key === other.key && this.parent === other.parent;
 	}
@@ -173,15 +180,15 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 	}
 
 	protected override [tryMoveCursorToAnchorSymbol](
-		anchor: FieldAnchor,
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
-		return this.context.forest.tryMoveCursorToField(anchor, cursor);
+		return this.context.forest.tryMoveCursorToField(this[anchorSymbol], cursor);
 	}
 
-	protected override [forgetAnchorSymbol](anchor: FieldAnchor): void {
-		if (anchor.parent === undefined) return;
-		this.context.forest.anchors.forget(anchor.parent);
+	protected override [forgetAnchorSymbol](): void {
+		this.offAfterDestroy?.();
+		if (this[anchorSymbol].parent === undefined) return;
+		this.context.forest.anchors.forget(this[anchorSymbol].parent);
 	}
 
 	public get length(): number {
@@ -441,8 +448,34 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 	}
 }
 
-export class LazyValueField<TTypes extends FlexAllowedTypes>
+export class ReadonlyLazyValueField<TTypes extends FlexAllowedTypes>
 	extends LazyField<typeof FieldKinds.required, TTypes>
+	implements FlexTreeRequiredField<TTypes>
+{
+	public constructor(
+		context: Context,
+		schema: FlexFieldSchema<typeof FieldKinds.required, TTypes>,
+		cursor: ITreeSubscriptionCursor,
+		fieldAnchor: FieldAnchor,
+	) {
+		super(context, schema, cursor, fieldAnchor);
+	}
+
+	public get content(): FlexTreeUnboxNodeUnion<TTypes> {
+		return this.atIndex(0);
+	}
+
+	public set content(newContent: FlexibleNodeContent<TTypes>) {
+		fail("cannot set content in readonly field");
+	}
+
+	public get boxedContent(): FlexTreeTypedNodeUnion<TTypes> {
+		return this.boxedAt(0) ?? fail("value node must have 1 item");
+	}
+}
+
+export class LazyValueField<TTypes extends FlexAllowedTypes>
+	extends ReadonlyLazyValueField<TTypes>
 	implements FlexTreeRequiredField<TTypes>
 {
 	public constructor(
@@ -460,11 +493,11 @@ export class LazyValueField<TTypes extends FlexAllowedTypes>
 		return fieldEditor;
 	}
 
-	public get content(): FlexTreeUnboxNodeUnion<TTypes> {
+	public override get content(): FlexTreeUnboxNodeUnion<TTypes> {
 		return this.atIndex(0);
 	}
 
-	public set content(newContent: FlexibleNodeContent<TTypes>) {
+	public override set content(newContent: FlexibleNodeContent<TTypes>) {
 		const content: ITreeCursorSynchronous[] = isCursor(newContent)
 			? prepareNodeCursorForInsert(newContent)
 			: [cursorFromContextualData(this.context, this.schema.allowedTypeSet, newContent)];
@@ -473,8 +506,22 @@ export class LazyValueField<TTypes extends FlexAllowedTypes>
 		fieldEditor.set(content[0]);
 	}
 
-	public get boxedContent(): FlexTreeTypedNodeUnion<TTypes> {
+	public override get boxedContent(): FlexTreeTypedNodeUnion<TTypes> {
 		return this.boxedAt(0) ?? fail("value node must have 1 item");
+	}
+}
+
+export class LazyIdentifierField<TTypes extends FlexAllowedTypes>
+	extends ReadonlyLazyValueField<TTypes>
+	implements FlexTreeRequiredField<TTypes>
+{
+	public constructor(
+		context: Context,
+		schema: FlexFieldSchema<typeof FieldKinds.required, TTypes>,
+		cursor: ITreeSubscriptionCursor,
+		fieldAnchor: FieldAnchor,
+	) {
+		super(context, schema, cursor, fieldAnchor);
 	}
 }
 
@@ -569,6 +616,7 @@ const builderList: [FlexFieldKind, Builder][] = [
 	[FieldKinds.optional, LazyOptionalField],
 	[FieldKinds.sequence, LazySequence],
 	[FieldKinds.required, LazyValueField],
+	[FieldKinds.identifier, LazyIdentifierField],
 ];
 
 const kindToClass: ReadonlyMap<FlexFieldKind, Builder> = new Map(builderList);

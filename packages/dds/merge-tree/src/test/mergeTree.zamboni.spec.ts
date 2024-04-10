@@ -4,8 +4,10 @@
  */
 
 import { strict as assert } from "assert";
+
 import { IMergeBlock } from "../mergeTreeNodes.js";
 import { packParent, zamboniSegments } from "../zamboni.js";
+
 import { TestClient } from "./testClient.js";
 
 describe("Zamboni Logic", () => {

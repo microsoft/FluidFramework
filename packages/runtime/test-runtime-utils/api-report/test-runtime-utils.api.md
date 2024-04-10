@@ -5,41 +5,41 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
-import { CreateChildSummarizerNodeFn } from '@fluidframework/runtime-definitions';
-import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions';
+import { CreateChildSummarizerNodeFn } from '@fluidframework/runtime-definitions/internal';
+import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions/internal';
 import { EventEmitter } from '@fluid-internal/client-utils';
 import { fluidHandleSymbol } from '@fluidframework/core-interfaces';
 import { FluidObject } from '@fluidframework/core-interfaces';
-import { FlushMode } from '@fluidframework/runtime-definitions';
+import { FlushMode } from '@fluidframework/runtime-definitions/internal';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
-import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
-import type { IContainerRuntimeEvents } from '@fluidframework/container-runtime-definitions';
-import { IdCreationRange } from '@fluidframework/id-compressor';
+import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions/internal';
+import type { IContainerRuntimeEvents } from '@fluidframework/container-runtime-definitions/internal';
+import type { IdCreationRange } from '@fluidframework/id-compressor/internal';
 import { IDeltaConnection } from '@fluidframework/datastore-definitions';
 import { IDeltaHandler } from '@fluidframework/datastore-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDeltaManagerEvents } from '@fluidframework/container-definitions';
 import { IDeltaQueue } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions';
-import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
-import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
+import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
+import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions/internal';
+import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions/internal';
+import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import type { IFluidHandleErased } from '@fluidframework/core-interfaces';
 import type { IFluidHandleInternal } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
-import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions';
-import { IIdCompressor } from '@fluidframework/id-compressor';
-import { IIdCompressorCore } from '@fluidframework/id-compressor';
-import { ILoader } from '@fluidframework/container-definitions';
+import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions/internal';
+import type { IIdCompressor } from '@fluidframework/id-compressor';
+import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
+import { ILoader } from '@fluidframework/container-definitions/internal';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
@@ -60,11 +60,19 @@ import { MessageType } from '@fluidframework/protocol-definitions';
 import { ReadOnlyInfo } from '@fluidframework/container-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
-import { VisibilityState } from '@fluidframework/runtime-definitions';
+import { VisibilityState } from '@fluidframework/runtime-definitions/internal';
 
 // @internal
 export interface IInsecureUser extends IUser {
     name: string;
+}
+
+// @alpha (undocumented)
+export interface IInternalMockRuntimeMessage {
+    // (undocumented)
+    content: any;
+    // (undocumented)
+    localOpMetadata?: unknown;
 }
 
 // @alpha
@@ -104,8 +112,6 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     protected addPendingMessage(content: any, localOpMetadata: unknown, clientSequenceNumber: number): void;
     // (undocumented)
     clientId: string;
-    // (undocumented)
-    protected clientSequenceNumber: number;
     // @deprecated (undocumented)
     createDeltaConnection(): MockDeltaConnection;
     // (undocumented)
@@ -124,6 +130,8 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     // (undocumented)
     get isDirty(): boolean;
     // (undocumented)
+    protected readonly outbox: IInternalMockRuntimeMessage[];
+    // (undocumented)
     protected readonly overrides?: {
         minimumSequenceNumber?: number | undefined;
     } | undefined;
@@ -132,14 +140,15 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     // (undocumented)
     process(message: ISequencedDocumentMessage): void;
     rebase(): void;
-    protected get referenceSequenceNumber(): number;
+    // (undocumented)
+    resolveHandle(handle: IFluidHandle): Promise<IResponse>;
     // (undocumented)
     protected reSubmitMessages(messagesToResubmit: {
         content: any;
-        localOpMetadata: unknown;
+        localOpMetadata?: unknown;
     }[]): void;
     // (undocumented)
-    submit(messageContent: any, localOpMetadata: unknown): number;
+    submit(messageContent: any, localOpMetadata?: unknown): number;
 }
 
 // @alpha
@@ -227,11 +236,13 @@ export class MockDeltaConnection implements IDeltaConnection {
 
 // @alpha
 export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-    constructor();
+    constructor(getClientId?: (() => string) | undefined);
     // (undocumented)
     readonly active: boolean;
     // (undocumented)
     readonly clientDetails: IClientDetails;
+    // (undocumented)
+    clientSequenceNumber: number;
     // (undocumented)
     readonly clientType: string;
     // (undocumented)
@@ -265,7 +276,7 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> imp
     // (undocumented)
     get outbound(): MockDeltaQueue<IDocumentMessage[]>;
     // (undocumented)
-    prepareInboundResponse(type: MessageType, contents: any): void;
+    process(message: ISequencedDocumentMessage): void;
     // (undocumented)
     readOnlyInfo: ReadOnlyInfo;
     // (undocumented)

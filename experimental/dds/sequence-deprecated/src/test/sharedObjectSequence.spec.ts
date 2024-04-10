@@ -4,15 +4,17 @@
  */
 
 import { strict as assert } from "assert";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { SharedObjectSequence } from "../sharedObjectSequence.js";
+} from "@fluidframework/test-runtime-utils/internal";
+
 import { SharedObjectSequenceFactory } from "../sequenceFactory.js";
+import { SharedObjectSequence } from "../sharedObjectSequence.js";
 
 function createConnectedSequence(id: string, runtimeFactory: MockContainerRuntimeFactory) {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();

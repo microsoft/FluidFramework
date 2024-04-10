@@ -37,6 +37,9 @@ module.exports = {
 
 	// A map from regular expressions to module names that allow to stub out resources with a single module
 	moduleNameMapper: {
+		// Remove explicit .js from local paths to allow jest to find the .ts* files
+		"^(\\.{1,2}/.*)\\.js$": "$1",
+		// Mock CSS and LESS imports during test
 		"\\.(css|less)$": "identity-obj-proxy",
 		// Force module sinon to resolve with the CJS entry point, because Jest does not support package.json.exports. Somewhat similar issue: https://github.com/uuidjs/uuid/issues/451
 		"^sinon$": "<rootDir>/node_modules/sinon/lib/sinon.js",

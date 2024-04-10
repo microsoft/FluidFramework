@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { ux, Flags, Command } from "@oclif/core";
 import { strict as assert } from "node:assert";
+import path from "node:path";
+import { Command, Flags, ux } from "@oclif/core";
 import chalk from "chalk";
 import { differenceInBusinessDays, formatDistanceToNow } from "date-fns";
 import { writeJson } from "fs-extra";
 import inquirer from "inquirer";
-import path from "node:path";
 import sortJson from "sort-json";
 import { table } from "table";
 
 import {
-	VersionDetails,
 	Context,
 	PackageVersionMap,
 	ReleaseReport,
 	ReportKind,
+	VersionDetails,
 	filterVersionsOlderThan,
 	getDisplayDate,
 	getDisplayDateRelative,
@@ -106,8 +106,8 @@ export abstract class ReleaseReportBaseCommand<
 		return date === undefined
 			? false
 			: this.numberBusinessDaysToConsiderRecent === undefined
-			  ? true
-			  : differenceInBusinessDays(Date.now(), date) < this.numberBusinessDaysToConsiderRecent;
+				? true
+				: differenceInBusinessDays(Date.now(), date) < this.numberBusinessDaysToConsiderRecent;
 	}
 
 	/**
@@ -402,10 +402,10 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 			flags.highest === true
 				? "version"
 				: flags.mostRecent === true
-				  ? "date"
-				  : flags.interactive
-					  ? "interactive"
-					  : this.defaultMode;
+					? "date"
+					: flags.interactive
+						? "interactive"
+						: this.defaultMode;
 		assert(mode !== undefined, `mode is undefined`);
 
 		this.releaseGroupName = flags.releaseGroup;
@@ -672,7 +672,7 @@ async function writeReport(
 	const version =
 		releaseGroup === undefined
 			? // Use container-runtime as a proxy for the client release group.
-			  report["@fluidframework/container-runtime"].version
+				report["@fluidframework/container-runtime"].version
 			: context.getVersion(releaseGroup);
 
 	const reportName = generateReportFileName(kind, version, releaseGroup);

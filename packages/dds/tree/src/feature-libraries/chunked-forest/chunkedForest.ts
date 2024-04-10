@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
 	Anchor,
 	AnchorSet,
@@ -29,6 +30,7 @@ import {
 } from "../../core/index.js";
 import { createEmitter } from "../../events/index.js";
 import { assertValidRange, brand, fail, getOrAddEmptyToMap } from "../../util/index.js";
+
 import { BasicChunk, BasicChunkCursor, SiblingsOrKey } from "./basicChunk.js";
 import { ChunkedCursor, TreeChunk } from "./chunk.js";
 import { IChunker, basicChunkTree, chunkTree } from "./chunkTree.js";
@@ -122,6 +124,7 @@ export class ChunkedForest implements IEditableForest {
 			create(content: ProtoNodes, destination: FieldKey): void {
 				const chunks: TreeChunk[] = content.map((c) => chunkTree(c, this.forest.chunker));
 				this.forest.roots.fields.set(destination, chunks);
+				this.forest.events.emit("afterRootFieldCreated", destination);
 			},
 			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
 				this.attachEdit(source, count, destination);
