@@ -6,7 +6,7 @@ For Long Term Support (LTS) versions this can require supporting these platforms
 
 It is likely that other configurations will work, but they are not supported: if they stop working, that is not a breaking change.
 If you would benefit from support for something not listed here, file an issue and the product team will evaluate your request.
-When making such a request please include if the a configuration already works (and thus the request is just that it becomes officially supported), or if changes are required to get it working.
+When making such a request please include if the configuration already works (and thus the request is just that it becomes officially supported), or if changes are required to get it working.
 
 ## Supported Runtimes
 
