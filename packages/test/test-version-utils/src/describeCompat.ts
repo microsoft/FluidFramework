@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { getUnexpectedLogErrorException, ITestObjectProvider } from "@fluidframework/test-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	getUnexpectedLogErrorException,
+	ITestObjectProvider,
+} from "@fluidframework/test-utils/internal";
 
 import { testBaseVersion } from "./baseVersion.js";
 import {
@@ -104,7 +107,7 @@ function createCompatSuite(
 				}, apis);
 
 				afterEach(function (done: Mocha.Done) {
-					const logErrors = getUnexpectedLogErrorException(provider.logger);
+					const logErrors = getUnexpectedLogErrorException(provider.tracker);
 					// if the test failed for another reason
 					// then we don't need to check errors
 					// and fail the after each as well
@@ -182,7 +185,7 @@ export interface ITestObjectProviderOptions {
  */
 export type DescribeCompatSuite = (
 	name: string,
-	compatVersion: string,
+	compatVersion: CompatType,
 	tests: (
 		this: Mocha.Suite,
 		provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider,
@@ -214,10 +217,13 @@ export type DescribeCompat = DescribeCompatSuite & {
 	noCompat: DescribeCompatSuite;
 };
 
+/** @internal */
+export type CompatType = "FullCompat" | "LoaderCompat" | "NoCompat";
+
 function createCompatDescribe(): DescribeCompat {
 	const createCompatSuiteWithDefault = (
 		tests: (this: Mocha.Suite, provider: () => ITestObjectProvider, apis: CompatApis) => void,
-		compatVersion: string,
+		compatVersion: CompatType,
 	) => {
 		switch (compatVersion) {
 			case "FullCompat":
@@ -227,19 +233,19 @@ function createCompatDescribe(): DescribeCompat {
 			case "NoCompat":
 				return createCompatSuite(tests, [CompatKind.None]);
 			default:
-				return createCompatSuite(tests, undefined, compatVersion);
+				unreachableCase(compatVersion, "unknown compat version");
 		}
 	};
-	const d: DescribeCompat = (name: string, compatVersion: string, tests) =>
+	const d: DescribeCompat = (name: string, compatVersion: CompatType, tests) =>
 		describe(name, createCompatSuiteWithDefault(tests, compatVersion));
-	d.skip = (name, compatVersion, tests) =>
+	d.skip = (name, compatVersion: CompatType, tests) =>
 		describe.skip(name, createCompatSuiteWithDefault(tests, compatVersion));
 
-	d.only = (name, compatVersion, tests) =>
+	d.only = (name, compatVersion: CompatType, tests) =>
 		describe.only(name, createCompatSuiteWithDefault(tests, compatVersion));
 
 	d.noCompat = (name, _, tests) =>
-		describe(name, createCompatSuiteWithDefault(tests, pkgVersion));
+		describe(name, createCompatSuite(tests, undefined, pkgVersion));
 
 	return d;
 }

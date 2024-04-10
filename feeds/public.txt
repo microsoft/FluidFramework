@@ -6,7 +6,7 @@
 @fluidframework/devtools-core
 @fluidframework/devtools
 @fluidframework/test-utils
-@fluidframework/test-driver-definitions
+@fluid-internal/test-driver-definitions
 @fluid-internal/mocha-test-setup
 @fluidframework/tinylicious-client
 @fluid-experimental/odsp-client
@@ -31,6 +31,7 @@
 fluid-framework
 @fluid-experimental/dds-interceptions
 @fluid-experimental/data-object-base
+@fluidframework/fluid-telemetry
 @fluidframework/app-insights-logger
 @fluid-experimental/attributor
 @fluidframework/aqueduct

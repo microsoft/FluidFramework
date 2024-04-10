@@ -4,57 +4,13 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { Lazy } from "@fluidframework/core-utils";
+import { Lazy } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { FlexListToUnion, LazyItem, isLazy } from "../feature-libraries/index.js";
-import { MakeNominal, RestrictiveReadonlyRecord, isReadonlyArray } from "../util/index.js";
+import { MakeNominal, isReadonlyArray } from "../util/index.js";
 
-import { TreeNode, Unhydrated } from "./types.js";
-import { UsageError } from "@fluidframework/telemetry-utils";
-
-/**
- * Helper used to produce types for object nodes.
- * @public
- */
-export type ObjectFromSchemaRecord<
-	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-> = {
-	-readonly [Property in keyof T]: TreeFieldFromImplicitField<T[Property]>;
-};
-
-/**
- * A {@link TreeNode} which modules a JavaScript object.
- * @remarks
- * Object nodes consist of a type which specifies which {@link TreeNodeSchema} they use (see {@link TreeNodeApi.schema}), and a collections of fields, each with a distinct `key` and its own {@link FieldSchema} defining what can be placed under that key.
- *
- * All non-empty fields on an object node are exposed as enumerable own properties with string keys.
- * No other own `own` or `enumerable` properties are included on object nodes unless the user of the node manually adds custom session only state.
- * This allows a majority of general purpose JavaScript object processing operations (like `for...in`, `Reflect.ownKeys()` and `Object.entries()`) to enumerate all the children.
- * @public
- */
-export type TreeObjectNode<
-	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-	TypeName extends string = string,
-> = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName>;
-
-/**
- * Helper used to produce types for:
- *
- * 1. Insertable content which can be used to construct an object node.
- *
- * 2. Insertable content which is an unhydrated object node.
- *
- * 3. Union of 1 and 2.
- *
- * @privateRemarks TODO: consider separating these cases into different types.
- *
- * @public
- */
-export type InsertableObjectFromSchemaRecord<
-	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-> = {
-	readonly [Property in keyof T]: InsertableTreeFieldFromImplicitField<T[Property]>;
-};
+import { Unhydrated } from "./types.js";
 
 /**
  * Schema for a tree node.
@@ -183,6 +139,12 @@ export enum FieldKind {
 	 * Only allows exactly one child.
 	 */
 	Required,
+	/**
+	 * A special field used for node identifiers.
+	 * @remarks
+	 * Only allows exactly one child.
+	 */
+	Identifier,
 }
 
 /**
@@ -208,6 +170,85 @@ export enum NodeKind {
 	 * A node which stores a single leaf value.
 	 */
 	Leaf,
+}
+
+/**
+ * Maps from a view key to its corresponding {@link FieldProps.key | stored key} for the provided
+ * {@link ImplicitFieldSchema | field schema}.
+ *
+ * @remarks
+ * If an explicit stored key was specified in the schema, it will be used.
+ * Otherwise, the stored key is the same as the view key.
+ */
+export function getStoredKey(viewKey: string, fieldSchema: ImplicitFieldSchema): string {
+	return getExplicitStoredKey(fieldSchema) ?? viewKey;
+}
+
+/**
+ * Gets the {@link FieldProps.key | stored key} specified by the schema, if one was explicitly specified.
+ * Otherwise, returns undefined.
+ */
+export function getExplicitStoredKey(fieldSchema: ImplicitFieldSchema): string | undefined {
+	return fieldSchema instanceof FieldSchema ? fieldSchema.props?.key : undefined;
+}
+
+/**
+ * Additional information to provide to a {@link FieldSchema}.
+ *
+ * @public
+ */
+export interface FieldProps {
+	/**
+	 * The unique identifier of a field, used in the persisted form of the tree.
+	 *
+	 * @remarks
+	 * If not explicitly set via the schema, this is the same as the schema's property key.
+	 *
+	 * Specifying a stored key that differs from the property key is particularly useful in refactoring scenarios.
+	 * To update the developer-facing API, while maintaining backwards compatibility with existing SharedTree data,
+	 * you can change the property key and specify the previous property key as the stored key.
+	 *
+	 * Notes:
+	 *
+	 * - Stored keys have no impact on standard JavaScript behavior, on tree nodes. For example, `Object.keys`
+	 * will always return the property keys specified in the schema, ignoring any stored keys that differ from
+	 * the property keys.
+	 *
+	 * - When specifying stored keys in an object schema, you must ensure that the final set of stored keys
+	 * (accounting for those implicitly derived from property keys) contains no duplicates.
+	 * This is validated at runtime.
+	 *
+	 * @example Refactoring code without breaking compatibility with existing data
+	 *
+	 * Consider some existing object schema:
+	 *
+	 * ```TypeScript
+	 * class Point extends schemaFactory.object("Point", {
+	 * 	xPosition: schemaFactory.number,
+	 * 	yPosition: schemaFactory.number,
+	 * 	zPosition: schemaFactory.optional(schemaFactory.number),
+	 * });
+	 * ```
+	 *
+	 * Developers using nodes of this type would access the the `xPosition` property as `point.xPosition`.
+	 *
+	 * We would like to refactor the schema to omit "Position" from the property keys, but application data has
+	 * already been persisted using the original property keys. To maintain compatibility with existing data,
+	 * we can refactor the schema as follows:
+	 *
+	 * ```TypeScript
+	 * class Point extends schemaFactory.object("Point", {
+	 * 	x: schemaFactory.required(schemaFactory.number, { key: "xPosition" }),
+	 * 	y: schemaFactory.required(schemaFactory.number, { key: "yPosition" }),
+	 * 	z: schemaFactory.optional(schemaFactory.number, { key: "zPosition" }),
+	 * });
+	 * ```
+	 *
+	 * Now, developers can access the `x` property as `point.x`, while existing data can still be collaborated on.
+	 *
+	 * @defaultValue If not specified, the key that is persisted is the property key that was specified in the schema.
+	 */
+	readonly key?: string;
 }
 
 /**
@@ -247,6 +288,10 @@ export class FieldSchema<
 		 * What types of tree nodes are allowed in this field.
 		 */
 		public readonly allowedTypes: Types,
+		/**
+		 * Optional properties associated with the field.
+		 */
+		public readonly props?: FieldProps,
 	) {
 		this.lazyTypes = new Lazy(() => normalizeAllowedTypes(this.allowedTypes));
 	}
@@ -294,6 +339,7 @@ function evaluateLazySchema(value: LazyItem<TreeNodeSchema>): TreeNodeSchema {
  * @public
  */
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
+
 /**
  * Schema for a field of a tree node.
  * @remarks
@@ -396,45 +442,6 @@ export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema
 >
 	? TBuild
 	: never;
-
-/**
- * A map of string keys to tree objects.
- *
- * @privateRemarks
- * Add support for `clear` once we have established merge semantics for it.
- *
- * @public
- */
-export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes>
-	extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>,
-		TreeNode {
-	/**
-	 * Adds or updates an entry in the map with a specified `key` and a `value`.
-	 *
-	 * @param key - The key of the element to add to the map.
-	 * @param value - The value of the element to add to the map.
-	 *
-	 * @remarks
-	 * Setting the value at a key to `undefined` is equivalent to calling {@link TreeMapNode.delete} with that key.
-	 */
-	set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T> | undefined): void;
-
-	/**
-	 * Removes the specified element from this map by its `key`.
-	 *
-	 * @remarks
-	 * Note: unlike JavaScript's Map API, this method does not return a flag indicating whether or not the value was
-	 * deleted.
-	 *
-	 * @privateRemarks
-	 * Regarding the choice to not return a boolean: Since this data structure is distributed in nature, it isn't
-	 * possible to tell whether or not the item was deleted as a result of this method call. Returning a "best guess"
-	 * is more likely to create issues / promote bad usage patterns than offer useful information.
-	 *
-	 * @param key - The key of the element to remove from the map.
-	 */
-	delete(key: string): void;
-}
 
 /**
  * Value that may be stored as a leaf node.

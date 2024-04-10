@@ -4,8 +4,8 @@
  */
 
 // eslint-disable-next-line import/no-internal-modules
-import { SnapshotLegacy as Snapshot } from "@fluidframework/merge-tree/test";
-import * as mocks from "@fluidframework/test-runtime-utils";
+import { SnapshotLegacy as Snapshot } from "@fluidframework/merge-tree/internal/test";
+import * as mocks from "@fluidframework/test-runtime-utils/internal";
 import { MersenneTwister19937, Random } from "random-js";
 
 import { SharedStringFactory } from "../sequenceFactory.js";

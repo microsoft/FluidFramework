@@ -13,9 +13,9 @@ import {
 import { describeCompat, itSkipsFailureOnSpecificDrivers } from "@fluid-private/test-version-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
-import { AttributionInfo } from "@fluidframework/runtime-definitions";
-import type { SharedString } from "@fluidframework/sequence";
+import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
+import { AttributionInfo } from "@fluidframework/runtime-definitions/internal";
+import type { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -23,7 +23,7 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 const stringId = "sharedStringKey";
 

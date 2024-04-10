@@ -233,7 +233,7 @@ class WrapperChunk extends ReferenceCountedBase implements TreeChunk {
 		chunk.referenceAdded();
 	}
 
-	protected dispose(): void {
+	protected onUnreferenced(): void {
 		this.chunk.referenceRemoved();
 	}
 

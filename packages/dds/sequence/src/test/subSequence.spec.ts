@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { Serializable } from "@fluidframework/datastore-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { Serializable } from "@fluidframework/datastore-definitions/internal";
 import {
 	PropertySet,
 	createInsertSegmentOp,
 	createRemoveRangeOp,
-} from "@fluidframework/merge-tree";
+} from "@fluidframework/merge-tree/internal";
 // eslint-disable-next-line import/no-internal-modules
-import { TestClient } from "@fluidframework/merge-tree/test";
+import { TestClient } from "@fluidframework/merge-tree/internal/test";
 
 import { SubSequence } from "../sharedSequence.js";
 

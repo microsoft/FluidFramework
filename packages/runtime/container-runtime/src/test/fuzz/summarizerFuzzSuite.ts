@@ -21,7 +21,7 @@ import {
 	makeRandom,
 	performFuzzActionsAsync,
 } from "@fluid-private/stochastic-test-utils";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import type { SummarizerOperation } from "./fuzzUtils.js";
 import {
@@ -172,11 +172,11 @@ export function createSummarizerFuzzSuite(
 			describe.only(`replay from file`, () => {
 				const saveInfo = getSaveInfo(model, options, seed);
 				assert(
-					saveInfo !== undefined,
+					saveInfo.saveOnFailure !== false,
 					"Cannot replay a file without a directory to save files in!",
 				);
 				const operations = options.parseOperations(
-					readFileSync(saveInfo.filepath).toString(),
+					readFileSync(saveInfo.saveOnFailure.path).toString(),
 				);
 
 				const replayModel = {
@@ -274,13 +274,12 @@ function getSaveInfo(
 	model: HasWorkloadName,
 	options: SummarizerFuzzSuiteOptions,
 	seed: number,
-): SaveInfo | undefined {
+): SaveInfo {
 	const directory = getSaveDirectory(model, options);
 	if (!directory) {
-		return undefined;
+		return { saveOnFailure: false, saveOnSuccess: false };
 	}
-	const filepath = path.join(directory, `${seed}.json`);
-	return { saveOnFailure: true, filepath };
+	return { saveOnFailure: { path: path.join(directory, `${seed}.json`) }, saveOnSuccess: false };
 }
 
 type InternalOptions = Omit<SummarizerFuzzSuiteOptions, "only" | "skip"> & {

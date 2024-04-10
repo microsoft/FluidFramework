@@ -21,6 +21,7 @@ export {
 	MockAudience,
 	IAudienceEvents,
 	MockSharedObjectServices,
+	IInternalMockRuntimeMessage,
 } from "./mocks.js";
 export {
 	MockContainerRuntimeFactoryForReconnection,

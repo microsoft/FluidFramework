@@ -4,7 +4,7 @@
  */
 
 import { IContainerContext, IRuntime } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import Sinon from "sinon";
 
 import { RuntimeFactoryHelper } from "../runtimeFactoryHelper.js";

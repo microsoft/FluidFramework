@@ -3,4 +3,5 @@ nyc
 **/*.tsbuildinfo
 src/test/**/*.spec.ts
 dist/test/**/*.spec.js
+lib/test/**/*.spec.js
 **/_api-extractor-temp/**

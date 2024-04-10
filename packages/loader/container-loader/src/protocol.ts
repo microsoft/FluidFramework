@@ -4,7 +4,7 @@
  */
 
 import { IAudienceOwner } from "@fluidframework/container-definitions/internal";
-import { canBeCoalescedByService } from "@fluidframework/driver-utils";
+import { canBeCoalescedByService } from "@fluidframework/driver-utils/internal";
 import {
 	IProtocolHandler as IBaseProtocolHandler,
 	IQuorumSnapshot,

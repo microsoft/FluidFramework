@@ -5,7 +5,7 @@
 
 import fs from "fs";
 
-import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
+import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
 
 import { LocationBase, generateStrings } from "./generateSharedStrings.js";
 

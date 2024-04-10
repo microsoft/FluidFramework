@@ -4,12 +4,12 @@
 
 ```ts
 
-import { DataObject } from '@fluidframework/aqueduct';
-import { DataObjectFactory } from '@fluidframework/aqueduct';
-import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
+import { DataObject } from '@fluidframework/aqueduct/internal';
+import { DataObjectFactory } from '@fluidframework/aqueduct/internal';
+import { IContainerRuntime } from '@fluidframework/container-runtime-definitions/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IUser } from '@fluidframework/protocol-definitions';
-import { SharedSummaryBlock } from '@fluidframework/shared-summary-block';
+import { SharedSummaryBlock } from '@fluidframework/shared-summary-block/internal';
 
 // @internal (undocumented)
 export const IFluidLastEditedTracker: keyof IProvideFluidLastEditedTracker;
