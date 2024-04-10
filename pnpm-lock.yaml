@@ -5351,28 +5351,19 @@ importers:
       '@arethetypeswrong/cli': ^0.15.2
       '@biomejs/biome': ^1.6.2
       '@fluid-internal/mocha-test-setup': workspace:~
-      '@fluid-private/test-dds-utils': workspace:~
-      '@fluid-private/test-drivers': workspace:~
       '@fluid-tools/build-cli': ^0.35.0
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.35.0
-      '@fluidframework/container-definitions': workspace:~
-      '@fluidframework/container-loader': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/fluid-static': workspace:~
-      '@fluidframework/test-runtime-utils': workspace:~
-      '@fluidframework/test-utils': workspace:~
       '@fluidframework/tree': workspace:~
       '@microsoft/api-extractor': ^7.42.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
-      '@types/uuid': ^9.0.2
-      ajv: ^8.12.0
-      ajv-formats: ^2.1.1
       c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -5397,23 +5388,14 @@ importers:
       '@arethetypeswrong/cli': 0.15.2
       '@biomejs/biome': 1.6.2
       '@fluid-internal/mocha-test-setup': link:../../../packages/test/mocha-test-setup
-      '@fluid-private/test-dds-utils': link:../../../packages/dds/test-dds-utils
-      '@fluid-private/test-drivers': link:../../../packages/test/test-drivers
       '@fluid-tools/build-cli': 0.35.0_@types+node@18.19.1
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.35.0_@types+node@18.19.1
-      '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
-      '@fluidframework/container-loader': link:../../../packages/loader/container-loader
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
-      '@fluidframework/test-utils': link:../../../packages/test/test-utils
       '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/react': 17.0.71
-      '@types/uuid': 9.0.7
-      ajv: 8.12.0
-      ajv-formats: 2.1.1_ajv@8.12.0
       c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
