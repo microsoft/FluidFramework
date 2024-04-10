@@ -1736,7 +1736,7 @@ export class ContainerRuntime
 		});
 
 		this._audience = audience;
-		if (!Object.prototype.hasOwnProperty.call(audience, "currentClientId")) {
+		if (!("currentClientId" in audience)) {
 			// back-compat, added in 2.0 RC3.
 			// Purpose: deal with cases when we run against old loader that does not have newly added capabilities
 			Object.defineProperty(audience, "currentClientId", {

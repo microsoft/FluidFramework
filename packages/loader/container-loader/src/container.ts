@@ -513,9 +513,9 @@ export class Container
 		// It's conceivable the container could be closed when this is called
 		// Only transition states if currently loading
 		if (this._lifecycleState === "loading") {
+			this._lifecycleState = "loaded";
 			// Propagate current connection state through the system.
 			this.propagateConnectionState(true /* initial transition */);
-			this._lifecycleState = "loaded";
 		}
 	}
 
@@ -626,17 +626,26 @@ export class Container
 	}
 
 	private get connected(): boolean {
-		return this.connectionStateHandler.connectionState === ConnectionState.Connected;
+		// "connected" event is delayed until runtime is fully loaded - see setLoaded()
+		return (
+			this.connectionStateHandler.connectionState === ConnectionState.Connected &&
+			this._lifecycleState === "loaded"
+		);
 	}
-
-	private _clientId: string | undefined;
 
 	/**
 	 * The server provided id of the client.
-	 * Set once this.connected is true, otherwise undefined
+	 * Set once connection is established and client is caught up.
+	 * Used only internally. See this.clientId for public API.
+	 */
+	private _clientId: string | undefined;
+
+	/**
+	 * clientId of the latest connection. Changes only once client is connected, caught up and fully loaded.
+	 * Changes to clientId are delayed through container loading sequence and delived once container is fully loaded.
 	 */
 	public get clientId(): string | undefined {
-		return this._clientId;
+		return this.protocolHandler.audience.currentClientId;
 	}
 
 	private get isInteractiveClient(): boolean {
@@ -1650,6 +1659,10 @@ export class Container
 			baseSnapshot,
 		);
 
+		// If we are loading from pending state, we start with old clientId.
+		// We switch to latest connection clientId only after setLoaded().
+		this.protocolHandler.audience.setCurrentClientId(pendingLocalState?.clientId);
+
 		timings.phase3 = performance.now();
 		const codeDetails = this.getCodeDetailsFromQuorum();
 		await this.instantiateRuntime(
@@ -1895,19 +1908,6 @@ export class Container
 		// this was breaking this._initialClients handling
 		//
 		this._protocolHandler = protocol;
-
-		// This is a bit debatable.
-		// On one hand, we notify about changes in connection and clientId in propagateConnectionState()
-		// If we established connection while loading container runtime, we will delay notifying container runtime
-		// until it's fully loaded, and setLoaded() will trigger notification
-		// At the same time, current clientId is available through API surface (IContainer.clientId, ContainerRuntime.clientId, etc.)
-		// And it would be weird to have audience.currentClientId not match it at any point in time, including through loading process.
-		//
-		// I think the best course of action is to remove Container's mode that allows concurrent establishing of socket
-		// connection with loading runtime (as it brings these weird combos and we observed runtime and developers get it wrong)
-		//
-		// For now the choise is to keep currentClientId in sync with clientId properties.
-		this.protocolHandler.audience.setCurrentClientId(this._clientId);
 	}
 
 	private captureProtocolSummary(): ISummaryTree {
@@ -2130,7 +2130,7 @@ export class Container
 				reason: reason?.text,
 				connectionInitiationReason,
 				pendingClientId: this.connectionStateHandler.pendingClientId,
-				clientId: this.clientId,
+				clientId: this._clientId,
 				autoReconnect,
 				opsBehind,
 				online: OnlineStatus[isOnline()],
@@ -2157,6 +2157,7 @@ export class Container
 	) {
 		if (this.connectionState === ConnectionState.Connected) {
 			this.protocolHandler.audience.setCurrentClientId(this._clientId);
+			assert(this.clientId === this._clientId, "clientId synchronized");
 		}
 
 		// When container loaded, we want to propagate initial connection state.
@@ -2417,7 +2418,7 @@ export class Container
 	 * @param readonly - Is the container in readonly mode?
 	 */
 	private setContextConnectedState(state: boolean, readonly: boolean): void {
-		if (this._runtime?.disposed === false) {
+		if (this._runtime?.disposed === false && this._lifecycleState === "loaded") {
 			/**
 			 * We want to lie to the ContainerRuntime when we are in readonly mode to prevent issues with pending
 			 * ops getting through to the DeltaManager.
