@@ -5,11 +5,11 @@
 
 import * as child_process from "child_process";
 import * as fs from "fs";
-import * as glob from "glob";
-import isEqual from "lodash.isequal";
+import { pathToFileURL } from "node:url";
 import * as path from "path";
 import * as util from "util";
-import { pathToFileURL } from "node:url";
+import * as glob from "glob";
+import isEqual from "lodash.isequal";
 
 /**
  *	An array of commands that are known to have subcommands and should be parsed as such

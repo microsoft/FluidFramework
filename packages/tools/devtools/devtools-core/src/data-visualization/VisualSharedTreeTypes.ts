@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { type Primitive } from "./VisualTree.js";
 
 /**
@@ -22,7 +23,7 @@ export const VisualSharedTreeNodeKind = {
 /**
  * Base schema interface.
  */
-interface SharedTreeSchemaNode {
+export interface SharedTreeSchemaNode {
 	/**
 	 * Name of the SharedTree schema.
 	 */

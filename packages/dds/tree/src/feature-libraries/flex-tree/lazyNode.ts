@@ -72,7 +72,7 @@ import {
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity.js";
 import { LazyNodeKeyField, makeField } from "./lazyField.js";
-import { FlexTreeNodeEvents, TreeEvent } from "./treeEvents.js";
+import { FlexTreeNodeEvents } from "./treeEvents.js";
 import { unboxedField } from "./unboxed.js";
 import { treeStatusFromAnchorCache } from "./utilities.js";
 
@@ -205,9 +205,7 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 	}
 
 	public getBoxed(key: FieldKey): FlexTreeField {
-		return inCursorField(this[cursorSymbol], brand(key), (cursor) =>
-			makeField(this.context, this.schema.getFieldSchema(key), cursor),
-		);
+		return getBoxedField(this, key, this.schema.getFieldSchema(key));
 	}
 
 	public boxedIterator(): IterableIterator<FlexTreeField> {
@@ -279,58 +277,16 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 			case "changing": {
 				const unsubscribeFromChildrenChange = this.anchorNode.on(
 					"childrenChanging",
-					(anchorNode: AnchorNode) =>
-						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
-						// the listener argument only needs to be an AnchorNode. Should go away if/when we make the listener signature
-						// for changing and subtreeChanging match the one for beforeChange and afterChange.
-						listener(anchorNode as unknown as AnchorNode & TreeEvent),
+					(anchorNode: AnchorNode) => listener(anchorNode),
 				);
 				return unsubscribeFromChildrenChange;
 			}
 			case "subtreeChanging": {
 				const unsubscribeFromSubtreeChange = this.anchorNode.on(
 					"subtreeChanging",
-					(anchorNode: AnchorNode) =>
-						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
-						// the listener argument only needs to be an AnchorNode. Should go away if/when we make the listener signature
-						// for changing and subtreeChanging match the one for beforeChange and afterChange.
-						listener(anchorNode as unknown as AnchorNode & TreeEvent),
+					(anchorNode: AnchorNode) => listener(anchorNode),
 				);
 				return unsubscribeFromSubtreeChange;
-			}
-			case "beforeChange": {
-				const unsubscribeFromChildrenBeforeChange = this.anchorNode.on(
-					"beforeChange",
-					(anchorNode: AnchorNode) => {
-						const treeNode = anchorNode.slots.get(flexTreeSlot);
-						assert(
-							treeNode !== undefined,
-							0x7d3 /* tree node not found in anchor node slots */,
-						);
-						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
-						// the listener argument only needs to be a TreeEvent. Should go away if/when we make the listener signature
-						// for changing and subtreeChanging match the one for beforeChange and afterChange.
-						listener({ target: treeNode } as unknown as AnchorNode & TreeEvent);
-					},
-				);
-				return unsubscribeFromChildrenBeforeChange;
-			}
-			case "afterChange": {
-				const unsubscribeFromChildrenAfterChange = this.anchorNode.on(
-					"afterChange",
-					(anchorNode: AnchorNode) => {
-						const treeNode = anchorNode.slots.get(flexTreeSlot);
-						assert(
-							treeNode !== undefined,
-							0x7d4 /* tree node not found in anchor node slots */,
-						);
-						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
-						// the listener argument only needs to be a TreeEvent. Should go away if/when we make the listener signature
-						// for changing and subtreeChanging match the one for beforeChange and afterChange.
-						listener({ target: treeNode } as unknown as AnchorNode & TreeEvent);
-					},
-				);
-				return unsubscribeFromChildrenAfterChange;
 			}
 			default:
 				unreachableCase(eventName);
@@ -562,7 +518,7 @@ const cachedStructClasses = new WeakMap<
 	) => LazyObjectNode<FlexObjectNodeSchema>
 >();
 
-export function getBoxedField(
+function getBoxedField(
 	objectNode: LazyTreeNode,
 	key: FieldKey,
 	fieldSchema: FlexFieldSchema,

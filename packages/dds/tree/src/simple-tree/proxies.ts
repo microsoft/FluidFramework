@@ -25,17 +25,10 @@ import {
 } from "../feature-libraries/index.js";
 import { Mutable, brand, fail, isReadonlyArray } from "../util/index.js";
 
-import { anchorProxy, getFlexNode, tryGetFlexNode, tryGetProxy } from "./proxyBinding.js";
+import { anchorProxy, tryGetFlexNode, tryGetProxy } from "./proxyBinding.js";
 import { extractRawNodeContent } from "./rawNode.js";
-import { getSimpleNodeSchema, tryGetSimpleNodeSchema } from "./schemaCaching.js";
-import {
-	type ImplicitAllowedTypes,
-	type InsertableTypedNode,
-	NodeKind,
-	TreeMapNode,
-	type TreeNodeSchema,
-} from "./schemaTypes.js";
-import { cursorFromNodeData } from "./toMapTree.js";
+import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
+import { NodeKind } from "./schemaTypes.js";
 import { TreeNode, Unhydrated } from "./types.js";
 
 /**
@@ -92,6 +85,12 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 			// this case unreachable as long as users follow the 'array recipe'.
 			fail("'sequence' field is unexpected.");
 		}
+		case FieldKinds.identifier: {
+			const identifier = field.boxedAt(0);
+			assert(identifier !== undefined, "identifier must exist");
+			return getOrCreateNodeProxy(identifier);
+		}
+
 		default:
 			fail("invalid field kind");
 	}
@@ -112,143 +111,6 @@ export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeVal
 	} else {
 		return (classSchema as { create(data: FlexTreeNode): TreeNode }).create(flexNode);
 	}
-}
-
-// #region Create dispatch map for maps
-
-export const mapStaticDispatchMap: PropertyDescriptorMap = {
-	[Symbol.iterator]: {
-		value(this: TreeMapNode) {
-			return this.entries();
-		},
-	},
-	delete: {
-		value(this: TreeMapNode, key: string): void {
-			const node = getFlexNode(this);
-			node.delete(key);
-		},
-	},
-	entries: {
-		*value(this: TreeMapNode): IterableIterator<[string, unknown]> {
-			const node = getFlexNode(this);
-			for (const key of node.keys()) {
-				yield [key, getProxyForField(node.getBoxed(key))];
-			}
-		},
-	},
-	get: {
-		value(this: TreeMapNode, key: string): unknown {
-			const node = getFlexNode(this);
-			const field = node.getBoxed(key);
-			return getProxyForField(field);
-		},
-	},
-	has: {
-		value(this: TreeMapNode, key: string): boolean {
-			const node = getFlexNode(this);
-			return node.has(key);
-		},
-	},
-	keys: {
-		value(this: TreeMapNode): IterableIterator<string> {
-			const node = getFlexNode(this);
-			return node.keys();
-		},
-	},
-	set: {
-		value(
-			this: TreeMapNode,
-			key: string,
-			value: InsertableTypedNode<TreeNodeSchema>,
-		): TreeMapNode {
-			const node = getFlexNode(this);
-			const content = prepareContentForInsert(
-				value as InsertableContent,
-				node.context.forest,
-			);
-
-			const classSchema = getSimpleNodeSchema(node.schema);
-			const cursor = cursorFromNodeData(content, classSchema.info as ImplicitAllowedTypes);
-
-			node.set(key, cursor);
-			return this;
-		},
-	},
-	size: {
-		get(this: TreeMapNode) {
-			return getFlexNode(this).size;
-		},
-	},
-	values: {
-		*value(this: TreeMapNode): IterableIterator<unknown> {
-			for (const [, value] of this.entries()) {
-				yield value;
-			}
-		},
-	},
-	forEach: {
-		value(
-			this: TreeMapNode,
-			callbackFn: (value: unknown, key: string, map: ReadonlyMap<string, unknown>) => void,
-			thisArg?: any,
-		): void {
-			if (thisArg === undefined) {
-				// We can't pass `callbackFn` to `FlexTreeMapNode` directly, or else the third argument ("map") will be a flex node instead of the proxy.
-				getFlexNode(this).forEach((v, k, _) => callbackFn(v, k, this), thisArg);
-			} else {
-				const boundCallbackFn = callbackFn.bind(thisArg);
-				getFlexNode(this).forEach((v, k, _) => boundCallbackFn(v, k, this), thisArg);
-			}
-		},
-	},
-	// TODO: add `clear` once we have established merge semantics for it.
-};
-
-const mapPrototype = Object.create(Object.prototype, mapStaticDispatchMap);
-
-// #endregion
-
-/**
- * @param allowAdditionalProperties - If true, setting of unexpected properties will be forwarded to the target object.
- * Otherwise setting of unexpected properties will error.
- * @param customTargetObject - Target object of the proxy.
- * If not provided `new Map()` is used for the target and a separate object created to dispatch map methods.
- * If provided, the customTargetObject will be used as both the dispatch object and the proxy target, and therefor must provide the map functionality from {@link mapPrototype}.
- */
-export function createMapProxy(
-	allowAdditionalProperties: boolean,
-	customTargetObject?: object,
-): TreeMapNode {
-	// Create a 'dispatch' object that this Proxy forwards to instead of the proxy target.
-	const dispatch: object =
-		customTargetObject ??
-		Object.create(mapPrototype, {
-			// Empty - JavaScript Maps do not expose any "own" properties.
-		});
-	const targetObject: object = customTargetObject ?? new Map<string, TreeNode>();
-
-	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
-	// a dispatch object to see if it improves performance.
-	const proxy = new Proxy<TreeMapNode>(targetObject as TreeMapNode, {
-		get: (target, key, receiver): unknown => {
-			// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
-			return Reflect.get(dispatch, key, proxy);
-		},
-		getOwnPropertyDescriptor: (target, key): PropertyDescriptor | undefined => {
-			return Reflect.getOwnPropertyDescriptor(dispatch, key);
-		},
-		has: (target, key) => {
-			return Reflect.has(dispatch, key);
-		},
-		set: (target, key, newValue): boolean => {
-			return allowAdditionalProperties ? Reflect.set(dispatch, key, newValue) : false;
-		},
-		ownKeys: (target) => {
-			// All of Map's properties are inherited via its prototype, so there is nothing to return here,
-			return [];
-		},
-	});
-	return proxy;
 }
 
 // #region Content insertion and proxy binding

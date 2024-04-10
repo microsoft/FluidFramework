@@ -40,7 +40,5 @@ export class DDSFuzzHandle implements IFluidHandle<string> {
 		}
 	}
 
-	public bind(handle: IFluidHandle): void {
-		throw new Error("Method not implemented.");
-	}
+	public bind(handle: IFluidHandle): void {}
 }

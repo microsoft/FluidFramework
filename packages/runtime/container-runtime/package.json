@@ -43,7 +43,7 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./test/containerRuntime": {
+		"./internal/test/containerRuntime": {
 			"import": {
 				"types": "./lib/containerRuntime.d.ts",
 				"default": "./lib/containerRuntime.js"
@@ -53,7 +53,7 @@
 				"default": "./dist/containerRuntime.js"
 			}
 		},
-		"./test/deltaScheduler": {
+		"./internal/test/deltaScheduler": {
 			"import": {
 				"types": "./lib/deltaScheduler.d.ts",
 				"default": "./lib/deltaScheduler.js"
@@ -63,7 +63,7 @@
 				"default": "./dist/deltaScheduler.js"
 			}
 		},
-		"./test/scheduleManager": {
+		"./internal/test/scheduleManager": {
 			"import": {
 				"types": "./lib/scheduleManager.d.ts",
 				"default": "./lib/scheduleManager.js"
@@ -73,7 +73,7 @@
 				"default": "./dist/scheduleManager.js"
 			}
 		},
-		"./test/blobManager": {
+		"./internal/test/blobManager": {
 			"import": {
 				"types": "./lib/blobManager.d.ts",
 				"default": "./lib/blobManager.js"
@@ -83,7 +83,7 @@
 				"default": "./dist/blobManager.js"
 			}
 		},
-		"./test/summary": {
+		"./internal/test/summary": {
 			"import": {
 				"types": "./lib/summary/index.d.ts",
 				"default": "./lib/summary/index.js"
@@ -93,7 +93,7 @@
 				"default": "./dist/summary/index.js"
 			}
 		},
-		"./test/gc": {
+		"./internal/test/gc": {
 			"import": {
 				"types": "./lib/gc/index.d.ts",
 				"default": "./lib/gc/index.js"
@@ -105,7 +105,7 @@
 		}
 	},
 	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"types": "./dist/container-runtime-public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
@@ -189,9 +189,9 @@
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-pairwise-generator": "workspace:~",
 		"@fluid-tools/benchmark": "^0.48.0",
-		"@fluid-tools/build-cli": "^0.34.0",
+		"@fluid-tools/build-cli": "^0.35.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.34.0",
+		"@fluidframework/build-tools": "^0.35.0",
 		"@fluidframework/container-runtime-previous": "npm:@fluidframework/container-runtime@2.0.0-internal.8.0.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",

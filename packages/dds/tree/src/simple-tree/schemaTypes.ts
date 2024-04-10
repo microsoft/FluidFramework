@@ -10,7 +10,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { FlexListToUnion, LazyItem, isLazy } from "../feature-libraries/index.js";
 import { MakeNominal, isReadonlyArray } from "../util/index.js";
 
-import { TreeNode, Unhydrated } from "./types.js";
+import { Unhydrated } from "./types.js";
 
 /**
  * Schema for a tree node.
@@ -139,6 +139,12 @@ export enum FieldKind {
 	 * Only allows exactly one child.
 	 */
 	Required,
+	/**
+	 * A special field used for node identifiers.
+	 * @remarks
+	 * Only allows exactly one child.
+	 */
+	Identifier,
 }
 
 /**
@@ -436,45 +442,6 @@ export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema
 >
 	? TBuild
 	: never;
-
-/**
- * A map of string keys to tree objects.
- *
- * @privateRemarks
- * Add support for `clear` once we have established merge semantics for it.
- *
- * @public
- */
-export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes>
-	extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>,
-		TreeNode {
-	/**
-	 * Adds or updates an entry in the map with a specified `key` and a `value`.
-	 *
-	 * @param key - The key of the element to add to the map.
-	 * @param value - The value of the element to add to the map.
-	 *
-	 * @remarks
-	 * Setting the value at a key to `undefined` is equivalent to calling {@link TreeMapNode.delete} with that key.
-	 */
-	set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T> | undefined): void;
-
-	/**
-	 * Removes the specified element from this map by its `key`.
-	 *
-	 * @remarks
-	 * Note: unlike JavaScript's Map API, this method does not return a flag indicating whether or not the value was
-	 * deleted.
-	 *
-	 * @privateRemarks
-	 * Regarding the choice to not return a boolean: Since this data structure is distributed in nature, it isn't
-	 * possible to tell whether or not the item was deleted as a result of this method call. Returning a "best guess"
-	 * is more likely to create issues / promote bad usage patterns than offer useful information.
-	 *
-	 * @param key - The key of the element to remove from the map.
-	 */
-	delete(key: string): void;
-}
 
 /**
  * Value that may be stored as a leaf node.

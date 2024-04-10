@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedTree, SharedTreeFactory, type TreeView, fail } from "@fluidframework/tree/internal";
@@ -17,7 +18,7 @@ const treeKey = "treeKey";
 export class Bubblebench extends DataObject {
 	public static readonly Name = "@fluid-example/bubblebench-simpletree";
 
-	private view: TreeView<App> | undefined;
+	private view: TreeView<typeof App> | undefined;
 	private _appState: AppState | undefined;
 
 	protected async initializingFirstTime() {
@@ -75,7 +76,7 @@ export class Bubblebench extends DataObject {
 	 * Get the SharedTree.
 	 * Cannot be accessed until after initialization has completed.
 	 */
-	private get tree(): TreeView<App> {
+	private get tree(): TreeView<typeof App> {
 		return this.view ?? fail("not initialized");
 	}
 
