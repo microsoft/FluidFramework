@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { type IFluidHandle } from '@fluidframework/core-interfaces';
+import {
+	type IFluidHandleErased,
+	type IFluidHandleInternal,
+	fluidHandleSymbol,
+	toFluidHandleErased,
+	toFluidHandleInternal,
+} from '@fluidframework/core-interfaces';
 
 import { type IShim } from './types.js';
 
@@ -15,25 +21,28 @@ import { type IShim } from './types.js';
  * Local handles such as the FluidObjectHandle and the SharedObjectHandle don't work as they do not properly bind the
  * Shim's underlying DDS.
  */
-export class ShimHandle<TShim extends IShim> implements IFluidHandle<TShim> {
+export class ShimHandle<TShim extends IShim> implements IFluidHandleInternal<TShim> {
 	public constructor(private readonly shim: TShim) {}
 
 	public get absolutePath(): string {
-		return this.shim.currentTree.handle.absolutePath;
+		return toFluidHandleInternal(this.shim.currentTree.handle).absolutePath;
 	}
 	public get isAttached(): boolean {
 		return this.shim.currentTree.handle.isAttached;
 	}
 	public attachGraph(): void {
-		return this.shim.currentTree.handle.attachGraph();
+		return toFluidHandleInternal(this.shim.currentTree.handle).attachGraph();
 	}
 	public async get(): Promise<TShim> {
 		return this.shim;
 	}
-	public bind(handle: IFluidHandle): void {
-		return this.shim.currentTree.handle.bind(handle);
+	public bind(handle: IFluidHandleInternal): void {
+		return toFluidHandleInternal(this.shim.currentTree.handle).bind(handle);
 	}
-	public get IFluidHandle(): IFluidHandle<TShim> {
+	public get IFluidHandle(): IFluidHandleInternal<TShim> {
 		return this;
+	}
+	public get [fluidHandleSymbol](): IFluidHandleErased<TShim> {
+		return toFluidHandleErased(this);
 	}
 }

@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
 	MockContainerRuntimeFactory,
@@ -883,13 +883,10 @@ describe("Matrix1", () => {
 
 					containerRuntimeFactory.processAllMessages();
 
-					const handle1 = matrix1.getCell(0, 0) as IFluidHandle;
-					const handle2 = matrix2.getCell(0, 0) as IFluidHandle;
+					const handle1 = matrix1.getCell(0, 0) as IFluidHandleInternal;
+					const handle2 = matrix2.getCell(0, 0) as IFluidHandleInternal;
 
-					assert.equal(
-						handle1.IFluidHandle.absolutePath,
-						handle2.IFluidHandle.absolutePath,
-					);
+					assert.equal(handle1.absolutePath, handle2.absolutePath);
 
 					// Remove handle from matrix to prevent the convergence sanity checks in 'afterEach()'
 					// from performing a 'deepEquals' on the matrix contents.
@@ -1120,7 +1117,10 @@ describe("Matrix1", () => {
 					public async deleteOutboundRoutes() {
 						// Delete the last handle that was added.
 						const lastAddedCol = this.colCount - 1;
-						const deletedHandle = this.matrix1.getCell(0, lastAddedCol) as IFluidHandle;
+						const deletedHandle = this.matrix1.getCell(
+							0,
+							lastAddedCol,
+						) as IFluidHandleInternal;
 						assert(deletedHandle, "Route must be added before deleting");
 
 						this.matrix1.setCell(0, lastAddedCol, undefined);

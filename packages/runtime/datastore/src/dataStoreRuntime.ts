@@ -12,8 +12,8 @@ import {
 	IRequest,
 	IResponse,
 	toFluidHandleInternal,
-} from "@fluidframework/core-interfaces/internal";
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+} from "@fluidframework/core-interfaces";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces";
 import {
 	assert,
 	Deferred,
@@ -121,7 +121,7 @@ export class FluidDataStoreRuntime
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.entryPoint}
 	 */
-	public readonly entryPoint: IFluidHandle<FluidObject>;
+	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
 
 	public get connected(): boolean {
 		return this.dataStoreContext.connected;

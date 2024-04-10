@@ -10,7 +10,7 @@ import type { isAny } from "./typeCheck.js";
  * Converts a Branded type into an "opaque" handle.
  * This prevents the value from being used directly, but does not fully type erase it.
  * @remarks
- * Like {@link Erased},
+ * Like {@link @fluidframework/core-interfaces#ErasedType},
  * but more type safe and cannot be used to hide the internal type from API extractor at package boundaries.
  *
  * The type can be recovered using {@link extractFromOpaque},

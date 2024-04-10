@@ -191,7 +191,20 @@
 				"backCompat": false
 			},
 			"ClassDeclaration_SharedString": {
-				"backCompat": false
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ISharedString": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SharedIntervalCollection": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SharedSegmentSequence": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SharedSequence": {
+				"forwardCompat": false
 			}
 		}
 	}

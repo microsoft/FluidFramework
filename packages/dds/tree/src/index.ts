@@ -355,8 +355,6 @@ export {
 	AllowOptionalNotFlattened,
 	isAny,
 	BrandedKeyContent,
-	ErasedType,
-	Erased,
 	RestrictiveReadonlyRecord,
 	MakeNominal,
 } from "./util/index.js";

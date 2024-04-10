@@ -161,12 +161,10 @@
 				"backCompat": false
 			},
 			"ClassDeclaration_SharedObject": {
-				"forwardCompat": false,
-				"backCompat": false
+				"forwardCompat": false
 			},
 			"ClassDeclaration_SharedObjectCore": {
-				"forwardCompat": false,
-				"backCompat": false
+				"forwardCompat": false
 			}
 		}
 	}

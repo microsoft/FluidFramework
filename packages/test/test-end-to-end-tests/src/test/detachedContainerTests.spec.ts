@@ -17,7 +17,12 @@ import {
 import { ConnectionState } from "@fluidframework/container-loader";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { ContainerMessageType } from "@fluidframework/container-runtime/internal";
-import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import {
+	FluidObject,
+	IFluidHandle,
+	IRequest,
+	toFluidHandleInternal,
+} from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map";
@@ -455,7 +460,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 			testChannelId,
 			SharedMap.getFactory().type,
 		);
-		testChannel.handle.attachGraph();
+		toFluidHandleInternal(testChannel.handle).attachGraph();
 		await containerP;
 		await defPromise.promise;
 	});

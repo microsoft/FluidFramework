@@ -42,7 +42,8 @@ import {
 	LeafNodeSchema,
 	allowedTypesSchemaSet,
 } from "./typed-schema/index.js";
-import { allowsValue, isTreeValue } from "./valueUtilities.js";
+import { allowsValue } from "./valueUtilities.js";
+import { isFluidHandle } from "@fluidframework/core-interfaces";
 
 /**
  * This library defines a tree data format that can infer its types from context.

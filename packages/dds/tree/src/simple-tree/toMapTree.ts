@@ -36,6 +36,7 @@ import {
 	normalizeFieldSchema,
 	getStoredKey,
 } from "./schemaTypes.js";
+import { isFluidHandle } from "@fluidframework/core-interfaces";
 
 /**
  * Module notes:

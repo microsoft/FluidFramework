@@ -7,13 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { TreeValue } from "../core/index.js";
-import {
-	FlexTreeNode,
-	isFlexTreeNode,
-	isFluidHandle,
-	isLazy,
-	markEager,
-} from "../feature-libraries/index.js";
+import { FlexTreeNode, isFlexTreeNode, isLazy, markEager } from "../feature-libraries/index.js";
 import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
 
 import {
@@ -41,6 +35,7 @@ import {
 } from "./schemaTypes.js";
 import { TreeArrayNode, arraySchema } from "./arrayNode.js";
 import { TreeNode } from "./types.js";
+import { isFluidHandle } from "@fluidframework/core-interfaces";
 import { InsertableObjectFromSchemaRecord, TreeObjectNode, objectSchema } from "./objectNode.js";
 import { TreeMapNode, mapSchema } from "./mapNode.js";
 

@@ -33,6 +33,7 @@ declare function get_old_InterfaceDeclaration_ISharedCounter():
 declare function use_current_InterfaceDeclaration_ISharedCounter(
     use: TypeOnly<current.ISharedCounter>): void;
 use_current_InterfaceDeclaration_ISharedCounter(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISharedCounter());
 
 /*
@@ -45,6 +46,7 @@ declare function get_current_InterfaceDeclaration_ISharedCounter():
 declare function use_old_InterfaceDeclaration_ISharedCounter(
     use: TypeOnly<old.ISharedCounter>): void;
 use_old_InterfaceDeclaration_ISharedCounter(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISharedCounter());
 
 /*
@@ -81,6 +83,7 @@ declare function get_old_ClassDeclaration_SharedCounter():
 declare function use_current_ClassDeclaration_SharedCounter(
     use: TypeOnly<current.SharedCounter>): void;
 use_current_ClassDeclaration_SharedCounter(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedCounter());
 
 /*

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type Brand, type Erased, brandErased, fromErased } from "./brand.js";
+import { type ErasedType } from "./erasedType.js";
 import type { IRequest, IResponse } from "./fluidRouter.js";
 
 /**
@@ -81,11 +81,6 @@ export interface IFluidHandleInternal<
 	readonly absolutePath: string;
 
 	/**
-	 * Flag indicating whether or not the entity has services attached.
-	 */
-	readonly isAttached: boolean;
-
-	/**
 	 * Runs through the graph and attach the bounded handles.
 	 */
 	attachGraph(): void;
@@ -98,10 +93,28 @@ export interface IFluidHandleInternal<
 }
 
 /**
+ * Setting to opt into compatibility with handles from before {@link fluidHandleSymbol} existed.
+ *
+ * Some code which uses this library might dynamically load multiple versions of it,
+ * as well as old or duplicated versions of packages which produce or implement handles.
+ * To correctly interoperate with this old packages and object produced by them, the old in-memory format for handles, without the symbol, are explicitly supported.
+ *
+ * This setting mostly exists as a way to easily find any code that only exists to provide this compatibility and clarify how to remove that compatibility.
+ * At some point this might be removed or turned into an actual configuration option, but for now its really just documentation.
+ */
+const enableBackwardsCompatibility = true;
+
+/**
  * Symbol which must only be used on {@link FluidObject}, and is used to identify such objects.
+ * @privateRemarks
+ * Normally `Symbol` would be used here instead of `Symbol.for` since just using Symbol (and avoiding the global symbol registry) removes the risk of collision, which is the main point of using a symbol for this in the first place.
+ * In this case however, some users of this library do dynamic code loading, and can end up with multiple versions of packages, and mix data from one version with another.
+ * Using the global symbol registry allows duplicate copies of this library to share a single symbol, though reintroduces the risk of collision, which is mitigated via the use of a UUIDv4 randomly generated when this code was authored:
  * @public
  */
-export const fluidHandleSymbol: unique symbol = Symbol("fluidHandle");
+export const fluidHandleSymbol: unique symbol = Symbol.for(
+	"FluidHandle-3978c7cf-4675-49ba-a20c-bf35efbf43da",
+);
 
 /**
  * Handle to a shared {@link FluidObject}.
@@ -119,27 +132,39 @@ export interface IFluidHandle<out T = unknown> {
 	get(): Promise<T>;
 
 	/**
-	 * Symbol used to mark an object as a {@link (IFluidHandle:interface)}.
+	 * Symbol used to mark an object as a {@link (IFluidHandle:interface)}
+	 * and to recover the underlying handle implementation.
 	 * @privateRemarks
-	 * Used to recover {@link IFluidHandleInternal}, see {@link toInternal}.
+	 * Used to recover {@link IFluidHandleInternal}, see {@link toFluidHandleInternal}.
 	 */
 	readonly [fluidHandleSymbol]: IFluidHandleErased<T>;
 }
 
-type HandleBrand<T> = Brand<IFluidHandleInternal<T>, IFluidHandleErased<T>>;
-
 /**
+ * A type erased Fluid Handle.
+ * These can only be produced by the Fluid Framework and provide the implementation details needed to power {@link (IFluidHandle:interface)}.
+ * @privateRemarks
+ * Created from {@link IFluidHandleInternal} using {@link toFluidHandleErased}.
  * @public
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IFluidHandleErased<T> extends Erased<readonly ["IFluidHandle", T]> {}
+export interface IFluidHandleErased<T> extends ErasedType<readonly ["IFluidHandle", T]> {}
 
 /**
- * Upcast a IFluidHandle to IFluidHandleInternal.
+ * Downcast an IFluidHandle to an IFluidHandleInternal.
  * @alpha
  */
 export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleInternal<T> {
-	return fromErased<HandleBrand<T>>(handle[fluidHandleSymbol]);
+	if (!(fluidHandleSymbol in handle) || !(fluidHandleSymbol in handle[fluidHandleSymbol])) {
+		if (enableBackwardsCompatibility && IFluidHandle in handle) {
+			return handle[IFluidHandle] as IFluidHandleInternal<T>;
+		}
+		throw new TypeError("Invalid IFluidHandle");
+	}
+
+	// This casts the IFluidHandleErased from the symbol instead of `handle` to ensure that if someone
+	// implements their own IFluidHandle in terms of an existing handle, it won't break anything.
+	return handle[fluidHandleSymbol] as unknown as IFluidHandleInternal<T>;
 }
 
 /**
@@ -147,5 +172,29 @@ export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleI
  * @alpha
  */
 export function toFluidHandleErased<T>(handle: IFluidHandleInternal<T>): IFluidHandleErased<T> {
-	return brandErased<HandleBrand<T>>(handle);
+	return handle as unknown as IFluidHandleErased<T>;
+}
+
+/**
+ * Type erase IFluidHandleInternal for use with {@link fluidHandleSymbol}.
+ * @internal
+ */
+export function isFluidHandle(value: unknown): value is IFluidHandle {
+	// `in` gives a type error on non-objects and null, so filter them out
+	if (typeof value !== "object" || value === null) {
+		return false;
+	}
+	if (fluidHandleSymbol in value) {
+		return true;
+	}
+	// If enableBackwardsCompatibility, run check for FluidHandles predating use of fluidHandleSymbol.
+	if (enableBackwardsCompatibility && IFluidHandle in value) {
+		// Since this check can have false positives, make it a bit more robust by checking value[IFluidHandle][IFluidHandle]
+		const inner = value[IFluidHandle] as IFluidHandle;
+		if (typeof inner !== "object" || inner === null) {
+			return false;
+		}
+		return IFluidHandle in inner;
+	}
+	return false;
 }

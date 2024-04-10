@@ -168,8 +168,20 @@
 			"ClassDeclaration_SharedMap": {
 				"backCompat": false
 			},
-			"RemovedClassDeclaration_SharedDirectory": {
+			"InterfaceDeclaration_ISharedDirectory": {
+				"forwardCompat": false,
 				"backCompat": false
+			},
+			"InterfaceDeclaration_ISharedMap": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_SharedDirectory": {
+				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_SharedDirectory": {
+				"backCompat": false,
+				"forwardCompat": false
 			},
 			"RemovedInterfaceDeclaration_ICreateInfo": {
 				"forwardCompat": false,

@@ -10,7 +10,7 @@ import {
 	IFluidHandle,
 	IFluidHandleContext,
 	type IFluidHandleInternal,
-	fluidHandleSymbol,
+	isFluidHandle,
 	toFluidHandleInternal,
 } from "@fluidframework/core-interfaces";
 import {
@@ -128,8 +128,8 @@ export class FluidSerializer implements IFluidSerializer {
 	// Otherwise returns the original 'value'.  Used by 'encode()' and 'stringify()'.
 	private readonly encodeValue = (value: unknown, bind: IFluidHandleInternal) => {
 		// If 'value' is an IFluidHandle return its encoded form.
-		return typeof value === "object" && value !== null && fluidHandleSymbol in value
-			? this.serializeHandle(value as IFluidHandleInternal, bind)
+		return isFluidHandle(value)
+			? this.serializeHandle(toFluidHandleInternal(value), bind)
 			: value;
 	};
 

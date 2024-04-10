@@ -8,6 +8,7 @@ import { strict as assert } from "assert";
 import {
 	FluidObject,
 	IFluidHandleContext,
+	type IFluidHandleInternal,
 	IFluidLoadable,
 	IProvideFluidHandle,
 	IProvideFluidLoadable,

@@ -13,7 +13,10 @@ import {
 	IFluidHandleContext,
 	IRequest,
 	IResponse,
+	fluidHandleSymbol,
+	toFluidHandleErased,
 } from "@fluidframework/core-interfaces";
+import type { IFluidHandleErased, IFluidHandleInternal } from "@fluidframework/core-interfaces";
 // This test doesn't care to test compat of the Fluid handle implementation, it's just used for convenience
 // to simulate an unknown object.
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
@@ -31,11 +34,11 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
  * An IFluidHandle implementation that has a random path / url. This is used to test that adding this handle to
  * a DDS doesn't yield unexpected results for GC.
  */
-export class TestFluidHandle implements IFluidHandle {
+export class TestFluidHandle implements IFluidHandleInternal {
 	public absolutePath: string = "/randomPath";
 	public isAttached: boolean = false;
 
-	public get IFluidHandle(): IFluidHandle {
+	public get IFluidHandle(): IFluidHandleInternal {
 		return this;
 	}
 
@@ -54,6 +57,10 @@ export class TestFluidHandle implements IFluidHandle {
 	public async resolveHandle(request: IRequest): Promise<IResponse> {
 		throw new Error("Method not implemented.");
 	}
+
+	public get [fluidHandleSymbol](): IFluidHandleErased<unknown> {
+		return toFluidHandleErased(this);
+	}
 }
 
 /**
@@ -61,13 +68,10 @@ export class TestFluidHandle implements IFluidHandle {
  * in the data store.
  */
 class TestSubDataStoreObject {
-	private readonly _handle: IFluidHandle;
-	public get handle() {
-		return this._handle;
-	}
+	public readonly handle: IFluidHandleInternal;
 
 	constructor(path: string, handleContext: IFluidHandleContext) {
-		this._handle = new FluidObjectHandle(this, path, handleContext);
+		this.handle = new FluidObjectHandle(this, path, handleContext);
 	}
 }
 

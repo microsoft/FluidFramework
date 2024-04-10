@@ -173,6 +173,10 @@
 			"InterfaceDeclaration_ITestContainerConfig": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"ClassDeclaration_TestFluidObject": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

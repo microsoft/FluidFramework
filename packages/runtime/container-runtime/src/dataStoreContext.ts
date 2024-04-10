@@ -9,7 +9,6 @@ import {
 	FluidObject,
 	IDisposable,
 	IEvent,
-	IFluidHandle,
 	IRequest,
 	IResponse,
 	ITelemetryBaseProperties,
@@ -1061,7 +1060,7 @@ export abstract class FluidDataStoreContext
 	public async uploadBlob(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
-	): Promise<IFluidHandle<ArrayBufferLike>> {
+	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		return this.parentContext.uploadBlob(blob, signal);
 	}
 }

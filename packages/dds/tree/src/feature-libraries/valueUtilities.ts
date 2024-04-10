@@ -53,11 +53,6 @@ export type FluidSerializableReadOnly =
 			readonly [P in string]?: FluidSerializableReadOnly;
 	  };
 
-// TODO: replace test in FluidSerializer.encodeValue with this.
-export function isFluidHandle(value: unknown): value is IFluidHandle {
-	return typeof value === "object" && value !== null && fluidHandleSymbol in value;
-}
-
 export function assertAllowedValue(
 	value: undefined | FluidSerializableReadOnly,
 ): asserts value is TreeValue {

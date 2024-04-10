@@ -4,6 +4,7 @@
 
 ```ts
 
+import type { ErasedType } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
@@ -160,7 +161,7 @@ export type AssignableFieldKinds = typeof FieldKinds.optional | typeof FieldKind
 export type Assume<TInput, TAssumeToBe> = [TInput] extends [TAssumeToBe] ? TInput : TAssumeToBe;
 
 // @internal
-export type Brand<ValueType, Name extends unknown | ErasedType> = ValueType & BrandedType<ValueType, Name extends Erased<infer TName> ? TName : Name>;
+export type Brand<ValueType, Name> = ValueType & BrandedType<ValueType, Name>;
 
 // @internal
 export function brand<T>(value: T extends BrandedType<infer ValueType, unknown> ? ValueType : never): T;
@@ -424,17 +425,8 @@ export function enumFromStrings<TScope extends string, const Members extends str
     readonly value: Members;
 })>;
 
-// @public
-export type Erased<Name> = ErasedType<Name>;
-
 // @internal
-export interface ErasedTreeNodeSchemaDataFormat extends Erased<"TreeNodeSchemaDataFormat"> {
-}
-
-// @public @sealed
-export abstract class ErasedType<out Name = unknown> {
-    static [Symbol.hasInstance](value: never): value is never;
-    protected abstract brand(dummy: never): Name;
+export interface ErasedTreeNodeSchemaDataFormat extends ErasedType<"TreeNodeSchemaDataFormat"> {
 }
 
 // @public

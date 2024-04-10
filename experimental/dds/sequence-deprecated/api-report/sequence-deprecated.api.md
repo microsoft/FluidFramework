@@ -160,7 +160,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
     // @deprecated (undocumented)
     get attributes(): IChannelAttributes;
     // @deprecated (undocumented)
-    create(document: IFluidDataStoreRuntime, id: string): ISharedObject;
+    create(document: IFluidDataStoreRuntime, id: string): SharedObjectSequence<unknown>;
     // @deprecated
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedObject>;
     // @deprecated (undocumented)

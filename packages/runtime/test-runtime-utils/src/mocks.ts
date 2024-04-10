@@ -11,10 +11,12 @@ import {
 	FluidObject,
 	IFluidHandle,
 	IFluidHandleContext,
+	type IFluidHandleInternal,
 	IRequest,
 	IResponse,
 	type ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
+	toFluidHandleInternal,
+} from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannel,
@@ -440,7 +442,9 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	}
 
 	public async resolveHandle(handle: IFluidHandle) {
-		return this.dataStoreRuntime.resolveHandle({ url: handle.absolutePath });
+		return this.dataStoreRuntime.resolveHandle({
+			url: toFluidHandleInternal(handle).absolutePath,
+		});
 	}
 }
 
@@ -715,8 +719,9 @@ export class MockFluidDataStoreRuntime
 	}) {
 		super();
 		this.clientId = overrides?.clientId ?? uuid();
-		this.entryPoint =
-			overrides?.entryPoint ?? new MockHandle(null as unknown as FluidObject, "", "");
+		this.entryPoint = toFluidHandleInternal(
+			overrides?.entryPoint ?? new MockHandle(null as unknown as FluidObject, "", ""),
+		);
 		this.id = overrides?.id ?? uuid();
 		this.logger = createChildLogger({
 			logger: overrides?.logger,
@@ -726,7 +731,7 @@ export class MockFluidDataStoreRuntime
 		this._attachState = overrides?.attachState ?? AttachState.Attached;
 	}
 
-	public readonly entryPoint: IFluidHandle<FluidObject>;
+	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
 
 	public get IFluidHandleContext(): IFluidHandleContext {
 		return this;

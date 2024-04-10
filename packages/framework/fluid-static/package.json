@@ -143,6 +143,10 @@
 			"RemovedTypeAliasDeclaration_SharedObjectClass": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"TypeAliasDeclaration_InitialObjects": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}
