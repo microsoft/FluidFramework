@@ -121,7 +121,7 @@ steps:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
-      flub release report
+      flub release report -g client -o .
 
 - task: AzureCLI@2
   displayName: 'Upload Manifest Files'
@@ -131,8 +131,8 @@ steps:
     scriptType: bash
     scriptLocation: inlineScript
     inlineScript: |
-      for file in $(find $(Pipeline.Workspace) -type f \( -name '*.caret.json' -o -name '*.simple.json' \)); do
-          az storage blob upload -f "$file" -c 'manifest-files' -n "$(basename "$file")" --account-name $(STORAGE_ACCOUNT) --account-key $(STORAGE_KEY) --verbose
+      for file in $(find . -type f \( -name '*.caret.json' -o -name '*.simple.json' \)); do
+          az storage blob upload -f "$file" -c 'manifest-files' -n "$(basename "$file")" --account-name $STORAGE_ACCOUNT --account-key $STORAGE_KEY --verbose
       done
 
 # This check runs only when the value of `Change package types` is selected as `alpha` or `beta`
