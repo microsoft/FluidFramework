@@ -373,7 +373,7 @@ export class SchemaFactory<
 				this.structuralTypes,
 				fullName,
 				() =>
-					this.namedMap_internal(
+					this.namedMap(
 						fullName as TName,
 						nameOrAllowedTypes as T,
 						false,
@@ -388,17 +388,15 @@ export class SchemaFactory<
 				T
 			>;
 		}
-		return this.namedMap_internal(nameOrAllowedTypes as TName, allowedTypes, true, true);
+		return this.namedMap(nameOrAllowedTypes as TName, allowedTypes, true, true);
 	}
 
 	/**
 	 * Define a {@link TreeNodeSchema} for a {@link (TreeMapNode:interface)}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
-	 *
-	 * @remarks See remarks on {@link SchemaFactory.namedArray_internal}.
 	 */
-	public namedMap_internal<
+	private namedMap<
 		Name extends TName | string,
 		const T extends ImplicitAllowedTypes,
 		const ImplicitlyConstructable extends boolean,
@@ -504,7 +502,7 @@ export class SchemaFactory<
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 			const fullName = structuralName("Array", types);
 			return getOrCreate(this.structuralTypes, fullName, () =>
-				this.namedArray_internal(fullName, nameOrAllowedTypes as T, false, true),
+				this.namedArray(fullName, nameOrAllowedTypes as T, false, true),
 			) as TreeNodeSchemaClass<
 				ScopedSchemaName<TScope, string>,
 				NodeKind.Array,
@@ -514,7 +512,7 @@ export class SchemaFactory<
 				T
 			>;
 		}
-		return this.namedArray_internal(nameOrAllowedTypes as TName, allowedTypes, true, true);
+		return this.namedArray(nameOrAllowedTypes as TName, allowedTypes, true, true);
 	}
 
 	/**
@@ -525,14 +523,8 @@ export class SchemaFactory<
 	 * @remarks
 	 * This is not intended to be used directly, use the overload of `array` which takes a name instead.
 	 * This is only public to work around a compiler limitation.
-	 *
-	 * @privateRemarks
-	 * TODO: this should be made private or protected.
-	 * Doing so breaks due to:
-	 * `src/class-tree/schemaFactoryRecursive.ts:42:9 - error TS2310: Type 'Array' recursively references itself as a base type.`
-	 * Once recursive APIs are better sorted out and integrated into this class, switch this back to private.
 	 */
-	public namedArray_internal<
+	private namedArray<
 		Name extends TName | string,
 		const T extends ImplicitAllowedTypes,
 		const ImplicitlyConstructable extends boolean,
@@ -643,7 +635,7 @@ export class SchemaFactory<
 		const Name extends TName,
 		const T extends Unenforced<ImplicitAllowedTypes>,
 	>(name: Name, allowedTypes: T) {
-		class RecursiveArray extends this.namedArray_internal(
+		class RecursiveArray extends this.namedArray(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
 			true,
@@ -696,7 +688,7 @@ export class SchemaFactory<
 		name: Name,
 		allowedTypes: T,
 	) {
-		class MapSchema extends this.namedMap_internal(
+		class MapSchema extends this.namedMap(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
 			true,
