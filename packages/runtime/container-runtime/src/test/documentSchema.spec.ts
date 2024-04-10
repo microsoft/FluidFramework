@@ -279,11 +279,11 @@ describe("Runtime", () => {
 				version: 1,
 				refSeq: 0,
 				runtime: {
-					explicitSchemaControl: boolToProp(features.explicitSchemaControl),
-					compressionLz4: boolToProp(features.compressionLz4),
-					idCompressorMode: features.idCompressorMode,
-					opGroupingEnabled: boolToProp(features.opGroupingEnabled),
-					disallowedVersions: arrayToProp(features.disallowedVersions),
+					explicitSchemaControl: boolToProp(featuresModified.explicitSchemaControl),
+					compressionLz4: boolToProp(featuresModified.compressionLz4),
+					idCompressorMode: featuresModified.idCompressorMode,
+					opGroupingEnabled: boolToProp(featuresModified.opGroupingEnabled),
+					disallowedVersions: arrayToProp(featuresModified.disallowedVersions),
 				},
 			};
 			assert.deepEqual(
