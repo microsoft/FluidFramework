@@ -234,6 +234,11 @@ export function wrapContextForInnerChannel(
 	return context;
 }
 
+/** Reformats a request URL to match expected format for a GC node path */
+function urlToGCNodePath(url: string): string {
+	return `/${trimLeadingAndTrailingSlashes(url.split("?")[0])}`;
+}
+
 /**
  * This class encapsulates data store handling. Currently it is only used by the container runtime,
  * but eventually could be hosted on any channel once we formalize the channel api boundary.
@@ -884,10 +889,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		);
 	}
 
-	public async getDataStore(
+	private async getDataStore(
 		id: string,
 		requestHeaderData: RuntimeHeaderData,
-		requestedNodePath: string,
+		originalRequest: IRequest,
 	): Promise<IFluidDataStoreContextInternal> {
 		const headerData = { ...defaultRuntimeHeaderData, ...requestHeaderData };
 		if (
@@ -897,7 +902,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				"Requested",
 				"getDataStore",
 				requestHeaderData,
-				requestedNodePath,
+				originalRequest,
 			)
 		) {
 			// The requested data store has been deleted by gc. Create a 404 response exception.
@@ -951,7 +956,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 * @param deletedLogSuffix - Whether it was Changed or Requested (will go into the eventName)
 	 * @param callSite - The function name this is called from.
 	 * @param requestHeaderData - The request header information to log if the data store is deleted.
-	 * @param requestedNodePath - The full GC node path of the node being requested (could be a child of the DataStore)
+	 * @param originalRequest - The original request (could be for a child of the DataStore)
 	 * @returns true if the data store is deleted. Otherwise, returns false.
 	 */
 	private checkAndLogIfDeleted(
@@ -960,7 +965,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		deletedLogSuffix: "Changed" | "Requested",
 		callSite: string,
 		requestHeaderData?: RuntimeHeaderData,
-		requestedNodePath?: string,
+		originalRequest?: IRequest,
 	) {
 		const dataStoreNodePath = `/${id}`;
 		if (!this.isDataStoreDeleted(dataStoreNodePath)) {
@@ -969,15 +974,23 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 		const pkg = this.contexts.getRecentlyDeletedContextPath(id);
 
+		const idToLog =
+			originalRequest !== undefined
+				? urlToGCNodePath(originalRequest.url)
+				: dataStoreNodePath;
 		this.mc.logger.sendErrorEvent({
 			eventName: `GC_Deleted_DataStore_${deletedLogSuffix}`,
 			...tagCodeArtifacts({
-				id: requestedNodePath ?? dataStoreNodePath,
+				id: idToLog,
 				pkg,
 			}),
 			callSite,
 			headers: JSON.stringify(requestHeaderData),
 			exists: context !== undefined,
+			details: {
+				url: originalRequest?.url,
+				headers: JSON.stringify(originalRequest?.headers),
+			},
 		});
 		return true;
 	}
@@ -1370,12 +1383,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			headerData.allowTombstone = true;
 		}
 
-		// Normalize the URL to the GC node path format
-		const gcNodePath = `/${trimLeadingAndTrailingSlashes(request.url.split("?")[0])}`;
-
 		await this.waitIfPendingAlias(id);
 		const internalId = this.internalId(id);
-		const dataStoreContext = await this.getDataStore(internalId, headerData, gcNodePath);
+		const dataStoreContext = await this.getDataStore(internalId, headerData, request);
 
 		// Get the initial snapshot details which contain the data store package path.
 		const details = await dataStoreContext.getInitialSnapshotDetails();
@@ -1383,7 +1393,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		// Note that this will throw if the data store is inactive or tombstoned and throwing on incorrect usage
 		// is configured.
 		this.gcNodeUpdated(
-			gcNodePath,
+			urlToGCNodePath(request.url),
 			"Loaded",
 			undefined /* timestampMs */,
 			details.pkg,

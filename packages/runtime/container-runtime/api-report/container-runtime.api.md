@@ -112,8 +112,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
     // (undocumented)
     readonly entryPoint: IFluidHandle<FluidObject>;
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
-    // (undocumented)
-    getDataStore(id: string, requestHeaderData: RuntimeHeaderData): Promise<IFluidDataStoreContextInternal>;
     getDataStoreIfAvailable(id: string, requestHeaderData: RuntimeHeaderData): Promise<IFluidDataStoreContextInternal | undefined>;
     getDataStorePackagePath(nodePath: string): Promise<readonly string[] | undefined>;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
@@ -386,6 +384,8 @@ export class DataStoreContexts implements Iterable<[string, FluidDataStoreContex
     // (undocumented)
     get(id: string): FluidDataStoreContext | undefined;
     getBoundOrRemoted(id: string, wait: boolean): Promise<FluidDataStoreContext | undefined>;
+    // (undocumented)
+    getRecentlyDeletedContextPath(id: string): string | undefined;
     getUnbound(id: string): LocalFluidDataStoreContext | undefined;
     // (undocumented)
     has(id: string): boolean;
