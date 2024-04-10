@@ -6,20 +6,21 @@ import path from "path";
 const pkgPath = path.resolve("./package.json");
 const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
 
-let hasNonDefaultExports = false;
+let testableEntryPoints = [];
 
 // Insert '/lib' into export maps
 if (pkg.exports !== undefined) {
 	let exportMap = {};
 	for (let [key, map] of Object.entries(pkg.exports)) {
-		// Skip root key.
-		if (key === "./alpha" || key === "./beta") {
-			hasNonDefaultExports = true;
+		if (key === "." || key === "./") {
+			testableEntryPoints.push(key);
+		} else if (key === "./alpha" || key === "./beta") {
 			const parts = key.split("/");
 			if (parts[1] !== "lib") {
 				parts.splice(/* start: */ 1, /* deleteCount: */ 0, "lib");
 				key = parts.join("/");
 			}
+			testableEntryPoints.push(key);
 		}
 
 		exportMap = { ...exportMap, [key]: map };
@@ -28,9 +29,9 @@ if (pkg.exports !== undefined) {
 }
 
 // Update ATTW
-if (hasNonDefaultExports) {
-	pkg.scripts["check:are-the-types-wrong"] =
-		"attw --pack . --entrypoints . ./lib/alpha ./lib/beta";
+if (testableEntryPoints.length > 0) {
+	let attwScript = `attw --pack . --entrypoints ${testableEntryPoints.join(" ")}`;
+	pkg.scripts["check:are-the-types-wrong"] = attwScript;
 } else if (pkg.scripts) {
 	delete pkg.scripts["check:are-the-types-wrong"];
 }
@@ -45,5 +46,5 @@ if (fs.existsSync("./lib/index.js")) {
 	}
 }
 
-const pkgText = JSON.stringify(pkg, null, "\t");
+const pkgText = JSON.stringify(pkg, null, "\t") + "\n";
 fs.writeFileSync(pkgPath, pkgText);
