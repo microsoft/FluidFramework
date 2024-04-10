@@ -634,15 +634,9 @@ export class Container
 	}
 
 	/**
-	 * The server provided id of the client.
-	 * Set once connection is established and client is caught up.
-	 * Used only internally. See this.clientId for public API.
-	 */
-	private _clientId: string | undefined;
-
-	/**
 	 * clientId of the latest connection. Changes only once client is connected, caught up and fully loaded.
 	 * Changes to clientId are delayed through container loading sequence and delived once container is fully loaded.
+	 * clientId does not reset on lost connection - old value persists until new connection is fully established.
 	 */
 	public get clientId(): string | undefined {
 		return this.protocolHandler.audience.currentClientId;
@@ -747,7 +741,6 @@ export class Container
 
 		this.connectionTransitionTimes[ConnectionState.Disconnected] = performance.now();
 		const pendingLocalState = loadProps?.pendingLocalState;
-		this._clientId = pendingLocalState?.clientId;
 
 		this._canReconnect = canReconnect ?? true;
 		this.clientDetailsOverride = clientDetailsOverride;
@@ -849,9 +842,6 @@ export class Container
 			{
 				logger: this.mc.logger,
 				connectionStateChanged: (value, oldState, reason) => {
-					if (value === ConnectionState.Connected) {
-						this._clientId = this.connectionStateHandler.pendingClientId;
-					}
 					this.logConnectionStateChangeTelemetry(value, oldState, reason);
 					if (this._lifecycleState === "loaded") {
 						this.propagateConnectionState(
@@ -2130,7 +2120,7 @@ export class Container
 				reason: reason?.text,
 				connectionInitiationReason,
 				pendingClientId: this.connectionStateHandler.pendingClientId,
-				clientId: this._clientId,
+				clientId: this.connectionStateHandler.clientId,
 				autoReconnect,
 				opsBehind,
 				online: OnlineStatus[isOnline()],
@@ -2156,8 +2146,7 @@ export class Container
 		disconnectedReason?: IConnectionStateChangeReason,
 	) {
 		if (this.connectionState === ConnectionState.Connected) {
-			this.protocolHandler.audience.setCurrentClientId(this._clientId);
-			assert(this.clientId === this._clientId, "clientId synchronized");
+			this.protocolHandler.audience.setCurrentClientId(this.connectionStateHandler.clientId);
 		}
 
 		// When container loaded, we want to propagate initial connection state.

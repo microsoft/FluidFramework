@@ -94,7 +94,11 @@ function submitDataStoreOp(
 	);
 }
 
-const changeConnectionState = (runtime: Omit<ContainerRuntime, "submit">, connected: boolean, clientId: string,) => {
+const changeConnectionState = (
+	runtime: Omit<ContainerRuntime, "submit">,
+	connected: boolean,
+	clientId: string,
+) => {
 	const audience = runtime.getAudience() as MockAudience;
 	audience.setCurrentClientId(clientId);
 	runtime.setConnectionState(connected, clientId);
@@ -264,7 +268,7 @@ describe("Runtime", () => {
 				(containerRuntime as any).flush();
 
 				submitDataStoreOp(containerRuntime, "2", "test");
-				changeConnectionState(containerRuntime,  true, mockClientId);
+				changeConnectionState(containerRuntime, true, mockClientId);
 				(containerRuntime as any).flush();
 
 				assert.strictEqual(submittedOps.length, 2);
@@ -505,7 +509,7 @@ describe("Runtime", () => {
 							},
 						} as ChannelCollection;
 
-						changeConnectionState(containerRuntime,  false, fakeClientId);
+						changeConnectionState(containerRuntime, false, fakeClientId);
 
 						containerRuntime.orderSequentially(() => {
 							submitDataStoreOp(containerRuntime, "1", "test");
@@ -527,7 +531,7 @@ describe("Runtime", () => {
 							"no messages should be sent",
 						);
 
-						changeConnectionState(containerRuntime,  true, fakeClientId);
+						changeConnectionState(containerRuntime, true, fakeClientId);
 
 						assert.strictEqual(
 							submittedOpsMetadata.length,
@@ -952,8 +956,8 @@ describe("Runtime", () => {
 			}
 
 			const toggleConnection = (runtime: ContainerRuntime) => {
-				changeConnectionState(runtime, true, fakeClientId)
-				changeConnectionState(runtime, false, fakeClientId)
+				changeConnectionState(runtime, true, fakeClientId);
+				changeConnectionState(runtime, false, fakeClientId);
 			};
 
 			const addPendingMessage = (pendingStateManager: PendingStateManager): void =>
@@ -1071,7 +1075,8 @@ describe("Runtime", () => {
 					addPendingMessage(pendingStateManager);
 
 					for (let i = 0; i < maxReconnects; i++) {
-						changeConnectionState(containerRuntime,  
+						changeConnectionState(
+							containerRuntime,
 							!containerRuntime.connected,
 							fakeClientId,
 						);

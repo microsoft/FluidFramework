@@ -55,7 +55,19 @@ export interface IConnectionStateHandlerInputs {
  */
 export interface IConnectionStateHandler {
 	readonly connectionState: ConnectionState;
+	/**
+	 * Pending clientID.
+	 * Changes whenever socket connection is established.
+	 * Resets to undefined when connection is lost
+	 */
 	readonly pendingClientId: string | undefined;
+	/**
+	 * clientId of a last established connection.
+	 * Does not reset on disconnect.
+	 * Changes only when new connection is established, client is fully caught up, and
+	 * there is no chance to ops from previous connection (i.e. if needed, we have waited and observed leave op from previous connection)
+	 */
+	readonly clientId: string | undefined;
 
 	containerSaved(): void;
 	dispose(): void;
@@ -139,6 +151,9 @@ class ConnectionStateHandlerPassThrough
 	}
 	public get pendingClientId() {
 		return this.pimpl.pendingClientId;
+	}
+	public get clientId() {
+		return this.pimpl.clientId;
 	}
 
 	public containerSaved() {
@@ -338,7 +353,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		return this._connectionState;
 	}
 
-	private get clientId(): string | undefined {
+	public get clientId(): string | undefined {
 		return this._clientId;
 	}
 
