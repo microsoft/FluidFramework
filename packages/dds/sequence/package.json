@@ -15,21 +15,21 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/sequence-public.d.ts",
+				"types": "./lib/public.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/sequence-public.d.ts",
+				"types": "./dist/public.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
 		"./beta": {
 			"import": {
-				"types": "./lib/sequence-beta.d.ts",
+				"types": "./lib/beta.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/sequence-beta.d.ts",
+				"types": "./dist/beta.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
@@ -45,11 +45,11 @@
 		},
 		"./alpha": {
 			"import": {
-				"types": "./lib/sequence-alpha.d.ts",
+				"types": "./lib/alpha.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/sequence-alpha.d.ts",
+				"types": "./dist/alpha.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
@@ -65,7 +65,7 @@
 		}
 	},
 	"main": "dist/index.js",
-	"types": "./dist/sequence-public.d.ts",
+	"types": "./dist/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",

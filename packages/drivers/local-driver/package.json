@@ -14,21 +14,21 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/local-driver-public.d.ts",
+				"types": "./lib/public.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/local-driver-public.d.ts",
+				"types": "./dist/public.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
 		"./alpha": {
 			"import": {
-				"types": "./lib/local-driver-alpha.d.ts",
+				"types": "./lib/alpha.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/local-driver-alpha.d.ts",
+				"types": "./dist/alpha.d.ts",
 				"default": "./dist/index.js"
 			}
 		},

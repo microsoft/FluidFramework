@@ -25,21 +25,21 @@
 		},
 		"./public": {
 			"import": {
-				"types": "./lib/fluid-telemetry-public.d.ts",
+				"types": "./lib/public.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/fluid-telemetry-public.d.ts",
+				"types": "./dist/public.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
 		"./beta": {
 			"import": {
-				"types": "./lib/fluid-telemetry-beta.d.ts",
+				"types": "./lib/beta.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/fluid-telemetry-beta.d.ts",
+				"types": "./dist/beta.d.ts",
 				"default": "./dist/index.js"
 			}
 		},

@@ -25,21 +25,21 @@
 		},
 		"./public": {
 			"import": {
-				"types": "./lib/odsp-client-public.d.ts",
+				"types": "./lib/public.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/odsp-client-public.d.ts",
+				"types": "./dist/public.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
 		"./beta": {
 			"import": {
-				"types": "./lib/odsp-client-beta.d.ts",
+				"types": "./lib/beta.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/odsp-client-beta.d.ts",
+				"types": "./dist/beta.d.ts",
 				"default": "./dist/index.js"
 			}
 		},

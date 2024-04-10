@@ -25,11 +25,11 @@
 		},
 		"./public": {
 			"import": {
-				"types": "./lib/data-objects-public.d.ts",
+				"types": "./lib/public.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/data-objects-public.d.ts",
+				"types": "./dist/public.d.ts",
 				"default": "./dist/index.js"
 			}
 		},

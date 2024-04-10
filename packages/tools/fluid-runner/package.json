@@ -24,21 +24,21 @@
 		},
 		"./public": {
 			"import": {
-				"types": "./lib/fluid-runner-public.d.ts",
+				"types": "./lib/public.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/fluid-runner-public.d.ts",
+				"types": "./dist/public.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
 		"./alpha": {
 			"import": {
-				"types": "./lib/fluid-runner-alpha.d.ts",
+				"types": "./lib/alpha.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/fluid-runner-alpha.d.ts",
+				"types": "./dist/alpha.d.ts",
 				"default": "./dist/index.js"
 			}
 		},

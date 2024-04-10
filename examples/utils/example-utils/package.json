@@ -26,11 +26,11 @@
 		},
 		"./public": {
 			"import": {
-				"types": "./lib/example-utils-public.d.ts",
+				"types": "./lib/public.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/example-utils-public.d.ts",
+				"types": "./dist/public.d.ts",
 				"default": "./dist/index.js"
 			}
 		},

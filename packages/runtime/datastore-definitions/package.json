@@ -15,18 +15,18 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/datastore-definitions-public.d.ts"
+				"types": "./lib/public.d.ts"
 			},
 			"require": {
-				"types": "./dist/datastore-definitions-public.d.ts"
+				"types": "./dist/public.d.ts"
 			}
 		},
 		"./alpha": {
 			"import": {
-				"types": "./lib/datastore-definitions-alpha.d.ts"
+				"types": "./lib/alpha.d.ts"
 			},
 			"require": {
-				"types": "./dist/datastore-definitions-alpha.d.ts"
+				"types": "./dist/alpha.d.ts"
 			}
 		},
 		"./internal": {
@@ -39,7 +39,7 @@
 		}
 	},
 	"main": "",
-	"types": "./dist/datastore-definitions-public.d.ts",
+	"types": "./dist/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
