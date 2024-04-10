@@ -6,8 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
-import { SharedMap } from "@fluidframework/map/internal";
-import { MapFactory } from "@fluidframework/map/internal";
+import { MapFactory, SharedMap } from "@fluidframework/map/internal";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence/internal";
 
 import { type ContainerSchema } from "../types.js";
