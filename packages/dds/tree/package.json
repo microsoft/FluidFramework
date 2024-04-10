@@ -32,7 +32,8 @@
 				"types": "./dist/beta.d.ts",
 				"default": "./dist/index.js"
 			}
-		},		"./internal": {
+		},
+		"./internal": {
 			"import": {
 				"types": "./lib/index.d.ts",
 				"default": "./lib/index.js"
