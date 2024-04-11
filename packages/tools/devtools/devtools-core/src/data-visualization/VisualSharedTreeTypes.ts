@@ -45,6 +45,8 @@ interface SharedTreeNode extends SharedTreeNodeBase {
 
 /**
  * Visual interface for SharedTree leaf node.
+ *
+ * @privateremarks `value` is type of {@link VisualChildNode} to visualize {@link FluidHandleNode}.
  */
 export interface SharedTreeLeafNode extends SharedTreeNodeBase {
 	kind: typeof VisualSharedTreeNodeKind.LeafNode;

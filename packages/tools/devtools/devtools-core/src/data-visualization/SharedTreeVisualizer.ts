@@ -81,7 +81,13 @@ function createToolTipContents(schema: SharedTreeSchemaNode): VisualTreeNode {
 }
 
 /**
- * Constructs a VisualTree of the input tree's schema fields in {@link VisualTreeNode} or {@link VisualValueNode}.
+ * Converts the visual represntation from {@link visualizeSharedTreeNodeBySchema} to a visual tree compatible with the devtools-view.
+ * @param tree - the visual representation of the SharedTree.
+ * @returns - the visual representation of type {@link VisualChildNode}
+ *
+ * {@link VisualTreeNode} is omitted when VisualSharedTreeNodeKind is the leaf node, since leaf does not accept object as its child.
+ * Check `NodeData` for the allowed types of the leaf node.
+ *
  */
 export function toVisualTree(tree: VisualSharedTreeNode): VisualChildNode {
 	if (tree.kind === VisualSharedTreeNodeKind.LeafNode) {
@@ -107,6 +113,7 @@ export function toVisualTree(tree: VisualSharedTreeNode): VisualChildNode {
 				return result;
 			}
 			default: {
+				console.log(`Unknown node kind: ${tree.value.nodeKind}`);
 				const result: UnknownObjectNode = {
 					nodeKind: VisualNodeKind.UnknownObjectNode,
 					tooltipContents: {
@@ -205,7 +212,7 @@ async function visualizeLeafNode(
 		schema: {
 			schemaName: tree.type,
 		},
-		value: await visualizeChildData(tree.value), // TODO: Change to VisualizeChildData.
+		value: await visualizeChildData(tree.value),
 		kind: VisualSharedTreeNodeKind.LeafNode,
 	};
 }
