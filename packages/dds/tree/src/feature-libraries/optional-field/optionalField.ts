@@ -156,7 +156,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	): OptionalChangeset => {
 		const { srcToDst, dstToSrc } = getBidirectionalMaps(change1.moves, revision1);
 		const change1FieldSrc = taggedOptRegister(change1.valueReplace?.src, revision1);
-		const change1FieldDst = taggedOptAtomId(change1.valueReplace?.dst, revision1);
+		const change1FieldDst = taggedOptAtomId(getEffectfulDst(change1.valueReplace), revision1);
 
 		const change2FieldSrc = taggedOptRegister(change2.valueReplace?.src, revision2);
 		let composedFieldSrc: RegisterId | undefined;
@@ -164,10 +164,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			if (change2FieldSrc === "self") {
 				composedFieldSrc = change1FieldSrc ?? change2FieldSrc;
 			} else if (
-				change1.valueReplace !== undefined &&
-				isReplaceEffectful(change1.valueReplace) &&
 				change1FieldDst !== undefined &&
-				areEqualRegisterIds(change2FieldSrc, change1FieldDst)
+				areEqualRegisterIds(change1FieldDst, change2FieldSrc)
 			) {
 				composedFieldSrc = "self";
 			} else {
@@ -299,7 +297,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			invertedMoves.push([taggedDst, taggedSrc]);
 		}
 		if (change.valueReplace !== undefined) {
-			if (change.valueReplace.isEmpty === false) {
+			const effectfulDst = getEffectfulDst(change.valueReplace);
+			if (effectfulDst !== undefined) {
 				invertIdMap.set("self", tagAtomId(change.valueReplace.dst));
 			}
 			if (change.valueReplace.src !== undefined) {
@@ -367,7 +366,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			forwardMap.set(tagAtomId(src), tagAtomId(dst));
 		}
 		if (overChange.valueReplace !== undefined) {
-			if (overChange.valueReplace.isEmpty === false) {
+			const effectfulDst = getEffectfulDst(overChange.valueReplace);
+			if (effectfulDst !== undefined) {
 				forwardMap.set("self", tagAtomId(overChange.valueReplace.dst));
 			}
 			if (overChange.valueReplace.src !== undefined) {
@@ -530,6 +530,12 @@ function isReplaceEffectful(replace: Replace): replace is EffectfulReplace {
 		return false;
 	}
 	return !replace.isEmpty || replace.src !== undefined;
+}
+
+function getEffectfulDst(replace: Replace | undefined): ChangeAtomId | undefined {
+	return replace === undefined || replace.isEmpty || replace.src === "self"
+		? undefined
+		: replace.dst;
 }
 
 function taggedOptRegister(
