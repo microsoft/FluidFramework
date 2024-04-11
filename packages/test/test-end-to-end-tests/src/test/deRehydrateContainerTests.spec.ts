@@ -12,8 +12,7 @@ import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definit
 import { Loader } from "@fluidframework/container-loader/internal";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import type { SharedCounter } from "@fluidframework/counter/internal";
-import type { ISharedMap } from "@fluidframework/map";
-import type { SharedDirectory } from "@fluidframework/map/internal";
+import type { SharedDirectory, ISharedMap } from "@fluidframework/map/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import type { ConsensusOrderedCollection } from "@fluidframework/ordered-collection/internal";
 import {

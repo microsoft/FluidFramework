@@ -93,6 +93,7 @@ export {
 	MapNodeStoredSchema,
 	LeafNodeStoredSchema,
 	Multiplicity,
+	SchemaPolicy,
 } from "./core/index.js";
 
 export {
@@ -254,6 +255,7 @@ export {
 	buildTreeConfiguration,
 	ISharedTreeEditor,
 	ISchemaEditor,
+	RevertibleFactory,
 	SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
 	Tree,
@@ -300,24 +302,23 @@ export {
 	TreeNodeSchemaCore,
 	TreeNodeSchemaNonClass,
 	SchemaIncompatible,
-
-	// experimental @beta APIs:
-	SchemaFactoryRecursive,
-	ValidateRecursiveSchema,
-	ObjectFromSchemaRecordUnsafe,
-	TreeObjectNodeUnsafe,
-	TreeFieldFromImplicitFieldUnsafe,
-	TreeNodeFromImplicitAllowedTypesUnsafe,
-	FieldSchemaUnsafe,
-	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
-	TreeArrayNodeUnsafe,
-	TreeMapNodeUnsafe,
-	InsertableObjectFromSchemaRecordUnsafe,
-	InsertableTreeFieldFromImplicitFieldUnsafe,
-	InsertableTypedNodeUnsafe,
-	NodeBuilderDataUnsafe,
-	NodeFromSchemaUnsafe,
 	type FieldProps,
+
+	// Recursive Schema APIs
+	type ValidateRecursiveSchema,
+	type ObjectFromSchemaRecordUnsafe,
+	type TreeObjectNodeUnsafe,
+	type TreeFieldFromImplicitFieldUnsafe,
+	type TreeNodeFromImplicitAllowedTypesUnsafe,
+	type FieldSchemaUnsafe,
+	type InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
+	type TreeArrayNodeUnsafe,
+	type TreeMapNodeUnsafe,
+	type InsertableObjectFromSchemaRecordUnsafe,
+	type InsertableTreeFieldFromImplicitFieldUnsafe,
+	type InsertableTypedNodeUnsafe,
+	type NodeBuilderDataUnsafe,
+	type NodeFromSchemaUnsafe,
 
 	// experimental @internal APIs:
 	adaptEnum,
