@@ -37,9 +37,21 @@ export interface MoveEffect<T> {
 	rebasedChanges?: T;
 
 	/**
-	 * The ID of the new endpoint associated with this mark.
+	 * Used when composing a move (or chain of moves) from A to B with another move (or chain of moves) from B to C.
+	 * For the move-out at A, this field will be set to the ID of the move-in at C, and vice versa.
 	 */
 	endpoint?: ChangeAtomId;
+
+	/**
+	 *
+	 */
+	endpoint2?: ChangeAtomId;
+
+	/**
+	 * Used when composing a move (or chain of moves) from A to B with another chain of moves from B to A to C.
+	 * The first move out at A will have endpointReplacment pointing to the second move out at A.
+	 */
+	endpointReplacement?: ChangeAtomId;
 }
 
 interface MoveEffectWithBasis<T> extends MoveEffect<T> {
@@ -126,10 +138,15 @@ function adjustMoveEffectBasis<T>(effect: MoveEffectWithBasis<T>, newBasis: Move
 	assert(basisShift > 0, 0x812 /* Expected basis shift to be positive */);
 
 	if (effect.endpoint !== undefined) {
-		adjusted.endpoint = {
-			...effect.endpoint,
-			localId: brand(effect.endpoint.localId + basisShift),
-		};
+		adjusted.endpoint = adjustChangeAtomId(effect.endpoint, basisShift);
+	}
+
+	if (effect.endpoint2 !== undefined) {
+		adjusted.endpoint2 = adjustChangeAtomId(effect.endpoint2, basisShift);
+	}
+
+	if (effect.endpointReplacement !== undefined) {
+		adjusted.endpointReplacement = adjustChangeAtomId(effect.endpointReplacement, basisShift);
 	}
 
 	if (effect.movedEffect !== undefined) {
@@ -183,4 +200,11 @@ export function getCrossFieldTargetFromMove(mark: MoveMarkEffect): CrossFieldTar
 		default:
 			unreachableCase(type);
 	}
+}
+
+function adjustChangeAtomId(id: ChangeAtomId, shift: number): ChangeAtomId {
+	return {
+		...id,
+		localId: brand(id.localId + shift),
+	};
 }

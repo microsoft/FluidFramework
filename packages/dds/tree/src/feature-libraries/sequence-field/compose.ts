@@ -188,21 +188,19 @@ function composeMarks<TNodeChange>(
 ): Mark<TNodeChange> {
 	const nodeChange = handleNodeChanges(baseMark, baseRev, newMark, composeChild, moveEffects);
 
-	// We apply endpoint updates after handling node changes because moved nodes should be sent to the endpoint in the base changeset,
-	// not the endpoint in the composed changeset.
-	return withNodeChange(
-		composeMarksIgnoreChild(
-			withUpdatedEndpoint(
+	return withUpdatedEndpoint(
+		withNodeChange(
+			composeMarksIgnoreChild(
 				withRevision(baseMark, baseRev),
-				baseMark.count,
-				baseRev,
+				withRevision(newMark, newRev),
 				moveEffects,
+				revisionMetadata,
 			),
-			withUpdatedEndpoint(withRevision(newMark, newRev), newMark.count, newRev, moveEffects),
-			moveEffects,
-			revisionMetadata,
+			nodeChange,
 		),
-		nodeChange,
+		baseMark.count,
+		undefined,
+		moveEffects,
 	);
 }
 
@@ -237,12 +235,17 @@ function composeMarksIgnoreChild<TNodeChange>(
 				// with the end of the new move (B to C).
 				// Because we are replacing the mark representing the start of the move with the new changeset's
 				// move-out from A, we update the base move-in at B to consider that its start point.
-				setEndpoint(
+				const newDetachId = {
+					revision: newDetachRevision,
+					localId: newAttachAndDetach.detach.id,
+				};
+
+				setEndpointReplacement(
 					moveEffects,
 					CrossFieldTarget.Destination,
 					getEndpoint(baseMark, undefined),
 					baseMark.count,
-					{ revision: newDetachRevision, localId: newAttachAndDetach.detach.id },
+					newDetachId,
 				);
 
 				const newEndpoint = getNewEndpoint(
@@ -255,6 +258,13 @@ function composeMarksIgnoreChild<TNodeChange>(
 
 				if (newEndpoint !== undefined) {
 					changeFinalEndpoint(newDetach as MoveMarkEffect, newEndpoint);
+					setEndpoint2(
+						moveEffects,
+						CrossFieldTarget.Destination,
+						newEndpoint,
+						baseMark.count,
+						newDetachId,
+					);
 				}
 			}
 
@@ -264,26 +274,6 @@ function composeMarksIgnoreChild<TNodeChange>(
 		if (isImpactfulCellRename(baseMark, undefined, revisionMetadata)) {
 			const baseAttachAndDetach = asAttachAndDetach(baseMark);
 			const newOutputId = getOutputCellId(newAttachAndDetach, undefined, revisionMetadata);
-
-			if (isMoveIn(baseAttachAndDetach.attach) && isMoveOut(newAttachAndDetach.detach)) {
-				const moveStartId = getEndpoint(baseAttachAndDetach.attach, undefined);
-				const moveEndId = getEndpoint(newAttachAndDetach.detach, undefined);
-				setEndpoint(
-					moveEffects,
-					CrossFieldTarget.Source,
-					moveStartId,
-					baseMark.count,
-					moveEndId,
-				);
-
-				setEndpoint(
-					moveEffects,
-					CrossFieldTarget.Destination,
-					moveEndId,
-					baseMark.count,
-					moveStartId,
-				);
-			}
 
 			if (areEqualCellIds(newOutputId, baseAttachAndDetach.cellId)) {
 				return { count: baseAttachAndDetach.count, cellId: baseAttachAndDetach.cellId };
@@ -311,20 +301,6 @@ function composeMarksIgnoreChild<TNodeChange>(
 	if (isImpactfulCellRename(baseMark, undefined, revisionMetadata)) {
 		const baseAttachAndDetach = asAttachAndDetach(baseMark);
 		if (markFillsCells(newMark)) {
-			if (isMoveIn(baseAttachAndDetach.attach) && isMoveOut(baseAttachAndDetach.detach)) {
-				assert(isMoveIn(newMark), 0x809 /* Unexpected mark type */);
-				setEndpoint(
-					moveEffects,
-					CrossFieldTarget.Source,
-					getEndpoint(newMark, undefined),
-					baseAttachAndDetach.count,
-					{
-						revision: baseAttachAndDetach.attach.revision,
-						localId: baseAttachAndDetach.attach.id,
-					},
-				);
-			}
-
 			const originalAttach = withRevision(
 				{
 					...baseAttachAndDetach.attach,
@@ -333,6 +309,43 @@ function composeMarksIgnoreChild<TNodeChange>(
 				},
 				baseAttachAndDetach.attach.revision,
 			);
+
+			if (isMoveIn(baseAttachAndDetach.attach) && isMoveOut(baseAttachAndDetach.detach)) {
+				assert(isMoveIn(newMark), 0x809 /* Unexpected mark type */);
+
+				const originalAttachId = {
+					revision: baseAttachAndDetach.attach.revision,
+					localId: baseAttachAndDetach.attach.id,
+				};
+
+				setEndpointReplacement(
+					moveEffects,
+					CrossFieldTarget.Source,
+					getEndpoint(newMark, undefined),
+					baseAttachAndDetach.count,
+					originalAttachId,
+				);
+
+				const newEndpoint = getNewEndpoint(
+					moveEffects,
+					CrossFieldTarget.Destination,
+					newMark.revision,
+					newMark.id,
+					newMark.count,
+				);
+
+				if (newEndpoint !== undefined) {
+					changeFinalEndpoint(originalAttach as MoveMarkEffect, newEndpoint);
+					setEndpoint2(
+						moveEffects,
+						CrossFieldTarget.Source,
+						newEndpoint,
+						baseMark.count,
+						originalAttachId,
+					);
+				}
+			}
+
 			return originalAttach;
 		} else {
 			// Other mark types have been handled by previous conditional branches.
@@ -375,6 +388,24 @@ function composeMarksIgnoreChild<TNodeChange>(
 				finalDest,
 			);
 
+			const replacementEndpoint1 = getReplacementEndpoint(
+				moveEffects,
+				CrossFieldTarget.Destination,
+				attach.revision,
+				attach.id,
+				baseMark.count,
+			);
+
+			if (replacementEndpoint1 !== undefined) {
+				setEndpoint2(
+					moveEffects,
+					CrossFieldTarget.Destination,
+					finalDest,
+					baseMark.count,
+					replacementEndpoint1,
+				);
+			}
+
 			setEndpoint(
 				moveEffects,
 				CrossFieldTarget.Destination,
@@ -382,6 +413,24 @@ function composeMarksIgnoreChild<TNodeChange>(
 				baseMark.count,
 				finalSource,
 			);
+
+			const replacementEndpoint2 = getReplacementEndpoint(
+				moveEffects,
+				CrossFieldTarget.Source,
+				detach.revision,
+				detach.id,
+				baseMark.count,
+			);
+
+			if (replacementEndpoint2 !== undefined) {
+				setEndpoint2(
+					moveEffects,
+					CrossFieldTarget.Source,
+					finalSource,
+					baseMark.count,
+					replacementEndpoint2,
+				);
+			}
 
 			// The `finalEndpoint` field of AttachAndDetach move effect pairs is not used,
 			// so we remove it as a normalization.
@@ -808,6 +857,55 @@ function setEndpoint(
 	}
 }
 
+function setEndpoint2(
+	moveEffects: MoveEffectTable<unknown>,
+	target: CrossFieldTarget,
+	id: ChangeAtomId,
+	count: number,
+	endpoint2: ChangeAtomId,
+) {
+	const effect = getMoveEffect(moveEffects, target, id.revision, id.localId, count);
+	const newEffect = effect.value !== undefined ? { ...effect.value, endpoint2 } : { endpoint2 };
+	setMoveEffect(moveEffects, target, id.revision, id.localId, effect.length, newEffect);
+
+	const remainingCount = count - effect.length;
+	if (remainingCount > 0) {
+		setEndpoint2(
+			moveEffects,
+			target,
+			offsetChangeAtomId(id, effect.length),
+			remainingCount,
+			offsetChangeAtomId(endpoint2, effect.length),
+		);
+	}
+}
+
+function setEndpointReplacement(
+	moveEffects: MoveEffectTable<unknown>,
+	target: CrossFieldTarget,
+	id: ChangeAtomId,
+	count: number,
+	endpointReplacement: ChangeAtomId,
+) {
+	const effect = getMoveEffect(moveEffects, target, id.revision, id.localId, count);
+	const newEffect =
+		effect.value !== undefined
+			? { ...effect.value, endpointReplacement }
+			: { endpointReplacement };
+	setMoveEffect(moveEffects, target, id.revision, id.localId, effect.length, newEffect);
+
+	const remainingCount = count - effect.length;
+	if (remainingCount > 0) {
+		setEndpointReplacement(
+			moveEffects,
+			target,
+			offsetChangeAtomId(id, effect.length),
+			remainingCount,
+			offsetChangeAtomId(endpointReplacement, effect.length),
+		);
+	}
+}
+
 function withUpdatedEndpoint<TMark extends MarkEffect>(
 	mark: TMark,
 	count: number,
@@ -862,11 +960,19 @@ function getNewEndpoint(
 ): ChangeAtomId | undefined {
 	const effect = getMoveEffect(moveEffects, target, revision, id, count);
 	assert(effect.length === count, 0x815 /* Expected effect to cover entire mark */);
-	if (effect.value?.endpoint === undefined) {
-		return undefined;
-	}
+	return effect.value?.endpoint2 ?? effect.value?.endpoint;
+}
 
-	return effect.value.endpoint;
+function getReplacementEndpoint(
+	moveEffects: MoveEffectTable<unknown>,
+	target: CrossFieldTarget,
+	revision: RevisionTag | undefined,
+	id: MoveId,
+	count: number,
+): ChangeAtomId | undefined {
+	const effect = getMoveEffect(moveEffects, target, revision, id, count);
+	assert(effect.length === count, 0x815 /* Expected effect to cover entire mark */);
+	return effect.value?.endpointReplacement;
 }
 
 function offsetChangeAtomId(id: ChangeAtomId, offset: number): ChangeAtomId {

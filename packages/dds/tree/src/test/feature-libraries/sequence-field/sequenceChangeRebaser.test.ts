@@ -578,7 +578,7 @@ const generateChildStates: ChildStateGenerator<TestState, WrappedChange> = funct
 	// if (state.mostRecentEdit !== undefined) {
 	// 	assert(state.parent?.content !== undefined, "Must have parent state to undo");
 	// 	const undoIntention = mintIntention();
-	// 	const invertedEdit = invert(state.mostRecentEdit.changeset);
+	// 	const invertedEdit = invertDeep(state.mostRecentEdit.changeset);
 	// 	yield {
 	// 		content: state.parent.content,
 	// 		mostRecentEdit: {
@@ -772,7 +772,7 @@ export function testStateBasedRebaserAxioms() {
 				generateChildStates,
 				fieldRebaser,
 				{
-					groupSubSuites: true,
+					groupSubSuites: false,
 					numberOfEditsToVerifyAssociativity: isStress ? 4 : 3,
 					skipRebaseOverCompose: false,
 				},
@@ -798,7 +798,7 @@ export function testStateBasedRebaserAxioms() {
 				generateChildStates,
 				fieldRebaser,
 				{
-					groupSubSuites: true,
+					groupSubSuites: false,
 					numberOfEditsToVerifyAssociativity: isStress ? 4 : 3,
 					skipRebaseOverCompose: false,
 				},
