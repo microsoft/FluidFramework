@@ -476,10 +476,7 @@ export interface IContainerRuntimeOptions {
 	 * message to be sent to the service.
 	 * The grouping an ungrouping of such messages is handled by the "OpGroupingManager".
 	 *
-	 * By default, the feature is disabled. If enabled from options, the `Fluid.ContainerRuntime.DisableGroupedBatching`
-	 * flag can be used to disable it at runtime.
-	 *
-	 * @experimental Not ready for use.
+	 * By default, the feature is enabled.
 	 */
 	readonly enableGroupedBatching?: boolean;
 
@@ -806,7 +803,7 @@ export class ContainerRuntime
 			enableRuntimeIdCompressor,
 			chunkSizeInBytes = defaultChunkSizeInBytes,
 			enableOpReentryCheck = false,
-			enableGroupedBatching = false,
+			enableGroupedBatching = true,
 			explicitSchemaControl = false,
 		} = runtimeOptions;
 
@@ -958,9 +955,6 @@ export class ContainerRuntime
 			}
 		};
 
-		const disableGroupedBatching = mc.config.getBoolean(
-			"Fluid.ContainerRuntime.DisableGroupedBatching",
-		);
 		const disableCompression = mc.config.getBoolean(
 			"Fluid.ContainerRuntime.CompressionDisabled",
 		);
@@ -969,8 +963,6 @@ export class ContainerRuntime
 			compressionOptions.minimumBatchSizeInBytes !== Infinity &&
 			compressionOptions.compressionAlgorithm === "lz4";
 
-		const opGroupingEnabled = disableGroupedBatching !== true && enableGroupedBatching;
-
 		const documentSchemaController = new DocumentsSchemaController(
 			existing,
 			metadata?.documentSchema,
@@ -978,7 +970,7 @@ export class ContainerRuntime
 				explicitSchemaControl,
 				compressionLz4,
 				idCompressorMode,
-				opGroupingEnabled,
+				opGroupingEnabled: enableGroupedBatching,
 				disallowedVersions: [],
 			},
 			(schema) => {
@@ -987,7 +979,6 @@ export class ContainerRuntime
 		);
 
 		const featureGatesForTelemetry: Record<string, boolean | number | undefined> = {
-			disableGroupedBatching,
 			disableCompression,
 		};
 
