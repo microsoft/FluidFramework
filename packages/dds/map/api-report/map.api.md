@@ -104,7 +104,7 @@ export const SharedDirectory: ISharedObjectKind<ISharedDirectory>;
 // @alpha @deprecated
 export type SharedDirectory = ISharedDirectory;
 
-// @public @deprecated
+// @public
 export const SharedMap: ISharedObjectKind<ISharedMap>;
 
 // @public @deprecated
