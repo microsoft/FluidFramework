@@ -21,8 +21,14 @@ export class Audience extends TypedEventEmitter<IAudienceEvents> implements IAud
 		super.setMaxListeners(0);
 	}
 
-	public get currentClientId() {
-		return this._currentClientId;
+	public self() {
+		return {
+			clientId: this._currentClientId,
+			client:
+				this._currentClientId === undefined
+					? undefined
+					: this.getMember(this._currentClientId),
+		};
 	}
 
 	public setCurrentClientId(clientId: string | undefined): void {
@@ -36,7 +42,7 @@ export class Audience extends TypedEventEmitter<IAudienceEvents> implements IAud
 			// this.getMember(clientId) could resolve to undefined in these two cases:
 			// 1) Feature gates controlling ConnectionStateHandler() behavior are off
 			// 2) we are loading from stashed state and audience is empty, but we remember and set prior clientId
-			this.emit("clientIdChanged", oldId, clientId);
+			this.emit("selfChanged", oldId, clientId);
 		}
 	}
 

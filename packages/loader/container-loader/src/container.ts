@@ -639,7 +639,7 @@ export class Container
 	 * clientId does not reset on lost connection - old value persists until new connection is fully established.
 	 */
 	public get clientId(): string | undefined {
-		return this.protocolHandler.audience.currentClientId;
+		return this.protocolHandler.audience.self().clientId;
 	}
 
 	private get isInteractiveClient(): boolean {

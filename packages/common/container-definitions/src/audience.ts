@@ -23,7 +23,7 @@ export interface IAudienceOwner extends IAudience {
 
 	/**
 	 * Notifies Audience that current clientId has changed.
-	 * See {@link IAudience.currentClientId} and {@link IAudienceEvents}'s "clientIdChanged" event for more details.
+	 * See {@link IAudience.self} and {@link IAudienceEvents}'s "selfChanged" event for more details.
 	 */
 	setCurrentClientId(clientId: string | undefined): void;
 }
@@ -36,10 +36,40 @@ export interface IAudienceEvents extends IEvent {
 		event: "addMember" | "removeMember",
 		listener: (clientId: string, client: IClient) => void,
 	): void;
+	/**
+	 * Notifies that client established new connection and caught-up on ops.
+	 * Values returned by {@link IAudience.self} represent newly established connection.
+	 * and {@link IAudienceEvents}'s "selfChanged" event for more details.
+	 */
 	(
-		event: "clientIdChanged",
+		event: "selfChanged",
 		listener: (oldClientId: string | undefined, clientId: string) => void,
 	): void;
+}
+
+/**
+ * Return type of {@link IAudience.self}. Please see remarks for {@link IAudience.self} to learn more details on promises.
+ * @public
+ */
+export interface ISelf {
+	/**
+	 * clientId of current or previous connection (if client is in disconnected or reconnecting / catching up state)
+	 * undefined if this client has never connected to the ordering service.
+	 * It changes only when client has reconnected, caught up with latest ops and certain other criteria are met.
+	 */
+	clientId: string | undefined;
+
+	/**
+	 * Information about current user, supplied by ordering service when client connected to it
+	 * and received clientId above.
+	 * If present (not undefined), it's same value as calling IAudience.getMember(clientId).
+	 * This property could be undefined even if there is non-undefined clientId.
+	 * This could happen in the following cases:
+	 * 1) Container was loaded from stash, by providing IPendingContainerState state to Container.load().
+	 * 2) Container is in the process of establishing new connection. Information about old connection is already resent
+	 * (old clientId is no longer in list of members), but clientId has not yet changed to a new value.
+	 */
+	client: IClient | undefined;
 }
 
 /**
@@ -78,31 +108,33 @@ export interface IAudience extends IEventProvider<IAudienceEvents> {
 	getMember(clientId: string): IClient | undefined;
 
 	/**
-	 * Returns this client's clientId. undefined if this client has never connected to the ordering service.
-	 * It changes only when client has reconnected and caught up with latest ops.
-	 * In other words, the value k
+	 * Returns information about client's connection. Please see {@link ISelf} member descriptions for more details.
 	 *
 	 * @experimental
 	 *
 	 * @remarks
 	 * This API is experimental.
 	 *
-	 * It's guaranteed that these events happen at the same time (synchronously, one after another):
-	 * 1. "clientIdChanged" event on this object fires
-	 * 2. the change of current clientId
-	 * 3. current clientId is added to members of audience
-	 * If  "connected" event fires, it will fire at the same time. "connected" event may not fired at some layers (like container runtime layer)
-	 * in some cases (like user has read-only permissions to container).
+	 * Reconnection process will be have these phases:
+	 * 1. Establishing connection phase:
+	 * - new connection clientId is added to member's list. That said, self.clientId still reflects old information.
+	 * - An old client's information is removed from members' list. getMember(self.clientId) will return undefined.
+	 * 2. Catch-up phase. Client catches up on latest ops and becomes current.
+	 * 3. "connect" phase - the following happens synchronously:
+	 * - self() information changes to reflect new connection
+	 * - "selfChanged" event on this object fires
+	 * - Various API surfaces may expose "connected" event. This event fires at the same time as self changes. That said, "connected" event will not fire at ContainerRuntime layer if container is read-only.
 	 *
-	 * Whenever this property changes, the "clientIdChanged" event is fired on this object.
 	 * That said, at the moment this is an experimental API. It depends on some experimental settings that might change in the future.
-	 * And application that deploy loader & container runtime bundles independently will see new (synchronized) behavior only when loader changes are deployed.
+	 * Events described in phase #3 may not happen at the same time if kill-bit feature gates are engaged due to a bug discovered in new logic
+	 * that delivers this functionality. Once it's proven (at scale) that everything works well, experimental tag will be removed.
+	 * Also application that deploy loader & container runtime bundles independently will see new (synchronized) behavior only when loader changes are deployed.
 	 * Newer runtimes will continue to observe old (non-synchronized) behavior when paired with older loader code.
 	 *
-	 * While it's marked as experimental, this promise could be broken, and consumers could experience current clientId being changed
-	 * (and "clientIdChanged" event fired) while (only applicable for "read" kind of connections)
+	 * When promises in phase #3 are broken (due to conditions described above), consumers could experience current clientId being changed
+	 * (and "selfChanged" event fired) while
 	 * 1. Such clientId is not present in Audience
 	 * 2. Client is not fully caught up
 	 */
-	readonly currentClientId: string | undefined;
+	self: () => ISelf;
 }

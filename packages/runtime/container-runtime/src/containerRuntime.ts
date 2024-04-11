@@ -7,6 +7,7 @@ import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	IAudience,
+	ISelf,
 	ICriticalContainerError,
 	IDeltaManager,
 } from "@fluidframework/container-definitions";
@@ -1736,19 +1737,23 @@ export class ContainerRuntime
 		});
 
 		this._audience = audience;
-		if (!("currentClientId" in audience)) {
+		if (audience.self === undefined) {
 			// back-compat, added in 2.0 RC3.
 			// Purpose: deal with cases when we run against old loader that does not have newly added capabilities
-			Object.defineProperty(audience, "currentClientId", {
-				get: this._getClientId,
-			});
+			audience.self = () => {
+				const clientId = this._getClientId();
+				return {
+					clientId,
+					client: clientId === undefined ? undefined : audience.getMember(clientId),
+				} satisfies ISelf;
+			};
 
 			let oldClientId = this.clientId;
 			this.on("connected", () => {
 				const clientId = this.clientId;
 				assert(clientId !== undefined, "can't be undefined");
 				(audience as unknown as TypedEventEmitter<IAudienceEvents>).emit(
-					"clientIdChanged",
+					"selfChanged",
 					oldClientId,
 					clientId,
 				);
@@ -2445,7 +2450,7 @@ export class ContainerRuntime
 
 	public setConnectionState(connected: boolean, clientId?: string) {
 		// Validate we have consistent state
-		const currentClientId = this._audience.currentClientId;
+		const currentClientId = this._audience.self().clientId;
 		assert(clientId === currentClientId, "same clientId");
 		assert(this.clientId === currentClientId, "same clientId");
 

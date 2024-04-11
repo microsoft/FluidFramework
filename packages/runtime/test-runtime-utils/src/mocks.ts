@@ -722,15 +722,18 @@ export class MockAudience extends TypedEventEmitter<IAudienceEvents> implements 
 		return this.audienceMembers.get(clientId);
 	}
 
-	public get currentClientId(): string | undefined {
-		return this._currentClientId;
+	public self() {
+		return {
+			clientId: this._currentClientId,
+			client: undefined,
+		};
 	}
 
 	public setCurrentClientId(clientId: string | undefined): void {
 		if (this._currentClientId !== clientId) {
 			const oldId = this._currentClientId;
 			this._currentClientId = clientId;
-			this.emit("clientIdChanged", oldId, clientId);
+			this.emit("selfChanged", oldId, clientId);
 		}
 	}
 }

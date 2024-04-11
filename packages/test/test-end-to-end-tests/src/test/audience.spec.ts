@@ -218,7 +218,7 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 		);
 	});
 
-	it("clientIdChanged & clientIdChanged event", async function () {
+	it("self() & 'selfChanged' event", async function () {
 		assert(apis.containerRuntime !== undefined);
 		if (apis.containerRuntime.version !== pkgVersion) {
 			// Only verify latest version of runtime - this functionality did not exist prior to RC3.
@@ -234,12 +234,12 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 		const audience = entry._context.containerRuntime.getAudience();
 
 		container.disconnect();
-		const oldId = audience.currentClientId;
+		const oldId = audience.self().clientId;
 		assert(oldId !== undefined);
 		assert(oldId === container.clientId);
 
 		let newClientId: string | undefined;
-		audience.on("clientIdChanged", (_oldId, id) => {
+		audience.on("selfChanged", (_oldId, id) => {
 			newClientId = id;
 		});
 
@@ -247,6 +247,6 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 		await waitForContainerConnection(container);
 
 		assert(newClientId === container.clientId);
-		assert(audience.currentClientId === container.clientId);
+		assert(audience.self().clientId === container.clientId);
 	});
 });
