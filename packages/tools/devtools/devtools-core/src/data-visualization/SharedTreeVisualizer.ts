@@ -113,7 +113,7 @@ export function toVisualTree(tree: VisualSharedTreeNode): VisualChildNode {
 				return result;
 			}
 			default: {
-				console.log(`Unknown node kind: ${tree.value.nodeKind}`);
+				console.error(`Unknown node kind: ${tree.value.nodeKind}`);
 				const result: UnknownObjectNode = {
 					nodeKind: VisualNodeKind.UnknownObjectNode,
 					tooltipContents: {
