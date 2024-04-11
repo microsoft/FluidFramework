@@ -519,7 +519,9 @@ function rebaseMarkIgnoreChild(
 		}
 		rebasedMark = makeDetachedMark(rebasedMark, cloneCellId(baseCellId));
 	} else if (markFillsCells(baseMark)) {
-		rebasedMark = withCellId(currMark, undefined);
+		rebasedMark = isAttachAndDetachEffect(currMark)
+			? withNodeChange({ ...currMark.detach, count: currMark.count }, currMark.changes)
+			: withCellId(currMark, undefined);
 	} else if (isAttachAndDetachEffect(baseMark)) {
 		assert(
 			baseMark.cellId !== undefined,
