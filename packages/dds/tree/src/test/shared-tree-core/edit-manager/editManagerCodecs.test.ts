@@ -166,7 +166,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 export function testCodec() {
 	describe("Codec", () => {
 		const family = makeEditManagerCodecs(
-			makeCodecFamily([[0, withDefaultBinaryEncoding(TestChange.codec)]]),
+			makeCodecFamily([[1, withDefaultBinaryEncoding(TestChange.codec)]]),
 			testRevisionTagCodec,
 			{
 				jsonValidator: typeboxValidator,
