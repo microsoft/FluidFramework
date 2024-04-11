@@ -220,7 +220,6 @@ describe("Fuzz - anchor stability", () => {
 			saveFailures: {
 				directory: failureDirectory,
 			},
-			skip: [49],
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		});
 	});
