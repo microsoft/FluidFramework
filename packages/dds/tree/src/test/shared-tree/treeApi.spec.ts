@@ -133,7 +133,7 @@ describe("treeApi", () => {
 					(root) => {
 						root.content = 3;
 					},
-					[{ type: "nodeExists", node: childB }],
+					[{ type: "nodeInDocument", node: childB }],
 				);
 			});
 			assert.equal(view.root.content, 0);
@@ -161,7 +161,7 @@ describe("treeApi", () => {
 				(root) => {
 					root.content = 3;
 				},
-				[{ type: "nodeExists", node: childB }],
+				[{ type: "nodeInDocument", node: childB }],
 			);
 			// The transaction does apply optimistically...
 			assert.equal(viewA.root.content, 0);
@@ -280,7 +280,7 @@ describe("treeApi", () => {
 					(root) => {
 						root.content = 3;
 					},
-					[{ type: "nodeExists", node: childB }],
+					[{ type: "nodeInDocument", node: childB }],
 				);
 			});
 			assert.equal(view.root.content, 0);
@@ -308,7 +308,7 @@ describe("treeApi", () => {
 				(root) => {
 					root.content = 3;
 				},
-				[{ type: "nodeExists", node: childB }],
+				[{ type: "nodeInDocument", node: childB }],
 			);
 			// The transaction does apply optimistically...
 			assert.equal(viewA.root.content, 0);

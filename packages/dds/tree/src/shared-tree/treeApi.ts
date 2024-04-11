@@ -53,8 +53,9 @@ export interface TreeApi extends TreeNodeApi {
 	 * @param transaction - The function to run as the body of the transaction.
 	 * This function is passed the provided `node`.
 	 * At any point during the transaction, the function may return the value `"rollback"` to abort the transaction and discard any changes it made so far.
-	 * @param preconditions - An optional list of {@link Constraint | constraints} that are checked just before the transaction begins.
-	 * If any of the constraints are not met at the start of the transaction then the transaction will not be run.
+	 * @param preconditions - An optional list of {@link TransactionConstraint | constraints} that are checked just before the transaction begins.
+	 * If any of the constraints are not met when `runTransaction` is called, it will throw an error.
+	 * If any of the constraints are not met when this transaction is sequenced (on this client or other clients), the transaction will not be run.
 	 * @remarks
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
 	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
@@ -68,7 +69,7 @@ export interface TreeApi extends TreeNodeApi {
 	runTransaction<TNode extends TreeNode>(
 		node: TNode,
 		transaction: (node: TNode) => void | "rollback",
-		preconditions?: Constraint[],
+		preconditions?: TransactionConstraint[],
 	): void;
 	/**
 	 * Apply one or more edits to the tree as a single atomic unit.
@@ -96,8 +97,9 @@ export interface TreeApi extends TreeNodeApi {
 	 * @param transaction - The function to run as the body of the transaction.
 	 * This function is passed the root of the tree.
 	 * At any point during the transaction, the function may return the value `"rollback"` to abort the transaction and discard any changes it made so far.
-	 * @param preconditions - An optional list of {@link Constraint | constraints} that are checked just before the transaction begins.
-	 * If any of the constraints are not met at the start of the transaction then the transaction will not be run.
+	 * @param preconditions - An optional list of {@link TransactionConstraint | constraints} that are checked just before the transaction begins.
+	 * If any of the constraints are not met when `runTransaction` is called, it will throw an error.
+	 * If any of the constraints are not met when this transaction is sequenced (on this client or other clients), the transaction will not be run.
 	 * @remarks
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
 	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
@@ -111,7 +113,7 @@ export interface TreeApi extends TreeNodeApi {
 	runTransaction<TView extends TreeView<ImplicitFieldSchema>>(
 		tree: TView,
 		transaction: (root: TView["root"]) => void | "rollback",
-		preconditions?: Constraint[],
+		preconditions?: TransactionConstraint[],
 	): void;
 
 	/**
@@ -141,7 +143,7 @@ export const treeApi: TreeApi = {
 	runTransaction<TNode extends TreeNode, TRoot extends ImplicitFieldSchema>(
 		treeOrNode: TNode | TreeView<TRoot>,
 		transaction: ((node: TNode) => void | "rollback") | ((root: TRoot) => void | "rollback"),
-		preconditions: Constraint[] = [],
+		preconditions: TransactionConstraint[] = [],
 	) {
 		if (treeOrNode instanceof SchematizingSimpleTreeView) {
 			const t = transaction as (root: TRoot) => void | "rollback";
@@ -181,15 +183,15 @@ export const treeApi: TreeApi = {
  * All clients will validate the constraints of a transaction when it is sequenced, so all clients will agree on whether the transaction succeeds or not.
  * @public
  */
-export type Constraint = NodeExists;
+export type TransactionConstraint = NodeInDocumentConstraint; // TODO: Add more constraint types here
 
 /**
- * A transaction {@link Constraint | constraint} which requires that the given node exists in the tree.
+ * A transaction {@link TransactionConstraint | constraint} which requires that the given node exists in the tree.
  * @remarks The node must be in the document (its {@link TreeStatus | status} must be {@link TreeStatus.InDocument | InDocument}) to qualify as "existing".
  * @public
  */
-export interface NodeExists {
-	type: "nodeExists";
+export interface NodeInDocumentConstraint {
+	type: "nodeInDocument";
 	node: TreeNode;
 }
 
@@ -198,12 +200,12 @@ export interface NodeExists {
 function runTransaction(
 	checkout: TreeCheckout,
 	transaction: () => void | "rollback",
-	preconditions: Constraint[],
+	preconditions: TransactionConstraint[],
 ): void {
 	checkout.transaction.start();
 	for (const constraint of preconditions) {
 		switch (constraint.type) {
-			case "nodeExists": {
+			case "nodeInDocument": {
 				const node = getFlexNode(constraint.node);
 				assert(
 					node.treeStatus() === TreeStatus.InDocument,
