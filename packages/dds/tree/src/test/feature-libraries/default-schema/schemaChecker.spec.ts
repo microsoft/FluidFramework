@@ -563,7 +563,7 @@ describe("schema validation", () => {
 					]),
 				};
 				const schemaPolicy = {
-					fieldKinds: new Map([[fieldSchema_optionalNumber.kind, FieldKinds.optional]])
+					fieldKinds: new Map([[fieldSchema_optionalNumber.kind, FieldKinds.optional]]),
 				};
 
 				assert.equal(
@@ -593,7 +593,7 @@ describe("schema validation", () => {
 					]),
 				};
 				const schemaPolicy = {
-					fieldKinds: new Map([[fieldSchema_requiredNumber.kind, FieldKinds.required]])
+					fieldKinds: new Map([[fieldSchema_requiredNumber.kind, FieldKinds.required]]),
 				};
 
 				assert.equal(
