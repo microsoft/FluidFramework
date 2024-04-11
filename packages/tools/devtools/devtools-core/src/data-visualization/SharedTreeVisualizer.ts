@@ -337,11 +337,19 @@ export async function visualizeSharedTreeNodeBySchema(
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
 	if (schema instanceof LeafNodeStoredSchema) {
-		return visualizeLeafNode(tree, visualizeChildData);
+		const leafVisualized = await visualizeLeafNode(tree, visualizeChildData);
+		return leafVisualized;
 	} else if (schema instanceof ObjectNodeStoredSchema) {
-		return visualizeObjectNode(tree, schema, contentSnapshot, visualizeChildData);
+		const objectVisualized = visualizeObjectNode(
+			tree,
+			schema,
+			contentSnapshot,
+			visualizeChildData,
+		);
+		return objectVisualized;
 	} else if (schema instanceof MapNodeStoredSchema) {
-		return visualizeMapNode(tree, schema, contentSnapshot, visualizeChildData);
+		const mapVisualized = visualizeMapNode(tree, schema, contentSnapshot, visualizeChildData);
+		return mapVisualized;
 	} else {
 		throw new TypeError("Unrecognized schema type.");
 	}
