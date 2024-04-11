@@ -980,15 +980,12 @@ export function testRebase() {
 				const rebased = rebase(moveAndRemove, moveAndRemove);
 				const expected = [
 					{ count: 1 },
-					Mark.attachAndDetach(
-						Mark.pin(1, returnCellId, {
-							cellId: {
-								...removeCellId,
-								adjacentCells: [{ id: removeCellId.localId, count: 1 }],
-							},
-						}),
-						Mark.remove(1, removeCellId),
-					),
+					Mark.remove(1, removeCellId, {
+						cellId: {
+							...removeCellId,
+							adjacentCells: [{ id: removeCellId.localId, count: 1 }],
+						},
+					}),
 					{ count: 1 },
 					Mark.tomb(returnCellId.revision, returnCellId.localId),
 				];

@@ -344,8 +344,11 @@ export function normalizeCellRename(
 	mark: CellMark<AttachAndDetach>,
 ): CellMark<AttachAndDetach | DetachOfRemovedNodes> {
 	assert(mark.cellId !== undefined, 0x823 /* AttachAndDetach marks should have a cell ID */);
+	// We must keep the attach information when the attach is a move-in because the input-context cell ID may not be
+	// enough to identify the move ID.
+	// TODO: revisit if we still need the attach information for new inserts.
 	if (mark.attach.type !== "Insert" || isNewAttachEffect(mark.attach, mark.cellId)) {
-	return mark;
+		return mark;
 	}
 	// Normalization: when the attach is a revive, we rely on the implicit reviving semantics of the
 	// detach instead of using an explicit revive effect in an AttachAndDetach mark.
