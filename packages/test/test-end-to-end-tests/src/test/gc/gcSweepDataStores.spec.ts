@@ -135,7 +135,7 @@ const newTestContainerConfig: () => ITestContainerConfig = () => ({
 		},
 		gcOptions: newGCOptions(),
 	},
-	loaderProps: { configProvider, logger: undefined },
+	loaderProps: { configProvider, logger: mockLogger },
 });
 
 const testContainerConfig: ITestContainerConfig = newTestContainerConfig();
