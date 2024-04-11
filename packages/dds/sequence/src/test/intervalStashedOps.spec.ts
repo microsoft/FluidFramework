@@ -51,7 +51,6 @@ const assertIntervals = (
 };
 
 describe("Interval Stashed Ops on client ", () => {
-	const localUserLongId = "localUser";
 	let sharedString: SharedString;
 	let dataStoreRuntime1: MockFluidDataStoreRuntime;
 	let containerRuntimeFactory: MockContainerRuntimeFactory;
@@ -66,7 +65,7 @@ describe("Interval Stashed Ops on client ", () => {
 
 		// Connect the first SharedString.
 		dataStoreRuntime1.setAttachState(AttachState.Attached);
-		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		const services1 = {
 			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 			objectStorage: new MockStorage(),
@@ -80,7 +79,6 @@ describe("Interval Stashed Ops on client ", () => {
 		let intervalId: string;
 		const label = "test";
 		let startingInterval;
-		let startingIntervalWithProps;
 		beforeEach(() => {
 			sharedString.insertText(0, "hello world");
 			collection = sharedString.getIntervalCollection(label);
@@ -90,7 +88,6 @@ describe("Interval Stashed Ops on client ", () => {
 				sequenceNumber: sharedString.getCurrentSeq(),
 				intervalType: IntervalType.SlideOnRemove,
 			};
-			startingIntervalWithProps = { ...startingInterval, props: { a: 1 } };
 			intervalId = collection.add(startingInterval).getIntervalId();
 		});
 		it("for add interval", () => {
@@ -128,7 +125,7 @@ describe("Interval Stashed Ops on client ", () => {
 					},
 				},
 			};
-			const metadata = sharedString["applyStashedOp"](opArgs);
+			sharedString["applyStashedOp"](opArgs);
 			assertIntervals(sharedString, collection, []);
 			assert.equal(collection.getIntervalById(intervalId), undefined);
 		});
@@ -147,7 +144,7 @@ describe("Interval Stashed Ops on client ", () => {
 					},
 				},
 			};
-			const metadata = sharedString["applyStashedOp"](opArgs);
+			sharedString["applyStashedOp"](opArgs);
 			assertIntervals(sharedString, collection, [{ start: 5, end: 10 }]);
 		});
 		it("for interval property change", () => {
@@ -165,7 +162,7 @@ describe("Interval Stashed Ops on client ", () => {
 					},
 				},
 			};
-			const metadata = sharedString["applyStashedOp"](opArgs);
+			sharedString["applyStashedOp"](opArgs);
 			assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
 			assert.equal(interval.properties.a, 2);
 		});

@@ -135,6 +135,24 @@ export const nodeKey = new FieldKindWithEditor(
 	new Set(),
 );
 
+const identifierFieldIdentifier = "Identifier";
+
+/**
+ * Exactly one identifier.
+ */
+export const identifier = new FieldKindWithEditor(
+	identifierFieldIdentifier,
+	Multiplicity.Single,
+	noChangeHandler,
+	(types, other) =>
+		(other.kind === sequence.identifier ||
+			other.kind === requiredIdentifier ||
+			other.kind === optional.identifier ||
+			other.kind === identifierFieldIdentifier) &&
+		allowsTreeSchemaIdentifierSuperset(types, other.types),
+	new Set(),
+);
+
 /**
  * Exactly 0 items.
  *
@@ -181,6 +199,7 @@ export const fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration
 			[optional.identifier, { kind: optional, formatVersion: 0 }],
 			[sequence.identifier, { kind: sequence, formatVersion: 0 }],
 			[forbidden.identifier, { kind: forbidden, formatVersion: 0 }],
+			[identifier.identifier, { kind: identifier, formatVersion: 0 }],
 		]),
 	],
 ]);
@@ -193,7 +212,7 @@ export const fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration
  * code which uses this should be audited for compatibility considerations.
  */
 export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
-	[required, optional, sequence, nodeKey, forbidden].map((s) => [s.identifier, s]),
+	[required, optional, sequence, nodeKey, identifier, forbidden].map((s) => [s.identifier, s]),
 );
 
 // Create named Aliases for nicer intellisense.
@@ -220,6 +239,10 @@ export interface NodeKeyFieldKind extends FlexFieldKind<"NodeKey", Multiplicity.
 /**
  * @internal
  */
+export interface Identifier extends FlexFieldKind<"Identifier", Multiplicity.Single> {}
+/**
+ * @internal
+ */
 export interface Forbidden
 	extends FlexFieldKind<typeof forbiddenFieldKindIdentifier, Multiplicity.Forbidden> {}
 
@@ -233,5 +256,6 @@ export const FieldKinds: {
 	readonly optional: Optional;
 	readonly sequence: Sequence;
 	readonly nodeKey: NodeKeyFieldKind;
+	readonly identifier: Identifier;
 	readonly forbidden: Forbidden;
-} = { required, optional, sequence, nodeKey, forbidden };
+} = { required, optional, sequence, nodeKey, identifier, forbidden };

@@ -77,11 +77,6 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 				this.events.emit("commitApplied", data, getRevertible),
 			),
 		);
-		this.unregisterCallbacks.add(
-			this.checkout.events.on("revertibleDisposed", (revertible) =>
-				this.events.emit("revertibleDisposed", revertible),
-			),
-		);
 	}
 
 	public upgradeSchema(): void {

@@ -29,12 +29,12 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
-		"api-extractor:esnext": "api-extractor run --local",
+		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib",
 		"build": "fluid-build . --task build",
 		"build-and-test-mocha": "npm run build && npm run test:mocha:verbose",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "fluid-build . --task api",
+		"build:docs": "api-extractor run --local",
 		"build:esnext": "fluid-tsc module --project ./tsconfig.esm.json && copyfiles -f ../../../../common/build/build-common/src/esm/package.json ./lib",
 		"build:test": "npm run build:test:utils && npm run build:test:mocha && npm run build:test:jest",
 		"build:test:jest": "concurrently npm:build:test:jest:cjs npm:build:test:jest:esm",
@@ -92,8 +92,9 @@
 	"devDependencies": {
 		"@biomejs/biome": "^1.6.2",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
+		"@fluid-tools/build-cli": "^0.36.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.34.0",
+		"@fluidframework/build-tools": "^0.36.0",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
@@ -153,13 +154,6 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:docs": {
-				"dependsOn": [
-					"...",
-					"api-extractor:commonjs"
-				],
-				"script": false
-			},
 			"build:test:jest:cjs": [
 				"tsc",
 				"build:test:utils:cjs"

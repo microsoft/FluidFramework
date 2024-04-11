@@ -16,7 +16,7 @@ import {
 	ISubmitSummaryOptions,
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { ISharedMap } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
