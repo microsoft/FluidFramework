@@ -2918,7 +2918,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/fluid-static': workspace:~
       '@fluidframework/local-driver': workspace:~
-      '@fluidframework/map': workspace:~
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/server-local-server': ^4.0.0
       '@fluidframework/telemetry-utils': workspace:~
@@ -2958,7 +2957,6 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluidframework/azure-client': link:../../../../packages/service-clients/azure-client
-      '@fluidframework/map': link:../../../../packages/dds/map
       '@fluidframework/routerlicious-driver': link:../../../../packages/drivers/routerlicious-driver
       '@fluidframework/telemetry-utils': link:../../../../packages/utils/telemetry-utils
       assert: 2.1.0

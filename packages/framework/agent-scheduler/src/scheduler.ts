@@ -13,7 +13,7 @@ import {
 	ISharedObjectRegistry,
 } from "@fluidframework/datastore/internal";
 import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map/internal";
+import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import {
 	IFluidDataStoreContext,

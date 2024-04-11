@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import type { ISharedMap } from "@fluidframework/map/internal";
+import type { ISharedMap } from "@fluidframework/map";
 import { DetachedReferencePosition, PropertySet } from "@fluidframework/merge-tree/internal";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";

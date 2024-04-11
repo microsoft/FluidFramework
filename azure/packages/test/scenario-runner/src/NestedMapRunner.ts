@@ -6,7 +6,7 @@
 import { AzureClient } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
-import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import { type ISharedMap, SharedMap } from "@fluidframework/map";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";

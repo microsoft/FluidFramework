@@ -12,7 +12,7 @@ import { IFluidHandle, IRequestHeader } from "@fluidframework/core-interfaces";
 import type { SharedCounter } from "@fluidframework/counter/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import type { ISharedMap } from "@fluidframework/map/internal";
+import type { ISharedMap } from "@fluidframework/map";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import {
 	DataObjectFactoryType,

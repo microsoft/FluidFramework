@@ -6,7 +6,7 @@
 import { SharedCell } from "@fluidframework/cell/internal";
 import { type IFluidLoadable } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
-import { SharedMap } from "@fluidframework/map/internal";
+import { SharedMap } from "@fluidframework/map";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import { expect } from "chai";
 

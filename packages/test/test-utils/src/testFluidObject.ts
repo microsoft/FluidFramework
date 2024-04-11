@@ -11,7 +11,7 @@ import {
 	mixinRequestHandler,
 } from "@fluidframework/datastore/internal";
 import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,

@@ -6,7 +6,7 @@
 import assert from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import type { ISharedMap } from "@fluidframework/map/internal";
+import type { ISharedMap } from "@fluidframework/map";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,

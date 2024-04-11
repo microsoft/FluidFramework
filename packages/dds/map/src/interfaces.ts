@@ -14,7 +14,7 @@ import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-objec
 /**
  * Type of "valueChanged" event parameter.
  * @sealed
- * @alpha
+ * @public
  */
 export interface IValueChanged {
 	/**
@@ -299,7 +299,7 @@ export interface IDirectoryValueChanged extends IValueChanged {
 /**
  * Events emitted in response to changes to the {@link ISharedMap | map} data.
  * @sealed
- * @alpha
+ * @public
  */
 export interface ISharedMapEvents extends ISharedObjectEvents {
 	/**
@@ -339,7 +339,7 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
  *
  * For more information, including example usages, see {@link https://fluidframework.com/docs/data-structures/map/}.
  * @sealed
- * @alpha
+ * @public
  */
 // TODO: Use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

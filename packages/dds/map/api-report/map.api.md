@@ -70,19 +70,19 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
-// @alpha @sealed
+// @public @sealed
 export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
     get<T = any>(key: string): T | undefined;
     set<T = unknown>(key: string, value: T): this;
 }
 
-// @alpha @sealed
+// @public @sealed
 export interface ISharedMapEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
-// @alpha @sealed
+// @public @sealed
 export interface IValueChanged {
     readonly key: string;
     readonly previousValue: any;
@@ -104,10 +104,10 @@ export const SharedDirectory: ISharedObjectKind<ISharedDirectory>;
 // @alpha @deprecated
 export type SharedDirectory = ISharedDirectory;
 
-// @alpha
+// @public @deprecated
 export const SharedMap: ISharedObjectKind<ISharedMap>;
 
-// @alpha
+// @public @deprecated
 export type SharedMap = ISharedMap;
 
 ```

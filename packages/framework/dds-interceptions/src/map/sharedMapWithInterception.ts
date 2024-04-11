@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISharedMap } from "@fluidframework/map/internal";
+import { ISharedMap } from "@fluidframework/map";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 
 /**

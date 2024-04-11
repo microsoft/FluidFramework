@@ -11,7 +11,8 @@ import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { Serializable } from "@fluidframework/datastore-definitions/internal";
-import type { SharedDirectory, ISharedMap, IValueChanged } from "@fluidframework/map/internal";
+import type { ISharedMap, IValueChanged } from "@fluidframework/map";
+import type { SharedDirectory } from "@fluidframework/map/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ChannelFactoryRegistry,

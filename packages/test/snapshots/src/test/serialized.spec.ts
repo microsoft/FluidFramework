@@ -12,7 +12,8 @@ import { IFluidCodeDetails } from "@fluidframework/container-definitions/interna
 import { Loader } from "@fluidframework/container-loader/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
-import { type ISharedMap, SharedMap, SharedDirectory } from "@fluidframework/map/internal";
+import { type ISharedMap, SharedMap } from "@fluidframework/map";
+import { SharedDirectory } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import {
 	ConsensusOrderedCollection,

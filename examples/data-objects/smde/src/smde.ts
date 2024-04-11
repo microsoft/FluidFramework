@@ -8,7 +8,7 @@ import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,

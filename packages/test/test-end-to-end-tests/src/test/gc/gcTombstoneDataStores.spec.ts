@@ -29,7 +29,7 @@ import {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { delay } from "@fluidframework/core-utils/internal";
-import type { ISharedMap } from "@fluidframework/map/internal";
+import type { ISharedMap } from "@fluidframework/map";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	IFluidDataStoreChannel,

@@ -80,7 +80,8 @@ export class MapFactory implements IChannelFactory<ISharedMap> {
 
 /**
  * Entrypoint for {@link ISharedMap} creation.
- * @alpha
+ * @public
+ * @deprecated Please use SharedTree for new containers. SharedMap is supported for loading preexisting Fluid Framework 1.0 containers only.
  */
 export const SharedMap: ISharedObjectKind<ISharedMap> = {
 	getFactory(): IChannelFactory<ISharedMap> {
@@ -94,7 +95,8 @@ export const SharedMap: ISharedObjectKind<ISharedMap> = {
 
 /**
  * Entrypoint for {@link ISharedMap} creation.
- * @alpha
+ * @public
+ * @deprecated Use ISharedMap instead.
  * @privateRemarks
  * This alias is for legacy compat from when the SharedMap class was exported as public.
  */

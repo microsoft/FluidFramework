@@ -18,7 +18,8 @@ import {
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
+import { SharedMap } from "@fluidframework/map";
+import { SharedDirectory } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { ConsensusQueue } from "@fluidframework/ordered-collection/internal";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";

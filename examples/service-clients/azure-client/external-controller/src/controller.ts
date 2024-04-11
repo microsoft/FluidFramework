@@ -4,7 +4,7 @@
  */
 
 import events_pkg from "events_pkg";
-import { IValueChanged } from "@fluidframework/map/internal";
+import { IValueChanged } from "fluid-framework";
 
 /**
  * IDiceRoller describes the public API surface for our dice roller data object.

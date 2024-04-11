@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase, IErrorBase } from "@fluidframework/core-interfaces";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
-import type { ISharedMap } from "@fluidframework/map/internal";
+import type { ISharedMap } from "@fluidframework/map";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,

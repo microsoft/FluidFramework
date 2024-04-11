@@ -4,7 +4,7 @@
  */
 
 import { IOdspAudience, OdspMember } from "@fluid-experimental/odsp-client";
-import { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
+import { ISharedMap, IValueChanged } from "@fluidframework/map";
 
 export const waitForMember = async (
 	audience: IOdspAudience,

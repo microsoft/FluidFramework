@@ -12,8 +12,7 @@ import {
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
-import { IFluidContainer } from "fluid-framework";
-import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map/internal";
+import { IFluidContainer, ISharedMap, IValueChanged, SharedMap } from "fluid-framework";
 import { v4 as uuid } from "uuid";
 
 import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";

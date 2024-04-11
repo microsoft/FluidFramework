@@ -13,7 +13,8 @@ import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { type IPendingRuntimeState } from "@fluidframework/container-runtime/internal/test/containerRuntime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { ISharedMap, ISharedDirectory, SharedDirectory } from "@fluidframework/map/internal";
+import type { ISharedMap } from "@fluidframework/map";
+import type { ISharedDirectory, SharedDirectory } from "@fluidframework/map/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
