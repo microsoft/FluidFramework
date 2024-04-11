@@ -140,8 +140,9 @@ export function create(
 					const customHeadersToLog = (config.get("customHeadersToLog") as string[]) ?? [];
 					if (customHeadersToLog) {
 						customHeadersToLog.forEach((header) => {
-							if (req.headers[header]) {
-								additionalProperties[header] = req.headers[header];
+							const lowerCaseHeader = header.toLowerCase();
+							if (req.headers[lowerCaseHeader]) {
+								additionalProperties[lowerCaseHeader] = req.headers[lowerCaseHeader];
 							}
 						});
 					}
