@@ -13,8 +13,8 @@ to enforce package entrypoints. Any imports of APIs that are not explicitly expo
 
 In addition, TypeScript users should compile Fluid Framework using the following tsconfig settings:
 
-- `moduleResolution: Node16` or `moduleResolution: Bundler`. See the
-  [TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information.
+-   `moduleResolution: Node16` or `moduleResolution: Bundler`. See the
+    [TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information.
 
 ## [3.2.0](https://github.com/microsoft/FluidFramework/releases/tag/protocol-definitions_v3.2.0)
 
