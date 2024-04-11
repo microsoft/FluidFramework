@@ -11,8 +11,8 @@ import {
 	deleteFromRangeMap,
 	getFirstEntryFromRangeMap,
 	setInRangeMap,
-	partitionAllRangesWithinMap,
 	mergeRangesWithinMap,
+	getAllEntriesFromMap,
 } from "../../../util/index.js";
 
 function newRangeMap(): RangeMap<string> {
@@ -146,21 +146,32 @@ describe("RangeMap", () => {
 		assert.deepEqual(entry7, expectedA2);
 	});
 
-	describe("partitionAllRangesWithinMap", () => {
-		it("get all `segments` from the given range", () => {
+	describe("getAllEntriesFromMap", () => {
+		it("get all entries within the given range", () => {
 			const map = newRangeMap();
 
 			setInRangeMap(map, 1, 3, "a");
 			setInRangeMap(map, 6, 2, "b");
 
-			const results = partitionAllRangesWithinMap(map, 0, 10);
+			const results = getAllEntriesFromMap(map, 0, 10);
 
 			assert.deepEqual(results, [
-				{ start: 0, length: 1, value: undefined },
 				{ start: 1, length: 3, value: "a" },
-				{ start: 4, length: 2, value: undefined },
 				{ start: 6, length: 2, value: "b" },
-				{ start: 8, length: 2, value: undefined },
+			]);
+		});
+
+		it("get all entries within the given range but partially overlapped", () => {
+			const map = newRangeMap();
+
+			setInRangeMap(map, 1, 3, "a");
+			setInRangeMap(map, 6, 2, "b");
+
+			const results = getAllEntriesFromMap(map, 2, 5);
+
+			assert.deepEqual(results, [
+				{ start: 2, length: 2, value: "a" },
+				{ start: 6, length: 1, value: "b" },
 			]);
 		});
 	});

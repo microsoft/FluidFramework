@@ -114,16 +114,13 @@ export function visitDelta(
 	fixedPointVisitOfRoots(visitor, attachPassRoots, attachConfig);
 	collectDestroys(delta.destroy, attachConfig);
 	for (const { id, count } of rootDestructions) {
-		const nodeRangeToDestruct = detachedFieldIndex.partitionDetachedNodeRanges(id, count);
-		if (nodeRangeToDestruct.length > 0) {
-			for (const { root, start, length } of nodeRangeToDestruct) {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const field = detachedFieldIndex.toFieldKey(root!);
-				visitor.destroy(field, length);
-				const offsettedId = offsetDetachId(id, start - id.minor);
-				detachedFieldIndex.deleteEntry(offsettedId, length);
-			}
+		const nodeRangeToDestruct = detachedFieldIndex.getAllDetachedNodeRanges(id, count);
+		for (const { root, length } of nodeRangeToDestruct) {
+			assert(root !== undefined, "The root of the node ranges to be destroy is undefined");
+			const field = detachedFieldIndex.toFieldKey(root);
+			visitor.destroy(field, length);
 		}
+		detachedFieldIndex.deleteEntry(id, count);
 	}
 }
 
@@ -426,10 +423,9 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 }
 
 /**
- * For the non-atomization purpose of the tree delta visit behavior, we will partition the existing
- * detached nodes into multiple segments. This partitioning is determined by whether the nodes within
- * a segment share the same root or not. If the shared root is undefined, the tree-building process
- * will be applied.
+ * For the purpose of non-atomization, the tree will not be built one-by-one on detached nodes.
+ * Instead, contiguous detached nodes are grouped into ranges, depending on whether the contiguous
+ * nodes have an identical root. Trees are then only built on nodes without a defined root.
  */
 function buildTrees(
 	id: Delta.DetachedNodeId,
@@ -437,12 +433,12 @@ function buildTrees(
 	config: PassConfig,
 	visitor: DeltaVisitor,
 ) {
-	const nodeRangeToBuildTrees = config.detachedFieldIndex.partitionDetachedNodeRanges(
+	const nodeRangeToBuildTrees = config.detachedFieldIndex.getAllDetachedNodeRanges(
 		id,
 		trees.length,
 	);
 
-	if (nodeRangeToBuildTrees === undefined) {
+	if (nodeRangeToBuildTrees.length === 0) {
 		const root = config.detachedFieldIndex.createEntry(id, trees.length);
 		const field = config.detachedFieldIndex.toFieldKey(root);
 		visitor.create(trees, field);
@@ -491,13 +487,12 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 		let index = 0;
 		for (const mark of delta.local) {
 			if (isAttachMark(mark) || isReplaceMark(mark)) {
-				// break and find all ranges
 				assert(mark.attach !== undefined, "mark attach should not be undefined");
-				let nodeRangeToAttach = config.detachedFieldIndex.partitionDetachedNodeRanges(
+				let nodeRangeToAttach = config.detachedFieldIndex.getAllDetachedNodeRanges(
 					mark.attach,
 					mark.count,
 				);
-				if (nodeRangeToAttach === undefined) {
+				if (nodeRangeToAttach.length === 0) {
 					nodeRangeToAttach = [
 						{ root: undefined, start: mark.attach.minor, length: mark.count },
 					];

@@ -170,7 +170,7 @@ export function setInRangeMap<T>(map: RangeMap<T>, start: number, length: number
  * TODO: We may find ways to mitigate the code duplication between set and delete, and we need to better
  * document the API.  AB#7413
  */
-export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: number): void {
+export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: number): boolean {
 	const end = start + length - 1;
 
 	let iBefore = -1;
@@ -190,7 +190,7 @@ export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: n
 
 	if (numOverlappingEntries === 0) {
 		// No entry will be removed
-		return;
+		return false;
 	}
 
 	const iFirst = iBefore + 1;
@@ -227,65 +227,42 @@ export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: n
 			}
 		}
 	}
+	return true;
 }
 
 /**
- * Given a query range, partition the range map into multiple segments according to the following rules:
- *
- * 1. If a range entry overlaps with the query range, store the overlapping portion as a segment in the result.
- * 2. If there is an "empty" space between two consecutive range entries, store the range between the end
- * of the first entry and the start of the second entry as a new segment with an undefined value.
- *
- * For example, consider a range map:
- *
- * map = [[start: 1, length: 3, value: 'a'], [start: 6, length: 2, value: 'b']]
- *
- * When partitioning the range map within the query range [0, 7], the result will be:
- *
- * [[ start: 0, length: 1, value: undefined ], [ start: 1, length: 3, value: 'a' ],
- * [ start: 4, length: 2, value: undefined ], [ start: 6, length: 1, value: 'b' ]]
+ * Retrieve all range entries from the map that intersect with the specified range.
  */
-export function partitionAllRangesWithinMap<T>(
+export function getAllEntriesFromMap<T>(
 	map: RangeMap<T>,
 	start: number,
 	length: number,
-): RangeFullQueryResult<T>[] {
-	const result: RangeFullQueryResult<T>[] = [];
+): { value: T | undefined; start: number; length: number }[] {
+	const result = [];
 	let currentStart = start;
 
-	// iterate over the entire range
 	while (currentStart < start + length) {
-		// Get the first next entry given the current position
+		// const remainedLength = length - (currentStart - start);
 		const nextResult = getFirstEntryFromRangeMap(
 			map,
 			currentStart,
 			length - (currentStart - start),
 		);
 
-		if (!nextResult) {
+		if (nextResult) {
+			const nextStart = Math.max(nextResult.start, currentStart);
+			const nextLength = Math.min(
+				nextResult.length - (nextStart - nextResult.start),
+				length - (nextStart - start),
+			);
 			result.push({
-				value: undefined,
-				start: currentStart,
-				length: length - (currentStart - start),
+				value: nextResult.value,
+				start: nextStart,
+				length: nextLength,
 			});
-			break;
+			currentStart = nextStart + nextLength;
 		} else {
-			if (nextResult.start > currentStart) {
-				result.push({
-					value: undefined,
-					start: currentStart,
-					length: nextResult.start - currentStart,
-				});
-				currentStart = nextResult.start;
-			} else {
-				// push the current nextResult
-				result.push({
-					value: nextResult.value,
-					start: currentStart,
-					length: nextResult.length,
-				});
-				currentStart = nextResult.start + nextResult.length;
-			}
+			break;
 		}
 	}
 	return result;
@@ -326,10 +303,4 @@ export function mergeRangesWithinMap<T>(entries: RangeMap<T>): RangeMap<T> {
 	}
 
 	return result;
-}
-
-export interface RangeFullQueryResult<T> {
-	value: T | undefined;
-	start: number;
-	length: number;
 }

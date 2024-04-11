@@ -14,7 +14,6 @@ import {
 	brand,
 	deleteFromNestedMap,
 	deleteFromRangeMap,
-	partitionAllRangesWithinMap,
 	idAllocatorFromMaxId,
 	populateNestedMap,
 	setInNestedMap,
@@ -22,6 +21,8 @@ import {
 	tryGetFromNestedMap,
 	type RangeMap,
 	mergeRangesWithinMap,
+	getFirstEntryFromRangeMap,
+	getAllEntriesFromMap,
 } from "../../util/index.js";
 import { RevisionTagCodec } from "../rebase/index.js";
 import { FieldKey } from "../schema-stored/index.js";
@@ -94,6 +95,7 @@ export class DetachedFieldIndex {
 	 */
 	public purge() {
 		this.detachedNodeToField.clear();
+		this.detachedNodeRangeMap.clear();
 	}
 
 	public updateMajor(current: Major, updated: Major) {
@@ -168,7 +170,8 @@ export class DetachedFieldIndex {
 		if (this.detachedNodeRangeMap.has(nodeId.major)) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const rangeMap = this.detachedNodeRangeMap.get(nodeId.major)!;
-			deleteFromRangeMap(rangeMap, nodeId.minor, count);
+			const foundRange = deleteFromRangeMap(rangeMap, nodeId.minor, count);
+			assert(foundRange, "Unable to delete an unexisting range");
 		}
 	}
 
@@ -205,10 +208,21 @@ export class DetachedFieldIndex {
 		}
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const rangeMap = this.detachedNodeRangeMap.get(nodeId.major)!;
+		assert(
+			getFirstEntryFromRangeMap(rangeMap, nodeId.minor, count) === undefined,
+			"The detached node range already exists in the map",
+		);
 		setInRangeMap(rangeMap, nodeId.minor, count, root);
 	}
 
-	public partitionDetachedNodeRanges(
+	/**
+	 * Given a query range, find and group all detahced nodes within the range according to the following rules:
+	 *
+	 * 1. If a range entry overlaps with the query range, store the overlapping portion as a new range in the result.
+	 * 2. If there is an "empty" space between two consecutive range entries, store the range between the end
+	 * of the first entry and the start of the second entry as a new range with an undefined value.
+	 */
+	public getAllDetachedNodeRanges(
 		nodeId: Delta.DetachedNodeId,
 		count: number,
 	): { root: ForestRootId | undefined; start: number; length: number }[] {
@@ -216,9 +230,29 @@ export class DetachedFieldIndex {
 		if (!rangeMap) {
 			return [];
 		}
-		const results = partitionAllRangesWithinMap(rangeMap, nodeId.minor, count).map(
-			({ value, start, length }) => ({ root: value, start, length }),
-		);
+
+		const results = [];
+		let currentPos = nodeId.minor;
+		const validRanges = getAllEntriesFromMap(rangeMap, nodeId.minor, count);
+		for (const range of validRanges) {
+			if (currentPos < range.start) {
+				results.push({
+					root: undefined,
+					start: currentPos,
+					length: range.start - currentPos,
+				});
+			}
+			results.push({ root: range.value, start: range.start, length: range.length });
+			currentPos = range.start + range.length;
+		}
+
+		if (currentPos < nodeId.minor + count) {
+			results.push({
+				root: undefined,
+				start: currentPos,
+				length: nodeId.minor + count - currentPos,
+			});
+		}
 		return results;
 	}
 
