@@ -10,7 +10,7 @@ import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definit
 import { ConnectionState } from "@fluidframework/container-loader";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
-import { type ISharedMap, SharedMap } from "@fluidframework/map";
+import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,

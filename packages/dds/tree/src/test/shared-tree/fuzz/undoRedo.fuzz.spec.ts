@@ -44,9 +44,8 @@ import {
 	failureDirectory,
 	fuzzNode,
 	initialFuzzSchema,
-	isRevertibleSharedTreeView,
 	onCreate,
-	successDirectory,
+	successesDirectory,
 	validateAnchors,
 } from "./fuzzUtils.js";
 import { Operation } from "./operationTypes.js";
@@ -98,7 +97,7 @@ describe("Fuzz - undo/redo", () => {
 		clear: 1,
 		insert: 3,
 		remove: 1,
-		move: 1,
+		intraFieldMove: 1,
 	};
 
 	describe("In-order undo/redo matches the initial/final state", () => {
@@ -278,7 +277,7 @@ describe("Fuzz - undo/redo", () => {
 			},
 			emitter,
 			saveSuccesses: {
-				directory: successDirectory,
+				directory: successesDirectory,
 			},
 			saveFailures: {
 				directory: failureDirectory,
