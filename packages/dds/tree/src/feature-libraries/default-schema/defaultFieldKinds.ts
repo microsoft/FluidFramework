@@ -192,14 +192,14 @@ export const forbidden = new FieldKindWithEditor(
 
 export const fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration> = new Map([
 	[
-		0,
+		1,
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
-			[nodeKey.identifier, { kind: nodeKey, formatVersion: 0 }],
-			[required.identifier, { kind: required, formatVersion: 0 }],
-			[optional.identifier, { kind: optional, formatVersion: 0 }],
-			[sequence.identifier, { kind: sequence, formatVersion: 0 }],
-			[forbidden.identifier, { kind: forbidden, formatVersion: 0 }],
-			[identifier.identifier, { kind: identifier, formatVersion: 0 }],
+			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
+			[required.identifier, { kind: required, formatVersion: 1 }],
+			[optional.identifier, { kind: optional, formatVersion: 1 }],
+			[sequence.identifier, { kind: sequence, formatVersion: 1 }],
+			[forbidden.identifier, { kind: forbidden, formatVersion: 1 }],
+			[identifier.identifier, { kind: identifier, formatVersion: 1 }],
 		]),
 	],
 ]);

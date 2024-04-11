@@ -8,9 +8,9 @@ importers:
   .:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
-      '@fluid-tools/build-cli': ^0.35.0
+      '@fluid-tools/build-cli': ^0.36.0
       '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/build-tools': ^0.35.0
+      '@fluidframework/build-tools': ^0.36.0
       '@fluidframework/eslint-config-fluid': ^4.0.0
       '@fluidframework/protocol-definitions-previous': npm:@fluidframework/protocol-definitions@3.2.0
       '@microsoft/api-extractor': ^7.42.3
@@ -23,9 +23,9 @@ importers:
       typescript: ~5.1.6
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
-      '@fluid-tools/build-cli': 0.35.0
+      '@fluid-tools/build-cli': 0.36.0
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.35.0
+      '@fluidframework/build-tools': 0.36.0
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/protocol-definitions-previous': /@fluidframework/protocol-definitions/3.2.0
       '@microsoft/api-extractor': 7.42.3
@@ -835,14 +835,14 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: true
 
-  /@fluid-tools/build-cli/0.35.0:
-    resolution: {integrity: sha512-ZiF8H4YGfyb9StK0b5U9TKk21Iwq+gHwuv1OOVq1QIcnpiNrqsjNO1l7QHviHjw8Umo/RgY6JMADKG2bJLJ0QA==}
+  /@fluid-tools/build-cli/0.36.0:
+    resolution: {integrity: sha512-Ht4GninKl3ja698JsY71YRy/KpzEsBkazlUtvT6ChnDMMT/SCbXD+oWqJYJtOOM6soy3wGNcu8uXFKa6oODtlA==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.35.0
-      '@fluidframework/build-tools': 0.35.0
-      '@fluidframework/bundle-size-tools': 0.35.0
+      '@fluid-tools/version-tools': 0.36.0
+      '@fluidframework/build-tools': 0.36.0
+      '@fluidframework/bundle-size-tools': 0.36.0
       '@microsoft/api-extractor': 7.42.3
       '@oclif/core': 3.26.2
       '@oclif/plugin-autocomplete': 3.0.13
@@ -895,8 +895,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluid-tools/version-tools/0.35.0:
-    resolution: {integrity: sha512-oy0piEs8d0h8ilzHN9MaLd7Js64faHhxu9hUiIpI2SP/5aJKE37OgEzCEyNmKnUr4ezesoXdVRohhoTw/oe5wg==}
+  /@fluid-tools/version-tools/0.36.0:
+    resolution: {integrity: sha512-xkLEgDUwZtmwTX6lJA2GgNeR9RUInLguY5VRJH77wHQ0G+8qaYAipcRtm7bPVpQn3ctCm28USA95NllgSPCzFA==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
@@ -918,13 +918,13 @@ packages:
     hasBin: true
     dev: true
 
-  /@fluidframework/build-tools/0.35.0:
-    resolution: {integrity: sha512-1Bqh8bwp52PVo4fFpb6OKSm8lxsV2XiPVPGeXmpt/QXCkwabbI7Suv4+4m7AFlXlyAcaW+LOV0B4LCWgcKYP6w==}
+  /@fluidframework/build-tools/0.36.0:
+    resolution: {integrity: sha512-wAOnEC6kBUIGqofGQMx24BpoYhG31bcHfc992los+GR2f8HaCg5WDlp416le8A7iK/UruU8soQvxYXLEJUm3vw==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.35.0
-      '@fluidframework/bundle-size-tools': 0.35.0
+      '@fluid-tools/version-tools': 0.36.0
+      '@fluidframework/bundle-size-tools': 0.36.0
       '@manypkg/get-packages': 2.2.0
       '@octokit/core': 4.2.4
       '@rushstack/node-core-library': 3.61.0
@@ -944,7 +944,7 @@ packages:
       lodash.isequal: 4.5.0
       picomatch: 2.3.1
       rimraf: 4.4.1
-      semver: 7.5.4
+      semver: 7.6.0
       sort-package-json: 1.57.0
       ts-morph: 21.0.1
       type-fest: 2.19.0
@@ -960,8 +960,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/bundle-size-tools/0.35.0:
-    resolution: {integrity: sha512-yBhx9LRXMyDNy4DbtzfK5+GJ+rkWfLQcVlf5aEkVPpbZoFGSpwDmPzeSYuPKurdB2ug2rcG6kfHYh9WfBjpi+w==}
+  /@fluidframework/bundle-size-tools/0.36.0:
+    resolution: {integrity: sha512-nMSMfFZtSAd5+Khuhy3odO/IgVJfRJprqpCd/2V1lGja2WrcZ+gcuJ5KPEMjHl5pywpr+EcCl4SBEafQDrEwEg==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
