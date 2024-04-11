@@ -43,12 +43,15 @@ import {
 	MenuSection,
 	NoDevtoolsErrorBar,
 	OpLatencyView,
+	TelemetryConsentModal,
 	SettingsView,
 	TelemetryView,
 	Waiting,
 } from "./components/index.js";
 
 const loggingContext = "INLINE(DevtoolsView)";
+
+const telemetryConsentKey = "Fluid.Devtools.Telemetry.Consent";
 
 /**
  * Message sent to the webpage to query for the supported set of Devtools features.
@@ -174,6 +177,16 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 	const [selectedTheme, setSelectedTheme] = React.useState(getFluentUIThemeToUse());
 
 	const [isMessageDismissed, setIsMessageDismissed] = React.useState(false);
+	const [modalVisible, setModalVisible] = React.useState(false);
+
+	React.useEffect(() => {
+		const displayed = localStorage.getItem(telemetryConsentKey);
+		if (displayed === null || displayed !== "true") {
+			setModalVisible(true);
+			localStorage.setItem(telemetryConsentKey, "true");
+		}
+	}, []);
+
 	const queryTimeoutInMilliseconds = 30_000; // 30 seconds
 	const messageRelay = useMessageRelay();
 
@@ -269,10 +282,22 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 									retrySearch={(): void => retryQuery()}
 								/>
 							)}
+							{modalVisible && (
+								<TelemetryConsentModal
+									onClose={(): void => setModalVisible(false)}
+								/>
+							)}
 							<_DevtoolsView supportedFeatures={{}} />
 						</>
 					) : (
-						<_DevtoolsView supportedFeatures={supportedFeatures} />
+						<>
+							{modalVisible && (
+								<TelemetryConsentModal
+									onClose={(): void => setModalVisible(false)}
+								/>
+							)}
+							<_DevtoolsView supportedFeatures={supportedFeatures} />
+						</>
 					)}
 				</FluentProvider>
 			</ThemeContext.Provider>
