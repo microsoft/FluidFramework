@@ -65,16 +65,35 @@ export default class GenerateEntrypointsCommand extends BaseCommand<
 				"File name suffix including extension for emitting entrypoint declaration files.",
 			default: ".d.ts",
 		}),
+		node10Compat: Flags.boolean({
+			description: `Optional generation of Node10 resolution compatible entrypoints matching those in package "exports" aligned with "main".`,
+		}),
 		...BaseCommand.flags,
 	};
 
 	public async run(): Promise<void> {
-		const { mainEntrypoint, outFileSuffix, outFileAlpha, outFileBeta, outFilePublic } =
-			this.flags;
-
-		return generateEntrypoints(
+		const {
 			mainEntrypoint,
-			{ pathPrefix: await getOutPathPrefix(this.flags), pathSuffix: outFileSuffix },
+			outFileSuffix,
+			outFileAlpha,
+			outFileBeta,
+			outFilePublic,
+			node10Compat,
+		} = this.flags;
+
+		let pkgJsonPromise: Promise<PackageJson> | undefined;
+		// eslint-disable-next-line @typescript-eslint/promise-function-async
+		function getPackageJsonPromise(): Promise<PackageJson> {
+			pkgJsonPromise = pkgJsonPromise ?? readPackageJson();
+			return pkgJsonPromise;
+		}
+
+		await generateEntrypoints(
+			mainEntrypoint,
+			{
+				pathPrefix: await getOutPathPrefix(this.flags, getPackageJsonPromise),
+				pathSuffix: outFileSuffix,
+			},
 			(level: Exclude<ApiLevel, typeof ApiLevel.internal>): string => {
 				switch (level) {
 					case ApiLevel.alpha: {
@@ -93,13 +112,24 @@ export default class GenerateEntrypointsCommand extends BaseCommand<
 			},
 			this.logger,
 		);
+
+		// Node10 Compat must follow generateEntryPoints as files generated then
+		// may be checked during Node10 compat generation.
+		if (node10Compat) {
+			await generateNode10Entrypoints(getPackageJsonPromise(), this.logger);
+		}
 	}
 }
 
-async function getOutPathPrefix({
-	outDir,
-	outFilePrefix,
-}: { outDir: string; outFilePrefix: string }): Promise<string> {
+async function readPackageJson(): Promise<PackageJson> {
+	const packageJson = await fs.readFile("./package.json", { encoding: "utf8" });
+	return JSON.parse(packageJson) as PackageJson;
+}
+
+async function getOutPathPrefix(
+	{ outDir, outFilePrefix }: { outDir: string; outFilePrefix: string },
+	getPackageJsonPromise: () => Promise<PackageJson>,
+): Promise<string> {
 	if (!outFilePrefix) {
 		// If no other prefix, ensure a trailing path separator.
 		// The join with '.' will effectively trim a trailing / or \ from outDir.
@@ -109,14 +139,19 @@ async function getOutPathPrefix({
 	return path.join(
 		outDir,
 		outFilePrefix.includes(unscopedPackageNameString)
-			? outFilePrefix.replace(unscopedPackageNameString, await getLocalUnscopedPackageName())
+			? outFilePrefix.replace(
+					unscopedPackageNameString,
+					await getLocalUnscopedPackageName(getPackageJsonPromise),
+				)
 			: outFilePrefix,
 	);
 }
 
-async function getLocalUnscopedPackageName(): Promise<string> {
-	const packageJson = await fs.readFile("./package.json", { encoding: "utf8" });
-	const packageName = (JSON.parse(packageJson) as PackageJson).name;
+async function getLocalUnscopedPackageName(
+	getPackageJsonPromise: () => Promise<PackageJson>,
+): Promise<string> {
+	const packageJson = await getPackageJsonPromise();
+	const packageName = packageJson.name;
 	if (typeof packageName !== "string") {
 		// eslint-disable-next-line unicorn/prefer-type-error
 		throw new Error(`unable to read package name`);
@@ -153,8 +188,8 @@ async function generateEntrypoints(
 	log: CommandLogger,
 ): Promise<void> {
 	/**
-	 * List of source file save promises. Used to collect modified source file save promises so we can await them all at
-	 * once.
+	 * List of out file save promises. Used to collect generated file save
+	 * promises so we can await them all at once.
 	 */
 	const fileSavePromises: Promise<void>[] = [];
 
@@ -230,9 +265,213 @@ async function generateEntrypoints(
 					.replace(/\.(?:d\.)?([cm]?)ts$/, ".$1js")}`,
 				namedExports,
 			});
+		} else {
+			// Without any export this module is invalid.
+			// This is somewhat useful while standing up FF to recognize invalid/unused
+			// cases that should not be exported. In the future for deprecation support
+			// this could generate an empty export block when package.json lists this
+			// path.
+			// It is also good to generate a file versus not to avoid leaving stale
+			// files around. If avoiding generation in the future, then file existence
+			// should be checked and the file removed.
 		}
 
 		fileSavePromises.push(sourceFile.save());
+	}
+
+	await Promise.all(fileSavePromises);
+}
+
+/**
+ * Only the value types of exports that are records, with addition of optional "types" property that
+ * type-fest omits.
+ */
+type ExportsRecordValue = Exclude<Extract<PackageJson["exports"], object>, unknown[]> & {
+	types?: string;
+};
+
+function findTypesPathForReferencedExportPath(
+	resolvedPath: string,
+	exports: ExportsRecordValue,
+): string | undefined {
+	for (const value of Object.values(exports)) {
+		if (typeof value === "string") {
+			const resolvedValuePath = path.resolve(value);
+			if (resolvedValuePath === resolvedPath) {
+				// matching path has been found - lookup sibling "types" value
+				return exports.types;
+			}
+		} else if (value !== null) {
+			if (Array.isArray(value)) {
+				continue;
+			}
+			const deepFind = findTypesPathForReferencedExportPath(resolvedPath, value);
+			if (deepFind !== undefined) {
+				return deepFind;
+			}
+		}
+	}
+
+	return undefined;
+}
+
+function findTypesPathUnder(
+	resolvedDirectoryPath: string,
+	exports: ExportsRecordValue,
+): string | undefined {
+	for (const [entry, value] of Object.entries(exports)) {
+		if (typeof value === "string") {
+			if (entry === "types") {
+				const resolvedValuePath = path.resolve(value);
+				if (resolvedValuePath.startsWith(resolvedDirectoryPath)) {
+					return value;
+				}
+			}
+		} else if (value !== null) {
+			if (Array.isArray(value)) {
+				continue;
+			}
+			const deepFind = findTypesPathUnder(resolvedDirectoryPath, value);
+			if (deepFind !== undefined) {
+				return deepFind;
+			}
+		}
+	}
+
+	return undefined;
+}
+
+/**
+ * Creates and saves file with given content with expectation that it
+ * references specified file and that file is valid module.
+ *
+ * @param referenceFile - file that must ultimately exist as valid module
+ * @param outFile - path of file to create
+ * @param content - text content for the outFile
+ * @param log - logger
+ * @returns - Promise of completed file save
+ */
+async function createRedirectFile(
+	referenceFile: string,
+	outFile: string,
+	content: string,
+	log: CommandLogger,
+): Promise<void> {
+	// Check that referenced file might be valid - it must contain the string "export".
+	const importContent = await fs.readFile(referenceFile, { encoding: "utf8" });
+	if (!importContent.includes("export")) {
+		// It is not valid, therefore outFile should not exist.
+		await fs.rm(outFile, { force: true }).finally(() => {
+			throw new Error(
+				`${referenceFile} does not appear to be a valid module (does not contain "export")`,
+			);
+		});
+	}
+
+	log.info(`\tGenerating ${outFile}`);
+	return fs.writeFile(outFile, content, "utf8");
+}
+
+async function generateNode10Entrypoints(
+	pkgJsonPromise: Promise<PackageJson>,
+	log: CommandLogger,
+): Promise<void> {
+	const pkgJson = await pkgJsonPromise;
+	const mainEntrypoint = pkgJson.main;
+	const typesEntrypoint = pkgJson.types;
+	if (typeof mainEntrypoint !== "string") {
+		// eslint-disable-next-line unicorn/prefer-type-error
+		throw new Error('no valid "main" string within package properties');
+	}
+	if (typeof typesEntrypoint !== "string") {
+		// eslint-disable-next-line unicorn/prefer-type-error
+		throw new Error('no valid "types" string within package properties');
+	}
+
+	if (!mainEntrypoint && !typesEntrypoint) {
+		// This is valid case for a package that does not yet have a public API.
+		// To generate proper compat, some reference path is needed. That could
+		// be the main entrypoint like ./lib/index.js or type ./lib.index.d.ts.
+		// Something needs to establish that support ins't being requested for
+		// another path like ./dist/index.js.
+		throw new Error(
+			'Node10 compatible entrypoints will not be generated when "main" and "types" are empty',
+		);
+	}
+
+	const { exports } = pkgJson;
+	if (typeof exports !== "object" || exports === null) {
+		throw new Error('no valid "exports" within package properties');
+	}
+
+	if (Array.isArray(exports)) {
+		// eslint-disable-next-line unicorn/prefer-type-error
+		throw new Error(`Node10 compatible entrypoints cannot be generated for "exports" array`);
+	}
+
+	/**
+	 * List of out file save promises. Used to collect generated file save
+	 * promises so we can await them all at once.
+	 */
+	const fileSavePromises: Promise<void>[] = [];
+
+	// Use a resolved path because some entries my use ./ prefix and others not.
+	const mainEntrypointPath = mainEntrypoint ? path.resolve(mainEntrypoint) : "";
+	const typesEntrypointDirectoryPath = typesEntrypoint
+		? path.dirname(path.resolve(typesEntrypoint))
+		: "";
+
+	// Iterate through exports looking for properties with values matching main entrypoint.
+	for (const [exportPath, exportValue] of Object.entries(exports)) {
+		if (exportPath === ".") {
+			continue;
+		}
+		if (typeof exportValue !== "object") {
+			log.verbose(
+				`Node10 compat: ignoring non-object export path "${exportPath}": "${exportValue}"`,
+			);
+			continue;
+		}
+		if (exportValue === null) {
+			log.verbose(`Node10 compat: ignoring null export path "${exportPath}"`);
+			continue;
+		}
+		if (Array.isArray(exportValue)) {
+			log.verbose(`Node10 compat: ignoring array export path "${exportPath}"`);
+			continue;
+		}
+
+		const outFile = `${exportPath}.d.ts`;
+		if (mainEntrypointPath) {
+			const findResult = findTypesPathForReferencedExportPath(mainEntrypointPath, exportValue);
+			if (findResult !== undefined) {
+				const importFrom = findResult.replace(/\.d\.([cm]?)ts/, ".$1js");
+				fileSavePromises.push(
+					createRedirectFile(
+						findResult,
+						outFile,
+						`${generatedHeader}\nexport * from "${importFrom}";\n`,
+						log,
+					),
+				);
+			}
+		} else {
+			const findResult = findTypesPathUnder(typesEntrypointDirectoryPath, exportValue);
+			if (findResult !== undefined) {
+				fileSavePromises.push(
+					createRedirectFile(
+						findResult,
+						outFile,
+						`${generatedHeader}\nexport type * from "${findResult}";\n`,
+						log,
+					),
+				);
+			}
+		}
+	}
+
+	if (fileSavePromises.length === 0) {
+		log.info(`\tNo Node10 compat files generated.`);
 	}
 
 	await Promise.all(fileSavePromises);
