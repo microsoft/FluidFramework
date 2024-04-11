@@ -60,6 +60,9 @@ export namespace ConnectionStateType {
 export type ConnectionStateType = ConnectionStateType.Disconnected | ConnectionStateType.EstablishingConnection | ConnectionStateType.CatchingUp | ConnectionStateType.Connected;
 
 // @public
+export type Constraint = NodeExists;
+
+// @public
 export type ContainerAttachProps<T = unknown> = T;
 
 // @alpha
@@ -310,6 +313,14 @@ export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema
 export type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchema<string, NodeKind, unknown, infer TBuild> ? TBuild : never;
 
 // @public
+export interface NodeExists {
+    // (undocumented)
+    node: TreeNode;
+    // (undocumented)
+    type: "nodeExists";
+}
+
+// @public
 export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<string, NodeKind, infer TNode> ? TNode : never;
 
 // @public
@@ -404,7 +415,9 @@ export const Tree: TreeApi;
 export interface TreeApi extends TreeNodeApi {
     contains(node: TreeNode, other: TreeNode): boolean;
     runTransaction<TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void | "rollback"): void;
+    runTransaction<TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void | "rollback", preconditions?: Constraint[]): void;
     runTransaction<TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void | "rollback"): void;
+    runTransaction<TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void | "rollback", preconditions?: Constraint[]): void;
 }
 
 // @public
