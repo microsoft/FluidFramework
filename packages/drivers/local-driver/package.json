@@ -43,11 +43,11 @@
 			}
 		}
 	},
-	"main": "dist/index.js",
+	"main": "lib/index.js",
 	"browser": {
 		"moniker": "@fluidframework/server-services-client/dist/generateNames.js"
 	},
-	"types": "dist/index.d.ts",
+	"types": "lib/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "flub generate entrypoints --outFileAlpha legacy --outDir ./dist",

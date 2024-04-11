@@ -24,11 +24,11 @@
 			}
 		}
 	},
-	"main": "dist/index.js",
+	"main": "lib/index.js",
 	"browser": {
 		"moniker": "@fluidframework/server-services-client/dist/generateNames.js"
 	},
-	"types": "dist/index.d.ts",
+	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
