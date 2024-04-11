@@ -37,21 +37,22 @@ export interface MoveEffect<T> {
 	rebasedChanges?: T;
 
 	/**
-	 * Used when composing a move (or chain of moves) from A to B with another move (or chain of moves) from B to C.
-	 * For the move-out at A, this field will be set to the ID of the move-in at C, and vice versa.
+	 * The ID of the other outer endpoint.
+	 * Used when this is the outer endpoint in a move chain which is being composed with another move chain.
 	 */
 	endpoint?: ChangeAtomId;
 
 	/**
-	 *
+	 * The ID of the truncated endpoint.
+	 * Used when this mark is the outer endpoint of a chain being composed with a redundant move chain.
 	 */
-	endpoint2?: ChangeAtomId;
+	truncatedEndpoint?: ChangeAtomId;
 
 	/**
-	 * Used when composing a move (or chain of moves) from A to B with another chain of moves from B to A to C.
-	 * The first move out at A will have endpointReplacment pointing to the second move out at A.
+	 * The ID of the truncated endpoint.
+	 * Used when this mark is the inner endpoint of a redundant move chain.
 	 */
-	endpointReplacement?: ChangeAtomId;
+	truncatedEndpointForInner?: ChangeAtomId;
 }
 
 interface MoveEffectWithBasis<T> extends MoveEffect<T> {
@@ -141,12 +142,15 @@ function adjustMoveEffectBasis<T>(effect: MoveEffectWithBasis<T>, newBasis: Move
 		adjusted.endpoint = adjustChangeAtomId(effect.endpoint, basisShift);
 	}
 
-	if (effect.endpoint2 !== undefined) {
-		adjusted.endpoint2 = adjustChangeAtomId(effect.endpoint2, basisShift);
+	if (effect.truncatedEndpoint !== undefined) {
+		adjusted.truncatedEndpoint = adjustChangeAtomId(effect.truncatedEndpoint, basisShift);
 	}
 
-	if (effect.endpointReplacement !== undefined) {
-		adjusted.endpointReplacement = adjustChangeAtomId(effect.endpointReplacement, basisShift);
+	if (effect.truncatedEndpointForInner !== undefined) {
+		adjusted.truncatedEndpointForInner = adjustChangeAtomId(
+			effect.truncatedEndpointForInner,
+			basisShift,
+		);
 	}
 
 	if (effect.movedEffect !== undefined) {
