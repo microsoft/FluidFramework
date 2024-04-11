@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { stringToBuffer } from "@fluid-internal/client-utils";
+import { EventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	IGetPendingLocalStateProps,
 	IRuntime,
@@ -58,6 +58,8 @@ const pendingLocalState: IPendingContainerState = {
 	savedOps: [],
 	url: "fluid",
 };
+
+const eventEmitter = new EventEmitter();
 
 class MockStorageAdapter implements ISerializedStateManagerDocumentStorageService {
 	public readonly blobs = new Map<string, ArrayBufferLike>();
@@ -167,6 +169,7 @@ describe("serializedStateManager", () => {
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			false,
+			eventEmitter,
 		);
 
 		await assert.rejects(
@@ -191,6 +194,7 @@ describe("serializedStateManager", () => {
 			logger.toTelemetryLogger(),
 			failProxy(), // no calls to storage expected
 			true,
+			eventEmitter,
 		);
 		// equivalent to attach
 		serializedStateManager.setInitialSnapshot({
@@ -216,6 +220,7 @@ describe("serializedStateManager", () => {
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
+			eventEmitter,
 		);
 		const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(
 			undefined,
@@ -239,6 +244,7 @@ describe("serializedStateManager", () => {
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
+			eventEmitter,
 		);
 		const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(
 			undefined,
@@ -276,6 +282,7 @@ describe("serializedStateManager", () => {
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
+			eventEmitter,
 			newSnapshotFetched,
 		);
 		let seq = 1;
@@ -327,6 +334,7 @@ describe("serializedStateManager", () => {
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
+			eventEmitter,
 			newSnapshotFetched,
 		);
 
@@ -374,6 +382,7 @@ describe("serializedStateManager", () => {
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
+			eventEmitter,
 			newSnapshotFetched,
 		);
 
@@ -431,6 +440,7 @@ describe("serializedStateManager", () => {
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
+			eventEmitter,
 			newSnapshotFetched,
 		);
 		const snapshotSequenceNumber = 11;
@@ -464,6 +474,7 @@ describe("serializedStateManager", () => {
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
+			eventEmitter,
 			newSnapshotFetched,
 		);
 		let seq = 1;
@@ -526,6 +537,7 @@ describe("serializedStateManager", () => {
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
+			eventEmitter,
 			newSnapshotFetched,
 		);
 		let seq = 1;
@@ -576,6 +588,7 @@ describe("serializedStateManager", () => {
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
+			eventEmitter,
 			newSnapshotFetched,
 		);
 		let seq = 1;
@@ -642,6 +655,7 @@ describe("serializedStateManager", () => {
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
+			eventEmitter,
 			newSnapshotFetched,
 		);
 		const lastProcessedOpSequenceNumber = 20;
@@ -681,6 +695,7 @@ describe("serializedStateManager", () => {
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
+			eventEmitter,
 			newSnapshotFetched,
 		);
 
@@ -702,7 +717,7 @@ describe("serializedStateManager", () => {
 		assert.strictEqual(parsed.pendingRuntimeState.sessionExpiryTimerStarted, undefined);
 	});
 
-	it("session expiry time is passsed when snapshot is refreshed", async () => {
+	it("no session expiry time when snapshot is refreshed but no saved event", async () => {
 		const pending: IPendingContainerState = {
 			...pendingLocalState,
 			baseSnapshot: { ...snapshot, id: "fromPending" },
@@ -717,6 +732,7 @@ describe("serializedStateManager", () => {
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
+			eventEmitter,
 			newSnapshotFetched,
 		);
 
@@ -730,6 +746,53 @@ describe("serializedStateManager", () => {
 
 		await serializedStateManager.fetchSnapshot(undefined, false);
 		await getLatestSnapshotInfoP.promise;
+
+		const mockRuntime: ISerializedStateManagerRuntime = {
+			getPendingLocalState: (props) => {
+				return props;
+			},
+		};
+		const state = await serializedStateManager.getPendingLocalStateCore(
+			{ notifyImminentClosure: false },
+			"clientId",
+			mockRuntime,
+			resolvedUrl,
+		);
+		const parsed = JSON.parse(state);
+		assert.strictEqual(parsed.pendingRuntimeState.sessionExpiryTimerStarted, undefined);
+	});
+
+	it("session expiry time is updated", async () => {
+		const pending: IPendingContainerState = {
+			...pendingLocalState,
+			baseSnapshot: { ...snapshot, id: "fromPending" },
+		};
+		const storageAdapter = new MockStorageAdapter();
+		const getLatestSnapshotInfoP = new Deferred<void>();
+		const newSnapshotFetched = () => {
+			getLatestSnapshotInfoP.resolve();
+		};
+		const serializedStateManager = new SerializedStateManager(
+			pending,
+			logger.toTelemetryLogger(),
+			storageAdapter,
+			true,
+			eventEmitter,
+			newSnapshotFetched,
+		);
+
+		const lastProcessedOpSequenceNumber = 10;
+		let seq = 1;
+		while (seq <= lastProcessedOpSequenceNumber) {
+			serializedStateManager.addProcessedOp(generateSavedOp(seq++));
+		}
+		const snapshotSequenceNumber = 5;
+		storageAdapter.uploadSummary(snapshotSequenceNumber);
+
+		await serializedStateManager.fetchSnapshot(undefined, false);
+		await getLatestSnapshotInfoP.promise;
+
+		eventEmitter.emit("saved");
 
 		const mockRuntime: ISerializedStateManagerRuntime = {
 			getPendingLocalState: (props) => {

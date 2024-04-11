@@ -933,6 +933,7 @@ export class Container
 			this.subLogger,
 			this.storageAdapter,
 			offlineLoadEnabled,
+			this,
 		);
 
 		const isDomAvailable =

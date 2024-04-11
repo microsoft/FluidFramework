@@ -28,6 +28,7 @@ import {
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
+import type { EventEmitter } from "@fluid-internal/client-utils";
 import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter.js";
 import { getDocumentAttributes } from "./utils.js";
 
@@ -73,7 +74,6 @@ export interface IPendingDetachedContainerState extends SnapshotWithBlobs {
 
 export interface ISnapshotInfo extends SnapshotWithBlobs {
 	snapshotSequenceNumber: number;
-	snapshotFetchedTime?: number;
 }
 
 export class SerializedStateManager {
@@ -82,6 +82,8 @@ export class SerializedStateManager {
 	private readonly mc: MonitoringContext;
 	private latestSnapshot: ISnapshotInfo | undefined;
 	private refreshSnapshot: Promise<void> | undefined;
+	private snapshotFetchedTime: number | undefined;
+	private updateSessionExpiryTime: boolean = false;
 
 	constructor(
 		private readonly pendingLocalState: IPendingContainerState | undefined,
@@ -91,12 +93,20 @@ export class SerializedStateManager {
 			"readBlob" | "getSnapshotTree" | "getSnapshot" | "getVersions"
 		>,
 		private readonly _offlineLoadEnabled: boolean,
+		private readonly containerEvent: EventEmitter,
 		private readonly newSnapshotFetched?: () => void,
 	) {
 		this.mc = createChildMonitoringContext({
 			logger: subLogger,
 			namespace: "serializedStateManager",
 		});
+		this.containerEvent.on("saved", this.handleSavedEvent.bind(this));
+	}
+
+	private handleSavedEvent() {
+		if (this.snapshotFetchedTime !== undefined) {
+			this.updateSessionExpiryTime = true;
+		}
 	}
 
 	public get offlineLoadEnabled(): boolean {
@@ -149,6 +159,7 @@ export class SerializedStateManager {
 					this.storageAdapter,
 					supportGetSnapshotApi,
 				);
+				this.snapshotFetchedTime = Date.now();
 				this.newSnapshotFetched?.();
 				this.updateSnapshotAndProcessedOpsMaybe();
 			})();
@@ -246,7 +257,9 @@ export class SerializedStateManager {
 				assert(this.snapshot !== undefined, 0x8e5 /* no base data */);
 				const pendingRuntimeState = await runtime.getPendingLocalState({
 					...props,
-					sessionExpiryTimerStarted: this.snapshot.snapshotFetchedTime,
+					sessionExpiryTimerStarted: this.updateSessionExpiryTime
+						? this.snapshotFetchedTime
+						: undefined,
 				});
 				const pendingState: IPendingContainerState = {
 					attached: true,
@@ -255,7 +268,7 @@ export class SerializedStateManager {
 					snapshotBlobs: this.snapshot.snapshotBlobs,
 					savedOps: this.processedOps,
 					url: resolvedUrl.url,
-					// no need to save this if there is no pending runtime state
+					// no need to save this if there is no pending runtime state ops
 					clientId:
 						(pendingRuntimeState as any).pending !== undefined ||
 						(pendingRuntimeState as any).pendingAttachmentBlobs !== undefined
@@ -295,14 +308,13 @@ export async function getLatestSnapshotInfo(
 				supportGetSnapshotApi,
 				undefined,
 			);
-			const snapshotFetchedTime = Date.now();
 			const snapshotBlobs = await getBlobContentsFromTree(baseSnapshot, storageAdapter);
 			const attributes: IDocumentAttributes = await getDocumentAttributes(
 				storageAdapter,
 				baseSnapshot,
 			);
 			const snapshotSequenceNumber = attributes.sequenceNumber;
-			return { baseSnapshot, snapshotBlobs, snapshotSequenceNumber, snapshotFetchedTime };
+			return { baseSnapshot, snapshotBlobs, snapshotSequenceNumber };
 		},
 	).catch(() => undefined);
 }
