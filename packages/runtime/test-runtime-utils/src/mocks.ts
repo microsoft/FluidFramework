@@ -764,10 +764,6 @@ export class MockFluidDataStoreRuntime
 		return deltaConnection;
 	}
 
-	public ensureNoDataModelChanges<T>(callback: () => T): T {
-		return callback();
-	}
-
 	public get absolutePath() {
 		return `/${this.id}`;
 	}

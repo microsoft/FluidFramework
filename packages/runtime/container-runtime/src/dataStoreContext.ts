@@ -219,10 +219,6 @@ export abstract class FluidDataStoreContext
 		return this._containerRuntime;
 	}
 
-	public ensureNoDataModelChanges<T>(callback: () => T): T {
-		return this.parentContext.ensureNoDataModelChanges(callback);
-	}
-
 	public get isLoaded(): boolean {
 		return this.loaded;
 	}

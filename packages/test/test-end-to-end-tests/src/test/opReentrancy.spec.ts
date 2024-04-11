@@ -89,50 +89,6 @@ describeCompat(
 			await provider.ensureSynchronized();
 		};
 
-		itExpects(
-			"Should close the container when submitting an op while processing a batch",
-			[
-				{
-					eventName: "fluid:telemetry:Container:ContainerClose",
-					error: "Op was submitted from within a `ensureNoDataModelChanges` callback",
-				},
-			],
-			async function () {
-				if (provider.driver.type === "t9s" || provider.driver.type === "tinylicious") {
-					// This test is flaky on Tinylicious. ADO:5010
-					this.skip();
-				}
-
-				await setupContainers({
-					...testContainerConfig,
-					runtimeOptions: {
-						enableOpReentryCheck: true,
-					},
-				});
-
-				sharedMap1.on("valueChanged", (changed) => {
-					if (changed.key !== "key2") {
-						sharedMap1.set("key2", `${sharedMap1.get("key1")} updated`);
-					}
-				});
-
-				assert.throws(() => {
-					sharedMap1.set("key1", "1");
-				});
-
-				sharedMap2.set("key2", "2");
-				await provider.ensureSynchronized();
-
-				// The offending container is closed
-				assert.ok(container1.closed);
-
-				// The other container is fine
-				assert.equal(sharedMap2.get("key1"), undefined);
-				assert.equal(sharedMap2.get("key2"), "2");
-				assert.ok(!mapsAreEqual(sharedMap1, sharedMap2));
-			},
-		);
-
 		[false, true].forEach((enableGroupedBatching) => {
 			it(`Eventual consistency with op reentry - ${
 				enableGroupedBatching ? "Grouped" : "Regular"
@@ -364,7 +320,6 @@ describeCompat(
 							enableOpReentryCheck: true,
 						},
 					},
-					featureGates: { "Fluid.ContainerRuntime.DisableOpReentryCheck": true },
 					name: "Enabled by options, disabled by feature gate",
 				},
 			].forEach((testConfig) => {

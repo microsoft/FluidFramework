@@ -170,9 +170,7 @@ describeCompat(
 
 				test.initial();
 				containerRuntime.orderSequentially(() => {
-					containerRuntime.ensureNoDataModelChanges(() => {
-						test.reentrant();
-					});
+					test.reentrant();
 				});
 
 				await provider.ensureSynchronized();
