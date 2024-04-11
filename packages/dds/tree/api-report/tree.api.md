@@ -1707,6 +1707,7 @@ export interface SharedTreeFormatOptions {
 // @internal
 export const SharedTreeFormatVersion: {
     readonly v1: 1;
+    readonly v2: 2;
 };
 
 // @internal

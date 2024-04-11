@@ -199,7 +199,7 @@ describe("message codec", () => {
 				revision,
 				originatorId,
 				changeset: {},
-				version: 2,
+				version: 3,
 			} satisfies Message);
 			assert.throws(
 				() => codec.decode(JSON.parse(encoded), {}),
