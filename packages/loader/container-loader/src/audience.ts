@@ -4,7 +4,11 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IAudienceEvents, IAudienceOwner } from "@fluidframework/container-definitions/internal";
+import {
+	IAudienceEvents,
+	IAudienceOwner,
+	ISelf,
+} from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { IClient } from "@fluidframework/protocol-definitions";
 
@@ -21,28 +25,27 @@ export class Audience extends TypedEventEmitter<IAudienceEvents> implements IAud
 		super.setMaxListeners(0);
 	}
 
-	public self() {
-		return {
-			clientId: this._currentClientId,
-			client:
-				this._currentClientId === undefined
-					? undefined
-					: this.getMember(this._currentClientId),
-		};
+	public getSelf(): ISelf | undefined {
+		return this._currentClientId === undefined
+			? undefined
+			: {
+					clientId: this._currentClientId,
+					client: this.getMember(this._currentClientId),
+			  };
 	}
 
-	public setCurrentClientId(clientId: string | undefined): void {
+	public setCurrentClientId(clientId: string): void {
 		if (this._currentClientId !== clientId) {
-			assert(
-				clientId !== undefined,
-				"undefined could be only initial value, and once it is changed, it is never undefined",
-			);
 			const oldId = this._currentClientId;
 			this._currentClientId = clientId;
 			// this.getMember(clientId) could resolve to undefined in these two cases:
 			// 1) Feature gates controlling ConnectionStateHandler() behavior are off
 			// 2) we are loading from stashed state and audience is empty, but we remember and set prior clientId
-			this.emit("selfChanged", oldId, clientId);
+			this.emit(
+				"selfChanged",
+				oldId === undefined ? undefined : ({ clientId: oldId } satisfies ISelf),
+				{ clientId, client: this.getMember(clientId) } satisfies ISelf,
+			);
 		}
 	}
 

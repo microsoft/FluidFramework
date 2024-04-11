@@ -75,21 +75,21 @@ export interface ContainerWarning extends IErrorBase_2 {
 export interface IAudience extends IEventProvider<IAudienceEvents> {
     getMember(clientId: string): IClient | undefined;
     getMembers(): Map<string, IClient>;
-    self: () => ISelf;
+    getSelf: () => ISelf | undefined;
 }
 
 // @public (undocumented)
 export interface IAudienceEvents extends IEvent {
     // (undocumented)
     (event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): void;
-    (event: "selfChanged", listener: (oldClientId: string | undefined, clientId: string) => void): void;
+    (event: "selfChanged", listener: (oldValue: ISelf | undefined, newValue: ISelf) => void): void;
 }
 
 // @internal
 export interface IAudienceOwner extends IAudience {
     addMember(clientId: string, details: IClient): void;
     removeMember(clientId: string): boolean;
-    setCurrentClientId(clientId: string | undefined): void;
+    setCurrentClientId(clientId: string): void;
 }
 
 // @alpha
@@ -463,8 +463,8 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 
 // @public
 export interface ISelf {
-    client: IClient | undefined;
-    clientId: string | undefined;
+    client?: IClient;
+    clientId: string;
 }
 
 // @alpha

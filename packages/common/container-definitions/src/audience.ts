@@ -23,9 +23,9 @@ export interface IAudienceOwner extends IAudience {
 
 	/**
 	 * Notifies Audience that current clientId has changed.
-	 * See {@link IAudience.self} and {@link IAudienceEvents}'s "selfChanged" event for more details.
+	 * See {@link IAudience.getSelf} and {@link IAudienceEvents}'s "selfChanged" event for more details.
 	 */
-	setCurrentClientId(clientId: string | undefined): void;
+	setCurrentClientId(clientId: string): void;
 }
 
 /**
@@ -38,26 +38,26 @@ export interface IAudienceEvents extends IEvent {
 	): void;
 	/**
 	 * Notifies that client established new connection and caught-up on ops.
-	 * Values returned by {@link IAudience.self} represent newly established connection.
-	 * and {@link IAudienceEvents}'s "selfChanged" event for more details.
+	 * @param oldValue - represents old connection. Please note that oldValue.client in almost all cases will be undefined,
+	 * due to specifics how Audience refreshes on reconnect. In the future we could improve it and always provide client information.
+	 * @param newValue - represents newly established connection. While {@link IAudience.getSelf} is experimental, it's note guaranteed that
+	 * newValue.client is present. Same is true if you are consuming audience from container runtime layer and running against old version of loader.
 	 */
-	(
-		event: "selfChanged",
-		listener: (oldClientId: string | undefined, clientId: string) => void,
-	): void;
+	(event: "selfChanged", listener: (oldValue: ISelf | undefined, newValue: ISelf) => void): void;
 }
 
 /**
- * Return type of {@link IAudience.self}. Please see remarks for {@link IAudience.self} to learn more details on promises.
+ * Return type of {@link IAudience.getSelf}. Please see remarks for {@link IAudience.getSelf} to learn more details on promises.
  * @public
  */
 export interface ISelf {
 	/**
 	 * clientId of current or previous connection (if client is in disconnected or reconnecting / catching up state)
+	 * If client never connected to ordering service, then {@link IAudience.getSelf} will return undefined.
 	 * undefined if this client has never connected to the ordering service.
 	 * It changes only when client has reconnected, caught up with latest ops and certain other criteria are met.
 	 */
-	clientId: string | undefined;
+	clientId: string;
 
 	/**
 	 * Information about current user, supplied by ordering service when client connected to it
@@ -69,7 +69,7 @@ export interface ISelf {
 	 * 2) Container is in the process of establishing new connection. Information about old connection is already resent
 	 * (old clientId is no longer in list of members), but clientId has not yet changed to a new value.
 	 */
-	client: IClient | undefined;
+	client?: IClient;
 }
 
 /**
@@ -109,6 +109,8 @@ export interface IAudience extends IEventProvider<IAudienceEvents> {
 
 	/**
 	 * Returns information about client's connection. Please see {@link ISelf} member descriptions for more details.
+	 * undefined if this client has never connected to the ordering service.
+	 * Please see {@link ISelf.clientId} for more details on when values returned by this function change over time.
 	 *
 	 * @experimental
 	 *
@@ -121,7 +123,7 @@ export interface IAudience extends IEventProvider<IAudienceEvents> {
 	 * - An old client's information is removed from members' list. getMember(self.clientId) will return undefined.
 	 * 2. Catch-up phase. Client catches up on latest ops and becomes current.
 	 * 3. "connect" phase - the following happens synchronously:
-	 * - self() information changes to reflect new connection
+	 * - getSelf() information changes to reflect new connection
 	 * - "selfChanged" event on this object fires
 	 * - Various API surfaces may expose "connected" event. This event fires at the same time as self changes. That said, "connected" event will not fire at ContainerRuntime layer if container is read-only.
 	 *
@@ -136,5 +138,5 @@ export interface IAudience extends IEventProvider<IAudienceEvents> {
 	 * 1. Such clientId is not present in Audience
 	 * 2. Client is not fully caught up
 	 */
-	self: () => ISelf;
+	getSelf: () => ISelf | undefined;
 }

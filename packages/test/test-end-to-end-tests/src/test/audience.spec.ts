@@ -218,7 +218,7 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 		);
 	});
 
-	it("self() & 'selfChanged' event", async function () {
+	it("getSelf() & 'selfChanged' event", async function () {
 		assert(apis.containerRuntime !== undefined);
 		if (apis.containerRuntime.version !== pkgVersion) {
 			// Only verify latest version of runtime - this functionality did not exist prior to RC3.
@@ -234,19 +234,26 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 		const audience = entry._context.containerRuntime.getAudience();
 
 		container.disconnect();
-		const oldId = audience.self().clientId;
+		const oldId = audience.getSelf()?.clientId;
 		assert(oldId !== undefined);
 		assert(oldId === container.clientId);
 
 		let newClientId: string | undefined;
-		audience.on("selfChanged", (_oldId, id) => {
-			newClientId = id;
+		audience.on("selfChanged", (_old, newValue) => {
+			newClientId = newValue.clientId;
+			assert(newClientId !== undefined);
+			assert(newValue.client === audience.getMember(newClientId));
+			// This assert could fire if one "Fluid.Container.DisableJoinSignalWait" feature gate is triggered.
+			// Code should not rely on such behavior while IAudience.getSelf() is experimental
+			// It also will fire if new runtime is used with old loader (that has exactly same effect as previous case)
+			// assert(newValue.client !== undefined);
 		});
 
 		container.connect();
 		await waitForContainerConnection(container);
 
+		assert(newClientId !== undefined);
 		assert(newClientId === container.clientId);
-		assert(audience.self().clientId === container.clientId);
+		assert(audience.getSelf()?.clientId === container.clientId);
 	});
 });

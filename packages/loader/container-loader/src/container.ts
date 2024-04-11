@@ -639,7 +639,7 @@ export class Container
 	 * clientId does not reset on lost connection - old value persists until new connection is fully established.
 	 */
 	public get clientId(): string | undefined {
-		return this.protocolHandler.audience.self().clientId;
+		return this.protocolHandler.audience.getSelf()?.clientId;
 	}
 
 	private get isInteractiveClient(): boolean {
@@ -1651,7 +1651,10 @@ export class Container
 
 		// If we are loading from pending state, we start with old clientId.
 		// We switch to latest connection clientId only after setLoaded().
-		this.protocolHandler.audience.setCurrentClientId(pendingLocalState?.clientId);
+		assert(this.clientId === undefined, "there should be no clientId yet");
+		if (pendingLocalState?.clientId !== undefined) {
+			this.protocolHandler.audience.setCurrentClientId(pendingLocalState?.clientId);
+		}
 
 		timings.phase3 = performance.now();
 		const codeDetails = this.getCodeDetailsFromQuorum();
@@ -2146,7 +2149,9 @@ export class Container
 		disconnectedReason?: IConnectionStateChangeReason,
 	) {
 		if (this.connectionState === ConnectionState.Connected) {
-			this.protocolHandler.audience.setCurrentClientId(this.connectionStateHandler.clientId);
+			const clientId = this.connectionStateHandler.clientId;
+			assert(clientId !== undefined, "there has to be clientId");
+			this.protocolHandler.audience.setCurrentClientId(clientId);
 		}
 
 		// When container loaded, we want to propagate initial connection state.

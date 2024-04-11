@@ -4,7 +4,12 @@
  */
 
 import { EventEmitter, TypedEventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
-import { AttachState, IAudience, IAudienceEvents } from "@fluidframework/container-definitions";
+import {
+	AttachState,
+	IAudience,
+	IAudienceEvents,
+	ISelf,
+} from "@fluidframework/container-definitions";
 import { ILoader, IAudienceOwner } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import {
@@ -722,18 +727,24 @@ export class MockAudience extends TypedEventEmitter<IAudienceEvents> implements 
 		return this.audienceMembers.get(clientId);
 	}
 
-	public self() {
-		return {
-			clientId: this._currentClientId,
-			client: undefined,
-		};
+	public getSelf() {
+		return this._currentClientId === undefined
+			? undefined
+			: {
+					clientId: this._currentClientId,
+					client: undefined,
+			  };
 	}
 
-	public setCurrentClientId(clientId: string | undefined): void {
+	public setCurrentClientId(clientId: string): void {
 		if (this._currentClientId !== clientId) {
 			const oldId = this._currentClientId;
 			this._currentClientId = clientId;
-			this.emit("selfChanged", oldId, clientId);
+			this.emit(
+				"selfChanged",
+				oldId === undefined ? undefined : ({ clientId: oldId } satisfies ISelf),
+				{ clientId } satisfies ISelf,
+			);
 		}
 	}
 }

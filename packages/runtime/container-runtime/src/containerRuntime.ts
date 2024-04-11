@@ -1737,15 +1737,17 @@ export class ContainerRuntime
 		});
 
 		this._audience = audience;
-		if (audience.self === undefined) {
+		if (audience.getSelf === undefined) {
 			// back-compat, added in 2.0 RC3.
 			// Purpose: deal with cases when we run against old loader that does not have newly added capabilities
-			audience.self = () => {
+			audience.getSelf = () => {
 				const clientId = this._getClientId();
-				return {
-					clientId,
-					client: clientId === undefined ? undefined : audience.getMember(clientId),
-				} satisfies ISelf;
+				return clientId === undefined
+					? undefined
+					: ({
+							clientId,
+							client: audience.getMember(clientId),
+					  } satisfies ISelf);
 			};
 
 			let oldClientId = this.clientId;
@@ -1754,8 +1756,8 @@ export class ContainerRuntime
 				assert(clientId !== undefined, "can't be undefined");
 				(audience as unknown as TypedEventEmitter<IAudienceEvents>).emit(
 					"selfChanged",
-					oldClientId,
-					clientId,
+					{ clientId: oldClientId },
+					{ clientId, client: audience.getMember(clientId) },
 				);
 				oldClientId = clientId;
 			});
@@ -2450,7 +2452,7 @@ export class ContainerRuntime
 
 	public setConnectionState(connected: boolean, clientId?: string) {
 		// Validate we have consistent state
-		const currentClientId = this._audience.self().clientId;
+		const currentClientId = this._audience.getSelf()?.clientId;
 		assert(clientId === currentClientId, "same clientId");
 		assert(this.clientId === currentClientId, "same clientId");
 
