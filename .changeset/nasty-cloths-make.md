@@ -3,7 +3,7 @@
 "@fluidframework/map": minor
 ---
 
-Moved SharedMap to '@fluidframework/map/legacy'
+fluid-framework: Moved SharedMap to '@fluidframework/map/legacy'
 
 Please use SharedTree for new containers.  SharedMap is supported for loading preexisting Fluid Framework 1.x containers only.
 
