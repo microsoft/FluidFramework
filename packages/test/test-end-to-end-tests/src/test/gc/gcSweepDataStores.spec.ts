@@ -119,24 +119,26 @@ function validateDataStoreStateInSummary(
 const tombstoneTimeoutMs = 200;
 const sweepGracePeriodMs = 0; // Skip Tombstone, these tests focus on Sweep
 const sweepTimeoutMs = tombstoneTimeoutMs + sweepGracePeriodMs;
-const gcOptions: IGCRuntimeOptions = {
+const newGCOptions: () => IGCRuntimeOptions = () => ({
 	inactiveTimeoutMs: 0,
 	enableGCSweep: true,
 	sweepGracePeriodMs,
-};
+});
 const mockLogger = new MockLogger();
 const configProvider = createTestConfigProvider();
-const testContainerConfig: ITestContainerConfig = {
+const newTestContainerConfig: () => ITestContainerConfig = () => ({
 	runtimeOptions: {
 		summaryOptions: {
 			summaryConfigOverrides: {
 				state: "disabled",
 			},
 		},
-		gcOptions,
+		gcOptions: newGCOptions(),
 	},
-	loaderProps: { configProvider, logger: mockLogger },
-};
+	loaderProps: { configProvider, logger: undefined },
+});
+
+const testContainerConfig: ITestContainerConfig = newTestContainerConfig();
 
 let provider: ITestObjectProvider;
 
@@ -154,7 +156,7 @@ const loadSummarizer = async (container: IContainer, summaryVersion?: string) =>
 		provider,
 		container,
 		{
-			runtimeOptions: { gcOptions },
+			runtimeOptions: { gcOptions: newGCOptions() },
 			loaderProps: { configProvider },
 			forceUseCreateVersion: true, // To simulate the summarizer running on the created container
 		},
@@ -951,9 +953,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 					// Load a container from the above summary, process all ops (including any GC ops) and validate that
 					// the deleted data store cannot be retrieved.
 					// We load with GC Disabled to confirm that the GC Op is processed regardless of such settings
-					const config_gcSweepDisabled = JSON.parse(
-						JSON.stringify(testContainerConfig),
-					) as ITestContainerConfig;
+					const config_gcSweepDisabled = newTestContainerConfig();
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					config_gcSweepDisabled.runtimeOptions!.gcOptions!.enableGCSweep = undefined;
 					const container2 = await loadContainer(
