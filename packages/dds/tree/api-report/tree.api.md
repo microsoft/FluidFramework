@@ -5,7 +5,7 @@
 ```ts
 
 import type { ErasedType } from '@fluidframework/core-interfaces';
-import { FluidObject } from '@fluidframework/core-interfaces/internal';
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
@@ -1310,6 +1310,14 @@ export type NodeFromSchemaUnsafe<T extends Unenforced<TreeNodeSchema>> = T exten
 // @internal
 export type NodeIndex = number;
 
+// @public
+export interface NodeInDocumentConstraint {
+    // (undocumented)
+    node: TreeNode;
+    // (undocumented)
+    type: "nodeInDocument";
+}
+
 // @internal
 export const nodeKeyFieldKey = "__n_id__";
 
@@ -1759,6 +1767,9 @@ readonly recursive: FieldSchemaUnsafe<FieldKind.Optional, readonly [() => TreeNo
 readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
 }>;
 
+// @public
+export type TransactionConstraint = NodeInDocumentConstraint;
+
 // @internal
 export enum TransactionResult {
     Abort = 0,
@@ -1780,7 +1791,9 @@ export interface TreeAdapter {
 export interface TreeApi extends TreeNodeApi {
     contains(node: TreeNode, other: TreeNode): boolean;
     runTransaction<TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void | "rollback"): void;
+    runTransaction<TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void | "rollback", preconditions?: TransactionConstraint[]): void;
     runTransaction<TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void | "rollback"): void;
+    runTransaction<TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void | "rollback", preconditions?: TransactionConstraint[]): void;
 }
 
 // @public
