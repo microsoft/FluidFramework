@@ -7,17 +7,17 @@
 The following types were deprecated (moved to either @fluidframework/core-interfaces or @fluidframework/telemetry-utils)
 and have been removed.
 
-- ITelemetryErrorEvent
-- ITelemetryGenericEvent
-- ITelemetryPerformanceEvent
-- ILoggingError
-- ITelemetryLogger
-- ITelemetryBaseLogger
-- ITelemetryBaseEvent
-- ITelemetryProperties
-- ITaggedTelemetryPropertyType
-- TelemetryEventPropertyType
-- TelemetryEventCategory
+-   ITelemetryErrorEvent
+-   ITelemetryGenericEvent
+-   ITelemetryPerformanceEvent
+-   ILoggingError
+-   ITelemetryLogger
+-   ITelemetryBaseLogger
+-   ITelemetryBaseEvent
+-   ITelemetryProperties
+-   ITaggedTelemetryPropertyType
+-   TelemetryEventPropertyType
+-   TelemetryEventCategory
 
 ## [1.1.0](https://github.com/microsoft/FluidFramework/releases/tag/common-definitions_v1.1.0)
 
