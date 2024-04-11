@@ -12,6 +12,7 @@ import * as util from "util";
 import * as core from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { setupMaster, setupWorker } from "@socket.io/sticky";
+import { type Server as SocketIoServer } from "socket.io";
 import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import * as socketIo from "./socketIoServer";
 
@@ -49,10 +50,10 @@ export class HttpServer implements core.IHttpServer {
 /**
  * @internal
  */
-export class WebServer implements core.IWebServer {
+export class WebServer<WSS = undefined> implements core.IWebServer<WSS> {
 	constructor(
 		public httpServer: HttpServer,
-		public webSocketServer: core.IWebSocketServer,
+		public webSocketServer: core.IWebSocketServer<WSS>,
 	) {}
 
 	/**
@@ -92,7 +93,7 @@ const createAndConfigureHttpServer = (
 /**
  * @internal
  */
-export class SocketIoWebServerFactory implements core.IWebServerFactory {
+export class SocketIoWebServerFactory implements core.IWebServerFactory<SocketIoServer> {
 	constructor(
 		private readonly redisClientConnectionManagerForPub: IRedisClientConnectionManager,
 		private readonly redisClientConnectionManagerForSub: IRedisClientConnectionManager,
@@ -101,7 +102,7 @@ export class SocketIoWebServerFactory implements core.IWebServerFactory {
 		private readonly socketIoConfig?: any,
 	) {}
 
-	public create(requestListener: RequestListener): core.IWebServer {
+	public create(requestListener: RequestListener): core.IWebServer<SocketIoServer> {
 		// Create the base HTTP server and register the provided request listener
 		const server = createAndConfigureHttpServer(requestListener, this.httpServerConfig);
 		const httpServer = new HttpServer(server);
@@ -114,7 +115,7 @@ export class SocketIoWebServerFactory implements core.IWebServerFactory {
 			this.socketIoConfig,
 		);
 
-		return new WebServer(httpServer, socketIoServer);
+		return new WebServer<SocketIoServer>(httpServer, socketIoServer);
 	}
 }
 
@@ -182,9 +183,10 @@ class NullHttpServer implements core.IHttpServer {
 		return { address: "", family: "", port: 0 };
 	}
 }
-class NullWebServer implements core.IWebServer {
+class NullWebServer<WSS = undefined> implements core.IWebServer<WSS> {
 	public readonly httpServer: NullHttpServer = new NullHttpServer();
-	public webSocketServer: core.IWebSocketServer = null as unknown as core.IWebSocketServer;
+	public webSocketServer: core.IWebSocketServer<WSS> =
+		null as unknown as core.IWebSocketServer<WSS>;
 
 	/**
 	 * Closes the web server
@@ -197,7 +199,7 @@ class NullWebServer implements core.IWebServer {
 /**
  * @internal
  */
-export class NodeClusterWebServerFactory implements core.IWebServerFactory {
+export class NodeClusterWebServerFactory<WSS = undefined> implements core.IWebServerFactory<WSS> {
 	private readonly lastHeartbeatMap: Map<number, number> = new Map();
 	private readonly newForkTimeouts: Map<number, NodeJS.Timeout> = new Map();
 	private readonly disconnectTimeouts: Map<number, NodeJS.Timeout> = new Map();
@@ -216,14 +218,17 @@ export class NodeClusterWebServerFactory implements core.IWebServerFactory {
 		};
 	}
 
-	public create(requestListener: RequestListener): core.IWebServer {
+	public create(requestListener: RequestListener): core.IWebServer<WSS> {
 		if (cluster.isPrimary) {
 			this.initializePrimaryThread();
 			return new NullWebServer();
 		}
 		const httpServer = this.initializeWorkerThread(requestListener);
 
-		return new WebServer(new HttpServer(httpServer), null as unknown as core.IWebSocketServer);
+		return new WebServer<WSS>(
+			new HttpServer(httpServer),
+			null as unknown as core.IWebSocketServer<WSS>,
+		);
 	}
 
 	protected initializePrimaryThread(): void {
@@ -373,7 +378,7 @@ export class NodeClusterWebServerFactory implements core.IWebServerFactory {
 /**
  * @internal
  */
-export class SocketIoNodeClusterWebServerFactory extends NodeClusterWebServerFactory {
+export class SocketIoNodeClusterWebServerFactory extends NodeClusterWebServerFactory<SocketIoServer> {
 	constructor(
 		private readonly redisClientConnectionManagerForPub: IRedisClientConnectionManager,
 		private readonly redisClientConnectionManagerForSub: IRedisClientConnectionManager,
@@ -385,7 +390,7 @@ export class SocketIoNodeClusterWebServerFactory extends NodeClusterWebServerFac
 		super(httpServerConfig, clusterConfig);
 	}
 
-	public create(requestListener: RequestListener): core.IWebServer {
+	public create(requestListener: RequestListener): core.IWebServer<SocketIoServer> {
 		if (cluster.isPrimary) {
 			this.initializePrimaryThread();
 			// Create a blank HTTP Server that will distribute incoming requests to worker nodes.
@@ -394,7 +399,10 @@ export class SocketIoNodeClusterWebServerFactory extends NodeClusterWebServerFac
 			setupMaster(server, {
 				loadBalancingMethod: "least-connection", // either "random", "round-robin" or "least-connection"
 			});
-			return new WebServer(new HttpServer(server), null as unknown as core.IWebSocketServer);
+			return new WebServer<SocketIoServer>(
+				new HttpServer(server),
+				null as unknown as core.IWebSocketServer<SocketIoServer>,
+			);
 		}
 		// Create a worker thread HTTP server and attach socket.io server to it.
 		const httpServer = this.initializeWorkerThread(requestListener);
@@ -406,6 +414,6 @@ export class SocketIoNodeClusterWebServerFactory extends NodeClusterWebServerFac
 			this.socketIoConfig,
 			setupWorker,
 		);
-		return new WebServer(new HttpServer(httpServer), socketIoServer);
+		return new WebServer<SocketIoServer>(new HttpServer(httpServer), socketIoServer);
 	}
 }

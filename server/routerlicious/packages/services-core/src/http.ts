@@ -16,15 +16,17 @@ export type RequestListener = (
 /**
  * @internal
  */
-export interface IWebServerFactory {
-	create(requestListener?: RequestListener): IWebServer;
+export interface IWebServerFactory<WSS = unknown> {
+	create(requestListener?: RequestListener): IWebServer<WSS>;
 }
 
 /**
  * @alpha
  */
-export interface IWebSocket {
+export interface IWebSocket<T = unknown> {
 	id: string;
+
+	internalSocketInstance?: T;
 
 	on(event: string, listener: (...args: any[]) => void);
 
@@ -40,11 +42,11 @@ export interface IWebSocket {
 /**
  * @internal
  */
-export interface IWebServer {
+export interface IWebServer<WSS = unknown> {
 	/**
 	 * Web socket interface
 	 */
-	webSocketServer: IWebSocketServer;
+	webSocketServer: IWebSocketServer<WSS>;
 
 	/**
 	 * HTTP server interface
@@ -60,7 +62,9 @@ export interface IWebServer {
 /**
  * @alpha
  */
-export interface IWebSocketServer {
+export interface IWebSocketServer<T = unknown> {
+	internalServerInstance?: T;
+
 	on(event: string, listener: (...args: any[]) => void);
 
 	close(): Promise<void>;

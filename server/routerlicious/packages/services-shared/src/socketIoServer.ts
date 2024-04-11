@@ -21,9 +21,13 @@ import {
 	SocketIoRedisSubscriptionConnection,
 } from "./socketIoRedisConnection";
 
-class SocketIoSocket implements core.IWebSocket {
+class SocketIoSocket implements core.IWebSocket<Socket> {
 	public get id(): string {
 		return this.socket.id;
+	}
+
+	public get internalSocketInstance(): Socket {
+		return this.socket;
 	}
 
 	constructor(private readonly socket: Socket) {}
@@ -67,8 +71,12 @@ function isSocketIoConnectionError(error: unknown): error is ISocketIoConnection
 	);
 }
 
-class SocketIoServer implements core.IWebSocketServer {
+class SocketIoServer implements core.IWebSocketServer<Server> {
 	private readonly events = new EventEmitter();
+
+	public get internalServerInstance(): Server {
+		return this.io;
+	}
 
 	constructor(
 		private readonly io: Server,
@@ -215,7 +223,7 @@ export function create(
 	socketIoAdapterConfig?: any,
 	socketIoConfig?: any,
 	ioSetup?: (io: Server) => void,
-): core.IWebSocketServer {
+): core.IWebSocketServer<Server> {
 	redisClientConnectionManagerForPub.getRedisClient().on("error", (err) => {
 		Lumberjack.error("Error with Redis pub connection", undefined, err);
 	});
