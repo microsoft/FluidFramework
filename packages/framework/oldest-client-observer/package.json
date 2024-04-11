@@ -15,21 +15,21 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/oldest-client-observer-public.d.ts",
+				"types": "./lib/public.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/oldest-client-observer-public.d.ts",
+				"types": "./dist/public.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
 		"./alpha": {
 			"import": {
-				"types": "./lib/oldest-client-observer-alpha.d.ts",
+				"types": "./lib/alpha.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/oldest-client-observer-alpha.d.ts",
+				"types": "./dist/alpha.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
@@ -45,15 +45,15 @@
 		}
 	},
 	"main": "dist/index.js",
-	"types": "./dist/oldest-client-observer-public.d.ts",
+	"types": "./dist/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
-		"api-extractor:esnext": "api-extractor run --local",
+		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "fluid-build . --task api",
+		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
@@ -101,9 +101,9 @@
 		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.6.2",
 		"@fluid-private/test-dds-utils": "workspace:~",
-		"@fluid-tools/build-cli": "^0.34.0",
+		"@fluid-tools/build-cli": "^0.35.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.34.0",
+		"@fluidframework/build-tools": "^0.35.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@microsoft/api-extractor": "^7.42.3",
 		"@types/node": "^18.19.0",
@@ -116,14 +116,6 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:docs": {
-				"dependsOn": [
-					"...",
-					"api-extractor:commonjs",
-					"api-extractor:esnext"
-				],
-				"script": false
-			},
 			"tsc": [
 				"...",
 				"typetests:gen"
