@@ -10,7 +10,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { IRequest } from "@fluidframework/core-interfaces";
-import type { ISharedMap } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map/internal";
 import {
 	IContainerRuntimeBase,
 	type IFluidDataStoreContext,
