@@ -228,7 +228,7 @@ export const TestChange = {
 	toDelta,
 	isEmpty,
 	codec,
-	codecs: makeCodecFamily([[0, codec]]),
+	codecs: makeCodecFamily([[1, codec]]),
 };
 deepFreeze(TestChange);
 

@@ -13,7 +13,7 @@ import {
 	TreeConfiguration,
 	ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
-import { createTestUndoRedoStacks, getView } from "../utils.js";
+import { TestTreeProviderLite, createTestUndoRedoStacks, getView } from "../utils.js";
 import { brand, cursorForJsonableTreeNode, leaf, rootFieldKey, type UpPath } from "../../index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { hydrate } from "../simple-tree/utils.js";
@@ -25,12 +25,18 @@ const rootNode: UpPath = {
 };
 
 const schema = new SchemaFactory("com.example");
-class TestObject extends schema.object("TestObject", { content: schema.number }) {}
+class ChildObject extends schema.object("ChildObject", {}) {}
+class TestObject extends schema.object("TestObject", {
+	content: schema.number,
+	child: schema.optional(ChildObject),
+}) {}
 
 describe("treeApi", () => {
 	describe("runTransaction invoked via a tree view", () => {
 		it("runs transactions", () => {
-			const view = getView(new TreeConfiguration(TestObject, () => ({ content: 42 })));
+			const view = getView(
+				new TreeConfiguration(TestObject, () => ({ content: 42, child: undefined })),
+			);
 			Tree.runTransaction(view, (root) => {
 				root.content = 43;
 			});
@@ -38,7 +44,9 @@ describe("treeApi", () => {
 		});
 
 		it("can be rolled back", () => {
-			const view = getView(new TreeConfiguration(TestObject, () => ({ content: 42 })));
+			const view = getView(
+				new TreeConfiguration(TestObject, () => ({ content: 42, child: undefined })),
+			);
 			Tree.runTransaction(view, (root) => {
 				root.content = 43;
 				return "rollback";
@@ -47,7 +55,9 @@ describe("treeApi", () => {
 		});
 
 		it("rolls back transactions on error", () => {
-			const view = getView(new TreeConfiguration(TestObject, () => ({ content: 42 })));
+			const view = getView(
+				new TreeConfiguration(TestObject, () => ({ content: 42, child: undefined })),
+			);
 			try {
 				Tree.runTransaction(view, (root) => {
 					root.content = 43;
@@ -62,7 +72,9 @@ describe("treeApi", () => {
 
 		// TODO: Either enable when afterBatch is implemented, or delete if no longer relevant
 		it.skip("emits change events", () => {
-			const view = getView(new TreeConfiguration(TestObject, () => ({ content: 42 })));
+			const view = getView(
+				new TreeConfiguration(TestObject, () => ({ content: 42, child: undefined })),
+			);
 			let event = false;
 			view.events.on("afterBatch", () => (event = true));
 			view.root.content = 44;
@@ -73,7 +85,9 @@ describe("treeApi", () => {
 		});
 
 		it.skip("emits change events on rollback", () => {
-			const view = getView(new TreeConfiguration(TestObject, () => ({ content: 42 })));
+			const view = getView(
+				new TreeConfiguration(TestObject, () => ({ content: 42, child: undefined })),
+			);
 			let eventCount = 0;
 			view.events.on("afterBatch", () => (eventCount += 1));
 			Tree.runTransaction(view, (r) => {
@@ -84,7 +98,9 @@ describe("treeApi", () => {
 		});
 
 		it("undoes and redoes entire transaction", () => {
-			const view = getView(new TreeConfiguration(TestObject, () => ({ content: 42 })));
+			const view = getView(
+				new TreeConfiguration(TestObject, () => ({ content: 42, child: undefined })),
+			);
 			const checkoutView = view.getViewOrError();
 			assert(checkoutView instanceof CheckoutFlexTreeView);
 			const { undoStack, redoStack } = createTestUndoRedoStacks(checkoutView.checkout.events);
@@ -101,11 +117,67 @@ describe("treeApi", () => {
 			redoStack[0].revert();
 			assert.equal(view.root.content, 44);
 		});
+
+		it("fails if node existence constraint is already violated", () => {
+			const view = getView(
+				new TreeConfiguration(TestObject, () => ({ content: 0, child: {} })),
+			);
+
+			const childB = view.root.child;
+			assert(childB !== undefined);
+			// The node given to the constraint is deleted from the document, so the transaction can't possibly succeed even locally/optimistically
+			view.root.child = undefined;
+			assert.throws(() => {
+				Tree.runTransaction(
+					view,
+					(root) => {
+						root.content = 3;
+					},
+					[{ type: "nodeInDocument", node: childB }],
+				);
+			});
+			assert.equal(view.root.content, 0);
+		});
+
+		it("respects a violated node existence constraint after sequencing", () => {
+			// Create two connected trees with child nodes
+			const config = new TreeConfiguration(TestObject, () => ({
+				content: 0,
+				child: {},
+			}));
+			const provider = new TestTreeProviderLite(2);
+			const [treeA, treeB] = provider.trees;
+			const viewA = treeA.schematize(config);
+			const viewB = treeB.schematize(config);
+			provider.processMessages();
+
+			// Tree A removes the child node (this will be sequenced before anything else because the provider sequences ops in the order of submission).
+			viewA.root.child = undefined;
+			// Tree B runs a transaction to change the root content to 43, but it should only succeed if the child node exists.
+			const childB = viewB.root.child;
+			assert(childB !== undefined);
+			Tree.runTransaction(
+				viewB,
+				(root) => {
+					root.content = 3;
+				},
+				[{ type: "nodeInDocument", node: childB }],
+			);
+			// The transaction does apply optimistically...
+			assert.equal(viewA.root.content, 0);
+			assert.equal(viewB.root.content, 3);
+			// ...but then is rolled back after sequencing because the child node was removed by Tree A.
+			provider.processMessages();
+			assert.equal(viewB.root.content, 0);
+			assert.equal(viewB.root.content, 0);
+		});
 	});
 
 	describe("runTransaction invoked via a node", () => {
 		it("runs transactions", () => {
-			const { root } = getView(new TreeConfiguration(TestObject, () => ({ content: 42 })));
+			const { root } = getView(
+				new TreeConfiguration(TestObject, () => ({ content: 42, child: undefined })),
+			);
 			Tree.runTransaction(root, (r) => {
 				r.content = 43;
 			});
@@ -113,7 +185,9 @@ describe("treeApi", () => {
 		});
 
 		it("can be rolled back", () => {
-			const { root } = getView(new TreeConfiguration(TestObject, () => ({ content: 42 })));
+			const { root } = getView(
+				new TreeConfiguration(TestObject, () => ({ content: 42, child: undefined })),
+			);
 			Tree.runTransaction(root, (r) => {
 				r.content = 43;
 				return "rollback";
@@ -122,7 +196,9 @@ describe("treeApi", () => {
 		});
 
 		it("rolls back transactions on error", () => {
-			const { root } = getView(new TreeConfiguration(TestObject, () => ({ content: 42 })));
+			const { root } = getView(
+				new TreeConfiguration(TestObject, () => ({ content: 42, child: undefined })),
+			);
 			try {
 				Tree.runTransaction(root, (r) => {
 					r.content = 43;
@@ -136,7 +212,9 @@ describe("treeApi", () => {
 		});
 
 		it("emits change events", () => {
-			const { root } = getView(new TreeConfiguration(TestObject, () => ({ content: 42 })));
+			const { root } = getView(
+				new TreeConfiguration(TestObject, () => ({ content: 42, child: undefined })),
+			);
 			let deepEvent = false;
 			let shallowEvent = false;
 			Tree.on(root, "nodeChanged", () => (shallowEvent = true));
@@ -149,7 +227,9 @@ describe("treeApi", () => {
 		});
 
 		it("emits change events on rollback", () => {
-			const { root } = getView(new TreeConfiguration(TestObject, () => ({ content: 42 })));
+			const { root } = getView(
+				new TreeConfiguration(TestObject, () => ({ content: 42, child: undefined })),
+			);
 			let deepEventCount = 0;
 			let shallowEventCount = 0;
 			Tree.on(root, "nodeChanged", () => (shallowEventCount += 1));
@@ -165,7 +245,9 @@ describe("treeApi", () => {
 		});
 
 		it("undoes and redoes entire transaction", () => {
-			const view = getView(new TreeConfiguration(TestObject, () => ({ content: 42 })));
+			const view = getView(
+				new TreeConfiguration(TestObject, () => ({ content: 42, child: undefined })),
+			);
 			const checkoutView = view.getViewOrError();
 			assert(checkoutView instanceof CheckoutFlexTreeView);
 			const { undoStack, redoStack } = createTestUndoRedoStacks(checkoutView.checkout.events);
@@ -181,6 +263,60 @@ describe("treeApi", () => {
 			assert.equal(redoStack.length, 1);
 			redoStack[0].revert();
 			assert.equal(view.root.content, 44);
+		});
+
+		it("fails if node existence constraint is already violated", () => {
+			const view = getView(
+				new TreeConfiguration(TestObject, () => ({ content: 0, child: {} })),
+			);
+
+			const childB = view.root.child;
+			assert(childB !== undefined);
+			// The node given to the constraint is deleted from the document, so the transaction can't possibly succeed even locally/optimistically
+			view.root.child = undefined;
+			assert.throws(() => {
+				Tree.runTransaction(
+					view.root,
+					(root) => {
+						root.content = 3;
+					},
+					[{ type: "nodeInDocument", node: childB }],
+				);
+			});
+			assert.equal(view.root.content, 0);
+		});
+
+		it("respects a violated node existence constraint after sequencing", () => {
+			// Create two connected trees with child nodes
+			const config = new TreeConfiguration(TestObject, () => ({
+				content: 0,
+				child: {},
+			}));
+			const provider = new TestTreeProviderLite(2);
+			const [treeA, treeB] = provider.trees;
+			const viewA = treeA.schematize(config);
+			const viewB = treeB.schematize(config);
+			provider.processMessages();
+
+			// Tree A removes the child node (this will be sequenced before anything else because the provider sequences ops in the order of submission).
+			viewA.root.child = undefined;
+			// Tree B runs a transaction to change the root content to 43, but it should only succeed if the child node exists.
+			const childB = viewB.root.child;
+			assert(childB !== undefined);
+			Tree.runTransaction(
+				viewB.root,
+				(root) => {
+					root.content = 3;
+				},
+				[{ type: "nodeInDocument", node: childB }],
+			);
+			// The transaction does apply optimistically...
+			assert.equal(viewA.root.content, 0);
+			assert.equal(viewB.root.content, 3);
+			// ...but then is rolled back after sequencing because the child node was removed by Tree A.
+			provider.processMessages();
+			assert.equal(viewB.root.content, 0);
+			assert.equal(viewB.root.content, 0);
 		});
 
 		// TODO: When SchematizingSimpleTreeView supports forking, add test coverage to ensure that transactions work properly on forks

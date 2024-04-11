@@ -5,7 +5,6 @@
 
 import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec/index.js";
 import {
-	BrandedTreeNodeSchemaDataFormat,
 	TreeNodeSchemaIdentifier,
 	TreeNodeStoredSchema,
 	TreeStoredSchema,
@@ -13,8 +12,9 @@ import {
 	encodeFieldSchema,
 	schemaFormat,
 	storedSchemaDecodeDispatcher,
+	toTreeNodeSchemaDataFormat,
 } from "../../core/index.js";
-import { brand, fail, fromErased } from "../../util/index.js";
+import { brand, fail } from "../../util/index.js";
 
 import { Format } from "./format.js";
 
@@ -27,7 +27,7 @@ export function encodeRepo(repo: TreeStoredSchema): Format {
 			enumerable: true,
 			configurable: true,
 			writable: true,
-			value: fromErased<BrandedTreeNodeSchemaDataFormat>(schema.encode()),
+			value: toTreeNodeSchemaDataFormat(schema.encode()),
 		});
 	}
 	return {
