@@ -9,7 +9,8 @@ import {
 	ISnapshotTreeEx,
 	SummaryType,
 	SummaryObject,
-} from "@fluidframework/protocol-definitions";
+// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/protocol-definitions/lib/legacy";
 import { unreachableCase } from "@fluidframework/common-utils";
 
 /**
