@@ -337,7 +337,7 @@ export async function visualizeSharedTreeNodeBySchema(
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
 	if (schema instanceof LeafNodeStoredSchema) {
-		return await visualizeLeafNode(tree, visualizeChildData);
+		return visualizeLeafNode(tree, visualizeChildData);
 	} else if (schema instanceof ObjectNodeStoredSchema) {
 		return visualizeObjectNode(tree, schema, contentSnapshot, visualizeChildData);
 	} else if (schema instanceof MapNodeStoredSchema) {
