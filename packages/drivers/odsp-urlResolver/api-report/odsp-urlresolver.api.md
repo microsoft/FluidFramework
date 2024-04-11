@@ -17,9 +17,6 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 }
 
-// @internal
-export const isOdspUrl: (url: string) => boolean;
-
 // @internal (undocumented)
 export class OdspUrlResolver implements IUrlResolver {
     // (undocumented)

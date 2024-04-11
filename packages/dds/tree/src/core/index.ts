@@ -143,6 +143,7 @@ export {
 	ErasedTreeNodeSchemaDataFormat,
 	SchemaAndPolicy,
 	Multiplicity,
+	SchemaPolicy,
 } from "./schema-stored/index.js";
 
 export {
@@ -188,6 +189,8 @@ export {
 	RevisionInfo,
 	EncodedRevisionTag,
 	EncodedChangeAtomId,
+	taggedAtomId,
+	taggedOptAtomId,
 } from "./rebase/index.js";
 
 export {
