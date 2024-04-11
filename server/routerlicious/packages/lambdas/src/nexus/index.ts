@@ -39,6 +39,7 @@ import {
 import { addNexusMessageTrace } from "./trace";
 import { connectDocument } from "./connect";
 import { disconnectDocument } from "./disconnect";
+import { SocketIoServerHelper, SocketIoSocketHelper } from "./socketIo";
 
 export { IBroadcastSignalEventPayload, ICollaborationSessionEvents, IRoom } from "./interfaces";
 
@@ -69,9 +70,9 @@ function parseRelayUserAgent(relayUserAgent: string | undefined): Record<string,
 	const propertyKeyValuePairs: string[][] = relayUserAgent
 		.split(";")
 		.map((keyValuePair) => keyValuePair.split(":"));
-	// TODO: would be cleaner with `Object.fromEntries()` but tsconfig needs es2019 lib
 	for (const [key, value] of propertyKeyValuePairs) {
-		map[key] = value;
+		// Trim key and value so that a user agent like "prop1:val1; prop2:val2" is parsed correctly.
+		map[key.trim()] = value.trim();
 	}
 	return map;
 }
@@ -105,6 +106,7 @@ export function configureWebSocketServices(
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: core.IClusterDrainingChecker,
 ) {
+	const socketIoServerHelper = new SocketIoServerHelper(webSocketServer);
 	const lambdaDependencies: INexusLambdaDependencies = {
 		ordererManager,
 		tenantManager,
@@ -121,6 +123,7 @@ export function configureWebSocketServices(
 		revokedTokenChecker,
 		clusterDrainingChecker,
 		collaborationSessionEventEmitter,
+		socketIoServerHelper,
 	};
 	const lambdaSettings: INexusLambdaSettings = {
 		maxTokenLifetimeSec,
@@ -144,6 +147,8 @@ export function configureWebSocketServices(
 		const disconnectedOrdererConnections = new Set<string>();
 		// Set of client Ids that have been disconnected from room and client manager.
 		const disconnectedClients = new Set<string>();
+		// Helper to get and set socket metadata.
+		const socketIoSocketHelper = new SocketIoSocketHelper(socket);
 
 		const lambdaConnectionStateTrackers: INexusLambdaConnectionStateTrackers = {
 			connectionsMap,
@@ -153,6 +158,7 @@ export function configureWebSocketServices(
 			expirationTimer,
 			disconnectedOrdererConnections,
 			disconnectedClients,
+			socketIoSocketHelper,
 		};
 
 		let connectDocumentComplete: boolean = false;
@@ -425,10 +431,12 @@ export function configureWebSocketServices(
 					);
 					socket.emit("nack", "", [nackMessage]);
 				} else {
-					let messageCount = 0;
+					let incomingMessageCount = 0;
 					for (const contentBatch of contentBatches) {
 						// Count all messages in each batch for accurate throttling calculation.
-						messageCount += Array.isArray(contentBatch) ? contentBatch.length : 1;
+						incomingMessageCount += Array.isArray(contentBatch)
+							? contentBatch.length
+							: 1;
 					}
 					const signalUsageData: core.IUsageData = {
 						value: 0,
@@ -436,6 +444,10 @@ export function configureWebSocketServices(
 						documentId: room.documentId,
 						clientId,
 					};
+					const clientsInRoom = socketIoServerHelper.getSocketsInRoom(room).size;
+					const outgoingMessageCount = clientsInRoom * incomingMessageCount;
+					const throttleAndUsageIncrementWeight =
+						incomingMessageCount + outgoingMessageCount;
 					const throttleError = checkThrottleAndUsage(
 						submitSignalThrottler,
 						getSubmitSignalThrottleId(clientId, room.tenantId),
@@ -443,7 +455,7 @@ export function configureWebSocketServices(
 						logger,
 						isSignalUsageCountingEnabled ? core.signalUsageStorageId : undefined,
 						isSignalUsageCountingEnabled ? signalUsageData : undefined,
-						messageCount /* incrementWeight */,
+						throttleAndUsageIncrementWeight,
 					);
 					if (throttleError) {
 						const nackMessage = createNackMessage(

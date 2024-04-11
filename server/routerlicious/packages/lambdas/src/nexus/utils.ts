@@ -5,13 +5,12 @@
 
 import type { ConnectionMode } from "@fluidframework/protocol-definitions";
 import { NetworkError, canSummarize, canWrite } from "@fluidframework/server-services-client";
-import type { ILogger, IWebSocket, IWebSocketServer } from "@fluidframework/server-services-core";
+import type { ILogger } from "@fluidframework/server-services-core";
 import {
 	Lumberjack,
 	getGlobalTelemetryContext,
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
-import type { Socket as SocketIoSocket, Server as SocketIoServer } from "socket.io";
 import type { IRoom } from "./interfaces";
 
 export const getMessageMetadata = (
@@ -66,49 +65,3 @@ export const isWriter = (scopes: string[], mode: ConnectionMode) =>
 	hasWriteAccess(scopes) && mode === "write";
 
 export const getRoomId = (room: IRoom) => `${room.tenantId}/${room.documentId}`;
-
-function isSocketIoServer(server: IWebSocketServer): server is IWebSocketServer<SocketIoServer> {
-	return (
-		(server as IWebSocketServer<SocketIoServer>).internalServerInstance !== undefined &&
-		typeof (server as IWebSocketServer<SocketIoServer>).internalServerInstance?.in ===
-			"function" &&
-		typeof (server as IWebSocketServer<SocketIoServer>).internalServerInstance?.to ===
-			"function" &&
-		typeof (server as IWebSocketServer<SocketIoServer>).internalServerInstance?.fetchSockets ===
-			"function" &&
-		typeof (server as IWebSocketServer<SocketIoServer>).internalServerInstance
-			?.serverSideEmitWithAck === "function" &&
-		typeof (server as IWebSocketServer<SocketIoServer>).internalServerInstance?.emitWithAck ===
-			"function"
-	);
-}
-
-function isSocketIoSocket(server: IWebSocket): server is IWebSocket<SocketIoSocket> {
-	return (
-		(server as IWebSocket<SocketIoSocket>).internalSocketInstance !== undefined &&
-		typeof (server as IWebSocket<SocketIoSocket>).internalSocketInstance?.id === "string" &&
-		typeof (server as IWebSocket<SocketIoSocket>).internalSocketInstance?.handshake ===
-			"object" &&
-		typeof (server as IWebSocket<SocketIoSocket>).internalSocketInstance?.connected ===
-			"boolean" &&
-		typeof (server as IWebSocket<SocketIoSocket>).internalSocketInstance?.recovered ===
-			"boolean"
-	);
-}
-
-export function getSocketData(socket: IWebSocket): SocketIoSocket["data"] | undefined {
-	if (isSocketIoSocket(socket)) {
-		return socket.internalSocketInstance?.data;
-	}
-	return undefined;
-}
-
-export async function getRoomSockets(
-	server: IWebSocketServer,
-	room: string,
-): ReturnType<SocketIoServer["fetchSockets"]> {
-	if (isSocketIoServer(server)) {
-		return server.internalServerInstance?.in(room).fetchSockets() ?? [];
-	}
-	return [];
-}

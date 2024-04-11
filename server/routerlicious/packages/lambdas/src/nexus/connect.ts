@@ -49,6 +49,7 @@ import type {
 	IRoom,
 } from "./interfaces";
 import { checkThrottleAndUsage, getSocketConnectThrottleId } from "./throttleAndUsage";
+import type { ISocketIoSocketMetadata } from "./socketIo";
 
 const SummarizerClientType = "summarizer";
 
@@ -277,10 +278,9 @@ async function joinRoomAndSubscribeToChannel(
 	socket: IWebSocket,
 	tenantId: string,
 	documentId: string,
+	clientId: string,
 	{ logger }: INexusLambdaDependencies,
-): Promise<[string, IRoom]> {
-	const clientId = generateClientId();
-
+): Promise<IRoom> {
 	const room: IRoom = {
 		tenantId,
 		documentId,
@@ -289,7 +289,7 @@ async function joinRoomAndSubscribeToChannel(
 	try {
 		// Subscribe to channels.
 		await Promise.all([socket.join(getRoomId(room)), socket.join(`client#${clientId}`)]);
-		return [clientId, room];
+		return room;
 	} catch (err) {
 		const errMsg = `Could not subscribe to channels. Error: ${safeStringify(
 			err,
@@ -344,7 +344,7 @@ async function retrieveClients(
 	return clients;
 }
 
-function createMessageClientAndJoinRoom(
+function createMessageClient(
 	mode: ConnectionMode,
 	client: IClient,
 	claims: ITokenClaims,
@@ -452,6 +452,70 @@ function setUpSignalListenerForRoomBroadcasting(
 	);
 }
 
+async function validateClients(
+	clientManagerClients: ISignalClient[],
+	room: IRoom,
+	{ socketIoServerHelper }: INexusLambdaDependencies,
+): Promise<ISignalClient[]> {
+	if (!socketIoServerHelper.isValid) {
+		return clientManagerClients;
+	}
+	const clientsInRoomAccordingToClientManager = new Map<string, ISignalClient>();
+	const socketsInRoomBySocketId = socketIoServerHelper.getSocketsInRoom(room);
+	const clientsInRoomAccordingToSocketIo = new Map<string, ISocketIoSocketMetadata>();
+	for (const [socketId, socketMetadata] of socketsInRoomBySocketId.entries()) {
+		if (socketMetadata.clientId) {
+			clientsInRoomAccordingToSocketIo.set(socketMetadata.clientId, socketMetadata);
+		} else {
+			Lumberjack.warning("Encountered socket without clientId when validating room clients", {
+				socketId,
+				...room,
+			});
+		}
+	}
+	const extraClients = new Set<string>();
+	const missingClients = new Set<string>();
+	const validClients: ISignalClient[] = [];
+	for (const client of [...clientManagerClients]) {
+		if (clientsInRoomAccordingToSocketIo.has(client.clientId)) {
+			validClients.push(client);
+		}
+		if (!clientsInRoomAccordingToSocketIo.has(client.clientId)) {
+			// TODO: We should remove the extra client from the client manager if we trust socket.io room map.
+			extraClients.add(client.clientId);
+		}
+	}
+	for (const [clientId, socketIoSocketMetadata] of clientsInRoomAccordingToSocketIo.entries()) {
+		if (!clientsInRoomAccordingToClientManager.has(clientId)) {
+			missingClients.add(clientId);
+			// TODO: We should add the missing client to the client manager if we trust socket.io room map.
+			if (socketIoSocketMetadata.client) {
+				validClients.push({ clientId, client: socketIoSocketMetadata.client });
+			} else {
+				Lumberjack.warning(
+					"Encountered socket without client info when validating room clients",
+					{
+						clientId,
+						...room,
+					},
+				);
+			}
+		}
+	}
+	if (extraClients.size > 0 || missingClients.size > 0) {
+		Lumberjack.warning("Socket.io client list differs from ClientManager", {
+			extraClients: Array.from(extraClients),
+			missingClients: Array.from(missingClients),
+			validClients: validClients.map((client) => client.clientId),
+			clientManagerClients: clientManagerClients.map((client) => client.clientId),
+			...room,
+		});
+	}
+	// TODO: return validClients if we trust socket.io room map.
+	// return validClients;
+	return clientManagerClients;
+}
+
 export async function connectDocument(
 	socket: IWebSocket,
 	lambdaDependencies: INexusLambdaDependencies,
@@ -474,7 +538,7 @@ export async function connectDocument(
 	let documentId = message.id;
 	let uncaughtError: any;
 	try {
-		const [connectVersions, version] = checkProtocolVersion(message.versions);
+		const { connectVersions, version } = checkProtocolVersion(message.versions);
 		connectionTrace.stampStage(ConnectDocumentStage.VersionsChecked);
 
 		checkThrottle(tenantId, lambdaDependencies);
@@ -487,10 +551,18 @@ export async function connectDocument(
 		documentId = claims.documentId;
 		connectionTrace.stampStage(ConnectDocumentStage.TokenVerified);
 
-		const [clientId, room] = await joinRoomAndSubscribeToChannel(
+		const clientId = generateClientId();
+		// Set metadata for the connection once we have clientId.
+		lambdaConnectionStateTrackers.socketIoSocketHelper.data = {
+			clientId,
+			tenantId,
+			documentId,
+		};
+		const room = await joinRoomAndSubscribeToChannel(
 			socket,
 			tenantId,
 			documentId,
+			clientId,
 			lambdaDependencies,
 		);
 		connectionTrace.stampStage(ConnectDocumentStage.RoomJoined);
@@ -509,7 +581,7 @@ export async function connectDocument(
 		connectionTrace.stampStage(ConnectDocumentStage.ClientsRetrieved);
 
 		const connectedTimestamp = Date.now();
-		const messageClient = createMessageClientAndJoinRoom(
+		const messageClient = createMessageClient(
 			message.mode,
 			message.client,
 			claims,
@@ -529,6 +601,8 @@ export async function connectDocument(
 			lambdaDependencies,
 		);
 		connectionTrace.stampStage(ConnectDocumentStage.MessageClientAdded);
+
+		const validatedClients = await validateClients(clients, room, lambdaDependencies);
 
 		if (isTokenExpiryEnabled) {
 			const lifeTimeMSec = validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
@@ -552,7 +626,7 @@ export async function connectDocument(
 					clientId,
 					claims,
 					version,
-					clients,
+					validatedClients,
 			  )
 			: composeConnectedMessage(
 					1024 /* messageSize */,
@@ -562,7 +636,7 @@ export async function connectDocument(
 					clientId,
 					claims,
 					version,
-					clients,
+					validatedClients,
 			  );
 		// back-compat: remove cast to any once new definition of IConnected comes through.
 		(connectedMessage as any).timestamp = connectedTimestamp;
