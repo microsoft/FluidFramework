@@ -66,6 +66,9 @@ export interface CompatApis {
 }
 
 // @internal (undocumented)
+export type CompatType = "FullCompat" | "LoaderCompat" | "NoCompat";
+
+// @internal (undocumented)
 export const ContainerRuntimeApi: {
     version: string;
     BaseContainerRuntimeFactory: typeof BaseContainerRuntimeFactory;
@@ -116,7 +119,7 @@ export type DescribeCompat = DescribeCompatSuite & {
 export const describeCompat: DescribeCompat;
 
 // @internal (undocumented)
-export type DescribeCompatSuite = (name: string, compatVersion: string, tests: (this: Mocha.Suite, provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider, apis: CompatApis) => void) => Mocha.Suite | void;
+export type DescribeCompatSuite = (name: string, compatVersion: CompatType, tests: (this: Mocha.Suite, provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider, apis: CompatApis) => void) => Mocha.Suite | void;
 
 // @internal (undocumented)
 export interface DescribeE2EDocInfo {

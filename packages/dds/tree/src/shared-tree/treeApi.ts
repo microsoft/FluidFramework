@@ -6,7 +6,14 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { Context } from "../feature-libraries/index.js";
-import { TreeNode, TreeNodeApi, TreeView, getFlexNode, treeNodeApi } from "../simple-tree/index.js";
+import {
+	ImplicitFieldSchema,
+	TreeNode,
+	TreeNodeApi,
+	TreeView,
+	getFlexNode,
+	treeNodeApi,
+} from "../simple-tree/index.js";
 import { fail } from "../util/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
@@ -55,10 +62,27 @@ export interface TreeApi extends TreeNodeApi {
 	 * Local change events will be emitted for each change as the transaction is being applied.
 	 * If the transaction is cancelled and rolled back, a corresponding change event will also be emitted for the rollback.
 	 */
-	runTransaction<TRoot>(
-		tree: TreeView<TRoot>,
-		transaction: (root: TRoot) => void | "rollback",
+	runTransaction<TView extends TreeView<ImplicitFieldSchema>>(
+		tree: TView,
+		transaction: (root: TView["root"]) => void | "rollback",
 	): void;
+
+	/**
+	 * Check if the subtree defined by `node` contains `other`.
+	 *
+	 * @returns true if `other` is an inclusive descendant of `node`, and false otherwise.
+	 * @remarks
+	 * This includes direct and indirect children:
+	 * as long as `node` is an ancestor of `other` (occurs in its parentage chain), this returns true, regardless of the number of levels of the tree between.
+	 *
+	 * `node` is considered to contain itself, so the case where `node === other` returns true.
+	 *
+	 * This is handy when checking if moving `node` into `other` would create a cycle and thus is invalid.
+	 *
+	 * This check walks the parents of `other` looking for `node`,
+	 * and thus runs in time proportional to the depth of child in the tree.
+	 */
+	contains(node: TreeNode, other: TreeNode): boolean;
 }
 
 /**
@@ -67,7 +91,7 @@ export interface TreeApi extends TreeNodeApi {
  */
 export const treeApi: TreeApi = {
 	...treeNodeApi,
-	runTransaction<TNode extends TreeNode, TRoot>(
+	runTransaction<TNode extends TreeNode, TRoot extends ImplicitFieldSchema>(
 		treeOrNode: TNode | TreeView<TRoot>,
 		transaction: ((node: TNode) => void | "rollback") | ((root: TRoot) => void | "rollback"),
 	) {
@@ -85,6 +109,17 @@ export const treeApi: TreeApi = {
 
 			runTransaction(treeView.checkout, () => t(node));
 		}
+	},
+
+	contains(parent: TreeNode, child: TreeNode): boolean {
+		let toCheck: TreeNode | undefined = child;
+		while (toCheck !== undefined) {
+			if (toCheck === parent) {
+				return true;
+			}
+			toCheck = treeApi.parent(toCheck);
+		}
+		return false;
 	},
 };
 

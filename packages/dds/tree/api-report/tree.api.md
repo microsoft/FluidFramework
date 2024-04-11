@@ -202,8 +202,7 @@ export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 // @internal
 export interface CheckoutEvents {
     afterBatch(): void;
-    commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
-    revertibleDisposed(revertible: Revertible): void;
+    commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
 }
 
 // @internal
@@ -472,6 +471,7 @@ export type FieldKey = Brand<string, "tree.FieldKey">;
 
 // @public
 export enum FieldKind {
+    Identifier = 2,
     Optional = 0,
     Required = 1
 }
@@ -493,6 +493,7 @@ export const FieldKinds: {
     readonly optional: Optional;
     readonly sequence: Sequence;
     readonly nodeKey: NodeKeyFieldKind;
+    readonly identifier: Identifier;
     readonly forbidden: Forbidden;
 };
 
@@ -528,7 +529,7 @@ export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types exten
     protected _typeCheck?: MakeNominal;
 }
 
-// @beta
+// @public
 export interface FieldSchemaUnsafe<out Kind extends FieldKind, out Types extends Unenforced<ImplicitAllowedTypes>> extends FieldSchema<Kind, any> {
     readonly allowedTypes: Types;
     readonly allowedTypeSet: ReadonlySet<TreeNodeSchema>;
@@ -902,7 +903,7 @@ export enum ForestType {
 }
 
 // @internal
-export interface FullSchemaPolicy {
+export interface FullSchemaPolicy extends SchemaPolicy {
     readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>;
 }
 
@@ -944,6 +945,10 @@ export interface IDefaultEditBuilder {
     sequenceField(field: FieldUpPath): SequenceFieldEditBuilder;
     // (undocumented)
     valueField(field: FieldUpPath): ValueFieldEditBuilder;
+}
+
+// @internal (undocumented)
+export interface Identifier extends FlexFieldKind<"Identifier", Multiplicity.Single> {
 }
 
 // @public
@@ -1003,7 +1008,7 @@ export type InsertableObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord
     readonly [Property in keyof T]: InsertableTreeFieldFromImplicitField<T[Property]>;
 };
 
-// @beta
+// @public
 export type InsertableObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>> = {
     readonly [Property in keyof T]: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
@@ -1011,13 +1016,13 @@ export type InsertableObjectFromSchemaRecordUnsafe<T extends Unenforced<Restrict
 // @public
 export type InsertableTreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> = TSchema extends FieldSchema<infer Kind, infer Types> ? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind> : TSchema extends ImplicitAllowedTypes ? InsertableTreeNodeFromImplicitAllowedTypes<TSchema> : unknown;
 
-// @beta
+// @public
 export type InsertableTreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind> : InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema>;
 
 // @public
 export type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes = TreeNodeSchema> = TSchema extends TreeNodeSchema ? InsertableTypedNode<TSchema> : TSchema extends AllowedTypes ? InsertableTypedNode<FlexListToUnion<TSchema>> : never;
 
-// @beta
+// @public
 export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema extends Unenforced<ImplicitAllowedTypes>> = TSchema extends AllowedTypes ? InsertableTypedNodeUnsafe<FlexListToUnion<TSchema>> : InsertableTypedNodeUnsafe<TSchema>;
 
 // @public
@@ -1025,7 +1030,7 @@ export type InsertableTypedNode<T extends TreeNodeSchema> = (T extends {
     implicitlyConstructable: true;
 } ? NodeBuilderData<T> : never) | Unhydrated<NodeFromSchema<T>>;
 
-// @beta
+// @public
 export type InsertableTypedNodeUnsafe<T extends Unenforced<TreeNodeSchema>> = Unhydrated<NodeFromSchemaUnsafe<T>> | (T extends {
     implicitlyConstructable: true;
 } ? NodeBuilderDataUnsafe<T> : never);
@@ -1085,7 +1090,7 @@ export interface ITransaction {
 
 // @public
 export interface ITree extends IChannel {
-    schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TreeFieldFromImplicitField<TRoot>>;
+    schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TRoot>;
 }
 
 // @internal
@@ -1288,7 +1293,7 @@ export type NewFieldContent = ITreeCursorSynchronous | readonly ITreeCursorSynch
 // @public
 export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema<string, NodeKind, unknown, infer TBuild> ? TBuild : never;
 
-// @beta
+// @public
 export type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchema<string, NodeKind, unknown, infer TBuild> ? TBuild : never;
 
 // @internal
@@ -1306,7 +1311,7 @@ export interface NodeExistsConstraint {
 // @public
 export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<string, NodeKind, infer TNode> ? TNode : never;
 
-// @beta
+// @public
 export type NodeFromSchemaUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchema<string, NodeKind, infer TNode> ? TNode : never;
 
 // @internal
@@ -1360,7 +1365,7 @@ export type ObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, I
     -readonly [Property in keyof T]: TreeFieldFromImplicitField<T[Property]>;
 };
 
-// @beta
+// @public
 export type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>> = {
     -readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
@@ -1490,10 +1495,14 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
 
 // @public
 export interface Revertible {
-    release(): void;
+    [disposeSymbol](): void;
     revert(): void;
+    revert(dispose: boolean): void;
     readonly status: RevertibleStatus;
 }
+
+// @public
+export type RevertibleFactory = (onRevertibleDisposed?: (revertible: Revertible) => void) => Revertible;
 
 // @public
 export enum RevertibleStatus {
@@ -1572,37 +1581,30 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     constructor(scope: TScope);
     array<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array, TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, `Array<${string}>`>>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, true, T>;
     array<const Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Array, TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, true, T>;
-    readonly boolean: TreeNodeSchema<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean>;
-    // @deprecated
-    fixRecursiveReference<T extends AllowedTypes>(...types: T): void;
-    readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<FluidObject<unknown> & IFluidLoadable>, IFluidHandle<FluidObject<unknown> & IFluidLoadable>>;
-    map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
-    map<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
-    namedArray_internal<Name extends TName | string, const T extends ImplicitAllowedTypes, const ImplicitlyConstructable extends boolean>(name: Name, allowedTypes: T, customizable: boolean, implicitlyConstructable: ImplicitlyConstructable): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Array, TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, ImplicitlyConstructable, T>;
-    namedMap_internal<Name extends TName | string, const T extends ImplicitAllowedTypes, const ImplicitlyConstructable extends boolean>(name: Name, allowedTypes: T, customizable: boolean, implicitlyConstructable: ImplicitlyConstructable): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, ImplicitlyConstructable, T>;
-    readonly null: TreeNodeSchema<"com.fluidframework.leaf.null", NodeKind.Leaf, null, null>;
-    readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
-    object<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, fields: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T>;
-    optional<const T extends ImplicitAllowedTypes>(t: T, props?: FieldProps): FieldSchema<FieldKind.Optional, T>;
-    required<const T extends ImplicitAllowedTypes>(t: T, props?: FieldProps): FieldSchema<FieldKind.Required, T>;
-    // (undocumented)
-    readonly scope: TScope;
-    readonly string: TreeNodeSchema<"com.fluidframework.leaf.string", NodeKind.Leaf, string, string>;
-}
-
-// @beta @sealed
-export class SchemaFactoryRecursive<TScope extends string, TName extends number | string = string> extends SchemaFactory<TScope, TName> {
     arrayRecursive<const Name extends TName, const T extends Unenforced<ImplicitAllowedTypes>>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Array, TreeArrayNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>>, {
         [Symbol.iterator](): Iterator<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>;
     }, false, T>;
+    readonly boolean: TreeNodeSchema<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean>;
+    readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<FluidObject & IFluidLoadable>, IFluidHandle<FluidObject & IFluidLoadable>>;
+    get identifier(): FieldSchema<FieldKind.Identifier>;
+    map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
+    map<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
     mapRecursive<Name extends TName, const T extends Unenforced<ImplicitAllowedTypes>>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>>, {
         [Symbol.iterator](): Iterator<[
         string,
         InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>
         ]>;
     }, false, T>;
+    readonly null: TreeNodeSchema<"com.fluidframework.leaf.null", NodeKind.Leaf, null, null>;
+    readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
+    object<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, fields: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T>;
     objectRecursive<const Name extends TName, const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>>(name: Name, t: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecordUnsafe<T>, false, T>;
+    optional<const T extends ImplicitAllowedTypes>(t: T, props?: FieldProps): FieldSchema<FieldKind.Optional, T>;
     optionalRecursive<const T extends Unenforced<readonly (() => TreeNodeSchema)[]>>(t: T): FieldSchemaUnsafe<FieldKind.Optional, T>;
+    required<const T extends ImplicitAllowedTypes>(t: T, props?: FieldProps): FieldSchema<FieldKind.Required, T>;
+    // (undocumented)
+    readonly scope: TScope;
+    readonly string: TreeNodeSchema<"com.fluidframework.leaf.string", NodeKind.Leaf, string, string>;
 }
 
 // @public
@@ -1641,6 +1643,11 @@ export interface SchemaLintConfiguration {
     readonly rejectEmpty: boolean;
     // (undocumented)
     readonly rejectForbidden: boolean;
+}
+
+// @internal
+export interface SchemaPolicy {
+    readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindData>;
 }
 
 // @internal
@@ -1778,8 +1785,9 @@ export interface TreeAdapter {
 
 // @public
 export interface TreeApi extends TreeNodeApi {
+    contains(node: TreeNode, other: TreeNode): boolean;
     runTransaction<TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void | "rollback"): void;
-    runTransaction<TRoot>(tree: TreeView<TRoot>, transaction: (root: TRoot) => void | "rollback"): void;
+    runTransaction<TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void | "rollback"): void;
 }
 
 // @public
@@ -1812,7 +1820,7 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends Readonl
     removeRange(start?: number, end?: number): void;
 }
 
-// @beta
+// @public
 export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAllowedTypes>> extends TreeArrayNodeBase<TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>, TreeArrayNode> {
 }
 
@@ -1851,7 +1859,7 @@ export interface TreeDataContext {
 // @public
 export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> = TSchema extends FieldSchema<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind> : TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypes<TSchema> : unknown;
 
-// @beta
+// @public
 export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind> : TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypesUnsafe<TSchema> : unknown;
 
 // @internal
@@ -1878,7 +1886,7 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
     set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T> | undefined): void;
 }
 
-// @beta
+// @public
 export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>> extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypesUnsafe<T>>, TreeNode {
     delete(key: string): void;
     set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T> | undefined): void;
@@ -1903,13 +1911,14 @@ export interface TreeNodeApi {
     on<K extends keyof TreeChangeEvents>(node: TreeNode, eventName: K, listener: TreeChangeEvents[K]): () => void;
     parent(node: TreeNode): TreeNode | undefined;
     schema<T extends TreeNode | TreeLeafValue>(node: T): TreeNodeSchema<string, NodeKind, unknown, T>;
+    shortId(node: TreeNode): number | undefined;
     readonly status: (node: TreeNode) => TreeStatus;
 }
 
 // @public
 export type TreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes = TreeNodeSchema> = TSchema extends TreeNodeSchema ? NodeFromSchema<TSchema> : TSchema extends AllowedTypes ? NodeFromSchema<FlexListToUnion<TSchema>> : unknown;
 
-// @beta
+// @public
 export type TreeNodeFromImplicitAllowedTypesUnsafe<TSchema extends Unenforced<ImplicitAllowedTypes>> = TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypes<TSchema> : TSchema extends TreeNodeSchema ? NodeFromSchema<TSchema> : TSchema extends AllowedTypes ? NodeFromSchema<FlexListToUnion<TSchema>> : unknown;
 
 // @public
@@ -1968,7 +1977,7 @@ export abstract class TreeNodeStoredSchema {
 // @public
 export type TreeObjectNode<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>, TypeName extends string = string> = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName>;
 
-// @beta
+// @public
 export type TreeObjectNodeUnsafe<T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>, TypeName extends string = string> = TreeNode & ObjectFromSchemaRecordUnsafe<T> & WithType<TypeName>;
 
 // @internal
@@ -2008,18 +2017,18 @@ export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
 ][_InlineTrick];
 
 // @public
-export interface TreeView<in out TRoot> extends IDisposable {
+export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposable {
     readonly error?: SchemaIncompatible;
     readonly events: ISubscribable<TreeViewEvents>;
-    readonly root: TRoot;
+    get root(): TreeFieldFromImplicitField<TSchema>;
+    set root(newRoot: InsertableTreeFieldFromImplicitField<TSchema>);
     upgradeSchema(): void;
 }
 
 // @public
 export interface TreeViewEvents {
     afterBatch(): void;
-    commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
-    revertibleDisposed(revertible: Revertible): void;
+    commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
     rootChanged(): void;
 }
 
@@ -2051,7 +2060,7 @@ export type UnbrandedName<TName> = [
 TName extends TreeNodeSchemaIdentifier<infer S> ? S : string
 ][_InlineTrick];
 
-// @beta
+// @public
 export type Unenforced<_DesiredExtendsConstraint> = unknown;
 
 // @public
@@ -2067,13 +2076,13 @@ export interface UpPath<TParent = UpPathDefault> {
 // @internal
 export type UpPathDefault = UpPath;
 
-// @beta
+// @public
 export type ValidateRecursiveSchema<T extends TreeNodeSchemaClass<string, NodeKind.Array | NodeKind.Map | NodeKind.Object, TreeNode & WithType<T["identifier"]>, {
-    [NodeKind.Object]: T["info"] extends RestrictiveReadonlyRecord<string, FieldSchema> ? InsertableObjectFromSchemaRecord<T["info"]> : unknown;
+    [NodeKind.Object]: T["info"] extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema> ? InsertableObjectFromSchemaRecord<T["info"]> : unknown;
     [NodeKind.Array]: T["info"] extends ImplicitAllowedTypes ? Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>> : unknown;
     [NodeKind.Map]: T["info"] extends ImplicitAllowedTypes ? Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>]> : unknown;
 }[T["kind"]], false, {
-    [NodeKind.Object]: RestrictiveReadonlyRecord<string, FieldSchema>;
+    [NodeKind.Object]: RestrictiveReadonlyRecord<string, ImplicitFieldSchema>;
     [NodeKind.Array]: ImplicitAllowedTypes;
     [NodeKind.Map]: ImplicitAllowedTypes;
 }[T["kind"]]>> = true;

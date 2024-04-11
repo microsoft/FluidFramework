@@ -8,11 +8,7 @@ import React from "react";
 
 import { InventoryList, InventoryListFactory } from "./inventoryList.js";
 import { MainView } from "./view/inventoryList.js";
-export { InventoryList, InventoryListFactory } from "./inventoryList.js";
 
-/**
- * @internal
- */
 export const fluidExport = new ContainerViewRuntimeFactory(
 	InventoryListFactory,
 	(tree: InventoryList) =>

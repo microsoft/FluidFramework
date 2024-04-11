@@ -7,9 +7,6 @@ import { strict as assert } from "assert";
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { leaf } from "../../domains/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { required } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	FieldKinds,
 	FlexFieldSchema,
@@ -117,11 +114,7 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.root, 5);
 		const log: [string, unknown][] = [];
 
-		// Currently there is no way to edit the root using the simple-tree API, so use flex-tree to do it:
-		const flexView = view.getViewOrError();
-		assert(!(flexView instanceof SchematizeError));
-		assert(flexView.flexTree.is(FlexFieldSchema.create(required, [leaf.number])));
-		flexView.flexTree.content = 6;
+		view.root = 6;
 
 		assert.deepEqual(log, [
 			["rootChanged", 6],
