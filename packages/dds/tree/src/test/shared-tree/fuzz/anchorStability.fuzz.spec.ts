@@ -137,7 +137,6 @@ describe("Fuzz - anchor stability", () => {
 			saveFailures: {
 				directory: failureDirectory,
 			},
-			skip: [17, 36, 49],
 			// AB#5745: Starting a transaction while detached, submitting edits, then attaching hits 0x428.
 			// Once this is fixed, this fuzz test could also include working from a detached state if desired.
 			detachedStartOptions: { numOpsBeforeAttach: 0 },

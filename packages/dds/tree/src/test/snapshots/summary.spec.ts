@@ -14,8 +14,7 @@ describe("snapshot tests", () => {
 		describe(`${compressionType}`, () => {
 			const testTrees = generateTestTrees(useUncompressedEncode);
 
-			// TODO: fix the summary tests failure caused by the non-atomization of tree delta visit
-			for (const { name: testName, runScenario, skip = true, only = false } of testTrees) {
+			for (const { name: testName, runScenario, skip = false, only = false } of testTrees) {
 				const itFn = only ? it.only : skip ? it.skip : it;
 
 				itFn(testName, async () => {

@@ -47,7 +47,7 @@ const rootNode: UpPath = {
 
 describe("Editing", () => {
 	describe("Sequence Field", () => {
-		it.skip("concurrent inserts", () => {
+		it("concurrent inserts", () => {
 			const tree1 = makeTreeFromJson([]);
 			insert(tree1, 0, "y");
 			const tree2 = tree1.fork();
@@ -250,7 +250,7 @@ describe("Editing", () => {
 			}
 		});
 
-		it.skip("can rebase local dependent inserts", () => {
+		it("can rebase local dependent inserts", () => {
 			const tree1 = makeTreeFromJson(["y"]);
 			const tree2 = tree1.fork();
 
