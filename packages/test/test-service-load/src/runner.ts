@@ -5,7 +5,12 @@
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { ConnectionState, IContainerExperimental, Loader } from "@fluidframework/container-loader";
+import {
+	ConnectionState,
+	type IContainerBeta,
+	type IContainerExperimental,
+	Loader,
+} from "@fluidframework/container-loader";
 import { IRequestHeader, LogLevel } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
@@ -257,7 +262,13 @@ async function runnerProcess(
 			const test = (await container.getEntryPoint()) as ILoadTest;
 
 			// Retain old behavior of runtime being disposed on container close
-			container.once("closed", () => container?.dispose());
+			container.once("closed", () => {
+				runConfig.logger.sendTelemetryEvent({
+					eventName: "ConnectionDiagnosticLog",
+					log: JSON.stringify((container as IContainerBeta).connectionDiagnosticsLog),
+				});
+				container?.dispose();
+			});
 
 			if (enableOpsMetrics) {
 				const testRuntime = await test.getRuntime();

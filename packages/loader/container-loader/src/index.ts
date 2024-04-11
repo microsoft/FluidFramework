@@ -25,3 +25,4 @@ export {
 } from "./location-redirection-utilities/index.js";
 export { IProtocolHandler, ProtocolHandlerBuilder } from "./protocol.js";
 export { tryParseCompatibleResolvedUrl, IParsedUrl } from "./utils.js";
+export { IConnectionStateChangeReason, ReconnectMode } from "./contracts.js";

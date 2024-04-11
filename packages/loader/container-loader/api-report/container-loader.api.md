@@ -4,7 +4,9 @@
 
 ```ts
 
+import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
+import { IAnyDriverError } from '@fluidframework/driver-definitions';
 import { IAudienceOwner } from '@fluidframework/container-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IConfigProviderBase } from '@fluidframework/core-interfaces';
@@ -12,6 +14,7 @@ import { IContainer } from '@fluidframework/container-definitions';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
+import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IFluidCodeDetails } from '@fluidframework/container-definitions';
 import { IFluidModule } from '@fluidframework/container-definitions';
 import { IHostLoader } from '@fluidframework/container-definitions';
@@ -28,34 +31,39 @@ import { IUrlResolver } from '@fluidframework/driver-definitions';
 
 // @beta
 export interface ConnectionDiagnostics {
-    catchingUp?: {
-        time: number;
-        checkpointSequenceNumber: number;
-        initialProcessedSequenceNumber: number;
-        currentProcessedSequenceNumber: number;
-    };
     clientId?: string;
-    connected?: {
-        time: number;
-        opsSent: number;
-        opsReceived: number;
+    connectionMode?: ConnectionMode;
+    state: keyof ConnectionDiagnostics["stateDetails"];
+    readonly stateDetails: {
+        disconnected: {
+            readonly time: number;
+            readonly reason?: IConnectionStateChangeReason;
+            readonly autoReconnect: ReconnectMode;
+        };
+        establishingConnection?: {
+            readonly time: number;
+            readonly reason?: IConnectionStateChangeReason;
+            steps: {
+                name: string;
+                type?: "auth" | "socket.io" | "orderingService";
+                time: number;
+                retryableError?: IAnyDriverError;
+            }[];
+        };
+        catchingUp?: {
+            readonly time: number;
+            readonly reason?: IConnectionStateChangeReason;
+            checkpointSequenceNumber?: number;
+            initialProcessedSequenceNumber?: number;
+            currentProcessedSequenceNumber?: number;
+        };
+        connected?: {
+            readonly time: number;
+            readonly reason?: IConnectionStateChangeReason;
+            opsSent?: number;
+            opsReceived?: number;
+        };
     };
-    disconnected: {
-        time: number;
-        autoReconnect: boolean;
-    };
-    disconnectReason?: string;
-    establishingConnection?: {
-        time: number;
-        steps: {
-            name: string;
-            type: "auth" | "socket.io" | "orderingService";
-            time: number;
-            retryableError?: Error;
-        }[];
-    };
-    lastDisconnectReason?: string;
-    state: keyof Pick<ConnectionDiagnostics, "disconnected" | "establishingConnection" | "catchingUp" | "connected">;
 }
 
 // @public
@@ -69,6 +77,14 @@ export enum ConnectionState {
 // @alpha @deprecated (undocumented)
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
+}
+
+// @beta (undocumented)
+export interface IConnectionStateChangeReason<T extends IErrorBase = IErrorBase> {
+    // (undocumented)
+    error?: T;
+    // (undocumented)
+    text: string;
 }
 
 // @beta
@@ -166,6 +182,16 @@ export class Loader implements IHostLoader {
 
 // @alpha
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
+
+// @beta (undocumented)
+export enum ReconnectMode {
+    // (undocumented)
+    Disabled = "Disabled",
+    // (undocumented)
+    Enabled = "Enabled",
+    // (undocumented)
+    Never = "Never"
+}
 
 // @alpha
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;

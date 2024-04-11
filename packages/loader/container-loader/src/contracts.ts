@@ -24,12 +24,18 @@ import {
 } from "@fluidframework/protocol-definitions";
 import type { PendingConnectionSteps } from "./container.js";
 
+/**
+ * @beta
+ */
 export enum ReconnectMode {
 	Never = "Never",
 	Disabled = "Disabled",
 	Enabled = "Enabled",
 }
 
+/**
+ * @beta
+ */
 export interface IConnectionStateChangeReason<T extends IErrorBase = IErrorBase> {
 	text: string;
 	error?: T;
