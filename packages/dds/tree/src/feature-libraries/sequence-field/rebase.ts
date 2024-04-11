@@ -423,9 +423,17 @@ class RebaseQueue {
  */
 function addMovedMarkEffect(mark: Mark, effect: MarkEffect): Mark {
 	if (isMoveIn(mark) && isMoveOut(effect)) {
-		return { ...mark, type: "Insert" };
+		const result: Mark = { ...mark, type: "Insert" };
+		if (effect.revision !== undefined) {
+			result.revision = effect.revision;
+		}
+		return result;
 	} else if (isAttachAndDetachEffect(mark) && isMoveIn(mark.attach) && isMoveOut(effect)) {
-		return { ...mark.detach, count: mark.count };
+		const result: Mark = { ...mark.detach, count: mark.count };
+		if (effect.revision !== undefined) {
+			result.revision = effect.revision;
+		}
+		return result;
 	} else if (isTombstone(mark)) {
 		return { ...mark, ...effect };
 	}
