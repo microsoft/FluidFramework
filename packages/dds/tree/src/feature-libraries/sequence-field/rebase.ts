@@ -38,6 +38,7 @@ import {
 	setMoveEffect,
 } from "./moveEffectTable.js";
 import {
+	AttachAndDetach,
 	CellId,
 	CellMark,
 	Changeset,
@@ -65,7 +66,7 @@ import {
 	compareLineages,
 	extractMarkEffect,
 	getDetachIdForLineage,
-	getDetachOutputId,
+	getDetachOutputCellId,
 	getEndpoint,
 	getInputCellId,
 	getOffsetInCellRange,
@@ -426,12 +427,13 @@ function addMovedMarkEffect(mark: Mark, effect: MarkEffect): Mark {
 		const result: Mark = {
 			...mark,
 			type: "Insert",
-			count: mark.count,
-			id: mark.id,
 		};
-		if (effect.revision !== undefined) {
-			result.revision = effect.revision;
-		}
+		return result;
+	} else if (isAttachAndDetachEffect(mark) && isMoveIn(mark.attach) && isMoveOut(effect)) {
+		const result: Mark & AttachAndDetach = {
+			...mark,
+			attach: { ...mark.attach, type: "Insert" },
+		};
 		return result;
 	} else if (isTombstone(mark)) {
 		return { ...mark, ...effect };
@@ -495,7 +497,7 @@ function rebaseMarkIgnoreChild(
 			!isNewAttach(currMark),
 			0x69d /* A new attach should not be rebased over its cell being emptied */,
 		);
-		const baseCellId = getDetachOutputId(baseMark, baseRevision, metadata);
+		const baseCellId = getDetachOutputCellId(baseMark, baseRevision, metadata);
 
 		if (isMoveOut(baseMark)) {
 			assert(isMoveMark(baseMark), 0x6f0 /* Only move marks have move IDs */);
@@ -526,9 +528,7 @@ function rebaseMarkIgnoreChild(
 		}
 		rebasedMark = makeDetachedMark(rebasedMark, cloneCellId(baseCellId));
 	} else if (markFillsCells(baseMark)) {
-		rebasedMark = isAttachAndDetachEffect(currMark)
-			? withNodeChange({ ...currMark.detach, count: currMark.count }, currMark.changes)
-			: withCellId(currMark, undefined);
+		rebasedMark = withCellId(currMark, undefined);
 	} else if (isAttachAndDetachEffect(baseMark)) {
 		assert(
 			baseMark.cellId !== undefined,

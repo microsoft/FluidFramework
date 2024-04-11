@@ -11,6 +11,7 @@ import {
 	RevisionMetadataSource,
 	RevisionTag,
 	areEqualChangeAtomIds,
+	makeChangeAtomId,
 } from "../../core/index.js";
 import { Mutable, RangeMap, brand, fail, getFromRangeMap } from "../../util/index.js";
 import {
@@ -139,11 +140,11 @@ export function getOutputCellId(
 	metadata: RevisionMetadataSource | undefined,
 ): CellId | undefined {
 	if (isDetach(mark)) {
-		return getDetachOutputId(mark, revision, metadata);
+		return getDetachOutputCellId(mark, revision, metadata);
 	} else if (markFillsCells(mark)) {
 		return undefined;
 	} else if (isAttachAndDetachEffect(mark)) {
-		return getDetachOutputId(mark.detach, revision, metadata);
+		return getDetachOutputCellId(mark.detach, revision, metadata);
 	}
 
 	return getInputCellId(mark, revision, metadata);
@@ -293,7 +294,10 @@ export function compareCellPositionsUsingTombstones(
 	}
 }
 
-export function getDetachOutputId(
+/**
+ * @returns the ID of the cell in the output context of the given detach `mark`.
+ */
+export function getDetachOutputCellId(
 	mark: Detach,
 	revision: RevisionTag | undefined,
 	metadata: RevisionMetadataSource | undefined,
@@ -304,6 +308,26 @@ export function getDetachOutputId(
 			localId: mark.id,
 		}
 	);
+}
+
+/**
+ * @returns the ID of the detached node in the output context of the given detach `mark`.
+ */
+export function getDetachedNodeId(
+	mark: Detach,
+	revision: RevisionTag | undefined,
+	metadata: RevisionMetadataSource | undefined,
+): ChangeAtomId {
+	switch (mark.type) {
+		case "Remove": {
+			return getDetachOutputCellId(mark, revision, metadata);
+		}
+		case "MoveOut": {
+			return makeChangeAtomId(mark.id, mark.revision ?? revision);
+		}
+		default:
+			unreachableCase(mark);
+	}
 }
 
 function getIntentionIfMetadataProvided(
@@ -321,7 +345,7 @@ export function normalizeCellRename(
 ): CellMark<AttachAndDetach | DetachOfRemovedNodes> {
 	assert(mark.cellId !== undefined, 0x823 /* AttachAndDetach marks should have a cell ID */);
 	if (mark.attach.type !== "Insert" || isNewAttachEffect(mark.attach, mark.cellId)) {
-		return mark;
+	return mark;
 	}
 	// Normalization: when the attach is a revive, we rely on the implicit reviving semantics of the
 	// detach instead of using an explicit revive effect in an AttachAndDetach mark.
