@@ -971,7 +971,7 @@ function getReplacementEndpoint(
 	count: number,
 ): ChangeAtomId | undefined {
 	const effect = getMoveEffect(moveEffects, target, revision, id, count);
-	assert(effect.length === count, 0x815 /* Expected effect to cover entire mark */);
+	assert(effect.length === count, "Expected effect to cover entire mark");
 	return effect.value?.endpointReplacement;
 }
 
