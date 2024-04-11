@@ -240,7 +240,7 @@ A new format was introduced for optional-field in [this PR](https://github.com/m
 That format was added as an option for `SharedTree` users in [this PR](https://github.com/microsoft/FluidFramework/pull/20615).
 
 Future changes introducing a new format can do so in a single PR if desired.
-Not exposing the new format in `SharedTreeFormatVersion` immediately has the benefit of allowing iteration on the new format without preserving compatibility.
+Waiting to expose the new format in `SharedTreeFormatVersion` has the benefit of allowing iteration on the new format without preserving compatibility.
 Once the format is exposed & released to users, it must be supported indefinitely.
 
 ## Possible Improvements
