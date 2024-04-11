@@ -6,6 +6,7 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import {
+	IConnectionStep,
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
 	IDocumentService,
@@ -248,22 +249,23 @@ export class OdspDocumentService
 	 */
 	public async connectToDeltaStream(
 		client: IClient,
-		status?: { steps: string[] },
+		steps?: IConnectionStep[],
 	): Promise<IDocumentDeltaConnection> {
+		assert(steps !== undefined, "steps should be defined");
+
 		if (this.socketModuleP === undefined) {
-			status?.steps.push("delayLoadedDeltaStream");
+			steps.unshift({ name: "loadSocketModule", time: Date.now() });
 			this.socketModuleP = this.getDelayLoadedDeltaStream();
 		}
 		return this.socketModuleP
 			.then(async (m) => {
 				this.odspSocketModuleLoaded = true;
-				return m.connectToDeltaStream(client, status!);
+				return m.connectToDeltaStream(client, steps);
 			})
 			.catch((error) => {
 				// Setting undefined in case someone tries to recover from module failure by calling again.
 				this.socketModuleP = undefined;
 				this.odspSocketModuleLoaded = false;
-				//* Do something with this error and status here?
 				throw error;
 			});
 	}

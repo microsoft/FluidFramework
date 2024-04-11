@@ -95,6 +95,18 @@ export interface IAuthorizationError extends IDriverErrorBase {
 }
 
 // @alpha
+export interface IConnectionStep {
+    // (undocumented)
+    name: string;
+    // (undocumented)
+    retryableError?: IAnyDriverError;
+    // (undocumented)
+    time: number;
+    // (undocumented)
+    type?: "auth" | "socket.io" | "orderingService";
+}
+
+// @alpha
 export interface IContainerPackageInfo {
     name: string;
 }
@@ -153,7 +165,7 @@ export interface IDocumentDeltaStorageService {
 // @alpha (undocumented)
 export interface IDocumentService extends IEventProvider<IDocumentServiceEvents> {
     connectToDeltaStorage(): Promise<IDocumentDeltaStorageService>;
-    connectToDeltaStream(client: IClient, status?: {}): Promise<IDocumentDeltaConnection>;
+    connectToDeltaStream(client: IClient, steps?: IConnectionStep[]): Promise<IDocumentDeltaConnection>;
     connectToStorage(): Promise<IDocumentStorageService>;
     dispose(error?: any): void;
     policies?: IDocumentServicePolicies;

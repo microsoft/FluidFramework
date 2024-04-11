@@ -16,6 +16,7 @@ export type {
 export { DriverErrorTypes } from "./driverError.js";
 export type {
 	FiveDaysMs,
+	IConnectionStep,
 	IDeltasFetchResult,
 	IDeltaStorageService,
 	IDocumentDeltaConnection,

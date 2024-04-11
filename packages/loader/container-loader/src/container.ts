@@ -43,6 +43,7 @@ import {
 	ISnapshot,
 	IThrottlingWarning,
 	IUrlResolver,
+	type IAnyDriverError,
 } from "@fluidframework/driver-definitions";
 import {
 	MessageType2,
@@ -2494,9 +2495,9 @@ export interface ConnectionDiagnostics {
 			steps: {
 				// 0 is current step
 				name: string; // Free-form, for telemetry only
-				type: "auth" | "socket.io" | "orderingService"; // unsure about this - part of public API, needs to be both stable and useful
+				type?: "auth" | "socket.io" | "orderingService"; // unsure about this - part of public API, needs to be both stable and useful
 				time: number;
-				retryableError?: Error; // with errorType (maybe AnyDriverError)
+				retryableError?: IAnyDriverError; // with errorType (maybe AnyDriverError)
 			}[];
 		};
 		/** Details about the connection while catchingUp */

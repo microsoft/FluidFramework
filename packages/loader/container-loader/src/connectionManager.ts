@@ -17,6 +17,7 @@ import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 	IDocumentService,
+	type IConnectionStep,
 } from "@fluidframework/driver-definitions";
 import {
 	calculateMaxWaitTime,
@@ -159,9 +160,11 @@ function isNoDeltaStreamConnection(connection: any): connection is NoDeltaStream
 	return connection instanceof NoDeltaStream;
 }
 
-const waitForOnline = async (): Promise<void> => {
+const waitForOnline = async (steps: IConnectionStep[]): Promise<void> => {
 	// Only wait if we have a strong signal that we're offline - otherwise assume we're online.
 	if (globalThis.navigator?.onLine === false && globalThis.addEventListener !== undefined) {
+		steps.unshift({ name: "waitForOnline", time: Date.now() });
+
 		return new Promise<void>((resolve) => {
 			const resolveAndRemoveListener = () => {
 				resolve();
@@ -571,6 +574,8 @@ export class ConnectionManager implements IConnectionManager {
 				throw new Error("Attempting to connect a closed DeltaManager");
 			}
 			if (abortSignal.aborted === true) {
+				diagnostics.unshift({ name: "ConnectionAttemptCancelled", time: Date.now() });
+
 				this.logger.sendTelemetryEvent({
 					eventName: "ConnectionAttemptCancelled",
 					attempts: connectRepeatCount,
@@ -593,6 +598,7 @@ export class ConnectionManager implements IConnectionManager {
 
 				if (connection.disposed) {
 					// Nobody observed this connection, so drop it on the floor and retry.
+					diagnostics.unshift({ name: "ReceivedClosedConnection", time: Date.now() });
 					this.logger.sendTelemetryEvent({ eventName: "ReceivedClosedConnection" });
 					connection = undefined;
 				}
@@ -614,6 +620,11 @@ export class ConnectionManager implements IConnectionManager {
 					LogLevel.verbose,
 				);
 				if (isDeltaStreamConnectionForbiddenError(origError)) {
+					diagnostics.unshift({
+						name: "DeltaStreamConnectionForbidden",
+						time: Date.now(),
+					});
+
 					connection = new NoDeltaStream(origError.storageOnlyReason, {
 						text: origError.message,
 						error: origError,
@@ -624,6 +635,8 @@ export class ConnectionManager implements IConnectionManager {
 					isFluidError(origError) &&
 					origError.errorType === DriverErrorTypes.outOfStorageError
 				) {
+					diagnostics.unshift({ name: "OutOfStorage", time: Date.now() });
+
 					// If we get out of storage error from calling joinsession, then use the NoDeltaStream object so
 					// that user can at least load the container.
 					connection = new NoDeltaStream(undefined, {
@@ -640,6 +653,12 @@ export class ConnectionManager implements IConnectionManager {
 					this.props.closeHandler(error);
 					throw error;
 				}
+
+				diagnostics.unshift({
+					name: "DeltaConnectionFailureToConnect",
+					time: Date.now(),
+					retryableError: origError,
+				});
 
 				// Since the error is retryable this will not log to the error table
 				logNetworkFailure(
@@ -671,6 +690,7 @@ export class ConnectionManager implements IConnectionManager {
 					this.props.reconnectionDelayHandler(delayMs, origError);
 				}
 
+				diagnostics.unshift({ name: `reconnectDelay: ${delayMs}ms`, time: Date.now() });
 				await new Promise<void>((resolve) => {
 					setTimeout(resolve, delayMs);
 				});
@@ -678,7 +698,7 @@ export class ConnectionManager implements IConnectionManager {
 				// If we believe we're offline, we assume there's no point in trying until we at least think we're online.
 				// NOTE: This isn't strictly true for drivers that don't require network (e.g. local driver).  Really this logic
 				// should probably live in the driver.
-				await waitForOnline();
+				await waitForOnline(diagnostics);
 				this.logger.sendPerformanceEvent({
 					eventName: "WaitBetweenConnectionAttempts",
 					duration: performance.now() - waitStartTime,
@@ -706,6 +726,10 @@ export class ConnectionManager implements IConnectionManager {
 		// Check for abort signal after while loop as well or we've been disposed
 		if (abortSignal.aborted === true || this._disposed) {
 			connection.dispose();
+			diagnostics.unshift({
+				name: "SuccessfulConnectionAttemptAlreadyCancelled",
+				time: Date.now(),
+			});
 			this.logger.sendTelemetryEvent({
 				eventName: "ConnectionAttemptCancelled",
 				attempts: connectRepeatCount,
@@ -715,6 +739,7 @@ export class ConnectionManager implements IConnectionManager {
 			return;
 		}
 
+		diagnostics.unshift({ name: "setupNewSuccessfulConnection", time: Date.now() });
 		this.setupNewSuccessfulConnection(connection, requestedMode, reason);
 	}
 
@@ -791,6 +816,7 @@ export class ConnectionManager implements IConnectionManager {
 			this.pendingConnection !== undefined,
 			0x345 /* this.pendingConnection is undefined when trying to cancel */,
 		);
+		this.pendingConnection.diagnostics.unshift({ name: "cancelling", time: Date.now() });
 		this.pendingConnection.abort();
 		this.pendingConnection = undefined;
 		this.logger.sendTelemetryEvent({ eventName: "ConnectionCancelReceived" });
@@ -989,6 +1015,8 @@ export class ConnectionManager implements IConnectionManager {
 		// If we're already disconnected/disconnecting it's not appropriate to call this again.
 		assert(this.connection !== undefined, 0x0eb /* "Missing connection for reconnect" */);
 
+		//* TODO: Add steps to Disconnected state as well (see usage of this variable below)
+		const stepsWhileDisconnected: IConnectionStep[] = [];
 		this.disconnectFromDeltaStream(reason);
 
 		// We will always trigger reconnect, even if canRetry is false.
@@ -1018,6 +1046,7 @@ export class ConnectionManager implements IConnectionManager {
 
 		// If the error tells us to wait before retrying, then do so.
 		const delayMs = getRetryDelayFromError(reason.error);
+		stepsWhileDisconnected.unshift({ name: `reconnectDelay: ${delayMs}ms`, time: Date.now() });
 		if (reason.error !== undefined && delayMs !== undefined) {
 			this.props.reconnectionDelayHandler(delayMs, reason.error);
 			await new Promise<void>((resolve) => {
@@ -1028,7 +1057,7 @@ export class ConnectionManager implements IConnectionManager {
 		// If we believe we're offline, we assume there's no point in trying again until we at least think we're online.
 		// NOTE: This isn't strictly true for drivers that don't require network (e.g. local driver).  Really this logic
 		// should probably live in the driver.
-		await waitForOnline();
+		await waitForOnline(stepsWhileDisconnected);
 
 		this.triggerConnect(
 			{
