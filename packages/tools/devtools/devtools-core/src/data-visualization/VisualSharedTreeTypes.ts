@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { type Primitive } from "./VisualTree.js";
+import type { VisualChildNode } from "@fluidframework/devtools-core-previous";
 
 /**
  * Base visualizer for SharedTree.
@@ -48,7 +48,7 @@ interface SharedTreeNode extends SharedTreeNodeBase {
  */
 export interface SharedTreeLeafNode extends SharedTreeNodeBase {
 	kind: typeof VisualSharedTreeNodeKind.LeafNode;
-	value: Primitive;
+	value: VisualChildNode;
 }
 
 /**

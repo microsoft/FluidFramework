@@ -826,6 +826,122 @@ describe("DefaultVisualizers unit tests", () => {
 		expect(result).to.deep.equal(expected);
 	});
 
+	it.only("SharedTree: Handle", async () => {
+		const factory = SharedTree.getFactory();
+		const builder = new SchemaFactory("shared-tree-test");
+		const runtime = new MockFluidDataStoreRuntime();
+
+		const sharedTree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"test",
+		);
+
+		const sharedString = new SharedString(
+			runtime,
+			"test-string",
+			SharedString.getFactory().attributes,
+		);
+		sharedString.insertText(0, "Hello World!");
+
+		class RootNodeSchema extends builder.object("root-item", {
+			foo: builder.object("bar-item", {
+				apple: builder.handle,
+			}),
+		}) {}
+
+		sharedTree.schematize(
+			new TreeConfiguration(
+				RootNodeSchema,
+				() =>
+					new RootNodeSchema({
+						foo: {
+							apple: sharedString.handle,
+						},
+					}),
+			),
+		);
+
+		const result = await visualizeSharedTree(
+			sharedTree as unknown as ISharedObject,
+			visualizeChildData,
+		);
+
+		const expected = {
+			children: {
+				foo: {
+					children: {
+						apple: {
+							value: "false",
+							nodeKind: "ValueNode",
+							tooltipContents: {
+								schema: {
+									nodeKind: "TreeNode",
+									children: {
+										name: {
+											nodeKind: "ValueNode",
+											value: "com.fluidframework.leaf.boolean",
+										},
+									},
+								},
+							},
+						},
+						banana: {
+							value: '"Taro Bubble Tea"',
+							nodeKind: "ValueNode",
+							tooltipContents: {
+								schema: {
+									nodeKind: "TreeNode",
+									children: {
+										name: {
+											nodeKind: "ValueNode",
+											value: "com.fluidframework.leaf.string",
+										},
+									},
+								},
+							},
+						},
+					},
+					nodeKind: "TreeNode",
+					tooltipContents: {
+						schema: {
+							nodeKind: "TreeNode",
+							children: {
+								name: {
+									nodeKind: "ValueNode",
+									value: "shared-tree-test.bar-item",
+								},
+								allowedTypes: {
+									value: "{ apple : com.fluidframework.leaf.boolean, banana : com.fluidframework.leaf.string }",
+									nodeKind: "ValueNode",
+								},
+							},
+						},
+					},
+				},
+			},
+			nodeKind: "FluidTreeNode",
+			tooltipContents: {
+				schema: {
+					nodeKind: "TreeNode",
+					children: {
+						name: {
+							nodeKind: "ValueNode",
+							value: "shared-tree-test.root-item",
+						},
+						allowedTypes: {
+							value: "{ foo : shared-tree-test.bar-item }",
+							nodeKind: "ValueNode",
+						},
+					},
+				},
+			},
+			fluidObjectId: "test",
+			typeMetadata: "SharedTree",
+		};
+
+		expect(result).to.deep.equal(expected);
+	});
+
 	it("SharedTree: Complex Nesting", async () => {
 		const factory = SharedTree.getFactory();
 		const builder = new SchemaFactory("shared-tree-test");
