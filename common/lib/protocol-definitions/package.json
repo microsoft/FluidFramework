@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/protocol-definitions",
-	"version": "3.3.0",
+	"version": "4.0.0",
 	"description": "Fluid protocol definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -44,8 +44,8 @@
 			}
 		}
 	},
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"main": "lib/public.js",
+	"types": "lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "flub generate entrypoints --outFileAlpha legacy --outDir ./dist",
