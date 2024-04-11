@@ -366,6 +366,7 @@ export interface SegmentGroup {
 
 /**
  * @alpha
+ * @deprecated - unused and will be removed
  */
 export class MergeNode implements IMergeNodeCommon {
 	index: number = 0;
@@ -388,10 +389,17 @@ export const MaxNodesInBlock = 8;
 /**
  * @internal
  */
-export class MergeBlock extends MergeNode {
+export class MergeBlock implements IMergeNodeCommon {
 	public children: IMergeNode[];
 	public needsScour?: boolean;
 	public parent?: MergeBlock;
+	public index: number = 0;
+	public ordinal: string = "";
+	public cachedLength: number | undefined = 0;
+
+	isLeaf(): this is ISegment {
+		return false;
+	}
 
 	/**
 	 * Supports querying the total length of all descendants of this IMergeBlock from the perspective of any
@@ -404,12 +412,11 @@ export class MergeBlock extends MergeNode {
 	partialLengths?: PartialSequenceLengths;
 
 	public constructor(public childCount: number) {
-		super();
 		this.children = new Array<IMergeNode>(MaxNodesInBlock);
 	}
 
-	public hierBlock(): HierMergeBlock | undefined {
-		return undefined;
+	public hierBlock(): this is HierMergeBlock {
+		return false;
 	}
 
 	public setOrdinal(child: IMergeNode, index: number) {
@@ -448,8 +455,8 @@ export class HierMergeBlock extends MergeBlock {
 		this.leftmostTiles = createMap<ReferencePosition>();
 	}
 
-	public hierBlock() {
-		return this;
+	public hierBlock(): this is HierMergeBlock {
+		return true;
 	}
 }
 
@@ -460,7 +467,7 @@ export function seqLTE(seq: number, minOrRefSeq: number) {
 /**
  * @alpha
  */
-export abstract class BaseSegment extends MergeNode implements ISegment {
+export abstract class BaseSegment implements ISegment {
 	public clientId: number = LocalClientId;
 	public seq: number = UniversalSequenceNumber;
 	public removedSeq?: number;
@@ -469,6 +476,10 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 	public movedSeqs?: number[];
 	public movedClientIds?: number[];
 	public wasMovedOnInsert?: boolean | undefined;
+	public index: number = 0;
+	public ordinal: string = "";
+	public cachedLength: number = 0;
+
 	public readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
 	public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
 	/***/

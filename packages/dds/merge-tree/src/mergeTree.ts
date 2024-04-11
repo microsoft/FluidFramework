@@ -1093,16 +1093,16 @@ export class MergeTree {
 		depthFirstNodeWalk(
 			segWithParent.parent,
 			segWithParent,
-			(seg) => {
-				if (seg.isLeaf()) {
-					if (Marker.is(seg) && refHasTileLabel(seg, markerLabel)) {
-						foundMarker = seg;
+			(node) => {
+				if (node.isLeaf()) {
+					if (Marker.is(node) && refHasTileLabel(node, markerLabel)) {
+						foundMarker = node;
 					}
 				} else {
-					const block = seg as HierMergeBlock;
+					assert(node.hierBlock(), "must be hierBlock");
 					const marker = forwards
-						? block.leftmostTiles[markerLabel]
-						: block.rightmostTiles[markerLabel];
+						? node.leftmostTiles[markerLabel]
+						: node.rightmostTiles[markerLabel];
 					if (marker !== undefined) {
 						assert(
 							marker.isLeaf() && Marker.is(marker),
@@ -2481,22 +2481,21 @@ export class MergeTree {
 				}
 			}
 		} else {
-			const block = node as HierMergeBlock;
+			assert(node.hierBlock(), "must be hier block");
 			// eslint-disable-next-line import/no-deprecated
-			extend(rightmostTiles, block.rightmostTiles);
+			extend(rightmostTiles, node.rightmostTiles);
 			// eslint-disable-next-line import/no-deprecated
-			extendIfUndefined(leftmostTiles, block.leftmostTiles);
+			extendIfUndefined(leftmostTiles, node.leftmostTiles);
 		}
 	}
 
 	private blockUpdate(block: MergeBlock) {
 		let len: number | undefined;
-		const hierBlock = block.hierBlock();
-		if (hierBlock) {
+		if (block.hierBlock()) {
 			// eslint-disable-next-line import/no-deprecated
-			hierBlock.rightmostTiles = createMap<Marker>();
+			block.rightmostTiles = createMap<Marker>();
 			// eslint-disable-next-line import/no-deprecated
-			hierBlock.leftmostTiles = createMap<Marker>();
+			block.leftmostTiles = createMap<Marker>();
 		}
 		for (let i = 0; i < block.childCount; i++) {
 			const child = block.children[i];
@@ -2505,12 +2504,12 @@ export class MergeTree {
 				len ??= 0;
 				len += nodeLength;
 			}
-			if (hierBlock) {
-				this.addNodeReferences(child, hierBlock.rightmostTiles, hierBlock.leftmostTiles);
+			if (block.hierBlock()) {
+				this.addNodeReferences(child, block.rightmostTiles, block.leftmostTiles);
 			}
 		}
 
-		block.cachedLength = len ?? 0;
+		block.cachedLength = len;
 	}
 
 	public blockUpdatePathLengths(
