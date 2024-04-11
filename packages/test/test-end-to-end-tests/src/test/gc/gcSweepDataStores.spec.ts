@@ -43,7 +43,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
-import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { MockLogger, tagCodeArtifacts } from "@fluidframework/telemetry-utils/internal";
 import {
 	getGCDeletedStateFromSummary,
 	getGCStateFromSummary,
@@ -249,6 +249,7 @@ describeCompat("V1/V2 compat", "FullCompat", (getTestObjectProvider) => {
 	});
 
 	afterEach(() => {
+		mockLogger.clear();
 		configProvider.clear();
 	});
 
@@ -291,6 +292,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 	});
 
 	afterEach(() => {
+		mockLogger.clear();
 		configProvider.clear();
 	});
 
@@ -373,6 +375,13 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 					eventName: "fluid:telemetry:ContainerRuntime:GC_DeletingLoadedDataStore",
 					clientType: "noninteractive/summarizer", // summarizationWithUnreferencedDataStoreAfterTime has a summarizer spanning before/after the delete
 				},
+				// DataStore
+				{
+					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
+					clientType: "interactive",
+					callSite: "getDataStore",
+				},
+				// Sub-DataStore
 				{
 					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
 					clientType: "interactive",
@@ -393,12 +402,15 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				const { summaryVersion } = await ensureSynchronizedAndSummarize(summarizer);
 				const container = await loadContainer(summaryVersion);
 
+				mockLogger.clear();
+
 				// This request fails since the datastore is swept
 				const entryPoint = (await container.getEntryPoint()) as ITestDataObject;
 				const errorResponse = await (
 					entryPoint._context.containerRuntime as any
 				).resolveHandle({
 					url: unreferencedId,
+					headers: { viaHandle: true },
 				});
 				assert.equal(
 					errorResponse.status,
@@ -415,6 +427,63 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 					true,
 					"Expected 'deleted' header to be set on the response",
 				);
+
+				// Flush microtask queue to get PathInfo event logged
+				await delay(0);
+				mockLogger.assertMatch([
+					{
+						eventName:
+							"fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
+						...tagCodeArtifacts({ id: `/${unreferencedId}` }),
+					},
+					{
+						eventName: "fluid:telemetry:ContainerRuntime:GC_DeletedDataStore_PathInfo",
+						...tagCodeArtifacts({
+							id: `/${unreferencedId}`,
+							pkg: "@fluid-example/test-dataStore",
+						}),
+					},
+				]);
+
+				// Request for child fails too since the datastore is swept
+				const childErrorResponse = await (
+					entryPoint._context.containerRuntime as any
+				).resolveHandle({
+					url: `${unreferencedId}/some-child-id`, // child id can be anything to test this case
+					headers: { viaHandle: true },
+				});
+				assert.equal(
+					childErrorResponse.status,
+					404,
+					"Should not be able to retrieve a swept datastore loading from a non-summarizer client",
+				);
+				assert.equal(
+					childErrorResponse.value,
+					`DataStore was deleted: ${unreferencedId}/some-child-id`,
+					"Expected the Sweep error message",
+				);
+				assert.equal(
+					childErrorResponse.headers?.[DeletedResponseHeaderKey],
+					true,
+					"Expected 'deleted' header to be set on the response",
+				);
+
+				// Flush microtask queue to get PathInfo event logged
+				await delay(0);
+				mockLogger.assertMatch([
+					{
+						eventName:
+							"fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
+						...tagCodeArtifacts({ id: `/${unreferencedId}/some-child-id` }),
+					},
+					{
+						eventName: "fluid:telemetry:ContainerRuntime:GC_DeletedDataStore_PathInfo",
+						...tagCodeArtifacts({
+							id: `/${unreferencedId}/some-child-id`,
+							pkg: "@fluid-example/test-dataStore",
+						}),
+					},
+				]);
 
 				// This request fails since the datastore is swept
 				const summarizerResponse = await (summarizer as any).runtime.resolveHandle({

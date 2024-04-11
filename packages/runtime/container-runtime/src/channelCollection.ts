@@ -910,12 +910,11 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			)
 		) {
 			// The requested data store has been deleted by gc. Create a 404 response exception.
-			const request: IRequest = { url: id };
 			throw responseToException(
-				createResponseError(404, "DataStore was deleted", request, {
+				createResponseError(404, "DataStore was deleted", originalRequest, {
 					[DeletedResponseHeaderKey]: true,
 				}),
-				request,
+				originalRequest,
 			);
 		}
 
@@ -988,7 +987,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		if (recentelyDeletedContext !== undefined) {
 			recentelyDeletedContext
 				.getInitialSnapshotDetails()
-				.then((details) => details.pkg.join("/"))
+				.then((details) => {
+					return details.pkg.join("/");
+				})
 				.then(
 					(pkg) => ({ pkg, error: undefined }),
 					(error) => ({ pkg: undefined, error }),
@@ -1267,7 +1268,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		assert(dataStoreContext !== undefined, 0x2d7 /* No data store with specified id */);
 
 		if (dataStoreContext.isLoaded) {
-			this.mc.logger.sendErrorEvent({
+			this.mc.logger.sendTelemetryEvent({
 				eventName: "GC_DeletingLoadedDataStore",
 				...tagCodeArtifacts({
 					id: dataStoreId,
