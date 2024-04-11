@@ -423,7 +423,7 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 			assert.ok(submitResult);
 
 			// Try to pause at sequence number 1 (before snapshot)
-			const sequenceNumber = 3;
+			const sequenceNumber = 1;
 			const headers: IRequestHeader = {
 				[LoaderHeader.loadMode]: {
 					pauseAfterLoad: true,
