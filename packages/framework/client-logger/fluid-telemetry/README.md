@@ -12,7 +12,7 @@ Let's walk through some examples for getting started with Fluid telemetry for co
 
 ### Prerequisite
 
-Before you can get telemetry sent to Azure App Insights, you'll need to create an Instance of App Insights on Azure. You'll then be able to leverage Azure App Insights integration and route your Fluid container application telemetry to App Insights. [Learn more about Azure App Insights](https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview). [Creating your App Insights instance](https://learn.microsoft.com/en-us/azure/azure-monitor/app/create-workspace-resource?tabs=bicep).
+Before you can get telemetry sent to Azure App Insights, you'll need to create an Instance of App Insights on Azure. You'll then be able to integrate your Azure App Insights instance with your Fluid application and route your Fluid container application telemetry to App Insights. [Learn more about Azure App Insights](https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview). [Creating your App Insights instance](https://learn.microsoft.com/en-us/azure/azure-monitor/app/create-workspace-resource?tabs=bicep).
 
 Once you setup your App Insights instance, you can proceed with next steps below to route the telemetry to App Insights.
 
@@ -75,7 +75,7 @@ startTelemetry(telemetryConfig);
 
 That's it for now! If you've decided to use Azure App Insights, we have designed useful prebuilt queries that utilize the generated telemetry. You can try out these queries after running your application with above code for a little duration.
 
-You can find these queries [in the "Interpreting Telemetry Data" section below.](#telemetry_visualization).
+You can find these queries [in the "Interpreting Telemetry Data" section below.](#telemetry_visualization)
 
 ## Use Case 2: Setup a custom telemetry consumer
 
@@ -164,7 +164,7 @@ Now, close out the “Queries” pane if it showed up for you and you will be in
 
 1. Session information
 
-The following query provides a table of data that can give you a quick overview of information about sessions for your application. It includes the Id of the container being interacted with, the number of collaborators and the length of each session. Note that query provides session id’s but these values do not actually exist in the telemetry, it is a concept we have derived from the data; see the intro paragraph for more information on sessions.
+The following query provides a table of data that can give you a quick overview of information about sessions for your application. It includes the Id of the container being interacted with, the number of containers and the length of each session. Note that query provides session id’s but these values do not actually exist in the telemetry, it is a concept we have derived from the data; see the intro paragraph for more information on sessions.
 
 ```sql
 let sessionGap = 5m;
