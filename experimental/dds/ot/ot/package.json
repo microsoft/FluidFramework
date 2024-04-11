@@ -48,8 +48,8 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
-		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib",
+		"api-extractor:commonjs": "flub generate entrypoints --outFileAlpha legacy --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outFileAlpha legacy --outDir ./lib",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",

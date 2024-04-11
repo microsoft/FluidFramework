@@ -67,7 +67,7 @@ export function makeEditManagerCodecs<TChangeset>(
 	>,
 	options: ICodecOptions,
 ): ICodecFamily<SummaryData<TChangeset>, EditManagerEncodingContext> {
-	return makeCodecFamily([[1, makeV1Codec(changeCodecs.resolve(0), revisionTagCodec, options)]]);
+	return makeCodecFamily([[1, makeV1Codec(changeCodecs.resolve(1), revisionTagCodec, options)]]);
 }
 
 function makeV1Codec<TChangeset>(

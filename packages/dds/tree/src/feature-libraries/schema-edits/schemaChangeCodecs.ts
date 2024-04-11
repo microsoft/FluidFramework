@@ -18,7 +18,7 @@ import { EncodedSchemaChange } from "./schemaChangeFormat.js";
 import { SchemaChange } from "./schemaChangeTypes.js";
 
 export function makeSchemaChangeCodecs(options: ICodecOptions): ICodecFamily<SchemaChange> {
-	return makeCodecFamily([[0, makeSchemaChangeCodec(options)]]);
+	return makeCodecFamily([[1, makeSchemaChangeCodec(options)]]);
 }
 
 function makeSchemaChangeCodec({
