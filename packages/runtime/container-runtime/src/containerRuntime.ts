@@ -1855,7 +1855,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     break;
                 case ContainerMessageType.BlobAttach:
                     assert(message?.metadata?.blobId, 0x12a /* "Missing blob id on metadata" */);
-                    this.blobManager.processBlobAttachOp(message.metadata.blobId, local);
+                    this.blobManager.processBlobAttachOp(message.metadata.blobId, local, message.metadata.localId);
                     break;
                 default:
             }
