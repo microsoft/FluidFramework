@@ -103,7 +103,7 @@ type SimpleKeyMap = Map<string | symbol, { storedKey: FieldKey; schema: FieldSch
 /**
  * Caches the mappings from view keys to stored keys for the provided object field schemas in {@link simpleKeyToFlexKeyCache}.
  */
-function getOrCreateFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): SimpleKeyMap {
+function createFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): SimpleKeyMap {
 	const keyMap: SimpleKeyMap = new Map();
 	for (const [viewKey, fieldSchema] of Object.entries(fields)) {
 		const storedKey = getStoredKey(viewKey, fieldSchema);
@@ -255,7 +255,7 @@ export function objectSchema<
 	assertUniqueKeys(base.identifier, base.info);
 
 	// Performance optimization: cache view key => stored key and schema.
-	const flexKeyMap: SimpleKeyMap = getOrCreateFlexKeyMapping(base.info);
+	const flexKeyMap: SimpleKeyMap = createFlexKeyMapping(base.info);
 
 	// Used to ensure we only use one most derived schema type.
 	// The type "Function" is used by "Object.constructor" and this matches it.
