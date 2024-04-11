@@ -86,14 +86,16 @@ describe("connectionManager", () => {
 		clock.restore();
 	});
 
-	function createConnectionManager(): ConnectionManager {
+	function createConnectionManager(
+		customProps?: IConnectionManagerFactoryArgs,
+	): ConnectionManager {
 		return new ConnectionManager(
 			() => mockDocumentService,
 			() => false,
 			client as IClient,
 			true /* reconnectAllowed */,
 			mockLogger.toTelemetryLogger(),
-			props,
+			customProps ?? props,
 		);
 	}
 
@@ -234,37 +236,6 @@ describe("connectionManager", () => {
 	});
 
 	it("Does not re-try connection on error if ReconnectMode=Disabled", async () => {
-		const connectionManager = createConnectionManager();
-		// mock connectToDeltaStream method so that it throws a retriable error when connect() is called in connectionManager
-		const stubbedConnectToDeltaStream = stub(mockDocumentService, "connectToDeltaStream");
-		const retryAfter = 0.2; // seconds
-		stubbedConnectToDeltaStream.throws(
-			// Throw retryable error
-			new RetryableError("Test message", NackErrorType.ThrottlingError, {
-				retryAfterSeconds: retryAfter,
-				driverVersion: "1",
-			}),
-		);
-		// This step will also disconnect the connection.
-		connectionManager.setAutoReconnect(ReconnectMode.Disabled, { text: "Test" });
-		connectionManager.connect({ text: "Test reconnect" });
-		assert(
-			stubbedConnectToDeltaStream.calledOnce,
-			"Connection should have been attempted only once",
-		);
-		clock.tick(retryAfter * 1000 + 10);
-
-		// Check if there has been any retry attempt after the retryAfter time as elapsed.
-		assert.equal(
-			stubbedConnectToDeltaStream.callCount,
-			1,
-			"Connection should have been attempted only once (when the connect() was called above), even after the retry timeout",
-		);
-		stubbedConnectToDeltaStream.restore();
-	});
-
-	it("Does try re-connection on error if ReconnectMode=Enabled", async () => {
-		const connectionManager = createConnectionManager();
 		// mock connectToDeltaStream method so that it throws a retriable error when connect() is called in connectionManager
 		const stubbedConnectToDeltaStream = stub(mockDocumentService, "connectToDeltaStream");
 		const retryAfter = 3; // seconds
@@ -275,20 +246,69 @@ describe("connectionManager", () => {
 				driverVersion: "1",
 			}),
 		);
-		connectionManager.setAutoReconnect(ReconnectMode.Enabled, { text: "Test" });
+		let isTimeoutSet = false;
+		const connectionManager = createConnectionManager({
+			...props,
+			// reconnectionDelayHandler should be invoked by connectionManager when the throttling errors occur causing it to attept retries
+			reconnectionDelayHandler: () => {
+				// Ideally this function from deltaManager emits "throttled" warning event which is bubbled up as container warning that host can listen to
+				// and call container.disconnect() if they wish.
+				// Emulate calling container.disconnect() which results in setting connectionManager reconnect state as "Disabled" after random amount of time
+				if (!isTimeoutSet) {
+					isTimeoutSet = true;
+					setTimeout(
+						() => {
+							connectionManager.setAutoReconnect(ReconnectMode.Disabled, {
+								text: "Container disconnected",
+							});
+						},
+						retryAfter * 1000 * 5,
+					);
+				}
+			},
+		});
 		connectionManager.connect({ text: "Test reconnect" });
 
+		await clock.tickAsync(retryAfter * 1000 * 5);
 		assert(
-			stubbedConnectToDeltaStream.calledOnce,
-			"Connection should have been attempted only once",
+			stubbedConnectToDeltaStream.callCount > 1,
+			"Reconnection should have been attempted after failure",
 		);
-		await clock.tickAsync(retryAfter * 1000);
 
-		// Check if there has been any retry attempt after the retryAfter time as elapsed.
+		const calledTimes = stubbedConnectToDeltaStream.callCount;
+		clock.tick(retryAfter * 1000 * 5);
 		assert.equal(
 			stubbedConnectToDeltaStream.callCount,
-			2,
-			"Connection should have been attempted twice by now",
+			calledTimes,
+			"Reattempt counts should remain the same as before i.e. no new attempts should be made after ReconnectMode.Disabled is set",
+		);
+		stubbedConnectToDeltaStream.restore();
+	});
+
+	it("Does try re-connection on error if ReconnectMode=Enabled", async () => {
+		// mock connectToDeltaStream method so that it throws a retriable error when connect() is called in connectionManager
+		const stubbedConnectToDeltaStream = stub(mockDocumentService, "connectToDeltaStream");
+		const retryAfter = 3; // seconds
+		stubbedConnectToDeltaStream.throws(
+			// Throw retryable error
+			new RetryableError("Test message", NackErrorType.ThrottlingError, {
+				retryAfterSeconds: retryAfter,
+				driverVersion: "1",
+			}),
+		);
+		const connectionManager = createConnectionManager();
+		connectionManager.connect({ text: "Test reconnect" });
+
+		await clock.tickAsync(retryAfter * 1000 * 5);
+		assert(
+			stubbedConnectToDeltaStream.callCount > 1,
+			"Reconnection should have been attempted after failure",
+		);
+		const calledTimes = stubbedConnectToDeltaStream.callCount;
+		await clock.tickAsync(retryAfter * 1000 * 5);
+		assert(
+			stubbedConnectToDeltaStream.callCount > calledTimes,
+			"Reattempt for connection should continue to happen",
 		);
 		stubbedConnectToDeltaStream.restore();
 	});
