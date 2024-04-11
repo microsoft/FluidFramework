@@ -6,6 +6,7 @@
 
 import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
+import { IAnyDriverError } from '@fluidframework/driver-definitions/internal';
 import { IAudienceOwner } from '@fluidframework/container-definitions/internal';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IConfigProviderBase } from '@fluidframework/core-interfaces';
@@ -13,6 +14,7 @@ import { IContainer } from '@fluidframework/container-definitions/internal';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
+import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IFluidCodeDetails } from '@fluidframework/container-definitions/internal';
 import { IFluidModule } from '@fluidframework/container-definitions/internal';
 import { IHostLoader } from '@fluidframework/container-definitions/internal';
