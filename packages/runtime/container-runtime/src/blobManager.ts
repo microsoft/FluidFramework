@@ -184,7 +184,7 @@ export class BlobManager {
         }
         this.blobIds.add(blobId);
         if (localId) {
-            this.blobIds.add(localId);
+            this.redirectTable?.set(localId, blobId);
         }
     }
 
