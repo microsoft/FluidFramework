@@ -7,6 +7,7 @@
 /* eslint-disable import/no-internal-modules */
 
 import { strict as assert } from "assert";
+
 import { leaf } from "../../domains/index.js";
 import {
 	FieldKinds,

@@ -7,19 +7,20 @@ import lodashPkg from "lodash";
 // eslint-disable-next-line @typescript-eslint/unbound-method
 const { cloneDeep } = lodashPkg;
 
-import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
+import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils";
+import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { IGarbageCollectionData, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import {
 	IFluidDataStoreContext,
-	IGarbageCollectionData,
 	ISummarizeResult,
-	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import { DataProcessingError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/runtime-definitions/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	ChannelServiceEndpoints,
 	IChannelContext,

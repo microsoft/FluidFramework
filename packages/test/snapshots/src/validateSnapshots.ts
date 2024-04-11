@@ -4,17 +4,22 @@
  */
 
 import fs from "fs";
+
 import {
 	compareWithReferenceSnapshot,
 	getNormalizedFileSnapshot,
 	loadContainer,
 	uploadSummary,
 } from "@fluid-internal/replay-tool";
-import { IContainer } from "@fluidframework/container-definitions";
-import { assert } from "@fluidframework/core-utils";
-import { FileStorageDocumentName } from "@fluidframework/file-driver";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import { FileStorageDocumentName } from "@fluidframework/file-driver/internal";
 import { ISequencedDocumentMessage, TreeEntry } from "@fluidframework/protocol-definitions";
-import { IFileSnapshot, StaticStorageDocumentServiceFactory } from "@fluidframework/replay-driver";
+import {
+	IFileSnapshot,
+	StaticStorageDocumentServiceFactory,
+} from "@fluidframework/replay-driver/internal";
+
 import { SnapshotStorageService } from "./snapshotStorageService.js";
 
 const metadataBlobName = ".metadata";

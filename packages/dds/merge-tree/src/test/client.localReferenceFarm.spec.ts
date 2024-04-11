@@ -6,10 +6,13 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
+
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
+
 import { SlidingPreference, setValidateRefCount } from "../localReference.js";
 import { ReferenceType } from "../ops.js";
 import { ReferencePosition } from "../referencePositions.js";
+
 import {
 	IConfigRange,
 	IMergeTreeOperationRunnerConfig,

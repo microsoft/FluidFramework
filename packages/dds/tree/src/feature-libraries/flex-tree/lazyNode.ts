@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+
 import {
 	Anchor,
 	AnchorNode,
@@ -37,6 +38,7 @@ import {
 	schemaIsMap,
 	schemaIsObjectNode,
 } from "../typed-schema/index.js";
+
 import { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
@@ -63,6 +65,7 @@ import {
 } from "./flexTreeTypes.js";
 import {
 	LazyEntity,
+	anchorSymbol,
 	cursorSymbol,
 	forgetAnchorSymbol,
 	isFreedSymbol,
@@ -170,19 +173,18 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 	}
 
 	protected override [tryMoveCursorToAnchorSymbol](
-		anchor: Anchor,
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
-		return this.context.forest.tryMoveCursorToNode(anchor, cursor);
+		return this.context.forest.tryMoveCursorToNode(this[anchorSymbol], cursor);
 	}
 
-	protected override [forgetAnchorSymbol](anchor: Anchor): void {
+	protected override [forgetAnchorSymbol](): void {
 		// This type unconditionally has an anchor, so `forgetAnchor` is always called and cleanup can be done here:
 		// After this point this node will not be usable,
 		// so remove it from the anchor incase a different context (or the same context later) uses this AnchorSet.
 		this.anchorNode.slots.delete(flexTreeSlot);
 		this.#removeDeleteCallback();
-		this.context.forest.anchors.forget(anchor);
+		this.context.forest.anchors.forget(this[anchorSymbol]);
 	}
 
 	public get value(): Value {

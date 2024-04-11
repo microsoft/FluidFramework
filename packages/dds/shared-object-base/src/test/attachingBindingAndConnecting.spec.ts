@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -21,7 +22,8 @@ import {
 	ISummaryTreeWithStats,
 	type ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+
 import { IFluidSerializer } from "../serializer.js";
 import { SharedObject } from "../sharedObject.js";
 

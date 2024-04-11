@@ -4,8 +4,9 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import * as api from "@fluidframework/driver-definitions";
+import * as api from "@fluidframework/driver-definitions/internal";
 import { IClient } from "@fluidframework/protocol-definitions";
+
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService.js";
 import { ReplayController } from "./replayController.js";
 import { ReplayDocumentDeltaConnection } from "./replayDocumentDeltaConnection.js";

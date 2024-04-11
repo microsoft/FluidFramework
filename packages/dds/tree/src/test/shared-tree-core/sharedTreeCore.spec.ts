@@ -4,23 +4,25 @@
  */
 
 import { strict as assert } from "assert";
+
 import { IsoBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
-import { createIdCompressor } from "@fluidframework/id-compressor";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
+import { createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	AllowedUpdateType,
 	ChangeFamily,
@@ -36,6 +38,7 @@ import {
 	cursorForJsonableTreeNode,
 	typeNameSymbol,
 } from "../../feature-libraries/index.js";
+import { InitializeAndSchematizeConfiguration } from "../../shared-tree/index.js";
 import {
 	EditManager,
 	SharedTreeCore,
@@ -43,9 +46,9 @@ import {
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
-import { InitializeAndSchematizeConfiguration } from "../../shared-tree/index.js";
 import { brand } from "../../util/index.js";
 import { SharedTreeTestFactory, schematizeFlexTree } from "../utils.js";
+
 import { TestSharedTreeCore } from "./utils.js";
 
 describe("SharedTreeCore", () => {

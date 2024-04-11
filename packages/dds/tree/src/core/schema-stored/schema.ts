@@ -21,6 +21,7 @@ import {
 	TreeNodeSchemaDataFormat,
 	TreeNodeSchemaIdentifier,
 } from "./format.js";
+import { Multiplicity } from "./multiplicity.js";
 
 /**
  * Schema for what {@link TreeValue} is allowed on a Leaf node.
@@ -67,15 +68,38 @@ export enum ValueSchema {
 export type TreeTypeSet = ReadonlySet<TreeNodeSchemaIdentifier> | undefined;
 
 /**
- * Specifies which field kind to use.
+ * Declarative portion of a Field Kind.
  *
  * @remarks
- * This is used instead of just the FieldKindIdentifier so that it can be subtyped into a more expressive type with additional information.
+ * Enough info about a field kind to know if a given tree is is schema.
  *
  * @internal
  */
-export interface FieldKindSpecifier<T = FieldKindIdentifier> {
-	identifier: T;
+export interface FieldKindData {
+	readonly identifier: FieldKindIdentifier;
+	readonly multiplicity: Multiplicity;
+}
+
+/**
+ * Everything needed to define what it means for a tree to be in schema.
+ */
+export interface SchemaAndPolicy {
+	readonly schema: StoredSchemaCollection;
+	readonly policy: SchemaPolicy;
+}
+
+/**
+ * Extra data needed to interpret schema.
+ */
+export interface SchemaPolicy {
+	/**
+	 * Policy information about FieldKinds:
+	 * This is typically stored as code, not in documents, and defines how to handle fields based on their kind.
+	 * It is assumed that all users of a document will have exactly the same FieldKind policies,
+	 * though older applications might be missing some,
+	 * and will be unable to process any changes that use those FieldKinds.
+	 */
+	readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindData>;
 }
 
 /**
@@ -84,7 +108,7 @@ export interface FieldKindSpecifier<T = FieldKindIdentifier> {
  * @internal
  */
 export interface TreeFieldStoredSchema {
-	readonly kind: FieldKindSpecifier;
+	readonly kind: FieldKindIdentifier;
 	/**
 	 * The set of allowed child types.
 	 * If not specified, types are unconstrained.
@@ -110,7 +134,7 @@ export const forbiddenFieldKindIdentifier = "Forbidden";
  */
 export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
 	// This kind requires the field to be empty.
-	kind: { identifier: brand(forbiddenFieldKindIdentifier) },
+	kind: brand(forbiddenFieldKindIdentifier),
 	// This type set also forces the field to be empty not not allowing any types as all.
 	types: new Set(),
 };
@@ -260,7 +284,7 @@ function decodeValueSchema(inMemory: PersistedValueSchema): ValueSchema {
 
 export function encodeFieldSchema(schema: TreeFieldStoredSchema): FieldSchemaFormat {
 	const out: FieldSchemaFormat = {
-		kind: schema.kind.identifier,
+		kind: schema.kind,
 	};
 	if (schema.types !== undefined) {
 		out.types = [...schema.types];
@@ -271,7 +295,7 @@ export function encodeFieldSchema(schema: TreeFieldStoredSchema): FieldSchemaFor
 export function decodeFieldSchema(schema: FieldSchemaFormat): TreeFieldStoredSchema {
 	const out: TreeFieldStoredSchema = {
 		// TODO: maybe provide actual FieldKind objects here, error on unrecognized kinds.
-		kind: { identifier: schema.kind },
+		kind: schema.kind,
 		types: schema.types === undefined ? undefined : new Set(schema.types),
 	};
 	return out;

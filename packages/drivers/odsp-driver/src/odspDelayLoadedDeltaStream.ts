@@ -4,18 +4,18 @@
  */
 
 import { performance } from "@fluid-internal/client-utils";
-import { ISignalEnvelope } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IConnectionStep,
 	IDocumentDeltaConnection,
 	IDocumentServicePolicies,
 	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	DeltaStreamConnectionForbiddenError,
 	NonRetryableError,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils/internal";
 import {
 	HostStoragePolicy,
@@ -25,7 +25,7 @@ import {
 	InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 	TokenFetchOptions,
-} from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	IClient,
 	ISequencedDocumentMessage,
@@ -35,7 +35,8 @@ import {
 	IFluidErrorBase,
 	MonitoringContext,
 	normalizeError,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
+
 import { policyLabelsUpdatesSignalType } from "./contracts.js";
 import { EpochTracker } from "./epochTracker.js";
 import { IOdspCache } from "./odspCache.js";

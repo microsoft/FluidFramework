@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
+import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver/internal";
 
 export function apisToBundle() {
 	// eslint-disable-next-line @typescript-eslint/no-floating-promises

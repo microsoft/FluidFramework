@@ -6,28 +6,26 @@
 
 import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
-import { IAnyDriverError } from '@fluidframework/driver-definitions';
-import { IAudienceOwner } from '@fluidframework/container-definitions';
+import { IAudienceOwner } from '@fluidframework/container-definitions/internal';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IConfigProviderBase } from '@fluidframework/core-interfaces';
-import { IContainer } from '@fluidframework/container-definitions';
+import { IContainer } from '@fluidframework/container-definitions/internal';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
-import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
-import { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { IErrorBase } from '@fluidframework/core-interfaces';
-import { IFluidCodeDetails } from '@fluidframework/container-definitions';
-import { IFluidModule } from '@fluidframework/container-definitions';
-import { IHostLoader } from '@fluidframework/container-definitions';
-import { ILoaderOptions as ILoaderOptions_2 } from '@fluidframework/container-definitions';
-import { ILocationRedirectionError } from '@fluidframework/driver-definitions';
+import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
+import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
+import { IFluidCodeDetails } from '@fluidframework/container-definitions/internal';
+import { IFluidModule } from '@fluidframework/container-definitions/internal';
+import { IHostLoader } from '@fluidframework/container-definitions/internal';
+import { ILoaderOptions as ILoaderOptions_2 } from '@fluidframework/container-definitions/internal';
+import { ILocationRedirectionError } from '@fluidframework/driver-definitions/internal';
 import { IProtocolHandler as IProtocolHandler_2 } from '@fluidframework/protocol-base';
-import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions';
+import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions/internal';
 import { IQuorumSnapshot } from '@fluidframework/protocol-base';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { IUrlResolver } from '@fluidframework/driver-definitions';
+import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
 
 // @beta
 export interface ConnectionDiagnostics {

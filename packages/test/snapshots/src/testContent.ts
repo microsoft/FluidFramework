@@ -5,7 +5,9 @@
 
 import fs from "fs";
 import nodePath from "path";
+
 import * as Mocha from "mocha";
+
 import { _dirname } from "./dirname.cjs";
 
 export interface TestContent {

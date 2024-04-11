@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 
-import { NestedMap } from "../../index.js";
-import { setInNestedMap, tryGetFromNestedMap } from "../../util/index.js";
+import { NestedMap, setInNestedMap, tryGetFromNestedMap } from "../../util/index.js";
 import { FieldKey } from "../schema-stored/index.js";
+
 import { ITreeCursorSynchronous } from "./cursor.js";
 import * as Delta from "./delta.js";
 import { ProtoNodes } from "./delta.js";
