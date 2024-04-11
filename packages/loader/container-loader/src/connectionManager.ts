@@ -647,7 +647,7 @@ export class ConnectionManager implements IConnectionManager {
 				// We will not perform retries if the container disconnected and the ReconnectMode is set to Disabled or Never
 				// so break out of the re-connecting while-loop after first attempt
 				if (this.reconnectMode !== ReconnectMode.Enabled) {
-					break;
+					return;
 				}
 
 				const waitStartTime = performance.now();
@@ -698,21 +698,19 @@ export class ConnectionManager implements IConnectionManager {
 			);
 		}
 
-		if (connection) {
-			// Check for abort signal after while loop as well or we've been disposed
-			if (abortSignal.aborted === true || this._disposed) {
-				connection.dispose();
-				this.logger.sendTelemetryEvent({
-					eventName: "ConnectionAttemptCancelled",
-					attempts: connectRepeatCount,
-					duration: formatTick(performance.now() - connectStartTime),
-					connectionEstablished: true,
-				});
-				return;
-			}
-
-			this.setupNewSuccessfulConnection(connection, requestedMode, reason);
+		// Check for abort signal after while loop as well or we've been disposed
+		if (abortSignal.aborted === true || this._disposed) {
+			connection.dispose();
+			this.logger.sendTelemetryEvent({
+				eventName: "ConnectionAttemptCancelled",
+				attempts: connectRepeatCount,
+				duration: formatTick(performance.now() - connectStartTime),
+				connectionEstablished: true,
+			});
+			return;
 		}
+
+		this.setupNewSuccessfulConnection(connection, requestedMode, reason);
 	}
 
 	/**

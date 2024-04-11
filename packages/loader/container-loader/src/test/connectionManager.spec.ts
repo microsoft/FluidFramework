@@ -269,14 +269,14 @@ describe("connectionManager", () => {
 		});
 		connectionManager.connect({ text: "Test reconnect" });
 
-		await clock.tickAsync(retryAfter * 1000 * 5);
+		await clock.tickAsync(retryAfter * 1000 * 10);
 		assert(
 			stubbedConnectToDeltaStream.callCount > 1,
 			"Reconnection should have been attempted after failure",
 		);
 
 		const calledTimes = stubbedConnectToDeltaStream.callCount;
-		clock.tick(retryAfter * 1000 * 5);
+		clock.tick(retryAfter * 1000 * 10);
 		assert.equal(
 			stubbedConnectToDeltaStream.callCount,
 			calledTimes,
@@ -299,13 +299,13 @@ describe("connectionManager", () => {
 		const connectionManager = createConnectionManager();
 		connectionManager.connect({ text: "Test reconnect" });
 
-		await clock.tickAsync(retryAfter * 1000 * 5);
+		await clock.tickAsync(retryAfter * 1000 * 10);
 		assert(
 			stubbedConnectToDeltaStream.callCount > 1,
 			"Reconnection should have been attempted after failure",
 		);
 		const calledTimes = stubbedConnectToDeltaStream.callCount;
-		await clock.tickAsync(retryAfter * 1000 * 5);
+		await clock.tickAsync(retryAfter * 1000 * 10);
 		assert(
 			stubbedConnectToDeltaStream.callCount > calledTimes,
 			"Reattempt for connection should continue to happen",
