@@ -14,7 +14,7 @@ import {
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../feature-libraries/valueUtilities.js";
-import { isFluidHandle } from "@fluidframework/core-interfaces";
+import { isFluidHandle } from "@fluidframework/core-interfaces/internal";
 
 describe("valueUtilities", () => {
 	// TODO: @fluidframework/core-interfaces is not setup for unit tests, so these tests are living here for now.

@@ -9,7 +9,7 @@ import {
 	fluidHandleSymbol,
 	toFluidHandleErased,
 	toFluidHandleInternal,
-} from '@fluidframework/core-interfaces';
+} from '@fluidframework/core-interfaces/internal';
 
 import { type IShim } from './types.js';
 

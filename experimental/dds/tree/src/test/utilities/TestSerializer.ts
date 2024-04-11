@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandleErased, IFluidHandleInternal } from '@fluidframework/core-interfaces';
+import type { IFluidHandleErased, IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import {
 	IFluidHandle,
 	IRequest,
 	IResponse,
 	fluidHandleSymbol,
 	toFluidHandleErased,
-} from '@fluidframework/core-interfaces';
+} from '@fluidframework/core-interfaces/internal';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 
 export class TestFluidSerializer implements IFluidSerializer {

@@ -21,8 +21,8 @@ import {
 	ISummarizer,
 	InactiveResponseHeaderKey,
 } from "@fluidframework/container-runtime/internal";
-import { IFluidHandle, toFluidHandleInternal } from "@fluidframework/core-interfaces";
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces";
+import { IFluidHandle, toFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { delay } from "@fluidframework/core-utils/internal";
 import { DriverHeader } from "@fluidframework/driver-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";

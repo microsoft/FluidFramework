@@ -35,7 +35,7 @@ import {
 } from "./schemaTypes.js";
 import { TreeArrayNode, arraySchema } from "./arrayNode.js";
 import { TreeNode } from "./types.js";
-import { isFluidHandle } from "@fluidframework/core-interfaces";
+import { isFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { InsertableObjectFromSchemaRecord, TreeObjectNode, objectSchema } from "./objectNode.js";
 import { TreeMapNode, mapSchema } from "./mapNode.js";
 

@@ -15,8 +15,11 @@ import {
 	IResponse,
 	fluidHandleSymbol,
 	toFluidHandleErased,
-} from "@fluidframework/core-interfaces";
-import type { IFluidHandleErased, IFluidHandleInternal } from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
+import type {
+	IFluidHandleErased,
+	IFluidHandleInternal,
+} from "@fluidframework/core-interfaces/internal";
 // This test doesn't care to test compat of the Fluid handle implementation, it's just used for convenience
 // to simulate an unknown object.
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports

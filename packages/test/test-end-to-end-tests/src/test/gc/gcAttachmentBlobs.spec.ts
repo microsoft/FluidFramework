@@ -11,7 +11,7 @@ import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { BlobManager } from "@fluidframework/container-runtime/internal/test/blobManager";
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,

@@ -22,7 +22,7 @@ import {
 	IFluidHandle,
 	IRequest,
 	toFluidHandleInternal,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map";

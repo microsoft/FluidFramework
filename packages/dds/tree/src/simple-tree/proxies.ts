@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, isFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, isFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
