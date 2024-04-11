@@ -15,7 +15,7 @@ import {
 // eslint-disable-next-line import/no-deprecated
 import { AzureFunctionTokenProvider } from "@fluidframework/azure-client/internal";
 import { ContainerSchema } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map";
+import { SharedMap } from "@fluidframework/map/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import commander from "commander";

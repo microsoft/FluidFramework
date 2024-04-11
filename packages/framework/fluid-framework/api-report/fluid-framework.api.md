@@ -10,13 +10,10 @@ import { IChannel } from '@fluidframework/datastore-definitions';
 import type { IErrorBase } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
-import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IFluidHandle } from '@fluidframework/core-interfaces/internal';
 import { IFluidHandle as IFluidHandle_2 } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidLoadable as IFluidLoadable_2 } from '@fluidframework/core-interfaces/internal';
-import { ISharedObject } from '@fluidframework/shared-object-base';
-import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base';
 
 // @public
@@ -272,18 +269,6 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 // @public
 export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
 
-// @public @sealed
-export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
-    get<T = any>(key: string): T | undefined;
-    set<T = unknown>(key: string, value: T): this;
-}
-
-// @public @sealed
-export interface ISharedMapEvents extends ISharedObjectEvents {
-    (event: "valueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
-}
-
 // @public
 export interface ISubscribable<E extends Events<E>> {
     on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void;
@@ -297,12 +282,6 @@ export class IterableTreeArrayContent<T> implements Iterable<T> {
 // @public
 export interface ITree extends IChannel {
     schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TRoot>;
-}
-
-// @public @sealed
-export interface IValueChanged {
-    readonly key: string;
-    readonly previousValue: any;
 }
 
 // @public
@@ -416,12 +395,6 @@ export interface SchemaIncompatible {
 
 // @public
 export type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
-
-// @public @deprecated
-export const SharedMap: ISharedObjectKind<ISharedMap>;
-
-// @public @deprecated
-export type SharedMap = ISharedMap;
 
 // @public
 export const SharedTree: ISharedObjectKind<ITree>;
