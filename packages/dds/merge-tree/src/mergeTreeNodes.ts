@@ -15,9 +15,9 @@ import { IMergeTreeDeltaOpArgs } from "./mergeTreeDeltaCallback.js";
 import { TrackingGroupCollection } from "./mergeTreeTracking.js";
 import { IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops.js";
 import { computeHierarchicalOrdinal } from "./ordinal.js";
-import { PartialSequenceLengths } from "./partialLengths.js";
+import type { PartialSequenceLengths } from "./partialLengths.js";
 // eslint-disable-next-line import/no-deprecated
-import { MapLike, PropertySet, clone, createMap } from "./properties.js";
+import { PropertySet, clone, createMap, type MapLike } from "./properties.js";
 import { ReferencePosition, refGetTileLabels, refTypeIncludesFlag } from "./referencePositions.js";
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager.js";
@@ -42,52 +42,8 @@ export interface IMergeNodeCommon {
  * someday we may split tree leaves from segments, but for now they are the same
  * this is just a convenience type that makes it clear that we need something that is both a segment and a leaf node
  */
-export type ISegmentLeaf = ISegment & { parent?: IMergeBlock };
-export type IMergeNode = IMergeBlock | ISegmentLeaf;
-/**
- * Internal (i.e. non-leaf) node in a merge tree.
- * @internal
- */
-export interface IMergeBlock extends IMergeNodeCommon {
-	parent?: IMergeBlock;
-
-	needsScour?: boolean;
-	/**
-	 * Number of direct children of this node
-	 */
-	childCount: number;
-	/**
-	 * Array of child nodes.
-	 *
-	 * @remarks To avoid reallocation, this is always initialized to have maximum length as deemed by
-	 * the merge tree's branching factor. Use `childCount` to determine how many children this node actually has.
-	 */
-	children: IMergeNode[];
-	/**
-	 * Supports querying the total length of all descendants of this IMergeBlock from the perspective of any
-	 * (clientId, seq) within the collab window.
-	 *
-	 * @remarks This is only optional for implementation reasons (internal nodes can be created/moved without
-	 * immediately initializing the partial lengths). Aside from mid-update on tree operations, these lengths
-	 * objects are always defined.
-	 */
-	partialLengths?: PartialSequenceLengths;
-	/**
-	 * The length of the contents of the node.
-	 */
-	cachedLength: number | undefined;
-	hierBlock(): IHierBlock | undefined;
-	assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean): void;
-	setOrdinal(child: IMergeNode, index: number): void;
-}
-
-/**
- * @internal
- */
-export interface IHierBlock extends IMergeBlock {
-	rightmostTiles: MapLike<ReferencePosition>;
-	leftmostTiles: MapLike<ReferencePosition>;
-}
+export type ISegmentLeaf = ISegment & { parent?: MergeBlock };
+export type IMergeNode = MergeBlock | ISegmentLeaf;
 
 /**
  * Contains removal information associated to an {@link ISegment}.
@@ -351,7 +307,7 @@ export interface ISegmentChanges {
 export interface BlockAction<TClientData> {
 	// eslint-disable-next-line @typescript-eslint/prefer-function-type
 	(
-		block: IMergeBlock,
+		block: MergeBlock,
 		pos: number,
 		refSeq: number,
 		clientId: number,
@@ -367,7 +323,7 @@ export interface BlockAction<TClientData> {
 export interface NodeAction<TClientData> {
 	// eslint-disable-next-line @typescript-eslint/prefer-function-type
 	(
-		node: IMergeNode,
+		node: MergeNode,
 		pos: number,
 		refSeq: number,
 		clientId: number,
@@ -383,7 +339,7 @@ export interface NodeAction<TClientData> {
 export interface InsertContext {
 	candidateSegment?: ISegment;
 	leaf: (segment: ISegment | undefined, pos: number, ic: InsertContext) => ISegmentChanges;
-	continuePredicate?: (continueFromBlock: IMergeBlock) => boolean;
+	continuePredicate?: (continueFromBlock: MergeBlock) => boolean;
 }
 
 /**
@@ -432,15 +388,27 @@ export const MaxNodesInBlock = 8;
 /**
  * @internal
  */
-export class MergeBlock extends MergeNode implements IMergeBlock {
-	parent?: IMergeBlock;
+export class MergeBlock extends MergeNode {
 	public children: IMergeNode[];
+	public needsScour?: boolean;
+	public parent?: MergeBlock;
+
+	/**
+	 * Supports querying the total length of all descendants of this IMergeBlock from the perspective of any
+	 * (clientId, seq) within the collab window.
+	 *
+	 * @remarks This is only optional for implementation reasons (internal nodes can be created/moved without
+	 * immediately initializing the partial lengths). Aside from mid-update on tree operations, these lengths
+	 * objects are always defined.
+	 */
+	partialLengths?: PartialSequenceLengths;
+
 	public constructor(public childCount: number) {
 		super();
 		this.children = new Array<IMergeNode>(MaxNodesInBlock);
 	}
 
-	public hierBlock(): IHierBlock | undefined {
+	public hierBlock(): HierMergeBlock | undefined {
 		return undefined;
 	}
 
@@ -465,6 +433,23 @@ export class MergeBlock extends MergeNode implements IMergeBlock {
 			this.setOrdinal(child, index);
 		}
 		this.children[index] = child;
+	}
+}
+
+export class HierMergeBlock extends MergeBlock {
+	public rightmostTiles: MapLike<ReferencePosition>;
+	public leftmostTiles: MapLike<ReferencePosition>;
+
+	constructor(childCount: number) {
+		super(childCount);
+		// eslint-disable-next-line import/no-deprecated
+		this.rightmostTiles = createMap<ReferencePosition>();
+		// eslint-disable-next-line import/no-deprecated
+		this.leftmostTiles = createMap<ReferencePosition>();
+	}
+
+	public hierBlock() {
+		return this;
 	}
 }
 
