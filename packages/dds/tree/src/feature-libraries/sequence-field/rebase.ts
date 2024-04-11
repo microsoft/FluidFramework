@@ -38,7 +38,6 @@ import {
 	setMoveEffect,
 } from "./moveEffectTable.js";
 import {
-	AttachAndDetach,
 	CellId,
 	CellMark,
 	Changeset,
