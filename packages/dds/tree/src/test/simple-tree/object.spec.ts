@@ -123,7 +123,7 @@ function testObjectLike(testCases: TestCase[]) {
 		});
 
 		/**
-		 * Creates a test out of applying the given function to both a structural clone of the initial tree object and a hydrated tree created form it for each test case.
+		 * Creates a test out of applying the given function to both a structural clone of the initial tree object and a hydrated tree created from it for each test case.
 		 * The results are asserted to be equal with nodes's assert.deepEqual.
 		 */
 		function test1(fn: (subject: object) => unknown) {

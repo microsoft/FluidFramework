@@ -96,7 +96,7 @@ export type InsertableObjectFromSchemaRecord<
  * @remarks
  * A missing entry for a given view key indicates that no such field exists.
  * Keys with symbols are currently never used, but allowed to make lookups on non-field things
- * (retuning undefined) easier.
+ * (returning undefined) easier.
  */
 type SimpleKeyMap = Map<string | symbol, { storedKey: FieldKey; schema: FieldSchema }>;
 

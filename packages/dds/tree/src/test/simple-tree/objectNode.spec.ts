@@ -23,7 +23,7 @@ describe("ObjectNode", () => {
 			{
 				const n = hydrate(Schema, { toString: 1 });
 				assert.equal(n.toString, 1);
-				// @ts-expect-error Intelisense (which allows this) and the actual compiler (which errors) disagree on this.
+				// @ts-expect-error Intellisense (which allows this) and the actual compiler (which errors) disagree on this.
 				n.toString = undefined;
 				assert.equal(n.toString, undefined);
 			}
@@ -65,7 +65,7 @@ describe("ObjectNode", () => {
 			function typeTest2() {
 				const n = hydrate(Schema, { foo: undefined });
 				const x = n.foo;
-				// TypeScript is typing the "foo" field based oin the getter not the field, which does not match runtime behavior.
+				// TypeScript is typing the "foo" field based on the getter not the field, which does not match runtime behavior.
 				type check_ = requireAssignableTo<typeof x, 5>;
 			}
 
@@ -89,7 +89,7 @@ describe("ObjectNode", () => {
 		});
 	});
 
-	it("empty property pofo deep equals", () => {
+	it("empty property pojo deep equals", () => {
 		const Schema = schemaFactory.object("x", {
 			foo: schemaFactory.optional(schemaFactory.number),
 		});
