@@ -2528,6 +2528,15 @@ export class ContainerRuntime
 	public process(messageArg: ISequencedDocumentMessage, local: boolean) {
 		this.verifyNotClosed();
 
+		assert(
+			messageArg.sequenceNumber === this.deltaManager.lastSequenceNumber,
+			"sequence numbers match",
+		);
+		assert(
+			messageArg.minimumSequenceNumber === this.deltaManager.minimumSequenceNumber,
+			"MSN match",
+		);
+
 		// Whether or not the message appears to be a runtime message from an up-to-date client.
 		// It may be a legacy runtime message (ie already unpacked and ContainerMessageType)
 		// or something different, like a system message.
