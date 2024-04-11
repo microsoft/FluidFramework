@@ -361,7 +361,8 @@
 			"codemirror and marked overrides are because simplemde use * versions, and the fully up to date versions of its deps do not work. packageExtensions was tried to fix this, but did not work.",
 			"Fixing the @oclif/core version avoids a large number of peer dep errors since 2.6 adds a prod dep on ts-node and thus a peer dep on @types/node",
 			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix",
-			"@fluentui/react-positioning's dependency on @floating-ui/dom causes a peer dependency violation, so overriding it forces a version that meets peer dependency requirements is installed."
+			"@fluentui/react-positioning's dependency on @floating-ui/dom causes a peer dependency violation, so overriding it forces a version that meets peer dependency requirements is installed.",
+			"ip dependencies < 1.1.8 and < 2.0.0 have vulnerabilities from CVE-2023-42282 (https://github.com/advisories/GHSA-78xj-cgh5-2h22)"
 		],
 		"overrides": {
 			"@types/node@<18": "^18.19.0",
