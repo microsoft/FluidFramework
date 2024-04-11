@@ -141,7 +141,7 @@ export function create(
 					if (customHeadersToLog) {
 						customHeadersToLog.forEach((header) => {
 							if (req.headers[header]) {
-								additionalProperties.header = req.headers[header];
+								additionalProperties[header] = req.headers[header];
 							}
 						});
 					}
