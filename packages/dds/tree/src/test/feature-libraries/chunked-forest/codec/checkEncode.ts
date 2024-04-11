@@ -27,9 +27,9 @@ import {
 import {
 	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
-	isFluidHandle,
 } from "../../../../feature-libraries/index.js";
 import { assertChunkCursorBatchEquals } from "../fieldCursorTestUtilities.js";
+import { isFluidHandle } from "@fluidframework/core-interfaces/internal";
 
 export function checkNodeEncode(
 	shape: NodeEncoder,

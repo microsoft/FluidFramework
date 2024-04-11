@@ -4,14 +4,16 @@
 
 ```ts
 
-import { FluidObject } from '@fluidframework/core-interfaces';
+import type { ErasedType } from '@fluidframework/core-interfaces';
+import { FluidObject } from '@fluidframework/core-interfaces/internal';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidLoadable } from '@fluidframework/core-interfaces';
+import { IFluidHandle as IFluidHandle_2 } from '@fluidframework/core-interfaces/internal';
+import { IFluidLoadable } from '@fluidframework/core-interfaces/internal';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base';
 import { SessionSpaceCompressedId } from '@fluidframework/id-compressor';
@@ -162,10 +164,10 @@ export type AssignableFieldKinds = typeof FieldKinds.optional | typeof FieldKind
 export type Assume<TInput, TAssumeToBe> = [TInput] extends [TAssumeToBe] ? TInput : TAssumeToBe;
 
 // @internal
-export type Brand<ValueType, Name extends string | ErasedType<string>> = ValueType & BrandedType<ValueType, Name extends Erased<infer TName> ? TName : Assume<Name, string>>;
+export type Brand<ValueType, Name> = ValueType & BrandedType<ValueType, Name>;
 
 // @internal
-export function brand<T>(value: T extends BrandedType<infer ValueType, string> ? ValueType : never): T;
+export function brand<T>(value: T extends BrandedType<infer ValueType, unknown> ? ValueType : never): T;
 
 // @internal
 export type BrandedKey<TKey, TContent> = TKey & Invariant<TContent>;
@@ -186,7 +188,7 @@ export interface BrandedMapSubset<K extends BrandedKey<unknown, any>> {
 }
 
 // @internal @sealed
-export abstract class BrandedType<out ValueType, Name extends string> {
+export abstract class BrandedType<out ValueType, Name> {
     static [Symbol.hasInstance](value: never): value is never;
     protected abstract brand(dummy: never): Name;
     // (undocumented)
@@ -427,16 +429,7 @@ export function enumFromStrings<TScope extends string, const Members extends str
 })>;
 
 // @internal
-export type Erased<Name extends string> = ErasedType<Name>;
-
-// @internal
-export interface ErasedTreeNodeSchemaDataFormat extends Erased<"TreeNodeSchemaDataFormat"> {
-}
-
-// @internal @sealed
-export abstract class ErasedType<out Name extends string> {
-    static [Symbol.hasInstance](value: never): value is never;
-    protected abstract brand(dummy: never): Name;
+export interface ErasedTreeNodeSchemaDataFormat extends ErasedType<"TreeNodeSchemaDataFormat"> {
 }
 
 // @public
@@ -445,10 +438,10 @@ export type Events<E> = {
 };
 
 // @internal
-export type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> = TOpaque extends BrandedType<infer ValueType, infer Name> ? isAny<ValueType> extends true ? unknown : Brand<ValueType, Name> : never;
+export type ExtractFromOpaque<TOpaque extends BrandedType<any, unknown>> = TOpaque extends BrandedType<infer ValueType, infer Name> ? isAny<ValueType> extends true ? unknown : Brand<ValueType, Name> : never;
 
 // @internal
-export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(value: TOpaque): ExtractFromOpaque<TOpaque>;
+export function extractFromOpaque<TOpaque extends BrandedType<any, unknown>>(value: TOpaque): ExtractFromOpaque<TOpaque>;
 
 // @public
 export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
@@ -1282,7 +1275,7 @@ export interface Named<TName> {
 }
 
 // @internal
-export type NameFromBranded<T extends BrandedType<unknown, string>> = T extends BrandedType<unknown, infer Name> ? Name : never;
+export type NameFromBranded<T extends BrandedType<unknown, unknown>> = T extends BrandedType<unknown, infer Name> ? Name : never;
 
 // @internal
 export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
@@ -1383,7 +1376,7 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined;
 
 // @internal
-export type Opaque<T extends Brand<any, string>> = T extends BrandedType<infer ValueType, infer Name> ? BrandedType<ValueType, Name> : never;
+export type Opaque<T extends Brand<any, unknown>> = T extends BrandedType<infer ValueType, infer Name> ? BrandedType<ValueType, Name> : never;
 
 // @internal (undocumented)
 export interface Optional extends FlexFieldKind<"Optional", Multiplicity.Optional> {
@@ -1585,7 +1578,7 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
         [Symbol.iterator](): Iterator<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>;
     }, false, T>;
     readonly boolean: TreeNodeSchema<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean>;
-    readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<FluidObject & IFluidLoadable>, IFluidHandle<FluidObject & IFluidLoadable>>;
+    readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle_2<FluidObject & IFluidLoadable>, IFluidHandle_2<FluidObject & IFluidLoadable>>;
     get identifier(): FieldSchema<FieldKind.Identifier>;
     map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
     map<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
@@ -2096,7 +2089,7 @@ export interface ValueFieldEditBuilder {
 }
 
 // @internal
-export type ValueFromBranded<T extends BrandedType<unknown, string>> = T extends BrandedType<infer ValueType, string> ? ValueType : never;
+export type ValueFromBranded<T extends BrandedType<unknown, unknown>> = T extends BrandedType<infer ValueType, unknown> ? ValueType : never;
 
 // @internal
 export enum ValueSchema {

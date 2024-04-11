@@ -7,6 +7,12 @@
 // @public
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
+// @public @sealed
+export abstract class ErasedType<out Name = unknown> {
+    static [Symbol.hasInstance](value: never): value is never;
+    protected abstract brand(dummy: never): Name;
+}
+
 // @public
 export type ExtendEventProvider<TBaseEvent extends IEvent, TBase extends IEventProvider<TBaseEvent>, TEvent extends TBaseEvent> = Omit<Omit<Omit<TBase, "on">, "once">, "off"> & IEventProvider<TBaseEvent> & IEventProvider<TEvent>;
 
@@ -231,10 +237,10 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 } ? TransformedEvent<TThis, E0, A0> : TransformedEvent<TThis, string, any[]>;
 
 // @public (undocumented)
-export const IFluidHandle: keyof IProvideFluidHandle;
+export const IFluidHandle = "IFluidHandle";
 
 // @public
-export interface IFluidHandle<T = FluidObject & IFluidLoadable> extends IProvideFluidHandle {
+export interface IFluidHandle<out T = FluidObject & IFluidLoadable> extends IProvideFluidHandle {
     // @deprecated (undocumented)
     readonly absolutePath: string;
     // @deprecated (undocumented)
@@ -293,7 +299,7 @@ export interface ILoggingError extends Error {
 // @public (undocumented)
 export interface IProvideFluidHandle {
     // (undocumented)
-    readonly IFluidHandle: IFluidHandle;
+    readonly [IFluidHandle]: IFluidHandle;
 }
 
 // @public (undocumented)
@@ -343,6 +349,9 @@ export interface IResponse {
     // (undocumented)
     value: any;
 }
+
+// @internal
+export function isFluidHandle(value: unknown): value is IFluidHandle;
 
 // @internal (undocumented)
 export interface ISignalEnvelope {

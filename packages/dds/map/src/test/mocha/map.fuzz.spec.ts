@@ -15,8 +15,9 @@ import {
 } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import { isFluidHandle } from "@fluidframework/core-interfaces/internal";
 
-import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 import { isObject } from "@fluidframework/core-utils/internal";
 import { ISharedMap, MapFactory } from "../../index.js";
@@ -49,14 +50,12 @@ async function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap): Promise<vo
 		const aVal: unknown = a.get(key);
 		const bVal: unknown = b.get(key);
 		if (isObject(aVal) === true) {
-			const aObj: FluidObject<IFluidHandle> = aVal as FluidObject<IFluidHandle>;
 			assert(
 				isObject(bVal),
 				`${a.id} and ${b.id} differ at ${key}: a is an object, b is not}`,
 			);
-			const bObj: FluidObject<IFluidHandle> = bVal as FluidObject<IFluidHandle>;
-			const aHandle = aObj.IFluidHandle ? await aObj.IFluidHandle?.get() : aObj;
-			const bHandle = bObj.IFluidHandle ? await bObj.IFluidHandle?.get() : bObj;
+			const aHandle = isFluidHandle(aVal) ? await aVal.get() : aVal;
+			const bHandle = isFluidHandle(bVal) ? await bVal.get() : bVal;
 			assert.equal(
 				aHandle,
 				bHandle,
