@@ -139,6 +139,12 @@ export enum FieldKind {
 	 * Only allows exactly one child.
 	 */
 	Required,
+	/**
+	 * A special field used for node identifiers.
+	 * @remarks
+	 * Only allows exactly one child.
+	 */
+	Identifier,
 }
 
 /**

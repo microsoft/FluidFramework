@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable import/no-deprecated */
 
 import type {
@@ -79,8 +80,7 @@ export class MapFactory implements IChannelFactory<ISharedMap> {
 
 /**
  * Entrypoint for {@link ISharedMap} creation.
- * @public
- * @deprecated Please use SharedTree for new containers. SharedMap is supported for loading preexisting Fluid Framework 1.0 containers only.
+ * @alpha
  */
 export const SharedMap: ISharedObjectKind<ISharedMap> = {
 	getFactory(): IChannelFactory<ISharedMap> {
@@ -94,8 +94,7 @@ export const SharedMap: ISharedObjectKind<ISharedMap> = {
 
 /**
  * Entrypoint for {@link ISharedMap} creation.
- * @public
- * @deprecated Use ISharedMap instead.
+ * @alpha
  * @privateRemarks
  * This alias is for legacy compat from when the SharedMap class was exported as public.
  */

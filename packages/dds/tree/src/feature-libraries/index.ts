@@ -211,6 +211,7 @@ export {
 	Optional,
 	Sequence,
 	NodeKeyFieldKind,
+	Identifier,
 	Forbidden,
 	DefaultChangeset,
 	DefaultChangeFamily,

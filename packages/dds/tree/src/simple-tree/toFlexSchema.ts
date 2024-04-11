@@ -147,6 +147,7 @@ export function convertField(schemaMap: SchemaMap, schema: ImplicitFieldSchema):
 const convertFieldKind = new Map<FieldKind, FlexFieldKind>([
 	[FieldKind.Optional, FieldKinds.optional],
 	[FieldKind.Required, FieldKinds.required],
+	[FieldKind.Identifier, FieldKinds.identifier],
 ]);
 
 /**
