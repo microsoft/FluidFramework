@@ -1,7 +1,7 @@
 # Platform Requirements for Fluid Framework Client Packages
 
 These are the platform requirements for the current version of Fluid Framework Client Packages.
-These requirements error on the side of being too strict since within a major version they can be relaxed over time, but not made stricter.
+These requirements err on the side of being too strict since within a major version they can be relaxed over time, but not made stricter.
 For Long Term Support (LTS) versions this can require supporting these platforms for several years.
 
 It is likely that other configurations will work, but they are not supported: if they stop working, that is not a breaking change.
@@ -36,4 +36,4 @@ Node10 resolution is not supported as it does not support Fluid Framework's API 
     If you have a workflow you would like included in this list, file an issue.
     Once this list of workflows motivating CommonJS support is empty, we may drop support for CommonJS one year after notice of the change is posted here.
 
-    -   Testing with Jest (Which lacks [stable ESM support](https://jestjs.io/docs/ecmascript-modules) due to [unstable APIs in NodeJs](https://github.com/nodejs/node/issues/37648))
+    -   Testing with Jest (which lacks [stable ESM support](https://jestjs.io/docs/ecmascript-modules) due to [unstable APIs in NodeJs](https://github.com/nodejs/node/issues/37648))
