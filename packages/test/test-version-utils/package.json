@@ -25,7 +25,7 @@
 	"types": "lib/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib",
+		"api-extractor:esnext": "flub generate entrypoints --outFileAlpha legacy --outDir ./lib",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
@@ -33,6 +33,7 @@
 		"build:genver": "gen-version",
 		"build:test": "npm run build:test:esm",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp node_modules/.legacy nyc",
@@ -102,6 +103,7 @@
 		"semver": "^7.5.3"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.15.2",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "^0.36.0",
 		"@fluidframework/build-common": "^2.0.3",
