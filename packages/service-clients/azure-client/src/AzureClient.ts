@@ -89,7 +89,7 @@ function wrapConfigProvider(baseConfigProvider?: IConfigProviderBase): IConfigPr
  */
 export class AzureClient {
 	private readonly documentServiceFactory: IDocumentServiceFactory;
-	private readonly urlResolver: IUrlResolver;
+	protected urlResolver: IUrlResolver;
 	private readonly configProvider: IConfigProviderBase | undefined;
 
 	/**

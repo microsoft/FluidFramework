@@ -15,6 +15,7 @@ import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/intern
 import { v4 as uuid } from "uuid";
 
 import { createAzureTokenProvider } from "./AzureTokenFactory.js";
+import { EphemeralAzureClient } from "./EphemeralAzureClient.js";
 
 /**
  * This function will determine if local or remote mode is required (based on FLUID_CLIENT), and return a new
@@ -64,9 +65,18 @@ export function createAzureClient(
 		}
 		return logger ?? testLogger;
 	};
-	return new AzureClient({
-		connection: connectionProps,
-		logger: getLogger(),
-		configProvider,
-	});
+
+	const useEphemeral = process.env.azure__fluid__relay__service__ephemeral as string;
+
+	return useEphemeral === "true"
+		? new EphemeralAzureClient({
+				connection: connectionProps,
+				logger: getLogger(),
+				configProvider,
+		  })
+		: new AzureClient({
+				connection: connectionProps,
+				logger: getLogger(),
+				configProvider,
+		  });
 }

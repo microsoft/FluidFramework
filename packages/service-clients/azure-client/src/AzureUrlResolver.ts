@@ -16,6 +16,8 @@ import {
  *
  * @remarks The token provider here can be an `InsecureTokenProvider` for basic scenarios or more robust, secure
  * providers that fulfill the {@link @fluidframework/routerlicious-driver#ITokenProvider} interface.
+ *
+ * @internal
  */
 export class AzureUrlResolver implements IUrlResolver {
 	public constructor() {}
