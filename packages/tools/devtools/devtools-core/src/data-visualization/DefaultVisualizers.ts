@@ -270,16 +270,19 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	// Maps the `visualTreeRepresentation` in the format compatible to {@link visualizeChildData} function.
 	const visualTree = toVisualTree(visualTreeRepresentation);
 
-	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	// TODO: Validate the type casting.
 	const visualTreeResult: FluidObjectNode = {
 		...visualTree,
 		fluidObjectId: sharedTree.id,
 		typeMetadata: "SharedTree",
 		nodeKind:
-			visualTree.nodeKind === VisualNodeKind.TreeNode
+			visualTree.nodeKind === VisualNodeKind.TreeNode ||
+			visualTree.nodeKind === VisualNodeKind.FluidHandleNode
 				? VisualNodeKind.FluidTreeNode
+				: visualTree.nodeKind === VisualNodeKind.UnknownObjectNode
+				? VisualNodeKind.FluidUnknownObjectNode
 				: VisualNodeKind.FluidValueNode,
-	} as FluidObjectNode;
+	} as unknown as FluidObjectNode;
 
 	return visualTreeResult;
 };

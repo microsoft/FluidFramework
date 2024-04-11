@@ -84,10 +84,6 @@ function createToolTipContents(schema: SharedTreeSchemaNode): VisualTreeNode {
  * Converts the visual representation from {@link visualizeSharedTreeNodeBySchema} to a visual tree compatible with the devtools-view.
  * @param tree - the visual representation of the SharedTree.
  * @returns - the visual representation of type {@link VisualChildNode}
- *
- * {@link VisualTreeNode} is omitted when VisualSharedTreeNodeKind is the leaf node, since leaf does not accept object as its child.
- * Check `NodeData` for the allowed types of the leaf node.
- *
  */
 export function toVisualTree(tree: VisualSharedTreeNode): VisualChildNode {
 	if (tree.kind === VisualSharedTreeNodeKind.LeafNode) {
