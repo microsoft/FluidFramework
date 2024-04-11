@@ -234,6 +234,15 @@ To make a breaking change in `SchemaChangeCodec`,
     -   Make this write version create edit manager & message codecs of the appropriate versions
     -   Be sure to document code saturation requirements which must be met before the new version can be used
 
+## Example
+
+A new format was introduced for optional-field in [this PR](https://github.com/microsoft/FluidFramework/pull/20341).
+That format was added as an option for `SharedTree` users in [this PR](https://github.com/microsoft/FluidFramework/pull/20615).
+
+Future changes introducing a new format can do so in a single PR if desired.
+Not exposing the new format in `SharedTreeFormatVersion` immediately has the benefit of allowing iteration on the new format without preserving compatibility.
+Once the format is exposed & released to users, it must be supported indefinitely.
+
 ## Possible Improvements
 
 As can be seen by the example above, under current guidelines, the size of the code change for a new format will vary depending on how deeply nested the implicitly versioned codec is (through codec composition layers).
