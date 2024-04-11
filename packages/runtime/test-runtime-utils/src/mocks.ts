@@ -23,7 +23,7 @@ import {
 	IDeltaConnection,
 	IDeltaHandler,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor/internal";
 import {

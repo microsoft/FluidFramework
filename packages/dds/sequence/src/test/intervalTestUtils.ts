@@ -36,6 +36,7 @@ export function assertConsistent(clients: Client[]): void {
 export function assertEquivalentSharedStrings(a: SharedString, b: SharedString) {
 	assert.equal(a.getText(), b.getText(), `Non-equal text between strings ${a.id} and ${b.id}.`);
 	assert.equal(a.getLength(), b.getLength());
+	assertPropertiesEqual(a, b);
 	const firstLabels = Array.from(a.getIntervalCollectionLabels()).sort();
 	const otherLabels = Array.from(b.getIntervalCollectionLabels()).sort();
 	assert.deepEqual(
@@ -103,6 +104,25 @@ export function assertEquivalentSharedStrings(a: SharedString, b: SharedString) 
 			);
 			assert.equal(interval.intervalType, otherInterval.intervalType);
 			assert.deepEqual(interval.properties, otherInterval.properties);
+		}
+	}
+}
+
+function assertPropertiesEqual(a: SharedString, b: SharedString): void {
+	for (let i = 0; i < a.getLength(); i++) {
+		const aProps = a.getPropertiesAtPosition(i) ?? [];
+		const bProps = b.getPropertiesAtPosition(i) ?? [];
+		const aKeys = aProps === undefined ? [] : Object.keys(aProps);
+		const bKeys = bProps === undefined ? [] : Object.keys(bProps);
+		assert.equal(
+			aKeys.length,
+			bKeys.length,
+			`Property sets have different lengths: ${aKeys.length} vs ${bKeys.length}`,
+		);
+		for (const key of Object.keys(aKeys)) {
+			const aVal: unknown = aProps[key];
+			const bVal: unknown = bProps[key];
+			assert.deepEqual(aVal, bVal, `Property sets have different values for key ${key}`);
 		}
 	}
 }
