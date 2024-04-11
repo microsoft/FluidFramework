@@ -208,7 +208,7 @@ export class AppData extends DataObject {
 					},
 				},
 			],
-			childrenTwo: 42,
+			childrenTwo: 32,
 		}));
 
 		sharedTree.schematize(config);
