@@ -45,7 +45,7 @@
 		}
 	},
 	"main": "lib/index.js",
-	"types": "lib/index.d.ts",
+	"types": "lib/public.d.ts",
 	"files": [
 		"dist/**/*",
 		"!dist/test/**",
