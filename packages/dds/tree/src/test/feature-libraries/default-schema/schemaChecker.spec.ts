@@ -36,37 +36,7 @@ import {
 	type Value,
 } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
-import type { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
-
-/**
- * A fake FluidHandle to be used in tests.
- * It's completely non-functional other than the `IFluidHandle` property, which is required
- * for the validations that SharedTree does on a FluidHandle value in a node.
- */
-class TestFluidHandle implements IFluidHandle {
-	public absolutePath: string = "fakePath";
-	public isAttached: boolean = false;
-
-	public get IFluidHandle(): IFluidHandle {
-		return this;
-	}
-
-	public async get(): Promise<any> {
-		throw new Error("Method not implemented.");
-	}
-
-	public bind(handle: IFluidHandle): void {
-		throw new Error("Method not implemented.");
-	}
-
-	public attachGraph(): void {
-		throw new Error("Method not implemented.");
-	}
-
-	public async resolveHandle(request: IRequest): Promise<IResponse> {
-		throw new Error("Method not implemented.");
-	}
-}
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 const emptySchemaPolicy: FullSchemaPolicy = {
 	fieldKinds: new Map(),
@@ -144,7 +114,7 @@ describe("schema validation", () => {
 			const booleanNode = getValueNode("myBooleanNode", false);
 			const nullNode = getValueNode("myNullNode", null);
 			const undefinedNode = getValueNode("myUndefinedNode", undefined);
-			const fluidHandleNode = getValueNode("myFluidHandleNode", new TestFluidHandle());
+			const fluidHandleNode = getValueNode("myFluidHandleNode", new MockHandle(undefined));
 			const nodeCases = [
 				numberNode,
 				stringNode,
@@ -421,7 +391,7 @@ describe("schema validation", () => {
 			const stringNode = getValueNode("myStringNode", "string");
 			const booleanNode = getValueNode("myBooleanNode", false);
 			const nullNode = getValueNode("myNullNode", null);
-			const fluidHandleNode = getValueNode("myFluidHandleNode", new TestFluidHandle());
+			const fluidHandleNode = getValueNode("myFluidHandleNode", new MockHandle(undefined));
 
 			it(`in schema (children of every type)`, () => {
 				// Note there's a sequence field here to test that both optional and sequence fields
