@@ -26,7 +26,6 @@ import {
 	prepareContentForInsert,
 } from "./proxies.js";
 import { getFlexNode, setFlexNode } from "./proxyBinding.js";
-import { getSimpleFieldSchema } from "./schemaCaching.js";
 import {
 	NodeKind,
 	ImplicitFieldSchema,
@@ -38,10 +37,11 @@ import {
 	TreeFieldFromImplicitField,
 	InsertableTreeFieldFromImplicitField,
 	FieldSchema,
+	normalizeFieldSchema,
 } from "./schemaTypes.js";
 import { cursorFromNodeData } from "./toMapTree.js";
 import { TreeNode } from "./types.js";
-import { RestrictiveReadonlyRecord, brand, fail } from "../util/index.js";
+import { RestrictiveReadonlyRecord, fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { RawTreeNode, rawError } from "./rawNode.js";
 
@@ -60,7 +60,8 @@ export type ObjectFromSchemaRecord<
  * @remarks
  * Object nodes consist of a type which specifies which {@link TreeNodeSchema} they use (see {@link TreeNodeApi.schema}), and a collections of fields, each with a distinct `key` and its own {@link FieldSchema} defining what can be placed under that key.
  *
- * All non-empty fields on an object node are exposed as enumerable own properties with string keys.
+ * All fields on an object node are exposed as own properties with string keys.
+ * Non-empty fields are enumerable and empty optional fields are non-enumerable own properties with the value `undefined`.
  * No other own `own` or `enumerable` properties are included on object nodes unless the user of the node manually adds custom session only state.
  * This allows a majority of general purpose JavaScript object processing operations (like `for...in`, `Reflect.ownKeys()` and `Object.entries()`) to enumerate all the children.
  * @public
@@ -90,62 +91,39 @@ export type InsertableObjectFromSchemaRecord<
 };
 
 /**
- * Maps from simple field keys ("view" keys) to their flex field counterparts ("stored" keys).
+ * Maps from simple field keys ("view" keys) to information about the field.
  *
  * @remarks
- * A missing entry for a given view key indicates that the view and stored keys are the same for that field.
+ * A missing entry for a given view key indicates that no such field exists.
+ * Keys with symbols are currently never used, but allowed to make lookups on non-field things
+ * (returning undefined) easier.
  */
-type SimpleKeyToFlexKeyMap = Map<string, FieldKey>;
-
-/**
- * Caches a {@link SimpleKeyToFlexKeyMap} for a given {@link TreeNodeSchema}.
- */
-const simpleKeyToFlexKeyCache = new WeakMap<TreeNodeSchema, SimpleKeyToFlexKeyMap>();
+type SimpleKeyMap = Map<string | symbol, { storedKey: FieldKey; schema: FieldSchema }>;
 
 /**
  * Caches the mappings from view keys to stored keys for the provided object field schemas in {@link simpleKeyToFlexKeyCache}.
  */
-function getOrCreateFlexKeyMapping(
-	nodeSchema: TreeNodeSchema,
-	fields: Record<string, ImplicitFieldSchema>,
-): SimpleKeyToFlexKeyMap {
-	let keyMap = simpleKeyToFlexKeyCache.get(nodeSchema);
-	if (keyMap === undefined) {
-		keyMap = new Map<FieldKey, FieldKey>();
-		for (const [viewKey, fieldSchema] of Object.entries(fields)) {
-			// Only specify mapping if the stored key differs from the view key.
-			// No entry in this map will indicate that the two keys are the same.
-			const storedKey = getStoredKey(viewKey, fieldSchema);
-			if (viewKey !== storedKey) {
-				keyMap.set(viewKey, brand(storedKey));
-			}
-		}
-		simpleKeyToFlexKeyCache.set(nodeSchema, keyMap);
+function createFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): SimpleKeyMap {
+	const keyMap: SimpleKeyMap = new Map();
+	for (const [viewKey, fieldSchema] of Object.entries(fields)) {
+		const storedKey = getStoredKey(viewKey, fieldSchema);
+		keyMap.set(viewKey, { storedKey, schema: normalizeFieldSchema(fieldSchema) });
 	}
+
 	return keyMap;
 }
 
 /**
  * @param allowAdditionalProperties - If true, setting of unexpected properties will be forwarded to the target object.
  * Otherwise setting of unexpected properties will error.
+ * TODO: consider implementing this using `Object.preventExtension` instead.
  * @param customTargetObject - Target object of the proxy.
  * If not provided `{}` is used for the target.
  */
-function createObjectProxy(
-	schema: ObjectNodeSchema,
+function createProxyHandler(
+	flexKeyMap: SimpleKeyMap,
 	allowAdditionalProperties: boolean,
-	targetObject: object = {},
-): TreeNode {
-	// Performance optimization: cache view key => stored key mapping.
-	const flexKeyMap: SimpleKeyToFlexKeyMap = getOrCreateFlexKeyMapping(
-		schema,
-		schema.info as Record<string, ImplicitFieldSchema>,
-	);
-
-	function getFlexKey(viewKey: string): FieldKey {
-		return flexKeyMap.get(viewKey) ?? brand(viewKey);
-	}
-
+): ProxyHandler<TreeNode> {
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
 	// prototype as an object literal '{}'.  This is because 'deepEquals' uses 'Object.getPrototypeOf'
 	// as a way to quickly reject objects with different prototype chains.
@@ -155,79 +133,71 @@ function createObjectProxy(
 
 	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
 	// a dispatch object to see if it improves performance.
-	const proxy = new Proxy(targetObject, {
-		get(target, viewKey): unknown {
-			const flexKey = getFlexKey(viewKey as FieldKey);
-			const field = getFlexNode(proxy).tryGetField(flexKey);
+	const handler: ProxyHandler<TreeNode> = {
+		get(target, viewKey, proxy): unknown {
+			const fieldInfo = flexKeyMap.get(viewKey);
 
-			if (field !== undefined) {
-				return getProxyForField(field);
+			if (fieldInfo !== undefined) {
+				const field = getFlexNode(proxy).tryGetField(fieldInfo.storedKey);
+				return field === undefined ? undefined : getProxyForField(field);
 			}
 
 			// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
 			return Reflect.get(target, viewKey, proxy);
 		},
-		set(target, viewKey, value: InsertableContent) {
-			const flexNode = getFlexNode(proxy);
-			const flexNodeSchema = flexNode.schema;
-			assert(flexNodeSchema instanceof FlexObjectNodeSchema, 0x888 /* invalid schema */);
-
-			const hasField = viewKey in schema.info;
-
-			if (!hasField) {
+		set(target, viewKey, value: InsertableContent, proxy) {
+			const fieldInfo = flexKeyMap.get(viewKey);
+			if (fieldInfo === undefined) {
 				return allowAdditionalProperties ? Reflect.set(target, viewKey, value) : false;
 			}
-			assert(typeof viewKey === "string", 0x7e1 /* invalid key */);
-			const flexKey: FieldKey | undefined = getFlexKey(viewKey);
 
-			const field = flexNode.getBoxed(flexKey);
-
-			const simpleNodeFields = schema.info;
-			if (simpleNodeFields[viewKey] === undefined) {
-				fail(`Field key '${viewKey}' not found in schema.`);
-			}
-
-			const simpleFieldSchema = getSimpleFieldSchema(field.schema, schema.info[viewKey]);
-
-			setField(field, simpleFieldSchema, value);
+			const flexNode = getFlexNode(proxy);
+			const field = flexNode.getBoxed(fieldInfo.storedKey);
+			setField(field, fieldInfo.schema, value);
 
 			return true;
 		},
 		has: (target, viewKey) => {
-			const fields = schema.info as Record<string, ImplicitFieldSchema>;
 			return (
-				fields[viewKey as FieldKey] !== undefined ||
+				flexKeyMap.has(viewKey) ||
 				(allowAdditionalProperties ? Reflect.has(target, viewKey) : false)
 			);
 		},
 		ownKeys: (target) => {
-			const fields = schema.info as Record<string, ImplicitFieldSchema>;
 			return [
-				...Object.keys(fields),
+				...flexKeyMap.keys(),
 				...(allowAdditionalProperties ? Reflect.ownKeys(target) : []),
 			];
 		},
 		getOwnPropertyDescriptor: (target, viewKey) => {
-			const flexKey = getFlexKey(viewKey as FieldKey);
-			const field = getFlexNode(proxy).tryGetField(flexKey);
+			const fieldInfo = flexKeyMap.get(viewKey);
 
-			if (field === undefined) {
+			if (fieldInfo === undefined) {
 				return allowAdditionalProperties
 					? Reflect.getOwnPropertyDescriptor(target, viewKey)
 					: undefined;
 			}
 
+			// For some reason, the getOwnPropertyDescriptor is not passed in the receiver, so use a weak map.
+			// If a refactoring is done to associated flex tree data with the target not the proxy, this extra map could be removed,
+			// and the design would be more compatible with proxyless nodes.
+			const proxy = targetToProxy.get(target) ?? fail("missing proxy");
+			const field = getFlexNode(proxy).tryGetField(fieldInfo.storedKey);
+
 			const p: PropertyDescriptor = {
-				value: getProxyForField(field),
+				value: field === undefined ? undefined : getProxyForField(field),
 				writable: true,
-				enumerable: true,
+				// Report empty fields as own properties so they shadow inherited properties (even when empty) to match TypeScript typing.
+				// Make empty fields not enumerable so they get skipped when iterating over an object to better align with
+				// JSON and deep equals with JSON compatible object (which can't have undefined fields).
+				enumerable: field !== undefined,
 				configurable: true, // Must be 'configurable' if property is absent from proxy target.
 			};
 
 			return p;
 		},
-	}) as TreeNode;
-	return proxy;
+	};
+	return handler;
 }
 
 export function setField(
@@ -283,7 +253,19 @@ export function objectSchema<
 	// Ensure no collisions between final set of view keys, and final set of stored keys (including those
 	// implicitly derived from view keys)
 	assertUniqueKeys(base.identifier, base.info);
-	class schema extends base {
+
+	// Performance optimization: cache view key => stored key and schema.
+	const flexKeyMap: SimpleKeyMap = createFlexKeyMapping(base.info);
+
+	// Used to ensure we only use one most derived schema type.
+	// The type "Function" is used by "Object.constructor" and this matches it.
+	// eslint-disable-next-line @typescript-eslint/ban-types
+	let constructorCached: Function;
+
+	let handler: ProxyHandler<object>;
+	let customizable: boolean;
+
+	class CustomObjectNode extends base {
 		public constructor(input: InsertableObjectFromSchemaRecord<T>) {
 			super(input);
 
@@ -305,8 +287,47 @@ export function objectSchema<
 			//
 			// In Case 1 (POJO emulation), the prototype chain match '{}' (proxyTarget = undefined)
 			// In Case 2 (Customizable Object), the prototype chain include the user's subclass (proxyTarget = this)
-			const customizable = this.constructor !== schema;
-			const proxyTarget = customizable ? this : undefined;
+
+			if (constructorCached === undefined) {
+				// One time initialization that required knowing the most derived type (from this.constructor) and thus has to be lazy.
+				constructorCached = this.constructor;
+				customizable = this.constructor !== CustomObjectNode;
+				handler ??= createProxyHandler(flexKeyMap, customizable);
+
+				// First run, do extra validation.
+				// TODO: provide a way for TreeConfiguration to trigger this same validation to ensure it gets run early.
+				// Scan for shadowing inherited members which won't work, but stop scan early to allow shadowing built in (which seems to work ok).
+				{
+					let prototype: object = this.constructor.prototype;
+					// There isn't a clear cleaner way to author this loop.
+					while (prototype !== CustomObjectNode.prototype) {
+						for (const [key] of flexKeyMap) {
+							if (
+								// constructor is a special case, since one is built in on the derived type, and shadowing it works fine since we only use it before fields are applied.
+								key !== "constructor" &&
+								Reflect.getOwnPropertyDescriptor(prototype, key) !== undefined
+							) {
+								throw new UsageError(
+									`Schema ${
+										base.identifier
+									} defines an inherited property ${key.toString()} which shadows a field. Since fields are exposed as own properties, this shadowing will not work, and is an error.`,
+								);
+							}
+						}
+						// Since this stops at CustomObjectNode, it should never see a null prototype, so this case is safe.
+						// Additionally, if the prototype chain is ever messed up such that CustomObjectNode is not in it,
+						// the null that would show up here does at least ensure this code throws instead of hanging.
+						prototype = Reflect.getPrototypeOf(prototype) as object;
+					}
+				}
+			}
+
+			assert(
+				constructorCached === this.constructor,
+				"Node instantiated from multiple bases.",
+			);
+
+			const proxyTarget = customizable ? this : {};
 
 			const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
 			assert(flexSchema instanceof FlexObjectNodeSchema, "invalid flex schema");
@@ -314,17 +335,14 @@ export function objectSchema<
 				? input
 				: new RawObjectNode(flexSchema, copyContent(flexSchema.name, input) as object);
 
-			const proxy: TreeNode = createObjectProxy(
-				this.constructor as ObjectNodeSchema,
-				customizable,
-				proxyTarget,
-			);
+			const proxy = new Proxy(proxyTarget, handler) as CustomObjectNode;
+			targetToProxy.set(proxyTarget, proxy);
 			setFlexNode(proxy, flexNode);
-			return proxy as unknown as schema;
+			return proxy;
 		}
 	}
 
-	return schema as TreeNodeSchemaClass<
+	return CustomObjectNode as TreeNodeSchemaClass<
 		TName,
 		NodeKind.Object,
 		TreeObjectNode<T, TName>,
@@ -333,6 +351,8 @@ export function objectSchema<
 		T
 	>;
 }
+
+const targetToProxy: WeakMap<object, TreeNode> = new WeakMap();
 
 /**
  * The implementation of an object node created by {@link createRawNode}.
