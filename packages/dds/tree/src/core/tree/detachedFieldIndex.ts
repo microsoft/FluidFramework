@@ -216,7 +216,7 @@ export class DetachedFieldIndex {
 	}
 
 	/**
-	 * Given a query range, find and group all detahced nodes within the range according to the following rules:
+	 * Given a query range, find and group all detached nodes within the range according to the following rules:
 	 *
 	 * 1. If a range entry overlaps with the query range, store the overlapping portion as a new range in the result.
 	 * 2. If there is an "empty" space between two consecutive range entries, store the range between the end
