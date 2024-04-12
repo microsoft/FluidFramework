@@ -4,15 +4,11 @@
 
 ```ts
 
+import type { EventEmitter } from 'events_pkg';
 import { FieldSchemaUnsafe as FieldSchemaUnsafe_2 } from './typesUnsafe.js';
-import { FluidObject } from '@fluidframework/core-interfaces';
-import { IChannel } from '@fluidframework/datastore-definitions';
-import type { IErrorBase } from '@fluidframework/core-interfaces';
-import { IEvent } from '@fluidframework/core-interfaces';
-import { IEventProvider } from '@fluidframework/core-interfaces';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { ISharedObjectKind } from '@fluidframework/shared-object-base';
+import { FluidObject as FluidObject_2 } from '@fluidframework/core-interfaces';
+import { IFluidHandle as IFluidHandle_2 } from '@fluidframework/core-interfaces';
+import { IFluidLoadable as IFluidLoadable_2 } from '@fluidframework/core-interfaces';
 
 // @public
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
@@ -778,6 +774,11 @@ export type InsertableTypedNode<T extends TreeNodeSchema> = (T extends {
     implicitlyConstructable: true;
 } ? NodeBuilderData<T> : never) | Unhydrated<NodeFromSchema<T>>;
 
+// @public
+export type InsertableTypedNodeUnsafe<T extends Unenforced<TreeNodeSchema>> = Unhydrated<NodeFromSchemaUnsafe<T>> | (T extends {
+    implicitlyConstructable: true;
+} ? NodeBuilderDataUnsafe<T> : never);
+
 // @public (undocumented)
 export interface IProvideFluidHandle {
     // (undocumented)
@@ -876,11 +877,6 @@ export type ISequencedDocumentMessageExperimental = Omit<ISequencedDocumentMessa
     expHash1?: string;
     compression?: string;
 };
-
-// @public
-export type InsertableTypedNodeUnsafe<T extends Unenforced<TreeNodeSchema>> = Unhydrated<NodeFromSchemaUnsafe<T>> | (T extends {
-    implicitlyConstructable: true;
-} ? NodeBuilderDataUnsafe<T> : never);
 
 // @public
 export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents<M>> {
@@ -1057,6 +1053,11 @@ export interface ITree extends IChannel {
 }
 
 // @public
+export interface IUser {
+    id: string;
+}
+
+// @public
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
 // @public
@@ -1126,6 +1127,27 @@ export type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonl
 };
 
 // @public
+export type OpSpaceCompressedId = number & {
+    readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae";
+};
+
+// @public (undocumented)
+export type ReadOnlyInfo = {
+    readonly readonly: false | undefined;
+} | {
+    readonly readonly: true;
+    readonly forced: boolean;
+    readonly permissions: boolean | undefined;
+    readonly storageOnly: boolean;
+    readonly storageOnlyReason?: string;
+};
+
+// @public
+export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
+    [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
+} : L;
+
+// @public
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
     readonly [P in symbol | string]: P extends K ? T : never;
 };
@@ -1156,7 +1178,7 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
         [Symbol.iterator](): Iterator<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>;
     }, false, T>;
     readonly boolean: TreeNodeSchema<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean>;
-    readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<FluidObject & IFluidLoadable>, IFluidHandle<FluidObject & IFluidLoadable>>;
+    readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle_2<FluidObject_2 & IFluidLoadable_2>, IFluidHandle_2<FluidObject_2 & IFluidLoadable_2>>;
     get identifier(): FieldSchema<FieldKind.Identifier>;
     map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
     map<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
@@ -1187,10 +1209,64 @@ export interface SchemaIncompatible {
 export type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
 // @public
+export type SessionId = StableId & {
+    readonly SessionId: "4498f850-e14e-4be9-8db0-89ec00997e58";
+};
+
+// @public
+export type SessionSpaceCompressedId = number & {
+    readonly SessionUnique: "cea55054-6b82-4cbf-ad19-1fa645ea3b3e";
+};
+
+// @public
 export const SharedTree: ISharedObjectKind<ITree>;
 
 // @public
+export type StableId = string & {
+    readonly StableId: "53172b0d-a3d5-41ea-bd75-b43839c97f5a";
+};
+
+// @public
+export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISummaryAttachment;
+
+// @public
+export namespace SummaryType {
+    // @internal (undocumented)
+    export type Attachment = 4;
+    // @internal (undocumented)
+    export type Blob = 2;
+    // @internal (undocumented)
+    export type Handle = 3;
+    // @internal (undocumented)
+    export type Tree = 1;
+    const Tree: Tree;
+    const Blob: Blob;
+    const Handle: Handle;
+    const Attachment: Attachment;
+}
+
+// @public
+export type SummaryType = SummaryType.Attachment | SummaryType.Blob | SummaryType.Handle | SummaryType.Tree;
+
+// @public
+export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment;
+
+// @public
+export interface Tagged<V, T extends string = string> {
+    // (undocumented)
+    tag: T;
+    // (undocumented)
+    value: V;
+}
+
+// @public
+export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
+
+// @public
 export type TransactionConstraint = NodeInDocumentConstraint;
+
+// @public
+export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
 
 // @public
 export const Tree: TreeApi;
