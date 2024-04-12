@@ -313,6 +313,9 @@ export class SharedTree
 export const SharedTreeFormatVersion = {
 	/**
 	 * Requires \@fluidframework/tree \>= 2.0.0.
+	 *
+	 * @deprecated - FF does not currently plan on supporting this format long-term.
+	 * Do not write production documents using this format, as they may not be loadable in the future.
 	 */
 	v1: 1,
 
@@ -362,7 +365,7 @@ export interface SharedTreeFormatOptions {
 	 * To be safe, application authors should verify that they have saturated this version
 	 * of \@fluidframework/tree in their ecosystem before changing the format version.
 	 *
-	 * This option defaults to SharedTreeFormatVersion.v1.
+	 * This option defaults to SharedTreeFormatVersion.v2.
 	 */
 	formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
 }
@@ -386,7 +389,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 	jsonValidator: noopValidator,
 	forest: ForestType.Reference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,
-	formatVersion: SharedTreeFormatVersion.v1,
+	formatVersion: SharedTreeFormatVersion.v2,
 };
 
 /**
