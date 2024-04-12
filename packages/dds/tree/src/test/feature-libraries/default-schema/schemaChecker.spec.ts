@@ -170,38 +170,7 @@ describe.only("schema validation", () => {
 			const numberNode = createLeafNode("myNumberNode", 1, ValueSchema.Number);
 			const stringNode = createLeafNode("myStringNode", "string", ValueSchema.String);
 
-			it(`in schema (nodes of a single type)`, () => {
-				const fieldSchema_requiredNumberNode = getFieldSchema(FieldKinds.required, [
-					numberNode.node.type,
-				]);
-				const mapNode = createNonLeafNode(
-					"myNumberMapNode",
-					new Map(),
-					new MapNodeStoredSchema(fieldSchema_requiredNumberNode),
-				);
-				const schemaAndPolicy = createSchemaAndPolicy(
-					new Map([
-						[numberNode.node.type, numberNode.schema],
-						[mapNode.node.type, mapNode.schema],
-					]),
-					new Map([[fieldSchema_requiredNumberNode.kind, FieldKinds.required]]),
-				);
-
-				// In schema while empty
-				assert.equal(
-					isNodeInSchema(mapNode.node, schemaAndPolicy),
-					SchemaValidationErrors.NoError,
-				);
-
-				// In schema after adding a number node
-				mapNode.node.fields.set(brand("prop1"), [numberNode.node]);
-				assert.equal(
-					isNodeInSchema(mapNode.node, schemaAndPolicy),
-					SchemaValidationErrors.NoError,
-				);
-			});
-
-			it(`in schema (nodes of several types)`, () => {
+			it("in schema", () => {
 				const fieldSchema = getFieldSchema(FieldKinds.required, [
 					numberNode.node.type,
 					stringNode.node.type,
@@ -220,20 +189,7 @@ describe.only("schema validation", () => {
 					new Map([[fieldSchema.kind, FieldKinds.required]]),
 				);
 
-				// In schema while empty
-				assert.equal(
-					isNodeInSchema(mapNode.node, schemaAndPolicy),
-					SchemaValidationErrors.NoError,
-				);
-
-				// In schema after adding a number node
 				mapNode.node.fields.set(brand("prop1"), [numberNode.node]);
-				assert.equal(
-					isNodeInSchema(mapNode.node, schemaAndPolicy),
-					SchemaValidationErrors.NoError,
-				);
-
-				// In schema after adding a string node
 				mapNode.node.fields.set(brand("prop2"), [stringNode.node]);
 				assert.equal(
 					isNodeInSchema(mapNode.node, schemaAndPolicy),
@@ -241,7 +197,28 @@ describe.only("schema validation", () => {
 				);
 			});
 
-			it(`not in schema due to having a value`, () => {
+			it("in schema while empty", () => {
+				const fieldSchema = getFieldSchema(FieldKinds.required, [numberNode.node.type]);
+				const mapNode = createNonLeafNode(
+					"myMapNode",
+					new Map(),
+					new MapNodeStoredSchema(fieldSchema),
+				);
+				const schemaAndPolicy = createSchemaAndPolicy(
+					new Map([
+						[numberNode.node.type, numberNode.schema],
+						[mapNode.node.type, mapNode.schema],
+					]),
+					new Map([[fieldSchema.kind, FieldKinds.required]]),
+				);
+
+				assert.equal(
+					isNodeInSchema(mapNode.node, schemaAndPolicy),
+					SchemaValidationErrors.NoError,
+				);
+			});
+
+			it("not in schema due to having a value", () => {
 				const fieldSchema = getFieldSchema(FieldKinds.required, [numberNode.node.type]);
 				const mapNode = createNonLeafNode(
 					"myNumberMapNode",
