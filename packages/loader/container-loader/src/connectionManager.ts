@@ -816,7 +816,10 @@ export class ConnectionManager implements IConnectionManager {
 			this.pendingConnection !== undefined,
 			0x345 /* this.pendingConnection is undefined when trying to cancel */,
 		);
-		this.pendingConnection.diagnostics.unshift({ name: "cancelling", time: Date.now() });
+		this.pendingConnection.diagnostics.unshift({
+			name: `cancelling: ${JSON.stringify(reason)}`,
+			time: Date.now(),
+		});
 		this.pendingConnection.abort();
 		this.pendingConnection = undefined;
 		this.logger.sendTelemetryEvent({ eventName: "ConnectionCancelReceived" });

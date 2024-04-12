@@ -155,8 +155,8 @@ export class OdspDelayLoadedDeltaStream {
 
 			steps.unshift({
 				name: requestWebsocketTokenFromJoinSession
-					? "getWebsocketToken_start"
-					: "getWebsocketToken_skipped",
+					? "getWebsocketToken_skipped"
+					: "getWebsocketToken_start",
 				time: Date.now(),
 				type: "auth",
 			});
@@ -188,11 +188,13 @@ export class OdspDelayLoadedDeltaStream {
 				websocketTokenPromise
 					.catch(annotateAndRethrowConnectionError("getWebsocketToken"))
 					.finally(() =>
-						steps.unshift({
-							name: "getWebsocketToken_end",
-							time: Date.now(),
-							type: "auth",
-						}),
+						requestWebsocketTokenFromJoinSession
+							? undefined
+							: steps.unshift({
+									name: "getWebsocketToken_end",
+									time: Date.now(),
+									type: "auth",
+							  }),
 					),
 			]);
 

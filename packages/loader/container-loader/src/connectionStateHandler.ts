@@ -417,14 +417,14 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 
 		this.connectionDiagnosticsLog = [
 			{
-				state: "disconnected",
-				stateDetails: {
-					disconnected: {
+				stateProgression: [
+					{
+						state: "disconnected",
 						time: Date.now(),
 						reason: { text: "ConnectionStateHandler instantiated" },
 						autoReconnect: ReconnectMode.Enabled, //* need to pass in from Container
 					},
-				},
+				],
 			},
 		];
 	}
@@ -573,14 +573,14 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		this._connectionState = ConnectionState.Disconnected;
 
 		const newConnectionDiag: ConnectionDiagnostics = {
-			state: "disconnected",
-			stateDetails: {
-				disconnected: {
+			stateProgression: [
+				{
+					state: "disconnected",
 					time: Date.now(),
 					reason,
 					autoReconnect: reconnectMode,
 				},
-			},
+			],
 		};
 		this.connectionDiagnosticsLog.unshift(newConnectionDiag);
 
@@ -595,12 +595,13 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		this._connectionState = ConnectionState.EstablishingConnection;
 
 		const diag = this.connectionDiagnosticsLog[0];
-		diag.state = "establishingConnection";
-		diag.stateDetails.establishingConnection = {
+		diag.stateProgression.unshift({
+			state: "establishingConnection",
 			time: Date.now(),
 			reason, //* Match extra verbage in reason text below?
 			steps,
-		};
+		});
+
 		this.handler.connectionStateChanged(ConnectionState.EstablishingConnection, oldState, {
 			text: `Establishing Connection due to ${reason.text}`,
 			error: reason.error,
@@ -648,13 +649,13 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 
 		const diag = this.connectionDiagnosticsLog[0];
 		diag.clientId = details.clientId;
-		diag.state = "catchingUp";
-		diag.stateDetails.catchingUp = {
+		diag.stateProgression.unshift({
+			state: "catchingUp",
 			time: Date.now(),
 			reason: details.reason,
 			checkpointSequenceNumber: details.checkpointSequenceNumber,
 			//* Need to include in event -- initialProcessedSequenceNumber: ...
-		};
+		});
 
 		// IMPORTANT: Report telemetry after we set _pendingClientId, but before transitioning to Connected state
 		this.handler.connectionStateChanged(ConnectionState.CatchingUp, oldState, details.reason);
@@ -714,10 +715,10 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 				this.handler.clientShouldHaveLeft(this._clientId!);
 			}
 			this._clientId = this.pendingClientId;
-			this.connectionDiagnosticsLog[0].state = "connected";
-			this.connectionDiagnosticsLog[0].stateDetails.connected = {
+			this.connectionDiagnosticsLog[0].stateProgression.unshift({
+				state: "connected",
 				time: Date.now(),
-			};
+			});
 		} else if (value === ConnectionState.Disconnected) {
 			// Clear pending state immediately to prepare for reconnect
 			this._pendingClientId = undefined;
@@ -751,15 +752,15 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 
 			//* Unify with cancel case?
 			const newConnectionDiag: ConnectionDiagnostics = {
-				state: "disconnected",
-				stateDetails: {
-					disconnected: {
+				stateProgression: [
+					{
+						state: "disconnected",
 						time: Date.now(),
 						reason,
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						autoReconnect: reconnectMode!,
 					},
-				},
+				],
 			};
 			this.connectionDiagnosticsLog.unshift(newConnectionDiag);
 		}

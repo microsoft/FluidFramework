@@ -2473,67 +2473,75 @@ export interface ConnectionDiagnostics {
 
 	//* This is hard to compute at the right time.  Maybe can follow example of ReconnectMode below?
 	/** read-only v. read/write connection */
-	connectionMode?: ConnectionMode;
+	desiredConnectionMode?: ConnectionMode;
 
-	//* TODO: Do we need additional modeling for the case when a connection attempt is cancelled?
-
-	/** The current (while active) or final (after disconnect) state of this connection */
-	state: keyof ConnectionDiagnostics["stateDetails"];
-
-	/** Details about the connection as it progressed through each state */
-	readonly stateDetails: {
+	/**
+	 * Progression of the connection through the 4 states, with details about each step.
+	 * Expected to go from disconnected to establishingConnection to catchingUp to connected,
+	 * with each state inserted at the front (reverse order), so the current/final state is at position [0]
+	 */
+	readonly stateProgression: [
 		/** Details about the connection while disconnected */
-		disconnected: {
-			readonly time: number;
-			readonly reason?: IConnectionStateChangeReason;
+		| {
+				state: "disconnected";
+				readonly time: number;
+				readonly reason?: IConnectionStateChangeReason;
 
-			readonly autoReconnect: ReconnectMode;
-		};
+				readonly autoReconnect: ReconnectMode;
+		  }
 		/** Details about the connection while establishingConnection */
-		establishingConnection?: {
-			readonly time: number;
-			readonly reason?: IConnectionStateChangeReason;
+		| {
+				state: "establishingConnection";
+				readonly time: number;
+				readonly reason?: IConnectionStateChangeReason;
 
-			steps: {
-				// 0 is current step
-				name: string; // Free-form, for telemetry only
-				type?: "auth" | "socket.io" | "orderingService"; // unsure about this - part of public API, needs to be both stable and useful
-				time: number;
-				retryableError?: IAnyDriverError; // with errorType (maybe AnyDriverError)
-			}[];
-		};
+				/** Reverse order - current/final step is at position [0] */
+				steps: PendingConnectionStep[];
+		  }
 		/** Details about the connection while catchingUp */
-		catchingUp?: {
-			readonly time: number;
-			readonly reason?: IConnectionStateChangeReason;
+		| {
+				state: "catchingUp";
+				readonly time: number;
+				readonly reason?: IConnectionStateChangeReason;
 
-			checkpointSequenceNumber?: number;
-			initialProcessedSequenceNumber?: number;
-			currentProcessedSequenceNumber?: number;
-		};
+				checkpointSequenceNumber?: number;
+				initialProcessedSequenceNumber?: number;
+				currentProcessedSequenceNumber?: number;
+
+				//* TODO: Add details about waiting for Leave/Join Op,
+				//* and waiting for checkPointSequenceNumber op to be processed, etc.
+		  }
 		/** Details about the connection while connected */
-		connected?: {
-			readonly time: number;
-			//* not used?
-			readonly reason?: IConnectionStateChangeReason;
+		| {
+				state: "connected";
+				readonly time: number;
+				//* not used?
+				readonly reason?: IConnectionStateChangeReason;
 
-			opsSent?: number;
-			opsReceived?: number;
-		};
-	};
+				opsSent?: number;
+				opsReceived?: number;
+		  },
+	];
 }
 
-//* Or invert this
-export type PendingConnectionSteps = Exclude<
-	ConnectionDiagnostics["stateDetails"]["establishingConnection"],
-	undefined
->["steps"];
+/**
+ * @beta
+ */
+export interface PendingConnectionStep {
+	name: string; // Free-form, for telemetry only
+	type?: "auth" | "socket.io" | "orderingService"; // unsure about this - part of public API, needs to be both stable and useful
+	time: number;
+	retryableError?: IAnyDriverError; // with errorType (maybe AnyDriverError)
+}
+export type PendingConnectionSteps = PendingConnectionStep[];
 
 /**
  * IContainer interface that includes beta features that are subject to change.
  * @beta
  */
 export interface IContainerBeta extends IContainer {
+	//* Probably add a max length (e.g. 3 or something) and drop off old entries, to restrict memory usage (each one can be about 1kb when stringified)
+	/** Log of connections / connection attempts, in reverse order (current/latest attempt is at position [0]) */
 	connectionDiagnosticsLog?: ConnectionDiagnostics[];
 }
 

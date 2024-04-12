@@ -8,6 +8,7 @@ export {
 	ConnectionDiagnostics,
 	IContainerBeta,
 	IContainerExperimental,
+	PendingConnectionStep,
 	waitContainerToCatchUp,
 } from "./container.js";
 export {

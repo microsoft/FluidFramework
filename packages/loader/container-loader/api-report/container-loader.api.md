@@ -32,38 +32,40 @@ import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
 // @beta
 export interface ConnectionDiagnostics {
     clientId?: string;
-    connectionMode?: ConnectionMode;
-    state: keyof ConnectionDiagnostics["stateDetails"];
-    readonly stateDetails: {
-        disconnected: {
-            readonly time: number;
-            readonly reason?: IConnectionStateChangeReason;
-            readonly autoReconnect: ReconnectMode;
-        };
-        establishingConnection?: {
-            readonly time: number;
-            readonly reason?: IConnectionStateChangeReason;
-            steps: {
-                name: string;
-                type?: "auth" | "socket.io" | "orderingService";
-                time: number;
-                retryableError?: IAnyDriverError;
-            }[];
-        };
-        catchingUp?: {
-            readonly time: number;
-            readonly reason?: IConnectionStateChangeReason;
-            checkpointSequenceNumber?: number;
-            initialProcessedSequenceNumber?: number;
-            currentProcessedSequenceNumber?: number;
-        };
-        connected?: {
-            readonly time: number;
-            readonly reason?: IConnectionStateChangeReason;
-            opsSent?: number;
-            opsReceived?: number;
-        };
-    };
+    desiredConnectionMode?: ConnectionMode;
+    readonly stateProgression: [
+    /** Details about the connection while disconnected */
+        {
+        state: "disconnected";
+        readonly time: number;
+        readonly reason?: IConnectionStateChangeReason;
+        readonly autoReconnect: ReconnectMode;
+    }
+    /** Details about the connection while establishingConnection */
+    | {
+        state: "establishingConnection";
+        readonly time: number;
+        readonly reason?: IConnectionStateChangeReason;
+        steps: PendingConnectionStep[];
+    }
+    /** Details about the connection while catchingUp */
+    | {
+        state: "catchingUp";
+        readonly time: number;
+        readonly reason?: IConnectionStateChangeReason;
+        checkpointSequenceNumber?: number;
+        initialProcessedSequenceNumber?: number;
+        currentProcessedSequenceNumber?: number;
+    }
+    /** Details about the connection while connected */
+    | {
+        state: "connected";
+        readonly time: number;
+        readonly reason?: IConnectionStateChangeReason;
+        opsSent?: number;
+        opsReceived?: number;
+    }
+    ];
 }
 
 // @public
@@ -89,7 +91,6 @@ export interface IConnectionStateChangeReason<T extends IErrorBase = IErrorBase>
 
 // @beta
 export interface IContainerBeta extends IContainer {
-    // (undocumented)
     connectionDiagnosticsLog?: ConnectionDiagnostics[];
 }
 
@@ -178,6 +179,18 @@ export class Loader implements IHostLoader {
     resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
     // (undocumented)
     readonly services: ILoaderServices;
+}
+
+// @beta (undocumented)
+export interface PendingConnectionStep {
+    // (undocumented)
+    name: string;
+    // (undocumented)
+    retryableError?: IAnyDriverError;
+    // (undocumented)
+    time: number;
+    // (undocumented)
+    type?: "auth" | "socket.io" | "orderingService";
 }
 
 // @alpha
