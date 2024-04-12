@@ -9,7 +9,7 @@ import { LocalClientId } from "./constants.js";
 import { LocalReferenceCollection } from "./localReference.js";
 import { MergeTree } from "./mergeTree.js";
 import { NodeAction, depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
-import { IMergeBlock, IRemovalInfo, ISegment, ISegmentLeaf } from "./mergeTreeNodes.js";
+import { IRemovalInfo, ISegment, ISegmentLeaf, type MergeBlock } from "./mergeTreeNodes.js";
 
 /**
  * This is a special segment that is not bound or known by the merge tree itself,
@@ -56,7 +56,7 @@ abstract class BaseEndpointSegment {
 	}
 
 	protected abstract endpointSegmentProps(): {
-		parent: IMergeBlock;
+		parent: MergeBlock;
 		index: number;
 		depth: number;
 	};

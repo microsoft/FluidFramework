@@ -22,15 +22,15 @@ function* supportedMonoRepoValues(): IterableIterator<MonoRepoKind> {
 }
 
 import {
+	VersionBumpType,
+	VersionScheme,
 	isVersionBumpType,
 	isVersionBumpTypeExtended,
 	isVersionScheme,
-	VersionBumpType,
-	VersionScheme,
 } from "@fluid-tools/version-tools";
 
 import { DependencyUpdateType } from "./library";
-import { isReleaseGroup, ReleaseGroup } from "./releaseGroups";
+import { ReleaseGroup, isReleaseGroup } from "./releaseGroups";
 
 /**
  * A re-usable CLI flag to parse the root directory of the Fluid repo.

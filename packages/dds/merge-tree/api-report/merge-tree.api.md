@@ -31,7 +31,7 @@ export interface AttributionPolicy {
 }
 
 // @alpha (undocumented)
-export abstract class BaseSegment extends MergeNode implements ISegment {
+export abstract class BaseSegment implements ISegment {
     // (undocumented)
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
     // (undocumented)
@@ -42,6 +42,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     append(other: ISegment): void;
     // (undocumented)
     attribution?: IAttributionCollection<AttributionKey>;
+    // (undocumented)
+    cachedLength: number;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
     // (undocumented)
@@ -54,6 +56,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     protected abstract createSplitSegmentAt(pos: number): BaseSegment | undefined;
     // (undocumented)
     hasProperty(key: string): boolean;
+    // (undocumented)
+    index: number;
     // (undocumented)
     isLeaf(): this is ISegment;
     // (undocumented)
@@ -70,6 +74,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     movedSeq?: number;
     // (undocumented)
     movedSeqs?: number[];
+    // (undocumented)
+    ordinal: string;
     // (undocumented)
     properties?: PropertySet;
     // (undocumented)
@@ -676,7 +682,7 @@ export function matchProperties(a: PropertySet | undefined, b: PropertySet | und
 // @internal (undocumented)
 export function maxReferencePosition<T extends ReferencePosition>(a: T, b: T): T;
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export class MergeNode implements IMergeNodeCommon {
     // (undocumented)
     cachedLength: number;

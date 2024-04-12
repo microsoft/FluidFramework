@@ -11,7 +11,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import type { ISharedMap, IValueChanged } from "@fluidframework/map";
+import type { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
 import type { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence/internal";
 import {
 	ITestFluidObject,

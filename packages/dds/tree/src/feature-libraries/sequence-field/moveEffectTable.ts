@@ -37,9 +37,22 @@ export interface MoveEffect {
 	rebasedChanges?: NodeId;
 
 	/**
-	 * The ID of the new endpoint associated with this mark.
+	 * The ID of the other outer endpoint.
+	 * Used when this is the outer endpoint in a move chain which is being composed with another move chain.
 	 */
 	endpoint?: ChangeAtomId;
+
+	/**
+	 * The ID of the truncated endpoint.
+	 * Used when this mark is the outer endpoint of a chain being composed with a redundant move chain.
+	 */
+	truncatedEndpoint?: ChangeAtomId;
+
+	/**
+	 * The ID of the truncated endpoint.
+	 * Used when this mark is the inner endpoint of a redundant move chain.
+	 */
+	truncatedEndpointForInner?: ChangeAtomId;
 }
 
 interface MoveEffectWithBasis extends MoveEffect {
@@ -126,10 +139,18 @@ function adjustMoveEffectBasis(effect: MoveEffectWithBasis, newBasis: MoveId): M
 	assert(basisShift > 0, 0x812 /* Expected basis shift to be positive */);
 
 	if (effect.endpoint !== undefined) {
-		adjusted.endpoint = {
-			...effect.endpoint,
-			localId: brand(effect.endpoint.localId + basisShift),
-		};
+		adjusted.endpoint = adjustChangeAtomId(effect.endpoint, basisShift);
+	}
+
+	if (effect.truncatedEndpoint !== undefined) {
+		adjusted.truncatedEndpoint = adjustChangeAtomId(effect.truncatedEndpoint, basisShift);
+	}
+
+	if (effect.truncatedEndpointForInner !== undefined) {
+		adjusted.truncatedEndpointForInner = adjustChangeAtomId(
+			effect.truncatedEndpointForInner,
+			basisShift,
+		);
 	}
 
 	if (effect.movedEffect !== undefined) {
@@ -183,4 +204,11 @@ export function getCrossFieldTargetFromMove(mark: MoveMarkEffect): CrossFieldTar
 		default:
 			unreachableCase(type);
 	}
+}
+
+function adjustChangeAtomId(id: ChangeAtomId, shift: number): ChangeAtomId {
+	return {
+		...id,
+		localId: brand(id.localId + shift),
+	};
 }

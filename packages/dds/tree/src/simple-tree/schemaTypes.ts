@@ -8,9 +8,9 @@ import { Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { FlexListToUnion, LazyItem, isLazy } from "../feature-libraries/index.js";
-import { MakeNominal, isReadonlyArray } from "../util/index.js";
-
+import { MakeNominal, brand, isReadonlyArray } from "../util/index.js";
 import { Unhydrated } from "./types.js";
+import { FieldKey } from "../core/index.js";
 
 /**
  * Schema for a tree node.
@@ -139,6 +139,12 @@ export enum FieldKind {
 	 * Only allows exactly one child.
 	 */
 	Required,
+	/**
+	 * A special field used for node identifiers.
+	 * @remarks
+	 * Only allows exactly one child.
+	 */
+	Identifier,
 }
 
 /**
@@ -174,8 +180,8 @@ export enum NodeKind {
  * If an explicit stored key was specified in the schema, it will be used.
  * Otherwise, the stored key is the same as the view key.
  */
-export function getStoredKey(viewKey: string, fieldSchema: ImplicitFieldSchema): string {
-	return getExplicitStoredKey(fieldSchema) ?? viewKey;
+export function getStoredKey(viewKey: string, fieldSchema: ImplicitFieldSchema): FieldKey {
+	return brand(getExplicitStoredKey(fieldSchema) ?? viewKey);
 }
 
 /**

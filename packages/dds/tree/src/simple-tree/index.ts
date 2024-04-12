@@ -48,7 +48,7 @@ export {
 	NodeBuilderDataUnsafe,
 	NodeFromSchemaUnsafe,
 } from "./typesUnsafe.js";
-export { SchemaFactoryRecursive, ValidateRecursiveSchema } from "./schemaFactoryRecursive.js";
+export { ValidateRecursiveSchema } from "./schemaFactoryRecursive.js";
 export { getProxyForField, InsertableContent } from "./proxies.js";
 
 export {

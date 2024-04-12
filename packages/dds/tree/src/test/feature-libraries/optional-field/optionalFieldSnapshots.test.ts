@@ -23,10 +23,10 @@ import { TestChange } from "../../testChange.js";
 
 function generateTestChangesets(
 	idCompressor: IIdCompressor,
-): { name: string; change: OptionalChangeset<TestChange> }[] {
+): { name: string; change: OptionalChangeset }[] {
 	const revision = idCompressor.generateCompressedId();
 	const localId: ChangesetLocalId = brand(42);
-	const childChange = TestChange.mint([], 1);
+	const childChange = TestNodeId.create({ localId: brand(5) }, TestChange.mint([], 1));
 	return [
 		{
 			name: "empty",
@@ -63,9 +63,7 @@ export function testSnapshots() {
 	describe("Snapshots", () => {
 		const snapshotCompressor = createSnapshotCompressor();
 		const changesets = generateTestChangesets(snapshotCompressor);
-		const family = makeOptionalFieldCodecFamily<TestChange>(
-			new RevisionTagCodec(snapshotCompressor),
-		);
+		const family = makeOptionalFieldCodecFamily(new RevisionTagCodec(snapshotCompressor));
 
 		const baseContext = {
 			originatorId: snapshotCompressor.localSessionId,
