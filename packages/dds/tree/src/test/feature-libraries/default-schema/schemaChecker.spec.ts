@@ -235,7 +235,6 @@ describe("schema validation", () => {
 		describe("MapNodeStoredSchema", () => {
 			const numberNode = getValueNode("myNumberNode", 1);
 			const stringNode = getValueNode("myStringNode", "string");
-			const booleanNode = getValueNode("myBooleanNode", false);
 
 			it(`in schema (nodes of a single type)`, () => {
 				const fieldSchema_requiredNumberNode = getFieldSchema(FieldKinds.required, [
