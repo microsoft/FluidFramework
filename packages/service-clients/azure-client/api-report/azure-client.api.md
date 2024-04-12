@@ -21,10 +21,6 @@ import { ScopeType } from '@fluidframework/protocol-definitions';
 // @public
 export class AzureClient {
     constructor(properties: AzureClientProps);
-    copyContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version?: AzureContainerVersion): Promise<{
-        container: IFluidContainer<TContainerSchema>;
-        services: AzureContainerServices;
-    }>;
     createContainer<const TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: AzureContainerServices;
@@ -34,7 +30,6 @@ export class AzureClient {
         services: AzureContainerServices;
     }>;
     getContainerVersions(id: string, options?: AzureGetVersionsOptions): Promise<AzureContainerVersion[]>;
-    // (undocumented)
     viewContainerVersion<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version: AzureContainerVersion): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: AzureContainerServices;
