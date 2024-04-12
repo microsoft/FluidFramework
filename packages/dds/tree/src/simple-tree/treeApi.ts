@@ -194,7 +194,7 @@ export const treeNodeApi: TreeNodeApi = {
 		for (const field of flexNode.boxedIterator()) {
 			if (field.schema.kind === FieldKinds.identifier) {
 				const identifier = field.boxedAt(0);
-				assert(identifier !== undefined, "The identifier must exist");
+				assert(identifier !== undefined, 0x927 /* The identifier must exist */);
 
 				return extractFromOpaque(
 					identifier.context.nodeKeys.localize(identifier.value as StableNodeKey),
