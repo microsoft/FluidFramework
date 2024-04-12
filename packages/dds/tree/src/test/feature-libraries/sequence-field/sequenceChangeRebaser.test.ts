@@ -579,7 +579,7 @@ const generateChildStates: ChildStateGenerator<TestState, WrappedChange> = funct
 	// if (state.mostRecentEdit !== undefined) {
 	// 	assert(state.parent?.content !== undefined, "Must have parent state to undo");
 	// 	const undoIntention = mintIntention();
-	// 	const invertedEdit = invert(state.mostRecentEdit.changeset);
+	// 	const invertedEdit = invertDeep(state.mostRecentEdit.changeset);
 	// 	yield {
 	// 		content: state.parent.content,
 	// 		mostRecentEdit: {
