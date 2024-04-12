@@ -23,16 +23,6 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./public": {
-			"import": {
-				"types": "./lib/public.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/public.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
 		"./internal": {
 			"import": {
 				"types": "./lib/index.d.ts",
@@ -47,9 +37,6 @@
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"scripts": {
-		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --outFileAlpha legacy --outDir ./dist",
-		"api-extractor:esnext": "flub generate entrypoints --outFileAlpha legacy --outDir ./lib --node10TypeCompat",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",

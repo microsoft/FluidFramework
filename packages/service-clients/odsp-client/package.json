@@ -23,16 +23,6 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./public": {
-			"import": {
-				"types": "./lib/public.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/public.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
 		"./lib/beta": {
 			"import": {
 				"types": "./lib/beta.d.ts",

@@ -15,21 +15,21 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./public": {
-			"import": {
 				"types": "./lib/public.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
 				"types": "./dist/public.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./lib/legacy": {
+			"import": {
+				"types": "./lib/legacy.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/legacy.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
