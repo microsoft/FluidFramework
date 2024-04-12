@@ -1099,7 +1099,7 @@ export class MergeTree {
 						foundMarker = node;
 					}
 				} else {
-					assert(node.hierBlock(), "must be hierBlock");
+					assert(node.hierBlock(), 0x90b /* must be hierBlock */);
 					const marker = forwards
 						? node.leftmostTiles[markerLabel]
 						: node.rightmostTiles[markerLabel];
@@ -2481,7 +2481,7 @@ export class MergeTree {
 				}
 			}
 		} else {
-			assert(node.hierBlock(), "must be hier block");
+			assert(node.hierBlock(), 0x90c /* must be hier block */);
 			// eslint-disable-next-line import/no-deprecated
 			extend(rightmostTiles, node.rightmostTiles);
 			// eslint-disable-next-line import/no-deprecated
