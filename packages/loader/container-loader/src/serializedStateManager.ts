@@ -20,8 +20,8 @@ import {
 	ISnapshotTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
+	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
 	UsageError,

@@ -11,9 +11,9 @@ import { stringToBuffer } from "@fluid-internal/client-utils";
 import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { type ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	type IFluidErrorBase,
+	type ITelemetryLoggerExt,
 	MockLogger,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";

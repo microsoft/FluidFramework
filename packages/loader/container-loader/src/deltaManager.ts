@@ -36,9 +36,9 @@ import {
 import {
 	type ITelemetryErrorEventExt,
 	type ITelemetryGenericEventExt,
-	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
 import {
+	ITelemetryLoggerExt,
 	DataCorruptionError,
 	DataProcessingError,
 	UsageError,

@@ -32,7 +32,7 @@ import { ISummaryHandle } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import { ITelemetryErrorEventExt } from '@fluidframework/telemetry-utils';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { IThrottlingWarning } from '@fluidframework/driver-definitions/internal';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { ITreeEntry } from '@fluidframework/protocol-definitions';

@@ -23,8 +23,9 @@ import {
 	SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils/internal";
-import { type ITelemetryErrorEventExt, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { type ITelemetryErrorEventExt } from "@fluidframework/telemetry-utils";
 import {
+	ITelemetryLoggerExt,
 	LoggingError,
 	PerformanceEvent,
 	TelemetryDataTag,

@@ -17,8 +17,11 @@ import {
 	RestLessClient,
 	getAuthorizationTokenFromCredentials,
 } from "@fluidframework/server-services-client";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { PerformanceEvent, numberFromString } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	numberFromString,
+} from "@fluidframework/telemetry-utils/internal";
 import fetch from "cross-fetch";
 import safeStringify from "json-stringify-safe";
 

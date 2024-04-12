@@ -8,8 +8,9 @@ import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert, Timer } from "@fluidframework/core-utils/internal";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { IClient, ISequencedClient } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, type TelemetryEventCategory } from "@fluidframework/telemetry-utils";
+import { type TelemetryEventCategory } from "@fluidframework/telemetry-utils";
 import {
+	ITelemetryLoggerExt,
 	PerformanceEvent,
 	loggerToMonitoringContext,
 	normalizeError,
