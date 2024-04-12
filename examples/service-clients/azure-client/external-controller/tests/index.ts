@@ -5,7 +5,7 @@
 
 /* eslint-disable import/no-internal-modules */
 
-import { type ISharedMap, SharedMap } from "fluid-framework";
+import { type ISharedMap, SharedMap } from "@fluidframework/map";
 import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
