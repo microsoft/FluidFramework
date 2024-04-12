@@ -60,6 +60,9 @@ import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import { VisibilityState } from '@fluidframework/runtime-definitions/internal';
 
 // @internal
+export function deepFreeze<T>(object: T): void;
+
+// @internal
 export interface IInsecureUser extends IUser {
     name: string;
 }

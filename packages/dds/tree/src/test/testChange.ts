@@ -20,8 +20,7 @@ import {
 	emptyDelta,
 } from "../core/index.js";
 import { JsonCompatibleReadOnly, RecursiveReadonly, brand } from "../util/index.js";
-
-import { deepFreeze } from "./utils.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 export interface NonEmptyTestChange {
 	/**

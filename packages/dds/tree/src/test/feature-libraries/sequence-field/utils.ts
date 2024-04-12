@@ -62,7 +62,6 @@ import {
 } from "../../../util/index.js";
 import {
 	assertFieldChangesEqual,
-	deepFreeze,
 	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
 } from "../../utils.js";
@@ -70,6 +69,7 @@ import {
 import { TestChangeset } from "./testEdits.js";
 import { ChangesetWrapper } from "../../changesetWrapper.js";
 import { TestNodeId } from "../../testNodeId.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 export function assertWrappedChangesetsEqual(actual: WrappedChange, expected: WrappedChange): void {
 	ChangesetWrapper.assertEqual(actual, expected, assertChangesetsEqual);

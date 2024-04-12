@@ -50,6 +50,7 @@ import { v4 as uuid } from "uuid";
 
 import { MockDeltaManager } from "./mockDeltas.js";
 import { MockHandle } from "./mockHandle.js";
+import { deepFreeze } from "./deepFreeze.js";
 
 /**
  * Mock implementation of IDeltaConnection for testing
@@ -522,6 +523,7 @@ export class MockContainerRuntimeFactory {
 	}
 
 	public pushMessage(msg: Partial<ISequencedDocumentMessage>) {
+		deepFreeze(msg);
 		if (
 			msg.clientId &&
 			msg.referenceSequenceNumber !== undefined &&

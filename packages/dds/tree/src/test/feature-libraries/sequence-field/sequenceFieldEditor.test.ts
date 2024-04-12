@@ -11,7 +11,7 @@ import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { TestChangeset, MarkMaker as Mark } from "./testEdits.js";
-import { deepFreeze } from "../../utils.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 const id: ChangesetLocalId = brand(0);
 
