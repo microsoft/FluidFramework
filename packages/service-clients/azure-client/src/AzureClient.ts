@@ -7,6 +7,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import {
 	type IContainer,
 	type IFluidModuleWithDetails,
+	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { type FluidObject, type IConfigProviderBase } from "@fluidframework/core-interfaces";
@@ -193,6 +194,42 @@ export class AzureClient {
 			container,
 			this.properties.connection,
 		);
+		const services = this.getContainerServices(container);
+		return { container: fluidContainer, services };
+	}
+
+	public async viewContainerVersion<TContainerSchema extends ContainerSchema>(
+		id: string,
+		containerSchema: TContainerSchema,
+		version: AzureContainerVersion,
+	): Promise<{
+		container: IFluidContainer<TContainerSchema>;
+		services: AzureContainerServices;
+	}> {
+		const loader = this.createLoader(containerSchema);
+		const url = new URL(this.properties.connection.endpoint);
+		url.searchParams.append("storage", encodeURIComponent(this.properties.connection.endpoint));
+		url.searchParams.append(
+			"tenantId",
+			encodeURIComponent(getTenantId(this.properties.connection)),
+		);
+		url.searchParams.append("containerId", encodeURIComponent(id));
+		const container = await loader.resolve({
+			url: url.href,
+			headers: {
+				// We don't want a connection - the point is to load an old version and remain there for inspection
+				[LoaderHeader.loadMode]: {
+					deltaConnection: "none",
+					pauseAfterLoad: true,
+				},
+				[LoaderHeader.version]: version.id,
+			},
+		});
+		const rootDataObject = await this.getContainerEntryPoint(container);
+		const fluidContainer = createFluidContainer<TContainerSchema>({
+			container,
+			rootDataObject,
+		});
 		const services = this.getContainerServices(container);
 		return { container: fluidContainer, services };
 	}
