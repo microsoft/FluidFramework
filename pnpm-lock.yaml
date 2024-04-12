@@ -10084,7 +10084,7 @@ importers:
       c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
-      eslint-plugin-regex: 1.10.0
+      eslint-plugin-regex: ~1.10.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
