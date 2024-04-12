@@ -373,8 +373,39 @@ describe("schema validation", () => {
 					isNodeInSchema(mapNode, schemaAndPolicy),
 					SchemaValidationErrors.Field_NodeTypeNotAllowed,
 				);
+			});
 
-				// mapNode.fields.set(brand("prop2"), []);
+			it(`not in schema due to having a value`, () => {
+				const fieldSchema_requiredNumberNode = getFieldSchema(FieldKinds.required, [
+					numberNode.type,
+				]);
+				const mapNodeSchema: TreeNodeStoredSchema = new MapNodeStoredSchema(
+					fieldSchema_requiredNumberNode,
+				);
+				const mapNode = createNonLeafNode(
+					"myNumberMapNode",
+					new Map([[brand("prop1"), [numberNode]]]),
+				);
+				mapNode.value = "something that's not undefined";
+
+				const schemaAndPolicy: SchemaAndPolicy = {
+					schema: {
+						nodeSchema: new Map([
+							[numberNode.type, new LeafNodeStoredSchema(ValueSchema.Number)],
+							[mapNode.type, mapNodeSchema],
+						]),
+					},
+					policy: {
+						fieldKinds: new Map([
+							[fieldSchema_requiredNumberNode.kind, FieldKinds.required],
+						]),
+					},
+				};
+
+				assert.equal(
+					isNodeInSchema(mapNode, schemaAndPolicy),
+					SchemaValidationErrors.NonLeafNode_ValueNotAllowed,
+				);
 			});
 		});
 
@@ -580,6 +611,41 @@ describe("schema validation", () => {
 				assert.equal(
 					isNodeInSchema(objectNode, schemaAndPolicy),
 					SchemaValidationErrors.Field_IncorrectMultiplicity,
+				);
+			});
+
+			it(`not in schema due to having a value`, () => {
+				const fieldSchema_requiredNumber = getFieldSchema(FieldKinds.required, [
+					numberNode.type,
+				]);
+				const nodeSchema_object: TreeNodeStoredSchema = new ObjectNodeStoredSchema(
+					new Map([[brand("requiredProp"), fieldSchema_requiredNumber]]),
+				);
+
+				// Create an object node with no fields at all; particularly it doesn't have the required 'requiredProp' field
+				const objectNode = createNonLeafNode(
+					"myObjectNode",
+					new Map([[brand("prop1"), [numberNode]]]),
+				);
+				objectNode.value = "something that's not undefined";
+
+				const schemaAndPolicy: SchemaAndPolicy = {
+					schema: {
+						nodeSchema: new Map([
+							[numberNode.type, new LeafNodeStoredSchema(ValueSchema.Number)],
+							[objectNode.type, nodeSchema_object],
+						]),
+					},
+					policy: {
+						fieldKinds: new Map([
+							[fieldSchema_requiredNumber.kind, FieldKinds.required],
+						]),
+					},
+				};
+
+				assert.equal(
+					isNodeInSchema(objectNode, schemaAndPolicy),
+					SchemaValidationErrors.NonLeafNode_ValueNotAllowed,
 				);
 			});
 		});

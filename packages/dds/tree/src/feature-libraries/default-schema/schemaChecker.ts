@@ -25,6 +25,7 @@ export const enum SchemaValidationErrors {
 	LeafNode_InvalidValue,
 	LeafNode_FieldsNotAllowed,
 	ObjectNode_FieldNotInSchema,
+	NonLeafNode_ValueNotAllowed,
 	Node_MissingSchema,
 	UnknownError,
 }
@@ -49,6 +50,9 @@ export function isNodeInSchema(
 			return SchemaValidationErrors.LeafNode_InvalidValue;
 		}
 	} else if (schema instanceof ObjectNodeStoredSchema) {
+		if (node.value !== undefined) {
+			return SchemaValidationErrors.NonLeafNode_ValueNotAllowed;
+		}
 		const uncheckedFieldsFromNode = new Set(node.fields.keys());
 		for (const [fieldKey, fieldSchema] of schema.objectNodeFields) {
 			const nodeField = getMapTreeField(node, fieldKey, false);
@@ -63,6 +67,9 @@ export function isNodeInSchema(
 			return SchemaValidationErrors.ObjectNode_FieldNotInSchema;
 		}
 	} else if (schema instanceof MapNodeStoredSchema) {
+		if (node.value !== undefined) {
+			return SchemaValidationErrors.NonLeafNode_ValueNotAllowed;
+		}
 		for (const field of node.fields.values()) {
 			const fieldInSchemaResult = isFieldInSchema(field, schema.mapFields, schemaAndPolicy);
 			if (fieldInSchemaResult !== SchemaValidationErrors.NoError) {
