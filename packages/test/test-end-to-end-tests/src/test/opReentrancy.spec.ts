@@ -278,8 +278,7 @@ describeCompat(
 
 			await setupContainers({
 				...testContainerConfig,
-				runtimeOptions: {
-				},
+				runtimeOptions: {},
 			});
 
 			await container1.deltaManager.inbound.pause();
@@ -313,8 +312,7 @@ describeCompat(
 				{
 					options: {
 						...testContainerConfig,
-						runtimeOptions: {
-						},
+						runtimeOptions: {},
 					},
 					name: "Enabled by options, disabled by feature gate",
 				},

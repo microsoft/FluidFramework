@@ -165,7 +165,7 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 		},
 		// back-compat, to be removed in 2.0
 		ensureNoDataModelChanges: (...args) => {
-			return (context as any).ensureNoDataModelChanges(...args);
+			return context.ensureNoDataModelChanges(...args);
 		},
 		submitMessage: (...args) => {
 			return context.submitMessage(...args);
