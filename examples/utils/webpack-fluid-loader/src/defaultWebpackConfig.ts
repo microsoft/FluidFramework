@@ -11,7 +11,7 @@ import { RouteOptions } from "./loader.js";
 import { devServerConfig } from "./routes.js";
 
 /**
- * @returns A webpack config designed for conventual Fluid Framework examples within this repo.
+ * @returns A webpack config designed for conventional Fluid Framework examples within this repo.
  *
  * @remarks
  * Using this currently requires the package using it to take dev dependencies on "source-map-loader" and "ts-loader".
