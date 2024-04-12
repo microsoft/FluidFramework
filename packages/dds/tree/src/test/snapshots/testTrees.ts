@@ -24,7 +24,6 @@ import {
 	FlexFieldSchema,
 	FlexTreeNodeSchema,
 	InsertableFlexNode,
-	TreeCompressionStrategy,
 	cursorForJsonableTreeNode,
 	cursorForTypedTreeData,
 	intoStoredSchema,
@@ -35,11 +34,8 @@ import {
 	InitializeAndSchematizeConfiguration,
 	SharedTreeFactory,
 	SharedTreeOptions,
-	SharedTreeFormatVersion,
 	runSynchronous,
 } from "../../shared-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { defaultSharedTreeOptions } from "../../shared-tree/sharedTree.js";
 import { brand } from "../../util/index.js";
 import {
 	TestTreeProviderLite,
@@ -138,15 +134,10 @@ function generateTreeRecursively(
 }
 
 // TODO: The generated test trees should eventually be updated to use the chunked-forest.
-export function generateTestTrees(useUncompressedEncode?: boolean) {
-	const testEncodeType = useUncompressedEncode === true ? "uncompressed" : "default-compression";
+export function generateTestTrees(options: SharedTreeOptions) {
 	const factoryOptions: SharedTreeOptions = {
 		jsonValidator: typeboxValidator,
-		treeEncodeType:
-			useUncompressedEncode === true
-				? TreeCompressionStrategy.Uncompressed
-				: defaultSharedTreeOptions.treeEncodeType,
-		formatVersion: SharedTreeFormatVersion.v1,
+		...options,
 	};
 	const factory = new SharedTreeFactory(factoryOptions);
 	const testTrees: {
@@ -217,7 +208,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 				});
 				provider.processMessages();
 
-				await takeSnapshot(provider.trees[0], `tree-0-final-${testEncodeType}`);
+				await takeSnapshot(provider.trees[0], "tree-0-final");
 			},
 		},
 		{
@@ -237,15 +228,15 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 				tree1.flexTree.insertAtStart([value]);
 				provider.processMessages();
 
-				await takeSnapshot(provider.trees[0], `tree-0-after-insert-${testEncodeType}`);
+				await takeSnapshot(provider.trees[0], "tree-0-after-insert");
 
 				// Remove node
 				tree1.flexTree.removeAt(0);
 
 				provider.processMessages();
 
-				await takeSnapshot(provider.trees[0], `tree-0-final-${testEncodeType}`);
-				await takeSnapshot(provider.trees[1], `tree-1-final-${testEncodeType}`);
+				await takeSnapshot(provider.trees[0], "tree-0-final");
+				await takeSnapshot(provider.trees[1], "tree-1-final");
 			},
 		},
 		{
@@ -308,7 +299,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 
 				// EditManager snapshot should involve information about rebasing tree1's edits (a transaction with root & child changes)
 				// over tree2's edits (a root change and a child change outside of the transaction).
-				await takeSnapshot(provider.trees[0], `final-${testEncodeType}`);
+				await takeSnapshot(provider.trees[0], "final");
 			},
 		},
 		{
@@ -331,7 +322,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 					remove(tree2, index, 1);
 					remove(tree3, index, 1);
 					provider.processMessages();
-					await takeSnapshot(provider.trees[0], `index-${index}-${testEncodeType}`);
+					await takeSnapshot(provider.trees[0], `index-${index}`);
 				}
 			},
 		},
@@ -358,7 +349,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 				tree1.merge(tree2);
 
 				provider.processMessages();
-				await takeSnapshot(baseTree, `tree2-${testEncodeType}`);
+				await takeSnapshot(baseTree, "tree2");
 
 				const expected = ["x", "y", "a", "b", "c"];
 				expectJsonTree([tree1, tree2], expected);
@@ -371,7 +362,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 				tree1.merge(tree3);
 
 				provider.processMessages();
-				await takeSnapshot(baseTree, `tree3-${testEncodeType}`);
+				await takeSnapshot(baseTree, "tree3");
 			},
 		},
 		{
@@ -382,7 +373,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 				const fieldKeyC: FieldKey = brand("FieldC");
 				await takeSnapshot(
 					generateCompleteTree([fieldKeyA, fieldKeyB, fieldKeyC], 2, 3, factoryOptions),
-					`final-${testEncodeType}`,
+					"final",
 				);
 			},
 		},
@@ -418,7 +409,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 
 				provider.processMessages();
 
-				await takeSnapshot(tree, `final-${testEncodeType}`);
+				await takeSnapshot(tree, "final");
 			},
 		},
 		{
@@ -468,16 +459,13 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 				view.transaction.commit();
 
 				provider.processMessages();
-				await takeSnapshot(tree, `final-${testEncodeType}`);
+				await takeSnapshot(tree, "final");
 			},
 		},
 		{
 			name: "empty-root",
 			runScenario: async (takeSnapshot) => {
-				await takeSnapshot(
-					generateCompleteTree([], 0, 0, factoryOptions),
-					`final-${testEncodeType}`,
-				);
+				await takeSnapshot(generateCompleteTree([], 0, 0, factoryOptions), "final");
 			},
 		},
 		{
@@ -499,7 +487,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 					initialTree: [],
 				}).checkout;
 				insert(tree1, 0, "y");
-				await takeSnapshot(baseTree, `${testEncodeType}`);
+				await takeSnapshot(baseTree, "final");
 			},
 		},
 	];
