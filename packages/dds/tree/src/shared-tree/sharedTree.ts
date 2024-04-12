@@ -386,7 +386,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 	jsonValidator: noopValidator,
 	forest: ForestType.Reference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,
-	formatVersion: SharedTreeFormatVersion.v1,
+	formatVersion: SharedTreeFormatVersion.v2,
 };
 
 /**
