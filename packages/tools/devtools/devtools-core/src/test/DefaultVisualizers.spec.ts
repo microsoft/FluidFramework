@@ -825,7 +825,7 @@ describe("DefaultVisualizers unit tests", () => {
 		expect(result).to.deep.equal(expected);
 	});
 
-	it("SharedTree: Leaf Handle", async () => {
+	it("SharedTree: Handle at the root", async () => {
 		const factory = SharedTree.getFactory();
 		const builder = new SchemaFactory("shared-tree-test");
 		const runtime = new MockFluidDataStoreRuntime();
