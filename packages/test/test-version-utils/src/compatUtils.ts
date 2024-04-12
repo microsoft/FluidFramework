@@ -88,6 +88,7 @@ function filterRuntimeOptionsForVersion(
 	};
 
 	// These is the "maximum" config.
+	console.log({driverType})
 	const {
 		compressionOptions = {
 			minimumBatchSizeInBytes: 200,
