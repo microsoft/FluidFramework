@@ -46,6 +46,7 @@ interface UndoRedoFuzzTestState extends FuzzTestState {
 	redoStack?: Revertible[];
 	// Parallel array to `clients`: set in testStart
 	anchors?: Map<Anchor, [UpPath, Value]>[];
+	unsubscribe?: (() => void)[];
 }
 
 describe("Fuzz - revert", () => {
@@ -78,25 +79,10 @@ describe("Fuzz - revert", () => {
 		};
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (state: UndoRedoFuzzTestState) => {
-			const tree = viewFromState(state, state.clients[0], populatedInitialState).checkout;
-			state.containerRuntimeFactory.processAllMessages();
-			state.initialTreeState = toJsonableTree(tree);
-			const undoStack: Revertible[] = [];
-			const redoStack: Revertible[] = [];
-			state.undoStack = undoStack;
-			state.redoStack = redoStack;
+			init(state);
 			state.anchors = [];
 			for (const client of state.clients) {
 				const checkout = viewFromState(state, client).checkout;
-				checkout.events.on("commitApplied", (commit, getRevertible) => {
-					if (getRevertible !== undefined) {
-						if (commit.kind === CommitKind.Undo) {
-							redoStack.push(getRevertible());
-						} else {
-							undoStack.push(getRevertible());
-						}
-					}
-				});
 				state.anchors.push(createAnchors(checkout));
 			}
 		});
@@ -148,6 +134,8 @@ describe("Fuzz - revert", () => {
 				const view = viewFromState(state, client).checkout;
 				validateAnchors(view, anchors[i], false);
 			}
+
+			tearDown(state);
 		});
 		createDDSFuzzSuite(model, {
 			defaultTestCount: runsPerBatch,
@@ -181,26 +169,7 @@ describe("Fuzz - revert", () => {
 			validateConsistency: validateTreeConsistency,
 		};
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
-		emitter.on("testStart", (state: UndoRedoFuzzTestState) => {
-			viewFromState(state, state.clients[0], populatedInitialState);
-			state.containerRuntimeFactory.processAllMessages();
-			const undoStack: Revertible[] = [];
-			const redoStack: Revertible[] = [];
-			state.undoStack = undoStack;
-			state.redoStack = redoStack;
-			for (const client of state.clients) {
-				const checkout = viewFromState(state, client).checkout;
-				checkout.events.on("commitApplied", (commit, getRevertible) => {
-					if (getRevertible !== undefined) {
-						if (commit.kind === CommitKind.Undo) {
-							redoStack.push(getRevertible());
-						} else {
-							undoStack.push(getRevertible());
-						}
-					}
-				});
-			}
-		});
+		emitter.on("testStart", init);
 		emitter.on("testEnd", (state: UndoRedoFuzzTestState) => {
 			const undoStack = state.undoStack ?? assert.fail("undoStack should be defined");
 			const redoStack = state.redoStack ?? assert.fail("redoStack should be defined");
@@ -220,6 +189,8 @@ describe("Fuzz - revert", () => {
 
 			state.containerRuntimeFactory.processAllMessages();
 			checkTreesAreSynchronized(state.clients.map((client) => client.channel));
+
+			tearDown(state);
 		});
 		createDDSFuzzSuite(model, {
 			defaultTestCount: runsPerBatch,
@@ -237,3 +208,34 @@ describe("Fuzz - revert", () => {
 		});
 	});
 });
+
+function init(state: UndoRedoFuzzTestState) {
+	const tree = viewFromState(state, state.clients[0], populatedInitialState).checkout;
+	state.initialTreeState = toJsonableTree(tree);
+	state.containerRuntimeFactory.processAllMessages();
+	const undoStack: Revertible[] = [];
+	const redoStack: Revertible[] = [];
+	state.undoStack = undoStack;
+	state.redoStack = redoStack;
+	state.unsubscribe = [];
+	for (const client of state.clients) {
+		const checkout = viewFromState(state, client).checkout;
+		const unsubscribe = checkout.events.on("commitApplied", (commit, getRevertible) => {
+			if (getRevertible !== undefined) {
+				if (commit.kind === CommitKind.Undo) {
+					redoStack.push(getRevertible());
+				} else {
+					undoStack.push(getRevertible());
+				}
+			}
+		});
+		state.unsubscribe.push(unsubscribe);
+	}
+}
+
+function tearDown(state: UndoRedoFuzzTestState) {
+	for (const unsubscribe of state.unsubscribe ??
+		assert.fail("unsubscribe array should be defined")) {
+		unsubscribe();
+	}
+}
