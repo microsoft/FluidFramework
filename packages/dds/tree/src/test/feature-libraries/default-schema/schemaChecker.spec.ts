@@ -21,7 +21,6 @@ import {
 	ObjectNodeStoredSchema,
 	ValueSchema,
 	type FieldKey,
-	type FieldKindData,
 	type FieldKindIdentifier,
 	type MapTree,
 	type SchemaAndPolicy,
@@ -33,7 +32,6 @@ import {
 	type Value,
 } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
-import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 const emptySchemaPolicy: SchemaPolicy = {
 	fieldKinds: new Map(),
@@ -453,7 +451,7 @@ describe.only("schema validation", () => {
 					new Map([[brand("prop1"), [numberNode.node]]]),
 					new ObjectNodeStoredSchema(
 						new Map([[brand("requiredProp"), fieldSchema_requiredNumber]]),
-					)
+					),
 				);
 				objectNode.node.value = "something that's not undefined";
 
@@ -486,7 +484,7 @@ describe.only("schema validation", () => {
 					new Map([[brand("prop1"), [numberNode.node]]]),
 					new ObjectNodeStoredSchema(
 						new Map([[brand("requiredProp"), fieldSchema_requiredNumber]]),
-					)
+					),
 				);
 
 				const schemaAndPolicy: SchemaAndPolicy = {
