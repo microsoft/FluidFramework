@@ -27,52 +27,43 @@ Below are some of the SharedTree terminology that will be helpful in order to un
 -   `node`:
 -   `field`:
 
-## SharedTree Visualizer
+## SharedTree Visualizer Logic
 
 ```mermaid
-sequenceDiagram
-participant Application
-participant Devtools
-participant Consumer
-
-Application->>Devtools: Initialize devtools
-Consumer-->>Devtools: "GET_ROOT_DATA_VISUALIZATIONS"
-Devtools->>Consumer: "ROOT_DATA_VISUALIZATIONS" ({ key1: handle1, key2: handle2, ..., keyN: handleN })
-loop renderTrees
-	Consumer->>Consumer: renderTree(handle.id)
-end
-Consumer-->>Devtools: "GET_DATA_VISUALIZATION" (id)
-Devtools->>Consumer: "DATA_VISUALIZATION" (visualization)
+flowchart TD
+    A([visualizeSharedTree]) -->|Calls with SharedTree| B([visualizeSharedTreeNodeBySchema])
+    B -->|Node type dispatch| C{Is it a LeafNodeStoredSchema?}
+    C -->|Yes| D([visualizeLeafNode])
+    C -->|No| E{Is it an ObjectNodeStoredSchema?}
+    E -->|Yes| F([visualizeObjectNode])
+    E -->|No| G{Is it a MapNodeStoredSchema?}
+    G -->|Yes| H([visualizeMapNode])
+    G -->|No| I([Error: Unrecognized schema type])
+    D --> J([Return VisualSharedTreeNode])
+    F --> J
+    H --> J
+    J --> K([toVisualTree])
+    K --> L([Return FluidObjectNode])
 ```
 
-Additionally, once a given DDS has been "rendered" for the first time, it will continue to broadcast automatic updates each time its contents change (i.e. each time the "op" event is fired on the DDS object).
-Consumers can simply continue to listen for the `DATA_VISUALIZATION` message in order to receive updates as changes are made in the application.
+## Function Description
 
-The visual tree for a given DDS will always contain the unique DDS ID (so message consumers can correlate them correctly).
-Their data format is likely best described by the code, so we won't go into it in too much depth here.
-See `./VisualTree` for a type-wise breakdown.
-
-At a high level, the DDS trees contain:
-
-1.  Their ID
-2.  Some root visual metadata
-3.  Child trees / values
-
-    -   These children will **always** be either nested visual trees describing primitive data, or a handle node pointing to another DDS.
-        When such a node is encountered, the consumer may post another `GET_DATA_VISUALIZATION` message requesting the corresponding "rendering".
+-   `visualizeSharedTreeNodeBySchema()`
+    -   Main recursive helper function that creates a visual representation of a SharedTree node based on its schema type. It decides how to process the node (as a leaf, object, or map node) depending on the schema provided.
+-   `visualizeLeafNode()`
+    -   Converts a leaf node into its visual representation, specifically handling nodes that do not contain any child nodes.
+-   `visualizeObjectNode()`
+    -   Visualizes an object node, potentially containing multiple child nodes. It distinguishes between array nodes and non-array nodes using a specific key (EmptyKey), which represents an implicit array if present alone.
+-   `visualizeMapNode()`
+    -   Handles the visualization of map nodes, which are key-value pairs that may vary dynamically.
+-   `createToolTipContents()`
+    -   Generates tooltip content for nodes. In the SharedTree Visualizer context, it provides schema details (e.g., schemaName, allowedTypes) in a `VisualTreeNode` which is compatible in `@fluid-internal/devtools-view`.
+-   `toVisualTree()`
+    -   Converts the entire visual representation of the SharedTree returned from the `visualizeSharedTreeNodeBySchema()` to a `VisualChildNode` type which is compatible for visualization in `@fluid-internal/devtools-view`.
 
 ## Follow-Up Work
 
 These follow-up items were noted above, but we will enumerate them here for completeness:
 
-1.  Dependency tracking to avoid memory leaks
-1.  Broadcast data _diffs_ instead of complete summaries.
-    -   GraphQL might give us some nice options here.
-
-Other follow-up items:
-
-1.  Update batching
-    -   For DDSs receiving rapid updates, we may not wish to broadcast updates on every single edit ("op" event).
-        It would likely be worth introducing some simple, minimal time threshold in which we will post updates.
-1.  Verify that the proposed flow is fast enough to prevent visual delays on the consumer side.
-    -   I.e. we don't want the devtools extension to be displaying lots of spinners while it and the devtools chat back and forth.
+1. Stronger type validation of the returned object from the `toVisualTree()` which is dispatched to the `@fluid-internal/devtools-view`.
+2. Establishing a more unified data type for the tooltip contents that is dispatched to the `@fluid-internal/devtools-view` and contain more rigorous information on the SharedTree schema.
