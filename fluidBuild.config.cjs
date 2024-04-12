@@ -85,9 +85,9 @@ module.exports = {
 			dependsOn: ["build:esnext"],
 			script: true,
 		},
-		"build:docs": ["tsc"],
 		// The package's local 'api-extractor.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.
+		"build:docs": ["tsc", "build:esnext"],
 		"ci:build:docs": ["tsc", "build:esnext"],
 		"build:readme": {
 			dependsOn: ["build:manifest"],
@@ -391,6 +391,7 @@ module.exports = {
 					"fluid-framework",
 					"@fluid-internal/client-utils",
 					"@fluid-internal/mocha-test-setup",
+					"@fluid-internal/test-driver-definitions",
 					"tinylicious",
 				],
 				// A list of packages published to our internal-build feed. Note that packages published

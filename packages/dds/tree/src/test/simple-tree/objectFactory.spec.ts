@@ -13,10 +13,6 @@ import {
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { extractFactoryContent } from "../../simple-tree/proxies.js";
-
-// eslint-disable-next-line import/no-internal-modules
-import { getFlexNode } from "../../simple-tree/proxyBinding.js";
-
 import { hydrate } from "./utils.js";
 
 describe("SharedTreeObject factories", () => {
@@ -208,12 +204,6 @@ describe("SharedTreeObject factories", () => {
 			const mapContent = root.grand.child.map.get("a");
 			assert(mapContent !== undefined);
 		}
-		getFlexNode(root).on("beforeChange", () => {
-			readData();
-		});
-		getFlexNode(root).on("afterChange", () => {
-			readData();
-		});
 		Tree.on(root, "treeChanged", () => {
 			readData();
 		});

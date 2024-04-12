@@ -42,13 +42,7 @@ import {
 	makeTreeChunker,
 } from "../feature-libraries/index.js";
 import { ExplicitCoreCodecVersions, SharedTreeCore } from "../shared-tree-core/index.js";
-import {
-	ITree,
-	ImplicitFieldSchema,
-	TreeConfiguration,
-	TreeFieldFromImplicitField,
-	TreeView,
-} from "../simple-tree/index.js";
+import { ITree, ImplicitFieldSchema, TreeConfiguration, TreeView } from "../simple-tree/index.js";
 import { brand } from "../util/index.js";
 
 import { InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
@@ -132,6 +126,7 @@ interface ExplicitCodecVersions extends ExplicitCoreCodecVersions {
 
 const formatVersionToTopLevelCodecVersions = new Map<number, ExplicitCodecVersions>([
 	[1, { forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 1, message: 1, fieldBatch: 1 }],
+	[2, { forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 2, message: 2, fieldBatch: 1 }],
 ]);
 
 function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
@@ -289,7 +284,7 @@ export class SharedTree
 
 	public schematize<TRoot extends ImplicitFieldSchema>(
 		config: TreeConfiguration<TRoot>,
-	): TreeView<TreeFieldFromImplicitField<TRoot>> {
+	): TreeView<TRoot> {
 		const view = new SchematizingSimpleTreeView(
 			this.checkout,
 			config,
@@ -320,6 +315,11 @@ export const SharedTreeFormatVersion = {
 	 * Requires \@fluidframework/tree \>= 2.0.0.
 	 */
 	v1: 1,
+
+	/**
+	 * Requires \@fluidframework/tree \>= 2.0.0.
+	 */
+	v2: 2,
 } as const;
 
 /**

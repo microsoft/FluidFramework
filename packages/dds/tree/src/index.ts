@@ -93,6 +93,7 @@ export {
 	MapNodeStoredSchema,
 	LeafNodeStoredSchema,
 	Multiplicity,
+	SchemaPolicy,
 } from "./core/index.js";
 
 export {
@@ -210,7 +211,6 @@ export {
 	schemaIsObjectNode,
 	AllowedTypeSet,
 	SchemaBuilderOptions,
-	TreeEvent,
 	SchemaCollection,
 	TreeCompressionStrategy,
 	treeSchemaFromStoredSchema,
@@ -225,7 +225,6 @@ export {
 	NormalizeFieldSchema,
 	FlexObjectNodeFields,
 	FlexMapFieldSchema,
-	ArrayToUnion,
 	ExtractItemType,
 	LazyItem,
 	PropertyNameFromFieldKey,
@@ -256,10 +255,13 @@ export {
 	buildTreeConfiguration,
 	ISharedTreeEditor,
 	ISchemaEditor,
+	RevertibleFactory,
 	SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
 	Tree,
 	TreeApi,
+	TransactionConstraint,
+	NodeInDocumentConstraint,
 } from "./shared-tree/index.js";
 
 export {
@@ -302,23 +304,23 @@ export {
 	TreeNodeSchemaCore,
 	TreeNodeSchemaNonClass,
 	SchemaIncompatible,
+	type FieldProps,
 
-	// experimental @beta APIs:
-	SchemaFactoryRecursive,
-	ValidateRecursiveSchema,
-	ObjectFromSchemaRecordUnsafe,
-	TreeObjectNodeUnsafe,
-	TreeFieldFromImplicitFieldUnsafe,
-	TreeNodeFromImplicitAllowedTypesUnsafe,
-	FieldSchemaUnsafe,
-	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
-	TreeArrayNodeUnsafe,
-	TreeMapNodeUnsafe,
-	InsertableObjectFromSchemaRecordUnsafe,
-	InsertableTreeFieldFromImplicitFieldUnsafe,
-	InsertableTypedNodeUnsafe,
-	NodeBuilderDataUnsafe,
-	NodeFromSchemaUnsafe,
+	// Recursive Schema APIs
+	type ValidateRecursiveSchema,
+	type ObjectFromSchemaRecordUnsafe,
+	type TreeObjectNodeUnsafe,
+	type TreeFieldFromImplicitFieldUnsafe,
+	type TreeNodeFromImplicitAllowedTypesUnsafe,
+	type FieldSchemaUnsafe,
+	type InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
+	type TreeArrayNodeUnsafe,
+	type TreeMapNodeUnsafe,
+	type InsertableObjectFromSchemaRecordUnsafe,
+	type InsertableTreeFieldFromImplicitFieldUnsafe,
+	type InsertableTypedNodeUnsafe,
+	type NodeBuilderDataUnsafe,
+	type NodeFromSchemaUnsafe,
 
 	// experimental @internal APIs:
 	adaptEnum,
@@ -354,8 +356,6 @@ export {
 	AllowOptionalNotFlattened,
 	isAny,
 	BrandedKeyContent,
-	ErasedType,
-	Erased,
 	RestrictiveReadonlyRecord,
 	MakeNominal,
 } from "./util/index.js";
@@ -387,6 +387,7 @@ export {
 	Required,
 	Optional,
 	NodeKeyFieldKind,
+	Identifier,
 	Forbidden,
 	Sequence,
 } from "./feature-libraries/index.js";

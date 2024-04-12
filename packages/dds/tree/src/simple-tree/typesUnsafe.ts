@@ -19,8 +19,8 @@ import {
 	TreeNodeSchema,
 	WithType,
 } from "./schemaTypes.js";
-import { TreeArrayNode } from "./treeArrayNode.js";
-import { TreeArrayNodeBase, TreeNode, Unhydrated } from "./types.js";
+import { TreeArrayNodeBase, TreeArrayNode } from "./arrayNode.js";
+import { TreeNode, Unhydrated } from "./types.js";
 
 /*
  * TODO:
@@ -35,7 +35,7 @@ import { TreeArrayNodeBase, TreeNode, Unhydrated } from "./types.js";
 
 /**
  * {@link Unenforced} version of {@link ObjectFromSchemaRecord}.
- * @beta
+ * @public
  */
 export type ObjectFromSchemaRecordUnsafe<
 	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
@@ -45,7 +45,7 @@ export type ObjectFromSchemaRecordUnsafe<
 
 /**
  * {@link Unenforced} version of {@link TreeObjectNode}.
- * @beta
+ * @public
  */
 export type TreeObjectNodeUnsafe<
 	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
@@ -54,7 +54,7 @@ export type TreeObjectNodeUnsafe<
 
 /**
  * {@link Unenforced} version of {@link TreeFieldFromImplicitField}.
- * @beta
+ * @public
  */
 export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> =
 	TSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
@@ -65,7 +65,7 @@ export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<Implicit
 
 /**
  * {@link Unenforced} version of {@link TreeNodeFromImplicitAllowedTypes}.
- * @beta
+ * @public
  */
 export type TreeNodeFromImplicitAllowedTypesUnsafe<
 	TSchema extends Unenforced<ImplicitAllowedTypes>,
@@ -79,7 +79,7 @@ export type TreeNodeFromImplicitAllowedTypesUnsafe<
 
 /**
  * {@link Unenforced} version of {@link InsertableTreeNodeFromImplicitAllowedTypes}.
- * @beta
+ * @public
  */
 export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
 	TSchema extends Unenforced<ImplicitAllowedTypes>,
@@ -89,7 +89,7 @@ export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
 
 /**
  * {@link Unenforced} version of {@link InsertableTypedNode}.
- * @beta
+ * @public
  */
 export type InsertableTypedNodeUnsafe<T extends Unenforced<TreeNodeSchema>> =
 	| Unhydrated<NodeFromSchemaUnsafe<T>>
@@ -97,7 +97,7 @@ export type InsertableTypedNodeUnsafe<T extends Unenforced<TreeNodeSchema>> =
 
 /**
  * {@link Unenforced} version of {@link NodeFromSchema}.
- * @beta
+ * @public
  */
 export type NodeFromSchemaUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchema<
 	string,
@@ -109,7 +109,7 @@ export type NodeFromSchemaUnsafe<T extends Unenforced<TreeNodeSchema>> = T exten
 
 /**
  * {@link Unenforced} version of {@link InsertableTreeNodeFromImplicitAllowedTypes}.
- * @beta
+ * @public
  */
 export type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchema<
 	string,
@@ -122,7 +122,7 @@ export type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> = T exte
 
 /**
  * {@link Unenforced} version of {@link (TreeArrayNode:interface)}.
- * @beta
+ * @public
  */
 export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAllowedTypes>>
 	extends TreeArrayNodeBase<
@@ -133,7 +133,7 @@ export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAl
 
 /**
  * {@link Unenforced} version of {@link TreeMapNode}.
- * @beta
+ * @public
  */
 export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>>
 	extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypesUnsafe<T>>,
@@ -151,7 +151,7 @@ export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>>
 
 /**
  * {@link Unenforced} version of {@link InsertableObjectFromSchemaRecord}.
- * @beta
+ * @public
  */
 export type InsertableObjectFromSchemaRecordUnsafe<
 	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
@@ -161,7 +161,7 @@ export type InsertableObjectFromSchemaRecordUnsafe<
 
 /**
  * {@link Unenforced} version of {@link InsertableTreeFieldFromImplicitField}.
- * @beta
+ * @public
  */
 export type InsertableTreeFieldFromImplicitFieldUnsafe<
 	TSchema extends Unenforced<ImplicitFieldSchema>,
@@ -171,7 +171,7 @@ export type InsertableTreeFieldFromImplicitFieldUnsafe<
 
 /**
  * {@link Unenforced} version of {@link FieldSchema}.
- * @beta
+ * @public
  */
 export interface FieldSchemaUnsafe<
 	out Kind extends FieldKind,
