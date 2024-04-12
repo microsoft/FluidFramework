@@ -2438,7 +2438,6 @@ export class MergeTree {
 
 		normalize();
 	}
-
 	private blockUpdate(block: MergeBlock) {
 		let len: number | undefined;
 

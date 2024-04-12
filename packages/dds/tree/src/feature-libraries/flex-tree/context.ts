@@ -97,7 +97,7 @@ export class Context implements FlexTreeContext, IDisposable {
 
 		assert(
 			!this.forest.anchors.slots.has(ContextSlot),
-			"Cannot create second flex-tree from checkout",
+			0x92b /* Cannot create second flex-tree from checkout */,
 		);
 		this.forest.anchors.slots.set(ContextSlot, this);
 	}
