@@ -1,0 +1,101 @@
+[
+	{
+		"stateProgression": [
+			{
+				"state": "disconnected",
+				"time": 1712902616815,
+				"reason": { "text": "Cancel Pending Connection due to Closing DeltaManager" },
+				"autoReconnect": "Never"
+			}
+		]
+	},
+	{
+		"stateProgression": [
+			{
+				"state": "establishingConnection",
+				"time": 1712902616337,
+				"reason": { "text": "Reconnecting due to Error", "error": "FaultInjectionDisconnect" },
+				"steps": [
+					{ "name": "cancelling: {\"text\":\"Closing DeltaManager\"}", "time": 1712902616814 }
+				]
+			},
+			{
+				"state": "disconnected",
+				"time": 1712902616336,
+				"reason": { "error": "FaultInjectionDisconnect" },
+				"autoReconnect": "Enabled"
+			}
+		]
+	},
+	{
+		"stateProgression": [
+			{ "state": "connected", "time": 1712902583540 },
+			{
+				"state": "catchingUp",
+				"time": 1712902583538,
+				"reason": { "text": "Reconnecting due to: Switch to write" },
+				"checkpointSequenceNumber": 3707
+			},
+			{
+				"state": "establishingConnection",
+				"time": 1712902583253,
+				"reason": { "text": "Reconnecting due to: Switch to write" },
+				"steps": [
+					{ "name": "setupNewSuccessfulConnection", "time": 1712902583537 },
+					{
+						"name": "createDeltaConnection_start",
+						"time": 1712902583257,
+						"type": "orderingService"
+					},
+					{ "name": "getWebsocketToken_end", "time": 1712902583257, "type": "auth" },
+					{ "name": "joinSession_end", "time": 1712902583257, "type": "orderingService" },
+					{ "name": "joinSession_start", "time": 1712902583254, "type": "orderingService" },
+					{ "name": "getWebsocketToken_start", "time": 1712902583254, "type": "auth" }
+				]
+			},
+			{
+				"state": "disconnected",
+				"time": 1712902583253,
+				"reason": { "text": "Switch to write" },
+				"autoReconnect": "Enabled"
+			}
+		],
+		"clientId": "692aeb14-e992-4b28-a241-0378dae0c801"
+	},
+	{
+		"stateProgression": [
+			{ "state": "connected", "time": 1712902583218 },
+			{
+				"state": "catchingUp",
+				"time": 1712902583218,
+				"reason": { "text": "DocumentConnect" },
+				"checkpointSequenceNumber": 3682
+			},
+			{
+				"state": "establishingConnection",
+				"time": 1712902581988,
+				"reason": { "text": "DocumentConnect" },
+				"steps": [
+					{ "name": "setupNewSuccessfulConnection", "time": 1712902583217 },
+					{
+						"name": "createDeltaConnection_start",
+						"time": 1712902581990,
+						"type": "orderingService"
+					},
+					{ "name": "getWebsocketToken_end", "time": 1712902581990, "type": "auth" },
+					{ "name": "joinSession_end", "time": 1712902581990, "type": "orderingService" },
+					{ "name": "joinSession_start", "time": 1712902581989, "type": "orderingService" },
+					{ "name": "getWebsocketToken_start", "time": 1712902581989, "type": "auth" },
+					{ "name": "loadSocketModule", "time": 1712902581989 }
+				]
+			},
+			{
+				"state": "disconnected",
+				"time": 1712902581971,
+				"reason": { "text": "ConnectionStateHandler instantiated" },
+				"autoReconnect": "Enabled"
+			}
+		],
+		"clientId": "c91f3392-8cf7-4548-a2d0-ac2f3fe9d6b3"
+	}
+]

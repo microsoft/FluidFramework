@@ -21,13 +21,20 @@ import {
 	ISignalClient,
 	ISignalMessage,
 } from "@fluidframework/protocol-definitions";
+import type { PendingConnectionSteps } from "./container.js";
 
+/**
+ * @beta
+ */
 export enum ReconnectMode {
 	Never = "Never",
 	Disabled = "Disabled",
 	Enabled = "Enabled",
 }
 
+/**
+ * @beta
+ */
 export interface IConnectionStateChangeReason<T extends IErrorBase = IErrorBase> {
 	text: string;
 	error?: T;
@@ -137,6 +144,7 @@ export interface IConnectionManagerFactoryArgs {
 	 */
 	readonly signalHandler: (signals: ISignalMessage[]) => void;
 
+	//* How will this tie into diagnostics? Probably appears as a step
 	/**
 	 * Called when connection manager experiences delay in connecting to relay service.
 	 * This can happen because client is offline, or service is busy and asks to not connect for some time.
@@ -154,10 +162,13 @@ export interface IConnectionManagerFactoryArgs {
 	/**
 	 * Called whenever connection to relay service is lost.
 	 */
-	readonly disconnectHandler: (reason: IConnectionStateChangeReason) => void;
+	readonly disconnectHandler: (
+		reason: IConnectionStateChangeReason,
+		reconnectMode: ReconnectMode,
+	) => void;
 
 	/**
-	 * Called whenever new connection to rely service is established
+	 * Called whenever new connection to relay service is established
 	 */
 	readonly connectHandler: (connection: IConnectionDetailsInternal) => void;
 
@@ -185,15 +196,22 @@ export interface IConnectionManagerFactoryArgs {
 		readonlyConnectionReason?: IConnectionStateChangeReason,
 	) => void;
 
+	//* Better to pass it or return it? Can't return it because DM emits event. But now ownership is split across classes
 	/**
 	 * Called whenever we try to start establishing a new connection.
 	 */
-	readonly establishConnectionHandler: (reason: IConnectionStateChangeReason) => void;
+	readonly establishConnectionHandler: (
+		reason: IConnectionStateChangeReason,
+		diagnostics: PendingConnectionSteps,
+	) => void;
 
 	/**
 	 * Called whenever we cancel the connection in progress.
 	 */
-	readonly cancelConnectionHandler: (reason: IConnectionStateChangeReason) => void;
+	readonly cancelConnectionHandler: (
+		reason: IConnectionStateChangeReason,
+		reconnectMode: ReconnectMode,
+	) => void;
 }
 
 /**

@@ -6,6 +6,7 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
+	IConnectionStep,
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
 	IDocumentService,
@@ -245,14 +246,20 @@ export class OdspDocumentService
 	 *
 	 * @returns returns the document delta stream service for onedrive/sharepoint driver.
 	 */
-	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+	public async connectToDeltaStream(
+		client: IClient,
+		steps?: IConnectionStep[],
+	): Promise<IDocumentDeltaConnection> {
+		assert(steps !== undefined, "steps should be defined");
+
 		if (this.socketModuleP === undefined) {
+			steps.unshift({ name: "loadSocketModule", time: Date.now() });
 			this.socketModuleP = this.getDelayLoadedDeltaStream();
 		}
 		return this.socketModuleP
 			.then(async (m) => {
 				this.odspSocketModuleLoaded = true;
-				return m.connectToDeltaStream(client);
+				return m.connectToDeltaStream(client, steps);
 			})
 			.catch((error) => {
 				// Setting undefined in case someone tries to recover from module failure by calling again.

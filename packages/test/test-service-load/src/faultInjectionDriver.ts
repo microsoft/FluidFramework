@@ -17,6 +17,7 @@ import {
 	IDocumentStorageService,
 	IResolvedUrl,
 	ISnapshotFetchOptions,
+	type IConnectionStep,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	IClient,
@@ -127,7 +128,10 @@ export class FaultInjectionDocumentService
 		this.internal.dispose(error);
 	}
 
-	async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+	async connectToDeltaStream(
+		client: IClient,
+		steps?: IConnectionStep[],
+	): Promise<IDocumentDeltaConnection> {
 		assert(
 			this._currentDeltaStream?.disposed !== false,
 			"Document service factory should only have one open connection",
@@ -135,7 +139,7 @@ export class FaultInjectionDocumentService
 		// this method is not expected to resolve until connected
 		await this.onlineP.promise;
 		this._currentDeltaStream = new FaultInjectionDocumentDeltaConnection(
-			await this.internal.connectToDeltaStream(client),
+			await this.internal.connectToDeltaStream(client, steps),
 			this.online,
 		);
 		return this._currentDeltaStream;

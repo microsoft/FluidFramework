@@ -11,6 +11,7 @@ import {
 	IDocumentServiceEvents,
 	IDocumentStorageService,
 	IResolvedUrl,
+	type IConnectionStep,
 } from "@fluidframework/driver-definitions/internal";
 import { IClient } from "@fluidframework/protocol-definitions";
 
@@ -39,8 +40,11 @@ export abstract class DocumentServiceProxy
 		return this._service.connectToDeltaStorage();
 	}
 
-	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
-		return this._service.connectToDeltaStream(client);
+	public async connectToDeltaStream(
+		client: IClient,
+		steps?: IConnectionStep[],
+	): Promise<IDocumentDeltaConnection> {
+		return this._service.connectToDeltaStream(client, steps);
 	}
 
 	public dispose(error?: any): void {

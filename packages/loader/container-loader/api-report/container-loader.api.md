@@ -4,7 +4,9 @@
 
 ```ts
 
+import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
+import { IAnyDriverError } from '@fluidframework/driver-definitions/internal';
 import { IAudienceOwner } from '@fluidframework/container-definitions/internal';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IConfigProviderBase } from '@fluidframework/core-interfaces';
@@ -12,6 +14,7 @@ import { IContainer } from '@fluidframework/container-definitions/internal';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
+import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IFluidCodeDetails } from '@fluidframework/container-definitions/internal';
 import { IFluidModule } from '@fluidframework/container-definitions/internal';
 import { IHostLoader } from '@fluidframework/container-definitions/internal';
@@ -26,6 +29,45 @@ import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
 
+// @beta
+export interface ConnectionDiagnostics {
+    clientId?: string;
+    desiredConnectionMode?: ConnectionMode;
+    readonly stateProgression: [
+    /** Details about the connection while disconnected */
+        {
+        state: "disconnected";
+        readonly time: number;
+        readonly reason?: IConnectionStateChangeReason;
+        readonly autoReconnect: ReconnectMode;
+    }
+    /** Details about the connection while establishingConnection */
+    | {
+        state: "establishingConnection";
+        readonly time: number;
+        readonly reason?: IConnectionStateChangeReason;
+        steps: PendingConnectionStep[];
+    }
+    /** Details about the connection while catchingUp */
+    | {
+        state: "catchingUp";
+        readonly time: number;
+        readonly reason?: IConnectionStateChangeReason;
+        checkpointSequenceNumber?: number;
+        initialProcessedSequenceNumber?: number;
+        currentProcessedSequenceNumber?: number;
+    }
+    /** Details about the connection while connected */
+    | {
+        state: "connected";
+        readonly time: number;
+        readonly reason?: IConnectionStateChangeReason;
+        opsSent?: number;
+        opsReceived?: number;
+    }
+    ];
+}
+
 // @public
 export enum ConnectionState {
     CatchingUp = 1,
@@ -39,8 +81,21 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
+// @beta (undocumented)
+export interface IConnectionStateChangeReason<T extends IErrorBase = IErrorBase> {
+    // (undocumented)
+    error?: T;
+    // (undocumented)
+    text: string;
+}
+
+// @beta
+export interface IContainerBeta extends IContainer {
+    connectionDiagnosticsLog?: ConnectionDiagnostics[];
+}
+
 // @internal
-export interface IContainerExperimental extends IContainer {
+export interface IContainerExperimental extends IContainerBeta {
     closeAndGetPendingLocalState?(stopBlobAttachingSignal?: AbortSignal): Promise<string>;
     getPendingLocalState?(): Promise<string>;
 }
@@ -126,8 +181,30 @@ export class Loader implements IHostLoader {
     readonly services: ILoaderServices;
 }
 
+// @beta (undocumented)
+export interface PendingConnectionStep {
+    // (undocumented)
+    name: string;
+    // (undocumented)
+    retryableError?: IAnyDriverError;
+    // (undocumented)
+    time: number;
+    // (undocumented)
+    type?: "auth" | "socket.io" | "orderingService";
+}
+
 // @alpha
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
+
+// @beta (undocumented)
+export enum ReconnectMode {
+    // (undocumented)
+    Disabled = "Disabled",
+    // (undocumented)
+    Enabled = "Enabled",
+    // (undocumented)
+    Never = "Never"
+}
 
 // @alpha
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;

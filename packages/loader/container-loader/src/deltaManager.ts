@@ -55,9 +55,11 @@ import {
 	IConnectionManager,
 	IConnectionManagerFactoryArgs,
 	IConnectionStateChangeReason,
+	type ReconnectMode,
 } from "./contracts.js";
 import { DeltaQueue } from "./deltaQueue.js";
 import { ThrottlingWarning } from "./error.js";
+import type { PendingConnectionSteps } from "./container.js";
 
 export interface IConnectionArgs {
 	mode?: ConnectionMode;
@@ -429,8 +431,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			reconnectionDelayHandler: (delayMs: number, error: unknown) =>
 				this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
 			closeHandler: (error: any) => this.close(error),
-			disconnectHandler: (reason: IConnectionStateChangeReason) =>
-				this.disconnectHandler(reason),
+			disconnectHandler: (...args) => this.disconnectHandler(...args),
 			connectHandler: (connection: IConnectionDetailsInternal) =>
 				this.connectHandler(connection),
 			pongHandler: (latency: number) => this.emit("pong", latency),
@@ -440,10 +441,14 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			) => {
 				safeRaiseEvent(this, this.logger, "readonly", readonly, readonlyConnectionReason);
 			},
-			establishConnectionHandler: (reason: IConnectionStateChangeReason) =>
-				this.establishingConnection(reason),
-			cancelConnectionHandler: (reason: IConnectionStateChangeReason) =>
-				this.cancelEstablishingConnection(reason),
+			establishConnectionHandler: (
+				reason: IConnectionStateChangeReason,
+				diagnostics: PendingConnectionSteps,
+			) => this.establishingConnection(reason, diagnostics),
+			cancelConnectionHandler: (
+				reason: IConnectionStateChangeReason,
+				reconnectMode: ReconnectMode,
+			) => this.cancelEstablishingConnection(reason, reconnectMode),
 		};
 
 		this.connectionManager = createConnectionManager(props);
@@ -483,12 +488,18 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		// - inbound & inboundSignal are resumed in attachOpHandler() when we have handler setup
 	}
 
-	private cancelEstablishingConnection(reason: IConnectionStateChangeReason) {
-		this.emit("cancelEstablishingConnection", reason);
+	private cancelEstablishingConnection(
+		reason: IConnectionStateChangeReason,
+		reconnectMode: ReconnectMode,
+	) {
+		this.emit("cancelEstablishingConnection", reason, reconnectMode);
 	}
 
-	private establishingConnection(reason: IConnectionStateChangeReason) {
-		this.emit("establishingConnection", reason);
+	private establishingConnection(
+		reason: IConnectionStateChangeReason,
+		diagnostics: PendingConnectionSteps,
+	) {
+		this.emit("establishingConnection", reason, diagnostics);
 	}
 
 	private connectHandler(connection: IConnectionDetailsInternal) {
@@ -805,9 +816,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		}
 	}
 
-	private disconnectHandler(reason: IConnectionStateChangeReason) {
+	private disconnectHandler(reason: IConnectionStateChangeReason, reconnectMode: ReconnectMode) {
 		this.messageBuffer.length = 0;
-		this.emit("disconnect", reason.text, reason.error);
+		this.emit("disconnect", reason.text, reason.error, reconnectMode);
 	}
 
 	/**

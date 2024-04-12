@@ -7,6 +7,7 @@ import { performance } from "@fluid-internal/client-utils";
 import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
+	IConnectionStep,
 	IDocumentDeltaConnection,
 	IDocumentServicePolicies,
 	IResolvedUrl,
@@ -134,7 +135,10 @@ export class OdspDelayLoadedDeltaStream {
 	 *
 	 * @returns returns the document delta stream service for onedrive/sharepoint driver.
 	 */
-	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+	public async connectToDeltaStream(
+		client: IClient,
+		steps: IConnectionStep[],
+	): Promise<IDocumentDeltaConnection> {
 		assert(
 			this.currentConnection === undefined,
 			0x4ad /* Should not be called when connection is already present! */,
@@ -149,6 +153,14 @@ export class OdspDelayLoadedDeltaStream {
 				  Promise.resolve(null)
 				: this.getWebsocketToken!(options);
 
+			steps.unshift({
+				name: requestWebsocketTokenFromJoinSession
+					? "getWebsocketToken_skipped"
+					: "getWebsocketToken_start",
+				time: Date.now(),
+				type: "auth",
+			});
+
 			const annotateAndRethrowConnectionError = (step: string) => (error: unknown) => {
 				throw this.annotateConnectionError(
 					error,
@@ -162,9 +174,28 @@ export class OdspDelayLoadedDeltaStream {
 				options,
 				false /* isRefreshingJoinSession */,
 			);
+			steps.unshift({ name: "joinSession_start", time: Date.now(), type: "orderingService" });
 			const [websocketEndpoint, websocketToken] = await Promise.all([
-				joinSessionPromise.catch(annotateAndRethrowConnectionError("joinSession")),
-				websocketTokenPromise.catch(annotateAndRethrowConnectionError("getWebsocketToken")),
+				joinSessionPromise
+					.catch(annotateAndRethrowConnectionError("joinSession"))
+					.finally(() =>
+						steps.unshift({
+							name: "joinSession_end",
+							time: Date.now(),
+							type: "orderingService",
+						}),
+					),
+				websocketTokenPromise
+					.catch(annotateAndRethrowConnectionError("getWebsocketToken"))
+					.finally(() =>
+						requestWebsocketTokenFromJoinSession
+							? undefined
+							: steps.unshift({
+									name: "getWebsocketToken_end",
+									time: Date.now(),
+									type: "auth",
+							  }),
+					),
 			]);
 
 			// eslint-disable-next-line unicorn/no-null
@@ -186,6 +217,12 @@ export class OdspDelayLoadedDeltaStream {
 				});
 			}
 			try {
+				steps.unshift({
+					name: "createDeltaConnection_start",
+					time: Date.now(),
+					type: "orderingService",
+				});
+
 				const connection = await this.createDeltaConnection(
 					websocketEndpoint.tenantId,
 					websocketEndpoint.id,

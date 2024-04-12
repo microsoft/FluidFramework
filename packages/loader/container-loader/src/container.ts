@@ -45,6 +45,7 @@ import {
 	ISnapshot,
 	IThrottlingWarning,
 	IUrlResolver,
+	type IAnyDriverError,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	MessageType2,
@@ -74,6 +75,7 @@ import {
 	IVersion,
 	MessageType,
 	SummaryType,
+	type ConnectionMode,
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt, type TelemetryEventCategory } from "@fluidframework/telemetry-utils";
 import {
@@ -352,7 +354,7 @@ interface IContainerLifecycleEvents extends IEvent {
 
 export class Container
 	extends EventEmitterWithErrorHandling<IContainerEvents>
-	implements IContainer, IContainerExperimental
+	implements IContainer, IContainerBeta, IContainerExperimental
 {
 	/**
 	 * Load an existing container.
@@ -571,6 +573,9 @@ export class Container
 
 	private get connectionMode() {
 		return this._deltaManager.connectionManager.connectionMode;
+	}
+	public get connectionDiagnosticsLog() {
+		return this.connectionStateHandler.connectionDiagnosticsLog;
 	}
 
 	public get resolvedUrl(): IResolvedUrl | undefined {
@@ -839,20 +844,7 @@ export class Container
 		this.connectionStateHandler = createConnectionStateHandler(
 			{
 				logger: this.mc.logger,
-				connectionStateChanged: (value, oldState, reason) => {
-					if (value === ConnectionState.Connected) {
-						this._clientId = this.connectionStateHandler.pendingClientId;
-					}
-					this.logConnectionStateChangeTelemetry(value, oldState, reason);
-					if (this._lifecycleState === "loaded") {
-						this.propagateConnectionState(
-							false /* initial transition */,
-							value === ConnectionState.Disconnected
-								? reason
-								: undefined /* disconnectedReason */,
-						);
-					}
-				},
+				connectionStateChanged: (...args) => this.handleConnectionStateChanged(...args),
 				shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
 				maxClientLeaveWaitTime: options.maxClientLeaveWaitTime,
 				logConnectionIssue: (
@@ -954,6 +946,26 @@ export class Container
 				}
 			};
 			document.addEventListener("visibilitychange", this.visibilityEventHandler);
+		}
+	}
+
+	private handleConnectionStateChanged(
+		value: ConnectionState,
+		oldState: ConnectionState,
+		reason?: IConnectionStateChangeReason,
+	) {
+		if (value === ConnectionState.Connected) {
+			this._clientId = this.connectionStateHandler.pendingClientId;
+		}
+
+		this.logConnectionStateChangeTelemetry(value, oldState, reason);
+		if (this._lifecycleState === "loaded") {
+			this.propagateConnectionState(
+				false /* initial transition */,
+				value === ConnectionState.Disconnected
+					? reason
+					: undefined /* disconnectedReason */,
+			);
 		}
 	}
 
@@ -2009,18 +2021,24 @@ export class Container
 			this.connectionStateHandler.receivedConnectEvent(details);
 		});
 
-		deltaManager.on("establishingConnection", (reason: IConnectionStateChangeReason) => {
-			this.connectionStateHandler.establishingConnection(reason);
-		});
+		deltaManager.on(
+			"establishingConnection",
+			(reason: IConnectionStateChangeReason, diagnostics: PendingConnectionSteps) => {
+				this.connectionStateHandler.establishingConnection(reason, diagnostics);
+			},
+		);
 
-		deltaManager.on("cancelEstablishingConnection", (reason: IConnectionStateChangeReason) => {
-			this.connectionStateHandler.cancelEstablishingConnection(reason);
-		});
+		deltaManager.on(
+			"cancelEstablishingConnection",
+			(reason: IConnectionStateChangeReason, reconnectMode: ReconnectMode) => {
+				this.connectionStateHandler.cancelEstablishingConnection(reason, reconnectMode);
+			},
+		);
 
-		deltaManager.on("disconnect", (text, error) => {
+		deltaManager.on("disconnect", (text, error, reconnectMode: ReconnectMode) => {
 			this.noopHeuristic?.notifyDisconnect();
 			if (!this.closed) {
-				this.connectionStateHandler.receivedDisconnectEvent({ text, error });
+				this.connectionStateHandler.receivedDisconnectEvent({ text, error }, reconnectMode);
 			}
 		});
 
@@ -2441,10 +2459,99 @@ export class Container
 }
 
 /**
+ * Diagnostics information about a given connection instance (single attempt/clientId),
+ * traversing the four connection states (disconnected, establishingConnection, catchingUp, connected).
+ *
+ * Includes what the current connection state is, and what is happening within that state
+ *
+ * @beta
+ */
+export interface ConnectionDiagnostics {
+	/**
+	 * The client id assigned for this connection by the ordering service
+	 * Only set when currentState is "catchingUp" or "connected"
+	 */
+	clientId?: string;
+
+	//* This is hard to compute at the right time.  Maybe can follow example of ReconnectMode below?
+	/** read-only v. read/write connection */
+	desiredConnectionMode?: ConnectionMode;
+
+	/**
+	 * Progression of the connection through the 4 states, with details about each step.
+	 * Expected to go from disconnected to establishingConnection to catchingUp to connected,
+	 * with each state inserted at the front (reverse order), so the current/final state is at position [0]
+	 */
+	readonly stateProgression: [
+		/** Details about the connection while disconnected */
+		| {
+				state: "disconnected";
+				readonly time: number;
+				readonly reason?: IConnectionStateChangeReason;
+
+				readonly autoReconnect: ReconnectMode;
+		  }
+		/** Details about the connection while establishingConnection */
+		| {
+				state: "establishingConnection";
+				readonly time: number;
+				readonly reason?: IConnectionStateChangeReason;
+
+				/** Reverse order - current/final step is at position [0] */
+				steps: PendingConnectionStep[];
+		  }
+		/** Details about the connection while catchingUp */
+		| {
+				state: "catchingUp";
+				readonly time: number;
+				readonly reason?: IConnectionStateChangeReason;
+
+				checkpointSequenceNumber?: number;
+				initialProcessedSequenceNumber?: number;
+				currentProcessedSequenceNumber?: number;
+
+				//* TODO: Add details about waiting for Leave/Join Op,
+				//* and waiting for checkPointSequenceNumber op to be processed, etc.
+		  }
+		/** Details about the connection while connected */
+		| {
+				state: "connected";
+				readonly time: number;
+				//* not used?
+				readonly reason?: IConnectionStateChangeReason;
+
+				opsSent?: number;
+				opsReceived?: number;
+		  },
+	];
+}
+
+/**
+ * @beta
+ */
+export interface PendingConnectionStep {
+	name: string; // Free-form, for telemetry only
+	type?: "auth" | "socket.io" | "orderingService"; // unsure about this - part of public API, needs to be both stable and useful
+	time: number;
+	retryableError?: IAnyDriverError; // with errorType (maybe AnyDriverError)
+}
+export type PendingConnectionSteps = PendingConnectionStep[];
+
+/**
+ * IContainer interface that includes beta features that are subject to change.
+ * @beta
+ */
+export interface IContainerBeta extends IContainer {
+	//* Probably add a max length (e.g. 3 or something) and drop off old entries, to restrict memory usage (each one can be about 1kb when stringified)
+	/** Log of connections / connection attempts, in reverse order (current/latest attempt is at position [0]) */
+	connectionDiagnosticsLog?: ConnectionDiagnostics[];
+}
+
+/**
  * IContainer interface that includes experimental features still under development.
  * @internal
  */
-export interface IContainerExperimental extends IContainer {
+export interface IContainerExperimental extends IContainerBeta {
 	/**
 	 * Get pending state from container. WARNING: misuse of this API can result in duplicate op
 	 * submission and potential document corruption. The blob returned MUST be deleted if and when this

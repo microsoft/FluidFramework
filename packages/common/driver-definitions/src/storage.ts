@@ -359,6 +359,18 @@ export interface IDocumentServicePolicies {
 }
 
 /**
+ * Diagnostic info about the current step in establishing a connection to delta stream
+ *
+ * @alpha
+ */
+export interface IConnectionStep {
+	name: string; // Free-form, for telemetry only
+	type?: "auth" | "socket.io" | "orderingService"; // unsure about this - part of real API, needs to be both stable and useful
+	time: number;
+	retryableError?: IAnyDriverError;
+}
+
+/**
  * @alpha
  */
 export interface IDocumentService extends IEventProvider<IDocumentServiceEvents> {
@@ -382,7 +394,10 @@ export interface IDocumentService extends IEventProvider<IDocumentServiceEvents>
 	/**
 	 * Subscribes to the document delta stream
 	 */
-	connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
+	connectToDeltaStream(
+		client: IClient,
+		steps?: IConnectionStep[],
+	): Promise<IDocumentDeltaConnection>;
 
 	/**
 	 * Dispose storage. Called by storage consumer (Container) when it's done with storage (Container closed).
