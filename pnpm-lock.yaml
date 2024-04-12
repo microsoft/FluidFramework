@@ -10084,6 +10084,7 @@ importers:
       c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
+      eslint-plugin-regex: 1.10.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
@@ -10162,6 +10163,7 @@ importers:
       '@types/uuid': 9.0.7
       c8: 8.0.1
       eslint: 8.55.0
+      eslint-plugin-regex: 1.10.0_eslint@8.55.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
@@ -29365,6 +29367,15 @@ packages:
       resolve: 2.0.0-next.5
       semver: 6.3.1
       string.prototype.matchall: 4.0.10
+    dev: true
+
+  /eslint-plugin-regex/1.10.0_eslint@8.55.0:
+    resolution: {integrity: sha512-C8/qYKkkbIb0epxKzaz4aw7oVAOmm19fJpR/moUrUToq/vc4xW4sEKMlTQqH6EtNGpvLjYsbbZRlWNWwQGeTSA==}
+    engines: {node: '>=6.0.0'}
+    peerDependencies:
+      eslint: '>=4.0.0'
+    dependencies:
+      eslint: 8.55.0
     dev: true
 
   /eslint-plugin-tsdoc/0.2.17:

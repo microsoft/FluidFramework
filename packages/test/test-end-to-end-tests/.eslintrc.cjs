@@ -11,6 +11,7 @@ module.exports = {
 	parserOptions: {
 		project: ["./src/test/tsconfig.json"],
 	},
+	plugins: ["regex"],
 	rules: {
 		"prefer-arrow-callback": "off",
 		"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
@@ -61,6 +62,19 @@ module.exports = {
 			@fluid-private/test-end-to-end-tests:     at ExportMap.get (/home/tylerbu/code/release-1/node_modules/.pnpm/eslint-plugin-i@2.29.0_j7h7oj6rrhtikhzta4fgkou42e/node_modules/eslint-plugin-i/lib/ExportMap.js:792:465)
 		 */
 		"import/no-deprecated": "off",
+		"regex/invalid-error": [
+			"error",
+			[
+				{
+					id: "invalidDescribeCompat",
+					message: "Invalid describeCompat usage. The inner describeCompat block should have have arguments defined. Using the TestObjectProvider from the outer block inside the inner block may lead to unexpected behavior.",
+					regex: `.*describeCompat\\(".*?",\\s+".*?",\\s+\\(.*?\\)\\s+=>\\s+\\{\\s+describeCompat\\(".*?",\\s+".*?",\\s+\\(\\)\\s+=>\\s+\\{.*`,
+					files: {
+						ignore: "^(?!.*\.spec\.ts).*$",
+					},
+				},
+			],
+		],
 	},
 	overrides: [
 		{
