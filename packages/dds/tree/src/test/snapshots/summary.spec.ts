@@ -11,15 +11,17 @@ import { takeSummarySnapshot } from "./utils.js";
 
 describe("snapshot tests", () => {
 	useSnapshotDirectory();
-	for (const treeEncodeKey of Object.keys(TreeCompressionStrategy)) {
+	for (const treeEncodeType of [
+		TreeCompressionStrategy.Compressed,
+		TreeCompressionStrategy.Uncompressed,
+	]) {
+		// Friendly description of tree encoding type
+		const treeEncodeKey = TreeCompressionStrategy[treeEncodeType];
 		for (const formatVersionKey of Object.keys(SharedTreeFormatVersion)) {
 			describe(`Using TreeCompressionStrategy.${treeEncodeKey} and SharedTreeFormatVersion.${formatVersionKey}`, () => {
 				useSnapshotDirectory(`summary/${treeEncodeKey}/${formatVersionKey}`);
 				const options: SharedTreeOptions = {
-					treeEncodeType:
-						TreeCompressionStrategy[
-							treeEncodeKey as keyof typeof TreeCompressionStrategy
-						],
+					treeEncodeType,
 					formatVersion:
 						SharedTreeFormatVersion[
 							formatVersionKey as keyof typeof SharedTreeFormatVersion
