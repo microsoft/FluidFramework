@@ -418,7 +418,7 @@ describe("schema validation", () => {
 			const nullNode = createLeafNode("myNullNode", null);
 			const fluidHandleNode = createLeafNode("myFluidHandleNode", new MockHandle(undefined));
 
-			it(`in schema (children of every type)`, () => {
+			it(`in schema (direct children of different leaf types)`, () => {
 				// Note there's a sequence field here to test that both optional and sequence fields
 				// can "not exist" in a node and it's still in schema, since both of those kinds of fields
 				// can be empty and when they are they shouldn't exist in the node.
