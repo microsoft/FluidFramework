@@ -91,7 +91,7 @@ function createNonLeafNode<
 	};
 }
 
-describe.only("schema validation", () => {
+describe("schema validation", () => {
 	describe("compliesWithMultiplicity", () => {
 		const multiplicityTestCases: [
 			kind: Multiplicity,
