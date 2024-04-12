@@ -45,17 +45,16 @@ import { ILoadTestConfig, ITestConfig } from "./testConfigFile.js";
 const packageName = `${pkgName}@${pkgVersion}`;
 
 class FileLogger implements ITelemetryBufferedLogger {
-	private static readonly loggerP = (minLogLevel?: LogLevel) =>
-		new LazyPromise<FileLogger>(async () => {
-			if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER !== undefined) {
-				await import(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
-				const logger = getTestLogger?.();
-				assert(logger !== undefined, "Expected getTestLogger to return something");
-				return new FileLogger(logger, minLogLevel);
-			} else {
-				return new FileLogger(undefined, minLogLevel);
-			}
-		});
+	private static readonly loggerP = new LazyPromise<FileLogger>(async () => {
+		if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER !== undefined) {
+			await import(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
+			const logger = getTestLogger?.();
+			assert(logger !== undefined, "Expected getTestLogger to return something");
+			return new FileLogger(logger, 20);
+		} else {
+			return new FileLogger(undefined, 20);
+		}
+	});
 
 	public static async createLogger(
 		dimensions: {
@@ -66,7 +65,7 @@ class FileLogger implements ITelemetryBufferedLogger {
 		},
 		minLogLevel: LogLevel = LogLevel.default,
 	) {
-		const logger = await this.loggerP(minLogLevel);
+		const logger = await this.loggerP;
 		return createChildLogger({
 			logger,
 			properties: {
@@ -76,10 +75,10 @@ class FileLogger implements ITelemetryBufferedLogger {
 	}
 
 	public static async flushLogger(runInfo?: { url: string; runId?: number }) {
-		await (await this.loggerP()).flush(runInfo);
+		await (await this.loggerP).flush(runInfo);
 	}
 
-	private error: boolean = false;
+	public error: boolean = false;
 	private readonly schema = new Map<string, number>();
 	private logs: ITelemetryBaseEvent[] = [];
 
@@ -91,7 +90,7 @@ class FileLogger implements ITelemetryBufferedLogger {
 	async flush(runInfo?: { url: string; runId?: number }): Promise<void> {
 		const baseFlushP = this.baseLogger?.flush();
 
-		if (this.error && runInfo !== undefined) {
+		if (runInfo !== undefined) {
 			const logs = this.logs;
 			const outputDir = `${__dirname}/output/${crypto
 				.createHash("md5")
