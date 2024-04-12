@@ -130,7 +130,6 @@ export class AppData extends DataObject {
 				a: "a",
 				b: "b",
 			},
-			aCounterHandle: counter.handle,
 		});
 
 		this._initialObjects[this.initialObjectsDirKey] = this.root.IFluidLoadable;
@@ -192,7 +191,6 @@ export class AppData extends DataObject {
 		class RootNodeSchema extends builder.object("root-item", {
 			childrenOne: builder.array(ChildSchema),
 			childrenTwo: builder.number,
-			childrenThree: builder.handle,
 		}) {}
 
 		const config = new TreeConfiguration(RootNodeSchema, () => ({
@@ -211,7 +209,6 @@ export class AppData extends DataObject {
 				},
 			],
 			childrenTwo: 32,
-			childrenThree: sharedTree.handle,
 		}));
 
 		sharedTree.schematize(config);

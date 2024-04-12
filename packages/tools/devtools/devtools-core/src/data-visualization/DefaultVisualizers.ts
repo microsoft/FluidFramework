@@ -25,7 +25,11 @@ import { SharedTree } from "@fluidframework/tree/internal";
 import { EditType } from "../CommonInterfaces.js";
 
 import { type VisualizeChildData, type VisualizeSharedObject } from "./DataVisualization.js";
-import { toVisualTree, visualizeSharedTreeNodeBySchema } from "./SharedTreeVisualizer.js";
+import {
+	determineNodeKind,
+	toVisualTree,
+	visualizeSharedTreeNodeBySchema,
+} from "./SharedTreeVisualizer.js";
 import {
 	type FluidObjectNode,
 	type FluidObjectTreeNode,
@@ -275,13 +279,7 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 		...visualTree,
 		fluidObjectId: sharedTree.id,
 		typeMetadata: "SharedTree",
-		nodeKind:
-			visualTree.nodeKind === VisualNodeKind.TreeNode ||
-			visualTree.nodeKind === VisualNodeKind.FluidHandleNode
-				? VisualNodeKind.FluidTreeNode
-				: visualTree.nodeKind === VisualNodeKind.UnknownObjectNode
-				? VisualNodeKind.FluidUnknownObjectNode
-				: VisualNodeKind.FluidValueNode,
+		nodeKind: determineNodeKind(visualTree.nodeKind),
 	} as unknown as FluidObjectNode;
 
 	return visualTreeResult;

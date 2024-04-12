@@ -33,6 +33,24 @@ import {
 import type { VisualizeChildData } from "./DataVisualization.js";
 
 /**
+ * Returns VisualNodeKind that is compatible to {@link FluidObjectNode} based on the `visualTree`'s node kind.
+ */
+export function determineNodeKind(nodeKind: VisualNodeKind): VisualNodeKind {
+	switch (nodeKind) {
+		case VisualNodeKind.TreeNode:
+		case VisualNodeKind.FluidHandleNode: {
+			return VisualNodeKind.FluidTreeNode;
+		}
+		case VisualNodeKind.ValueNode: {
+			return VisualNodeKind.FluidValueNode;
+		}
+		default: {
+			return VisualNodeKind.FluidUnknownObjectNode;
+		}
+	}
+}
+
+/**
  * Returns allowed types of the non-leaf nodes in the tree.
  * @param allowedTypes - a string if array node, `Record<string, string>` for non-array nodes.
  * @returns - a VisualChildNode with the allowed type.
