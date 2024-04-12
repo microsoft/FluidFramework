@@ -38,7 +38,7 @@
 			}
 		}
 	},
-	"main": "lib/index.js",
+	"main": "",
 	"types": "lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
