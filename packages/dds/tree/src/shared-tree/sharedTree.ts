@@ -126,6 +126,7 @@ interface ExplicitCodecVersions extends ExplicitCoreCodecVersions {
 
 const formatVersionToTopLevelCodecVersions = new Map<number, ExplicitCodecVersions>([
 	[1, { forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 1, message: 1, fieldBatch: 1 }],
+	[2, { forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 2, message: 2, fieldBatch: 1 }],
 ]);
 
 function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
@@ -314,6 +315,11 @@ export const SharedTreeFormatVersion = {
 	 * Requires \@fluidframework/tree \>= 2.0.0.
 	 */
 	v1: 1,
+
+	/**
+	 * Requires \@fluidframework/tree \>= 2.0.0.
+	 */
+	v2: 2,
 } as const;
 
 /**
