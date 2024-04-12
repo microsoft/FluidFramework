@@ -1167,14 +1167,6 @@ export class ContainerRuntime
 	private ensureNoDataModelChangesCalls = 0;
 
 	/**
-	 * Tracks the number of detected reentrant ops to report,
-	 * in order to self-throttle the telemetry events.
-	 *
-	 * This should be removed as part of ADO:2322
-	 */
-	private opReentryCallsToReport = 5;
-
-	/**
 	 * Invokes the given callback and expects that no ops are submitted
 	 * until execution finishes. If an op is submitted, an error will be raised.
 	 *
@@ -1207,6 +1199,7 @@ export class ContainerRuntime
 
 	private dirtyContainer: boolean;
 	private emitDirtyDocumentEvent = true;
+	/** This should be cleaned up as part of ADO:2322 */
 	private readonly enableOpReentryCheck: boolean;
 	private readonly disableAttachReorder: boolean | undefined;
 	private readonly closeSummarizerDelayMs: number;
@@ -3995,33 +3988,22 @@ export class ContainerRuntime
 	}
 
 	private verifyCanSubmitOps() {
-		if (this.ensureNoDataModelChangesCalls > 0) {
-			const errorMessage =
-				"Op was submitted from within a `ensureNoDataModelChanges` callback";
-			if (this.opReentryCallsToReport > 0) {
-				this.mc.logger.sendTelemetryEvent(
-					{ eventName: "OpReentry" },
-					// We need to capture the call stack in order to inspect the source of this usage pattern
-					getLongStack(() => new UsageError(errorMessage)),
-				);
-				this.opReentryCallsToReport--;
-			}
-
-			// Creating ops while processing ops can lead
-			// to undefined behavior and events observed in the wrong order.
-			// For example, we have two callbacks registered for a DDS, A and B.
-			// Then if on change #1 callback A creates change #2, the invocation flow will be:
-			//
-			// A because of #1
-			// A because of #2
-			// B because of #2
-			// B because of #1
-			//
-			// The runtime must enforce op coherence by not allowing ops to be submitted
-			// while ops are being processed.
-			if (this.enableOpReentryCheck) {
-				throw new UsageError(errorMessage);
-			}
+		// Creating ops while processing ops can lead
+		// to undefined behavior and events observed in the wrong order.
+		// For example, we have two callbacks registered for a DDS, A and B.
+		// Then if on change #1 callback A creates change #2, the invocation flow will be:
+		//
+		// A because of #1
+		// A because of #2
+		// B because of #2
+		// B because of #1
+		//
+		// The runtime must enforce op coherence by not allowing ops to be submitted
+		// while ops are being processed.
+		if (this.ensureNoDataModelChangesCalls > 0 && this.enableOpReentryCheck) {
+			throw new UsageError(
+				"Op was submitted from within a `ensureNoDataModelChanges` callback",
+			);
 		}
 	}
 
