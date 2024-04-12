@@ -261,6 +261,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     };
     // (undocumented)
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
+    ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     get flushMode(): FlushMode;
     get gcThrowOnTombstoneUsage(): boolean;
@@ -476,6 +477,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     dispose(): void;
     // (undocumented)
     get disposed(): boolean;
+    // (undocumented)
+    ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     protected factoryFromPackagePath(): Promise<IFluidDataStoreFactory>;
     readonly gcThrowOnTombstoneUsage: boolean;

@@ -1424,7 +1424,6 @@ describe("Runtime", () => {
 				maxBatchSizeInBytes: 700 * 1024,
 				chunkSizeInBytes: 204800,
 				enableRuntimeIdCompressor: undefined,
-				enableOpReentryCheck: false,
 				enableGroupedBatching: false,
 				explicitSchemaControl: false,
 			} satisfies IContainerRuntimeOptions;

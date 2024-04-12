@@ -270,7 +270,7 @@ describeCompat(
 			});
 		});
 
-		it("Should throw when submitting an op while handling an event - offline", async function () {
+		it("Should not throw when submitting an op while handling an event - offline", async function () {
 			if (provider.driver.type === "t9s" || provider.driver.type === "tinylicious") {
 				// This test is flaky on Tinylicious. ADO:5010
 				this.skip();
@@ -279,7 +279,6 @@ describeCompat(
 			await setupContainers({
 				...testContainerConfig,
 				runtimeOptions: {
-					enableOpReentryCheck: true,
 				},
 			});
 
@@ -292,9 +291,7 @@ describeCompat(
 				}
 			});
 
-			assert.throws(() => {
-				sharedMap1.set("key1", "1");
-			});
+			sharedMap1.set("key1", "1");
 
 			container1.deltaManager.inbound.resume();
 			container1.deltaManager.outbound.resume();
@@ -317,7 +314,6 @@ describeCompat(
 					options: {
 						...testContainerConfig,
 						runtimeOptions: {
-							enableOpReentryCheck: true,
 						},
 					},
 					name: "Enabled by options, disabled by feature gate",

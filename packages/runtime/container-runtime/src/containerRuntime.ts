@@ -1188,6 +1188,23 @@ export class ContainerRuntime
 
 	private ensureNoDataModelChangesCalls = 0;
 
+	/**
+	 * Invokes the given callback and expects that no ops are submitted
+	 * until execution finishes. If an op is submitted, an error will be raised.
+	 *
+	 * Can be disabled by feature gate `Fluid.ContainerRuntime.DisableOpReentryCheck`
+	 *
+	 * @param callback - the callback to be invoked
+	 */
+	public ensureNoDataModelChanges<T>(callback: () => T): T {
+		this.ensureNoDataModelChangesCalls++;
+		try {
+			return callback();
+		} finally {
+			this.ensureNoDataModelChangesCalls--;
+		}
+	}
+
 	public get connected(): boolean {
 		return this._connected;
 	}
@@ -2491,20 +2508,25 @@ export class ContainerRuntime
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
 		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
-			if (modernRuntimeMessage) {
-				this.processCore({
-					// Cast it since we expect it to be this based on modernRuntimeMessage computation above.
-					// There is nothing really ensuring that anytime original message.type is Operation that
-					// the result messages will be so. In the end modern bool being true only directs to
-					// throw error if ultimately unrecognized without compat details saying otherwise.
-					message: message as InboundSequencedContainerRuntimeMessage,
-					local,
-					modernRuntimeMessage,
-				});
-			} else {
-				// Unrecognized message will be ignored.
-				this.processCore({ message, local, modernRuntimeMessage });
-			}
+			const msg: MessageWithContext = modernRuntimeMessage
+				? {
+						// Cast it since we expect it to be this based on modernRuntimeMessage computation above.
+						// There is nothing really ensuring that anytime original message.type is Operation that
+						// the result messages will be so. In the end modern bool being true only directs to
+						// throw error if ultimately unrecognized without compat details saying otherwise.
+						message: message as InboundSequencedContainerRuntimeMessage,
+						local,
+						modernRuntimeMessage,
+				  }
+				: // Unrecognized message will be ignored.
+				  {
+						message,
+						local,
+						modernRuntimeMessage,
+				  };
+
+			// ensure that we observe any re-entrancy, and if needed, rebase ops
+			this.ensureNoDataModelChanges(() => this.processCore(msg));
 		}
 	}
 
