@@ -14,7 +14,7 @@ import {
 	isTreeValue,
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
-import { fail } from "../util/index.js";
+import { fail, extractFromOpaque } from "../util/index.js";
 
 import { getOrCreateNodeProxy } from "./proxies.js";
 import { getFlexNode, tryGetFlexNode } from "./proxyBinding.js";
@@ -30,7 +30,6 @@ import {
 } from "./schemaTypes.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { TreeNode } from "./types.js";
-import { extractFromOpaque } from "../util/index.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.

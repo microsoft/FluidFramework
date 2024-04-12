@@ -18,6 +18,7 @@ import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
+import { isObject } from "@fluidframework/core-utils/internal";
 import { ISharedMap, MapFactory } from "../../index.js";
 
 import { _dirname } from "./dirname.cjs";
@@ -47,14 +48,13 @@ async function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap): Promise<vo
 	for (const key of a.keys()) {
 		const aVal: unknown = a.get(key);
 		const bVal: unknown = b.get(key);
-		if (
-			aVal !== null &&
-			typeof aVal === "object" &&
-			bVal !== null &&
-			typeof bVal === "object"
-		) {
-			const aObj: FluidObject<IFluidHandle> = aVal;
-			const bObj: FluidObject<IFluidHandle> = bVal;
+		if (isObject(aVal) === true) {
+			const aObj: FluidObject<IFluidHandle> = aVal as FluidObject<IFluidHandle>;
+			assert(
+				isObject(bVal),
+				`${a.id} and ${b.id} differ at ${key}: a is an object, b is not}`,
+			);
+			const bObj: FluidObject<IFluidHandle> = bVal as FluidObject<IFluidHandle>;
 			const aHandle = aObj.IFluidHandle ? await aObj.IFluidHandle?.get() : aObj;
 			const bHandle = bObj.IFluidHandle ? await bObj.IFluidHandle?.get() : bObj;
 			assert.equal(

@@ -13,8 +13,6 @@ import {
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { extractFactoryContent } from "../../simple-tree/proxies.js";
-
-// eslint-disable-next-line import/no-internal-modules
 import { hydrate } from "./utils.js";
 
 describe("SharedTreeObject factories", () => {
