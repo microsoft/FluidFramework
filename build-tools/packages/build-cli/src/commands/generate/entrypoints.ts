@@ -404,6 +404,7 @@ async function generateEntrypoints(
 		if (namedExports.length > 0) {
 			sourceFile.insertText(0, generatedHeader);
 			sourceFile.addExportDeclaration({
+				leadingTrivia: "\n",
 				moduleSpecifier: `./${mainSourceFile
 					.getBaseName()
 					.replace(/\.(?:d\.)?([cm]?)ts$/, ".$1js")}`,
@@ -439,8 +440,8 @@ async function generateNode10TypeEntrypoints(
 			fs.writeFile(
 				outFile,
 				isTypeOnly
-					? `${generatedHeader}\nexport type * from "${relPath}";\n`
-					: `${generatedHeader}\nexport * from "${jsImport}";\n`,
+					? `${generatedHeader}export type * from "${relPath}";\n`
+					: `${generatedHeader}export * from "${jsImport}";\n`,
 				"utf8",
 			),
 		);
