@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 
-import { Multiplicity } from "../../../../dist/index.js";
 // Reaching into internal module just to test it
 import {
 	SchemaValidationErrors,
@@ -22,6 +21,7 @@ import {
 import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
+	Multiplicity,
 	ObjectNodeStoredSchema,
 	ValueSchema,
 	type FieldKey,
