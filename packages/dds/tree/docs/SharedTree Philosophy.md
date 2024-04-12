@@ -178,7 +178,7 @@ When operations need to span different subtrees, they can be thought of as an op
 
 **NOTE**
 
-This is part of why SHaredTree is a tree, and not a graph.
+This is part of why SharedTree is a tree, and not a graph.
 When dealing with mutable content, its really useful to be clear about what the invariants of any given data are.
 Having these comes from its schema is ideal, but in the cases where that's insufficient, constraints can be contextually applied by the parents.
 This approach is most practical when any given data only has a single context (based on its single parentage path).
