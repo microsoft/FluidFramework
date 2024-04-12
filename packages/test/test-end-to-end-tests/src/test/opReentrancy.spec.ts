@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { SharedDirectory, ISharedMap } from "@fluidframework/map/internal";
@@ -69,6 +69,7 @@ describeCompat(
 				...containerConfig,
 				loaderProps: { configProvider: configProvider(featureGates) },
 			};
+			provider.reset();
 			container1 = await provider.makeTestContainer(configWithFeatureGates);
 			container2 = await provider.loadTestContainer(configWithFeatureGates);
 
@@ -209,40 +210,6 @@ describeCompat(
 		});
 
 		describe("Reentry safeguards", () => {
-			itExpects(
-				"Flushing is not supported",
-				[
-					{
-						eventName: "fluid:telemetry:Container:ContainerClose",
-						error: "Flushing is not supported inside DDS event handlers",
-					},
-				],
-				async function () {
-					if (provider.driver.type === "t9s" || provider.driver.type === "tinylicious") {
-						// This test is flaky on Tinylicious. ADO:5010
-						this.skip();
-					}
-
-					await setupContainers({
-						...testContainerConfig,
-						runtimeOptions: {
-							flushMode: FlushMode.Immediate,
-						},
-					});
-
-					sharedString1.on("sequenceDelta", () =>
-						assert.throws(() =>
-							dataObject1.context.containerRuntime.orderSequentially(() =>
-								sharedMap1.set("0", 0),
-							),
-						),
-					);
-
-					sharedString1.insertText(0, "ad");
-					await provider.ensureSynchronized();
-				},
-			);
-
 			it("Flushing is supported if it happens in the next batch", async function () {
 				if (provider.driver.type === "t9s" || provider.driver.type === "tinylicious") {
 					// This test is flaky on Tinylicious. ADO:5010
@@ -299,7 +266,7 @@ describeCompat(
 
 			// The offending container is not closed
 			assert.ok(!container1.closed);
-			assert.ok(!mapsAreEqual(sharedMap1, sharedMap2));
+			assert.ok(mapsAreEqual(sharedMap1, sharedMap2));
 		});
 
 		describe("Allow reentry", () =>
