@@ -80,7 +80,7 @@ describe("SharedString Snapshot Version", () => {
 	async function loadSharedString(id: string, serializedSnapshot: string): Promise<SharedString> {
 		const containerRuntimeFactory = new MockContainerRuntimeFactory();
 		const dataStoreRuntime = new MockFluidDataStoreRuntime();
-		const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 		const services = {
 			deltaConnection: dataStoreRuntime.createDeltaConnection(),
 			objectStorage: new MockStorage(JSON.parse(serializedSnapshot)),

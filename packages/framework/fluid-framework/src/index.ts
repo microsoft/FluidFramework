@@ -43,8 +43,6 @@ export type {
 	MemberChangedListener,
 	Myself,
 } from "@fluidframework/fluid-static";
-export type { ISharedMap, ISharedMapEvents, IValueChanged } from "@fluidframework/map";
-export { SharedMap } from "@fluidframework/map";
 export type {
 	FluidObject,
 	IErrorBase,

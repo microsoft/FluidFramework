@@ -77,7 +77,7 @@ export const valueHandler = {
 	rebaser: replaceRebaser(),
 	codecsFactory: () =>
 		makeCodecFamily([
-			[0, makeValueCodec<TUnsafe<ValueChangeset>, FieldChangeEncodingContext>(Type.Any())],
+			[1, makeValueCodec<TUnsafe<ValueChangeset>, FieldChangeEncodingContext>(Type.Any())],
 		]),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 

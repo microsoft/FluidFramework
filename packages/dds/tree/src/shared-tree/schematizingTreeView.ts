@@ -77,11 +77,6 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 				this.events.emit("commitApplied", data, getRevertible),
 			),
 		);
-		this.unregisterCallbacks.add(
-			this.checkout.events.on("revertibleDisposed", (revertible) =>
-				this.events.emit("revertibleDisposed", revertible),
-			),
-		);
 	}
 
 	public upgradeSchema(): void {
@@ -279,7 +274,7 @@ export function requireSchema<TRoot extends FlexFieldSchema>(
 		nodeKeyFieldKey,
 		onDispose,
 	);
-	assert(slots.has(ContextSlot), "Context should be tracked in slot");
+	assert(slots.has(ContextSlot), 0x90d /* Context should be tracked in slot */);
 
 	const unregister = checkout.storedSchema.on("afterSchemaChange", () => {
 		const compatibility = viewSchema.checkCompatibility(checkout.storedSchema);

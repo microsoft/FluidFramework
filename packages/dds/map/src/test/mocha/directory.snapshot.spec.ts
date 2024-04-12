@@ -146,7 +146,7 @@ describe("SharedDirectory Snapshot Tests", () => {
 				? takeSnapshot(serialize(testDirectory))
 				: readSnapshot();
 			const secondDirectory = await loadSharedDirectory("B", snapshotData);
-			assertEquivalentDirectories(testDirectory, secondDirectory);
+			await assertEquivalentDirectories(testDirectory, secondDirectory);
 		});
 	}
 });
