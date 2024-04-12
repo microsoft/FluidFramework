@@ -525,9 +525,13 @@ const arrayNodePrototype = Object.create(Object.prototype, arrayNodePrototypePro
 // #endregion
 
 /**
- * Helper to coerce property keys to integer indexes (or undefined if not an in-range integer).
+ * Attempts to coerce the given property key to an integer index property.
+ * @param key - The property key to coerce.
+ * @param exclusiveMax - This restricts the range in which the resulting index is allowed to be.
+ * The coerced index of `key` must be less than `exclusiveMax` or else this function will return `undefined`.
+ * This is useful for reading an array within the bounds of its length, e.g. `asIndex(key, array.length)`.
  */
-function asIndex(key: string | symbol, length: number) {
+function asIndex(key: string | symbol, exclusiveMax: number): number | undefined {
 	if (typeof key === "string") {
 		// TODO: It may be worth a '0' <= ch <= '9' check before calling 'Number' to quickly
 		// reject 'length' as an index, or even parsing integers ourselves.
@@ -535,7 +539,7 @@ function asIndex(key: string | symbol, length: number) {
 
 		// TODO: See 'matrix/range.ts' for fast integer coercing + range check.
 		if (Number.isInteger(asNumber)) {
-			return 0 <= asNumber && asNumber < length ? asNumber : undefined;
+			return 0 <= asNumber && asNumber < exclusiveMax ? asNumber : undefined;
 		}
 	}
 }
@@ -620,8 +624,8 @@ function createArrayNodeProxy(
 				return Reflect.set(dispatch, key, newValue, proxy);
 			}
 
-			const field = getSequenceField(proxy);
-			const maybeIndex = asIndex(key, field.length);
+			// JS allows arrays to be set an any index, even an index that is arbitrarily past what is currently the end of the array.
+			const maybeIndex = asIndex(key, Infinity);
 			if (maybeIndex !== undefined) {
 				// For MVP, we otherwise disallow setting properties (mutation is only available via the array node mutation APIs).
 				return false;
