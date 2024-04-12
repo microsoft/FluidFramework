@@ -14,21 +14,17 @@ const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 export const EncodedRegisterId = Type.Union([EncodedChangeAtomId, Type.Null()]);
 export type EncodedRegisterId = Static<typeof EncodedRegisterId>;
 
-export const EncodedBuild = Type.Tuple([EncodedChangeAtomId]);
-export type EncodedBuild = Static<typeof EncodedBuild>;
-
 export const EncodedOptionalChangeset = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Object(
 		{
-			// Subtrees being created. They start as detached.
-			b: Type.Optional(Type.Array(EncodedBuild)),
-			// Subtrees being moved.
-			m: EncodedMoves,
+			// Moves between detached fields.
+			// These entries should not be interpreted as "applied one after the other", but rather as
+			// "applied simultaneously". As such, this list should not contain duplicated src or dst entries.
+			m: Type.Optional(Type.Array(EncodedMove)),
 			// Nested changes
-			c: EncodedChildChanges(tNodeChange),
-			// Reserved ID for detaching the subtree from the field if it were to be populated.
-			// Only specified when the field is empty.
-			d: Type.Optional(EncodedRegisterId),
+			c: Type.Optional(EncodedChildChanges(tNodeChange)),
+			// How to replace the current value of the field.
+			r: Type.Optional(EncodedReplace),
 		},
 		noAdditionalProps,
 	);
@@ -39,7 +35,7 @@ export type EncodedOptionalChangeset<Schema extends TSchema> = Static<
 
 const EncodedChildChanges = <Schema extends TSchema>(tNodeChange: Schema) =>
 	// Changes to the children of the node that is in the specified register in the input context of this change.
-	Type.Optional(Type.Array(Type.Tuple([EncodedRegisterId, tNodeChange])));
+	Type.Array(Type.Tuple([EncodedRegisterId, tNodeChange]));
 
 // A list of triplets (source, destination, isNodeTargeting) each representing a move of a node
 // from its current source register to a new destination register.
@@ -47,6 +43,18 @@ const EncodedChildChanges = <Schema extends TSchema>(tNodeChange: Schema) =>
 // Otherwise the intention is to move whatever node happens to be in the source register.
 // These entries should not be interpreted as "applied one after the other", but rather as "applied simultaneously".
 // As such, changesets should not contain duplicated src or dst entries.
-const EncodedMoves = Type.Optional(
-	Type.Array(Type.Tuple([EncodedRegisterId, EncodedRegisterId, Type.Optional(Type.Boolean())])),
+const EncodedMove = Type.Tuple([EncodedChangeAtomId, EncodedChangeAtomId]);
+
+const EncodedReplace = Type.Object(
+	{
+		// Whether the field is empty in the input context of this change.
+		e: Type.Boolean(),
+		// The ID for the node to put in this field, or undefined if the field should be emptied.
+		// Will be "self" when the intention is to keep the current node in this field.
+		s: Type.Optional(EncodedRegisterId),
+		// An ID to associate with the node (if any) which is detached by this edit.
+		d: EncodedChangeAtomId,
+	},
+	noAdditionalProps,
 );
+export type EncodedReplace = Static<typeof EncodedReplace>;

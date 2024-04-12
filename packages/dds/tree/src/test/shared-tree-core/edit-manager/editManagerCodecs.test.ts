@@ -5,7 +5,6 @@
 
 import { SessionId } from "@fluidframework/id-compressor";
 
-import { makeCodecFamily, withDefaultBinaryEncoding } from "../../../codec/index.js";
 import { ChangeEncodingContext } from "../../../core/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -165,13 +164,9 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 
 export function testCodec() {
 	describe("Codec", () => {
-		const family = makeEditManagerCodecs(
-			makeCodecFamily([[1, withDefaultBinaryEncoding(TestChange.codec)]]),
-			testRevisionTagCodec,
-			{
-				jsonValidator: typeboxValidator,
-			},
-		);
+		const family = makeEditManagerCodecs(TestChange.codecs, testRevisionTagCodec, {
+			jsonValidator: typeboxValidator,
+		});
 
 		makeEncodingTestSuite(family, testCases);
 
