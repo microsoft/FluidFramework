@@ -40,7 +40,7 @@ export interface IAudienceEvents extends IEvent {
 	 * Notifies that client established new connection and caught-up on ops.
 	 * @param oldValue - represents old connection. Please note that oldValue.client in almost all cases will be undefined,
 	 * due to specifics how Audience refreshes on reconnect. In the future we could improve it and always provide client information.
-	 * @param newValue - represents newly established connection. While {@link IAudience.getSelf} is experimental, it's note guaranteed that
+	 * @param newValue - represents newly established connection. While {@link IAudience.getSelf} is experimental, it's not guaranteed that
 	 * newValue.client is present. Same is true if you are consuming audience from container runtime layer and running against old version of loader.
 	 */
 	(event: "selfChanged", listener: (oldValue: ISelf | undefined, newValue: ISelf) => void): void;
@@ -53,15 +53,13 @@ export interface IAudienceEvents extends IEvent {
 export interface ISelf {
 	/**
 	 * clientId of current or previous connection (if client is in disconnected or reconnecting / catching up state)
-	 * If client never connected to ordering service, then {@link IAudience.getSelf} will return undefined.
-	 * undefined if this client has never connected to the ordering service.
 	 * It changes only when client has reconnected, caught up with latest ops and certain other criteria are met.
 	 */
 	clientId: string;
 
 	/**
 	 * Information about current user, supplied by ordering service when client connected to it
-	 * and received clientId above.
+	 * and received {@link ISelf.clientId}.
 	 * If present (not undefined), it's same value as calling IAudience.getMember(clientId).
 	 * This property could be undefined even if there is non-undefined clientId.
 	 * This could happen in the following cases:
@@ -117,10 +115,10 @@ export interface IAudience extends IEventProvider<IAudienceEvents> {
 	 * @remarks
 	 * This API is experimental.
 	 *
-	 * Reconnection process will be have these phases:
+	 * Reconnection process will have these phases:
 	 * 1. Establishing connection phase:
 	 * - new connection clientId is added to member's list. That said, self.clientId still reflects old information.
-	 * - An old client's information is removed from members' list. getMember(self.clientId) will return undefined.
+	 * - The old client's information is removed from members' list. getMember(self.clientId) will return undefined.
 	 * 2. Catch-up phase. Client catches up on latest ops and becomes current.
 	 * 3. "connect" phase - the following happens synchronously:
 	 * - getSelf() information changes to reflect new connection
