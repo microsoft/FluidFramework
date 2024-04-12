@@ -75,29 +75,31 @@ function createNonLeafNode(
 }
 
 describe("schema validation", () => {
-	const multiplicityTestCases: [
-		kind: Multiplicity,
-		numberToTest: number,
-		expectedResult: boolean,
-	][] = [
-		[Multiplicity.Forbidden, 0, true],
-		[Multiplicity.Forbidden, 1, false],
-		[Multiplicity.Single, 0, false],
-		[Multiplicity.Single, 1, true],
-		[Multiplicity.Single, 2, false],
-		[Multiplicity.Sequence, 0, true],
-		[Multiplicity.Sequence, 1, true],
-		[Multiplicity.Sequence, 2, true],
-		[Multiplicity.Optional, 0, true],
-		[Multiplicity.Optional, 1, true],
-		[Multiplicity.Optional, 2, false],
-	];
-	for (const [kind, numberToTest, expectedResult] of multiplicityTestCases) {
-		it(`compliesWithMultiplicity(${numberToTest}, ${Multiplicity[kind]}) === ${expectedResult}`, () => {
-			const actual = compliesWithMultiplicity(numberToTest, kind);
-			assert.equal(actual, expectedResult);
-		});
-	}
+	describe("compliesWithMultiplicity", () => {
+		const multiplicityTestCases: [
+			kind: Multiplicity,
+			numberToTest: number,
+			expectedResult: boolean,
+		][] = [
+			[Multiplicity.Forbidden, 0, true],
+			[Multiplicity.Forbidden, 1, false],
+			[Multiplicity.Single, 0, false],
+			[Multiplicity.Single, 1, true],
+			[Multiplicity.Single, 2, false],
+			[Multiplicity.Sequence, 0, true],
+			[Multiplicity.Sequence, 1, true],
+			[Multiplicity.Sequence, 2, true],
+			[Multiplicity.Optional, 0, true],
+			[Multiplicity.Optional, 1, true],
+			[Multiplicity.Optional, 2, false],
+		];
+		for (const [kind, numberToTest, expectedResult] of multiplicityTestCases) {
+			it(`compliesWithMultiplicity(${numberToTest}, ${Multiplicity[kind]}) === ${expectedResult}`, () => {
+				const actual = compliesWithMultiplicity(numberToTest, kind);
+				assert.equal(actual, expectedResult);
+			});
+		}
+	});
 
 	describe("isNodeInSchema", () => {
 		describe("LeafNodeStoredSchema", () => {
