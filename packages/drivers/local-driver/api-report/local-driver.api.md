@@ -7,6 +7,7 @@
 import { DocumentDeltaConnection } from '@fluidframework/driver-base/internal';
 import { GitManager } from '@fluidframework/server-services-client';
 import { IClient } from '@fluidframework/protocol-definitions';
+import { IConnectionStep } from '@fluidframework/driver-definitions/internal';
 import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
 import { IDatabaseManager } from '@fluidframework/server-services-core';
 import { IDb } from '@fluidframework/server-services-core';
@@ -67,7 +68,7 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 export class LocalDocumentService extends TypedEventEmitter<IDocumentServiceEvents> implements IDocumentService {
     constructor(resolvedUrl: IResolvedUrl, localDeltaConnectionServer: ILocalDeltaConnectionServer, tokenProvider: ITokenProvider, tenantId: string, documentId: string, documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>, policies?: IDocumentServicePolicies, innerDocumentService?: IDocumentService | undefined, logger?: ITelemetryBaseLogger | undefined);
     connectToDeltaStorage(): Promise<IDocumentDeltaStorageService>;
-    connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
+    connectToDeltaStream(client: IClient, steps?: IConnectionStep[]): Promise<IDocumentDeltaConnection>;
     connectToStorage(): Promise<IDocumentStorageService>;
     // (undocumented)
     dispose(): void;

@@ -13,6 +13,7 @@ import {
 	IDocumentServicePolicies,
 	IDocumentStorageService,
 	IResolvedUrl,
+	type IConnectionStep,
 } from "@fluidframework/driver-definitions/internal";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { ITokenProvider } from "@fluidframework/routerlicious-driver";
@@ -89,12 +90,15 @@ export class LocalDocumentService
 	 * Creates and returns a delta stream for local use.
 	 * @param client - client data
 	 */
-	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+	public async connectToDeltaStream(
+		client: IClient,
+		steps?: IConnectionStep[],
+	): Promise<IDocumentDeltaConnection> {
 		if (this.policies.storageOnly === true) {
 			throw new Error("can't connect to delta stream in storage-only mode");
 		}
 		if (this.innerDocumentService) {
-			return this.innerDocumentService.connectToDeltaStream(client);
+			return this.innerDocumentService.connectToDeltaStream(client, steps);
 		}
 		const ordererToken = await this.tokenProvider.fetchOrdererToken(
 			this.tenantId,
