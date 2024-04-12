@@ -9,6 +9,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { TreeValue } from "../core/index.js";
 import {
 	FlexTreeNode,
+	Unenforced,
 	isFlexTreeNode,
 	isFluidHandle,
 	isLazy,
@@ -26,7 +27,6 @@ import {
 import { isTreeNode } from "./proxies.js";
 import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
 import {
-	AllowedTypes,
 	FieldKind,
 	FieldSchema,
 	ImplicitAllowedTypes,
@@ -43,6 +43,14 @@ import { TreeArrayNode, arraySchema } from "./arrayNode.js";
 import { TreeNode } from "./types.js";
 import { InsertableObjectFromSchemaRecord, TreeObjectNode, objectSchema } from "./objectNode.js";
 import { TreeMapNode, mapSchema } from "./mapNode.js";
+import {
+	InsertableObjectFromSchemaRecordUnsafe,
+	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
+	TreeArrayNodeUnsafe,
+	TreeMapNodeUnsafe,
+	TreeObjectNodeUnsafe,
+} from "./typesUnsafe.js";
+import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
 
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
@@ -365,7 +373,7 @@ export class SchemaFactory<
 				this.structuralTypes,
 				fullName,
 				() =>
-					this.namedMap_internal(
+					this.namedMap(
 						fullName as TName,
 						nameOrAllowedTypes as T,
 						false,
@@ -380,17 +388,15 @@ export class SchemaFactory<
 				T
 			>;
 		}
-		return this.namedMap_internal(nameOrAllowedTypes as TName, allowedTypes, true, true);
+		return this.namedMap(nameOrAllowedTypes as TName, allowedTypes, true, true);
 	}
 
 	/**
 	 * Define a {@link TreeNodeSchema} for a {@link (TreeMapNode:interface)}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
-	 *
-	 * @remarks See remarks on {@link SchemaFactory.namedArray_internal}.
 	 */
-	public namedMap_internal<
+	private namedMap<
 		Name extends TName | string,
 		const T extends ImplicitAllowedTypes,
 		const ImplicitlyConstructable extends boolean,
@@ -496,7 +502,7 @@ export class SchemaFactory<
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 			const fullName = structuralName("Array", types);
 			return getOrCreate(this.structuralTypes, fullName, () =>
-				this.namedArray_internal(fullName, nameOrAllowedTypes as T, false, true),
+				this.namedArray(fullName, nameOrAllowedTypes as T, false, true),
 			) as TreeNodeSchemaClass<
 				ScopedSchemaName<TScope, string>,
 				NodeKind.Array,
@@ -506,7 +512,7 @@ export class SchemaFactory<
 				T
 			>;
 		}
-		return this.namedArray_internal(nameOrAllowedTypes as TName, allowedTypes, true, true);
+		return this.namedArray(nameOrAllowedTypes as TName, allowedTypes, true, true);
 	}
 
 	/**
@@ -517,14 +523,8 @@ export class SchemaFactory<
 	 * @remarks
 	 * This is not intended to be used directly, use the overload of `array` which takes a name instead.
 	 * This is only public to work around a compiler limitation.
-	 *
-	 * @privateRemarks
-	 * TODO: this should be made private or protected.
-	 * Doing so breaks due to:
-	 * `src/class-tree/schemaFactoryRecursive.ts:42:9 - error TS2310: Type 'Array' recursively references itself as a base type.`
-	 * Once recursive APIs are better sorted out and integrated into this class, switch this back to private.
 	 */
-	public namedArray_internal<
+	private namedArray<
 		Name extends TName | string,
 		const T extends ImplicitAllowedTypes,
 		const ImplicitlyConstructable extends boolean,
@@ -578,33 +578,166 @@ export class SchemaFactory<
 	}
 
 	/**
-	 * Function which can be used for its compile time side-effects to tweak the evaluation order of recursive types to make them compile.
-	 * @remarks
-	 * Some related information in https://github.com/microsoft/TypeScript/issues/55758.
-	 *
-	 * Also be aware that code which relies on this tends to break VSCode's IntelliSense every time anything related to that code (even comments) is edited.
-	 * Running the command `TypeScript: Restart TS Server` with the schema file focused should fix it.
-	 * Sometimes this does not work: closing all open files except the schema before running the command can help.
-	 * Real compile errors (for example elsewhere in the file) can also cause the IntelliSense to not work correctly ever after `TypeScript: Restart TS Server`.
-	 *
-	 * Intellisense has also shown problems when schema files with recursive types are part of a cyclic file dependency.
-	 * Splitting the schema into its own file with minimal dependencies can help with this.
-	 *
-	 * Ensure `"noImplicitAny": true` is set in the `tsconfig.json`.
-	 * Without it, recursive types that are not working properly can infer `any` and give very non-type-safe results instead of erroring.
-	 *
-	 * @example
-	 * ```typescript
-	 * const factory = new SchemaFactory("example");
-	 * const recursiveReference = () => RecursiveObject;
-	 * factory.fixRecursiveReference(recursiveReference);
-	 * export class RecursiveObject extends factory.object("exampleObject", {
-	 * 	recursive: [recursiveReference],
-	 * }) {}
-	 * ```
-	 * @deprecated Use special `recursive` versions of builders instead of relying on this.
+	 * Make a field of type identifier instead of the default which is required.
 	 */
-	public fixRecursiveReference<T extends AllowedTypes>(...types: T): void {}
+	public get identifier(): FieldSchema<FieldKind.Identifier> {
+		return new FieldSchema(FieldKind.Identifier, this.string);
+	}
+
+	/**
+	 * {@link SchemaFactory.object} except tweaked to work better for recursive types.
+	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
+	 * @remarks
+	 * This version of {@link SchemaFactory.object} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
+	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
+	 *
+	 * Additionally `ImplicitlyConstructable` is disabled (forcing use of constructor) to avoid
+	 * `error TS2589: Type instantiation is excessively deep and possibly infinite.`
+	 * which otherwise gets reported at sometimes incorrect source locations that vary based on incremental builds.
+	 */
+	public objectRecursive<
+		const Name extends TName,
+		const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
+	>(name: Name, t: T) {
+		type TScopedName = ScopedSchemaName<TScope, Name>;
+		return this.object(
+			name,
+			t as T & RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+		) as unknown as TreeNodeSchemaClass<
+			TScopedName,
+			NodeKind.Object,
+			TreeObjectNodeUnsafe<T, TScopedName>,
+			object & InsertableObjectFromSchemaRecordUnsafe<T>,
+			false,
+			T
+		>;
+	}
+
+	/**
+	 * {@link SchemaFactory.optional} except tweaked to work better for recursive types.
+	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
+	 * @remarks
+	 * This version of {@link SchemaFactory.optional} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
+	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
+	 */
+	public optionalRecursive<const T extends Unenforced<readonly (() => TreeNodeSchema)[]>>(t: T) {
+		return createFieldSchemaUnsafe(FieldKind.Optional, t);
+	}
+
+	/**
+	 * `SchemaFactory.array` except tweaked to work better for recursive types.
+	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
+	 * @remarks
+	 * This version of `SchemaFactory.array` uses the same workarounds as {@link SchemaFactory.objectRecursive}.
+	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
+	 */
+	public arrayRecursive<
+		const Name extends TName,
+		const T extends Unenforced<ImplicitAllowedTypes>,
+	>(name: Name, allowedTypes: T) {
+		class RecursiveArray extends this.namedArray(
+			name,
+			allowedTypes as T & ImplicitAllowedTypes,
+			true,
+			false,
+		) {
+			public constructor(
+				data:
+					| Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T & ImplicitAllowedTypes>>
+					| FlexTreeNode,
+			) {
+				if (isFlexTreeNode(data)) {
+					super(data as any);
+				} else {
+					super(data);
+				}
+			}
+		}
+
+		return RecursiveArray as TreeNodeSchemaClass<
+			ScopedSchemaName<TScope, Name>,
+			NodeKind.Array,
+			TreeArrayNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>>,
+			{
+				/**
+				 * Iterator for the iterable of content for this node.
+				 * @privateRemarks
+				 * Wrapping the constructor parameter for recursive arrays and maps in an inlined object type avoids (for unknown reasons)
+				 * the following compile error when declaring the recursive schema:
+				 * `Function implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.`
+				 * To benefit from this without impacting the API, the definition of `Iterable` has been inlined as such an object.
+				 *
+				 * If this workaround is kept, ideally this comment would be deduplicated with the other instance of it.
+				 * Unfortunately attempts to do this failed to avoid the compile error this was introduced to solve.
+				 */
+				[Symbol.iterator](): Iterator<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>;
+			},
+			false,
+			T
+		>;
+	}
+
+	/**
+	 * `SchemaFactory.map` except tweaked to work better for recursive types.
+	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
+	 * @remarks
+	 * This version of `SchemaFactory.map` uses the same workarounds as {@link SchemaFactory.objectRecursive}.
+	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
+	 */
+	public mapRecursive<Name extends TName, const T extends Unenforced<ImplicitAllowedTypes>>(
+		name: Name,
+		allowedTypes: T,
+	) {
+		class MapSchema extends this.namedMap(
+			name,
+			allowedTypes as T & ImplicitAllowedTypes,
+			true,
+			false,
+		) {
+			public constructor(
+				data:
+					| Iterable<
+							[
+								string,
+								InsertableTreeNodeFromImplicitAllowedTypes<
+									T & ImplicitAllowedTypes
+								>,
+							]
+					  >
+					| FlexTreeNode,
+			) {
+				if (isFlexTreeNode(data)) {
+					super(data as any);
+				} else {
+					super(new Map(data));
+				}
+			}
+		}
+
+		return MapSchema as TreeNodeSchemaClass<
+			ScopedSchemaName<TScope, Name>,
+			NodeKind.Map,
+			TreeMapNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>>,
+			{
+				/**
+				 * Iterator for the iterable of content for this node.
+				 * @privateRemarks
+				 * Wrapping the constructor parameter for recursive arrays and maps in an inlined object type avoids (for unknown reasons)
+				 * the following compile error when declaring the recursive schema:
+				 * `Function implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.`
+				 * To benefit from this without impacting the API, the definition of `Iterable` has been inlined as such an object.
+				 *
+				 * If this workaround is kept, ideally this comment would be deduplicated with the other instance of it.
+				 * Unfortunately attempts to do this failed to avoid the compile error this was introduced to solve.
+				 */
+				[Symbol.iterator](): Iterator<
+					[string, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>]
+				>;
+			},
+			false,
+			T
+		>;
+	}
 }
 
 export function structuralName<const T extends string>(

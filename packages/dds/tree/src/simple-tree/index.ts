@@ -27,6 +27,7 @@ export {
 	InsertableTypedNode,
 	NodeBuilderData,
 	type FieldProps,
+	normalizeFieldSchema,
 } from "./schemaTypes.js";
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 export { getFlexNode } from "./proxyBinding.js";
@@ -47,8 +48,8 @@ export {
 	NodeBuilderDataUnsafe,
 	NodeFromSchemaUnsafe,
 } from "./typesUnsafe.js";
-export { SchemaFactoryRecursive, ValidateRecursiveSchema } from "./schemaFactoryRecursive.js";
-export { getProxyForField } from "./proxies.js";
+export { ValidateRecursiveSchema } from "./schemaFactoryRecursive.js";
+export { getProxyForField, InsertableContent } from "./proxies.js";
 
 export {
 	adaptEnum,
@@ -71,5 +72,6 @@ export {
 	InsertableObjectFromSchemaRecord,
 	ObjectFromSchemaRecord,
 	TreeObjectNode,
+	setField,
 } from "./objectNode.js";
 export { TreeMapNode } from "./mapNode.js";

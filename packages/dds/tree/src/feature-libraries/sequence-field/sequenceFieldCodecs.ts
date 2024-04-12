@@ -27,22 +27,19 @@ import {
 	Remove,
 } from "./types.js";
 import { isNoopMark } from "./utils.js";
-import { FieldChangeEncodingContext, NodeId } from "../index.js";
+import { FieldChangeEncodingContext } from "../index.js";
 import { EncodedNodeChangeset } from "../modular-schema/index.js";
 
-export const sequenceFieldChangeCodecFactory = <TNodeChange>(
+export const sequenceFieldChangeCodecFactory = (
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
 		EncodedRevisionTag,
 		ChangeEncodingContext
 	>,
-) =>
-	makeCodecFamily<Changeset<TNodeChange>, FieldChangeEncodingContext>([
-		[0, makeV0Codec(revisionTagCodec)],
-	]);
+) => makeCodecFamily<Changeset, FieldChangeEncodingContext>([[1, makeV1Codec(revisionTagCodec)]]);
 
-function makeV0Codec<TNodeChange>(
+function makeV1Codec(
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
@@ -50,7 +47,7 @@ function makeV0Codec<TNodeChange>(
 		ChangeEncodingContext
 	>,
 ): IJsonCodec<
-	Changeset<TNodeChange>,
+	Changeset,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnly,
 	FieldChangeEncodingContext
@@ -288,7 +285,7 @@ function makeV0Codec<TNodeChange>(
 
 	return {
 		encode: (
-			changeset: Changeset<TNodeChange>,
+			changeset: Changeset,
 			context: FieldChangeEncodingContext,
 		): JsonCompatibleReadOnly & Encoded.Changeset<NodeChangeSchema> => {
 			const jsonMarks: Encoded.Changeset<NodeChangeSchema> = [];
@@ -303,7 +300,7 @@ function makeV0Codec<TNodeChange>(
 					encodedMark.cellId = cellIdCodec.encode(mark.cellId, context.baseContext);
 				}
 				if (mark.changes !== undefined) {
-					encodedMark.changes = context.encodeNode(mark.changes as NodeId);
+					encodedMark.changes = context.encodeNode(mark.changes);
 				}
 				jsonMarks.push(encodedMark);
 			}
@@ -312,10 +309,10 @@ function makeV0Codec<TNodeChange>(
 		decode: (
 			changeset: Encoded.Changeset<NodeChangeSchema>,
 			context: FieldChangeEncodingContext,
-		): Changeset<TNodeChange> => {
-			const marks: Changeset<TNodeChange> = [];
+		): Changeset => {
+			const marks: Changeset = [];
 			for (const mark of changeset) {
-				const decodedMark: Mark<TNodeChange> = {
+				const decodedMark: Mark = {
 					count: mark.count,
 				};
 
@@ -329,7 +326,7 @@ function makeV0Codec<TNodeChange>(
 					decodedMark.cellId = cellIdCodec.decode(mark.cellId, context.baseContext);
 				}
 				if (mark.changes !== undefined) {
-					decodedMark.changes = context.decodeNode(mark.changes) as TNodeChange;
+					decodedMark.changes = context.decodeNode(mark.changes);
 				}
 				marks.push(decodedMark);
 			}

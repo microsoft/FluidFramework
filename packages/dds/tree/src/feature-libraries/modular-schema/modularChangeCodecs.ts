@@ -129,7 +129,7 @@ function makeModularChangeCodec(
 	/**
 	 * The codec version for the generic field kind.
 	 */
-	const genericFieldKindFormatVersion = 0;
+	const genericFieldKindFormatVersion = 1;
 	const fieldChangesetCodecs: Map<
 		FieldKindIdentifier,
 		{

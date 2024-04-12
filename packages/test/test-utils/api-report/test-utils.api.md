@@ -42,7 +42,7 @@ import { IRequestHeader } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions/internal';
-import { ISharedMap } from '@fluidframework/map';
+import { ISharedMap } from '@fluidframework/map/internal';
 import { ISummarizer } from '@fluidframework/container-runtime/internal';
 import { ISummaryContext } from '@fluidframework/driver-definitions/internal';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
@@ -237,7 +237,7 @@ export interface ITestObjectProvider {
     driver: ITestDriver;
     ensureSynchronized(timeoutDuration?: number): Promise<void>;
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
-    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
+    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader, pendingLocalState?: string): Promise<IContainer>;
     logger: ITelemetryBaseLogger;
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
     makeTestLoader(testContainerConfig?: ITestContainerConfig): IHostLoader;
@@ -351,7 +351,7 @@ export class TestObjectProvider implements ITestObjectProvider {
     readonly driver: ITestDriver;
     ensureSynchronized(): Promise<void>;
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
-    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
+    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader, pendingLocalState?: string): Promise<IContainer>;
     get logger(): ITelemetryBaseLogger;
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
     makeTestLoader(testContainerConfig?: ITestContainerConfig): Loader;
@@ -379,7 +379,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
     get driver(): ITestDriver;
     ensureSynchronized(): Promise<void>;
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
-    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
+    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader, pendingLocalState?: string): Promise<IContainer>;
     get logger(): ITelemetryBaseLogger;
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
     makeTestLoader(testContainerConfig?: ITestContainerConfig): Loader;
