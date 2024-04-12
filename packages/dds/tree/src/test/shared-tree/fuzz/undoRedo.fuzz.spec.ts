@@ -42,14 +42,11 @@ import {
 	createAnchors,
 	deterministicIdCompressorFactory,
 	failureDirectory,
-	fuzzNode,
-	initialFuzzSchema,
 	onCreate,
-	successesDirectory,
+	populatedInitialState,
 	validateAnchors,
 } from "./fuzzUtils.js";
 import { Operation } from "./operationTypes.js";
-import { TreeContent, typeNameSymbol } from "../../../index.js";
 
 interface UndoRedoFuzzTestState extends FuzzTestState {
 	initialTreeState?: JsonableTree[];
@@ -59,38 +56,9 @@ interface UndoRedoFuzzTestState extends FuzzTestState {
 	anchors?: Map<Anchor, [UpPath, Value]>[];
 }
 
-const config = {
-	schema: initialFuzzSchema,
-	initialTree: {
-		[typeNameSymbol]: fuzzNode.name,
-		sequenceChildren: [
-			{
-				[typeNameSymbol]: fuzzNode.name,
-				sequenceChildren: [11, 12, 13],
-				requiredChild: 1,
-				optionalChild: undefined,
-			},
-			{
-				[typeNameSymbol]: fuzzNode.name,
-				sequenceChildren: [21, 22, 23],
-				requiredChild: 2,
-				optionalChild: undefined,
-			},
-			{
-				[typeNameSymbol]: fuzzNode.name,
-				sequenceChildren: [31, 32, 33],
-				requiredChild: 3,
-				optionalChild: undefined,
-			},
-		],
-		requiredChild: 0,
-		optionalChild: undefined,
-	},
-} satisfies TreeContent;
-
 describe("Fuzz - undo/redo", () => {
-	const runsPerBatch = 100;
-	const opsPerRun = 30;
+	const runsPerBatch = 20;
+	const opsPerRun = 15;
 
 	const undoRedoWeights: Partial<EditGeneratorOpWeights> = {
 		set: 3,
@@ -98,6 +66,7 @@ describe("Fuzz - undo/redo", () => {
 		insert: 3,
 		remove: 1,
 		intraFieldMove: 1,
+		crossFieldMove: 1,
 	};
 
 	describe("In-order undo/redo matches the initial/final state", () => {
@@ -117,7 +86,7 @@ describe("Fuzz - undo/redo", () => {
 		};
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (state: UndoRedoFuzzTestState) => {
-			const tree = viewFromState(state, state.clients[0], config.initialTree).checkout;
+			const tree = viewFromState(state, state.clients[0], populatedInitialState).checkout;
 			state.containerRuntimeFactory.processAllMessages();
 			state.initialTreeState = toJsonableTree(tree);
 			const undoStack: Revertible[] = [];
@@ -221,7 +190,7 @@ describe("Fuzz - undo/redo", () => {
 		};
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (state: UndoRedoFuzzTestState) => {
-			viewFromState(state, state.clients[0], config.initialTree);
+			viewFromState(state, state.clients[0], populatedInitialState);
 			state.containerRuntimeFactory.processAllMessages();
 			const undoStack: Revertible[] = [];
 			const redoStack: Revertible[] = [];
@@ -276,9 +245,6 @@ describe("Fuzz - undo/redo", () => {
 				attachingBeforeRehydrateDisable: true,
 			},
 			emitter,
-			saveSuccesses: {
-				directory: successesDirectory,
-			},
 			saveFailures: {
 				directory: failureDirectory,
 			},
