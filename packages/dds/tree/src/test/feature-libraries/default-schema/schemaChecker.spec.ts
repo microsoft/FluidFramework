@@ -60,7 +60,7 @@ function createLeafNode(
 	nodeSchemaIdentifier: string,
 	value: Value,
 	valueSchema: ValueSchema,
-): { node: MapTree; schema: LeafNodeStoredSchema } {
+): { node: MapTree; schema: TreeNodeStoredSchema } {
 	return {
 		node: {
 			type: brand(nodeSchemaIdentifier),
@@ -71,14 +71,20 @@ function createLeafNode(
 	};
 }
 
-function createNonLeafNode(
+function createNonLeafNode<
+	T extends TreeNodeStoredSchema = MapNodeStoredSchema | ObjectNodeStoredSchema,
+>(
 	nodeSchemaIdentifier: string,
 	fields: Map<FieldKey, MapTree[]>,
-): MapTree {
+	schema: T,
+): { node: MapTree; schema: TreeNodeStoredSchema } {
 	return {
-		type: brand(nodeSchemaIdentifier),
-		value: undefined,
-		fields,
+		node: {
+			type: brand(nodeSchemaIdentifier),
+			value: undefined,
+			fields,
+		},
+		schema,
 	};
 }
 
@@ -190,15 +196,16 @@ describe.only("schema validation", () => {
 				const fieldSchema_requiredNumberNode = getFieldSchema(FieldKinds.required, [
 					numberNode.node.type,
 				]);
-				const mapNodeSchema: TreeNodeStoredSchema = new MapNodeStoredSchema(
-					fieldSchema_requiredNumberNode,
+				const mapNode = createNonLeafNode(
+					"myNumberMapNode",
+					new Map(),
+					new MapNodeStoredSchema(fieldSchema_requiredNumberNode),
 				);
-				const mapNode = createNonLeafNode("myNumberMapNode", new Map());
 				const schemaAndPolicy: SchemaAndPolicy = {
 					schema: {
 						nodeSchema: new Map([
 							[numberNode.node.type, numberNode.schema],
-							[mapNode.type, mapNodeSchema],
+							[mapNode.node.type, mapNode.schema],
 						]),
 					},
 					policy: {
@@ -210,14 +217,14 @@ describe.only("schema validation", () => {
 
 				// In schema while empty
 				assert.equal(
-					isNodeInSchema(mapNode, schemaAndPolicy),
+					isNodeInSchema(mapNode.node, schemaAndPolicy),
 					SchemaValidationErrors.NoError,
 				);
 
 				// In schema after adding a number node
-				mapNode.fields.set(brand("prop1"), [numberNode.node]);
+				mapNode.node.fields.set(brand("prop1"), [numberNode.node]);
 				assert.equal(
-					isNodeInSchema(mapNode, schemaAndPolicy),
+					isNodeInSchema(mapNode.node, schemaAndPolicy),
 					SchemaValidationErrors.NoError,
 				);
 			});
@@ -227,16 +234,17 @@ describe.only("schema validation", () => {
 					numberNode.node.type,
 					stringNode.node.type,
 				]);
-				const mapNodeSchema: TreeNodeStoredSchema = new MapNodeStoredSchema(
-					fieldSchema_requiredUnionNode,
+				const mapNode = createNonLeafNode(
+					"myUnionMapNode",
+					new Map(),
+					new MapNodeStoredSchema(fieldSchema_requiredUnionNode),
 				);
-				const mapNode = createNonLeafNode("myUnionMapNode", new Map());
 				const schemaAndPolicy: SchemaAndPolicy = {
 					schema: {
 						nodeSchema: new Map([
 							[numberNode.node.type, numberNode.schema],
 							[stringNode.node.type, stringNode.schema],
-							[mapNode.type, mapNodeSchema],
+							[mapNode.node.type, mapNode.schema],
 						]),
 					},
 					policy: {
@@ -248,21 +256,21 @@ describe.only("schema validation", () => {
 
 				// In schema while empty
 				assert.equal(
-					isNodeInSchema(mapNode, schemaAndPolicy),
+					isNodeInSchema(mapNode.node, schemaAndPolicy),
 					SchemaValidationErrors.NoError,
 				);
 
 				// In schema after adding a number node
-				mapNode.fields.set(brand("prop1"), [numberNode.node]);
+				mapNode.node.fields.set(brand("prop1"), [numberNode.node]);
 				assert.equal(
-					isNodeInSchema(mapNode, schemaAndPolicy),
+					isNodeInSchema(mapNode.node, schemaAndPolicy),
 					SchemaValidationErrors.NoError,
 				);
 
 				// In schema after adding a string node
-				mapNode.fields.set(brand("prop2"), [stringNode.node]);
+				mapNode.node.fields.set(brand("prop2"), [stringNode.node]);
 				assert.equal(
-					isNodeInSchema(mapNode, schemaAndPolicy),
+					isNodeInSchema(mapNode.node, schemaAndPolicy),
 					SchemaValidationErrors.NoError,
 				);
 			});
@@ -271,20 +279,18 @@ describe.only("schema validation", () => {
 				const fieldSchema_requiredNumberNode = getFieldSchema(FieldKinds.required, [
 					numberNode.node.type,
 				]);
-				const mapNodeSchema: TreeNodeStoredSchema = new MapNodeStoredSchema(
-					fieldSchema_requiredNumberNode,
-				);
 				const mapNode = createNonLeafNode(
 					"myNumberMapNode",
 					new Map([[brand("prop1"), [numberNode.node]]]),
+					new MapNodeStoredSchema(fieldSchema_requiredNumberNode),
 				);
-				mapNode.value = "something that's not undefined";
+				mapNode.node.value = "something that's not undefined";
 
 				const schemaAndPolicy: SchemaAndPolicy = {
 					schema: {
 						nodeSchema: new Map([
 							[numberNode.node.type, numberNode.schema],
-							[mapNode.type, mapNodeSchema],
+							[mapNode.node.type, mapNode.schema],
 						]),
 					},
 					policy: {
@@ -295,7 +301,7 @@ describe.only("schema validation", () => {
 				};
 
 				assert.equal(
-					isNodeInSchema(mapNode, schemaAndPolicy),
+					isNodeInSchema(mapNode.node, schemaAndPolicy),
 					SchemaValidationErrors.NonLeafNode_ValueNotAllowed,
 				);
 			});
@@ -308,18 +314,18 @@ describe.only("schema validation", () => {
 				const fieldSchema_requiredNumberNode = getFieldSchema(FieldKinds.required, [
 					numberNode.node.type,
 				]);
-				const nodeSchema_object: TreeNodeStoredSchema = new ObjectNodeStoredSchema(
-					new Map([[brand("numberProp"), fieldSchema_requiredNumberNode]]),
-				);
 				const objectNode = createNonLeafNode(
 					"myObjectNode",
 					new Map([[brand("numberProp"), [numberNode.node]]]),
+					new ObjectNodeStoredSchema(
+						new Map([[brand("numberProp"), fieldSchema_requiredNumberNode]]),
+					),
 				);
 				const schemaAndPolicy: SchemaAndPolicy = {
 					schema: {
 						nodeSchema: new Map([
 							[numberNode.node.type, numberNode.schema],
-							[objectNode.type, nodeSchema_object],
+							[objectNode.node.type, objectNode.schema],
 						]),
 					},
 					policy: {
@@ -331,7 +337,7 @@ describe.only("schema validation", () => {
 
 				// In schema when empty optional and sequence fields don't exist
 				assert.equal(
-					isNodeInSchema(objectNode, schemaAndPolicy),
+					isNodeInSchema(objectNode.node, schemaAndPolicy),
 					SchemaValidationErrors.NoError,
 				);
 			});
@@ -343,15 +349,18 @@ describe.only("schema validation", () => {
 				const fieldSchema_optionalNumberNode = getFieldSchema(FieldKinds.optional, [
 					numberNode.node.type,
 				]);
-				const nodeSchema_object: TreeNodeStoredSchema = new ObjectNodeStoredSchema(
-					new Map([[brand("numberProp"), fieldSchema_optionalNumberNode]]),
+				const objectNode = createNonLeafNode(
+					"myObjectNode",
+					new Map(),
+					new ObjectNodeStoredSchema(
+						new Map([[brand("numberProp"), fieldSchema_optionalNumberNode]]),
+					),
 				);
-				const objectNode = createNonLeafNode("myObjectNode", new Map());
 				const schemaAndPolicy: SchemaAndPolicy = {
 					schema: {
 						nodeSchema: new Map([
 							[numberNode.node.type, numberNode.schema],
-							[objectNode.type, nodeSchema_object],
+							[objectNode.node.type, objectNode.schema],
 						]),
 					},
 					policy: {
@@ -363,7 +372,7 @@ describe.only("schema validation", () => {
 
 				// In schema when optional field is empty
 				assert.equal(
-					isNodeInSchema(objectNode, schemaAndPolicy),
+					isNodeInSchema(objectNode.node, schemaAndPolicy),
 					SchemaValidationErrors.NoError,
 				);
 			});
@@ -372,21 +381,21 @@ describe.only("schema validation", () => {
 				const fieldSchema_optionalNumber = getFieldSchema(FieldKinds.optional, [
 					numberNode.node.type,
 				]);
-				const nodeSchema_object: TreeNodeStoredSchema = new ObjectNodeStoredSchema(
-					new Map([[brand("prop1"), fieldSchema_optionalNumber]]),
-				);
 
 				// "prop2" is not defined as a field in the object node schema
 				const objectNode = createNonLeafNode(
 					"myObjectNode",
 					new Map([[brand("prop2"), []]]),
+					new ObjectNodeStoredSchema(
+						new Map([[brand("prop1"), fieldSchema_optionalNumber]]),
+					),
 				);
 
 				const schemaAndPolicy: SchemaAndPolicy = {
 					schema: {
 						nodeSchema: new Map([
 							[numberNode.node.type, numberNode.schema],
-							[objectNode.type, nodeSchema_object],
+							[objectNode.node.type, objectNode.schema],
 						]),
 					},
 					policy: {
@@ -397,7 +406,7 @@ describe.only("schema validation", () => {
 				};
 
 				assert.equal(
-					isNodeInSchema(objectNode, schemaAndPolicy),
+					isNodeInSchema(objectNode.node, schemaAndPolicy),
 					SchemaValidationErrors.ObjectNode_FieldNotInSchema,
 				);
 			});
@@ -406,18 +415,20 @@ describe.only("schema validation", () => {
 				const fieldSchema_requiredNumber = getFieldSchema(FieldKinds.required, [
 					numberNode.node.type,
 				]);
-				const nodeSchema_object: TreeNodeStoredSchema = new ObjectNodeStoredSchema(
-					new Map([[brand("requiredProp"), fieldSchema_requiredNumber]]),
-				);
-
 				// Create an object node with no fields at all; particularly it doesn't have the required 'requiredProp' field
-				const objectNode = createNonLeafNode("myObjectNode", new Map([]));
+				const objectNode = createNonLeafNode(
+					"myObjectNode",
+					new Map([]),
+					new ObjectNodeStoredSchema(
+						new Map([[brand("requiredProp"), fieldSchema_requiredNumber]]),
+					),
+				);
 
 				const schemaAndPolicy: SchemaAndPolicy = {
 					schema: {
 						nodeSchema: new Map([
 							[numberNode.node.type, numberNode.schema],
-							[objectNode.type, nodeSchema_object],
+							[objectNode.node.type, objectNode.schema],
 						]),
 					},
 					policy: {
@@ -428,7 +439,7 @@ describe.only("schema validation", () => {
 				};
 
 				assert.equal(
-					isNodeInSchema(objectNode, schemaAndPolicy),
+					isNodeInSchema(objectNode.node, schemaAndPolicy),
 					SchemaValidationErrors.Field_IncorrectMultiplicity,
 				);
 			});
@@ -437,21 +448,20 @@ describe.only("schema validation", () => {
 				const fieldSchema_requiredNumber = getFieldSchema(FieldKinds.required, [
 					numberNode.node.type,
 				]);
-				const nodeSchema_object: TreeNodeStoredSchema = new ObjectNodeStoredSchema(
-					new Map([[brand("requiredProp"), fieldSchema_requiredNumber]]),
-				);
-
 				const objectNode = createNonLeafNode(
 					"myObjectNode",
 					new Map([[brand("prop1"), [numberNode.node]]]),
+					new ObjectNodeStoredSchema(
+						new Map([[brand("requiredProp"), fieldSchema_requiredNumber]]),
+					)
 				);
-				objectNode.value = "something that's not undefined";
+				objectNode.node.value = "something that's not undefined";
 
 				const schemaAndPolicy: SchemaAndPolicy = {
 					schema: {
 						nodeSchema: new Map([
 							[numberNode.node.type, numberNode.schema],
-							[objectNode.type, nodeSchema_object],
+							[objectNode.node.type, objectNode.schema],
 						]),
 					},
 					policy: {
@@ -462,7 +472,7 @@ describe.only("schema validation", () => {
 				};
 
 				assert.equal(
-					isNodeInSchema(objectNode, schemaAndPolicy),
+					isNodeInSchema(objectNode.node, schemaAndPolicy),
 					SchemaValidationErrors.NonLeafNode_ValueNotAllowed,
 				);
 			});
@@ -471,20 +481,19 @@ describe.only("schema validation", () => {
 				const fieldSchema_requiredNumber = getFieldSchema(FieldKinds.required, [
 					numberNode.node.type,
 				]);
-				const nodeSchema_object: TreeNodeStoredSchema = new ObjectNodeStoredSchema(
-					new Map([[brand("requiredProp"), fieldSchema_requiredNumber]]),
-				);
-
 				const objectNode = createNonLeafNode(
 					"myObjectNode",
 					new Map([[brand("prop1"), [numberNode.node]]]),
+					new ObjectNodeStoredSchema(
+						new Map([[brand("requiredProp"), fieldSchema_requiredNumber]]),
+					)
 				);
 
 				const schemaAndPolicy: SchemaAndPolicy = {
 					schema: {
 						nodeSchema: new Map([
 							[numberNode.node.type, numberNode.schema],
-							[objectNode.type, nodeSchema_object],
+							[objectNode.node.type, objectNode.schema],
 						]),
 					},
 					// Field kind is missing from the policy
@@ -492,7 +501,7 @@ describe.only("schema validation", () => {
 				};
 
 				assert.equal(
-					isNodeInSchema(objectNode, schemaAndPolicy),
+					isNodeInSchema(objectNode.node, schemaAndPolicy),
 					SchemaValidationErrors.Field_KindNotInSchemaPolicy,
 				);
 			});
