@@ -397,6 +397,9 @@ export class MergeBlock implements IMergeNodeCommon {
 	public ordinal: string = "";
 	public cachedLength: number | undefined = 0;
 
+	public rightmostTiles: Readonly<MapLike<Marker>>;
+	public leftmostTiles: Readonly<MapLike<Marker>>;
+
 	isLeaf(): this is ISegment {
 		return false;
 	}
@@ -413,10 +416,10 @@ export class MergeBlock implements IMergeNodeCommon {
 
 	public constructor(public childCount: number) {
 		this.children = new Array<IMergeNode>(MaxNodesInBlock);
-	}
-
-	public hierBlock(): this is HierMergeBlock {
-		return false;
+		// eslint-disable-next-line import/no-deprecated
+		this.rightmostTiles = createMap<Marker>();
+		// eslint-disable-next-line import/no-deprecated
+		this.leftmostTiles = createMap<Marker>();
 	}
 
 	public setOrdinal(child: IMergeNode, index: number) {
@@ -440,23 +443,6 @@ export class MergeBlock implements IMergeNodeCommon {
 			this.setOrdinal(child, index);
 		}
 		this.children[index] = child;
-	}
-}
-
-export class HierMergeBlock extends MergeBlock {
-	public rightmostTiles: MapLike<ReferencePosition>;
-	public leftmostTiles: MapLike<ReferencePosition>;
-
-	constructor(childCount: number) {
-		super(childCount);
-		// eslint-disable-next-line import/no-deprecated
-		this.rightmostTiles = createMap<ReferencePosition>();
-		// eslint-disable-next-line import/no-deprecated
-		this.leftmostTiles = createMap<ReferencePosition>();
-	}
-
-	public hierBlock(): this is HierMergeBlock {
-		return true;
 	}
 }
 
