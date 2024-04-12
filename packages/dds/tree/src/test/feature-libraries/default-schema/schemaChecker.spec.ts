@@ -56,22 +56,17 @@ function getFieldSchema(
 	};
 }
 
-function getValueNode(nodeSchemaIdentifier: string, value: Value): MapTree {
+function createLeafNode(nodeSchemaIdentifier: string, value: Value): MapTree {
 	return {
 		type: brand(nodeSchemaIdentifier),
 		value,
 		fields: new Map(),
 	};
 }
-function getMapNode(nodeSchemaIdentifier: string, fields: Map<FieldKey, MapTree[]>): MapTree {
-	return {
-		type: brand(nodeSchemaIdentifier),
-		value: undefined,
-		fields,
-	};
-}
-
-function getObjectNode(nodeSchemaIdentifier: string, fields: Map<FieldKey, MapTree[]>): MapTree {
+function createNonLeafNode(
+	nodeSchemaIdentifier: string,
+	fields: Map<FieldKey, MapTree[]>,
+): MapTree {
 	return {
 		type: brand(nodeSchemaIdentifier),
 		value: undefined,
@@ -106,12 +101,12 @@ describe("schema validation", () => {
 
 	describe("isNodeInSchema", () => {
 		describe("LeafNodeStoredSchema", () => {
-			const numberNode = getValueNode("myNumberNode", 1);
-			const stringNode = getValueNode("myStringNode", "string");
-			const booleanNode = getValueNode("myBooleanNode", false);
-			const nullNode = getValueNode("myNullNode", null);
-			const undefinedNode = getValueNode("myUndefinedNode", undefined);
-			const fluidHandleNode = getValueNode("myFluidHandleNode", new MockHandle(undefined));
+			const numberNode = createLeafNode("myNumberNode", 1);
+			const stringNode = createLeafNode("myStringNode", "string");
+			const booleanNode = createLeafNode("myBooleanNode", false);
+			const nullNode = createLeafNode("myNullNode", null);
+			const undefinedNode = createLeafNode("myUndefinedNode", undefined);
+			const fluidHandleNode = createLeafNode("myFluidHandleNode", new MockHandle(undefined));
 			const nodeCases = [
 				numberNode,
 				stringNode,
@@ -179,7 +174,7 @@ describe("schema validation", () => {
 			});
 
 			it(`not in schema due to having fields`, () => {
-				const numberNodeWithFields = getValueNode("myNumberNodeWithFields", 1);
+				const numberNodeWithFields = createLeafNode("myNumberNodeWithFields", 1);
 				const schemaAndPolicy: SchemaAndPolicy = {
 					schema: {
 						nodeSchema: new Map([
@@ -200,8 +195,8 @@ describe("schema validation", () => {
 		});
 
 		describe("MapNodeStoredSchema", () => {
-			const numberNode = getValueNode("myNumberNode", 1);
-			const stringNode = getValueNode("myStringNode", "string");
+			const numberNode = createLeafNode("myNumberNode", 1);
+			const stringNode = createLeafNode("myStringNode", "string");
 
 			it(`in schema (nodes of a single type)`, () => {
 				const fieldSchema_requiredNumberNode = getFieldSchema(FieldKinds.required, [
@@ -210,7 +205,7 @@ describe("schema validation", () => {
 				const mapNodeSchema: TreeNodeStoredSchema = new MapNodeStoredSchema(
 					fieldSchema_requiredNumberNode,
 				);
-				const mapNode = getMapNode("myNumberMapNode", new Map());
+				const mapNode = createNonLeafNode("myNumberMapNode", new Map());
 				const schemaAndPolicy: SchemaAndPolicy = {
 					schema: {
 						nodeSchema: new Map([
@@ -247,7 +242,7 @@ describe("schema validation", () => {
 				const mapNodeSchema: TreeNodeStoredSchema = new MapNodeStoredSchema(
 					fieldSchema_requiredUnionNode,
 				);
-				const mapNode = getMapNode("myUnionMapNode", new Map());
+				const mapNode = createNonLeafNode("myUnionMapNode", new Map());
 				const schemaAndPolicy: SchemaAndPolicy = {
 					schema: {
 						nodeSchema: new Map([
@@ -297,7 +292,7 @@ describe("schema validation", () => {
 				};
 
 				// numberNode.type is not in the schema collection
-				const mapNode_oneNumber = getMapNode(
+				const mapNode_oneNumber = createNonLeafNode(
 					"myNumberMapNode",
 					new Map([[brand("prop1"), [numberNode]]]),
 				);
@@ -315,7 +310,7 @@ describe("schema validation", () => {
 				);
 
 				// numberNode.type is not in the schema collection
-				const mapNode_oneNumber = getMapNode(
+				const mapNode_oneNumber = createNonLeafNode(
 					"myNumberMapNode",
 					new Map([[brand("prop1"), [numberNode]]]),
 				);
@@ -346,7 +341,7 @@ describe("schema validation", () => {
 				const mapNodeSchema: TreeNodeStoredSchema = new MapNodeStoredSchema(
 					fieldSchema_requiredNumberNode,
 				);
-				const mapNode = getMapNode(
+				const mapNode = createNonLeafNode(
 					"myNumberMapNode",
 					new Map([[brand("prop1"), [numberNode]]]),
 				);
@@ -384,11 +379,11 @@ describe("schema validation", () => {
 		});
 
 		describe("ObjectNodeStoredSchema", () => {
-			const numberNode = getValueNode("myNumberNode", 1);
-			const stringNode = getValueNode("myStringNode", "string");
-			const booleanNode = getValueNode("myBooleanNode", false);
-			const nullNode = getValueNode("myNullNode", null);
-			const fluidHandleNode = getValueNode("myFluidHandleNode", new MockHandle(undefined));
+			const numberNode = createLeafNode("myNumberNode", 1);
+			const stringNode = createLeafNode("myStringNode", "string");
+			const booleanNode = createLeafNode("myBooleanNode", false);
+			const nullNode = createLeafNode("myNullNode", null);
+			const fluidHandleNode = createLeafNode("myFluidHandleNode", new MockHandle(undefined));
 
 			it(`in schema (children of every type)`, () => {
 				// Note there's a sequence field here to test that both optional and sequence fields
@@ -418,7 +413,7 @@ describe("schema validation", () => {
 						[brand("fluidHandleProp"), fieldSchema_optionalFluidHandleNode],
 					]),
 				);
-				const objectNode = getObjectNode("myObjectNode", new Map());
+				const objectNode = createNonLeafNode("myObjectNode", new Map());
 				const schemaAndPolicy: SchemaAndPolicy = {
 					schema: {
 						nodeSchema: new Map([
@@ -472,7 +467,7 @@ describe("schema validation", () => {
 				const nodeSchema: TreeNodeStoredSchema = new ObjectNodeStoredSchema(
 					new Map([[brand("prop1"), fieldSchema]]),
 				);
-				const objectNode = getObjectNode(
+				const objectNode = createNonLeafNode(
 					"myObjectNode",
 					new Map([[brand("prop1"), [numberNode]]]),
 				);
@@ -502,7 +497,7 @@ describe("schema validation", () => {
 					new Map([[brand("prop1"), fieldSchema_requiredNumber]]),
 				);
 
-				const objectNode = getObjectNode(
+				const objectNode = createNonLeafNode(
 					"myObjectNode",
 					new Map([[brand("prop1"), [numberNode]]]),
 				);
@@ -532,7 +527,10 @@ describe("schema validation", () => {
 				);
 
 				// "prop2" is not defined as a field in the object node schema
-				const objectNode = getObjectNode("myObjectNode", new Map([[brand("prop2"), []]]));
+				const objectNode = createNonLeafNode(
+					"myObjectNode",
+					new Map([[brand("prop2"), []]]),
+				);
 
 				const schemaAndPolicy: SchemaAndPolicy = {
 					schema: {
@@ -563,7 +561,7 @@ describe("schema validation", () => {
 				);
 
 				// Create an object node with no fields at all; particularly it doesn't have the required 'requiredProp' field
-				const objectNode = getObjectNode("myObjectNode", new Map([]));
+				const objectNode = createNonLeafNode("myObjectNode", new Map([]));
 
 				const schemaAndPolicy: SchemaAndPolicy = {
 					schema: {
@@ -589,7 +587,7 @@ describe("schema validation", () => {
 
 	describe("isFieldInSchema", () => {
 		it(`not in schema if field kind not supported by schema policy`, () => {
-			const numberNode = getValueNode("myNumberNode", 1);
+			const numberNode = createLeafNode("myNumberNode", 1);
 			const fieldSchema = getFieldSchema(FieldKinds.required, [numberNode.type]);
 			const schemaAndPolicy: SchemaAndPolicy = {
 				schema: {
@@ -608,8 +606,8 @@ describe("schema validation", () => {
 		});
 
 		it(`not in schema if type of a child node is not supported by field`, () => {
-			const numberNode = getValueNode("myNumberNode", 1);
-			const stringNode = getValueNode("myStringNode", "myStringValue");
+			const numberNode = createLeafNode("myNumberNode", 1);
+			const stringNode = createLeafNode("myStringNode", "myStringValue");
 			const fieldSchema = getFieldSchema(FieldKinds.sequence, [numberNode.type]);
 			const schemaAndPolicy: SchemaAndPolicy = {
 				schema: {
@@ -666,7 +664,7 @@ describe("schema validation", () => {
 			expectedResult,
 		] of isFieldInSchema_multiplicityTestCases) {
 			it(`correctly validates field multiplicity: (${fieldKind.identifier}, ${howManyChildNodes}) => ${expectedResult}`, () => {
-				const numberNode = getValueNode("myNumberNode", 1);
+				const numberNode = createLeafNode("myNumberNode", 1);
 				const fieldSchema = getFieldSchema(fieldKind, [numberNode.type]);
 				const schemaAndPolicy: SchemaAndPolicy = {
 					schema: {
