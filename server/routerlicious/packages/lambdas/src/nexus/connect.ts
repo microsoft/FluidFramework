@@ -62,6 +62,7 @@ enum ConnectDocumentStage {
 	ClientsRetrieved = "ClientsRetrieved",
 	MessageClientCreated = "MessageClientCreated",
 	MessageClientAdded = "MessageClientAdded",
+	ClientListValidated = "ClientListValidated",
 	TokenExpirySet = "TokenExpirySet",
 	MessageClientConnected = "MessageClientConnected",
 	SocketTrackerAppended = "SocketTrackerAppended",
@@ -552,12 +553,6 @@ export async function connectDocument(
 		connectionTrace.stampStage(ConnectDocumentStage.TokenVerified);
 
 		const clientId = generateClientId();
-		// Set metadata for the connection once we have clientId.
-		lambdaConnectionStateTrackers.socketIoSocketHelper.data = {
-			clientId,
-			tenantId,
-			documentId,
-		};
 		const room = await joinRoomAndSubscribeToChannel(
 			socket,
 			tenantId,
@@ -592,6 +587,14 @@ export async function connectDocument(
 		);
 		connectionTrace.stampStage(ConnectDocumentStage.MessageClientCreated);
 
+		// Set metadata for the connection once we have clientId and IClient details.
+		lambdaConnectionStateTrackers.socketIoSocketHelper.data = {
+			clientId,
+			tenantId,
+			documentId,
+			client: messageClient as IClient,
+		};
+
 		await addMessageClientToClientManager(
 			tenantId,
 			documentId,
@@ -603,6 +606,7 @@ export async function connectDocument(
 		connectionTrace.stampStage(ConnectDocumentStage.MessageClientAdded);
 
 		const validatedClients = await validateClients(clients, room, lambdaDependencies);
+		connectionTrace.stampStage(ConnectDocumentStage.ClientListValidated);
 
 		if (isTokenExpiryEnabled) {
 			const lifeTimeMSec = validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
