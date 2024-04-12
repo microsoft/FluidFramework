@@ -49,17 +49,17 @@ export function isNodeInSchema(
 			return SchemaValidationErrors.LeafNode_InvalidValue;
 		}
 	} else if (schema instanceof ObjectNodeStoredSchema) {
-		const fieldsActuallyInNode = new Set(node.fields.keys());
-		for (const [fieldKey, fieldSchema] of schema.objectNodeFields.entries()) {
+		const uncheckedFieldsFromNode = new Set(node.fields.keys());
+		for (const [fieldKey, fieldSchema] of schema.objectNodeFields) {
 			const nodeField = getMapTreeField(node, fieldKey, false);
 			const fieldInSchemaResult = isFieldInSchema(nodeField, fieldSchema, schemaAndPolicy);
 			if (fieldInSchemaResult !== SchemaValidationErrors.NoError) {
 				return fieldInSchemaResult;
 			}
-			fieldsActuallyInNode.delete(fieldKey);
+			uncheckedFieldsFromNode.delete(fieldKey);
 		}
 		// The node has fields that we did not check as part of looking at every field defined in the node's schema
-		if (fieldsActuallyInNode.size !== 0) {
+		if (uncheckedFieldsFromNode.size !== 0) {
 			return SchemaValidationErrors.ObjectNode_FieldNotInSchema;
 		}
 	} else if (schema instanceof MapNodeStoredSchema) {
