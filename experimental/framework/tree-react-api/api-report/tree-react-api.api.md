@@ -4,7 +4,9 @@
 
 ```ts
 
+import { DataObject } from '@fluidframework/aqueduct/internal';
 import type { DataObjectClass } from '@fluidframework/fluid-static';
+import type { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
 import type { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ImplicitFieldSchema } from '@fluidframework/tree/internal';
 import * as React_2 from 'react';
@@ -30,6 +32,11 @@ export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
 
 // @public
 export function treeDataObject<TSchema extends ImplicitFieldSchema>(key: string, treeConfiguration: TreeConfiguration<TSchema>): DataObjectClass<IReactTreeDataObject<TSchema> & IFluidLoadable>;
+
+// @internal
+export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(key: string, treeConfiguration: TreeConfiguration<TSchema>): DataObjectClass<IReactTreeDataObject<TSchema> & IFluidLoadable & DataObject> & {
+    readonly factory: IFluidDataStoreFactory;
+};
 
 // (No @packageDocumentation comment for this package)
 

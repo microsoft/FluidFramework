@@ -5,10 +5,11 @@
 
 /* eslint-disable unicorn/no-null */
 
-import { DataObject } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions";
 import type { DataObjectClass } from "@fluidframework/fluid-static";
+import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import {
 	configuredSharedTree,
 	typeboxValidator,
@@ -41,17 +42,6 @@ const SharedTree = configuredSharedTree({
 export const factory: IChannelFactory = SharedTree.getFactory();
 
 /**
- * Object with the required recursive type to be used to mark DataObjectClasses.
- * Note that this probably doesn't work when exported to a package API as it will likely infer `any`.
- * TODO: Simplify DataObjectClasses to avoid needing this.
- */
-const dataObjectFactoryMarker = {
-	get IFluidDataStoreFactory(): typeof dataObjectFactoryMarker {
-		return this;
-	},
-};
-
-/**
  * Defines a DataObject for a {@link @fluidframework/tree#SharedTree} with a built in {@link @fluidframework/tree#TreeConfiguration}.
  * @param key - See {@link ITreeDataObject.key}.
  * @param treeConfiguration - See {@link ITreeDataObject.config}.
@@ -62,9 +52,32 @@ export function treeDataObject<TSchema extends ImplicitFieldSchema>(
 	key: string,
 	treeConfiguration: TreeConfiguration<TSchema>,
 ): DataObjectClass<IReactTreeDataObject<TSchema> & IFluidLoadable> {
-	return class InventoryList extends TreeDataObject<TSchema> {
+	return treeDataObjectInternal(key, treeConfiguration);
+}
+
+/**
+ * Defines a DataObject for a {@link @fluidframework/tree#SharedTree} with a built in {@link @fluidframework/tree#TreeConfiguration}.
+ * @param key - See {@link ITreeDataObject.key}.
+ * @param treeConfiguration - See {@link ITreeDataObject.config}.
+ * @returns A {@link @fluidframework/fluid-static#DataObjectClass} to allow easy use of a SharedTree in a ContainerSchema.
+ * @internal
+ */
+export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(
+	key: string,
+	treeConfiguration: TreeConfiguration<TSchema>,
+): DataObjectClass<IReactTreeDataObject<TSchema> & IFluidLoadable & DataObject> & {
+	readonly factory: IFluidDataStoreFactory;
+} {
+	return class SchemaAwareTreeDataObject extends TreeDataObject<TSchema> {
 		public readonly key = key;
 		public readonly config = treeConfiguration;
+
+		public static readonly factory = new DataObjectFactory(
+			`TreeDataObject:${key}`,
+			SchemaAwareTreeDataObject,
+			[SharedTree.getFactory()],
+			{},
+		);
 	};
 }
 
@@ -121,13 +134,12 @@ export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema>
 
 /**
  * Generic DataObject for shared trees.
+ * @internal
  */
 export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema>
 	extends DataObject
 	implements IReactTreeDataObject<TSchema>
 {
-	public static readonly factory = dataObjectFactoryMarker;
-
 	#tree?: TreeView<TSchema>;
 
 	public get tree(): TreeView<TSchema> {

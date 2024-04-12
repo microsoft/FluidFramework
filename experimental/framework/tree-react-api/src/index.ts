@@ -4,4 +4,4 @@
  */
 
 export type { ITreeDataObject, IReactTreeDataObject } from "./reactSharedTreeView.js";
-export { treeDataObject } from "./reactSharedTreeView.js";
+export { treeDataObject, treeDataObjectInternal } from "./reactSharedTreeView.js";

@@ -5359,6 +5359,7 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/fluid-static': workspace:~
+      '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/tinylicious-client': workspace:~
       '@fluidframework/tree': workspace:~
       '@microsoft/api-extractor': ^7.42.3
@@ -5383,6 +5384,7 @@ importers:
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
       '@fluidframework/fluid-static': link:../../../packages/framework/fluid-static
+      '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/tree': link:../../../packages/dds/tree
       react: 17.0.2
     devDependencies:
