@@ -14,6 +14,7 @@ import {
 	IRevokeTokenOptions,
 	IRevokedTokenChecker,
 	IClusterDrainingChecker,
+	IUsageData,
 } from "@fluidframework/server-services-core";
 import {
 	verifyStorageToken,
@@ -122,6 +123,8 @@ export function create(
 		revokedTokenChecker,
 	};
 
+	const isHttpUsageCountingEnabled: string = config.get("usage:httpUsageCountingEnabled");
+
 	router.get(
 		"/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
@@ -158,6 +161,7 @@ export function create(
 			tenantThrottlers.get(Constants.createDocThrottleIdPrefix),
 			winston,
 			createDocTenantThrottleOptions,
+			isHttpUsageCountingEnabled,
 		),
 		verifyStorageToken(tenantManager, config, {
 			requireDocumentId: false,
