@@ -47,7 +47,7 @@ const getStyles = makeStyles({
 		verticalAlign: "middle",
 	},
 	inlineValue: {
-		whiteSpace: "pre-line",
+		whiteSpace: "pre-wrap",
 	},
 });
 
