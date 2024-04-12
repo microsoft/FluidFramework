@@ -67,6 +67,7 @@ export function makeMessageCodecs<TChangeset>(
 		// Back-compat: messages weren't always written with an explicit version field.
 		[undefined, v1Codec],
 		[1, v1Codec],
+		[2, makeV1Codec(changeCodecs.resolve(2).json, revisionTagCodec, options)],
 	]);
 }
 
