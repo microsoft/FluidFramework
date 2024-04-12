@@ -28,9 +28,6 @@
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"scripts": {
-		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --outFileAlpha legacy --outDir ./dist",
-		"api-extractor:esnext": "flub generate entrypoints --outFileAlpha legacy --outDir ./lib",
 		"build": "fluid-build . --task build",
 		"build-and-test-mocha": "npm run build && npm run test:mocha:verbose",
 		"build:compile": "fluid-build . --task compile",
