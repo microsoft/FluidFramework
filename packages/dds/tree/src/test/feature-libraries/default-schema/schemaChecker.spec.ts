@@ -13,11 +13,7 @@ import {
 	isNodeInSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/default-schema/schemaChecker.js";
-import {
-	FieldKinds,
-	type FlexFieldKind,
-	type FullSchemaPolicy,
-} from "../../../feature-libraries/index.js";
+import { FieldKinds, type FlexFieldKind } from "../../../feature-libraries/index.js";
 import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
@@ -29,6 +25,7 @@ import {
 	type FieldKindIdentifier,
 	type MapTree,
 	type SchemaAndPolicy,
+	type SchemaPolicy,
 	type StoredSchemaCollection,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
@@ -38,7 +35,7 @@ import {
 import { brand } from "../../../util/index.js";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
-const emptySchemaPolicy: FullSchemaPolicy = {
+const emptySchemaPolicy: SchemaPolicy = {
 	fieldKinds: new Map(),
 };
 
