@@ -142,7 +142,8 @@ export function create(
 						customHeadersToLog.forEach((header) => {
 							const lowerCaseHeader = header.toLowerCase();
 							if (req.headers[lowerCaseHeader]) {
-								additionalProperties[lowerCaseHeader] = req.headers[lowerCaseHeader];
+								additionalProperties[lowerCaseHeader] =
+									req.headers[lowerCaseHeader];
 							}
 						});
 					}
