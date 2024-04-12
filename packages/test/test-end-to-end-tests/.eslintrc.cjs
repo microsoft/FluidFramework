@@ -67,10 +67,11 @@ module.exports = {
 			[
 				{
 					id: "invalidDescribeCompat",
-					message: "Invalid describeCompat usage. The inner describeCompat block should have have arguments defined. Using the TestObjectProvider from the outer block inside the inner block may lead to unexpected behavior.",
+					message:
+						"Invalid describeCompat usage. The inner describeCompat block should have have arguments defined. Using the TestObjectProvider from the outer block inside the inner block may lead to unexpected behavior.",
 					regex: `.*describeCompat\\(".*?",\\s+".*?",\\s+\\(.*?\\)\\s+=>\\s+\\{\\s+describeCompat\\(".*?",\\s+".*?",\\s+\\(\\)\\s+=>\\s+\\{.*`,
 					files: {
-						ignore: "^(?!.*\.spec\.ts).*$",
+						ignore: "^(?!.*.spec.ts).*$",
 					},
 				},
 			],
