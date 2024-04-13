@@ -23,7 +23,7 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./test/EditLog": {
+		"./internal/test/EditLog": {
 			"import": {
 				"types": "./lib/EditLog.d.ts",
 				"default": "./lib/EditLog.js"
@@ -41,7 +41,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"check:are-the-types-wrong": "attw --pack .",
+		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints ./internal/test/EditLog",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",

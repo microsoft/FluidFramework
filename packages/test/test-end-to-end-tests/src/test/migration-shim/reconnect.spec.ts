@@ -17,7 +17,7 @@ import {
 	type TraitLabel,
 } from "@fluid-experimental/tree";
 // eslint-disable-next-line import/no-internal-modules
-import { type EditLog } from "@fluid-experimental/tree/test/EditLog";
+import { type EditLog } from "@fluid-experimental/tree/internal/test/EditLog";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { type IContainerExperimental } from "@fluidframework/container-loader/internal";
