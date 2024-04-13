@@ -1807,6 +1807,66 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(map1.get(testKey), testValue);
 		assert.strictEqual(map2.get(testKey), testValue);
 	});
+
+	async function testAudience(writeConnection: boolean) {
+		const container = (await provider.loadTestContainer(
+			testContainerConfig,
+		)) as IContainerExperimental;
+
+		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
+		if (writeConnection) {
+			map.set("someKey", "value");
+		}
+
+		// add "write" container / connection
+		const container2 = (await provider.loadTestContainer(
+			testContainerConfig,
+		)) as IContainerExperimental;
+		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
+		map2.set("someKey2", "value");
+
+		// add "read" container / connection
+		await provider.loadTestContainer(testContainerConfig);
+
+		await provider.ensureSynchronized();
+
+		// Make some changes such that we have some pending state.
+		await container.deltaManager.outbound.pause();
+		map.set("someKey3", "value");
+
+		// calling below container.getPendingLocalState() will result in flushing of current batch,
+		// and attempt to send ops. Even though outbound queue is paused, it will result in reconnect flow being triggered
+		// if container is in "read" mode at the moment. Reconnect flow will result in modification of Audience,
+		// and thus failing checks below.
+		if (!writeConnection) {
+			container.disconnect();
+		}
+
+		assert(container.getPendingLocalState !== undefined);
+		const pendingState = await container.getPendingLocalState();
+		assert.strictEqual(container.clientId, JSON.parse(pendingState).clientId);
+
+		// Load container from stashed state, without delta connection (not to disturb Audience)
+		const headers: IRequestHeader = { [LoaderHeader.loadMode]: { deltaConnection: "none" } };
+		const container3 = await loader.resolve({ url, headers }, pendingState);
+
+		// check audience and clientId matching
+		const audience = container.audience;
+		const audience3 = container3.audience;
+		assert(container.clientId === container3.clientId);
+		assert.deepEqual(audience.getSelf(), audience3.getSelf());
+		assert(audience.getMembers().size === audience3.getMembers().size);
+	}
+
+	it("pending state: Audience & Quorum ('read' connection)", async () => {
+		await testAudience(false);
+	});
+
+	it("pending state: Audience & Quorum ('write' connection)", async () => {
+		await testAudience(true);
+	});
 });
 
 describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {

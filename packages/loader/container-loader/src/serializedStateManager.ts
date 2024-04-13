@@ -19,6 +19,7 @@ import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 	IVersion,
+	IClient,
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
@@ -58,6 +59,10 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	savedOps: ISequencedDocumentMessage[];
 	url: string;
 	clientId?: string;
+	/**
+	 * "read" clients from Audience
+	 */
+	readClients: Record<string, IClient>;
 }
 
 /**
@@ -233,6 +238,7 @@ export class SerializedStateManager {
 		clientId: string | undefined,
 		runtime: Pick<IRuntime, "getPendingLocalState">,
 		resolvedUrl: IResolvedUrl,
+		readClients: Record<string, IClient>,
 	) {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
@@ -256,6 +262,7 @@ export class SerializedStateManager {
 					baseSnapshot: this.snapshot.baseSnapshot,
 					snapshotBlobs: this.snapshot.snapshotBlobs,
 					savedOps: this.processedOps,
+					readClients,
 					url: resolvedUrl.url,
 					// no need to save this if there is no pending runtime state
 					clientId: pendingRuntimeState !== undefined ? clientId : undefined,

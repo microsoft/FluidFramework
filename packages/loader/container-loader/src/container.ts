@@ -1127,11 +1127,29 @@ export class Container
 			this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
 			0x0d2 /* "resolved url should be valid Fluid url" */,
 		);
+
+		// Save Audience state. We only need to save "read" clients, as "write" clients will be rehydrated
+		// as part of Quorum rehydration.
+		// At the moment we only need information about "self" to make our API consistent (there is Container.clientId -> there is Audience.getSelf())
+		// But having full audience might be useful for various consumer scenarios.
+		//
+		// NOTE: grab readClients & clientId at the same time - either before or after calling runtime.getPendingLocalState().
+		// Later flushes ops, which would trigger reconnect flow if container is in "read" connection mode.
+		// And reconnection flow results in changes to clientId & audience.
+		const readClients: Record<string, IClient> = {};
+		const audience = this.audience;
+		for (const [id, client] of audience.getMembers()) {
+			if (client.mode === "read") {
+				readClients[id] = client;
+			}
+		}
+
 		const pendingState = await this.serializedStateManager.getPendingLocalStateCore(
 			props,
 			this.clientId,
 			this.runtime,
 			this.resolvedUrl,
+			readClients,
 		);
 		return pendingState;
 	}
@@ -1649,10 +1667,23 @@ export class Container
 			baseSnapshot,
 		);
 
+		assert(
+			this.clientId === undefined,
+			"clientId can change only in loaded state of container!",
+		);
+
 		// If we are loading from pending state, we start with old clientId.
 		// We switch to latest connection clientId only after setLoaded().
-		assert(this.clientId === undefined, "there should be no clientId yet");
 		if (pendingLocalState?.clientId !== undefined) {
+			// When we deal with pending state, we do not start connection early, allowing us to "fake" parts of the old Audience
+			// by inserting old client info ("read" connections only), and thus making system more consistent for user.
+			// When we move to ConnectionState.CatchingUp state, we clear audience and start populating it using information
+			// from new connection. So we can do this trick only in disconnected state.
+			assert(this.connectionState === ConnectionState.Disconnected, "should be disconnected");
+			const audience = this.protocolHandler.audience;
+			for (const [id, client] of Object.entries(pendingLocalState.readClients)) {
+				audience.addMember(id, client);
+			}
 			this.protocolHandler.audience.setCurrentClientId(pendingLocalState?.clientId);
 		}
 

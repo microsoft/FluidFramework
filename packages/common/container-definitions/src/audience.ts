@@ -62,10 +62,8 @@ export interface ISelf {
 	 * client connected to it and received {@link ISelf.clientId}.
 	 * If present (not undefined), it's same value as calling IAudience.getMember(clientId).
 	 * This property could be undefined even if there is non-undefined clientId.
-	 * This could happen in the following cases:
-	 * 1) Container was loaded from stash, by providing IPendingContainerState state to Container.load().
-	 * 2) Container is in the process of establishing new connection. Information about old connection is already reset
-	 * (old clientId is no longer in list of members), but clientId has not yet changed to a new value.
+	 * This could happen when Container is in the process of establishing new connection. Information about old connection
+	 * is already reset (old clientId is no longer in list of members), but clientId has not yet changed to a new value.
 	 */
 	client?: IClient;
 }

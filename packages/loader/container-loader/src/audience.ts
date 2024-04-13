@@ -17,7 +17,7 @@ import { IClient } from "@fluidframework/protocol-definitions";
  */
 export class Audience extends TypedEventEmitter<IAudienceEvents> implements IAudienceOwner {
 	private readonly members = new Map<string, IClient>();
-	private _currentClientId: string | undefined;
+	private self: ISelf | undefined = undefined;
 
 	constructor() {
 		super();
@@ -26,26 +26,25 @@ export class Audience extends TypedEventEmitter<IAudienceEvents> implements IAud
 	}
 
 	public getSelf(): ISelf | undefined {
-		return this._currentClientId === undefined
-			? undefined
-			: {
-					clientId: this._currentClientId,
-					client: this.getMember(this._currentClientId),
-			  };
+		return this.self;
 	}
 
 	public setCurrentClientId(clientId: string): void {
-		if (this._currentClientId !== clientId) {
-			const oldId = this._currentClientId;
-			this._currentClientId = clientId;
+		const oldId = this.self?.clientId;
+		if (oldId !== clientId) {
+			const oldSelf = this.self;
 			// this.getMember(clientId) could resolve to undefined in these two cases:
 			// 1) Feature gates controlling ConnectionStateHandler() behavior are off
 			// 2) we are loading from stashed state and audience is empty, but we remember and set prior clientId
-			this.emit(
-				"selfChanged",
-				oldId === undefined ? undefined : ({ clientId: oldId } satisfies ISelf),
-				{ clientId, client: this.getMember(clientId) } satisfies ISelf,
-			);
+			this.self =
+				clientId === undefined
+					? undefined
+					: {
+							clientId,
+							client: this.getMember(clientId),
+					  };
+
+			this.emit("selfChanged", oldSelf, this.self);
 		}
 	}
 
@@ -53,6 +52,10 @@ export class Audience extends TypedEventEmitter<IAudienceEvents> implements IAud
 	 * Adds a new client to the audience
 	 */
 	public addMember(clientId: string, details: IClient) {
+		if (clientId === this.self?.clientId) {
+			// see check below - it will ensure that if we ever overwrite it, it is same value
+			this.self.client = details;
+		}
 		// Given that signal delivery is unreliable process, we might observe same client being added twice
 		// In such case we should see exactly same payload (IClient), and should not raise event twice!
 		if (this.members.has(clientId)) {
