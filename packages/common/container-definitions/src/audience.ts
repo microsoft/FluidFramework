@@ -53,18 +53,18 @@ export interface IAudienceEvents extends IEvent {
 export interface ISelf {
 	/**
 	 * clientId of current or previous connection (if client is in disconnected or reconnecting / catching up state)
-	 * It changes only when client has reconnected, caught up with latest ops and certain other criteria are met.
+	 * It changes only when client has reconnected, caught up with latest ops.
 	 */
 	clientId: string;
 
 	/**
-	 * Information about current user, supplied by ordering service when client connected to it
-	 * and received {@link ISelf.clientId}.
+	 * Information about current client (including user identity, connection properties), supplied by ordering service when
+	 * client connected to it and received {@link ISelf.clientId}.
 	 * If present (not undefined), it's same value as calling IAudience.getMember(clientId).
 	 * This property could be undefined even if there is non-undefined clientId.
 	 * This could happen in the following cases:
 	 * 1) Container was loaded from stash, by providing IPendingContainerState state to Container.load().
-	 * 2) Container is in the process of establishing new connection. Information about old connection is already resent
+	 * 2) Container is in the process of establishing new connection. Information about old connection is already reset
 	 * (old clientId is no longer in list of members), but clientId has not yet changed to a new value.
 	 */
 	client?: IClient;
