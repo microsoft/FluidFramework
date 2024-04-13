@@ -15,21 +15,21 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/ordered-collection-public.d.ts",
+				"types": "./lib/public.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/ordered-collection-public.d.ts",
+				"types": "./dist/public.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
-		"./alpha": {
+		"./lib/legacy": {
 			"import": {
-				"types": "./lib/ordered-collection-alpha.d.ts",
+				"types": "./lib/legacy.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/ordered-collection-alpha.d.ts",
+				"types": "./dist/legacy.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
@@ -45,21 +45,21 @@
 		}
 	},
 	"main": "dist/index.js",
-	"types": "./dist/ordered-collection-public.d.ts",
+	"types": "./dist/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
-		"api-extractor:esnext": "api-extractor run --local",
+		"api-extractor:commonjs": "flub generate entrypoints --outFileAlpha legacy --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outFileAlpha legacy --outDir ./lib",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "fluid-build . --task api",
+		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:genver": "gen-version",
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints . ./lib/legacy",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
@@ -117,9 +117,9 @@
 		"@biomejs/biome": "^1.6.2",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/test-dds-utils": "workspace:~",
-		"@fluid-tools/build-cli": "^0.35.0",
+		"@fluid-tools/build-cli": "^0.36.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.35.0",
+		"@fluidframework/build-tools": "^0.36.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@fluidframework/ordered-collection-previous": "npm:@fluidframework/ordered-collection@2.0.0-internal.8.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
@@ -139,18 +139,6 @@
 		"replace-in-file": "^6.3.5",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6"
-	},
-	"fluidBuild": {
-		"tasks": {
-			"build:docs": {
-				"dependsOn": [
-					"...",
-					"api-extractor:commonjs",
-					"api-extractor:esnext"
-				],
-				"script": false
-			}
-		}
 	},
 	"typeValidation": {
 		"broken": {}

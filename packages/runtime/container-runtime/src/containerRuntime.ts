@@ -2608,7 +2608,7 @@ export class ContainerRuntime
 			// 2) this.resetReconnectCount() below
 			assert(
 				message.type !== ContainerMessageType.ChunkedOp,
-				"we should never get here with chunked ops",
+				0x93b /* we should never get here with chunked ops */,
 			);
 
 			let localOpMetadata: unknown;
@@ -2684,7 +2684,7 @@ export class ContainerRuntime
 					if (this._idCompressor === undefined) {
 						assert(
 							this.idCompressorMode !== undefined,
-							"id compressor should be enabled",
+							0x93c /* id compressor should be enabled */,
 						);
 						this.pendingIdCompressorOps.push(range);
 					} else {
@@ -2698,7 +2698,7 @@ export class ContainerRuntime
 			case ContainerMessageType.ChunkedOp:
 				// From observability POV, we should not exppse the rest of the system (including "op" events on object) to these messages.
 				// Also resetReconnectCount() would be wrong - see comment that was there before this change was made.
-				assert(false, "should not even get here");
+				assert(false, 0x93d /* should not even get here */);
 			case ContainerMessageType.Rejoin:
 				break;
 			case ContainerMessageType.DocumentSchemaChange:
@@ -3114,7 +3114,7 @@ export class ContainerRuntime
 		if (idRange !== undefined) {
 			assert(
 				idRange.ids === undefined || idRange.ids.firstGenCount === 1,
-				"No other ranges should be taken while container is detached.",
+				0x93e /* No other ranges should be taken while container is detached. */,
 			);
 			this._idCompressor?.finalizeCreationRange(idRange);
 		}
@@ -3908,7 +3908,7 @@ export class ContainerRuntime
 		assert(
 			metadata === undefined ||
 				containerRuntimeMessage.type === ContainerMessageType.BlobAttach,
-			"metadata",
+			0x93f /* metadata */,
 		);
 
 		const serializedContent = JSON.stringify(containerRuntimeMessage);
