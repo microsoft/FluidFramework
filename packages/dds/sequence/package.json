@@ -23,7 +23,7 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./lib/beta": {
+		"./beta": {
 			"import": {
 				"types": "./lib/beta.d.ts",
 				"default": "./lib/index.js"
@@ -43,7 +43,7 @@
 				"default": "./dist/intervalCollection.js"
 			}
 		},
-		"./lib/legacy": {
+		"./legacy": {
 			"import": {
 				"types": "./lib/legacy.d.ts",
 				"default": "./lib/index.js"

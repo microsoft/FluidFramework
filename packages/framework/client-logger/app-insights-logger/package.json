@@ -23,7 +23,7 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./lib/beta": {
+		"./beta": {
 			"import": {
 				"types": "./lib/beta.d.ts",
 				"default": "./lib/index.js"

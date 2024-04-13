@@ -21,7 +21,7 @@
 				"types": "./dist/public.d.ts"
 			}
 		},
-		"./lib/legacy": {
+		"./legacy": {
 			"import": {
 				"types": "./lib/legacy.d.ts"
 			},

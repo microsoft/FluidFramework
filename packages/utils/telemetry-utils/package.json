@@ -23,7 +23,7 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./lib/legacy": {
+		"./legacy": {
 			"import": {
 				"types": "./lib/legacy.d.ts",
 				"default": "./lib/index.js"
