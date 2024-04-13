@@ -13,7 +13,7 @@ import { ITelemetryBaseLogger, LogLevel, Tagged } from "@fluidframework/core-int
  * error - Error log event, ideally 0 of these are logged during a session
  *
  * performance - Includes duration, and often has _start, _end, or _cancel suffixes for activity tracking
- * @public
+ * @alpha
  */
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
@@ -73,7 +73,7 @@ export interface ITelemetryEventExt extends ITelemetryPropertiesExt {
 /**
  * Informational (non-error) telemetry event
  * @remarks Maps to category = "generic"
- * @public
+ * @alpha
  */
 export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
 	eventName: string;
@@ -92,7 +92,7 @@ export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
 /**
  * Performance telemetry event.
  * @remarks Maps to category = "performance"
- * @public
+ * @alpha
  */
 export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt {
 	duration?: number; // Duration of event (optional)

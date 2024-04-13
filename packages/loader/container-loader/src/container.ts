@@ -75,8 +75,8 @@ import {
 	MessageType,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { type TelemetryEventCategory } from "@fluidframework/telemetry-utils";
 import {
+	type TelemetryEventCategory,
 	ITelemetryLoggerExt,
 	EventEmitterWithErrorHandling,
 	GenericError,

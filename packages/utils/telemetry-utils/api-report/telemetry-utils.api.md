@@ -207,7 +207,7 @@ export interface ITelemetryEventExt extends ITelemetryPropertiesExt {
     eventName: string;
 }
 
-// @public
+// @alpha
 export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
     // (undocumented)
     category?: TelemetryEventCategory;
@@ -236,7 +236,7 @@ export interface ITelemetryLoggerPropertyBags {
     error?: ITelemetryLoggerPropertyBag;
 }
 
-// @public
+// @alpha
 export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt {
     // (undocumented)
     duration?: number;
@@ -382,7 +382,7 @@ export enum TelemetryDataTag {
     UserData = "UserData"
 }
 
-// @public
+// @alpha
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
 // @public
