@@ -46,10 +46,6 @@
 	},
 	"main": "lib/index.js",
 	"types": "lib/public.d.ts",
-	"files": [
-		"dist/**/*",
-		"lib/**/*"
-	],
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "flub generate entrypoints --outFileAlpha legacy --outDir ./dist",
