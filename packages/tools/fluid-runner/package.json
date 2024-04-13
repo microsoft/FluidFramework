@@ -15,11 +15,11 @@
 		".": {
 			"import": {
 				"types": "./lib/public.d.ts",
-				"default": "./lib/public.js"
+				"default": "./lib/index.js"
 			},
 			"require": {
 				"types": "./dist/public.d.ts",
-				"default": "./dist/public.js"
+				"default": "./dist/index.js"
 			}
 		},
 		"./legacy": {
