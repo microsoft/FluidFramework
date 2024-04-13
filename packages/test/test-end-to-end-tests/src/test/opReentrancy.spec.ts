@@ -90,6 +90,34 @@ describeCompat(
 			await provider.ensureSynchronized();
 		};
 
+		it("Test reentrant op sending", async function () {
+			if (provider.driver.type === "t9s" || provider.driver.type === "tinylicious") {
+				// This test is flaky on Tinylicious. ADO:5010
+				this.skip();
+			}
+
+			await setupContainers(testContainerConfig);
+
+			sharedMap1.on("valueChanged", (changed) => {
+				if (changed.key !== "key2") {
+					sharedMap1.set("key2", `${sharedMap1.get("key1")} updated`);
+				}
+			});
+
+			sharedMap1.set("key1", "1");
+			sharedMap2.set("key2", "2");
+
+			await provider.ensureSynchronized();
+
+			assert.ok(!container1.closed);
+			assert.ok(!container2.closed);
+
+			// The other container is fine
+			assert.equal(sharedMap2.get("key1"), "1");
+			assert.equal(sharedMap2.get("key2"), "2");
+			assert.ok(mapsAreEqual(sharedMap1, sharedMap2));
+		});
+
 		[false, true].forEach((enableGroupedBatching) => {
 			it(`Eventual consistency with op reentry - ${
 				enableGroupedBatching ? "Grouped" : "Regular"
