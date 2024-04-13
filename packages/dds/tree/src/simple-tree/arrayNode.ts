@@ -318,7 +318,7 @@ const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 			const content = contextualizeInsertedArrayContent(value, sequenceField);
 
 			const simpleNodeSchema = getSimpleNodeSchema(sequenceNode.schema);
-			assert(simpleNodeSchema.kind === NodeKind.Array, "Expected array schema");
+			assert(simpleNodeSchema.kind === NodeKind.Array, 0x912 /* Expected array schema */);
 
 			const simpleFieldSchema = getSimpleFieldSchema(
 				sequenceField.schema,
@@ -339,7 +339,7 @@ const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 			const content = contextualizeInsertedArrayContent(value, sequenceField);
 
 			const simpleNodeSchema = getSimpleNodeSchema(sequenceNode.schema);
-			assert(simpleNodeSchema.kind === NodeKind.Array, "Expected array schema");
+			assert(simpleNodeSchema.kind === NodeKind.Array, 0x913 /* Expected array schema */);
 
 			const simpleFieldSchema = getSimpleFieldSchema(
 				sequenceField.schema,
@@ -360,7 +360,7 @@ const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 			const content = contextualizeInsertedArrayContent(value, sequenceField);
 
 			const simpleNodeSchema = getSimpleNodeSchema(sequenceNode.schema);
-			assert(simpleNodeSchema.kind === NodeKind.Array, "Expected array schema");
+			assert(simpleNodeSchema.kind === NodeKind.Array, 0x914 /* Expected array schema */);
 
 			const simpleFieldSchema = getSimpleFieldSchema(
 				sequenceField.schema,
@@ -722,7 +722,7 @@ export function arraySchema<
 			}
 
 			const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
-			assert(flexSchema instanceof FlexFieldNodeSchema, "invalid flex schema");
+			assert(flexSchema instanceof FlexFieldNodeSchema, 0x915 /* invalid flex schema */);
 			const flexNode: FlexTreeNode = isFlexTreeNode(input)
 				? input
 				: new RawFieldNode(flexSchema, copyContent(flexSchema.name, input) as object);

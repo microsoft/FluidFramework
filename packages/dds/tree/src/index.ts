@@ -260,6 +260,8 @@ export {
 	SharedTreeFormatVersion,
 	Tree,
 	TreeApi,
+	TransactionConstraint,
+	NodeInDocumentConstraint,
 } from "./shared-tree/index.js";
 
 export {
@@ -354,8 +356,6 @@ export {
 	AllowOptionalNotFlattened,
 	isAny,
 	BrandedKeyContent,
-	ErasedType,
-	Erased,
 	RestrictiveReadonlyRecord,
 	MakeNominal,
 } from "./util/index.js";
