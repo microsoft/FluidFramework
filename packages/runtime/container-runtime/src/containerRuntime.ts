@@ -2808,7 +2808,7 @@ export class ContainerRuntime
 		let result: T;
 		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
 			// Note: we are not touching any batches other than mainBatch here, for two reasons:
-			// 1. It would not help, as we other batches are flushed independently from main batch.
+			// 1. It would not help, as other batches are flushed independently from main batch.
 			// 2. There is no way to undo process of data store creation, blob creation, ID compressor ops, or other things tracked by other batches.
 			checkpoint = this.outbox.checkpoint().mainBatch;
 		}
