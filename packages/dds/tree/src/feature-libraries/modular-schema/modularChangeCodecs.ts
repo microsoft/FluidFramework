@@ -168,7 +168,7 @@ function makeModularChangeCodec(
 
 			encodeNode: (nodeId: NodeId): EncodedNodeChangeset => {
 				const node = tryGetFromNestedMap(nodeChanges, nodeId.revision, nodeId.localId);
-				assert(node !== undefined, "Unknown node ID");
+				assert(node !== undefined, 0x92e /* Unknown node ID */);
 				return encodeNodeChangesForJson(node, fieldContext);
 			},
 

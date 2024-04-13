@@ -11,9 +11,9 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import { SharedTree } from "../../treeFactory.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools.js";
 import { ITree, SchemaFactory } from "../../simple-tree/index.js";
+import { SharedTreeFactory, SharedTreeFormatVersion } from "../../shared-tree/index.js";
 
 /**
  * This suite provides some e2e snapshot coverage for how SharedTree ops look.
@@ -42,7 +42,7 @@ describe("SharedTree op format snapshots", () => {
 	let tree: ITree;
 
 	beforeEach(() => {
-		const factory = SharedTree.getFactory();
+		const factory = new SharedTreeFactory({ formatVersion: SharedTreeFormatVersion.v1 });
 		const containerRuntimeFactory = new MockContainerRuntimeFactory();
 		const sessionId = "00000000-0000-4000-b000-000000000000" as SessionId;
 		const runtime = new MockFluidDataStoreRuntime({

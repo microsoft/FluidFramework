@@ -181,7 +181,7 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBl
  * @param snapshot - ISnapshot
  */
 export function convertSnapshotToSnapshotInfo(snapshot: ISnapshot): ISnapshotInfo {
-	assert(snapshot.sequenceNumber !== undefined, "Snapshot sequence number is missing");
+	assert(snapshot.sequenceNumber !== undefined, 0x93a /* Snapshot sequence number is missing */);
 	const snapshotBlobs: ISerializableBlobContents = {};
 	for (const [blobId, arrayBufferLike] of snapshot.blobContents.entries()) {
 		snapshotBlobs[blobId] = bufferToString(arrayBufferLike, "utf8");
