@@ -909,7 +909,7 @@ export function refHasTileLabels(refPos: ReferencePosition): boolean;
 // @internal (undocumented)
 export function refTypeIncludesFlag(refPosOrType: ReferencePosition | ReferenceType, flags: ReferenceType): boolean;
 
-// @internal
+// @alpha
 export const reservedMarkerIdKey = "markerId";
 
 // @internal (undocumented)
