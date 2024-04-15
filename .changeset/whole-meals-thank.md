@@ -30,7 +30,6 @@
 "@fluidframework/request-handler": "major"
 "@fluid-experimental/oldest-client-observer": "major"
 "@fluidframework/fluid-static": "major"
-"fluid-framework": "major"
 "@fluid-experimental/dds-interceptions": "major"
 "@fluid-experimental/data-object-base": "major"
 "@fluidframework/fluid-telemetry": "major"
