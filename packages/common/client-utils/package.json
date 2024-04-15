@@ -59,16 +59,6 @@
 		}
 	},
 	"main": "lib/indexNode.js",
-	"browser": {
-		"./dist/indexBrowser.js": "./dist/indexNode.js",
-		"./dist/indexBrowser.d.ts": "./dist/indexNode.d.ts",
-		"./lib/indexBrowser.js": "./lib/indexNode.js",
-		"./lib/indexBrowser.d.ts": "./lib/indexNode.d.ts",
-		"./dist/bufferBrowser.js": "./dist/bufferNode.js",
-		"./dist/bufferBrowser.d.ts": "./dist/bufferNode.d.ts",
-		"./lib/bufferBrowser.js": "./lib/bufferNode.js",
-		"./lib/bufferBrowser.d.ts": "./lib/bufferNode.d.ts"
-	},
 	"types": "lib/indexNode.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
