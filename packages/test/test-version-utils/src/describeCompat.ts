@@ -11,18 +11,12 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 import { testBaseVersion } from "./baseVersion.js";
-import {
-	CompatConfig,
-	configList,
-	isCompatVersionBelowMinVersion,
-	mochaGlobalSetup,
-} from "./compatConfig.js";
+import { CompatConfig, configList, mochaGlobalSetup } from "./compatConfig.js";
 import { CompatKind, driver, r11sEndpointName, tenantIndex } from "./compatOptions.js";
 import {
 	getVersionedTestObjectProviderFromApis,
 	getCompatVersionedTestObjectProviderFromApis,
 } from "./compatUtils.js";
-import { pkgVersion } from "./packageVersion.js";
 import {
 	getContainerRuntimeApi,
 	getDataRuntimeApi,
@@ -45,7 +39,6 @@ function createCompatSuite(
 		apis: CompatApis,
 	) => void,
 	compatFilter?: CompatKind[],
-	minVersion?: string,
 ): (this: Mocha.Suite) => void {
 	return function (this: Mocha.Suite) {
 		let configs = configList.value;
@@ -53,10 +46,6 @@ function createCompatSuite(
 			configs = configs.filter((value) => compatFilter.includes(value.kind));
 		}
 		for (const config of configs) {
-			if (minVersion && isCompatVersionBelowMinVersion(minVersion, config)) {
-				// skip current config if compat version is below min version supported for test suite
-				continue;
-			}
 			describe(config.name, function () {
 				let provider: ITestObjectProvider;
 				let resetAfterEach: boolean;
@@ -244,8 +233,7 @@ function createCompatDescribe(): DescribeCompat {
 	d.only = (name, compatVersion: CompatType, tests) =>
 		describe.only(name, createCompatSuiteWithDefault(tests, compatVersion));
 
-	d.noCompat = (name, _, tests) =>
-		describe(name, createCompatSuite(tests, undefined, pkgVersion));
+	d.noCompat = (name, _, tests) => describe(name, createCompatSuite(tests, undefined));
 
 	return d;
 }

@@ -5,14 +5,7 @@
 
 import { fromInternalScheme } from "@fluid-tools/version-tools";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
-import * as semver from "semver";
-
-import {
-	baseVersion,
-	baseVersionForMinCompat,
-	codeVersion,
-	testBaseVersion,
-} from "./baseVersion.js";
+import { baseVersion, codeVersion, testBaseVersion } from "./baseVersion.js";
 import {
 	CompatKind,
 	compatKind,
@@ -240,25 +233,6 @@ const genFullBackCompatConfig = (driverVersionsAboveV2Int1: number = 0): CompatC
 	}
 	return _configList;
 };
-
-/**
- * Returns true if compat test version is below the one provided as minimum version.
- * It helps to filter out lower verions configs that the ones intended to be tested on a
- * particular suite.
- */
-export function isCompatVersionBelowMinVersion(minVersion: string, config: CompatConfig) {
-	let lowerVersion: string | number = config.compatVersion;
-	// For CrossVersion there are 2 versions being tested. Get the lower one.
-	if (config.kind === CompatKind.CrossVersion) {
-		lowerVersion =
-			semver.compare(config.compatVersion as string, config.loadVersion as string) > 0
-				? (config.loadVersion as string)
-				: config.compatVersion;
-	}
-	const compatVersion = getRequestedVersion(baseVersionForMinCompat, lowerVersion);
-	const minReqVersion = getRequestedVersion(testBaseVersion(minVersion), minVersion);
-	return semver.compare(compatVersion, minReqVersion) < 0;
-}
 
 // Helper function for genCrossVersionCompatConfig().
 function genCompatConfig(createVersion: string, loadVersion: string): CompatConfig {
