@@ -7,7 +7,7 @@ aliases:
 
 Fluid Framework contains code enabling the production and consumption of stable typed telemetry for Fluid Framework applications. The typed telemetry is used as the backbone for different Fluid Framework cloud offerings such as dashboards and alarms for Fluid applications. This package can also be used as a reference for customizing and creating your own telemetry solution if desired.
 
-At this time, the package enables collection of telemetry related to the Fluid Container only. In the future, more areas would be added as needs evolve. This telemetry is strongly typed and backed by versioning semantics to avoid un-planned or un-expected breaks in telemetry.
+At this time, the package enables collection of telemetry related to the Fluid container only. In the future, more areas would be added as needs evolve. This telemetry is strongly typed and backed by versioning semantics to avoid un-planned or un-expected breaks in telemetry.
 
 ## Getting Started
 
@@ -25,7 +25,7 @@ Once you setup your App Insights instance, you can proceed with next steps below
 
 Install the Fluid Framework telemetry package and Azure App Insights package dependencies
 
--   Using NPM: `npm install @fluidframework/fluid-telemetry @microsoft/applicationinsights-web`
+-   Using npm: `npm install @fluidframework/fluid-telemetry @microsoft/applicationinsights-web`
 
 #### Step 2: Setup telemetry collection
 
@@ -88,11 +88,11 @@ To use a custom telemetry consumer and integrate with a cloud provider or custom
 
 In this example, you'll walk through the basic setup process to start getting container telemetry to be produced and log it to the console.
 
-#### Step 1: Install new package dependencies
+#### Step 1: Install package dependencies
 
 Install the Fluid Framework telemetry package dependency
 
--   Using NPM: `npm install @fluidframework/fluid-telemetry`
+-   Using npm: `npm install @fluidframework/fluid-telemetry`
 
 #### Step 2: Define a custom telemetry consumer
 
@@ -151,25 +151,25 @@ This section provides a set of Azure App Insights queries related to collaborati
 
 #### Understanding container telemetry
 
-Before we dive into the queries, we will walk through what a “session” or “collaborative session” is in the context of the following queries. Currently, the concept of a "session” or “collaborative session” does not actually exist within telemetry itself. At a high level, we identify a session by finding a set of container telemetry being emitted with the same container ID within a specific time frame.
+Before we dive into the queries, we will walk through what a `session` or `collaborative session` is in the context of the following queries. Currently, the concept of a `session` or `collaborative session` does not actually exist within telemetry itself. At a high level, we identify a session by finding a set of container telemetry being emitted with the same container ID within a specific time frame.
 
-Going into more detail, A “Session” or “Collaborative Session” is defined as a period in which we see a continuous stream of container telemetry being emitted with a unique container Id. For a given set of telemetry with the same container Id, if this stream of telemetry stops for longer than a specified period of time then we consider that the end of the session. Each session is differentiated from each other because it has no telemetry (no user activity) emitted for a defined amount of time prior to the start and after the end of emitted telemetry. For each of these queries you can also adjust the time gap that defines a session based on your preference.
+Going into more detail, A `Session` or `Collaborative Session` is defined as a period in which we see a continuous stream of container telemetry being emitted with a unique container Id. For a given set of telemetry with the same container Id, if this stream of telemetry stops for longer than a specified period of time then we consider that the end of the session. Each session is differentiated from each other because it has no telemetry (no user activity) emitted for a defined amount of time prior to the start and after the end of emitted telemetry. For each of these queries you can also adjust the time gap that defines a session based on your preference.
 
 > Note: All telemetry being visualized below is generated from clients without any intervention from the server. The accuracy might be impacted due to inherent nature of client telemetry and data being lost due to faulty clients or lack of connectivity before the telemetry is fully pushed out. We recommend not using this telemetry for business metrics, but rather use it for operational metrics and diagnosis of issues.
 
 #### Accessing App Insights Portal
 
-Before we can query, we must first navigate to your Azure App Insights telemetry page. To do this, go to your Azure App Insights Instance and click on the “Logs” tab under Monitoring.
+Before we can query, we must first navigate to your Azure App Insights telemetry page. To do this, go to your Azure App Insights Instance and click on the `Logs` tab under Monitoring.
 
 ![Logs on App Insights Portal](images/telemetry_1.png)
 
-Now, close out the “Queries” pane if it showed up for you and you will be in the view where we can execute our queries. Note that if you are using the Fluid Azure App Insights logger, your telemetry data will be available in the “customEvents” table.
+Now, close out the `Queries` pane if it showed up for you and you will be in the view where we can execute our queries. Note that if you are using the Fluid Azure App Insights logger, your telemetry data will be available in the `customEvents` table.
 
 #### Queries and results
 
 1. Session information
 
-The following query provides a table of data that can give you a quick overview of information about sessions for your application. It includes the Id of the container being interacted with, the number of containers and the length of each session. Note that query provides session id’s but these values do not actually exist in the telemetry, it is a concept we have derived from the data; see the intro paragraph for more information on sessions.
+The following query provides a table of data that can give you a quick overview of information about sessions for your application. It includes the Id of the container being interacted with, the number of containers and the length of each session. Note that query provides session id's but these values do not actually exist in the telemetry, it is a concept we have derived from the data; see the intro paragraph for more information on sessions.
 
 ```sql
 let sessionGap = 5m;
@@ -313,14 +313,14 @@ customEvents
 
 1. Adjusting the date span of the query
 
-To adjust the time span of this query, simply use the Time Range dropdown provided by azure. You do not need to modify the query directly. By default, these queries will query against all logs you have available.
+    To adjust the time span of this query, simply use the Time Range dropdown provided by azure. You do not need to modify the query directly. By default, these queries will query against all logs you have available.
 
-![Adjusting date](images/telemetry_time_period.png)
+    ![Adjusting date](images/telemetry_time_period.png)
 
-1. Adjusting the gap of time that defines a session
+2. Adjusting the gap of time that defines a session
 
-By default, we identify each session has a period of 5 minutes of inactivity before and after. However, you may want to adjust this time period. To do so, modify the value of the variable named `sessionGap` to be your desired time length.
+    By default, we identify each session has a period of 5 minutes of inactivity before and after. However, you may want to adjust this time period. To do so, modify the value of the variable named `sessionGap` to be your desired time length.
 
 3. Adjusting the title of your graphs
 
-For all queries, you can modify the title of your graph using the last line of the query, for example, replace `render columnchart with (title = "Approximate Length Of Sessions Separated Into 2.5 Minute Time Bins")` query, `with render columnchart with (title = "Approximate Length Of Sessions Separated Into 10 Minute Time Bins")`
+    For all queries, you can modify the title of your graph using the last line of the query, for example, replace `render columnchart with (title = "Approximate Length Of Sessions Separated Into 2.5 Minute Time Bins")` query, `with render columnchart with (title = "Approximate Length Of Sessions Separated Into 10 Minute Time Bins")`
