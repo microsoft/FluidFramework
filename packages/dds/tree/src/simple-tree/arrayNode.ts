@@ -566,6 +566,13 @@ function createArrayNodeProxy(
 	allowAdditionalProperties: boolean,
 	customTargetObject?: object,
 ): TreeArrayNode {
+	if (customTargetObject !== undefined) {
+		// This causes `JSON.stringify` to give the same output as if the proxy were truly an array.
+		// Otherwise, it will stringify like an object (e.g. `{"0": ..., "1": ...}`) for a `customTargetObject`.
+		Reflect.defineProperty(customTargetObject, "toJSON", {
+			value: () => Array.from(proxy as any),
+		});
+	}
 	const targetObject = customTargetObject ?? [];
 
 	// Create a 'dispatch' object that this Proxy forwards to instead of the proxy target, because we need
