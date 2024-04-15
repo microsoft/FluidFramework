@@ -142,7 +142,6 @@ export {
 	storedSchemaDecodeDispatcher,
 	ErasedTreeNodeSchemaDataFormat,
 	SchemaAndPolicy,
-	SchemaPolicy,
 	Multiplicity,
 	SchemaPolicy,
 } from "./schema-stored/index.js";
