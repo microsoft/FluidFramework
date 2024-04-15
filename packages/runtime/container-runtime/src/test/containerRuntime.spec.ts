@@ -2127,10 +2127,9 @@ describe("Runtime", () => {
 			function createSnapshot(addMissindDatasore: boolean, setGroupId: boolean = true) {
 				if (addMissindDatasore) {
 					snapshotTree.trees[".channels"].trees.missingDataStore = {
-						blobs: {},
+						blobs: { path: "id" },
 						trees: {},
 						groupId: setGroupId ? "G1" : undefined,
-						omitted: true,
 					};
 				}
 			}

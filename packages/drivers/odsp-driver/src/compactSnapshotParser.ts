@@ -103,10 +103,7 @@ function readOpsSection(node: NodeTypes): ISequencedDocumentMessage[] {
  * Recreates snapshot tree out of tree representation.
  * @param node - tree node to de-serialize from
  */
-function readTreeSection(
-	node: NodeCore,
-	blobContents: Map<string, ArrayBuffer>,
-): {
+function readTreeSection(node: NodeCore): {
 	snapshotTree: ISnapshotTree;
 	slowTreeStructureCount: number;
 	omittedTreesCount: number;
@@ -140,7 +137,7 @@ function readTreeSection(
 					// "name": <node name>
 					// "children": <blob id>
 					if (content === "children") {
-						const result = readTreeSection(treeNode.getNode(3), blobContents);
+						const result = readTreeSection(treeNode.getNode(3));
 						trees[treeNode.getString(1)] = result.snapshotTree;
 						slowTreeStructureCount += result.slowTreeStructureCount;
 						continue;
@@ -148,11 +145,7 @@ function readTreeSection(
 					// "name": <node name>
 					// "value": <blob id>
 					if (content === "value") {
-						const blobId = treeNode.getString(3);
-						snapshotTree.blobs[treeNode.getString(1)] = blobId;
-						if (!blobContents.has(blobId)) {
-							snapshotTree.omitted = true;
-						}
+						snapshotTree.blobs[treeNode.getString(1)] = treeNode.getString(3);
 						continue;
 					}
 					break;
@@ -165,11 +158,7 @@ function readTreeSection(
 						treeNode.getMaybeString(2) === "nodeType" &&
 						treeNode.getMaybeString(4) === "value"
 					) {
-						const blobId = treeNode.getString(5);
-						snapshotTree.blobs[treeNode.getString(1)] = blobId;
-						if (!blobContents.has(blobId)) {
-							snapshotTree.omitted = true;
-						}
+						snapshotTree.blobs[treeNode.getString(1)] = treeNode.getString(5);
 						continue;
 					}
 
@@ -180,7 +169,7 @@ function readTreeSection(
 						treeNode.getMaybeString(2) === "unreferenced" &&
 						treeNode.getMaybeString(4) === "children"
 					) {
-						const result = readTreeSection(treeNode.getNode(5), blobContents);
+						const result = readTreeSection(treeNode.getNode(5));
 						trees[treeNode.getString(1)] = result.snapshotTree;
 						slowTreeStructureCount += result.slowTreeStructureCount;
 						assert(
@@ -217,15 +206,14 @@ function readTreeSection(
 
 		const path = getStringInstance(records.name, "Path name should be string");
 		if (records.value !== undefined) {
-			const blobId = getStringInstance(records.value, "Blob value should be string");
-			snapshotTree.blobs[path] = blobId;
-			if (!blobContents.has(blobId)) {
-				snapshotTree.omitted = true;
-			}
+			snapshotTree.blobs[path] = getStringInstance(
+				records.value,
+				"Blob value should be string",
+			);
 			// eslint-disable-next-line unicorn/no-negated-condition
 		} else if (records.children !== undefined) {
 			assertNodeCoreInstance(records.children, "Trees should be of type NodeCore");
-			const result = readTreeSection(records.children, blobContents);
+			const result = readTreeSection(records.children);
 			trees[path] = result.snapshotTree;
 			slowTreeStructureCount += result.slowTreeStructureCount;
 		} else {
@@ -242,10 +230,7 @@ function readTreeSection(
  * Recreates snapshot tree out of tree representation.
  * @param node - tree node to de-serialize from
  */
-function readSnapshotSection(
-	node: NodeTypes,
-	blobContents: Map<string, ArrayBuffer>,
-): {
+function readSnapshotSection(node: NodeTypes): {
 	sequenceNumber: number;
 	snapshotTree: ISnapshotTree;
 	slowTreeStructureCount: number;
@@ -258,7 +243,6 @@ function readSnapshotSection(
 	assertNumberInstance(records.sequenceNumber, "sequenceNumber should be of type number");
 	const { snapshotTree, slowTreeStructureCount, omittedTreesCount } = readTreeSection(
 		records.treeNodes,
-		blobContents,
 	);
 	snapshotTree.id = getStringInstance(records.id, "snapshotId should be string");
 	const sequenceNumber = records.sequenceNumber.valueOf();
@@ -305,10 +289,8 @@ export function parseCompactSnapshotResponse(
 		0x2c2 /* "Create Version should be equal to currentReadVersion" */,
 	);
 
+	const [snapshot, durationSnapshotTree] = measure(() => readSnapshotSection(records.snapshot));
 	const [blobContents, durationBlobs] = measure(() => readBlobSection(records.blobs));
-	const [snapshot, durationSnapshotTree] = measure(() =>
-		readSnapshotSection(records.snapshot, blobContents.blobContents),
-	);
 
 	return {
 		...snapshot,

@@ -45,7 +45,7 @@ import {
 	IDocumentStorageService,
 	type ISnapshot,
 } from "@fluidframework/driver-definitions/internal";
-import { readAndParse } from "@fluidframework/driver-utils/internal";
+import { isInstanceOfISnapshot, readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IIdCompressorCore,
@@ -1387,6 +1387,7 @@ export class ContainerRuntime
 			loader,
 			pendingLocalState,
 			supportedFeatures,
+			snapshotWithContents,
 		} = context;
 
 		this.mc = createChildMonitoringContext({
@@ -1415,6 +1416,12 @@ export class ContainerRuntime
 		this.submitSummaryFn = submitSummaryFn;
 		this.submitSignalFn = submitSignalFn;
 
+		if (isInstanceOfISnapshot(snapshotWithContents)) {
+			this.evaluateSnapshotForOmittedBlobContents(
+				snapshotWithContents.snapshotTree,
+				snapshotWithContents.blobContents,
+			);
+		}
 		// TODO: After IContainerContext.options is removed, we'll just create a new blank object {} here.
 		// Values are generally expected to be set from the runtime side.
 		this.options = options ?? {};
@@ -1962,6 +1969,21 @@ export class ContainerRuntime
 		this.removeAllListeners();
 	}
 
+	private evaluateSnapshotForOmittedBlobContents(
+		snapshotTree: ISnapshotTree,
+		blobContents: Map<string, ArrayBuffer>,
+	) {
+		for (const [_, id] of Object.entries(snapshotTree.blobs)) {
+			if (!blobContents.has(id)) {
+				snapshotTree.omitted = true;
+				break;
+			}
+		}
+		for (const [_, treeChild] of Object.entries(snapshotTree.trees)) {
+			this.evaluateSnapshotForOmittedBlobContents(treeChild, blobContents);
+		}
+	}
+
 	/**
 	 * Api to fetch the snapshot from the service for a loadingGroupIds.
 	 * @param loadingGroupIds - LoadingGroupId for which the snapshot is asked for.
@@ -2012,6 +2034,7 @@ export class ContainerRuntime
 			hasIsolatedChannels,
 		);
 		assert(snapshotTreeForPath !== undefined, 0x8ef /* no snapshotTree for the path */);
+		this.evaluateSnapshotForOmittedBlobContents(snapshotTreeForPath, snapshot.blobContents);
 		assert(
 			snapshotTreeForPath.omitted !== true,
 			"Blobs for the fetched Grouped snapshot should be present",
