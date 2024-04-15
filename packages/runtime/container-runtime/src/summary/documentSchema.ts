@@ -456,7 +456,7 @@ export class DocumentsSchemaController {
 		// For simplicity, let's only support new schema features for explicit schema control mode
 		assert(
 			features.disallowedVersions.length === 0 || features.explicitSchemaControl,
-			"not supported",
+			0x949 /* not supported */,
 		);
 
 		// Desired schema by this session - almost all props are coming from arguments
@@ -505,14 +505,14 @@ export class DocumentsSchemaController {
 			assert(
 				boolToProp(this.explicitSchemaControl) ===
 					this.sessionSchema.runtime.explicitSchemaControl,
-				"explicitSchemaControl",
+				0x94a /* explicitSchemaControl */,
 			);
 			this.futureSchema = undefined;
 		} else {
 			this.sessionSchema = and(this.documentSchema, this.desiredSchema);
 			this.futureSchema = or(this.documentSchema, this.desiredSchema);
-			assert(this.sessionSchema.runtime.explicitSchemaControl === true, "legacy");
-			assert(this.futureSchema.runtime.explicitSchemaControl === true, "legacy");
+			assert(this.sessionSchema.runtime.explicitSchemaControl === true, 0x94b /* legacy */);
+			assert(this.futureSchema.runtime.explicitSchemaControl === true, 0x94c /* legacy */);
 			if (same(this.documentSchema, this.futureSchema)) {
 				this.futureSchema = undefined;
 			}
@@ -537,7 +537,10 @@ export class DocumentsSchemaController {
 		// race conditions. If we put any other number (including latest seq number), then we will have two clients
 		// (loading from two different summaries) with different numbers, and eventual consistency will be broken as schema
 		// change ops will be interpretted differently by those two clients.
-		assert(this.explicitSchemaControl || schema.refSeq === 0, "refSeq should be zero");
+		assert(
+			this.explicitSchemaControl || schema.refSeq === 0,
+			0x94d /* refSeq should be zero */,
+		);
 
 		return schema;
 	}
@@ -552,7 +555,7 @@ export class DocumentsSchemaController {
 			assert(
 				this.explicitSchemaControl &&
 					this.futureSchema.runtime.explicitSchemaControl === true,
-				"not legacy",
+				0x94e /* not legacy */,
 			);
 			return {
 				...this.futureSchema,
@@ -575,8 +578,14 @@ export class DocumentsSchemaController {
 		local: boolean,
 		sequenceNumber: number,
 	) {
-		assert(content.refSeq <= this.documentSchema.refSeq, "did we lose a message somewhere?");
-		assert(this.documentSchema.refSeq < sequenceNumber, "time should move forward only!");
+		assert(
+			content.refSeq <= this.documentSchema.refSeq,
+			0x94f /* did we lose a message somewhere? */,
+		);
+		assert(
+			this.documentSchema.refSeq < sequenceNumber,
+			0x950 /* time should move forward only! */,
+		);
 		if (content.refSeq !== this.documentSchema.refSeq) {
 			// CAS failed
 			return false;
@@ -586,7 +595,7 @@ export class DocumentsSchemaController {
 		// This will ensure we do not trip on our own messages that are no longer wanted as we processed someone else schema change message.
 		assert(
 			!local || (this.explicitSchemaControl && this.futureSchema !== undefined),
-			"not sending ops",
+			0x951 /* not sending ops */,
 		);
 
 		// Changes are in effect. Immediately check that this client understands these changes

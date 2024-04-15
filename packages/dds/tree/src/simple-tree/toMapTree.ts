@@ -132,7 +132,7 @@ function leafToMapTree(
 	schema: TreeNodeSchema,
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
 ): MapTree {
-	assert(schema.kind === NodeKind.Leaf, "Expected a leaf schema.");
+	assert(schema.kind === NodeKind.Leaf, 0x921 /* Expected a leaf schema. */);
 	if (!isTreeValue(data)) {
 		// This rule exists to protect against useless `toString` output like `[object Object]`.
 		// In this case, that's actually reasonable behavior, since object input is not compatible with Leaf schemas.
@@ -220,7 +220,7 @@ function arrayToMapTreeFields(
  * Used to determine which fallback values may be appropriate.
  */
 function arrayToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree {
-	assert(schema.kind === NodeKind.Array, "Expected an array schema.");
+	assert(schema.kind === NodeKind.Array, 0x922 /* Expected an array schema. */);
 	if (!isReadonlyArray(data)) {
 		throw new UsageError(`Input data is incompatible with Array schema: ${data}`);
 	}
@@ -248,7 +248,7 @@ function arrayToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTre
  * Used to determine which fallback values may be appropriate.
  */
 function mapToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree {
-	assert(schema.kind === NodeKind.Map, "Expected a Map schema.");
+	assert(schema.kind === NodeKind.Map, 0x923 /* Expected a Map schema. */);
 	if (!(data instanceof Map)) {
 		throw new UsageError(`Input data is incompatible with Map schema: ${data}`);
 	}
@@ -280,7 +280,7 @@ function mapToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree 
  * Used to determine which fallback values may be appropriate.
  */
 function objectToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree {
-	assert(schema.kind === NodeKind.Object, "Expected an Object schema.");
+	assert(schema.kind === NodeKind.Object, 0x924 /* Expected an Object schema. */);
 	if (typeof data !== "object" || data === null) {
 		throw new UsageError(`Input data is incompatible with Object schema: ${data}`);
 	}
@@ -301,7 +301,7 @@ function objectToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTr
 
 			// Note: SchemaFactory validates this at schema creation time, with a user-friendly error.
 			// So we don't expect to hit this, and if we do it is likely an internal bug.
-			assert(!fields.has(flexKey), "Keys must not be duplicated");
+			assert(!fields.has(flexKey), 0x925 /* Keys must not be duplicated */);
 			fields.set(flexKey, [mappedChildTree]);
 		}
 	}
@@ -313,7 +313,7 @@ function objectToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTr
 }
 
 function getObjectFieldSchema(schema: TreeNodeSchema, key: FieldKey): FieldSchema {
-	assert(schema.kind === NodeKind.Object, "Expected an Object schema.");
+	assert(schema.kind === NodeKind.Object, 0x926 /* Expected an Object schema. */);
 	const fields = schema.info as Record<string, ImplicitFieldSchema>;
 	if (fields[key] === undefined) {
 		fail(`Field "${key}" not found in schema "${schema.identifier}".`);

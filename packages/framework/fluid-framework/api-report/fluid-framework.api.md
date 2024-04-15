@@ -62,19 +62,6 @@ export type ConnectionStateType = ConnectionStateType.Disconnected | ConnectionS
 // @public
 export type ContainerAttachProps<T = unknown> = T;
 
-// @alpha
-export const ContainerErrorTypes: {
-    readonly clientSessionExpiredError: "clientSessionExpiredError";
-    readonly genericError: "genericError";
-    readonly throttlingError: "throttlingError";
-    readonly dataCorruptionError: "dataCorruptionError";
-    readonly dataProcessingError: "dataProcessingError";
-    readonly usageError: "usageError";
-};
-
-// @alpha
-export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
-
 // @public
 export interface ContainerSchema {
     readonly dynamicObjectTypes?: readonly LoadableObjectClass[];
@@ -316,6 +303,14 @@ export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<
 export type NodeFromSchemaUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchema<string, NodeKind, infer TNode> ? TNode : never;
 
 // @public
+export interface NodeInDocumentConstraint {
+    // (undocumented)
+    node: TreeNode;
+    // (undocumented)
+    type: "nodeInDocument";
+}
+
+// @public
 export enum NodeKind {
     Array = 1,
     Leaf = 3,
@@ -398,13 +393,18 @@ export type ScopedSchemaName<TScope extends string | undefined, TName extends nu
 export const SharedTree: ISharedObjectKind<ITree>;
 
 // @public
+export type TransactionConstraint = NodeInDocumentConstraint;
+
+// @public
 export const Tree: TreeApi;
 
 // @public
 export interface TreeApi extends TreeNodeApi {
     contains(node: TreeNode, other: TreeNode): boolean;
     runTransaction<TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void | "rollback"): void;
+    runTransaction<TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void | "rollback", preconditions?: TransactionConstraint[]): void;
     runTransaction<TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void | "rollback"): void;
+    runTransaction<TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void | "rollback", preconditions?: TransactionConstraint[]): void;
 }
 
 // @public
