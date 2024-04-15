@@ -14,24 +14,52 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": {
-				"types": "./lib/indexNode.d.ts",
-				"default": "./lib/indexNode.js"
+			"node": {
+				"import": {
+					"types": "./lib/indexNode.d.ts",
+					"default": "./lib/indexNode.js"
+				},
+				"require": {
+					"types": "./dist/indexNode.d.ts",
+					"default": "./dist/indexNode.js"
+				}
 			},
-			"require": {
-				"types": "./dist/indexNode.d.ts",
-				"default": "./dist/indexNode.js"
+			"default": {
+				"import": {
+					"types": "./lib/indexBrowser.d.ts",
+					"default": "./lib/indexBrowser.js"
+				},
+				"require": {
+					"types": "./dist/indexBrowser.d.ts",
+					"default": "./dist/indexBrowser.js"
+				}
+			}
+		},
+		"./bufferBrowser.js": {
+			"node": {
+				"import": {
+					"types": "./lib/bufferNode.d.ts",
+					"default": "./lib/bufferNode.js"
+				},
+				"require": {
+					"types": "./dist/bufferNode.d.ts",
+					"default": "./dist/bufferNode.js"
+				}
+			},
+			"default": {
+				"import": {
+					"types": "./lib/bufferBrowser.d.ts",
+					"default": "./lib/bufferBrowser.js"
+				},
+				"require": {
+					"types": "./dist/bufferBrowser.d.ts",
+					"default": "./dist/bufferBrowser.js"
+				}
 			}
 		}
 	},
-	"main": "dist/indexNode.js",
-	"browser": {
-		"./dist/indexNode.js": "./dist/indexBrowser.js",
-		"./dist/indexNode.d.ts": "./dist/indexBrowser.d.ts",
-		"./lib/indexNode.js": "./lib/indexBrowser.js",
-		"./lib/indexNode.d.ts": "./lib/indexBrowser.d.ts"
-	},
-	"types": "dist/indexNode.d.ts",
+	"main": "lib/indexNode.js",
+	"types": "lib/indexNode.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
