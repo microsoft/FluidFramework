@@ -239,7 +239,6 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		tree.blobs = {};
 		tree.groupId = groupId;
 		tree.trees = {};
-		tree.omitted = true;
 	}
 
 	private async readGroupId(tree: ISnapshotTreeEx): Promise<string | undefined> {
