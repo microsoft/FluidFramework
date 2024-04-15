@@ -14,23 +14,29 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": {
-				"types": "./lib/indexNode.d.ts",
-				"default": "./lib/indexNode.js"
+			"node": {
+				"import": {
+					"types": "./lib/indexNode.d.ts",
+					"default": "./lib/indexNode.js"
+				},
+				"require": {
+					"types": "./dist/indexNode.d.ts",
+					"default": "./dist/indexNode.js"
+				}
 			},
-			"require": {
-				"types": "./dist/indexNode.d.ts",
-				"default": "./dist/indexNode.js"
+			"default": {
+				"import": {
+					"types": "./lib/indexBrowser.d.ts",
+					"default": "./lib/indexBrowser.js"
+				},
+				"require": {
+					"types": "./dist/indexBrowser.d.ts",
+					"default": "./dist/indexBrowser.js"
+				}
 			}
 		}
 	},
 	"main": "lib/indexBrowser.js",
-	"browser": {
-		"./dist/indexNode.js": "./dist/indexBrowser.js",
-		"./dist/indexNode.d.ts": "./dist/indexBrowser.d.ts",
-		"./lib/indexNode.js": "./lib/indexBrowser.js",
-		"./lib/indexNode.d.ts": "./lib/indexBrowser.d.ts"
-	},
 	"types": "lib/indexBrowser.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
