@@ -29,6 +29,8 @@ import {
 	RevisionTag,
 	RevisionTagCodec,
 	SchemaAndPolicy,
+	SchemaPolicy,
+	TreeStoredSchemaRepository,
 } from "../core/index.js";
 import { JsonCompatibleReadOnly, brand } from "../util/index.js";
 
@@ -46,6 +48,10 @@ const summarizablesTreeKey = "indexes";
 export interface ExplicitCoreCodecVersions {
 	editManager: number;
 	message: number;
+}
+
+interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
+	schema: TreeStoredSchemaRepository;
 }
 
 /**
@@ -91,9 +97,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 	private readonly idCompressor: IIdCompressor;
 
-	private readonly schemaAndPolicy: SchemaAndPolicy;
-
 	protected readonly mintRevisionTag: () => RevisionTag;
+
+	private readonly schemaAndPolicy: ClonableSchemaAndPolicy;
 
 	/**
 	 * @param summarizables - Summarizers for all indexes used by this tree
@@ -114,11 +120,15 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
 		telemetryContextPrefix: string,
-		schemaAndPolicy: SchemaAndPolicy,
+		schema: TreeStoredSchemaRepository,
+		schemaPolicy: SchemaPolicy,
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
 
-		this.schemaAndPolicy = schemaAndPolicy;
+		this.schemaAndPolicy = {
+			schema,
+			policy: schemaPolicy,
+		};
 
 		assert(
 			runtime.idCompressor !== undefined,
@@ -141,12 +151,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			switch (args.type) {
 				case "append":
 					for (const c of args.newCommits) {
-						this.submitCommit(c);
+						this.submitCommit(c, this.schemaAndPolicy);
 					}
 					break;
 				case "replace":
 					if (getChangeReplaceType(args) === "transactionCommit") {
-						this.submitCommit(args.newCommits[0]);
+						this.submitCommit(args.newCommits[0], this.schemaAndPolicy);
 					}
 					break;
 				default:
@@ -220,11 +230,19 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * Submits an op to the Fluid runtime containing the given commit
 	 * @param commit - the commit to submit
 	 */
-	private submitCommit(commit: GraphCommit<TChange>, isResubmit = false): void {
-		// Edits should not be submitted until all transactions finish
+	private submitCommit(
+		commit: GraphCommit<TChange>,
+		schemaAndPolicy: ClonableSchemaAndPolicy,
+		isResubmit = false,
+	): void {
 		assert(
+			// Edits should not be submitted until all transactions finish
 			!this.getLocalBranch().isTransacting() || isResubmit,
 			0x68b /* Unexpected edit submitted during transaction */,
+		);
+		assert(
+			this.isAttached() === (this.detachedRevision === undefined),
+			"Detached revision should only be set when not attached",
 		);
 
 		// Edits submitted before the first attach are treated as sequenced because they will be included
@@ -239,23 +257,22 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 				this.detachedRevision,
 			);
 			this.editManager.advanceMinimumSequenceNumber(newRevision);
+		} else {
+			const message = this.messageCodec.encode(
+				{
+					commit,
+					sessionId: this.editManager.localSessionId,
+				},
+				{
+					schema: {
+						// Clone the schema to ensure that during resubmit the schema has not been mutated by later changes
+						schema: schemaAndPolicy.schema.clone(),
+						policy: schemaAndPolicy.policy,
+					},
+				},
+			);
+			this.submitLocalMessage(message, schemaAndPolicy);
 		}
-
-		// Don't submit the op if it is not attached
-		if (!this.isAttached()) {
-			return;
-		}
-
-		const message = this.messageCodec.encode(
-			{
-				commit,
-				sessionId: this.editManager.localSessionId,
-			},
-			{
-				schema: this.schemaAndPolicy ?? undefined,
-			},
-		);
-		this.submitLocalMessage(message);
 	}
 
 	protected processCore(
@@ -296,7 +313,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			commit: { revision },
 		} = this.messageCodec.decode(content, {});
 		const [commit] = this.editManager.findLocalCommit(revision);
-		this.submitCommit(commit, true);
+		const schemaAndPolicy = localOpMetadata as ClonableSchemaAndPolicy;
+		assert(
+			schemaAndPolicy.schema !== undefined && schemaAndPolicy.policy !== undefined,
+			"Local metadata must contain schema and policy.",
+		);
+		this.submitCommit(commit, schemaAndPolicy, true);
 	}
 
 	protected applyStashedOp(content: JsonCompatibleReadOnly): void {
