@@ -559,7 +559,9 @@ export class DocumentsSchemaController {
 	 * @returns Optional message to send.
 	 */
 	public maybeSendSchemaMessage(): IDocumentSchemaChangeMessage | undefined {
-		if (this.sendOp && this.futureSchema !== undefined) {
+		const sendOp = this.sendOp;
+		this.sendOp = false;
+		if (sendOp && this.futureSchema !== undefined) {
 			assert(
 				this.explicitSchemaControl &&
 					this.futureSchema.runtime.explicitSchemaControl === true,
@@ -570,7 +572,6 @@ export class DocumentsSchemaController {
 				refSeq: this.documentSchema.refSeq,
 			};
 		}
-		this.sendOp = false;
 	}
 
 	private validateSeqNumber(schemaSeqNumber: number, lastKnowSeqNumber, message: string) {

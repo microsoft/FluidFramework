@@ -369,6 +369,11 @@ describe("Runtime", () => {
 		assert(message !== undefined);
 		assert(message.runtime.opGroupingEnabled === true);
 
+		// Validate that client will attempt to send only one such message.
+		// This is important, as otherwise we will keep sending them forever. Not only this is useless,
+		// but it will also trip asserts as we will have two messages with same sequence number (due to op grouping)
+		assert(controller.maybeSendSchemaMessage() === undefined);
+
 		assert(
 			controller.processDocumentSchemaOp(
 				message,
