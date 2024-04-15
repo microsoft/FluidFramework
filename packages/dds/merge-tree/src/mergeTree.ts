@@ -2468,7 +2468,7 @@ export class MergeTree {
 						if (tileLabels) {
 							for (const tileLabel of tileLabels) {
 								// this depends on walking children in order
-								// the. The later, and right most children overwrite
+								// The later, and right most children overwrite
 								// whereas early, and left most do not overwrite
 								rightmostTiles[tileLabel] = segment;
 								leftmostTiles[tileLabel] ??= segment;
