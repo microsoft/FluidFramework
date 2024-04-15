@@ -15,7 +15,7 @@ import {
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
-import type { ISharedMap, IValueChanged } from "@fluidframework/map";
+import type { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,

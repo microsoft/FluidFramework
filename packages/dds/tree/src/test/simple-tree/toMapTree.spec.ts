@@ -10,7 +10,7 @@ import { MockHandle, validateAssertionError } from "@fluidframework/test-runtime
 import type { ImplicitAllowedTypes } from "../../../dist/index.js";
 import { EmptyKey, type FieldKey, type MapTree } from "../../core/index.js";
 import { leaf } from "../../domains/index.js";
-import { SchemaFactory, SchemaFactoryRecursive } from "../../simple-tree/index.js";
+import { SchemaFactory } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { InsertableContent } from "../../simple-tree/proxies.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -76,7 +76,7 @@ describe("toMapTree", () => {
 	});
 
 	it("recursive", () => {
-		const schemaFactory = new SchemaFactoryRecursive("test");
+		const schemaFactory = new SchemaFactory("test");
 		class Foo extends schemaFactory.objectRecursive("Foo", {
 			x: schemaFactory.optionalRecursive(() => Bar),
 		}) {}
@@ -124,7 +124,7 @@ describe("toMapTree", () => {
 	});
 
 	it("Fails when referenced schema has not yet been instantiated", () => {
-		const schemaFactory = new SchemaFactoryRecursive("test");
+		const schemaFactory = new SchemaFactory("test");
 
 		let Bar: any;
 		class Foo extends schemaFactory.objectRecursive("Foo", {

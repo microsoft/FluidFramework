@@ -3,16 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import type { ErasedType } from "@fluidframework/core-interfaces";
 import { DiscriminatedUnionDispatcher } from "../../codec/index.js";
-import {
-	Brand,
-	Erased,
-	MakeNominal,
-	brand,
-	brandErased,
-	fail,
-	invertMap,
-} from "../../util/index.js";
+import { MakeNominal, brand, fail, invertMap } from "../../util/index.js";
 import {
 	FieldKey,
 	FieldKindIdentifier,
@@ -144,9 +137,19 @@ export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
  * Opaque type erased handle to the encoded representation of the contents of a stored schema.
  * @internal
  */
-export interface ErasedTreeNodeSchemaDataFormat extends Erased<"TreeNodeSchemaDataFormat"> {}
-export interface BrandedTreeNodeSchemaDataFormat
-	extends Brand<TreeNodeSchemaDataFormat, ErasedTreeNodeSchemaDataFormat> {}
+export interface ErasedTreeNodeSchemaDataFormat extends ErasedType<"TreeNodeSchemaDataFormat"> {}
+
+function toErasedTreeNodeSchemaDataFormat(
+	data: TreeNodeSchemaDataFormat,
+): ErasedTreeNodeSchemaDataFormat {
+	return data as unknown as ErasedTreeNodeSchemaDataFormat;
+}
+
+export function toTreeNodeSchemaDataFormat(
+	data: ErasedTreeNodeSchemaDataFormat,
+): TreeNodeSchemaDataFormat {
+	return data as unknown as TreeNodeSchemaDataFormat;
+}
 
 /**
  * @internal
@@ -193,7 +196,7 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 				value: encodeFieldSchema(this.objectNodeFields.get(key) ?? fail("missing field")),
 			});
 		}
-		return brandErased<BrandedTreeNodeSchemaDataFormat>({
+		return toErasedTreeNodeSchemaDataFormat({
 			object: fieldsObject,
 		});
 	}
@@ -216,7 +219,7 @@ export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 	}
 
 	public override encode(): ErasedTreeNodeSchemaDataFormat {
-		return brandErased<BrandedTreeNodeSchemaDataFormat>({
+		return toErasedTreeNodeSchemaDataFormat({
 			map: encodeFieldSchema(this.mapFields),
 		});
 	}
@@ -243,7 +246,7 @@ export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
 	}
 
 	public override encode(): ErasedTreeNodeSchemaDataFormat {
-		return brandErased<BrandedTreeNodeSchemaDataFormat>({
+		return toErasedTreeNodeSchemaDataFormat({
 			leaf: encodeValueSchema(this.leafValue),
 		});
 	}

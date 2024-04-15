@@ -386,7 +386,7 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 			let root = config.detachedFieldIndex.tryGetEntry(id);
 			if (root === undefined) {
 				const tree = tryGetFromNestedMap(config.refreshers, id.major, id.minor);
-				assert(tree !== undefined, "refresher data not found");
+				assert(tree !== undefined, 0x928 /* refresher data not found */);
 				buildTrees(id, [tree], config, visitor);
 				root = config.detachedFieldIndex.getEntry(id);
 			}

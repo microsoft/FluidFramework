@@ -3,17 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export {
-	brand,
-	Brand,
-	BrandedType,
-	fromErased,
-	Erased,
-	ErasedType,
-	NameFromBranded,
-	ValueFromBranded,
-	brandErased,
-} from "./brand.js";
+export { brand, Brand, BrandedType, NameFromBranded, ValueFromBranded } from "./brand.js";
 export { brandedNumberType, brandedStringType } from "./typeboxBrand.js";
 export { brandOpaque, extractFromOpaque, ExtractFromOpaque, Opaque } from "./opaque.js";
 export {

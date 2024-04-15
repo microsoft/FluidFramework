@@ -129,7 +129,7 @@ function makeModularChangeCodec(
 	/**
 	 * The codec version for the generic field kind.
 	 */
-	const genericFieldKindFormatVersion = 0;
+	const genericFieldKindFormatVersion = 1;
 	const fieldChangesetCodecs: Map<
 		FieldKindIdentifier,
 		{
@@ -168,7 +168,7 @@ function makeModularChangeCodec(
 
 			encodeNode: (nodeId: NodeId): EncodedNodeChangeset => {
 				const node = tryGetFromNestedMap(nodeChanges, nodeId.revision, nodeId.localId);
-				assert(node !== undefined, "Unknown node ID");
+				assert(node !== undefined, 0x92e /* Unknown node ID */);
 				return encodeNodeChangesForJson(node, fieldContext);
 			},
 

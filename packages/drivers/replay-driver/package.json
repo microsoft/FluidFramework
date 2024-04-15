@@ -15,11 +15,11 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/replay-driver-public.d.ts",
+				"types": "./lib/public.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/replay-driver-public.d.ts",
+				"types": "./dist/public.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
@@ -34,21 +34,21 @@
 			}
 		}
 	},
-	"main": "dist/index.js",
-	"types": "./dist/replay-driver-public.d.ts",
+	"main": "lib/index.js",
+	"types": "lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
-		"api-extractor:esnext": "api-extractor run --local",
+		"api-extractor:commonjs": "flub generate entrypoints --outFileAlpha legacy --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outFileAlpha legacy --outDir ./lib --node10TypeCompat",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "fluid-build . --task api",
+		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
+		"check:are-the-types-wrong": "attw --pack .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
+		"clean": "rimraf --glob dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "fluid-build --task format .",
@@ -71,9 +71,9 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.6.2",
-		"@fluid-tools/build-cli": "^0.35.0",
+		"@fluid-tools/build-cli": "^0.37.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.35.0",
+		"@fluidframework/build-tools": "^0.37.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@fluidframework/replay-driver-previous": "npm:@fluidframework/replay-driver@2.0.0-internal.8.0.0",
 		"@microsoft/api-extractor": "^7.42.3",
@@ -88,14 +88,6 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:docs": {
-				"dependsOn": [
-					"...",
-					"api-extractor:commonjs",
-					"api-extractor:esnext"
-				],
-				"script": false
-			},
 			"tsc": [
 				"...",
 				"typetests:gen"

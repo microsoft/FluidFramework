@@ -8,8 +8,8 @@ import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../co
 import type { FieldChangeEncodingContext } from "../modular-schema/index.js";
 
 import type { OptionalChangeset } from "./optionalFieldChangeTypes.js";
-import { makeOptionalFieldCodec as makeV0Codec } from "./optionalFieldCodecV0.js";
 import { makeOptionalFieldCodec as makeV1Codec } from "./optionalFieldCodecV1.js";
+import { makeOptionalFieldCodec as makeV2Codec } from "./optionalFieldCodecV2.js";
 
 export const makeOptionalFieldCodecFamily = (
 	revisionTagCodec: IJsonCodec<
@@ -20,6 +20,6 @@ export const makeOptionalFieldCodecFamily = (
 	>,
 ): ICodecFamily<OptionalChangeset, FieldChangeEncodingContext> =>
 	makeCodecFamily([
-		[0, makeV0Codec(revisionTagCodec)],
 		[1, makeV1Codec(revisionTagCodec)],
+		[2, makeV2Codec(revisionTagCodec)],
 	]);
