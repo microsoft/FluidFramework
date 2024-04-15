@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// Note: The exports map in package.json will correct this import to "./bufferNode.js" in node environments
-import { IsoBuffer } from "./bufferBrowser.js";
+import { IsoBuffer } from "./indexNode";
 
 /**
  * Converts the provided {@link https://en.wikipedia.org/wiki/Base64 | base64}-encoded string

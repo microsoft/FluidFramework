@@ -24,7 +24,7 @@ export { Heap, IComparer, IHeapNode, NumberComparer } from "./heap";
  * desired.
  */
 // eslint-disable-next-line no-restricted-syntax
-export * from "./indexBrowser.js";
+export * from "./indexNode";
 export { Lazy } from "./lazy";
 export { IsomorphicPerformance } from "./performanceIsomorphic";
 export { PromiseCache, PromiseCacheExpiry, PromiseCacheOptions } from "./promiseCache";
