@@ -411,15 +411,6 @@ async function generateEntrypoints(
 				namedExports,
 			});
 		} else {
-			// Without any export this module is invalid.
-			// This is somewhat useful while standing up FF to recognize invalid/unused
-			// cases that should not be exported. In the future for deprecation support
-			// this could generate an empty export block when package.json lists this
-			// path.
-			// It is also good to generate a file versus not to avoid leaving stale
-			// files around. If avoiding generation in the future, then file existence
-			// should be checked and the file removed.
-			//
 			// At this point we already know that package "export" has a request
 			// for this entrypoint. Warn of emptiness, but make it valid for use.
 			log.warning(`no exports for ${outFile} using API level ${apiLevel}`);
