@@ -236,8 +236,7 @@ class MyMapSchema extends sf.map('MyMap', [sf.number, sf.string]) { ... }
 
 #### Recursive schema
 
-Additionally, you can create recursive types (nodes that include nodes of the same type in their subtree hierarchy). Because of current limitation in TypeScript, doing this requires 
-specific versions of the node types: `objectRecursive()`, `arrayRecursive()`, and `mapRecursive`.
+Additionally, you can create recursive types (nodes that include nodes of the same type in their subtree hierarchy). Because of current limitation in TypeScript, doing this requires specific versions of the node types: `objectRecursive()`, `arrayRecursive()`, and `mapRecursive`.
 
 Due to limitations of TypeScript, recursive schema may not produce type errors when declared incorrectly. Using `ValidateRecursiveSchema` helps ensure that mistakes made in the definition of a recursive schema will introduce a compile error.
 
@@ -514,9 +513,9 @@ Additionally, the `TreeView` object includes 3 events that operate over the whol
 `SharedTree` makes creating an undo and redo stack very simple. By listening for the `commitApplied` event on the `TreeView` object, you can get a `Revertible` object.
 `Revertible` objects come in three flavors:
 
-- Default - a normal change made in the local client that would go on the undo stack
-- Undo - a change that is the result of reverting a Default or Redo `Revertible` object that would go on the redo stack
-- Redo - a change that is the result of reverting an Undo `Revertible` object that would go on the undo stack
+-   Default: a normal change made in the local client that would go on the undo stack
+-   Undo: a change that is the result of reverting a Default or Redo `Revertible` object that would go on the redo stack
+-   Redo: a change that is the result of reverting an Undo `Revertible` object that would go on the undo stack
 
 To undo a change, call the `revert` method on the `Revertible` object. This will return the `TreeView` object to the state last observed by the local client. If changes were made by other clients that are incompatible with the state of the tree after undo,
 these changes will also be reverted. Calling `revert` on the Redo `Revertible` object will put everything back to the way it was if the change was unintentially destructive.
@@ -578,6 +577,7 @@ Tree.runTransaction(myNode, (node) => {
     ) return "rollback";
 })
 ```
+
 You can also pass a `TreeView` object to `runTransaction()`.
 
 ```typescript
