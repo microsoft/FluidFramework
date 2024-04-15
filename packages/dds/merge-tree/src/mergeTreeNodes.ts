@@ -397,7 +397,17 @@ export class MergeBlock implements IMergeNodeCommon {
 	public ordinal: string = "";
 	public cachedLength: number | undefined = 0;
 
+	/**
+	 * Maps each tile label in this block to the rightmost (i.e. furthest) marker associated with that tile label.
+	 * When combined with the tree structure of MergeBlocks, this allows accelerated queries for nearest tile
+	 * with a certain label before a given position
+	 */
 	public rightmostTiles: Readonly<MapLike<Marker>>;
+	/**
+	 * Maps each tile label in this block to the leftmost (i.e. nearest) marker associated with that tile label.
+	 * When combined with the tree structure of MergeBlocks, this allows accelerated queries for nearest tile
+	 * with a certain label before a given position
+	 */
 	public leftmostTiles: Readonly<MapLike<Marker>>;
 
 	isLeaf(): this is ISegment {
