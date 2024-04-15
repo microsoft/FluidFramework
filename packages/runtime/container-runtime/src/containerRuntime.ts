@@ -1969,6 +1969,12 @@ export class ContainerRuntime
 		this.removeAllListeners();
 	}
 
+	/**
+	 * Utility function to check if any blobs under a snapshot tree is missing and if so, then set
+	 * omitted flag to true for that snapshot tree.
+	 * @param snapshotTree - snapshotTree to be evaluated for missing blobs.
+	 * @param blobContents - blobContents of the snapshot.
+	 */
 	private evaluateSnapshotForOmittedBlobContents(
 		snapshotTree: ISnapshotTree,
 		blobContents: Map<string, ArrayBuffer>,
