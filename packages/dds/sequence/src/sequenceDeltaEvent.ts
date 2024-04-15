@@ -76,7 +76,7 @@ export abstract class SequenceEvent<
 
 	/**
 	 * The in-order ranges affected by this delta.
-	 * These are not necessarily continuous.
+	 * These are not necessarily contiguous.
 	 *
 	 * @remarks - If processing code doesn't care about the order of the ranges, it may instead consider using the
 	 * {@link @fluidframework/merge-tree#IMergeTreeDeltaCallbackArgs.deltaSegments|deltaSegments} field on {@link SequenceEvent.deltaArgs|deltaArgs}.
