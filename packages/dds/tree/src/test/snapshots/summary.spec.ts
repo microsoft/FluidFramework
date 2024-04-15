@@ -10,7 +10,6 @@ import { generateTestTrees } from "./testTrees.js";
 import { takeSummarySnapshot } from "./utils.js";
 
 describe("snapshot tests", () => {
-	useSnapshotDirectory();
 	for (const treeEncodeType of [
 		TreeCompressionStrategy.Compressed,
 		TreeCompressionStrategy.Uncompressed,
