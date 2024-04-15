@@ -4,7 +4,7 @@
  */
 
 // As a safety net against unintentionally exporting types tagged @internal,
-// we re-export from '/legacy' rathen than '/internal'.
+// we re-export from '/legacy' rather than '/internal'.
 /* eslint-disable import/no-internal-modules -- Allow importing from '/legacy' */
 
 export { ContainerErrorTypes } from "@fluidframework/container-definitions/legacy";
