@@ -701,9 +701,7 @@ export class ModularChangeFamily
 			tagChange(over.change.fieldChanges, revisionFromTaggedChange(over)),
 			genId,
 			crossFieldTable,
-			() => true,
 			rebaseMetadata,
-			constraintState,
 		);
 
 		const rebasedNodes: ChangeAtomIdMap<NodeChangeset> = new Map();
@@ -730,7 +728,6 @@ export class ModularChangeFamily
 				taggedBaseNodeChange,
 				genId,
 				crossFieldTable,
-				() => true,
 				rebaseMetadata,
 				constraintState,
 				existenceState,
@@ -795,19 +792,13 @@ export class ModularChangeFamily
 		over: TaggedChange<FieldChangeMap>,
 		genId: IdAllocator,
 		crossFieldTable: RebaseTable,
-		fieldFilter: (baseChange: FieldChange, newChange: FieldChange | undefined) => boolean,
 		revisionMetadata: RebaseRevisionMetadata,
-		constraintState: ConstraintState,
 		existenceState: NodeExistenceState = NodeExistenceState.Alive,
 	): FieldChangeMap {
 		const rebasedFields: FieldChangeMap = new Map();
 
 		// Rebase fields contained in the base changeset
 		for (const [field, baseChanges] of over.change) {
-			if (!fieldFilter(baseChanges, change.get(field))) {
-				continue;
-			}
-
 			const fieldChange: FieldChange = change.get(field) ?? {
 				fieldKind: genericFieldKind.identifier,
 				change: brand(newGenericChangeset()),
@@ -918,7 +909,6 @@ export class ModularChangeFamily
 		over: TaggedChange<NodeChangeset | undefined>,
 		genId: IdAllocator,
 		crossFieldTable: RebaseTable,
-		fieldFilter: (baseChange: FieldChange, newChange: FieldChange | undefined) => boolean,
 		revisionMetadata: RebaseRevisionMetadata,
 		constraintState: ConstraintState,
 		existenceState: NodeExistenceState = NodeExistenceState.Alive,
@@ -941,9 +931,7 @@ export class ModularChangeFamily
 			baseMap,
 			genId,
 			crossFieldTable,
-			fieldFilter,
 			revisionMetadata,
-			constraintState,
 			existenceState,
 		);
 
