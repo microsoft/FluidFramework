@@ -13,9 +13,9 @@ import { FileDeltaStorageService } from "./fileDeltaStorageService.js";
  * The DocumentService manages the different endpoints for connecting to
  * underlying storage for file document service.
  */
-// eslint-disable-next-line import/namespace
 export class FileDocumentService
 	extends TypedEventEmitter<api.IDocumentServiceEvents>
+	// eslint-disable-next-line import/namespace
 	implements api.IDocumentService
 {
 	constructor(

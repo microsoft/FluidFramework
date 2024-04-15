@@ -62,19 +62,6 @@ export type ConnectionStateType = ConnectionStateType.Disconnected | ConnectionS
 // @public
 export type ContainerAttachProps<T = unknown> = T;
 
-// @alpha
-export const ContainerErrorTypes: {
-    readonly clientSessionExpiredError: "clientSessionExpiredError";
-    readonly genericError: "genericError";
-    readonly throttlingError: "throttlingError";
-    readonly dataCorruptionError: "dataCorruptionError";
-    readonly dataProcessingError: "dataProcessingError";
-    readonly usageError: "usageError";
-};
-
-// @alpha
-export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
-
 // @public
 export interface ContainerSchema {
     readonly dynamicObjectTypes?: readonly LoadableObjectClass[];
