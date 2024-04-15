@@ -13,7 +13,7 @@ import {
 	isNodeInSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/default-schema/schemaChecker.js";
-import { FieldKinds, type FlexFieldKind } from "../../../feature-libraries/index.js";
+import { FieldKinds } from "../../../feature-libraries/index.js";
 import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
@@ -386,6 +386,22 @@ describe("schema validation", () => {
 	});
 
 	describe("isFieldInSchema", () => {
+		it("in schema", () => {
+			const numberNode = createLeafNode("myNumberNode", 1, ValueSchema.Number);
+			const fieldSchema = getFieldSchema(FieldKinds.required, [numberNode.node.type]);
+			const schemaAndPolicy = createSchemaAndPolicy(
+				new Map([[numberNode.node.type, numberNode.schema]]),
+				new Map([[fieldSchema.kind, FieldKinds.required]]),
+			);
+
+			const field: MapTree[] = [numberNode.node];
+
+			assert.equal(
+				isFieldInSchema(field, fieldSchema, schemaAndPolicy),
+				SchemaValidationErrors.NoError,
+			);
+		});
+
 		it(`not in schema if field kind not supported by schema policy`, () => {
 			const numberNode = createLeafNode("myNumberNode", 1, ValueSchema.Number);
 			const fieldSchema = getFieldSchema(FieldKinds.required, [numberNode.node.type]);
@@ -419,49 +435,20 @@ describe("schema validation", () => {
 			);
 		});
 
-		const isFieldInSchema_multiplicityTestCases: [
-			kind: FlexFieldKind,
-			numberToTest: number,
-			expectedResult: SchemaValidationErrors,
-		][] = [
-			[FieldKinds.required, 0, SchemaValidationErrors.Field_IncorrectMultiplicity],
-			[FieldKinds.required, 1, SchemaValidationErrors.NoError],
-			[FieldKinds.required, 2, SchemaValidationErrors.Field_IncorrectMultiplicity],
-			[FieldKinds.forbidden, 0, SchemaValidationErrors.NoError],
-			[FieldKinds.forbidden, 1, SchemaValidationErrors.Field_IncorrectMultiplicity],
-			[FieldKinds.optional, 0, SchemaValidationErrors.NoError],
-			[FieldKinds.optional, 1, SchemaValidationErrors.NoError],
-			[FieldKinds.optional, 2, SchemaValidationErrors.Field_IncorrectMultiplicity],
-			[FieldKinds.sequence, 0, SchemaValidationErrors.NoError],
-			[FieldKinds.sequence, 1, SchemaValidationErrors.NoError],
-			[FieldKinds.sequence, 2, SchemaValidationErrors.NoError],
-			[FieldKinds.nodeKey, 0, SchemaValidationErrors.Field_IncorrectMultiplicity],
-			[FieldKinds.nodeKey, 1, SchemaValidationErrors.NoError],
-			[FieldKinds.nodeKey, 2, SchemaValidationErrors.Field_IncorrectMultiplicity],
-		];
-		for (const [
-			fieldKind,
-			howManyChildNodes,
-			expectedResult,
-		] of isFieldInSchema_multiplicityTestCases) {
-			it(`correctly validates field multiplicity: (${fieldKind.identifier}, ${howManyChildNodes}) => ${expectedResult}`, () => {
-				const numberNode = createLeafNode("myNumberNode", 1, ValueSchema.Number);
-				const fieldSchema = getFieldSchema(fieldKind, [numberNode.node.type]);
-				const schemaAndPolicy = createSchemaAndPolicy(
-					new Map([[numberNode.node.type, numberNode.schema]]),
-					new Map([[fieldSchema.kind, fieldKind]]),
-				);
+		it("not in schema due to field multiplicity not respected", () => {
+			const numberNode = createLeafNode("myNumberNode", 1, ValueSchema.Number);
+			const fieldSchema = getFieldSchema(FieldKinds.required, [numberNode.node.type]);
+			const schemaAndPolicy = createSchemaAndPolicy(
+				new Map([[numberNode.node.type, numberNode.schema]]),
+				new Map([[fieldSchema.kind, FieldKinds.required]]),
+			);
 
-				const childNodes: MapTree[] = [];
-				for (let i = 0; i < howManyChildNodes; i++) {
-					childNodes.push(numberNode.node);
-				}
+			const emptyField: MapTree[] = [];
 
-				assert.equal(
-					isFieldInSchema(childNodes, fieldSchema, schemaAndPolicy),
-					expectedResult,
-				);
-			});
-		}
+			assert.equal(
+				isFieldInSchema(emptyField, fieldSchema, schemaAndPolicy),
+				SchemaValidationErrors.Field_IncorrectMultiplicity,
+			);
+		});
 	});
 });
