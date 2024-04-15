@@ -566,13 +566,6 @@ function createArrayNodeProxy(
 	allowAdditionalProperties: boolean,
 	customTargetObject?: object,
 ): TreeArrayNode {
-	if (customTargetObject !== undefined) {
-		// This causes `JSON.stringify` to give the same output as if the proxy were truly an array.
-		// Otherwise, it will stringify like an object (e.g. `{"0": ..., "1": ...}`) for a `customTargetObject`.
-		Reflect.defineProperty(customTargetObject, "toJSON", {
-			value: () => Array.from(proxy as any),
-		});
-	}
 	const targetObject = customTargetObject ?? [];
 
 	// Create a 'dispatch' object that this Proxy forwards to instead of the proxy target, because we need
@@ -753,12 +746,17 @@ export function arraySchema<
 			setFlexNode(proxy, flexNode);
 			return proxy as unknown as schema;
 		}
+
+		public toJSON(): unknown {
+			// This override causes the class instance to `JSON.stringify` as `[a, b]` rather than `{0: a, 1: b}`.
+			return Array.from(this as unknown as TreeArrayNode);
+		}
 	}
 
 	// Setup array functionality
 	Object.defineProperties(schema.prototype, arrayNodePrototypeProperties);
 
-	return schema as TreeNodeSchemaClass<
+	return schema as typeof base as TreeNodeSchemaClass<
 		TName,
 		NodeKind.Array,
 		TreeArrayNode<T> & WithType<TName>,

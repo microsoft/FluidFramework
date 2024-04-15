@@ -4,59 +4,31 @@
  */
 
 import { strict as assert } from "assert";
-
-import {
-	ImplicitAllowedTypes,
-	InsertableTreeFieldFromImplicitField,
-	InsertableTreeNodeFromImplicitAllowedTypes,
-	NodeKind,
-	SchemaFactory,
-	TreeArrayNode,
-	TreeFieldFromImplicitField,
-	TreeNodeSchema,
-} from "../../simple-tree/index.js";
-
+import { SchemaFactory } from "../../simple-tree/index.js";
 import { hydrate } from "./utils.js";
 import { Mutable } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { asIndex } from "../../simple-tree/arrayNode.js";
 
-type ArrayNodeSchema<T extends ImplicitAllowedTypes> = TreeNodeSchema<
-	string,
-	NodeKind.Array,
-	TreeArrayNode<T>,
-	Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-	true
->;
-
-const schemaFactory = new SchemaFactory("Test");
-
-function hydrateArray<TContent extends TreeNodeSchema | readonly TreeNodeSchema[]>(
-	schemaType: "structural" | "class-based",
-	contentType: TContent,
-	content?: InsertableTreeFieldFromImplicitField<ArrayNodeSchema<TContent>>,
-): TreeFieldFromImplicitField<ArrayNodeSchema<TContent>> {
-	const schema =
-		schemaType === "structural"
-			? schemaFactory.array(contentType)
-			: schemaFactory.array("Array", contentType);
-
-	return hydrate(schema, content ?? []);
-}
+const schemaFactory = new SchemaFactory("ArrayNodeTest");
+const structuralArray = schemaFactory.array(schemaFactory.number);
+const classBasedArray = schemaFactory.array("Array", schemaFactory.number);
 
 describe("ArrayNode", () => {
 	describe("created via structural schema", () => {
-		testArrayFromSchemaType("structural");
+		testArrayFromSchemaType(structuralArray);
 	});
 
 	describe("created via class-based schema", () => {
-		testArrayFromSchemaType("class-based");
+		testArrayFromSchemaType(classBasedArray);
 	});
 
 	// Tests which should behave the same for both "structural" and "class-based" arrays can be added in this function to avoid duplication.
-	function testArrayFromSchemaType(schemaType: "structural" | "class-based"): void {
+	function testArrayFromSchemaType(
+		schemaType: typeof structuralArray | typeof classBasedArray,
+	): void {
 		it("fails at runtime if attempting to set content via index assignment", () => {
-			const array = hydrateArray(schemaType, schemaFactory.number, [0]);
+			const array = hydrate(schemaType, [0]);
 			const mutableArray = array as Mutable<typeof array>;
 			assert.equal(mutableArray.length, 1);
 			assert.throws(() => (mutableArray[0] = 3)); // An index within the array that already has an element
@@ -66,7 +38,7 @@ describe("ArrayNode", () => {
 
 		it("stringifies in the same way as a JS array", () => {
 			const jsArray = [0, 1, 2];
-			const array = hydrateArray(schemaType, schemaFactory.number, jsArray);
+			const array = hydrate(schemaType, jsArray);
 			assert.equal(JSON.stringify(array), JSON.stringify(jsArray));
 		});
 	}
