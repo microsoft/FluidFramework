@@ -66,16 +66,21 @@ export {
 
 export type {
 	DeserializeCallback,
+	InteriorSequencePlace,
 	IInterval,
 	IIntervalCollectionEvent,
 	IIntervalCollection,
+	IntervalIndex,
+	IntervalStickiness,
 	ISequenceDeltaRange,
 	ISerializableInterval,
 	ISerializedInterval,
 	ISharedIntervalCollection,
 	ISharedSegmentSequenceEvents,
 	ISharedString,
+	SequencePlace,
 	SharedStringSegment,
+	Side,
 } from "@fluidframework/sequence/internal";
 
 export {
