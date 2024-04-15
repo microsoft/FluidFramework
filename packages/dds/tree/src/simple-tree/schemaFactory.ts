@@ -415,7 +415,8 @@ export class SchemaFactory<
 	> {
 		return mapSchema(
 			this.nodeSchema(name, NodeKind.Map, allowedTypes, implicitlyConstructable),
-			customizable,
+			// The current policy is customizable nodes don't get fake prototypes.
+			!customizable,
 		);
 	}
 

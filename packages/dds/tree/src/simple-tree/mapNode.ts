@@ -84,7 +84,8 @@ const handler: ProxyHandler<TreeMapNode> = {
 /**
  * Define a {@link TreeNodeSchema} for a {@link (TreeArrayNode:interface)}.
  *
- * @param name - Unique identifier for this schema including the factory's scope.
+ * @param base - base schema type to extend.
+ * @param useMapPrototype - should this type emulate a ES6 Map object (by faking its prototype with a proxy).
  */
 export function mapSchema<
 	TName extends string,
@@ -99,7 +100,7 @@ export function mapSchema<
 		ImplicitlyConstructable,
 		T
 	>,
-	customizable: boolean,
+	useMapPrototype: boolean,
 ) {
 	type TChild = TreeNodeFromImplicitAllowedTypes<T>;
 	class schema extends base implements TreeMapNode<T> {
@@ -120,12 +121,12 @@ export function mapSchema<
 						>,
 				  );
 
-			if (customizable) {
-				setFlexNode(this, flexNode);
-			} else {
+			if (useMapPrototype) {
 				const proxy = new Proxy<schema>(this, handler);
 				setFlexNode(proxy, flexNode);
 				return proxy;
+			} else {
+				setFlexNode(this, flexNode);
 			}
 		}
 
