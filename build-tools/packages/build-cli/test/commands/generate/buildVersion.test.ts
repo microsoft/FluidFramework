@@ -15,6 +15,10 @@ const test_tags = [
 	"client_v2.0.0-rc.1.0.0",
 	"client_v2.0.0-rc.1.0.1",
 	"client_v2.0.0-rc.2.0.0",
+	"client_v2.0.0",
+	"client_v2.0.1",
+	"client_v2.1.0",
+	"client_v2.1.1",
 	"build-tools_v0.5.2002",
 	"build-tools_v0.4.2001",
 	"build-tools_v0.4.2000",
@@ -428,6 +432,81 @@ describe("generate:buildVersion", () => {
 		.it("RC version, release", (ctx) => {
 			expect(ctx.stdout).to.contain("version=2.0.0-rc.3.0.0");
 			expect(ctx.stdout).to.contain("isLatest=false");
+		});
+
+	test
+		.env({
+			VERSION_BUILDNUMBER: "212045",
+			VERSION_TAGNAME: "client",
+			TEST_BUILD: "false",
+			VERSION_RELEASE: "release",
+			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+		})
+		.stdout()
+		.command(["generate:buildVersion", "--fileVersion", "2.0.0", "--tags", ...test_tags])
+		.it("2.0 version, release", (ctx) => {
+			expect(ctx.stdout).to.contain("version=2.0.0");
+			expect(ctx.stdout).to.contain("isLatest=false");
+		});
+
+	test
+		.env({
+			VERSION_BUILDNUMBER: "212045",
+			VERSION_TAGNAME: "client",
+			TEST_BUILD: "false",
+			VERSION_RELEASE: "prerelease",
+			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+		})
+		.stdout()
+		.command(["generate:buildVersion", "--fileVersion", "2.0.0", "--tags", ...test_tags])
+		.it("2.0 version, prerelease", (ctx) => {
+			expect(ctx.stdout).to.contain("version=2.0.0-212045");
+			expect(ctx.stdout).to.contain("isLatest=false");
+		});
+
+	test
+		.env({
+			VERSION_BUILDNUMBER: "212045",
+			VERSION_TAGNAME: "client",
+			TEST_BUILD: "true",
+			VERSION_RELEASE: "prerelease",
+			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+		})
+		.stdout()
+		.command(["generate:buildVersion", "--fileVersion", "2.0.0", "--tags", ...test_tags])
+		.it("2.0 version, test", (ctx) => {
+			expect(ctx.stdout).to.contain("version=0.0.0-212045-test");
+			expect(ctx.stdout).to.contain("isLatest=false");
+		});
+
+	test
+		.env({
+			VERSION_BUILDNUMBER: "212045",
+			VERSION_TAGNAME: "client",
+			TEST_BUILD: "false",
+			VERSION_RELEASE: "release",
+			VERSION_INCLUDE_INTERNAL_VERSIONS: "True",
+		})
+		.stdout()
+		.command(["generate:buildVersion", "--fileVersion", "2.1.2", "--tags", ...test_tags])
+		.it("2.1.2 version returns isLatest true", (ctx) => {
+			expect(ctx.stdout).to.contain("version=2.1.2");
+			expect(ctx.stdout).to.contain("isLatest=true");
+		});
+
+	test
+		.env({
+			VERSION_BUILDNUMBER: "212045",
+			VERSION_TAGNAME: "client",
+			TEST_BUILD: "false",
+			VERSION_RELEASE: "release",
+			VERSION_INCLUDE_INTERNAL_VERSIONS: "True",
+		})
+		.stdout()
+		.command(["generate:buildVersion", "--fileVersion", "2.2.0", "--tags", ...test_tags])
+		.it("2.2.0 version returns isLatest true", (ctx) => {
+			expect(ctx.stdout).to.contain("version=2.2.0");
+			expect(ctx.stdout).to.contain("isLatest=true");
 		});
 });
 
