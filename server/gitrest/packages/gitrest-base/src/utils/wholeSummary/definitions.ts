@@ -4,13 +4,16 @@
  */
 
 import { IBlob, ITree } from "@fluidframework/gitresources";
-import { IRepositoryManager } from "../definitions";
+import { IRepositoryManager, type IRepoManagerParams } from "../definitions";
+import type { InMemoryRepoManagerFactory } from "../helpers";
 
 export interface IWholeSummaryOptions {
 	documentId: string;
 	repoManager: IRepositoryManager;
+	repoManagerParams: IRepoManagerParams;
 	lumberjackProperties: Record<string, any>;
 	externalStorageEnabled: boolean;
+	inMemoryRepoManagerFactory: InMemoryRepoManagerFactory;
 }
 
 /**

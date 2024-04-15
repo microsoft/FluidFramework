@@ -32,10 +32,12 @@ export {
 } from "./gitWholeSummaryManager";
 export {
 	checkSoftDeleted,
+	InMemoryRepoManagerFactory,
 	exists,
 	getExternalWriterParams,
 	getFilesystemManagerFactory,
 	getGitDirectory,
+	getGitManagerFactoryParamsFromConfig,
 	getLumberjackBasePropertiesFromRepoManagerParams,
 	getRepoManagerFromWriteAPI,
 	getRepoManagerParamsFromRequest,

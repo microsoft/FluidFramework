@@ -6,6 +6,7 @@
 import { PathLike, Stats } from "fs";
 import * as path from "path";
 import { Request } from "express";
+import type { Provider } from "nconf";
 import {
 	IGetRefParamsExternal,
 	IWholeFlatSummary,
@@ -17,6 +18,7 @@ import {
 	HttpProperties,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
+import { ExternalStorageManager, NullExternalStorageManager } from "../externalStorageManager";
 import {
 	Constants,
 	IExternalWriterConfig,
@@ -25,11 +27,15 @@ import {
 	IRepoManagerParams,
 	IRepositoryManagerFactory,
 	IStorageRoutingId,
+	type IRepositoryManager,
+	type IStorageDirectoryConfig,
 } from "./definitions";
 import {
 	BaseGitRestTelemetryProperties,
 	GitRestLumberEventName,
 } from "./gitrestTelemetryDefinitions";
+import { MemFsManagerFactory } from "./filesystems";
+import { IsomorphicGitManagerFactory } from "./isomorphicgitManager";
 
 /**
  * Validates that the input encoding is valid
@@ -340,5 +346,93 @@ export async function checkSoftDeleted(
 			error,
 		);
 		throw error;
+	}
+}
+
+export interface IGitManagerFactoryParams {
+	storageDirectoryConfig: IStorageDirectoryConfig;
+	gitLibraryName: string;
+	apiMetricsSamplingPeriod?: number;
+	enableRepositoryManagerMetrics: boolean;
+	repoPerDocEnabled: boolean;
+	enableSlimGitInit: boolean;
+	externalStorageManager: ExternalStorageManager;
+}
+
+export function getGitManagerFactoryParamsFromConfig(config: Provider): IGitManagerFactoryParams {
+	const storageDirectoryConfig: IStorageDirectoryConfig = config.get("storageDir") ?? {
+		useRepoOwner: true,
+	};
+	const gitLibraryName: string = config.get("git:lib:name") ?? "isomporphic-git";
+
+	const apiMetricsSamplingPeriod: number | undefined = config.get("git:apiMetricsSamplingPeriod");
+
+	const repoPerDocEnabled: boolean = config.get("git:repoPerDocEnabled") ?? false;
+	const enableRepositoryManagerMetrics: boolean =
+		config.get("git:enableRepositoryManagerMetrics") ?? false;
+	const enableSlimGitInit: boolean = config.get("git:enableSlimGitInit") ?? false;
+
+	const externalStorageManager = new ExternalStorageManager(config);
+
+	return {
+		storageDirectoryConfig,
+		gitLibraryName,
+		apiMetricsSamplingPeriod,
+		repoPerDocEnabled,
+		enableRepositoryManagerMetrics,
+		enableSlimGitInit,
+		externalStorageManager,
+	};
+}
+
+export class InMemoryRepoManagerFactory implements IRepositoryManagerFactory {
+	private readonly memfsVolumeCache: Map<string, MemFsManagerFactory> = new Map();
+
+	constructor(
+		private readonly storageDirectoryConfig: IStorageDirectoryConfig,
+		private readonly repoPerDocEnabled: boolean,
+		private readonly enableRepositoryManagerMetrics: boolean,
+		private readonly enableSlimGitInit: boolean,
+	) {}
+
+	public async create(params: IRepoManagerParams): Promise<IRepositoryManager> {
+		const inMemoryRepoManager = await this.getRepoFactory(params).create(params);
+		return inMemoryRepoManager;
+	}
+
+	public async open(params: IRepoManagerParams): Promise<IRepositoryManager> {
+		const inMemoryRepoManager = await this.getRepoFactory(params).create(params);
+		return inMemoryRepoManager;
+	}
+
+	public async delete(params: IRepoManagerParams): Promise<void> {
+		const inMemoryFsManagerFactory = this.memfsVolumeCache.get(this.getRepoCacheKey(params));
+		if (inMemoryFsManagerFactory) {
+			inMemoryFsManagerFactory.volume.reset();
+			this.memfsVolumeCache.delete(params.repoName);
+		}
+	}
+
+	private getRepoCacheKey(params: IRepoManagerParams): string {
+		return `${params.repoOwner}/${params.repoName}`;
+	}
+
+	private getRepoFactory(params: IRepoManagerParams): IsomorphicGitManagerFactory {
+		const cachedMemFsFactory = this.memfsVolumeCache.get(this.getRepoCacheKey(params));
+		const memFsFactory = cachedMemFsFactory ?? new MemFsManagerFactory();
+		if (!cachedMemFsFactory) {
+			this.memfsVolumeCache.set(this.getRepoCacheKey(params), memFsFactory);
+		}
+		return new IsomorphicGitManagerFactory(
+			this.storageDirectoryConfig,
+			{
+				defaultFileSystemManagerFactory: memFsFactory,
+				ephemeralFileSystemManagerFactory: memFsFactory,
+			},
+			new NullExternalStorageManager(),
+			this.repoPerDocEnabled,
+			this.enableRepositoryManagerMetrics,
+			this.enableSlimGitInit,
+		);
 	}
 }

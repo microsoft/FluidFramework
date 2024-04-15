@@ -20,6 +20,7 @@ import {
 	Constants,
 	getExternalWriterParams,
 	getFilesystemManagerFactory,
+	getGitManagerFactoryParamsFromConfig,
 	getLumberjackBasePropertiesFromRepoManagerParams,
 	getRepoManagerFromWriteAPI,
 	getRepoManagerParamsFromRequest,
@@ -27,6 +28,7 @@ import {
 	IExternalWriterConfig,
 	IFileSystemManager,
 	IFileSystemManagerFactories,
+	InMemoryRepoManagerFactory,
 	IRepoManagerParams,
 	IRepositoryManager,
 	IRepositoryManagerFactory,
@@ -47,6 +49,7 @@ async function getSummary(
 	fileSystemManager: IFileSystemManager,
 	sha: string,
 	repoManagerParams: IRepoManagerParams,
+	inMemoryRepoManagerFactory: InMemoryRepoManagerFactory,
 	externalWriterConfig?: IExternalWriterConfig,
 	persistLatestFullSummary = false,
 	persistLatestFullEphemeralSummary = false,
@@ -100,6 +103,8 @@ async function getSummary(
 	const wholeSummaryManager = new GitWholeSummaryManager(
 		repoManagerParams.storageRoutingId.documentId,
 		repoManager,
+		repoManagerParams,
+		inMemoryRepoManagerFactory,
 		lumberjackProperties,
 		externalWriterConfig?.enabled ?? false,
 	);
@@ -134,6 +139,7 @@ async function createSummary(
 	fileSystemManager: IFileSystemManager,
 	payload: IWholeSummaryPayload,
 	repoManagerParams: IRepoManagerParams,
+	inMemoryRepoManagerFactory: InMemoryRepoManagerFactory,
 	externalWriterConfig?: IExternalWriterConfig,
 	isInitialSummary?: boolean,
 	persistLatestFullSummary = false,
@@ -149,6 +155,8 @@ async function createSummary(
 	const wholeSummaryManager = new GitWholeSummaryManager(
 		repoManagerParams.storageRoutingId.documentId,
 		repoManager,
+		repoManagerParams,
+		inMemoryRepoManagerFactory,
 		lumberjackProperties,
 		externalWriterConfig?.enabled ?? false,
 		{
@@ -220,6 +228,7 @@ async function deleteSummary(
 	repoManager: IRepositoryManager,
 	fileSystemManager: IFileSystemManager,
 	repoManagerParams: IRepoManagerParams,
+	inMemoryRepoManagerFactory: InMemoryRepoManagerFactory,
 	softDelete: boolean,
 	repoPerDocEnabled: boolean,
 	externalWriterConfig?: IExternalWriterConfig,
@@ -236,6 +245,8 @@ async function deleteSummary(
 	const wholeSummaryManager = new GitWholeSummaryManager(
 		repoManagerParams.storageRoutingId.documentId,
 		repoManager,
+		repoManagerParams,
+		inMemoryRepoManagerFactory,
 		lumberjackProperties,
 		externalWriterConfig?.enabled ?? false,
 	);
@@ -255,10 +266,20 @@ export function create(
 	const enableLowIoWrite: "initial" | boolean = store.get("git:enableLowIoWrite") ?? false;
 	const enableOptimizedInitialSummary: boolean =
 		store.get("git:enableOptimizedInitialSummary") ?? false;
-	const repoPerDocEnabled: boolean = store.get("git:repoPerDocEnabled") ?? false;
 	const enforceStrictPersistedFullSummaryReads: boolean =
 		store.get("git:enforceStrictPersistedFullSummaryReads") ?? false;
-
+	const {
+		storageDirectoryConfig,
+		repoPerDocEnabled,
+		enableRepositoryManagerMetrics,
+		enableSlimGitInit,
+	} = getGitManagerFactoryParamsFromConfig(store);
+	const inMemoryRepoManagerFactory = new InMemoryRepoManagerFactory(
+		storageDirectoryConfig,
+		repoPerDocEnabled,
+		enableRepositoryManagerMetrics,
+		enableSlimGitInit,
+	);
 	/**
 	 * Retrieves a summary.
 	 * If sha is "latest", returns latest summary for owner/repo.
@@ -300,6 +321,7 @@ export function create(
 						fsManager,
 						request.params.sha,
 						repoManagerParams,
+						inMemoryRepoManagerFactory,
 						getExternalWriterParams(request.query?.config as string | undefined),
 						persistLatestFullSummary,
 						persistLatestFullEphemeralSummary,
@@ -380,6 +402,7 @@ export function create(
 					fsManager,
 					wholeSummaryPayload,
 					repoManagerParams,
+					inMemoryRepoManagerFactory,
 					getExternalWriterParams(request.query?.config as string | undefined),
 					isInitialSummary,
 					persistLatestFullSummary,
@@ -427,6 +450,7 @@ export function create(
 						repoManager,
 						fsManager,
 						repoManagerParams,
+						inMemoryRepoManagerFactory,
 						softDelete,
 						repoPerDocEnabled,
 						getExternalWriterParams(request.query?.config as string | undefined),

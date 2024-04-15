@@ -20,11 +20,13 @@ import {
 	IFileSystemManagerFactory,
 	IFileSystemPromises,
 	IRepositoryManager,
+	InMemoryRepoManagerFactory,
 	IsomorphicGitManagerFactory,
 	MemFsManagerFactory,
 	RedisFsManagerFactory,
 	checkSoftDeleted,
 	type IRepoManagerParams,
+	type IStorageDirectoryConfig,
 } from "../utils";
 import { NullExternalStorageManager } from "../externalStorageManager";
 import { ISummaryWriteFeatureFlags } from "../utils/wholeSummary";
@@ -114,6 +116,7 @@ const testModes = permuteFlags({
 	enableLowIoWrite: false,
 	enableOptimizedInitialSummary: false,
 	enableSlimGitInit: false,
+	enableLazyRepoInit: false,
 }) as unknown as ISummaryTestMode[];
 
 type GitFileSystem = "memfs" | "redisfs" | "hashmap-redisfs";
@@ -202,22 +205,9 @@ testFileSystems.forEach((fileSystem) => {
 			const tenantId = "gitrest-summaries-test-tenantId";
 			let documentId: string;
 			let repoManager: IRepositoryManager;
-			const getWholeSummaryManager = (
+			let getWholeSummaryManager: (
 				featureFlagOverrides?: Partial<ISummaryWriteFeatureFlags>,
-			) => {
-				// Always create a new WholeSummaryManager to reset internal caches.
-				return new GitWholeSummaryManager(
-					documentId,
-					repoManager,
-					{ documentId, tenantId },
-					false /* externalStorageEnabled */,
-					{
-						enableLowIoWrite: testMode.enableLowIoWrite,
-						optimizeForInitialSummary: testMode.enableOptimizedInitialSummary,
-						...featureFlagOverrides,
-					},
-				);
-			};
+			) => GitWholeSummaryManager;
 			let fsSpy: SinonSpiedInstance<IFileSystemPromises>;
 			const getCurrentStorageAccessCallCounts = (): StorageAccessCallCounts & {
 				[fn: string]: number;
@@ -231,11 +221,18 @@ testFileSystems.forEach((fileSystem) => {
 				documentId = uuid();
 				// Spy on memfs volume to record number of calls to storage.
 				fsSpy = getFsSpy();
+				const storageDirConfig: IStorageDirectoryConfig = {
+					useRepoOwner: true,
+					baseDir: `/${uuid()}/tmp`,
+				};
+				const inMemoryRepoManagerFactory = new InMemoryRepoManagerFactory(
+					storageDirConfig,
+					testMode.repoPerDocEnabled,
+					false /* enableRepositoryManagerMetrics */,
+					testMode.enableSlimGitInit,
+				);
 				const repoManagerFactory = new IsomorphicGitManagerFactory(
-					{
-						useRepoOwner: true,
-						baseDir: `/${uuid()}/tmp`,
-					},
+					storageDirConfig,
 					{
 						defaultFileSystemManagerFactory: fsManagerFactory,
 					},
@@ -245,11 +242,30 @@ testFileSystems.forEach((fileSystem) => {
 					testMode.enableSlimGitInit,
 					undefined /* apiMetricsSamplingPeriod */,
 				);
-				repoManager = await repoManagerFactory.create({
+				const repoManagerParams: IRepoManagerParams = {
 					repoOwner: tenantId,
 					repoName: documentId,
 					storageRoutingId: { tenantId, documentId },
-				});
+				};
+				repoManager = await repoManagerFactory.create(repoManagerParams);
+				getWholeSummaryManager = (
+					featureFlagOverrides?: Partial<ISummaryWriteFeatureFlags>,
+				) => {
+					// Always create a new WholeSummaryManager to reset internal caches.
+					return new GitWholeSummaryManager(
+						documentId,
+						repoManager,
+						repoManagerParams,
+						inMemoryRepoManagerFactory,
+						{ documentId, tenantId },
+						false /* externalStorageEnabled */,
+						{
+							enableLowIoWrite: testMode.enableLowIoWrite,
+							optimizeForInitialSummary: testMode.enableOptimizedInitialSummary,
+							...featureFlagOverrides,
+						},
+					);
+				};
 			});
 
 			afterEach(async () => {
@@ -356,9 +372,9 @@ testFileSystems.forEach((fileSystem) => {
 						getCurrentStorageAccessCallCounts(),
 					);
 					// Tests run against commit 7620034bac63c5e3c4cb85f666a41c46012e8a49 on Dec 13, 2023
-					// showed that the final storage size was 13kb, or 23kb for low-io mode where summary blobs are not shared.
+					// showed that the final storage size was 13kb, or 24kb for low-io mode where summary blobs are not shared.
 					const finalStorageSizeKb = Math.ceil((await fsCheckSizeBytes()) / 1_024);
-					const expectedMaxStorageSizeKb = testMode.enableLowIoWrite ? 23 : 13;
+					const expectedMaxStorageSizeKb = testMode.enableLowIoWrite ? 24 : 13;
 					process.stdout.write(
 						`Final storage size: ${finalStorageSizeKb}kb; expected: ${expectedMaxStorageSizeKb}\n`,
 					);

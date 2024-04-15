@@ -19,6 +19,7 @@ export interface ISummaryTestMode {
 	enableLowIoWrite: boolean;
 	enableOptimizedInitialSummary: boolean;
 	enableSlimGitInit: boolean;
+	enableLazyRepoInit: boolean;
 }
 
 export const defaultProvider = new nconf.Provider({}).use("memory").defaults({
@@ -58,6 +59,7 @@ export const defaultProvider = new nconf.Provider({}).use("memory").defaults({
 		enableRedisFsMetrics: true,
 		redisApiMetricsSamplingPeriod: 0,
 		enforceStrictPersistedFullSummaryReads: false,
+		enableLazyRepoInit: false,
 	},
 });
 

@@ -12,13 +12,12 @@ import {
 	RedisClientConnectionManager,
 } from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
-import { ExternalStorageManager } from "./externalStorageManager";
 import { GitrestRunner } from "./runner";
 import {
+	getGitManagerFactoryParamsFromConfig,
 	IFileSystemManagerFactories,
 	IRepositoryManagerFactory,
 	IsomorphicGitManagerFactory,
-	IStorageDirectoryConfig,
 	NodeFsManagerFactory,
 	RedisFsManagerFactory,
 } from "./utils";
@@ -123,20 +122,17 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 		config: Provider,
 		fileSystemManagerFactories: IFileSystemManagerFactories,
 	) {
-		const externalStorageManager = new ExternalStorageManager(config);
-		const storageDirectoryConfig: IStorageDirectoryConfig = config.get(
-			"storageDir",
-		) as IStorageDirectoryConfig;
-		const gitLibrary: string | undefined = config.get("git:lib:name") ?? "isomporphic-git";
-		const repoPerDocEnabled: boolean = config.get("git:repoPerDocEnabled") ?? false;
-		const enableRepositoryManagerMetrics: boolean =
-			config.get("git:enableRepositoryManagerMetrics") ?? false;
-		const apiMetricsSamplingPeriod: number | undefined = config.get(
-			"git:apiMetricsSamplingPeriod",
-		);
-		const enableSlimGitInit: boolean = config.get("git:enableSlimGitInit") ?? false;
+		const {
+			storageDirectoryConfig,
+			gitLibraryName,
+			apiMetricsSamplingPeriod,
+			repoPerDocEnabled,
+			enableRepositoryManagerMetrics,
+			enableSlimGitInit,
+			externalStorageManager,
+		} = getGitManagerFactoryParamsFromConfig(config);
 
-		if (gitLibrary === "isomorphic-git") {
+		if (gitLibraryName === "isomorphic-git") {
 			return new IsomorphicGitManagerFactory(
 				storageDirectoryConfig,
 				fileSystemManagerFactories,
