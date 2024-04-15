@@ -66,10 +66,7 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 				enableReadyCheck: true,
 				maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 				enableOfflineQueue: redisConfig.enableOfflineQueue,
-				retryStrategy: getRedisClusterRetryStrategy({
-					delayPerAttemptMs: 50,
-					maxDelayMs: 2000,
-				}),
+				retryStrategy: getRedisClusterRetryStrategy(redisConfig.retryStrategyParams),
 			};
 			if (redisConfig.enableAutoPipelining) {
 				/**
@@ -94,6 +91,14 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 				throw new Error("redisOptions must be provided");
 			}
 			this.redisOptions = redisOptions;
+		}
+
+		if (!this.redisOptions.retryStrategy) {
+			this.redisOptions.retryStrategy = 
+			getRedisClusterRetryStrategy({
+				delayPerAttemptMs: 50,
+				maxDelayMs: 2000
+			});
 		}
 		this.authenticateAndCreateRedisClient();
 	}
