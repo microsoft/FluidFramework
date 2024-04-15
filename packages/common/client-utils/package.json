@@ -24,14 +24,14 @@
 			}
 		}
 	},
-	"main": "dist/indexNode.js",
+	"main": "lib/indexNode.js",
 	"browser": {
 		"./dist/indexNode.js": "./dist/indexBrowser.js",
 		"./dist/indexNode.d.ts": "./dist/indexBrowser.d.ts",
 		"./lib/indexNode.js": "./lib/indexBrowser.js",
 		"./lib/indexNode.d.ts": "./lib/indexBrowser.d.ts"
 	},
-	"types": "dist/indexNode.d.ts",
+	"types": "lib/indexNode.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
@@ -44,7 +44,7 @@
 		"build:test:mocha:cjs": "fluid-tsc commonjs --project ./src/test/mocha/tsconfig.cjs.json",
 		"build:test:mocha:esm": "tsc --project ./src/test/mocha/tsconfig.json",
 		"build:test:types": "tsc --project ./src/test/types/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
+		"check:are-the-types-wrong": "attw --pack .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
