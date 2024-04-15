@@ -5,7 +5,7 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IValueChanged } from "@fluidframework/map";
+import { IValueChanged } from "@fluidframework/map/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 
 export interface ITodoItemInitialState {

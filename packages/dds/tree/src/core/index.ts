@@ -136,7 +136,7 @@ export {
 	LeafNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
-	BrandedTreeNodeSchemaDataFormat,
+	toTreeNodeSchemaDataFormat,
 	decodeFieldSchema,
 	encodeFieldSchema,
 	storedSchemaDecodeDispatcher,
@@ -144,6 +144,7 @@ export {
 	SchemaAndPolicy,
 	SchemaPolicy,
 	Multiplicity,
+	SchemaPolicy,
 } from "./schema-stored/index.js";
 
 export {

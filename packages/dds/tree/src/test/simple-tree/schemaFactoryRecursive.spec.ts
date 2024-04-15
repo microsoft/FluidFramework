@@ -19,9 +19,9 @@ import {
 	TreeConfiguration,
 	TreeNodeFromImplicitAllowedTypes,
 	TreeView,
+	SchemaFactory,
 } from "../../simple-tree/index.js";
 import {
-	SchemaFactoryRecursive,
 	ValidateRecursiveSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaFactoryRecursive.js";
@@ -50,13 +50,13 @@ import { hydrate } from "./utils.js";
 // Recursion through ImplicitAllowedTypes (part of co-recursion)
 // Recursion through ImplicitFieldSchema (part of union and as part of co-recursion)
 
-const sf = new SchemaFactoryRecursive("recursive");
+const sf = new SchemaFactory("recursive");
 
-describe("SchemaFactoryRecursive", () => {
+describe("SchemaFactory Recursive methods", () => {
 	describe("objectRecursive", () => {
 		it("End-to-end with recursive object", () => {
 			const factory = new TreeFactory({});
-			const schema = new SchemaFactoryRecursive("com.example");
+			const schema = new SchemaFactory("com.example");
 
 			/**
 			 * Example Recursive type

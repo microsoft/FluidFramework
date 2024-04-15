@@ -15,7 +15,6 @@ export type {
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 export { AttachState } from "@fluidframework/container-definitions";
-export { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 export { DriverErrorTypes } from "@fluidframework/driver-definitions";
 export { ConnectionState } from "@fluidframework/container-loader";
 export type {
@@ -34,8 +33,6 @@ export type {
 	MemberChangedListener,
 	Myself,
 } from "@fluidframework/fluid-static";
-export type { ISharedMap, ISharedMapEvents, IValueChanged } from "@fluidframework/map";
-export { SharedMap } from "@fluidframework/map";
 
 // Let the tree package manage its own API surface, we will simply reflect it here.
 // Note: this only surfaces the `@public` API items from the tree package. If the `@beta` and `@alpha` items are
