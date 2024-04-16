@@ -33,8 +33,8 @@ import {
 	ISignalMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { type ITelemetryErrorEventExt } from "@fluidframework/telemetry-utils";
 import {
+	type ITelemetryErrorEventExt,
 	type ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
 	DataCorruptionError,

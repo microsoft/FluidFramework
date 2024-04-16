@@ -193,7 +193,7 @@ export interface ITaggedTelemetryPropertyTypeExt {
     value: TelemetryEventPropertyTypeExt;
 }
 
-// @public
+// @internal
 export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
     // (undocumented)
     eventName: string;
@@ -236,13 +236,13 @@ export interface ITelemetryLoggerPropertyBags {
     error?: ITelemetryLoggerPropertyBag;
 }
 
-// @alpha
+// @internal
 export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt {
     // (undocumented)
     duration?: number;
 }
 
-// @public
+// @internal
 export interface ITelemetryPropertiesExt {
     // (undocumented)
     [index: string]: TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>;
@@ -382,10 +382,10 @@ export enum TelemetryDataTag {
     UserData = "UserData"
 }
 
-// @alpha
+// @internal
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
-// @public
+// @internal
 export type TelemetryEventPropertyTypeExt = string | number | boolean | undefined | (string | number | boolean)[] | {
     [key: string]: // Flat objects can have the same properties as the event itself
     string | number | boolean | undefined | (string | number | boolean)[];
