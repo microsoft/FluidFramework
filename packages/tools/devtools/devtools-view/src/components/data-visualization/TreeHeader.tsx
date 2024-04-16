@@ -46,6 +46,9 @@ const getStyles = makeStyles({
 		paddingBottom: "2px",
 		verticalAlign: "middle",
 	},
+	inlineValue: {
+		whiteSpace: "pre-wrap",
+	},
 });
 
 /**
@@ -94,7 +97,9 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 					<Info20Regular className={styles.iconContainer} />
 				</Tooltip>
 			)}
-			{inlineValue !== undefined && <span>: {inlineValue}</span>}
+			{inlineValue !== undefined && (
+				<span className={styles.inlineValue}>: {inlineValue}</span>
+			)}
 		</div>
 	);
 }

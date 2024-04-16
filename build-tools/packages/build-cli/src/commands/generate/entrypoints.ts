@@ -24,6 +24,17 @@ import type { CommandLogger } from "../../logging";
  */
 const unscopedPackageNameString = "{@unscopedPackageName}";
 
+interface ExportData {
+	/**
+	 * Location of file relative to package
+	 */
+	relPath: string;
+	/**
+	 * Export is only .d.ts file
+	 */
+	isTypeOnly: boolean;
+}
+
 /**
  * Generates type declarations files for Fluid Framework APIs to support API levels (/alpha, /beta. etc.).
  */
@@ -31,7 +42,7 @@ export default class GenerateEntrypointsCommand extends BaseCommand<
 	typeof GenerateEntrypointsCommand
 > {
 	static readonly description =
-		`Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.)`;
+		`Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.) as found in package.json "exports"`;
 
 	static readonly flags = {
 		mainEntrypoint: Flags.file({
@@ -48,29 +59,111 @@ export default class GenerateEntrypointsCommand extends BaseCommand<
 			description: `File name prefix for emitting entrypoint declaration files. Pattern of '${unscopedPackageNameString}' within value will be replaced with the unscoped name of this package.`,
 			default: "",
 		}),
+		outFileAlpha: Flags.string({
+			description: "Base file name for alpha entrypoint declaration files.",
+			default: ApiLevel.alpha,
+		}),
+		outFileBeta: Flags.string({
+			description: "Base file name for beta entrypoint declaration files.",
+			default: ApiLevel.beta,
+		}),
+		outFilePublic: Flags.string({
+			description: "Base file name for public entrypoint declaration files.",
+			default: ApiLevel.public,
+		}),
 		outFileSuffix: Flags.string({
 			description:
 				"File name suffix including extension for emitting entrypoint declaration files.",
 			default: ".d.ts",
 		}),
+		node10TypeCompat: Flags.boolean({
+			description: `Optional generation of Node10 resolution compatible type entrypoints matching others.`,
+		}),
 		...BaseCommand.flags,
 	};
 
 	public async run(): Promise<void> {
-		const { mainEntrypoint, outFileSuffix } = this.flags;
-
-		return generateEntrypoints(
+		const {
 			mainEntrypoint,
-			{ pathPrefix: await getOutPathPrefix(this.flags), pathSuffix: outFileSuffix },
+			outFileSuffix,
+			outFileAlpha,
+			outFileBeta,
+			outFilePublic,
+			node10TypeCompat,
+		} = this.flags;
+
+		const packageJson = await readPackageJson();
+
+		const pathPrefix = getOutPathPrefix(this.flags, packageJson).replace(/\\/g, "/");
+
+		const mapQueryPathToApiLevel: Map<string | RegExp, ApiLevel | undefined> = new Map([
+			[`${pathPrefix}${outFileAlpha}${outFileSuffix}`, ApiLevel.alpha],
+			[`${pathPrefix}${outFileBeta}${outFileSuffix}`, ApiLevel.beta],
+			[`${pathPrefix}${outFilePublic}${outFileSuffix}`, ApiLevel.public],
+		]);
+
+		if (node10TypeCompat) {
+			// /internal export may be supported without API level generation; so
+			// add query for such path for Node10 type compat generation.
+			const dirPath = pathPrefix.replace(/\/[^/]*$/, "");
+			const internalPathRegex = new RegExp(`${dirPath}\\/index\\.d\\.?[cm]?ts$`);
+			mapQueryPathToApiLevel.set(internalPathRegex, undefined);
+		}
+
+		const { mapApiLevelToOutputPath, mapExportPathToData } = buildOutputMaps(
+			packageJson,
+			mapQueryPathToApiLevel,
+			node10TypeCompat,
 			this.logger,
 		);
+
+		const promises: Promise<void>[] = [];
+
+		// Requested specific outputs that are not in the output map are explicitly
+		// removed for clean incremental build support.
+		for (const [outputPath, apiLevel] of mapQueryPathToApiLevel.entries()) {
+			if (
+				apiLevel !== undefined &&
+				typeof outputPath === "string" &&
+				!mapApiLevelToOutputPath.has(apiLevel)
+			) {
+				promises.push(fs.rm(outputPath, { force: true }));
+			}
+		}
+
+		if (node10TypeCompat && mapExportPathToData.size === 0) {
+			throw new Error(
+				'There are no API level "exports" requiring Node10 type compatibility generation.',
+			);
+		}
+
+		if (mapApiLevelToOutputPath.size === 0) {
+			throw new Error(
+				`There are no package exports matching requested output entrypoints:\n\t${[
+					...mapQueryPathToApiLevel.keys(),
+				].join("\n\t")}`,
+			);
+		}
+
+		promises.push(generateEntrypoints(mainEntrypoint, mapApiLevelToOutputPath, this.logger));
+
+		if (node10TypeCompat) {
+			promises.push(generateNode10TypeEntrypoints(mapExportPathToData, this.logger));
+		}
+
+		await Promise.all(promises);
 	}
 }
 
-async function getOutPathPrefix({
-	outDir,
-	outFilePrefix,
-}: { outDir: string; outFilePrefix: string }): Promise<string> {
+async function readPackageJson(): Promise<PackageJson> {
+	const packageJson = await fs.readFile("./package.json", { encoding: "utf8" });
+	return JSON.parse(packageJson) as PackageJson;
+}
+
+function getOutPathPrefix(
+	{ outDir, outFilePrefix }: { outDir: string; outFilePrefix: string },
+	packageJson: PackageJson,
+): string {
 	if (!outFilePrefix) {
 		// If no other prefix, ensure a trailing path separator.
 		// The join with '.' will effectively trim a trailing / or \ from outDir.
@@ -80,14 +173,16 @@ async function getOutPathPrefix({
 	return path.join(
 		outDir,
 		outFilePrefix.includes(unscopedPackageNameString)
-			? outFilePrefix.replace(unscopedPackageNameString, await getLocalUnscopedPackageName())
+			? outFilePrefix.replace(
+					unscopedPackageNameString,
+					getLocalUnscopedPackageName(packageJson),
+				)
 			: outFilePrefix,
 	);
 }
 
-async function getLocalUnscopedPackageName(): Promise<string> {
-	const packageJson = await fs.readFile("./package.json", { encoding: "utf8" });
-	const packageName = (JSON.parse(packageJson) as PackageJson).name;
+function getLocalUnscopedPackageName(packageJson: PackageJson): string {
+	const packageName = packageJson.name;
 	if (typeof packageName !== "string") {
 		// eslint-disable-next-line unicorn/prefer-type-error
 		throw new Error(`unable to read package name`);
@@ -99,6 +194,116 @@ async function getLocalUnscopedPackageName(): Promise<string> {
 	}
 
 	return unscopedPackageName;
+}
+
+/**
+ * Only the value types of exports that are records.
+ */
+type ExportsRecordValue = Exclude<Extract<PackageJson["exports"], object>, unknown[]>;
+
+function findTypesPathMatching(
+	mapQueryPathToApiLevel: Map<string | RegExp, ApiLevel | undefined>,
+	exports: ExportsRecordValue,
+): { apiLevel: ApiLevel | undefined; relPath: string; isTypeOnly: boolean } | undefined {
+	for (const [entry, value] of Object.entries(exports)) {
+		if (typeof value === "string") {
+			if (entry === "types") {
+				for (const [key, apiLevel] of mapQueryPathToApiLevel.entries()) {
+					// eslint-disable-next-line max-depth
+					if (
+						typeof key === "string"
+							? path.resolve(value) === path.resolve(key)
+							: key.test(value)
+					) {
+						const isTypeOnly = !(
+							"default" in exports ||
+							"import" in exports ||
+							"require" in exports
+						);
+						return { apiLevel, relPath: value, isTypeOnly };
+					}
+				}
+			}
+		} else if (value !== null) {
+			if (Array.isArray(value)) {
+				continue;
+			}
+			const deepFind = findTypesPathMatching(mapQueryPathToApiLevel, value);
+			if (deepFind !== undefined) {
+				return deepFind;
+			}
+		}
+	}
+
+	return undefined;
+}
+
+function buildOutputMaps(
+	packageJson: PackageJson,
+	mapQueryPathToApiLevel: Map<string | RegExp, ApiLevel | undefined>,
+	node10TypeCompat: boolean,
+	log: CommandLogger,
+): {
+	mapApiLevelToOutputPath: Map<ApiLevel, string>;
+	mapExportPathToData: Map<string, ExportData>;
+} {
+	const mapApiLevelToOutputPath = new Map<ApiLevel, string>();
+	const mapExportPathToData = new Map<string, ExportData>();
+
+	const { exports } = packageJson;
+	if (typeof exports !== "object" || exports === null) {
+		throw new Error('no valid "exports" within package properties');
+	}
+
+	if (Array.isArray(exports)) {
+		// eslint-disable-next-line unicorn/prefer-type-error
+		throw new Error(`required entrypoints cannot be generated for "exports" array`);
+	}
+
+	// Iterate through exports looking for properties with values matching keys in map.
+	for (const [exportPath, exportValue] of Object.entries(exports)) {
+		if (typeof exportValue !== "object") {
+			log.verbose(`ignoring non-object export path "${exportPath}": "${exportValue}"`);
+			continue;
+		}
+		if (exportValue === null) {
+			log.verbose(`ignoring null export path "${exportPath}"`);
+			continue;
+		}
+		if (Array.isArray(exportValue)) {
+			log.verbose(`ignoring array export path "${exportPath}"`);
+			continue;
+		}
+
+		const findResult = findTypesPathMatching(mapQueryPathToApiLevel, exportValue);
+		if (findResult !== undefined) {
+			const { apiLevel, relPath, isTypeOnly } = findResult;
+
+			// Add mapping for API level file generation
+			if (apiLevel !== undefined) {
+				if (mapApiLevelToOutputPath.has(apiLevel)) {
+					log.warning(`${relPath} found in exports multiple times.`);
+				} else {
+					mapApiLevelToOutputPath.set(apiLevel, relPath);
+				}
+			}
+
+			// Add mapping for Node10 type compatibility generation if requested.
+			// Exclude root "." path as "types" should handle that.
+			if (node10TypeCompat && exportPath !== ".") {
+				const node10TypeExportPath = exportPath.replace(/(?:\.([cm]?)js)?$/, ".d.$1ts");
+				// Nothing needed when export path already matches internal path.
+				if (path.resolve(node10TypeExportPath) !== path.resolve(relPath)) {
+					mapExportPathToData.set(node10TypeExportPath, {
+						relPath,
+						isTypeOnly,
+					});
+				}
+			}
+		}
+	}
+
+	return { mapApiLevelToOutputPath, mapExportPathToData: mapExportPathToData };
 }
 
 function sourceContext(node: Node): string {
@@ -114,16 +319,17 @@ const generatedHeader: string = `/*!
  * THIS IS AN AUTOGENERATED FILE. DO NOT EDIT THIS FILE DIRECTLY.
  * Generated by "flub generate entrypoints" in @fluidframework/build-tools.
  */
+
 `;
 
 async function generateEntrypoints(
 	mainEntrypoint: string,
-	{ pathPrefix, pathSuffix }: { pathPrefix: string; pathSuffix: string },
+	mapApiLevelToOutput: Map<ApiLevel, string>,
 	log: CommandLogger,
 ): Promise<void> {
 	/**
-	 * List of source file save promises. Used to collect modified source file save promises so we can await them all at
-	 * once.
+	 * List of out file save promises. Used to collect generated file save
+	 * promises so we can await them all at once.
 	 */
 	const fileSavePromises: Promise<void>[] = [];
 
@@ -182,26 +388,67 @@ async function generateEntrypoints(
 			namedExports[namedExports.length - 1].trailingTrivia = "\n";
 		}
 
-		const outFile = `${pathPrefix}${apiLevel}${pathSuffix}`;
+		const outFile = mapApiLevelToOutput.get(apiLevel);
+		if (outFile === undefined) {
+			continue;
+		}
+
 		log.info(`\tGenerating ${outFile}`);
 		const sourceFile = project.createSourceFile(outFile, undefined, {
 			overwrite: true,
 			scriptKind: ScriptKind.TS,
 		});
 
-		sourceFile.insertText(0, generatedHeader);
 		// Avoid adding export declaration unless there are exports.
 		// Adding one without any named exports results in a * export (everything).
 		if (namedExports.length > 0) {
+			sourceFile.insertText(0, generatedHeader);
 			sourceFile.addExportDeclaration({
+				leadingTrivia: "\n",
 				moduleSpecifier: `./${mainSourceFile
 					.getBaseName()
 					.replace(/\.(?:d\.)?([cm]?)ts$/, ".$1js")}`,
 				namedExports,
 			});
+		} else {
+			// At this point we already know that package "export" has a request
+			// for this entrypoint. Warn of emptiness, but make it valid for use.
+			log.warning(`no exports for ${outFile} using API level ${apiLevel}`);
+			sourceFile.insertText(0, `${generatedHeader}export {}\n\n`);
 		}
 
 		fileSavePromises.push(sourceFile.save());
+	}
+
+	await Promise.all(fileSavePromises);
+}
+
+async function generateNode10TypeEntrypoints(
+	mapExportPathToData: Map<string, ExportData>,
+	log: CommandLogger,
+): Promise<void> {
+	/**
+	 * List of out file save promises. Used to collect generated file save
+	 * promises so we can await them all at once.
+	 */
+	const fileSavePromises: Promise<void>[] = [];
+
+	for (const [outFile, { relPath, isTypeOnly }] of mapExportPathToData.entries()) {
+		log.info(`\tGenerating ${outFile}`);
+		const jsImport = relPath.replace(/\.d\.([cm]?)ts/, ".$1js");
+		fileSavePromises.push(
+			fs.writeFile(
+				outFile,
+				isTypeOnly
+					? `${generatedHeader}export type * from "${relPath}";\n`
+					: `${generatedHeader}export * from "${jsImport}";\n`,
+				"utf8",
+			),
+		);
+	}
+
+	if (fileSavePromises.length === 0) {
+		log.info(`\tNo Node10 compat files generated.`);
 	}
 
 	await Promise.all(fileSavePromises);
