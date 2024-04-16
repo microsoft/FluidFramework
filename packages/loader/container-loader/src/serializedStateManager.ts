@@ -93,20 +93,20 @@ export class SerializedStateManager {
 			"readBlob" | "getSnapshotTree" | "getSnapshot" | "getVersions"
 		>,
 		private readonly _offlineLoadEnabled: boolean,
-		private readonly containerEvent: EventEmitter,
+		containerEvent: EventEmitter,
+		private readonly containerDirty: () => boolean,
 		private readonly newSnapshotFetched?: () => void,
 	) {
 		this.mc = createChildMonitoringContext({
 			logger: subLogger,
 			namespace: "serializedStateManager",
 		});
-		this.containerEvent.on("saved", this.handleSavedEvent.bind(this));
-	}
-
-	private handleSavedEvent() {
-		if (this.snapshotFetchedTime !== undefined) {
-			this.updateSessionExpiryTime = true;
-		}
+		containerEvent.once("saved", () => {
+			if (this.snapshotFetchedTime !== undefined) {
+				this.updateSessionExpiryTime = true;
+				this.updateSnapshotAndProcessedOpsMaybe();
+			}
+		});
 	}
 
 	public get offlineLoadEnabled(): boolean {
@@ -160,8 +160,11 @@ export class SerializedStateManager {
 					supportGetSnapshotApi,
 				);
 				this.snapshotFetchedTime = Date.now();
+				if (!this.containerDirty()) {
+					this.updateSessionExpiryTime = true;
+					this.updateSnapshotAndProcessedOpsMaybe();
+				}
 				this.newSnapshotFetched?.();
-				this.updateSnapshotAndProcessedOpsMaybe();
 			})();
 
 			return { baseSnapshot, version: undefined };
@@ -268,12 +271,7 @@ export class SerializedStateManager {
 					snapshotBlobs: this.snapshot.snapshotBlobs,
 					savedOps: this.processedOps,
 					url: resolvedUrl.url,
-					// no need to save this if there is no pending runtime state ops
-					clientId:
-						(pendingRuntimeState as any).pending !== undefined ||
-						(pendingRuntimeState as any).pendingAttachmentBlobs !== undefined
-							? clientId
-							: undefined,
+					clientId,
 				};
 
 				return JSON.stringify(pendingState);

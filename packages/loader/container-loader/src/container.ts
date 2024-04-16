@@ -934,6 +934,7 @@ export class Container
 			this.storageAdapter,
 			offlineLoadEnabled,
 			this,
+			() => this.isDirty,
 		);
 
 		const isDomAvailable =

@@ -133,6 +133,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		await timeoutAwait(getLatestSnapshotInfoP.promise, {
 			errorMsg: "Timeout on waiting for getLatestSnapshotInfo",
 		});
+		await provider.ensureSynchronized();
 		const pendingOps2 = await container1.closeAndGetPendingLocalState?.();
 		const container2: IContainerExperimental = await loader.resolve({ url }, pendingOps2);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
