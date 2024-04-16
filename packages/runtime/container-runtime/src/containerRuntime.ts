@@ -1865,6 +1865,7 @@ export class ContainerRuntime
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
+			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
 		});
 
 		ReportOpPerfTelemetry(this.clientId, this.deltaManager, this, this.logger);
@@ -3399,7 +3400,6 @@ export class ContainerRuntime
 				all: {
 					summaryNumber,
 					summaryReferenceSequenceNumber: () => summaryRefSeqNum,
-					initialSequenceNumber: this.deltaManager.initialSequenceNumber,
 				},
 			},
 		});
