@@ -282,12 +282,21 @@ export async function getRepoManagerFromWriteAPI(
 	repoManagerParams: IRepoManagerParams,
 	repoPerDocEnabled: boolean,
 	optimizeForInitialSummary?: boolean,
-) {
+): Promise<{ createdNew: boolean; repoManager: IRepositoryManager }> {
 	if (optimizeForInitialSummary) {
-		return repoManagerFactory.create({ ...repoManagerParams, optimizeForInitialSummary });
+		return {
+			createdNew: true,
+			repoManager: await repoManagerFactory.create({
+				...repoManagerParams,
+				optimizeForInitialSummary,
+			}),
+		};
 	}
 	try {
-		return await repoManagerFactory.open(repoManagerParams);
+		return {
+			createdNew: false,
+			repoManager: await repoManagerFactory.open(repoManagerParams),
+		};
 	} catch (error: any) {
 		// If repoPerDocEnabled is true, we want the behavior to be "open or create" for GitRest Write APIs,
 		// creating the repository on the fly. So, if the open operation fails with a 400 code (representing
@@ -298,7 +307,10 @@ export async function getRepoManagerFromWriteAPI(
 			error?.name === "NetworkError" &&
 			(error as NetworkError)?.code === 400
 		) {
-			return repoManagerFactory.create(repoManagerParams);
+			return {
+				createdNew: true,
+				repoManager: await repoManagerFactory.create(repoManagerParams),
+			};
 		}
 		throw error;
 	}

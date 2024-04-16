@@ -56,3 +56,7 @@ export {
 	IsomorphicGitRepositoryManager,
 } from "./isomorphicgitManager";
 export { RedisFsConfig, RedisFsManager } from "./redisFs";
+export {
+	Constants as WholeSummaryConstants,
+	convertFullSummaryToWholeSummaryEntries,
+} from "./wholeSummary";

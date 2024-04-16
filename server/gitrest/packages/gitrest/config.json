@@ -56,7 +56,8 @@
 		"enableRedisFsOptimizedStat": false,
 		"redisApiMetricsSamplingPeriod": 0,
 		"enforceStrictPersistedFullSummaryReads": false,
-		"enableLazyRepoInit": false
+		"enableLazyRepoInit": false,
+		"enableLazyRepoInitForEphemeralContainers": false
 	},
 	"redis": {
 		"host": "redis",

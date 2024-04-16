@@ -38,6 +38,8 @@ import {
 	persistLatestFullSummaryInStorage,
 	retrieveLatestFullSummaryFromStorage,
 	SystemErrors,
+	convertFullSummaryToWholeSummaryEntries,
+	WholeSummaryConstants,
 } from "../utils";
 
 function getFullSummaryDirectory(repoManager: IRepositoryManager, documentId: string): string {
@@ -146,6 +148,7 @@ async function createSummary(
 	persistLatestFullEphemeralSummary = false,
 	enableLowIoWrite: "initial" | boolean = false,
 	optimizeForInitialSummary: boolean = false,
+	forceWaitForPersistLatestFullSummary = false,
 ): Promise<IWriteSummaryResponse | IWholeFlatSummary> {
 	const lumberjackProperties = {
 		...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
@@ -210,7 +213,7 @@ async function createSummary(
 						error,
 					);
 				});
-				if (!isNew) {
+				if (forceWaitForPersistLatestFullSummary || !isNew) {
 					// To avoid any possible race conditions when outside the critical path, we can await the persist operation.
 					// Chances for a race condition are slim and likely inconsequential, but better safe than sorry.
 					await persistP;
@@ -260,6 +263,9 @@ export function create(
 	repoManagerFactory: IRepositoryManagerFactory,
 ): Router {
 	const router: Router = Router();
+	const enableLazyRepoInit = store.get("git:enableLazyRepoInit") ?? false;
+	const enableLazyRepoInitForEphemeralContainers =
+		store.get("git:enableLazyRepoInitForEphemeralContainers") ?? false;
 	const persistLatestFullSummary: boolean = store.get("git:persistLatestFullSummary") ?? false;
 	const persistLatestFullEphemeralSummary: boolean =
 		store.get("git:persistLatestFullEphemeralSummary") ?? false;
@@ -299,36 +305,34 @@ export function create(
 			return;
 		}
 		getGlobalTelemetryContext().bindProperties({ tenantId, documentId }, () => {
-			const resultP = repoManagerFactory
-				.open(repoManagerParams)
-				.then(async (repoManager) => {
-					const fileSystemManagerFactory = getFilesystemManagerFactory(
-						fileSystemManagerFactories,
-						repoManagerParams.isEphemeralContainer,
-					);
-					const fsManager = fileSystemManagerFactory.create({
-						...repoManagerParams.fileSystemManagerParams,
-						rootDir: repoManager.path,
-					});
-					await checkSoftDeleted(
-						fsManager,
-						repoManager.path,
-						repoManagerParams,
-						repoPerDocEnabled,
-					);
-					return getSummary(
-						repoManager,
-						fsManager,
-						request.params.sha,
-						repoManagerParams,
-						inMemoryRepoManagerFactory,
-						getExternalWriterParams(request.query?.config as string | undefined),
-						persistLatestFullSummary,
-						persistLatestFullEphemeralSummary,
-						enforceStrictPersistedFullSummaryReads,
-					);
-				})
-				.catch((error) => logAndThrowApiError(error, request, repoManagerParams));
+			const resultP = (async () => {
+				const repoManager = await repoManagerFactory.open(repoManagerParams);
+				const fileSystemManagerFactory = getFilesystemManagerFactory(
+					fileSystemManagerFactories,
+					repoManagerParams.isEphemeralContainer,
+				);
+				const fsManager = fileSystemManagerFactory.create({
+					...repoManagerParams.fileSystemManagerParams,
+					rootDir: repoManager.path,
+				});
+				await checkSoftDeleted(
+					fsManager,
+					repoManager.path,
+					repoManagerParams,
+					repoPerDocEnabled,
+				);
+				return getSummary(
+					repoManager,
+					fsManager,
+					request.params.sha,
+					repoManagerParams,
+					inMemoryRepoManagerFactory,
+					getExternalWriterParams(request.query?.config as string | undefined),
+					persistLatestFullSummary,
+					persistLatestFullEphemeralSummary,
+					enforceStrictPersistedFullSummaryReads,
+				);
+			})().catch((error) => logAndThrowApiError(error, request, repoManagerParams));
 			handleResponse(resultP, response);
 		});
 	});
@@ -369,25 +373,108 @@ export function create(
 		const wholeSummaryPayload: IWholeSummaryPayload = request.body;
 		getGlobalTelemetryContext().bindProperties({ tenantId, documentId }, () => {
 			const resultP = (async () => {
-				// There are possible optimizations we can make throughout the summary write process
-				// if we are using repoPerDoc model and it is the first summary for that document.
-				const optimizeForInitialSummary =
-					enableOptimizedInitialSummary && isInitialSummary && repoPerDocEnabled;
-				// If creating a repo per document, we do not need to check for an existing repo on initial summary write.
-				const repoManager = await getRepoManagerFromWriteAPI(
-					repoManagerFactory,
-					repoManagerParams,
-					repoPerDocEnabled,
-					optimizeForInitialSummary,
-				);
+				// Create a FileSystemManager factory for direct FS access when persisting the latest full summary,
+				// which bypasses the normal Git library usage for accessing FS.
 				const fileSystemManagerFactory = getFilesystemManagerFactory(
 					fileSystemManagerFactories,
 					repoManagerParams.isEphemeralContainer,
 				);
+				const useLazyRepoInit = repoManagerParams.isEphemeralContainer
+					? enableLazyRepoInitForEphemeralContainers
+					: enableLazyRepoInit;
+				const externalWriterParams = getExternalWriterParams(
+					request.query?.config as string | undefined,
+				);
+				if (useLazyRepoInit && isInitialSummary) {
+					// For lazy repo init, do all the normal initial summary creation in an in-memory FS with low-io false,
+					// then persist latest summary in the actual FS and return with a special initial sha.
+					// This way, we can avoid creating a repo on initial summary write, which is expensive and slow with a remote filesystem.
+					// Lastly, for subsequent summaries, read latest summary from that blob and persist it into storage as an initial summary.
+					const inMemoryRepoManager = await inMemoryRepoManagerFactory.create({
+						...repoManagerParams,
+						optimizeForInitialSummary: true,
+					});
+					const realFsManager = fileSystemManagerFactory.create({
+						...repoManagerParams.fileSystemManagerParams,
+						rootDir: inMemoryRepoManager.path,
+					});
+					// Create summary in memory and persist it to storage as a single blob.
+					const initialSummaryResult = await createSummary(
+						inMemoryRepoManager,
+						realFsManager,
+						wholeSummaryPayload,
+						repoManagerParams,
+						inMemoryRepoManagerFactory,
+						externalWriterParams,
+						isInitialSummary,
+						true /* persistLatestFullSummary */,
+						true /* persistLatestFullEphemeralSummary */,
+						false /* enableLowIoWrite */,
+						true /* optimizeForInitialSummary */,
+					);
+					return {
+						...initialSummaryResult,
+						id: WholeSummaryConstants.InitialSummarySha,
+					};
+				}
+
+				// There are possible optimizations we can make throughout the summary write process
+				// if we are using repoPerDoc model and it is the first summary for that document.
+				const optimizeForInitialSummary =
+					enableOptimizedInitialSummary && isInitialSummary && repoPerDocEnabled;
+
+				// If creating a repo per document, we do not need to check for an existing repo on initial summary write.
+				const { createdNew: createdNewRepoManager, repoManager } =
+					await getRepoManagerFromWriteAPI(
+						repoManagerFactory,
+						repoManagerParams,
+						repoPerDocEnabled,
+						optimizeForInitialSummary,
+					);
 				const fsManager = fileSystemManagerFactory.create({
 					...repoManagerParams.fileSystemManagerParams,
 					rootDir: repoManager.path,
 				});
+				let realLazyInitialSummaryId: string | undefined;
+				if (createdNewRepoManager && !isInitialSummary && enableLazyRepoInit) {
+					// If a new repo was created and this is not the initial summary, we need to perform lazy repo init
+					// process for adding the first summary back into storage.
+					const latestFullSummary = await retrieveLatestFullSummaryFromStorage(
+						fsManager,
+						getFullSummaryDirectory(
+							repoManager,
+							repoManagerParams.storageRoutingId.documentId,
+						),
+						lumberjackProperties,
+					);
+					if (!latestFullSummary) {
+						throw new NetworkError(404, "Previous summary not found.");
+					}
+					// Write the summary to the new repo.
+					const lazyInitialSummary = await createSummary(
+						repoManager,
+						fsManager,
+						{
+							type: "container",
+							message: "Initial summary for lazy init",
+							sequenceNumber: 0,
+							entries: convertFullSummaryToWholeSummaryEntries({
+								treeEntries: latestFullSummary.trees[0].entries,
+								blobs: latestFullSummary.blobs,
+							}),
+						},
+						repoManagerParams,
+						inMemoryRepoManagerFactory,
+						externalWriterParams,
+						true /* isInitialSummary */,
+						persistLatestFullSummary,
+						persistLatestFullEphemeralSummary,
+						enableLowIoWrite,
+						true /* optimizeForInitialSummary */,
+						true /* forceWaitForPersistLatestFullSummary */,
+					);
+					realLazyInitialSummaryId = lazyInitialSummary.id;
+				}
 				// A new document cannot already be soft-deleted.
 				if (!optimizeForInitialSummary) {
 					await checkSoftDeleted(
@@ -397,13 +484,21 @@ export function create(
 						repoPerDocEnabled,
 					);
 				}
+				const payload = realLazyInitialSummaryId
+					? JSON.parse(
+							JSON.stringify(wholeSummaryPayload).replace(
+								new RegExp(`${WholeSummaryConstants.InitialSummarySha}`, "g"),
+								realLazyInitialSummaryId,
+							),
+					  )
+					: wholeSummaryPayload;
 				return createSummary(
 					repoManager,
 					fsManager,
-					wholeSummaryPayload,
+					payload,
 					repoManagerParams,
 					inMemoryRepoManagerFactory,
-					getExternalWriterParams(request.query?.config as string | undefined),
+					externalWriterParams,
 					isInitialSummary,
 					persistLatestFullSummary,
 					persistLatestFullEphemeralSummary,
