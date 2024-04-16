@@ -27,7 +27,6 @@ export {
 	InsertableTypedNode,
 	NodeBuilderData,
 	type FieldProps,
-	makeFieldSchema,
 	normalizeFieldSchema,
 } from "./schemaTypes.js";
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
