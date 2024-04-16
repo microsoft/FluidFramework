@@ -7,6 +7,17 @@ While these edits seem destructive, they do not actually erase the node and the 
 Instead, the node is moved out of the document tree, and treated as a new root that stands apart - detached - from the document.
 This keeps the contents of the removed subtree in the forest instead of erasing them.
 
+## Does This Lead to Unbounded Memory Growth?
+
+Keeping all detached trees forever would lead to unbounded memory growth in clients,
+and would run the risk of seriously bloating the document's snapshot size.
+In order to avoid that, we intend to
+(this is not implemented at the time of writing)
+garbage-collect detached trees.
+How this happens is covered further down,
+but the key idea is that most of our systems are allowed to ignore the existence of this garbage collection scheme,
+thereby making those systems' contracts and implementations simpler.
+
 ## When Are Detached Trees Relevant?
 
 Detached trees are needed when a removed tree's contents
@@ -68,6 +79,39 @@ In order to apply such an edit, we need access to the contents of the removed tr
 All other edits could be ignored since the user has no way of seeing their impact.
 
 ## Why Design It This Way?
+
+### Merge Semantics
+
+We have adopted merge semantics that allow edits to affect removed trees.
+This means removed trees are still part of the shared document that is being edited,
+even if they are not part of the document tree at all times.
+Keeping removed trees around in the forest is aligned with this view.
+
+### Performance
+
+One alternative,
+(i.e., eagerly erasing the contents of subtrees that are removed)
+would force us to have ways of recovering this data when needed.
+One such approach would be to require that removal operations include a copy of the contents they remove/overwrite.
+For example, every time a client sets a required field,
+that client would include a copy the replaced subtree as part of the edit sent over the wire.
+This is bad from a performance point of view because it adds a cost common operations even though that cost my never be recouped.
+
+Another alternative would be to keep all detached trees forever
+(i.e., without garbage-collecting them).
+As mentioned above, this would be bad for memory usage
+(though that could be addressed using local disk storage)
+and document load.
+
+### Simplicity
+
+The fact that most of our system gets to assume all trees exist forever makes the system simpler.
+There is a non-negligible complexity cost associated with the GC scheme,
+but this complexity is contained in a relatively small body of code that exists only for this purpose.
+
+### Evolvability
+
+This design seems well positioned to accommodate future evolutions like the concept of [undo window](undo.md).
 
 ## How it Works
 
