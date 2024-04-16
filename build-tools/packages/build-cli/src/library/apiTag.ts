@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-const ApiTag = {
+export const ApiTag = {
 	public: "public",
 	beta: "beta",
 	alpha: "alpha",
