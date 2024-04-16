@@ -1,7 +1,7 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
 	"extends": "../../../common/build/build-common/api-extractor-base.esm.primary.json",
-	"bundledPackages": ["@fluidframework/*"],
+	"bundledPackages": ["@fluidframework/**"],
 	"messages": {
 		"extractorMessageReporting": {
 			// TODO: Fix violations and set logLevel to "error"
