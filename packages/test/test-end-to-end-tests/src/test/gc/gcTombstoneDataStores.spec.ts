@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import { strict as assert } from "assert";
 import {
 	AllowTombstoneRequestHeaderKey,
 	ContainerRuntime,
+	IOnDemandSummarizeOptions,
 	ISummarizer,
 	TombstoneResponseHeaderKey,
 } from "@fluidframework/container-runtime";
@@ -36,11 +39,19 @@ import {
 } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
+import {
+	IFluidDataStoreChannel,
+	IGarbageCollectionDetailsBase,
+} from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
 import type { SharedMap } from "@fluidframework/map";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils.js";
+
+type ExpectedTombstoneError = Error & {
+	code: number;
+	underlyingResponseHeaders?: { [TombstoneResponseHeaderKey]: boolean };
+};
 
 /**
  * These tests validate that TombstoneReady data stores are correctly marked as tombstones. Tombstones should be added
@@ -127,9 +138,9 @@ describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObject
 	) => {
 		return createSummarizer(provider, container, summarizerTestConfig, summaryVersion, logger);
 	};
-	const summarize = async (summarizer: ISummarizer) => {
+	const summarize = async (summarizer: ISummarizer, options?: IOnDemandSummarizeOptions) => {
 		await provider.ensureSynchronized();
-		return summarizeNow(summarizer);
+		return summarizeNow(summarizer, options);
 	};
 
 	// This function creates an unreferenced datastore and returns the datastore's id and the summary version that
@@ -611,7 +622,6 @@ describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObject
 			async function () {
 				// This will become the persisted value in the container(s) created below (except the one with disableTombstoneFailureViaOption)
 				// NOTE: IT IS RESET AT THE END OF THE TEST
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				testContainerConfig.runtimeOptions!.gcOptions!.gcGeneration = 1;
 
 				// Note: The Summarizers in this test don't use the "future" GC option - it only matters for the interactive client
@@ -644,7 +654,6 @@ describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObject
 					"DID NOT Expect tombstone header to be set on the response",
 				);
 
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				testContainerConfig.runtimeOptions!.gcOptions!.gcGeneration = undefined;
 			},
 		);
@@ -689,12 +698,7 @@ describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObject
 				);
 
 				// This fails because the DataStore is tombstoned
-				let tombstoneError:
-					| (Error & {
-							code: number;
-							underlyingResponseHeaders?: { [TombstoneResponseHeaderKey]: boolean };
-					  })
-					| undefined;
+				let tombstoneError: ExpectedTombstoneError | undefined;
 				try {
 					await handle.get();
 				} catch (error: any) {

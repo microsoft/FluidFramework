@@ -181,9 +181,6 @@ export async function loadContainer(
 	};
 	// This is to align with the snapshot tests which may upgrade GC Version before the default is changed.
 	settings["Fluid.GarbageCollection.GCVersionUpgradeToV4"] = false;
-	// Due to a bug where references added by an attach op are missed, we need to keep the old code for now.
-	settings["Fluid.GarbageCollection.DetectOutboundRoutesViaDDS"] = true;
-
 	// Load the Fluid document while forcing summarizeProtocolTree option
 	const loader = new Loader({
 		urlResolver,

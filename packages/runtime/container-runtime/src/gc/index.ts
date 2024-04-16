@@ -11,6 +11,7 @@ export {
 	defaultSessionExpiryDurationMs,
 	GCNodeType,
 	gcTestModeKey,
+	gcDisableDataStoreSweepOptionName,
 	gcDisableThrowOnTombstoneLoadOptionName,
 	gcGenerationOptionName,
 	GCFeatureMatrix,
@@ -32,13 +33,13 @@ export {
 	runSessionExpiryKey,
 	runSweepKey,
 	stableGCVersion,
-	disableAttachmentBlobSweepKey,
 	disableAutoRecoveryKey,
 	disableDatastoreSweepKey,
 	detectOutboundRoutesViaDDSKey,
 	UnreferencedState,
 	throwOnTombstoneLoadOverrideKey,
 	GarbageCollectionMessage,
+	GarbageCollectionMessageType,
 	ISweepMessage,
 } from "./gcDefinitions";
 export {

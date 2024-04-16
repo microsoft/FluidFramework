@@ -10,7 +10,7 @@
  */
 export const gcTreeKey = "gc";
 /**
- * They prefix for GC blobs in the GC tree in summary.
+ * The prefix for GC blobs in the GC tree in summary.
  *
  * @internal
  */
@@ -27,6 +27,12 @@ export const gcTombstoneBlobKey = "__tombstones";
  * @internal
  */
 export const gcDeletedBlobKey = "__deletedNodes";
+/**
+ * The key for the GC Data blob in attach summaries.
+ *
+ * @internal
+ */
+export const gcDataBlobKey = ".gcdata";
 
 /**
  * Garbage collection data returned by nodes in a Container.

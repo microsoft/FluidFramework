@@ -73,6 +73,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     readonly entryPoint: IFluidHandle<FluidObject>;
+    getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
     // (undocumented)
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     // (undocumented)

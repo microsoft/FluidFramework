@@ -24,8 +24,9 @@ import {
 import { type IClient, SummaryType } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 
-import { type IConfigProviderBase, type FluidObject } from "@fluidframework/core-interfaces";
+import { type FluidObject, type IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
+import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils";
 import { createAzureAudienceMember } from "./AzureAudience";
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver";
 import {
@@ -48,6 +49,15 @@ const getTenantId = (connectionProperties: AzureConnectionConfig): string => {
 };
 
 const MAX_VERSION_COUNT = 5;
+
+/**
+ * Default feature gates.
+ * These values will only be used if the feature gate is not already set by the supplied config provider.
+ */
+const azureClientFeatureGates = {
+	// Azure client requires a write connection by default
+	"Fluid.Container.ForceWriteConnection": true,
+};
 
 /**
  * AzureClient provides the ability to have a Fluid object backed by the Azure Fluid Relay or,
@@ -80,7 +90,10 @@ export class AzureClient {
 			origDocumentServiceFactory,
 			properties.summaryCompression,
 		);
-		this.configProvider = properties.configProvider;
+		this.configProvider = wrapConfigProviderWithDefaults(
+			properties.configProvider,
+			azureClientFeatureGates,
+		);
 	}
 
 	/**
@@ -201,7 +214,7 @@ export class AzureClient {
 	 * Get the list of versions for specific container.
 	 * @param id - Unique ID of the source container in Azure Fluid Relay.
 	 * @param options - "Get" options. If options are not provided, API
-	 * will assume maxCount of versions to retreive to be 5.
+	 * will assume maxCount of versions to retrieve to be 5.
 	 * @returns Array of available container versions.
 	 */
 	public async getContainerVersions(

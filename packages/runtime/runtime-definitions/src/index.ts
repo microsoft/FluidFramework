@@ -34,6 +34,7 @@ export {
 } from "./dataStoreRegistry";
 export {
 	gcBlobPrefix,
+	gcDataBlobKey,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,

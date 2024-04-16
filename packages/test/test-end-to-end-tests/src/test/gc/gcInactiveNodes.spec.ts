@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import { strict as assert } from "assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
@@ -140,8 +142,8 @@ describeCompat("GC inactive nodes tests", "2.0.0-rc.1.0.0", (getTestObjectProvid
 			return summaryResult.summaryVersion;
 		};
 
-		async function createNewDataObject() {
-			const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
+		async function createNewDataObject(runtime: IContainerRuntimeBase = containerRuntime) {
+			const dataStore = await runtime.createDataStore(TestDataObjectType);
 			return dataStore.entryPoint.get() as Promise<ITestDataObject>;
 		}
 

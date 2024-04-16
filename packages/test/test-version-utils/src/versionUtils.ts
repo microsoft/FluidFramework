@@ -434,7 +434,6 @@ function internalSchema(
 	if (requested === 0) {
 		return `${publicVersion}-${prereleaseIdentifier}.${internalVersion}`;
 	}
-
 	// Here we handle edge cases of converting the early rc/internal releases.
 	// We convert early rc releases to internal releases, and early internal releases to public releases.
 	if (prereleaseIdentifier === "rc" || prereleaseIdentifier === "dev-rc") {

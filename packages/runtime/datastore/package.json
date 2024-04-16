@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/datastore",
-	"version": "2.0.0-rc.1.0.0",
+	"version": "2.0.0-rc.1.0.9",
 	"description": "Fluid data store implementation",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -129,7 +129,6 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"lodash": "^4.17.21",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
@@ -172,6 +171,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_FluidDataStoreRuntime": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

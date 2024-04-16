@@ -258,9 +258,14 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	makeVisibleAndAttachGraph(): void;
 
 	/**
-	 * Retrieves the summary used as part of the initial summary message
+	 * Synchronously retrieves the summary used as part of the initial summary message
 	 */
 	getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+
+	/**
+	 * Synchronously retrieves GC Data (representing the outbound routes present) for the initial state of the DataStore
+	 */
+	getAttachGCData?(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
 
 	/**
 	 * Processes the op.
@@ -486,12 +491,25 @@ export interface IFluidDataStoreContext
 	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
 	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
 	 *
+	 * Similar capability is exposed with from/to string paths instead of handles via @see addedGCOutboundRoute
+	 *
 	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
 	 * all references added in the system.
 	 * @param srcHandle - The handle of the node that added the reference.
 	 * @param outboundHandle - The handle of the outbound node that is referenced.
 	 */
 	addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
+
+	/**
+	 * (Same as @see addedGCOutboundReference, but with string paths instead of handles)
+	 *
+	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
+	 * all references added in the system.
+	 *
+	 * @param fromPath - The absolute path of the node that added the reference.
+	 * @param toPath - The absolute path of the outbound node that is referenced.
+	 */
+	addedGCOutboundRoute?(fromPath: string, toPath: string): void;
 }
 
 /**
