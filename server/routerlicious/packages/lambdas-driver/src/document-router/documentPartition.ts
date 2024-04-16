@@ -71,6 +71,7 @@ export class DocumentPartition {
 		this.q.pause();
 
 		this.context.on("error", (error: any, errorData: IContextErrorData) => {
+			Lumberjack.verbose("Listening for errors in documentPartition, context error event");
 			if (errorData.markAsCorrupt) {
 				this.markAsCorrupt(error, errorData.markAsCorrupt);
 			} else if (errorData.restart) {
