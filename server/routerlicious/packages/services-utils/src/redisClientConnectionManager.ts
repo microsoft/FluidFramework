@@ -20,7 +20,7 @@ export interface IRedisClientConnectionManager {
 
 export class RedisClientConnectionManager implements IRedisClientConnectionManager {
 	private client: Redis.default | Redis.Cluster | undefined;
-	private readonly redisOptions: Redis.RedisOptions & Redis.ClusterOptions;
+	private readonly redisOptions: Partial<Redis.RedisOptions & Redis.ClusterOptions>;
 	private readonly enableClustering: boolean;
 	private readonly slotsRefreshTimeout: number;
 	private readonly retryDelays: {
@@ -32,7 +32,7 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 	};
 
 	constructor(
-		redisOptions?: Redis.RedisOptions & Redis.ClusterOptions,
+		redisOptions?: Partial<Redis.RedisOptions & Redis.ClusterOptions>,
 		redisConfig?: any,
 		enableClustering: boolean = false,
 		slotsRefreshTimeout: number = 50000,
