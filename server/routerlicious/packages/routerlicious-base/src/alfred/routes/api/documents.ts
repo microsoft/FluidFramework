@@ -122,7 +122,7 @@ export function create(
 		revokedTokenChecker,
 	};
 
-	const isHttpUsageCountingEnabled: string = config.get("usage:httpUsageCountingEnabled");
+	const isHttpUsageCountingEnabled: boolean = config.get("usage:httpUsageCountingEnabled");
 
 	router.get(
 		"/:tenantId/:id",
