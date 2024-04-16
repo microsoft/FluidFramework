@@ -854,9 +854,9 @@ export class ContainerRuntime
 
 		// Verify summary runtime sequence number matches protocol sequence number.
 		const runtimeSequenceNumber = messageAtLastSummary?.sequenceNumber;
+		const protocolSequenceNumber = context.deltaManager.initialSequenceNumber;
 		// When we load with pending state, we reuse an old snapshot so we don't expect these numbers to match
 		if (!context.pendingLocalState && runtimeSequenceNumber !== undefined) {
-			const protocolSequenceNumber = context.deltaManager.initialSequenceNumber;
 			// Unless bypass is explicitly set, then take action when sequence numbers mismatch.
 			if (
 				loadSequenceNumberVerification !== "bypass" &&
@@ -984,6 +984,7 @@ export class ContainerRuntime
 
 		const documentSchemaController = new DocumentsSchemaController(
 			existing,
+			protocolSequenceNumber,
 			metadata?.documentSchema,
 			{
 				explicitSchemaControl,
@@ -1112,7 +1113,17 @@ export class ContainerRuntime
 		return this._getAttachState();
 	}
 
-	public get documentSchema() {
+	/**
+	 * Current session schema - defines what options are on & off.
+	 * It's overlap of document schema (controlled by summary & ops) and options controlling this session.
+	 * For example, document schema might have compression ON, but feature gates / runtime options turn it Off.
+	 * In such case it will be off in session schema (i.e. this session should not use compression), but this client
+	 * has to deal with compressed ops as other clients might send them.
+	 * And in reverse, session schema can have compression Off, but feature gates / runtime options want it On.
+	 * In such case it will be off in session schema, however this client will propose change to schema, and once / if
+	 * this op rountrips, compression will be On. Client can't send compressed ops until it's change in schema.
+	 */
+	public get sessionSchema() {
 		return this.documentsSchemaController.sessionSchema.runtime;
 	}
 
@@ -1129,7 +1140,7 @@ export class ContainerRuntime
 	private readonly skipSavedCompressorOps: boolean;
 
 	public get idCompressorMode() {
-		return this.documentSchema.idCompressorMode;
+		return this.sessionSchema.idCompressorMode;
 	}
 	/**
 	 * See IContainerRuntimeBase.idCompressor() for details.
@@ -1419,7 +1430,7 @@ export class ContainerRuntime
 		// If it's not in the list, then we will need to either use no compression, or fallback to some other (supported by format)
 		// compression.
 		const compressionOptions: ICompressionRuntimeOptions = {
-			minimumBatchSizeInBytes: this.documentSchema.compressionLz4
+			minimumBatchSizeInBytes: this.sessionSchema.compressionLz4
 				? runtimeOptions.compressionOptions.minimumBatchSizeInBytes
 				: Number.POSITIVE_INFINITY,
 			compressionAlgorithm: CompressionAlgorithms.lz4,
@@ -3954,6 +3965,14 @@ export class ContainerRuntime
 				// on this callback to do actual sending.
 				const contents = this.documentsSchemaController.maybeSendSchemaMessage();
 				if (contents) {
+					this.logger.sendTelemetryEvent({
+						eventName: "RuntimeDocSchemaChange",
+						refSeq: contents.refSeq,
+						version: contents.version,
+						newRuntimeSchema: JSON.stringify(contents.runtime),
+						sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
+						oldRuntimeSchema: JSON.stringify(this.metadata?.documentSchema?.runtime),
+					});
 					const msg: ContainerRuntimeDocumentSchemaMessage = {
 						type: ContainerMessageType.DocumentSchemaChange,
 						contents,
@@ -4432,6 +4451,6 @@ export class ContainerRuntime
 	}
 
 	private get groupedBatchingEnabled(): boolean {
-		return this.documentSchema.opGroupingEnabled === true;
+		return this.sessionSchema.opGroupingEnabled === true;
 	}
 }
