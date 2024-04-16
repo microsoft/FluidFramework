@@ -901,7 +901,7 @@ describe("Directory", () => {
 
 				containerRuntimeFactory.processAllMessages();
 
-				assertEquivalentDirectories(directory, directory2);
+				await assertEquivalentDirectories(directory, directory2);
 
 				// Delete the subDirectory in the second SharedDirectory.
 				directory2.deleteSubDirectory(subDirName);

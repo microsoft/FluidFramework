@@ -104,20 +104,22 @@ export function getApiExports(sourceFile: SourceFile): ExportRecords {
 	for (const [name, exportedDecls] of exported.entries()) {
 		for (const exportedDecl of exportedDecls) {
 			const level = getNodeLevel(exportedDecl);
+			const existingLevel = foundNameLevels.get(name);
 			if (level === undefined) {
-				records.unknown.set(name, { exportedDecl });
-			} else {
-				const existingLevel = foundNameLevels.get(name);
+				// Overloads might only have JSDocs for first of set; so ignore
+				// secondary exports without recognized level.
 				if (existingLevel === undefined) {
-					records[level].push({ name, isTypeOnly: isTypeExport(exportedDecl) });
-					foundNameLevels.set(name, level);
-				} else if (level !== existingLevel) {
-					throw new Error(
-						`${name} has been exported twice with different api levels.\nFirst as ${existingLevel} and now as ${level} from ${exportedDecl
-							.getSourceFile()
-							.getFilePath()}:${exportedDecl.getStartLineNumber()}.`,
-					);
+					records.unknown.set(name, { exportedDecl });
 				}
+			} else if (existingLevel === undefined) {
+				records[level].push({ name, isTypeOnly: isTypeExport(exportedDecl) });
+				foundNameLevels.set(name, level);
+			} else if (level !== existingLevel) {
+				throw new Error(
+					`${name} has been exported twice with different api levels.\nFirst as ${existingLevel} and now as ${level} from ${exportedDecl
+						.getSourceFile()
+						.getFilePath()}:${exportedDecl.getStartLineNumber()}.`,
+				);
 			}
 		}
 	}

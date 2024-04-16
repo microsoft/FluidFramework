@@ -12,7 +12,6 @@ import {
 	DeltaMark,
 	TaggedChange,
 	areEqualChangeAtomIds,
-	makeDetachedNodeId,
 } from "../../core/index.js";
 import { Mutable } from "../../util/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
@@ -22,10 +21,9 @@ import { MarkList, NoopMarkType } from "./types.js";
 import {
 	areInputCellsEmpty,
 	areOutputCellsEmpty,
-	getDetachOutputId,
+	getDetachedNodeId,
 	getEndpoint,
 	getInputCellId,
-	getOutputCellId,
 	isAttachAndDetachEffect,
 } from "./utils.js";
 import { ToDelta } from "../modular-schema/index.js";
@@ -74,7 +72,7 @@ export function sequenceFieldToDelta(
 				continue;
 			}
 
-			const outputId = getOutputCellId(mark, revision, undefined);
+			const outputId = getDetachedNodeId(mark.detach, revision, undefined);
 			assert(
 				outputId !== undefined,
 				0x820 /* AttachAndDetach mark should have defined output cell ID */,
@@ -107,7 +105,7 @@ export function sequenceFieldToDelta(
 					break;
 				}
 				case "Remove": {
-					const newDetachId = getDetachOutputId(mark, revision, undefined);
+					const newDetachId = getDetachedNodeId(mark, revision, undefined);
 					if (inputCellId === undefined) {
 						deltaMark.detach = nodeIdFromChangeAtom(newDetachId);
 						local.push(deltaMark);
@@ -133,7 +131,9 @@ export function sequenceFieldToDelta(
 				}
 				case "MoveOut": {
 					// The move destination will look for the detach ID of the source, so we can ignore `finalEndpoint`.
-					const detachId = makeDetachedNodeId(mark.revision ?? revision, mark.id);
+					const detachId = nodeIdFromChangeAtom(
+						getDetachedNodeId(mark, revision, undefined),
+					);
 					if (inputCellId === undefined) {
 						deltaMark.detach = detachId;
 						local.push(deltaMark);

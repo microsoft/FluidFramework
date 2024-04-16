@@ -6,7 +6,7 @@
 
 import { IDirectory } from '@fluidframework/map/internal';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions/internal';
-import { ISharedMap } from '@fluidframework/map';
+import { ISharedMap } from '@fluidframework/map/internal';
 import * as MergeTree from '@fluidframework/merge-tree/internal';
 import { SharedString } from '@fluidframework/sequence/internal';
 

@@ -456,31 +456,13 @@ export class DocumentsSchemaController {
 		// For simplicity, let's only support new schema features for explicit schema control mode
 		assert(
 			features.disallowedVersions.length === 0 || features.explicitSchemaControl,
-			"not supported",
+			0x949 /* not supported */,
 		);
 
-		this.documentSchema =
-			(documentMetadataSchema as IDocumentSchemaCurrent) ??
-			({
-				version: currentDocumentVersionSchema,
-				// see comment in summarizeDocumentSchema() on why it has to stay zero
-				refSeq: 0,
-				// If it's existing document and it has no schema, then it was written by legacy client.
-				// If it's a new document, then we define it's legacy-related behaviors.
-				runtime: {
-					explicitSchemaControl: boolToProp(!existing && features.explicitSchemaControl),
-				},
-			} satisfies IDocumentSchemaCurrent);
-
-		// Use legacy behavior only if both document and options tell us to use legacy.
-		// Otherwise it's no longer legacy time!
-		this.explicitSchemaControl =
-			this.documentSchema.runtime.explicitSchemaControl === true ||
-			features.explicitSchemaControl;
-
+		// Desired schema by this session - almost all props are coming from arguments
 		this.desiredSchema = {
 			version: currentDocumentVersionSchema,
-			refSeq: this.documentSchema.refSeq,
+			refSeq: documentMetadataSchema?.refSeq ?? 0,
 			runtime: {
 				explicitSchemaControl: boolToProp(features.explicitSchemaControl),
 				compressionLz4: boolToProp(features.compressionLz4),
@@ -490,19 +472,47 @@ export class DocumentsSchemaController {
 			},
 		};
 
+		// Schema coming from document metadata (snapshot we loaded from), or if no document exists
+		// (this is a new document) then this is the same as desiredSchema (same as session schema in such case).
+		// Latter is importnat sure that's what will go into summary.
+		this.documentSchema = !existing
+			? this.desiredSchema
+			: (documentMetadataSchema as IDocumentSchemaCurrent) ??
+			  ({
+					version: currentDocumentVersionSchema,
+					// see comment in summarizeDocumentSchema() on why it has to stay zero
+					refSeq: 0,
+					// If it's existing document and it has no schema, then it was written by legacy client.
+					// If it's a new document, then we define it's legacy-related behaviors.
+					runtime: {
+						explicitSchemaControl: boolToProp(
+							!existing && features.explicitSchemaControl,
+						),
+					},
+			  } satisfies IDocumentSchemaCurrent);
+
+		// Use legacy behavior only if both document and options tell us to use legacy.
+		// Otherwise it's no longer legacy time!
+		this.explicitSchemaControl =
+			this.documentSchema.runtime.explicitSchemaControl === true ||
+			features.explicitSchemaControl;
+
+		// Calculate
+		// - current session schema (overlap of document schema and desired schema)
+		// - future schema to propose (concatination of document schema and desired schema)
 		if (!this.explicitSchemaControl || !existing) {
 			this.sessionSchema = this.desiredSchema;
 			assert(
 				boolToProp(this.explicitSchemaControl) ===
 					this.sessionSchema.runtime.explicitSchemaControl,
-				"explicitSchemaControl",
+				0x94a /* explicitSchemaControl */,
 			);
 			this.futureSchema = undefined;
 		} else {
 			this.sessionSchema = and(this.documentSchema, this.desiredSchema);
 			this.futureSchema = or(this.documentSchema, this.desiredSchema);
-			assert(this.sessionSchema.runtime.explicitSchemaControl === true, "legacy");
-			assert(this.futureSchema.runtime.explicitSchemaControl === true, "legacy");
+			assert(this.sessionSchema.runtime.explicitSchemaControl === true, 0x94b /* legacy */);
+			assert(this.futureSchema.runtime.explicitSchemaControl === true, 0x94c /* legacy */);
 			if (same(this.documentSchema, this.futureSchema)) {
 				this.futureSchema = undefined;
 			}
@@ -527,7 +537,10 @@ export class DocumentsSchemaController {
 		// race conditions. If we put any other number (including latest seq number), then we will have two clients
 		// (loading from two different summaries) with different numbers, and eventual consistency will be broken as schema
 		// change ops will be interpretted differently by those two clients.
-		assert(this.explicitSchemaControl || schema.refSeq === 0, "refSeq should be zero");
+		assert(
+			this.explicitSchemaControl || schema.refSeq === 0,
+			0x94d /* refSeq should be zero */,
+		);
 
 		return schema;
 	}
@@ -542,7 +555,7 @@ export class DocumentsSchemaController {
 			assert(
 				this.explicitSchemaControl &&
 					this.futureSchema.runtime.explicitSchemaControl === true,
-				"not legacy",
+				0x94e /* not legacy */,
 			);
 			return {
 				...this.futureSchema,
@@ -565,8 +578,14 @@ export class DocumentsSchemaController {
 		local: boolean,
 		sequenceNumber: number,
 	) {
-		assert(content.refSeq <= this.documentSchema.refSeq, "did we lose a message somewhere?");
-		assert(this.documentSchema.refSeq < sequenceNumber, "time should move forward only!");
+		assert(
+			content.refSeq <= this.documentSchema.refSeq,
+			0x94f /* did we lose a message somewhere? */,
+		);
+		assert(
+			this.documentSchema.refSeq < sequenceNumber,
+			0x950 /* time should move forward only! */,
+		);
 		if (content.refSeq !== this.documentSchema.refSeq) {
 			// CAS failed
 			return false;
@@ -576,7 +595,7 @@ export class DocumentsSchemaController {
 		// This will ensure we do not trip on our own messages that are no longer wanted as we processed someone else schema change message.
 		assert(
 			!local || (this.explicitSchemaControl && this.futureSchema !== undefined),
-			"not sending ops",
+			0x951 /* not sending ops */,
 		);
 
 		// Changes are in effect. Immediately check that this client understands these changes

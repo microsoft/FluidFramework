@@ -5,7 +5,13 @@
 
 // Provide EventEmitter from example-utils to avoid examples all directly depending on
 // a @fluid-internal package while EventEmitter support is finalized.
-export { EventEmitter } from "@fluid-internal/client-utils";
+import { EventEmitter } from "@fluid-internal/client-utils";
+export {
+	/**
+	 * @public
+	 */
+	EventEmitter,
+};
 
 export {
 	ContainerViewRuntimeFactory,
