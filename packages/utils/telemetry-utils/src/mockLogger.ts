@@ -17,7 +17,7 @@ import { ITelemetryLoggerExt, ITelemetryPropertiesExt } from "./telemetryTypes.j
  * The MockLogger records events sent to it, and then can walk back over those events
  * searching for a set of expected events to match against the logged events.
  *
- * @internal
+ * @alpha
  */
 export class MockLogger implements ITelemetryBaseLogger {
 	events: ITelemetryBaseEvent[] = [];

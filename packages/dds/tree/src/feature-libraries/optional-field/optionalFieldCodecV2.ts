@@ -20,7 +20,7 @@ import {
 	type FieldChangeEncodingContext,
 } from "../modular-schema/index.js";
 
-import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormatV1.js";
+import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormatV2.js";
 import type { OptionalChangeset, RegisterId, Replace } from "./optionalFieldChangeTypes.js";
 
 function makeRegisterIdCodec(

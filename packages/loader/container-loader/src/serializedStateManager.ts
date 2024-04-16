@@ -209,15 +209,21 @@ export class SerializedStateManager {
 	 */
 	public setInitialSnapshot(snapshot: SnapshotWithBlobs | undefined) {
 		if (this.offlineLoadEnabled) {
-			assert(this.snapshot === undefined, "inital snapshot should only be defined once");
-			assert(snapshot !== undefined, "attachment snapshot should be defined");
+			assert(
+				this.snapshot === undefined,
+				0x937 /* inital snapshot should only be defined once */,
+			);
+			assert(snapshot !== undefined, 0x938 /* attachment snapshot should be defined */);
 			const { baseSnapshot, snapshotBlobs } = snapshot;
 			const attributesHash =
 				".protocol" in baseSnapshot.trees
 					? baseSnapshot.trees[".protocol"].blobs.attributes
 					: baseSnapshot.blobs[".attributes"];
 			const attributes = JSON.parse(snapshotBlobs[attributesHash]);
-			assert(attributes.sequenceNumber === 0, "trying to set a non attachment snapshot");
+			assert(
+				attributes.sequenceNumber === 0,
+				0x939 /* trying to set a non attachment snapshot */,
+			);
 			this.snapshot = { ...snapshot, snapshotSequenceNumber: attributes.sequenceNumber };
 		}
 	}
