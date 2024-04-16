@@ -88,7 +88,7 @@ export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): Laz
 	if (cached !== undefined) {
 		context.forest.anchors.forget(anchor);
 		assert(cached.context === context, 0x782 /* contexts must match */);
-		assert(cached instanceof LazyTreeNode, "Expected LazyTreeNode");
+		assert(cached instanceof LazyTreeNode, 0x92c /* Expected LazyTreeNode */);
 		return cached as LazyTreeNode;
 	}
 	const schema = context.schema.nodeSchema.get(cursor.type) ?? fail("missing schema");
@@ -100,7 +100,7 @@ export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): Laz
 
 function cleanupTree(anchor: AnchorNode): void {
 	const cached = anchor.slots.get(flexTreeSlot) ?? fail("tree should only be cleaned up once");
-	assert(cached instanceof LazyTreeNode, "Expected LazyTreeNode");
+	assert(cached instanceof LazyTreeNode, 0x92d /* Expected LazyTreeNode */);
 	cached[disposeSymbol]();
 }
 
