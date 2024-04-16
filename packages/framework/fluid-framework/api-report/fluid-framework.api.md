@@ -188,10 +188,6 @@ export interface FieldProps {
 
 // @public @sealed
 export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types extends ImplicitAllowedTypes = ImplicitAllowedTypes> {
-    constructor(
-    kind: Kind,
-    allowedTypes: Types,
-    props?: FieldProps | undefined);
     readonly allowedTypes: Types;
     get allowedTypeSet(): ReadonlySet<TreeNodeSchema>;
     readonly kind: Kind;
@@ -555,6 +551,9 @@ export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> = ISh
 
 // @public
 export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
+
+// @public
+export const makeFieldSchema: <Kind extends FieldKind = FieldKind, Types extends ImplicitAllowedTypes = ImplicitAllowedTypes>(kind: Kind, allowedTypes: Types, props?: FieldProps) => FieldSchema<Kind, Types>;
 
 // @public
 export interface MakeNominal {
