@@ -3,17 +3,16 @@
 Here we detail the vision for the first implementation of undo/redo.
 This implementation is meant to satisfy our needs for parity with experimental (AKA legacy) SharedTree.
 
-Note that the system described here allows for changes to subtrees that were concurrently removed to have an impact on that subtree,
+Note that the system described here allows for a change to a subtree that was concurrently removed to have an impact on that subtree,
 even when the deletion is sequenced before the subtree-impacting change.
-This system does not, however support editing of subtrees that were removed prior,
-though we discuss what this would require.
+This system does not, however, support the editing of any subtree that is in a removed state in the context where such an edit would be made.
 
-Related:
+## Unifying Undo and Redo
 
--   [V1 Undo Example Flow](./v1-undo-example-flow.md)
+### Creating Concrete Undo Edits
 
 This first version aims to achieve some basic undo functionality with a minimum amount of code changes and complexity.
-To that end, we mostly reuse the existing code paths for changesets by always sending
+To that end, we reuse the existing code paths for changesets by always sending
 [concrete undos](./undo.md#abstract-vs-concrete-undo-messages) over the wire.
 The undo edit is created by inverting the edit that needs to be undone,
 and rebasing that inverse over all the changes that have been applied since.
@@ -21,109 +20,44 @@ and rebasing that inverse over all the changes that have been applied since.
 Sending concrete undo edits alleviates the need to establish and maintain distributed consensus on an undo window.
 It does however require sending rebased changes over the wire
 (although that is also needed for resubmitting ops, so concrete undo does not make this a new requirement).
-Rebased changes may contain lineage entries, which we haven't sent over the wire before.
-We do not currently know of a reason why this would be problematic,
-or of any other issue or special requirement associated with sending rebased changes over the wire.
 
-Using concrete undos even when the change to be undone has not been sequenced is somewhat problematic
-because we cannot know in advance the exact impact of the change to undo.
-Despite that, we anticipate no data loss and no decoherence from it.
+### Creating Concrete Redo Edits
 
-## Creating Concrete Redo Edits
-
-Redo changesets should be created by inverting the corresponding undo changeset and rebasing that inverse over all the edits that were applied since the undo.
-This is preferable to rebasing the original edit over all the edits that were applied since before the original edit:
+Redo changesets are created by inverting the corresponding undo changeset and rebasing that inverse over all the edits that were applied since the undo.
+This is preferable to rebasing the original (undone) edit over all the edits that were applied since that original edit for the following reasons:
 
 -   It is better at mitigating data-loss caused by undo.
     For example, undoing an insert will remove any content that has since been added under the inserted node.
     Applying the inverse of the undo will restore that content while re-applying the original insert will not.
--   It is more efficient as it doesn't require rebasing over as many edits.
+-   It is more efficient as it doesn't require rebasing over as many edits (and retaining as many edits).
 
-## Managing Commits
+### Revertibles
 
-### The Undo Commit Tree
+This approach to undo and redo makes the two cases indistinguishable for our implementation.
+Instead of undoing or redoing an edit, we simply speak of reverting and edit.
+Each edit is represented by commit.
+For each edit that can be reverted, a `Revertible` object can be generated and used to revert it.
+For practical details, see the `CheckoutEvents.commitApplied` and `Revertible` APIs.
 
-In order to perform an undo operation, it is necessary that we are able to determine which prior edit is to be undone.
-To that end, we need to maintain a tree of undoable commits where each node may look like this:
+## Managing Revertibles
 
-```typescript
-interface UndoableCommit<TChange> {
-	/* The commit to undo */
-	readonly commit: GraphCommit<TChange>;
-	/* The next undoable commit. */
-	readonly parent?: UndoableCommit<TChange>;
-}
-```
+In order to revert a commit, we must invert it and rebase that invert to the tip of the branch on which the revert would apply.
+This requires:
 
-That tree is a sparse copy of the commit tree maintained by `EditManager` and each view for branch management.
+-   The original commit to be reverted
+-   The commits that we applied after the original commit
 
-The structure forms a tree as opposed to a linked-list because different local branches can share the same ancestor commits.
-Each branch however only ever sees a single spine of this tree, which therefore looks like a linked-list to said branch.
-The rest of the document uses the term "list" when describing operations performed at the scope of a single branch.
+So long as a commit may be reverted, this information is maintained by maintaining a branch whose tip is the original commit.
+If and when the commit is reverted, the inverse of the commit is rebased from the tip of that branch to the tip of the branch on which the inverse will apply.
+The inverse is then applied to the tip of that branch.
+This approach imbues reverts with the specific semantics described here. TODO: link doc.
 
-The tree is sparse because it does **_not_** contain the following kinds of edits:
+Note that this approach relies on the fact that, at a low level, SharedTree edits are non-destructive,
+meaning they do not erase information about the document.
+For more details, see [Detached Tree](./repair-data.md).
 
--   Edits authored by other clients (this is only a concern for the part of the tree that represents the trunk).
--   Undo edits.
-
-Note that some of these edits in the tree may be part of the trunk while others may be on a branch.
-Each branch need only maintain a "head" pointer to the child-most commit on the branch.
-
-### The Redo Commit Tree
-
-The tree of redoable commits is maintained across branches in a similar fashion to the undoable commits tree.
-Redoable commits are effectively undoable commits and can therefore use the same `UndoableCommit` structure described above.
-
-### Reacting to Local Edits
-
-The redo and undo commit lists for a branch are updated as follows in the face of new local edits:
-
--   If the edit is neither an undo nor a redo:
-    -   A new undoable commit node is pushed onto the undoable commit list.
-        The parent field of the new commit node should point to the previous head undoable commit.
-    -   The head pointer for the redoable commits is cleared for that branch.
-        This effectively drops all the redoable commits for the branch.
--   If the edit is an undo:
-    -   The head undoable commit is popped.
-        The parent of the undoable commit becomes the new head undoable commit.
-    -   The concrete undo commit is pushed onto the tip of the redoable commit list.
-        The parent field of the new redoable commit node should point to the previous head redoable commit.
--   If the edit is a redo:
-    -   The head pointer for the redoable commits is popped.
-        The parent of the redoable commit becomes the new head redoable commit.
-    -   The concrete redo commit is pushed onto the undoable commit list.
-        The parent field of the new commit node should point to the previous head undoable commit.
-
-### Forking
-
-When a branch is forked, the new branch can simply obtain the head undoable and redoable commit pointers from the parent branch.
-This helps keep forking cheap.
-
-### Rebasing
-
-When a branch is rebased onto another branch, it must re-create whatever undoable and redoable commits it has to the head of the undo list maintained by the parent branch.
-This can be done by finding the lowest common ancestor in between the two branches,
-and attaching to the tip of the parent branch all of the commits on the child branch that lie under the common ancestor.
-
-Note that all the commits from the rebased branch will undergo rebasing so the undoable/redoable commit nodes for them will need to be remade.
-It would not be valid to simply update the rebased branch's existing undo commit node objects by updating the edits within.
-That's because it's possible that the rebased branch may itself be the parent branch of some other child branch,
-whose undo queue includes those commit nodes.
-The child-most branch's commit nodes should not be affected by the fact that its parent branch was rebased.
-
-One simple way to characterize what needs to happen
-(and possibly to implement it)
-is to replay (the rebased version of) the local branch edits onto a new fork of the parent branch.
-This would however require knowing which of those local edits were undo, redos, or normal edits.
-
-### Dropping Old Commits
-
-As sequenced edits fall out of the collab window,
-we have the option to either drop or retain the corresponding commit nodes in the undo tree.
-We can let the application pick a maximum length for the undo queue of the user.
-
-Retaining commits that fall out of the collab window muddies the statement that this commit tree is a sparse version of the normal commit tree.
-It can be still be thought of as sparse if we ignore the fact that sequenced commits get dropped from it as the collab window advances.
+When the `Revertible` object associated with the revertible commit is disposed,
+the associated branch is disposed and any associated resources are reclaimed.
 
 ## Repair Data
 

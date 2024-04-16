@@ -373,7 +373,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		private readonly mintRevisionTag: () => RevisionTag,
 		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly removedRoots: DetachedFieldIndex = makeDetachedFieldIndex(
-			"repair",
+			"detached",
 			revisionTagCodec,
 		),
 	) {

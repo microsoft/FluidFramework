@@ -1,7 +1,6 @@
 # Undo
 
 This document offers a high-level description of the undo system.
-It should be updated once more progress is made on the implementation.
 
 ## Undo Model and Semantics
 
@@ -139,9 +138,6 @@ the only difference between the message sent when undoing an edit that lies with
 and undoing an edit that lies outside it,
 would be that the latter includes additional historical data.
 
-This is the approach we currently intend to implement long term.
-(See [V1 Undo](./v1-undo.md) for short-term horizon)
-
 One challenge with this approach is that it could result in attempting to send prohibitively large amounts of historical data.
 That's because applying the undo _may_ require historical data not only from the edit to be undone,
 but from all edits that occurred after it also.
@@ -154,6 +150,9 @@ In this approach,
 the issuing client computes the net change to the tip state and sends that as a normal changeset.
 Such a changeset would be rebased over any concurrent edits as changesets normally are.
 Note that this precludes having undo-specific logic for rebasing the change over concurrent edits.
+
+This is the approach currently implemented.
+(See [V1 Undo](./v1-undo.md))
 
 #### Undo as a Special Changeset
 

@@ -1,49 +1,41 @@
-# Repair Data
+# Detached Trees
 
-This document offers a high-level view of our design choices regarding repair data.
-It should be updated once more progress is made on the implementation.
+## What are Detached Trees?
 
-## What is Repair Data
+SharedTree allows users to generate edits that remove or overwrite nodes from the document.
+While these edits seem destructive, they do not actually erase the node and the data associated with it and its descendants.
+Instead, the node is moved out of the document tree, and treated as a new root that stands apart - detached - from the document.
+This keeps the contents of the removed subtree in the forest instead of erasing them.
 
-In order to undo an edit `e` that was applied to state `s1` and yielded state `s2`,
-we need to construct an inverse edit `e⁻¹` that yields state `s1` when applied to state `s2`.
-Computing `e⁻¹` requires the following information:
+## When Are Detached Trees Relevant?
 
--   The original change to be undone
--   Any document state that we wish to restore as part of the undo
-    but cannot derive from the the original change.
+Detached trees are needed when a removed tree's contents
+(i.e., the contents of the now detached tree)
+become relevant again.
+There are four scenarios where this can happen:
 
-This last bullet point may not be immediately obvious,
-but it is a critical issue.
-We may need to recover information about the state of the document before the change that we wish to undo
-because document changes can be destructive:
+-   Reverting a commit
+-   Aborting a transaction
+-   Rebasing a local branch
+-   Applying a rebased commit
 
--   Setting the value on a node erases information about the prior value of that node.
--   Deleting a subtree erases information about the contents of that subtree.
+### Reverting a Commit
 
-Such data cannot be derived solely from the original changeset to be undone.
-We refer to the information that is needed in addition to the original changeset as "repair data".
+This is the more obvious use case:
+reverting a remove or overwrite operation requires the corresponding tree that was removed or overwritten.
+See the [undo design document](./undo.md) for more details.
 
-## Three Contexts
+### Aborting a Transaction
 
-Repair data is used in three different contexts.
+When a client needs to edit the document, it can do so in a transaction.
+Transactions are allowed to return a special value to communicate that the transaction should be aborted.
+When that happens, any edits that the transaction had already applied to the document state need to be rolled back.
+If some of those edits removed nodes, then those nodes need to be reintroduced into the document tree.
 
-### Rolling Back Local Transactions
+### Rebasing a Local Branch
 
-When a client needs to edit the document, it runs a command as part of a transaction.
-Commands are allowed to return a special value to communicate to the transaction code that the transaction should be aborted.
-When that happens, any edits that the command had already applied to the document state need to be rolled back.
-
-Rolling back changes could be achieved by editing a separate copy of the document during the transaction
-(possibly though a persistent data structure, or a copy on write system).
-The current implementation (which will likely change soon) edits the one true document state as the transaction progresses, and rolls back the changes afterward.
-It actually rolls back the changes even if the transaction succeeds,
-but that's not particularly relevant to our discussion.
-
-### Local Branch Updates
-
-When a client successfully completes a local transaction,
-it updates the local document state to reflect the impact of the edit,
+When a client performs a local edit,
+it updates the local document state to reflect the impact of this edit,
 and it sends the edit to the service for sequencing.
 Under ideal circumstances, the next edit that the client receives from the service is that same edit that it had applied locally and sent for sequencing.
 If that's the case, the client does not need to update the document state.
@@ -54,7 +46,7 @@ but also the impact that the peer edit has on the local edit.
 
 Consider the following example:
 
--   Local edit: Remove nodes A and B iff A and B exist.
+-   Local edit: Remove node B iff node A exist.
 -   Peer edit: Remove node A.
 
 If the peer edit is sequenced before the local edit,
@@ -62,22 +54,33 @@ the rebased version of the local edit will have its constraint violated.
 This ought to leave the document in a state where A was removed but B was not removed.
 In order to arrive at such a state from the local tip state
 (where both A and B were removed)
-it is necessary to revive node B.
+it is necessary to restore node B.
 
-### User Undo
+### Applying a Rebased Commit
 
-This is the more obvious use case:
-undoing destructive operation requires the corresponding repair data.
-See the [undo design document](./undo.md) for more details.
+Another case where the contents of a removed tree can be relevant is when we need to apply a commit that edits those contents.
+While we don't currently support the creation of edits to already removed trees,
+any edit may be rebased over the removal of one of its ancestors,
+thereby making the edit target the removed tree.
+In order to apply such an edit, we need access to the contents of the removed tree.\*
 
-## Repair Data Stores
+\* Strictly speaking, this is only true for edits that would move contents out of the removed tree and into the document tree.
+All other edits could be ignored since the user has no way of seeing their impact.
 
-Repair data is computed by each client as they apply changes to documents.
-For example, before deleting a subtree from the document,
-the client first takes note of the data in that subtree so that it can revive it later if need be.
-Until it is needed,
-or until it can be discarded,
-repair data is stored in a `RepairDataStore`.
+## Why Design It This Way?
+
+## How it Works
+
+### Identifying Detached Trees
+
+Whenever a detached tree needs to be reintroduced into the document tree,
+or whenever we need to apply changes to a detached tree,
+we need to be able to describe which detached tree is impacted.
+
+Trees (subtrees) that are in the document are identified by their path from the document root.
+Detached trees however are not reachable from the document root, so they need to be identified though a different scheme.
+
+a `DetachedFieldIndex`.
 
 Each of the three contexts in which repair data may be needed maintains its own repair data store:
 

@@ -510,7 +510,6 @@ export class ModularChangeFamily
 	 * @param change - The change to invert.
 	 * @param isRollback - Whether the inverted change is meant to rollback a change on a branch as is the case when
 	 * performing a sandwich rebase.
-	 * @param repairStore - The store to query for repair data.
 	 */
 	public invert(change: TaggedChange<ModularChangeset>, isRollback: boolean): ModularChangeset {
 		// Return an empty inverse for changes with constraint violations
@@ -1313,9 +1312,6 @@ function copyDetachedNodes(detachedNodes: ChangeAtomIdMap<TreeChunk>, revision?:
 
 /**
  * @param change - The change to convert into a delta.
- * @param repairStore - The store to query for repair data.
- * @param path - The path of the node being altered by the change as defined by the input context.
- * Undefined for the root and for nodes that do not exist in the input context.
  */
 function intoDeltaImpl(
 	change: FieldChangeMap,
