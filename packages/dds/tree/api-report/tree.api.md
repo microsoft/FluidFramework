@@ -640,7 +640,7 @@ export class FlexObjectNodeSchema<const out Name extends string = string, const 
 export interface FlexTreeContext extends ISubscribable<ForestEvents> {
     readonly forest: IForestSubscription;
     // (undocumented)
-    readonly nodeKeys: NodeKeys;
+    readonly nodeKeyManager: NodeKeyManager;
     get root(): FlexTreeField;
     readonly schema: FlexTreeSchema;
 }
@@ -1325,11 +1325,10 @@ export interface NodeKeyFieldKind extends FlexFieldKind<"NodeKey", Multiplicity.
 }
 
 // @internal
-export interface NodeKeys {
-    generate(): LocalNodeKey;
-    localize(key: StableNodeKey): LocalNodeKey;
-    readonly map: ReadonlyMap<LocalNodeKey, FlexTreeObjectNode>;
-    stabilize(key: LocalNodeKey): StableNodeKey;
+export interface NodeKeyManager {
+    generateLocalNodeKey(): LocalNodeKey;
+    localizeNodeKey(key: StableNodeKey): LocalNodeKey;
+    stabilizeNodeKey(key: LocalNodeKey): StableNodeKey;
 }
 
 // @public
