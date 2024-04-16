@@ -26,7 +26,7 @@ import {
 } from "./types.js";
 import {
 	extractMarkEffect,
-	getDetachOutputId,
+	getDetachOutputCellId,
 	getEndpoint,
 	getInputCellId,
 	getOutputCellId,
@@ -154,7 +154,7 @@ function invertMark(
 				);
 			}
 
-			const cellId = getDetachOutputId(
+			const cellId = getDetachOutputCellId(
 				mark,
 				mark.revision ?? revision ?? fail("Revision must be defined"),
 				revisionMetadata,

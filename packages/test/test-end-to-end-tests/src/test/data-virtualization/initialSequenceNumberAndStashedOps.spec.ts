@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
 import { describeCompat, type ITestDataObject } from "@fluid-private/test-version-utils";
 import type { IContainerExperimental } from "@fluidframework/container-loader/internal";

@@ -88,7 +88,7 @@ export interface ILoaderServices {
     readonly urlResolver: IUrlResolver;
 }
 
-// @internal
+// @alpha
 export interface IParsedUrl {
     id: string;
     path: string;
@@ -132,7 +132,7 @@ export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot:
 // @alpha
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
 
-// @internal
+// @alpha
 export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined;
 
 // @alpha

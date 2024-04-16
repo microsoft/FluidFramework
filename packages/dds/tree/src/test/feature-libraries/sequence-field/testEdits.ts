@@ -31,6 +31,7 @@ export const cases: {
 	revive: TestChangeset;
 	pin: TestChangeset;
 	move: TestChangeset;
+	moveAndRemove: TestChangeset;
 	return: TestChangeset;
 	transient_insert: TestChangeset;
 } = {
@@ -50,6 +51,10 @@ export const cases: {
 	revive: createReviveChangeset(2, 2, { revision: tag, localId: brand(0) }),
 	pin: [createPinMark(4, brand(0))],
 	move: createMoveChangeset(1, 2, 4),
+	moveAndRemove: [
+		createMoveOutMark(1, brand(0)),
+		createAttachAndDetachMark(createMoveInMark(1, brand(0)), createRemoveMark(1, brand(1))),
+	],
 	return: createReturnChangeset(1, 3, 0, { revision: tag, localId: brand(0) }),
 	transient_insert: [
 		{ count: 1 },
@@ -181,15 +186,19 @@ function createReviveMark(
 
 function createPinMark(
 	count: number,
-	id: SF.MoveId,
+	id: SF.MoveId | SF.CellId,
 	overrides?: Partial<SF.CellMark<SF.Insert>>,
 ): SF.CellMark<SF.Insert> {
-	return {
+	const cellIdObject: SF.CellId = typeof id === "object" ? id : { localId: id };
+	const mark: SF.CellMark<SF.Insert> = {
 		type: "Insert",
 		count,
-		id,
-		...overrides,
+		id: cellIdObject.localId,
 	};
+	if (cellIdObject.revision !== undefined) {
+		mark.revision = cellIdObject.revision;
+	}
+	return { ...mark, ...overrides };
 }
 
 /**
