@@ -387,7 +387,7 @@ export interface IDevtoolsMessage<TData = unknown> {
     type: string;
 }
 
-// @beta
+// @alpha
 export interface IFluidDevtools extends IDisposable {
     closeContainerDevtools(containerKey: ContainerKey): void;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
