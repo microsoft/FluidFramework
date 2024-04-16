@@ -253,7 +253,6 @@ export interface FieldProps {
 
 /**
  * Package internal construction API.
- * Use {@link createFieldSchema} to create an instance of this type instead.
  */
 export let createFieldSchema: <
 	Kind extends FieldKind = FieldKind,
@@ -269,7 +268,7 @@ export let createFieldSchema: <
  * including functionality that does not have to be kept consistent across versions or deterministic.
  *
  * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
- * Use {@link createFieldSchema} to create an instance of this type instead.
+ * Use `createFieldSchema` to create an instance of this type instead.
  * @sealed @public
  */
 export class FieldSchema<

@@ -553,9 +553,6 @@ export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> = ISh
 export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
 
 // @public
-export const makeFieldSchema: <Kind extends FieldKind = FieldKind, Types extends ImplicitAllowedTypes = ImplicitAllowedTypes>(kind: Kind, allowedTypes: Types, props?: FieldProps) => FieldSchema<Kind, Types>;
-
-// @public
 export interface MakeNominal {
 }
 
