@@ -4,6 +4,6 @@
 "@fluidframework/map": minor
 ---
 
-Make some interface members readonly
+fluid-framework: Make some interface members readonly
 
 Remove unneeded mutability from some interface members.
