@@ -6,7 +6,7 @@
 "@fluidframework/tree": minor
 ---
 
-Replace SharedObjectClass with new ISharedObjectKind type.
+fluid-framework: Replace SharedObjectClass with new ISharedObjectKind type.
 
 The static objects used as SharedObjectClass now explicitly implement the new ISharedObjectKind type.
 SharedObjectClass has been removed as ISharedObjectKind now fills that role.

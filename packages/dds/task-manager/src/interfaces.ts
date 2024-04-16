@@ -9,13 +9,13 @@ import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-objec
  * Describes the event listener format for {@link ITaskManagerEvents} events.
  *
  * @param taskId - The unique identifier of the related task.
- * @internal
+ * @alpha
  */
 export type TaskEventListener = (taskId: string) => void;
 
 /**
  * Events emitted by {@link TaskManager}.
- * @internal
+ * @alpha
  */
 export interface ITaskManagerEvents extends ISharedObjectEvents {
 	/**
@@ -133,7 +133,7 @@ export interface ITaskManagerEvents extends ISharedObjectEvents {
  * when using {@link ITaskManager.subscribeToTask}.
  *
  * See {@link ITaskManagerEvents} for more details.
- * @internal
+ * @alpha
  */
 export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
 	/**
