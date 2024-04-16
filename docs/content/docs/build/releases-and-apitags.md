@@ -17,9 +17,9 @@ Fluid Releases will be done through three channels
 
 Prod releases are our most stable releases, follow semver and are ready to be used in Production scenarios. These releases correspond to the `latest` tag on npm. This should be the channel used to get the most stable version of Fluid. Following **semver (X.Y.Z)**, this channel will includes:
 
--   **Major releases (X)** - Used when releasing `breaking changes`. Breaking changes can include API changes, runtime behavior changes and document format changes. Variable release cadence
--   **Minor releases (Y)** - Used when adding `new features or non-critical bug fixes`, released ~weekly
--   **Patch releases (Z)** - Used when releasing fixes for `critical, time-sensitive bugs`. Variable release cadence
+-   **Major releases (X)** - Used when releasing `breaking changes`. Breaking changes can include API changes, runtime behavior changes and document format changes. Variable release cadence.
+-   **Minor releases (Y)** - Used when adding `new features or non-critical bug fixes`, released ~weekly.
+-   **Patch releases (Z)** - Used when releasing fixes for `critical, time-sensitive bugs`. Variable release cadence.
 
 ### Pre-Release Channel (Release Candidates)
 
@@ -37,7 +37,7 @@ There are no guarantees for API breakages or Fluid document compatibility among 
 
 ## API Tags
 
-There are no API guarantees for packages in the @fluid-experimental namespace.
+There are no API guarantees for packages in the @fluid-experimental and @fluid-internal namespaces. @fluid-experimental APIs are for you to try and provide feedback on and @fluid-internal APIs are only meant for internal consumption by the framework and should not be used.
 For packages that are part of the **@fluidframework** namespace, we use API tagging to communicate the stability and guarantees associated with those APIs.
 
 -   **Public APIs** (`@public`) - These are officially released and supported by us. Any breaking changes to these APIs will first be deprecated before being removed in a major release. We guarantee not to break them in minor and patch releases (respecting the semver guarantees)
