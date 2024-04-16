@@ -914,7 +914,16 @@ export class ContainerRuntime
 
 			// This is the only exception to the rule above - we have proper plumbing to load ID compressor on schema change
 			// event. It is loaded async (relative to op processing), so this conversion is only safe for off -> delayed conversion!
-			if (idCompressorMode === undefined && desiredIdCompressorMode === "delayed") {
+			// Clients do not expect ID compressor ops unless ID compressor is On for them, and that could be achieved only through
+			// explicit schema change, i.e. only if explicitSchemaControl is on.
+			// Note: it would be better if we throw on combination of options (explicitSchemaControl = off, desiredIdCompressorMode === "delayed")
+			// that is not supported. But our service tests are oblivious to these problems and throwing here will cause a ton of failures
+			// We ignored incompatible ID compressor changes from the start (they were sticky), so that's not a new problem being introduced...
+			if (
+				idCompressorMode === undefined &&
+				desiredIdCompressorMode === "delayed" &&
+				explicitSchemaControl
+			) {
 				idCompressorMode = desiredIdCompressorMode;
 			}
 		} else {
