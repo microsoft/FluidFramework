@@ -1,5 +1,38 @@
 # @fluidframework/runtime-definitions
 
+## 2.0.0-rc.3.0.0
+
+### Major Changes
+
+-   runtime-definitions: IFluidDataStoreContext no longer raises events, IFluidDataStoreChannel needs to implement new method ([#20065](https://github.com/microsoft/FluidFramework/issues/20065)) [a4c346d360](https://github.com/microsoft/FluidFramework/commits/a4c346d360731904a5fd155dd06eb7fe9e09b165)
+
+    This change could be ignored, unless you have custom implementations of IFluidDataStoreChannel or listened to IFluidDataStoreContext's "attached" or "attaching" events
+
+    IFluidDataStoreContext no longer raises events. Instead, it will call IFluidDataStoreChannel.setAttachState().
+    If you are implementing data store runtme, please implement setAttachState() API and rely on this flow.
+    If you are not data store developer, and were reaching out to context, then please stop doing it - the only purpose of IFluidDataStoreContext is
+    communication with IFluidDataStoreChannel. Context object should not be exposed by impplementers of IFluidDataStoreChannel.
+    If you are using stock implementations of IFluidDataStoreChannel, you can listen for same events on IFluidDataStoreRuntime instead.
+
+-   Packages now use package.json "exports" and require modern module resolution ([#20553](https://github.com/microsoft/FluidFramework/issues/20553)) [35fd3e4b1c](https://github.com/microsoft/FluidFramework/commits/35fd3e4b1cb9bbe42ffdfdc11752b21088abe43d)
+
+    Fluid Framework packages have been updated to use the [package.json "exports"
+    field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
+    TypeScript types and implementation code.
+
+    This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
+
+    -   `"moduleResolution": "Node16"` with `"module": "Node16"`
+    -   `"moduleResolution": "Bundler"` with `"module": "ESNext"`
+
+    We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
+    for use with modern versions of Node.js _and_ Bundlers.
+    [See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
+    regarding the module and moduleResolution options.
+
+    **Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
+    to distinguish stable APIs from those that are in development.**
+
 ## 2.0.0-rc.2.0.0
 
 ### Minor Changes

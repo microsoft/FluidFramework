@@ -1,8 +1,16 @@
-# @fluid-experimental/property-query
+# @fluidframework/fluid-telemetry
 
 ## 2.0.0-rc.3.0.0
 
 ### Major Changes
+
+-   New package: @fluidframework/fluid-telemetry ([#20553](https://github.com/microsoft/FluidFramework/issues/20553)) [35fd3e4b1c](https://github.com/microsoft/FluidFramework/commits/35fd3e4b1cb9bbe42ffdfdc11752b21088abe43d)
+
+    Before deploying your application at scale, it is critical to have the holistic telemetry in place to monitor its usage
+    and look for issues and optimizations. To make this easier, we are providing a fluid-telemetry package that comes with
+    Typed telemetry events that you can funnel to your any analytics tool of your choice. If you decide to use Azure App
+    Insights to view this data, we also provide helper packages and dashboard queries to get you started quickly. You can
+    learn more at <https://aka.ms/fluid/telemetry>.
 
 -   Packages now use package.json "exports" and require modern module resolution ([#20553](https://github.com/microsoft/FluidFramework/issues/20553)) [35fd3e4b1c](https://github.com/microsoft/FluidFramework/commits/35fd3e4b1cb9bbe42ffdfdc11752b21088abe43d)
 
@@ -22,83 +30,3 @@
 
     **Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
     to distinguish stable APIs from those that are in development.**
-
-## 2.0.0-rc.2.0.0
-
-Dependency updates only.
-
-## 2.0.0-rc.1.0.0
-
-Dependency updates only.
-
-## 2.0.0-internal.8.0.0
-
-Dependency updates only.
-
-## 2.0.0-internal.7.4.0
-
-Dependency updates only.
-
-## 2.0.0-internal.7.3.0
-
-Dependency updates only.
-
-## 2.0.0-internal.7.2.0
-
-Dependency updates only.
-
-## 2.0.0-internal.7.1.0
-
-Dependency updates only.
-
-## 2.0.0-internal.7.0.0
-
-Dependency updates only.
-
-## 2.0.0-internal.6.4.0
-
-Dependency updates only.
-
-## 2.0.0-internal.6.3.0
-
-Dependency updates only.
-
-## 2.0.0-internal.6.2.0
-
-Dependency updates only.
-
-## 2.0.0-internal.6.1.0
-
-Dependency updates only.
-
-## 2.0.0-internal.6.0.0
-
-Dependency updates only.
-
-## 2.0.0-internal.5.4.0
-
-Dependency updates only.
-
-## 2.0.0-internal.5.3.0
-
-Dependency updates only.
-
-## 2.0.0-internal.5.2.0
-
-Dependency updates only.
-
-## 2.0.0-internal.5.1.0
-
-Dependency updates only.
-
-## 2.0.0-internal.5.0.0
-
-Dependency updates only.
-
-## 2.0.0-internal.4.4.0
-
-Dependency updates only.
-
-## 2.0.0-internal.4.1.0
-
-Dependency updates only.
