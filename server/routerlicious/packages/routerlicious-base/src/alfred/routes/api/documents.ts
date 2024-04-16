@@ -14,7 +14,6 @@ import {
 	IRevokeTokenOptions,
 	IRevokedTokenChecker,
 	IClusterDrainingChecker,
-	IUsageData,
 } from "@fluidframework/server-services-core";
 import {
 	verifyStorageToken,
