@@ -2,30 +2,33 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable import/no-nodejs-modules */
 
 import { strict as assert } from "assert";
 import { mkdirSync, readFileSync } from "fs";
 import path from "path";
+
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
-	BaseFuzzTestState,
-	createFuzzDescribe,
-	defaultOptions,
 	AsyncGenerator,
+	AsyncReducer,
+	BaseFuzzTestState,
 	SaveInfo,
 	asyncGeneratorFromArray,
+	createFuzzDescribe,
+	defaultOptions,
 	makeRandom,
 	performFuzzActionsAsync,
-	AsyncReducer,
 } from "@fluid-private/stochastic-test-utils";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+
+import type { SummarizerOperation } from "./fuzzUtils.js";
 import {
 	IMockContainerRuntimeForSummarizerOptions,
 	MockContainerRuntimeFactoryForSummarizer,
 	MockContainerRuntimeForSummarizer,
-} from "./summarizerFuzzMocks";
-import type { SummarizerOperation } from "./fuzzUtils";
+} from "./summarizerFuzzMocks.js";
 
 export interface SummarizerFuzzTestState extends BaseFuzzTestState {
 	containerRuntimeFactory: MockContainerRuntimeFactoryForSummarizer;
@@ -144,7 +147,6 @@ export function createSummarizerFuzzSuite(
 	const options: SummarizerFuzzSuiteOptions = {
 		...defaultSummarizerFuzzSuiteOptions,
 		...providedOptions,
-		saveFailures: false,
 	};
 
 	const only = new Set(options.only);
@@ -170,11 +172,11 @@ export function createSummarizerFuzzSuite(
 			describe.only(`replay from file`, () => {
 				const saveInfo = getSaveInfo(model, options, seed);
 				assert(
-					saveInfo !== undefined,
+					saveInfo.saveOnFailure !== false,
 					"Cannot replay a file without a directory to save files in!",
 				);
 				const operations = options.parseOperations(
-					readFileSync(saveInfo.filepath).toString(),
+					readFileSync(saveInfo.saveOnFailure.path).toString(),
 				);
 
 				const replayModel = {
@@ -224,7 +226,13 @@ async function runTestForSeed(
 		saveInfo,
 	);
 
-	// TODO AB#6954: Validate we can summarize
+	const oldRuntime = finalState.containerRuntime;
+	oldRuntime.disposeFn();
+	const newRuntime = containerRuntimeFactory.createContainerRuntime(
+		new MockFluidDataStoreRuntime(),
+	);
+	await newRuntime.initializeWithStashedOps(oldRuntime);
+	await newRuntime.summarize();
 
 	options.emitter.emit("testEnd", finalState);
 
@@ -266,13 +274,12 @@ function getSaveInfo(
 	model: HasWorkloadName,
 	options: SummarizerFuzzSuiteOptions,
 	seed: number,
-): SaveInfo | undefined {
+): SaveInfo {
 	const directory = getSaveDirectory(model, options);
 	if (!directory) {
-		return undefined;
+		return { saveOnFailure: false, saveOnSuccess: false };
 	}
-	const filepath = path.join(directory, `${seed}.json`);
-	return { saveOnFailure: true, filepath };
+	return { saveOnFailure: { path: path.join(directory, `${seed}.json`) }, saveOnSuccess: false };
 }
 
 type InternalOptions = Omit<SummarizerFuzzSuiteOptions, "only" | "skip"> & {

@@ -4,22 +4,30 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
+
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 
 import { strict as assert } from "node:assert";
-import { AttachState, ContainerErrorTypes } from "@fluidframework/container-definitions";
-import { ContainerMessageType } from "@fluidframework/container-runtime";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+
+import { AttachState } from "@fluidframework/container-definitions";
+import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
+import { ContainerMessageType } from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
-import { SharedMap, SharedDirectory } from "@fluidframework/map";
-import { timeoutPromise } from "@fluidframework/test-utils";
+import { SharedMap, SharedDirectory } from "@fluidframework/map/internal";
 import { type ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
-import { InsecureTinyliciousTokenProvider } from "@fluidframework/tinylicious-driver";
-import { TinyliciousClient } from "../index";
-import { TestDataObject } from "./TestDataObject";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
+import { InsecureTinyliciousTokenProvider } from "@fluidframework/tinylicious-driver/internal";
+
+import { TinyliciousClient } from "../index.js";
+
+import { TestDataObject } from "./TestDataObject.js";
 
 const corruptedAliasOp = async (
 	runtime: IContainerRuntime,
@@ -50,11 +58,11 @@ const allDataCorruption = async (containers: IFluidContainer[]): Promise<boolean
 
 describe("TinyliciousClient", () => {
 	let tinyliciousClient: TinyliciousClient;
-	const schema: ContainerSchema = {
+	const schema = {
 		initialObjects: {
 			map1: SharedMap,
 		},
-	};
+	} satisfies ContainerSchema;
 	beforeEach(() => {
 		tinyliciousClient = new TinyliciousClient();
 	});
@@ -232,12 +240,12 @@ describe("TinyliciousClient", () => {
 	 * the container.
 	 */
 	it("can create/add loadable objects (DDS) dynamically during runtime", async () => {
-		const dynamicSchema: ContainerSchema = {
+		const dynamicSchema = {
 			initialObjects: {
 				map1: SharedMap,
 			},
 			dynamicObjectTypes: [SharedDirectory],
-		};
+		} satisfies ContainerSchema;
 
 		const { container } = await tinyliciousClient.createContainer(dynamicSchema);
 		await container.attach();
@@ -267,12 +275,12 @@ describe("TinyliciousClient", () => {
 	 * the container.
 	 */
 	it("can create/add loadable objects (custom data object) dynamically during runtime", async () => {
-		const dynamicSchema: ContainerSchema = {
+		const dynamicSchema = {
 			initialObjects: {
 				map1: SharedMap,
 			},
 			dynamicObjectTypes: [TestDataObject],
-		};
+		} satisfies ContainerSchema;
 
 		const { container: createFluidContainer } =
 			await tinyliciousClient.createContainer(dynamicSchema);
@@ -299,11 +307,11 @@ describe("TinyliciousClient", () => {
 	 * error event.
 	 */
 	it("can process data corruption events", async () => {
-		const dynamicSchema: ContainerSchema = {
+		const dynamicSchema = {
 			initialObjects: {
 				do1: TestDataObject,
 			},
-		};
+		} satisfies ContainerSchema;
 
 		const { container: createFluidContainer } =
 			await tinyliciousClient.createContainer(dynamicSchema);
@@ -314,7 +322,7 @@ describe("TinyliciousClient", () => {
 			});
 		});
 
-		const do1 = createFluidContainer.initialObjects.do1 as TestDataObject;
+		const do1 = createFluidContainer.initialObjects.do1;
 		const dataCorruption = allDataCorruption([createFluidContainer]);
 		await corruptedAliasOp(runtimeOf(do1), "alias");
 		assert(await dataCorruption);

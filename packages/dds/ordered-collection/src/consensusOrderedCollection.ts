@@ -4,24 +4,26 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import { v4 as uuid } from "uuid";
+
 import {
 	ConsensusCallback,
 	ConsensusResult,
 	IConsensusOrderedCollection,
-	IOrderedCollection,
 	IConsensusOrderedCollectionEvents,
-} from "./interfaces";
+	IOrderedCollection,
+} from "./interfaces.js";
 
 const snapshotFileNameData = "header";
 const snapshotFileNameTracking = "jobTracking";
@@ -38,10 +40,11 @@ interface IConsensusOrderedCollectionValue<T> {
 /**
  * An operation for consensus ordered collection
  */
-interface IConsensusOrderedCollectionAddOperation {
+interface IConsensusOrderedCollectionAddOperation<T> {
 	opName: "add";
 	// serialized value
 	value: string;
+	deserializedValue?: T;
 }
 
 interface IConsensusOrderedCollectionAcquireOperation {
@@ -65,8 +68,8 @@ interface IConsensusOrderedCollectionReleaseOperation {
 	acquireId: string;
 }
 
-type IConsensusOrderedCollectionOperation =
-	| IConsensusOrderedCollectionAddOperation
+type IConsensusOrderedCollectionOperation<T> =
+	| IConsensusOrderedCollectionAddOperation<T>
 	| IConsensusOrderedCollectionAcquireOperation
 	| IConsensusOrderedCollectionCompleteOperation
 	| IConsensusOrderedCollectionReleaseOperation;
@@ -137,9 +140,10 @@ export class ConsensusOrderedCollection<T = any>
 			return;
 		}
 
-		await this.submit<IConsensusOrderedCollectionAddOperation>({
+		await this.submit<IConsensusOrderedCollectionAddOperation<T>>({
 			opName: "add",
 			value: valueSer,
+			deserializedValue: value,
 		});
 	}
 
@@ -289,11 +293,15 @@ export class ConsensusOrderedCollection<T = any>
 		localOpMetadata: unknown,
 	) {
 		if (message.type === MessageType.Operation) {
-			const op = message.contents as IConsensusOrderedCollectionOperation;
+			const op = message.contents as IConsensusOrderedCollectionOperation<T>;
 			let value: IConsensusOrderedCollectionValue<T> | undefined;
 			switch (op.opName) {
 				case "add":
-					this.addCore(this.deserializeValue(op.value, this.serializer) as T);
+					if (op.deserializedValue !== undefined) {
+						this.addCore(op.deserializedValue);
+					} else {
+						this.addCore(this.deserializeValue(op.value, this.serializer) as T);
+					}
 					break;
 
 				case "acquire":
@@ -319,7 +327,7 @@ export class ConsensusOrderedCollection<T = any>
 		}
 	}
 
-	private async submit<TMessage extends IConsensusOrderedCollectionOperation>(
+	private async submit<TMessage extends IConsensusOrderedCollectionOperation<T>>(
 		message: TMessage,
 	): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
 		assert(this.isAttached(), 0x06a /* "Trying to submit message while detached!" */);
@@ -394,7 +402,7 @@ export class ConsensusOrderedCollection<T = any>
 		return serializer.parse(content);
 	}
 
-	protected applyStashedOp() {
+	protected applyStashedOp(): void {
 		throw new Error("not implemented");
 	}
 }

@@ -2,9 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { assert } from "chai";
 
-import { MonoRepoKind } from "@fluidframework/build-tools";
+import { MonoRepoKind } from "../../src/library";
 
 import {
 	generateBumpDepsBranchName,
@@ -125,6 +126,12 @@ describe("generateReleaseBranchName", () => {
 	it("Fluid internal version scheme", () => {
 		const actual = generateReleaseBranchName(MonoRepoKind.Client, "2.0.0-internal.1.0.0");
 		const expected = "release/v2int/1.0";
+		assert.equal(actual, expected);
+	});
+
+	it("Fluid RC version scheme", () => {
+		const actual = generateReleaseBranchName(MonoRepoKind.Client, "2.0.0-rc.1.0.0");
+		const expected = "release/client/2.0.0-rc.1.0";
 		assert.equal(actual, expected);
 	});
 

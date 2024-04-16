@@ -7,35 +7,34 @@ import {
 	MonitoringContext,
 	UsageError,
 	validatePrecondition,
-} from "@fluidframework/telemetry-utils";
-import { IContainerRuntimeMetadata } from "../summary";
+} from "@fluidframework/telemetry-utils/internal";
+
+import { IContainerRuntimeMetadata } from "../summary/index.js";
+
 import {
-	nextGCVersion,
+	GCFeatureMatrix,
+	GCVersion,
+	IGCMetadata_Deprecated,
+	IGCRuntimeOptions,
+	IGarbageCollectorConfigs,
 	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,
+	defaultSweepGracePeriodMs,
+	disableDatastoreSweepKey,
 	disableTombstoneKey,
-	GCFeatureMatrix,
+	gcDisableDataStoreSweepOptionName,
+	gcDisableThrowOnTombstoneLoadOptionName,
+	gcGenerationOptionName,
 	gcTestModeKey,
-	GCVersion,
-	gcVersionUpgradeToV4Key,
-	IGarbageCollectorConfigs,
-	IGCRuntimeOptions,
 	maxSnapshotCacheExpiryMs,
 	oneDayMs,
 	runGCKey,
 	runSessionExpiryKey,
 	runSweepKey,
-	stableGCVersion,
 	throwOnTombstoneLoadOverrideKey,
 	throwOnTombstoneUsageKey,
-	gcDisableThrowOnTombstoneLoadOptionName,
-	defaultSweepGracePeriodMs,
-	gcGenerationOptionName,
-	IGCMetadata_Deprecated,
-	disableDatastoreSweepKey,
-	gcDisableDataStoreSweepOptionName,
-} from "./gcDefinitions";
-import { getGCVersion, shouldAllowGcSweep } from "./gcHelpers";
+} from "./gcDefinitions.js";
+import { getGCVersion, getGCVersionInEffect, shouldAllowGcSweep } from "./gcHelpers.js";
 
 /**
  * Generates configurations for the Garbage Collector that it uses to determine what to run and how.
@@ -113,9 +112,7 @@ export function generateGCConfigs(
 		createParams.gcOptions[gcGenerationOptionName] /* currentGeneration */,
 	);
 
-	// If version upgrade is not enabled, fall back to the stable GC version.
-	const gcVersionInEffect =
-		mc.config.getBoolean(gcVersionUpgradeToV4Key) === true ? nextGCVersion : stableGCVersion;
+	const gcVersionInEffect = getGCVersionInEffect(mc.config);
 
 	// The GC version is up-to-date if the GC version in effect is at least equal to the GC version in base snapshot.
 	// If it is not up-to-date, there is a newer version of GC out there which is more reliable than this. So, GC

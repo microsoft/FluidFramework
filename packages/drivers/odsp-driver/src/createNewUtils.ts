@@ -3,34 +3,36 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
-import {
-	ISummaryBlob,
-	ISummaryTree,
-	SummaryType,
-	ISnapshotTree,
-	type SummaryObject,
-} from "@fluidframework/protocol-definitions";
+import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	getDocAttributesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
-} from "@fluidframework/driver-utils";
-import { stringToBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
-import { unreachableCase } from "@fluidframework/core-utils";
+} from "@fluidframework/driver-utils/internal";
+import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
 import { getGitType } from "@fluidframework/protocol-base";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
-import { ISnapshot } from "@fluidframework/driver-definitions";
+import {
+	ISnapshotTree,
+	ISummaryBlob,
+	ISummaryTree,
+	type SummaryObject,
+	SummaryType,
+} from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import { v4 as uuid } from "uuid";
+
 import {
 	IOdspSummaryPayload,
 	IOdspSummaryTree,
 	OdspSummaryTreeEntry,
 	OdspSummaryTreeValue,
-} from "./contracts";
-import { getWithRetryForTokenRefresh, maxUmpPostBodySize } from "./odspUtils";
-import { EpochTracker, FetchType } from "./epochTracker";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { runWithRetry } from "./retryUtils";
+} from "./contracts.js";
+import { EpochTracker, FetchType } from "./epochTracker.js";
+import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+import { getWithRetryForTokenRefresh, maxUmpPostBodySize } from "./odspUtils.js";
+import { runWithRetry } from "./retryUtils.js";
 
 /**
  * Converts a summary(ISummaryTree) taken in detached container to snapshot tree and blobs
@@ -281,7 +283,6 @@ export async function createNewFluidContainerCore<T>(args: {
 				validateResponseCallback?.(fetchResponse.content);
 
 				event.end({
-					headers: Object.keys(headers).length > 0 ? true : undefined,
 					attempts: options.refresh ? 2 : 1,
 					...fetchResponse.propsToLog,
 				});

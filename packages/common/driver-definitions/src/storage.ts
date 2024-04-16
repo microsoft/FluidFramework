@@ -5,10 +5,10 @@
 
 import type {
 	IDisposable,
-	IEventProvider,
 	IErrorEvent,
-	ITelemetryBaseLogger,
 	IEvent,
+	IEventProvider,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import type {
 	ConnectionMode,
@@ -26,8 +26,9 @@ import type {
 	ITokenClaims,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import type { IAnyDriverError } from "./driverError";
-import type { IResolvedUrl } from "./urlResolver";
+
+import type { IAnyDriverError } from "./driverError.js";
+import type { IResolvedUrl } from "./urlResolver.js";
 
 /**
  * @internal
@@ -313,10 +314,11 @@ export interface IDocumentDeltaConnection
 
 	/**
 	 * Submits a new signal to the server
+	 *
+	 * @privateRemarks
+	 * UnknownShouldBe<string> can be string if {@link IDocumentServiceFactory} becomes internal.
 	 */
-	// TODO: Use something other than `any`.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	submitSignal(content: any, targetClientId?: string): void;
+	submitSignal: (content: string, targetClientId?: string) => void;
 }
 
 /**

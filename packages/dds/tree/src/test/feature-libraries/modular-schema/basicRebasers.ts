@@ -4,7 +4,11 @@
  */
 
 import { TUnsafe, Type } from "@sinclair/typebox";
+
+import { makeCodecFamily } from "../../../codec/index.js";
+import { DeltaFieldChanges, makeDetachedNodeId, Multiplicity } from "../../../core/index.js";
 import {
+	FieldChangeEncodingContext,
 	FieldChangeHandler,
 	FieldChangeRebaser,
 	FieldKindWithEditor,
@@ -12,13 +16,6 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import { Mutable, fail } from "../../../util/index.js";
-import { makeCodecFamily } from "../../../codec/index.js";
-import {
-	ChangeEncodingContext,
-	DeltaFieldChanges,
-	makeDetachedNodeId,
-} from "../../../core/index.js";
-import { Multiplicity } from "../../../feature-libraries/index.js";
 import { makeValueCodec } from "../../codec/index.js";
 
 /**
@@ -80,7 +77,7 @@ export const valueHandler = {
 	rebaser: replaceRebaser(),
 	codecsFactory: () =>
 		makeCodecFamily([
-			[0, makeValueCodec<TUnsafe<ValueChangeset>, ChangeEncodingContext>(Type.Any())],
+			[1, makeValueCodec<TUnsafe<ValueChangeset>, FieldChangeEncodingContext>(Type.Any())],
 		]),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 

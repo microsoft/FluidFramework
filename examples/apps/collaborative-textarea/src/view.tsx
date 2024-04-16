@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { CollaborativeTextArea, SharedStringHelper } from "@fluid-example/example-utils";
+import { SharedString } from "@fluidframework/sequence/internal";
 import React from "react";
-import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
-import { SharedString } from "@fluidframework/sequence";
 
 interface CollaborativeTextProps {
 	text: SharedString;

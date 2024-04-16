@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import EventEmitter from "events";
+import { EventEmitter } from "@fluid-internal/client-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { BatchTracker } from "../batchTracker";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+
+import { BatchTracker } from "../batchTracker.js";
 
 describe("Runtime", () => {
 	const emitter = new EventEmitter();

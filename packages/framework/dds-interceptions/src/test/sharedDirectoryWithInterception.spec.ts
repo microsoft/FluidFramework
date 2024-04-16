@@ -4,10 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { IDirectory, SharedDirectory, DirectoryFactory } from "@fluidframework/map";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { createDirectoryWithInterception } from "../map";
+
+import { IDirectory, type ISharedDirectory, SharedDirectory } from "@fluidframework/map/internal";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+
+import { createDirectoryWithInterception } from "../map/index.js";
 
 describe("Shared Directory with Interception", () => {
 	describe("Simple User Attribution", () => {
@@ -15,7 +17,7 @@ describe("Shared Directory with Interception", () => {
 		const documentId = "fakeId";
 		const attributionDirectoryName = "attribution";
 		const attributionKey = (key: string) => `${key}.attribution`;
-		let sharedDirectory: SharedDirectory;
+		let sharedDirectory: ISharedDirectory;
 		let dataStoreContext: IFluidDataStoreContext;
 
 		// This function gets / creates the attribution directory for the given subdirectory path.
@@ -96,11 +98,7 @@ describe("Shared Directory with Interception", () => {
 
 		beforeEach(() => {
 			const dataStoreRuntime = new MockFluidDataStoreRuntime();
-			sharedDirectory = new SharedDirectory(
-				documentId,
-				dataStoreRuntime,
-				DirectoryFactory.Attributes,
-			);
+			sharedDirectory = SharedDirectory.getFactory().create(dataStoreRuntime, documentId);
 
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			dataStoreContext = {
@@ -399,7 +397,7 @@ describe("Shared Directory with Interception", () => {
 		 */
 		it("should assert if set is called on the wrapper from the callback causing infinite recursion", async () => {
 			// eslint-disable-next-line prefer-const
-			let sharedDirectoryWithInterception: SharedDirectory;
+			let sharedDirectoryWithInterception: IDirectory;
 
 			let useWrapper: boolean = true;
 			// If useWrapper above is true, this interception callback that calls a set on the wrapped object

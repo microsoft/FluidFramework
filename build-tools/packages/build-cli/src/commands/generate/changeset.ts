@@ -2,19 +2,20 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Package } from "@fluidframework/build-tools";
+
+import { writeFile } from "node:fs/promises";
+import path from "node:path";
 import { VersionBumpType } from "@fluid-tools/version-tools";
+import { Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import chalk from "chalk";
 import humanId from "human-id";
-import { writeFile } from "node:fs/promises";
-import path from "node:path";
 import { format as prettier } from "prettier";
 import prompts from "prompts";
 
 import { BaseCommand } from "../../base";
-import { Repository, getDefaultBumpTypeForBranch } from "../../library";
 import { releaseGroupFlag } from "../../flags";
+import { Repository, getDefaultBumpTypeForBranch } from "../../library";
 
 /**
  * If more than this number of packages are changed relative to the selected branch, the user will be prompted to select
@@ -44,8 +45,12 @@ interface Choice {
 	heading?: boolean;
 }
 
-export default class GenerateChangesetCommand extends BaseCommand<typeof GenerateChangesetCommand> {
-	static readonly summary = `Generates a new changeset file. You will be prompted to select the packages affected by this change. You can also create an empty changeset to include with this change that can be updated later.`;
+export default class GenerateChangesetCommand extends BaseCommand<
+	typeof GenerateChangesetCommand
+> {
+	static readonly summary =
+		`Generates a new changeset file. You will be prompted to select the packages affected by this change. You can also create an empty changeset to include with this change that can be updated later.`;
+
 	static readonly aliases: string[] = [
 		// 'add' is the verb that the standard changesets cli uses. It's also shorter than 'generate'.
 		"changeset:add",
@@ -261,8 +266,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 				type: uiMode === "default" ? "autocompleteMultiselect" : "multiselect",
 				choices: [...choices, { title: " ", heading: true, disabled: true }],
 				instructions: INSTRUCTIONS,
-				message:
-					"Choose which packages to include in the changeset. Type to filter the list.",
+				message: "Choose which packages to include in the changeset. Type to filter the list.",
 				optionsPerPage: 5,
 				onState: (state: any) => {
 					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions

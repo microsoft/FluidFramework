@@ -4,16 +4,19 @@
  */
 
 import * as fs from "fs";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { LoaderHeader } from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
-import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
-import { IFluidFileConverter } from "./codeLoaderBundle";
-import { FakeUrlResolver } from "./fakeUrlResolver";
-import { getSnapshotFileContent, timeoutPromise, getArgsValidationError } from "./utils";
+
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
+import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+
+import { IFluidFileConverter } from "./codeLoaderBundle.js";
+import { FakeUrlResolver } from "./fakeUrlResolver.js";
 /* eslint-disable import/no-internal-modules */
-import { ITelemetryOptions } from "./logger/fileLogger";
-import { createLogger, getTelemetryFileValidationError } from "./logger/loggerUtils";
+import { ITelemetryOptions } from "./logger/fileLogger.js";
+import { createLogger, getTelemetryFileValidationError } from "./logger/loggerUtils.js";
+import { getArgsValidationError, getSnapshotFileContent, timeoutPromise } from "./utils.js";
 /* eslint-enable import/no-internal-modules */
 
 /**
@@ -21,11 +24,17 @@ import { createLogger, getTelemetryFileValidationError } from "./logger/loggerUt
  */
 export type IExportFileResponse = IExportFileResponseSuccess | IExportFileResponseFailure;
 
-interface IExportFileResponseSuccess {
+/**
+ * @alpha
+ */
+export interface IExportFileResponseSuccess {
 	success: true;
 }
 
-interface IExportFileResponseFailure {
+/**
+ * @alpha
+ */
+export interface IExportFileResponseFailure {
 	success: false;
 	eventName: string;
 	errorMessage: string;

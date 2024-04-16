@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Octokit } from "@octokit/core";
 import { CommandLogger } from "../logging";
 

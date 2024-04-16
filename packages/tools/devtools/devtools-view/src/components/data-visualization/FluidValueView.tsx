@@ -2,15 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import type { FluidObjectValueNode, HasContainerKey } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
-import type { FluidObjectValueNode, HasContainerKey } from "@fluidframework/devtools-core";
-import { useContainerFeaturesContext } from "../../ContainerFeatureFlagHelper";
-import { EditableView } from "./EditableView";
+import { useContainerFeaturesContext } from "../../ContainerFeatureFlagHelper.js";
 
-import type { DataVisualizationTreeProps } from "./CommonInterfaces";
-import { TreeItem } from "./TreeItem";
-import { TreeHeader } from "./TreeHeader";
+import type { DataVisualizationTreeProps } from "./CommonInterfaces.js";
+import { EditableView } from "./EditableView.js";
+import { TreeHeader } from "./TreeHeader.js";
+import { TreeItem } from "./TreeItem.js";
 
 /**
  * {@link ValueView} input props.
@@ -38,6 +39,7 @@ export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 					label={label}
 					nodeTypeMetadata={node.typeMetadata}
 					inlineValue={String(node.value)}
+					tooltipContents={node.tooltipContents}
 				/>
 			)}
 		</>

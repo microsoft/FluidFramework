@@ -4,16 +4,17 @@
  */
 
 import { IsoBuffer } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
 	BlobCore,
-	codeToBytesMap,
-	getValueSafely,
 	MarkerCodes,
 	MarkerCodesEnd,
 	MarkerCodesStart,
 	NodeCore,
-} from "./zipItDataRepresentationUtils";
+	codeToBytesMap,
+	getValueSafely,
+} from "./zipItDataRepresentationUtils.js";
 
 /**
  * Buffer class, used to sequentially writ data.

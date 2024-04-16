@@ -3,16 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-import { Body1, Body1Strong, Link, Subtitle1, makeStyles } from "@fluentui/react-components";
 import {
-	handleIncomingMessage,
-	type InboundHandlers,
+	Body1,
+	Body1Strong,
+	Button,
+	Link,
+	Subtitle1,
+	makeStyles,
+} from "@fluentui/react-components";
+import {
+	DevtoolsFeatures,
+	GetDevtoolsFeatures,
 	type ISourcedDevtoolsMessage,
+	type InboundHandlers,
+	SetUnsampledTelemetry,
 	TelemetryEvent,
-} from "@fluidframework/devtools-core";
-import { useMessageRelay } from "../MessageRelayContext";
-import { DynamicComposedChart, type GraphDataSet } from "./graphs";
+	handleIncomingMessage,
+} from "@fluidframework/devtools-core/internal";
+import React from "react";
+
+import { useMessageRelay } from "../MessageRelayContext.js";
+
+import { DynamicComposedChart, type GraphDataSet } from "./graphs/index.js";
 
 const useStyles = makeStyles({
 	flexColumn: {
@@ -84,13 +96,50 @@ export function OpLatencyView(): React.ReactElement {
 			},
 			data: [],
 		});
-	const unsampledTelemetry = localStorage.getItem("Fluid.Telemetry.DisableSampling");
+	const [unsampledTelemetry, setUnsampledTelemetry] = React.useState<boolean>(false);
+
+	React.useEffect(() => {
+		// Handler for incoming messages
+		const inboundMessageHandlers: InboundHandlers = {
+			[DevtoolsFeatures.MessageType]: async (untypedMessage) => {
+				const message = untypedMessage as DevtoolsFeatures.Message;
+				const messageFlag = message.data.unsampledTelemetry;
+				if (messageFlag !== undefined) {
+					setUnsampledTelemetry(messageFlag);
+					return true;
+				}
+				return false;
+			},
+		};
+
+		function messageHandler(message: Partial<ISourcedDevtoolsMessage>): void {
+			handleIncomingMessage(message, inboundMessageHandlers);
+		}
+
+		messageRelay.on("message", messageHandler);
+		messageRelay.postMessage(GetDevtoolsFeatures.createMessage());
+
+		// Cleanup the event listener
+		return () => {
+			messageRelay.off("message", messageHandler);
+		};
+	}, [messageRelay]);
+
 	// Render the text conditionally
-	const renderInstructions = unsampledTelemetry !== "true";
+	const renderInstructions = unsampledTelemetry !== true;
 
 	function formatTimestamp(timestamp: number): string {
 		return new Date(timestamp).toTimeString().slice(0, 8);
 	}
+
+	const toggleUnsampledTelemetry = (): void => {
+		const newValue = !unsampledTelemetry;
+		const toggleMessage = SetUnsampledTelemetry.createMessage({
+			unsampledTelemetry: newValue,
+		});
+		messageRelay.postMessage(toggleMessage);
+	};
+
 	React.useEffect(() => {
 		/**
 		 * Handlers for inbound messages.
@@ -101,6 +150,11 @@ export function OpLatencyView(): React.ReactElement {
 				const eventContents = message.data.event.logContent;
 				// Op roundtrip time logs are the only ones with relevant information for this component
 				if (!eventContents.eventName.endsWith("OpRoundtripTime")) {
+					return false;
+				}
+				// If any of the required fields are missing, we can't use this data
+				// TODO: AB#7583 Investigates the ops being skipped and their source.
+				if (eventContents.durationNetwork === undefined) {
 					return false;
 				}
 
@@ -156,10 +210,7 @@ export function OpLatencyView(): React.ReactElement {
 			<h3>Op Latency</h3>
 			{renderInstructions ? (
 				<Body1>
-					{`Unsampled telemetry has not been enabled and is necessary for this feature to work as designed. To enable it, open the web console and set the Disable Sampling flag to true using the following command:`}
-					<pre
-						style={{ whiteSpace: "pre-wrap", wordWrap: "break-word" }}
-					>{`localStorage.setItem("Fluid.Telemetry.DisableSampling", "true");`}</pre>
+					{`Unsampled telemetry is not currently enabled in the Fluid-based application and is necessary for this feature to work as designed.`}
 					{`\nIMPORTANT: This flag is only intended for local development with Devtools and should not be enabled in production scenarios.`}
 				</Body1>
 			) : (
@@ -249,6 +300,10 @@ export function OpLatencyView(): React.ReactElement {
 					</div>
 				</>
 			)}
+			<Button size="small" onClick={toggleUnsampledTelemetry}>
+				{unsampledTelemetry ? "Disable Unsampled Telemetry" : "Enable Unsampled Telemetry"}
+			</Button>
+			<Body1>The page will refresh upon clicking the button</Body1>
 		</div>
 	);
 }

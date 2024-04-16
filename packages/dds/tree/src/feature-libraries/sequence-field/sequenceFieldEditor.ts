@@ -3,29 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { ChangesetLocalId } from "../../core/index.js";
-import { FieldEditor } from "../modular-schema/index.js";
 import { brand } from "../../util/index.js";
+import { FieldEditor, NodeId } from "../modular-schema/index.js";
+
+import { MarkListFactory } from "./markListFactory.js";
 import {
 	CellId,
 	CellMark,
 	Changeset,
 	Insert,
 	Mark,
-	MoveId,
-	NodeChangeType,
-	MoveOut,
-	MoveIn,
 	MarkList,
+	MoveId,
+	MoveIn,
+	MoveOut,
 } from "./types.js";
-import { MarkListFactory } from "./markListFactory.js";
 import { splitMark } from "./utils.js";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
-	insert(index: number, count: number, firstId: ChangesetLocalId): Changeset<never>;
-	remove(index: number, count: number, id: ChangesetLocalId): Changeset<never>;
-	revive(index: number, count: number, detachEvent: CellId, isIntention?: true): Changeset<never>;
+	insert(index: number, count: number, firstId: ChangesetLocalId): Changeset;
+	remove(index: number, count: number, id: ChangesetLocalId): Changeset;
+	revive(index: number, count: number, detachEvent: CellId, isIntention?: true): Changeset;
 
 	/**
 	 *
@@ -33,31 +34,19 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 	 * @param count - The number of nodes to move
 	 * @param destIndex - The index the nodes should be moved to, interpreted before detaching the moved nodes
 	 */
-	move(
-		sourceIndex: number,
-		count: number,
-		destIndex: number,
-		id: ChangesetLocalId,
-	): Changeset<never>;
+	move(sourceIndex: number, count: number, destIndex: number, id: ChangesetLocalId): Changeset;
 
-	moveOut(sourceIndex: number, count: number, id: ChangesetLocalId): Changeset<never>;
-	moveIn(destIndex: number, count: number, id: ChangesetLocalId): Changeset<never>;
+	moveOut(sourceIndex: number, count: number, id: ChangesetLocalId): Changeset;
+	moveIn(destIndex: number, count: number, id: ChangesetLocalId): Changeset;
 
-	return(
-		sourceIndex: number,
-		count: number,
-		destIndex: number,
-		detachEvent: CellId,
-	): Changeset<never>;
+	return(sourceIndex: number, count: number, destIndex: number, detachEvent: CellId): Changeset;
 }
 
 export const sequenceFieldEditor = {
-	buildChildChange: <TNodeChange = NodeChangeType>(
-		index: number,
-		change: TNodeChange,
-	): Changeset<TNodeChange> => markAtIndex(index, { count: 1, changes: change }),
-	insert: (index: number, count: number, firstId: ChangesetLocalId): Changeset<never> => {
-		const mark: CellMark<Insert, never> = {
+	buildChildChange: (index: number, change: NodeId): Changeset =>
+		markAtIndex(index, { count: 1, changes: change }),
+	insert: (index: number, count: number, firstId: ChangesetLocalId): Changeset => {
+		const mark: CellMark<Insert> = {
 			type: "Insert",
 			id: firstId,
 			count,
@@ -65,12 +54,12 @@ export const sequenceFieldEditor = {
 		};
 		return markAtIndex(index, mark);
 	},
-	remove: (index: number, count: number, id: ChangesetLocalId): Changeset<never> =>
+	remove: (index: number, count: number, id: ChangesetLocalId): Changeset =>
 		count === 0 ? [] : markAtIndex(index, { type: "Remove", count, id }),
 
-	revive: (index: number, count: number, detachEvent: CellId): Changeset<never> => {
+	revive: (index: number, count: number, detachEvent: CellId): Changeset => {
 		assert(detachEvent.revision !== undefined, 0x724 /* Detach event must have a revision */);
-		const mark: CellMark<Insert, never> = {
+		const mark: CellMark<Insert> = {
 			type: "Insert",
 			id: detachEvent.localId,
 			count,
@@ -79,19 +68,14 @@ export const sequenceFieldEditor = {
 		return count === 0 ? [] : markAtIndex(index, mark);
 	},
 
-	move(
-		sourceIndex: number,
-		count: number,
-		destIndex: number,
-		id: ChangesetLocalId,
-	): Changeset<never> {
-		const moveIn: Mark<never> = {
+	move(sourceIndex: number, count: number, destIndex: number, id: ChangesetLocalId): Changeset {
+		const moveIn: Mark = {
 			type: "MoveIn",
 			id,
 			count,
 			cellId: { localId: id },
 		};
-		const moveOut: Mark<never> = {
+		const moveOut: Mark = {
 			type: "MoveOut",
 			id,
 			count,
@@ -99,8 +83,8 @@ export const sequenceFieldEditor = {
 		return moveMarksToMarkList(sourceIndex, count, destIndex, moveOut, moveIn);
 	},
 
-	moveOut(sourceIndex: number, count: number, id: ChangesetLocalId): Changeset<never> {
-		const moveOut: Mark<never> = {
+	moveOut(sourceIndex: number, count: number, id: ChangesetLocalId): Changeset {
+		const moveOut: Mark = {
 			type: "MoveOut",
 			id,
 			count,
@@ -108,8 +92,8 @@ export const sequenceFieldEditor = {
 		return markAtIndex(sourceIndex, moveOut);
 	},
 
-	moveIn(destIndex: number, count: number, id: ChangesetLocalId): Changeset<never> {
-		const moveIn: Mark<never> = {
+	moveIn(destIndex: number, count: number, id: ChangesetLocalId): Changeset {
+		const moveIn: Mark = {
 			type: "MoveIn",
 			id,
 			count,
@@ -118,20 +102,15 @@ export const sequenceFieldEditor = {
 		return markAtIndex(destIndex, moveIn);
 	},
 
-	return(
-		sourceIndex: number,
-		count: number,
-		destIndex: number,
-		detachEvent: CellId,
-	): Changeset<never> {
+	return(sourceIndex: number, count: number, destIndex: number, detachEvent: CellId): Changeset {
 		const id = brand<MoveId>(0);
-		const moveOut: CellMark<MoveOut, never> = {
+		const moveOut: CellMark<MoveOut> = {
 			type: "MoveOut",
 			id,
 			count,
 		};
 
-		const returnTo: CellMark<MoveIn, never> = {
+		const returnTo: CellMark<MoveIn> = {
 			type: "MoveIn",
 			id,
 			count,
@@ -146,14 +125,14 @@ function moveMarksToMarkList(
 	sourceIndex: number,
 	count: number,
 	destIndex: number,
-	detach: CellMark<MoveOut, never>,
-	attach: CellMark<MoveIn, never>,
-): MarkList<never> {
+	detach: CellMark<MoveOut>,
+	attach: CellMark<MoveIn>,
+): MarkList {
 	if (count === 0) {
 		return [];
 	}
 	const firstIndexBeyondMoveOut = sourceIndex + count;
-	const marks = new MarkListFactory<never>();
+	const marks = new MarkListFactory();
 	marks.pushOffset(Math.min(sourceIndex, destIndex));
 	if (destIndex <= sourceIndex) {
 		// The destination is fully before the source
@@ -176,6 +155,6 @@ function moveMarksToMarkList(
 	return marks.list;
 }
 
-function markAtIndex<TNodeChange>(index: number, mark: Mark<TNodeChange>): Changeset<TNodeChange> {
+function markAtIndex(index: number, mark: Mark): Changeset {
 	return index === 0 ? [mark] : [{ count: index }, mark];
 }

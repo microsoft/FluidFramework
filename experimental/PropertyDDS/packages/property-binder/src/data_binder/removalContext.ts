@@ -6,9 +6,9 @@
 /**
  * @fileoverview Context which describes a remove operation.
  */
-import { BaseContext } from "./baseContext";
-import { DataBinding } from "./dataBinding";
-import { NodeType } from "./dataBindingTree";
+import { BaseContext } from "./baseContext.js";
+import { DataBinding } from "./dataBinding.js";
+import { NodeType } from "./dataBindingTree.js";
 
 /**
  * Context which describes a remove operation

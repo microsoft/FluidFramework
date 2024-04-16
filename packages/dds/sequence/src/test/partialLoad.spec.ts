@@ -4,15 +4,17 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	MockFluidDataStoreRuntime,
-	MockContainerRuntimeFactory,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { ReferenceType } from "@fluidframework/merge-tree";
+
 import { IChannelServices } from "@fluidframework/datastore-definitions";
+import { ReferenceType } from "@fluidframework/merge-tree/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { SharedStringFactory, SharedString } from "../index";
+import {
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { SharedString, SharedStringFactory } from "../index.js";
 
 function applyOperations(
 	sharedString: SharedString,
@@ -50,7 +52,7 @@ function generateSummaryTree(
 	const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 	dataStoreRuntime1.options = options;
 	// Connect the first SharedString.
-	const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 	const services1: IChannelServices = {
 		deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 		objectStorage: new MockStorage(),
@@ -66,7 +68,7 @@ function generateSummaryTree(
 	// Create and connect a second SharedString.
 	const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
 	dataStoreRuntime2.options = options;
-	const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 	const sharedString2 = new SharedString(
 		dataStoreRuntime2,
 		"shared-string",

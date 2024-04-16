@@ -6,21 +6,22 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	type IDevtoolsMessage,
-	type ISourcedDevtoolsMessage,
 	type IMessageRelay,
 	type IMessageRelayEvents,
-	isDevtoolsMessage,
+	type ISourcedDevtoolsMessage,
 	devtoolsMessageSource,
-} from "@fluidframework/devtools-core";
+	isDevtoolsMessage,
+} from "@fluidframework/devtools-core/internal";
 
-import { browser } from "./Globals";
+import { browser } from "./Globals.js";
 import {
-	devToolsInitAcknowledgementType,
 	type DevToolsInitMessage,
-	devToolsInitMessageType,
-	extensionMessageSource,
 	type TypedPortConnection,
-} from "./messaging";
+	devToolsInitAcknowledgementType,
+	devToolsInitMessageType,
+	extensionPopupMessageSource,
+	extensionViewMessageSource,
+} from "./messaging/index.js";
 
 /**
  * {@link BackgroundConnection} input parameters.
@@ -137,11 +138,15 @@ export class BackgroundConnection
 		if (!isDevtoolsMessage(message)) {
 			return false;
 		}
-
+		const allowedMessageSources = [
+			extensionViewMessageSource,
+			extensionPopupMessageSource,
+			devtoolsMessageSource,
+		];
 		// Ignore messages from unexpected sources.
 		// We receive at least one message directly from the Background script so we need to include
-		// extensionMessageSource as a valid source.
-		if (message.source !== extensionMessageSource && message.source !== devtoolsMessageSource) {
+		// extensionMessageSource and extensionPopupMessageSource as valid sources.
+		if (!allowedMessageSources.includes(message.source)) {
 			return false;
 		}
 

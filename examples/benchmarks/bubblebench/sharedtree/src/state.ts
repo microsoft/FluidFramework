@@ -3,18 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { Change, SharedTree } from "@fluid-experimental/tree";
 import {
 	IAppState,
 	IClient,
-	IArrayish,
 	makeBubble,
 	makeClient,
+	SimpleClient,
 } from "@fluid-example/bubblebench-common";
-import { fromJson, TreeArrayProxy, TreeObjectProxy } from "./proxy/index.js";
+import { Change, SharedTree } from "@fluid-experimental/tree";
+
+import { TreeArrayProxy, TreeObjectProxy, fromJson } from "./proxy/index.js";
 
 interface IApp {
-	clients: IArrayish<IClient>;
+	readonly clients: SimpleClient[];
 }
 
 export class AppState implements IAppState {
@@ -22,7 +23,7 @@ export class AppState implements IAppState {
 	public readonly applyEdits: () => void;
 	private readonly root: IApp;
 
-	public readonly localClient: IClient;
+	public readonly localClient: SimpleClient;
 
 	private readonly deferredUpdates = true;
 	private readonly deferredChanges: Change[] = [];
@@ -66,7 +67,7 @@ export class AppState implements IAppState {
 		return this._height;
 	}
 
-	public get clients(): IArrayish<IClient> {
+	public get clients(): Iterable<IClient> {
 		return this.root.clients;
 	}
 

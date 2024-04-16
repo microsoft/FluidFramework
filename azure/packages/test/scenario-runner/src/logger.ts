@@ -2,17 +2,22 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import crypto from "crypto";
-import fs from "fs";
+import fs from "node:fs";
 
-import { IEvent, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert, LazyPromise } from "@fluidframework/core-utils";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
+import type { ITelemetryBufferedLogger } from "@fluid-internal/test-driver-definitions";
+import type { IEvent, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
+import { type ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { pkgName, pkgVersion } from "./packageVersion";
-import { ScenarioRunnerTelemetryEventNames, getAzureClientConnectionConfigFromEnv } from "./utils";
+import { pkgName, pkgVersion } from "./packageVersion.js";
+import {
+	type ScenarioRunnerTelemetryEventNames,
+	getAzureClientConnectionConfigFromEnv,
+} from "./utils.js";
 
 export interface LoggerConfig {
 	scenarioName?: string;
@@ -130,8 +135,8 @@ class ScenarioRunnerLogger implements ITelemetryBufferedLogger {
 }
 
 export const loggerP = new LazyPromise<ScenarioRunnerLogger>(async () => {
-	if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
-		await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
+	if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER !== undefined) {
+		await import(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
 		const logger = getTestLogger?.();
 		assert(logger !== undefined, "Expected getTestLogger to return something");
 		return new ScenarioRunnerLogger(logger);

@@ -4,21 +4,26 @@
  */
 
 import { strict as assert } from "assert";
-import type { SharedString, IIntervalCollection, SequenceInterval } from "@fluidframework/sequence";
+
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IHostLoader } from "@fluidframework/container-definitions/internal";
+import { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime/internal";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type {
+	IIntervalCollection,
+	SequenceInterval,
+	SharedString,
+} from "@fluidframework/sequence/internal";
 import {
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
 	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
 	ITestFluidObject,
+	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
-import { IContainerExperimental } from "@fluidframework/container-loader";
-import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { IHostLoader } from "@fluidframework/container-definitions";
+} from "@fluidframework/test-utils/internal";
 
 const stringId = "sharedStringKey";
 const collectionId = "collectionKey";
@@ -75,7 +80,7 @@ describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObject
 					},
 				},
 			},
-			enableRuntimeIdCompressor: true,
+			enableRuntimeIdCompressor: "on",
 		},
 		loaderProps: {
 			configProvider: configProvider({
@@ -106,8 +111,7 @@ describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObject
 		url = await container1.getAbsoluteUrl("");
 	});
 
-	// todo re-enable after AB#7145
-	it.skip("doesn't resend successful op", async () => {
+	it("doesn't resend successful op", async () => {
 		// add an interval
 		const id = collection1.add({ start: 4, end: 7 }).getIntervalId();
 

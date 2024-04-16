@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable } from "@fluidframework/core-interfaces";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
-import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
+import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
+import { IDisposable } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	FetchSource,
 	IDocumentService,
@@ -16,8 +15,8 @@ import {
 	ISnapshot,
 	ISnapshotFetchOptions,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
-import { UsageError } from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-definitions/internal";
+import { UsageError } from "@fluidframework/driver-utils/internal";
 import {
 	ICreateBlobResponse,
 	ISnapshotTree,
@@ -25,9 +24,11 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { IDetachedBlobStorage } from "./loader";
-import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
-import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+
+import { IDetachedBlobStorage } from "./loader.js";
+import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService.js";
+import { RetriableDocumentStorageService } from "./retriableDocumentStorageService.js";
 
 /**
  * Stringified blobs from a summary/snapshot tree.
@@ -234,7 +235,7 @@ const redirectTableBlobName = ".redirectTable";
  */
 export async function getBlobContentsFromTree(
 	snapshot: ISnapshotTree,
-	storage: IDocumentStorageService,
+	storage: Pick<IDocumentStorageService, "readBlob">,
 ): Promise<ISerializableBlobContents> {
 	const blobs = {};
 	await getBlobContentsFromTreeCore(snapshot, blobs, storage);
@@ -244,7 +245,7 @@ export async function getBlobContentsFromTree(
 async function getBlobContentsFromTreeCore(
 	tree: ISnapshotTree,
 	blobs: ISerializableBlobContents,
-	storage: IDocumentStorageService,
+	storage: Pick<IDocumentStorageService, "readBlob">,
 	root = true,
 ) {
 	const treePs: Promise<any>[] = [];
@@ -267,7 +268,7 @@ async function getBlobContentsFromTreeCore(
 async function getBlobManagerTreeFromTree(
 	tree: ISnapshotTree,
 	blobs: ISerializableBlobContents,
-	storage: IDocumentStorageService,
+	storage: Pick<IDocumentStorageService, "readBlob">,
 ) {
 	const id = tree.blobs[redirectTableBlobName];
 	const blob = await storage.readBlob(id);

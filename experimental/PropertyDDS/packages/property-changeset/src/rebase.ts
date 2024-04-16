@@ -4,9 +4,9 @@
  */
 
 import { copy as cloneDeep } from "fastest-json-copy";
-import isEqual from "lodash/isEqual";
+import isEqual from "lodash/isEqual.js";
 
-import { ChangeSet } from "./changeset";
+import { ChangeSet } from "./changeset.js";
 
 class SyncPromise {
 	value: any;

@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/core-utils';
+import { assert } from '@fluidframework/core-utils/internal';
 import { type IChannelAttributes, type IDeltaHandler } from '@fluidframework/datastore-definitions';
-import { MessageType, type ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { type ISequencedDocumentMessage, MessageType } from '@fluidframework/protocol-definitions';
+
 import { type IOpContents, type IShimDeltaHandler } from './types.js';
 import { attributesMatch, isStampedOp } from './utils.js';
 
@@ -79,7 +80,7 @@ export class SharedTreeShimDeltaHandler implements IShimDeltaHandler {
 	public applyStashedOp(contents: unknown): void {
 		assert(
 			!this.shouldDropOp(contents as IOpContents),
-			"SharedTreeShim should not be able to apply v1 ops as they shouldn't have been created locally."
+			0x8ab /* SharedTreeShim should not be able to apply v1 ops as they shouldn't have been created locally. */
 		);
 		this.handler.applyStashedOp(contents);
 	}

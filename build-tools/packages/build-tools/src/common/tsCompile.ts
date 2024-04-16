@@ -3,16 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type * as tsTypes from "typescript";
 import path from "path";
+import type * as tsTypes from "typescript";
 import { defaultLogger } from "./logging.js";
-import { getTscUtils } from "./tscUtils.js";
-
-// Any paths given by typescript will be normalized to forward slashes.
-// Local paths should be normalized to make any comparisons.
-function normalizeSlashes(path: string): string {
-	return path.replace(/\\/g, "/");
-}
+import { getTscUtils, normalizeSlashes } from "./tscUtils.js";
 
 export function tsCompile({
 	command,

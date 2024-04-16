@@ -6,13 +6,15 @@
 /* eslint-disable no-bitwise */
 
 import {
+	// eslint-disable-next-line import/no-deprecated
 	Client,
 	PropertiesManager,
 	PropertySet,
 	SlidingPreference,
-} from "@fluidframework/merge-tree";
+} from "@fluidframework/merge-tree/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { SequencePlace, Side } from "../intervalCollection";
+
+import { SequencePlace, Side } from "../intervalCollection.js";
 
 /**
  * Basic interval abstraction
@@ -231,7 +233,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 		label: string,
 		start: SequencePlace | undefined,
 		end: SequencePlace | undefined,
-
+		// eslint-disable-next-line import/no-deprecated
 		client: Client | undefined,
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,

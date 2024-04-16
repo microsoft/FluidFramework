@@ -3,17 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
-	TreeFieldStoredSchema,
 	FieldKindIdentifier,
+	TreeFieldStoredSchema,
 	TreeStoredSchema,
 	TreeTypeSet,
+	Multiplicity,
 } from "../../core/index.js";
-import { Multiplicity } from "../multiplicity.js";
-import { isNeverField } from "./isNeverTree.js";
+
 import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler.js";
 import { FlexFieldKind, FullSchemaPolicy } from "./fieldKind.js";
+import { isNeverField } from "./isNeverTree.js";
 
 /**
  * Functionality for FieldKinds that is stable,
@@ -73,7 +75,7 @@ export class FieldKindWithEditor<
 	): boolean {
 		if (
 			isNeverField(policy, originalData, {
-				kind: this,
+				kind: this.identifier,
 				types: originalTypes,
 			})
 		) {

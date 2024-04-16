@@ -3,24 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import { LoggingError, TelemetryDataTag, tagCodeArtifacts } from "@fluidframework/telemetry-utils";
-import { assert, LazyPromise } from "@fluidframework/core-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
+import {
+	IExperimentalIncrementalSummaryContext,
+	IGarbageCollectionData,
+	ITelemetryContext,
+} from "@fluidframework/runtime-definitions";
 import {
 	CreateChildSummarizerNodeParam,
-	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNodeConfigWithGC,
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
-	ITelemetryContext,
-	IExperimentalIncrementalSummaryContext,
-} from "@fluidframework/runtime-definitions";
-import { unpackChildNodesUsedRoutes } from "@fluidframework/runtime-utils";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { cloneGCData, unpackChildNodesGCDetails } from "../../gc";
-import { SummarizerNode } from "./summarizerNode";
+} from "@fluidframework/runtime-definitions/internal";
+import { unpackChildNodesUsedRoutes } from "@fluidframework/runtime-utils/internal";
+import {
+	LoggingError,
+	TelemetryDataTag,
+	tagCodeArtifacts,
+} from "@fluidframework/telemetry-utils/internal";
+
+import { cloneGCData, unpackChildNodesGCDetails } from "../../gc/index.js";
+
+import { SummarizerNode } from "./summarizerNode.js";
 import {
 	EscapedPath,
 	ICreateChildDetails,
@@ -28,7 +36,7 @@ import {
 	ISummarizerNodeRootContract,
 	SummaryNode,
 	ValidateSummaryResult,
-} from "./summarizerNodeUtils";
+} from "./summarizerNodeUtils.js";
 
 export interface IRootSummarizerNodeWithGC
 	extends ISummarizerNodeWithGC,

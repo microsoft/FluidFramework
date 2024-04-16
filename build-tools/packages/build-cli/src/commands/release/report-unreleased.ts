@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import fetch from "node-fetch";
 import * as fs from "node:fs/promises";
-import { Flags } from "@oclif/core";
+import { isInternalVersionRange } from "@fluid-tools/version-tools";
 import { Logger } from "@fluidframework/build-tools";
+import { Flags } from "@oclif/core";
+import fetch from "node-fetch";
 import { BaseCommand } from "../../base";
 import { PackageVersionList } from "../../library";
-import { isInternalVersionRange } from "@fluid-tools/version-tools";
 
 // Define the interface for build details
 interface IBuildDetails {
@@ -22,7 +22,8 @@ interface IBuildDetails {
 }
 
 export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReportCommand> {
-	static readonly description = `Creates a release report for the most recent build of the client release group published to an internal ADO feed. It does this by finding the most recent build in ADO produced from a provided branch, and creates a report using that version. The report is a combination of the "simple" and "caret" report formats. Packages released as part of the client release group will have an exact version range, while other packages, such as server packages or independent packages, will have a caret-equivalent version range.`;
+	static readonly description =
+		`Creates a release report for the most recent build of the client release group published to an internal ADO feed. It does this by finding the most recent build in ADO produced from a provided branch, and creates a report using that version. The report is a combination of the "simple" and "caret" report formats. Packages released as part of the client release group will have an exact version range, while other packages, such as server packages or independent packages, will have a caret-equivalent version range.`;
 
 	static readonly flags = {
 		repo: Flags.string({

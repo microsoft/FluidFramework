@@ -3,20 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { RevisionTag } from "../../core/index.js";
+
+import { MoveEffectTable, splitMarkForMoveEffects } from "./moveEffectTable.js";
 import { Mark } from "./types.js";
-import { splitMarkForMoveEffects, MoveEffectTable } from "./moveEffectTable.js";
 import { splitMark } from "./utils.js";
 
-export class MarkQueue<T> {
-	private readonly stack: Mark<T>[] = [];
+export class MarkQueue {
+	private readonly stack: Mark[] = [];
 	private index = 0;
 
 	public constructor(
-		private readonly list: readonly Mark<T>[],
+		private readonly list: readonly Mark[],
 		public readonly revision: RevisionTag | undefined,
-		private readonly moveEffects: MoveEffectTable<T>,
+		private readonly moveEffects: MoveEffectTable,
 	) {
 		this.list = list;
 	}
@@ -25,13 +27,13 @@ export class MarkQueue<T> {
 		return this.peek() === undefined;
 	}
 
-	public dequeue(): Mark<T> {
+	public dequeue(): Mark {
 		const output = this.tryDequeue();
 		assert(output !== undefined, 0x4e2 /* Unexpected end of mark queue */);
 		return output;
 	}
 
-	public tryDequeue(): Mark<T> | undefined {
+	public tryDequeue(): Mark | undefined {
 		const mark = this.stack.length > 0 ? this.stack.pop() : this.list[this.index++];
 		if (mark === undefined) {
 			return undefined;
@@ -49,7 +51,7 @@ export class MarkQueue<T> {
 	 * or the entire next mark if `length` is longer than the mark's length.
 	 * @param length - The length to dequeue, measured in the input context.
 	 */
-	public dequeueUpTo(length: number): Mark<T> {
+	public dequeueUpTo(length: number): Mark {
 		const mark = this.dequeue();
 		if (mark.count <= length) {
 			return mark;
@@ -60,7 +62,7 @@ export class MarkQueue<T> {
 		return mark1;
 	}
 
-	public peek(): Mark<T> | undefined {
+	public peek(): Mark | undefined {
 		const mark = this.tryDequeue();
 		if (mark !== undefined) {
 			this.stack.push(mark);

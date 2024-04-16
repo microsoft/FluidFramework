@@ -3,45 +3,47 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
-import { assert, Deferred } from "@fluidframework/core-utils";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
-	ITelemetryLoggerExt,
-	PerformanceEvent,
-	isFluidError,
-	normalizeError,
-	loggerToMonitoringContext,
-	wrapError,
-} from "@fluidframework/telemetry-utils";
-import {
-	ThrottlingError,
-	RateLimiter,
-	NonRetryableError,
 	LocationRedirectionError,
-} from "@fluidframework/driver-utils";
+	NonRetryableError,
+	RateLimiter,
+	ThrottlingError,
+} from "@fluidframework/driver-utils/internal";
 import {
-	OdspErrorTypes,
-	snapshotKey,
 	ICacheEntry,
 	IEntry,
 	IFileEntry,
-	IPersistedCache,
 	IOdspError,
 	IOdspErrorAugmentations,
 	IOdspResolvedUrl,
-} from "@fluidframework/odsp-driver-definitions";
+	IPersistedCache,
+	OdspErrorTypes,
+	maximumCacheDurationMs,
+	snapshotKey,
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
+	PerformanceEvent,
+	isFluidError,
+	loggerToMonitoringContext,
+	normalizeError,
+	wrapError,
+} from "@fluidframework/telemetry-utils/internal";
+import { v4 as uuid } from "uuid";
+
+import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts.js";
+import { ClpCompliantAppHeader } from "./contractsPublic.js";
+import { INonPersistentCache, IOdspCache, IPersistedFileCache } from "./odspCache.js";
+import { patchOdspResolvedUrl } from "./odspLocationRedirection.js";
+import {
+	IOdspResponse,
 	fetchAndParseAsJSONHelper,
 	fetchArray,
 	fetchHelper,
 	getOdspResolvedUrl,
-	IOdspResponse,
-} from "./odspUtils";
-import { IOdspCache, INonPersistentCache, IPersistedFileCache } from "./odspCache";
-import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
-import { ClpCompliantAppHeader } from "./contractsPublic";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { patchOdspResolvedUrl } from "./odspLocationRedirection";
+} from "./odspUtils.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 /**
  * @alpha
@@ -65,9 +67,6 @@ export type FetchType =
 export type FetchTypeInternal = FetchType | "cache";
 
 export const Odsp409Error = "Odsp409Error";
-
-// Must be less than policy of 5 days
-export const defaultCacheExpiryTimeoutMs: number = 2 * 24 * 60 * 60 * 1000; // 2 days in ms
 
 /**
  * In ODSP, the concept of "epoch" refers to binary updates to files. For example, this might include using
@@ -107,7 +106,7 @@ export class EpochTracker implements IPersistedFileCache {
 			"Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache",
 		)
 			? 0
-			: defaultCacheExpiryTimeoutMs;
+			: maximumCacheDurationMs;
 	}
 
 	// public for UT purposes only!

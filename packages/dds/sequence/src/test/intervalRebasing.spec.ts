@@ -4,19 +4,22 @@
  */
 
 import { strict as assert } from "assert";
+
 import { IChannelServices } from "@fluidframework/datastore-definitions";
+// eslint-disable-next-line import/no-internal-modules
+import { useStrictPartialLengthChecks } from "@fluidframework/merge-tree/internal/test";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-// eslint-disable-next-line import/no-internal-modules
-import { useStrictPartialLengthChecks } from "@fluidframework/merge-tree/dist/test";
-import { SharedString } from "../sharedString";
-import { IntervalStickiness } from "../intervals";
-import { Side } from "../intervalCollection";
-import { SharedStringFactory } from "../sequenceFactory";
-import { assertConsistent, assertSequenceIntervals, Client } from "./intervalTestUtils";
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { Side } from "../intervalCollection.js";
+import { IntervalStickiness } from "../intervals/index.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { SharedString } from "../sharedString.js";
+
+import { Client, assertConsistent, assertSequenceIntervals } from "./intervalTestUtils.js";
 
 function constructClient(
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,

@@ -4,24 +4,27 @@
  */
 
 import { strict as assert } from "node:assert";
-import { Deferred } from "@fluidframework/core-utils";
-import { MockLogger, type IFluidErrorBase } from "@fluidframework/telemetry-utils";
+
+import { Deferred } from "@fluidframework/core-utils/internal";
 import {
-	OdspErrorTypes,
-	IOdspResolvedUrl,
 	IEntry,
+	IOdspResolvedUrl,
+	OdspErrorTypes,
 	snapshotKey,
-} from "@fluidframework/odsp-driver-definitions";
-import { EpochTrackerWithRedemption } from "../epochTracker";
-import { LocalPersistentCache } from "../odspCache";
-import { getHashedDocumentId } from "../odspPublicUtils";
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { type IFluidErrorBase, MockLogger } from "@fluidframework/telemetry-utils/internal";
+
+import { EpochTrackerWithRedemption } from "../epochTracker.js";
+import { LocalPersistentCache } from "../odspCache.js";
+import { getHashedDocumentId } from "../odspPublicUtils.js";
+
 import {
-	mockFetchSingle,
+	MockResponse,
 	mockFetchMultiple,
-	okResponse,
+	mockFetchSingle,
 	notFound,
-	type MockResponse,
-} from "./mockFetch";
+	okResponse,
+} from "./mockFetch.js";
 
 class DeferralWithCallback extends Deferred<void> {
 	private epochCallback: () => Promise<unknown> = async () => {};

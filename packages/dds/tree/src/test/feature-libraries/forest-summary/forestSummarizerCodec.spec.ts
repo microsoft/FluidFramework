@@ -4,35 +4,36 @@
  */
 
 import { strict as assert } from "assert";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { rootFieldKey } from "../../../core/index.js";
-import {
-	TreeCompressionStrategy,
-	cursorForJsonableTreeField,
-	makeFieldBatchCodec,
-} from "../../../feature-libraries/index.js";
 
-import {
-	FieldSet,
-	makeForestSummarizerCodec,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/forest-summary/codec.js";
-import { emptySchema } from "../../cursorTestSuite.js";
-// eslint-disable-next-line import/no-internal-modules
-import { Format, version } from "../../../feature-libraries/forest-summary/format.js";
-// eslint-disable-next-line import/no-internal-modules
-import { TreeChunk } from "../../../feature-libraries/chunked-forest/index.js";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
+import { ICodecOptions } from "../../../codec/index.js";
+import { rootFieldKey } from "../../../core/index.js";
+import { typeboxValidator } from "../../../external-utilities/index.js";
 import {
 	chunkField,
 	defaultChunkPolicy,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
+// eslint-disable-next-line import/no-internal-modules
+import { TreeChunk } from "../../../feature-libraries/chunked-forest/index.js";
+import {
+	FieldSet,
+	makeForestSummarizerCodec,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/forest-summary/codec.js";
+// eslint-disable-next-line import/no-internal-modules
+import { Format, version } from "../../../feature-libraries/forest-summary/format.js";
+import {
+	TreeCompressionStrategy,
+	cursorForJsonableTreeField,
+	makeFieldBatchCodec,
+} from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
-import { ICodecOptions } from "../../../codec/index.js";
-import { typeboxValidator } from "../../../external-utilities/index.js";
+import { emptySchema } from "../../cursorTestSuite.js";
 
 const codecOptions: ICodecOptions = { jsonValidator: typeboxValidator };
-const fieldBatchCodec = makeFieldBatchCodec(codecOptions);
+const fieldBatchCodec = makeFieldBatchCodec(codecOptions, 1);
 const context = {
 	encodeType: TreeCompressionStrategy.Uncompressed,
 };

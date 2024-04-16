@@ -74,6 +74,7 @@ export class SummaryWriter implements ISummaryWriter {
 	 * such as a job queue. If set to 'true', the return value of writeClientSummary/writeServiceSummary will not
 	 * be used by the lambda. The external process will be responsible for sending the updates to the op stream.
 	 */
+	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 	public get isExternal(): boolean {
 		return false;
 	}

@@ -2,16 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import * as fs from "fs";
+import * as path from "path";
 import { PackageName } from "@rushstack/node-core-library";
 import { queue } from "async";
 import * as chalk from "chalk";
 import detectIndent from "detect-indent";
-import * as fs from "fs";
 import { readFileSync, readJsonSync, writeJsonSync } from "fs-extra";
-import * as path from "path";
 import sortPackageJson from "sort-package-json";
 
-import type { PackageJson as StandardPackageJson, SetRequired } from "type-fest";
+import type { SetRequired, PackageJson as StandardPackageJson } from "type-fest";
 
 import { options } from "../fluidBuild/options";
 import { type IFluidBuildConfig, type ITypeValidationConfig } from "./fluidRepo";
@@ -113,8 +114,8 @@ export class Package {
 		this.packageManager = existsSync(pnpmWorkspacePath)
 			? "pnpm"
 			: existsSync(yarnLockPath)
-			? "yarn"
-			: "npm";
+				? "yarn"
+				: "npm";
 		traceInit(`${this.nameColored}: Package loaded`);
 		Object.assign(this, additionalProperties);
 	}
@@ -227,8 +228,8 @@ export class Package {
 		return this.packageManager === "pnpm"
 			? "pnpm i"
 			: this.packageManager === "yarn"
-			? "npm run install-strict"
-			: "npm i";
+				? "npm run install-strict"
+				: "npm i";
 	}
 
 	private get color() {
@@ -358,12 +359,10 @@ async function queueExec<TItem, TResult>(
 				const result = await exec(item);
 				const elapsedTime = (Date.now() - startTime) / 1000;
 				log(
-					`[${++numDone}/${p.length}] ${messageCallback(item)} - ${elapsedTime.toFixed(
-						3,
-					)}s`,
+					`[${++numDone}/${p.length}] ${messageCallback(item)} - ${elapsedTime.toFixed(3)}s`,
 				);
 				return result;
-		  }
+			}
 		: exec;
 	const q = queue(async (taskExec: TaskExec<TItem, TResult>) => {
 		try {
@@ -402,9 +401,7 @@ export class Packages {
 					ignoredDirFullPaths === undefined ||
 					!ignoredDirFullPaths.some((name) => isSameFileOrDir(name, fullPath))
 				) {
-					packages.push(
-						...Packages.loadDir(fullPath, group, ignoredDirFullPaths, monoRepo),
-					);
+					packages.push(...Packages.loadDir(fullPath, group, ignoredDirFullPaths, monoRepo));
 				}
 			}
 		});
@@ -526,7 +523,9 @@ export function updatePackageJsonFile(
  *
  * @internal
  */
-export function readPackageJsonAndIndent(pathToJson: string): [json: PackageJson, indent: string] {
+export function readPackageJsonAndIndent(
+	pathToJson: string,
+): [json: PackageJson, indent: string] {
 	const contents = readFileSync(pathToJson).toString();
 	const indentation = detectIndent(contents).indent || "\t";
 	const pkgJson: PackageJson = JSON.parse(contents);

@@ -4,7 +4,6 @@
 
 ```ts
 
-import type { EventEmitter } from 'events';
 import type { FluidObject } from '@fluidframework/core-interfaces';
 import type { IAnyDriverError } from '@fluidframework/driver-definitions';
 import type { IClient } from '@fluidframework/protocol-definitions';
@@ -12,26 +11,27 @@ import type { IClientConfiguration } from '@fluidframework/protocol-definitions'
 import type { IClientDetails } from '@fluidframework/protocol-definitions';
 import type { IDisposable } from '@fluidframework/core-interfaces';
 import type { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import type { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { IErrorBase } from '@fluidframework/core-interfaces';
+import type { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
+import { IErrorBase } from '@fluidframework/core-interfaces/internal';
+import type { IErrorBase as IErrorBase_2 } from '@fluidframework/core-interfaces';
 import type { IErrorEvent } from '@fluidframework/core-interfaces';
 import type { IEvent } from '@fluidframework/core-interfaces';
 import type { IEventProvider } from '@fluidframework/core-interfaces';
-import { IGenericError } from '@fluidframework/core-interfaces';
+import { IGenericError } from '@fluidframework/core-interfaces/internal';
 import type { IQuorumClients } from '@fluidframework/protocol-definitions';
 import type { IRequest } from '@fluidframework/core-interfaces';
-import type { IResolvedUrl } from '@fluidframework/driver-definitions';
+import type { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 import type { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import type { ISequencedProposal } from '@fluidframework/protocol-definitions';
 import type { ISignalMessage } from '@fluidframework/protocol-definitions';
-import type { ISnapshot } from '@fluidframework/driver-definitions';
+import type { ISnapshot } from '@fluidframework/driver-definitions/internal';
 import type { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import type { ISummaryContent } from '@fluidframework/protocol-definitions';
 import type { ISummaryTree } from '@fluidframework/protocol-definitions';
 import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { IThrottlingWarning } from '@fluidframework/core-interfaces';
+import { IThrottlingWarning } from '@fluidframework/core-interfaces/internal';
 import type { ITokenClaims } from '@fluidframework/protocol-definitions';
-import { IUsageError } from '@fluidframework/core-interfaces';
+import { IUsageError } from '@fluidframework/core-interfaces/internal';
 import type { IVersion } from '@fluidframework/protocol-definitions';
 import type { MessageType } from '@fluidframework/protocol-definitions';
 
@@ -63,25 +63,33 @@ export const ContainerErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @alpha (undocumented)
+// @alpha
 export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
 
 // @alpha
-export interface ContainerWarning extends IErrorBase {
+export interface ContainerWarning extends IErrorBase_2 {
     logged?: boolean;
 }
 
 // @public
-export interface IAudience extends EventEmitter {
+export interface IAudience extends IEventProvider<IAudienceEvents> {
     getMember(clientId: string): IClient | undefined;
     getMembers(): Map<string, IClient>;
-    on(event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): this;
+    getSelf: () => ISelf | undefined;
 }
 
-// @alpha
+// @public (undocumented)
+export interface IAudienceEvents extends IEvent {
+    // (undocumented)
+    (event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): void;
+    (event: "selfChanged", listener: (oldValue: ISelf | undefined, newValue: ISelf) => void): void;
+}
+
+// @internal
 export interface IAudienceOwner extends IAudience {
     addMember(clientId: string, details: IClient): void;
     removeMember(clientId: string): boolean;
+    setCurrentClientId(clientId: string): void;
 }
 
 // @alpha
@@ -91,7 +99,7 @@ export interface IBatchMessage {
     // (undocumented)
     contents?: string;
     // (undocumented)
-    metadata: Record<string, unknown> | undefined;
+    metadata?: Record<string, unknown>;
     // (undocumented)
     referenceSequenceNumber?: number;
 }
@@ -145,7 +153,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 export interface IContainerContext {
     readonly attachState: AttachState;
     // (undocumented)
-    readonly audience: IAudience | undefined;
+    readonly audience: IAudience;
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
     // (undocumented)
@@ -163,8 +171,6 @@ export interface IContainerContext {
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
     // (undocumented)
     getLoadedFromVersion(): IVersion | undefined;
-    // @deprecated (undocumented)
-    getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
     // @deprecated
     readonly id: string;
     // (undocumented)
@@ -183,7 +189,7 @@ export interface IContainerContext {
     // @deprecated (undocumented)
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     // (undocumented)
-    readonly submitSignalFn: (contents: any, targetClientId?: string) => void;
+    readonly submitSignalFn: (contents: unknown, targetClientId?: string) => void;
     // (undocumented)
     readonly submitSummaryFn: (summaryOp: ISummaryContent, referenceSequenceNumber?: number) => number;
     // (undocumented)
@@ -221,7 +227,7 @@ export interface IContainerLoadMode {
 }
 
 // @public
-export type ICriticalContainerError = IErrorBase;
+export type ICriticalContainerError = IErrorBase_2;
 
 // @public @sealed
 export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
@@ -258,7 +264,7 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "disconnect", listener: (reason: string, error?: IAnyDriverError) => void): any;
     (event: "readonly", listener: (readonly: boolean, readonlyConnectionReason?: {
         reason: string;
-        error?: IErrorBase;
+        error?: IErrorBase_2;
     }) => void): any;
 }
 
@@ -293,7 +299,6 @@ export { IErrorBase }
 
 // @alpha
 export interface IFluidBrowserPackage extends IFluidPackage {
-    // (undocumented)
     fluid: {
         browser: IFluidBrowserPackageEnvironment;
         [environment: string]: IFluidPackageEnvironment;
@@ -454,6 +459,12 @@ export const IRuntimeFactory: keyof IProvideRuntimeFactory;
 // @alpha
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
     instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
+}
+
+// @public
+export interface ISelf {
+    client?: IClient;
+    clientId: string;
 }
 
 // @alpha

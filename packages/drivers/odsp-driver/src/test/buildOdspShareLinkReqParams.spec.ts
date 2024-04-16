@@ -4,8 +4,13 @@
  */
 
 import { strict as assert } from "node:assert";
-import { SharingLinkRole, SharingLinkScope } from "@fluidframework/odsp-driver-definitions";
-import { buildOdspShareLinkReqParams } from "../odspUtils";
+
+import {
+	SharingLinkRole,
+	SharingLinkScope,
+} from "@fluidframework/odsp-driver-definitions/internal";
+
+import { buildOdspShareLinkReqParams } from "../odspUtils.js";
 
 describe("buildOdspShareLinkReqParams", () => {
 	it("Should return appropriate query parameters when only scope is provided", async () => {

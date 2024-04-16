@@ -4,14 +4,32 @@
  */
 
 module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
+	extends: [
+		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
+		"prettier",
+	],
 	parserOptions: {
-		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+		project: [
+			"./tsconfig.json",
+			"./tsconfig.bin.lint.json",
+			"./src/test/tsconfig.json",
+			"./src/test/tsconfig.cjs.lint.json",
+		],
 	},
 	rules: {
 		"@typescript-eslint/no-non-null-assertion": "off",
 		"@typescript-eslint/no-use-before-define": "off",
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"import/no-nodejs-modules": "off",
+		"unicorn/filename-case": [
+			"error",
+			{
+				cases: {
+					camelCase: true,
+					pascalCase: true,
+				},
+				ignore: ["fluid-runner", "sample-executable"],
+			},
+		],
 	},
 };

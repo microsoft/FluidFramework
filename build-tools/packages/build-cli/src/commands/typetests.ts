@@ -2,13 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Flags } from "@oclif/core";
+
 import {
 	ITypeValidationConfig,
 	Package,
 	PackageJson,
 	updatePackageJsonFile,
 } from "@fluidframework/build-tools";
+import { Flags } from "@oclif/core";
 
 import { PackageCommand } from "../BasePackageCommand";
 
@@ -85,8 +86,8 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 			(this.flags.remove
 				? VersionOptions.Clear
 				: this.flags.previous
-				? VersionOptions.Previous
-				: VersionOptions.ClearIfDisabled);
+					? VersionOptions.Previous
+					: VersionOptions.ClearIfDisabled);
 		updatePackageJsonFile(pkg.directory, (json) => {
 			if (this.flags.disable) {
 				json.typeValidation ??= { broken: {} };

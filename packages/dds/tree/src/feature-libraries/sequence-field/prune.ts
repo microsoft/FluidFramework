@@ -3,17 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { Changeset } from "./types.js";
+import { NodeChangePruner } from "../modular-schema/index.js";
 import { MarkListFactory } from "./markListFactory.js";
+import { Changeset } from "./types.js";
 import { withNodeChange } from "./utils.js";
 
-export type NodeChangePruner<TNodeChange> = (change: TNodeChange) => TNodeChange | undefined;
-
-export function prune<TNodeChange>(
-	changeset: Changeset<TNodeChange>,
-	pruneNode: NodeChangePruner<TNodeChange>,
-): Changeset<TNodeChange> {
-	const pruned = new MarkListFactory<TNodeChange>();
+export function prune(changeset: Changeset, pruneNode: NodeChangePruner): Changeset {
+	const pruned = new MarkListFactory();
 	for (let mark of changeset) {
 		if (mark.changes !== undefined) {
 			mark = withNodeChange(mark, pruneNode(mark.changes));

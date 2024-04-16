@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { DriverPreCheckInfo } from "@fluidframework/driver-definitions";
-import { getLocatorFromOdspUrl } from "./odspFluidFileLink";
+import { DriverPreCheckInfo } from "@fluidframework/driver-definitions/internal";
+
+import { getLocatorFromOdspUrl } from "./odspFluidFileLink.js";
 
 /**
  * A check that returns DriverPreCheckInfo if the URL format is likely supported by this driver.

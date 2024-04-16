@@ -6,21 +6,21 @@
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { IGarbageCollectionData, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import {
-	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
-	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
+} from "@fluidframework/runtime-definitions/internal";
+import { ReadAndParseBlob } from "@fluidframework/runtime-utils/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+
+import { RuntimeHeaderData } from "../containerRuntime.js";
+import { ContainerRuntimeGCMessage } from "../messageTypes.js";
 import {
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,
 	IRefreshSummaryResult,
-} from "../summary";
-import { RuntimeHeaderData } from "../containerRuntime";
-import { ContainerRuntimeGCMessage } from "../messageTypes";
+} from "../summary/index.js";
 
 /**
  * @alpha
@@ -307,8 +307,6 @@ export interface IGarbageCollectionRuntime {
 	getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
 	/** After GC has run, called to notify the runtime of routes that are used in it. */
 	updateUsedRoutes(usedRoutes: readonly string[]): void;
-	/** After GC has run, called to notify the runtime of routes that are unused in it. */
-	updateUnusedRoutes(unusedRoutes: readonly string[]): void;
 	/**
 	 * After GC has run and identified nodes that are sweep ready, called to delete the sweep ready nodes. The runtime
 	 * should return the routes of nodes that were deleted.

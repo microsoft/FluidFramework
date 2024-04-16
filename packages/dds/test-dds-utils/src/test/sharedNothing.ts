@@ -2,16 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { SharedObject } from "@fluidframework/shared-object-base";
-import {
+
+import type {
 	IChannelAttributes,
 	IChannelFactory,
 	IChannelServices,
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { ChangeConnectionState, DDSFuzzModel, type BaseOperation } from "../ddsFuzzHarness";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import { SharedObject } from "@fluidframework/shared-object-base/internal";
+
+import type { BaseOperation, ChangeConnectionState, DDSFuzzModel } from "../ddsFuzzHarness.js";
 
 /**
  * Mock DDS which holds no data.
@@ -31,7 +33,7 @@ class SharedNothing extends SharedObject {
 	public noopCalls = 0;
 	public methodCalls: string[] = [];
 
-	constructor(
+	public constructor(
 		public readonly id: string,
 		public readonly runtime: IFluidDataStoreRuntime,
 		public readonly attributes: IChannelAttributes,

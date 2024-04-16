@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 const TypeIdHelper = require("@fluid-experimental/property-changeset").TypeIdHelper;
 const PropertyUtils = require("@fluid-experimental/property-changeset").Utils;
 const _ = require("lodash");

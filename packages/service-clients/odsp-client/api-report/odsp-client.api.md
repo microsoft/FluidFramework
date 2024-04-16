@@ -10,7 +10,7 @@ import { IFluidContainer } from '@fluidframework/fluid-static';
 import type { IMember } from '@fluidframework/fluid-static';
 import type { IServiceAudience } from '@fluidframework/fluid-static';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { TokenResponse } from '@fluidframework/odsp-driver-definitions';
+import { TokenResponse } from '@fluidframework/odsp-driver-definitions/internal';
 
 // @beta
 export type IOdspAudience = IServiceAudience<OdspMember>;
@@ -25,13 +25,13 @@ export interface IOdspTokenProvider {
 export class OdspClient {
     constructor(properties: OdspClientProps);
     // (undocumented)
-    createContainer(containerSchema: ContainerSchema): Promise<{
-        container: IFluidContainer;
+    createContainer<T extends ContainerSchema>(containerSchema: T): Promise<{
+        container: IFluidContainer<T>;
         services: OdspContainerServices;
     }>;
     // (undocumented)
-    getContainer(id: string, containerSchema: ContainerSchema): Promise<{
-        container: IFluidContainer;
+    getContainer<T extends ContainerSchema>(id: string, containerSchema: T): Promise<{
+        container: IFluidContainer<T>;
         services: OdspContainerServices;
     }>;
 }

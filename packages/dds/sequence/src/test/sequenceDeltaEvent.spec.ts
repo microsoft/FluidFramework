@@ -5,17 +5,19 @@
 
 import { strict as assert } from "assert";
 import { isNullOrUndefined } from "util";
+
 import {
-	createAnnotateRangeOp,
-	createInsertSegmentOp,
-	createRemoveRangeOp,
 	IMergeTreeDeltaCallbackArgs,
 	PropertySet,
 	TextSegment,
-} from "@fluidframework/merge-tree";
+	createAnnotateRangeOp,
+	createInsertSegmentOp,
+	createRemoveRangeOp,
+} from "@fluidframework/merge-tree/internal";
 // eslint-disable-next-line import/no-internal-modules
-import { TestClient } from "@fluidframework/merge-tree/dist/test";
-import { SequenceDeltaEvent } from "../sequenceDeltaEvent";
+import { TestClient } from "@fluidframework/merge-tree/internal/test";
+
+import { SequenceDeltaEvent } from "../sequenceDeltaEvent.js";
 
 interface IExpectedSegmentInfo {
 	offset: number;

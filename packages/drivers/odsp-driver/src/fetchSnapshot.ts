@@ -3,61 +3,62 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
-import {
-	ITelemetryLoggerExt,
-	isFluidError,
-	PerformanceEvent,
-	wrapError,
-} from "@fluidframework/telemetry-utils";
 import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
-import { getW3CData } from "@fluidframework/driver-base";
-import { ISnapshot } from "@fluidframework/driver-definitions";
-import {
-	IOdspResolvedUrl,
-	ISnapshotOptions,
-	OdspErrorTypes,
-	InstrumentedStorageTokenFetcher,
-	type IOdspError,
-} from "@fluidframework/odsp-driver-definitions";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { getW3CData } from "@fluidframework/driver-base/internal";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	DriverErrorTelemetryProps,
-	isRuntimeMessage,
 	NonRetryableError,
-} from "@fluidframework/driver-utils";
+	isRuntimeMessage,
+} from "@fluidframework/driver-utils/internal";
 import {
 	fetchIncorrectResponse,
 	throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import {
+	type IOdspError,
+	IOdspResolvedUrl,
+	ISnapshotOptions,
+	InstrumentedStorageTokenFetcher,
+	OdspErrorTypes,
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import {
+	PerformanceEvent,
+	isFluidError,
+	wrapError,
+} from "@fluidframework/telemetry-utils/internal";
+import { v4 as uuid } from "uuid";
+
+import {
+	ISnapshotContentsWithProps,
+	currentReadVersion,
+	parseCompactSnapshotResponse,
+} from "./compactSnapshotParser.js";
+import {
 	IOdspSnapshot,
 	ISnapshotCachedEntry2,
 	IVersionedValueWithEpoch,
 	persistedCacheValueVersion,
-} from "./contracts";
-import { getQueryString } from "./getQueryString";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
+} from "./contracts.js";
+import { EpochTracker } from "./epochTracker.js";
+import { getQueryString } from "./getQueryString.js";
+import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser.js";
 import {
+	IOdspResponse,
 	fetchAndParseAsJSONHelper,
 	fetchHelper,
 	getWithRetryForTokenRefresh,
 	getWithRetryForTokenRefreshRepeat,
-	IOdspResponse,
 	isSnapshotFetchForLoadingGroup,
 	measure,
 	measureP,
 	useLegacyFlowWithoutGroupsForSnapshotFetch,
-} from "./odspUtils";
-import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser";
-import {
-	currentReadVersion,
-	ISnapshotContentsWithProps,
-	parseCompactSnapshotResponse,
-} from "./compactSnapshotParser";
-import { EpochTracker } from "./epochTracker";
-import { pkgVersion } from "./packageVersion";
+} from "./odspUtils.js";
+import { pkgVersion } from "./packageVersion.js";
 
 /**
  * Enum to support different types of snapshot formats.
@@ -82,7 +83,7 @@ export enum SnapshotFormatSupportType {
 export async function fetchSnapshot(
 	snapshotUrl: string,
 	// eslint-disable-next-line @rushstack/no-new-null
-	token: string | null,
+	token: string,
 	versionId: string,
 	fetchFullSnapshot: boolean,
 	forceAccessTokenViaAuthorizationHeader: boolean,
@@ -109,7 +110,6 @@ export async function fetchSnapshot(
 		logger,
 		{
 			eventName: "fetchSnapshot",
-			headers: Object.keys(headers).length > 0 ? true : undefined,
 		},
 		async () => snapshotDownloader(url, { headers }),
 	)) as IOdspResponse<IOdspSnapshot>;
@@ -271,7 +271,6 @@ async function fetchLatestSnapshotCore(
 		const fetchSnapshotForLoadingGroup = isSnapshotFetchForLoadingGroup(loadingGroupIds);
 		const eventName = fetchSnapshotForLoadingGroup ? "TreesLatestForGroup" : "TreesLatest";
 		const storageToken = await storageTokenFetcher(tokenFetchOptions, eventName, true);
-		assert(storageToken !== null, 0x1e5 /* "Storage token should not be null" */);
 
 		const perfEvent = {
 			eventName,
@@ -436,7 +435,6 @@ async function fetchLatestSnapshotCore(
 
 			assert(parsedSnapshotContents !== undefined, 0x312 /* snapshot should be parsed */);
 			const snapshot = parsedSnapshotContents.content;
-			const { trees, numBlobs, encodedBlobsSize } = evalBlobsAndTrees(snapshot);
 
 			// There are some scenarios in ODSP where we cannot cache, trees/latest will explicitly tell us when we
 			// cannot cache using an HTTP response header. Only cache snapshot if it is not for a loading group.
@@ -479,17 +477,16 @@ async function fetchLatestSnapshotCore(
 			}
 
 			event.end({
-				trees,
+				// trees, leafTrees, blobNodes, encodedBlobsSize,
+				// blobNodes - blobs tells us (roughly) how many blobs are deduped by service.
+				...getTreeStats(snapshot),
 				blobs: snapshot.blobContents?.size ?? 0,
-				leafNodes: numBlobs,
-				encodedBlobsSize,
 				sequenceNumber,
 				ops: snapshot.ops?.length ?? 0,
 				fetchSnapshotForLoadingGroup,
 				useLegacyFlowWithoutGroups:
 					useLegacyFlowWithoutGroupsForSnapshotFetch(loadingGroupIds),
 				userOps: snapshot.ops?.filter((op) => isRuntimeMessage(op)).length ?? 0,
-				headers: Object.keys(response.requestHeaders).length > 0 ? true : undefined,
 				// Measures time to make fetch call. Should be similar to
 				// fetchStartToResponseEndTime - receiveContentTime, i.e. it looks like it's time till first byte /
 				// end of response headers
@@ -574,18 +571,24 @@ function getFormBodyAndHeaders(
 	return { body: postBody, headers: header };
 }
 
-export function evalBlobsAndTrees(snapshot: ISnapshot): {
+interface ITreeStats {
 	trees: number;
-	numBlobs: number;
-	encodedBlobsSize: number;
-} {
-	const trees = countTreesInSnapshotTree(snapshot.snapshotTree);
-	const numBlobs = snapshot.blobContents.size;
+	leafTrees: number;
+	blobNodes: number;
+}
+
+export function getTreeStats(snapshot: ISnapshot): ITreeStats & { encodedBlobsSize: number } {
+	const stats: ITreeStats = {
+		trees: 0,
+		leafTrees: 0,
+		blobNodes: 0,
+	};
+	getTreeStatsCore(snapshot.snapshotTree, stats);
 	let encodedBlobsSize = 0;
 	for (const [_, blobContent] of snapshot.blobContents) {
 		encodedBlobsSize += blobContent.byteLength;
 	}
-	return { trees, numBlobs, encodedBlobsSize };
+	return { ...stats, encodedBlobsSize };
 }
 
 export function validateBlobsAndTrees(snapshot: IOdspSnapshot): void {
@@ -599,13 +602,19 @@ export function validateBlobsAndTrees(snapshot: IOdspSnapshot): void {
 	);
 }
 
-function countTreesInSnapshotTree(snapshotTree: ISnapshotTree): number {
-	let numTrees = 0;
-	for (const [_, tree] of Object.entries(snapshotTree.trees)) {
-		numTrees += 1;
-		numTrees += countTreesInSnapshotTree(tree);
+function getTreeStatsCore(snapshotTree: ISnapshotTree, stats: ITreeStats): void {
+	stats.blobNodes += Object.entries(snapshotTree.blobs).length;
+	stats.trees++;
+
+	const entries = Object.entries(snapshotTree.trees);
+	if (entries.length === 0) {
+		stats.leafTrees++;
+	} else {
+		for (const [_, tree] of entries) {
+			stats.trees++;
+			getTreeStatsCore(tree, stats);
+		}
 	}
-	return numTrees;
 }
 
 /**

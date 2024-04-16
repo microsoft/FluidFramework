@@ -4,11 +4,11 @@
 
 ```ts
 
-import { ISegment } from '@fluidframework/merge-tree';
-import { ISharedMap } from '@fluidframework/map';
-import { IValueChanged } from '@fluidframework/map';
-import { SequenceDeltaEvent } from '@fluidframework/sequence';
-import { SharedSegmentSequence } from '@fluidframework/sequence';
+import { ISegment } from '@fluidframework/merge-tree/internal';
+import { ISharedMap } from '@fluidframework/map/internal';
+import { IValueChanged } from '@fluidframework/map/internal';
+import { SequenceDeltaEvent } from '@fluidframework/sequence/internal';
+import { SharedSegmentSequence } from '@fluidframework/sequence/internal';
 
 // @internal (undocumented)
 export interface IRevertible {

@@ -4,42 +4,42 @@
 
 ```ts
 
-import { FetchSource } from '@fluidframework/driver-definitions';
+import { FetchSource } from '@fluidframework/driver-definitions/internal';
 import { IAttachment } from '@fluidframework/protocol-definitions';
-import { IAuthorizationError } from '@fluidframework/driver-definitions';
+import { IAuthorizationError } from '@fluidframework/driver-definitions/internal';
 import { IBlob } from '@fluidframework/protocol-definitions';
 import { ICommittedProposal } from '@fluidframework/protocol-definitions';
 import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
-import { IDeltasFetchResult } from '@fluidframework/driver-definitions';
+import { IDeltasFetchResult } from '@fluidframework/driver-definitions/internal';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
-import { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions';
+import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
+import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
+import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions/internal';
 import { IDriverErrorBase } from '@fluidframework/driver-definitions';
-import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
-import { ILocationRedirectionError } from '@fluidframework/driver-definitions';
+import { IFluidErrorBase } from '@fluidframework/telemetry-utils/internal';
+import { ILocationRedirectionError } from '@fluidframework/driver-definitions/internal';
 import { IRequest } from '@fluidframework/core-interfaces';
-import { IResolvedUrl } from '@fluidframework/driver-definitions';
+import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISnapshot } from '@fluidframework/driver-definitions';
-import { ISnapshotFetchOptions } from '@fluidframework/driver-definitions';
+import { ISnapshot } from '@fluidframework/driver-definitions/internal';
+import { ISnapshotFetchOptions } from '@fluidframework/driver-definitions/internal';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
-import { IStream } from '@fluidframework/driver-definitions';
-import { IStreamResult } from '@fluidframework/driver-definitions';
-import { ISummaryContext } from '@fluidframework/driver-definitions';
+import { IStream } from '@fluidframework/driver-definitions/internal';
+import { IStreamResult } from '@fluidframework/driver-definitions/internal';
+import { ISummaryContext } from '@fluidframework/driver-definitions/internal';
 import { ISummaryHandle } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
+import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import { ITelemetryErrorEventExt } from '@fluidframework/telemetry-utils';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { ITelemetryProperties } from '@fluidframework/core-interfaces';
-import { IThrottlingWarning } from '@fluidframework/driver-definitions';
+import { IThrottlingWarning } from '@fluidframework/driver-definitions/internal';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { ITreeEntry } from '@fluidframework/protocol-definitions';
-import { IUrlResolver } from '@fluidframework/driver-definitions';
+import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
 import { IVersion } from '@fluidframework/protocol-definitions';
-import { LoaderCachingPolicy } from '@fluidframework/driver-definitions';
-import { LoggingError } from '@fluidframework/telemetry-utils';
+import { LoaderCachingPolicy } from '@fluidframework/driver-definitions/internal';
+import { LoggingError } from '@fluidframework/telemetry-utils/internal';
 
 // @internal
 export function applyStorageCompression(documentServiceFactory: IDocumentServiceFactory, config?: ICompressionStorageConfig | boolean): IDocumentServiceFactory;
@@ -159,7 +159,7 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
 }
 
 // @internal
-export type DriverErrorTelemetryProps = ITelemetryProperties & {
+export type DriverErrorTelemetryProps = ITelemetryBaseProperties & {
     driverVersion: string | undefined;
 };
 
@@ -180,7 +180,6 @@ export class GenericNetworkError extends LoggingError implements IDriverErrorBas
     constructor(message: string, canRetry: boolean, props: DriverErrorTelemetryProps);
     // (undocumented)
     readonly canRetry: boolean;
-    // (undocumented)
     readonly errorType: "genericNetworkError";
 }
 
@@ -283,7 +282,7 @@ export enum OnlineStatus {
 
 // @internal
 export class ParallelRequests<T> {
-    constructor(from: number, to: number | undefined, payloadSize: number, logger: ITelemetryLoggerExt, requestCallback: (request: number, from: number, to: number, strongTo: boolean, props: ITelemetryProperties) => Promise<{
+    constructor(from: number, to: number | undefined, payloadSize: number, logger: ITelemetryLoggerExt, requestCallback: (request: number, from: number, to: number, strongTo: boolean, props: ITelemetryBaseProperties) => Promise<{
         partial: boolean;
         cancel: boolean;
         payload: T[];
@@ -342,7 +341,7 @@ export class RateLimiter {
 export function readAndParse<T>(storage: Pick<IDocumentStorageService, "readBlob">, id: string): Promise<T>;
 
 // @internal
-export function requestOps(get: (from: number, to: number, telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>, concurrency: number, fromTotal: number, toTotal: number | undefined, payloadSize: number, logger: ITelemetryLoggerExt, signal?: AbortSignal, scenarioName?: string): IStream<ISequencedDocumentMessage[]>;
+export function requestOps(get: (from: number, to: number, telemetryProps: ITelemetryBaseProperties) => Promise<IDeltasFetchResult>, concurrency: number, fromTotal: number, toTotal: number | undefined, payloadSize: number, logger: ITelemetryLoggerExt, signal?: AbortSignal, scenarioName?: string): IStream<ISequencedDocumentMessage[]>;
 
 // @internal (undocumented)
 export class RetryableError<T extends string> extends NetworkErrorBasic<T> {

@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString, IsoBuffer } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { IsoBuffer, bufferToString } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
-import { fail, JsonCompatibleReadOnly } from "../util/index.js";
+
 import { ChangeEncodingContext } from "../core/index.js";
+import { JsonCompatibleReadOnly, fail } from "../util/index.js";
 
 /**
  * Translates decoded data to encoded data.
@@ -166,14 +167,21 @@ export interface ICodecFamily<TDecoded, TContext = void> {
 	 * This ensures that applications can diagnose compatibility issues.
 	 */
 	resolve(
-		formatVersion: number,
+		formatVersion: FormatVersion,
 	): IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>;
 
 	/**
 	 * @returns an iterable of all format versions supported by this family.
 	 */
-	getSupportedFormats(): Iterable<number>;
+	getSupportedFormats(): Iterable<FormatVersion>;
 }
+
+/**
+ * A version stamp for encoded data.
+ *
+ * Undefined is tolerated to enable the scenario where data was not initially versioned.
+ */
+export type FormatVersion = number | undefined;
 
 /**
  * Creates a codec family from a registry of codecs.
@@ -182,7 +190,7 @@ export interface ICodecFamily<TDecoded, TContext = void> {
 export function makeCodecFamily<TDecoded, TContext>(
 	registry: Iterable<
 		[
-			formatVersion: number,
+			formatVersion: FormatVersion,
 			codec:
 				| IMultiFormatCodec<
 						TDecoded,
@@ -195,7 +203,7 @@ export function makeCodecFamily<TDecoded, TContext>(
 	>,
 ): ICodecFamily<TDecoded, TContext> {
 	const codecs: Map<
-		number,
+		FormatVersion,
 		IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>
 	> = new Map();
 	for (const [formatVersion, codec] of registry) {

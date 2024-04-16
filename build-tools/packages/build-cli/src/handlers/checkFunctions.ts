@@ -2,13 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "node:assert";
 import execa from "execa";
 import inquirer from "inquirer";
 import { Machine } from "jssm";
 
-import { FluidRepo } from "@fluidframework/build-tools";
 import { bumpVersionScheme } from "@fluid-tools/version-tools";
+import { FluidRepo } from "@fluidframework/build-tools";
 
 import {
 	generateBumpDepsBranchName,
@@ -64,9 +65,7 @@ export const checkBranchName: StateHandlerFunction = async (
 
 			case "major":
 			case "minor": {
-				log.verbose(
-					`Checking if ${context.originalBranchName} is 'main', 'next', or 'lts'.`,
-				);
+				log.verbose(`Checking if ${context.originalBranchName} is 'main', 'next', or 'lts'.`);
 				if (!["main", "next", "lts"].includes(context.originalBranchName)) {
 					log.warning(
 						`Release prep should only be done on 'main', 'next', or 'lts' branches, but current branch is '${context.originalBranchName}'.`,
@@ -239,7 +238,7 @@ export const checkDependenciesInstalled: StateHandlerFunction = async (
 	const packagesToCheck = isReleaseGroup(releaseGroup)
 		? context.packagesInReleaseGroup(releaseGroup)
 		: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		  [context.fullPackageMap.get(releaseGroup)!];
+			[context.fullPackageMap.get(releaseGroup)!];
 
 	const installed = await FluidRepo.ensureInstalled(packagesToCheck);
 

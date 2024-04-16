@@ -4,16 +4,25 @@
  */
 
 import { strict as assert } from "node:assert";
-import { IDirectory } from "../../interfaces";
 
-export function assertEquivalentDirectories(first: IDirectory, second: IDirectory): void {
-	assertEventualConsistencyCore(first.getWorkingDirectory("/"), second.getWorkingDirectory("/"));
+import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
+import { isObject } from "@fluidframework/core-utils/internal";
+import { IDirectory } from "../../interfaces.js";
+
+export async function assertEquivalentDirectories(
+	first: IDirectory,
+	second: IDirectory,
+): Promise<void> {
+	await assertEventualConsistencyCore(
+		first.getWorkingDirectory("/"),
+		second.getWorkingDirectory("/"),
+	);
 }
 
-function assertEventualConsistencyCore(
+async function assertEventualConsistencyCore(
 	first: IDirectory | undefined,
 	second: IDirectory | undefined,
-): void {
+): Promise<void> {
 	assert(first !== undefined, "first root dir should be present");
 	assert(second !== undefined, "second root dir should be present");
 
@@ -27,14 +36,41 @@ function assertEventualConsistencyCore(
 
 	// Check key/value pairs in both directories.
 	for (const key of first.keys()) {
-		assert.strictEqual(
-			first.get(key),
-			second.get(key),
-			`Key not found or value not matching ` +
-				`key: ${key}, value in dir first at path ${first.absolutePath}: ${first.get(
-					key,
-				)} and in second at path ${second.absolutePath}: ${second.get(key)}`,
-		);
+		const firstVal: unknown = first.get(key);
+		const secondVal: unknown = second.get(key);
+		if (isObject(firstVal) === true) {
+			const firstObj: FluidObject<IFluidHandle> = firstVal as FluidObject<IFluidHandle>;
+			assert(
+				isObject(secondVal),
+				`Values differ at key ${key}: first is an object, second is not`,
+			);
+			const secondObj: FluidObject<IFluidHandle> = secondVal as FluidObject<IFluidHandle>;
+			const firstHandle = firstObj.IFluidHandle
+				? await firstObj.IFluidHandle?.get()
+				: firstObj;
+			const secondHandle = secondObj.IFluidHandle
+				? await secondObj.IFluidHandle?.get()
+				: secondObj;
+			assert.equal(
+				firstHandle,
+				secondHandle,
+				`Key not found or value not matching ` +
+					`key: ${key}, value in dir first at path ${
+						first.absolutePath
+					}: ${JSON.stringify(firstHandle)} and in second at path ${
+						second.absolutePath
+					}: ${JSON.stringify(secondHandle)}`,
+			);
+		} else {
+			assert.strictEqual(
+				first.get(key),
+				second.get(key),
+				`Key not found or value not matching ` +
+					`key: ${key}, value in dir first at path ${first.absolutePath}: ${first.get(
+						key,
+					)} and in second at path ${second.absolutePath}: ${second.get(key)}`,
+			);
+		}
 	}
 
 	// Check for number of subdirectores with both directories.
@@ -54,7 +90,7 @@ function assertEventualConsistencyCore(
 			subDirectory2 !== undefined,
 			`SubDirectory with name ${name} not present in second directory`,
 		);
-		assertEventualConsistencyCore(subDirectory1, subDirectory2);
+		await assertEventualConsistencyCore(subDirectory1, subDirectory2);
 	}
 
 	// Check for consistency of subdirectories ordering of both directories

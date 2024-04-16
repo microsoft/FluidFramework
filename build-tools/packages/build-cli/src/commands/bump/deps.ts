@@ -2,12 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Flags } from "@oclif/core";
 import chalk from "chalk";
 import prompts from "prompts";
 import stripAnsi from "strip-ansi";
 
-import { FluidRepo, MonoRepo, MonoRepoKind } from "@fluidframework/build-tools";
+import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args";
 import { BaseCommand } from "../../base";
@@ -20,15 +21,17 @@ import {
 	testModeFlag,
 } from "../../flags";
 import {
+	// eslint-disable-next-line import/no-deprecated
+	MonoRepoKind,
 	generateBumpDepsBranchName,
 	generateBumpDepsCommitMessage,
 	indentString,
 	isDependencyUpdateType,
 	npmCheckUpdates,
 } from "../../library";
-import { ReleaseGroup } from "../../releaseGroups";
 // eslint-disable-next-line import/no-internal-modules
 import { npmCheckUpdatesHomegrown } from "../../library/package";
+import { ReleaseGroup } from "../../releaseGroups";
 
 /**
  * Update the dependency version of a specified package or release group. That is, if one or more packages in the repo
@@ -97,8 +100,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		{
 			description:
 				"Bump dependencies on packages in the server release group to the greatest released version in the client release group. Include pre-release versions.",
-			command:
-				"<%= config.bin %> <%= command.id %> server -g client -t greatest --prerelease",
+			command: "<%= config.bin %> <%= command.id %> server -g client -t greatest --prerelease",
 		},
 		{
 			description:
@@ -137,6 +139,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 
 		const branchName = await context.gitRepo.getCurrentBranchName();
 
+		// eslint-disable-next-line import/no-deprecated
 		if (args.package_or_release_group === MonoRepoKind.Server && branchName !== "next") {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const { confirmed } = await prompts({
@@ -220,7 +223,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 						/* prerelease */ flags.prerelease,
 						/* writeChanges */ !flags.testMode,
 						this.logger,
-				  )
+					)
 				: await npmCheckUpdates(
 						context,
 						flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
@@ -230,7 +233,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 						/* prerelease */ flags.prerelease,
 						/* writeChanges */ !flags.testMode,
 						this.logger,
-				  );
+					);
 
 		if (updatedPackages.length > 0) {
 			if (shouldInstall) {
@@ -245,7 +248,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 				...new Set(
 					updatedPackages
 						.filter((p) => p.monoRepo !== undefined)
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-return
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						.map((p) => p.monoRepo!.releaseGroup),
 				),
 			];

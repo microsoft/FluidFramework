@@ -2,41 +2,41 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import { AttachState } from "@fluidframework/container-definitions";
 import {
-	AttachState,
 	type IContainer,
 	type IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
+} from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
+import { type FluidObject, type IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type IDocumentServiceFactory,
 	type IUrlResolver,
-} from "@fluidframework/driver-definitions";
-import { applyStorageCompression } from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-definitions/internal";
+import { applyStorageCompression } from "@fluidframework/driver-utils/internal";
+import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import {
-	type ContainerSchema,
+	type IRootDataObject,
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
-	type IFluidContainer,
-	type IRootDataObject,
 	createServiceAudience,
-} from "@fluidframework/fluid-static";
+} from "@fluidframework/fluid-static/internal";
 import { type IClient, SummaryType } from "@fluidframework/protocol-definitions";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
+import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 
-import { type FluidObject, type IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
-import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils";
-import { createAzureAudienceMember } from "./AzureAudience";
-import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver";
+import { createAzureAudienceMember } from "./AzureAudience.js";
+import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver.js";
 import {
 	type AzureClientProps,
 	type AzureConnectionConfig,
 	type AzureContainerServices,
 	type AzureContainerVersion,
 	type AzureGetVersionsOptions,
-} from "./interfaces";
-import { isAzureRemoteConnectionConfig } from "./utils";
+} from "./interfaces.js";
+import { isAzureRemoteConnectionConfig } from "./utils.js";
 
 /**
  * Strongly typed id for connecting to a local Azure Fluid Relay.
@@ -58,6 +58,29 @@ const azureClientFeatureGates = {
 	// Azure client requires a write connection by default
 	"Fluid.Container.ForceWriteConnection": true,
 };
+
+/**
+ * Feature gates required to support runtime compatibility when V1 and V2 clients are collaborating
+ */
+const azureClientV1CompatFeatureGates = {
+	// Disable Garbage Collection
+	"Fluid.GarbageCollection.RunSweep": false, // To prevent the GC op
+	"Fluid.GarbageCollection.DisableAutoRecovery": true, // To prevent the GC op
+	"Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride": false, // For a consistent story of "GC is disabled"
+};
+
+/**
+ * Wrap the config provider to fall back on the appropriate defaults for Azure Client.
+ * @param baseConfigProvider - The base config provider to wrap
+ * @returns A new config provider with the appropriate defaults applied underneath the given provider
+ */
+function wrapConfigProvider(baseConfigProvider?: IConfigProviderBase): IConfigProviderBase {
+	const defaults = {
+		...azureClientFeatureGates,
+		...azureClientV1CompatFeatureGates,
+	};
+	return wrapConfigProviderWithDefaults(baseConfigProvider, defaults);
+}
 
 /**
  * AzureClient provides the ability to have a Fluid object backed by the Azure Fluid Relay or,
@@ -90,10 +113,7 @@ export class AzureClient {
 			origDocumentServiceFactory,
 			properties.summaryCompression,
 		);
-		this.configProvider = wrapConfigProviderWithDefaults(
-			properties.configProvider,
-			azureClientFeatureGates,
-		);
+		this.configProvider = wrapConfigProvider(properties.configProvider);
 	}
 
 	/**
@@ -103,7 +123,7 @@ export class AzureClient {
 	 * @param containerSchema - Container schema for the new container.
 	 * @returns New detached container instance along with associated services.
 	 */
-	public async createContainer<TContainerSchema extends ContainerSchema>(
+	public async createContainer<const TContainerSchema extends ContainerSchema>(
 		containerSchema: TContainerSchema,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
@@ -300,6 +320,7 @@ export class AzureClient {
 		 * See {@link FluidContainer.attach}
 		 */
 		const attach = async (): Promise<string> => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- AB#7608
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state");
 			}
@@ -321,7 +342,7 @@ export class AzureClient {
 		const rootDataObject: FluidObject<IRootDataObject> = await container.getEntryPoint();
 		assert(
 			rootDataObject.IRootDataObject !== undefined,
-			"entryPoint must be of type IRootDataObject",
+			0x90a /* entryPoint must be of type IRootDataObject */,
 		);
 		return rootDataObject.IRootDataObject;
 	}

@@ -3,20 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { assert, compareArrays } from "@fluidframework/core-utils";
+import { assert, compareArrays } from "@fluidframework/core-utils/internal";
+
 import {
-	FieldKey,
-	TreeNodeSchemaIdentifier,
 	CursorLocationType,
+	FieldKey,
 	FieldUpPath,
-	UpPath,
-	TreeValue,
-	Value,
 	PathRootPrefix,
+	TreeNodeSchemaIdentifier,
+	TreeValue,
+	UpPath,
+	Value,
 } from "../../core/index.js";
-import { fail, ReferenceCountedBase } from "../../util/index.js";
-import { prefixFieldPath, prefixPath, SynchronousCursor } from "../treeCursorUtils.js";
-import { ChunkedCursor, cursorChunk, dummyRoot, TreeChunk } from "./chunk.js";
+import { ReferenceCountedBase, fail } from "../../util/index.js";
+import { SynchronousCursor, prefixFieldPath, prefixPath } from "../treeCursorUtils.js";
+
+import { ChunkedCursor, TreeChunk, cursorChunk, dummyRoot } from "./chunk.js";
 
 /**
  * Create a tree chunk with ref count 1.
@@ -64,7 +66,7 @@ export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
 		return new Cursor(this);
 	}
 
-	protected dispose(): void {}
+	protected onUnreferenced(): void {}
 }
 
 /**

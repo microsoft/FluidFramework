@@ -3,26 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-
-import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { EventEmitter } from "@fluid-internal/client-utils";
+import { ReadOnlyInfo } from "@fluidframework/container-definitions";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
 	IChannelFactory,
+	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
-import {
-	createSingleBlobSummary,
-	IFluidSerializer,
-	SharedObject,
-} from "@fluidframework/shared-object-base";
-import { ReadOnlyInfo } from "@fluidframework/container-definitions";
-import { TaskManagerFactory } from "./taskManagerFactory";
-import { ITaskManager, ITaskManagerEvents } from "./interfaces";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+
+import { ITaskManager, ITaskManagerEvents } from "./interfaces.js";
+import { TaskManagerFactory } from "./taskManagerFactory.js";
 
 /**
  * Description of a task manager operation
@@ -63,7 +60,7 @@ const placeholderClientId = "placeholder";
  * {@inheritDoc ITaskManager}
  *
  * @sealed
- * @internal
+ * @alpha
  */
 export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITaskManager {
 	/**

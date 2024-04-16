@@ -4,48 +4,49 @@
  */
 
 import { performance } from "@fluid-internal/client-utils";
-import { ISignalEnvelope } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
-import {
-	IFluidErrorBase,
-	MonitoringContext,
-	normalizeError,
-} from "@fluidframework/telemetry-utils";
+import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentDeltaConnection,
-	IResolvedUrl,
 	IDocumentServicePolicies,
-} from "@fluidframework/driver-definitions";
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	DeltaStreamConnectionForbiddenError,
 	NonRetryableError,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
+import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils/internal";
+import {
+	HostStoragePolicy,
+	type IOdspError,
+	IOdspResolvedUrl,
+	ISocketStorageDiscovery,
+	InstrumentedStorageTokenFetcher,
+	OdspErrorTypes,
+	TokenFetchOptions,
+} from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	IClient,
 	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/protocol-definitions";
 import {
-	IOdspResolvedUrl,
-	TokenFetchOptions,
-	HostStoragePolicy,
-	InstrumentedStorageTokenFetcher,
-	ISocketStorageDiscovery,
-	OdspErrorTypes,
-	type IOdspError,
-} from "@fluidframework/odsp-driver-definitions";
-import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils/internal";
-import { IOdspCache } from "./odspCache";
-import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
+	IFluidErrorBase,
+	MonitoringContext,
+	normalizeError,
+} from "@fluidframework/telemetry-utils/internal";
+
+import { policyLabelsUpdatesSignalType } from "./contracts.js";
+import { EpochTracker } from "./epochTracker.js";
+import { IOdspCache } from "./odspCache.js";
+import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection.js";
 import {
+	TokenFetchOptionsEx,
 	getJoinSessionCacheKey,
 	getWithRetryForTokenRefresh,
-	TokenFetchOptionsEx,
-} from "./odspUtils";
-import { fetchJoinSession } from "./vroom";
-import { EpochTracker } from "./epochTracker";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { policyLabelsUpdatesSignalType } from "./contracts";
+} from "./odspUtils.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { fetchJoinSession } from "./vroom.js";
 
 /**
  * This OdspDelayLoadedDeltaStream is used by OdspDocumentService.ts to delay load the delta connection
@@ -219,9 +220,13 @@ export class OdspDelayLoadedDeltaStream {
 				this.currentConnection = connection;
 				return connection;
 			} catch (error) {
-				this.clearJoinSessionTimer();
-				this.cache.sessionJoinCache.remove(this.joinSessionKey);
-
+				// Remove join session information from cache only if it is an error related to connect_document and not a socket related error.
+				// Otherwise keep it in cache so that this session can be re-used after disconnection.
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+				if ((error as any).errorFrom === "connect_document_error") {
+					this.clearJoinSessionTimer();
+					this.cache.sessionJoinCache.remove(this.joinSessionKey);
+				}
 				const normalizedError = this.annotateConnectionError(
 					error,
 					"createDeltaConnection",
@@ -475,7 +480,7 @@ export class OdspDelayLoadedDeltaStream {
 			timestamp: number;
 		};
 		const time = label.timestamp;
-		assert(time > 0, "time should be positive");
+		assert(time > 0, 0x8e0 /* time should be positive */);
 		if (time > this.labelUpdateTimestamp) {
 			this.labelUpdateTimestamp = time;
 			this.metadataUpdateHandler({

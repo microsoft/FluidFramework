@@ -8,7 +8,7 @@
 /* eslint-disable unicorn/prefer-module */
 
 import * as path from "node:path";
-import * as fs from "fs";
+import * as fs from "node:fs";
 import Table from "easy-table";
 import { Runner, Suite, Test } from "mocha";
 import chalk from "chalk";
@@ -40,7 +40,7 @@ class MochaMemoryTestReporter {
 		// be sure to update the glob used to look for output files in the perf pipeline.
 		const reportDir = options?.reporterOptions?.reportDir ?? "";
 		this.outputDirectory =
-			reportDir !== "" ? path.resolve(reportDir) : path.join(__dirname, ".output");
+			reportDir === "" ? path.join(__dirname, ".output") : path.resolve(reportDir);
 
 		fs.mkdirSync(this.outputDirectory, { recursive: true });
 

@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export { buildSnapshotTree } from "./buildSnapshotTree";
-export { BlobTreeEntry, TreeTreeEntry, AttachmentTreeEntry } from "./blob";
-export { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
-export { UsageError } from "./error";
-export { InsecureUrlResolver } from "./insecureUrlResolver";
-export { canBeCoalescedByService, isRuntimeMessage, MessageType2 } from "./messageRecognition";
+export { buildSnapshotTree } from "./buildSnapshotTree.js";
+export { BlobTreeEntry, TreeTreeEntry, AttachmentTreeEntry } from "./blob.js";
+export { DocumentStorageServiceProxy } from "./documentStorageServiceProxy.js";
+export { UsageError } from "./error.js";
+export { InsecureUrlResolver } from "./insecureUrlResolver.js";
+export { canBeCoalescedByService, isRuntimeMessage, MessageType2 } from "./messageRecognition.js";
 export {
 	AuthorizationError,
 	canRetryOnError,
@@ -27,8 +27,8 @@ export {
 	OnlineStatus,
 	RetryableError,
 	ThrottlingError,
-} from "./network";
-export { logNetworkFailure } from "./networkUtils";
+} from "./network.js";
+export { logNetworkFailure } from "./networkUtils.js";
 export {
 	emptyMessageStream,
 	ParallelRequests,
@@ -36,22 +36,22 @@ export {
 	requestOps,
 	streamFromMessages,
 	streamObserver,
-} from "./parallelRequests";
-export { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
-export { RateLimiter } from "./rateLimiter";
-export { readAndParse } from "./readAndParse";
-export { calculateMaxWaitTime, IProgress, runWithRetry } from "./runWithRetry";
+} from "./parallelRequests.js";
+export { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService.js";
+export { RateLimiter } from "./rateLimiter.js";
+export { readAndParse } from "./readAndParse.js";
+export { calculateMaxWaitTime, IProgress, runWithRetry } from "./runWithRetry.js";
 export {
 	CombinedAppAndProtocolSummary,
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
-} from "./summaryForCreateNew";
-export { convertSummaryTreeToSnapshotITree } from "./treeConversions";
+} from "./summaryForCreateNew.js";
+export { convertSummaryTreeToSnapshotITree } from "./treeConversions.js";
 export {
 	applyStorageCompression,
 	ICompressionStorageConfig,
 	SummaryCompressionAlgorithm,
 	blobHeadersBlobName,
-} from "./adapters";
-export { isInstanceOfISnapshot } from "./storageUtils";
+} from "./adapters/index.js";
+export { isInstanceOfISnapshot } from "./storageUtils.js";

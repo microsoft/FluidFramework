@@ -2,37 +2,38 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Loader } from "@fluidframework/container-loader";
+
+import { AttachState } from "@fluidframework/container-definitions";
+import {
+	type IContainer,
+	type IFluidModuleWithDetails,
+	type IHostLoader,
+} from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
+import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type IDocumentServiceFactory,
 	type IUrlResolver,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import {
-	AttachState,
-	type IHostLoader,
-	type IContainer,
-	type IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-import {
-	createTinyliciousCreateNewRequest,
-	InsecureTinyliciousTokenProvider,
-	InsecureTinyliciousUrlResolver,
-} from "@fluidframework/tinylicious-driver";
-import {
-	type ContainerSchema,
+	type IRootDataObject,
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
-	type IFluidContainer,
-	type IRootDataObject,
 	createServiceAudience,
-} from "@fluidframework/fluid-static";
+} from "@fluidframework/fluid-static/internal";
 import { type IClient } from "@fluidframework/protocol-definitions";
-import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
-import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils";
-import { type TinyliciousClientProps, type TinyliciousContainerServices } from "./interfaces";
-import { createTinyliciousAudienceMember } from "./TinyliciousAudience";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
+import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
+import {
+	InsecureTinyliciousTokenProvider,
+	InsecureTinyliciousUrlResolver,
+	createTinyliciousCreateNewRequest,
+} from "@fluidframework/tinylicious-driver/internal";
+
+import { createTinyliciousAudienceMember } from "./TinyliciousAudience.js";
+import { type TinyliciousClientProps, type TinyliciousContainerServices } from "./interfaces.js";
 
 /**
  * Provides the ability to have a Fluid object backed by a Tinylicious service.
@@ -86,6 +87,7 @@ export class TinyliciousClient {
 		 * See {@link FluidContainer.attach}
 		 */
 		const attach = async (): Promise<string> => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- AB#7608
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state.");
 			}

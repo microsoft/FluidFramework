@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Package, FluidRepo } from "@fluidframework/build-tools";
+import { readFile, writeFile } from "node:fs/promises";
 import { fromInternalScheme, isInternalVersionScheme } from "@fluid-tools/version-tools";
+import { FluidRepo, Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { command as execCommand } from "execa";
-import { readFile, writeFile } from "node:fs/promises";
 import { inc } from "semver";
 import { CleanOptions } from "simple-git";
 
@@ -22,7 +22,9 @@ async function replaceInFile(search: string, replace: string, path: string): Pro
 	await writeFile(path, newContent, "utf8");
 }
 
-export default class GenerateChangeLogCommand extends BaseCommand<typeof GenerateChangeLogCommand> {
+export default class GenerateChangeLogCommand extends BaseCommand<
+	typeof GenerateChangeLogCommand
+> {
 	static readonly description = "Generate a changelog for packages based on changesets.";
 
 	static readonly flags = {
@@ -95,7 +97,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<typeof Generat
 		const packagesToCheck = isReleaseGroup(releaseGroup)
 			? context.packagesInReleaseGroup(releaseGroup)
 			: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			  [context.fullPackageMap.get(releaseGroup)!];
+				[context.fullPackageMap.get(releaseGroup)!];
 
 		const installed = await FluidRepo.ensureInstalled(packagesToCheck);
 

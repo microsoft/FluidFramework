@@ -4,30 +4,31 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	FluidDataStoreRuntime,
 	FluidObjectHandle,
 	ISharedObjectRegistry,
-} from "@fluidframework/datastore";
-import { AttachState } from "@fluidframework/container-definitions";
-import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
-import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore/internal";
+import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map/internal";
+import { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntry,
-} from "@fluidframework/runtime-definitions";
-import { v4 as uuid } from "uuid";
+} from "@fluidframework/runtime-definitions/internal";
+import { type ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
+	UsageError,
 	createChildLogger,
 	tagCodeArtifacts,
-	UsageError,
-	type ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils";
-import { IAgentScheduler, IAgentSchedulerEvents } from "./agent";
+} from "@fluidframework/telemetry-utils/internal";
+import { v4 as uuid } from "uuid";
+
+import { IAgentScheduler, IAgentSchedulerEvents } from "./agent.js";
 
 // Note: making sure this ID is unique and does not collide with storage provided clientID
 const UnattachedClientId = `${uuid()}_unattached`;

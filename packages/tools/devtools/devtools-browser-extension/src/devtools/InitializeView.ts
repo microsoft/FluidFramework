@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { DevtoolsPanel } from "@fluid-internal/devtools-view";
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { DevtoolsPanel } from "@fluid-internal/devtools-view";
+import { BackgroundConnection } from "../BackgroundConnection.js";
+import { browser } from "../Globals.js";
+import { extensionViewMessageSource } from "../messaging/index.js";
 
-import { BackgroundConnection } from "../BackgroundConnection";
-import { browser } from "../Globals";
-import { extensionMessageSource } from "../messaging";
-import { formatDevtoolsScriptMessageForLogging } from "./Logging";
-import { OneDSLogger } from "./TelemetryLogging";
+import { formatDevtoolsScriptMessageForLogging } from "./Logging.js";
+import { OneDSLogger } from "./TelemetryLogging.js";
 
 /**
  * Renders the Fluid Devtools view into the provided target element.
@@ -22,7 +22,7 @@ import { OneDSLogger } from "./TelemetryLogging";
 export async function initializeDevtoolsView(target: HTMLElement): Promise<void> {
 	const connection = await BackgroundConnection.Initialize({
 		// TODO: devtools-panel-specific source
-		messageSource: extensionMessageSource,
+		messageSource: extensionViewMessageSource,
 		// The devtools panel will always be associated with this fixed tabID
 		tabId: browser.devtools.inspectedWindow.tabId,
 	});

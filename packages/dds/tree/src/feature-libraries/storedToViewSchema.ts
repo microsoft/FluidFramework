@@ -3,27 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
-	TreeStoredSchema,
-	TreeNodeSchemaIdentifier,
-	TreeFieldStoredSchema,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
+	TreeFieldStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeStoredSchema,
 } from "../core/index.js";
 import { fail } from "../util/index.js";
+
 import { defaultSchemaPolicy } from "./default-schema/index.js";
 import {
-	FlexTreeSchema,
-	FlexTreeNodeSchema,
-	FlexMapFieldSchema,
-	FlexFieldSchema,
-	FlexAllowedTypes,
 	Any,
-	LeafNodeSchema,
+	FlexAllowedTypes,
+	FlexFieldSchema,
+	FlexMapFieldSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
+	FlexTreeNodeSchema,
+	FlexTreeSchema,
+	LeafNodeSchema,
 } from "./typed-schema/index.js";
 
 /**
@@ -98,8 +100,7 @@ export function fieldSchemaFromStoredSchema(
 	schema: TreeFieldStoredSchema,
 	map: ReadonlyMap<TreeNodeSchemaIdentifier, FlexTreeNodeSchema>,
 ): FlexFieldSchema {
-	const kind =
-		defaultSchemaPolicy.fieldKinds.get(schema.kind.identifier) ?? fail("missing field kind");
+	const kind = defaultSchemaPolicy.fieldKinds.get(schema.kind) ?? fail("missing field kind");
 	const types: FlexAllowedTypes =
 		schema.types === undefined
 			? [Any]

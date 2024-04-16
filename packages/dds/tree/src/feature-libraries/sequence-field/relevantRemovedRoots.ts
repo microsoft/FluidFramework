@@ -3,19 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { DeltaDetachedNodeId, TaggedChange, offsetDetachId } from "../../core/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
+
 import { Changeset, Mark } from "./types.js";
-import { isInsert, isDetachOfRemovedNodes, isAttachAndDetachEffect } from "./utils.js";
+import { isAttachAndDetachEffect, isDetachOfRemovedNodes, isInsert } from "./utils.js";
+import { RelevantRemovedRootsFromChild } from "../modular-schema/index.js";
 
-export type RelevantRemovedRootsFromTChild<TChild> = (
-	child: TChild,
-) => Iterable<DeltaDetachedNodeId>;
-
-export function* relevantRemovedRoots<TChild>(
-	{ change, revision }: TaggedChange<Changeset<TChild>>,
-	relevantRemovedRootsFromChild: RelevantRemovedRootsFromTChild<TChild>,
+export function* relevantRemovedRoots(
+	{ change, revision }: TaggedChange<Changeset>,
+	relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
 ): Iterable<DeltaDetachedNodeId> {
 	for (const mark of change) {
 		if (refersToRelevantRemovedRoots(mark)) {
@@ -34,7 +33,7 @@ export function* relevantRemovedRoots<TChild>(
 	}
 }
 
-function refersToRelevantRemovedRoots<TChild>(mark: Mark<TChild>): boolean {
+function refersToRelevantRemovedRoots(mark: Mark): boolean {
 	if (mark.cellId !== undefined) {
 		const effect = isAttachAndDetachEffect(mark) ? mark.attach : mark;
 		if (isInsert(effect)) {

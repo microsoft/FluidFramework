@@ -12,9 +12,9 @@ import {
 	StableRange,
 	TraitLabel,
 } from "@fluid-experimental/tree";
-import { IArrayish } from "@fluid-example/bubblebench-common";
-import { Serializable } from "@fluidframework/datastore-definitions";
-import { fromJson, NodeKind } from "./treeutils.js";
+import { Serializable } from "@fluidframework/datastore-definitions/internal";
+
+import { NodeKind, fromJson } from "./treeutils.js";
 
 function getChild(
 	tree: SharedTree,
@@ -79,7 +79,7 @@ export const TreeObjectProxy = <T extends Object>(
 		// },
 	});
 
-export class TreeArrayProxy<T> implements IArrayish<Serializable<T>> {
+export class TreeArrayProxy<T> {
 	constructor(
 		private readonly tree: SharedTree,
 		private readonly nodeId: NodeId,

@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
-	Tree,
-	TreeConfiguration,
+	type ITree,
+	NodeFromSchema,
 	SchemaFactory,
 	SharedTree,
-	NodeFromSchema,
+	Tree,
+	TreeConfiguration,
 } from "@fluidframework/tree";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 
@@ -87,7 +88,7 @@ class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements
 		// Note that this is not a normal Node EventEmitter and functions differently.  There is no "off" method,
 		// but instead "on" returns a callback to unregister the event.  AB#5973
 		// Tree.on() is the way to register events on the inventory item (the first argument).  AB#6051
-		this._unregisterChangingEvent = Tree.on(this._inventoryItemNode, "afterChange", () => {
+		this._unregisterChangingEvent = Tree.on(this._inventoryItemNode, "nodeChanged", () => {
 			this.emit("quantityChanged");
 		});
 	}
@@ -100,8 +101,8 @@ class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements
 }
 
 export class NewTreeInventoryList extends DataObject implements IInventoryList {
-	private _sharedTree: SharedTree | undefined;
-	private get sharedTree(): SharedTree {
+	private _sharedTree: ITree | undefined;
+	private get sharedTree(): ITree {
 		if (this._sharedTree === undefined) {
 			throw new Error("Not initialized properly");
 		}
@@ -131,7 +132,7 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 	};
 
 	protected async initializingFirstTime(): Promise<void> {
-		this._sharedTree = this.runtime.createChannel(undefined, newTreeFactory.type) as SharedTree;
+		this._sharedTree = this.runtime.createChannel(undefined, newTreeFactory.type) as ITree;
 		this.root.set(sharedTreeKey, this._sharedTree.handle);
 		// Convenient repro for bug AB#5975
 		// const retrievedSharedTree = await this._sharedTree.handle.get();
@@ -144,7 +145,7 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 	// This would usually live in hasInitialized - I'm using initializingFromExisting here due to bug AB#5975.
 	protected async initializingFromExisting(): Promise<void> {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this._sharedTree = await this.root.get<IFluidHandle<SharedTree>>(sharedTreeKey)!.get();
+		this._sharedTree = await this.root.get<IFluidHandle<ITree>>(sharedTreeKey)!.get();
 	}
 
 	protected async hasInitialized(): Promise<void> {
@@ -158,13 +159,13 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 		// reach in and grab the inventoryItems list.
 		this._inventoryItemList =
 			this.sharedTree.schematize(treeConfiguration).root.inventoryItemList;
-		// afterChange will fire for any change of any type anywhere in the subtree.  In this application we expect
+		// "treeChanged" will fire for any change of any type anywhere in the subtree. In this application we expect
 		// three types of tree changes that will trigger this handler - add items, delete items, change item quantities.
-		// Since "afterChange" doesn't provide event args, we need to scan the tree and compare it to our InventoryItems
+		// Since "treeChanged" doesn't provide event args, we need to scan the tree and compare it to our InventoryItems
 		// to find what changed.  We'll intentionally ignore the quantity changes here, which are instead handled by
 		// "changing" listeners on each individual item node.
 		// Tree.on() is the way to register events on the list (the first argument).  AB#6051
-		Tree.on(this.inventoryItemList, "afterChange", () => {
+		Tree.on(this.inventoryItemList, "treeChanged", () => {
 			for (const inventoryItemNode of this.inventoryItemList) {
 				// If we're not currently tracking some item in the tree, then it must have been
 				// added in this change.

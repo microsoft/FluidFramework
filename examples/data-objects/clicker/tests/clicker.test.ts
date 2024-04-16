@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { retryWithEventualValue } from "@fluidframework/test-utils/internal";
+
 import { globals } from "../jest.config.cjs";
-import { retryWithEventualValue } from "@fluidframework/test-utils";
 
 describe("clicker", () => {
 	const getValue = async (index: number, expectedValue: string) =>

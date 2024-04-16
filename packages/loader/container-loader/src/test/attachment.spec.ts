@@ -4,21 +4,23 @@
  */
 
 import { strict as assert } from "assert";
-import { AttachState } from "@fluidframework/container-definitions";
-import { v4 as uuid } from "uuid";
-import { SummaryType } from "@fluidframework/protocol-definitions";
+
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import { SummaryType } from "@fluidframework/protocol-definitions";
+import { v4 as uuid } from "uuid";
+
 import {
 	AttachProcessProps,
 	AttachingDataWithBlobs,
-	DetachedDataWithOutstandingBlobs,
-	runRetriableAttachProcess,
-	DetachedDefaultData,
-	AttachmentData,
 	AttachingDataWithoutBlobs,
-} from "../attachment";
-import { combineAppAndProtocolSummary } from "../utils";
+	AttachmentData,
+	DetachedDataWithOutstandingBlobs,
+	DetachedDefaultData,
+	runRetriableAttachProcess,
+} from "../attachment.js";
+import { combineAppAndProtocolSummary } from "../utils.js";
 
 const emptySummary = combineAppAndProtocolSummary(
 	{ tree: {}, type: SummaryType.Tree },
@@ -110,7 +112,6 @@ describe("runRetriableAttachProcess", () => {
 			});
 
 			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
-			assert.strictEqual(attachmentData.snapshot, undefined, "should not have snapshot");
 		});
 
 		it("From DetachedDefaultData with offline and without blobs", async () => {
@@ -118,7 +119,7 @@ describe("runRetriableAttachProcess", () => {
 				state: AttachState.Detached,
 			};
 			let attachmentData: AttachmentData | undefined;
-			await runRetriableAttachProcess({
+			const snapshot = await runRetriableAttachProcess({
 				initialAttachmentData: initial,
 				offlineLoadEnabled: true,
 				setAttachmentData: (data) => (attachmentData = data),
@@ -134,7 +135,7 @@ describe("runRetriableAttachProcess", () => {
 			});
 
 			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
-			assert.notStrictEqual(attachmentData.snapshot, undefined, "should  have snapshot");
+			assert.notStrictEqual(snapshot, undefined, "should have snapshot");
 		});
 
 		it("From DetachedDefaultData with blobs and without offline", async () => {
@@ -180,7 +181,6 @@ describe("runRetriableAttachProcess", () => {
 			);
 
 			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
-			assert.strictEqual(attachmentData.snapshot, undefined, "should not have snapshot");
 		});
 
 		it("From DetachedDefaultData with zero blobs and without offline", async () => {
@@ -205,7 +205,6 @@ describe("runRetriableAttachProcess", () => {
 			});
 
 			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
-			assert.strictEqual(attachmentData.snapshot, undefined, "should not have snapshot");
 		});
 	});
 
@@ -443,7 +442,6 @@ describe("runRetriableAttachProcess", () => {
 			);
 
 			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
-			assert.strictEqual(attachmentData.snapshot, undefined, "should not have snapshot");
 		});
 
 		it("From AttachingDataWithBlobs", async () => {
@@ -453,7 +451,7 @@ describe("runRetriableAttachProcess", () => {
 				summary: emptySummary,
 			};
 			let attachmentData: AttachmentData | undefined;
-			await runRetriableAttachProcess(
+			const snapshot = await runRetriableAttachProcess(
 				createProxyWithFailDefault<AttachProcessProps>({
 					initialAttachmentData: initial,
 					offlineLoadEnabled: true,
@@ -467,7 +465,7 @@ describe("runRetriableAttachProcess", () => {
 			);
 
 			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
-			assert.notStrictEqual(attachmentData.snapshot, undefined, "should  have snapshot");
+			assert.notStrictEqual(snapshot, undefined, "should have snapshot");
 		});
 
 		it("From AttachingDataWithoutBlobs", async () => {
@@ -477,7 +475,7 @@ describe("runRetriableAttachProcess", () => {
 				summary: emptySummary,
 			};
 			let attachmentData: AttachmentData | undefined;
-			await runRetriableAttachProcess(
+			const snapshot = await runRetriableAttachProcess(
 				createProxyWithFailDefault<AttachProcessProps>({
 					initialAttachmentData: initial,
 					offlineLoadEnabled: true,
@@ -490,7 +488,7 @@ describe("runRetriableAttachProcess", () => {
 			);
 
 			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
-			assert.notStrictEqual(attachmentData.snapshot, undefined, "should  have snapshot");
+			assert.notStrictEqual(snapshot, undefined, "should have snapshot");
 		});
 	});
 });

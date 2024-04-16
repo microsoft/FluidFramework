@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import {
+	ContainerMessageType,
+	IChunkedOp,
+	unpackRuntimeMessage,
+} from "@fluidframework/container-runtime/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { DataStoreMessageType } from "@fluidframework/datastore/internal";
 import {
 	ISequencedDocumentMessage,
 	ISummaryAck,
@@ -12,13 +18,7 @@ import {
 	MessageType,
 	TreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { IAttachMessage, IEnvelope } from "@fluidframework/runtime-definitions";
-import {
-	IChunkedOp,
-	ContainerMessageType,
-	unpackRuntimeMessage,
-} from "@fluidframework/container-runtime";
-import { DataStoreMessageType } from "@fluidframework/datastore";
+import { IAttachMessage, IEnvelope } from "@fluidframework/runtime-definitions/internal";
 
 const noClientName = "No Client";
 const objectTypePrefix = "https://graph.microsoft.com/types/";
@@ -555,6 +555,9 @@ function processOp(
 			case ContainerMessageType.GC: {
 				break;
 			}
+			case ContainerMessageType.DocumentSchemaChange: {
+				break;
+			}
 			case ContainerMessageType.ChunkedOp: {
 				const chunk = runtimeMessage.contents as IChunkedOp;
 				// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
@@ -580,8 +583,8 @@ function processOp(
 					opCount = chunk.totalChunks; // 1 op for each chunk.
 					const patchedMessage = Object.create(runtimeMessage);
 					patchedMessage.contents = chunks.join("");
-					patchedMessage.type = chunk.originalType;
-					type = chunk.originalType;
+					type = (chunk as any).originalType;
+					patchedMessage.type = type;
 					totalMsgSize = value.totalSize;
 					chunkMap.delete(patchedMessage.clientId);
 				} else {

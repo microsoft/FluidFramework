@@ -2,7 +2,7 @@
 
 [Packages](docs/) &gt; [simple-suite-test](docs/simple-suite-test)
 
-Test package
+<b>Test package</b>
 
 # Remarks {#simple-suite-test-remarks}
 
@@ -24,7 +24,7 @@ Also, here is a link test, including a bad link, because we should have some rea
 
 - Good link (no alias): [TestClass](docs/simple-suite-test#testclass-class)
 
-- Good link (with alias): [function alias text](docs/simple-suite-test#testfunction-function)
+- Good link (with alias): _function alias text_
 
 - Bad link (no alias): _InvalidItem_
 
@@ -408,7 +408,7 @@ export declare abstract class TestAbstractClass
 
 | Constructor | Description |
 | --- | --- |
-| [(constructor)(privateProperty, protectedProperty)](docs/simple-suite-test#testabstractclass-_constructor_-constructor) | This is a constructor. |
+| [(constructor)(privateProperty, protectedProperty)](docs/simple-suite-test#testabstractclass-_constructor_-constructor) | This is a _{@customTag constructor}_. |
 
 ### Properties
 
@@ -429,7 +429,7 @@ export declare abstract class TestAbstractClass
 
 #### (constructor) {#testabstractclass-_constructor_-constructor}
 
-This is a constructor.
+This is a _{@customTag constructor}_.
 
 ##### Signature {#_constructor_-signature}
 

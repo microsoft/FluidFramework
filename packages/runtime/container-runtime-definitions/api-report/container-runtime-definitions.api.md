@@ -6,18 +6,17 @@
 
 import type { AttachState } from '@fluidframework/container-definitions';
 import type { FluidObject } from '@fluidframework/core-interfaces';
-import { FlushMode } from '@fluidframework/runtime-definitions';
+import { FlushMode } from '@fluidframework/runtime-definitions/internal';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
-import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
-import { IContainerRuntimeBaseEvents } from '@fluidframework/runtime-definitions';
+import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions/internal';
+import { IContainerRuntimeBaseEvents } from '@fluidframework/runtime-definitions/internal';
 import type { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import type { IDocumentStorageService } from '@fluidframework/driver-definitions';
+import type { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
 import type { IEventProvider } from '@fluidframework/core-interfaces';
-import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
 import type { IFluidHandle } from '@fluidframework/core-interfaces';
 import type { IFluidHandleContext } from '@fluidframework/core-interfaces';
-import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
+import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
 import type { IRequest } from '@fluidframework/core-interfaces';
 import type { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -31,7 +30,6 @@ export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, ICont
     readonly clientId: string | undefined;
     // (undocumented)
     readonly connected: boolean;
-    createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
@@ -53,7 +51,7 @@ export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase & IE
 // @alpha
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
     // (undocumented)
-    (event: "dirty" | "disconnected" | "dispose" | "saved" | "attached", listener: () => void): any;
+    (event: "dirty" | "disconnected" | "saved" | "attached", listener: () => void): any;
     // (undocumented)
     (event: "connected", listener: (clientId: string) => void): any;
 }

@@ -4,8 +4,10 @@
  */
 
 import { strict as assert } from "node:assert";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
-import { OdspUrlResolver } from "../urlResolver";
+
+import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
+
+import { OdspUrlResolver } from "../urlResolver.js";
 
 describe("Spo Url Resolver", () => {
 	it("Should resolve the spo urls correctly", async () => {
@@ -23,7 +25,7 @@ describe("Spo Url Resolver", () => {
 		);
 		assert.equal(
 			resolved.url,
-			`fluid-odsp://placeholder/placeholder/${resolved.hashedDocumentId}/`,
+			`https://placeholder/placeholder/${resolved.hashedDocumentId}/`,
 			"fluid url does not match",
 		);
 	});
@@ -43,7 +45,7 @@ describe("Spo Url Resolver", () => {
 		);
 		assert.equal(
 			resolved.url,
-			`fluid-odsp://placeholder/placeholder/${resolved.hashedDocumentId}/`,
+			`https://placeholder/placeholder/${resolved.hashedDocumentId}/`,
 			"fluid url does not match",
 		);
 	});

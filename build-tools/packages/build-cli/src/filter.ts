@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Context, Package } from "@fluidframework/build-tools";
 import path from "node:path";
+import { Package } from "@fluidframework/build-tools";
 import { filterFlags, selectionFlags } from "./flags";
-import { knownReleaseGroups, ReleaseGroup } from "./releaseGroups";
+import { Context } from "./library";
+import { ReleaseGroup, knownReleaseGroups } from "./releaseGroups";
 
 /**
  * The criteria that should be used for selecting package-like objects from a collection.
@@ -67,7 +68,9 @@ export interface PackageFilterOptions {
  *
  * @param flags - The parsed command flags.
  */
-export const parsePackageSelectionFlags = (flags: selectionFlags): PackageSelectionCriteria => {
+export const parsePackageSelectionFlags = (
+	flags: selectionFlags,
+): PackageSelectionCriteria => {
 	const options: PackageSelectionCriteria =
 		flags.all === true
 			? AllPackagesSelectionCriteria
@@ -76,7 +79,7 @@ export const parsePackageSelectionFlags = (flags: selectionFlags): PackageSelect
 					releaseGroups: (flags.releaseGroup as ReleaseGroup[]) ?? [],
 					releaseGroupRoots: (flags.releaseGroupRoot as ReleaseGroup[]) ?? [],
 					directory: flags.dir,
-			  };
+				};
 
 	return options;
 };

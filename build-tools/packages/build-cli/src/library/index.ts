@@ -4,6 +4,11 @@
  */
 
 export {
+	ApiLevel,
+	knownApiLevels,
+	isKnownApiLevel,
+} from "./apiLevel";
+export {
 	generateBumpVersionBranchName,
 	generateBumpVersionCommitMessage,
 	generateBumpDepsBranchName,
@@ -16,6 +21,7 @@ export {
 export { getDisplayDate, getDisplayDateRelative } from "./dates";
 export { bumpReleaseGroup, DependencyUpdateType, isDependencyUpdateType } from "./bump";
 export { DEFAULT_CHANGESET_PATH, loadChangesets } from "./changesets";
+export { Context, VersionDetails, isMonoRepoKind, MonoRepoKind } from "./context";
 export { Repository } from "./git";
 export {
 	filterVersionsOlderThan,
@@ -31,6 +37,7 @@ export {
 } from "./package";
 export { difference } from "./sets";
 export { getIndent, indentString } from "./text";
+export { getApiExports } from "./typescriptApi";
 export { createPullRequest, getCommitInfo, pullRequestExists } from "./github";
 export {
 	getRanges,
@@ -40,3 +47,5 @@ export {
 	ReportKind,
 	toReportKind,
 } from "./release";
+export { LayerGraph } from "./layerGraph";
+export { type Handler, policyHandlers } from "./repoPolicyCheck";

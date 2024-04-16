@@ -4,25 +4,28 @@
  */
 
 import { strict as assert } from "node:assert";
-import { ISnapshot } from "@fluidframework/driver-definitions";
-import * as api from "@fluidframework/protocol-definitions";
+
 import { bufferToString } from "@fluid-internal/client-utils";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	IFileEntry,
 	IOdspResolvedUrl,
 	ISharingLinkKind,
 	SharingLinkRole,
 	SharingLinkScope,
-} from "@fluidframework/odsp-driver-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { convertCreateNewSummaryTreeToTreeAndBlobs } from "../createNewUtils";
-import { createNewFluidFile } from "../createFile";
-import { createNewContainerOnExistingFile } from "../createNewContainerOnExistingFile";
-import { EpochTracker } from "../epochTracker";
-import { getHashedDocumentId } from "../odspPublicUtils";
-import { INewFileInfo, createCacheSnapshotKey, IExistingFileInfo } from "../odspUtils";
-import { LocalPersistentCache } from "../odspCache";
-import { mockFetchOk } from "./mockFetch";
+} from "@fluidframework/odsp-driver-definitions/internal";
+import * as api from "@fluidframework/protocol-definitions";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+
+import { createNewFluidFile } from "../createFile.js";
+import { createNewContainerOnExistingFile } from "../createNewContainerOnExistingFile.js";
+import { convertCreateNewSummaryTreeToTreeAndBlobs } from "../createNewUtils.js";
+import { EpochTracker } from "../epochTracker.js";
+import { LocalPersistentCache } from "../odspCache.js";
+import { getHashedDocumentId } from "../odspPublicUtils.js";
+import { IExistingFileInfo, INewFileInfo, createCacheSnapshotKey } from "../odspUtils.js";
+
+import { mockFetchOk } from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 

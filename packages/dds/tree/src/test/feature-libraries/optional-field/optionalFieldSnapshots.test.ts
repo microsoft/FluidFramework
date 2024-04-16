@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import path from "path";
+
 import { IIdCompressor } from "@fluidframework/id-compressor";
+
 import { ChangesetLocalId, RevisionTagCodec } from "../../../core/index.js";
 import {
 	OptionalChangeset,
@@ -11,18 +14,19 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
 import { brand } from "../../../util/index.js";
-import { TestChange } from "../../testChange.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { createSnapshotCompressor } from "../../snapshots/testTrees.js";
+import { TestNodeId } from "../../testNodeId.js";
 import { Change } from "./optionalFieldUtils.js";
+import { TestChange } from "../../testChange.js";
 
 function generateTestChangesets(
 	idCompressor: IIdCompressor,
-): { name: string; change: OptionalChangeset<TestChange> }[] {
+): { name: string; change: OptionalChangeset }[] {
 	const revision = idCompressor.generateCompressedId();
 	const localId: ChangesetLocalId = brand(42);
-	const childChange = TestChange.mint([], 1);
+	const childChange = TestNodeId.create({ localId: brand(5) }, TestChange.mint([], 1));
 	return [
 		{
 			name: "empty",
@@ -45,33 +49,37 @@ function generateTestChangesets(
 			),
 		},
 		{
-			name: "with reserved detach on self",
-			change: Change.reserve("self", "self"),
+			name: "with reserved detach",
+			change: Change.reserve("self", { revision, localId }),
 		},
 		{
-			name: "with reserved detach not on self",
-			change: Change.reserve("self", { revision, localId }),
+			name: "pin",
+			change: Change.pin({ revision, localId }),
 		},
 	];
 }
 
 export function testSnapshots() {
 	describe("Snapshots", () => {
-		useSnapshotDirectory("optional-field");
 		const snapshotCompressor = createSnapshotCompressor();
 		const changesets = generateTestChangesets(snapshotCompressor);
-		const family = makeOptionalFieldCodecFamily(
-			TestChange.codec,
-			new RevisionTagCodec(snapshotCompressor),
-		);
+		const family = makeOptionalFieldCodecFamily(new RevisionTagCodec(snapshotCompressor));
+
+		const baseContext = {
+			originatorId: snapshotCompressor.localSessionId,
+		};
 
 		for (const version of family.getSupportedFormats()) {
 			describe(`version ${version}`, () => {
+				const dir = path.join("optional-field", `V${version}`);
+				useSnapshotDirectory(dir);
 				const codec = family.resolve(version);
 				for (const { name, change } of changesets) {
 					it(name, () => {
 						const encoded = codec.json.encode(change, {
-							originatorId: snapshotCompressor.localSessionId,
+							baseContext,
+							encodeNode: (node) => TestNodeId.encode(node, baseContext),
+							decodeNode: (node) => TestNodeId.decode(node, baseContext),
 						});
 						takeJsonSnapshot(encoded);
 					});

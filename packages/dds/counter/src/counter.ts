@@ -3,23 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
-	type IFluidDataStoreRuntime,
-	type IChannelStorageService,
-	type IChannelFactory,
 	type IChannelAttributes,
+	type IChannelFactory,
+	type IChannelStorageService,
+	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
+import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import {
-	createSingleBlobSummary,
-	type IFluidSerializer,
-	SharedObject,
-} from "@fluidframework/shared-object-base";
-import { CounterFactory } from "./counterFactory";
-import { type ISharedCounter, type ISharedCounterEvents } from "./interfaces";
+import { type IFluidSerializer } from "@fluidframework/shared-object-base";
+import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+
+import { CounterFactory } from "./counterFactory.js";
+import { type ISharedCounter, type ISharedCounterEvents } from "./interfaces.js";
 
 /**
  * Describes the operation (op) format for incrementing the {@link SharedCounter}.
@@ -54,7 +52,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 	 *
 	 * @returns newly create shared counter (but not attached yet)
 	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCounter {
+	public static create(runtime: IFluidDataStoreRuntime, id?: string): ISharedCounter {
 		return runtime.createChannel(id, CounterFactory.Type) as SharedCounter;
 	}
 
@@ -71,7 +69,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 	 *
 	 * @returns a factory that creates and load SharedCounter
 	 */
-	public static getFactory(): IChannelFactory {
+	public static getFactory(): IChannelFactory<ISharedCounter> {
 		return new CounterFactory();
 	}
 

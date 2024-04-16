@@ -3,20 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITelemetryLoggerExt,
-	MonitoringContext,
-	PerformanceEvent,
-	createChildMonitoringContext,
-} from "@fluidframework/telemetry-utils";
-import { performance, stringToBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
-import { getW3CData, promiseRaceWithWinner } from "@fluidframework/driver-base";
+import { Uint8ArrayToString, performance, stringToBuffer } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+import { getW3CData, promiseRaceWithWinner } from "@fluidframework/driver-base/internal";
 import {
 	IDocumentStorageService,
-	ISummaryContext,
 	IDocumentStorageServicePolicies,
-} from "@fluidframework/driver-definitions";
+	ISummaryContext,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	ICreateBlobResponse,
 	ISnapshotTree,
@@ -24,19 +18,26 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { ICache, InMemoryCache } from "./cache";
-import { IRouterliciousDriverPolicies } from "./policies";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import {
+	MonitoringContext,
+	PerformanceEvent,
+	createChildMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
+
+import { ICache, InMemoryCache } from "./cache.js";
+import { INormalizedWholeSnapshot, IWholeFlatSnapshot } from "./contracts.js";
+import { GitManager } from "./gitManager.js";
+import { IRouterliciousDriverPolicies } from "./policies.js";
+import { convertWholeFlatSnapshotToSnapshotTreeAndBlobs } from "./r11sSnapshotParser.js";
+import { IR11sResponse } from "./restWrapper.js";
+import { ISummaryUploadManager } from "./storageContracts.js";
 import {
 	convertSnapshotAndBlobsToSummaryTree,
 	evalBlobsAndTrees,
 	validateBlobsAndTrees,
-} from "./treeUtils";
-import { GitManager } from "./gitManager";
-import { WholeSummaryUploadManager } from "./wholeSummaryUploadManager";
-import { ISummaryUploadManager } from "./storageContracts";
-import { IR11sResponse } from "./restWrapper";
-import { INormalizedWholeSnapshot, IWholeFlatSnapshot } from "./contracts";
-import { convertWholeFlatSnapshotToSnapshotTreeAndBlobs } from "./r11sSnapshotParser";
+} from "./treeUtils.js";
+import { WholeSummaryUploadManager } from "./wholeSummaryUploadManager.js";
 
 const latestSnapshotId: string = "latest";
 

@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
-import { SubSequence } from "../../sharedSequence";
+import { IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
+
+import { SubSequence } from "../../sharedSequence.js";
 
 describe("SharedSequence memory usage", () => {
 	// IMPORTANT: variables scoped to the test suite are a big problem for memory-profiling tests
@@ -30,7 +31,7 @@ describe("SharedSequence memory usage", () => {
 			title = "Create empty SharedSequence";
 			minSampleCount = 500;
 
-			private segment = new SubSequence<number>([]);
+			segment = new SubSequence<number>([]);
 
 			async run() {
 				this.segment = new SubSequence<number>([]);

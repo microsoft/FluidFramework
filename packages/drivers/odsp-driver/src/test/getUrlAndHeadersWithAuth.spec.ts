@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "node:assert";
-import { getUrlAndHeadersWithAuth } from "../getUrlAndHeadersWithAuth";
+
+import { getUrlAndHeadersWithAuth } from "../getUrlAndHeadersWithAuth.js";
 
 describe("getUrlAndHeadersWithAuth", () => {
 	const baseUrl = "https://contoso.sharepoint.com/_api/v2.1/drives/driveId/items/itemId/opstream";
@@ -18,18 +19,6 @@ describe("getUrlAndHeadersWithAuth", () => {
 	function generateToken(length: number): string {
 		return "a".repeat(length);
 	}
-
-	it("returns original url if token is null", async () => {
-		const { url, headers } = getUrlAndHeadersWithAuth(baseUrl, null, false);
-		assert.strictEqual(url, baseUrl, "Original and returned urls must match");
-		assert.deepStrictEqual(headers, {}, "Returned header must be empty");
-	});
-
-	it("returns original url if token is empty", async () => {
-		const { url, headers } = getUrlAndHeadersWithAuth(baseUrl, "", false);
-		assert.strictEqual(url, baseUrl, "Original and returned urls must match");
-		assert.deepStrictEqual(headers, {}, "Returned header must be empty");
-	});
 
 	const validateTokenEmbeddedIntoQueryString = (
 		originalUrl: URL,

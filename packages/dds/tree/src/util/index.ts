@@ -3,23 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export {
-	brand,
-	Brand,
-	BrandedType,
-	brandOpaque,
-	brandedNumberType,
-	brandedStringType,
-	extractFromOpaque,
-	ExtractFromOpaque,
-	fromErased,
-	Erased,
-	ErasedType,
-	NameFromBranded,
-	Opaque,
-	ValueFromBranded,
-	brandErased,
-} from "./brand.js";
+export { brand, Brand, BrandedType, NameFromBranded, ValueFromBranded } from "./brand.js";
+export { brandedNumberType, brandedStringType } from "./typeboxBrand.js";
+export { brandOpaque, extractFromOpaque, ExtractFromOpaque, Opaque } from "./opaque.js";
 export {
 	deleteFromNestedMap,
 	getOrAddInMap,
@@ -73,7 +59,6 @@ export {
 	Populated,
 	RecursiveReadonly,
 	zipIterables,
-	Assume,
 	assertValidIndex,
 	assertValidRange,
 	assertNonNegativeSafeInteger,
@@ -100,6 +85,7 @@ export {
 	FlattenKeys,
 	AllowOptionalNotFlattened,
 	RestrictiveReadonlyRecord,
+	Assume,
 } from "./typeUtils.js";
 
 export {
@@ -117,6 +103,7 @@ export {
 	RangeMap,
 	RangeQueryResult,
 	setInRangeMap,
+	deleteFromRangeMap,
 } from "./rangeMap.js";
 
 export {

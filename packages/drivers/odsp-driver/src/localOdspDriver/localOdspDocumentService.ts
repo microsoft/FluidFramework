@@ -4,19 +4,20 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
 	IDocumentServiceEvents,
 	IDocumentStorageService,
 	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
-import { UsageError } from "@fluidframework/driver-utils";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { UsageError } from "@fluidframework/driver-utils/internal";
+import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { LocalOdspDeltaStorageService } from "./localOdspDeltaStorageService";
-import { LocalOdspDocumentStorageService } from "./localOdspDocumentStorageManager";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+
+import { LocalOdspDeltaStorageService } from "./localOdspDeltaStorageService.js";
+import { LocalOdspDocumentStorageService } from "./localOdspDocumentStorageManager.js";
 
 /**
  * IDocumentService implementation that provides explicit snapshot to the document storage service.

@@ -19,6 +19,6 @@ export {
 	ISharedMap,
 	ISharedMapEvents,
 	IValueChanged,
-} from "./interfaces";
-export { LocalValueMaker, ILocalValue } from "./localValues";
-export { MapFactory, AttributableMap } from "./map";
+} from "./interfaces.js";
+export { LocalValueMaker, ILocalValue } from "./localValues.js";
+export { MapFactory, AttributableMap } from "./map.js";

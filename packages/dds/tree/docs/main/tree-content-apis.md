@@ -71,11 +71,11 @@ Ideally these APIs will be able to be updated incrementally with non-breaking ch
 but in the event that major breaking changes are needed a new high level API can be created to address the new needs,
 and can be maintained in parallel with the older APIs until they are deprecated and removed.
 
-Note that currently all of these APIs are available on [EditableTree](../../src/feature-libraries/editable-tree/README.md) allowing the ideal one to be selected by the user from a single object.
+Note that currently all of these APIs are available on [FlexTree](../../src/feature-libraries/flex-tree/README.md) allowing the ideal one to be selected by the user from a single object.
 
 ### JavaScript Object like API
 
-Status: currently implemented by "EditableTree".
+Status: currently implemented by "FlexTree".
 
 This API focuses on providing an API that is concise, intuitive and discoverable for developers familiar with JavaScript objects.
 
@@ -85,7 +85,7 @@ Includes Editing.
 
 ### Tree "Reflection" API
 
-Status: currently implemented by "EditableTree".
+Status: currently implemented by "FlexTree".
 
 Provides an API for accessing and editing the underlying tree data-model.
 Views fields as sequences of nodes and allows looking up schema information.
@@ -97,8 +97,8 @@ Use-cases include things like copying, importing or exporting data, debugging to
 
 ### Change notification API
 
-Status: planned to be implemented by "EditableTree".
+Status: planned to be implemented by "FlexTree".
 
 An API similar to PropertyDDS's property binder should be included.
-It will provide a way to bind events to subtrees, which can be selected via APIs on "EditableTree".
+It will provide a way to bind events to subtrees, which can be selected via APIs on "FlexTree".
 Design is in the early planning stages so details are not yet covered here.

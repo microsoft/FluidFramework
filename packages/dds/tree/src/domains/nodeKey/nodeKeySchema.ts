@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { ValueSchema } from "../../core/index.js";
 import {
-	nodeKeyFieldKey,
 	FieldKinds,
-	nodeKeyTreeIdentifier,
-	SchemaBuilderInternal,
 	FlexFieldSchema,
+	SchemaBuilderInternal,
+	nodeKeyFieldKey,
+	nodeKeyTreeIdentifier,
 } from "../../feature-libraries/index.js";
 
 const builder = new SchemaBuilderInternal({ scope: "com.fluidframework.nodeKey" });

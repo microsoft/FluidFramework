@@ -8,5 +8,5 @@ export {
 	IOldestClientObservableEvents,
 	IOldestClientObserver,
 	IOldestClientObserverEvents,
-} from "./interfaces";
-export { OldestClientObserver } from "./oldestClientObserver";
+} from "./interfaces.js";
+export { OldestClientObserver } from "./oldestClientObserver.js";

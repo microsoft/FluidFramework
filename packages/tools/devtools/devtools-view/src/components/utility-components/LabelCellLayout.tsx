@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { InfoLabel, Label, TableCellLayout } from "@fluentui/react-components";
 import React from "react";
-import { Label, TableCellLayout } from "@fluentui/react-components";
-import { InfoLabel } from "@fluentui/react-components/unstable";
 
 /**
  * {@link LabelCellLayout} input props.

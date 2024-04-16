@@ -4,23 +4,25 @@
  */
 
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/core-utils";
-import { NonRetryableError, runWithRetry } from "@fluidframework/driver-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+import { NonRetryableError, runWithRetry } from "@fluidframework/driver-utils/internal";
 import {
 	IOdspUrlParts,
 	OdspErrorTypes,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
-} from "@fluidframework/odsp-driver-definitions";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+
+import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import {
 	fetchHelper,
 	getWithRetryForTokenRefresh,
-	toInstrumentedOdspTokenFetcher,
-} from "./odspUtils";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { runWithRetry as runWithRetryForCoherencyAndServiceReadOnlyErrors } from "./retryUtils";
+	toInstrumentedOdspStorageTokenFetcher,
+} from "./odspUtils.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { runWithRetry as runWithRetryForCoherencyAndServiceReadOnlyErrors } from "./retryUtils.js";
 
 // Store cached responses for the lifetime of web session as file link remains the same for given file item
 const fileLinkCache = new Map<string, Promise<string>>();
@@ -110,17 +112,12 @@ async function getFileLinkCore(
 			let additionalProps;
 			const fileLink = await getWithRetryForTokenRefresh(async (options) => {
 				attempts++;
-				const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
+				const storageTokenFetcher = toInstrumentedOdspStorageTokenFetcher(
 					logger,
 					odspUrlParts,
 					getToken,
-					true /* throwOnNullToken */,
 				);
 				const storageToken = await storageTokenFetcher(options, "GetFileLinkCore");
-				assert(
-					storageToken !== null,
-					0x2bb /* "Instrumented token fetcher with throwOnNullToken = true should never return null" */,
-				);
 
 				// IMPORTANT: In past we were using GetFileByUrl() API to get to the list item that was corresponding
 				// to the file. This was intentionally replaced with GetFileById() to solve the following issue:
@@ -211,17 +208,12 @@ async function getFileItemLite(
 			const fileItem = await getWithRetryForTokenRefresh(async (options) => {
 				attempts++;
 				const { siteUrl, driveId, itemId } = odspUrlParts;
-				const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
+				const storageTokenFetcher = toInstrumentedOdspStorageTokenFetcher(
 					logger,
 					odspUrlParts,
 					getToken,
-					true /* throwOnNullToken */,
 				);
 				const storageToken = await storageTokenFetcher(options, "GetFileItemLite");
-				assert(
-					storageToken !== null,
-					0x2bc /* "Instrumented token fetcher with throwOnNullToken =true should never return null" */,
-				);
 
 				const { url, headers } = getUrlAndHeadersWithAuth(
 					`${siteUrl}/_api/v2.0/drives/${driveId}/items/${itemId}?select=webUrl,webDavUrl,sharepointIds`,

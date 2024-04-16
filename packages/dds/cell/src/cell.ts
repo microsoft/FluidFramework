@@ -3,32 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	type IChannelAttributes,
-	type IFluidDataStoreRuntime,
-	type IChannelStorageService,
 	type IChannelFactory,
-	type Serializable,
+	type IChannelStorageService,
+	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import { type Serializable } from "@fluidframework/datastore-definitions/internal";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
+import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { type AttributionKey } from "@fluidframework/runtime-definitions/internal";
+import { type IFluidSerializer } from "@fluidframework/shared-object-base";
+import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+
+import { CellFactory } from "./cellFactory.js";
 import {
-	type AttributionKey,
-	type ISummaryTreeWithStats,
-} from "@fluidframework/runtime-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
-import {
-	createSingleBlobSummary,
-	type IFluidSerializer,
-	SharedObject,
-} from "@fluidframework/shared-object-base";
-import { CellFactory } from "./cellFactory";
-import {
-	type ISharedCell,
-	type ISharedCellEvents,
 	type ICellLocalOpMetadata,
 	type ICellOptions,
-} from "./interfaces";
+	type ISharedCell,
+	type ISharedCellEvents,
+} from "./interfaces.js";
 
 /**
  * Description of a cell delta operation
@@ -51,7 +47,6 @@ interface ICellValue {
 	value: unknown;
 	/**
 	 * The attribution key contained in the `Cell`.
-	 * @alpha
 	 */
 	attribution?: AttributionKey;
 }
@@ -137,11 +132,6 @@ export class SharedCell<T = any>
 	 * {@inheritDoc ISharedCell.set}
 	 */
 	public set(value: Serializable<T>): void {
-		// Serialize the value if required.
-		const operationValue: ICellValue = {
-			value: this.serializer.encode(value, this.handle),
-		};
-
 		// Set the value locally.
 		const previousValue = this.setCore(value);
 		this.setAttribution();
@@ -150,6 +140,10 @@ export class SharedCell<T = any>
 		if (!this.isAttached()) {
 			return;
 		}
+
+		const operationValue: ICellValue = {
+			value,
+		};
 
 		const op: ISetCellOperation = {
 			type: "setCell",
@@ -227,7 +221,8 @@ export class SharedCell<T = any>
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const content = await readAndParse<ICellValue>(storage, snapshotFileName);
 
-		this.data = this.decode(content);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		this.data = this.serializer.decode(content.value);
 		this.attribution = content.attribution;
 	}
 
@@ -251,7 +246,7 @@ export class SharedCell<T = any>
 	private applyInnerOp(content: ICellOperation): Serializable<T> | undefined {
 		switch (content.type) {
 			case "setCell": {
-				return this.setCore(this.decode(content.value));
+				return this.setCore(content.value.value as Serializable<T>);
 			}
 
 			case "deleteCell": {
@@ -323,11 +318,6 @@ export class SharedCell<T = any>
 		return previousLocalValue;
 	}
 
-	private decode(cellValue: ICellValue): Serializable<T> {
-		const value = cellValue.value;
-		return this.serializer.decode(value) as Serializable<T>;
-	}
-
 	private createLocalOpMetadata(
 		op: ICellOperation,
 		previousValue?: Serializable<T>,
@@ -352,7 +342,7 @@ export class SharedCell<T = any>
 				break;
 			}
 			case "setCell": {
-				this.set(this.decode(cellContent.value));
+				this.set(cellContent.value.value as Serializable<T>);
 				break;
 			}
 			default: {

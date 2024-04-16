@@ -5,8 +5,9 @@
 
 import { strict as assert } from "node:assert";
 
-import { createIdCompressor } from "@fluidframework/id-compressor";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+
 import { SchemaFactory, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
 
@@ -25,7 +26,7 @@ describe("class-tree tree", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view: TreeView<NodeList> = tree.schematize(config);
+		const view: TreeView<typeof NodeList> = tree.schematize(config);
 		assert.deepEqual([...view.root], ["a", "b"]);
 	});
 
@@ -35,7 +36,7 @@ describe("class-tree tree", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view: TreeView<NodeList> = tree.schematize(config);
+		const view: TreeView<typeof NodeList> = tree.schematize(config);
 		assert.deepEqual([...view.root], ["a", "b"]);
 	});
 
@@ -45,7 +46,7 @@ describe("class-tree tree", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view: TreeView<Canvas> = tree.schematize(config);
+		const view: TreeView<typeof Canvas> = tree.schematize(config);
 	});
 
 	it("ObjectRoot - unhydrated", () => {
@@ -54,7 +55,7 @@ describe("class-tree tree", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view: TreeView<Canvas> = tree.schematize(config);
+		const view: TreeView<typeof Canvas> = tree.schematize(config);
 	});
 
 	it("Union Root", () => {
@@ -63,7 +64,7 @@ describe("class-tree tree", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view: TreeView<number | string> = tree.schematize(config);
+		const view = tree.schematize(config);
 		assert.equal(view.root, "a");
 	});
 
@@ -73,7 +74,7 @@ describe("class-tree tree", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view: TreeView<undefined | string> = tree.schematize(config);
+		const view = tree.schematize(config);
 		assert.equal(view.root, undefined);
 	});
 
@@ -83,7 +84,7 @@ describe("class-tree tree", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view: TreeView<undefined | string> = tree.schematize(config);
+		const view = tree.schematize(config);
 		assert.equal(view.root, "x");
 	});
 

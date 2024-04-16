@@ -4,42 +4,44 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import {
-	ISummarizerNode,
-	ISummarizerNodeConfig,
-	ISummarizeResult,
-	CreateChildSummarizerNodeParam,
-	CreateSummarizerNodeSource,
-	SummarizeInternalFn,
-	ITelemetryContext,
-	IExperimentalIncrementalSummaryContext,
-} from "@fluidframework/runtime-definitions";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	ISequencedDocumentMessage,
-	SummaryType,
 	ISnapshotTree,
+	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
-	ITelemetryLoggerExt,
-	createChildLogger,
+	IExperimentalIncrementalSummaryContext,
+	ITelemetryContext,
+} from "@fluidframework/runtime-definitions";
+import {
+	CreateChildSummarizerNodeParam,
+	CreateSummarizerNodeSource,
+	ISummarizeResult,
+	ISummarizerNode,
+	ISummarizerNodeConfig,
+	SummarizeInternalFn,
+} from "@fluidframework/runtime-definitions/internal";
+import { mergeStats } from "@fluidframework/runtime-utils/internal";
+import { type ITelemetryErrorEventExt, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import {
 	LoggingError,
 	PerformanceEvent,
 	TelemetryDataTag,
+	createChildLogger,
 	tagCodeArtifacts,
-	type ITelemetryErrorEventExt,
-} from "@fluidframework/telemetry-utils";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { mergeStats } from "@fluidframework/runtime-utils";
+} from "@fluidframework/telemetry-utils/internal";
+
 import {
 	EscapedPath,
 	ICreateChildDetails,
 	IRefreshSummaryResult,
 	IStartSummaryResult,
 	ISummarizerNodeRootContract,
-	parseSummaryForSubtrees,
 	SummaryNode,
 	ValidateSummaryResult,
-} from "./summarizerNodeUtils";
+	parseSummaryForSubtrees,
+} from "./summarizerNodeUtils.js";
 
 export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {}
 

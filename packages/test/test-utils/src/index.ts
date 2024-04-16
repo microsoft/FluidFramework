@@ -27,6 +27,7 @@ export {
 	createDocumentId,
 	DataObjectFactoryType,
 	EventAndErrorTrackingLogger,
+	type IEventAndErrorTrackingLogger,
 	getUnexpectedLogErrorException,
 	IDocumentIdStrategy,
 	IOpProcessingController,
@@ -37,6 +38,7 @@ export {
 } from "./testObjectProvider.js";
 export {
 	createSummarizer,
+	createSummarizerCore,
 	createSummarizerFromFactory,
 	summarizeNow,
 	SummaryInfo,

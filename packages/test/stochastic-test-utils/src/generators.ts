@@ -2,16 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { unreachableCase } from "@fluidframework/core-utils";
+
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+
 import {
 	AcceptanceCondition,
 	AsyncGenerator,
 	AsyncWeights,
 	BaseFuzzTestState,
-	done,
 	Generator,
 	Weights,
-} from "./types";
+	done,
+} from "./types.js";
 
 /**
  * Returns a generator which produces a categorial distribution with the provided weights.
@@ -53,14 +55,14 @@ export function createWeightedGenerator<T, TState extends BaseFuzzTestState>(
 		}
 		totalWeight = cumulativeWeight;
 	}
-	if (totalWeight === 0) {
-		throw new Error("createWeightedGenerator must have some positive weight");
-	}
 
 	// Note: if this is a perf bottleneck in usage, the cumulative weights array could be
 	// binary searched, and for small likelihood of acceptance (i.e. disproportional weights)
 	// we could pre-filter the acceptance conditions rather than rejection sample the outcome.
 	return (state) => {
+		if (totalWeight === 0) {
+			throw new Error("createWeightedGenerator must have some positive weight");
+		}
 		const { random } = state;
 		const sample = () => {
 			const weightSelected = random.real(0, totalWeight);

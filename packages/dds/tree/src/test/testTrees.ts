@@ -5,30 +5,30 @@
 
 import { strict as assert } from "assert";
 
-import { MockHandle } from "@fluidframework/test-runtime-utils";
-import { ITreeCursorSynchronous, JsonableTree } from "../core/index.js";
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
+
+import { ITreeCursorSynchronous, JsonableTree, Multiplicity } from "../core/index.js";
+import { leaf } from "../domains/index.js";
 import {
+	AllowedTypesToFlexInsertableTree,
 	Any,
 	FieldKinds,
 	FlexFieldSchema,
-	FullSchemaPolicy,
-	Multiplicity,
-	SchemaLibrary,
 	FlexTreeNodeSchema,
 	FlexTreeSchema,
+	FullSchemaPolicy,
+	InsertableFlexField,
+	SchemaBuilderBase,
+	SchemaLibrary,
+	cursorForJsonableTreeNode,
 	cursorsForTypedFieldData,
 	defaultSchemaPolicy,
+	intoStoredSchemaCollection,
 	jsonableTreeFromFieldCursor,
-	cursorForJsonableTreeNode,
 	typeNameSymbol,
 	valueSymbol,
-	AllowedTypesToFlexInsertableTree,
-	InsertableFlexField,
-	intoStoredSchemaCollection,
-	SchemaBuilderBase,
 } from "../feature-libraries/index.js";
 import { TreeContent } from "../shared-tree/index.js";
-import { leaf } from "../domains/index.js";
 
 interface TestTree {
 	readonly name: string;

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { Type } from "@sinclair/typebox";
 import structuredClone from "@ungap/structured-clone";
 
@@ -295,20 +295,6 @@ export function assertNonNegativeSafeInteger(index: number) {
 }
 
 /**
- * Assume that `TInput` is a `TAssumeToBe`.
- *
- * @remarks
- * This is useful in generic code when it is impractical (or messy)
- * to to convince the compiler that a generic type `TInput` will extend `TAssumeToBe`.
- * In these cases `TInput` can be replaced with `Assume<TInput, TAssumeToBe>` to allow compilation of the generic code.
- * When the generic code is parameterized with a concrete type, if that type actually does extend `TAssumeToBe`,
- * it will behave like `TInput` was used directly.
- *
- * @internal
- */
-export type Assume<TInput, TAssumeToBe> = [TInput] extends [TAssumeToBe] ? TInput : TAssumeToBe;
-
-/**
  * Convert an object into a Map.
  *
  * This function must only be used with objects specifically intended to encode map like information.
@@ -409,8 +395,8 @@ export function compareNamed(a: Named<string>, b: Named<string>): -1 | 0 | 1 {
 
 /**
  * Placeholder for `Symbol.dispose`.
- *
- * Replace this with `Symbol.dispose` when it is available.
+ * @privateRemarks
+ * TODO: replace this with `Symbol.dispose` when it is available or make it a valid polyfill.
  * @public
  */
 export const disposeSymbol: unique symbol = Symbol("Symbol.dispose placeholder");

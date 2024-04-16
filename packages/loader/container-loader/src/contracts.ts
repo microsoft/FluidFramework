@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IErrorBase, ITelemetryProperties } from "@fluidframework/core-interfaces";
 import {
 	IConnectionDetails,
 	ICriticalContainerError,
 	IDeltaQueue,
-	IFluidCodeDetails,
-	isFluidPackage,
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails, isFluidPackage } from "@fluidframework/container-definitions/internal";
+import { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { IContainerPackageInfo } from "@fluidframework/driver-definitions/internal";
 import {
 	ConnectionMode,
 	IClientConfiguration,
@@ -21,7 +21,6 @@ import {
 	ISignalClient,
 	ISignalMessage,
 } from "@fluidframework/protocol-definitions";
-import { IContainerPackageInfo } from "@fluidframework/driver-definitions";
 
 export enum ReconnectMode {
 	Never = "Never",
@@ -73,12 +72,12 @@ export interface IConnectionManager {
 	// Various connectivity properties for telemetry describing type of current connection
 	// Things like connection mode, service info, etc.
 	// Called when connection state changes (connect / disconnect)
-	readonly connectionProps: ITelemetryProperties;
+	readonly connectionProps: ITelemetryBaseProperties;
 
 	// Verbose information about connection logged to telemetry in case of issues with
 	// maintaining healthy connection, including op gaps, not receiving join op in time, etc.
 	// Contains details information, like sequence numbers at connection time, initial ops info, etc.
-	readonly connectionVerboseProps: ITelemetryProperties;
+	readonly connectionVerboseProps: ITelemetryBaseProperties;
 
 	/**
 	 * Prepares message to be sent. Fills in clientSequenceNumber.
@@ -100,7 +99,7 @@ export interface IConnectionManager {
 	 * Submits signal to relay service.
 	 * Called only when active connection is present.
 	 */
-	submitSignal(content: any, targetClientId?: string): void;
+	submitSignal: (content: string, targetClientId?: string) => void;
 
 	/**
 	 * Submits messages to relay service.

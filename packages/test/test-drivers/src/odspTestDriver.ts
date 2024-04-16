@@ -5,26 +5,28 @@
 
 import assert from "assert";
 import os from "os";
-import { compare } from "semver";
+
+import { ITestDriver, OdspEndpoint } from "@fluid-internal/test-driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import {
+	IClientConfig,
+	getDriveId,
+	getDriveItemByRootFileName,
+} from "@fluidframework/odsp-doclib-utils/internal";
 import type {
-	OdspResourceTokenFetchOptions,
 	HostStoragePolicy,
-} from "@fluidframework/odsp-driver-definitions";
+	OdspResourceTokenFetchOptions,
+} from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	OdspTokenConfig,
 	OdspTokenManager,
-	odspTokensCache,
 	getMicrosoftConfiguration,
-} from "@fluidframework/tool-utils";
-import {
-	getDriveId,
-	getDriveItemByRootFileName,
-	IClientConfig,
-} from "@fluidframework/odsp-doclib-utils/internal";
-import { ITestDriver, OdspEndpoint } from "@fluidframework/test-driver-definitions";
-import { OdspDriverApiType, OdspDriverApi } from "./odspDriverApi";
+	odspTokensCache,
+} from "@fluidframework/tool-utils/internal";
+import { compare } from "semver";
+
+import { OdspDriverApi, OdspDriverApiType } from "./odspDriverApi.js";
 
 const passwordTokenConfig = (username, password): OdspTokenConfig => ({
 	type: "password",

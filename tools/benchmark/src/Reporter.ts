@@ -34,7 +34,7 @@ SOFTWARE.
 
 /* eslint no-console: ["error", { allow: ["log"] }] */
 import * as path from "node:path";
-import * as fs from "fs";
+import * as fs from "node:fs";
 import Table from "easy-table";
 import chalk from "chalk";
 import { geometricMean, pad, prettyNumber, Stats } from "./ReporterUtilities";
@@ -200,14 +200,17 @@ export class BenchmarkReporter {
 		// Add row to overallSummaryTable
 		let statusSymbol: string;
 		switch (benchmarksMap.size) {
-			case countSuccessful:
+			case countSuccessful: {
 				statusSymbol = chalk.green("✔");
 				break;
-			case countFailure:
+			}
+			case countFailure: {
 				statusSymbol = chalk.red("×");
 				break;
-			default:
+			}
+			default: {
 				statusSymbol = chalk.yellow("!");
+			}
 		}
 		this.overallSummaryTable.cell("status", pad(4) + statusSymbol);
 		this.overallSummaryTable.cell("suite name", chalk.italic(suiteName));

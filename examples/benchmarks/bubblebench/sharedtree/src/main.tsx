@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IArrayish, IClient } from "@fluid-example/bubblebench-common";
+import { IClient } from "@fluid-example/bubblebench-common";
 import { SharedTree, WriteFormat } from "@fluid-experimental/tree";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+
 import { TreeObjectProxy } from "./proxy/index.js";
 import { AppState } from "./state.js";
 
 interface IApp {
-	clients: IArrayish<IClient>;
+	clients: IClient[];
 }
 
 /**

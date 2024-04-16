@@ -3,22 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { fail, strict as assert } from "assert";
+import { strict as assert, fail } from "assert";
+
+import { IJsonCodec, makeCodecFamily } from "../codec/index.js";
 import {
-	ChangeFamily,
-	ChangeRebaser,
-	TaggedChange,
 	AnchorSet,
+	ChangeEncodingContext,
+	ChangeFamily,
+	ChangeFamilyCodec,
 	ChangeFamilyEditor,
-	FieldKey,
-	emptyDelta,
+	ChangeRebaser,
 	DeltaFieldMap,
 	DeltaRoot,
-	ChangeFamilyCodec,
-	ChangeEncodingContext,
+	FieldKey,
+	TaggedChange,
+	emptyDelta,
 } from "../core/index.js";
-import { IJsonCodec, makeCodecFamily } from "../codec/index.js";
 import { JsonCompatibleReadOnly, RecursiveReadonly, brand } from "../util/index.js";
+
 import { deepFreeze } from "./utils.js";
 
 export interface NonEmptyTestChange {
@@ -103,7 +105,7 @@ function composeList(changes: TestChange[], verify: boolean = true): TestChange 
 			intentions = composeIntentions(intentions, change.intentions);
 		}
 	}
-	if (inputContext !== undefined) {
+	if (intentions.length !== 0 && inputContext !== undefined) {
 		return {
 			inputContext,
 			intentions,
@@ -200,7 +202,10 @@ export interface AnchorRebaseData {
 	intentions: number[];
 }
 
-const emptyChange: TestChange = { intentions: [] };
+const emptyChange: TestChange = {
+	intentions: [],
+};
+
 const codec: IJsonCodec<
 	TestChange,
 	JsonCompatibleReadOnly,
@@ -223,6 +228,10 @@ export const TestChange = {
 	toDelta,
 	isEmpty,
 	codec,
+	codecs: makeCodecFamily([
+		[1, codec],
+		[2, codec],
+	]),
 };
 deepFreeze(TestChange);
 
@@ -236,7 +245,11 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 	}
 
 	public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
-		return rebase(change, over.change) ?? { intentions: [] };
+		return (
+			rebase(change, over.change) ?? {
+				intentions: [],
+			}
+		);
 	}
 }
 
@@ -311,7 +324,7 @@ export function testChangeFamilyFactory(
 ): ChangeFamily<ChangeFamilyEditor, TestChange> {
 	const family = {
 		rebaser: rebaser ?? new TestChangeRebaser(),
-		codecs: makeCodecFamily<TestChange, ChangeEncodingContext>([[0, TestChange.codec]]),
+		codecs: TestChange.codecs,
 		buildEditor: () => ({
 			enterTransaction: () => assert.fail("Unexpected edit"),
 			exitTransaction: () => assert.fail("Unexpected edit"),

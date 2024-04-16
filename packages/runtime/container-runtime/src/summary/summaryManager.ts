@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	IDisposable,
 	IEvent,
 	IEventProvider,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
-	createChildLogger,
-	ITelemetryLoggerExt,
-	PerformanceEvent,
-} from "@fluidframework/telemetry-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
-import { IThrottler } from "../throttler";
-import { ISummarizerClientElection } from "./summarizerClientElection";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+
+import { IThrottler } from "../throttler.js";
+
+import { Summarizer } from "./summarizer.js";
+import { ISummarizerClientElection } from "./summarizerClientElection.js";
 import {
 	EnqueueSummarizeResult,
 	IEnqueueSummarizeOptions,
@@ -28,9 +28,8 @@ import {
 	ISummarizer,
 	ISummarizerEvents,
 	SummarizerStopReason,
-} from "./summarizerTypes";
-import { SummaryCollection } from "./summaryCollection";
-import { Summarizer } from "./summarizer";
+} from "./summarizerTypes.js";
+import { SummaryCollection } from "./summaryCollection.js";
 
 const defaultInitialDelayMs = 5000;
 const defaultOpsToBypassInitialDelay = 4000;
@@ -168,6 +167,10 @@ export class SummaryManager extends TypedEventEmitter<ISummarizerEvents> impleme
 		state === SummaryManagerState.Starting || state === SummaryManagerState.Running;
 
 	private getShouldSummarizeState(): ShouldSummarizeState {
+		if (this.disposed) {
+			return { shouldSummarize: false, stopReason: "parentNotConnected" };
+		}
+
 		// Note that if we're in the Running state, the electedClient may be a summarizer client, so we can't
 		// enforce connectedState.clientId === clientElection.electedClientId. But once we're Running, we should
 		// only transition to Stopping when the electedParentId changes. Stopping the summarizer without
@@ -190,11 +193,7 @@ export class SummaryManager extends TypedEventEmitter<ISummarizerEvents> impleme
 			return { shouldSummarize: false, stopReason: "parentNotConnected" };
 		}
 
-		if (this.disposed) {
-			assert(false, 0x260 /* "Disposed should mean disconnected!" */);
-		} else {
-			return { shouldSummarize: true };
-		}
+		return { shouldSummarize: true };
 	}
 
 	private readonly refreshSummarizer = () => {
@@ -238,6 +237,10 @@ export class SummaryManager extends TypedEventEmitter<ISummarizerEvents> impleme
 
 		this.delayBeforeCreatingSummarizer()
 			.then(async (startWithInitialDelay: boolean) => {
+				if (this.disposed) {
+					return "early exit (disposed)";
+				}
+
 				// Re-validate that it need to be running. Due to asynchrony, it may be not the case anymore
 				// but only if creation was delayed. If it was not, then we want to ensure we always create
 				// a summarizer to kick off lastSummary. Without that, we would not be able to summarize and get

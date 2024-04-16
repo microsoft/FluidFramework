@@ -3,42 +3,46 @@
  * Licensed under the MIT License.
  */
 
+import { IFluidMountableView } from "@fluid-example/example-utils";
+import { AttachState } from "@fluidframework/container-definitions";
+import {
+	IContainer,
+	IFluidCodeDetails,
+	IFluidCodeResolver,
+	IFluidModule,
+	IFluidModuleWithDetails,
+	IFluidPackage,
+	IResolvedFluidCodeDetails,
+	LoaderHeader,
+	isFluidBrowserPackage,
+} from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
+import { FluidObject } from "@fluidframework/core-interfaces";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import { InsecureUrlResolver } from "@fluidframework/driver-utils/internal";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
+import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver/internal";
+import {
+	HostStoragePolicy,
+	IPersistedCache,
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { IUser } from "@fluidframework/protocol-definitions";
+import { RequestParser } from "@fluidframework/runtime-utils/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import sillyname from "sillyname";
 import { v4 as uuid } from "uuid";
-import { IFluidMountableView } from "@fluid-example/example-utils";
-import { assert, Deferred } from "@fluidframework/core-utils";
-import {
-	AttachState,
-	IFluidCodeResolver,
-	IResolvedFluidCodeDetails,
-	isFluidBrowserPackage,
-	IContainer,
-	IFluidPackage,
-	IFluidCodeDetails,
-	IFluidModuleWithDetails,
-	IFluidModule,
-	LoaderHeader,
-} from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
-import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
-import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-definitions";
-import { IUser } from "@fluidframework/protocol-definitions";
-import { FluidObject } from "@fluidframework/core-interfaces";
-import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { RequestParser } from "@fluidframework/runtime-utils";
-import { InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { Port } from "webpack-dev-server";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { getUrlResolver } from "./getUrlResolver";
-import { deltaConnectionServer, getDocumentServiceFactory } from "./getDocumentServiceFactory";
-import { OdspPersistentCache } from "./odspPersistantCache";
-import { OdspUrlResolver } from "./odspUrlResolver";
+
+import { deltaConnectionServer, getDocumentServiceFactory } from "./getDocumentServiceFactory.js";
+import { getUrlResolver } from "./getUrlResolver.js";
+import { OdspPersistentCache } from "./odspPersistantCache.js";
+import { OdspUrlResolver } from "./odspUrlResolver.js";
 import {
+	WebCodeLoader,
 	extractPackageIdentifierDetails,
 	resolveFluidPackageEnvironment,
-	WebCodeLoader,
-} from "./webCodeLoader";
+} from "./webCodeLoader/index.js";
 
 export interface IDevServerUser extends IUser {
 	name: string;

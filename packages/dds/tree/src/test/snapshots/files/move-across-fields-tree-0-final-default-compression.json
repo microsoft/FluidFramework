@@ -169,7 +169,7 @@
                       "change": [
                         {
                           "data": {
-                            "maxId": 0,
+                            "maxId": 3,
                             "changes": [
                               {
                                 "fieldKey": "rootFieldKey",

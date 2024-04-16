@@ -4,15 +4,17 @@
  */
 
 import { strict as assert } from "assert";
-import { Random } from "best-random";
+
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
-	MockFluidDataStoreRuntime,
-	MockStorage,
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
-} from "@fluidframework/test-runtime-utils";
-import { SharedDelta } from "./delta";
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
+import { Random } from "best-random";
+
+import { SharedDelta } from "./delta.js";
 
 describe("SharedOT", () => {
 	describe("stress", () => {

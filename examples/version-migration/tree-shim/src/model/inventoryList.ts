@@ -4,19 +4,20 @@
  */
 
 import {
+	SharedTree as LegacySharedTree,
 	MigrationShim,
 	MigrationShimFactory,
-	SharedTree as LegacySharedTree,
 	SharedTreeShim,
 	SharedTreeShimFactory,
 } from "@fluid-experimental/tree";
 // eslint-disable-next-line import/no-internal-modules
 import { EditLog } from "@fluid-experimental/tree/test/EditLog";
-import { SharedTree, ITree } from "@fluidframework/tree";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { ITree, SharedTree } from "@fluidframework/tree";
 
 import type { IInventoryItem, IInventoryList, IMigrateBackingData } from "../modelInterfaces.js";
+
 import { LegacyTreeInventoryListController } from "./legacyTreeInventoryListController.js";
 import { NewTreeInventoryListController } from "./newTreeInventoryListController.js";
 

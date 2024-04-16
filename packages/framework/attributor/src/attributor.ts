@@ -2,14 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert } from "@fluidframework/core-utils";
+
+import { type IAudience, type IDeltaManager } from "@fluidframework/container-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type IDocumentMessage,
 	type ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import { type AttributionInfo } from "@fluidframework/runtime-definitions";
-import { UsageError } from "@fluidframework/telemetry-utils";
-import { type IAudience, type IDeltaManager } from "@fluidframework/container-definitions";
+import { type AttributionInfo } from "@fluidframework/runtime-definitions/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Provides lookup between attribution keys and their associated attribution information.
