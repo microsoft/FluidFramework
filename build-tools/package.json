@@ -60,7 +60,11 @@
 		"exclude": [],
 		"include": [],
 		"report-dir": "nyc/report",
-		"reporter": ["cobertura", "html", "text"],
+		"reporter": [
+			"cobertura",
+			"html",
+			"text"
+		],
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
@@ -72,7 +76,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "~0.29.0",
 		"@microsoft/api-documenter": "^7.22.24",
-		"@microsoft/api-extractor": "^7.42.3",
+		"@microsoft/api-extractor": "^7.43.1",
 		"c8": "^7.14.0",
 		"commitizen": "^4.3.0",
 		"concurrently": "^8.2.1",
@@ -103,7 +107,9 @@
 			"allowedVersions": {
 				"eslint": "8.51.0"
 			},
-			"ignoreMissing": ["@types/node"]
+			"ignoreMissing": [
+				"@types/node"
+			]
 		},
 		"overrides": {
 			"json5@<1.0.2": "^1.0.2",

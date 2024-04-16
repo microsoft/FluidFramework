@@ -84,7 +84,7 @@
 		"@fluidframework/build-tools": "^0.37.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@fluidframework/routerlicious-urlresolver-previous": "npm:@fluidframework/routerlicious-urlresolver@2.0.0-internal.8.0.0",
-		"@microsoft/api-extractor": "^7.42.3",
+		"@microsoft/api-extractor": "^7.43.1",
 		"@types/mocha": "^9.1.1",
 		"@types/nconf": "^0.10.0",
 		"@types/node": "^18.19.0",

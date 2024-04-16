@@ -24,7 +24,11 @@
 	"bin": {
 		"flub": "./bin/run.js"
 	},
-	"files": ["/bin", "/lib", "/oclif.manifest.json"],
+	"files": [
+		"/bin",
+		"/lib",
+		"/oclif.manifest.json"
+	],
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint && concurrently npm:build:docs npm:build:diagrams",
 		"build:compile": "npm run tsc && npm run build:test && npm run build:copy && npm run build:readme",
@@ -55,18 +59,28 @@
 	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
-		"exclude": ["src/test/**/*.*ts", "lib/test/**/*.*js"],
+		"exclude": [
+			"src/test/**/*.*ts",
+			"lib/test/**/*.*js"
+		],
 		"exclude-after-remap": false,
-		"include": ["src/**/*.*ts", "lib/**/*.*js"],
+		"include": [
+			"src/**/*.*ts",
+			"lib/**/*.*js"
+		],
 		"report-dir": "nyc/report",
-		"reporter": ["cobertura", "html", "text"],
+		"reporter": [
+			"cobertura",
+			"html",
+			"text"
+		],
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
 		"@fluid-tools/version-tools": "workspace:~",
 		"@fluidframework/build-tools": "workspace:~",
 		"@fluidframework/bundle-size-tools": "workspace:~",
-		"@microsoft/api-extractor": "^7.42.3",
+		"@microsoft/api-extractor": "^7.43.1",
 		"@oclif/core": "^3.26.0",
 		"@oclif/plugin-autocomplete": "^3.0.13",
 		"@oclif/plugin-commands": "^3.2.2",
@@ -152,11 +166,18 @@
 	"fluidBuild": {
 		"tasks": {
 			"compile": {
-				"dependsOn": ["...", "build:diagrams"],
+				"dependsOn": [
+					"...",
+					"build:diagrams"
+				],
 				"script": false
 			},
 			"build:diagrams": [],
-			"build:manifest": ["...", "build:copy", "build:diagrams"]
+			"build:manifest": [
+				"...",
+				"build:copy",
+				"build:diagrams"
+			]
 		}
 	},
 	"oclif": {
@@ -164,8 +185,12 @@
 		"dirname": "flub",
 		"flexibleTaxonomy": true,
 		"commands": "./lib/commands",
-		"additionalHelpFlags": ["-h"],
-		"additionalVersionFlags": ["-V"],
+		"additionalHelpFlags": [
+			"-h"
+		],
+		"additionalVersionFlags": [
+			"-V"
+		],
 		"plugins": [
 			"@oclif/plugin-autocomplete",
 			"@oclif/plugin-commands",
