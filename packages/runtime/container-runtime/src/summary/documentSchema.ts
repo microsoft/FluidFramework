@@ -556,12 +556,12 @@ export class DocumentsSchemaController {
 	/**
 	 * Called by Container runtime whenever it is about to send some op.
 	 * It gives opportunity for controller to issue its own ops - we do not want to send ops if there are no local changes in document.
+	 * Please consider note above constructor about race conditions - current design is to send op only once in a session lifetime.
 	 * @returns Optional message to send.
 	 */
 	public maybeSendSchemaMessage(): IDocumentSchemaChangeMessage | undefined {
-		const sendOp = this.sendOp;
-		this.sendOp = false;
-		if (sendOp && this.futureSchema !== undefined) {
+		if (this.sendOp && this.futureSchema !== undefined) {
+			this.sendOp = false;
 			assert(
 				this.explicitSchemaControl &&
 					this.futureSchema.runtime.explicitSchemaControl === true,
