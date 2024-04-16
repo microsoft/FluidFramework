@@ -212,15 +212,14 @@ Creates a release report for the most recent build of the client release group p
 
 ```
 USAGE
-  $ flub release report-unreleased --repo <value> --ado_pat <value> --sourceBranch <value> --output <value> [-v |
-  --quiet]
+  $ flub release report-unreleased --path_to_manifest_file <value> --output <value> [-v | --quiet] [--DEV_VERSION
+  <value>]
 
 FLAGS
-  --ado_pat=<value>       (required) ADO Personal Access Token. This flag should be provided via the ADO_PAT environment
-                          variable for security reasons.
-  --output=<value>        (required) Output manifest file path
-  --repo=<value>          (required) Repository name
-  --sourceBranch=<value>  (required) Branch name across which the dev release manifest should be generated.
+  --DEV_VERSION=<value>            Dev version generated in the pipeline. This flag should be provided via the
+                                   DEV_VERSION environment variable for security reasons.
+  --output=<value>                 (required) Output manifest file path
+  --path_to_manifest_file=<value>  (required) Path to manifest
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
