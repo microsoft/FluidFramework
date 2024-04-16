@@ -1641,7 +1641,7 @@ describe("SharedTree", () => {
 			validateTreeConsistency(provider.trees[0], provider.trees[1]);
 		});
 
-		it.only("do not break encoding for resubmitted data changes", async () => {
+		it("do not break encoding for resubmitted data changes", async () => {
 			const provider = new TestTreeProviderLite(1);
 			const tree1 = provider.trees[0];
 			const view1 = schematizeFlexTree(tree1, {
