@@ -19,7 +19,7 @@
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/index.d.ts",
+				"types": "./dist/public.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
