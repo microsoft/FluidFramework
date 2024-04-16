@@ -269,10 +269,12 @@ export class SerializedStateManager {
 				const pendingRuntimeState = await runtime.getPendingLocalState(props);
 				// This conversion is required because ArrayBufferLike doesn't survive JSON.stringify
 				const loadedGroupIdSnapshots = {};
+				let hasGroupIdSnapshots = false;
 				if (this.storageAdapter.loadedGroupIdSnapshots) {
 					for (const [groupId, snapshot] of Object.entries(
 						this.storageAdapter.loadedGroupIdSnapshots,
 					)) {
+						hasGroupIdSnapshots = true;
 						loadedGroupIdSnapshots[groupId] = convertSnapshotToSnapshotInfo(snapshot);
 					}
 				}
@@ -281,7 +283,7 @@ export class SerializedStateManager {
 					pendingRuntimeState,
 					baseSnapshot: this.snapshot.baseSnapshot,
 					snapshotBlobs: this.snapshot.snapshotBlobs,
-					loadedGroupIdSnapshots: this.storageAdapter.loadedGroupIdSnapshots
+					loadedGroupIdSnapshots: hasGroupIdSnapshots
 						? loadedGroupIdSnapshots
 						: undefined,
 					savedOps: this.processedOps,
@@ -314,7 +316,8 @@ export async function getLatestSnapshotInfo(
 		{ eventName: "GetLatestSnapshotInfo" },
 		async () => {
 			if (supportGetSnapshotApi && storageAdapter.loadedGroupIdSnapshots !== undefined) {
-				const snapshot = await storageAdapter.getSnapshot?.({
+				assert(storageAdapter.getSnapshot !== undefined, "getSnapshot should exist");
+				const snapshot = await storageAdapter.getSnapshot({
 					versionId: undefined,
 					scenarioName: "getLatestSnapshotInfo",
 					cacheSnapshot: false,

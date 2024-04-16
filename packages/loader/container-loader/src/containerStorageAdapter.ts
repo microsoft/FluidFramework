@@ -62,7 +62,7 @@ export class ContainerStorageAdapter
 
 	private _loadedGroupIdSnapshots: Record<string, ISnapshot> | undefined;
 	/**
-	 * Any snapshots that were downloaded during the initial load of the container.
+	 * Any loading group id (virtualized) snapshot download from storage will be stored here.
 	 */
 	public get loadedGroupIdSnapshots(): Record<string, ISnapshot> | undefined {
 		return this._loadedGroupIdSnapshots;
@@ -73,6 +73,7 @@ export class ContainerStorageAdapter
 	 * after connecting to a real service augments it with retry and combined summary tree enforcement.
 	 * @param detachedBlobStorage - The detached blob storage to use up until we connect to a real service
 	 * @param logger - Telemetry logger
+	 * @param loadingGroupIdSnapshotsFromPendingState - in offline mode, any loading group snapshots we've downloaded from the service that were stored in the pending state
 	 * @param addProtocolSummaryIfMissing - a callback to permit the container to inspect the summary we're about to
 	 * upload, and fix it up with a protocol tree if needed
 	 * @param forceEnableSummarizeProtocolTree - Enforce uploading a protocol summary regardless of the service's policy
@@ -84,7 +85,7 @@ export class ContainerStorageAdapter
 		 * ArrayBufferLikes or utf8 encoded strings, containing blobs from a snapshot
 		 */
 		private readonly blobContents: { [id: string]: ArrayBufferLike | string } = {},
-		private pendingLocalGroupIdSnapshots: Record<string, ISnapshotInfo> | undefined,
+		private loadingGroupIdSnapshotsFromPendingState: Record<string, ISnapshotInfo> | undefined,
 		private readonly addProtocolSummaryIfMissing: (summaryTree: ISummaryTree) => ISummaryTree,
 		forceEnableSummarizeProtocolTree: boolean | undefined,
 	) {
@@ -127,7 +128,7 @@ export class ContainerStorageAdapter
 	}
 
 	public clearPendingState() {
-		this.pendingLocalGroupIdSnapshots = undefined;
+		this.loadingGroupIdSnapshotsFromPendingState = undefined;
 	}
 
 	public get policies(): IDocumentStorageServicePolicies | undefined {
@@ -152,7 +153,7 @@ export class ContainerStorageAdapter
 		}
 		let snapshot: ISnapshot;
 		if (
-			this.pendingLocalGroupIdSnapshots !== undefined &&
+			this.loadingGroupIdSnapshotsFromPendingState !== undefined &&
 			snapshotFetchOptions?.loadingGroupIds !== undefined
 		) {
 			assert(
@@ -160,7 +161,9 @@ export class ContainerStorageAdapter
 				"Only one loading group id is supported",
 			);
 			const localSnapshot =
-				this.pendingLocalGroupIdSnapshots[snapshotFetchOptions.loadingGroupIds[0]];
+				this.loadingGroupIdSnapshotsFromPendingState[
+					snapshotFetchOptions.loadingGroupIds[0]
+				];
 			assert(localSnapshot !== undefined, "Local snapshot must be present");
 			const attributes = await getDocumentAttributes(this, localSnapshot.baseSnapshot);
 			snapshot = convertSnapshotInfoToSnapshot(localSnapshot, attributes.sequenceNumber);
