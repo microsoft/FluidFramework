@@ -506,19 +506,18 @@ Additionally, the `TreeView` object includes 3 events that operate over the whol
 
 `afterBatch` fires when a batch of changes has been processed by the Fluid Framework and the `TreeView` object is updated.
 
-`commitApplied` fires whenever a local change is applied outside of a transaction or when a local transaction is committed. This is used to get `Revertible` objects to put on the undo stack. See [Undo/Redo support](#undoredo-support) and [Transactions](#transactions).
+`commitApplied` fires whenever a local change is applied outside of a transaction or when a local transaction is committed. This is used to get `Revertible` objects to put on the undo or redo stacks. See [Undo/Redo support](#undoredo-support) and [Transactions](#transactions).
 
 ### Undo/Redo support
 
-`SharedTree` makes creating an undo and redo stack very simple. By listening for the `commitApplied` event on the `TreeView` object, you can get a `Revertible` object.
-`Revertible` objects come in three flavors:
+`SharedTree` makes creating an undo and redo stack very simple. By listening for the `commitApplied` event on the `TreeView` object, you can get a `Revertible` object from a `Commit`.
+`Commit` objects come in three flavors:
 
--   Default: a normal change made in the local client that would go on the undo stack
--   Undo: a change that is the result of reverting a Default or Redo `Revertible` object that would go on the redo stack
--   Redo: a change that is the result of reverting an Undo `Revertible` object that would go on the undo stack
+-   Default: a normal commit made in the local client that would go on the undo stack
+-   Undo: a commit that is the result of reverting a Default or Redo `Revertible` object that would go on the redo stack
+-   Redo: a commit that is the result of reverting an Undo `Revertible` object that would go on the undo stack
 
-To undo a change, call the `revert` method on the `Revertible` object. This will return the `TreeView` object to the state last observed by the local client. If changes were made by other clients that are incompatible with the state of the tree after undo,
-these changes will also be reverted. Calling `revert` on the Redo `Revertible` object will put everything back to the way it was if the change was unintentially destructive.
+To undo a change, call the `revert` method on the `Revertible` object. This will return the properties of the `TreeView` object last changed by the local client to the their previous state. If changes were made to those properties by other clients in the meantime these changes will be overwritten. For example, if the local client moves 3 items into an array, and then a remote client moves one of those items somewhere else, when the local client reverts their change, the item moved by the remote client will be returned to its original position.
 
 There is an example of a working undo/redo stack here: [Shared Tree Demo](https://github.com/microsoft/FluidExamples/tree/main/brainstorm).
 
@@ -529,16 +528,24 @@ The `Tree` class provides some static utility APIs for working with data in the 
 ### Event handling
 
 ```typescript
-Tree.on(node: SharedTreeNode, eventType: string, listener: () => void): () => void
+on<K extends keyof TreeChangeEvents>(
+		node: TreeNode,
+		eventName: K,
+		listener: TreeChangeEvents[K],
+	): () => void;
 ```
 
-Assigns the specified `listener` function to the specified `eventType` for the specified `node`. The `node` can be any node of the tree. The `eventType` can be either "treeChanged" or "nodeChanged". `nodeChanged` fires whenever the given node changes. `treeChanged` fires whenever the given node or any of the nodes in its child subtree changes.
+`Tree.on` assigns the specified `listener` function to the specified `eventType` for the specified `node`. The `node` can be any node of the tree. The `eventType` can be either "treeChanged" or "nodeChanged". `nodeChanged` fires whenever the given node changes. `treeChanged` fires whenever the given node or any of the nodes in its child subtree changes.
 
 An `event` object is automatically passed to the `listener`. It has one member:
 
 -   `event.target`: The node on which the event was triggered.
 
-The `Tree.on()` method returns a function that unsubscribes the handler from the event. This method is typically called in clean up code when the node is being removed.
+The `Tree.on()` method returns a function that unsubscribes the handler from the event. This method is typically called in clean up code when the node is being removed. For example:
+
+```typescript
+const unsubscribe = Tree.on(myTreeNode, "treeChanged", () => {...});
+```
 
 ### Type guard
 
