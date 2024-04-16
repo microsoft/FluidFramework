@@ -2,7 +2,7 @@
 "@fluidframework/runtime-definitions": major
 ---
 
-IFluidDataStoreContext no longer raises events, IFluidDataStoreChannel needs to implement new method
+runtime-definitions: IFluidDataStoreContext no longer raises events, IFluidDataStoreChannel needs to implement new method
 
 This change could be ignored, unless you have custom implementations of IFluidDataStoreChannel or listened to IFluidDataStoreContext's "attached" or "attaching" events
 
