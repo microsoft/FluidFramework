@@ -14,11 +14,16 @@ import {
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import { pkgVersion } from "../packageVersion.js";
 
 describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, apis) => {
 	class TestDataObject extends apis.dataRuntime.DataObject {
 		public get _root() {
 			return this.root;
+		}
+
+		public get _context() {
+			return this.context;
 		}
 	}
 
@@ -211,5 +216,44 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 			client2Container.clientId,
 			"client2's audience should be removed",
 		);
+	});
+
+	it("getSelf() & 'selfChanged' event", async function () {
+		assert(apis.containerRuntime !== undefined);
+		if (apis.containerRuntime.version !== pkgVersion) {
+			// Only verify latest version of runtime - this functionality did not exist prior to RC3.
+			// Given that every version (from now on) tests this functionality, there is no reason to test old versions.
+			// This test does not use second container, so there is no need for cross-version tests.
+			this.skip();
+			return;
+		}
+
+		const container = await provider.makeTestContainer();
+		const entry = await getContainerEntryPointBackCompat<TestDataObject>(container);
+		await waitForContainerConnection(container);
+		const audience = entry._context.containerRuntime.getAudience();
+
+		container.disconnect();
+		const oldId = audience.getSelf()?.clientId;
+		assert(oldId !== undefined);
+		assert(oldId === container.clientId);
+
+		let newClientId: string | undefined;
+		audience.on("selfChanged", (_old, newValue) => {
+			newClientId = newValue.clientId;
+			assert(newClientId !== undefined);
+			assert(newValue.client === audience.getMember(newClientId));
+			// This assert could fire if one "Fluid.Container.DisableJoinSignalWait" feature gate is triggered.
+			// Code should not rely on such behavior while IAudience.getSelf() is experimental
+			// It also will fire if new runtime is used with old loader (that has exactly same effect as previous case)
+			// assert(newValue.client !== undefined);
+		});
+
+		container.connect();
+		await waitForContainerConnection(container);
+
+		assert(newClientId !== undefined);
+		assert(newClientId === container.clientId);
+		assert(audience.getSelf()?.clientId === container.clientId);
 	});
 });
