@@ -1669,6 +1669,12 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     readonly string: TreeNodeSchema<"com.fluidframework.leaf.string", NodeKind.Leaf, string, string>;
 }
 
+// @public (undocumented)
+export type SchemaFactoryFieldKind = "required" | "optional" | "array";
+
+// @public (undocumented)
+export type SchemaFactoryNodeType = "object" | "array" | "map";
+
 // @internal
 export function schemaIsFieldNode(schema: FlexTreeNodeSchema): schema is FlexFieldNodeSchema;
 
