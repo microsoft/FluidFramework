@@ -1261,7 +1261,7 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tree': workspace:~
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
