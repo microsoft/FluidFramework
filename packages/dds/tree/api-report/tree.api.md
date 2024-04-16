@@ -510,10 +510,6 @@ export interface FieldProps {
 
 // @public @sealed
 export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types extends ImplicitAllowedTypes = ImplicitAllowedTypes> {
-    constructor(
-    kind: Kind,
-    allowedTypes: Types,
-    props?: FieldProps | undefined);
     readonly allowedTypes: Types;
     get allowedTypeSet(): ReadonlySet<TreeNodeSchema>;
     readonly kind: Kind;
@@ -1231,6 +1227,9 @@ export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
 // @internal
 export interface LocalNodeKey extends Opaque<Brand<SessionSpaceCompressedId, "Local Node Key">> {
 }
+
+// @public
+export const makeFieldSchema: <Kind extends FieldKind = FieldKind, Types extends ImplicitAllowedTypes = ImplicitAllowedTypes>(kind: Kind, allowedTypes: Types, props?: FieldProps) => FieldSchema<Kind, Types>;
 
 // @public
 export interface MakeNominal {

@@ -38,6 +38,7 @@ import {
 	WithType,
 	type,
 	type FieldProps,
+	makeFieldSchema,
 } from "./schemaTypes.js";
 import { TreeArrayNode, arraySchema } from "./arrayNode.js";
 import { TreeNode } from "./types.js";
@@ -557,7 +558,7 @@ export class SchemaFactory<
 		t: T,
 		props?: FieldProps,
 	): FieldSchema<FieldKind.Optional, T> {
-		return new FieldSchema(FieldKind.Optional, t, props);
+		return makeFieldSchema(FieldKind.Optional, t, props);
 	}
 
 	/**
@@ -574,14 +575,14 @@ export class SchemaFactory<
 		t: T,
 		props?: FieldProps,
 	): FieldSchema<FieldKind.Required, T> {
-		return new FieldSchema(FieldKind.Required, t, props);
+		return makeFieldSchema(FieldKind.Required, t, props);
 	}
 
 	/**
 	 * Make a field of type identifier instead of the default which is required.
 	 */
 	public get identifier(): FieldSchema<FieldKind.Identifier> {
-		return new FieldSchema(FieldKind.Identifier, this.string);
+		return makeFieldSchema(FieldKind.Identifier, this.string);
 	}
 
 	/**

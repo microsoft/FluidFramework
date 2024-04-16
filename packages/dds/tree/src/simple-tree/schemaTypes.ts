@@ -252,16 +252,53 @@ export interface FieldProps {
 }
 
 /**
+ * This function exposes the private constructor for {@link FieldSchema} for public users.
+ * @public
+ */
+export const makeFieldSchema = <
+	Kind extends FieldKind = FieldKind,
+	Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+>(
+	kind: Kind,
+	allowedTypes: Types,
+	props?: FieldProps,
+) => create(kind, allowedTypes, props);
+
+/**
+ * Package internal construction API.
+ * Use {@link makeFieldSchema} to create an instance of this type instead.
+ */
+let create: <
+	Kind extends FieldKind = FieldKind,
+	Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+>(
+	kind: Kind,
+	allowedTypes: Types,
+	props?: FieldProps,
+) => FieldSchema<Kind, Types>;
+
+/**
  * All policy for a specific field,
  * including functionality that does not have to be kept consistent across versions or deterministic.
  *
  * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
+ * Use {@link makeFieldSchema} to create an instance of this type instead.
  * @sealed @public
  */
 export class FieldSchema<
 	out Kind extends FieldKind = FieldKind,
 	out Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 > {
+	static {
+		create = <
+			Kind2 extends FieldKind = FieldKind,
+			Types2 extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+		>(
+			kind: Kind2,
+			allowedTypes: Types2,
+			props?: FieldProps,
+		) => new FieldSchema(kind, allowedTypes, props);
+	}
 	/**
 	 * This class is used with instanceof, and therefore should have nominal typing.
 	 * This field enforces that.
@@ -278,7 +315,7 @@ export class FieldSchema<
 		return this.lazyTypes.value;
 	}
 
-	public constructor(
+	private constructor(
 		/**
 		 * The {@link https://en.wikipedia.org/wiki/Kind_(type_theory) | kind } of this field.
 		 * Determines the multiplicity, viewing and editing APIs as well as the merge resolution policy.
@@ -301,7 +338,7 @@ export class FieldSchema<
  * Normalizes a {@link ImplicitFieldSchema} to a {@link FieldSchema}.
  */
 export function normalizeFieldSchema(schema: ImplicitFieldSchema): FieldSchema {
-	return schema instanceof FieldSchema ? schema : new FieldSchema(FieldKind.Required, schema);
+	return schema instanceof FieldSchema ? schema : makeFieldSchema(FieldKind.Required, schema);
 }
 /**
  * Normalizes a {@link ImplicitAllowedTypes} to a set of {@link TreeNodeSchema}s, by eagerly evaluating any
