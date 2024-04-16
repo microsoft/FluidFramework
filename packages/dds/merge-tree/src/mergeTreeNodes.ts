@@ -692,9 +692,10 @@ export abstract class BaseSegment implements ISegment {
  *
  * @remarks In general, marker ids should be accessed using the inherent method
  * {@link Marker.getId}. Marker ids should not be updated after creation.
- * @internal
+ * @alpha
  */
 export const reservedMarkerIdKey = "markerId";
+
 /**
  * @internal
  */

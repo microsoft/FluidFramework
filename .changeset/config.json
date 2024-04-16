@@ -4,8 +4,8 @@
 		"@fluid-private/changelog-generator-wrapper",
 		{
 			"repoBaseUrl": "https://github.com/microsoft/FluidFramework",
-			"issueTemplate": " ([#$issue]($repoBaseUrl/issues/$issue))",
-			"commitTemplate": " [$abbrevHash]($repoBaseUrl/commits/$hash)"
+			"issueTemplate": " ([#$issue]($repoBaseUrl/pull/$issue))",
+			"commitTemplate": " [$abbrevHash]($repoBaseUrl/commit/$hash)"
 		}
 	],
 	"commit": false,
