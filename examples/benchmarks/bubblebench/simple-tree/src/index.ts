@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { AppView } from "@fluid-example/bubblebench-common";
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import React from "react";

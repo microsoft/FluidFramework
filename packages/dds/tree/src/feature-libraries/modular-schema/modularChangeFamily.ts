@@ -184,7 +184,7 @@ export class ModularChangeFamily
 			(child1, child2) => {
 				assert(
 					child1 === undefined || child2 === undefined,
-					"Should not have two changesets to compose",
+					0x92f /* Should not have two changesets to compose */,
 				);
 
 				return child1 ?? child2 ?? fail("Should not compose two undefined node IDs");
@@ -547,7 +547,7 @@ export class ModularChangeFamily
 				localId,
 				this.invertNodeChange(
 					// TODO: This does not allow inheriting revision from parent
-					tagChange(nodeChangeset, revision ?? change.revision),
+					tagChange(nodeChangeset, change.revision),
 					isRollback,
 					genId,
 					crossFieldTable,
@@ -999,7 +999,7 @@ export class ModularChangeFamily
 		nodeMap: ChangeAtomIdMap<NodeChangeset>,
 	): NodeId | undefined {
 		const changeset = tryGetFromNestedMap(nodeMap, nodeId.revision, nodeId.localId);
-		assert(changeset !== undefined, "Unknown node ID");
+		assert(changeset !== undefined, 0x930 /* Unknown node ID */);
 
 		const prunedFields =
 			changeset.fieldChanges !== undefined
@@ -1162,7 +1162,7 @@ function* relevantRemovedRootsFromFields(
 		const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
 		const delegate = function* (node: NodeId): Iterable<DeltaDetachedNodeId> {
 			const nodeChangeset = tryGetFromNestedMap(nodeChanges, node.revision, node.localId);
-			assert(nodeChangeset !== undefined, "Unknown node ID");
+			assert(nodeChangeset !== undefined, 0x931 /* Unknown node ID */);
 			if (nodeChangeset.fieldChanges !== undefined) {
 				yield* relevantRemovedRootsFromFields(
 					nodeChangeset.fieldChanges,
@@ -1336,7 +1336,7 @@ function intoDeltaImpl(
 					childChange.localId,
 				);
 
-				assert(nodeChange !== undefined, "Unknown node ID");
+				assert(nodeChange !== undefined, 0x932 /* Unknown node ID */);
 				return deltaFromNodeChange(
 					tagChange(nodeChange, fieldRevision),
 					nodeChanges,
