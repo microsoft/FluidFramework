@@ -21,6 +21,18 @@ describe("ArrayNode", () => {
 
 	describe("created via class-based schema", () => {
 		testArrayFromSchemaType(classBasedArray);
+
+		it("doesn't stringify extra properties", () => {
+			class ExtraArray extends schemaFactory.array("ArrayWithExtra", schemaFactory.number) {
+				public extra = "foo";
+			}
+
+			const jsArray = [0, 1, 2];
+			const array = hydrate(ExtraArray, jsArray);
+			assert.equal(array.extra, "foo");
+			// "extra" should not be stringified
+			assert.equal(JSON.stringify(array), JSON.stringify(jsArray));
+		});
 	});
 
 	// Tests which should behave the same for both "structural" and "class-based" arrays can be added in this function to avoid duplication.
