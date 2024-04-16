@@ -43,7 +43,7 @@ export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
  * Interface to represent the parsed parts of IResolvedUrl.url to help
  * in getting info about different parts of the url.
  * May not be compatible or relevant for any Url Resolver
- * @internal
+ * @alpha
  */
 export interface IParsedUrl {
 	/**
@@ -72,7 +72,7 @@ export interface IParsedUrl {
  * with urls of type: protocol://<string>/.../..?<querystring>
  * @param url - This is the IResolvedUrl.url part of the resolved url.
  * @returns The IParsedUrl representing the input URL, or undefined if the format was not supported
- * @internal
+ * @alpha
  */
 export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined {
 	const parsed = new URL(url);
@@ -163,7 +163,6 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBl
 				throw new LoggingError(
 					"No handles should be there in summary in detached container!!",
 				);
-				break;
 			default: {
 				unreachableCase(summaryObject, `Unknown tree type ${(summaryObject as any).type}`);
 			}
@@ -181,7 +180,7 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBl
  * @param snapshot - ISnapshot
  */
 export function convertSnapshotToSnapshotInfo(snapshot: ISnapshot): ISnapshotInfo {
-	assert(snapshot.sequenceNumber !== undefined, "Snapshot sequence number is missing");
+	assert(snapshot.sequenceNumber !== undefined, 0x93a /* Snapshot sequence number is missing */);
 	const snapshotBlobs: ISerializableBlobContents = {};
 	for (const [blobId, arrayBufferLike] of snapshot.blobContents.entries()) {
 		snapshotBlobs[blobId] = bufferToString(arrayBufferLike, "utf8");

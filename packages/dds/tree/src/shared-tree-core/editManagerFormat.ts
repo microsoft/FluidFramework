@@ -94,15 +94,13 @@ const SummarySessionBranch = <ChangeSchema extends TSchema>(tChange: ChangeSchem
 export interface EncodedEditManager<TChangeset> {
 	readonly trunk: readonly Readonly<SequencedCommit<TChangeset>>[];
 	readonly branches: readonly [SessionId, Readonly<EncodedSummarySessionBranch<TChangeset>>][];
-	readonly version: typeof version;
+	readonly version: 1 | 2;
 }
-
-export const version = 1.0;
 
 export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object(
 		{
-			version: Type.Literal(version),
+			version: Type.Union([Type.Literal(1), Type.Literal(2)]),
 			trunk: Type.Array(SequencedCommit(tChange)),
 			branches: Type.Array(Type.Tuple([SessionIdSchema, SummarySessionBranch(tChange)])),
 		},
