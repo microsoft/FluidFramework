@@ -311,8 +311,10 @@ export interface TreeChangeEvents {
 
 	/**
 	 * Emitted by a node when something _may_ have changed anywhere in the subtree rooted at it.
-	 *
 	 * @remarks
+	 * Emitted after any `nodeChanged` events for the change and any `treeChanged` events
+	 * for the nodes between (on the parentage path) the changed node and this one (if any).
+	 *
 	 * This event is guaranteed to be emitted whenever the subtree _has_ changed.
 	 * However, it might also be emitted when the subtree has no visible changes compared to before the event firing.
 	 *
