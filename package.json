@@ -390,6 +390,9 @@
 				"fluid-framework",
 				"markdown-magic"
 			]
+		},
+		"patchedDependencies": {
+			"@microsoft/api-extractor@7.43.1": "patches/@microsoft__api-extractor@7.43.1.patch"
 		}
 	}
 }
