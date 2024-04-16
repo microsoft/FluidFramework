@@ -7,6 +7,7 @@ import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	IAudience,
+	ISelf,
 	ICriticalContainerError,
 	IDeltaManager,
 } from "@fluidframework/container-definitions";
@@ -17,6 +18,7 @@ import {
 	ILoader,
 	IRuntime,
 	LoaderHeader,
+	type IAudienceEvents,
 } from "@fluidframework/container-definitions/internal";
 import {
 	IContainerRuntime,
@@ -914,7 +916,16 @@ export class ContainerRuntime
 
 			// This is the only exception to the rule above - we have proper plumbing to load ID compressor on schema change
 			// event. It is loaded async (relative to op processing), so this conversion is only safe for off -> delayed conversion!
-			if (idCompressorMode === undefined && desiredIdCompressorMode === "delayed") {
+			// Clients do not expect ID compressor ops unless ID compressor is On for them, and that could be achieved only through
+			// explicit schema change, i.e. only if explicitSchemaControl is on.
+			// Note: it would be better if we throw on combination of options (explicitSchemaControl = off, desiredIdCompressorMode === "delayed")
+			// that is not supported. But our service tests are oblivious to these problems and throwing here will cause a ton of failures
+			// We ignored incompatible ID compressor changes from the start (they were sticky), so that's not a new problem being introduced...
+			if (
+				idCompressorMode === undefined &&
+				desiredIdCompressorMode === "delayed" &&
+				explicitSchemaControl
+			) {
 				idCompressorMode = desiredIdCompressorMode;
 			}
 		} else {
@@ -1734,8 +1745,32 @@ export class ContainerRuntime
 			this.remoteMessageProcessor.clearPartialMessagesFor(clientId);
 		});
 
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this._audience = audience!;
+		this._audience = audience;
+		if (audience.getSelf === undefined) {
+			// back-compat, added in 2.0 RC3.
+			// Purpose: deal with cases when we run against old loader that does not have newly added capabilities
+			audience.getSelf = () => {
+				const clientId = this._getClientId();
+				return clientId === undefined
+					? undefined
+					: ({
+							clientId,
+							client: audience.getMember(clientId),
+					  } satisfies ISelf);
+			};
+
+			let oldClientId = this.clientId;
+			this.on("connected", () => {
+				const clientId = this.clientId;
+				assert(clientId !== undefined, "can't be undefined");
+				(audience as unknown as TypedEventEmitter<IAudienceEvents>).emit(
+					"selfChanged",
+					{ clientId: oldClientId },
+					{ clientId, client: audience.getMember(clientId) },
+				);
+				oldClientId = clientId;
+			});
+		}
 
 		const closeSummarizerDelayOverride = this.mc.config.getNumber(
 			"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs",
@@ -2425,6 +2460,11 @@ export class ContainerRuntime
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string) {
+		// Validate we have consistent state
+		const currentClientId = this._audience.getSelf()?.clientId;
+		assert(clientId === currentClientId, "same clientId");
+		assert(this.clientId === currentClientId, "same clientId");
+
 		if (connected && this.idCompressorMode === "delayed") {
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.loadIdCompressor();
@@ -2807,9 +2847,9 @@ export class ContainerRuntime
 		let checkpoint: IBatchCheckpoint | undefined;
 		let result: T;
 		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
-			// Note: we are not touching this.pendingAttachBatch here, for two reasons:
-			// 1. It would not help, as we flush attach ops as they become available.
-			// 2. There is no way to undo process of data store creation.
+			// Note: we are not touching any batches other than mainBatch here, for two reasons:
+			// 1. It would not help, as other batches are flushed independently from main batch.
+			// 2. There is no way to undo process of data store creation, blob creation, ID compressor ops, or other things tracked by other batches.
 			checkpoint = this.outbox.checkpoint().mainBatch;
 		}
 		try {
@@ -3924,33 +3964,7 @@ export class ContainerRuntime
 					});
 				}
 
-				// If this is attach message for new data store, and we are in a batch, send this op out of order
-				// Is it safe:
-				//    Yes, this should be safe reordering. Newly created data stores are not visible through API surface.
-				//    They become visible only when aliased, or handle to some sub-element of newly created datastore
-				//    is stored in some DDS, i.e. only after some other op.
-				// Why:
-				//    Attach ops are large, and expensive to process. Plus there are scenarios where a lot of new data
-				//    stores are created, causing issues like relay service throttling (too many ops) and catastrophic
-				//    failure (batch is too large). Pushing them earlier and outside of main batch should alleviate
-				//    these issues.
-				// Cons:
-				//    1. With large batches, relay service may throttle clients. Clients may disconnect while throttled.
-				//    This change creates new possibility of a lot of newly created data stores never being referenced
-				//    because client died before it had a change to submit the rest of the ops. This will create more
-				//    garbage that needs to be collected leveraging GC (Garbage Collection) feature.
-				//    2. Sending ops out of order means they are excluded from rollback functionality. This is not an issue
-				//    today as rollback can't undo creation of data store. To some extent not sending them is a bigger
-				//    issue than sending.
-				// Please note that this does not change file format, so it can be disabled in the future if this
-				// optimization no longer makes sense (for example, batch compression may make it less appealing).
-				if (
-					this.currentlyBatching() &&
-					type === ContainerMessageType.Attach &&
-					this.disableAttachReorder !== true
-				) {
-					this.outbox.submitAttach(message);
-				} else if (type === ContainerMessageType.BlobAttach) {
+				if (type === ContainerMessageType.BlobAttach) {
 					// BlobAttach ops must have their metadata visible and cannot be grouped (see opGroupingManager.ts)
 					this.outbox.submitBlobAttach(message);
 				} else {
