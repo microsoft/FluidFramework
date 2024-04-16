@@ -80,8 +80,9 @@ export class KafkaRunner implements IRunner {
 			};
 
 			this.runnerMetric.setProperties(this.runnerMetricProperties);
-
-			error.errorLabel = errorData?.errorLabel;
+			if (typeof error === "object" && error !== null) {
+				error.errorLabel = errorData?.errorLabel;
+			}
 
 			if (errorData && !errorData.restart) {
 				const errorMsg =
