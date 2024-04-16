@@ -1,49 +1,5 @@
 # @fluidframework/map
 
-## 2.0.0-rc.3.0.0
-
-### Major Changes
-
--   fluid-framework: DDS classes are no longer publicly exported ([#20030](https://github.com/microsoft/FluidFramework/issues/20030)) [2e699b8577](https://github.com/microsoft/FluidFramework/commits/2e699b85774d3aec34d5d10bc3f6d72488c9ca3e)
-
-    SharedDirectory now only exports its factory and the interface type.
-    The actual concrete classes which leak implementation details are no longer exported.
-    Users of the `SharedDirectory` type should use `ISharedDirectory`.
-
-    Most of other internal crufts are also hided within the API surface, such as the encoded format,
-    ILocalValue, ICreateInfo, local op metadata types, etc.
-
--   Packages now use package.json "exports" and require modern module resolution ([#20553](https://github.com/microsoft/FluidFramework/issues/20553)) [35fd3e4b1c](https://github.com/microsoft/FluidFramework/commits/35fd3e4b1cb9bbe42ffdfdc11752b21088abe43d)
-
-    Fluid Framework packages have been updated to use the [package.json "exports"
-    field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
-    TypeScript types and implementation code.
-
-    This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-
-    -   `"moduleResolution": "Node16"` with `"module": "Node16"`
-    -   `"moduleResolution": "Bundler"` with `"module": "ESNext"`
-
-    We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
-    for use with modern versions of Node.js _and_ Bundlers.
-    [See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
-    regarding the module and moduleResolution options.
-
-    **Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
-    to distinguish stable APIs from those that are in development.**
-
-### Minor Changes
-
--   fluid-framework: Replace SharedObjectClass with new ISharedObjectKind type. ([#20028](https://github.com/microsoft/FluidFramework/issues/20028)) [287066dc10](https://github.com/microsoft/FluidFramework/commits/287066dc107aa600bedef19f632de8b7bba5790e)
-
-    The static objects used as SharedObjectClass now explicitly implement the new ISharedObjectKind type.
-    SharedObjectClass has been removed as ISharedObjectKind now fills that role.
-    LoadableObjectCtor has been inlined as it only had one use: an external user of it can replace it with `(new (...args: any[]) => T)`.
-
--   fluid-framework: Make some interface members readonly ([#20422](https://github.com/microsoft/FluidFramework/issues/20422)) [869e041f8f](https://github.com/microsoft/FluidFramework/commits/869e041f8ff8a27dc4a332a759a79241bc8e0d99)
-
-    Remove unneeded mutability from some interface members.
-
 ## 2.0.0-rc.2.0.0
 
 ### Minor Changes
