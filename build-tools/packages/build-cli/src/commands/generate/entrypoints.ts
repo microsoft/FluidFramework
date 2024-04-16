@@ -145,7 +145,9 @@ export default class GenerateEntrypointsCommand extends BaseCommand<
 			);
 		}
 
-		promises.push(generateEntrypoints(mainEntrypoint, mapApiTagLevelToOutputPath, this.logger));
+		promises.push(
+			generateEntrypoints(mainEntrypoint, mapApiTagLevelToOutputPath, this.logger),
+		);
 
 		if (node10TypeCompat) {
 			promises.push(generateNode10TypeEntrypoints(mapExportPathToData, this.logger));
