@@ -12,10 +12,10 @@ import {
 	getFirstEntryFromRangeMap,
 	setInRangeMap,
 	mergeRangesWithinMap,
-	getAllEntriesFromMap,
+	getAllValidEntriesFromMap,
 } from "../../../util/index.js";
 
-function newRangeMap(): RangeMap<string> {
+function newRangeMap(): RangeMap<string | undefined> {
 	return [];
 }
 
@@ -153,7 +153,7 @@ describe("RangeMap", () => {
 			setInRangeMap(map, 1, 3, "a");
 			setInRangeMap(map, 6, 2, "b");
 
-			const results = getAllEntriesFromMap(map, 0, 10);
+			const results = getAllValidEntriesFromMap(map, 0, 10);
 
 			assert.deepEqual(results, [
 				{ start: 1, length: 3, value: "a" },
@@ -167,12 +167,23 @@ describe("RangeMap", () => {
 			setInRangeMap(map, 1, 3, "a");
 			setInRangeMap(map, 6, 2, "b");
 
-			const results = getAllEntriesFromMap(map, 2, 5);
+			const results = getAllValidEntriesFromMap(map, 2, 5);
 
 			assert.deepEqual(results, [
 				{ start: 2, length: 2, value: "a" },
 				{ start: 6, length: 1, value: "b" },
 			]);
+		});
+
+		it("skip entries with undefined value", () => {
+			const map = newRangeMap();
+
+			setInRangeMap(map, 1, 3, "a");
+			setInRangeMap(map, 6, 2, undefined);
+
+			const results = getAllValidEntriesFromMap(map, 2, 8);
+
+			assert.deepEqual(results, [{ start: 2, length: 2, value: "a" }]);
 		});
 	});
 

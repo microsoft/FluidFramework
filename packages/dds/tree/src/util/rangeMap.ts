@@ -231,13 +231,14 @@ export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: n
 }
 
 /**
- * Retrieve all range entries from the map that intersect with the specified range.
+ * Retrieve all range entries (except the entries with undefined values) from the map
+ * that intersect with the specified range.
  */
-export function getAllEntriesFromMap<T>(
+export function getAllValidEntriesFromMap<T>(
 	map: RangeMap<T>,
 	start: number,
 	length: number,
-): { value: T | undefined; start: number; length: number }[] {
+): { value: T; start: number; length: number }[] {
 	const result = [];
 	let currentStart = start;
 
@@ -255,11 +256,14 @@ export function getAllEntriesFromMap<T>(
 				nextResult.length - (nextStart - nextResult.start),
 				length - (nextStart - start),
 			);
-			result.push({
-				value: nextResult.value,
-				start: nextStart,
-				length: nextLength,
-			});
+			if (nextResult.value !== undefined) {
+				result.push({
+					value: nextResult.value,
+					start: nextStart,
+					length: nextLength,
+				});
+			}
+
 			currentStart = nextStart + nextLength;
 		} else {
 			break;

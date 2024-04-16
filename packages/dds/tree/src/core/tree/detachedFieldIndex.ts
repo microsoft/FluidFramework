@@ -22,7 +22,7 @@ import {
 	type RangeMap,
 	mergeRangesWithinMap,
 	getFirstEntryFromRangeMap,
-	getAllEntriesFromMap,
+	getAllValidEntriesFromMap,
 } from "../../util/index.js";
 import { RevisionTagCodec } from "../rebase/index.js";
 import { FieldKey } from "../schema-stored/index.js";
@@ -221,35 +221,34 @@ export class DetachedFieldIndex {
 	 * 1. If a range entry overlaps with the query range, store the overlapping portion as a new range in the result.
 	 * 2. If there is an "empty" space between two consecutive range entries, store the range between the end
 	 * of the first entry and the start of the second entry as a new range with an undefined value.
+	 *
+	 * The function only returns the length and value (root) of the range entry. Since consecutive ranges without gaps
+	 * are always returned, there's no need to include the start points of the ranges.
 	 */
 	public getAllDetachedNodeRanges(
 		nodeId: Delta.DetachedNodeId,
 		count: number,
-	): { root: ForestRootId | undefined; start: number; length: number }[] {
+	): { length: number; root?: ForestRootId }[] {
 		const rangeMap = this.detachedNodeRangeMap.get(nodeId.major);
 		if (!rangeMap) {
-			return [];
+			return [{ length: count }];
 		}
 
 		const results = [];
 		let currentPos = nodeId.minor;
-		const validRanges = getAllEntriesFromMap(rangeMap, nodeId.minor, count);
+		const validRanges = getAllValidEntriesFromMap(rangeMap, nodeId.minor, count);
 		for (const range of validRanges) {
 			if (currentPos < range.start) {
 				results.push({
-					root: undefined,
-					start: currentPos,
 					length: range.start - currentPos,
 				});
 			}
-			results.push({ root: range.value, start: range.start, length: range.length });
+			results.push({ length: range.length, root: range.value });
 			currentPos = range.start + range.length;
 		}
 
 		if (currentPos < nodeId.minor + count) {
 			results.push({
-				root: undefined,
-				start: currentPos,
 				length: nodeId.minor + count - currentPos,
 			});
 		}
