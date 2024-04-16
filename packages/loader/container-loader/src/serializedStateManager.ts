@@ -170,6 +170,20 @@ export class SerializedStateManager {
 			this.storageAdapter,
 			supportGetSnapshotApi,
 		);
+
+		// We are making two network calls because it requires work for storage to add a special base groupId.
+		if (supportGetSnapshotApi && this.storageAdapter.loadedGroupIdSnapshots !== undefined) {
+			assert(this.storageAdapter.getSnapshot !== undefined, "getSnapshot should exist");
+			const snapshot = await this.storageAdapter.getSnapshot({
+				versionId: undefined,
+				scenarioName: "getLatestSnapshotInfo",
+				cacheSnapshot: false,
+				loadingGroupIds: Object.keys(this.storageAdapter.loadedGroupIdSnapshots),
+				fetchSource: FetchSource.noCache,
+			});
+			assert(snapshot !== undefined, "Snapshot should exist");
+			return convertSnapshotToSnapshotInfo(snapshot);
+		}
 		this.updateSnapshotAndProcessedOpsMaybe();
 	}
 
@@ -315,18 +329,6 @@ export async function getLatestSnapshotInfo(
 		mc.logger,
 		{ eventName: "GetLatestSnapshotInfo" },
 		async () => {
-			if (supportGetSnapshotApi && storageAdapter.loadedGroupIdSnapshots !== undefined) {
-				assert(storageAdapter.getSnapshot !== undefined, "getSnapshot should exist");
-				const snapshot = await storageAdapter.getSnapshot({
-					versionId: undefined,
-					scenarioName: "getLatestSnapshotInfo",
-					cacheSnapshot: false,
-					loadingGroupIds: Object.keys(storageAdapter.loadedGroupIdSnapshots).concat(""),
-					fetchSource: FetchSource.noCache,
-				});
-				assert(snapshot !== undefined, "Snapshot should exist");
-				return convertSnapshotToSnapshotInfo(snapshot);
-			}
 			const { baseSnapshot } = await getSnapshotTree(
 				mc,
 				storageAdapter,
