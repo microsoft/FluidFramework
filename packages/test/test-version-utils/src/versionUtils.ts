@@ -444,8 +444,8 @@ export function getRequestedVersion(
 ): string {
 	const calculatedRange = calculateRequestedRange(baseVersion, requested, adjustPublicMajor);
 	try {
-		// Returns the exact version that was requested (i.e. 2.0.0-rc.2.0.2). 
-		// Will throw if the requested version range is not valid. 
+		// Returns the exact version that was requested (i.e. 2.0.0-rc.2.0.2).
+		// Will throw if the requested version range is not valid.
 		return resolveVersion(calculatedRange, false);
 	} catch (err: any) {
 		// If we tried fetching N-1 and it failed, try N-2. It is possible that we are trying to bump the current branch
