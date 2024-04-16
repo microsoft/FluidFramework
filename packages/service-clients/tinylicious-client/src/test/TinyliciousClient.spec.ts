@@ -20,8 +20,7 @@ import { ContainerErrorTypes } from "@fluidframework/container-definitions/inter
 import { ContainerMessageType } from "@fluidframework/container-runtime/internal";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map";
-import { SharedDirectory } from "@fluidframework/map/internal";
+import { SharedMap, SharedDirectory } from "@fluidframework/map/internal";
 import { type ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { InsecureTinyliciousTokenProvider } from "@fluidframework/tinylicious-driver/internal";

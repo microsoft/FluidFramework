@@ -17,6 +17,7 @@ export * from "./ContainerSummaryView.js";
 export * from "./LandingView.js";
 export * from "./Menu.js";
 export * from "./NoDevtoolsErrorBar.js";
+export * from "./TelemetryConsentModal.js";
 export * from "./TelemetryView.js";
 export * from "./SettingsView.js";
 export * from "./OpLatencyView.js";

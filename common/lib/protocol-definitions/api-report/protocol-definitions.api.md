@@ -94,7 +94,7 @@ export type ICommittedProposal = {
     commitSequenceNumber: number;
 } & IApprovedProposal;
 
-// @internal
+// @alpha
 export interface IConnect {
     client: IClient;
     driverVersion?: string;
