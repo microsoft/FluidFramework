@@ -15,11 +15,11 @@ const structuralArray = schemaFactory.array(schemaFactory.number);
 const classBasedArray = schemaFactory.array("Array", schemaFactory.number);
 
 describe("ArrayNode", () => {
-	describe("created via structural schema", () => {
+	describe("created in pojo-emulation mode", () => {
 		testArrayFromSchemaType(structuralArray);
 	});
 
-	describe("created via class-based schema", () => {
+	describe("created in customizable mode", () => {
 		testArrayFromSchemaType(classBasedArray);
 
 		it("doesn't stringify extra properties", () => {
