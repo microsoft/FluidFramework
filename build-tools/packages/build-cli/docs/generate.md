@@ -214,15 +214,17 @@ _See code: [src/commands/generate/changeset.ts](https://github.com/microsoft/Flu
 
 ## `flub generate entrypoints`
 
-Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.)
+Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.) as found in package.json "exports"
 
 ```
 USAGE
-  $ flub generate entrypoints [-v | --quiet] [--mainEntrypoint <value>] [--outDir <value>] [--outFileAlpha <value>]
-    [--outFileBeta <value>] [--outFilePublic <value>] [--outFilePrefix <value>] [--outFileSuffix <value>]
+  $ flub generate entrypoints [-v | --quiet] [--mainEntrypoint <value>] [--outDir <value>] [--outFilePrefix <value>]
+    [--outFileAlpha <value>] [--outFileBeta <value>] [--outFilePublic <value>] [--outFileSuffix <value>]
+    [--node10TypeCompat]
 
 FLAGS
   --mainEntrypoint=<value>  [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
+  --node10TypeCompat        Optional generation of Node10 resolution compatible type entrypoints matching others.
   --outDir=<value>          [default: ./lib] Directory to emit entrypoint declaration files.
   --outFileAlpha=<value>    [default: alpha] Base file name for alpha entrypoint declaration files.
   --outFileBeta=<value>     [default: beta] Base file name for beta entrypoint declaration files.
@@ -238,7 +240,8 @@ LOGGING FLAGS
       --quiet    Disable all logging.
 
 DESCRIPTION
-  Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.)
+  Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.) as found in package.json
+  "exports"
 ```
 
 _See code: [src/commands/generate/entrypoints.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/entrypoints.ts)_
