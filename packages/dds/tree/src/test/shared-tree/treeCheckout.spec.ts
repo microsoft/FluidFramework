@@ -31,7 +31,7 @@ import {
 	cursorForJsonableTreeField,
 	intoStoredSchema,
 } from "../../feature-libraries/index.js";
-import { ITreeCheckout, TreeContent } from "../../shared-tree/index.js";
+import { ITreeCheckout, RevertibleFactory, TreeContent } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
 	checkoutWithContent,
@@ -794,7 +794,7 @@ describe("sharedTreeView", () => {
 	});
 
 	describe("revertibles", () => {
-		itView("triggers a revertible event for changes made to the local branch", (view) => {
+		itView("can be generated for changes made to the local branch", (view) => {
 			const revertiblesCreated: Revertible[] = [];
 			const unsubscribe = view.events.on("commitApplied", (_, getRevertible) => {
 				assert(getRevertible !== undefined, "commit should be revertible");
@@ -812,7 +812,7 @@ describe("sharedTreeView", () => {
 			assert.equal(revertiblesCreated.length, 2);
 
 			// Each revert also leads to the creation of a revertible event
-			revertiblesCreated[1].revert();
+			revertiblesCreated[1].revert(false);
 
 			assert.equal(revertiblesCreated.length, 3);
 
@@ -820,20 +820,23 @@ describe("sharedTreeView", () => {
 		});
 
 		itView(
-			"only triggers a revertibleDisposed event for when a revertible is released",
+			"only invokes the onRevertibleDisposed callback when revertible is released",
 			(view) => {
 				const revertiblesCreated: Revertible[] = [];
-				const unsubscribe1 = view.events.on("commitApplied", (_, getRevertible) => {
+
+				const unsubscribe = view.events.on("commitApplied", (_, getRevertible) => {
 					assert(getRevertible !== undefined, "commit should be revertible");
-					const revertible = getRevertible();
+					const revertible = getRevertible(onRevertibleDisposed);
 					assert.equal(revertible.status, RevertibleStatus.Valid);
 					revertiblesCreated.push(revertible);
 				});
+
 				const revertiblesDisposed: Revertible[] = [];
-				const unsubscribe2 = view.events.on("revertibleDisposed", (revertible) => {
-					assert.equal(revertible.status, RevertibleStatus.Disposed);
-					revertiblesDisposed.push(revertible);
-				});
+
+				function onRevertibleDisposed(disposed: Revertible): void {
+					assert.equal(disposed.status, RevertibleStatus.Disposed);
+					revertiblesDisposed.push(disposed);
+				}
 
 				insertFirstNode(view, "A");
 				insertFirstNode(view, "B");
@@ -852,15 +855,14 @@ describe("sharedTreeView", () => {
 				revertiblesCreated[1].revert();
 				assert.equal(revertiblesDisposed.length, 2);
 
-				unsubscribe1();
-				unsubscribe2();
+				unsubscribe();
 			},
 		);
 
 		itView(
 			"revertibles cannot be acquired outside of the commitApplied event callback",
 			(view) => {
-				let acquireRevertible;
+				let acquireRevertible: RevertibleFactory | undefined;
 				const unsubscribe = view.events.on("commitApplied", (_, getRevertible) => {
 					assert(getRevertible !== undefined, "commit should be revertible");
 					acquireRevertible = getRevertible;
@@ -868,7 +870,7 @@ describe("sharedTreeView", () => {
 
 				insertFirstNode(view, "A");
 				assert(acquireRevertible !== undefined);
-				assert.throws(acquireRevertible);
+				assert.throws(() => acquireRevertible?.());
 				unsubscribe();
 			},
 		);
@@ -883,7 +885,7 @@ describe("sharedTreeView", () => {
 			});
 			const unsubscribe2 = view.events.on("commitApplied", (_, getRevertible) => {
 				assert(getRevertible !== undefined, "commit should be revertible");
-				assert.throws(getRevertible);
+				assert.throws(() => getRevertible());
 			});
 
 			insertFirstNode(view, "A");
@@ -938,18 +940,18 @@ describe("sharedTreeView", () => {
 		itView("disposing of a view also disposes of its revertibles", (view) => {
 			const fork = view.fork();
 			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe1 = fork.events.on("commitApplied", (_, getRevertible) => {
+			const unsubscribe = fork.events.on("commitApplied", (_, getRevertible) => {
 				assert(getRevertible !== undefined, "commit should be revertible");
-				const r = getRevertible();
+				const r = getRevertible(onRevertibleDisposed);
 				assert.equal(r.status, RevertibleStatus.Valid);
 				revertiblesCreated.push(r);
 			});
 
 			const revertiblesDisposed: Revertible[] = [];
-			const unsubscribe2 = fork.events.on("revertibleDisposed", (revertible) => {
-				assert.equal(revertible.status, RevertibleStatus.Disposed);
-				revertiblesDisposed.push(revertible);
-			});
+			function onRevertibleDisposed(disposed: Revertible): void {
+				assert.equal(disposed.status, RevertibleStatus.Disposed);
+				revertiblesDisposed.push(disposed);
+			}
 
 			insertFirstNode(fork, "A");
 
@@ -962,8 +964,7 @@ describe("sharedTreeView", () => {
 			assert.equal(revertiblesDisposed.length, 1);
 			assert.equal(revertiblesCreated[0], revertiblesDisposed[0]);
 
-			unsubscribe1();
-			unsubscribe2();
+			unsubscribe();
 		});
 
 		itView("can be reverted after rebasing", (view) => {

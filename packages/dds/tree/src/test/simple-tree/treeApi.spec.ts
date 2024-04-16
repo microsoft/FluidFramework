@@ -4,9 +4,9 @@
  */
 
 import { strict as assert } from "node:assert";
-import type { TreeChangeEvents } from "../../../dist/index.js";
+import { type TreeChangeEvents } from "../../../dist/index.js";
 import { rootFieldKey } from "../../core/index.js";
-import { TreeStatus } from "../../feature-libraries/index.js";
+import { TreeStatus, createMockNodeKeyManager } from "../../feature-libraries/index.js";
 import {
 	NodeFromSchema,
 	SchemaFactory,
@@ -121,6 +121,33 @@ describe("treeApi", () => {
 		assert.equal(Tree.status(child), TreeStatus.Removed);
 		assert.equal(Tree.status(newChild), TreeStatus.InDocument);
 		// TODO: test Deleted status.
+	});
+
+	describe("shortID", () => {
+		it("returns local id when an identifier fieldkind exists.", () => {
+			const schemaWithIdentifier = schema.object("parent", {
+				identifier: schema.identifier,
+			});
+			const nodeKeyManager = createMockNodeKeyManager();
+			const id = nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
+			const config = new TreeConfiguration(schemaWithIdentifier, () => ({
+				identifier: id,
+			}));
+
+			const root = getView(config, nodeKeyManager).root;
+
+			assert.equal(Tree.shortId(root), nodeKeyManager.localizeNodeKey(id));
+		});
+		it("returns undefined when an identifier fieldkind does not exist.", () => {
+			const schemaWithIdentifier = schema.object("parent", {
+				identifier: schema.string,
+			});
+			const config = new TreeConfiguration(schemaWithIdentifier, () => ({
+				identifier: "testID",
+			}));
+			const root = getView(config).root;
+			assert.equal(Tree.shortId(root), undefined);
+		});
 	});
 
 	describe("on", () => {

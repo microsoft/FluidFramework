@@ -85,6 +85,12 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 			// this case unreachable as long as users follow the 'array recipe'.
 			fail("'sequence' field is unexpected.");
 		}
+		case FieldKinds.identifier: {
+			const identifier = field.boxedAt(0);
+			assert(identifier !== undefined, 0x91a /* identifier must exist */);
+			return getOrCreateNodeProxy(identifier);
+		}
+
 		default:
 			fail("invalid field kind");
 	}
@@ -98,7 +104,7 @@ export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeVal
 
 	const schema = flexNode.schema;
 	const classSchema = tryGetSimpleNodeSchema(schema);
-	assert(classSchema !== undefined, "node without schema");
+	assert(classSchema !== undefined, 0x91b /* node without schema */);
 	if (typeof classSchema === "function") {
 		const simpleSchema = classSchema as unknown as new (dummy: FlexTreeNode) => TreeNode;
 		return new simpleSchema(flexNode);
