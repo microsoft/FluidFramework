@@ -51,7 +51,7 @@ export function convertToSummaryTree(snapshot: ITree, fullTree?: boolean): ISumm
 // @alpha
 export function convertToSummaryTreeWithStats(snapshot: ITree, fullTree?: boolean): ISummaryTreeWithStats;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export const create404Response: (request: IRequest) => IResponse;
 
 // @internal (undocumented)

@@ -137,6 +137,16 @@ export function create(
 					if (req.body?.isEphemeralContainer !== undefined) {
 						additionalProperties.isEphemeralContainer = req.body.isEphemeralContainer;
 					}
+					const customHeadersToLog = (config.get("customHeadersToLog") as string[]) ?? [];
+					if (customHeadersToLog) {
+						customHeadersToLog.forEach((header) => {
+							const lowerCaseHeader = header.toLowerCase();
+							if (req.headers[lowerCaseHeader]) {
+								additionalProperties[lowerCaseHeader] =
+									req.headers[lowerCaseHeader];
+							}
+						});
+					}
 					return additionalProperties;
 				},
 				enableLatencyMetric,

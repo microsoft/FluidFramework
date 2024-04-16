@@ -11,7 +11,6 @@ import { MergeTree } from "./mergeTree.js";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	CollaborationWindow,
-	IMergeBlock,
 	IMergeNode,
 	IMoveInfo,
 	IRemovalInfo,
@@ -20,6 +19,7 @@ import {
 	seqLTE,
 	toMoveInfo,
 	toRemovalInfo,
+	type MergeBlock,
 } from "./mergeTreeNodes.js";
 // eslint-disable-next-line import/no-deprecated
 import { SortedSet } from "./sortedSet.js";
@@ -215,7 +215,7 @@ export interface PartialSequenceLengthsOptions {
 	verifier?: (partialLengths: PartialSequenceLengths) => void;
 	verifyExpected?: (
 		mergeTree: MergeTree,
-		node: IMergeBlock,
+		node: MergeBlock,
 		refSeq: number,
 		clientId: number,
 		localSeq?: number,
@@ -286,7 +286,7 @@ export class PartialSequenceLengths {
 	 * Local partial information doesn't support `update`.
 	 */
 	public static combine(
-		block: IMergeBlock,
+		block: MergeBlock,
 		// eslint-disable-next-line import/no-deprecated
 		collabWindow: CollaborationWindow,
 		recur = false,
@@ -372,10 +372,10 @@ export class PartialSequenceLengths {
 
 	/**
 	 * @returns a PartialSequenceLengths structure which tracks only lengths of leaf children of the provided
-	 * IMergeBlock.
+	 * MergeBlock.
 	 */
 	private static fromLeaves(
-		block: IMergeBlock,
+		block: MergeBlock,
 		// eslint-disable-next-line import/no-deprecated
 		collabWindow: CollaborationWindow,
 		computeLocalPartials: boolean,
@@ -903,7 +903,7 @@ export class PartialSequenceLengths {
 	// on all descendant PartialSequenceLengths)
 	// TODO: assert client id matches
 	public update(
-		node: IMergeBlock,
+		node: MergeBlock,
 		seq: number,
 		clientId: number,
 		// eslint-disable-next-line import/no-deprecated
@@ -1269,7 +1269,7 @@ function verifyPartialLengthsInner(
 
 export function verifyExpectedPartialLengths(
 	mergeTree: MergeTree,
-	node: IMergeBlock,
+	node: MergeBlock,
 	refSeq: number,
 	clientId: number,
 	localSeq?: number,
