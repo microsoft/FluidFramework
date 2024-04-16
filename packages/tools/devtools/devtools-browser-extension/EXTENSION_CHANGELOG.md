@@ -4,6 +4,7 @@
 
 -   Updates the Shared Tree Visualizer.
 -   Added the telemetry opt in feature.
+-   Added button to toggle unsampled telemetry
 
 # 0.0.3
 
