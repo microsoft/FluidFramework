@@ -242,7 +242,7 @@ export function mapSchema<
 			const proxyTarget = customizable ? this : undefined;
 
 			const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
-			assert(flexSchema instanceof FlexMapNodeSchema, "invalid flex schema");
+			assert(flexSchema instanceof FlexMapNodeSchema, 0x917 /* invalid flex schema */);
 			const flexNode: FlexTreeNode = isFlexTreeNode(input)
 				? input
 				: new RawMapNode(
