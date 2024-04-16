@@ -258,7 +258,7 @@ class Proposal = sf.object('Proposal', {
 
 ### Creation
 
-To create a `TreeView` object, create a container with an initial object of that type and then apply the schema to it. The code in this section continues the sticky note example. Start by creating a container schema with an initial object of type `SharedTree` and use it to create a container.
+To create a `TreeView` object, create a container with an initial object of type `SharedTree` and then apply the schema to it. The code in this section continues the sticky note example. Start by creating a container schema with an initial object of type `SharedTree` and use it to create a container.
 
 ```typescript
 const containerSchema: ContainerSchema = {
@@ -567,7 +567,7 @@ For another example, see the `Tree.parent()` method in [Node information](#node-
 
 ### Transactions
 
-If you want the `SharedTree` to treat a set of changes atomicly, wrap these changes in a transaction. Using a transaction guarantees that all of the changes will be applied together or none of them will. Transactions will include the concept of a constraint in the future which will allow the changes in a transaction to fail if the constraint is not met.
+If you want the `SharedTree` to treat a set of changes atomically, wrap these changes in a transaction. Using a transaction guarantees that all of the changes will be applied together or none of them will. Transactions will include the concept of a constraint in the future which will allow the changes in a transaction to fail if the constraint is not met.
 
 Further, changes within a transaction are exposed through a single `Revertible` object so that they can be reverted as a single change by the undo/redo code. See [Undo/Redo support](#undoredo-support) for more information about `Revertible` objects.
 
