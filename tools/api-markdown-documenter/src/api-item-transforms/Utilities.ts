@@ -131,6 +131,7 @@ function resolveSymbolicLink(
 
 	// Return undefined if the resolved API item should be excluded based on release tags
 	if (!shouldItemBeIncluded(resolvedApiItem, config)) {
+		logger.verbose("Excluding link to item based on release tags");
 		return undefined;
 	}
 
