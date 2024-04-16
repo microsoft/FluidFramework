@@ -10,4 +10,4 @@ This feature could be enabled only by applications that have consumed 2.0.0-inte
 The feature has been proven in production in Loop app, as it was enabled through feature gates at 100% in PROD.
 All internal applications (Loop, Whiteboard) that send telemetry to our common Kusto tenant are already at or above minimal required version of runtime.
 
-If your application does not satisfy these deployment requirements, please disable op grouping via passing IContainerRuntimeOptions.enableGroupedBatching = false when calling ContainerRunntime.load().
+If your application does not satisfy these deployment requirements, please disable op grouping via passing IContainerRuntimeOptions.enableGroupedBatching = false when calling ContainerRuntime.load().
