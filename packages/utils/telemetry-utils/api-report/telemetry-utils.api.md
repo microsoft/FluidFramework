@@ -266,7 +266,7 @@ export class LoggingError extends Error implements ILoggingError, Omit<IFluidErr
 // @internal
 export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(logger: L, ...configs: (IConfigProviderBase | undefined)[]): MonitoringContext<L>;
 
-// @internal
+// @alpha
 export class MockLogger implements ITelemetryBaseLogger {
     constructor(minLogLevel?: LogLevel | undefined);
     assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
