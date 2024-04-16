@@ -10,7 +10,6 @@ overrides:
   '@oclif/core': ~2.4.0
   sharp: ^0.33.2
   '@fluentui/react-positioning>@floating-ui/dom': ~1.5.4
-  '@microsoft/api-extractor>typescript': ~5.1.6
 
 patchedDependencies:
   '@microsoft/api-extractor@7.43.1':
@@ -19671,7 +19670,7 @@ packages:
       resolve: 1.22.8
       semver: 7.5.4
       source-map: 0.6.1
-      typescript: 5.1.6
+      typescript: 5.4.2
     transitivePeerDependencies:
       - '@types/node'
     dev: true
@@ -19693,7 +19692,7 @@ packages:
       resolve: 1.22.8
       semver: 7.5.4
       source-map: 0.6.1
-      typescript: 5.1.6
+      typescript: 5.4.2
     transitivePeerDependencies:
       - '@types/node'
     dev: true
