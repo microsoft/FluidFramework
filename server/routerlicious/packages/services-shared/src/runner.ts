@@ -31,11 +31,18 @@ export async function run<T extends IResources>(
 	const customizations = await (resourceFactory.customize
 		? resourceFactory.customize(config)
 		: undefined);
-	const resources = await resourceFactory.create(config, customizations);
-	const runner = await runnerFactory.create(resources);
+	const resources = await resourceFactory.create(config, customizations).catch((error) => {
+		error.errorLabel = `resourceFactory:create:${error.errorLabel ?? ""}`;
+		throw error;
+	});
+	const runner = await runnerFactory.create(resources).catch((error) => {
+		error.errorLabel = `runnerFactory:create:${error.errorLabel ?? ""}`;
+		throw error;
+	});
 
 	// Start the runner and then listen for the message to stop it
 	const runningP = runner.start(logger).catch(async (error) => {
+		error.errorLabel = `runner:start:${error.errorLabel ?? ""}`;
 		logger?.error(`Encountered exception while running service: ${serializeError(error)}`);
 		Lumberjack.error(`Encountered exception while running service`, undefined, error);
 		await runner.stop().catch((innerError) => {
@@ -132,9 +139,13 @@ export function runService<T extends IResources>(
 			process.exit(0);
 		})
 		.catch(async (error) => {
-			if (error.uncaughtException) {
-				runnerMetric.setProperty(CommonProperties.restartReason, "uncaughtException");
-			}
+			runnerMetric.setProperties({
+				[CommonProperties.restartReason]: error.uncaughtException
+					? "uncaughtException"
+					: undefined,
+				[CommonProperties.errorLabel]: error.errorLabel,
+				[CommonProperties.isGlobalDb]: error.isGlobalDb,
+			});
 			await executeAndWait(() => {
 				logger?.error(`${group} service exiting due to error`);
 				logger?.error(serializeError(error));

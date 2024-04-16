@@ -81,6 +81,8 @@ export class KafkaRunner implements IRunner {
 
 			this.runnerMetric.setProperties(this.runnerMetricProperties);
 
+			error.errorLabel = errorData?.errorLabel;
+
 			if (errorData && !errorData.restart) {
 				const errorMsg =
 					"KafkaRunner encountered an error that is not configured to trigger restart";

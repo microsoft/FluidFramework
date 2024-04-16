@@ -112,6 +112,8 @@ export enum CommonProperties {
 	totalBatchSize = "totalBatchSize",
 	isEphemeralContainer = "isEphemeralContainer",
 	restartReason = "restartReason",
+	errorLabel = "errorLabel",
+	isGlobalDb = "isGlobalDb",
 }
 
 /**
