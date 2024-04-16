@@ -914,7 +914,16 @@ export class ContainerRuntime
 
 			// This is the only exception to the rule above - we have proper plumbing to load ID compressor on schema change
 			// event. It is loaded async (relative to op processing), so this conversion is only safe for off -> delayed conversion!
-			if (idCompressorMode === undefined && desiredIdCompressorMode === "delayed") {
+			// Clients do not expect ID compressor ops unless ID compressor is On for them, and that could be achieved only through
+			// explicit schema change, i.e. only if explicitSchemaControl is on.
+			// Note: it would be better if we throw on combination of options (explicitSchemaControl = off, desiredIdCompressorMode === "delayed")
+			// that is not supported. But our service tests are oblivious to these problems and throwing here will cause a ton of failures
+			// We ignored incompatible ID compressor changes from the start (they were sticky), so that's not a new problem being introduced...
+			if (
+				idCompressorMode === undefined &&
+				desiredIdCompressorMode === "delayed" &&
+				explicitSchemaControl
+			) {
 				idCompressorMode = desiredIdCompressorMode;
 			}
 		} else {
@@ -2577,7 +2586,7 @@ export class ContainerRuntime
 			// 2) this.resetReconnectCount() below
 			assert(
 				message.type !== ContainerMessageType.ChunkedOp,
-				"we should never get here with chunked ops",
+				0x93b /* we should never get here with chunked ops */,
 			);
 
 			let localOpMetadata: unknown;
@@ -2653,7 +2662,7 @@ export class ContainerRuntime
 					if (this._idCompressor === undefined) {
 						assert(
 							this.idCompressorMode !== undefined,
-							"id compressor should be enabled",
+							0x93c /* id compressor should be enabled */,
 						);
 						this.pendingIdCompressorOps.push(range);
 					} else {
@@ -2667,7 +2676,7 @@ export class ContainerRuntime
 			case ContainerMessageType.ChunkedOp:
 				// From observability POV, we should not exppse the rest of the system (including "op" events on object) to these messages.
 				// Also resetReconnectCount() would be wrong - see comment that was there before this change was made.
-				assert(false, "should not even get here");
+				assert(false, 0x93d /* should not even get here */);
 			case ContainerMessageType.Rejoin:
 				break;
 			case ContainerMessageType.DocumentSchemaChange:
@@ -3083,7 +3092,7 @@ export class ContainerRuntime
 		if (idRange !== undefined) {
 			assert(
 				idRange.ids === undefined || idRange.ids.firstGenCount === 1,
-				"No other ranges should be taken while container is detached.",
+				0x93e /* No other ranges should be taken while container is detached. */,
 			);
 			this._idCompressor?.finalizeCreationRange(idRange);
 		}
@@ -3877,7 +3886,7 @@ export class ContainerRuntime
 		assert(
 			metadata === undefined ||
 				containerRuntimeMessage.type === ContainerMessageType.BlobAttach,
-			"metadata",
+			0x93f /* metadata */,
 		);
 
 		const serializedContent = JSON.stringify(containerRuntimeMessage);

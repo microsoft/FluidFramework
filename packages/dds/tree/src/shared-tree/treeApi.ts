@@ -209,7 +209,7 @@ function runTransaction(
 				const node = getFlexNode(constraint.node);
 				assert(
 					node.treeStatus() === TreeStatus.InDocument,
-					'Attempted to apply "nodeExists" constraint when building a transaction, but the node is not in the document.',
+					0x90f /* Attempted to apply "nodeExists" constraint when building a transaction, but the node is not in the document. */,
 				);
 				checkout.editor.addNodeExistsConstraint(node.anchorNode);
 				break;
