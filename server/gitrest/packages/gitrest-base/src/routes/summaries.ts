@@ -40,11 +40,8 @@ import {
 	SystemErrors,
 	convertFullSummaryToWholeSummaryEntries,
 	WholeSummaryConstants,
+	getLatestFullSummaryDirectory,
 } from "../utils";
-
-function getFullSummaryDirectory(repoManager: IRepositoryManager, documentId: string): string {
-	return `${repoManager.path}/${documentId}`;
-}
 
 async function getSummary(
 	repoManager: IRepositoryManager,
@@ -69,7 +66,10 @@ async function getSummary(
 		try {
 			const latestFullSummaryFromStorage = await retrieveLatestFullSummaryFromStorage(
 				fileSystemManager,
-				getFullSummaryDirectory(repoManager, repoManagerParams.storageRoutingId.documentId),
+				getLatestFullSummaryDirectory(
+					repoManager.path,
+					repoManagerParams.storageRoutingId.documentId,
+				),
 				lumberjackProperties,
 			);
 			if (latestFullSummaryFromStorage !== undefined) {
@@ -121,7 +121,10 @@ async function getSummary(
 		// next getSummary or a createSummary request may trigger persisting to storage.
 		persistLatestFullSummaryInStorage(
 			fileSystemManager,
-			getFullSummaryDirectory(repoManager, repoManagerParams.storageRoutingId.documentId),
+			getLatestFullSummaryDirectory(
+				repoManager.path,
+				repoManagerParams.storageRoutingId.documentId,
+			),
 			fullSummary,
 			lumberjackProperties,
 		).catch((error) => {
@@ -199,8 +202,8 @@ async function createSummary(
 				// Send latest full summary to storage for faster read access.
 				const persistP = persistLatestFullSummaryInStorage(
 					fileSystemManager,
-					getFullSummaryDirectory(
-						repoManager,
+					getLatestFullSummaryDirectory(
+						repoManager.path,
 						repoManagerParams.storageRoutingId.documentId,
 					),
 					latestFullSummary,
@@ -441,8 +444,8 @@ export function create(
 					// process for adding the first summary back into storage.
 					const latestFullSummary = await retrieveLatestFullSummaryFromStorage(
 						fsManager,
-						getFullSummaryDirectory(
-							repoManager,
+						getLatestFullSummaryDirectory(
+							repoManager.path,
 							repoManagerParams.storageRoutingId.documentId,
 						),
 						lumberjackProperties,

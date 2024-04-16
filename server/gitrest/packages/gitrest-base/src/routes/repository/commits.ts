@@ -6,14 +6,24 @@
 import { handleResponse } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import nconf from "nconf";
+import type { ICommitDetails } from "@fluidframework/gitresources";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { NetworkError } from "@fluidframework/server-services-client";
 import {
 	checkSoftDeleted,
 	getExternalWriterParams,
 	getFilesystemManagerFactory,
+	getGitManagerFactoryParamsFromConfig,
+	getLatestFullSummaryDirectory,
+	getLumberjackBasePropertiesFromRepoManagerParams,
+	getRepoInfoFromParamsAndStorageConfig,
 	getRepoManagerParamsFromRequest,
 	IFileSystemManagerFactories,
 	IRepositoryManagerFactory,
+	isRepoNotExistsError,
 	logAndThrowApiError,
+	retrieveLatestFullSummaryFromStorage,
+	WholeSummaryConstants,
 } from "../../utils";
 
 export function create(
@@ -22,7 +32,9 @@ export function create(
 	repoManagerFactory: IRepositoryManagerFactory,
 ): Router {
 	const router: Router = Router();
-	const repoPerDocEnabled: boolean = store.get("git:repoPerDocEnabled") ?? false;
+	const { storageDirectoryConfig, repoPerDocEnabled } =
+		getGitManagerFactoryParamsFromConfig(store);
+	const lazyRepoInitEnabled: boolean = store.get("git:lazyRepoInitEnabled") ?? false;
 
 	// https://developer.github.com/v3/repos/commits/
 	// sha
@@ -33,7 +45,10 @@ export function create(
 
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	router.get("/repos/:owner/:repo/commits", async (request, response, next) => {
+		// TODO: Broken for lazy repo because repo does not exist
 		const repoManagerParams = getRepoManagerParamsFromRequest(request);
+		if (lazyRepoInitEnabled) {
+		}
 		const resultP = repoManagerFactory
 			.open(repoManagerParams)
 			.then(async (repoManager) => {
@@ -57,7 +72,73 @@ export function create(
 					getExternalWriterParams(request.query?.config as string),
 				);
 			})
-			.catch((error) => logAndThrowApiError(error, request, repoManagerParams));
+			.catch(async (error) => {
+				if (lazyRepoInitEnabled && isRepoNotExistsError(error)) {
+					const fileSystemManagerFactory = getFilesystemManagerFactory(
+						fileSystemManagerFactories,
+						repoManagerParams.isEphemeralContainer,
+					);
+					const { directoryPath } = getRepoInfoFromParamsAndStorageConfig(
+						repoPerDocEnabled,
+						repoManagerParams,
+						storageDirectoryConfig,
+					);
+					const fileSystemManager = fileSystemManagerFactory.create({
+						...repoManagerParams.fileSystemManagerParams,
+						rootDir: directoryPath,
+					});
+					const latestFullSummaryDirectory = getLatestFullSummaryDirectory(
+						directoryPath,
+						repoManagerParams.storageRoutingId?.documentId ??
+							repoManagerParams.repoName,
+					);
+					const lumberjackProperties = {
+						...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
+					};
+					try {
+						const latestFullSummaryFromStorage =
+							await retrieveLatestFullSummaryFromStorage(
+								fileSystemManager,
+								latestFullSummaryDirectory,
+								lumberjackProperties,
+							);
+						if (!latestFullSummaryFromStorage) {
+							throw new NetworkError(404, "No latest full summary found");
+						}
+						const dummyCommitDetails: ICommitDetails = {
+							sha: WholeSummaryConstants.LatestSummarySha,
+							commit: {
+								author: {
+									date: new Date().toISOString(),
+									email: "dummy@microsoft.com",
+									name: "GitRest Service",
+								},
+								committer: {
+									date: new Date().toISOString(),
+									email: "dummy@microsoft.com",
+									name: "GitRest Service",
+								},
+								tree: {
+									sha: latestFullSummaryFromStorage.trees[0]?.id,
+									url: `/repos/${repoManagerParams.repoOwner}/${repoManagerParams.repoName}/git/trees/${WholeSummaryConstants.LatestSummarySha}`,
+								},
+								message: "Dummy commit for lazy repo initial summary",
+								url: `/repos/${repoManagerParams.repoOwner}/${repoManagerParams.repoName}/git/commits/${WholeSummaryConstants.LatestSummarySha}`,
+							},
+							parents: [],
+							url: `/repos/${repoManagerParams.repoOwner}/${repoManagerParams.repoName}/git/commits/${WholeSummaryConstants.LatestSummarySha}`,
+						};
+						return [dummyCommitDetails];
+					} catch (lazyRepoRecoveryError: unknown) {
+						Lumberjack.error(
+							"Failed to spoof commits for lazy repo",
+							lumberjackProperties,
+							lazyRepoRecoveryError,
+						);
+					}
+				}
+				logAndThrowApiError(error, request, repoManagerParams);
+			});
 		handleResponse(resultP, response);
 	});
 

@@ -36,6 +36,10 @@ import {
 } from "./gitrestTelemetryDefinitions";
 import { MemFsManagerFactory } from "./filesystems";
 import { IsomorphicGitManagerFactory } from "./isomorphicgitManager";
+import {
+	RepoDoesNotExistMessage,
+	RepoDoesNotExistStatusCode,
+} from "./repositoryManagerFactoryBase";
 
 /**
  * Validates that the input encoding is valid
@@ -221,6 +225,68 @@ export function getGitDirectory(repoPath: string, baseDir?: string, suffixPath?:
 	return [baseDir, repoPath, suffixPath].filter((x) => x !== undefined).join("/");
 }
 
+interface IRepoInfo {
+	/**
+	 * Used by RepoManagerFactory as an internal cache key for existing repositories.
+	 * Not to be confused with {@link IRepositoryManager.path} which is actually equivalent to {@link IRepoInfo.directoryPath}.
+	 */
+	repoPath: string;
+	/**
+	 * The storage directory path for the repo.
+	 * This is the same as {@link IRepositoryManager.path}.
+	 */
+	directoryPath: string;
+	/**
+	 * Used by RepoManagerFactory to track mutexes for reading/writing to repositories.
+	 * Also used in Git object URLs.
+	 */
+	repoName: string;
+}
+
+/**
+ * Consistently calculate a Git repo's storage path and name from the given parameters and configs.
+ * This is useful for APIs that need to access the repo's storage path and name, without creating a full repo manager.
+ */
+export function getRepoInfoFromParamsAndStorageConfig(
+	repoPerDocEnabled: boolean,
+	repoManagerParams: IRepoManagerParams,
+	storageDirectoryConfig: IStorageDirectoryConfig,
+): IRepoInfo {
+	const repoPath = getRepoPath(
+		repoPerDocEnabled
+			? repoManagerParams.storageRoutingId.tenantId
+			: repoManagerParams.repoName,
+		repoPerDocEnabled ? repoManagerParams.storageRoutingId.documentId : undefined,
+		storageDirectoryConfig.useRepoOwner ? repoManagerParams.repoOwner : undefined,
+	);
+	const directoryPath = getGitDirectory(
+		repoPath,
+		storageDirectoryConfig.baseDir,
+		storageDirectoryConfig.suffixPath,
+	);
+	const repoName = repoPerDocEnabled
+		? `${repoManagerParams.storageRoutingId.tenantId}/${repoManagerParams.storageRoutingId.documentId}`
+		: repoManagerParams.repoName;
+	return {
+		repoPath,
+		directoryPath,
+		repoName,
+	};
+}
+
+/**
+ * Gets the directory path for the latest full summary blob for a document.
+ * @param repoDirectoryPath - The path to the repo directory. This should be the same as {@link IRepositoryManager.path}.
+ * @param documentId - The document ID of the summary.
+ * @returns storage path for the latest full summary blob.
+ */
+export function getLatestFullSummaryDirectory(
+	repoDirectoryPath: string,
+	documentId: string,
+): string {
+	return `${repoDirectoryPath}/${documentId}`;
+}
+
 export function parseStorageRoutingId(storageRoutingId?: string): IStorageRoutingId | undefined {
 	if (!storageRoutingId) {
 		return undefined;
@@ -277,6 +343,19 @@ export function logAndThrowApiError(
 	);
 }
 
+/**
+ * Whether the error is a "Repo does not exist" error.
+ * Ideally, this would be just a 404 error check, but there are back-compat problems
+ * with changing 400 response to 404.
+ */
+export function isRepoNotExistsError(error: unknown): boolean {
+	return (
+		isNetworkError(error) &&
+		error.code === RepoDoesNotExistStatusCode &&
+		error.message.startsWith(RepoDoesNotExistMessage)
+	);
+}
+
 export async function getRepoManagerFromWriteAPI(
 	repoManagerFactory: IRepositoryManagerFactory,
 	repoManagerParams: IRepoManagerParams,
@@ -301,12 +380,7 @@ export async function getRepoManagerFromWriteAPI(
 		// If repoPerDocEnabled is true, we want the behavior to be "open or create" for GitRest Write APIs,
 		// creating the repository on the fly. So, if the open operation fails with a 400 code (representing
 		// the repo does not exist), we try to create the reposiroty instead.
-		if (
-			repoPerDocEnabled &&
-			error instanceof Error &&
-			error?.name === "NetworkError" &&
-			(error as NetworkError)?.code === 400
-		) {
+		if (repoPerDocEnabled && isRepoNotExistsError(error)) {
 			return {
 				createdNew: true,
 				repoManager: await repoManagerFactory.create(repoManagerParams),

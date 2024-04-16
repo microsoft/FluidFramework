@@ -26,6 +26,10 @@ import * as helpers from "./helpers";
 
 type RepoOperationType = "create" | "open";
 
+// services-client/getOrCreateRepository depends on a 400 response code
+export const RepoDoesNotExistStatusCode = 400;
+export const RepoDoesNotExistMessage = "Repo does not exist";
+
 export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepositoryManagerFactory {
 	// Map each mutex to one repo. We don't want to block concurrent requests on the mutex if
 	// the requests are meant for different repos.
@@ -104,12 +108,14 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 			gitdir: string,
 			lumberjackBaseProperties: Record<string, any>,
 		) => {
-			Lumberjack.error(`Repo does not exist ${gitdir}`, {
+			Lumberjack.error(`${RepoDoesNotExistMessage} ${gitdir}`, {
 				...lumberjackBaseProperties,
 				[BaseGitRestTelemetryProperties.directoryPath]: gitdir,
 			});
-			// services-client/getOrCreateRepository depends on a 400 response code
-			throw new NetworkError(400, `Repo does not exist ${gitdir}`);
+			throw new NetworkError(
+				RepoDoesNotExistStatusCode,
+				`${RepoDoesNotExistMessage} ${gitdir}`,
+			);
 		};
 
 		return executeApiWithMetric(
@@ -135,18 +141,11 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 		if (!params.storageRoutingId?.tenantId || !params.storageRoutingId?.documentId) {
 			throw new NetworkError(400, `Invalid ${Constants.StorageRoutingIdHeader} header`);
 		}
-		const repoPath = helpers.getRepoPath(
-			params.storageRoutingId.tenantId,
-			params.storageRoutingId.documentId,
-			this.storageDirectoryConfig.useRepoOwner ? params.repoOwner : undefined,
+		const { repoPath, directoryPath, repoName } = helpers.getRepoInfoFromParamsAndStorageConfig(
+			true /* repoPerDocEnabled */,
+			params,
+			this.storageDirectoryConfig,
 		);
-		const directoryPath = helpers.getGitDirectory(
-			repoPath,
-			this.storageDirectoryConfig.baseDir,
-			this.storageDirectoryConfig.suffixPath,
-		);
-		const repoName = `${params.storageRoutingId.tenantId}/${params.storageRoutingId.documentId}`;
-
 		return this.internalHandlerCore(
 			params,
 			repoPath,
@@ -167,22 +166,17 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 		) => Promise<void> | never,
 		repoOperationType: RepoOperationType,
 	): Promise<IRepositoryManager> {
-		const repoPath = helpers.getRepoPath(
-			params.repoName,
-			undefined,
-			this.storageDirectoryConfig.useRepoOwner ? params.repoOwner : undefined,
-		);
-		const directoryPath = helpers.getGitDirectory(
-			repoPath,
-			this.storageDirectoryConfig.baseDir,
-			this.storageDirectoryConfig.suffixPath,
+		const { repoPath, directoryPath, repoName } = helpers.getRepoInfoFromParamsAndStorageConfig(
+			false /* repoPerDocEnabled */,
+			params,
+			this.storageDirectoryConfig,
 		);
 
 		return this.internalHandlerCore(
 			params,
 			repoPath,
 			directoryPath,
-			params.repoName,
+			repoName,
 			onRepoNotExists,
 			repoOperationType,
 		);
