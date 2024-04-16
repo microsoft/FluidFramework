@@ -18,6 +18,7 @@ export {
 	MockFluidDataStoreRuntime,
 	MockObjectStorageService,
 	MockQuorumClients,
+	MockAudience,
 	MockSharedObjectServices,
 	IInternalMockRuntimeMessage,
 } from "./mocks.js";

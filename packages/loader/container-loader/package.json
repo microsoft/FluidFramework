@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-loader",
-	"version": "2.0.0-rc.3.0.0",
+	"version": "2.0.0-rc.4.0.0",
 	"description": "Fluid container loader",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -200,9 +200,14 @@
 	"typeValidation": {
 		"broken": {
 			"InterfaceDeclaration_IContainerExperimental": {
+				"backCompat": false,
 				"forwardCompat": false
 			},
 			"InterfaceDeclaration_IParsedUrl": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IProtocolHandler": {
+				"backCompat": false,
 				"forwardCompat": false
 			}
 		}
