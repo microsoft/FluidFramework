@@ -26,7 +26,7 @@ import { IMergeTreeOptions, ReferencePosition } from "../index.js";
 import { MergeTree, getSlideToSegoff } from "../mergeTree.js";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import { backwardExcursion, forwardExcursion, walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { IMergeBlock, ISegment, ISegmentLeaf, Marker, MaxNodesInBlock } from "../mergeTreeNodes.js";
+import { MergeBlock, ISegment, ISegmentLeaf, Marker, MaxNodesInBlock } from "../mergeTreeNodes.js";
 import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder.js";
 import {
 	IJSONSegment,
@@ -606,7 +606,7 @@ export interface MergeTreeStats {
 }
 
 export function getStats(tree: MergeTree) {
-	const nodeGetStats = (block: IMergeBlock): MergeTreeStats => {
+	const nodeGetStats = (block: MergeBlock): MergeTreeStats => {
 		const stats: MergeTreeStats = {
 			maxHeight: 0,
 			nodeCount: 0,

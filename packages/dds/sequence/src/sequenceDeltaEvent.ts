@@ -36,6 +36,9 @@ export abstract class SequenceEvent<
 	private readonly pLast: Lazy<ISequenceDeltaRange<TOperation>>;
 
 	constructor(
+		/**
+		 * Arguments reflecting the type of change that caused this event.
+		 */
 		public readonly deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>,
 		// eslint-disable-next-line import/no-deprecated
 		private readonly mergeTreeClient: Client,
@@ -73,7 +76,10 @@ export abstract class SequenceEvent<
 
 	/**
 	 * The in-order ranges affected by this delta.
-	 * These may not be continuous.
+	 * These are not necessarily contiguous.
+	 *
+	 * @remarks - If processing code doesn't care about the order of the ranges, it may instead consider using the
+	 * {@link @fluidframework/merge-tree#IMergeTreeDeltaCallbackArgs.deltaSegments|deltaSegments} field on {@link SequenceEvent.deltaArgs|deltaArgs}.
 	 */
 	public get ranges(): readonly Readonly<ISequenceDeltaRange<TOperation>>[] {
 		return this.sortedRanges.value.items;
@@ -140,6 +146,11 @@ export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationTyp
  */
 export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
 	constructor(
+		/**
+		 * Defined iff `deltaArgs.operation` is {@link @fluidframework/merge-tree#MergeTreeMaintenanceType.ACKNOWLEDGED|MergeTreeMaintenanceType.ACKNOWLEDGED}.
+		 *
+		 * In that case, this argument provides information about the change which was acknowledged.
+		 */
 		public readonly opArgs: IMergeTreeDeltaOpArgs | undefined,
 		deltaArgs: IMergeTreeMaintenanceCallbackArgs,
 		// eslint-disable-next-line import/no-deprecated

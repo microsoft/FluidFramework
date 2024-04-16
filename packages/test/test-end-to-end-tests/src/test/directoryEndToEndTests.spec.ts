@@ -9,11 +9,11 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase, IFluidHandle } from "@fluidframework/core-interfaces";
-import type { ISharedMap } from "@fluidframework/map";
 import type {
 	IDirectory,
 	IDirectoryValueChanged,
 	ISharedDirectory,
+	ISharedMap,
 	SharedDirectory,
 } from "@fluidframework/map/internal";
 import {

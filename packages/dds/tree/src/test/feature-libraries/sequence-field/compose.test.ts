@@ -1397,6 +1397,39 @@ export function testCompose() {
 				assertChangesetsEqual(composed, expected);
 			}));
 
+		it("move1 (back) ○ [return1, move2 (forward)]", () =>
+			withConfig(() => {
+				const move1 = tagChange(Change.move(2, 1, 0), tag1);
+				const return1 = tagChange(
+					[
+						Mark.moveOut(1, brand(0), {
+							idOverride: {
+								type: SF.DetachIdOverrideType.Redetach,
+								id: { revision: tag1, localId: brand(0) },
+							},
+						}),
+						Mark.skip(2),
+						Mark.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
+					],
+					tag2,
+				);
+
+				const move2 = tagChange(Change.move(2, 1, 1), tag3);
+
+				const returnAndMove = makeAnonChange(shallowCompose([return1, move2]));
+				const composed = shallowCompose([move1, returnAndMove]);
+
+				const expected = [
+					Mark.tomb(tag1, brand(0)),
+					Mark.skip(1),
+					Mark.moveIn(1, { revision: tag3, localId: brand(0) }),
+					Mark.skip(1),
+					Mark.moveOut(1, { revision: tag3, localId: brand(0) }),
+				];
+
+				assertChangesetsEqual(composed, expected);
+			}));
+
 		it("remove (rollback) ○ insert", () =>
 			withConfig(() => {
 				const insertA = tagChange([Mark.insert(1, brand(0))], tag1);
