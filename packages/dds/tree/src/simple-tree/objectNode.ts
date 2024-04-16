@@ -324,13 +324,13 @@ export function objectSchema<
 
 			assert(
 				constructorCached === this.constructor,
-				"Node instantiated from multiple bases.",
+				0x918 /* Node instantiated from multiple bases. */,
 			);
 
 			const proxyTarget = customizable ? this : {};
 
 			const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
-			assert(flexSchema instanceof FlexObjectNodeSchema, "invalid flex schema");
+			assert(flexSchema instanceof FlexObjectNodeSchema, 0x919 /* invalid flex schema */);
 			const flexNode: FlexTreeNode = isFlexTreeNode(input)
 				? input
 				: new RawObjectNode(flexSchema, copyContent(flexSchema.name, input) as object);

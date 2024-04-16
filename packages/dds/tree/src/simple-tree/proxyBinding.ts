@@ -57,7 +57,7 @@ const anchorForgetters = new WeakMap<TreeNode, () => void>();
  * In practice, this happens when either the anchor node is destroyed, or another anchor to the same node is created by a new flex node.
  */
 export function anchorProxy(anchors: AnchorSet, path: UpPath, proxy: TreeNode): void {
-	assert(!anchorForgetters.has(proxy), "Proxy anchor should not be set twice");
+	assert(!anchorForgetters.has(proxy), 0x91c /* Proxy anchor should not be set twice */);
 	const anchor = anchors.track(path);
 	const anchorNode = anchors.locate(anchor) ?? fail("Expected anchor node to be present");
 	bindProxyToAnchorNode(proxy, anchorNode);
@@ -143,7 +143,10 @@ export function setFlexNode<TProxy extends TreeNode>(
 	flexNode: FlexTreeNode,
 ): TProxy {
 	const existingFlexNode = proxyToAnchorNode.get(proxy)?.slots.get(flexTreeSlot);
-	assert(existingFlexNode === undefined, "Cannot associate a flex node with multiple targets");
+	assert(
+		existingFlexNode === undefined,
+		0x91d /* Cannot associate a flex node with multiple targets */,
+	);
 	if (flexNode instanceof RawTreeNode) {
 		proxyToRawFlexNode.set(proxy, flexNode);
 	} else {
@@ -166,7 +169,7 @@ function bindProxyToAnchorNode(proxy: TreeNode, anchorNode: AnchorNode): void {
 	// Once a proxy has been associated with an anchor node, it should never change to another anchor node
 	assert(
 		!proxyToAnchorNode.has(proxy),
-		"Proxy has already been bound to a different anchor node",
+		0x91e /* Proxy has already been bound to a different anchor node */,
 	);
 	proxyToAnchorNode.set(proxy, anchorNode);
 	// However, it's fine for an anchor node to rotate through different proxies when the content at that place in the tree is replaced.

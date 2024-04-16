@@ -25,13 +25,7 @@ import {
 } from "../util/index.js";
 
 import { SummaryData } from "./editManager.js";
-import {
-	Commit,
-	EncodedCommit,
-	EncodedEditManager,
-	SequencedCommit,
-	version,
-} from "./editManagerFormat.js";
+import { Commit, EncodedCommit, EncodedEditManager, SequencedCommit } from "./editManagerFormat.js";
 
 export interface EditManagerEncodingContext {
 	readonly schema?: SchemaAndPolicy;
@@ -67,10 +61,13 @@ export function makeEditManagerCodecs<TChangeset>(
 	>,
 	options: ICodecOptions,
 ): ICodecFamily<SummaryData<TChangeset>, EditManagerEncodingContext> {
-	return makeCodecFamily([[1, makeV1Codec(changeCodecs.resolve(1), revisionTagCodec, options)]]);
+	return makeCodecFamily([
+		[1, makeV1CodecWithVersion(changeCodecs.resolve(1), revisionTagCodec, options, 1)],
+		[2, makeV1CodecWithVersion(changeCodecs.resolve(2), revisionTagCodec, options, 2)],
+	]);
 }
 
-function makeV1Codec<TChangeset>(
+function makeV1CodecWithVersion<TChangeset>(
 	changeCodec: IMultiFormatCodec<
 		TChangeset,
 		JsonCompatibleReadOnly,
@@ -84,6 +81,7 @@ function makeV1Codec<TChangeset>(
 		ChangeEncodingContext
 	>,
 	options: ICodecOptions,
+	version: EncodedEditManager<TChangeset>["version"],
 ): IJsonCodec<
 	SummaryData<TChangeset>,
 	JsonCompatibleReadOnly,
