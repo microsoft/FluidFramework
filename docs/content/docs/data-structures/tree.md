@@ -258,7 +258,7 @@ class Proposal = sf.object('Proposal', {
 
 ### Creation
 
-To create a `TreeView` object, create a container with an initial object of that type and then apply the schema to it. The code in this section continues the sticky note example. Start by creating a container schema with an initial object of type `SharedTree` and use it to create a container.
+To create a `TreeView` object, create a container with an initial object of type `SharedTree` and then apply the schema to it. The code in this section continues the sticky note example. Start by creating a container schema with an initial object of type `SharedTree` and use it to create a container.
 
 ```typescript
 const containerSchema: ContainerSchema = {
