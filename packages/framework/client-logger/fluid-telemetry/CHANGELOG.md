@@ -1,8 +1,16 @@
-# @fluid-internal/client-utils
+# @fluidframework/fluid-telemetry
 
 ## 2.0.0-rc.3.0.0
 
 ### Major Changes
+
+-   New package: @fluidframework/fluid-telemetry [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+
+    Before deploying your application at scale, it is critical to have the holistic telemetry in place to monitor its usage
+    and look for issues and optimizations. To make this easier, we are providing a fluid-telemetry package that comes with
+    Typed telemetry events that you can funnel to your any analytics tool of your choice. If you decide to use Azure App
+    Insights to view this data, we also provide helper packages and dashboard queries to get you started quickly. You can
+    learn more at <https://aka.ms/fluid/telemetry>.
 
 -   Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
 
@@ -22,47 +30,3 @@
 
     **Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
     to distinguish stable APIs from those that are in development.**
-
-## 2.0.0-rc.2.0.0
-
-Dependency updates only.
-
-## 2.0.0-rc.1.0.0
-
-Dependency updates only.
-
-## 2.0.0-internal.8.0.0
-
-Dependency updates only.
-
-## 2.0.0-internal.7.4.0
-
-Dependency updates only.
-
-## 2.0.0-internal.7.3.0
-
-Dependency updates only.
-
-## 2.0.0-internal.7.2.0
-
-Dependency updates only.
-
-## 2.0.0-internal.7.1.0
-
-Dependency updates only.
-
-## 2.0.0-internal.7.0.0
-
-### Minor Changes
-
--   client-utils: Internal buffer encoding helpers now require 'utf8', 'utf-8', or 'base64' [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
-
-    Previously, the buffer encoding helpers 'Uint8ArrayToString', 'bufferToString', and 'IsoBuffer.toString' would accept a string argument, which was overly permissive.
-
-    The type of the 'encoding' argument has been narrow to just the supported values 'utf8', 'utf-8', or 'base64'.
-
-## 2.0.0-internal.6.4.0
-
-Dependency updates only.
-
-## 2.0.0-internal.6.3.0
