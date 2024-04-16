@@ -69,9 +69,9 @@
 		"retryDelayOnMoved": 100,
 		"maxRedirections": 16,
 		"retryStrategyParams": {
-            "delayPerAttemptMs": 50,
-            "maxDelayMs": 2000
-        }
+			"delayPerAttemptMs": 50,
+			"maxDelayMs": 2000
+		}
 	},
 	"system": {
 		"httpServer": {

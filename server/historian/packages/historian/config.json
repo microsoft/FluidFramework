@@ -40,9 +40,9 @@
 		"retryDelayOnMoved": 100,
 		"maxRedirections": 16,
 		"retryStrategyParams": {
-            "delayPerAttemptMs": 50,
-            "maxDelayMs": 2000
-        }
+			"delayPerAttemptMs": 50,
+			"maxDelayMs": 2000
+		}
 	},
 	"redisForThrottling": {
 		"host": "redis",
@@ -56,9 +56,9 @@
 		"retryDelayOnMoved": 100,
 		"maxRedirections": 16,
 		"retryStrategyParams": {
-            "delayPerAttemptMs": 50,
-            "maxDelayMs": 2000
-        }
+			"delayPerAttemptMs": 50,
+			"maxDelayMs": 2000
+		}
 	},
 	"error": {
 		"track": false,

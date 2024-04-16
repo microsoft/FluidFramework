@@ -94,10 +94,9 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 		}
 
 		if (!this.redisOptions.retryStrategy) {
-			this.redisOptions.retryStrategy = 
-			getRedisClusterRetryStrategy({
+			this.redisOptions.retryStrategy = getRedisClusterRetryStrategy({
 				delayPerAttemptMs: 50,
-				maxDelayMs: 2000
+				maxDelayMs: 2000,
 			});
 		}
 		this.authenticateAndCreateRedisClient();
