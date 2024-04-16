@@ -258,6 +258,9 @@ describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider
 			assert(Number.isInteger(id));
 			assert(Number.isInteger(id2));
 		} else {
+			// Runtime will not change enableRuntimeIdCompressor setting if explicitSchemaControl is off
+			// Other containers will not expect ID compressor ops and will fail, thus runtime does not allow this upgrade.
+			// generateDocumentUniqueId() works, but gives long IDs
 			assert(!Number.isInteger(id));
 			assert(!Number.isInteger(id2));
 		}

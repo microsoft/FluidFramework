@@ -918,7 +918,11 @@ export class ContainerRuntime
 			// Note: it would be better if we throw on combination of options (explicitSchemaControl = off, desiredIdCompressorMode === "delayed")
 			// that is not supported. But our service tests are oblivious to these problems and throwing here will cause a ton of failures
 			// We ignored incompatible ID compressor changes from the start (they were sticky), so that's not a new problem being introduced...
-			if (idCompressorMode === undefined && desiredIdCompressorMode === "delayed" && explicitSchemaControl) {
+			if (
+				idCompressorMode === undefined &&
+				desiredIdCompressorMode === "delayed" &&
+				explicitSchemaControl
+			) {
 				idCompressorMode = desiredIdCompressorMode;
 			}
 		} else {
