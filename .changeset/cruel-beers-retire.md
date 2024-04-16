@@ -1,8 +1,12 @@
 ---
-"fluid-framework": minor
-"@fluidframework/tree": minor
+"@fluidframework/tree": "minor"
 ---
 
-tree: Stabilize recursive schema APIs
+Recursive schemas
 
-Move recursive schema APIs from beta to public. Users of the beta APIs via `SchemaFactoryRecursive` can now find them on `SchemaFactory`.
+Schemas are even more powerful now with the added support for recursive types, which allows you to define types that
+reference nodes of the same type in their subtree. 
+
+Users of the beta APIs via `SchemaFactoryRecursive` can now find them on `SchemaFactory`.
+
+[Read more about Recursive Schema at fluidframework.com](https://fluidframework.com/docs/data-structures/tree/#recursive-schema)
