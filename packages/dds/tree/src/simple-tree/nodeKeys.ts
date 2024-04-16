@@ -3,9 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { LocalNodeKey, NodeKeyIndex, NodeKeyManager, StableNodeKey } from "../node-key/index.js";
+import {
+	LocalNodeKey,
+	NodeKeyIndex,
+	NodeKeyManager,
+	StableNodeKey,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../feature-libraries/node-key/index.js";
 
-import { FlexTreeObjectNode } from "./flexTreeTypes.js";
+// eslint-disable-next-line import/no-internal-modules
+import { FlexTreeObjectNode } from "../feature-libraries/flex-tree/flexTreeTypes.js";
 
 /**
  * A collection of utilities for managing {@link StableNodeKey}s.

@@ -61,6 +61,6 @@ export {
 	FlexibleNodeSubSequence,
 } from "./flexTreeTypes.js";
 
-export { NodeKeys } from "./nodeKeys.js";
+export { NodeKeys } from "../../simple-tree/nodeKeys.js";
 
 export { assertFlexTreeEntityNotFreed } from "./lazyEntity.js";
