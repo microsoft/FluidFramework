@@ -9,7 +9,7 @@
  * @packageDocumentation
  */
 
-export type { IAudience, IAudienceOwner } from "./audience.js";
+export type { IAudience, IAudienceOwner, IAudienceEvents, ISelf } from "./audience.js";
 export type { IFluidBrowserPackage, IFluidBrowserPackageEnvironment } from "./browserPackage.js";
 export { isFluidBrowserPackage } from "./browserPackage.js";
 export type {
