@@ -4,5 +4,5 @@
  * Licensed under the MIT License.
  */
 
-import { fluidRunner } from "@fluidframework/fluid-runner";
+import { fluidRunner } from "@fluidframework/fluid-runner/internal";
 await fluidRunner();

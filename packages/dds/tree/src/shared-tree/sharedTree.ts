@@ -131,7 +131,7 @@ const formatVersionToTopLevelCodecVersions = new Map<number, ExplicitCodecVersio
 
 function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
 	const versions = formatVersionToTopLevelCodecVersions.get(formatVersion);
-	assert(versions !== undefined, "Unknown format version");
+	assert(versions !== undefined, 0x90e /* Unknown format version */);
 	return versions;
 }
 
