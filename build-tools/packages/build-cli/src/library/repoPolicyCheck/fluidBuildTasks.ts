@@ -5,21 +5,21 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import * as JSON5 from "json5";
-import * as semver from "semver";
 import {
+	FluidRepo,
 	Package,
 	PackageJson,
-	updatePackageJsonFile,
-	normalizeGlobalTaskDefinitions,
-	getTaskDefinitions,
-	getEsLintConfigFilePath,
-	FluidRepo,
-	loadFluidBuildConfig,
 	TscUtils,
+	getEsLintConfigFilePath,
+	getTaskDefinitions,
+	loadFluidBuildConfig,
+	normalizeGlobalTaskDefinitions,
+	updatePackageJsonFile,
 } from "@fluidframework/build-tools";
-import { Handler, readFile } from "./common";
+import * as JSON5 from "json5";
+import * as semver from "semver";
 import { TsConfigJson } from "type-fest";
+import { Handler, readFile } from "./common";
 
 /**
  * Get and cache the tsc check ignore setting
@@ -302,18 +302,23 @@ function eslintGetScriptDependencies(
 	}
 
 	projects = Array.isArray(projects) ? projects : [projects];
-	return projects.map((project) => {
-		const found = findTscScripts(json, project);
+	return (
+		projects
+			// Projects with ".lint." in the name are not required to have other associated tasks.
+			.filter((project) => !project.includes(".lint."))
+			.map((project) => {
+				const found = findTscScripts(json, project);
 
-		// The main compile script is build:esnext, point eslint to it
-		if (found === undefined) {
-			throw new Error(
-				`Unable to find script for project ${project} specified in ${eslintConfig}`,
-			);
-		}
+				// The main compile script is build:esnext, point eslint to it
+				if (found === undefined) {
+					throw new Error(
+						`Unable to find script for project ${project} specified in ${eslintConfig}`,
+					);
+				}
 
-		return found;
-	});
+				return found;
+			})
+	);
 }
 
 /**

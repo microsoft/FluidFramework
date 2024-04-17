@@ -26,11 +26,7 @@ describe("Minimum Compat Version", () => {
 					compatVersion: "2.0.0-internal.8.0.0",
 				}),
 			(error: Error) => {
-				return (
-					error.message?.startsWith(
-						`Error while running: npm v @fluidframework/container-loader`,
-					) === true
-				);
+				return error.message?.startsWith("Error trying to getRequestedVersion:") === true;
 			},
 			"Should fail when not sending a correct version",
 		);

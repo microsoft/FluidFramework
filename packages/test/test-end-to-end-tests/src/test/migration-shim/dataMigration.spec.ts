@@ -43,7 +43,7 @@ class InventorySchema extends builder.object("abcInventory", {
 	quantity: builder.number,
 }) {}
 
-function getNewTreeView(tree: ITree): TreeView<InventorySchema> {
+function getNewTreeView(tree: ITree): TreeView<typeof InventorySchema> {
 	return tree.schematize(
 		new TreeConfiguration(InventorySchema, () => ({
 			quantity: 0,

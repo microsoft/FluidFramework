@@ -88,6 +88,11 @@ export interface AnchorEvents {
 	 * @remarks
 	 * When this happens depends entirely on how the anchorSet is used.
 	 * It's possible nodes removed from the tree will be kept indefinitely, and thus never trigger this event, or they may be discarded immediately.
+	 *
+	 * @privateRemarks
+	 * The specifics of the delta visit algorithm can impact the behavior of these events.
+	 * Refer to the privateRemarks of specific events and/or the documentation of the delta visit algorithm (as of
+	 * 2024-04-02, src/core/tree/visitDelta.ts) for more information.
 	 */
 	afterDestroy(anchor: AnchorNode): void;
 
@@ -108,28 +113,33 @@ export interface AnchorEvents {
 	childrenChanged(anchor: AnchorNode): void;
 
 	/**
-	 * Before a change in this subtree happens.
-	 *
-	 * @remarks
-	 * Includes edits of child subtrees.
-	 */
-	beforeChange(anchor: AnchorNode): void;
-
-	/**
-	 * After a change in this subtree happened.
-	 *
-	 * @remarks
-	 * Includes edits of child subtrees.
-	 */
-	afterChange(anchor: AnchorNode): void;
-
-	/**
 	 * Something in this tree is changing.
 	 * The event can optionally return a {@link PathVisitor} to traverse the subtree.
 	 * Called on every parent (transitively) when a change is occurring.
 	 * Includes changes to this node itself.
 	 */
 	subtreeChanging(anchor: AnchorNode): PathVisitor | void;
+
+	/**
+	 * Emitted after the subtree rooted at `anchor` may have been changed.
+	 *
+	 * @remarks
+	 * While this event is always emitted in the presence of changes to the subtree,
+	 * it may also be emitted even though no changes have been made to the subtree.
+	 * It may be emitted multiple times within the application of a single edit or transaction.
+	 *
+	 * If this event is emitted by a node, it will later be emitted by all its ancestors up to the root as well, at
+	 * least once on each ancestor.
+	 *
+	 * @privateRemarks
+	 * The delta visit algorithm is complicated and it may fire this event multiple times for the same change to a node.
+	 * The change to the tree may not be visible until the event fires for the last time.
+	 * Refer to the documentation of the delta visit algorithm for more details.
+	 *
+	 * TODO: can we make it so this event is guaranteed to only fire once during the delta visit? Specifically when
+	 * changes to the tree did happen and are visible to the listener.
+	 */
+	subtreeChanged(anchor: AnchorNode): void;
 
 	/**
 	 * Value on this node is changing.
@@ -171,6 +181,11 @@ export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEven
 	 * Use {@link anchorSlot} to create slots.
 	 */
 	readonly slots: BrandedMapSubset<AnchorSlot<any>>;
+
+	/**
+	 * The set this anchor node is part of.
+	 */
+	readonly anchorSet: AnchorSet;
 
 	/**
 	 * Gets a child of this node.
@@ -622,6 +637,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 			0x767 /* Must release existing visitor before acquiring another */,
 		);
 
+		const referencedPathNodes: PathNode[] = [];
 		const visitor = {
 			anchorSet: this,
 			// Run `withNode` on anchorNode for parent if there is such an anchorNode.
@@ -636,25 +652,10 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					// Delta traversal should early out in this case because no work is needed (and all move outs are known to not contain anchors).
 					this.parent = this.anchorSet.internalizePath(this.parent);
 					if (this.parent instanceof PathNode) {
+						this.parent.addRef();
+						referencedPathNodes.push(this.parent);
 						withNode(this.parent);
 					}
-				}
-			},
-			// Run `withNode` on every node from the current `this.parent` to the root.
-			// Should only be called when in a field.
-			withParentNodeUpToRoot(withNode: (anchorNode: PathNode) => void) {
-				assert(
-					this.parentField !== undefined,
-					0x7cd /* Must be in a field to call withNodeUpToRoot */,
-				);
-				// This function gets called when we attach a node to the root field, in which case there is no parent.
-				// It's expected this will do nothing in that case.
-				let currentParent: UpPath | undefined = this.parent;
-				while (currentParent !== undefined) {
-					if (currentParent instanceof PathNode) {
-						withNode(currentParent);
-					}
-					currentParent = currentParent.parent;
 				}
 			},
 			// Lookup table for path visitors collected from {@link AnchorEvents.visitSubtreeChanging} emitted events.
@@ -668,6 +669,9 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					this.anchorSet.activeVisitor !== undefined,
 					0x768 /* Multiple free calls for same visitor */,
 				);
+				for (const node of referencedPathNodes) {
+					node.removeRef();
+				}
 				this.anchorSet.activeVisitor = undefined;
 			},
 			notifyChildrenChanging(): void {
@@ -697,9 +701,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					start: 0,
 					end: count,
 				});
-				this.withParentNodeUpToRoot((p) => {
-					p.events.emit("beforeChange", p);
-				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.beforeAttach(sourcePath, destinationPath);
@@ -720,9 +721,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: this.parentField,
 					...destination,
 				};
-				this.withParentNodeUpToRoot((p) => {
-					p.events.emit("afterChange", p);
-				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.afterAttach(sourcePath, destinationPath);
@@ -765,9 +763,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: destination,
 					index: 0,
 				});
-				this.withParentNodeUpToRoot((p) => {
-					p.events.emit("beforeChange", p);
-				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.beforeDetach(sourcePath, destinationPath);
@@ -788,9 +783,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: destination,
 					start: 0,
 					end: count,
-				});
-				this.withParentNodeUpToRoot((p) => {
-					p.events.emit("afterChange", p);
 				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
@@ -839,9 +831,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: destination,
 					index: 0,
 				});
-				this.withParentNodeUpToRoot((p) => {
-					p.events.emit("beforeChange", p);
-				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.beforeReplace(
@@ -874,9 +863,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: oldContent,
 					start: 0,
 					end: newContent.end - newContent.start,
-				});
-				this.withParentNodeUpToRoot((p) => {
-					p.events.emit("afterChange", p);
 				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
@@ -967,6 +953,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 			exitNode(index: number): void {
 				assert(this.parent !== undefined, 0x3ac /* Must have parent node */);
 				this.maybeWithNode((p) => {
+					p.events.emit("subtreeChanged", p);
 					// Remove subtree path visitors added at this node if there are any
 					this.pathVisitors.delete(p);
 				});
@@ -1143,7 +1130,7 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 
 	// Called when refcount is set to 0.
 	// Node may be kept alive by children or events after this point.
-	protected dispose(): void {
+	protected onUnreferenced(): void {
 		this.considerDispose();
 	}
 
