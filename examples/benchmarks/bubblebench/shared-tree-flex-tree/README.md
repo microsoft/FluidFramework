@@ -1,4 +1,6 @@
-# @fluid-example/bubblebench-editable-shared-tree
+# @fluid-example/bubblebench-shared-tree-flex-tree
+
+Version of bubble bench implementing on shared-tree's internal flex-tree abstraction layer.
 
 ### Running the test locally
 
