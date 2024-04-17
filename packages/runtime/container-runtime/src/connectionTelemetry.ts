@@ -361,7 +361,7 @@ class OpPerfTelemetry {
 			// The threshold could be adjusted, but ideally it stays  workload-agnostic, as service
 			// performance impacts all workloads relying on service.
 			const category = duration > latencyThreshold ? "error" : "performance";
-			if (latencyData.opPerfData.durationInboundToProcessing !== undefined) {
+			if (message.type !== "noop") {
 				this.opLatencyLogger.sendPerformanceEvent({
 					eventName: "OpRoundtripTime",
 					sequenceNumber,
@@ -369,7 +369,6 @@ class OpPerfTelemetry {
 					duration,
 					category,
 					pingLatency: this.pingLatency,
-
 					msnDistance:
 						this.deltaManager.lastSequenceNumber -
 						this.deltaManager.minimumSequenceNumber,
