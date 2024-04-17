@@ -138,7 +138,7 @@ steps:
     filePath: $(Build.SourcesDirectory)/scripts/update-package-version.sh
 
 - task: Bash@3
-  displayName: Generate manifest file
+  displayName: Generate Manifest Files
   env:
     DEV_VERSION: $(SetVersion.version)
   inputs:
@@ -148,7 +148,7 @@ steps:
       flub release report-unreleased --p .
 
 - task: AzureCLI@2
-  displayName: 'Upload Manifest Files'
+  displayName: Upload Manifest Files
   continueOnError: true
   inputs:
     azureSubscription: 'fluid-docs'

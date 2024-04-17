@@ -84,7 +84,7 @@ async function generateReleaseReportForUnreleasedVersions(
 async function writeManifestToFile(
 	path: string,
 	jsonFile: string,
-	fileName: string,
+	revisedFileName: string,
 	devVersion: string,
 	log?: Logger,
 ): Promise<string | undefined> {
@@ -106,8 +106,10 @@ async function writeManifestToFile(
 			}
 		}
 
+		const currentDate = new Date().toISOString().slice(0, 10);
+
 		await fs.writeFile(`${path}/${jsonFile}`, JSON.stringify(manifestFile, undefined, 2));
-		await fs.rename(`${path}/${jsonFile}`, `${path}/${fileName}.json`);
+		await fs.rename(`${path}/${jsonFile}`, `${path}/${revisedFileName}-${currentDate}.json`);
 	} catch (error) {
 		log?.errorLog("Error writing manifest to file:", error);
 		return undefined;
