@@ -34,7 +34,7 @@ export function create(
 	const router: Router = Router();
 	const { storageDirectoryConfig, repoPerDocEnabled } =
 		getGitManagerFactoryParamsFromConfig(store);
-	const lazyRepoInitEnabled: boolean = store.get("git:lazyRepoInitEnabled") ?? false;
+	const lazyRepoInitCompatEnabled: boolean = store.get("git:enableLazyRepoInitCompat") ?? false;
 
 	// https://developer.github.com/v3/repos/commits/
 	// sha
@@ -47,8 +47,6 @@ export function create(
 	router.get("/repos/:owner/:repo/commits", async (request, response, next) => {
 		// TODO: Broken for lazy repo because repo does not exist
 		const repoManagerParams = getRepoManagerParamsFromRequest(request);
-		if (lazyRepoInitEnabled) {
-		}
 		const resultP = repoManagerFactory
 			.open(repoManagerParams)
 			.then(async (repoManager) => {
@@ -73,7 +71,7 @@ export function create(
 				);
 			})
 			.catch(async (error) => {
-				if (lazyRepoInitEnabled && isRepoNotExistsError(error)) {
+				if (lazyRepoInitCompatEnabled && isRepoNotExistsError(error)) {
 					const fileSystemManagerFactory = getFilesystemManagerFactory(
 						fileSystemManagerFactories,
 						repoManagerParams.isEphemeralContainer,
@@ -130,8 +128,8 @@ export function create(
 						};
 						return [dummyCommitDetails];
 					} catch (lazyRepoRecoveryError: unknown) {
-						Lumberjack.error(
-							"Failed to spoof commits for lazy repo",
+						Lumberjack.warning(
+							"Failed to spoof commits for possible lazy repo",
 							lumberjackProperties,
 							lazyRepoRecoveryError,
 						);

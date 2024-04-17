@@ -46,7 +46,7 @@ export function create(
 	const router: Router = Router();
 	const { storageDirectoryConfig, repoPerDocEnabled } =
 		getGitManagerFactoryParamsFromConfig(store);
-	const lazyRepoInitEnabled: boolean = store.get("git:lazyRepoInitEnabled") ?? false;
+	const lazyRepoInitCompatEnabled: boolean = store.get("git:enableLazyRepoInitCompat") ?? false;
 
 	// https://developer.github.com/v3/git/refs/
 
@@ -102,7 +102,7 @@ export function create(
 				);
 			})
 			.catch(async (error) => {
-				if (lazyRepoInitEnabled && isRepoNotExistsError(error)) {
+				if (lazyRepoInitCompatEnabled && isRepoNotExistsError(error)) {
 					const fileSystemManagerFactory = getFilesystemManagerFactory(
 						fileSystemManagerFactories,
 						repoManagerParams.isEphemeralContainer,

@@ -56,6 +56,7 @@
 		"enableRedisFsOptimizedStat": false,
 		"redisApiMetricsSamplingPeriod": 0,
 		"enforceStrictPersistedFullSummaryReads": false,
+		"enableLazyRepoInitCompat": false,
 		"enableLazyRepoInit": false,
 		"enableLazyRepoInitForEphemeralContainers": false
 	},

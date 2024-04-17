@@ -266,12 +266,16 @@ export function create(
 	repoManagerFactory: IRepositoryManagerFactory,
 ): Router {
 	const router: Router = Router();
+
+	const lazyRepoInitCompatEnabled: boolean = store.get("git:enableLazyRepoInitCompat") ?? false;
 	const enableLazyRepoInit = store.get("git:enableLazyRepoInit") ?? false;
 	const enableLazyRepoInitForEphemeralContainers =
 		store.get("git:enableLazyRepoInitForEphemeralContainers") ?? false;
+
 	const persistLatestFullSummary: boolean = store.get("git:persistLatestFullSummary") ?? false;
 	const persistLatestFullEphemeralSummary: boolean =
 		store.get("git:persistLatestFullEphemeralSummary") ?? false;
+
 	const enableLowIoWrite: "initial" | boolean = store.get("git:enableLowIoWrite") ?? false;
 	const enableOptimizedInitialSummary: boolean =
 		store.get("git:enableOptimizedInitialSummary") ?? false;
@@ -439,7 +443,7 @@ export function create(
 					rootDir: repoManager.path,
 				});
 				let realLazyInitialSummaryId: string | undefined;
-				if (createdNewRepoManager && !isInitialSummary && enableLazyRepoInit) {
+				if (createdNewRepoManager && !isInitialSummary && lazyRepoInitCompatEnabled) {
 					// If a new repo was created and this is not the initial summary, we need to perform lazy repo init
 					// process for adding the first summary back into storage.
 					const latestFullSummary = await retrieveLatestFullSummaryFromStorage(
