@@ -1,5 +1,8 @@
 # Detached Trees
 
+> Note: in the past, the term "repair data" has been used to refer to detached trees because of the role they play in undo/redo.
+> The more general term "detached trees" is preferred because said trees are sometimes needed outside of undo/redo scenarios.
+
 ## What are Detached Trees?
 
 SharedTree allows users to generate edits that remove or overwrite nodes from the document.
@@ -111,7 +114,8 @@ but this complexity is contained in a relatively small body of code that exists 
 
 ### Evolvability
 
-This design seems well positioned to accommodate future evolutions like the concept of [undo window](undo.md).
+This design seems well positioned to accommodate future evolutions like the concept of [undo window](undo.md) and partial checkouts
+(because of the refresher system).
 
 ## How it Works
 
@@ -179,3 +183,57 @@ The current approach has the following consequences:
 The translation from a `DetachedNodeId` to path in a detached field is handled by the `DetachedFieldIndex`.
 
 ### The `DetachedFieldIndex`
+
+The `DetachedFieldIndex` is used primarily by the `visitDelta` function to translate `DetachedNodeId`s to paths.
+Its core responsibilities are as follows:
+
+-   Picking a path where a newly detached tree (associated with a specific `DetachedNodeId`) should be stored
+-   Checking if a specific detached tree (`DetachedNodeId`) has an assigned path,
+    and if so, recalling what that path is.
+
+#### A Naive Scheme
+
+In theory, the conversion from `DetachedNodeId`s to paths could be a trivial one:
+
+```typescript
+function detachedNodeIdToPath(id: DetachedNodeId): UpPath {
+	const parentField = `detached-${id.major}-${id.minor}`;
+	return { parent: undefined, parentIndex: 0, parentField };
+}
+```
+
+While this would work, it has the following drawbacks:
+
+1. The overhear per detached tree may be prohibitive in scenarios (like text editing)
+   that lead to a large number of small detached trees,
+   because the `Forest` would have to store a string of the form `detached-<major>-<minor>` for each detached tree.
+2. It assumes we are able to dictate to `DeltaVisitor`s (specifically, to `Forest`s) how they should identify detached trees.
+   This is not currently an issue because we do have that ability,
+   but it is possible we will want to allow `Forest`s to have their own (more efficient) scheme for identifying them.
+   This point is weak on its own, but it provides an incentive to pick an approach that,
+   on top of addressing point 1, also addresses it.
+
+#### The Current Scheme
+
+The scheme used by our actual `DetachedFieldIndex` implementation involves the introduction of a new kind of identifier: `ForestRootId`.
+`ForestRootId`s act as a indirection layer between (and has 1:1 relationship with) a detached tree's `DetachedNodeId` and its corresponding path in the `Forest`:
+for a specific detached tree, one can map its `DetachedNodeId` to a `ForestRootId`, and map that `ForestRootId` to the detached tree's path in the `Forest`.
+
+`ForestRootId`s are incrementing consecutive integers that are picked by the `DetachedFieldIndex` when it is made aware of new detached trees.
+The actual detached tree path for a given `ForestRootId` is derivable from that `ForestRootId` alone.
+
+The fact that `ForestRootId`s are (typically) small integers makes them cheap to store.
+The fact that `ForestRootId`s are consecutive makes them well suited to run-length encoding.
+Finally, the fact that `ForestRootId`s are otherwise arbitrary prepares us for the possibility that `Forest` could be picking them in the future.
+It also entails that the arbitrary mapping from each `DetachedNodeId` to their corresponding `ForestRootId`
+must be maintained in the `DetachedFieldIndex` and included in summaries.
+
+The indirection layer that `ForestRootId`s provide affords `DetachedFieldIndex` some freedom in how to organize the mapping between `DetachedNodeId`s and `ForestRootId`s.
+This allows `DetachedFieldIndex` to pack more than one detached tree in the same detached field.
+This makes representing detached trees in the forest more efficient because the cost of storing the detached field's key is amortized over all the detached trees stored under it.
+In principle, `DetachedFieldIndex` could store all detached nodes under a single detached field,
+but doing so would make the mapping from `DetachedNodeId` to `ForestRootId` very complex,
+and likely less compact to represent in memory and in summaries.
+Where the sweet spot lies depends on editing patterns and we will do our best to approximate according to usage data,
+and if usage data suggests it is worth the engineering effort.
+The crucial point is that we have encapsulated that concern in the `DetachedFieldIndex` and are able to revisit its implementation details.
