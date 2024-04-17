@@ -352,7 +352,7 @@ function calculateRequestedRange(
 	baseVersion: string,
 	requested?: number | string,
 	adjustPublicMajor: boolean = false,
-) {
+): string {
 	if (requested === undefined || requested === 0) {
 		return baseVersion;
 	}
