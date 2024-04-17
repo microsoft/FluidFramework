@@ -24,7 +24,7 @@ Also, here is a link test, including a bad link, because we should have some rea
 
 - Good link (no alias): [TestClass](docs/simple-suite-test#testclass-class)
 
-- Good link (with alias): [function alias text](docs/simple-suite-test#testfunction-function)
+- Good link (with alias): _function alias text_
 
 - Bad link (no alias): _InvalidItem_
 

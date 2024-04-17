@@ -11,6 +11,11 @@ overrides:
   sharp: ^0.33.2
   '@fluentui/react-positioning>@floating-ui/dom': ~1.5.4
 
+patchedDependencies:
+  '@microsoft/api-extractor@7.42.3':
+    hash: f66stvskxun56mencgf6l5564y
+    path: patches/@microsoft__api-extractor@7.42.3.patch
+
 importers:
 
   .:
@@ -55,7 +60,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-tools': 1.0.195075
       '@microsoft/api-documenter': 7.23.12
-      '@microsoft/api-extractor': 7.42.3
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y
       '@octokit/core': 4.2.4
       auto-changelog: 2.4.0
       c8: 8.0.1
@@ -137,7 +142,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.37.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y
       '@types/jsrsasign': 10.5.12
       '@types/uuid': 9.0.7
       copyfiles: 2.4.1
@@ -317,7 +322,7 @@ importers:
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       cross-env: ^7.0.3
-      css-loader: ^1.0.0
+      css-loader: ^6.11.0
       eslint: ~8.55.0
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
@@ -347,7 +352,7 @@ importers:
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence': link:../../../packages/dds/sequence
-      css-loader: 1.0.1_webpack@5.89.0
+      css-loader: 6.11.0_webpack@5.89.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       style-loader: 1.3.0_webpack@5.89.0
@@ -404,7 +409,7 @@ importers:
       '@types/uuid': ^9.0.2
       clean-webpack-plugin: ^4.0.0
       cross-env: ^7.0.3
-      css-loader: ^1.0.0
+      css-loader: ^6.11.0
       eslint: ~8.55.0
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
@@ -434,7 +439,7 @@ importers:
       '@fluidframework/container-runtime-definitions': link:../../../packages/runtime/container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
-      css-loader: 1.0.1_webpack@5.89.0
+      css-loader: 6.11.0_webpack@5.89.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       style-loader: 1.3.0_webpack@5.89.0
@@ -504,7 +509,7 @@ importers:
       '@types/uuid': ^9.0.2
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
-      css-loader: ^1.0.0
+      css-loader: ^6.11.0
       eslint: ~8.55.0
       expect-puppeteer: ^9.0.2
       html-loader: ^3.1.0
@@ -574,7 +579,7 @@ importers:
       '@types/uuid': 9.0.7
       copyfiles: 2.4.1
       cross-env: 7.0.3
-      css-loader: 1.0.1_webpack@5.89.0
+      css-loader: 6.11.0_webpack@5.89.0
       eslint: 8.55.0
       expect-puppeteer: 9.0.2
       html-loader: 3.1.2_webpack@5.89.0
@@ -704,7 +709,7 @@ importers:
       '@types/node': ^18.19.0
       clean-webpack-plugin: ^4.0.0
       cross-env: ^7.0.3
-      css-loader: ^1.0.0
+      css-loader: ^6.11.0
       eslint: ~8.55.0
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
@@ -735,7 +740,7 @@ importers:
       '@fluidframework/request-handler': link:../../../packages/framework/request-handler
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/task-manager': link:../../../packages/dds/task-manager
-      css-loader: 1.0.1_webpack@5.89.0
+      css-loader: 6.11.0_webpack@5.89.0
       style-loader: 1.3.0_webpack@5.89.0
     devDependencies:
       '@biomejs/biome': 1.6.2
@@ -799,7 +804,7 @@ importers:
       '@types/react-dom': ^17.0.18
       '@types/uuid': ^9.0.2
       cross-env: ^7.0.3
-      css-loader: ^1.0.0
+      css-loader: ^6.11.0
       eslint: ~8.55.0
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
@@ -858,7 +863,7 @@ importers:
       '@types/react-dom': 17.0.25
       '@types/uuid': 9.0.7
       cross-env: 7.0.3
-      css-loader: 1.0.1_webpack@5.89.0
+      css-loader: 6.11.0_webpack@5.89.0
       eslint: 8.55.0
       expect-puppeteer: 9.0.2
       html-webpack-plugin: 5.5.3_webpack@5.89.0
@@ -1345,7 +1350,7 @@ importers:
       '@types/webpack-hot-middleware': ^2.25.9
       buffer: ^6.0.3
       c8: ^8.0.1
-      css-loader: ^1.0.0
+      css-loader: ^6.11.0
       eslint: ~8.55.0
       express: ^4.19.2
       fs-extra: ^9.1.0
@@ -1383,7 +1388,7 @@ importers:
       '@types/webpack-hot-middleware': 2.25.9_webpack-cli@4.10.0
       buffer: 6.0.3
       c8: 8.0.1
-      css-loader: 1.0.1_webpack@5.89.0
+      css-loader: 6.11.0_webpack@5.89.0
       eslint: 8.55.0
       fs-extra: 9.1.0
       prettier: 3.0.3
@@ -1584,7 +1589,7 @@ importers:
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       cross-env: ^7.0.3
-      css-loader: ^1.0.0
+      css-loader: ^6.11.0
       eslint: ~8.55.0
       expect-puppeteer: ^9.0.2
       jest: ^29.6.2
@@ -1624,7 +1629,7 @@ importers:
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       cross-env: 7.0.3
-      css-loader: 1.0.1_webpack@5.89.0
+      css-loader: 6.11.0_webpack@5.89.0
       eslint: 8.55.0
       expect-puppeteer: 9.0.2
       jest: 29.7.0_@types+node@18.19.1
@@ -1747,7 +1752,7 @@ importers:
       '@types/react': ^17.0.44
       codemirror: ^5.48.4
       copyfiles: ^2.4.1
-      css-loader: ^1.0.0
+      css-loader: ^6.11.0
       eslint: ~8.55.0
       prettier: ~3.0.3
       react: ^17.0.1
@@ -1785,7 +1790,7 @@ importers:
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       copyfiles: 2.4.1
-      css-loader: 1.0.1_webpack@5.89.0
+      css-loader: 6.11.0_webpack@5.89.0
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
@@ -1955,7 +1960,7 @@ importers:
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/sequence': workspace:~
       '@types/react': ^17.0.44
-      css-loader: ^1.0.0
+      css-loader: ^6.11.0
       eslint: ~8.55.0
       html-loader: ^3.1.0
       loader-utils: ^1.1.0
@@ -1991,7 +1996,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_webpack-cli@4.10.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@types/react': 17.0.71
-      css-loader: 1.0.1_webpack@5.89.0
+      css-loader: 6.11.0_webpack@5.89.0
       eslint: 8.55.0
       html-loader: 3.1.2_webpack@5.89.0
       loader-utils: 1.4.2
@@ -2101,7 +2106,7 @@ importers:
       '@types/react-dom': ^17.0.18
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
-      css-loader: ^1.0.0
+      css-loader: ^6.11.0
       eslint: ~8.55.0
       expect-puppeteer: ^9.0.2
       jest: ^29.6.2
@@ -2150,7 +2155,7 @@ importers:
       '@types/react-dom': 17.0.25
       copyfiles: 2.4.1
       cross-env: 7.0.3
-      css-loader: 1.0.1_webpack@5.89.0
+      css-loader: 6.11.0_webpack@5.89.0
       eslint: 8.55.0
       expect-puppeteer: 9.0.2
       jest: 29.7.0_@types+node@18.19.1
@@ -2339,7 +2344,7 @@ importers:
       '@types/prosemirror-state': ^1.4.0
       '@types/react': ^17.0.44
       copyfiles: ^2.4.1
-      css-loader: ^1.0.0
+      css-loader: ^6.11.0
       eslint: ~8.55.0
       orderedmap: ^2.1.0
       prettier: ~3.0.3
@@ -2401,7 +2406,7 @@ importers:
       '@types/prosemirror-state': 1.4.0
       '@types/react': 17.0.71
       copyfiles: 2.4.1
-      css-loader: 1.0.1_webpack@5.89.0
+      css-loader: 6.11.0_webpack@5.89.0
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
@@ -2436,7 +2441,7 @@ importers:
       '@fluidframework/sequence': workspace:~
       '@types/react': ^17.0.44
       '@types/simplemde': ^1.11.7
-      css-loader: ^1.0.0
+      css-loader: ^6.11.0
       eslint: ~8.55.0
       prettier: ~3.0.3
       react: ^17.0.1
@@ -2474,7 +2479,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@types/react': 17.0.71
       '@types/simplemde': 1.11.11
-      css-loader: 1.0.1_webpack@5.89.0
+      css-loader: 6.11.0_webpack@5.89.0
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
@@ -2582,7 +2587,7 @@ importers:
       '@types/react-dom': ^17.0.18
       '@types/uuid': ^9.0.2
       cross-env: ^7.0.3
-      css-loader: ^1.0.0
+      css-loader: ^6.11.0
       eslint: ~8.55.0
       expect-puppeteer: ^9.0.2
       jest: ^29.6.2
@@ -2629,7 +2634,7 @@ importers:
       '@types/react-dom': 17.0.25
       '@types/uuid': 9.0.7
       cross-env: 7.0.3
-      css-loader: 1.0.1_webpack@5.89.0
+      css-loader: 6.11.0_webpack@5.89.0
       eslint: 8.55.0
       expect-puppeteer: 9.0.2
       jest: 29.7.0_@types+node@18.19.1
@@ -2676,7 +2681,7 @@ importers:
       c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
-      css-loader: ^1.0.0
+      css-loader: ^6.11.0
       debug: ^4.3.4
       eslint: ~8.55.0
       esm-loader-css: ^1.0.4
@@ -2734,7 +2739,7 @@ importers:
       c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
-      css-loader: 1.0.1_webpack@5.89.0
+      css-loader: 6.11.0_webpack@5.89.0
       eslint: 8.55.0
       esm-loader-css: 1.0.6
       file-loader: 3.0.1_webpack@5.89.0
@@ -2800,7 +2805,7 @@ importers:
       copyfiles: ^2.4.1
       cors: ^2.8.4
       cross-env: ^7.0.3
-      css-loader: ^1.0.0
+      css-loader: ^6.11.0
       eslint: ~8.55.0
       eslint-config-prettier: ~9.0.0
       expect-puppeteer: ^9.0.2
@@ -2854,7 +2859,7 @@ importers:
       '@fluidframework/telemetry-utils': link:../../packages/utils/telemetry-utils
       '@fluidframework/tinylicious-driver': link:../../packages/drivers/tinylicious-driver
       cors: 2.8.5
-      css-loader: 1.0.1_webpack@5.89.0
+      css-loader: 6.11.0_webpack@5.89.0
       express: 4.19.2
       lodash.isequal: 4.5.0
       node-fetch: 2.7.0
@@ -3021,7 +3026,7 @@ importers:
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
-      css-loader: ^1.0.0
+      css-loader: ^6.11.0
       eslint: ~8.55.0
       fluid-framework: workspace:~
       html-webpack-plugin: ^5.5.0
@@ -3043,7 +3048,7 @@ importers:
       '@fluid-experimental/odsp-client': link:../../../../packages/service-clients/odsp-client
       '@fluidframework/odsp-doclib-utils': link:../../../../packages/utils/odsp-doclib-utils
       '@fluidframework/odsp-driver-definitions': link:../../../../packages/drivers/odsp-driver-definitions
-      css-loader: 1.0.1_webpack@5.89.0
+      css-loader: 6.11.0_webpack@5.89.0
       fluid-framework: link:../../../../packages/framework/fluid-framework
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
@@ -3216,7 +3221,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.37.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       '@types/uuid': 9.0.7
@@ -3363,7 +3368,7 @@ importers:
       '@types/node': ^18.19.0
       clean-webpack-plugin: ^4.0.0
       cross-env: ^7.0.3
-      css-loader: ^1.0.0
+      css-loader: ^6.11.0
       eslint: ~8.55.0
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
@@ -3395,7 +3400,7 @@ importers:
       '@fluidframework/routerlicious-driver': link:../../../packages/drivers/routerlicious-driver
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/tinylicious-driver': link:../../../packages/drivers/tinylicious-driver
-      css-loader: 1.0.1_webpack@5.89.0
+      css-loader: 6.11.0_webpack@5.89.0
       style-loader: 1.3.0_webpack@5.89.0
     devDependencies:
       '@biomejs/biome': 1.6.2
@@ -3463,7 +3468,7 @@ importers:
       '@types/uuid': ^9.0.2
       clean-webpack-plugin: ^4.0.0
       cross-env: ^7.0.3
-      css-loader: ^1.0.0
+      css-loader: ^6.11.0
       eslint: ~8.55.0
       eslint-config-prettier: ~9.0.0
       expect-puppeteer: ^9.0.2
@@ -3525,7 +3530,7 @@ importers:
       '@types/uuid': 9.0.7
       clean-webpack-plugin: 4.0.0_webpack@5.89.0
       cross-env: 7.0.3
-      css-loader: 1.0.1_webpack@5.89.0
+      css-loader: 6.11.0_webpack@5.89.0
       eslint: 8.55.0
       eslint-config-prettier: 9.0.0_eslint@8.55.0
       expect-puppeteer: 9.0.2
@@ -3582,7 +3587,7 @@ importers:
       '@types/uuid': ^9.0.2
       clean-webpack-plugin: ^4.0.0
       cross-env: ^7.0.3
-      css-loader: ^1.0.0
+      css-loader: ^6.11.0
       eslint: ~8.55.0
       eslint-config-prettier: ~9.0.0
       expect-puppeteer: ^9.0.2
@@ -3644,7 +3649,7 @@ importers:
       '@types/uuid': 9.0.7
       clean-webpack-plugin: 4.0.0_webpack@5.89.0
       cross-env: 7.0.3
-      css-loader: 1.0.1_webpack@5.89.0
+      css-loader: 6.11.0_webpack@5.89.0
       eslint: 8.55.0
       eslint-config-prettier: 9.0.0_eslint@8.55.0
       expect-puppeteer: 9.0.2
@@ -3696,7 +3701,7 @@ importers:
       '@types/react-dom': ^17.0.18
       '@types/uuid': ^9.0.2
       cross-env: ^7.0.3
-      css-loader: ^1.0.0
+      css-loader: ^6.11.0
       eslint: ~8.55.0
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
@@ -3756,7 +3761,7 @@ importers:
       '@types/react-dom': 17.0.25
       '@types/uuid': 9.0.7
       cross-env: 7.0.3
-      css-loader: 1.0.1_webpack@5.89.0
+      css-loader: 6.11.0_webpack@5.89.0
       eslint: 8.55.0
       expect-puppeteer: 9.0.2
       html-webpack-plugin: 5.5.3_webpack@5.89.0
@@ -3882,7 +3887,7 @@ importers:
       '@types/node': ^18.19.0
       clean-webpack-plugin: ^4.0.0
       cross-env: ^7.0.3
-      css-loader: ^1.0.0
+      css-loader: ^6.11.0
       eslint: ~8.55.0
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
@@ -3908,7 +3913,7 @@ importers:
       '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
       '@fluidframework/container-runtime-definitions': link:../../../packages/runtime/container-runtime-definitions
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
-      css-loader: 1.0.1_webpack@5.89.0
+      css-loader: 6.11.0_webpack@5.89.0
       style-loader: 1.3.0_webpack@5.89.0
     devDependencies:
       '@biomejs/biome': 1.6.2
@@ -3961,7 +3966,7 @@ importers:
       '@types/react-dom': ^17.0.18
       clean-webpack-plugin: ^4.0.0
       cross-env: ^7.0.3
-      css-loader: ^1.0.0
+      css-loader: ^6.11.0
       eslint: ~8.55.0
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
@@ -3990,7 +3995,7 @@ importers:
       '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
       '@fluidframework/container-runtime-definitions': link:../../../packages/runtime/container-runtime-definitions
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
-      css-loader: 1.0.1_webpack@5.89.0
+      css-loader: 6.11.0_webpack@5.89.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       style-loader: 1.3.0_webpack@5.89.0
@@ -4070,7 +4075,7 @@ importers:
       clean-webpack-plugin: ^4.0.0
       concurrently: ^8.2.1
       cross-env: ^7.0.3
-      css-loader: ^1.0.0
+      css-loader: ^6.11.0
       eslint: ~8.55.0
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
@@ -4143,7 +4148,7 @@ importers:
       clean-webpack-plugin: 4.0.0_webpack@5.89.0
       concurrently: 8.2.2
       cross-env: 7.0.3
-      css-loader: 1.0.1_webpack@5.89.0
+      css-loader: 6.11.0_webpack@5.89.0
       eslint: 8.55.0
       expect-puppeteer: 9.0.2
       html-webpack-plugin: 5.5.3_webpack@5.89.0
@@ -4380,7 +4385,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/chai': 4.3.11
       '@types/debug': 4.1.12
       '@types/lodash': 4.14.202
@@ -4497,7 +4502,7 @@ importers:
       '@fluidframework/server-local-server': 4.0.0
       '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../../../../packages/test/test-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/lodash': 4.14.202
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -4934,7 +4939,7 @@ importers:
       '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/path-browserify': 1.0.2
@@ -5002,7 +5007,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       best-random: 1.0.3
@@ -5069,7 +5074,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-runtime-utils': link:../../../../../packages/runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       best-random: 1.0.3
@@ -5136,7 +5141,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/diff': 3.5.8
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -5239,7 +5244,7 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
       '@fluidframework/undo-redo': link:../../../packages/framework/undo-redo
-      '@microsoft/api-extractor': 7.42.3
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y
       '@types/chai': 4.3.11
       '@types/lru-cache': 5.1.1
       '@types/mocha': 9.1.1
@@ -5298,7 +5303,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/node': 18.19.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -5344,7 +5349,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/node': 18.19.1
       copyfiles: 2.4.1
       eslint: 8.55.0
@@ -5419,7 +5424,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/base64-js': 1.3.2
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': link:../../test/types_jest-environment-puppeteer
@@ -5484,7 +5489,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0
       '@fluidframework/container-definitions-previous': /@fluidframework/container-definitions/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y
       copyfiles: 2.4.1
       eslint: 8.55.0
       eslint-plugin-deprecation: 2.0.0_bpztyfltmpuv6lhsgzfwtmxhte
@@ -5516,7 +5521,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/core-interfaces-previous': /@fluidframework/core-interfaces/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/node': 18.19.1
       copyfiles: 2.4.1
       eslint: 8.55.0
@@ -5560,7 +5565,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/sinon': 17.0.3
@@ -5606,7 +5611,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0
       '@fluidframework/driver-definitions-previous': /@fluidframework/driver-definitions/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y
       copyfiles: 2.4.1
       eslint: 8.55.0
       prettier: 3.0.3
@@ -5668,7 +5673,7 @@ importers:
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -5737,7 +5742,7 @@ importers:
       '@fluidframework/counter-previous': /@fluidframework/counter/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -5805,7 +5810,7 @@ importers:
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
@@ -5892,7 +5897,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/map-previous': /@fluidframework/map/2.0.0-internal.8.0.0
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/path-browserify': 1.0.2
@@ -5987,7 +5992,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/matrix-previous': /@fluidframework/matrix/2.0.0-internal.8.0.0
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@tiny-calc/micro': 0.0.0-alpha.5
       '@types/double-ended-queue': 2.1.7
       '@types/mocha': 9.1.1
@@ -6073,7 +6078,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/merge-tree-previous': /@fluidframework/merge-tree/2.0.0-internal.8.0.0
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/diff': 3.5.8
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -6151,7 +6156,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/ordered-collection-previous': /@fluidframework/ordered-collection/2.0.0-internal.8.0.0
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
@@ -6222,7 +6227,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -6294,7 +6299,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/register-collection-previous': /@fluidframework/register-collection/2.0.0-internal.8.0.0
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -6384,7 +6389,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/sequence-previous': /@fluidframework/sequence/2.0.0-internal.8.0.0
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/diff': 3.5.8
       '@types/double-ended-queue': 2.1.7
       '@types/mocha': 9.1.1
@@ -6472,7 +6477,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/shared-object-base-previous': /@fluidframework/shared-object-base/2.0.0-internal.8.0.0
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/benchmark': 2.1.5
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -6545,7 +6550,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/shared-summary-block-previous': /@fluidframework/shared-summary-block/2.0.0-internal.8.0.0
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/benchmark': 2.1.5
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -6625,7 +6630,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/task-manager-previous': /@fluidframework/task-manager/2.0.0-internal.8.0.0
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -6701,7 +6706,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
@@ -6805,7 +6810,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../../test/test-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/diff': 3.5.8
       '@types/easy-table': 0.0.32
       '@types/mocha': 9.1.1
@@ -6867,7 +6872,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/debugger-previous': /@fluidframework/debugger/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/node': 18.19.1
       copyfiles: 2.4.1
       eslint: 8.55.0
@@ -6924,7 +6929,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/driver-base-previous': /@fluidframework/driver-base/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -6978,7 +6983,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/driver-web-cache-previous': /@fluidframework/driver-web-cache/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/jest': 29.5.3
       '@types/node': 18.19.1
       copyfiles: 2.4.1
@@ -7028,7 +7033,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/file-driver-previous': /@fluidframework/file-driver/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/node': 18.19.1
       copyfiles: 2.4.1
       eslint: 8.55.0
@@ -7105,7 +7110,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/local-driver-previous': /@fluidframework/local-driver/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/jsrsasign': 10.5.12
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -7189,7 +7194,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/odsp-driver-previous': /@fluidframework/odsp-driver/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/node-fetch': 2.6.11
@@ -7237,7 +7242,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/odsp-driver-definitions-previous': /@fluidframework/odsp-driver-definitions/2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      '@microsoft/api-extractor': 7.42.3
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.55.0
@@ -7290,7 +7295,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/odsp-urlresolver-previous': /@fluidframework/odsp-urlresolver/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       copyfiles: 2.4.1
@@ -7345,7 +7350,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/replay-driver-previous': /@fluidframework/replay-driver/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/nock': 9.3.1
       '@types/node': 18.19.1
       copyfiles: 2.4.1
@@ -7425,7 +7430,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/routerlicious-driver-previous': /@fluidframework/routerlicious-driver/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/nock': 9.3.1
       '@types/node': 18.19.1
@@ -7491,7 +7496,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/routerlicious-urlresolver-previous': /@fluidframework/routerlicious-urlresolver/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/nconf': 0.10.6
       '@types/node': 18.19.1
@@ -7553,7 +7558,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/tinylicious-driver-previous': /@fluidframework/tinylicious-driver/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/jsrsasign': 10.5.12
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -7616,7 +7621,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
       copyfiles: 2.4.1
@@ -7685,7 +7690,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -7766,7 +7771,7 @@ importers:
       '@fluidframework/merge-tree': link:../../dds/merge-tree
       '@fluidframework/sequence': link:../../dds/sequence
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -7823,7 +7828,7 @@ importers:
       '@fluid-tools/build-cli': 0.37.0_@types+node@18.19.1
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/sinon': 17.0.3
@@ -7880,7 +7885,7 @@ importers:
       '@fluid-internal/mocha-test-setup': link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli': 0.37.0
       '@fluidframework/build-tools': 0.37.0
-      '@microsoft/api-extractor': 7.42.3
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y
       '@types/chai': 4.3.11
       '@types/mocha': 9.1.1
       '@types/sinon': 17.0.3
@@ -7942,7 +7947,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/node': 18.19.1
       copyfiles: 2.4.1
       eslint: 8.55.0
@@ -7996,7 +8001,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/diff': 3.5.8
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -8050,7 +8055,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/node': 18.19.1
       copyfiles: 2.4.1
       eslint: 8.55.0
@@ -8124,7 +8129,7 @@ importers:
       '@fluidframework/fluid-static-previous': /@fluidframework/fluid-static/2.0.0-internal.8.0.0
       '@fluidframework/map': link:../../dds/map
       '@fluidframework/sequence': link:../../dds/sequence
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -8175,7 +8180,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/node': 18.19.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -8230,7 +8235,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/request-handler-previous': /@fluidframework/request-handler/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/diff': 3.5.8
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -8287,7 +8292,7 @@ importers:
       '@fluidframework/datastore': link:../../runtime/datastore
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/synthesize-previous': /@fluidframework/synthesize/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -8350,7 +8355,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@fluidframework/undo-redo-previous': /@fluidframework/undo-redo/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/diff': 3.5.8
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -8435,7 +8440,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/container-loader-previous': /@fluidframework/container-loader/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/debug': 4.1.12
       '@types/double-ended-queue': 2.1.7
       '@types/mocha': 9.1.1
@@ -8515,7 +8520,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/driver-utils-previous': /@fluidframework/driver-utils/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/sinon': 17.0.3
@@ -8565,7 +8570,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.37.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y
       copyfiles: 2.4.1
       eslint: 8.55.0
       prettier: 3.0.3
@@ -8584,7 +8589,6 @@ importers:
       '@fluid-tools/build-cli': ^0.37.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.37.0
-      '@fluidframework/common-definitions': ^1.1.0
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/container-runtime-previous': npm:@fluidframework/container-runtime@2.0.0-internal.8.0.0
@@ -8624,7 +8628,6 @@ importers:
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
-      '@fluidframework/common-definitions': 1.1.0
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-runtime-definitions': link:../container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -8654,7 +8657,7 @@ importers:
       '@fluidframework/container-runtime-previous': /@fluidframework/container-runtime/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-runtime-utils': link:../test-runtime-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/double-ended-queue': 2.1.7
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -8707,7 +8710,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0
       '@fluidframework/container-runtime-definitions-previous': /@fluidframework/container-runtime-definitions/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y
       copyfiles: 2.4.1
       eslint: 8.55.0
       prettier: 3.0.3
@@ -8778,7 +8781,7 @@ importers:
       '@fluidframework/datastore-previous': /@fluidframework/datastore/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-runtime-utils': link:../test-runtime-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/lodash': 4.14.202
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -8829,7 +8832,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0
       '@fluidframework/datastore-definitions-previous': /@fluidframework/datastore-definitions/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y
       copyfiles: 2.4.1
       eslint: 8.55.0
       prettier: 3.0.3
@@ -8887,7 +8890,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/id-compressor-previous': /@fluidframework/id-compressor/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
@@ -8938,7 +8941,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/runtime-definitions-previous': /@fluidframework/runtime-definitions/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.42.3
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y
       copyfiles: 2.4.1
       eslint: 8.55.0
       eslint-plugin-deprecation: 2.0.0_bpztyfltmpuv6lhsgzfwtmxhte
@@ -9003,7 +9006,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/runtime-utils-previous': /@fluidframework/runtime-utils/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/sinon': 17.0.3
@@ -9087,7 +9090,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-runtime-utils-previous': /@fluidframework/test-runtime-utils/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/jsrsasign': 10.5.12
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -9172,7 +9175,7 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../../test/test-utils
       '@fluidframework/tree': link:../../dds/tree
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
@@ -9405,7 +9408,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-utils': link:../../test/test-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
@@ -9481,7 +9484,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-utils': link:../../test/test-utils
       '@fluidframework/tinylicious-client-previous': /@fluidframework/tinylicious-client/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       copyfiles: 2.4.1
@@ -9731,7 +9734,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       copyfiles: 2.4.1
@@ -9866,7 +9869,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -9943,7 +9946,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.37.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y
       copyfiles: 2.4.1
       eslint: 8.55.0
       prettier: 3.0.3
@@ -10016,7 +10019,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
       copyfiles: 2.4.1
@@ -10201,7 +10204,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -10389,7 +10392,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-utils-previous': /@fluidframework/test-utils/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/debug': 4.1.12
       '@types/diff': 3.5.8
       '@types/mocha': 9.1.1
@@ -10507,7 +10510,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.37.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/nock': 9.3.1
       '@types/node': 18.19.1
@@ -10581,7 +10584,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0
       '@fluidframework/devtools-previous': /@fluid-experimental/devtools/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y
       '@types/chai': 4.3.11
       '@types/mocha': 9.1.1
       c8: 8.0.1
@@ -10815,7 +10818,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/id-compressor': link:../../../runtime/id-compressor
       '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.42.3
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y
       '@types/chai': 4.3.11
       '@types/mocha': 9.1.1
       c8: 8.0.1
@@ -11064,7 +11067,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/shared-object-base': link:../../../dds/shared-object-base
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@previewjs/api': 13.0.0
       '@previewjs/chromeless': 7.0.3_@types+node@18.19.1
       '@previewjs/core': 23.0.1_@types+node@18.19.1
@@ -11221,7 +11224,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/fluid-runner-previous': /@fluidframework/fluid-runner/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/yargs': 17.0.32
@@ -11374,7 +11377,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/odsp-doclib-utils-previous': /@fluidframework/odsp-doclib-utils/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -11439,7 +11442,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/telemetry-utils-previous': /@fluidframework/telemetry-utils/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/debug': 4.1.12
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -11509,7 +11512,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/tool-utils-previous': /@fluidframework/tool-utils/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/debug': 4.1.12
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -16448,7 +16451,7 @@ packages:
       '@fluid-tools/version-tools': 0.37.0
       '@fluidframework/build-tools': 0.37.0
       '@fluidframework/bundle-size-tools': 0.37.0
-      '@microsoft/api-extractor': 7.42.3
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y
       '@oclif/core': 2.4.0
       '@oclif/plugin-autocomplete': 3.0.13
       '@oclif/plugin-commands': 3.2.2
@@ -16508,7 +16511,7 @@ packages:
       '@fluid-tools/version-tools': 0.37.0
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/bundle-size-tools': 0.37.0
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@oclif/core': 2.4.0
       '@oclif/plugin-autocomplete': 3.0.13
       '@oclif/plugin-commands': 3.2.2
@@ -16568,7 +16571,7 @@ packages:
       '@fluid-tools/version-tools': 0.37.0
       '@fluidframework/build-tools': 0.37.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/bundle-size-tools': 0.37.0_webpack-cli@4.10.0
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@oclif/core': 2.4.0
       '@oclif/plugin-autocomplete': 3.0.13
       '@oclif/plugin-commands': 3.2.2
@@ -16628,7 +16631,7 @@ packages:
       '@fluid-tools/version-tools': 0.37.0
       '@fluidframework/build-tools': 0.37.0_webpack-cli@4.10.0
       '@fluidframework/bundle-size-tools': 0.37.0_webpack-cli@4.10.0
-      '@microsoft/api-extractor': 7.42.3
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y
       '@oclif/core': 2.4.0
       '@oclif/plugin-autocomplete': 3.0.13
       '@oclif/plugin-commands': 3.2.2
@@ -19651,7 +19654,7 @@ packages:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor/7.42.3:
+  /@microsoft/api-extractor/7.42.3_f66stvskxun56mencgf6l5564y:
     resolution: {integrity: sha512-JNLJFpGHz6ekjS6bvYXxUBeRGnSHeCMFNvRbCQ+7XXB/ZFrgLSMPwWtEq40AiWAy+oyG5a4RSNwdJTp0B2USvQ==}
     hasBin: true
     dependencies:
@@ -19671,8 +19674,9 @@ packages:
     transitivePeerDependencies:
       - '@types/node'
     dev: true
+    patched: true
 
-  /@microsoft/api-extractor/7.42.3_@types+node@18.19.1:
+  /@microsoft/api-extractor/7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1:
     resolution: {integrity: sha512-JNLJFpGHz6ekjS6bvYXxUBeRGnSHeCMFNvRbCQ+7XXB/ZFrgLSMPwWtEq40AiWAy+oyG5a4RSNwdJTp0B2USvQ==}
     hasBin: true
     dependencies:
@@ -19692,6 +19696,7 @@ packages:
     transitivePeerDependencies:
       - '@types/node'
     dev: true
+    patched: true
 
   /@microsoft/applicationinsights-analytics-js/2.8.16_tslib@1.14.1:
     resolution: {integrity: sha512-jN9uxOv5DRHyPf7AndMBPx7AqprbsWKRfvsoQEftarzbz4+0xdooPEmUceXBX+XJ0OiYG9E5tBvgqCV4eeSGAA==}
@@ -24823,6 +24828,7 @@ packages:
   /ansi-regex/2.1.1:
     resolution: {integrity: sha512-TIGnTpdo+E3+pCyAluZvtED5p5wCqLdezCyhPZzKPcxvFplEt4i+W7OONCKgeZFT3+y5NZZfOOS/Bdcanm1MYA==}
     engines: {node: '>=0.10.0'}
+    dev: true
 
   /ansi-regex/3.0.1:
     resolution: {integrity: sha512-+O9Jct8wf++lXxxFc4hc8LsjaSq0HFzzL7cVsw8pRDIPdjKD2mT4ytDZlLuSBZ4cLKZFXIrMGO7DbQCtMJJMKw==}
@@ -24846,6 +24852,7 @@ packages:
   /ansi-styles/2.2.1:
     resolution: {integrity: sha512-kmCevFghRiWM7HB5zTPULl4r9bVFSWjz62MhqizDGUrq2NWuNMQyuv4tHHoKJHs69M/MF64lEcHdYIocrdWQYA==}
     engines: {node: '>=0.10.0'}
+    dev: true
 
   /ansi-styles/3.2.1:
     resolution: {integrity: sha512-VT0ZI6kZRdTh8YyJw3SMbYm/u+NqfsAxEpWO0Pf9sq8/e94WxxOpPKx9FR1FlyCtOVDNOQ+8ntlqFxiRc+r5qA==}
@@ -25384,13 +25391,6 @@ packages:
   /b4a/1.6.6:
     resolution: {integrity: sha512-5Tk1HLk6b6ctmjIkAcU/Ujv/1WqiDl0F0JdRCR80VsOcUlHcu7pWeWRlOqQLHfDEsVx9YH/aif5AG4ehoCtTmg==}
     dev: true
-
-  /babel-code-frame/6.26.0:
-    resolution: {integrity: sha512-XqYMR2dfdGMW+hd0IUZ2PwK+fGeFkOxZJ0wY+JaQAHzt1Zx8LcvpiZD2NiGkEG8qx0CfkAOr5xt76d1e8vG90g==}
-    dependencies:
-      chalk: 1.1.3
-      esutils: 2.0.3
-      js-tokens: 3.0.2
 
   /babel-jest/29.7.0_@babel+core@7.24.4:
     resolution: {integrity: sha512-BrvGY3xZSwEcCzKvKsCi2GgHqDqsYkOP4/by5xCgIwGXQxIEh+8ew3gmrE1y7XRR6LHZIj6yLYnUi/mm2KXKBg==}
@@ -26421,6 +26421,7 @@ packages:
       has-ansi: 2.0.0
       strip-ansi: 3.0.1
       supports-color: 2.0.0
+    dev: true
 
   /chalk/2.4.2:
     resolution: {integrity: sha512-Mti+f9lpJNcwF4tWV8/OrTTtF1gZi+f8FqlyAdouralcFWFQWF2+NgCHShjkCb+IFBLq9buZwE1xckQU4peSuQ==}
@@ -27546,26 +27547,6 @@ packages:
       type-fest: 1.4.0
     dev: true
 
-  /css-loader/1.0.1_webpack@5.89.0:
-    resolution: {integrity: sha512-+ZHAZm/yqvJ2kDtPne3uX0C+Vr3Zn5jFn2N4HywtS5ujwvsVkyg0VArEXpl3BgczDA8anieki1FIzhchX4yrDw==}
-    engines: {node: '>= 6.9.0 <7.0.0 || >= 8.9.0'}
-    peerDependencies:
-      webpack: ^4.0.0 || ^5.82.0
-    dependencies:
-      babel-code-frame: 6.26.0
-      css-selector-tokenizer: 0.7.3
-      icss-utils: 2.1.0
-      loader-utils: 1.4.2
-      lodash: 4.17.21
-      postcss: 6.0.23
-      postcss-modules-extract-imports: 1.2.1
-      postcss-modules-local-by-default: 1.2.0
-      postcss-modules-scope: 1.1.0
-      postcss-modules-values: 1.3.0
-      postcss-value-parser: 3.3.1
-      source-list-map: 2.0.1
-      webpack: 5.89.0_webpack-cli@4.10.0
-
   /css-loader/3.6.0_webpack@4.47.0:
     resolution: {integrity: sha512-M5lSukoWi1If8dhQAUCvj4H8vUt3vOnwbQBH9DdTm/s4Ym2B/3dPMtYZeJmq7Q3S3Pa+I94DcZ7pc9bP14cWIQ==}
     engines: {node: '>= 8.9.0'}
@@ -27607,6 +27588,28 @@ packages:
       webpack: 5.89.0_webpack-cli@4.10.0
     dev: true
 
+  /css-loader/6.11.0_webpack@5.89.0:
+    resolution: {integrity: sha512-CTJ+AEQJjq5NzLga5pE39qdiSV56F8ywCIsqNIRF0r7BDgWsN25aazToqAFg7ZrtA/U016xudB3ffgweORxX7g==}
+    engines: {node: '>= 12.13.0'}
+    peerDependencies:
+      '@rspack/core': 0.x || 1.x
+      webpack: ^5.0.0 || ^5.82.0
+    peerDependenciesMeta:
+      '@rspack/core':
+        optional: true
+      webpack:
+        optional: true
+    dependencies:
+      icss-utils: 5.1.0_postcss@8.4.35
+      postcss: 8.4.35
+      postcss-modules-extract-imports: 3.1.0_postcss@8.4.35
+      postcss-modules-local-by-default: 4.0.5_postcss@8.4.35
+      postcss-modules-scope: 3.2.0_postcss@8.4.35
+      postcss-modules-values: 4.0.0_postcss@8.4.35
+      postcss-value-parser: 4.2.0
+      semver: 7.6.0
+      webpack: 5.89.0_webpack-cli@4.10.0
+
   /css-select-base-adapter/0.1.1:
     resolution: {integrity: sha512-jQVeeRG70QI08vSTwf1jHxp74JoZsr2XSgETae8/xC8ovSnL2WF87GTLO86Sbwdt2lK4Umg4HnnwMO4YF3Ce7w==}
     dev: true
@@ -27639,12 +27642,6 @@ packages:
       domutils: 3.1.0
       nth-check: 2.1.1
     dev: true
-
-  /css-selector-tokenizer/0.7.3:
-    resolution: {integrity: sha512-jWQv3oCEL5kMErj4wRnK/OPoBi0D+P1FR2cDCKYPaMeD2eW3/mttav8HT4hT1CKopiJI/psEULjkClhvJo4Lvg==}
-    dependencies:
-      cssesc: 3.0.0
-      fastparse: 1.1.2
 
   /css-tree/1.0.0-alpha.37:
     resolution: {integrity: sha512-DMxWJg0rnz7UgxKT0Q1HU/L9BeJI0M6ksor0OgqOnF+aRCDWg/N2641HmVyU9KVIu0OVVWOb2IpC9A+BJRnejg==}
@@ -29632,6 +29629,7 @@ packages:
   /esutils/2.0.3:
     resolution: {integrity: sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==}
     engines: {node: '>=0.10.0'}
+    dev: true
 
   /etag/1.8.1:
     resolution: {integrity: sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg==}
@@ -30032,9 +30030,6 @@ packages:
   /fastest-levenshtein/1.0.16:
     resolution: {integrity: sha512-eRnCtTTtGZFpQCwhJiUOuxPQWRXVKYDn0b2PeHfXL6/Zi53SLAzAHfVhVWK2AryC/WH05kGfxhFIPvTF0SXQzg==}
     engines: {node: '>= 4.9.1'}
-
-  /fastparse/1.1.2:
-    resolution: {integrity: sha512-483XLLxTVIwWK3QTrMGRqUfUpoOs/0hbQrl2oz4J0pAcm3A3bu84wxTFqGqkJzewCLdME38xJLJAxBABfQT8sQ==}
 
   /fastq/1.15.0:
     resolution: {integrity: sha512-wBrocU2LCXXa+lWBt8RoIRD89Fi8OdABODa/kEnyeyjS5aZO5/GNvI5sEINADqP/h8M29UHTHUb53sUu5Ihqdw==}
@@ -31294,6 +31289,7 @@ packages:
     engines: {node: '>=0.10.0'}
     dependencies:
       ansi-regex: 2.1.1
+    dev: true
 
   /has-bigints/1.0.2:
     resolution: {integrity: sha512-tSvCKtBr9lkF0Ex0aQiP9N+OpV4zi2r/Nee5VkRDbaqv35RLYMzbwQfFSZZH0kR+Rd6302UJZ2p/bJCEoR3VoQ==}
@@ -31968,14 +31964,6 @@ packages:
     dependencies:
       safer-buffer: 2.1.2
 
-  /icss-replace-symbols/1.1.0:
-    resolution: {integrity: sha512-chIaY3Vh2mh2Q3RGXttaDIzeiPvaVXJ+C4DAh/w3c37SKZ/U6PGMmuicR2EQQp9bKG8zLMCl7I+PtIoOOPp8Gg==}
-
-  /icss-utils/2.1.0:
-    resolution: {integrity: sha512-bsVoyn/1V4R1kYYjLcWLedozAM4FClZUdjE9nIr8uWY7xs78y9DATgwz2wGU7M+7z55KenmmTkN2DVJ7bqzjAA==}
-    dependencies:
-      postcss: 6.0.23
-
   /icss-utils/4.1.1:
     resolution: {integrity: sha512-4aFq7wvWyMHKgxsH8QQtGpvbASCf+eM3wPRLI6R+MgAnTCZ6STYsRvttLvRWK0Nfif5piF394St3HeJDaljGPA==}
     engines: {node: '>= 6'}
@@ -31990,7 +31978,6 @@ packages:
       postcss: ^8.1.0
     dependencies:
       postcss: 8.4.35
-    dev: true
 
   /idb/6.1.5:
     resolution: {integrity: sha512-IJtugpKkiVXQn5Y+LteyBCNk1N8xpGV3wWZk9EVtZWH8DYkjBn0bX1XnGP9RkyZF0sAcywa6unHqSWKe7q4LGw==}
@@ -33740,9 +33727,6 @@ packages:
     engines: {node: '>= 0.8'}
     dev: true
 
-  /js-tokens/3.0.2:
-    resolution: {integrity: sha512-RjTcuD4xjtthQkaWH7dFlH85L+QaVtSoOyGdZ3g6HFhS9dFNDfLyqgm2NFe2X6cQpeFmt0452FJjFG5UameExg==}
-
   /js-tokens/4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
 
@@ -33981,6 +33965,7 @@ packages:
     hasBin: true
     dependencies:
       minimist: 1.2.8
+    dev: true
 
   /json5/2.2.3:
     resolution: {integrity: sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg==}
@@ -34496,6 +34481,7 @@ packages:
       big.js: 5.2.2
       emojis-list: 3.0.0
       json5: 1.0.2
+    dev: true
 
   /loader-utils/2.0.4:
     resolution: {integrity: sha512-xXqpXoINfFhgua9xiqD8fPFHgkoq1mmmpE92WlDbm9rNRd/EbRb+Gqf908T2DMfuHjjJlksiK2RbHVOdD/MqSw==}
@@ -37612,11 +37598,6 @@ packages:
       webpack: 4.47.0_webpack-cli@4.10.0
     dev: true
 
-  /postcss-modules-extract-imports/1.2.1:
-    resolution: {integrity: sha512-6jt9XZwUhwmRUhb/CkyJY020PYaPJsCyt3UjbaWo6XEbH/94Hmv6MP7fG2C5NDU/BcHzyGYxNtHvM+LTf9HrYw==}
-    dependencies:
-      postcss: 6.0.23
-
   /postcss-modules-extract-imports/2.0.0:
     resolution: {integrity: sha512-LaYLDNS4SG8Q5WAWqIJgdHPJrDDr/Lv775rMBFUbgjTz6j34lUznACHcdRWroPvXANP2Vj7yNK57vp9eFqzLWQ==}
     engines: {node: '>= 6'}
@@ -37633,11 +37614,13 @@ packages:
       postcss: 8.4.35
     dev: true
 
-  /postcss-modules-local-by-default/1.2.0:
-    resolution: {integrity: sha512-X4cquUPIaAd86raVrBwO8fwRfkIdbwFu7CTfEOjiZQHVQwlHRSkTgH5NLDmMm5+1hQO8u6dZ+TOOJDbay1hYpA==}
+  /postcss-modules-extract-imports/3.1.0_postcss@8.4.35:
+    resolution: {integrity: sha512-k3kNe0aNFQDAZGbin48pL2VNidTF0w4/eASDsxlyspobzU3wZQLOGj7L9gfRe0Jo9/4uud09DsjFNH7winGv8Q==}
+    engines: {node: ^10 || ^12 || >= 14}
+    peerDependencies:
+      postcss: ^8.1.0
     dependencies:
-      css-selector-tokenizer: 0.7.3
-      postcss: 6.0.23
+      postcss: 8.4.35
 
   /postcss-modules-local-by-default/3.0.3:
     resolution: {integrity: sha512-e3xDq+LotiGesympRlKNgaJ0PCzoUIdpH0dj47iWAui/kyTgh3CiAr1qP54uodmJhl6p9rN6BoNcdEDVJx9RDw==}
@@ -37661,11 +37644,16 @@ packages:
       postcss-value-parser: 4.2.0
     dev: true
 
-  /postcss-modules-scope/1.1.0:
-    resolution: {integrity: sha512-LTYwnA4C1He1BKZXIx1CYiHixdSe9LWYVKadq9lK5aCCMkoOkFyZ7aigt+srfjlRplJY3gIol6KUNefdMQJdlw==}
+  /postcss-modules-local-by-default/4.0.5_postcss@8.4.35:
+    resolution: {integrity: sha512-6MieY7sIfTK0hYfafw1OMEG+2bg8Q1ocHCpoWLqOKj3JXlKu4G7btkmM/B7lFubYkYWmRSPLZi5chid63ZaZYw==}
+    engines: {node: ^10 || ^12 || >= 14}
+    peerDependencies:
+      postcss: ^8.1.0
     dependencies:
-      css-selector-tokenizer: 0.7.3
-      postcss: 6.0.23
+      icss-utils: 5.1.0_postcss@8.4.35
+      postcss: 8.4.35
+      postcss-selector-parser: 6.0.13
+      postcss-value-parser: 4.2.0
 
   /postcss-modules-scope/2.2.0:
     resolution: {integrity: sha512-YyEgsTMRpNd+HmyC7H/mh3y+MeFWevy7V1evVhJWewmMbjDHIbZbOXICC2y+m1xI1UVfIT1HMW/O04Hxyu9oXQ==}
@@ -37685,11 +37673,14 @@ packages:
       postcss-selector-parser: 6.0.13
     dev: true
 
-  /postcss-modules-values/1.3.0:
-    resolution: {integrity: sha512-i7IFaR9hlQ6/0UgFuqM6YWaCfA1Ej8WMg8A5DggnH1UGKJvTV/ugqq/KaULixzzOi3T/tF6ClBXcHGCzdd5unA==}
+  /postcss-modules-scope/3.2.0_postcss@8.4.35:
+    resolution: {integrity: sha512-oq+g1ssrsZOsx9M96c5w8laRmvEu9C3adDSjI8oTcbfkrTE8hx/zfyobUoWIxaKPO8bt6S62kxpw5GqypEw1QQ==}
+    engines: {node: ^10 || ^12 || >= 14}
+    peerDependencies:
+      postcss: ^8.1.0
     dependencies:
-      icss-replace-symbols: 1.1.0
-      postcss: 6.0.23
+      postcss: 8.4.35
+      postcss-selector-parser: 6.0.13
 
   /postcss-modules-values/3.0.0:
     resolution: {integrity: sha512-1//E5jCBrZ9DmRX+zCtmQtRSV6PV42Ix7Bzj9GbwJceduuf7IqP8MgeTXuRDHOWj2m0VzZD5+roFWDuU8RQjcg==}
@@ -37706,7 +37697,6 @@ packages:
     dependencies:
       icss-utils: 5.1.0_postcss@8.4.35
       postcss: 8.4.35
-    dev: true
 
   /postcss-nested/6.0.1_postcss@8.4.31:
     resolution: {integrity: sha512-mEp4xPMi5bSWiMbsgoPfcP74lsWLHkQbZc3sY+jWYd65CUwXrUaTp0fmNpa01ZcETKlIgUdFN/MpS2xZtqL9dQ==}
@@ -37732,14 +37722,9 @@ packages:
     dependencies:
       cssesc: 3.0.0
       util-deprecate: 1.0.2
-    dev: true
-
-  /postcss-value-parser/3.3.1:
-    resolution: {integrity: sha512-pISE66AbVkp4fDQ7VHBwRNXzAAKJjw4Vw7nWI/+Q3vuly7SNfgYXvm6i5IgFylHGK5sP/xHAbB7N49OS4gWNyQ==}
 
   /postcss-value-parser/4.2.0:
     resolution: {integrity: sha512-1NNCs6uurfkVbeXG4S8JFT9t19m45ICnif8zWLd5oPSZ50QnwMfK+H3jv408d4jw/7Bttv5axS5IiHoLaVNHeQ==}
-    dev: true
 
   /postcss/5.2.18:
     resolution: {integrity: sha512-zrUjRRe1bpXKsX1qAJNJjqZViErVuyEkMTRrwu4ud4sbTtIBRmtaYDrHmcGgmrbsW3MHfmtIf+vJumgQn+PrXg==}
@@ -37750,14 +37735,6 @@ packages:
       source-map: 0.5.7
       supports-color: 3.2.3
     dev: true
-
-  /postcss/6.0.23:
-    resolution: {integrity: sha512-soOk1h6J3VMTZtVeVpv15/Hpdl2cBLX3CAw4TAbkpTJiNPk9YP/zWcD1ND+xEtvyuuvKzbxliTOIyvkSeSJ6ag==}
-    engines: {node: '>=4.0.0'}
-    dependencies:
-      chalk: 2.4.2
-      source-map: 0.6.1
-      supports-color: 5.5.0
 
   /postcss/7.0.39:
     resolution: {integrity: sha512-yioayjNbHn6z1/Bywyb2Y4s3yvDAeXGOyxqD+LnVOinq6Mdmd++SW2wUNVzavyyHxd6+DxzWGIuosg6P1Rj8uA==}
@@ -40471,6 +40448,7 @@ packages:
 
   /source-list-map/2.0.1:
     resolution: {integrity: sha512-qnQ7gVMxGNxsiL4lEuJwe/To8UnK7fAnmbGEEH8RpLouuKbeEm0lhbQVFIrNSuB+G7tVrAlVsZgETT5nljf+Iw==}
+    dev: true
 
   /source-map-js/0.6.2:
     resolution: {integrity: sha512-/3GptzWzu0+0MBQFrDKzw/DvvMTUORvgY6k6jd/VS6iCR4RDTKWH6v6WPwQoUO8667uQEf9Oe38DxAYWY5F/Ug==}
@@ -40982,6 +40960,7 @@ packages:
     engines: {node: '>=0.10.0'}
     dependencies:
       ansi-regex: 2.1.1
+    dev: true
 
   /strip-ansi/4.0.0:
     resolution: {integrity: sha512-4XaJ2zQdCzROZDivEVIDPkcQn8LMFSa8kj8Gxb/Lnwzv9A8VctNZ+lfivC/sV3ivW8ElJTERXZoPBRrZKkNKow==}
@@ -41168,6 +41147,7 @@ packages:
   /supports-color/2.0.0:
     resolution: {integrity: sha512-KKNVtd6pCYgPIKU4cp2733HWYCpplQhddZLBUryaAHou723x+FRzQ5Df824Fj+IyyuiQTRoub4SnIFfIcrp70g==}
     engines: {node: '>=0.8.0'}
+    dev: true
 
   /supports-color/3.2.3:
     resolution: {integrity: sha512-Jds2VIYDrlp5ui7t8abHN2bjAu4LV/q4N2KivFPpGH0lrka0BMq/33AmECUXlKPcHigkNaqfXRENFju+rlcy+A==}

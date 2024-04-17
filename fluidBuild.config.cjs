@@ -168,7 +168,6 @@ module.exports = {
 
 		// Independent packages
 		"build": "common/build",
-		"common-def": "common/lib/common-definitions",
 		"common-utils": "common/lib/common-utils",
 		"protocol-def": "common/lib/protocol-definitions",
 
@@ -449,7 +448,6 @@ module.exports = {
 			"@fluid-tools/markdown-magic",
 			"@fluid-tools/telemetry-generator",
 			"@fluidframework/build-common",
-			"@fluidframework/common-definitions",
 			"@fluidframework/common-utils",
 			"@fluidframework/eslint-config-fluid",
 			"@fluid-internal/eslint-plugin-fluid",
