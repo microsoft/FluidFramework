@@ -280,6 +280,7 @@ describe("AnchorSet", () => {
 		checkEquality(anchors.locate(anchor4), path4);
 	});
 
+	// Skipped due to the non-atomization of delta visit
 	it.skip("can rebase over removal of multiple nodes and restore of single node", () => {
 		const [anchors, anchor1, anchor2, anchor3, anchor4] = setup();
 		const detachMark = {

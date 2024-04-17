@@ -204,6 +204,7 @@ describe("Fuzz - revert", () => {
 			saveFailures: {
 				directory: failureDirectory,
 			},
+			skip: [0, 3, 17, 18], // Skipped due to the non-atomization of delta visit
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		});
 	});

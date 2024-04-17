@@ -175,6 +175,7 @@ describe("Editing", () => {
 			expectJsonTree([tree1, tree2], expectedState);
 		});
 
+		// Skipped due to the non-atomization of delta visit
 		it.skip("can order concurrent inserts within concurrently removed content", () => {
 			const tree = makeTreeFromJson(["A", "B", "C", "D"]);
 			const delAB = tree.fork();
@@ -710,6 +711,7 @@ describe("Editing", () => {
 			assert.deepEqual(actual, expected);
 		});
 
+		// Skipped due to the non-atomization of delta visit
 		it.skip("move adjacent nodes to separate destinations", () => {
 			const tree = makeTreeFromJson(["A", "B", "C", "D"]);
 			const tree2 = tree.fork();
@@ -1794,7 +1796,7 @@ describe("Editing", () => {
 			expectJsonTree([tree, tree2], []);
 		});
 
-		it.skip("rebase insert within revive", () => {
+		it("rebase insert within revive", () => {
 			const tree = makeTreeFromJson(["y"]);
 			const tree1 = tree.fork();
 
@@ -1886,7 +1888,7 @@ describe("Editing", () => {
 			expectJsonTree([tree, treeC], startState);
 		});
 
-		describe.skip("Exhaustive removal tests", () => {
+		describe("Exhaustive removal tests", () => {
 			// Toggle the constant below to run each scenario as a separate test.
 			// This is useful to debug a specific scenario but makes CI and the test browser slower.
 			// Note that if the numbers of nodes and peers are too high (more than 3 nodes and 3 peers),

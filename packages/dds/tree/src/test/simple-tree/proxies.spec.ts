@@ -312,6 +312,7 @@ describe("ArrayNode Proxy", () => {
 			assert.deepEqual(root, [42, 43]);
 		});
 
+		// Skipped due to the non-atomization of delta visit
 		it.skip("multiple objects", () => {
 			const root = hydrate(schema, []);
 			assert.deepEqual(root, []);
