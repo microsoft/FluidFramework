@@ -22,6 +22,7 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 		}),
 		path_to_manifest_file: Flags.string({
 			description: "Path to manifest",
+			char: "p",
 			required: true,
 		}),
 		...BaseCommand.flags,
