@@ -42,7 +42,6 @@ export interface IAttributor {
 
 /**
  * {@inheritdoc IAttributor}
- * @internal
  */
 export class Attributor implements IAttributor {
 	protected readonly keyToInfo: Map<number, AttributionInfo>;
@@ -83,7 +82,6 @@ export class Attributor implements IAttributor {
 /**
  * Attributor which listens to an op stream and records entries for each op.
  * Sequence numbers are used as attribution keys.
- * @internal
  */
 export class OpStreamAttributor extends Attributor implements IAttributor {
 	public constructor(
