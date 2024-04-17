@@ -53,8 +53,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockQuorumClients,
 	validateAssertionError,
-} from "@fluidframework/test-runtime-utils/internal";
-import { MockAudience } from "@fluidframework/test-runtime-utils/internal";
+ MockAudience } from "@fluidframework/test-runtime-utils/internal";
 import { SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";
