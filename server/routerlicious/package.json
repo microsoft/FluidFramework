@@ -118,6 +118,9 @@
 			"ignoreMissing": [
 				"@types/node"
 			]
+		},
+		"patchedDependencies": {
+			"@microsoft/api-extractor@7.42.3": "patches/@microsoft__api-extractor@7.42.3.patch"
 		}
 	}
 }
