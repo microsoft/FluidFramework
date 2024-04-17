@@ -151,6 +151,9 @@
 		],
 		"overrides": {
 			"sharp": "^0.33.2"
+		},
+		"patchedDependencies": {
+			"@microsoft/api-extractor@7.43.1": "../../../patches/@microsoft__api-extractor@7.43.1.patch"
 		}
 	},
 	"typeValidation": {
