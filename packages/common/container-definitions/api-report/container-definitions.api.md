@@ -85,7 +85,7 @@ export interface IAudienceEvents extends IEvent {
     (event: "selfChanged", listener: (oldValue: ISelf | undefined, newValue: ISelf) => void): void;
 }
 
-// @internal
+// @alpha
 export interface IAudienceOwner extends IAudience {
     addMember(clientId: string, details: IClient): void;
     removeMember(clientId: string): boolean;

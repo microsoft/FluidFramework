@@ -151,7 +151,8 @@ steps:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
-      flub release report-unreleased --p .
+      echo VERSION=$SetVersion.version
+      flub release report-unreleased -p .
 
 - task: AzureCLI@2
   displayName: Upload Manifest Files

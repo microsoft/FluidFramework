@@ -432,9 +432,9 @@ export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationTyp
 
 // @alpha
 export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
-    constructor(deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>, mergeTreeClient: Client);
+    constructor(
+    deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>, mergeTreeClient: Client);
     get clientId(): string | undefined;
-    // (undocumented)
     readonly deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>;
     // (undocumented)
     readonly deltaOperation: TOperation;
@@ -499,8 +499,8 @@ export namespace SequenceIntervalIndexes {
 
 // @alpha
 export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
-    constructor(opArgs: IMergeTreeDeltaOpArgs | undefined, deltaArgs: IMergeTreeMaintenanceCallbackArgs, mergeTreeClient: Client);
-    // (undocumented)
+    constructor(
+    opArgs: IMergeTreeDeltaOpArgs | undefined, deltaArgs: IMergeTreeMaintenanceCallbackArgs, mergeTreeClient: Client);
     readonly opArgs: IMergeTreeDeltaOpArgs | undefined;
 }
 
