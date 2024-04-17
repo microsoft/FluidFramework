@@ -1,6 +1,6 @@
 ---
 title: Debugging
-menuPosition: 4
+menuPosition: 5
 status: unwritten
 draft: true
 ---
