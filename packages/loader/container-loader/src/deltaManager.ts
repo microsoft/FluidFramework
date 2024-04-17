@@ -191,6 +191,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	/** count number of noops sent by the client which may not be acked */
 	private noOpCount: number = 0;
+
+	/** count the number of signals sent by the client */
+	private signalCount: number = 0;
+
 	/** Track clientSequenceNumber of the last op */
 	private lastClientSequenceNumber: number = 0;
 
@@ -253,6 +257,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	public get minimumSequenceNumber(): number {
 		return this.minSequenceNumber;
+	}
+
+	public get signalSentCount(): number {
+		return this.signalCount;
 	}
 
 	/**
@@ -332,6 +340,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	}
 
 	public submitSignal(content: string, targetClientId?: string) {
+		this.signalCount++;
 		return this.connectionManager.submitSignal(content, targetClientId);
 	}
 
@@ -516,6 +525,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 		this.opsSize = 0;
 		this.noOpCount = 0;
+		this.signalCount = 0;
 
 		this.emit(
 			"connect",

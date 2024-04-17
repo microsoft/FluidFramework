@@ -162,6 +162,11 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
 	readonly outbound: IDeltaQueue<U[]>;
 
 	/**
+	 * Count of signals sent by the current client while in an active connection
+	 */
+	readonly signalSentCount?: number;
+
+	/**
 	 * The queue of inbound delta signals
 	 */
 	readonly inboundSignal: IDeltaQueue<ISignalMessage>;

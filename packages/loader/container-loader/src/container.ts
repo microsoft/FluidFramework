@@ -2128,6 +2128,7 @@ export class Container
 				checkpointSequenceNumber,
 				quorumSize: this._protocolHandler?.quorum.getMembers().size,
 				isDirty: this.isDirty,
+				signalCount: this.deltaManager.signalSentCount,
 				...this._deltaManager.connectionProps,
 			},
 			reason?.error,
