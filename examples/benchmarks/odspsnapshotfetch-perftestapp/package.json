@@ -55,7 +55,7 @@
 		"@types/webpack-hot-middleware": "^2.25.9",
 		"buffer": "^6.0.3",
 		"c8": "^8.0.1",
-		"css-loader": "^1.0.0",
+		"css-loader": "^6.11.0",
 		"eslint": "~8.55.0",
 		"fs-extra": "^9.1.0",
 		"prettier": "~3.0.3",
