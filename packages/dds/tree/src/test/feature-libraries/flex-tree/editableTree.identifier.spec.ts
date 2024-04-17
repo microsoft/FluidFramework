@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { SchemaBuilder, leaf, nodeKeyField, nodeKeySchema } from "../../../domains/index.js";
 import {
 	LocalNodeKey,

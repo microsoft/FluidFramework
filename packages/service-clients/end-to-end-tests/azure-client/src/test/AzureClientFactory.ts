@@ -10,8 +10,8 @@ import {
 	ITelemetryBaseLogger,
 } from "@fluidframework/azure-client";
 import { IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils";
-import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
+import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils/internal";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { createAzureTokenProvider } from "./AzureTokenFactory.js";

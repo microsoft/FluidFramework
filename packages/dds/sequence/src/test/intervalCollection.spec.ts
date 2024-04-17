@@ -4,14 +4,15 @@
  */
 
 import { strict as assert } from "assert";
+
 import { AttachState } from "@fluidframework/container-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
 	ReferenceType,
 	SlidingPreference,
 	reservedRangeLabelsKey,
-} from "@fluidframework/merge-tree";
-import { LoggingError } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/merge-tree/internal";
+import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
@@ -19,12 +20,14 @@ import {
 	MockEmptyDeltaConnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
+
 import { IIntervalCollection, Side } from "../intervalCollection.js";
 import { IntervalIndex } from "../intervalIndex/index.js";
 import { ISerializableInterval, IntervalStickiness, SequenceInterval } from "../intervals/index.js";
 import { SharedStringFactory } from "../sequenceFactory.js";
 import { SharedString } from "../sharedString.js";
+
 import { assertSequenceIntervals } from "./intervalTestUtils.js";
 
 class MockIntervalIndex<TInterval extends ISerializableInterval>
@@ -100,8 +103,7 @@ describe("SharedString interval collections", () => {
 			dataStoreRuntime1.options = {
 				intervalStickinessEnabled: true,
 			};
-			const containerRuntime1 =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -111,8 +113,7 @@ describe("SharedString interval collections", () => {
 
 			// Create and connect a second SharedString.
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime({ clientId: "2" });
-			const containerRuntime2 =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			dataStoreRuntime2.options = {
 				intervalStickinessEnabled: true,
 			};
@@ -1219,7 +1220,6 @@ describe("SharedString interval collections", () => {
 	describe("reconnect", () => {
 		let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
 		let containerRuntime1: MockContainerRuntimeForReconnection;
-		let containerRuntime2: MockContainerRuntimeForReconnection;
 		let sharedString2: SharedString;
 
 		let collection1: IIntervalCollection<SequenceInterval>;
@@ -1240,7 +1240,7 @@ describe("SharedString interval collections", () => {
 
 			// Create and connect a second SharedString.
 			const runtime2 = new MockFluidDataStoreRuntime({ clientId: "2" });
-			containerRuntime2 = containerRuntimeFactory.createContainerRuntime(runtime2);
+			containerRuntimeFactory.createContainerRuntime(runtime2);
 			sharedString2 = new SharedString(
 				runtime2,
 				"shared-string-2",

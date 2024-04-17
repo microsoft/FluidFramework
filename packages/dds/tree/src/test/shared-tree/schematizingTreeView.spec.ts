@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { UsageError } from "@fluidframework/telemetry-utils";
+
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	FieldKinds,
 	FlexFieldSchema,
@@ -13,10 +15,6 @@ import {
 	intoStoredSchema,
 	nodeKeyFieldKey,
 } from "../../feature-libraries/index.js";
-
-import { leaf } from "../../domains/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { required } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 // eslint-disable-next-line import/no-internal-modules
 import { UpdateType } from "../../shared-tree/schematizeTree.js";
 import {
@@ -26,18 +24,15 @@ import {
 } from "../../shared-tree/schematizingTreeView.js";
 import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toFlexSchema } from "../../simple-tree/toFlexSchema.js";
+import { toFlexConfig, toFlexSchema } from "../../simple-tree/toFlexSchema.js";
 import { brand, disposeSymbol } from "../../util/index.js";
-import {
-	checkoutFromConfig,
-	checkoutWithContent,
-	createTestUndoRedoStacks,
-	insert,
-} from "../utils.js";
+import { checkoutWithContent, createTestUndoRedoStacks, insert } from "../utils.js";
 
 const schema = new SchemaFactory("com.example");
 const config = new TreeConfiguration(schema.number, () => 5);
 const configGeneralized = new TreeConfiguration([schema.number, schema.string], () => 6);
+const flexConfig = toFlexConfig(config);
+const flexConfigGeneralized = toFlexConfig(configGeneralized);
 
 // Schema for tree that must always be empty.
 const emptySchema = new SchemaBuilderBase(FieldKinds.required, {
@@ -73,7 +68,7 @@ describe("SchematizingSimpleTreeView", () => {
 	});
 
 	it("Open and close existing document", () => {
-		const checkout = checkoutFromConfig(config);
+		const checkout = checkoutWithContent(flexConfig);
 		const view = new SchematizingSimpleTreeView(
 			checkout,
 			config,
@@ -107,7 +102,7 @@ describe("SchematizingSimpleTreeView", () => {
 	});
 
 	it("Modify root", () => {
-		const checkout = checkoutFromConfig(config);
+		const checkout = checkoutWithContent(flexConfig);
 		const view = new SchematizingSimpleTreeView(
 			checkout,
 			config,
@@ -119,11 +114,7 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.root, 5);
 		const log: [string, unknown][] = [];
 
-		// Currently there is no way to edit the root using the simple-tree API, so use flex-tree to do it:
-		const flexView = view.getViewOrError();
-		assert(!(flexView instanceof SchematizeError));
-		assert(flexView.flexTree.is(FlexFieldSchema.create(required, [leaf.number])));
-		flexView.flexTree.content = 6;
+		view.root = 6;
 
 		assert.deepEqual(log, [
 			["rootChanged", 6],
@@ -133,7 +124,7 @@ describe("SchematizingSimpleTreeView", () => {
 	});
 
 	it("Schema becomes incompatible then comparable", () => {
-		const checkout = checkoutFromConfig(config);
+		const checkout = checkoutWithContent(flexConfig);
 		const view = new SchematizingSimpleTreeView(
 			checkout,
 			config,
@@ -173,7 +164,7 @@ describe("SchematizingSimpleTreeView", () => {
 	});
 
 	it("Open upgradable document, then upgrade schema", () => {
-		const checkout = checkoutFromConfig(config);
+		const checkout = checkoutWithContent(flexConfig);
 		const view = new SchematizingSimpleTreeView(
 			checkout,
 			configGeneralized,
@@ -202,7 +193,7 @@ describe("SchematizingSimpleTreeView", () => {
 	});
 
 	it("Open incompatible document", () => {
-		const checkout = checkoutFromConfig(configGeneralized);
+		const checkout = checkoutWithContent(flexConfigGeneralized);
 		const view = new SchematizingSimpleTreeView(
 			checkout,
 			config,
@@ -248,5 +239,30 @@ describe("SchematizingSimpleTreeView", () => {
 		undoStack.pop()?.revert();
 		assert.equal(undoStack.length, 0);
 		assert.equal(redoStack.length, 1);
+	});
+
+	it("handles proxies in the initial tree", () => {
+		// This is a regression test for a bug in which the initial tree contained a proxy and subsequent reads of the tree would mix up the proxy associations.
+		const sf = new SchemaFactory(undefined);
+		class TestObject extends sf.object("TestObject", { value: sf.number }) {}
+		const treeContent = {
+			schema: TestObject,
+			// Initial tree contains a proxy
+			initialTree: () => new TestObject({ value: 3 }),
+		};
+		const view = new SchematizingSimpleTreeView(
+			checkoutWithContent(toFlexConfig(treeContent)),
+			treeContent,
+			createMockNodeKeyManager(),
+			brand(nodeKeyFieldKey),
+		);
+
+		// We do not call `upgradeSchema()` and thus the initial tree remains unused.
+		// Therefore, the proxy for `new TestObject(...)` should not be bound.
+		assert.equal(view.root.value, 3);
+		// In the buggy case, the proxy for `new TestObject(...)` would get bound during this set, which is wrong...
+		view.root.value = 4;
+		// ...and would cause this read to return a proxy to the TestObject rather than the primitive value.
+		assert.equal(view.root.value, 4);
 	});
 });

@@ -8,7 +8,8 @@ import {
 	ITelemetryBaseLogger,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { createChildLogger } from "./logger.js";
 import { ITelemetryLoggerExt, ITelemetryPropertiesExt } from "./telemetryTypes.js";
 
@@ -16,7 +17,7 @@ import { ITelemetryLoggerExt, ITelemetryPropertiesExt } from "./telemetryTypes.j
  * The MockLogger records events sent to it, and then can walk back over those events
  * searching for a set of expected events to match against the logged events.
  *
- * @internal
+ * @alpha
  */
 export class MockLogger implements ITelemetryBaseLogger {
 	events: ITelemetryBaseEvent[] = [];

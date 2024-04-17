@@ -5,21 +5,21 @@
 ```ts
 
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IContainerContext } from '@fluidframework/container-definitions';
-import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
-import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
-import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
+import { IContainerContext } from '@fluidframework/container-definitions/internal';
+import { IContainerRuntime } from '@fluidframework/container-runtime-definitions/internal';
+import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
+import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
-import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
+import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IRequestHeader } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
-import { IRuntime } from '@fluidframework/container-definitions';
-import { IRuntimeFactory } from '@fluidframework/container-definitions';
+import { IRuntime } from '@fluidframework/container-definitions/internal';
+import { IRuntimeFactory } from '@fluidframework/container-definitions/internal';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
-import { ISnapshotTreeWithBlobContents } from '@fluidframework/container-definitions';
-import { ISummarizeResult } from '@fluidframework/runtime-definitions';
+import { ISnapshotTreeWithBlobContents } from '@fluidframework/container-definitions/internal';
+import { ISummarizeResult } from '@fluidframework/runtime-definitions/internal';
 import { ISummaryBlob } from '@fluidframework/protocol-definitions';
 import { ISummaryStats } from '@fluidframework/runtime-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
@@ -51,7 +51,7 @@ export function convertToSummaryTree(snapshot: ITree, fullTree?: boolean): ISumm
 // @alpha
 export function convertToSummaryTreeWithStats(snapshot: ITree, fullTree?: boolean): ISummaryTreeWithStats;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export const create404Response: (request: IRequest) => IResponse;
 
 // @internal (undocumented)

@@ -25,11 +25,6 @@ A variety of configuration files were build and named while dual build pattern w
 
 preferrably for the CommonJS case.
 
-### Legacy Configurations
-
-This package previously exported a series of configurations with differing levels of validation.
-These configurations are now deprecated and have been replaced with the configuration noted above.
-
 ## TypeScript Configurations (`tsconfig.json`)
 
 This package includes several TypeScript project (tsconfig) files that are contain the common configurations used within

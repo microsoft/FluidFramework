@@ -217,7 +217,8 @@
 	},
 	"usage": {
 		"clientConnectivityCountingEnabled": false,
-		"signalUsageCountingEnabled": false
+		"signalUsageCountingEnabled": false,
+		"httpUsageCountingEnabled": false
 	},
 	"shared": {
 		"transientTenants": [],
@@ -279,7 +280,13 @@
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
 		"enableOfflineQueue": true,
-		"enableClustering": false
+		"enableClustering": false,
+		"retryDelayOnMoved": 100,
+		"maxRedirections": 16,
+		"retryStrategyParams": {
+			"delayPerAttemptMs": 50,
+			"maxDelayMs": 2000
+		}
 	},
 	"redisForTenantCache": {
 		"host": "redis",
@@ -290,7 +297,13 @@
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
 		"enableOfflineQueue": true,
-		"enableClustering": false
+		"enableClustering": false,
+		"retryDelayOnMoved": 100,
+		"maxRedirections": 16,
+		"retryStrategyParams": {
+			"delayPerAttemptMs": 50,
+			"maxDelayMs": 2000
+		}
 	},
 	"redis2": {
 		"host": "redis",
@@ -301,7 +314,13 @@
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
 		"enableOfflineQueue": true,
-		"enableClustering": false
+		"enableClustering": false,
+		"retryDelayOnMoved": 100,
+		"maxRedirections": 16,
+		"retryStrategyParams": {
+			"delayPerAttemptMs": 50,
+			"maxDelayMs": 2000
+		}
 	},
 	"redisForThrottling": {
 		"host": "redis",
@@ -312,7 +331,13 @@
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
 		"enableOfflineQueue": true,
-		"enableClustering": false
+		"enableClustering": false,
+		"retryDelayOnMoved": 100,
+		"maxRedirections": 16,
+		"retryStrategyParams": {
+			"delayPerAttemptMs": 50,
+			"maxDelayMs": 2000
+		}
 	},
 	"error": {
 		"track": false,

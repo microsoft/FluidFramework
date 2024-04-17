@@ -20,18 +20,39 @@ export interface IRedisClientConnectionManager {
 
 export class RedisClientConnectionManager implements IRedisClientConnectionManager {
 	private client: Redis.default | Redis.Cluster | undefined;
-	private readonly redisOptions: Redis.RedisOptions;
+	private readonly redisOptions: Partial<Redis.RedisOptions & Redis.ClusterOptions>;
 	private readonly enableClustering: boolean;
 	private readonly slotsRefreshTimeout: number;
+	private readonly retryDelays: {
+		retryDelayOnFailover: number;
+		retryDelayOnClusterDown: number;
+		retryDelayOnTryAgain: number;
+		retryDelayOnMoved: number;
+		maxRedirections?: number;
+	};
 
 	constructor(
-		redisOptions?: Redis.RedisOptions,
+		redisOptions?: Partial<Redis.RedisOptions & Redis.ClusterOptions>,
 		redisConfig?: any,
 		enableClustering: boolean = false,
 		slotsRefreshTimeout: number = 50000,
+		retryDelays: {
+			retryDelayOnFailover: number;
+			retryDelayOnClusterDown: number;
+			retryDelayOnTryAgain: number;
+			retryDelayOnMoved: number;
+			maxRedirections?: number;
+		} = {
+			retryDelayOnFailover: 100,
+			retryDelayOnClusterDown: 100,
+			retryDelayOnTryAgain: 100,
+			retryDelayOnMoved: 100,
+			maxRedirections: 16,
+		},
 	) {
 		this.enableClustering = enableClustering;
 		this.slotsRefreshTimeout = slotsRefreshTimeout;
+		this.retryDelays = retryDelays;
 		if (!redisOptions && !redisConfig) {
 			Lumberjack.error("Either redisOptions or redisConfig must be provided");
 			throw new Error("Either redisOptions or redisConfig must be provided");
@@ -45,10 +66,7 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 				enableReadyCheck: true,
 				maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 				enableOfflineQueue: redisConfig.enableOfflineQueue,
-				retryStrategy: getRedisClusterRetryStrategy({
-					delayPerAttemptMs: 50,
-					maxDelayMs: 2000,
-				}),
+				retryStrategy: getRedisClusterRetryStrategy(redisConfig.retryStrategyParams),
 			};
 			if (redisConfig.enableAutoPipelining) {
 				/**
@@ -74,16 +92,32 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 			}
 			this.redisOptions = redisOptions;
 		}
+
+		if (!this.redisOptions.retryStrategy) {
+			this.redisOptions.retryStrategy = getRedisClusterRetryStrategy({
+				delayPerAttemptMs: 50,
+				maxDelayMs: 2000,
+			});
+		}
 		this.authenticateAndCreateRedisClient();
 	}
 
 	private authenticateAndCreateRedisClient(): void {
+		if (this.enableClustering) {
+			this.redisOptions.clusterRetryStrategy = this.redisOptions.retryStrategy;
+		}
+
 		this.client = this.enableClustering
 			? new Redis.Cluster([{ port: this.redisOptions.port, host: this.redisOptions.host }], {
 					redisOptions: this.redisOptions,
 					slotsRefreshTimeout: this.slotsRefreshTimeout,
 					dnsLookup: (adr, callback) => callback(null, adr),
 					showFriendlyErrorStack: true,
+					retryDelayOnFailover: this.retryDelays.retryDelayOnFailover,
+					retryDelayOnClusterDown: this.retryDelays.retryDelayOnClusterDown,
+					retryDelayOnTryAgain: this.retryDelays.retryDelayOnTryAgain,
+					retryDelayOnMoved: this.retryDelays.retryDelayOnMoved,
+					maxRedirections: this.retryDelays.maxRedirections,
 			  })
 			: new Redis.default(this.redisOptions);
 		Lumberjack.info("Redis client created");

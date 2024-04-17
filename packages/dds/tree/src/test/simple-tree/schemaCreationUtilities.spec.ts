@@ -5,8 +5,9 @@
 
 import { strict as assert } from "node:assert";
 
-import { unreachableCase } from "@fluidframework/core-utils";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	NodeFromSchema,
 	SchemaFactory,
@@ -41,7 +42,7 @@ describe("schemaCreationUtilities", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
 			"tree",
 		);
-		const view: TreeView<Parent> = tree.schematize(config);
+		const view: TreeView<typeof Parent> = tree.schematize(config);
 		const mode = view.root.mode;
 		switch (true) {
 			case mode instanceof Mode.Bonus: {
@@ -115,7 +116,7 @@ describe("schemaCreationUtilities", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
 			"tree",
 		);
-		const view: TreeView<Parent> = tree.schematize(config);
+		const view: TreeView<typeof Parent> = tree.schematize(config);
 		const mode = view.root.mode;
 		switch (mode.value) {
 			case "Fun": {

@@ -5,19 +5,18 @@
 
 import {
 	IChannelAttributes,
-	IChannelFactory,
-	IChannelServices,
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { SharedObject } from "@fluidframework/shared-object-base/internal";
+
 import { ISharedMap, ISharedMapEvents } from "./interfaces.js";
 import { IMapDataObjectSerializable, IMapOperation, MapKernel } from "./mapKernel.js";
-import { pkgVersion } from "./packageVersion.js";
 
 interface IMapSerializationFormat {
 	blobs?: string[];
@@ -27,70 +26,8 @@ interface IMapSerializationFormat {
 const snapshotFileName = "header";
 
 /**
- * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link ISharedMap}.
- *
- * @sealed
- * @alpha
- */
-export class MapFactory implements IChannelFactory<ISharedMap> {
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
-	 */
-	public static readonly Type = "https://graph.microsoft.com/types/map";
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
-	 */
-	public static readonly Attributes: IChannelAttributes = {
-		type: MapFactory.Type,
-		snapshotFormatVersion: "0.2",
-		packageVersion: pkgVersion,
-	};
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
-	 */
-	public get type(): string {
-		return MapFactory.Type;
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
-	 */
-	public get attributes(): IChannelAttributes {
-		return MapFactory.Attributes;
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-	 */
-	public async load(
-		runtime: IFluidDataStoreRuntime,
-		id: string,
-		services: IChannelServices,
-		attributes: IChannelAttributes,
-	): Promise<ISharedMap> {
-		const map = new SharedMap(id, runtime, attributes);
-		await map.load(services);
-
-		return map;
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
-	 */
-	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap {
-		const map = new SharedMap(id, runtime, MapFactory.Attributes);
-		map.initializeLocal();
-
-		return map;
-	}
-}
-
-/**
  * {@inheritDoc ISharedMap}
- * @public
- * @deprecated Please use SharedTree for new containers.  SharedMap is supported for loading preexisting Fluid Framework 1.0 containers only.
+ * @alpha
  */
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
 	/**

@@ -4,10 +4,10 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { ContainerMessageType } from "../messageTypes.js";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+
 import { IBatch } from "./definitions.js";
 
 /**
@@ -50,7 +50,7 @@ export class OpGroupingManager {
 	}
 
 	public groupBatch(batch: IBatch): IBatch {
-		assert(this.shouldGroup(batch), "cannot group the provided batch");
+		assert(this.shouldGroup(batch), 0x946 /* cannot group the provided batch */);
 
 		if (batch.content.length >= 1000) {
 			this.logger.sendTelemetryEvent({
@@ -86,11 +86,9 @@ export class OpGroupingManager {
 			...batch,
 			content: [
 				{
-					localOpMetadata: undefined,
 					metadata: undefined,
 					referenceSequenceNumber: batch.content[0].referenceSequenceNumber,
 					contents: serializedContent,
-					type: OpGroupingManager.groupedBatchOp as ContainerMessageType,
 				},
 			],
 		};
@@ -98,7 +96,7 @@ export class OpGroupingManager {
 	}
 
 	public ungroupOp(op: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
-		assert(isGroupContents(op.contents), "can only ungroup a grouped batch");
+		assert(isGroupContents(op.contents), 0x947 /* can only ungroup a grouped batch */);
 		const contents: IGroupedBatchMessageContents = op.contents;
 
 		let fakeCsn = 1;

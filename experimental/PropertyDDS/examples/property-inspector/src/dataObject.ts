@@ -6,10 +6,10 @@
 import { EventEmitter } from "@fluid-example/example-utils";
 import { PropertyTreeFactory, SharedPropertyTree } from "@fluid-experimental/property-dds";
 import { BaseProperty } from "@fluid-experimental/property-properties";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IDirectory, IValueChanged } from "@fluidframework/map";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { IDirectory, IValueChanged } from "@fluidframework/map/internal";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 
 export interface IPropertyTree extends EventEmitter {
 	pset: any;

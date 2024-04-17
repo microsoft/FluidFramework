@@ -6,27 +6,28 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	FluidDataStoreRuntime,
 	FluidObjectHandle,
 	ISharedObjectRegistry,
-} from "@fluidframework/datastore";
+} from "@fluidframework/datastore/internal";
 import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
-import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
+import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map/internal";
+import { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntry,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
+import { type ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
-	type ITelemetryLoggerExt,
 	UsageError,
 	createChildLogger,
 	tagCodeArtifacts,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
+
 import { IAgentScheduler, IAgentSchedulerEvents } from "./agent.js";
 
 // Note: making sure this ID is unique and does not collide with storage provided clientID

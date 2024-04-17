@@ -6,6 +6,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
+
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	ITestDataObject,
@@ -13,31 +14,31 @@ import {
 	describeCompat,
 	itExpects,
 } from "@fluid-private/test-version-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	AllowTombstoneRequestHeaderKey,
 	ContainerRuntime,
 	IOnDemandSummarizeOptions,
 	ISummarizer,
 	TombstoneResponseHeaderKey,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import {
 	IErrorBase,
 	IFluidHandle,
 	IRequest,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { delay } from "@fluidframework/core-utils";
-import type { ISharedMap } from "@fluidframework/map";
+import { delay } from "@fluidframework/core-utils/internal";
+import type { ISharedMap } from "@fluidframework/map/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	IFluidDataStoreChannel,
 	IGarbageCollectionDetailsBase,
-} from "@fluidframework/runtime-definitions";
-import { responseToException } from "@fluidframework/runtime-utils";
-import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/runtime-definitions/internal";
+import { responseToException } from "@fluidframework/runtime-utils/internal";
+import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base/internal";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -45,7 +46,8 @@ import {
 	createTestConfigProvider,
 	summarizeNow,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
+
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils.js";
 
 type ExpectedTombstoneError = Error & {

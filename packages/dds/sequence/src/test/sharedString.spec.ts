@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { AttachState } from "@fluidframework/container-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
@@ -16,7 +17,7 @@ import {
 	reservedMarkerSimpleTypeKey,
 	reservedTileLabelsKey,
 	revertMergeTreeDeltaRevertibles,
-} from "@fluidframework/merge-tree";
+} from "@fluidframework/merge-tree/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	MockContainerRuntimeFactory,
@@ -26,7 +27,8 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 	validateAssertionError,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
+
 import { SharedStringFactory } from "../sequenceFactory.js";
 import { SharedString, getTextAndMarkers } from "../sharedString.js";
 
@@ -383,8 +385,7 @@ describe("SharedString", () => {
 			// Load a new Ink in connected state from the snapshot of the first one.
 			const containerRuntimeFactory = new MockContainerRuntimeFactory();
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-			const containerRuntime2 =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2: IChannelServices = {
 				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: MockStorage.createFromSummary(
@@ -401,8 +402,7 @@ describe("SharedString", () => {
 
 			// Now connect the first Ink
 			dataStoreRuntime1.setAttachState(AttachState.Attached);
-			const containerRuntime1 =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(undefined),
@@ -450,8 +450,7 @@ describe("SharedString", () => {
 
 			// Connect the first SharedString.
 			dataStoreRuntime1.setAttachState(AttachState.Attached);
-			const containerRuntime1 =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -461,8 +460,7 @@ describe("SharedString", () => {
 
 			// Create and connect a second SharedString.
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-			const containerRuntime2 =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2 = {
 				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -662,7 +660,6 @@ describe("SharedString", () => {
 	describe("reconnect", () => {
 		let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
 		let containerRuntime1: MockContainerRuntimeForReconnection;
-		let containerRuntime2: MockContainerRuntimeForReconnection;
 		let sharedString2: SharedString;
 
 		beforeEach(async () => {
@@ -679,7 +676,7 @@ describe("SharedString", () => {
 
 			// Create and connect a second SharedString.
 			const runtime2 = new MockFluidDataStoreRuntime();
-			containerRuntime2 = containerRuntimeFactory.createContainerRuntime(runtime2);
+			containerRuntimeFactory.createContainerRuntime(runtime2);
 			sharedString2 = new SharedString(
 				runtime2,
 				"shared-string-2",

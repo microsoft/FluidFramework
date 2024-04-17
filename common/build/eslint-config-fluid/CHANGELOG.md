@@ -1,5 +1,22 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [5.3.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.3.0)
+
+The import/order rule is enabled with the following settings:
+
+```json
+[
+	"error",
+	{
+		"newlines-between": "always",
+		"alphabetize": {
+			"order": "asc",
+			"caseInsensitive": false
+		}
+	}
+]
+```
+
 ## [5.2.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.2.0)
 
 The import/order rule is now disabled in all configs.

@@ -15,11 +15,11 @@
 	"exports": {
 		".": {
 			"import": "./lib/index.js",
-			"types": "./lib/api-markdown-documenter-public.d.ts"
+			"types": "./lib/public.d.ts"
 		},
 		"./beta": {
 			"import": "./lib/index.js",
-			"types": "./lib/api-markdown-documenter-beta.d.ts"
+			"types": "./lib/beta.d.ts"
 		}
 	},
 	"scripts": {
@@ -82,8 +82,8 @@
 	"devDependencies": {
 		"@fluid-tools/markdown-magic": "file:../markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.26.1",
-		"@fluidframework/eslint-config-fluid": "file:../../common/build/eslint-config-fluid",
+		"@fluidframework/build-tools": "^0.37.0",
+		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@fluidframework/mocha-test-setup": "~2.0.0-internal.6.2.0",
 		"@microsoft/api-extractor": "^7.42.3",
 		"@types/chai": "^4.3.4",

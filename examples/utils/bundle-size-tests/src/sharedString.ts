@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SharedString } from "@fluidframework/sequence";
+import { SharedString } from "@fluidframework/sequence/internal";
 
 export function apisToBundle() {
 	SharedString.getFactory();

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { SharedMap } from "@fluidframework/map";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { timeoutPromise } from "@fluidframework/test-utils";
+import { SharedMap } from "@fluidframework/map/internal";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { ScenarioRunner } from "./ScenarioRunner.js";
@@ -36,7 +36,7 @@ export class MapTrafficRunner extends ScenarioRunner<
 	MapTrafficRunConfig,
 	void
 > {
-	protected runnerClientFilePath: string = "./dist/mapTrafficRunnerClient.js";
+	protected runnerClientFilePath: string = "./lib/mapTrafficRunnerClient.js";
 
 	public static async execRun(runConfig: MapTrafficRunConfig): Promise<void> {
 		let schema;

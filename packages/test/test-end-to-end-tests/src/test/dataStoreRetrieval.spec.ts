@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
@@ -11,7 +12,7 @@ import {
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 /**
  * These tests retrieve a data store after its creation but at different stages of visibility.

@@ -9,8 +9,10 @@ export {
 	Optional,
 	Sequence,
 	NodeKeyFieldKind,
+	Identifier,
 	Forbidden,
 	fieldKinds,
+	fieldKindConfigurations,
 } from "./defaultFieldKinds.js";
 
 export {

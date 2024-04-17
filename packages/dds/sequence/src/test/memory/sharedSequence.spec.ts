@@ -4,6 +4,7 @@
  */
 
 import { IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
+
 import { SubSequence } from "../../sharedSequence.js";
 
 describe("SharedSequence memory usage", () => {
@@ -30,7 +31,7 @@ describe("SharedSequence memory usage", () => {
 			title = "Create empty SharedSequence";
 			minSampleCount = 500;
 
-			private segment = new SubSequence<number>([]);
+			segment = new SubSequence<number>([]);
 
 			async run() {
 				this.segment = new SubSequence<number>([]);

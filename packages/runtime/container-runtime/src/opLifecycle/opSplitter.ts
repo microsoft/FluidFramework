@@ -3,16 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { IBatchMessage } from "@fluidframework/container-definitions";
+import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	DataCorruptionError,
 	createChildLogger,
 	extractSafePropertiesFromMessage,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
+
 import { ContainerMessageType, ContainerRuntimeChunkedOpMessage } from "../messageTypes.js";
+
 import { estimateSocketSize } from "./batchManager.js";
 import { BatchMessage, IBatch, IChunkedOp } from "./definitions.js";
 
@@ -180,7 +182,7 @@ export class OpSplitter {
 	}
 
 	public processChunk(message: ISequencedDocumentMessage): ProcessChunkResult {
-		assert(isChunkedContents(message.contents), "message not of type ChunkedOp");
+		assert(isChunkedContents(message.contents), 0x948 /* message not of type ChunkedOp */);
 		const contents: IChunkedContents = message.contents;
 
 		// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
@@ -203,7 +205,10 @@ export class OpSplitter {
 
 		const newMessage = { ...message };
 		newMessage.contents = serializedContent === "" ? undefined : JSON.parse(serializedContent);
-		newMessage.type = chunkedContent.originalType;
+		// back-compat with 1.x builds
+		// This is only required / present for non-compressed, chunked ops
+		// For compressed ops, we have op grouping enabled, and type of each op is preserved within compressed content.
+		newMessage.type = (chunkedContent as any).originalType;
 		newMessage.metadata = chunkedContent.originalMetadata;
 		newMessage.compression = chunkedContent.originalCompression;
 		return {
@@ -233,9 +238,7 @@ const chunkToBatchMessage = (
 	};
 	return {
 		contents: JSON.stringify(payload),
-		type: payload.type,
 		metadata,
-		localOpMetadata: undefined,
 		referenceSequenceNumber,
 	};
 };
@@ -270,7 +273,6 @@ export const splitOp = (
 		const chunk: IChunkedOp = {
 			chunkId,
 			contents: op.contents.substr(offset, chunkSizeInBytes),
-			originalType: op.type,
 			totalChunks: chunkCount,
 		};
 
@@ -280,6 +282,15 @@ export const splitOp = (
 			// last chunk, therefore it is the only one that needs it.
 			chunk.originalMetadata = op.metadata;
 			chunk.originalCompression = op.compression;
+
+			// back-compat with 1.x builds
+			// 2.x builds only do chunking for compressed ops.
+			// originalType is no longer used in such cases, as each op preserves its type within compressed payload.
+			// But, if 1.x builds see this op, and there is no type on the message, then it will ignore this message silently.
+			// This is really bad, as we will crash on later ops and it's very hard to debug these cases.
+			// If we put some known type here, then we will crash on it (as 1.x does not understand compression, and thus will not
+			// find info on the op like address of the channel to deliver the op)
+			(chunk as any).originalType = "component";
 		}
 
 		chunks.push(chunk);

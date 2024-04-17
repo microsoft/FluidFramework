@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IChannelStorageService,
@@ -17,23 +17,42 @@ import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { SharedObject } from "@fluidframework/shared-object-base/internal";
+
 import { ICodecOptions, IJsonCodec } from "../codec/index.js";
-import { ChangeFamily, ChangeFamilyEditor, GraphCommit, RevisionTagCodec } from "../core/index.js";
-import { SchemaAndPolicy } from "../feature-libraries/index.js";
+import {
+	ChangeFamily,
+	ChangeFamilyEditor,
+	GraphCommit,
+	RevisionTag,
+	RevisionTagCodec,
+	SchemaAndPolicy,
+	SchemaPolicy,
+	TreeStoredSchemaRepository,
+} from "../core/index.js";
 import { JsonCompatibleReadOnly, brand } from "../util/index.js";
+
 import { SharedTreeBranch, getChangeReplaceType } from "./branch.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
+import { makeEditManagerCodec } from "./editManagerCodecs.js";
 import { SeqNumber } from "./editManagerFormat.js";
 import { EditManagerSummarizer } from "./editManagerSummarizer.js";
 import { MessageEncodingContext, makeMessageCodec } from "./messageCodecs.js";
 import { DecodedMessage } from "./messageTypes.js";
 
-// TODO: How should the format version be determined?
-const formatVersion = 0;
 // TODO: Organize this to be adjacent to persisted types.
 const summarizablesTreeKey = "indexes";
+
+export interface ExplicitCoreCodecVersions {
+	editManager: number;
+	message: number;
+}
+
+interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
+	schema: TreeStoredSchemaRepository;
+}
 
 /**
  * Generic shared tree, which needs to be configured with indexes, field kinds and a history policy to be used.
@@ -78,7 +97,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 	private readonly idCompressor: IIdCompressor;
 
-	private readonly schemaAndPolicy: SchemaAndPolicy;
+	protected readonly mintRevisionTag: () => RevisionTag;
+
+	private readonly schemaAndPolicy: ClonableSchemaAndPolicy;
 
 	/**
 	 * @param summarizables - Summarizers for all indexes used by this tree
@@ -93,30 +114,35 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		summarizables: readonly Summarizable[],
 		changeFamily: ChangeFamily<TEditor, TChange>,
 		options: ICodecOptions,
+		formatOptions: ExplicitCoreCodecVersions,
 		// Base class arguments
 		id: string,
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
 		telemetryContextPrefix: string,
-		schemaAndPolicy: SchemaAndPolicy,
+		schema: TreeStoredSchemaRepository,
+		schemaPolicy: SchemaPolicy,
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
 
-		this.schemaAndPolicy = schemaAndPolicy;
+		this.schemaAndPolicy = {
+			schema,
+			policy: schemaPolicy,
+		};
 
 		assert(
 			runtime.idCompressor !== undefined,
 			0x886 /* IdCompressor must be enabled to use SharedTree */,
 		);
 		this.idCompressor = runtime.idCompressor;
-		const mintRevisionTag = () => this.idCompressor.generateCompressedId();
+		this.mintRevisionTag = () => this.idCompressor.generateCompressedId();
 		/**
 		 * A random ID that uniquely identifies this client in the collab session.
 		 * This is sent alongside every op to identify which client the op originated from.
 		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
 		 */
 		const localSessionId = runtime.idCompressor.localSessionId;
-		this.editManager = new EditManager(changeFamily, localSessionId, mintRevisionTag);
+		this.editManager = new EditManager(changeFamily, localSessionId, this.mintRevisionTag);
 		this.editManager.localBranch.on("afterChange", (args) => {
 			if (this.getLocalBranch().isTransacting()) {
 				// Avoid submitting ops for changes that are part of a transaction.
@@ -125,12 +151,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			switch (args.type) {
 				case "append":
 					for (const c of args.newCommits) {
-						this.submitCommit(c);
+						this.submitCommit(c, this.schemaAndPolicy);
 					}
 					break;
 				case "replace":
 					if (getChangeReplaceType(args) === "transactionCommit") {
-						this.submitCommit(args.newCommits[0]);
+						this.submitCommit(args.newCommits[0], this.schemaAndPolicy);
 					}
 					break;
 				default:
@@ -139,13 +165,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		});
 
 		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
+		const editManagerCodec = makeEditManagerCodec(
+			this.editManager.changeFamily.codecs,
+			revisionTagCodec,
+			options,
+			formatOptions.editManager,
+		);
 		this.summarizables = [
-			new EditManagerSummarizer(
-				this.editManager,
-				revisionTagCodec,
-				options,
-				this.schemaAndPolicy,
-			),
+			new EditManagerSummarizer(this.editManager, editManagerCodec, this.schemaAndPolicy),
 			...summarizables,
 		];
 		assert(
@@ -154,9 +181,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		);
 
 		this.messageCodec = makeMessageCodec(
-			changeFamily.codecs.resolve(formatVersion).json,
+			changeFamily.codecs,
 			new RevisionTagCodec(runtime.idCompressor),
 			options,
+			formatOptions.message,
 		);
 	}
 
@@ -202,11 +230,19 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * Submits an op to the Fluid runtime containing the given commit
 	 * @param commit - the commit to submit
 	 */
-	private submitCommit(commit: GraphCommit<TChange>, isResubmit = false): void {
-		// Edits should not be submitted until all transactions finish
+	private submitCommit(
+		commit: GraphCommit<TChange>,
+		schemaAndPolicy: ClonableSchemaAndPolicy,
+		isResubmit = false,
+	): void {
 		assert(
+			// Edits should not be submitted until all transactions finish
 			!this.getLocalBranch().isTransacting() || isResubmit,
 			0x68b /* Unexpected edit submitted during transaction */,
+		);
+		assert(
+			this.isAttached() === (this.detachedRevision === undefined),
+			"Detached revision should only be set when not attached",
 		);
 
 		// Edits submitted before the first attach are treated as sequenced because they will be included
@@ -221,23 +257,22 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 				this.detachedRevision,
 			);
 			this.editManager.advanceMinimumSequenceNumber(newRevision);
+		} else {
+			const message = this.messageCodec.encode(
+				{
+					commit,
+					sessionId: this.editManager.localSessionId,
+				},
+				{
+					schema: schemaAndPolicy,
+				},
+			);
+			this.submitLocalMessage(message, {
+				// Clone the schema to ensure that during resubmit the schema has not been mutated by later changes
+				schema: schemaAndPolicy.schema.clone(),
+				policy: schemaAndPolicy.policy,
+			});
 		}
-
-		// Don't submit the op if it is not attached
-		if (!this.isAttached()) {
-			return;
-		}
-
-		const message = this.messageCodec.encode(
-			{
-				commit,
-				sessionId: this.editManager.localSessionId,
-			},
-			{
-				schema: this.schemaAndPolicy ?? undefined,
-			},
-		);
-		this.submitLocalMessage(message);
 	}
 
 	protected processCore(
@@ -278,7 +313,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			commit: { revision },
 		} = this.messageCodec.decode(content, {});
 		const [commit] = this.editManager.findLocalCommit(revision);
-		this.submitCommit(commit, true);
+		assert(
+			isClonableSchemaPolicy(localOpMetadata),
+			"Local metadata must contain schema and policy.",
+		);
+		this.submitCommit(commit, localOpMetadata, true);
 	}
 
 	protected applyStashedOp(content: JsonCompatibleReadOnly): void {
@@ -308,6 +347,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			gcNodes,
 		};
 	}
+}
+
+function isClonableSchemaPolicy(
+	maybeSchemaPolicy: unknown,
+): maybeSchemaPolicy is ClonableSchemaAndPolicy {
+	const schemaAndPolicy = maybeSchemaPolicy as ClonableSchemaAndPolicy;
+	return schemaAndPolicy.schema !== undefined && schemaAndPolicy.policy !== undefined;
 }
 
 /**

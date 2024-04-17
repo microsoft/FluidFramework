@@ -10,15 +10,15 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import type { ISharedMap, IValueChanged } from "@fluidframework/map";
-import type { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import type { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
+import type { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence/internal";
 import {
 	ITestFluidObject,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
 	timeoutPromise,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 // during these point succeeding objects won't even exist locally
 const ContainerCreated = 0;

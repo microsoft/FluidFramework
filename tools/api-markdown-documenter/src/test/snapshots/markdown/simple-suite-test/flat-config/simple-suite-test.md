@@ -24,7 +24,7 @@ Also, here is a link test, including a bad link, because we should have some rea
 
 - Good link (no alias): [TestClass](docs/simple-suite-test#testclass-class)
 
-- Good link (with alias): [function alias text](docs/simple-suite-test#testfunction-function)
+- Good link (with alias): _function alias text_
 
 - Bad link (no alias): _InvalidItem_
 
@@ -132,6 +132,8 @@ Here are some remarks about the interface
 
 | Property | Modifiers | Default Value | Type | Description |
 | --- | --- | --- | --- | --- |
+| [getterProperty](docs/simple-suite-test#testinterface-getterproperty-property) | `readonly` |  | boolean | A test getter-only interface property. |
+| [setterProperty](docs/simple-suite-test#testinterface-setterproperty-property) |  |  | boolean | A test property with a getter and a setter. |
 | [testInterfaceProperty](docs/simple-suite-test#testinterface-testinterfaceproperty-propertysignature) |  |  | number | Test interface property |
 | [testOptionalInterfaceProperty](docs/simple-suite-test#testinterface-testoptionalinterfaceproperty-propertysignature) | `optional` | 0 | number | Test optional property |
 
@@ -181,6 +183,27 @@ readonly testClassEventProperty: () => void;
 Here are some remarks about the event property
 
 ### Property Details
+
+#### getterProperty {#testinterface-getterproperty-property}
+
+A test getter-only interface property.
+
+##### Signature {#getterproperty-signature}
+
+```typescript
+get getterProperty(): boolean;
+```
+
+#### setterProperty {#testinterface-setterproperty-property}
+
+A test property with a getter and a setter.
+
+##### Signature {#setterproperty-signature}
+
+```typescript
+get setterProperty(): boolean;
+set setterProperty(newValue: boolean);
+```
 
 #### testInterfaceProperty {#testinterface-testinterfaceproperty-propertysignature}
 
@@ -564,7 +587,7 @@ Here are some remarks about the class
 | Property | Modifiers | Type | Description |
 | --- | --- | --- | --- |
 | [abstractPropertyGetter](docs/simple-suite-test#testclass-abstractpropertygetter-property) | `readonly` | [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
-| [testClassGetterProperty](docs/simple-suite-test#testclass-testclassgetterproperty-property) | `readonly`, `virtual` | number | Test class getter-only property |
+| [testClassGetterProperty](docs/simple-suite-test#testclass-testclassgetterproperty-property) | `virtual` | number | Test class property with both a getter and a setter. |
 | [testClassProperty](docs/simple-suite-test#testclass-testclassproperty-property) | `readonly` | TTypeParameterB | Test class property |
 
 ### Methods
@@ -630,13 +653,14 @@ get abstractPropertyGetter(): TestMappedType;
 
 #### testClassGetterProperty {#testclass-testclassgetterproperty-property}
 
-Test class getter-only property
+Test class property with both a getter and a setter.
 
 ##### Signature {#testclassgetterproperty-signature}
 
 ```typescript
 /** @virtual */
 get testClassGetterProperty(): number;
+set testClassGetterProperty(newValue: number);
 ```
 
 ##### Remarks {#testclassgetterproperty-remarks}

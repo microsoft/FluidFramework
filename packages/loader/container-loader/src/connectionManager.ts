@@ -10,14 +10,13 @@ import {
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions";
 import {
-	DriverErrorTypes,
-	IAnyDriverError,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 	IDocumentService,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	calculateMaxWaitTime,
 	canRetryOnError,
@@ -26,7 +25,7 @@ import {
 	getRetryDelayFromError,
 	isRuntimeMessage,
 	logNetworkFailure,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import {
 	ConnectionMode,
 	IClient,
@@ -43,14 +42,15 @@ import {
 	MessageType,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	GenericError,
-	ITelemetryLoggerExt,
 	UsageError,
 	formatTick,
 	isFluidError,
 	normalizeError,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
+
 import {
 	IConnectionDetailsInternal,
 	IConnectionManager,
@@ -533,6 +533,8 @@ export class ConnectionManager implements IConnectionManager {
 		const docService = this.serviceProvider();
 		assert(docService !== undefined, 0x2a7 /* "Container is not attached" */);
 
+		this.props.establishConnectionHandler(reason);
+
 		let connection: IDocumentDeltaConnection | undefined;
 
 		if (docService.policies?.storageOnly === true) {
@@ -556,7 +558,6 @@ export class ConnectionManager implements IConnectionManager {
 			connectionMode: requestedMode,
 		};
 
-		this.props.establishConnectionHandler(reason);
 		// This loop will keep trying to connect until successful, with a delay between each iteration.
 		while (connection === undefined) {
 			if (this._disposed) {
@@ -643,6 +644,12 @@ export class ConnectionManager implements IConnectionManager {
 				);
 
 				lastError = origError;
+
+				// We will not perform retries if the container disconnected and the ReconnectMode is set to Disabled or Never
+				// so break out of the re-connecting while-loop after first attempt
+				if (this.reconnectMode !== ReconnectMode.Enabled) {
+					return;
+				}
 
 				const waitStartTime = performance.now();
 				const retryDelayFromError = getRetryDelayFromError(origError);

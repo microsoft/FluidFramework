@@ -4,7 +4,8 @@
  */
 
 import { IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+
 import { SharedMatrix, SharedMatrixFactory } from "../../index.js";
 
 function createLocalMatrix(id: string) {

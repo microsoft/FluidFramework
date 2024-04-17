@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { FieldKey } from "../schema-stored/index.js";
+
 import { FieldUpPath, UpPath } from "./pathTree.js";
 import { TreeType, Value } from "./types.js";
 

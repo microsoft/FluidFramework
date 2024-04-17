@@ -4,10 +4,9 @@
  */
 
 import { SessionId } from "@fluidframework/id-compressor";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-// eslint-disable-next-line import/no-internal-modules -- test import
-import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/test/idCompressorTestUtilities";
 import {
 	AllowedUpdateType,
 	FieldKey,
@@ -35,10 +34,12 @@ import {
 	ITreeCheckout,
 	InitializeAndSchematizeConfiguration,
 	SharedTreeFactory,
+	SharedTreeOptions,
+	SharedTreeFormatVersion,
 	runSynchronous,
 } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { SharedTreeOptions, defaultSharedTreeOptions } from "../../shared-tree/sharedTree.js";
+import { defaultSharedTreeOptions } from "../../shared-tree/sharedTree.js";
 import { brand } from "../../util/index.js";
 import {
 	TestTreeProviderLite,
@@ -139,12 +140,13 @@ function generateTreeRecursively(
 // TODO: The generated test trees should eventually be updated to use the chunked-forest.
 export function generateTestTrees(useUncompressedEncode?: boolean) {
 	const testEncodeType = useUncompressedEncode === true ? "uncompressed" : "default-compression";
-	const factoryOptions = {
+	const factoryOptions: SharedTreeOptions = {
 		jsonValidator: typeboxValidator,
 		treeEncodeType:
 			useUncompressedEncode === true
 				? TreeCompressionStrategy.Uncompressed
 				: defaultSharedTreeOptions.treeEncodeType,
+		formatVersion: SharedTreeFormatVersion.v1,
 	};
 	const factory = new SharedTreeFactory(factoryOptions);
 	const testTrees: {
@@ -257,7 +259,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 					scope: "optional-field",
 					libraries: [leaf.library],
 				});
-				const testNode = innerBuilder.map("TestNode", leaf.all);
+				const testNode = innerBuilder.map("TestNode", SchemaBuilder.optional(leaf.all));
 				const docSchema = innerBuilder.intoSchema(SchemaBuilder.optional(testNode));
 
 				const config = {

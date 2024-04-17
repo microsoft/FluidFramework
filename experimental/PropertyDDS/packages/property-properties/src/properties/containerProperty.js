@@ -9,7 +9,9 @@
 const { MSG } = require("@fluid-experimental/property-common").constants;
 const { ConsoleUtils } = require("@fluid-experimental/property-common");
 const _ = require("underscore");
+
 const { validationsEnabled } = require("../enableValidations");
+
 const { AbstractStaticCollectionProperty } = require("./abstractStaticCollectionProperty");
 const { BaseProperty } = require("./baseProperty");
 const { IndexedCollectionBaseProperty } = require("./indexedCollectionBaseProperty");
