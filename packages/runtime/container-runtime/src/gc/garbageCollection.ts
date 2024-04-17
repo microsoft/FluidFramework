@@ -975,11 +975,13 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 	}
 
+	//* TODO: switch to params object
+
 	/**
 	 * Called when a node with the given id is updated. If the node is inactive or tombstoned, this will log an error
 	 * or throw an error if failing on incorrect usage is configured.
 	 * @param nodePath - The path of the node that changed.
-	 * @param reason - Whether the node was loaded or changed.
+	 * @param reason - Whether the node (or a subpath) was loaded or changed.
 	 * @param timestampMs - The timestamp when the node changed.
 	 * @param packagePath - The package path of the node. This may not be available if the node hasn't been loaded yet.
 	 * @param request - The original request for loads to preserve it in telemetry.
@@ -987,7 +989,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 */
 	public nodeUpdated(
 		nodePath: string,
-		reason: "Loaded" | "Changed",
+		reason: "Loaded" | "Changed" | "SubpathLoaded" | "SubpathChanged",
 		timestampMs?: number,
 		packagePath?: readonly string[],
 		request?: IRequest,
@@ -1002,7 +1004,12 @@ export class GarbageCollector implements IGarbageCollector {
 		// This will log if appropriate
 		this.telemetryTracker.nodeUsed({
 			id: nodePath,
-			usageType: reason,
+			usageType:
+				reason === "SubpathLoaded"
+					? "Loaded"
+					: reason === "SubpathChanged"
+					? "Changed"
+					: reason,
 			currentReferenceTimestampMs:
 				timestampMs ?? this.runtime.getCurrentReferenceTimestampMs(),
 			packagePath,
@@ -1010,6 +1017,7 @@ export class GarbageCollector implements IGarbageCollector {
 			isTombstoned,
 			lastSummaryTime: this.getLastSummaryTimestampMs(),
 			headers: headerData,
+			subpath: reason === "SubpathLoaded" || reason === "SubpathChanged",
 		});
 
 		// Any time we log a Tombstone Loaded error (via Telemetry Tracker),

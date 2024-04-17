@@ -234,6 +234,11 @@ export function wrapContextForInnerChannel(
 	return context;
 }
 
+/** Reformats a request URL to match expected format for a GC node path */
+function urlToGCNodePath(url: string): string {
+	return `/${trimLeadingAndTrailingSlashes(url.split("?")[0])}`;
+}
+
 /**
  * This class encapsulates data store handling. Currently it is only used by the container runtime,
  * but eventually could be hosted on any channel once we formalize the channel api boundary.
@@ -278,7 +283,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		baseLogger: ITelemetryBaseLogger,
 		private readonly gcNodeUpdated: (
 			nodePath: string,
-			reason: "Loaded" | "Changed",
+			reason: "Loaded" | "Changed" | "SubpathLoaded" | "SubpathChanged",
 			timestampMs?: number,
 			packagePath?: readonly string[],
 			request?: IRequest,
@@ -1380,6 +1385,20 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			request,
 			headerData,
 		);
+
+		// If this is a sub-DataStore url, we need to also notify GC that the parent is used.
+		// This is in case the url is to a route that Fluid doesn't understand or track for GC (handled by app's request handler)
+		if (requestForChild) {
+			this.gcNodeUpdated(
+				urlToGCNodePath(id),
+				"SubpathLoaded",
+				undefined /* timestampMs */,
+				details.pkg,
+				request,
+				headerData,
+			);
+		}
+
 		const dataStore = await dataStoreContext.realize();
 
 		const subRequest = requestParser.createSubRequest(1);

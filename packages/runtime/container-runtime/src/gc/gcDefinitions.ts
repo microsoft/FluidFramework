@@ -372,7 +372,7 @@ export interface IGarbageCollector {
 	 */
 	nodeUpdated(
 		nodePath: string,
-		reason: "Loaded" | "Changed",
+		reason: "Loaded" | "Changed" | "SubpathLoaded" | "SubpathChanged",
 		timestampMs?: number,
 		packagePath?: readonly string[],
 		request?: IRequest,

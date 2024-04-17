@@ -1652,7 +1652,7 @@ export class ContainerRuntime
 			this.mc.logger,
 			(
 				path: string,
-				reason: "Loaded" | "Changed",
+				reason: "Loaded" | "Changed" | "SubpathLoaded" | "SubpathChanged",
 				timestampMs?: number,
 				packagePath?: readonly string[],
 				request?: IRequest,
