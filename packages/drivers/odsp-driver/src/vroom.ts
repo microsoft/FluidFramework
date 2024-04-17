@@ -20,7 +20,7 @@ import { runWithRetry } from "./retryUtils.js";
 
 interface IJoinSessionBody {
 	requestSocketToken: boolean;
-	guestDisplayName: string;
+	guestDisplayName?: string;
 }
 
 /**
@@ -83,12 +83,14 @@ export async function fetchJoinSession(
 				postBody += `prefer: FluidRemoveCheckAccess\r\n`;
 			}
 			postBody += `_post: 1\r\n`;
-			// Name should be there when socket token is requested and vice-versa.
-			if (requestSocketToken && guestDisplayName !== undefined) {
+
+			if (requestSocketToken) {
 				const body: IJoinSessionBody = {
 					requestSocketToken: true,
-					guestDisplayName,
 				};
+				if (guestDisplayName !== undefined) {
+					body.guestDisplayName = guestDisplayName;
+				}
 				postBody += `\r\n${JSON.stringify(body)}\r\n`;
 			}
 			postBody += `\r\n--${formBoundary}--`;
