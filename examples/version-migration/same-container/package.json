@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/version-migration-same-container",
-	"version": "2.0.0-rc.3.0.0",
+	"version": "2.0.0-rc.4.0.0",
 	"private": true,
 	"description": "Using external data to initialize the container state and serialize out afterwards.",
 	"homepage": "https://fluidframework.com",
@@ -72,7 +72,7 @@
 		"@types/uuid": "^9.0.2",
 		"clean-webpack-plugin": "^4.0.0",
 		"cross-env": "^7.0.3",
-		"css-loader": "^1.0.0",
+		"css-loader": "^6.11.0",
 		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
 		"expect-puppeteer": "^9.0.2",
