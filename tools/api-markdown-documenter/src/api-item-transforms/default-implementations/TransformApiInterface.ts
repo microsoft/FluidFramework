@@ -11,7 +11,7 @@ import {
 	type ApiItem,
 	ApiItemKind,
 	type ApiMethodSignature,
-	type ApiPropertySignature,
+	type ApiPropertyItem,
 } from "@microsoft/api-extractor-model";
 
 import type { SectionNode } from "../../documentation-domain/index.js";
@@ -63,7 +63,7 @@ export function transformApiInterface(
 	if (filteredChildren.length > 0) {
 		// Accumulate child items
 		const constructSignatures: ApiConstructSignature[] = [];
-		const allProperties: ApiPropertySignature[] = [];
+		const allProperties: ApiPropertyItem[] = [];
 		const callSignatures: ApiCallSignature[] = [];
 		const indexSignatures: ApiIndexSignature[] = [];
 		const methods: ApiMethodSignature[] = [];
@@ -73,8 +73,9 @@ export function transformApiInterface(
 					constructSignatures.push(child as ApiConstructSignature);
 					break;
 				}
+				case ApiItemKind.Property:
 				case ApiItemKind.PropertySignature: {
-					allProperties.push(child as ApiPropertySignature);
+					allProperties.push(child as ApiPropertyItem);
 					break;
 				}
 				case ApiItemKind.CallSignature: {

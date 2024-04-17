@@ -132,6 +132,8 @@ Here are some remarks about the interface
 
 | Property | Modifiers | Default Value | Type | Description |
 | --- | --- | --- | --- | --- |
+| [getterProperty](docs/simple-suite-test#testinterface-getterproperty-property) | `readonly` |  | boolean | A test getter-only interface property. |
+| [setterProperty](docs/simple-suite-test#testinterface-setterproperty-property) |  |  | boolean | A test property with a getter and a setter. |
 | [testInterfaceProperty](docs/simple-suite-test#testinterface-testinterfaceproperty-propertysignature) |  |  | number | Test interface property |
 | [testOptionalInterfaceProperty](docs/simple-suite-test#testinterface-testoptionalinterfaceproperty-propertysignature) | `optional` | 0 | number | Test optional property |
 
@@ -181,6 +183,27 @@ readonly testClassEventProperty: () => void;
 Here are some remarks about the event property
 
 ### Property Details
+
+#### getterProperty {#testinterface-getterproperty-property}
+
+A test getter-only interface property.
+
+##### Signature {#getterproperty-signature}
+
+```typescript
+get getterProperty(): boolean;
+```
+
+#### setterProperty {#testinterface-setterproperty-property}
+
+A test property with a getter and a setter.
+
+##### Signature {#setterproperty-signature}
+
+```typescript
+get setterProperty(): boolean;
+set setterProperty(newValue: boolean);
+```
 
 #### testInterfaceProperty {#testinterface-testinterfaceproperty-propertysignature}
 
