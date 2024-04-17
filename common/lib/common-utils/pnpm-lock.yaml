@@ -3,6 +3,11 @@ lockfileVersion: 5.4
 overrides:
   sharp: ^0.33.2
 
+patchedDependencies:
+  '@microsoft/api-extractor@7.42.3':
+    hash: f66stvskxun56mencgf6l5564y
+    path: ../../../patches/@microsoft__api-extractor@7.42.3.patch
+
 importers:
 
   .:
@@ -62,7 +67,7 @@ importers:
       '@fluidframework/build-tools': 0.26.1_@types+node@16.18.38
       '@fluidframework/common-utils-previous': /@fluidframework/common-utils/1.0.0
       '@fluidframework/eslint-config-fluid': 4.0.0_yzjfgl2l2fa2siv5ppqhbzvdbi
-      '@microsoft/api-extractor': 7.42.3_@types+node@16.18.38
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@16.18.38
       '@types/base64-js': 1.3.0
       '@types/benchmark': 2.1.2
       '@types/jest': 22.2.3
@@ -523,7 +528,7 @@ packages:
       '@fluid-tools/version-tools': 0.26.1_vy4ah4eawmaxtqslmps6irc47e
       '@fluidframework/build-tools': 0.26.1_@types+node@16.18.38
       '@fluidframework/bundle-size-tools': 0.26.1
-      '@microsoft/api-extractor': 7.42.3_@types+node@16.18.38
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@16.18.38
       '@oclif/core': 3.5.0
       '@oclif/plugin-autocomplete': 2.3.10_vy4ah4eawmaxtqslmps6irc47e
       '@oclif/plugin-commands': 3.0.3
@@ -1308,7 +1313,7 @@ packages:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor/7.42.3_@types+node@16.18.38:
+  /@microsoft/api-extractor/7.42.3_f66stvskxun56mencgf6l5564y_@types+node@16.18.38:
     resolution: {integrity: sha512-JNLJFpGHz6ekjS6bvYXxUBeRGnSHeCMFNvRbCQ+7XXB/ZFrgLSMPwWtEq40AiWAy+oyG5a4RSNwdJTp0B2USvQ==}
     hasBin: true
     dependencies:
@@ -1328,6 +1333,7 @@ packages:
     transitivePeerDependencies:
       - '@types/node'
     dev: true
+    patched: true
 
   /@microsoft/tsdoc-config/0.16.2:
     resolution: {integrity: sha512-OGiIzzoBLgWWR0UdRJX98oYO+XKGf7tiK4Zk6tQ/E4IJqGCe7dvkTvgDZV5cFJUzLGDOjeAXrnZoA6QkVySuxw==}
