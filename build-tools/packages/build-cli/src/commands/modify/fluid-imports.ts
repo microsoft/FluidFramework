@@ -12,6 +12,7 @@ import { type ImportDeclaration, ModuleKind, Project, SourceFile } from "ts-morp
 import { BaseCommand } from "../../base";
 import { ApiLevel, getApiExports, isKnownApiLevel, knownApiLevels } from "../../library";
 import type { CommandLogger } from "../../logging";
+import type { ApiLevelDataFile } from "../generate/fluid-import-data";
 
 const maxConcurrency = 4;
 
@@ -531,12 +532,6 @@ function isImportUnassigned(importDeclaration: ImportDeclaration): boolean {
 	);
 }
 
-interface MemberDataRaw {
-	level: ApiLevel;
-	kind: string;
-	name: string;
-}
-
 type MemberData = Partial<Record<ApiLevel, Set<string>>>;
 type MapData = Map<string, MemberData>;
 
@@ -619,7 +614,7 @@ async function loadData(dataFile: string): Promise<MapData> {
 	// Load the raw data file
 	// eslint-disable-next-line unicorn/no-await-expression-member
 	const rawData: string = (await readFile(dataFile)).toString();
-	const apiLevelDataRaw: Record<string, MemberDataRaw[]> = JSON5.parse(rawData);
+	const apiLevelDataRaw: ApiLevelDataFile = JSON5.parse(rawData);
 
 	// Transform the raw data into a more useable form
 	const apiLevelData = new Map<string, MemberData>();
