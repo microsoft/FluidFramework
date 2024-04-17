@@ -104,7 +104,7 @@ export function create(
 							throw new NetworkError(404, "No latest full summary found");
 						}
 						const dummyCommitDetails: ICommitDetails = {
-							sha: WholeSummaryConstants.LatestSummarySha,
+							sha: WholeSummaryConstants.InitialSummarySha,
 							commit: {
 								author: {
 									date: new Date().toISOString(),
@@ -118,13 +118,13 @@ export function create(
 								},
 								tree: {
 									sha: latestFullSummaryFromStorage.trees[0]?.id,
-									url: `/repos/${repoManagerParams.repoOwner}/${repoManagerParams.repoName}/git/trees/${WholeSummaryConstants.LatestSummarySha}`,
+									url: `/repos/${repoManagerParams.repoOwner}/${repoManagerParams.repoName}/git/trees/${WholeSummaryConstants.InitialSummarySha}`,
 								},
 								message: "Dummy commit for lazy repo initial summary",
-								url: `/repos/${repoManagerParams.repoOwner}/${repoManagerParams.repoName}/git/commits/${WholeSummaryConstants.LatestSummarySha}`,
+								url: `/repos/${repoManagerParams.repoOwner}/${repoManagerParams.repoName}/git/commits/${WholeSummaryConstants.InitialSummarySha}`,
 							},
 							parents: [],
-							url: `/repos/${repoManagerParams.repoOwner}/${repoManagerParams.repoName}/git/commits/${WholeSummaryConstants.LatestSummarySha}`,
+							url: `/repos/${repoManagerParams.repoOwner}/${repoManagerParams.repoName}/git/commits/${WholeSummaryConstants.InitialSummarySha}`,
 						};
 						return [dummyCommitDetails];
 					} catch (lazyRepoRecoveryError: unknown) {

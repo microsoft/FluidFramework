@@ -116,7 +116,6 @@ const testModes = permuteFlags({
 	enableLowIoWrite: false,
 	enableOptimizedInitialSummary: false,
 	enableSlimGitInit: false,
-	enableLazyRepoInit: false,
 }) as unknown as ISummaryTestMode[];
 
 type GitFileSystem = "memfs" | "redisfs" | "hashmap-redisfs";
@@ -391,7 +390,7 @@ testFileSystems.forEach((fileSystem) => {
 			 * 2. Send some ops
 			 * 3. Wait until Client Summary is written
 			 * 4. Disconnect, triggering new service summary
-			 * 5. Send some ops
+			 * 5. Reconnect, Send some ops
 			 * 6. Wait until Client Summary is written
 			 */
 			it("Can create and read multiple summaries", async () => {

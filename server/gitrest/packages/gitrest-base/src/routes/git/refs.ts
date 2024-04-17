@@ -140,9 +140,9 @@ export function create(
 								repoManagerParams.repoName
 							}/git/refs/${getRefId(request.params[0])}`,
 							object: {
-								sha: WholeSummaryConstants.LatestSummarySha,
+								sha: WholeSummaryConstants.InitialSummarySha,
 								type: "commit",
-								url: `/repos/${repoManagerParams.repoOwner}/${repoManagerParams.repoName}/git/commits/${WholeSummaryConstants.LatestSummarySha}`,
+								url: `/repos/${repoManagerParams.repoOwner}/${repoManagerParams.repoName}/git/commits/${WholeSummaryConstants.InitialSummarySha}`,
 							},
 						};
 						return dummyRef;
