@@ -1,6 +1,6 @@
 # Fluid Framework Developer Tools
 
-# 0.0.4
+# 0.1.0
 
 -   Updates the Shared Tree Visualizer.
 -   Added the telemetry opt in feature.
