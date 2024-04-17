@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import path from "path";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { executeApiWithMetric } from "@fluidframework/server-services-utils";
@@ -236,7 +237,12 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 					await this.mutexes.get(repoName).waitForUnlock();
 				}
 				if (!this.repositoryCache.has(repoPath)) {
-					const repoExists = await helpers.exists(fileSystemManager, directoryPath);
+					const repoExists = await helpers.exists(
+						fileSystemManager,
+						// Repo directory sometimes exists even when the repo has not been initialized.
+						// Instead, check if the repo/objects directory exists.
+						path.join(directoryPath, "/objects"),
+					);
 					if (!repoExists || !repoExists.isDirectory()) {
 						await onRepoNotExists(
 							fileSystemManager,
