@@ -14,7 +14,9 @@ import { BaseCommand } from "../../base";
  * Outputs a list of files that will be included in a package based on its 'files' property in package.json and any
  * npmignore files.
  */
-export default class GeneratePackListCommand extends BaseCommand<typeof GeneratePackListCommand> {
+export default class GeneratePackListCommand extends BaseCommand<
+	typeof GeneratePackListCommand
+> {
 	static readonly description =
 		"Outputs a list of files that will be included in a package based on its 'files' property in package.json and any .npmignore files.";
 
@@ -43,15 +45,11 @@ export default class GeneratePackListCommand extends BaseCommand<typeof Generate
 			const dirCountA = a.match(/\//)?.length ?? 0;
 			const dirCountB = b.match(/\//)?.length ?? 0;
 
-			const hasDir = dirCountA > 0 || dirCountB > 0;
-
-			if (hasDir) {
-				if (dirCountA < dirCountB) {
-					return -1;
-				}
-				if (dirCountA > dirCountB) {
-					return 1;
-				}
+			if (dirCountA < dirCountB) {
+				return -1;
+			}
+			if (dirCountA > dirCountB) {
+				return 1;
 			}
 
 			if (a < b) {

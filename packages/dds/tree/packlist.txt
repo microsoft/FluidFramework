@@ -11,6 +11,7 @@ api-extractor.json
 beta.d.ts
 internal.d.ts
 package.json
+packlist.txt
 prettier.config.cjs
 tsconfig.cjs.json
 tsconfig.json
