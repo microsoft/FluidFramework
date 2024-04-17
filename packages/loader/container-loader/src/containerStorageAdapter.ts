@@ -60,11 +60,11 @@ export class ContainerStorageAdapter
 		return this._summarizeProtocolTree === true;
 	}
 
-	private _loadedGroupIdSnapshots: Record<string, ISnapshot> | undefined;
+	private _loadedGroupIdSnapshots: Record<string, ISnapshot> = {};
 	/**
 	 * Any loading group id (virtualized) snapshot download from storage will be stored here.
 	 */
-	public get loadedGroupIdSnapshots(): Record<string, ISnapshot> | undefined {
+	public get loadedGroupIdSnapshots(): Record<string, ISnapshot> {
 		return this._loadedGroupIdSnapshots;
 	}
 
@@ -148,9 +148,6 @@ export class ContainerStorageAdapter
 	}
 
 	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
-		if (this._loadedGroupIdSnapshots === undefined) {
-			this._loadedGroupIdSnapshots = {};
-		}
 		let snapshot: ISnapshot;
 		if (
 			this.loadingGroupIdSnapshotsFromPendingState !== undefined &&

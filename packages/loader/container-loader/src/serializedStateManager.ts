@@ -86,7 +86,7 @@ export type ISerializedStateManagerDocumentStorageService = Pick<
 	IDocumentStorageService,
 	"getSnapshot" | "getSnapshotTree" | "getVersions" | "readBlob"
 > & {
-	loadedGroupIdSnapshots: Record<string, ISnapshot> | undefined;
+	loadedGroupIdSnapshots: Record<string, ISnapshot>;
 };
 
 export class SerializedStateManager {
@@ -171,14 +171,16 @@ export class SerializedStateManager {
 			supportGetSnapshotApi,
 		);
 
+		// These are loading groupIds that the containerRuntime has requested over its lifetime.
+		const downloadedGroupIds = Object.keys(this.storageAdapter.loadedGroupIdSnapshots);
 		// We are making two network calls because it requires work for storage to add a special base groupId.
-		if (supportGetSnapshotApi && this.storageAdapter.loadedGroupIdSnapshots !== undefined) {
+		if (supportGetSnapshotApi && downloadedGroupIds.length > 0) {
 			assert(this.storageAdapter.getSnapshot !== undefined, "getSnapshot should exist");
 			const snapshot = await this.storageAdapter.getSnapshot({
 				versionId: undefined,
 				scenarioName: "getLatestSnapshotInfo",
 				cacheSnapshot: false,
-				loadingGroupIds: Object.keys(this.storageAdapter.loadedGroupIdSnapshots),
+				loadingGroupIds: downloadedGroupIds,
 				fetchSource: FetchSource.noCache,
 			});
 			assert(snapshot !== undefined, "Snapshot should exist");
@@ -284,10 +286,9 @@ export class SerializedStateManager {
 				// This conversion is required because ArrayBufferLike doesn't survive JSON.stringify
 				const loadedGroupIdSnapshots = {};
 				let hasGroupIdSnapshots = false;
-				if (this.storageAdapter.loadedGroupIdSnapshots) {
-					for (const [groupId, snapshot] of Object.entries(
-						this.storageAdapter.loadedGroupIdSnapshots,
-					)) {
+				const groupIdSnapshots = Object.entries(this.storageAdapter.loadedGroupIdSnapshots);
+				if (groupIdSnapshots.length > 0) {
+					for (const [groupId, snapshot] of groupIdSnapshots) {
 						hasGroupIdSnapshots = true;
 						loadedGroupIdSnapshots[groupId] = convertSnapshotToSnapshotInfo(snapshot);
 					}
