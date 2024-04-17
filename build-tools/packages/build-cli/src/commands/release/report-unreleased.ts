@@ -8,6 +8,7 @@ import { isInternalVersionRange } from "@fluid-tools/version-tools";
 import type { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../base";
+import type { PackageVersionList } from "../../library";
 
 export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReportCommand> {
 	static readonly description =
@@ -30,15 +31,6 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 
 	public async run(): Promise<void> {
 		const { flags } = this;
-		// find if *.caret.json and *.simple.json exists at the pat specified
-
-		// if *.caret.json and *.simple.json does not exists, throw error
-
-		// if they *.caret.json exist, open open the *.caret.json file and replace values with the Dev version
-		// Rename *.caret.json t0 manifest.json
-
-		// if they *.simple.json exist, open open the *.simple.json file and replace values with the Dev version
-		// rename *.simple.json to simpleManifest.json
 
 		try {
 			await generateReleaseReportForUnreleasedVersions(
@@ -65,8 +57,7 @@ async function generateReleaseReportForUnreleasedVersions(
 	console.log(`Caret manifest file name: ${caretJsonFile}`);
 	console.log(`Simple manifest file name: ${simpleJsonFile}`);
 
-	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-	if (!caretJsonFile || !simpleJsonFile) {
+	if (caretJsonFile === undefined || simpleJsonFile === undefined) {
 		throw new Error(
 			`Either *.caret.json or *.simple.json file doesn't exist: ${path} ${caretJsonFile} and ${simpleJsonFile}`,
 		);
@@ -90,18 +81,15 @@ async function writeManifestToFile(
 ): Promise<string | undefined> {
 	try {
 		const manifestData = await fs.readFile(`${path}/${jsonFile}`, "utf8");
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const manifestFile = JSON.parse(manifestData);
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const manifestFile: PackageVersionList = JSON.parse(manifestData);
+
 		for (const key of Object.keys(manifestFile)) {
 			if (
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
 				isInternalVersionRange(manifestFile[key], true) ||
-				// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 				manifestFile[key].includes("-rc.")
 			) {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				manifestFile[key] = devVersion;
 			}
 		}
