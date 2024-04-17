@@ -607,12 +607,13 @@ export class SchemaFactory<
 		return createFieldSchemaUnsafe(FieldKind.Required, t, props);
 	}
 
-	/**
-	 * Make a field of type identifier instead of the default which is required.
-	 */
-	public get identifier(): FieldSchema<FieldKind.Identifier> {
-		return createFieldSchema(FieldKind.Identifier, this.string);
-	}
+	// TODO:#7734,7736: Re-enable when persisted document format is optimized
+	// /**
+	//  * Make a field of type identifier instead of the default which is required.
+	//  */
+	// public get identifier(): FieldSchema<FieldKind.Identifier> {
+	// 	return createFieldSchema(FieldKind.Identifier, this.string);
+	// }
 
 	/**
 	 * {@link SchemaFactory.object} except tweaked to work better for recursive types.
