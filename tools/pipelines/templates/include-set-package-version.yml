@@ -145,6 +145,14 @@ steps:
 
 - task: Bash@3
   displayName: Generate Manifest Files
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.buildDirectory }}
+    script: |
+      flub release report -g client -o .
+
+- task: Bash@3
+  displayName: Update Version in Manifest Files
   env:
     DEV_VERSION: $(SetVersion.version)
   inputs:
@@ -170,7 +178,7 @@ steps:
           echo "Container 'manifest-files' created."
       fi
 
-      for file in $(find . -type f \( -name 'manifest.json' -o -name 'simpleManifest.json' \)); do
+      for file in $(find . -type f \( -name 'manifest-*.json' -o -name 'simpleManifest-*.json' \)); do
           az storage blob upload -f "$file" -c 'manifest-files' -n "$(basename "$file")" --account-name ${{ parameters.STORAGE_ACCOUNT }} --account-key ${{ parameters.STORAGE_KEY }} --verbose
       done
 
