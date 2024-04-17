@@ -7,7 +7,6 @@ import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	IAudience,
-	ISelf,
 	ICriticalContainerError,
 	IDeltaManager,
 } from "@fluidframework/container-definitions";
@@ -18,7 +17,6 @@ import {
 	ILoader,
 	IRuntime,
 	LoaderHeader,
-	type IAudienceEvents,
 } from "@fluidframework/container-definitions/internal";
 import {
 	IContainerRuntime,
@@ -1756,32 +1754,8 @@ export class ContainerRuntime
 			this.remoteMessageProcessor.clearPartialMessagesFor(clientId);
 		});
 
-		this._audience = audience;
-		if (audience.getSelf === undefined) {
-			// back-compat, added in 2.0 RC3.
-			// Purpose: deal with cases when we run against old loader that does not have newly added capabilities
-			audience.getSelf = () => {
-				const clientId = this._getClientId();
-				return clientId === undefined
-					? undefined
-					: ({
-							clientId,
-							client: audience.getMember(clientId),
-					  } satisfies ISelf);
-			};
-
-			let oldClientId = this.clientId;
-			this.on("connected", () => {
-				const clientId = this.clientId;
-				assert(clientId !== undefined, "can't be undefined");
-				(audience as unknown as TypedEventEmitter<IAudienceEvents>).emit(
-					"selfChanged",
-					{ clientId: oldClientId },
-					{ clientId, client: audience.getMember(clientId) },
-				);
-				oldClientId = clientId;
-			});
-		}
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		this._audience = audience!;
 
 		const closeSummarizerDelayOverride = this.mc.config.getNumber(
 			"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs",
@@ -2471,11 +2445,6 @@ export class ContainerRuntime
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string) {
-		// Validate we have consistent state
-		const currentClientId = this._audience.getSelf()?.clientId;
-		assert(clientId === currentClientId, "same clientId");
-		assert(this.clientId === currentClientId, "same clientId");
-
 		if (connected && this.idCompressorMode === "delayed") {
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.loadIdCompressor();

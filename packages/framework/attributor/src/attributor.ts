@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { type IAudience, type IDeltaManager } from "@fluidframework/container-definitions";
+import { type IDeltaManager } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	MessageType,
 	type IDocumentMessage,
+	type IQuorumClients,
 	type ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { type AttributionInfo } from "@fluidframework/runtime-definitions/internal";
@@ -42,7 +43,6 @@ export interface IAttributor {
 
 /**
  * {@inheritdoc IAttributor}
- * @internal
  */
 export class Attributor implements IAttributor {
 	protected readonly keyToInfo: Map<number, AttributionInfo>;
@@ -83,12 +83,11 @@ export class Attributor implements IAttributor {
 /**
  * Attributor which listens to an op stream and records entries for each op.
  * Sequence numbers are used as attribution keys.
- * @internal
  */
 export class OpStreamAttributor extends Attributor implements IAttributor {
 	public constructor(
 		deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-		audience: IAudience,
+		quorumClients: IQuorumClients,
 		initialEntries?: Iterable<[number, AttributionInfo]>,
 	) {
 		super(initialEntries);
@@ -98,13 +97,10 @@ export class OpStreamAttributor extends Attributor implements IAttributor {
 					typeof message.clientId === "string",
 					"Client id should be present and should be of type string",
 				);
-				const client = audience.getMember(message.clientId);
-				assert(
-					client !== undefined,
-					0x4af /* Received message from user not in the audience */,
-				);
+				const client = quorumClients.getMember(message.clientId);
+				assert(client !== undefined, "Received message from user not in the quorumClients");
 				this.keyToInfo.set(message.sequenceNumber, {
-					user: client.user,
+					user: client.client.user,
 					timestamp: message.timestamp,
 				});
 			}
