@@ -342,134 +342,143 @@ describe("Routerlicious", () => {
 				});
 
 				describe("#submitSignal", () => {
-					it("Single Signal", async () => {
-						const signalContent = "TestSignal";
+					describe("v1 signals", () => {
+						let firstSocket: LocalWebSocket;
+						let firstConnectMessage: IConnected;
+						let secondSocket: LocalWebSocket;
 
-						const firstSocket = webSocketServer.createConnection();
+						beforeEach(async () => {
+							firstSocket = webSocketServer.createConnection();
+							firstConnectMessage = await connectToServer(
+								testId,
+								testTenantId,
+								testSecret,
+								firstSocket,
+							);
+							secondSocket = webSocketServer.createConnection();
+							await connectToServer(testId, testTenantId, testSecret, secondSocket);
+						});
+						it("Single Signal", async () => {
+							const signalContent = "TestSignal";
+							const promises = [
+								new Promise<void>((resolve) => {
+									firstSocket.on("signal", (signal: ISignalMessage) => {
+										assert.equal(
+											signalContent,
+											signal.content,
+											"Signal content mismatch",
+										);
+										assert.equal(
+											firstConnectMessage.clientId,
+											signal.clientId,
+											"Client ID mismatch",
+										);
+										resolve();
+									});
+								}),
+								new Promise<void>((resolve) => {
+									secondSocket.on("signal", (signal: ISignalMessage) => {
+										assert.equal(
+											signalContent,
+											signal.content,
+											"Signal content mismatch",
+										);
+										assert.equal(
+											firstConnectMessage.clientId,
+											signal.clientId,
+											"Client ID mismatch",
+										);
+										resolve();
+									});
+								}),
+							];
+							firstSocket.send("submitSignal", firstConnectMessage.clientId, [
+								signalContent,
+							]);
+							await Promise.all(promises);
+						});
 
-						const firstConnectMessage = await connectToServer(
-							testId,
-							testTenantId,
-							testSecret,
-							firstSocket,
-						);
+						it("Multiple Signals", async () => {
+							const signalContent1 = "TestSignal1";
+							const signalContent2 = "TestSignal2";
 
-						const secondSocket = webSocketServer.createConnection();
+							const promises = [
+								new Promise<void>((resolve) => {
+									let count = 0;
 
-						await connectToServer(testId, testTenantId, testSecret, secondSocket);
+									firstSocket.on("signal", (signal: ISignalMessage) => {
+										assert.equal(
+											count == 0 ? signalContent1 : signalContent2,
+											signal.content,
+											"Signal content mismatch",
+										);
+										assert.equal(
+											firstConnectMessage.clientId,
+											signal.clientId,
+											"Client ID mismatch",
+										);
+										count++;
 
-						const promises = [
-							new Promise<void>((resolve) => {
-								firstSocket.on("signal", (signal: ISignalMessage) => {
-									assert.equal(
-										signalContent,
-										signal.content,
-										"Signal content mismatch",
-									);
-									assert.equal(
-										firstConnectMessage.clientId,
-										signal.clientId,
-										"Client ID mismatch",
-									);
-									resolve();
-								});
-							}),
-							new Promise<void>((resolve) => {
-								secondSocket.on("signal", (signal: ISignalMessage) => {
-									assert.equal(
-										signalContent,
-										signal.content,
-										"Signal content mismatch",
-									);
-									assert.equal(
-										firstConnectMessage.clientId,
-										signal.clientId,
-										"Client ID mismatch",
-									);
-									resolve();
-								});
-							}),
-						];
+										if (count == 2) {
+											resolve();
+										}
+									});
+								}),
+								new Promise<void>((resolve) => {
+									let count = 0;
 
-						firstSocket.send("submitSignal", firstConnectMessage.clientId, [
-							signalContent,
-						]);
-						await Promise.all(promises);
+									secondSocket.on("signal", (signal: ISignalMessage) => {
+										assert.equal(
+											count == 0 ? signalContent1 : signalContent2,
+											signal.content,
+											"Signal content mismatch",
+										);
+										assert.equal(
+											firstConnectMessage.clientId,
+											signal.clientId,
+											"Client ID mismatch",
+										);
+										count++;
+
+										if (count == 2) {
+											resolve();
+										}
+									});
+								}),
+							];
+
+							firstSocket.send("submitSignal", firstConnectMessage.clientId, [
+								signalContent1,
+							]);
+							firstSocket.send("submitSignal", firstConnectMessage.clientId, [
+								signalContent2,
+							]);
+							await Promise.all(promises);
+						});
+
+						it("Invalid clientID", async () => {
+							const promises = [
+								new Promise<void>((resolve) => {
+									firstSocket.on("signal", (signal: ISignalMessage) => {
+										assert.fail("Signal should not have been received");
+									});
+									setTimeout(resolve, 100);
+								}),
+								new Promise<void>((resolve) => {
+									secondSocket.on("signal", (signal: ISignalMessage) => {
+										assert.fail("Signal should not have been received");
+									});
+									setTimeout(resolve, 100);
+								}),
+							];
+
+							firstSocket.send("submitSignal", "invalidClientID", ["TestSignal"]);
+							await Promise.all(promises);
+						});
 					});
 
-					it("Multiple Signals", async () => {
-						const signalContent1 = "TestSignal1";
-						const signalContent2 = "TestSignal2";
-
-						const firstSocket = webSocketServer.createConnection();
-
-						const firstConnectMessage = await connectToServer(
-							testId,
-							testTenantId,
-							testSecret,
-							firstSocket,
-						);
-
-						const secondSocket = webSocketServer.createConnection();
-
-						await connectToServer(testId, testTenantId, testSecret, secondSocket);
-
-						const promises = [
-							new Promise<void>((resolve) => {
-								let count = 0;
-
-								firstSocket.on("signal", (signal: ISignalMessage) => {
-									assert.equal(
-										count == 0 ? signalContent1 : signalContent2,
-										signal.content,
-										"Signal content mismatch",
-									);
-									assert.equal(
-										firstConnectMessage.clientId,
-										signal.clientId,
-										"Client ID mismatch",
-									);
-									count++;
-
-									if (count == 2) {
-										resolve();
-									}
-								});
-							}),
-							new Promise<void>((resolve) => {
-								let count = 0;
-
-								secondSocket.on("signal", (signal: ISignalMessage) => {
-									assert.equal(
-										count == 0 ? signalContent1 : signalContent2,
-										signal.content,
-										"Signal content mismatch",
-									);
-									assert.equal(
-										firstConnectMessage.clientId,
-										signal.clientId,
-										"Client ID mismatch",
-									);
-									count++;
-
-									if (count == 2) {
-										resolve();
-									}
-								});
-							}),
-						];
-
-						firstSocket.send("submitSignal", firstConnectMessage.clientId, [
-							signalContent1,
-						]);
-						firstSocket.send("submitSignal", firstConnectMessage.clientId, [
-							signalContent2,
-						]);
-						await Promise.all(promises);
-					});
-
-					it("Verify v2 signals", async () => {
-						let userSignalCounts = [0, 0, 0];
+					describe("v2 signals", () => {
+						let userSignalCounts: number[];
 
 						const createSignalPromise = (
 							userIndex: number,
@@ -482,99 +491,278 @@ describe("Routerlicious", () => {
 								});
 							});
 						};
-						const firstSocket = webSocketServer.createConnection();
 
-						const firstConnectMessage = await connectToServer(
-							testId,
-							testTenantId,
-							testSecret,
-							firstSocket,
-							true,
-						);
+						let firstSocket: LocalWebSocket;
+						let firstConnectMessage: IConnected;
+						let secondSocket: LocalWebSocket;
+						let secondConnectMessage: IConnected;
+						let thirdSocket: LocalWebSocket;
+						let user1SignalPromise: Promise<ISignalMessage>;
+						let user2SignalPromise: Promise<ISignalMessage>;
+						let user3SignalPromise: Promise<ISignalMessage>;
 
-						const secondSocket = webSocketServer.createConnection();
+						beforeEach(async () => {
+							userSignalCounts = [0, 0, 0];
 
-						const secondConnectMessage = await connectToServer(
-							testId,
-							testTenantId,
-							testSecret,
-							secondSocket,
-							true,
-						);
+							firstSocket = webSocketServer.createConnection();
 
-						const thirdSocket = webSocketServer.createConnection();
+							firstConnectMessage = await connectToServer(
+								testId,
+								testTenantId,
+								testSecret,
+								firstSocket,
+								true,
+							);
 
-						await connectToServer(testId, testTenantId, testSecret, thirdSocket, true);
+							secondSocket = webSocketServer.createConnection();
 
-						const user1SignalPromise = createSignalPromise(0, firstSocket);
-						const user2SignalPromise = createSignalPromise(1, secondSocket);
-						const user3SignalPromise = createSignalPromise(2, thirdSocket);
+							secondConnectMessage = await connectToServer(
+								testId,
+								testTenantId,
+								testSecret,
+								secondSocket,
+								true,
+							);
 
-						const targetedSignal: ISentSignalMessage = {
-							targetClientId: firstConnectMessage.clientId,
-							content: "TestSignal",
-						};
+							thirdSocket = webSocketServer.createConnection();
 
-						secondSocket.send("submitSignal", secondConnectMessage.clientId, [
-							targetedSignal,
-						]);
-						let user1Signal = await user1SignalPromise;
-						assert.equal(userSignalCounts[0], 1),
-							"User 1 should have received 1 signal";
-						assert.equal(
-							user1Signal.content,
-							"TestSignal",
-							"User 1 signal content mismatch",
-						);
-						assert.equal(
-							userSignalCounts[1],
-							0,
-							"User 2 should not have received any signals",
-						);
-						assert.equal(
-							userSignalCounts[2],
-							0,
-							"User 3 should not have received any signals",
-						);
+							await connectToServer(
+								testId,
+								testTenantId,
+								testSecret,
+								thirdSocket,
+								true,
+							);
 
-						const broadcastSignal: ISentSignalMessage = {
-							content: "TestSignal",
-						};
+							user1SignalPromise = createSignalPromise(0, firstSocket);
+							user2SignalPromise = createSignalPromise(1, secondSocket);
+							user3SignalPromise = createSignalPromise(2, thirdSocket);
+						});
 
-						firstSocket.send("submitSignal", firstConnectMessage.clientId, [
-							broadcastSignal,
-						]);
-						user1Signal = await user1SignalPromise;
-						const user2Signal = await user2SignalPromise;
-						const user3Signal = await user3SignalPromise;
+						it("Verify targeted signal", async () => {
+							const targetedSignal: ISentSignalMessage = {
+								targetClientId: firstConnectMessage.clientId,
+								content: "TestSignal",
+								clientConnectionNumber: 1,
+								referenceSequenceNumber: 1,
+							};
 
-						assert.equal(
-							userSignalCounts[0],
-							2,
-							"User 1 should have received 2 signals",
-						);
-						assert.equal(
-							user1Signal.content,
-							"TestSignal",
-							"User 1 signal content mismatch",
-						);
-						assert.equal(
-							userSignalCounts[1],
-							1,
-							"User 2 should have received 1 signal",
-						);
-						assert.equal(
-							user2Signal.content,
-							"TestSignal",
-							"User 2 signal content mismatch",
-						);
-						assert.equal(userSignalCounts[2], 1),
-							"User 3 should have received 1 signal";
-						assert.equal(
-							user3Signal.content,
-							"TestSignal",
-							"User 3 signal content mismatch",
-						);
+							secondSocket.send("submitSignal", secondConnectMessage.clientId, [
+								targetedSignal,
+							]);
+							let user1Signal = await user1SignalPromise;
+							assert.equal(userSignalCounts[0], 1),
+								"User 1 should have received 1 signal";
+							assert.equal(
+								user1Signal.content,
+								"TestSignal",
+								"User 1 signal content mismatch",
+							);
+							assert.equal(
+								userSignalCounts[1],
+								0,
+								"User 2 should not have received any signals",
+							);
+							assert.equal(
+								userSignalCounts[2],
+								0,
+								"User 3 should not have received any signals",
+							);
+						});
+
+						it("Verify broadcast signal", async () => {
+							const broadcastSignal: ISentSignalMessage = {
+								content: "TestSignal",
+								clientConnectionNumber: 1,
+								referenceSequenceNumber: 1,
+							};
+
+							firstSocket.send("submitSignal", firstConnectMessage.clientId, [
+								broadcastSignal,
+							]);
+							const user1Signal = await user1SignalPromise;
+							const user2Signal = await user2SignalPromise;
+							const user3Signal = await user3SignalPromise;
+
+							assert.equal(
+								userSignalCounts[0],
+								1,
+								"User 1 should have received 2 signals",
+							);
+							assert.equal(
+								user1Signal.content,
+								"TestSignal",
+								"User 1 signal content mismatch",
+							);
+							assert.equal(
+								userSignalCounts[1],
+								1,
+								"User 2 should have received 1 signal",
+							);
+							assert.equal(
+								user2Signal.content,
+								"TestSignal",
+								"User 2 signal content mismatch",
+							);
+							assert.equal(userSignalCounts[2], 1),
+								"User 3 should have received 1 signal";
+							assert.equal(
+								user3Signal.content,
+								"TestSignal",
+								"User 3 signal content mismatch",
+							);
+						});
+						it("Verify mixed targeted and broadcast signals", async () => {
+							const targetedSignal: ISentSignalMessage = {
+								targetClientId: firstConnectMessage.clientId,
+								content: "TestSignal",
+							};
+
+							secondSocket.send("submitSignal", secondConnectMessage.clientId, [
+								targetedSignal,
+							]);
+							let user1Signal = await user1SignalPromise;
+							assert.equal(userSignalCounts[0], 1),
+								"User 1 should have received 1 signal";
+							assert.equal(
+								user1Signal.content,
+								"TestSignal",
+								"User 1 signal content mismatch",
+							);
+							assert.equal(
+								userSignalCounts[1],
+								0,
+								"User 2 should not have received any signals",
+							);
+							assert.equal(
+								userSignalCounts[2],
+								0,
+								"User 3 should not have received any signals",
+							);
+
+							const broadcastSignal: ISentSignalMessage = {
+								content: "TestSignal",
+							};
+
+							firstSocket.send("submitSignal", firstConnectMessage.clientId, [
+								broadcastSignal,
+							]);
+							user1Signal = await user1SignalPromise;
+							const user2Signal = await user2SignalPromise;
+							const user3Signal = await user3SignalPromise;
+
+							assert.equal(
+								userSignalCounts[0],
+								2,
+								"User 1 should have received 2 signals",
+							);
+							assert.equal(
+								user1Signal.content,
+								"TestSignal",
+								"User 1 signal content mismatch",
+							);
+							assert.equal(
+								userSignalCounts[1],
+								1,
+								"User 2 should have received 1 signal",
+							);
+							assert.equal(
+								user2Signal.content,
+								"TestSignal",
+								"User 2 signal content mismatch",
+							);
+							assert.equal(userSignalCounts[2], 1),
+								"User 3 should have received 1 signal";
+							assert.equal(
+								user3Signal.content,
+								"TestSignal",
+								"User 3 signal content mismatch",
+							);
+						});
+
+						// These type tests can be skipped to save time
+						describe("Invalid/Malformed signals", () => {
+							let noSignalPromises: Promise<void>[];
+
+							before(() => {
+								noSignalPromises = [
+									new Promise<void>((resolve) => {
+										firstSocket.on("signal", (signal: ISignalMessage) => {
+											assert.fail("Signal should not have been received");
+										});
+										setTimeout(resolve, 100);
+									}),
+									new Promise<void>((resolve) => {
+										secondSocket.on("signal", (signal: ISignalMessage) => {
+											assert.fail("Signal should not have been received");
+										});
+										setTimeout(resolve, 100);
+									}),
+									new Promise<void>((resolve) => {
+										thirdSocket.on("signal", (signal: ISignalMessage) => {
+											assert.fail("Signal should not have been received");
+										});
+										setTimeout(resolve, 100);
+									}),
+								];
+							});
+
+							it("Invalid targetClientID", async () => {
+								const targetedSignal: ISentSignalMessage = {
+									targetClientId: "invalidClientID",
+									content: "TestSignal",
+								};
+
+								secondSocket.send("submitSignal", secondConnectMessage.clientId, [
+									targetedSignal,
+								]);
+								await Promise.all(noSignalPromises);
+							});
+
+							it("Invalid targetClientID type", async () => {
+								const targetedSignal = {
+									targetClientId: true,
+									content: "TestSignal",
+								};
+
+								secondSocket.send("submitSignal", secondConnectMessage.clientId, [
+									targetedSignal,
+								]);
+								await Promise.all(noSignalPromises);
+							});
+							it("Missing content field", async () => {
+								const targetedSignal = {
+									targetClientId: firstConnectMessage.clientId,
+								};
+								secondSocket.send("submitSignal", secondConnectMessage.clientId, [
+									targetedSignal,
+								]);
+								await Promise.all(noSignalPromises);
+							});
+							it("Invalid signal field", async () => {
+								const targetedSignal = {
+									targetClientId: firstConnectMessage.clientId,
+									content: "TestSignal",
+									invalidField: "invalid",
+								};
+								secondSocket.send("submitSignal", secondConnectMessage.clientId, [
+									targetedSignal,
+								]);
+								await Promise.all(noSignalPromises);
+							});
+							it("Invalid optional signal fields", async () => {
+								const targetedSignal = {
+									targetClientId: firstConnectMessage.clientId,
+									content: "TestSignal",
+									clientConnectionNumber: false,
+									referenceSequenceNumber: "invalid",
+								};
+								secondSocket.send("submitSignal", secondConnectMessage.clientId, [
+									targetedSignal,
+								]);
+								await Promise.all(noSignalPromises);
+							});
+						});
 					});
 				});
 
