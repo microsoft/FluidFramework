@@ -15,8 +15,8 @@ describe("HeadingNode -> Html", () => {
 	});
 
 	it("Without ID", () => {
-		const input = HeadingNode.createFromPlainText("Foo", "foo-id");
-		const expected = h("h1", { id: "foo-id" }, "Foo");
+		const input = HeadingNode.createFromPlainText("Foo");
+		const expected = h("h1", "Foo");
 		assertTransformation(input, expected);
 	});
 
