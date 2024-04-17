@@ -6751,7 +6751,7 @@ importers:
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/test-utils': workspace:~
       '@microsoft/api-extractor': ^7.42.3
-      '@sinclair/typebox': ^0.29.4
+      '@sinclair/typebox': ^0.32.20
       '@tylerbu/sorted-btree-es6': ^1.8.0
       '@types/diff': ^3.5.1
       '@types/easy-table': ^0.0.32
@@ -6790,7 +6790,7 @@ importers:
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/shared-object-base': link:../shared-object-base
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      '@sinclair/typebox': 0.29.6
+      '@sinclair/typebox': 0.32.20
       '@tylerbu/sorted-btree-es6': 1.8.0
       '@ungap/structured-clone': 1.2.0
       uuid: 9.0.1
@@ -20922,6 +20922,11 @@ packages:
 
   /@sinclair/typebox/0.29.6:
     resolution: {integrity: sha512-aX5IFYWlMa7tQ8xZr3b2gtVReCvg7f3LEhjir/JAjX2bJCMVJA5tIPv30wTD4KDfcwMd7DDYY3hFDeGmOgtrZQ==}
+    dev: true
+
+  /@sinclair/typebox/0.32.20:
+    resolution: {integrity: sha512-ziK497ILSIYMxD/thl496idIb03IZPlha04itLQu1xAFQbumWZ+Dj4PMMCkDRpAYhvVSdmRlTjGu2B2MA5RplQ==}
+    dev: false
 
   /@sindresorhus/is/0.14.0:
     resolution: {integrity: sha512-9NET910DNaIPngYnLLPeg+Ogzqsi9uM4mSboU5y6p8S5DzMTVEsJZrawi+BoDNUVBa2DhJqQYUFvMDfgU062LQ==}
