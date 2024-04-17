@@ -909,9 +909,7 @@ describeCompat("Container connections", "NoCompat", (getTestObjectProvider) => {
 		let didReceiveContainerWarning = false;
 
 		// Host apps can chose to listen to container warning events and disconnect the container if they observe throttling errors
-		container.once("warning", async (warning) => {
-			didReceiveContainerWarning = true;
-
+		container.once("warning", (warning) => {
 			assert.equal(
 				warning.errorType,
 				"throttlingError",
@@ -922,7 +920,7 @@ describeCompat("Container connections", "NoCompat", (getTestObjectProvider) => {
 			container.disconnect();
 			const countUntilDisconnectWasCalled = reconnectionAttemptCount;
 
-			await clock.tickAsync(retryAfter * 1000 + 10);
+			clock.tick(retryAfter * 1000 + 10);
 			// Check if there has been any retry attempt after some time greater than retry after has elapsed
 			assert.equal(
 				reconnectionAttemptCount,
@@ -930,20 +928,21 @@ describeCompat("Container connections", "NoCompat", (getTestObjectProvider) => {
 				"Connection should not have been attempted, even after the retry timedout",
 			);
 
-			await clock.tickAsync(retryAfter * 1000 + 10);
+			clock.tick(retryAfter * 1000 + 10);
 			// Check if there has been any retry attempt after more time has elapsed
 			assert.equal(
 				reconnectionAttemptCount,
 				countUntilDisconnectWasCalled,
 				"Connection should not have been attempted after some more time",
 			);
+			didReceiveContainerWarning = true;
 		});
 
 		// Disconnect and connect the container again to trigger the connection to the delta service
 		// to test the container warning behavior above
 		container.disconnect();
 		container.connect();
-		await clock.tickAsync(retryAfter * 1000 + 10);
+		await clock.tickAsync(retryAfter * 1000 + 20);
 		assert(
 			didReceiveContainerWarning,
 			"Container warning event should happen when throttling error occurs",
