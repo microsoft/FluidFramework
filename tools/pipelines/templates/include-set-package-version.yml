@@ -179,7 +179,7 @@ steps:
       fi
 
       for file in $(find . -type f \( -name 'manifest-*.json' -o -name 'simpleManifest-*.json' \)); do
-          az storage blob upload -f "$file" -c 'manifest-files' -n "$(basename "$file")" --account-name ${{ parameters.STORAGE_ACCOUNT }} --account-key ${{ parameters.STORAGE_KEY }} --verbose
+          az storage blob upload -f "$file" -c 'manifest-files' -n "$(basename "$file")" --account-name ${{ parameters.STORAGE_ACCOUNT }} --account-key ${{ parameters.STORAGE_KEY }} --overwrite true --verbose
       done
 
 # This task is a last-minute verification that no Fluid internal versions show up with caret dependencies. This is to
