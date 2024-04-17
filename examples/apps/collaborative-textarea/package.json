@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/collaborative-textarea",
-	"version": "2.0.0-rc.3.0.0",
+	"version": "2.0.0-rc.4.0.0",
 	"private": true,
 	"description": "A minimal example using the react collaborative-textarea",
 	"homepage": "https://fluidframework.com",
@@ -49,7 +49,7 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
-		"css-loader": "^1.0.0",
+		"css-loader": "^6.11.0",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",
 		"style-loader": "^1.0.0"

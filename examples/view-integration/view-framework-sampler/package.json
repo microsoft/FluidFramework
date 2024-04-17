@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/view-framework-sampler",
-	"version": "2.0.0-rc.3.0.0",
+	"version": "2.0.0-rc.4.0.0",
 	"private": true,
 	"description": "Example of integrating a Fluid data object with a variety of view frameworks.",
 	"homepage": "https://fluidframework.com",
@@ -39,7 +39,7 @@
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"css-loader": "^1.0.0",
+		"css-loader": "^6.11.0",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",
 		"style-loader": "^1.0.0",
