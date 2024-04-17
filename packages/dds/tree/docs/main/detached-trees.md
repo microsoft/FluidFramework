@@ -85,10 +85,10 @@ All other edits could be ignored since the user has no way of seeing their impac
 
 ### Merge Semantics
 
-We have adopted merge semantics that allow edits to affect removed trees.
-This means removed trees are still part of the shared document that is being edited,
-even if they are not part of the document tree at all times.
-Keeping removed trees around in the forest is aligned with this view.
+We have adopted merge semantics and features (undo/redo) that allow edits to affect removed trees.
+This means removed trees are still part of the shared content that is being edited,
+even if these trees are not part of the document tree at all times.
+Assuming removed trees continue to exist is in tune with that.
 
 ### Performance
 
@@ -106,16 +106,31 @@ As mentioned above, this would be bad for memory usage
 (though that could be addressed using local disk storage)
 and document load.
 
+This approach seems like a decent tradeoff between these two.
+More importantly, it paves the way to allowing us to more precisely control that tradeoff though the concept of [undo window](undo.md).
+
 ### Simplicity
 
 The fact that most of our system gets to assume all trees exist forever makes the system simpler.
 There is a non-negligible complexity cost associated with the GC scheme,
 but this complexity is contained in a relatively small body of code that exists only for this purpose.
 
+This approach allows us to think of SharedTree as a composite DDS made up of two sub-DDSes:
+
+-   One that is concerned with the existence of trees:
+    -   New trees can be created
+    -   Trees are never deleted, but clients are allowed to forget their existence and contents
+    -   Clients can refresh one-another on the existence and contents of trees
+-   One that is concerned with the location of trees with respect to one-another:
+    -   Trees can be moved (which includes removal and restoration)
+
+One does not need to adopt this view in order to use SharedTree or even understand its internals,
+but it can help structure one's reasoning about it.
+
 ### Evolvability
 
-This design seems well positioned to accommodate future evolutions like the concept of [undo window](undo.md) and partial checkouts
-(because of the refresher system).
+This design, because of the refresher system it introduces,
+seems well positioned to accommodate future evolutions like partial checkouts.
 
 ## How it Works
 
