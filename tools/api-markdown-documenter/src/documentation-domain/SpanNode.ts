@@ -61,7 +61,7 @@ export class SpanNode<
 	/**
 	 * Formatting to apply to all {@link DocumentationParentNode.children}.
 	 *
-	 * @defaultValue Inherit
+	 * @defaultValue Inherit formatting from ancestry, if any exists.
 	 */
 	public readonly textFormatting?: TextFormatting;
 

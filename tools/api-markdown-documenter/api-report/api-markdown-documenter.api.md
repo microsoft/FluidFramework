@@ -709,9 +709,9 @@ export abstract class TableRowNode extends DocumentationParentNodeBase<TableCell
 
 // @public
 export interface TextFormatting {
-    readonly bold?: true;
-    readonly italic?: true;
-    readonly strikethrough?: true;
+    readonly bold?: boolean;
+    readonly italic?: boolean;
+    readonly strikethrough?: boolean;
 }
 
 // @alpha
