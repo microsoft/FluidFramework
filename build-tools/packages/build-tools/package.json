@@ -90,10 +90,7 @@
 	},
 	"pnpm": {
 		"updateConfig": {
-			"ignoreDependencies": [
-				"type-fest",
-				"typescript"
-			]
+			"ignoreDependencies": ["type-fest", "typescript"]
 		}
 	}
 }
