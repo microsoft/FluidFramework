@@ -99,7 +99,7 @@ import {
 	responseToException,
 	seqFromTree,
 } from "@fluidframework/runtime-utils/internal";
-import { type ITelemetryGenericEventExt } from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryGenericEventExt } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	DataCorruptionError,
