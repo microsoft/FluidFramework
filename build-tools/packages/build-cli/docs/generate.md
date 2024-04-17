@@ -9,6 +9,7 @@ Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub generate changelog`](#flub-generate-changelog)
 * [`flub generate changeset`](#flub-generate-changeset)
 * [`flub generate entrypoints`](#flub-generate-entrypoints)
+* [`flub generate packlist`](#flub-generate-packlist)
 * [`flub generate upcoming`](#flub-generate-upcoming)
 
 ## `flub generate assertTags`
@@ -245,6 +246,29 @@ DESCRIPTION
 ```
 
 _See code: [src/commands/generate/entrypoints.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/entrypoints.ts)_
+
+## `flub generate packlist`
+
+Outputs a list of files that will be included in a package based on its 'files' property in package.json and any .npmignore files.
+
+```
+USAGE
+  $ flub generate packlist [-v | --quiet] [--packagePath <value>] [--out <value>]
+
+FLAGS
+  --out=<value>          [default: packlist.txt] File to output the pack list to.
+  --packagePath=<value>  [default: .] Path to a folder containing a package.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  Outputs a list of files that will be included in a package based on its 'files' property in package.json and any
+  .npmignore files.
+```
+
+_See code: [src/commands/generate/packlist.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/packlist.ts)_
 
 ## `flub generate upcoming`
 
