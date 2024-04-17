@@ -1,6 +1,6 @@
 {
 	"name": "client-release-group-root",
-	"version": "2.0.0-rc.3.0.0",
+	"version": "2.0.0-rc.4.0.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -390,6 +390,9 @@
 				"fluid-framework",
 				"markdown-magic"
 			]
+		},
+		"patchedDependencies": {
+			"@microsoft/api-extractor@7.42.3": "patches/@microsoft__api-extractor@7.42.3.patch"
 		}
 	}
 }

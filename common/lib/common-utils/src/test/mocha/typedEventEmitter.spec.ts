@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IErrorEvent } from "@fluidframework/common-definitions";
+import { IErrorEvent } from "../../typedEventEmitter";
 import { TypedEventEmitter } from "../..";
 
 describe("TypedEventEmitter", () => {

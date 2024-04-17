@@ -394,9 +394,7 @@ export interface IMergeTreeDelta {
 
 // @alpha (undocumented)
 export interface IMergeTreeDeltaCallbackArgs<TOperationType extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType> {
-    // (undocumented)
     readonly deltaSegments: IMergeTreeSegmentDelta[];
-    // (undocumented)
     readonly operation: TOperationType;
 }
 
@@ -481,9 +479,7 @@ export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
 
 // @alpha (undocumented)
 export interface IMergeTreeSegmentDelta {
-    // (undocumented)
     propertyDeltas?: PropertySet;
-    // (undocumented)
     segment: ISegment;
 }
 
@@ -909,7 +905,7 @@ export function refHasTileLabels(refPos: ReferencePosition): boolean;
 // @internal (undocumented)
 export function refTypeIncludesFlag(refPosOrType: ReferencePosition | ReferenceType, flags: ReferenceType): boolean;
 
-// @internal
+// @alpha
 export const reservedMarkerIdKey = "markerId";
 
 // @internal (undocumented)
