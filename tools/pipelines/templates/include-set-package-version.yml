@@ -32,6 +32,12 @@ parameters:
   type: string
   default: none
 
+- name: STORAGE_ACCOUNT
+  type: string
+
+- name: STORAGE_KEY
+  type: string
+
 # Set version
 steps:
 - ${{ if eq(parameters.buildToolsVersionToInstall, 'repo') }}:
