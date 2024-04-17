@@ -8,8 +8,8 @@ import {
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
 	ITelemetryBaseLogger,
-	type ScopeType,
 } from "@fluidframework/azure-client";
+import { type ScopeType } from "@fluidframework/azure-client/internal";
 import { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";

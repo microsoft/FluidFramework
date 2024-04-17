@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITokenProvider, type ScopeType } from "@fluidframework/azure-client";
+import { ITokenProvider } from "@fluidframework/azure-client";
+import { type ScopeType } from "@fluidframework/azure-client/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 
 export function createAzureTokenProvider(
