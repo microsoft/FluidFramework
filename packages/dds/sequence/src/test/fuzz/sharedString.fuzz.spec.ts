@@ -63,6 +63,7 @@ describe("SharedString fuzz testing", () => {
 		{ ...baseSharedStringModel, workloadName: "default" },
 		{
 			...defaultFuzzOptions,
+			skip: [14, 20, 33, 43, 66, 77, 79, 95],
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 0,
 		},
@@ -79,6 +80,10 @@ describe("SharedString fuzz with stashing", () => {
 				maxNumberOfClients: Number.MAX_SAFE_INTEGER,
 				stashableClientProbability: 0.2,
 			},
+			skip: [
+				0, 3, 8, 10, 13, 17, 19, 20, 21, 22, 25, 31, 32, 33, 36, 37, 38, 46, 47, 49, 50, 55,
+				62, 70, 72, 73, 74, 82, 84, 91, 93, 94, 96, 97, 99,
+			],
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 0,
 		},

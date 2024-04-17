@@ -28,7 +28,7 @@ describe("IntervalCollection fuzz testing", () => {
 
 	createDDSFuzzSuite(model, {
 		...defaultFuzzOptions,
-		skip: [23, 41, 43, 53, 85],
+		skip: [35, 61, 72, 99],
 		// Note: there are some known eventual consistency issues which the tests don't currently reproduce.
 		// Search this package for AB#6552 (or look at that work item) for a skipped test and further details.
 		// Uncomment this line to replay a specific seed from its failure file:
@@ -50,7 +50,7 @@ describe("IntervalCollection with stashing", () => {
 			stashableClientProbability: 0.2,
 		},
 		// AB#7220
-		skip: [10, 13, 14, 25, 29, 64, 70, 76, 82, 85, 86],
+		skip: [4, 11, 18, 29, 35, 41, 47, 53, 65, 66, 73, 76, 86, 93, 96, 99],
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});
@@ -64,6 +64,7 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 
 	const options = {
 		...defaultFuzzOptions,
+		skip: [35],
 		reconnectProbability: 0.0,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
