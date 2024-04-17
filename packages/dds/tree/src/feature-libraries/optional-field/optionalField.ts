@@ -442,7 +442,81 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		return prunedChange;
 	},
+
+	replaceRevisions: (
+		change: OptionalChangeset,
+		oldRevisions: Set<RevisionTag | undefined>,
+		newRevision: RevisionTag,
+	): OptionalChangeset => {
+		const valueReplace = replaceReplaceRevisions(
+			change.valueReplace,
+			oldRevisions,
+			newRevision,
+		);
+
+		const childChanges: ChildChange[] = [];
+		for (const [id, childChange] of change.childChanges) {
+			childChanges.push([
+				replaceRegisterRevisions(id, oldRevisions, newRevision),
+				childChange,
+			]);
+		}
+
+		const moves: Move[] = [];
+		for (const [src, dst] of change.moves) {
+			moves.push([
+				replaceAtomRevisions(src, oldRevisions, newRevision),
+				replaceAtomRevisions(dst, oldRevisions, newRevision),
+			]);
+		}
+
+		const updated: Mutable<OptionalChangeset> = { childChanges, moves };
+		if (valueReplace !== undefined) {
+			updated.valueReplace = valueReplace;
+		}
+
+		return updated;
+	},
 };
+
+function replaceReplaceRevisions(
+	replace: Replace | undefined,
+	oldRevisions: Set<RevisionTag | undefined>,
+	newRevision: RevisionTag,
+): Replace | undefined {
+	if (replace === undefined) {
+		return undefined;
+	}
+
+	const updated: Mutable<Replace> = {
+		...replace,
+		dst: replaceAtomRevisions(replace.dst, oldRevisions, newRevision),
+	};
+
+	if (replace.src !== undefined) {
+		updated.src = replaceRegisterRevisions(replace.src, oldRevisions, newRevision);
+	}
+
+	return updated;
+}
+
+function replaceRegisterRevisions(
+	register: RegisterId,
+	oldRevisions: Set<RevisionTag | undefined>,
+	newRevision: RevisionTag,
+): RegisterId {
+	return register === "self"
+		? register
+		: replaceAtomRevisions(register, oldRevisions, newRevision);
+}
+
+function replaceAtomRevisions(
+	id: ChangeAtomId,
+	oldRevisions: Set<RevisionTag | undefined>,
+	newRevision: RevisionTag,
+): ChangeAtomId {
+	return oldRevisions.has(id.revision) ? { ...id, revision: newRevision } : id;
+}
 
 function getComposedReplaceDst(
 	change1: Replace | undefined,

@@ -123,6 +123,12 @@ export interface FieldChangeRebaser<TChangeset> {
 	 * @returns `change` with any empty child node changesets removed.
 	 */
 	prune(change: TChangeset, pruneChild: NodeChangePruner): TChangeset;
+
+	replaceRevisions(
+		change: TChangeset,
+		oldRevisions: Set<RevisionTag | undefined>,
+		newRevisions: RevisionTag,
+	): TChangeset;
 }
 
 /**
@@ -150,6 +156,7 @@ export function isolatedFieldChangeRebaser<TChangeset>(data: {
 	return {
 		...data,
 		prune: (change) => change,
+		replaceRevisions: (change) => change,
 	};
 }
 

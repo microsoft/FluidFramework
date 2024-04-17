@@ -93,6 +93,7 @@ const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
 	invert: (change) => change.change,
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base.change),
 	prune: (change, pruneChild) => (change === undefined ? undefined : pruneChild(change)),
+	replaceRevisions: (change) => change,
 };
 
 const singleNodeEditor: FieldEditor<SingleNodeChangeset> = {

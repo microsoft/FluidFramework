@@ -77,6 +77,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 		},
 		rebase: rebaseGenericChange,
 		prune: pruneGenericChange,
+		replaceRevisions: (change) => change,
 	},
 	codecsFactory: makeGenericChangeCodec,
 	editor: {
