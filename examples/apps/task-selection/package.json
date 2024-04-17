@@ -46,7 +46,7 @@
 		"@fluidframework/request-handler": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/task-manager": "workspace:~",
-		"css-loader": "^1.0.0",
+		"css-loader": "^6.11.0",
 		"style-loader": "^1.0.0"
 	},
 	"devDependencies": {

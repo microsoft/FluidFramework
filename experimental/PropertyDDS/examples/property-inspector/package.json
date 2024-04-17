@@ -85,7 +85,7 @@
 		"clean-webpack-plugin": "^4.0.0",
 		"concurrently": "^8.2.1",
 		"cross-env": "^7.0.3",
-		"css-loader": "^1.0.0",
+		"css-loader": "^6.11.0",
 		"eslint": "~8.55.0",
 		"expect-puppeteer": "^9.0.2",
 		"html-webpack-plugin": "^5.5.0",

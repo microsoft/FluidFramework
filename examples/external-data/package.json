@@ -68,7 +68,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tinylicious-driver": "workspace:~",
 		"cors": "^2.8.4",
-		"css-loader": "^1.0.0",
+		"css-loader": "^6.11.0",
 		"express": "^4.19.2",
 		"lodash.isequal": "^4.5.0",
 		"node-fetch": "^2.6.9",
