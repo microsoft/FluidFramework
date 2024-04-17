@@ -32,7 +32,7 @@ import {
 	SchemaPolicy,
 	TreeStoredSchemaRepository,
 } from "../core/index.js";
-import { JsonCompatibleReadOnly, brand, fail } from "../util/index.js";
+import { JsonCompatibleReadOnly, brand } from "../util/index.js";
 
 import { SharedTreeBranch, getChangeReplaceType } from "./branch.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
