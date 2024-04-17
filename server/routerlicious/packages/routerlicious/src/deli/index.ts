@@ -14,7 +14,7 @@ import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
-import { RedisOptions } from "ioredis";
+import { RedisOptions, ClusterOptions } from "ioredis";
 import * as winston from "winston";
 import {
 	RedisClientConnectionManager,
@@ -121,7 +121,7 @@ export async function deliCreate(
 	);
 
 	const redisConfig = config.get("redis");
-	const redisOptions: RedisOptions = {
+	const redisOptions: RedisOptions & ClusterOptions = {
 		host: redisConfig.host,
 		port: redisConfig.port,
 		password: redisConfig.pass,
