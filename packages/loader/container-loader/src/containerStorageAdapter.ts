@@ -156,10 +156,6 @@ export class ContainerStorageAdapter
 			this.loadingGroupIdSnapshotsFromPendingState !== undefined &&
 			snapshotFetchOptions?.loadingGroupIds !== undefined
 		) {
-			assert(
-				snapshotFetchOptions?.loadingGroupIds.length === 1,
-				"Only one loading group id is supported",
-			);
 			const localSnapshot =
 				this.loadingGroupIdSnapshotsFromPendingState[
 					snapshotFetchOptions.loadingGroupIds[0]
