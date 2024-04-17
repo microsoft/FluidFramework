@@ -83,6 +83,12 @@ export interface ChangeRebaser<TChangeset> {
 		over: TaggedChange<TChangeset>,
 		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
+
+	replaceRevisions(
+		change: TChangeset,
+		oldRevisions: Set<RevisionTag | undefined>,
+		newRevision: RevisionTag,
+	): TChangeset;
 }
 
 /**

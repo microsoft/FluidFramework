@@ -11,6 +11,7 @@ import {
 	ChangeFamily,
 	ChangeRebaser,
 	RevisionMetadataSource,
+	RevisionTag,
 	RevisionTagCodec,
 	TaggedChange,
 	mapTaggedChange,
@@ -177,6 +178,27 @@ export class SharedTreeChangeFamily
 					),
 				},
 			],
+		};
+	}
+
+	public replaceRevisions(
+		change: SharedTreeChange,
+		oldRevisions: Set<RevisionTag | undefined>,
+		newRevision: RevisionTag,
+	): SharedTreeChange {
+		return {
+			changes: change.changes.map((inner) => {
+				return inner.type === "data"
+					? {
+							...inner,
+							innerChange: this.modularChangeFamily.rebaser.replaceRevisions(
+								inner.innerChange,
+								oldRevisions,
+								newRevision,
+							),
+					  }
+					: inner;
+			}),
 		};
 	}
 

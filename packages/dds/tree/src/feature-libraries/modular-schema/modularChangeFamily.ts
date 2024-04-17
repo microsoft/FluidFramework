@@ -54,6 +54,8 @@ import {
 	getOrAddInMap,
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
+	nestedMapFromFlatList,
+	nestedMapToFlatList,
 	nestedSetContains,
 	populateNestedMap,
 	setInNestedMap,
@@ -1022,9 +1024,76 @@ export class ModularChangeFamily
 		}
 	}
 
+	public replaceRevisions(
+		change: ModularChangeset,
+		oldRevisions: Set<RevisionTag | undefined>,
+		newRevision: RevisionTag,
+	): ModularChangeset {
+		const updatedFields = this.replaceFieldMapRevisions(
+			change.fieldChanges,
+			oldRevisions,
+			newRevision,
+		);
+
+		const updatedNodes: ChangeAtomIdMap<NodeChangeset> = nestedMapFromFlatList(
+			nestedMapToFlatList(change.nodeChanges).map(([revision, id, nodeChangeset]) => [
+				replaceRevision(revision, oldRevisions, newRevision),
+				id,
+				this.replaceNodeChangesetRevisions(nodeChangeset, oldRevisions, newRevision),
+			]),
+		);
+
+		// TODO: Builds, destroys, refreshers, revisions
+		return { ...change, fieldChanges: updatedFields, nodeChanges: updatedNodes };
+	}
+
+	private replaceNodeChangesetRevisions(
+		nodeChangeset: NodeChangeset,
+		oldRevisions: Set<RevisionTag | undefined>,
+		newRevision: RevisionTag,
+	): NodeChangeset {
+		const updated = { ...nodeChangeset };
+		if (nodeChangeset.fieldChanges !== undefined) {
+			updated.fieldChanges = this.replaceFieldMapRevisions(
+				nodeChangeset.fieldChanges,
+				oldRevisions,
+				newRevision,
+			);
+		}
+
+		return updated;
+	}
+
+	private replaceFieldMapRevisions(
+		fields: FieldChangeMap,
+		oldRevisions: Set<RevisionTag | undefined>,
+		newRevision: RevisionTag,
+	): FieldChangeMap {
+		const updatedFields: FieldChangeMap = new Map();
+		for (const [field, fieldChange] of fields) {
+			const updatedFieldChange = getFieldKind(
+				this.fieldKinds,
+				fieldChange.fieldKind,
+			).changeHandler.rebaser.replaceRevisions(fieldChange.change, oldRevisions, newRevision);
+
+			updatedFields.set(field, { ...fieldChange, change: updatedFieldChange });
+		}
+
+		return updatedFields;
+	}
+
 	public buildEditor(changeReceiver: (change: ModularChangeset) => void): ModularEditBuilder {
 		return new ModularEditBuilder(this, changeReceiver);
 	}
+}
+
+// TODO: Instead of passing around old/new revisions everywhere, should we just pass this as a delegate?
+function replaceRevision(
+	revision: RevisionTag | undefined,
+	oldRevisions: Set<RevisionTag | undefined>,
+	newRevision: RevisionTag,
+): RevisionTag | undefined {
+	return oldRevisions.has(revision) ? newRevision : revision;
 }
 
 function composeBuildsDestroysAndRefreshers(changes: TaggedChange<ModularChangeset>[]) {

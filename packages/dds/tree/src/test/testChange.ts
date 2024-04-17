@@ -16,6 +16,7 @@ import {
 	DeltaFieldMap,
 	DeltaRoot,
 	FieldKey,
+	RevisionTag,
 	TaggedChange,
 	emptyDelta,
 } from "../core/index.js";
@@ -250,6 +251,14 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 				intentions: [],
 			}
 		);
+	}
+
+	public replaceRevisions(
+		change: TestChange,
+		oldRevisions: Set<RevisionTag | undefined>,
+		newRevision: RevisionTag,
+	): TestChange {
+		return change;
 	}
 }
 

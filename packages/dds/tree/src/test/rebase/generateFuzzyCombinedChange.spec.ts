@@ -20,6 +20,7 @@ const testRebaser: ChangeRebaser<TestChange> = {
 		C: change.change,
 		O: over.change,
 	}),
+	replaceRevisions: (change: TestChange) => change,
 };
 
 function generateRandomChange(seed: number) {
