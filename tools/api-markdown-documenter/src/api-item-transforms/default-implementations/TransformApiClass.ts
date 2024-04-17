@@ -14,9 +14,9 @@ import {
 	type ApiProperty,
 } from "@microsoft/api-extractor-model";
 
-import { type SectionNode } from "../../documentation-domain/index.js";
+import type { SectionNode } from "../../documentation-domain/index.js";
 import { ApiModifier, isStatic } from "../../utilities/index.js";
-import { type ApiItemTransformationConfiguration } from "../configuration/index.js";
+import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createChildDetailsSection, createMemberTables } from "../helpers/index.js";
 import { filterChildMembers } from "../ApiItemTransformUtilities.js";
 
@@ -97,7 +97,7 @@ export function transformApiClass(
 					break;
 				}
 				default: {
-					config.logger?.error(`Unsupported ApiClass child kind: "${child.kind}"`);
+					config.logger?.error(`Unsupported Class child kind: "${child.kind}"`);
 					break;
 				}
 			}
