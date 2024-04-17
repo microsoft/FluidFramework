@@ -217,7 +217,8 @@
 	},
 	"usage": {
 		"clientConnectivityCountingEnabled": false,
-		"signalUsageCountingEnabled": false
+		"signalUsageCountingEnabled": false,
+		"httpUsageCountingEnabled": false
 	},
 	"shared": {
 		"transientTenants": [],
