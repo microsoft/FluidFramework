@@ -7,9 +7,9 @@
 import { AttributionInfo } from '@fluidframework/runtime-definitions/internal';
 import { AttributionKey } from '@fluidframework/runtime-definitions/internal';
 import { ContainerRuntime } from '@fluidframework/container-runtime/internal';
-import { IAudience } from '@fluidframework/container-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
+import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 
 // @internal
@@ -63,7 +63,7 @@ export const mixinAttributor: (Base?: typeof ContainerRuntime) => typeof Contain
 
 // @internal
 export class OpStreamAttributor extends Attributor implements IAttributor {
-    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, audience: IAudience, initialEntries?: Iterable<[number, AttributionInfo]>);
+    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, quorumClients: IQuorumClients, initialEntries?: Iterable<[number, AttributionInfo]>);
 }
 
 // (No @packageDocumentation comment for this package)
