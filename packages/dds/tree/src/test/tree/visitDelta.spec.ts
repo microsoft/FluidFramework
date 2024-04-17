@@ -971,9 +971,12 @@ describe("visitDelta", () => {
 			["exitField", rootKey],
 		];
 		testTreeVisit(delta, expected, index, [{ id: buildId, trees: [content] }]);
+		// Since the RangeMap is utilized to store the range of detached nodes, the
+		// order of detached nodes is automatically maintained based on the incremental
+		// order of the nodeId minors (start points of ranges).
 		assert.deepEqual(Array.from(index.entries()), [
-			{ id: detachId, root: 2 },
 			{ id: node1, root: 3 },
+			{ id: detachId, root: 2 },
 		]);
 	});
 

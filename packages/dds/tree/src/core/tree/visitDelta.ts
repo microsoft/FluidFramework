@@ -422,11 +422,6 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 	}
 }
 
-/**
- * For the purpose of non-atomization, the tree will not be built one-by-one on detached nodes.
- * Instead, contiguous detached nodes are grouped into ranges, depending on whether the contiguous
- * nodes have an identical root. Trees are then only built on nodes without a defined root.
- */
 function buildTrees(
 	id: Delta.DetachedNodeId,
 	trees: readonly ITreeCursorSynchronous[],

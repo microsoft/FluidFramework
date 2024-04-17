@@ -12,17 +12,14 @@ import {
 	JsonCompatibleReadOnly,
 	NestedMap,
 	brand,
-	deleteFromNestedMap,
 	deleteFromRangeMap,
 	idAllocatorFromMaxId,
-	populateNestedMap,
-	setInNestedMap,
 	setInRangeMap,
-	tryGetFromNestedMap,
 	type RangeMap,
 	mergeRangesWithinMap,
 	getFirstEntryFromRangeMap,
 	getAllValidEntriesFromMap,
+	getFromRangeMap,
 } from "../../util/index.js";
 import { RevisionTagCodec } from "../rebase/index.js";
 import { FieldKey } from "../schema-stored/index.js";
@@ -45,7 +42,6 @@ export type ForestRootId = Brand<number, "tree.ForestRootId">;
  */
 export class DetachedFieldIndex {
 	// TODO: don't store the field key in the index, it can be derived from the root ID
-	private detachedNodeToField: NestedMap<Major, Minor, ForestRootId> = new Map();
 	// The data structure designed to store a `contiguous` range of detached nodes sharing the same root.
 	private readonly detachedNodeRangeMap: Map<Major, RangeMap<ForestRootId>> = new Map();
 	private readonly codec: IJsonCodec<DetachedFieldSummaryData, Format>;
@@ -72,19 +68,29 @@ export class DetachedFieldIndex {
 			this.revisionTagCodec,
 			this.options,
 		);
-		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField, true);
+		// populate the rangeMap of detached nodes
+		for (const [major, innerRangeMap] of this.detachedNodeRangeMap) {
+			const clonedRangeMap: RangeMap<ForestRootId> = [];
+			for (const rangeEntry of innerRangeMap) {
+				clonedRangeMap.push({ ...rangeEntry });
+			}
+			clone.detachedNodeRangeMap.set(major, clonedRangeMap);
+		}
 		return clone;
 	}
 
+	/**
+	 * Returns the atomic detached node id instead of ranges
+	 */
 	public *entries(): Generator<{ root: ForestRootId } & { id: Delta.DetachedNodeId }> {
-		for (const [major, innerMap] of this.detachedNodeToField) {
-			if (major !== undefined) {
-				for (const [minor, entry] of innerMap) {
-					yield { id: { major, minor }, root: entry };
-				}
-			} else {
-				for (const [minor, entry] of innerMap) {
-					yield { id: { minor }, root: entry };
+		for (const [major, innerRangeMap] of this.detachedNodeRangeMap) {
+			for (const rangeEntry of innerRangeMap) {
+				const id =
+					major !== undefined
+						? { major, minor: rangeEntry.start }
+						: { minor: rangeEntry.start };
+				for (let offset = 0; offset < rangeEntry.length; offset++) {
+					yield { id: { ...id, minor: id.minor + offset }, root: rangeEntry.value };
 				}
 			}
 		}
@@ -94,36 +100,19 @@ export class DetachedFieldIndex {
 	 * Removes all entries from the index.
 	 */
 	public purge() {
-		this.detachedNodeToField.clear();
+		// this.detachedNodeToField.clear();
 		this.detachedNodeRangeMap.clear();
 	}
 
 	public updateMajor(current: Major, updated: Major) {
-		const innerCurrent = this.detachedNodeToField.get(current);
-		if (innerCurrent !== undefined) {
-			this.detachedNodeToField.delete(current);
-			const innerUpdated = this.detachedNodeToField.get(updated);
-			if (innerUpdated === undefined) {
-				this.detachedNodeToField.set(updated, innerCurrent);
-			} else {
-				for (const [minor, entry] of innerCurrent) {
-					assert(
-						innerUpdated.get(minor) === undefined,
-						0x7a9 /* Collision during index update */,
-					);
-					innerUpdated.set(minor, entry);
-				}
-			}
-		}
-		// Update the detached node ranges accordingly
-		const currentRangeMap = this.detachedNodeRangeMap.get(current);
-		if (currentRangeMap !== undefined) {
+		const innerRangeMap = this.detachedNodeRangeMap.get(current);
+		if (innerRangeMap !== undefined) {
 			this.detachedNodeRangeMap.delete(current);
 			const updatedRangeMap = this.detachedNodeRangeMap.get(updated);
 			if (updatedRangeMap === undefined) {
-				this.detachedNodeRangeMap.set(updated, currentRangeMap);
+				this.detachedNodeRangeMap.set(updated, innerRangeMap);
 			} else {
-				for (const rangeEntry of currentRangeMap) {
+				for (const rangeEntry of innerRangeMap) {
 					const { start, length, value } = rangeEntry;
 					setInRangeMap(updatedRangeMap, start, length, value);
 				}
@@ -144,7 +133,11 @@ export class DetachedFieldIndex {
 	 * Returns undefined if no such id is known to the index.
 	 */
 	public tryGetEntry(id: Delta.DetachedNodeId): ForestRootId | undefined {
-		return tryGetFromNestedMap(this.detachedNodeToField, id.major, id.minor);
+		const innerRangeMap = this.detachedNodeRangeMap.get(id.major);
+		if (innerRangeMap !== undefined) {
+			return getFromRangeMap(innerRangeMap, id.minor, 1).value;
+		}
+		return undefined;
 	}
 
 	/**
@@ -158,20 +151,11 @@ export class DetachedFieldIndex {
 	}
 
 	public deleteEntry(nodeId: Delta.DetachedNodeId, count: number = 1): void {
-		for (let i = 0; i < count; ++i) {
-			const found = deleteFromNestedMap(
-				this.detachedNodeToField,
-				nodeId.major,
-				nodeId.minor + i,
-			);
-			assert(found, 0x7ab /* Unable to delete unknown entry */);
-		}
-		// Delete the detached node ranges accordingly
 		if (this.detachedNodeRangeMap.has(nodeId.major)) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const rangeMap = this.detachedNodeRangeMap.get(nodeId.major)!;
-			const foundRange = deleteFromRangeMap(rangeMap, nodeId.minor, count);
-			assert(foundRange, "Unable to delete an unexisting range");
+			const innerRangeMap = this.detachedNodeRangeMap.get(nodeId.major)!;
+			const found = deleteFromRangeMap(innerRangeMap, nodeId.minor, count);
+			assert(found, "Unable to delete an unexisting range");
 		}
 	}
 
@@ -181,18 +165,6 @@ export class DetachedFieldIndex {
 	public createEntry(nodeId?: Delta.DetachedNodeId, count: number = 1): ForestRootId {
 		const root = this.rootIdAllocator.allocate(count);
 		if (nodeId !== undefined) {
-			for (let i = 0; i < count; i++) {
-				assert(
-					tryGetFromNestedMap(
-						this.detachedNodeToField,
-						nodeId.major,
-						nodeId.minor + i,
-					) === undefined,
-					0x7ce /* Detached node ID already exists in index */,
-				);
-				setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor + i, root);
-			}
-			// Update the detached node ranges accordingly
 			this.setDetachedNodeRange(nodeId, count, root);
 		}
 		return root;
@@ -207,12 +179,12 @@ export class DetachedFieldIndex {
 			this.detachedNodeRangeMap.set(nodeId.major, []);
 		}
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const rangeMap = this.detachedNodeRangeMap.get(nodeId.major)!;
+		const innerRangeMap = this.detachedNodeRangeMap.get(nodeId.major)!;
 		assert(
-			getFirstEntryFromRangeMap(rangeMap, nodeId.minor, count) === undefined,
+			getFirstEntryFromRangeMap(innerRangeMap, nodeId.minor, count) === undefined,
 			"The detached node range already exists in the map",
 		);
-		setInRangeMap(rangeMap, nodeId.minor, count, root);
+		setInRangeMap(innerRangeMap, nodeId.minor, count, root);
 	}
 
 	/**
@@ -229,14 +201,14 @@ export class DetachedFieldIndex {
 		nodeId: Delta.DetachedNodeId,
 		count: number,
 	): { length: number; root?: ForestRootId }[] {
-		const rangeMap = this.detachedNodeRangeMap.get(nodeId.major);
-		if (!rangeMap) {
+		const innerRangeMap = this.detachedNodeRangeMap.get(nodeId.major);
+		if (!innerRangeMap) {
 			return [{ length: count }];
 		}
 
 		const results = [];
 		let currentPos = nodeId.minor;
-		const validRanges = getAllValidEntriesFromMap(rangeMap, nodeId.minor, count);
+		const validRanges = getAllValidEntriesFromMap(innerRangeMap, nodeId.minor, count);
 		for (const range of validRanges) {
 			if (currentPos < range.start) {
 				results.push({
@@ -256,8 +228,23 @@ export class DetachedFieldIndex {
 	}
 
 	public encode(): JsonCompatibleReadOnly {
+		// Since currently the codec only accepts the original NestedMap format data, so break the
+		// detached node ranges atomically into single nodeIds, and build a NestedMap from them.
+		const detachedNodeToField: NestedMap<Major, Minor, ForestRootId> = new Map();
+		for (const [major, rangeMap] of this.detachedNodeRangeMap) {
+			const innerMap = new Map();
+			for (const rangeEntry of rangeMap) {
+				for (let offset = 0; offset < rangeEntry.length; offset++) {
+					innerMap.set(rangeEntry.start + offset, rangeEntry.value);
+				}
+			}
+			if (innerMap.size > 0) {
+				detachedNodeToField.set(major, innerMap);
+			}
+		}
+
 		return this.codec.encode({
-			data: this.detachedNodeToField,
+			data: detachedNodeToField,
 			maxId: this.rootIdAllocator.getMaxId(),
 		}) as JsonCompatibleReadOnly;
 	}
@@ -271,15 +258,14 @@ export class DetachedFieldIndex {
 		this.rootIdAllocator = idAllocatorFromMaxId(
 			detachedFieldIndex.maxId,
 		) as IdAllocator<ForestRootId>;
-		this.detachedNodeToField = detachedFieldIndex.data;
 
-		// Build the detached node range accordingly
-		for (const [major, innerMap] of this.detachedNodeToField) {
-			const rangeEntries = [];
+		// Build the rangeMap for detached nodes according to the nestedMap
+		for (const [major, innerMap] of detachedFieldIndex.data) {
+			const innerRangeMap = [];
 			for (const [minor, entry] of innerMap) {
-				rangeEntries.push({ start: minor, length: 1, value: entry });
+				innerRangeMap.push({ start: minor, length: 1, value: entry });
 			}
-			this.detachedNodeRangeMap.set(major, mergeRangesWithinMap(rangeEntries));
+			this.detachedNodeRangeMap.set(major, mergeRangesWithinMap(innerRangeMap));
 		}
 	}
 }
