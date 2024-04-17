@@ -32,7 +32,7 @@ import {
 	SchemaPolicy,
 	TreeStoredSchemaRepository,
 } from "../core/index.js";
-import { JsonCompatibleReadOnly, brand } from "../util/index.js";
+import { JsonCompatibleReadOnly, brand, fail } from "../util/index.js";
 
 import { SharedTreeBranch, getChangeReplaceType } from "./branch.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
@@ -264,14 +264,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 					sessionId: this.editManager.localSessionId,
 				},
 				{
-					schema: {
-						// Clone the schema to ensure that during resubmit the schema has not been mutated by later changes
-						schema: schemaAndPolicy.schema.clone(),
-						policy: schemaAndPolicy.policy,
-					},
+					schema: schemaAndPolicy,
 				},
 			);
-			this.submitLocalMessage(message, schemaAndPolicy);
+			this.submitLocalMessage(message, {
+				// Clone the schema to ensure that during resubmit the schema has not been mutated by later changes
+				schema: schemaAndPolicy.schema.clone(),
+				policy: schemaAndPolicy.policy,
+			});
 		}
 	}
 
@@ -313,12 +313,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			commit: { revision },
 		} = this.messageCodec.decode(content, {});
 		const [commit] = this.editManager.findLocalCommit(revision);
-		const schemaAndPolicy = localOpMetadata as ClonableSchemaAndPolicy;
 		assert(
-			schemaAndPolicy.schema !== undefined && schemaAndPolicy.policy !== undefined,
+			isClonableSchemaPolicy(localOpMetadata),
 			"Local metadata must contain schema and policy.",
 		);
-		this.submitCommit(commit, schemaAndPolicy, true);
+		this.submitCommit(commit, localOpMetadata, true);
 	}
 
 	protected applyStashedOp(content: JsonCompatibleReadOnly): void {
@@ -348,6 +347,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			gcNodes,
 		};
 	}
+}
+
+function isClonableSchemaPolicy(
+	maybeSchemaPolicy: unknown,
+): maybeSchemaPolicy is ClonableSchemaAndPolicy {
+	const schemaAndPolicy = maybeSchemaPolicy as ClonableSchemaAndPolicy;
+	return schemaAndPolicy.schema !== undefined && schemaAndPolicy.policy !== undefined;
 }
 
 /**
