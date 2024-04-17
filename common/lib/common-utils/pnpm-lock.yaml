@@ -3,6 +3,11 @@ lockfileVersion: 5.4
 overrides:
   sharp: ^0.33.2
 
+patchedDependencies:
+  '@microsoft/api-extractor@7.42.3':
+    hash: f66stvskxun56mencgf6l5564y
+    path: ../../../patches/@microsoft__api-extractor@7.42.3.patch
+
 importers:
 
   .:
@@ -10,7 +15,6 @@ importers:
       '@fluid-tools/build-cli': ^0.26.1
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/common-definitions': ^1.1.0
       '@fluidframework/common-utils-previous': npm:@fluidframework/common-utils@1.0.0
       '@fluidframework/eslint-config-fluid': ^4.0.0
       '@microsoft/api-extractor': ^7.42.3
@@ -51,7 +55,6 @@ importers:
       ts-node: ^10.9.1
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/common-definitions': 1.1.0
       '@types/events': 3.0.0
       base64-js: 1.5.1
       buffer: 6.0.3
@@ -64,7 +67,7 @@ importers:
       '@fluidframework/build-tools': 0.26.1_@types+node@16.18.38
       '@fluidframework/common-utils-previous': /@fluidframework/common-utils/1.0.0
       '@fluidframework/eslint-config-fluid': 4.0.0_yzjfgl2l2fa2siv5ppqhbzvdbi
-      '@microsoft/api-extractor': 7.42.3_@types+node@16.18.38
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@16.18.38
       '@types/base64-js': 1.3.0
       '@types/benchmark': 2.1.2
       '@types/jest': 22.2.3
@@ -525,7 +528,7 @@ packages:
       '@fluid-tools/version-tools': 0.26.1_vy4ah4eawmaxtqslmps6irc47e
       '@fluidframework/build-tools': 0.26.1_@types+node@16.18.38
       '@fluidframework/bundle-size-tools': 0.26.1
-      '@microsoft/api-extractor': 7.42.3_@types+node@16.18.38
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@16.18.38
       '@oclif/core': 3.5.0
       '@oclif/plugin-autocomplete': 2.3.10_vy4ah4eawmaxtqslmps6irc47e
       '@oclif/plugin-commands': 3.0.3
@@ -695,10 +698,6 @@ packages:
   /@fluidframework/common-definitions/0.20.1:
     resolution: {integrity: sha512-KaoQ7w2MDH5OeRKVatL5yVOCFg+9wD6bLSLFh1/TV1EZM46l49iBqO7UVjUtPE6BIm0jvvOzJXULGVSpzokX3g==}
     dev: true
-
-  /@fluidframework/common-definitions/1.1.0:
-    resolution: {integrity: sha512-WQYtG9tkx2j7i1JSXPvwLnQsqCOZAghMj0aGciqjZVNppUly/XBpAjb4V6FEUCEjxCScPKhyE+1rhV1ep52NgA==}
-    dev: false
 
   /@fluidframework/common-utils/1.0.0:
     resolution: {integrity: sha512-O3UoZ2dQR/ZWMXTSbDcTH93WMqHmEKoYhYMn6cybESswmMOA2E9UF3B2TkJ+aofBLOLllDKXXGtuhPmu/9rTqQ==}
@@ -1314,7 +1313,7 @@ packages:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor/7.42.3_@types+node@16.18.38:
+  /@microsoft/api-extractor/7.42.3_f66stvskxun56mencgf6l5564y_@types+node@16.18.38:
     resolution: {integrity: sha512-JNLJFpGHz6ekjS6bvYXxUBeRGnSHeCMFNvRbCQ+7XXB/ZFrgLSMPwWtEq40AiWAy+oyG5a4RSNwdJTp0B2USvQ==}
     hasBin: true
     dependencies:
@@ -1334,6 +1333,7 @@ packages:
     transitivePeerDependencies:
       - '@types/node'
     dev: true
+    patched: true
 
   /@microsoft/tsdoc-config/0.16.2:
     resolution: {integrity: sha512-OGiIzzoBLgWWR0UdRJX98oYO+XKGf7tiK4Zk6tQ/E4IJqGCe7dvkTvgDZV5cFJUzLGDOjeAXrnZoA6QkVySuxw==}

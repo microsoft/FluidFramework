@@ -7,6 +7,12 @@
 // @public
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
+// @public @sealed
+export abstract class ErasedType<out Name = unknown> {
+    static [Symbol.hasInstance](value: never): value is never;
+    protected abstract brand(dummy: never): Name;
+}
+
 // @public
 export type ExtendEventProvider<TBaseEvent extends IEvent, TBase extends IEventProvider<TBaseEvent>, TEvent extends TBaseEvent> = Omit<Omit<Omit<TBase, "on">, "once">, "off"> & IEventProvider<TBaseEvent> & IEventProvider<TEvent>;
 

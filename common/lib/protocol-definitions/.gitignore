@@ -2,6 +2,11 @@
 dist
 lib
 
+# Generated Node10 module resolution compatibility files
+beta.d.ts
+internal.d.ts
+legacy.d.ts
+
 # Babel
 public/scripts/es5
 

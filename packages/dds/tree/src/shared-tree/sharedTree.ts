@@ -126,11 +126,12 @@ interface ExplicitCodecVersions extends ExplicitCoreCodecVersions {
 
 const formatVersionToTopLevelCodecVersions = new Map<number, ExplicitCodecVersions>([
 	[1, { forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 1, message: 1, fieldBatch: 1 }],
+	[2, { forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 2, message: 2, fieldBatch: 1 }],
 ]);
 
 function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
 	const versions = formatVersionToTopLevelCodecVersions.get(formatVersion);
-	assert(versions !== undefined, "Unknown format version");
+	assert(versions !== undefined, 0x90e /* Unknown format version */);
 	return versions;
 }
 
@@ -228,7 +229,8 @@ export class SharedTree
 			runtime,
 			attributes,
 			telemetryContextPrefix,
-			{ schema, policy: defaultSchemaPolicy },
+			schema,
+			defaultSchemaPolicy,
 		);
 		this._events = createEmitter<CheckoutEvents>();
 		const localBranch = this.getLocalBranch();
@@ -312,8 +314,16 @@ export class SharedTree
 export const SharedTreeFormatVersion = {
 	/**
 	 * Requires \@fluidframework/tree \>= 2.0.0.
+	 *
+	 * @deprecated - FF does not currently plan on supporting this format long-term.
+	 * Do not write production documents using this format, as they may not be loadable in the future.
 	 */
 	v1: 1,
+
+	/**
+	 * Requires \@fluidframework/tree \>= 2.0.0.
+	 */
+	v2: 2,
 } as const;
 
 /**
@@ -356,7 +366,7 @@ export interface SharedTreeFormatOptions {
 	 * To be safe, application authors should verify that they have saturated this version
 	 * of \@fluidframework/tree in their ecosystem before changing the format version.
 	 *
-	 * This option defaults to SharedTreeFormatVersion.v1.
+	 * This option defaults to SharedTreeFormatVersion.v2.
 	 */
 	formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
 }
@@ -380,7 +390,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 	jsonValidator: noopValidator,
 	forest: ForestType.Reference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,
-	formatVersion: SharedTreeFormatVersion.v1,
+	formatVersion: SharedTreeFormatVersion.v2,
 };
 
 /**
