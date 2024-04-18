@@ -2235,7 +2235,7 @@ export class Container
 			this.mc.logger.sendErrorEvent({ eventName: "SubmitMessageWithNoConnection", type });
 			return -1;
 		}
-		if (type == MessageType.NoOp) {
+		if (type === MessageType.NoOp) {
 			this.noopCount++;
 		}
 		this.noopHeuristic?.notifyMessageSent();
