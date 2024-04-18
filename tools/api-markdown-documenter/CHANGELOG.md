@@ -1,5 +1,9 @@
 # @fluid-tools/api-markdown-documenter
 
+## 0.12.1
+
+-   Fixed a bug where property signatures under class items did not get documentation generated for them.
+
 ## 0.12.0
 
 -   Added functionality for transforming Documentation Domain trees to [hast](https://github.com/syntax-tree/hast).
