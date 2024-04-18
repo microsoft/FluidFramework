@@ -73,7 +73,7 @@ export class LocalWebSocket implements IWebSocket {
     // (undocumented)
     emit(event: string, ...args: any[]): void;
     // (undocumented)
-    emitToRoom(roomId: string, event: string, ...args: any[]): void;
+    emitToRoom(roomId: string, event: string, ...args: any[]): Promise<void>;
     // (undocumented)
     readonly id: string;
     // (undocumented)
