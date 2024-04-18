@@ -79,7 +79,7 @@ thereby making the edit target the removed tree.
 In order to apply such an edit, we need access to the contents of the removed tree.\*
 
 \* Strictly speaking, this is only true for edits that would move contents out of the removed tree and into the document tree.
-All other edits could be ignored since the user has no way of seeing their impact.
+All other edits could theoretically be ignored since the user has no way of seeing their impact.
 
 ## Why Design It This Way?
 
@@ -252,3 +252,83 @@ and likely less compact to represent in memory and in summaries.
 Where the sweet spot lies depends on editing patterns and we will do our best to approximate according to usage data,
 and if usage data suggests it is worth the engineering effort.
 The crucial point is that we have encapsulated that concern in the `DetachedFieldIndex` and are able to revisit its implementation details.
+
+### GC and Refreshers
+
+Retaining detached trees forever would have two negative consequences:
+
+1. It would cause unbounded bloat in the memory of clients that do not need these trees.
+   Currently those are maintained in main memory.
+   They could be offloaded to disk, but the unbounded bloat on disk is still bad.
+2. They would cause unbounded bloat in the size of the document snapshot.
+   This has a negative impact on service costs and on document load times,
+   both of which are crucial metrics to optimize.
+
+Because of this, we want to be able to GC _some_ of the detached trees.
+
+#### Which Detached Trees to GC?
+
+It's helpful to reiterate the cases for which detached tree may be relevant
+(see [above](#when-are-detached-trees-relevant) for details on each one):
+
+-   a) Reverting a commit
+-   b) Aborting a transaction
+-   c) Rebasing a local branch
+-   d) Applying a rebased commit (that was concurrent to the tree's detach)
+
+This last case can be further decomposed as follows:
+
+-   d1) Applying a rebased commit from a local branch where that commit was concurrent to the tree's detach
+-   d2) Applying a rebased commit from a peer where the commit's reference sequence number is lower than the sequence number of the commit that detached the tree
+-   d3) Applying a rebased commit from a peer where the commit's reference sequence number is greater than or equal to the sequence number of the commit that detached the tree
+
+For each such case, we can infer how long detached trees may need to be kept (i.e., not GC-ed)
+if we wanted to ensure their availability for that use case.
+
+-   a) So long as the host application holds a `Revertible` for an edit that detached or edited the tree
+-   b) So long as the transaction that detached or edited the tree is open
+-   c) So long as the edits that detached or edited the tree remain on the branch
+-   d1) Same as c)
+-   d2) So long the minimum reference sequence number is less than the sequence number of the edits that detached or edited the tree
+-   d3) Forever
+
+This last case is important:
+for any detached tree, it's always possible, at some point in the future, for a peer to send a commit that corresponds to case d3.
+This makes it clear that, if we want to GC _any_ detached trees,
+we should at least GC those that would only be relevant to this last case.
+We can ensure a client can recover such a GC-ed tree when relevant by forcing peers to include in the commits they send out a copy of the relevant detached trees.
+This is covered in [Detached Tree Refreshers](#detached-tree-refreshers).
+
+This still leaves a lot of options with respects to the other cases (2 options for 5 cases = 32 possible policies).
+To help narrow this down, it's helpful to consider what we would do for cases a through d2 if we were to need a detached three that had been GC-ed.
+In some of those cases (a, b, c) we would actually have no way of recovering the tree, because it may not be known to other peers or be recoverable from a snapshot.
+In the case d2, the peer couldn't include a copy of the relevant detached tree because it didn't know about it at the time it sent the commit for sequencing and broadcast.
+This doesn't mean the detached tree is unrecoverable,
+but recovering it would entail re-fetching the last snapshot and replaying prior edits over it,
+which would be slow, introduce an async boundary in the processing of peer changes,
+and add load to the service that hosts summaries.
+This leads us to adopt the following policy: do not GC trees that fall under these other cases.
+
+This might seem like a complex policy at first because cases a through d2 entail different detached tree lifetimes.
+Fortunately, we only need to worry about satisfying the union of these cases,
+and that union can be satisfied by abiding to the following simple rules for any given detached tree:
+
+-   Keep track of the most recent commit for which that tree was relevant
+    (where relevant is defined as "the commit either detached or edited that tree").
+-   When that commit is trimmed from the trunk branch by the `EditManager`,
+    then the detached tree can be GC-ed.
+
+To see why that is, it's helpful to be mindful of the following facts:
+
+-   The `EditManager` doesn't trim off commits that may need to be rebased over in the future.
+-   All commits that are on a local branch may be rebased over in the future, so long as the branch exists.
+-   All commits that are in-flight
+    (i.e., commits that future peer edit may not have been aware of)
+    are preserved in a local branch.
+-   Each Revertible is backed by a local branch that contains (at its head) the commit to be reverted.
+
+Taken together,
+these facts mean that we have mapped the challenge of knowing whether a detached tree may be relevant for the cases we care about,
+to the the much simpler challenge of knowing whether the last commit to which it was relevant has been trimmed from the trunk.
+
+#### Detached Tree Refreshers
