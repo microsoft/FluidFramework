@@ -236,7 +236,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
 		enableOpHashing: true,
 		enableAutoDSNUpdate: false,
 		enableEphemeralContainerSummaryCleanup: true,
-		ephemeralContainerSoftDeleteTimeInMs: 24 * 60 * 60 * 1000,
+		ephemeralContainerSoftDeleteTimeInMs: -1,
 		checkForIdleClientsOnStartup: false,
 		maintainBatches: false,
 		enableWriteClientSignals: false,

@@ -73,8 +73,7 @@ export async function deliCreate(
 		enableEphemeralContainerSummaryCleanup;
 
 	const ephemeralContainerSoftDeleteTimeInMs =
-		(config.get("deli:ephemeralContainerSoftDeleteTimeInMs") as number | undefined) ??
-		5 * 24 * 60 * 60 * 1000;
+		(config.get("deli:ephemeralContainerSoftDeleteTimeInMs") as number | undefined) ?? -1; // -1 means not soft deletion but hard deletion directly
 	core.DefaultServiceConfiguration.deli.ephemeralContainerSoftDeleteTimeInMs =
 		ephemeralContainerSoftDeleteTimeInMs;
 
