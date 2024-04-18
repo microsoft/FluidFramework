@@ -147,7 +147,8 @@ export function convertField(schemaMap: SchemaMap, schema: ImplicitFieldSchema):
 const convertFieldKind = new Map<FieldKind, FlexFieldKind>([
 	[FieldKind.Optional, FieldKinds.optional],
 	[FieldKind.Required, FieldKinds.required],
-	[FieldKind.Identifier, FieldKinds.identifier],
+	// TODO:#7734,7736: Re-enable when persisted document format is optimized
+	// [FieldKind.Identifier, FieldKinds.identifier],
 ]);
 
 /**

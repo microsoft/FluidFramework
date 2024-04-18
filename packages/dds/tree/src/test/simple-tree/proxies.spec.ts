@@ -7,19 +7,12 @@ import { strict as assert } from "assert";
 
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
-import {
-	NodeFromSchema,
-	SchemaFactory,
-	TreeArrayNode,
-	TreeConfiguration,
-} from "../../simple-tree/index.js";
+import { NodeFromSchema, SchemaFactory, TreeArrayNode } from "../../simple-tree/index.js";
 // TODO: test other things from "proxies" file.
 // eslint-disable-next-line import/no-internal-modules
 import { isTreeNode } from "../../simple-tree/proxies.js";
 
 import { hydrate, pretty } from "./utils.js";
-import { getView } from "../utils.js";
-import { createMockNodeKeyManager } from "../../feature-libraries/index.js";
 
 describe("simple-tree proxies", () => {
 	const sb = new SchemaFactory("test");
@@ -169,19 +162,20 @@ describe("SharedTreeObject", () => {
 		assert.equal(root.optional, undefined);
 	});
 
-	it("returns the stable id under the identifier field kind.", () => {
-		const schemaWithIdentifier = sb.object("parent", {
-			identifier: sb.identifier,
-		});
-		const nodeKeyManager = createMockNodeKeyManager();
-		const id = nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
-		const config = new TreeConfiguration(schemaWithIdentifier, () => ({
-			identifier: id,
-		}));
+	// TODO:#7734,7736: Re-enable when persisted document format is optimized
+	// it("returns the stable id under the identifier field kind.", () => {
+	// 	const schemaWithIdentifier = sb.object("parent", {
+	// 		identifier: sb.identifier,
+	// 	});
+	// 	const nodeKeyManager = createMockNodeKeyManager();
+	// 	const id = nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
+	// 	const config = new TreeConfiguration(schemaWithIdentifier, () => ({
+	// 		identifier: id,
+	// 	}));
 
-		const root = getView(config, nodeKeyManager).root;
-		assert.equal(root.identifier, id);
-	});
+	// 	const root = getView(config, nodeKeyManager).root;
+	// 	assert.equal(root.identifier, id);
+	// });
 });
 
 describe("ArrayNode Proxy", () => {

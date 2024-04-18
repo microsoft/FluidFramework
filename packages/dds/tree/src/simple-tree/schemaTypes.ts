@@ -139,12 +139,13 @@ export enum FieldKind {
 	 * Only allows exactly one child.
 	 */
 	Required,
-	/**
-	 * A special field used for node identifiers.
-	 * @remarks
-	 * Only allows exactly one child.
-	 */
-	Identifier,
+	// TODO:#7734,7736: Re-enable when persisted document format is optimized
+	// /**
+	//  * A special field used for node identifiers.
+	//  * @remarks
+	//  * Only allows exactly one child.
+	//  */
+	// Identifier,
 }
 
 /**
