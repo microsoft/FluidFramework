@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-
+import { useFakeTimers } from "sinon";
 import { MockDocumentDeltaConnection } from "@fluid-private/test-loader-utils";
 import {
 	ITestDataObject,
@@ -40,6 +40,7 @@ import { FiveDaysMs, IDocumentServiceFactory } from "@fluidframework/driver-defi
 import {
 	DeltaStreamConnectionForbiddenError,
 	NonRetryableError,
+	RetryableError,
 } from "@fluidframework/driver-utils/internal";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { DataCorruptionError } from "@fluidframework/telemetry-utils/internal";
@@ -855,5 +856,96 @@ describeCompat("Driver", "NoCompat", (getTestObjectProvider) => {
 		const ds = await provider.documentServiceFactory.createDocumentService(resolvedUrl);
 		const storage = await ds.connectToStorage();
 		assert.equal(storage.policies?.maximumCacheDurationMs, fiveDaysMs);
+	});
+});
+
+describeCompat("Container connections", "NoCompat", (getTestObjectProvider) => {
+	let provider: ITestObjectProvider;
+	let clock;
+	before(() => {
+		clock = useFakeTimers();
+	});
+	beforeEach("", async function () {
+		provider = getTestObjectProvider();
+		if (provider.driver.type !== "local") {
+			this.skip();
+		}
+	});
+	afterEach(() => {
+		clock.reset();
+	});
+	after(() => {
+		clock.restore();
+	});
+	it("container disconnect() stops the connection re-attempt loop", async () => {
+		let emulateThrowErrorOnConnection = false;
+		const retryAfter = 3;
+		let reconnectionAttemptCount = 0;
+		(provider as any)._documentServiceFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
+			provider.documentServiceFactory,
+			{
+				createDocumentService: {
+					connectToDeltaStream: (_ds) => async (client) => {
+						// We let the container get created first before starting emulate throwing of errors.
+						if (emulateThrowErrorOnConnection) {
+							reconnectionAttemptCount++;
+							throw new RetryableError("Test message", "ThrottlingError", {
+								retryAfterSeconds: retryAfter,
+								driverVersion: "1",
+							});
+						} else {
+							return _ds.connectToDeltaStream(client);
+						}
+					},
+				},
+			},
+		);
+		// Create container
+		const container = await provider.makeTestContainer();
+		await waitForContainerConnection(container);
+		emulateThrowErrorOnConnection = true;
+
+		// This flag will ensure that the container warnings were observed when throttling error was thrown
+		let didReceiveContainerWarning = false;
+
+		// Host apps can chose to listen to container warning events and disconnect the container if they observe throttling errors
+		container.once("warning", (warning) => {
+			assert.equal(
+				warning.errorType,
+				"throttlingError",
+				"Error type thrown by the warning message is incorrect",
+			);
+
+			// disconnecting the container should also stop re-connects to the service
+			container.disconnect();
+			const countUntilDisconnectWasCalled = reconnectionAttemptCount;
+
+			clock.tick(retryAfter * 1000 + 10);
+			// Check if there has been any retry attempt after some time greater than retry after has elapsed
+			assert.equal(
+				reconnectionAttemptCount,
+				countUntilDisconnectWasCalled,
+				"Connection should not have been attempted, even after the retry timedout",
+			);
+
+			clock.tick(retryAfter * 1000 + 10);
+			// Check if there has been any retry attempt after more time has elapsed
+			assert.equal(
+				reconnectionAttemptCount,
+				countUntilDisconnectWasCalled,
+				"Connection should not have been attempted after some more time",
+			);
+			didReceiveContainerWarning = true;
+		});
+
+		// Disconnect and connect the container again to trigger the connection to the delta service
+		// to test the container warning behavior above
+		container.disconnect();
+		container.connect();
+		await clock.tickAsync(retryAfter * 1000 + 20);
+		assert(
+			didReceiveContainerWarning,
+			"Container warning event should happen when throttling error occurs",
+		);
 	});
 });

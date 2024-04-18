@@ -1,4 +1,4 @@
-# @fluid-example/bubblebench-sharedtree
+# @fluid-example/bubblebench-experimental-tree
 
 ## 2.0.0-rc.3.0.0
 
