@@ -5,6 +5,7 @@
 		"noImplicitAny": true,
 		"noUnusedLocals": false,
 		"noImplicitOverride": true,
+		"esModuleInterop": true,
 		"rootDir": "./",
 		"outDir": "../../lib/test",
 		"module": "Node16",

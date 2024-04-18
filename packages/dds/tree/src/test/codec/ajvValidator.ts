@@ -8,13 +8,21 @@ import { create404Response } from "@fluidframework/runtime-utils/internal";
 import { FluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 import type { Static, TSchema } from "@sinclair/typebox";
-import Ajv from "ajv";
-import addFormats from "ajv-formats";
+// Based on ESM workaround from https://github.com/ajv-validator/ajv/issues/2047#issuecomment-1241470041 .
+// In ESM, this gets the module, in cjs, it gets the default export which is the Ajv class.
+import ajvModuleOrClass from "ajv";
+import formats from "ajv-formats";
 
-import type { JsonValidator } from "@fluidframework/tree/internal";
+// The first case here covers the esm mode, and the second the cjs one.
+// Getting correct typing for the cjs case without breaking esm compilation provided difficult, so that case uses `any`
+const Ajv =
+	(ajvModuleOrClass as typeof ajvModuleOrClass & { default: unknown }).default ??
+	(ajvModuleOrClass as any);
+
+import type { JsonValidator } from "../../codec/index.js";
 
 // See: https://github.com/sinclairzx81/typebox#ajv
-const ajv = addFormats(new Ajv({ strict: false, allErrors: true }), [
+const ajv = formats.default(new Ajv({ strict: false, allErrors: true }), [
 	"date-time",
 	"time",
 	"date",

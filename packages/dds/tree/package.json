@@ -149,7 +149,7 @@
 		"@types/ungap__structured-clone": "^1.2.0",
 		"@types/uuid": "^9.0.2",
 		"ajv": "^8.12.0",
-		"ajv-formats": "^2.1.1",
+		"ajv-formats": "^3.0.1",
 		"c8": "^8.0.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
