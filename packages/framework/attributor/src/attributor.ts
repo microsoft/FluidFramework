@@ -6,6 +6,7 @@
 import { type IDeltaManager } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
+	MessageType,
 	type IDocumentMessage,
 	type IQuorumClients,
 	type ISequencedDocumentMessage,
@@ -91,10 +92,12 @@ export class OpStreamAttributor extends Attributor implements IAttributor {
 	) {
 		super(initialEntries);
 		deltaManager.on("op", (message: ISequencedDocumentMessage) => {
-			// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
-			const client = quorumClients.getMember(message.clientId as string);
-			if (message.type === "op") {
-				// TODO: This case may be legitimate, and if so we need to figure out how to handle it.
+			if (message.type === MessageType.Operation) {
+				assert(
+					typeof message.clientId === "string",
+					"Client id should be present and should be of type string",
+				);
+				const client = quorumClients.getMember(message.clientId);
 				assert(client !== undefined, "Received message from user not in the quorumClients");
 				this.keyToInfo.set(message.sequenceNumber, {
 					user: client.client.user,
