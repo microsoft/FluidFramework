@@ -421,3 +421,29 @@ This edit is created on client 1 before client 1 receives client 2's edit to the
 This means that the refresher that client 1 had included no longer represents the current state of the detached tree.
 If client 2 still has a copy of the detached tree in memory,
 it must take care not to overwrite it with the copy from the refresher.
+
+## Future Work
+
+### Collecting Usage Data
+
+While we expect that the refresher system provides a valuable tradeoff,
+we can only make a cost/benefit analysis once we have actual telemetry about its usage.
+
+Specifically, we want to know:
+
+1. The peak on client memory overhead in bytes (forest + detached field index + untrimmed commits)
+2. The peak snapshot size overhead in bytes (forest + detached field index + refreshers/detached tree copies recent messages and tail messages)
+3. The total message size overhead in bytes for all messages (refreshers)
+
+For each of these, it may also be interesting to know the percentage of the overall memory cost this overhead accounts for.
+This is because a 10MB overhead may be fine on top of a 1GB baseline,
+but wouldn't be fine on top of a 1KB baseline.
+
+We can then use those metrics to compare them against the following hypothetical alternatives approaches:
+
+-   Storing all detached trees forever.
+-   Storing none of the detached trees, but including a copy of the detached tree in any commit that detaches a tree.
+-   Storing detached trees for the minimum amount of time +K sequenced edits?
+
+This last option should enable us to assess the value of implementing the undo window system,
+and if so, what might be a good K value for it.
