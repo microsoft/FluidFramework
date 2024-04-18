@@ -1008,7 +1008,7 @@ importers:
       rimraf: 4.4.1
       typescript: 5.1.6
 
-  examples/benchmarks/bubblebench/editable-shared-tree:
+  examples/benchmarks/bubblebench/experimental-tree:
     specifiers:
       '@biomejs/biome': ^1.6.2
       '@fluid-example/bubblebench-common': workspace:~
@@ -1024,7 +1024,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
-      '@fluidframework/tree': workspace:~
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': workspace:~
       '@types/node': ^18.19.0
@@ -1044,7 +1043,6 @@ importers:
       ts-jest: ^29.1.1
       ts-loader: ^9.3.0
       typescript: ~5.1.6
-      typescript-formatter: ^7.1.0
       webpack: ^5.82.0
       webpack-cli: ^4.9.2
       webpack-dev-server: ~4.15.1
@@ -1058,7 +1056,6 @@ importers:
       '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../../../packages/runtime/datastore-definitions
       '@fluidframework/map': link:../../../../packages/dds/map
-      '@fluidframework/tree': link:../../../../packages/dds/tree
       react: 17.0.2
     devDependencies:
       '@biomejs/biome': 1.6.2
@@ -1085,7 +1082,6 @@ importers:
       ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
-      typescript-formatter: 7.2.2_typescript@5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
       webpack-cli: 4.10.0_4fnl6fxs65yjb57cbmzmmxikci
       webpack-dev-server: 4.15.2_xufw7vsm4hgw2efzchq5tzqpge
@@ -1172,86 +1168,7 @@ importers:
       webpack-dev-server: 4.15.2_xufw7vsm4hgw2efzchq5tzqpge
       webpack-merge: 5.10.0
 
-  examples/benchmarks/bubblebench/sharedtree:
-    specifiers:
-      '@biomejs/biome': ^1.6.2
-      '@fluid-example/bubblebench-common': workspace:~
-      '@fluid-example/example-utils': workspace:~
-      '@fluid-example/webpack-fluid-loader': workspace:~
-      '@fluid-experimental/tree': workspace:~
-      '@fluidframework/aqueduct': workspace:~
-      '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/build-tools': ^0.37.0
-      '@fluidframework/container-definitions': workspace:~
-      '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/map': workspace:~
-      '@fluidframework/test-tools': ^1.0.195075
-      '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': workspace:~
-      '@types/node': ^18.19.0
-      '@types/react': ^17.0.44
-      '@types/react-dom': ^17.0.18
-      cross-env: ^7.0.3
-      eslint: ~8.55.0
-      expect-puppeteer: ^9.0.2
-      jest: ^29.6.2
-      jest-environment-puppeteer: ^9.0.2
-      jest-junit: ^10.0.0
-      jest-puppeteer: ^9.0.2
-      prettier: ~3.0.3
-      puppeteer: ^22.2.0
-      react: ^17.0.1
-      rimraf: ^4.4.0
-      ts-jest: ^29.1.1
-      ts-loader: ^9.3.0
-      typescript: ~5.1.6
-      webpack: ^5.82.0
-      webpack-cli: ^4.9.2
-      webpack-dev-server: ~4.15.1
-      webpack-merge: ^5.8.0
-    dependencies:
-      '@fluid-example/bubblebench-common': link:../common
-      '@fluid-example/example-utils': link:../../../utils/example-utils
-      '@fluid-experimental/tree': link:../../../../experimental/dds/tree
-      '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
-      '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
-      '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
-      '@fluidframework/datastore-definitions': link:../../../../packages/runtime/datastore-definitions
-      '@fluidframework/map': link:../../../../packages/dds/map
-      react: 17.0.2
-    devDependencies:
-      '@biomejs/biome': 1.6.2
-      '@fluid-example/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
-      '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.37.0_h467wi3sy6j67ifywrn7x7qf4m
-      '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@fluidframework/test-tools': 1.0.195075
-      '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': link:../../../../packages/test/types_jest-environment-puppeteer
-      '@types/node': 18.19.1
-      '@types/react': 17.0.71
-      '@types/react-dom': 17.0.25
-      cross-env: 7.0.3
-      eslint: 8.55.0
-      expect-puppeteer: 9.0.2
-      jest: 29.7.0_@types+node@18.19.1
-      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
-      jest-junit: 10.0.0
-      jest-puppeteer: 9.0.2_45yw4b353ouaepujuapfecneom
-      prettier: 3.0.3
-      puppeteer: 22.2.0_typescript@5.1.6
-      rimraf: 4.4.1
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
-      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
-      typescript: 5.1.6
-      webpack: 5.89.0_webpack-cli@4.10.0
-      webpack-cli: 4.10.0_4fnl6fxs65yjb57cbmzmmxikci
-      webpack-dev-server: 4.15.2_xufw7vsm4hgw2efzchq5tzqpge
-      webpack-merge: 5.10.0
-
-  examples/benchmarks/bubblebench/simple-tree:
+  examples/benchmarks/bubblebench/shared-tree:
     specifiers:
       '@biomejs/biome': ^1.6.2
       '@fluid-example/bubblebench-common': workspace:~
@@ -1321,6 +1238,89 @@ importers:
       puppeteer: 22.2.0_typescript@5.1.6
       rimraf: 4.4.1
       source-map-loader: 2.0.2_webpack@5.89.0
+      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
+      typescript: 5.1.6
+      typescript-formatter: 7.2.2_typescript@5.1.6
+      webpack: 5.89.0_webpack-cli@4.10.0
+      webpack-cli: 4.10.0_4fnl6fxs65yjb57cbmzmmxikci
+      webpack-dev-server: 4.15.2_xufw7vsm4hgw2efzchq5tzqpge
+      webpack-merge: 5.10.0
+
+  examples/benchmarks/bubblebench/shared-tree-flex-tree:
+    specifiers:
+      '@biomejs/biome': ^1.6.2
+      '@fluid-example/bubblebench-common': workspace:~
+      '@fluid-example/example-utils': workspace:~
+      '@fluid-example/webpack-fluid-loader': workspace:~
+      '@fluid-experimental/tree': workspace:~
+      '@fluidframework/aqueduct': workspace:~
+      '@fluidframework/build-common': ^2.0.3
+      '@fluidframework/build-tools': ^0.37.0
+      '@fluidframework/container-definitions': workspace:~
+      '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/datastore-definitions': workspace:~
+      '@fluidframework/eslint-config-fluid': ^5.1.0
+      '@fluidframework/map': workspace:~
+      '@fluidframework/test-tools': ^1.0.195075
+      '@fluidframework/tree': workspace:~
+      '@types/jest': 29.5.3
+      '@types/jest-environment-puppeteer': workspace:~
+      '@types/node': ^18.19.0
+      '@types/react': ^17.0.44
+      '@types/react-dom': ^17.0.18
+      cross-env: ^7.0.3
+      eslint: ~8.55.0
+      expect-puppeteer: ^9.0.2
+      jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
+      jest-junit: ^10.0.0
+      jest-puppeteer: ^9.0.2
+      prettier: ~3.0.3
+      puppeteer: ^22.2.0
+      react: ^17.0.1
+      rimraf: ^4.4.0
+      ts-jest: ^29.1.1
+      ts-loader: ^9.3.0
+      typescript: ~5.1.6
+      typescript-formatter: ^7.1.0
+      webpack: ^5.82.0
+      webpack-cli: ^4.9.2
+      webpack-dev-server: ~4.15.1
+      webpack-merge: ^5.8.0
+    dependencies:
+      '@fluid-example/bubblebench-common': link:../common
+      '@fluid-example/example-utils': link:../../../utils/example-utils
+      '@fluid-experimental/tree': link:../../../../experimental/dds/tree
+      '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
+      '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
+      '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
+      '@fluidframework/datastore-definitions': link:../../../../packages/runtime/datastore-definitions
+      '@fluidframework/map': link:../../../../packages/dds/map
+      '@fluidframework/tree': link:../../../../packages/dds/tree
+      react: 17.0.2
+    devDependencies:
+      '@biomejs/biome': 1.6.2
+      '@fluid-example/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
+      '@fluidframework/build-common': 2.0.3
+      '@fluidframework/build-tools': 0.37.0_h467wi3sy6j67ifywrn7x7qf4m
+      '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
+      '@fluidframework/test-tools': 1.0.195075
+      '@types/jest': 29.5.3
+      '@types/jest-environment-puppeteer': link:../../../../packages/test/types_jest-environment-puppeteer
+      '@types/node': 18.19.1
+      '@types/react': 17.0.71
+      '@types/react-dom': 17.0.25
+      cross-env: 7.0.3
+      eslint: 8.55.0
+      expect-puppeteer: 9.0.2
+      jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
+      jest-junit: 10.0.0
+      jest-puppeteer: 9.0.2_45yw4b353ouaepujuapfecneom
+      prettier: 3.0.3
+      puppeteer: 22.2.0_typescript@5.1.6
+      rimraf: 4.4.1
       ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
@@ -12510,7 +12510,7 @@ packages:
       '@babel/core': 7.24.4
       '@babel/helper-compilation-targets': 7.23.6
       '@babel/helper-module-imports': 7.24.3
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
       '@babel/traverse': 7.24.1
       debug: 4.3.4
       lodash.debounce: 4.0.8
@@ -12605,11 +12605,6 @@ packages:
 
   /@babel/helper-plugin-utils/7.10.4:
     resolution: {integrity: sha512-O4KCvQA6lLiMU9l2eawBPMf1xPP8xPfB3iEQw150hOVTqj/rfXz0ThTb4HEzqQfs2Bmo5Ay8BzxfzVtBrr9dVg==}
-    dev: true
-
-  /@babel/helper-plugin-utils/7.22.5:
-    resolution: {integrity: sha512-uLls06UVKgFG9QD4OeFYLEGteMIAa5kpTPcFL28yuCIIzsf6ZyKZMllKVOCZFhiZ5ptnwX4mtKdWCBE/uT4amg==}
-    engines: {node: '>=6.9.0'}
     dev: true
 
   /@babel/helper-plugin-utils/7.24.0:
@@ -12784,7 +12779,7 @@ packages:
     dependencies:
       '@babel/core': 7.24.4
       '@babel/helper-create-class-features-plugin': 7.22.15_@babel+core@7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
     dev: true
 
   /@babel/plugin-proposal-decorators/7.24.1_@babel+core@7.24.4:
@@ -12806,7 +12801,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
       '@babel/plugin-syntax-export-default-from': 7.23.3_@babel+core@7.24.4
     dev: true
 
@@ -12818,7 +12813,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
       '@babel/plugin-syntax-nullish-coalescing-operator': 7.8.3_@babel+core@7.24.4
     dev: true
 
@@ -12829,7 +12824,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.12.9
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
       '@babel/plugin-syntax-object-rest-spread': 7.8.3_@babel+core@7.12.9
       '@babel/plugin-transform-parameters': 7.23.3_@babel+core@7.12.9
     dev: true
@@ -12844,7 +12839,7 @@ packages:
       '@babel/compat-data': 7.24.4
       '@babel/core': 7.24.4
       '@babel/helper-compilation-targets': 7.23.6
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
       '@babel/plugin-syntax-object-rest-spread': 7.8.3_@babel+core@7.24.4
       '@babel/plugin-transform-parameters': 7.23.3_@babel+core@7.24.4
     dev: true
@@ -12857,7 +12852,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
       '@babel/helper-skip-transparent-expression-wrappers': 7.22.5
       '@babel/plugin-syntax-optional-chaining': 7.8.3_@babel+core@7.24.4
     dev: true
@@ -12871,7 +12866,7 @@ packages:
     dependencies:
       '@babel/core': 7.24.4
       '@babel/helper-create-class-features-plugin': 7.22.15_@babel+core@7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
     dev: true
 
   /@babel/plugin-proposal-private-property-in-object/7.21.0-placeholder-for-preset-env.2_@babel+core@7.24.4:
@@ -12893,7 +12888,7 @@ packages:
       '@babel/core': 7.24.4
       '@babel/helper-annotate-as-pure': 7.22.5
       '@babel/helper-create-class-features-plugin': 7.22.15_@babel+core@7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
       '@babel/plugin-syntax-private-property-in-object': 7.14.5_@babel+core@7.24.4
     dev: true
 
@@ -12912,7 +12907,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
     dev: true
 
   /@babel/plugin-syntax-class-properties/7.12.13_@babel+core@7.24.4:
@@ -12960,7 +12955,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
     dev: true
 
   /@babel/plugin-syntax-export-namespace-from/7.8.3_@babel+core@7.24.4:
@@ -12979,7 +12974,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
     dev: true
 
   /@babel/plugin-syntax-import-assertions/7.24.1_@babel+core@7.24.4:
@@ -13026,7 +13021,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.12.9
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
     dev: true
 
   /@babel/plugin-syntax-jsx/7.23.3_@babel+core@7.24.4:
@@ -13036,7 +13031,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
     dev: true
 
   /@babel/plugin-syntax-logical-assignment-operators/7.10.4_@babel+core@7.24.4:
@@ -13129,7 +13124,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
     dev: true
 
   /@babel/plugin-syntax-unicode-sets-regex/7.18.6_@babel+core@7.24.4:
@@ -13150,7 +13145,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
     dev: true
 
   /@babel/plugin-transform-arrow-functions/7.24.1_@babel+core@7.24.4:
@@ -13205,7 +13200,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
     dev: true
 
   /@babel/plugin-transform-block-scoping/7.24.4_@babel+core@7.24.4:
@@ -13253,7 +13248,7 @@ packages:
       '@babel/helper-environment-visitor': 7.22.20
       '@babel/helper-function-name': 7.23.0
       '@babel/helper-optimise-call-expression': 7.22.5
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
       '@babel/helper-replace-supers': 7.22.20_@babel+core@7.24.4
       '@babel/helper-split-export-declaration': 7.22.6
       globals: 11.12.0
@@ -13294,7 +13289,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
     dev: true
 
   /@babel/plugin-transform-destructuring/7.24.1_@babel+core@7.24.4:
@@ -13368,7 +13363,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
       '@babel/plugin-syntax-flow': 7.23.3_@babel+core@7.24.4
     dev: true
 
@@ -13379,7 +13374,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
     dev: true
 
   /@babel/plugin-transform-for-of/7.24.1_@babel+core@7.24.4:
@@ -13466,7 +13461,7 @@ packages:
     dependencies:
       '@babel/core': 7.24.4
       '@babel/helper-module-transforms': 7.23.3_@babel+core@7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
       '@babel/helper-simple-access': 7.22.5
     dev: true
 
@@ -13603,7 +13598,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.12.9
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
     dev: true
 
   /@babel/plugin-transform-parameters/7.23.3_@babel+core@7.24.4:
@@ -13613,7 +13608,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
     dev: true
 
   /@babel/plugin-transform-parameters/7.24.1_@babel+core@7.24.4:
@@ -13667,7 +13662,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
     dev: true
 
   /@babel/plugin-transform-react-jsx-development/7.22.5_@babel+core@7.24.4:
@@ -13687,7 +13682,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
     dev: true
 
   /@babel/plugin-transform-react-jsx-source/7.23.3_@babel+core@7.24.4:
@@ -13697,7 +13692,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
     dev: true
 
   /@babel/plugin-transform-react-jsx/7.23.4_@babel+core@7.24.4:
@@ -13709,7 +13704,7 @@ packages:
       '@babel/core': 7.24.4
       '@babel/helper-annotate-as-pure': 7.22.5
       '@babel/helper-module-imports': 7.24.3
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
       '@babel/plugin-syntax-jsx': 7.23.3_@babel+core@7.24.4
       '@babel/types': 7.24.0
     dev: true
@@ -13722,7 +13717,7 @@ packages:
     dependencies:
       '@babel/core': 7.24.4
       '@babel/helper-annotate-as-pure': 7.22.5
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
     dev: true
 
   /@babel/plugin-transform-regenerator/7.24.1_@babel+core@7.24.4:
@@ -13753,7 +13748,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
     dev: true
 
   /@babel/plugin-transform-shorthand-properties/7.24.1_@babel+core@7.24.4:
@@ -13773,7 +13768,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
       '@babel/helper-skip-transparent-expression-wrappers': 7.22.5
     dev: true
 
@@ -13805,7 +13800,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
     dev: true
 
   /@babel/plugin-transform-template-literals/7.24.1_@babel+core@7.24.4:
@@ -13837,7 +13832,7 @@ packages:
       '@babel/core': 7.24.4
       '@babel/helper-annotate-as-pure': 7.22.5
       '@babel/helper-create-class-features-plugin': 7.22.15_@babel+core@7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
       '@babel/plugin-syntax-typescript': 7.23.3_@babel+core@7.24.4
     dev: true
 
@@ -13983,7 +13978,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
       '@babel/helper-validator-option': 7.23.5
       '@babel/plugin-transform-flow-strip-types': 7.23.3_@babel+core@7.24.4
     dev: true
@@ -14006,7 +14001,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
       '@babel/helper-validator-option': 7.23.5
       '@babel/plugin-transform-react-display-name': 7.23.3_@babel+core@7.24.4
       '@babel/plugin-transform-react-jsx': 7.23.4_@babel+core@7.24.4
@@ -14021,7 +14016,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.4
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
       '@babel/helper-validator-option': 7.23.5
       '@babel/plugin-syntax-jsx': 7.23.3_@babel+core@7.24.4
       '@babel/plugin-transform-modules-commonjs': 7.23.3_@babel+core@7.24.4
@@ -25464,7 +25459,7 @@ packages:
     resolution: {integrity: sha512-Y1IQok9821cC9onCx5otgFfRm7Lm+I+wwxOx738M/WLPZ9Q42m4IG5W0FNX8WLL2gYMZo3JkuXIH2DOpWM+qwA==}
     engines: {node: '>=8'}
     dependencies:
-      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-plugin-utils': 7.24.0
       '@istanbuljs/load-nyc-config': 1.1.0
       '@istanbuljs/schema': 0.1.3
       istanbul-lib-instrument: 5.2.1
