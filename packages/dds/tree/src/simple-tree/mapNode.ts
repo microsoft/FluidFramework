@@ -82,6 +82,22 @@ const handler: ProxyHandler<TreeMapNode> = {
 };
 
 /**
+ * {@link TreeNodeSchemaClass} for {@link TreeMapNode}s.
+ */
+export type MapNodeSchema<
+	TName extends string = string,
+	T extends ImplicitAllowedTypes = never,
+	ImplicitlyConstructable extends boolean = boolean,
+> = TreeNodeSchemaClass<
+	TName,
+	NodeKind.Map,
+	TreeMapNode<T> & WithType<TName>,
+	Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
+	ImplicitlyConstructable,
+	T
+>;
+
+/**
  * Define a {@link TreeNodeSchema} for a {@link (TreeArrayNode:interface)}.
  *
  * @param base - base schema type to extend.
@@ -163,8 +179,12 @@ export function mapSchema<
 				node.context.forest,
 			);
 
-			const classSchema = getSimpleNodeSchema(node.schema);
-			const cursor = cursorFromNodeData(content, classSchema.info as ImplicitAllowedTypes);
+			const classSchema = getSimpleNodeSchema(node.schema) as MapNodeSchema<
+				TName,
+				T,
+				ImplicitlyConstructable
+			>;
+			const cursor = cursorFromNodeData(content, classSchema.info);
 
 			node.set(key, cursor);
 			return this;
@@ -193,14 +213,7 @@ export function mapSchema<
 		}
 		// TODO: add `clear` once we have established merge semantics for it.
 	}
-	const schemaErased: TreeNodeSchemaClass<
-		TName,
-		NodeKind.Map,
-		TreeMapNode<T> & WithType<TName>,
-		Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
-		ImplicitlyConstructable,
-		T
-	> = schema;
+	const schemaErased: MapNodeSchema<TName, T, ImplicitlyConstructable> = schema;
 	return schemaErased;
 }
 

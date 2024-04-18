@@ -29,7 +29,6 @@ import {
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
-	ImplicitFieldSchema,
 	TreeNodeSchemaClass,
 	WithType,
 	TreeNodeSchema,
@@ -232,6 +231,22 @@ export const TreeArrayNode = {
 };
 
 /**
+ * {@link TreeNodeSchemaClass} for {@link TreeArrayNode}s.
+ */
+export type ArrayNodeSchema<
+	TName extends string = string,
+	T extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+	ImplicitlyConstructable extends boolean = boolean,
+> = TreeNodeSchemaClass<
+	TName,
+	NodeKind.Array,
+	TreeArrayNode<T> & WithType<TName>,
+	Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+	ImplicitlyConstructable,
+	T
+>;
+
+/**
  * Package internal construction API.
  * Use {@link (TreeArrayNode:variable).spread} to create an instance of this type instead.
  */
@@ -317,12 +332,12 @@ const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 
 			const content = contextualizeInsertedArrayContent(value, sequenceField);
 
-			const simpleNodeSchema = getSimpleNodeSchema(sequenceNode.schema);
+			const simpleNodeSchema = getSimpleNodeSchema(sequenceNode.schema) as ArrayNodeSchema;
 			assert(simpleNodeSchema.kind === NodeKind.Array, 0x912 /* Expected array schema */);
 
 			const simpleFieldSchema = getSimpleFieldSchema(
 				sequenceField.schema,
-				simpleNodeSchema.info as ImplicitFieldSchema,
+				simpleNodeSchema.info,
 			);
 
 			sequenceField.insertAt(index, cursorFromFieldData(content, simpleFieldSchema));
@@ -338,12 +353,12 @@ const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 
 			const content = contextualizeInsertedArrayContent(value, sequenceField);
 
-			const simpleNodeSchema = getSimpleNodeSchema(sequenceNode.schema);
+			const simpleNodeSchema = getSimpleNodeSchema(sequenceNode.schema) as ArrayNodeSchema;
 			assert(simpleNodeSchema.kind === NodeKind.Array, 0x913 /* Expected array schema */);
 
 			const simpleFieldSchema = getSimpleFieldSchema(
 				sequenceField.schema,
-				simpleNodeSchema.info as ImplicitFieldSchema,
+				simpleNodeSchema.info,
 			);
 
 			sequenceField.insertAtStart(cursorFromFieldData(content, simpleFieldSchema));
@@ -359,12 +374,12 @@ const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 
 			const content = contextualizeInsertedArrayContent(value, sequenceField);
 
-			const simpleNodeSchema = getSimpleNodeSchema(sequenceNode.schema);
+			const simpleNodeSchema = getSimpleNodeSchema(sequenceNode.schema) as ArrayNodeSchema;
 			assert(simpleNodeSchema.kind === NodeKind.Array, 0x914 /* Expected array schema */);
 
 			const simpleFieldSchema = getSimpleFieldSchema(
 				sequenceField.schema,
-				simpleNodeSchema.info as ImplicitFieldSchema,
+				simpleNodeSchema.info,
 			);
 
 			sequenceField.insertAtEnd(cursorFromFieldData(content, simpleFieldSchema));
@@ -756,14 +771,7 @@ export function arraySchema<
 	// Setup array functionality
 	Object.defineProperties(schema.prototype, arrayNodePrototypeProperties);
 
-	return schema as typeof base as TreeNodeSchemaClass<
-		TName,
-		NodeKind.Array,
-		TreeArrayNode<T> & WithType<TName>,
-		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		ImplicitlyConstructable,
-		T
-	>;
+	return schema as typeof base as ArrayNodeSchema<TName, T, ImplicitlyConstructable>;
 }
 
 /**

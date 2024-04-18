@@ -223,7 +223,10 @@ export function setField(
 	}
 }
 
-type ObjectNodeSchema<
+/**
+ * {@link TreeNodeSchemaClass} for {@link TreeObjectNode}s.
+ */
+export type ObjectNodeSchema<
 	TName extends string = string,
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema> = RestrictiveReadonlyRecord<
 		string,
@@ -233,7 +236,7 @@ type ObjectNodeSchema<
 > = TreeNodeSchemaClass<
 	TName,
 	NodeKind.Object,
-	TreeNode & WithType<TName>,
+	TreeObjectNode<T, TName>,
 	InsertableObjectFromSchemaRecord<T>,
 	ImplicitlyConstructable,
 	T
@@ -249,7 +252,16 @@ export function objectSchema<
 	TName extends string,
 	const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 	const ImplicitlyConstructable extends boolean,
->(base: ObjectNodeSchema<TName, T, ImplicitlyConstructable>) {
+>(
+	base: TreeNodeSchemaClass<
+		TName,
+		NodeKind.Object,
+		TreeNode & WithType<TName>,
+		InsertableObjectFromSchemaRecord<T>,
+		ImplicitlyConstructable,
+		T
+	>,
+) {
 	// Ensure no collisions between final set of view keys, and final set of stored keys (including those
 	// implicitly derived from view keys)
 	assertUniqueKeys(base.identifier, base.info);
@@ -342,14 +354,7 @@ export function objectSchema<
 		}
 	}
 
-	return CustomObjectNode as TreeNodeSchemaClass<
-		TName,
-		NodeKind.Object,
-		TreeObjectNode<T, TName>,
-		object & InsertableObjectFromSchemaRecord<T>,
-		true,
-		T
-	>;
+	return CustomObjectNode as ObjectNodeSchema<TName, T, true>;
 }
 
 const targetToProxy: WeakMap<object, TreeNode> = new WeakMap();

@@ -44,6 +44,9 @@ import {
 } from "./schemaTypes.js";
 import { cursorFromNodeData } from "./toMapTree.js";
 import { TreeConfiguration } from "./tree.js";
+import type { MapNodeSchema } from "./mapNode.js";
+import type { ArrayNodeSchema } from "./arrayNode.js";
+import type { ObjectNodeSchema } from "./objectNode.js";
 
 /**
  * Returns a cursor (in nodes mode) for the root node.
@@ -202,7 +205,7 @@ export function convertNodeSchema(
 				return cached;
 			}
 			case NodeKind.Map: {
-				const fieldInfo = schema.info as ImplicitAllowedTypes;
+				const fieldInfo: ImplicitAllowedTypes = (schema as MapNodeSchema).info;
 				const field = FlexFieldSchema.create(
 					FieldKinds.optional,
 					convertAllowedTypes(schemaMap, fieldInfo),
@@ -213,7 +216,7 @@ export function convertNodeSchema(
 				break;
 			}
 			case NodeKind.Array: {
-				const fieldInfo = schema.info as ImplicitAllowedTypes;
+				const fieldInfo: ImplicitFieldSchema = (schema as ArrayNodeSchema).info;
 				const field = FlexFieldSchema.create(
 					FieldKinds.sequence,
 					convertAllowedTypes(schemaMap, fieldInfo),
@@ -224,7 +227,7 @@ export function convertNodeSchema(
 				break;
 			}
 			case NodeKind.Object: {
-				const info = schema.info as Record<string, ImplicitFieldSchema>;
+				const info: Record<string, ImplicitFieldSchema> = (schema as ObjectNodeSchema).info;
 				const fields: Record<string, FlexFieldSchema> = Object.create(null);
 				for (const [viewKey, implicitFieldSchema] of Object.entries(info)) {
 					// If a `stored key` was provided, use it as the key in the flex schema.

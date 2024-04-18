@@ -36,6 +36,9 @@ import {
 	normalizeFieldSchema,
 	getStoredKey,
 } from "./schemaTypes.js";
+import type { ArrayNodeSchema } from "./arrayNode.js";
+import type { MapNodeSchema } from "./mapNode.js";
+import type { ObjectNodeSchema } from "./objectNode.js";
 
 /**
  * Module notes:
@@ -110,11 +113,11 @@ export function nodeDataToMapTree(
 		case NodeKind.Leaf:
 			return leafToMapTree(data, schema, allowedTypes);
 		case NodeKind.Array:
-			return arrayToMapTree(data, schema);
+			return arrayToMapTree(data, schema as ArrayNodeSchema);
 		case NodeKind.Map:
-			return mapToMapTree(data, schema);
+			return mapToMapTree(data, schema as MapNodeSchema);
 		case NodeKind.Object:
-			return objectToMapTree(data, schema);
+			return objectToMapTree(data, schema as ObjectNodeSchema);
 		default:
 			fail(`Unrecognized schema kind: ${schema.kind}.`);
 	}
@@ -219,13 +222,13 @@ function arrayToMapTreeFields(
  * @param allowedTypes - The allowed types specified by the parent.
  * Used to determine which fallback values may be appropriate.
  */
-function arrayToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree {
+function arrayToMapTree(data: InsertableContent, schema: ArrayNodeSchema): MapTree {
 	assert(schema.kind === NodeKind.Array, 0x922 /* Expected an array schema. */);
 	if (!isReadonlyArray(data)) {
 		throw new UsageError(`Input data is incompatible with Array schema: ${data}`);
 	}
 
-	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
+	const allowedChildTypes = normalizeAllowedTypes(schema.info);
 
 	const mappedData = arrayToMapTreeFields(data, allowedChildTypes);
 
@@ -247,13 +250,13 @@ function arrayToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTre
  * @param allowedTypes - The allowed types specified by the parent.
  * Used to determine which fallback values may be appropriate.
  */
-function mapToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree {
+function mapToMapTree(data: InsertableContent, schema: MapNodeSchema): MapTree {
 	assert(schema.kind === NodeKind.Map, 0x923 /* Expected a Map schema. */);
 	if (!(data instanceof Map)) {
 		throw new UsageError(`Input data is incompatible with Map schema: ${data}`);
 	}
 
-	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
+	const allowedChildTypes = normalizeAllowedTypes(schema.info);
 
 	const transformedFields = new Map<FieldKey, MapTree[]>();
 	for (const [key, value] of data) {
@@ -279,7 +282,7 @@ function mapToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree 
  * @param allowedTypes - The allowed types specified by the parent.
  * Used to determine which fallback values may be appropriate.
  */
-function objectToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree {
+function objectToMapTree(data: InsertableContent, schema: ObjectNodeSchema): MapTree {
 	assert(schema.kind === NodeKind.Object, 0x924 /* Expected an Object schema. */);
 	if (typeof data !== "object" || data === null) {
 		throw new UsageError(`Input data is incompatible with Object schema: ${data}`);
@@ -312,9 +315,9 @@ function objectToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTr
 	};
 }
 
-function getObjectFieldSchema(schema: TreeNodeSchema, key: FieldKey): FieldSchema {
+function getObjectFieldSchema(schema: ObjectNodeSchema, key: FieldKey): FieldSchema {
 	assert(schema.kind === NodeKind.Object, 0x926 /* Expected an Object schema. */);
-	const fields = schema.info as Record<string, ImplicitFieldSchema>;
+	const fields: Record<string, ImplicitFieldSchema> = schema.info;
 	if (fields[key] === undefined) {
 		fail(`Field "${key}" not found in schema "${schema.identifier}".`);
 	} else {
