@@ -18,10 +18,10 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ISummaryTreeWithStats, ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { IFluidSerializer, ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { SharedObject, createSingleBlobSummary } from '@fluidframework/shared-object-base/internal';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import {
 	IEventSampler,
 	ITelemetryLoggerPropertyBags,
+	ITelemetryLoggerExt,
 	PerformanceEvent,
 	createChildLogger,
 	createSampledLogger,

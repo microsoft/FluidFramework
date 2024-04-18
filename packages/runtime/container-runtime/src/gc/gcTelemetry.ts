@@ -5,13 +5,11 @@
 
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
-	type ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils";
-import {
 	MonitoringContext,
 	generateStack,
 	tagCodeArtifacts,
+	type ITelemetryGenericEventExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { RuntimeHeaderData } from "../containerRuntime.js";
