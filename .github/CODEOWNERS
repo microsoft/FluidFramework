@@ -21,7 +21,7 @@
 
 /examples/                                                                @microsoft/fluid-cr-framework
 /experimental/                                                            @microsoft/fluid-cr-framework
-/experimental/PropertyDDS/                                                @evaliyev @karlbom @nedalhy @ruiterr
+/experimental/PropertyDDS/                                                @microsoft/fluid-cr-dds
 /experimental/dds/tree/                                                   @microsoft/fluid-cr-tree
 /packages/dds/                                                            @microsoft/fluid-cr-dds
 /packages/drivers/                                                        @microsoft/fluid-cr-drivers
