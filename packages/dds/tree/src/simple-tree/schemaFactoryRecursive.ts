@@ -10,7 +10,7 @@ import { InsertableObjectFromSchemaRecord } from "./objectNode.js";
 import {
 	FieldKind,
 	FieldProps,
-	FieldSchema,
+	createFieldSchema,
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
 	InsertableTreeNodeFromImplicitAllowedTypes,
@@ -26,10 +26,11 @@ export function createFieldSchemaUnsafe<
 	Types extends Unenforced<ImplicitAllowedTypes>,
 >(kind: Kind, allowedTypes: Types, props: FieldProps | undefined): FieldSchemaUnsafe<Kind, Types> {
 	// At runtime, we still want this to be a FieldSchema instance, but we can't satisfy its extends clause, so just return it as an FieldSchemaUnsafe
-	return new FieldSchema(kind, allowedTypes as ImplicitAllowedTypes, props) as FieldSchemaUnsafe<
-		Kind,
-		Types
-	>;
+	return createFieldSchema(
+		kind,
+		allowedTypes as ImplicitAllowedTypes,
+		props,
+	) as FieldSchemaUnsafe<Kind, Types>;
 }
 
 /**

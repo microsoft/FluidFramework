@@ -189,7 +189,7 @@ steps:
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
       # Delete files ending with caret.json, simple.json, tilde.json, and full.json
-      for file in *.caret.json *.simple.json *.tilde.json *.full.json; do
+      for file in simpleManifest-*.json manifest-*.json *.tilde.json *.full.json; do
         if [ -e "$file" ]; then
             rm -f "$file"
         fi
