@@ -489,28 +489,26 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 		);
 	});
 
-	it("can call connect() twice to change the connection mode", async () => {
-		const container = await createConnectedContainer();
+	itExpects(
+		"can call connect() twice",
+		[{ eventName: "fluid:telemetry:ConnectionManager:ConnectionModeMismatch" }],
+		async () => {
+			const container = await createConnectedContainer();
 
-		container.disconnect();
+			container.disconnect();
 
-		container.connect();
-		(container as any).deltaManager.connectionManager.shouldJoinWrite = () => {
-			return true;
-		};
-		container.connect();
+			container.connect();
+			(container as any).deltaManager.connectionManager.shouldJoinWrite = () => {
+				return true;
+			};
+			container.connect();
 
-		await waitForContainerConnection(container, true, {
-			durationMs: timeoutMs,
-			errorMsg: "container connected event timeout",
-		});
-
-		assert.strictEqual(
-			(container as any).connectionMode,
-			"write",
-			"container in read mode after connecting with pending op",
-		);
-	});
+			await waitForContainerConnection(container, true, {
+				durationMs: timeoutMs,
+				errorMsg: "container connected event timeout",
+			});
+		},
+	);
 
 	it("can cancel call connect() twice then cancel with disconnect()", async () => {
 		const container = await createConnectedContainer();
