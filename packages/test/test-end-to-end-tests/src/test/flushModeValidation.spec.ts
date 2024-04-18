@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import type { ISharedMap } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
 	ChannelFactoryRegistry,

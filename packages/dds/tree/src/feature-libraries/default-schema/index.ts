@@ -9,6 +9,7 @@ export {
 	Optional,
 	Sequence,
 	NodeKeyFieldKind,
+	Identifier,
 	Forbidden,
 	fieldKinds,
 	fieldKindConfigurations,

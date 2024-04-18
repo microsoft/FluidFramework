@@ -58,7 +58,7 @@ export interface SetField {
 
 export interface SequenceFieldEdit {
 	type: "sequence";
-	edit: Insert | Remove | IntraFieldMove;
+	edit: Insert | Remove | IntraFieldMove | CrossFieldMove;
 }
 
 export interface RequiredFieldEdit {
@@ -93,6 +93,15 @@ export interface Move {
 
 export interface IntraFieldMove extends Move {
 	type: "intraFieldMove";
+}
+
+export interface CrossFieldMove extends Move {
+	type: "crossFieldMove";
+	/**
+	 * The field to move the content to.
+	 * May be the same as the source field.
+	 */
+	dstField: FieldDownPath;
 }
 
 export interface SchemaOp {

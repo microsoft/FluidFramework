@@ -5,7 +5,6 @@
 
 import { EventEmitter } from "events";
 import * as http from "http";
-import * as util from "util";
 import * as core from "@fluidframework/server-services-core";
 import {
 	BaseTelemetryProperties,
@@ -134,7 +133,11 @@ class SocketIoServer implements core.IWebSocketServer {
 			const drainTime = this.socketIoConfig?.gracefulShutdownDrainTimeMs ?? 30000;
 			const drainInterval = this.socketIoConfig?.gracefulShutdownDrainIntervalMs ?? 1000;
 			if (drainTime > 0 && drainInterval > 0) {
-				// we are assuming no new connections appear once we start. any leftover connections will be closed when close is called
+				// Stop receiving new connections
+				this.io.engine.use((_, res, __) => {
+					res.status(503).send("Graceful Shutdown");
+				});
+
 				const connections = await this.io.fetchSockets();
 				const connectionCount = connections.length;
 				const telemetryProperties = {
@@ -188,18 +191,20 @@ class SocketIoServer implements core.IWebSocketServer {
 					);
 				} else {
 					metricForTimeTaken.success("Graceful shutdown finished");
+					const reconnections = await this.io.fetchSockets();
+					Lumberjack.info("Graceful shutdown. Closing last reconnected connections", {
+						connectionsCount: reconnections.length,
+					});
 				}
 			}
 		}
 
-		// eslint-disable-next-line @typescript-eslint/promise-function-async
-		const pubClosedP = util.promisify(((callback) =>
-			this.redisClientConnectionManagerForPub.getRedisClient().quit(callback)) as any)();
-		// eslint-disable-next-line @typescript-eslint/promise-function-async
-		const subClosedP = util.promisify(((callback) =>
-			this.redisClientConnectionManagerForSub.getRedisClient().quit(callback)) as any)();
-		const ioClosedP = util.promisify(((callback) => this.io.close(callback)) as any)();
-		await Promise.all([pubClosedP, subClosedP, ioClosedP]);
+		this.io.close();
+		await sleep(3000); // Give time for any  disconnect handlers to execute before closing Redis resources
+		await Promise.all([
+			this.redisClientConnectionManagerForPub.getRedisClient().quit(),
+			this.redisClientConnectionManagerForSub.getRedisClient().quit(),
+		]);
 	}
 }
 

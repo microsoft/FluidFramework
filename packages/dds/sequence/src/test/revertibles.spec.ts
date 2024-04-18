@@ -43,7 +43,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		dataStoreRuntime1.setAttachState(AttachState.Attached);
 		sharedString = stringFactory.create(dataStoreRuntime1, "shared-string-1");
 
-		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		const services1 = {
 			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 			objectStorage: new MockStorage(),
@@ -367,7 +367,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 
 		// Connect the first SharedString.
 		dataStoreRuntime1.setAttachState(AttachState.Attached);
-		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		const services1 = {
 			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 			objectStorage: new MockStorage(),
@@ -377,7 +377,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 
 		// Create and connect a second SharedString.
 		const dataStoreRuntime2 = new MockFluidDataStoreRuntime({ clientId: "2" });
-		const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 		const services2 = {
 			deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 			objectStorage: new MockStorage(),
@@ -710,7 +710,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 
 		// Connect the first SharedString.
 		dataStoreRuntime1.setAttachState(AttachState.Attached);
-		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		const services1 = {
 			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 			objectStorage: new MockStorage(),
@@ -727,8 +727,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 
 		beforeEach(() => {
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime({ clientId: "2" });
-			const containerRuntime2 =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2 = {
 				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -753,7 +752,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 				}
 			});
 
-			const int = collection.add({ start: 2, end: 4 });
+			collection.add({ start: 2, end: 4 });
 			containerRuntimeFactory.processAllMessages();
 
 			sharedString2.removeRange(0, 6);
@@ -1279,12 +1278,10 @@ describe("Sequence.Revertibles with stickiness", () => {
 			appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
 		});
 
-		const id = collection
-			.add({
-				start: { pos: 4, side: Side.Before },
-				end: { pos: 5, side: Side.After },
-			})
-			.getIntervalId();
+		collection.add({
+			start: { pos: 4, side: Side.Before },
+			end: { pos: 5, side: Side.After },
+		});
 		sharedString.removeText(3, 6);
 		containerRuntimeFactory.processAllMessages();
 
