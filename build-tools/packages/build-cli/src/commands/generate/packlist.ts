@@ -3,40 +3,40 @@
  * Licensed under the MIT License.
  */
 
+import type { Package } from "@fluidframework/build-tools";
 import Arborist from "@npmcli/arborist";
 import { Flags } from "@oclif/core";
 import { writeFile } from "fs-extra";
 import packlist from "npm-packlist";
 
-import { BaseCommand } from "../../base";
+import { PackageCommand } from "../../BasePackageCommand";
+import path from "node:path";
 
 /**
  * Outputs a list of files that will be included in a package based on its 'files' property in package.json and any
  * npmignore files.
  */
-export default class GeneratePackListCommand extends BaseCommand<
+export default class GeneratePackListCommand extends PackageCommand<
 	typeof GeneratePackListCommand
 > {
 	static readonly description =
 		"Outputs a list of files that will be included in a package based on its 'files' property in package.json and any .npmignore files.";
 
 	static readonly flags = {
-		packagePath: Flags.directory({
-			description: "Path to a folder containing a package.",
-			default: ".",
-		}),
 		out: Flags.file({
-			description: "File to output the pack list to.",
+			description:
+				"File to output the pack list to. This path is relative to the package whose contents is being listed.",
 			default: "packlist.txt",
 			exists: false,
 		}),
-		...BaseCommand.flags,
+		...PackageCommand.flags,
 	} as const;
 
-	public async run(): Promise<void> {
-		const { packagePath, out: outFile } = this.flags;
+	protected async processPackage(pkg: Package): Promise<void> {
+		const { out } = this.flags;
 
-		const arborist = new Arborist({ path: packagePath });
+		const outFile = path.join(pkg.directory, out);
+		const arborist = new Arborist({ path: pkg.directory });
 		const tree = await arborist.loadActual();
 		const files = await packlist(tree);
 
@@ -48,7 +48,7 @@ export default class GeneratePackListCommand extends BaseCommand<
 			if (dirCountA < dirCountB) {
 				return -1;
 			}
-			if (dirCountA > dirCountB) {
+			if (dirCountA > dirCountB || a > b) {
 				return 1;
 			}
 
