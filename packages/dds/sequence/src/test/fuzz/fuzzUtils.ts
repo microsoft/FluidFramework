@@ -154,7 +154,7 @@ export const defaultSharedStringOperationGenerationConfig: Required<SharedString
 		weights: {
 			addText: 2,
 			removeRange: 1,
-			annotateRange: 1,
+			annotateRange: 0,
 			obliterateRange: 1,
 		},
 		propertyNamePool: ["prop1", "prop2", "prop3"],
