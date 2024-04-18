@@ -51,6 +51,7 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		"recursive": true,
 		"require": requiredModulePaths,
 		"unhandled-rejections": "strict",
+		"node-option": "conditions=allow-ff-test-exports",
 		// Performance tests benefit from having access to GC, and memory tests require it.
 		// Exposing it here avoids all packages which do perf testing from having to expose it.
 		"v8-expose-gc": true,
