@@ -24,7 +24,6 @@ import {
 	LambdaCloseType,
 	MongoManager,
 	requestWithRetry,
-	runWithRetry,
 } from "@fluidframework/server-services-core";
 import { defaultHash, IGitManager } from "@fluidframework/server-services-client";
 import {
@@ -229,6 +228,7 @@ export class DeliLambdaFactory
 		);
 
 		deliLambda.on("close", (closeType) => {
+			const baseLumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 			const handler = async () => {
 				if (
 					closeType === LambdaCloseType.ActivityTimeout ||
@@ -240,38 +240,42 @@ export class DeliLambdaFactory
 							await requestWithRetry(
 								async () => gitManager.deleteSummary(false),
 								"deliLambda_onClose" /* callName */,
-								getLumberBaseProperties(
-									documentId,
-									tenantId,
-								) /* telemetryProperties */,
+								baseLumberjackProperties /* telemetryProperties */,
 								(error) => true /* shouldRetry */,
 								3 /* maxRetries */,
 							);
 						}
 
-						// Delete the document metadata
-						await runWithRetry(
-							async () =>
-								this.documentRepository.deleteOne({
-									documentId,
-									tenantId,
-								}),
-							"deleteDocMetadata",
-							3 /* maxRetries */,
-							1000 /* retryAfterMs */,
-							getLumberBaseProperties(documentId, tenantId),
-							(error) =>
-								error.code === 11000 ||
-								error.message?.toString()?.indexOf("E11000 duplicate key") >=
-									0 /* shouldIgnoreError */,
-							(error) => true /* shouldRetry */,
-						);
+						// Delete the document metadata, soft or hard depending on the configuration
+						const deletionFilter = {
+							documentId,
+							tenantId,
+						};
+						if (
+							this.serviceConfiguration.deli.ephemeralContainerSoftDeleteTimeInMs >= 0
+						) {
+							const scheduledDeletionTime = new Date(
+								Date.now() +
+									this.serviceConfiguration.deli
+										.ephemeralContainerSoftDeleteTimeInMs,
+							);
+							await this.documentRepository.updateOne(
+								deletionFilter,
+								{ scheduledDeletionTime: scheduledDeletionTime.toJSON() },
+								null,
+							);
+							Lumberjack.info(
+								`Successfully scheduled to clean up ephemeral container`,
+								baseLumberjackProperties,
+							);
+						} else {
+							await this.documentRepository.deleteOne(deletionFilter);
 
-						Lumberjack.info(
-							`Successfully cleaned up ephemeral container`,
-							getLumberBaseProperties(documentId, tenantId),
-						);
-
+							Lumberjack.info(
+								`Successfully cleaned up ephemeral container`,
+								baseLumberjackProperties,
+							);
+						}
 						return;
 					}
 					const filter = { documentId, tenantId, session: { $exists: true } };
@@ -297,7 +301,7 @@ export class DeliLambdaFactory
 						} catch (error) {
 							Lumberjack.error(
 								"Failed to get cluster draining status",
-								getLumberBaseProperties(documentId, tenantId),
+								baseLumberjackProperties,
 								error,
 							);
 						}
@@ -308,13 +312,13 @@ export class DeliLambdaFactory
                         ${JSON.stringify(closeType)}`;
 
 					context.log?.info(message, { messageMetaData });
-					Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
+					Lumberjack.info(message, baseLumberjackProperties);
 				}
 			};
 			handler().catch((e) => {
 				const message = `Failed to handle session alive and active with exception ${e}`;
 				context.log?.error(message, { messageMetaData });
-				Lumberjack.error(message, getLumberBaseProperties(documentId, tenantId), e);
+				Lumberjack.error(message, baseLumberjackProperties, e);
 			});
 		});
 

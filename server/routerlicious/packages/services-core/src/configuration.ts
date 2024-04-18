@@ -29,6 +29,9 @@ export interface IDeliServerConfiguration {
 	// Enables ephemeral container summary deletion on deli close
 	enableEphemeralContainerSummaryCleanup: boolean;
 
+	// Time to wait before deleting ephemeral container summaries
+	ephemeralContainerSoftDeleteTimeInMs: number;
+
 	// Enables deli to maintain batches as it produces them to the next lambdas
 	maintainBatches: boolean;
 
@@ -233,6 +236,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
 		enableOpHashing: true,
 		enableAutoDSNUpdate: false,
 		enableEphemeralContainerSummaryCleanup: true,
+		ephemeralContainerSoftDeleteTimeInMs: 24 * 60 * 60 * 1000,
 		checkForIdleClientsOnStartup: false,
 		maintainBatches: false,
 		enableWriteClientSignals: false,
