@@ -38,10 +38,12 @@
 			"name": "isomorphic-git"
 		},
 		"filesystem": {
-			"name": "nodeFs"
+			"name": "nodeFs",
+			"maxFileSizeBytes": 0
 		},
 		"ephemeralfilesystem": {
-			"name": "redisFs"
+			"name": "redisFs",
+			"maxFileSizeBytes": 0
 		},
 		"persistLatestFullSummary": false,
 		"persistLatestFullEphemeralSummary": false,
@@ -55,8 +57,7 @@
 		"enableHashmapRedisFs": false,
 		"enableRedisFsOptimizedStat": false,
 		"redisApiMetricsSamplingPeriod": 0,
-		"enforceStrictPersistedFullSummaryReads": false,
-		"maxRedisFsFileSizeBytes": 0
+		"enforceStrictPersistedFullSummaryReads": false
 	},
 	"redis": {
 		"host": "redis",

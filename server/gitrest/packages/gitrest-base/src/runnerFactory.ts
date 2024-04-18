@@ -75,8 +75,13 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 		customizations?: IGitrestResourcesCustomizations,
 	): IFileSystemManagerFactories {
 		const defaultFileSystemName: string = config.get("git:filesystem:name") ?? "nodeFs";
+		const defaultFileSystemMaxFileSizeBytes: number | undefined =
+			config.get("git:filesystem:maxFileSizeBytes") ?? 0;
+
 		const ephemeralFileSystemName: string =
 			config.get("git:ephemeralfilesystem:name") ?? "redisFs";
+		const ephemeralFileSystemMaxFileSizeBytes: number | undefined =
+			config.get("git:ephemeralfilesystem:maxFileSizeBytes") ?? 0;
 
 		// Creating two customizations for redisClientConnectionManager for now.
 		// This may be changed to a single customization in the future.
@@ -84,11 +89,13 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 			defaultFileSystemName,
 			config,
 			customizations?.redisClientConnectionManagerForDefaultFileSystem,
+			defaultFileSystemMaxFileSizeBytes,
 		);
 		const ephemeralFileSystemManagerFactory = this.getFileSystemManagerFactoryByName(
 			ephemeralFileSystemName,
 			config,
 			customizations?.redisClientConnectionManagerForEphemeralFileSystem,
+			ephemeralFileSystemMaxFileSizeBytes,
 		);
 
 		return {
@@ -101,9 +108,10 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 		fileSystemName: string,
 		config: Provider,
 		redisClientConnectionManagerCustomization?: IRedisClientConnectionManager,
+		maxFileSizeBytes?: number,
 	) {
 		if (!fileSystemName || fileSystemName === "nodeFs") {
-			return new NodeFsManagerFactory();
+			return new NodeFsManagerFactory(maxFileSizeBytes);
 		} else if (fileSystemName === "redisFs") {
 			const redisConfig = config.get("redis");
 			const redisClientConnectionManager =
@@ -114,7 +122,11 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 					redisConfig.enableClustering,
 					redisConfig.slotsRefreshTimeout,
 				);
-			return new RedisFsManagerFactory(config, redisClientConnectionManager);
+			return new RedisFsManagerFactory(
+				config,
+				redisClientConnectionManager,
+				maxFileSizeBytes,
+			);
 		}
 		throw new Error("Invalid file system name.");
 	}

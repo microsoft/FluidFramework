@@ -35,7 +35,6 @@ import {
 export interface RedisFsConfig {
 	enableRedisFsMetrics: boolean;
 	redisApiMetricsSamplingPeriod: number;
-	maxFileSizeBytes: number;
 	enableOptimizedStat: boolean;
 }
 
@@ -169,18 +168,7 @@ export class RedisFs implements IFileSystemPromises {
 			return;
 		}
 
-<<<<<<< HEAD
-		if (
-			this.redisFsConfig.maxFileSizeBytes > 0 &&
-			sizeof(data) > this.redisFsConfig.maxFileSizeBytes
-		) {
-			throw new RedisFsError(SystemErrors.EFBIG, filepathString);
-		}
-
-		const result = await executeRedisFsApi(
-=======
 		const result = await executeRedisFsApiWithMetric(
->>>>>>> main
 			async () => this.redisFsClient.set(filepathString, data),
 			RedisFsApis.WriteFile,
 			this.redisFsConfig.enableRedisFsMetrics,
