@@ -14,6 +14,7 @@ export {
 	RuntimeMessage,
 	agentSchedulerId,
 	ContainerRuntime,
+	DeletedResponseHeaderKey,
 	TombstoneResponseHeaderKey,
 	InactiveResponseHeaderKey,
 	ISummaryConfiguration,
