@@ -8,6 +8,7 @@ Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub generate bundleStats`](#flub-generate-bundlestats)
 * [`flub generate changelog`](#flub-generate-changelog)
 * [`flub generate changeset`](#flub-generate-changeset)
+* [`flub generate entrypoints`](#flub-generate-entrypoints)
 * [`flub generate upcoming`](#flub-generate-upcoming)
 
 ## `flub generate assertTags`
@@ -210,6 +211,40 @@ EXAMPLES
 ```
 
 _See code: [src/commands/generate/changeset.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/changeset.ts)_
+
+## `flub generate entrypoints`
+
+Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.) as found in package.json "exports"
+
+```
+USAGE
+  $ flub generate entrypoints [-v | --quiet] [--mainEntrypoint <value>] [--outDir <value>] [--outFilePrefix <value>]
+    [--outFileAlpha <value>] [--outFileBeta <value>] [--outFilePublic <value>] [--outFileSuffix <value>]
+    [--node10TypeCompat]
+
+FLAGS
+  --mainEntrypoint=<value>  [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
+  --node10TypeCompat        Optional generation of Node10 resolution compatible type entrypoints matching others.
+  --outDir=<value>          [default: ./lib] Directory to emit entrypoint declaration files.
+  --outFileAlpha=<value>    [default: alpha] Base file name for alpha entrypoint declaration files.
+  --outFileBeta=<value>     [default: beta] Base file name for beta entrypoint declaration files.
+  --outFilePrefix=<value>   File name prefix for emitting entrypoint declaration files. Pattern of
+                            '{@unscopedPackageName}' within value will be replaced with the unscoped name of this
+                            package.
+  --outFilePublic=<value>   [default: public] Base file name for public entrypoint declaration files.
+  --outFileSuffix=<value>   [default: .d.ts] File name suffix including extension for emitting entrypoint declaration
+                            files.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.) as found in package.json
+  "exports"
+```
+
+_See code: [src/commands/generate/entrypoints.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/entrypoints.ts)_
 
 ## `flub generate upcoming`
 

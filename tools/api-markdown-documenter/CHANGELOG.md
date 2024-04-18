@@ -2,6 +2,8 @@
 
 ## 0.12.0
 
+-   Added functionality for transforming Documentation Domain trees to [hast](https://github.com/syntax-tree/hast).
+    The main entrypoint for this is: `documentToHtml`.
 -   Updated the package to emit ESM only.
 -   Fixed a bug where [inline tags](https://tsdoc.org/pages/spec/tag_kinds/#inline-tags) (other than `{@link}` and `{@inheritDoc}`, which are handled specially by API-Extractor) were not handled and resulted in errors being logged to the console.
     Such tags are now handled in the following way:
@@ -10,6 +12,7 @@
 -   Fixed a bug where pre-escaped text contents (including embedded HTML content) would be incorrectly re-escaped.
 -   Fixed a bug where type parameter information was only being generated for `interface` and `class` items.
 -   Adds "Constraint" and "Default" columns to type parameter tables when any are present among the type parameters.
+-   Fixed a bug where getter/setter properties under interface items did not get documentation generated for them.
 
 ### ⚠ BREAKING CHANGES
 

@@ -108,7 +108,7 @@ function createTestSuiteWithInstalledVersion(
 		});
 
 		afterEach(function (done: Mocha.Done) {
-			const logErrors = getUnexpectedLogErrorException(defaultProvider.logger);
+			const logErrors = getUnexpectedLogErrorException(defaultProvider.tracker);
 			// if the test failed for another reason
 			// then we don't need to check errors
 			// and fail the after each as well

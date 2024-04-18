@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import path from "node:path";
 import { parseISO } from "date-fns";
-import { exec, execNoError } from "./utils";
 import registerDebug from "debug";
 import { statSync } from "fs-extra";
-import path from "node:path";
+import { exec, execNoError } from "./utils";
 
 const traceGitRepo = registerDebug("fluid-build:gitRepo");
 

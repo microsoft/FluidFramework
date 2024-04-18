@@ -1816,6 +1816,41 @@ describe("Editing", () => {
 			expectJsonTree([tree1, tree2], expected);
 		});
 
+		it("repro scenario that requires correct rebase metadata", () => {
+			const startState = [{ seq: ["A"] }, { seq: [] }, { seq: ["B"] }];
+			const tree = makeTreeFromJson(startState);
+
+			const [root0Array, root1Array, root2Array]: FieldUpPath[] = makeArray(3, (i) => ({
+				parent: {
+					parent: {
+						parent: undefined,
+						parentField: rootFieldKey,
+						parentIndex: i,
+					},
+					parentField: brand("seq"),
+					parentIndex: 0,
+				},
+				field: brand(""),
+			}));
+
+			const treeA = tree.fork();
+			const treeC = tree.fork();
+			const treeD = tree.fork();
+
+			treeD.editor.move(root0Array, 0, 1, root1Array, 0);
+			tree.merge(treeD, false);
+			treeA.editor.sequenceField(root2Array).move(0, 1, 0);
+			tree.merge(treeA, false);
+			treeC.editor.sequenceField(root0Array).move(0, 1, 1);
+			tree.merge(treeC, false);
+			treeC.editor.sequenceField(rootField).move(1, 1, 1);
+			tree.merge(treeC, false);
+
+			treeC.rebaseOnto(treeD);
+			treeC.rebaseOnto(treeA);
+			expectJsonTree([tree, treeC], startState);
+		});
+
 		describe("Exhaustive removal tests", () => {
 			// Toggle the constant below to run each scenario as a separate test.
 			// This is useful to debug a specific scenario but makes CI and the test browser slower.
@@ -2021,7 +2056,7 @@ describe("Editing", () => {
 			const startState = makeArray(nbNodes, (n) => `N${n}`);
 			const scenarios = buildScenarios();
 
-			// Increased timeout because the default in CI is 2s but this test fixture naturally takes ~1.9s and was
+			// Increased timeout because the default in CI is 2s but this test fixture naturally takes longer and was
 			// timing out frequently
 			outerFixture("All Scenarios", () => {
 				for (const scenario of scenarios) {
@@ -2032,7 +2067,7 @@ describe("Editing", () => {
 						runScenario(scenario, true);
 					}
 				}
-			}).timeout(5000);
+			}).timeout(10000);
 		});
 
 		describe("revert semantics", () => {

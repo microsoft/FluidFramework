@@ -8,9 +8,9 @@ import { Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { FlexListToUnion, LazyItem, isLazy } from "../feature-libraries/index.js";
-import { MakeNominal, isReadonlyArray } from "../util/index.js";
-
+import { MakeNominal, brand, isReadonlyArray } from "../util/index.js";
 import { Unhydrated } from "./types.js";
+import { FieldKey } from "../core/index.js";
 
 /**
  * Schema for a tree node.
@@ -139,6 +139,12 @@ export enum FieldKind {
 	 * Only allows exactly one child.
 	 */
 	Required,
+	/**
+	 * A special field used for node identifiers.
+	 * @remarks
+	 * Only allows exactly one child.
+	 */
+	Identifier,
 }
 
 /**
@@ -174,8 +180,8 @@ export enum NodeKind {
  * If an explicit stored key was specified in the schema, it will be used.
  * Otherwise, the stored key is the same as the view key.
  */
-export function getStoredKey(viewKey: string, fieldSchema: ImplicitFieldSchema): string {
-	return getExplicitStoredKey(fieldSchema) ?? viewKey;
+export function getStoredKey(viewKey: string, fieldSchema: ImplicitFieldSchema): FieldKey {
+	return brand(getExplicitStoredKey(fieldSchema) ?? viewKey);
 }
 
 /**
@@ -246,16 +252,42 @@ export interface FieldProps {
 }
 
 /**
+ * Package internal construction API.
+ */
+export let createFieldSchema: <
+	Kind extends FieldKind = FieldKind,
+	Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+>(
+	kind: Kind,
+	allowedTypes: Types,
+	props?: FieldProps,
+) => FieldSchema<Kind, Types>;
+
+/**
  * All policy for a specific field,
  * including functionality that does not have to be kept consistent across versions or deterministic.
  *
  * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
+ * Use {@link SchemaFactory} to create the FieldSchema instances, for example {@link SchemaFactory.optional}.
+ * @privateRemarks
+ * Public access to the constructor is removed to prevent creating expressible but unsupported (or not stable) configurations.
+ * {@link createFieldSchema} can be used internally to create instances.
  * @sealed @public
  */
 export class FieldSchema<
 	out Kind extends FieldKind = FieldKind,
 	out Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 > {
+	static {
+		createFieldSchema = <
+			Kind2 extends FieldKind = FieldKind,
+			Types2 extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+		>(
+			kind: Kind2,
+			allowedTypes: Types2,
+			props?: FieldProps,
+		) => new FieldSchema(kind, allowedTypes, props);
+	}
 	/**
 	 * This class is used with instanceof, and therefore should have nominal typing.
 	 * This field enforces that.
@@ -272,7 +304,7 @@ export class FieldSchema<
 		return this.lazyTypes.value;
 	}
 
-	public constructor(
+	private constructor(
 		/**
 		 * The {@link https://en.wikipedia.org/wiki/Kind_(type_theory) | kind } of this field.
 		 * Determines the multiplicity, viewing and editing APIs as well as the merge resolution policy.
@@ -295,7 +327,7 @@ export class FieldSchema<
  * Normalizes a {@link ImplicitFieldSchema} to a {@link FieldSchema}.
  */
 export function normalizeFieldSchema(schema: ImplicitFieldSchema): FieldSchema {
-	return schema instanceof FieldSchema ? schema : new FieldSchema(FieldKind.Required, schema);
+	return schema instanceof FieldSchema ? schema : createFieldSchema(FieldKind.Required, schema);
 }
 /**
  * Normalizes a {@link ImplicitAllowedTypes} to a set of {@link TreeNodeSchema}s, by eagerly evaluating any

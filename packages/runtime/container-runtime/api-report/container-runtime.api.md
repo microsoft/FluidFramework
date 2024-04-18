@@ -252,14 +252,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     readonly disposeFn: (error?: ICriticalContainerError) => void;
     // (undocumented)
-    get documentSchema(): {
-        explicitSchemaControl?: true | undefined;
-        compressionLz4?: true | undefined;
-        idCompressorMode?: IdCompressorMode;
-        opGroupingEnabled?: true | undefined;
-        disallowedVersions?: string[] | undefined;
-    };
-    // (undocumented)
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
     ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
@@ -329,6 +321,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
     get scope(): FluidObject;
+    get sessionSchema(): {
+        explicitSchemaControl?: true | undefined;
+        compressionLz4?: true | undefined;
+        idCompressorMode?: IdCompressorMode;
+        opGroupingEnabled?: true | undefined;
+        disallowedVersions?: string[] | undefined;
+    };
     // (undocumented)
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     // (undocumented)
@@ -411,7 +410,7 @@ export type DocumentSchemaValueType = string | string[] | true | number | undefi
 
 // @alpha
 export class DocumentsSchemaController {
-    constructor(existing: boolean, documentMetadataSchema: IDocumentSchema | undefined, features: IDocumentSchemaFeatures, onSchemaChange: (schema: IDocumentSchemaCurrent) => void);
+    constructor(existing: boolean, snapshotSequenceNumber: number, documentMetadataSchema: IDocumentSchema | undefined, features: IDocumentSchemaFeatures, onSchemaChange: (schema: IDocumentSchemaCurrent) => void);
     maybeSendSchemaMessage(): IDocumentSchemaChangeMessage | undefined;
     // (undocumented)
     onDisconnect(): void;
@@ -515,7 +514,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     get isLoaded(): boolean;
     // (undocumented)
     readonly isLocalDataStore: boolean;
-    isRoot(): Promise<boolean>;
+    isRoot(aliasedDataStores?: Set<string>): Promise<boolean>;
     // (undocumented)
     readonly loadingGroupId: string | undefined;
     // (undocumented)

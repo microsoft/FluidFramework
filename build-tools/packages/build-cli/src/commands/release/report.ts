@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { ux, Flags, Command } from "@oclif/core";
 import { strict as assert } from "node:assert";
+import path from "node:path";
+import { Command, Flags, ux } from "@oclif/core";
 import chalk from "chalk";
 import { differenceInBusinessDays, formatDistanceToNow } from "date-fns";
 import { writeJson } from "fs-extra";
 import inquirer from "inquirer";
-import path from "node:path";
 import sortJson from "sort-json";
 import { table } from "table";
 
 import {
-	VersionDetails,
 	Context,
 	PackageVersionMap,
 	ReleaseReport,
 	ReportKind,
+	VersionDetails,
 	filterVersionsOlderThan,
 	getDisplayDate,
 	getDisplayDateRelative,

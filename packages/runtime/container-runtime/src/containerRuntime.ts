@@ -852,9 +852,9 @@ export class ContainerRuntime
 
 		// Verify summary runtime sequence number matches protocol sequence number.
 		const runtimeSequenceNumber = messageAtLastSummary?.sequenceNumber;
+		const protocolSequenceNumber = context.deltaManager.initialSequenceNumber;
 		// When we load with pending state, we reuse an old snapshot so we don't expect these numbers to match
 		if (!context.pendingLocalState && runtimeSequenceNumber !== undefined) {
-			const protocolSequenceNumber = context.deltaManager.initialSequenceNumber;
 			// Unless bypass is explicitly set, then take action when sequence numbers mismatch.
 			if (
 				loadSequenceNumberVerification !== "bypass" &&
@@ -882,6 +882,19 @@ export class ContainerRuntime
 			}
 		}
 
+		let desiredIdCompressorMode: IdCompressorMode;
+		switch (mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled")) {
+			case true:
+				desiredIdCompressorMode = "on";
+				break;
+			case false:
+				desiredIdCompressorMode = undefined;
+				break;
+			default:
+				desiredIdCompressorMode = enableRuntimeIdCompressor;
+				break;
+		}
+
 		// Enabling the IdCompressor is a one-way operation and we only want to
 		// allow new containers to turn it on.
 		let idCompressorMode: IdCompressorMode;
@@ -893,23 +906,28 @@ export class ContainerRuntime
 			// 3) Same logic applies for "delayed" mode
 			// Maybe in the future we will need to enabled (and figure how to do it safely) "delayed" -> "on" change.
 			// We could do "off" -> "on" transition too, if all clients start loading compressor (but not using it initially) and
-			// do so for a while - this will allow clients to eventually to disregard "off" setting (when it's safe so) and start
+			// do so for a while - this will allow clients to eventually disregard "off" setting (when it's safe so) and start
 			// using compressor in future sessions.
 			// Everyting is possible, but it needs to be designed and executed carefully, when such need arises.
 			idCompressorMode = metadata?.documentSchema?.runtime
 				?.idCompressorMode as IdCompressorMode;
-		} else {
-			switch (mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled")) {
-				case true:
-					idCompressorMode = "on";
-					break;
-				case false:
-					idCompressorMode = undefined;
-					break;
-				default:
-					idCompressorMode = enableRuntimeIdCompressor;
-					break;
+
+			// This is the only exception to the rule above - we have proper plumbing to load ID compressor on schema change
+			// event. It is loaded async (relative to op processing), so this conversion is only safe for off -> delayed conversion!
+			// Clients do not expect ID compressor ops unless ID compressor is On for them, and that could be achieved only through
+			// explicit schema change, i.e. only if explicitSchemaControl is on.
+			// Note: it would be better if we throw on combination of options (explicitSchemaControl = off, desiredIdCompressorMode === "delayed")
+			// that is not supported. But our service tests are oblivious to these problems and throwing here will cause a ton of failures
+			// We ignored incompatible ID compressor changes from the start (they were sticky), so that's not a new problem being introduced...
+			if (
+				idCompressorMode === undefined &&
+				desiredIdCompressorMode === "delayed" &&
+				explicitSchemaControl
+			) {
+				idCompressorMode = desiredIdCompressorMode;
 			}
+		} else {
+			idCompressorMode = desiredIdCompressorMode;
 		}
 
 		const createIdCompressorFn = async () => {
@@ -964,6 +982,7 @@ export class ContainerRuntime
 
 		const documentSchemaController = new DocumentsSchemaController(
 			existing,
+			protocolSequenceNumber,
 			metadata?.documentSchema,
 			{
 				explicitSchemaControl,
@@ -1092,7 +1111,17 @@ export class ContainerRuntime
 		return this._getAttachState();
 	}
 
-	public get documentSchema() {
+	/**
+	 * Current session schema - defines what options are on & off.
+	 * It's overlap of document schema (controlled by summary & ops) and options controlling this session.
+	 * For example, document schema might have compression ON, but feature gates / runtime options turn it Off.
+	 * In such case it will be off in session schema (i.e. this session should not use compression), but this client
+	 * has to deal with compressed ops as other clients might send them.
+	 * And in reverse, session schema can have compression Off, but feature gates / runtime options want it On.
+	 * In such case it will be off in session schema, however this client will propose change to schema, and once / if
+	 * this op rountrips, compression will be On. Client can't send compressed ops until it's change in schema.
+	 */
+	public get sessionSchema() {
 		return this.documentsSchemaController.sessionSchema.runtime;
 	}
 
@@ -1109,7 +1138,7 @@ export class ContainerRuntime
 	private readonly skipSavedCompressorOps: boolean;
 
 	public get idCompressorMode() {
-		return this.documentSchema.idCompressorMode;
+		return this.sessionSchema.idCompressorMode;
 	}
 	/**
 	 * See IContainerRuntimeBase.idCompressor() for details.
@@ -1400,7 +1429,7 @@ export class ContainerRuntime
 		// If it's not in the list, then we will need to either use no compression, or fallback to some other (supported by format)
 		// compression.
 		const compressionOptions: ICompressionRuntimeOptions = {
-			minimumBatchSizeInBytes: this.documentSchema.compressionLz4
+			minimumBatchSizeInBytes: this.sessionSchema.compressionLz4
 				? runtimeOptions.compressionOptions.minimumBatchSizeInBytes
 				: Number.POSITIVE_INFINITY,
 			compressionAlgorithm: CompressionAlgorithms.lz4,
@@ -2601,7 +2630,7 @@ export class ContainerRuntime
 			// 2) this.resetReconnectCount() below
 			assert(
 				message.type !== ContainerMessageType.ChunkedOp,
-				"we should never get here with chunked ops",
+				0x93b /* we should never get here with chunked ops */,
 			);
 
 			let localOpMetadata: unknown;
@@ -2675,6 +2704,10 @@ export class ContainerRuntime
 					// Some other client turned on the id compressor. If we have not turned it on,
 					// put it in a pending queue and delay finalization.
 					if (this._idCompressor === undefined) {
+						assert(
+							this.idCompressorMode !== undefined,
+							0x93c /* id compressor should be enabled */,
+						);
 						this.pendingIdCompressorOps.push(range);
 					} else {
 						this._idCompressor.finalizeCreationRange(range);
@@ -2687,7 +2720,7 @@ export class ContainerRuntime
 			case ContainerMessageType.ChunkedOp:
 				// From observability POV, we should not exppse the rest of the system (including "op" events on object) to these messages.
 				// Also resetReconnectCount() would be wrong - see comment that was there before this change was made.
-				assert(false, "should not even get here");
+				assert(false, 0x93d /* should not even get here */);
 			case ContainerMessageType.Rejoin:
 				break;
 			case ContainerMessageType.DocumentSchemaChange:
@@ -2827,9 +2860,9 @@ export class ContainerRuntime
 		let checkpoint: IBatchCheckpoint | undefined;
 		let result: T;
 		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
-			// Note: we are not touching this.pendingAttachBatch here, for two reasons:
-			// 1. It would not help, as we flush attach ops as they become available.
-			// 2. There is no way to undo process of data store creation.
+			// Note: we are not touching any batches other than mainBatch here, for two reasons:
+			// 1. It would not help, as other batches are flushed independently from main batch.
+			// 2. There is no way to undo process of data store creation, blob creation, ID compressor ops, or other things tracked by other batches.
 			checkpoint = this.outbox.checkpoint().mainBatch;
 		}
 		try {
@@ -3103,7 +3136,7 @@ export class ContainerRuntime
 		if (idRange !== undefined) {
 			assert(
 				idRange.ids === undefined || idRange.ids.firstGenCount === 1,
-				"No other ranges should be taken while container is detached.",
+				0x93e /* No other ranges should be taken while container is detached. */,
 			);
 			this._idCompressor?.finalizeCreationRange(idRange);
 		}
@@ -3897,7 +3930,7 @@ export class ContainerRuntime
 		assert(
 			metadata === undefined ||
 				containerRuntimeMessage.type === ContainerMessageType.BlobAttach,
-			"metadata",
+			0x93f /* metadata */,
 		);
 
 		const serializedContent = JSON.stringify(containerRuntimeMessage);
@@ -3934,6 +3967,14 @@ export class ContainerRuntime
 				// on this callback to do actual sending.
 				const contents = this.documentsSchemaController.maybeSendSchemaMessage();
 				if (contents) {
+					this.logger.sendTelemetryEvent({
+						eventName: "RuntimeDocSchemaChange",
+						refSeq: contents.refSeq,
+						version: contents.version,
+						newRuntimeSchema: JSON.stringify(contents.runtime),
+						sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
+						oldRuntimeSchema: JSON.stringify(this.metadata?.documentSchema?.runtime),
+					});
 					const msg: ContainerRuntimeDocumentSchemaMessage = {
 						type: ContainerMessageType.DocumentSchemaChange,
 						contents,
@@ -3944,33 +3985,7 @@ export class ContainerRuntime
 					});
 				}
 
-				// If this is attach message for new data store, and we are in a batch, send this op out of order
-				// Is it safe:
-				//    Yes, this should be safe reordering. Newly created data stores are not visible through API surface.
-				//    They become visible only when aliased, or handle to some sub-element of newly created datastore
-				//    is stored in some DDS, i.e. only after some other op.
-				// Why:
-				//    Attach ops are large, and expensive to process. Plus there are scenarios where a lot of new data
-				//    stores are created, causing issues like relay service throttling (too many ops) and catastrophic
-				//    failure (batch is too large). Pushing them earlier and outside of main batch should alleviate
-				//    these issues.
-				// Cons:
-				//    1. With large batches, relay service may throttle clients. Clients may disconnect while throttled.
-				//    This change creates new possibility of a lot of newly created data stores never being referenced
-				//    because client died before it had a change to submit the rest of the ops. This will create more
-				//    garbage that needs to be collected leveraging GC (Garbage Collection) feature.
-				//    2. Sending ops out of order means they are excluded from rollback functionality. This is not an issue
-				//    today as rollback can't undo creation of data store. To some extent not sending them is a bigger
-				//    issue than sending.
-				// Please note that this does not change file format, so it can be disabled in the future if this
-				// optimization no longer makes sense (for example, batch compression may make it less appealing).
-				if (
-					this.currentlyBatching() &&
-					type === ContainerMessageType.Attach &&
-					this.disableAttachReorder !== true
-				) {
-					this.outbox.submitAttach(message);
-				} else if (type === ContainerMessageType.BlobAttach) {
+				if (type === ContainerMessageType.BlobAttach) {
 					// BlobAttach ops must have their metadata visible and cannot be grouped (see opGroupingManager.ts)
 					this.outbox.submitBlobAttach(message);
 				} else {
@@ -4438,6 +4453,6 @@ export class ContainerRuntime
 	}
 
 	private get groupedBatchingEnabled(): boolean {
-		return this.documentSchema.opGroupingEnabled === true;
+		return this.sessionSchema.opGroupingEnabled === true;
 	}
 }

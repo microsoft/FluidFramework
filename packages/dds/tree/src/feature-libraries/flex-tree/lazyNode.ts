@@ -88,7 +88,7 @@ export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): Laz
 	if (cached !== undefined) {
 		context.forest.anchors.forget(anchor);
 		assert(cached.context === context, 0x782 /* contexts must match */);
-		assert(cached instanceof LazyTreeNode, "Expected LazyTreeNode");
+		assert(cached instanceof LazyTreeNode, 0x92c /* Expected LazyTreeNode */);
 		return cached as LazyTreeNode;
 	}
 	const schema = context.schema.nodeSchema.get(cursor.type) ?? fail("missing schema");
@@ -100,7 +100,7 @@ export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): Laz
 
 function cleanupTree(anchor: AnchorNode): void {
 	const cached = anchor.slots.get(flexTreeSlot) ?? fail("tree should only be cleaned up once");
-	assert(cached instanceof LazyTreeNode, "Expected LazyTreeNode");
+	assert(cached instanceof LazyTreeNode, 0x92d /* Expected LazyTreeNode */);
 	cached[disposeSymbol]();
 }
 
@@ -205,9 +205,7 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 	}
 
 	public getBoxed(key: FieldKey): FlexTreeField {
-		return inCursorField(this[cursorSymbol], brand(key), (cursor) =>
-			makeField(this.context, this.schema.getFieldSchema(key), cursor),
-		);
+		return getBoxedField(this, key, this.schema.getFieldSchema(key));
 	}
 
 	public boxedIterator(): IterableIterator<FlexTreeField> {
@@ -520,7 +518,7 @@ const cachedStructClasses = new WeakMap<
 	) => LazyObjectNode<FlexObjectNodeSchema>
 >();
 
-export function getBoxedField(
+function getBoxedField(
 	objectNode: LazyTreeNode,
 	key: FieldKey,
 	fieldSchema: FlexFieldSchema,

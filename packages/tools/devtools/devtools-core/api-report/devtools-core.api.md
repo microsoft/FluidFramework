@@ -89,7 +89,7 @@ export namespace ContainerDevtoolsFeatures {
     }
 }
 
-// @beta
+// @alpha
 export interface ContainerDevtoolsProps extends HasContainerKey {
     container: IContainer;
     containerData?: Record<string, IFluidLoadable>;
@@ -246,7 +246,7 @@ export const EditType: {
 // @internal
 export type EditType = (typeof EditType)[keyof typeof EditType];
 
-// @beta
+// @alpha
 export interface FluidDevtoolsProps {
     initialContainers?: ContainerDevtoolsProps[];
     logger?: IDevtoolsLogger;
@@ -387,7 +387,7 @@ export interface IDevtoolsMessage<TData = unknown> {
     type: string;
 }
 
-// @beta
+// @alpha
 export interface IFluidDevtools extends IDisposable {
     closeContainerDevtools(containerKey: ContainerKey): void;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
@@ -408,7 +408,7 @@ export interface InboundHandlers {
     [type: string]: (message: ISourcedDevtoolsMessage) => Promise<boolean>;
 }
 
-// @beta
+// @alpha
 export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools;
 
 // @internal
@@ -532,7 +532,7 @@ export interface VisualNodeBase {
     };
     metadata?: Record<string, Primitive>;
     nodeKind: VisualNodeKind | string;
-    tooltipContents?: string | Record<string, string>;
+    tooltipContents?: string | Record<string, VisualChildNode>;
     typeMetadata?: string;
 }
 

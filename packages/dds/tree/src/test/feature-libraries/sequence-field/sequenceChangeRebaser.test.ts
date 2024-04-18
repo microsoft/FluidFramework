@@ -74,7 +74,7 @@ function generateAdjacentCells(maxId: number): SF.IdRange[] {
 	return [{ id: brand(0), count: maxId + 1 }];
 }
 
-const hasAdjacentCells = (m: SF.Mark<unknown>): boolean => m.cellId?.adjacentCells !== undefined;
+const hasAdjacentCells = (m: SF.Mark): boolean => m.cellId?.adjacentCells !== undefined;
 function withAdjacentTombstones(marks: readonly SF.Mark[]): SF.Mark[] {
 	const output = [...marks];
 	let markIdx = marks.findIndex(hasAdjacentCells);
@@ -578,7 +578,7 @@ const generateChildStates: ChildStateGenerator<TestState, WrappedChange> = funct
 	// if (state.mostRecentEdit !== undefined) {
 	// 	assert(state.parent?.content !== undefined, "Must have parent state to undo");
 	// 	const undoIntention = mintIntention();
-	// 	const invertedEdit = invert(state.mostRecentEdit.changeset);
+	// 	const invertedEdit = invertDeep(state.mostRecentEdit.changeset);
 	// 	yield {
 	// 		content: state.parent.content,
 	// 		mostRecentEdit: {

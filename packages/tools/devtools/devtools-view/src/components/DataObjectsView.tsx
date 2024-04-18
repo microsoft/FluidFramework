@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Tree as FluentTree } from "@fluentui/react-components/unstable";
+import { Tree as FluentTree } from "@fluentui/react-components";
 import {
 	GetRootDataVisualizations,
 	type HasContainerKey,

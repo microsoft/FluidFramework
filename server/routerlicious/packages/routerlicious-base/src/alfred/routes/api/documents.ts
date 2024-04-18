@@ -122,6 +122,8 @@ export function create(
 		revokedTokenChecker,
 	};
 
+	const isHttpUsageCountingEnabled: boolean = config.get("usage:httpUsageCountingEnabled");
+
 	router.get(
 		"/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
@@ -158,6 +160,7 @@ export function create(
 			tenantThrottlers.get(Constants.createDocThrottleIdPrefix),
 			winston,
 			createDocTenantThrottleOptions,
+			isHttpUsageCountingEnabled,
 		),
 		verifyStorageToken(tenantManager, config, {
 			requireDocumentId: false,

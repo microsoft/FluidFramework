@@ -7,12 +7,14 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import { Multiplicity, rootFieldKey } from "../core/index.js";
 import {
+	FieldKinds,
 	LeafNodeSchema,
+	StableNodeKey,
 	TreeStatus,
 	isTreeValue,
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
-import { fail } from "../util/index.js";
+import { fail, extractFromOpaque } from "../util/index.js";
 
 import { getOrCreateNodeProxy } from "./proxies.js";
 import { getFlexNode, tryGetFlexNode } from "./proxyBinding.js";
@@ -91,6 +93,12 @@ export interface TreeNodeApi {
 	 * Returns the {@link TreeStatus} of the given node.
 	 */
 	readonly status: (node: TreeNode) => TreeStatus;
+
+	/**
+	 * If the given node has an identifier specified by a field of kind "identifier" then this returns the compressed form of that identifier.
+	 * Otherwise returns undefined.
+	 */
+	shortId(node: TreeNode): number | undefined;
 }
 
 /**
@@ -180,6 +188,19 @@ export const treeNodeApi: TreeNodeApi = {
 			unknown,
 			T
 		>;
+	},
+	shortId(node: TreeNode): number | undefined {
+		const flexNode = getFlexNode(node);
+		for (const field of flexNode.boxedIterator()) {
+			if (field.schema.kind === FieldKinds.identifier) {
+				const identifier = field.boxedAt(0);
+				assert(identifier !== undefined, 0x927 /* The identifier must exist */);
+
+				return extractFromOpaque(
+					identifier.context.nodeKeys.localize(identifier.value as StableNodeKey),
+				);
+			}
+		}
 	},
 };
 
