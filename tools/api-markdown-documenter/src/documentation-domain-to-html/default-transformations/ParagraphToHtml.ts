@@ -2,6 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import type { Element as HastElement } from "hast";
 import type { ParagraphNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";

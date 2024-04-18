@@ -2,6 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import { h } from "hastscript";
 import { CodeSpanNode, PlainTextNode } from "../../documentation-domain/index.js";
 import { assertTransformation } from "./Utilities.js";

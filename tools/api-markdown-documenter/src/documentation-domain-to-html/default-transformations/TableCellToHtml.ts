@@ -2,6 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import type { Element as HastElement } from "hast";
 import { TableCellKind, type TableCellNode } from "../../documentation-domain/index.js";
 import { transformChildrenUnderTag } from "../Utilities.js";
