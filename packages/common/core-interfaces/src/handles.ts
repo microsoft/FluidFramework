@@ -54,7 +54,6 @@ export interface IFluidHandleContext extends IProvideFluidHandleContext {
  * it can't have its own docs or different tags.
  */
 export const IFluidHandle = "IFluidHandle";
-export const IFluidHandle = "IFluidHandle";
 
 /**
  * @deprecated {@link IFluidHandleInternal} and {@link IFluidHandleInternal} should be identified should be identified using the {@link fluidHandleSymbol} symbol.

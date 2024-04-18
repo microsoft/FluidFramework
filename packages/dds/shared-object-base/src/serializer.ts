@@ -10,7 +10,6 @@ import {
 	IFluidHandle,
 	IFluidHandleContext,
 	type IFluidHandleInternal,
-	isFluidHandle,
 	toFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import {

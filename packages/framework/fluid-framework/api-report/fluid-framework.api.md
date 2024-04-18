@@ -938,7 +938,7 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
 export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind> : TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypesUnsafe<TSchema> : unknown;
 
 // @public
-export type TreeLeafValue = number | string | boolean | IFluidHandle_2 | null;
+export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
 
 // @public
 export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>, TreeNode {
