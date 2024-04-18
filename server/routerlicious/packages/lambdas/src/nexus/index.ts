@@ -77,7 +77,7 @@ function parseRelayUserAgent(relayUserAgent: string | undefined): Record<string,
 		.map((keyValuePair) => keyValuePair.split(":"));
 	for (const [key, value] of propertyKeyValuePairs) {
 		// Trim key and value so that a user agent like "prop1:val1; prop2:val2" is parsed correctly.
-		map[key.trim()] = value.trim();
+		if (key && value) map[key.trim()] = value.trim();
 	}
 	return map;
 }
