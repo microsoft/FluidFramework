@@ -271,29 +271,29 @@ Because of this, we want to be able to GC _some_ of the detached trees.
 It's helpful to reiterate the cases for which detached tree may be relevant
 (see [above](#when-are-detached-trees-relevant) for details on each one):
 
--   a) Reverting a commit
--   b) Aborting a transaction
--   c) Rebasing a local branch
--   d) Applying a rebased commit (that was concurrent to the tree's detach)
+-   (a) Reverting a commit
+-   (b) Aborting a transaction
+-   (c) Rebasing a local branch
+-   (d) Applying a rebased commit (that was concurrent to the tree's detach)
 
 This last case can be further decomposed as follows:
 
--   d1) Applying a rebased commit from a local branch where that commit was concurrent to the tree's detach
--   d2) Applying a rebased commit from a peer where the commit's reference sequence number is lower than the sequence number of the commit that detached the tree
--   d3) Applying a rebased commit from a peer where the commit's reference sequence number is greater than or equal to the sequence number of the commit that detached the tree
+-   (d1) Applying a rebased commit from a local branch where that commit was concurrent to the tree's detach
+-   (d2) Applying a rebased commit from a peer where the commit's reference sequence number is lower than the sequence number of the commit that detached the tree
+-   (d3) Applying a rebased commit from a peer where the commit's reference sequence number is greater than or equal to the sequence number of the commit that detached the tree
 
 For each such case, we can infer how long detached trees may need to be kept (i.e., not GC-ed)
 if we wanted to ensure their availability for that use case.
 
--   a) So long as the host application holds a `Revertible` for an edit that detached or edited the tree
--   b) So long as the transaction that detached or edited the tree is open
--   c) So long as the edits that detached or edited the tree remain on the branch
--   d1) Same as c)
--   d2) So long the minimum reference sequence number is less than the sequence number of the edits that detached or edited the tree
--   d3) Forever
+-   (a) As long as the host application holds a `Revertible` for an edit that detached or edited the detached tree
+-   (b) As long as the transaction that detached or edited the detached tree is open
+-   (c) As long as the edits that detached or edited the detached tree remain on the branch
+-   (d1) As long as the edit that detached the tree remain on the branch
+-   (d2) As long as the minimum reference sequence number is less than the sequence number of the edit that detached the tree
+-   (d3) Forever
 
 This last case is important:
-for any detached tree, it's always possible, at some point in the future, for a peer to send a commit that corresponds to case d3.
+for any detached tree, it's always possible, at some point in the future, for a peer to send a commit that corresponds to case (d3).
 This makes it clear that, if we want to GC _any_ detached trees,
 we should at least GC those that would only be relevant to this last case.
 We can ensure a client can recover such a GC-ed tree when relevant by forcing peers to include in the commits they send out a copy of the relevant detached trees.
@@ -301,15 +301,15 @@ This is covered in [Detached Tree Refreshers](#detached-tree-refreshers).
 
 This still leaves a lot of options with respects to the other cases (2 options for 5 cases = 32 possible policies).
 To help narrow this down, it's helpful to consider what we would do for cases a through d2 if we were to need a detached three that had been GC-ed.
-In some of those cases (a, b, c) we would actually have no way of recovering the tree, because it may not be known to other peers or be recoverable from a snapshot.
-In the case d2, the peer couldn't include a copy of the relevant detached tree because it didn't know about it at the time it sent the commit for sequencing and broadcast.
+In some of those cases (a, b, c, d1) we would actually have no way of recovering the tree, because it may not be known to other peers or be recoverable from a snapshot.
+In the case (d2), the peer couldn't include a copy of the relevant detached tree because it didn't know about it at the time it sent the commit for sequencing and broadcast.
 This doesn't mean the detached tree is unrecoverable,
 but recovering it would entail re-fetching the last snapshot and replaying prior edits over it,
 which would be slow, introduce an async boundary in the processing of peer changes,
 and add load to the service that hosts summaries.
-This leads us to adopt the following policy: do not GC trees that fall under these other cases.
+This leads us to adopt the following policy: do not GC trees that fall under these other (i.e., non-(d3)) cases.
 
-This might seem like a complex policy at first because cases a through d2 entail different detached tree lifetimes.
+This might seem like a complex policy at first because cases (a) through (d2) entail different detached tree lifetimes.
 Fortunately, we only need to worry about satisfying the union of these cases,
 and that union can be satisfied by abiding to the following simple rules for any given detached tree:
 
@@ -330,5 +330,94 @@ To see why that is, it's helpful to be mindful of the following facts:
 Taken together,
 these facts mean that we have mapped the challenge of knowing whether a detached tree may be relevant for the cases we care about,
 to the the much simpler challenge of knowing whether the last commit to which it was relevant has been trimmed from the trunk.
+This approach means that we will sometimes delay the garbage collection of a detached tree longer that strictly necessary.
+This is likely to be tolerable, but further effort could be made to carve out a stricter policy if we felt the memory gains outweighed the additional complexity.
 
 #### Detached Tree Refreshers
+
+In the context of detached trees,
+a refresher is a copy of a detached tree that is included by a peer on a commit as part of its submission (or resubmission)
+to the sequencing service.
+Note that this excludes commits that are internal to the peer, i.e., commits on its branches.
+This means the inclusion of refresher can be confined to the logic that (re)submits commits to the sequencing service.
+(See `SharedTeeCore`'s usage of its `CommitEnricher`.)
+
+##### Including Refreshers
+
+Because of the GC policy described above,
+such refreshers are needed for each detached tree whose contents are needed to apply the commit,
+and whose detach operation was known to the peer\*.
+We make this happen by adding refreshers to commits as needed immediately before they are submitted to the sequencing service.
+Note that commits sometimes need to go through a resubmission phase,
+so we need to ensure that the set of refreshers on such commits is updated before these commits are is resubmitted.
+(See the logic in `SharedTeeCore` and `DefaultCommitEnricher`).
+
+\* Strictly speaking,
+a client could omit the refresher for trees for which both of the following are true:
+
+-   That client has already sent a commit that would lead its peers to have a refresher in memory of for that tree.
+    This is true of commits that detach the tree or edit the detached tree.
+-   That client has not yet received that commit back from the sequencing service.
+
+![Diagram showing a scenario where a refresher need not be sent](../.attachments/SuperfluousRefresher.png)
+This diagram shows two peers collaborating on a tree.
+Client 1 removes the tree.
+Before client 1 receives that edit back from the service,
+client 1 restores the detached tree by undoing their first edit.
+Client 1 does not technically need to include a refresher with the undo
+because all peers are guaranteed to still have that detached tree in memory by the time they apply the undo.
+This is because, by virtue of our GC policy,
+they will keep the detached tree so long as the removal edit is not out of the collaboration window
+(represented by the light blue box).
+
+##### Applying Refreshers
+
+When a commit with refreshers is applied,
+we need to check the following for each refresher:
+
+1. Is the detached tree that the refresher would have us re-create in memory actually needed to apply the commit?
+2. Does such a detached tree already exist in memory?
+
+The answer to (1) can be "no" because the detached tree of interest may have been concurrently restored
+(i.e., re-attached to the document tree)
+since the commit was initially sent.
+When that's the case, the refresher must\* be ignored.
+
+![Diagram showing a scenario where a refresher is not needed](../.attachments/RefresherNotNeeded.png)
+This diagram shows two peers collaborating on a tree.
+Client 2 edits the tree.
+Some time later, client 1 removes the tree edited by client 2.
+Some time later, client 1 reverts the removal, thereby restoring the detached tree.
+This revert must carry a refresher because it restores a detached tree.
+Concurrently to that, client 2 reverts their edit.
+This revert must carry a refresher because it edits a detached tree.
+The restoring of the detached tree is sequenced first.
+By the time the revert sent by client 2 is applied by client 1,
+the tree is targets is no longer detached, so the refresher can be ignored.
+
+\* Aside from the time and memory overhead of needlessly creating a and retaining the detached tree,
+ignoring such a refresher is a requirement because creating the detached would claim a `ChangeAtomId` and `DetachedNodeId`
+that may need to be used later if the now attached tree is detached again.
+In such a scenario, having an already existing detached tree with the same `ChangeAtomId`/`DetachedNodeId` would violate the 1:1 relationship between those IDs and trees,
+which could lead to bugs.
+
+The answer to (2) can be "yes" because the local client may not have GC-ed this tree yet.
+For example, the local client may have a branch where that tree is being edited.
+When that's the case, the refresher must\* be ignored.
+
+\* Ignoring this refresher is a requirement for the same reasons as in (1):
+we don't want to create a separate copy of a tree we already have.
+It's also important that we don't overwrite the detached tree we already have with the one from the refresher,
+because the refresher may be stale.
+To see why consider the following scenario:
+
+![Diagram showing a scenario where a refresher is stale](../.attachments/StaleRefresher.png)
+This diagram shows two peers collaborating on a tree.
+Client 1 removes the tree.
+Concurrently to that, client 2 edit that same tree.
+Concurrently to that, client 1 edits the detached tree.
+This edit must carry a refresher because it touches a detached tree.
+This edit is created on client 1 before client 1 receives client 2's edit to the detached tree.
+This means that the refresher that client 1 had included no longer represents the current state of the detached tree.
+If client 2 still has a copy of the detached tree in memory,
+it must take care not to overwrite it with the copy from the refresher.
