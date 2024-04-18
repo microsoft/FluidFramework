@@ -72,6 +72,11 @@ export async function deliCreate(
 	core.DefaultServiceConfiguration.deli.enableEphemeralContainerSummaryCleanup =
 		enableEphemeralContainerSummaryCleanup;
 
+	const ephemeralContainerSoftDeleteTimeInMs =
+		(config.get("deli:ephemeralContainerSoftDeleteTimeInMs") as number | undefined) ?? -1; // -1 means not soft deletion but hard deletion directly
+	core.DefaultServiceConfiguration.deli.ephemeralContainerSoftDeleteTimeInMs =
+		ephemeralContainerSoftDeleteTimeInMs;
+
 	let globalDb: core.IDb;
 	if (globalDbEnabled) {
 		const globalDbReconnect = (config.get("mongo:globalDbReconnect") as boolean) ?? false;

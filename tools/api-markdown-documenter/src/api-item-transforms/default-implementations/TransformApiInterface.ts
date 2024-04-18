@@ -18,6 +18,7 @@ import type { SectionNode } from "../../documentation-domain/index.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createChildDetailsSection, createMemberTables } from "../helpers/index.js";
 import { filterChildMembers } from "../ApiItemTransformUtilities.js";
+import { getScopedMemberNameForDiagnostics } from "../Utilities.js";
 
 /**
  * Default documentation transform for `Interface` items.
@@ -91,7 +92,11 @@ export function transformApiInterface(
 					break;
 				}
 				default: {
-					config.logger?.error(`Unsupported Interface child kind: "${child.kind}"`);
+					config.logger?.error(
+						`Unsupported child kind under Interface "${getScopedMemberNameForDiagnostics(
+							apiInterface,
+						)}": "${child.kind}"`,
+					);
 					break;
 				}
 			}

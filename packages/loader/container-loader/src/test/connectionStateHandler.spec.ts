@@ -15,8 +15,10 @@ import {
 	ISequencedClient,
 	ITokenClaims,
 } from "@fluidframework/protocol-definitions";
-import { TelemetryEventCategory } from "@fluidframework/telemetry-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	TelemetryEventCategory,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 
 import { Audience } from "../audience.js";
