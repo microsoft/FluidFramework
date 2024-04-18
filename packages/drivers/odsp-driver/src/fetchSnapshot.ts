@@ -220,8 +220,8 @@ async function redeemSharingLink(
 	storageTokenFetcher: InstrumentedStorageTokenFetcher,
 	logger: ITelemetryLoggerExt,
 	forceAccessTokenViaAuthorizationHeader: boolean,
-): Promise<IOdspResponse<unknown>> {
-	return PerformanceEvent.timedExecAsync(
+): Promise<void> {
+	await PerformanceEvent.timedExecAsync(
 		logger,
 		{
 			eventName: "RedeemShareLink",
@@ -239,14 +239,37 @@ async function redeemSharingLink(
 				const encodedShareUrl = getEncodedShareUrl(
 					odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
 				);
-				const redeemUrl = `${odspResolvedUrl.siteUrl}/_api/v2.0/shares/${encodedShareUrl}`;
-				const { url, headers } = getUrlAndHeadersWithAuth(
-					redeemUrl,
-					storageToken,
-					forceAccessTokenViaAuthorizationHeader,
-				);
-				headers.prefer = "redeemSharingLink";
-				return fetchAndParseAsJSONHelper(url, { headers });
+				let redeemUrl: string | undefined;
+				// There is an issue where if we use the siteUrl in /shares, then the allowed length of url is just a few hundred characters
+				// and we fail to do the redeem. But if we use the tenant domain in the url, then the allowed length becomes 2048. So, first
+				// construct the url for /shares using tenant domain but to be on safer side, fallback to what we were using before.
+				try {
+					redeemUrl = `${
+						new URL(odspResolvedUrl.siteUrl).origin
+					}/_api/v2.0/shares/${encodedShareUrl}`;
+					const { url, headers } = getUrlAndHeadersWithAuth(
+						redeemUrl,
+						storageToken,
+						forceAccessTokenViaAuthorizationHeader,
+					);
+					headers.prefer = "redeemSharingLink";
+					await fetchAndParseAsJSONHelper(url, { headers });
+				} catch (error) {
+					logger.sendTelemetryEvent(
+						{ eventName: "ShareLinkRedeemFailedWithDomain", length: redeemUrl?.length },
+						error,
+					);
+					const redeemUrlWithSiteUrl = `${odspResolvedUrl.siteUrl}/_api/v2.0/shares/${encodedShareUrl}`;
+					const urlHeadersWithSiteUrl = getUrlAndHeadersWithAuth(
+						redeemUrlWithSiteUrl,
+						storageToken,
+						forceAccessTokenViaAuthorizationHeader,
+					);
+					urlHeadersWithSiteUrl.headers.prefer = "redeemSharingLink";
+					await fetchAndParseAsJSONHelper(urlHeadersWithSiteUrl.url, {
+						headers: urlHeadersWithSiteUrl.headers,
+					});
+				}
 			}),
 	);
 }
