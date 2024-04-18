@@ -14,7 +14,7 @@ import ajvModuleOrClass from "ajv";
 import formats from "ajv-formats";
 
 // The first case here covers the esm mode, and the second the cjs one.
-// Getting correct typing for the cjs case without breaking esm compilation provided difficult, so that case uses `any`
+// Getting correct typing for the cjs case without breaking esm compilation proved to be difficult, so that case uses `any`
 const Ajv =
 	(ajvModuleOrClass as typeof ajvModuleOrClass & { default: unknown }).default ??
 	(ajvModuleOrClass as any);
