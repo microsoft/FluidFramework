@@ -38,9 +38,11 @@ export function transformApiEnum(
 				}
 				default: {
 					config.logger?.error(
-						`Unsupported child kind under Enum "${getScopedMemberNameForDiagnostics(
+						`Child item "${
+							child.displayName
+						}" Enum "${getScopedMemberNameForDiagnostics(
 							apiEnum,
-						)}": "${child.kind}"`,
+						)}" is of unsupported API item kind: "${child.kind}"`,
 					);
 					break;
 				}

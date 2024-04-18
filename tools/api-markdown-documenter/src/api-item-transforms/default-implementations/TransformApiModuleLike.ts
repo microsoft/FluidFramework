@@ -108,9 +108,11 @@ export function transformApiModuleLike(
 				}
 				default: {
 					config.logger?.error(
-						`Unsupported child kind under ${
+						`Child item "${child.displayName}" ${
 							apiItem.kind
-						} "${getScopedMemberNameForDiagnostics(apiItem)}": "${child.kind}"`,
+						} "${getScopedMemberNameForDiagnostics(
+							apiItem,
+						)}" is of unsupported API item kind: "${child.kind}"`,
 					);
 					break;
 				}

@@ -100,9 +100,11 @@ export function transformApiClass(
 				}
 				default: {
 					config.logger?.error(
-						`Unsupported child kind under Class "${getScopedMemberNameForDiagnostics(
+						`Child item "${
+							child.displayName
+						}" Class "${getScopedMemberNameForDiagnostics(
 							apiClass,
-						)}": "${child.kind}"`,
+						)}" is of unsupported API item kind: "${child.kind}"`,
 					);
 					break;
 				}
