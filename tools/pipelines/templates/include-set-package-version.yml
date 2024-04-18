@@ -182,6 +182,19 @@ steps:
           az storage blob upload -f "$file" -c 'manifest-files' -n "$(basename "$file")" --account-name ${{ parameters.STORAGE_ACCOUNT }} --account-key ${{ parameters.STORAGE_KEY }} --overwrite true --verbose
       done
 
+- task: Bash@3
+  displayName: Delete manifest files from root
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.buildDirectory }}
+    script: |
+      # Delete files ending with caret.json, simple.json, tilde.json, and full.json
+      for file in *.caret.json *.simple.json *.tilde.json *.full.json; do
+        if [ -e "$file" ]; then
+            rm -f "$file"
+        fi
+      done
+
 # This task is a last-minute verification that no Fluid internal versions show up with caret dependencies. This is to
 # help find and prevent bugs in the version bumping tools.
 - task: Bash@3
