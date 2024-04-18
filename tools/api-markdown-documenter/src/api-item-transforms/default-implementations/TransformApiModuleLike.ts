@@ -20,6 +20,7 @@ import type { ApiModuleLike } from "../../utilities/index.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createChildDetailsSection, createMemberTables } from "../helpers/index.js";
 import { filterItems } from "../ApiItemTransformUtilities.js";
+import { getScopedMemberNameForDiagnostics } from "../Utilities.js";
 
 /**
  * Default documentation transform for module-like API items (packages, namespaces).
@@ -107,7 +108,9 @@ export function transformApiModuleLike(
 				}
 				default: {
 					config.logger?.error(
-						`Unsupported child kind under ${apiItem.kind} "${apiItem.displayName}": "${child.kind}"`,
+						`Unsupported child kind under ${
+							apiItem.kind
+						} "${getScopedMemberNameForDiagnostics(apiItem)}": "${child.kind}"`,
 					);
 					break;
 				}
