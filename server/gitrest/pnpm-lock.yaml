@@ -156,6 +156,7 @@ importers:
       '@types/mocha': ^10.0.0
       '@types/nconf': ^0.10.0
       '@types/node': ^18.17.1
+      '@types/pako': ~2.0.3
       '@types/rimraf': ^3.0.2
       '@types/sinon': ^17.0.2
       '@types/supertest': ^2.0.7
@@ -181,6 +182,7 @@ importers:
       mocha: ^10.1.0
       nconf: ^0.11.4
       object-sizeof: ^1.6.3
+      pako: ~2.1.0
       prettier: ~3.0.3
       rimraf: ^3.0.2
       sillyname: ^0.1.0
@@ -214,6 +216,7 @@ importers:
       memfs: 3.4.13
       nconf: 0.11.4
       object-sizeof: 1.6.3
+      pako: 2.1.0
       prettier: 3.0.3
       split: 1.0.1
       uuid: 3.4.0
@@ -231,6 +234,7 @@ importers:
       '@types/mocha': 10.0.1
       '@types/nconf': 0.10.3
       '@types/node': 18.17.7
+      '@types/pako': 2.0.3
       '@types/rimraf': 3.0.2
       '@types/sinon': 17.0.2
       '@types/supertest': 2.0.12
@@ -2524,6 +2528,10 @@ packages:
 
   /@types/normalize-package-data/2.4.1:
     resolution: {integrity: sha512-Gj7cI7z+98M282Tqmp2K5EIsoouUEzbBJhQQzDE3jSIRk6r9gsz0oUokqIUR4u1R3dMHo0pDHM7sNOHyhulypw==}
+    dev: true
+
+  /@types/pako/2.0.3:
+    resolution: {integrity: sha512-bq0hMV9opAcrmE0Byyo0fY3Ew4tgOevJmQ9grUhpXQhYfyLJ1Kqg3P33JT5fdbT2AjeAjR51zqqVjAL/HMkx7Q==}
     dev: true
 
   /@types/qs/6.9.7:
@@ -9021,7 +9029,6 @@ packages:
 
   /pako/2.1.0:
     resolution: {integrity: sha512-w+eufiZ1WuJYgPXbV/PO3NCMEc3xqylkKHzp8bxp1uW4qaSNQUkwmLLEc3kKsfz8lpV1F8Ht3U1Cm+9Srog2ug==}
-    dev: true
 
   /param-case/3.0.4:
     resolution: {integrity: sha512-RXlj7zCYokReqWpOPH9oYivUzLYZ5vAPIfEmCTNViosC78F8F0H9y7T7gG2M39ymgutxF5gcFEsyZQSph9Bp3A==}
