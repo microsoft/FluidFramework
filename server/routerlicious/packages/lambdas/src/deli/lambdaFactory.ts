@@ -254,19 +254,22 @@ export class DeliLambdaFactory
 						if (
 							this.serviceConfiguration.deli.ephemeralContainerSoftDeleteTimeInMs >= 0
 						) {
-							const scheduledDeletionTime = new Date(
+							const scheduledDeletionTimeStr = new Date(
 								Date.now() +
 									this.serviceConfiguration.deli
 										.ephemeralContainerSoftDeleteTimeInMs,
-							);
+							).toJSON();
 							await this.documentRepository.updateOne(
 								deletionFilter,
-								{ scheduledDeletionTime: scheduledDeletionTime.toJSON() },
+								{ scheduledDeletionTime: scheduledDeletionTimeStr },
 								null,
 							);
 							Lumberjack.info(
 								`Successfully scheduled to clean up ephemeral container`,
-								baseLumberjackProperties,
+								{
+									...baseLumberjackProperties,
+									scheduledDeletionTime: scheduledDeletionTimeStr,
+								},
 							);
 						} else {
 							await this.documentRepository.deleteOne(deletionFilter);
