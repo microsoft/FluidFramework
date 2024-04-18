@@ -4,24 +4,26 @@
  */
 
 import { strict as assert } from "assert";
-import { stringToBuffer } from "@fluid-internal/client-utils";
-import { IContainer } from "@fluidframework/container-definitions";
 
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+// eslint-disable-next-line import/no-internal-modules
+import { BlobManager } from "@fluidframework/container-runtime/internal/test/blobManager";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
-import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
-// eslint-disable-next-line import/no-internal-modules
-import { BlobManager } from "@fluidframework/container-runtime/test/blobManager";
+} from "@fluidframework/test-utils/internal";
+
 import {
+	MockDetachedBlobStorage,
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
-	MockDetachedBlobStorage,
 } from "../mockDetachedBlobStorage.js";
+
 import {
 	getGCStateFromSummary,
 	waitForContainerWriteModeConnectionWrite,
@@ -30,7 +32,7 @@ import {
 /**
  * Validates that unreferenced blobs are marked as unreferenced and deleted correctly.
  */
-describeCompat("Garbage collection of blobs", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("Garbage collection of blobs", "NoCompat", (getTestObjectProvider) => {
 	// If deleteUnreferencedContent is true, GC is run in test mode where content that is not referenced is
 	// deleted after each GC run.
 	const tests = (deleteUnreferencedContent: boolean = false) => {

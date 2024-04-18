@@ -5,31 +5,33 @@
 
 import { strict as assert } from "assert";
 
-import { ContainerRuntime, IGCRuntimeOptions } from "@fluidframework/container-runtime";
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { ContainerRuntime, IGCRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { delay } from "@fluidframework/core-utils/internal";
 import {
+	ITestContainerConfig,
 	ITestObjectProvider,
 	createSummarizer,
+	createTestConfigProvider,
 	summarizeNow,
 	waitForContainerConnection,
-	ITestContainerConfig,
-	createTestConfigProvider,
-} from "@fluidframework/test-utils";
-import { describeCompat, ITestDataObject, itExpects } from "@fluid-private/test-version-utils";
-import { stringToBuffer } from "@fluid-internal/client-utils";
-import { delay } from "@fluidframework/core-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+} from "@fluidframework/test-utils/internal";
+
 import {
+	MockDetachedBlobStorage,
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
-	MockDetachedBlobStorage,
 } from "../mockDetachedBlobStorage.js";
+
 import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils.js";
 
 /**
  * These tests validate that SweepReady attachment blobs are correctly marked as tombstones. Tombstones should be added
  * to the summary and changing them (sending / receiving ops, loading, etc.) is not allowed.
  */
-describeCompat("GC attachment blob tombstone tests", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectProvider) => {
 	const tombstoneTimeoutMs = 200;
 	const configProvider = createTestConfigProvider();
 	const gcOptions: IGCRuntimeOptions = {

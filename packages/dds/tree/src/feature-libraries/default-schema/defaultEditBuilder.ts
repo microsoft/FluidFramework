@@ -3,38 +3,38 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { OptionalChangeset } from "../optional-field/index.js";
-import { ICodecFamily, ICodecOptions } from "../../codec/index.js";
+import { assert } from "@fluidframework/core-utils/internal";
+
+import { ICodecFamily } from "../../codec/index.js";
 import {
+	ChangeEncodingContext,
 	ChangeFamily,
-	ChangeRebaser,
-	UpPath,
 	ChangeFamilyEditor,
+	ChangeRebaser,
+	ChangesetLocalId,
+	CursorLocationType,
+	DeltaDetachedNodeId,
+	DeltaRoot,
 	FieldUpPath,
+	ITreeCursorSynchronous,
+	TaggedChange,
+	UpPath,
 	compareFieldUpPaths,
 	topDownPath,
-	TaggedChange,
-	DeltaRoot,
-	ChangesetLocalId,
-	DeltaDetachedNodeId,
-	ChangeEncodingContext,
-	RevisionTagCodec,
-	CursorLocationType,
-	ITreeCursorSynchronous,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
 import {
-	ModularChangeFamily,
-	ModularEditBuilder,
+	EditDescription,
 	FieldChangeset,
-	ModularChangeset,
 	FieldEditDescription,
+	ModularChangeFamily,
+	ModularChangeset,
+	ModularEditBuilder,
 	intoDelta as intoModularDelta,
 	relevantRemovedRoots as relevantModularRemovedRoots,
-	EditDescription,
 } from "../modular-schema/index.js";
-import { FieldBatchCodec } from "../chunked-forest/index.js";
+import { OptionalChangeset } from "../optional-field/index.js";
+
 import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds.js";
 
 export type DefaultChangeset = ModularChangeset;
@@ -47,17 +47,8 @@ export type DefaultChangeset = ModularChangeset;
 export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, DefaultChangeset> {
 	private readonly modularFamily: ModularChangeFamily;
 
-	public constructor(
-		revisionTagCodec: RevisionTagCodec,
-		fieldBatchCodec: FieldBatchCodec,
-		codecOptions: ICodecOptions,
-	) {
-		this.modularFamily = new ModularChangeFamily(
-			fieldKinds,
-			revisionTagCodec,
-			fieldBatchCodec,
-			codecOptions,
-		);
+	public constructor(codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>) {
+		this.modularFamily = new ModularChangeFamily(fieldKinds, codecs);
 	}
 
 	public get rebaser(): ChangeRebaser<DefaultChangeset> {
@@ -102,6 +93,21 @@ export function relevantRemovedRoots(
 
 /**
  * Default editor for transactional tree data changes.
+ * @privateRemarks
+ * When taking into account not just the content of the tree,
+ * but also how the merge identities (and thus anchors, flex-tree and simple-tree nodes) of nodes before and after the edits correspond,
+ * some edits are currently impossible to express.
+ * Examples of these non-expressible edits include:
+ *
+ * - Changing the type of a node while keeping its merge identity.
+ * - Changing the value of a leaf while keeping its merge identity.
+ * - Swapping subtrees between two value fields.
+ * - Replacing a node in the middle of a tree while reusing some of the old nodes decedents that were under value fields.
+ *
+ * At some point it will likely be worth supporting at least some of these, possibly using a mechanism that could support all of them if desired.
+ * If/when such a mechanism becomes available, an evaluation should be done to determine if any existing editing operations should be changed to leverage it
+ * (Possibly by adding opt ins at the view schema layer).
+ *
  * @internal
  */
 export interface IDefaultEditBuilder {
@@ -226,10 +232,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				};
 				edits.push(edit);
 
-				this.modularBuilder.submitChanges(
-					edits,
-					newContent === undefined ? detachId : fillId,
-				);
+				this.modularBuilder.submitChanges(edits);
 			},
 		};
 	}
@@ -292,23 +295,20 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 			}
 			const moveOut = sequence.changeHandler.editor.moveOut(sourceIndex, count, moveId);
 			const moveIn = sequence.changeHandler.editor.moveIn(destIndex, count, moveId);
-			this.modularBuilder.submitChanges(
-				[
-					{
-						type: "field",
-						field: sourceField,
-						fieldKind: sequence.identifier,
-						change: brand(moveOut),
-					},
-					{
-						type: "field",
-						field: adjustedAttachField,
-						fieldKind: sequence.identifier,
-						change: brand(moveIn),
-					},
-				],
-				moveId,
-			);
+			this.modularBuilder.submitChanges([
+				{
+					type: "field",
+					field: sourceField,
+					fieldKind: sequence.identifier,
+					change: brand(moveOut),
+				},
+				{
+					type: "field",
+					field: adjustedAttachField,
+					fieldKind: sequence.identifier,
+					change: brand(moveIn),
+				},
+			]);
 		}
 	}
 
@@ -334,10 +334,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				};
 				// The changes have to be submitted together, otherwise they will be assigned different revisions,
 				// which will prevent the build ID and the insert ID from matching.
-				this.modularBuilder.submitChanges(
-					[build, attach],
-					brand((firstId as number) + length - 1),
-				);
+				this.modularBuilder.submitChanges([build, attach]);
 			},
 			remove: (index: number, count: number): void => {
 				if (count === 0) {

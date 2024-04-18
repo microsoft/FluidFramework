@@ -6,16 +6,11 @@
 import { strict } from "assert";
 import child_process from "child_process";
 import fs from "fs";
-import { assert, Lazy } from "@fluidframework/core-utils";
-import {
-	MockEmptyDeltaConnection,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix";
+
+import { AttachState } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IContainer } from "@fluidframework/container-definitions";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
 	FileDeltaStorageService,
 	FileDocumentServiceFactory,
@@ -23,27 +18,36 @@ import {
 	FileStorageDocumentName,
 	FluidFetchReaderFileSnapshotWriter,
 	ISnapshotWriterStorage,
-	Replayer,
 	ReplayFileDeltaConnection,
-} from "@fluidframework/file-driver";
+	Replayer,
+} from "@fluidframework/file-driver/internal";
+import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix/internal";
 import {
 	ISequencedDocumentMessage,
-	ITree,
-	TreeEntry,
-	MessageType,
-	ITreeEntry,
 	ISummaryTree,
+	ITree,
+	ITreeEntry,
+	MessageType,
+	TreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { FileSnapshotReader, IFileSnapshot } from "@fluidframework/replay-driver";
-import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils";
+import { FileSnapshotReader, IFileSnapshot } from "@fluidframework/replay-driver/internal";
+import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	MockEmptyDeltaConnection,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
 import stringify from "json-stable-stringify";
+
 import {
 	compareWithReferenceSnapshot,
 	getNormalizedFileSnapshot,
 	loadContainer,
 	uploadSummary,
-} from "./helpers";
-import { ReplayArgs } from "./replayArgs";
+} from "./helpers.js";
+import { ReplayArgs } from "./replayArgs.js";
 
 // "worker_threads" does not resolve without --experimental-worker flag on command line
 let threads = { isMainThread: true };
@@ -902,8 +906,7 @@ async function assertDdsEqual(
 		return;
 	}
 
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	dataStoreRuntime.local = true;
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
 	const deltaConnection = new MockEmptyDeltaConnection();
 
 	async function newMatrix(summary: ISummaryTree): Promise<SharedMatrix> {

@@ -2,21 +2,22 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Flags } from "@oclif/core";
 
+import { writeFileSync } from "node:fs";
+import { Package, PackageNamePolicyConfig } from "@fluidframework/build-tools";
 import { BaseCommand } from "../base";
 import { filterPackages, parsePackageFilterFlags } from "../filter";
 import { filterFlags, releaseGroupFlag } from "../flags";
-import { PnpmListEntry, pnpmList } from "../pnpm";
 import {
 	type Feed,
+	feeds,
 	isFeed,
 	packagePublishesToFeed,
-	feeds,
 	// eslint-disable-next-line import/no-internal-modules -- the policy-related stuff will eventually be moved into this package
-} from "@fluidframework/build-tools/dist/repoPolicyCheck/handlers/npmPackages";
-import { Package, PackageNamePolicyConfig } from "@fluidframework/build-tools";
-import { writeFileSync } from "node:fs";
+} from "../library/repoPolicyCheck/npmPackages";
+import { PnpmListEntry, pnpmList } from "../pnpm";
 
 interface ListItem extends PnpmListEntry {
 	tarball?: string;

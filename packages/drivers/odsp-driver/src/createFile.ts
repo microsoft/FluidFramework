@@ -3,43 +3,44 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { NonRetryableError } from "@fluidframework/driver-utils";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import {
-	InstrumentedStorageTokenFetcher,
+	IFileEntry,
 	IOdspResolvedUrl,
+	InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 	ShareLinkInfoType,
-	IFileEntry,
-} from "@fluidframework/odsp-driver-definitions";
-import { ICreateFileResponse } from "./contracts";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import {
-	buildOdspShareLinkReqParams,
-	createCacheSnapshotKey,
-	getWithRetryForTokenRefresh,
-	INewFileInfo,
-	getOrigin,
-} from "./odspUtils";
-import { ISnapshotContents } from "./odspPublicUtils";
-import { createOdspUrl } from "./createOdspUrl";
-import { getApiRoot } from "./odspUrlHelper";
-import { EpochTracker } from "./epochTracker";
-import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+
+import { ICreateFileResponse } from "./contracts.js";
+import { ClpCompliantAppHeader } from "./contractsPublic.js";
 import {
 	convertCreateNewSummaryTreeToTreeAndBlobs,
 	convertSummaryIntoContainerSnapshot,
 	createNewFluidContainerCore,
-} from "./createNewUtils";
-import { runWithRetry } from "./retryUtils";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { ClpCompliantAppHeader } from "./contractsPublic";
+} from "./createNewUtils.js";
+import { createOdspUrl } from "./createOdspUrl.js";
+import { EpochTracker } from "./epochTracker.js";
+import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
+import { getApiRoot } from "./odspUrlHelper.js";
+import {
+	INewFileInfo,
+	buildOdspShareLinkReqParams,
+	createCacheSnapshotKey,
+	getWithRetryForTokenRefresh,
+} from "./odspUtils.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { runWithRetry } from "./retryUtils.js";
 
 const isInvalidFileName = (fileName: string): boolean => {
 	const invalidCharsRegex = /["*/:<>?\\|]+/g;
-	return !!fileName.match(invalidCharsRegex);
+	return invalidCharsRegex.test(fileName);
 };
 
 /**
@@ -108,7 +109,7 @@ export async function createNewFluidFile(
 	if (createNewSummary !== undefined && createNewCaching) {
 		assert(summaryHandle !== undefined, 0x203 /* "Summary handle is undefined" */);
 		// converting summary and getting sequence number
-		const snapshot: ISnapshotContents = convertCreateNewSummaryTreeToTreeAndBlobs(
+		const snapshot: ISnapshot = convertCreateNewSummaryTreeToTreeAndBlobs(
 			createNewSummary,
 			summaryHandle,
 		);
@@ -134,10 +135,12 @@ function extractShareLinkData(
 ): ShareLinkInfoType | undefined {
 	let shareLinkInfo: ShareLinkInfoType | undefined;
 	if (enableSingleRequestForShareLinkWithCreate) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const { sharing } = response;
 		if (!sharing) {
 			return;
 		}
+		/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 		shareLinkInfo = {
 			createLink: {
 				link: sharing.sharingLink
@@ -152,6 +155,7 @@ function extractShareLinkData(
 				shareId: sharing.shareId,
 			},
 		};
+		/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 	}
 	return shareLinkInfo;
 }
@@ -166,7 +170,7 @@ export async function createNewEmptyFluidFile(
 	const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
 	// add .tmp extension to empty file (host is expected to rename)
 	const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.tmp`);
-	const initialUrl = `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${
+	const initialUrl = `${getApiRoot(new URL(newFileInfo.siteUrl))}/drives/${
 		newFileInfo.driveId
 	}/items/root:/${filePath}/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
 
@@ -209,7 +213,6 @@ export async function createNewEmptyFluidFile(
 					);
 				}
 				event.end({
-					headers: Object.keys(headers).length !== 0 ? true : undefined,
 					...fetchResponse.propsToLog,
 				});
 				return content.id;
@@ -230,7 +233,7 @@ export async function createNewFluidFileFromSummary(
 	const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
 	const encodedFilename = encodeURIComponent(newFileInfo.filename);
 	const baseUrl =
-		`${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
+		`${getApiRoot(new URL(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
 		`${filePath}/${encodedFilename}`;
 
 	const containerSnapshot = convertSummaryIntoContainerSnapshot(createNewSummary);

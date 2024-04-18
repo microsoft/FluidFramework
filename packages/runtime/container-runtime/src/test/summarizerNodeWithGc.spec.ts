@@ -4,28 +4,34 @@
  */
 
 import { strict as assert } from "assert";
+
 import { SummaryType } from "@fluidframework/protocol-definitions";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
-	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 	ISummarizeInternalResult,
 	ISummarizerNodeConfig,
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
-} from "@fluidframework/runtime-definitions";
-import { GCDataBuilder, mergeStats } from "@fluidframework/runtime-utils";
-import { MockLogger, TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils";
-// eslint-disable-next-line import/no-internal-modules
-import { ValidateSummaryResult } from "../summary/summarizerNode";
+} from "@fluidframework/runtime-definitions/internal";
+import { GCDataBuilder, mergeStats } from "@fluidframework/runtime-utils/internal";
 import {
-	createRootSummarizerNodeWithGC,
+	MockLogger,
+	TelemetryDataTag,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
+
+import { cloneGCData } from "../gc/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { ValidateSummaryResult } from "../summary/summarizerNode/index.js";
+import {
 	IRootSummarizerNodeWithGC,
 	SummarizerNodeWithGC,
+	createRootSummarizerNodeWithGC,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../summary/summarizerNode/summarizerNodeWithGc";
-import { cloneGCData } from "../gc";
+} from "../summary/summarizerNode/summarizerNodeWithGc.js";
 
 describe("SummarizerNodeWithGC Tests", () => {
 	const summarizerNodeId = "testNode";
@@ -58,7 +64,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			undefined,
 			getRootBaseGCDetails,
 		);
-		rootSummarizerNode.startSummary(0, createChildLogger());
+		rootSummarizerNode.startSummary(0, createChildLogger(), 0);
 
 		summarizerNode = rootSummarizerNode.createChild(
 			summarizeInternal,
@@ -283,7 +289,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 
 		it("summary validation should fail if GC not run on root node", () => {
 			createRoot();
-			rootNode.startSummary(11, logger);
+			rootNode.startSummary(11, logger, 0);
 
 			// Validate summary fails by calling validateSummary.
 			const expectedResult: ValidateSummaryResult = {
@@ -318,7 +324,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			createRoot();
 			createMid({ type: CreateSummarizerNodeSource.Local });
 			createLeaf({ type: CreateSummarizerNodeSource.Local });
-			rootNode.startSummary(11, logger);
+			rootNode.startSummary(11, logger, 0);
 
 			// Call updateUsedRoutes (indicating GC ran) and summarize on the root and leaf nodes but not on the
 			// mid node. Calling summarize is important because otherwise we will see similar failures because of
@@ -362,7 +368,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			createRoot();
 			createMid({ type: CreateSummarizerNodeSource.Local });
 			createLeaf({ type: CreateSummarizerNodeSource.Local });
-			rootNode.startSummary(11, logger);
+			rootNode.startSummary(11, logger, 0);
 			// Call updateUsedRoutes (indicating GC ran) and summarize on the root and leaf nodes but not on the
 			// mid node. Calling summarize is important because otherwise we will see similar failures because of
 			// not running GC.
@@ -406,7 +412,8 @@ describe("SummarizerNodeWithGC Tests", () => {
 		it("Should add GC pending summary node created after parent node was summarized with non-empty used routes", async () => {
 			createRoot();
 			createMid({ type: CreateSummarizerNodeSource.Local });
-			rootNode.startSummary(summaryRefSeq++, logger);
+			const latestSummaryRefSeqNum = summaryRefSeq;
+			rootNode.startSummary(summaryRefSeq++, logger, 0);
 			rootNode.updateUsedRoutes([""]);
 			midNode?.updateUsedRoutes([""]);
 
@@ -418,7 +425,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			assert(result.isSummaryTracked, "should be tracked");
 			assert(result.isSummaryNewer === true, "should be newer");
 
-			rootNode.startSummary(summaryRefSeq++, logger);
+			rootNode.startSummary(summaryRefSeq++, logger, latestSummaryRefSeqNum);
 			rootNode.updateUsedRoutes([`/`, `/${ids[1]}`, `/${ids[1]}/${ids[2]}`]);
 			midNode?.updateUsedRoutes([`/`, `/${ids[2]}`]);
 
@@ -444,7 +451,8 @@ describe("SummarizerNodeWithGC Tests", () => {
 		it("Should add GC pending summary node created after parent node was summarized with empty used routes", async () => {
 			createRoot();
 			createMid({ type: CreateSummarizerNodeSource.Local });
-			rootNode.startSummary(summaryRefSeq++, logger);
+			const latestSummaryRefSeqNum = summaryRefSeq;
+			rootNode.startSummary(summaryRefSeq++, logger, 0);
 			rootNode.updateUsedRoutes([""]);
 			midNode?.updateUsedRoutes([""]);
 
@@ -456,7 +464,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			assert(result.isSummaryTracked, "should be tracked");
 			assert(result.isSummaryNewer === true, "should be newer");
 
-			rootNode.startSummary(summaryRefSeq++, logger);
+			rootNode.startSummary(summaryRefSeq++, logger, latestSummaryRefSeqNum);
 			rootNode.updateUsedRoutes([""]);
 			midNode?.updateUsedRoutes([""]);
 

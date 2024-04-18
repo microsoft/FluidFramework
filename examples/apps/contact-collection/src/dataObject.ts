@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
+import type { EventEmitter } from "@fluid-example/example-utils";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { v4 as uuid } from "uuid";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 
 /**
  * IContact describes the public, read-only API surface for a single contact

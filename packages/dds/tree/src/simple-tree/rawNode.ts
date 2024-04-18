@@ -3,34 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, TreeNodeSchemaIdentifier } from "../core/index.js";
+import { Anchor, AnchorNode, FieldKey, TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
-	EditableTreeEvents,
-	FlexFieldNodeSchema,
 	FlexTreeContext,
+	FlexTreeEntityKind,
 	FlexTreeField,
 	FlexTreeNode,
-	FlexTreeTypedNode,
-	FlexTreeEntityKind,
-	FlexTreeMapNode,
-	FlexTreeObjectNode,
-	FlexTreeTypedField,
-	FlexTreeUnboxField,
-	FlexibleFieldContent,
-	flexTreeMarker,
-	onNextChange,
-	LocalNodeKey,
-	FlexMapNodeSchema,
-	FlexObjectNodeSchema,
+	FlexTreeNodeEvents,
 	FlexTreeNodeSchema,
+	FlexTreeTypedNode,
 	TreeStatus,
-	FlexTreeFieldNode,
+	flexTreeMarker,
 } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
-import { InsertableContent } from "./proxies.js";
 
 /** Stores the content of the raw node, i.e. the data that was passed to the factory */
-const nodeContent = Symbol();
+export const nodeContent = Symbol();
 interface HasNodeContent<T> {
 	[nodeContent]: T;
 }
@@ -52,31 +40,12 @@ export function extractRawNodeContent(node: object): object | undefined {
 }
 
 /**
- * Creates a node that pretends to satisfy the given schema while wrapping the given node content.
+ * Node that pretends to satisfy the given schema while wrapping the given node content.
  * Retrieve the node content via {@link extractRawNodeContent}.
  *
  * @remarks This is useful for creating "raw" nodes: nodes which capture data about a pending insertion but are not yet inserted.
  * These raw nodes can be then used on the right-hand side of an assignment (via `=`) to the tree.
  * However, many of their properties and methods are currently unimplemented and will error if accessed.
- */
-export function createRawNode(
-	schema: FlexTreeNodeSchema,
-	content: InsertableContent,
-): RawTreeNode<FlexTreeNodeSchema, InsertableContent> {
-	if (schema instanceof FlexObjectNodeSchema) {
-		return new RawObjectNode(schema, content as object);
-	}
-	if (schema instanceof FlexMapNodeSchema) {
-		return new RawMapNode(schema, content as ReadonlyMap<string, InsertableContent>);
-	}
-	if (schema instanceof FlexFieldNodeSchema) {
-		return new RawFieldNode(schema, content);
-	}
-	fail("Unrecognized schema");
-}
-
-/**
- * The base implementation of a node created by {@link createRawNode}.
  */
 export abstract class RawTreeNode<TSchema extends FlexTreeNodeSchema, TContent>
 	implements FlexTreeNode, HasNodeContent<TContent>
@@ -84,7 +53,10 @@ export abstract class RawTreeNode<TSchema extends FlexTreeNodeSchema, TContent>
 	public readonly [flexTreeMarker] = FlexTreeEntityKind.Node as const;
 	public readonly [nodeContent]: TContent;
 
+	#anchor: Anchor | undefined;
+
 	public readonly type: TreeNodeSchemaIdentifier;
+
 	public constructor(
 		public readonly schema: TSchema,
 		content: TContent,
@@ -111,6 +83,10 @@ export abstract class RawTreeNode<TSchema extends FlexTreeNodeSchema, TContent>
 		throw rawError("Reading fields");
 	}
 
+	public getBoxed(key: string): never {
+		throw rawError("Reading boxed fields");
+	}
+
 	public boxedIterator(): IterableIterator<FlexTreeField> {
 		throw rawError("Boxed iteration");
 	}
@@ -122,111 +98,19 @@ export abstract class RawTreeNode<TSchema extends FlexTreeNodeSchema, TContent>
 
 	public value: undefined;
 
-	public on<K extends keyof EditableTreeEvents>(
+	public on<K extends keyof FlexTreeNodeEvents>(
 		eventName: K,
-		listener: EditableTreeEvents[K],
+		listener: FlexTreeNodeEvents[K],
 	): () => void {
 		throw rawError("Event registration");
 	}
 
-	public [onNextChange](fn: (node: FlexTreeNode) => void): () => void {
-		throw rawError("onNextChange event registration");
+	public get anchorNode(): AnchorNode {
+		throw rawError("Reading anchor node");
 	}
 }
 
-/**
- * The implementation of an object node created by {@link createRawNode}.
- */
-export class RawObjectNode<TSchema extends FlexObjectNodeSchema, TContent extends object>
-	extends RawTreeNode<TSchema, TContent>
-	implements FlexTreeObjectNode
-{
-	public get localNodeKey(): LocalNodeKey | undefined {
-		throw rawError("Reading local node keys");
-	}
-}
-
-/**
- * The implementation of a map node created by {@link createRawNode}.
- */
-export class RawMapNode<TSchema extends FlexMapNodeSchema>
-	extends RawTreeNode<TSchema, ReadonlyMap<string, InsertableContent>>
-	implements FlexTreeMapNode<TSchema>
-{
-	public get size(): number {
-		return this[nodeContent].size;
-	}
-	public has(key: string): boolean {
-		return this[nodeContent].has(key);
-	}
-	public get(key: string): FlexTreeUnboxField<TSchema["info"]> {
-		return this[nodeContent].get(key) as FlexTreeUnboxField<TSchema["info"]>;
-	}
-	public getBoxed(key: string): FlexTreeTypedField<TSchema["info"]> {
-		throw rawError("Reading boxed map values");
-	}
-	public keys(): IterableIterator<FieldKey> {
-		return this[nodeContent].keys() as IterableIterator<FieldKey>;
-	}
-	public values(): IterableIterator<FlexTreeUnboxField<TSchema["info"], "notEmpty">> {
-		throw rawError("Iterating map values");
-	}
-	public entries(): IterableIterator<
-		[FieldKey, FlexTreeUnboxField<TSchema["info"], "notEmpty">]
-	> {
-		throw rawError("Iterating map entries");
-	}
-	public forEach(
-		callbackFn: (
-			value: FlexTreeUnboxField<TSchema["info"], "notEmpty">,
-			key: FieldKey,
-			map: FlexTreeMapNode<TSchema>,
-		) => void,
-		thisArg?: any,
-	): void {
-		throw rawError("Iterating maps with forEach");
-	}
-	public set(key: string, value: FlexibleFieldContent<TSchema["info"]> | undefined): void {
-		throw rawError("Setting a map entry");
-	}
-	public delete(key: string): void {
-		throw rawError("Deleting a map entry");
-	}
-
-	public get asObject(): {
-		readonly [P in FieldKey]?: FlexTreeUnboxField<TSchema["info"], "notEmpty">;
-	} {
-		throw rawError("Converting a map to an object");
-	}
-
-	public [Symbol.iterator](): IterableIterator<
-		[FieldKey, FlexTreeUnboxField<TSchema["info"], "notEmpty">]
-	> {
-		return this.entries();
-	}
-
-	public override boxedIterator(): IterableIterator<FlexTreeTypedField<TSchema["info"]>> {
-		throw rawError("Boxed iteration");
-	}
-}
-
-/**
- * The implementation of a field node created by {@link createRawNode}.
- */
-export class RawFieldNode<TSchema extends FlexFieldNodeSchema>
-	extends RawTreeNode<TSchema, InsertableContent>
-	implements FlexTreeFieldNode<TSchema>
-{
-	public get content(): FlexTreeUnboxField<TSchema["info"]> {
-		throw rawError("Reading content of an array node");
-	}
-
-	public get boxedContent(): FlexTreeTypedField<TSchema["info"]> {
-		throw rawError("Reading boxed content of an array node");
-	}
-}
-
-function rawError(message?: string): Error {
+export function rawError(message?: string): Error {
 	return new Error(
 		`${
 			message ?? "Operation"

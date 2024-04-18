@@ -2,17 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable no-param-reassign */
 
 import {
-	PropertyFactory,
 	BaseProperty,
+	PropertyFactory,
 	ReferenceArrayProperty,
 } from "@fluid-experimental/property-properties";
-import { PropertyProxy, proxySymbol } from "./propertyProxy";
-import { PropertyProxyErrors } from "./errors";
-import { forceType, Utilities } from "./utilities";
-import { ComponentArray } from "./componentArray";
+
+import { ComponentArray } from "./componentArray.js";
+import { PropertyProxyErrors } from "./errors.js";
+import { PropertyProxy, proxySymbol } from "./propertyProxy.js";
+import { Utilities, forceType } from "./utilities.js";
 
 /**
  * Set the length of the {@link external:ArrayProperty ArrayProperty} referenced by the inputted {@link ComponentArray}.

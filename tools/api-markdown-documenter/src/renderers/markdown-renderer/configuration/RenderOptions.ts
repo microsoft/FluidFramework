@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
 	type BlockQuoteNode,
 	type CodeSpanNode,
@@ -21,9 +22,9 @@ import {
 	type TableNode,
 	type TableRowNode,
 	type UnorderedListNode,
-} from "../../../documentation-domain";
-import type { DocumentWriter } from "../../DocumentWriter";
-import type { RenderContext } from "../RenderContext";
+} from "../../../documentation-domain/index.js";
+import type { DocumentWriter } from "../../DocumentWriter.js";
+import type { RenderContext } from "../RenderContext.js";
 import {
 	renderBlockQuote,
 	renderCodeSpan,
@@ -41,7 +42,7 @@ import {
 	renderTableCell,
 	renderTableRow,
 	renderUnorderedList,
-} from "../default-renderers";
+} from "../default-renderers/index.js";
 
 /**
  * Configuration for rendering {@link DocumentationNode}s to `Markdown`, specified by {@link DocumentationNode."type"}.

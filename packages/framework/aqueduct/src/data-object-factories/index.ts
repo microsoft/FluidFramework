@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { DataObjectFactory } from "./dataObjectFactory";
-export { PureDataObjectFactory } from "./pureDataObjectFactory";
+export { DataObjectFactory } from "./dataObjectFactory.js";
+export { PureDataObjectFactory } from "./pureDataObjectFactory.js";

@@ -40,7 +40,7 @@ export {
 	TreeNodeSequence,
 	VersionedOp,
 	WriteFormat,
-} from './0.0.2';
+} from './0.0.2.js';
 export {
 	BuildInternal,
 	BuildNodeInternal,
@@ -70,4 +70,4 @@ export {
 	StablePlaceInternal,
 	StableRangeInternal,
 	TraitLocationInternal,
-} from './0.1.1';
+} from './0.1.1.js';

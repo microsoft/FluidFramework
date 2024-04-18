@@ -4,24 +4,28 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	ITestDataObject,
 	TestDataObjectType,
 	describeCompat,
 } from "@fluid-private/test-version-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import {
+	ContainerRuntime,
+	ISubmitSummaryOptions,
+} from "@fluidframework/container-runtime/internal";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { ISharedMap } from "@fluidframework/map/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
 	createSummarizer,
 	summarizeNow,
-} from "@fluidframework/test-utils";
-import { ContainerRuntime, ISubmitSummaryOptions } from "@fluidframework/container-runtime";
-import type { ISharedMap } from "@fluidframework/map";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+} from "@fluidframework/test-utils/internal";
 
 // These tests intend to ensure that summarization succeeds in edge case scenarios that rarely happen
-describeCompat("Summarization edge cases", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
+describeCompat("Summarization edge cases", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {

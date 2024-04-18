@@ -4,19 +4,21 @@
  */
 
 import { strict as assert } from "assert";
+
 import { ChangesetLocalId } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
-import { deepFreeze } from "../../utils.js";
 import { TestChange } from "../../testChange.js";
+import { TestNodeId } from "../../testNodeId.js";
 import { TestChangeset, MarkMaker as Mark } from "./testEdits.js";
+import { deepFreeze } from "../../utils.js";
 
 const id: ChangesetLocalId = brand(0);
 
 export function testEditor() {
 	describe("Editor", () => {
 		it("child change", () => {
-			const childChange = TestChange.mint([0], 1);
+			const childChange = TestNodeId.create({ localId: brand(0) }, TestChange.mint([0], 1));
 			deepFreeze(childChange);
 			const actual = SF.sequenceFieldEditor.buildChildChange(42, childChange);
 			const expected: TestChangeset = [{ count: 42 }, Mark.modify(childChange)];

@@ -2,11 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import React from "react";
-import { tokens } from "@fluentui/react-components";
 
-import { ThemeContext, ThemeOption } from "../../ThemeHelper";
-import { type HasLabel } from "./CommonInterfaces";
+import { Tooltip, makeStyles, tokens } from "@fluentui/react-components";
+import React from "react";
+
+import type { VisualChildNode } from "@fluidframework/devtools-core/internal";
+import { Info20Regular } from "@fluentui/react-icons";
+import { ThemeContext, ThemeOption } from "../../ThemeHelper.js";
+
+import type { HasLabel } from "./CommonInterfaces.js";
+import { ToolTipContentsView } from "./ToolTipContentsView.js";
 
 /**
  * Input props to {@link TreeHeader}
@@ -17,25 +22,46 @@ export interface TreeHeaderProps extends HasLabel {
 	 */
 	nodeTypeMetadata?: string | undefined;
 
+	metadata?: string | undefined;
+
 	/**
 	 * Inline value to display alongside the metadata.
 	 */
 	inlineValue?: React.ReactElement | string;
 
-	// TODO: metadata
-	metadata?: string | undefined;
+	/**
+	 * Visual Tree data rendered in the tooltip.
+	 */
+	tooltipContents?: string | Record<string, VisualChildNode>;
 }
+
+const getStyles = makeStyles({
+	tooltip: {
+		color: tokens.colorNeutralForeground1Hover,
+		minWidth: "1000px",
+	},
+	iconContainer: {
+		paddingLeft: "3px",
+		paddingRight: "3px",
+		paddingBottom: "2px",
+		verticalAlign: "middle",
+	},
+	inlineValue: {
+		whiteSpace: "pre-wrap",
+	},
+});
 
 /**
  * Renders the header of the item.
  */
 export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
-	const { label, nodeTypeMetadata, inlineValue, metadata } = props;
-
+	const { label, nodeTypeMetadata, inlineValue, metadata, tooltipContents } = props;
 	const { themeInfo } = React.useContext(ThemeContext);
 
+	const styles = getStyles();
+
 	return (
-		<div style={{ width: "auto" }}>
+		<div>
 			{`${label}`}
 			<span
 				style={{
@@ -60,8 +86,20 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 			>
 				{metadata === undefined ? "" : ` ${metadata}`}
 			</span>
-			{inlineValue === undefined ? "" : ": "}
-			{inlineValue}
+			{tooltipContents !== undefined && (
+				<Tooltip
+					content={{
+						children: <ToolTipContentsView contents={tooltipContents} />,
+						className: styles.tooltip,
+					}}
+					relationship="description"
+				>
+					<Info20Regular className={styles.iconContainer} />
+				</Tooltip>
+			)}
+			{inlineValue !== undefined && (
+				<span className={styles.inlineValue}>: {inlineValue}</span>
+			)}
 		</div>
 	);
 }

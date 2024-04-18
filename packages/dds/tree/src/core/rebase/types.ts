@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { Type } from "@sinclair/typebox";
 import {
 	OpSpaceCompressedId,
 	SessionId,
 	SessionSpaceCompressedId,
 } from "@fluidframework/id-compressor";
+import { Type } from "@sinclair/typebox";
+
 import {
 	Brand,
 	NestedMap,
@@ -84,6 +85,31 @@ export function areEqualChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): boolean
 }
 
 /**
+ * @returns a ChangeAtomId with the given revision and local ID.
+ */
+export function makeChangeAtomId(localId: ChangesetLocalId, revision?: RevisionTag): ChangeAtomId {
+	return revision === undefined ? { localId } : { localId, revision };
+}
+
+export function asChangeAtomId(id: ChangesetLocalId | ChangeAtomId): ChangeAtomId {
+	return typeof id === "object" ? id : { localId: id };
+}
+
+export function taggedAtomId(id: ChangeAtomId, revision: RevisionTag | undefined): ChangeAtomId {
+	return makeChangeAtomId(id.localId, id.revision ?? revision);
+}
+
+export function taggedOptAtomId(
+	id: ChangeAtomId | undefined,
+	revision: RevisionTag | undefined,
+): ChangeAtomId | undefined {
+	if (id === undefined) {
+		return undefined;
+	}
+	return taggedAtomId(id, revision);
+}
+
+/**
  * A node in a graph of commits. A commit's parent is the commit on which it was based.
  */
 export interface GraphCommit<TChange> {
@@ -95,6 +121,36 @@ export interface GraphCommit<TChange> {
 	readonly parent?: GraphCommit<TChange>;
 	/** The inverse of this commit */
 	inverse?: TChange;
+}
+
+/**
+ * The type of a commit. This is used to describe the context in which the commit was created.
+ *
+ * @public
+ */
+export enum CommitKind {
+	/** A commit corresponding to a change that is not the result of an undo/redo. */
+	Default,
+	/** A commit that is the result of an undo. */
+	Undo,
+	/** A commit that is the result of a redo. */
+	Redo,
+}
+
+/**
+ * Information about a commit that has been applied.
+ *
+ * @public
+ */
+export interface CommitMetadata {
+	/**
+	 * A {@link CommitKind} enum value describing whether the commit represents an Edit, an Undo, or a Redo.
+	 */
+	readonly kind: CommitKind;
+	/**
+	 * Indicates whether the commit is a local edit
+	 */
+	readonly isLocal: boolean;
 }
 
 /**

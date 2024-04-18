@@ -4,23 +4,25 @@
  */
 
 import { strict as assert } from "assert";
+
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime/internal";
 import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	createTestConfigProvider,
 	createSummarizer,
+	createTestConfigProvider,
 	summarizeNow,
-} from "@fluidframework/test-utils";
-import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
-import { SharedCounter } from "@fluidframework/counter";
+} from "@fluidframework/test-utils/internal";
 
 describeCompat(
 	"Summarizer closes instead of refreshing",
-	"2.0.0-rc.1.0.0",
-	(getTestObjectProvider) => {
+	"NoCompat",
+	(getTestObjectProvider, apis) => {
+		const { SharedCounter } = apis.dds;
+
 		const configProvider = createTestConfigProvider();
 		const testContainerConfig: ITestContainerConfig = {
 			runtimeOptions: {
@@ -62,6 +64,10 @@ describeCompat(
 				{
 					eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
 					category: "generic",
+					error: "summary state stale - Unsupported option 'refreshLatestAck'",
+				},
+				{
+					eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
 					error: "summary state stale - Unsupported option 'refreshLatestAck'",
 				},
 			],
@@ -153,8 +159,6 @@ describeCompat(
 						summaryVersion1,
 					);
 
-				await provider.ensureSynchronized();
-
 				// This tells the summarizer to process the latest summary ack
 				// This is because the second summarizer is not the elected summarizer and thus the summaryManager does not
 				// tell the summarizer to process acks.
@@ -182,6 +186,10 @@ describeCompat(
 				{
 					eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
 					category: "generic",
+					error: "summary state stale - Unsupported option 'refreshLatestAck'",
+				},
+				{
+					eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
 					error: "summary state stale - Unsupported option 'refreshLatestAck'",
 				},
 			],

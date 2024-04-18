@@ -81,7 +81,7 @@ const resolvedUrl: IFluidResolvedUrl = {
     },
     tokens: { jwt: "token" },
     type: "fluid",
-    url: "fluid://www.ContosoFluidService.com/ContosoTenant/documentIdentifier",
+    url: "https://www.ContosoFluidService.com/ContosoTenant/documentIdentifier",
 }
 ```
 
@@ -135,6 +135,7 @@ As the Fluid Framework expands, we intend to make further use of these responses
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
 [SharedString]: {{< relref "/docs/data-structures/string.md" >}}
 [Sequences]: {{< relref "/docs/data-structures/sequences.md" >}}
+[SharedTree]: {{< relref "/docs/data-structures/tree.md" >}}
 
 <!-- API links -->
 

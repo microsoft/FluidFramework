@@ -3,28 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
+	BranchRebaseResult,
 	ChangeFamily,
 	ChangeFamilyEditor,
-	findAncestor,
+	CommitKind,
+	CommitMetadata,
 	GraphCommit,
-	mintCommit,
-	tagChange,
-	TaggedChange,
-	rebaseBranch,
 	RevisionTag,
-	findCommonAncestor,
+	TaggedChange,
+	findAncestor,
 	makeAnonChange,
-	Revertible,
-	RevertibleKind,
-	RevertibleResult,
-	RevertibleStatus,
-	BranchRebaseResult,
-	rebaseChangeOverChanges,
+	mintCommit,
+	rebaseBranch,
+	tagChange,
 	tagRollbackInverse,
 } from "../core/index.js";
 import { EventEmitter, ISubscribable } from "../events/index.js";
+
 import { TransactionStack } from "./transactionStack.js";
 
 /**
@@ -107,18 +105,9 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 	afterChange(change: SharedTreeBranchChange<TChange>): void;
 
 	/**
-	 * Fired when a revertible change is made to this branch.
+	 * {@inheritdoc TreeViewEvents.commitApplied}
 	 */
-	newRevertible(revertible: Revertible): void;
-
-	/**
-	 * Fired when a revertible made on this branch is disposed.
-	 *
-	 * @param revertible - The revertible that was disposed.
-	 * This revertible was previously passed to the `newRevertible` event.
-	 * @param revision - The revision associated with the revertible that was disposed.
-	 */
-	revertibleDisposed(revertible: Revertible, revision: RevisionTag): void;
+	commitApplied(data: CommitMetadata): void;
 
 	/**
 	 * Fired when this branch forks
@@ -139,9 +128,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	SharedTreeBranchEvents<TEditor, TChange>
 > {
 	public readonly editor: TEditor;
-	// set of revertibles maintained for automatic disposal
-	private readonly revertibles = new Set<RevertibleRevision>();
-	private readonly _revertibleCommits = new Map<RevisionTag, GraphCommit<TChange>>();
 	private readonly transactions = new TransactionStack();
 	/**
 	 * After pushing a starting revision to the transaction stack, this branch might be rebased
@@ -196,19 +182,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * Apply a change to this branch.
 	 * @param change - the change to apply
 	 * @param revision - the revision of the new head commit of the branch that contains `change`
+	 * @param changeKind - the kind of change to apply
 	 * @returns the change that was applied and the new head commit of the branch
 	 */
 	public apply(
 		change: TChange,
 		revision: RevisionTag,
-	): [change: TChange, newCommit: GraphCommit<TChange>] {
-		return this.applyChange(change, revision, RevertibleKind.Default);
-	}
-
-	private applyChange(
-		change: TChange,
-		revision: RevisionTag,
-		revertibleKind: RevertibleKind,
+		changeKind: CommitKind = CommitKind.Default,
 	): [change: TChange, newCommit: GraphCommit<TChange>] {
 		this.assertNotDisposed();
 
@@ -226,9 +206,9 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		this.emit("beforeChange", changeEvent);
 		this.head = newHead;
 
-		// If this is not part of a transaction, emit a revertible event
+		// If this is not part of a transaction, emit a commitApplied event
 		if (!this.isTransacting()) {
-			this.emitNewRevertible(newHead, revertibleKind);
+			this.emit("commitApplied", { isLocal: true, kind: changeKind });
 		}
 
 		this.emit("afterChange", changeEvent);
@@ -303,9 +283,9 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		this.emit("beforeChange", changeEvent);
 		this.head = newHead;
 
-		// If this transaction is not nested, emit a revertible event
+		// If this transaction is not nested, emit a commitApplied event
 		if (!this.isTransacting()) {
-			this.emitNewRevertible(newHead, RevertibleKind.Default);
+			this.emit("commitApplied", { isLocal: true, kind: CommitKind.Default });
 		}
 
 		this.emit("afterChange", changeEvent);
@@ -378,84 +358,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		return [startCommit, commits];
 	}
 
-	public revertibleCommits(): IterableIterator<RevisionTag> {
-		return this._revertibleCommits.keys();
-	}
-
-	public purgeRevertibles(): void {
-		for (const revertible of this.revertibles) {
-			revertible.dispose();
-		}
-	}
-
-	/**
-	 * Associate a revertible with a new commit of the same revision.
-	 * This is applicable when a commit is replaced by a rebase or a local commit is sequenced.
-	 */
-	public updateRevertibleCommit(commit: GraphCommit<TChange>) {
-		if (this._revertibleCommits.get(commit.revision) !== undefined) {
-			this._revertibleCommits.set(commit.revision, commit);
-		}
-	}
-
-	private emitNewRevertible(commit: GraphCommit<TChange>, kind: RevertibleKind): void {
-		if (!this.hasListeners("newRevertible")) {
-			// No point generating revertibles if no one cares about them
-			return;
-		}
-		const revertible = new RevertibleRevision(
-			kind,
-			commit.revision,
-			this.revertRevertible.bind(this),
-			this.disposeRevertible.bind(this),
-		);
-		this._revertibleCommits.set(commit.revision, commit);
-		this.revertibles.add(revertible);
-		this.emit("newRevertible", revertible);
-		// Decrements the ref count for the revertible.
-		// This ensures that the revertible is disposed if no listener has retained it.
-		revertible.discard();
-	}
-
-	private disposeRevertible(revertible: RevertibleRevision): void {
-		// TODO: delete the repair data from the forest
-		this._revertibleCommits.delete(revertible.revision);
-		this.revertibles.delete(revertible);
-		this.emit("revertibleDisposed", revertible, revertible.revision);
-	}
-
-	private revertRevertible(revertible: RevertibleRevision): void {
-		assert(!this.isTransacting(), 0x7cb /* Undo is not yet supported during transactions */);
-
-		const commit = this._revertibleCommits.get(revertible.revision);
-		assert(commit !== undefined, 0x7cc /* expected to find a revertible commit */);
-
-		let change = this.changeFamily.rebaser.invert(
-			tagChange(commit.change, revertible.revision),
-			false,
-		);
-
-		const headCommit = this.getHead();
-		// Rebase the inverted change onto any commits that occurred after the undoable commits.
-		if (revertible.revision !== headCommit.revision) {
-			const pathAfterUndoable: GraphCommit<TChange>[] = [];
-			const ancestor = findCommonAncestor([commit], [headCommit, pathAfterUndoable]);
-			assert(
-				ancestor === commit,
-				0x677 /* The head commit should be based off the undoable commit. */,
-			);
-			change = rebaseChangeOverChanges(this.changeFamily.rebaser, change, pathAfterUndoable);
-		}
-
-		this.applyChange(
-			change,
-			this.mintRevisionTag(),
-			revertible.kind === RevertibleKind.Default || revertible.kind === RevertibleKind.Redo
-				? RevertibleKind.Undo
-				: RevertibleKind.Redo,
-		);
-	}
-
 	/**
 	 * Spawn a new branch that is based off of the current state of this branch.
 	 * Changes made to the new branch will not be applied to this branch until the new branch is merged back in.
@@ -472,10 +374,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	/**
 	 * Rebase the changes that have been applied to this branch over divergent changes in the given branch.
 	 * After this operation completes, this branch will be based off of `branch`.
-	 *
-	 * @remarks
-	 * This operation can change the relative ordering between revertible commits therefore, the revertible event
-	 * is not emitted during this operation.
 	 *
 	 * @param branch - the branch to rebase onto
 	 * @param upTo - the furthest commit on `branch` over which to rebase (inclusive). Defaults to the head commit of `branch`.
@@ -497,18 +395,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const { newSourceHead, commits } = rebaseResult;
 		const { deletedSourceCommits, targetCommits, sourceCommits } = commits;
 
-		// It's possible that the target branch already contained some of the commits that
-		// were on this branch. When that's the case, we adopt the commit objects from the target branch.
-		// Because of that, we need to make sure that any revertibles that were based on the old commit objects
-		// now point to the new object that were adopted from the target branch.
-		for (const targetCommit of targetCommits) {
-			this.updateRevertibleCommit(targetCommit);
-		}
-
 		const newCommits = targetCommits.concat(sourceCommits);
 		if (this.isTransacting()) {
 			const src = targetCommits[0].parent?.revision;
-			const dst = targetCommits.at(-1)?.revision;
+			const dst = targetCommits[targetCommits.length - 1].revision;
 			if (src !== undefined && dst !== undefined) {
 				this.initialTransactionRevToRebasedRev.set(src, dst);
 			}
@@ -525,20 +415,12 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		this.emit("beforeChange", changeEvent);
 		this.head = newSourceHead;
 
-		// update revertible commits that have been rebased
-		sourceCommits.forEach((commit) => {
-			this.updateRevertibleCommit(commit);
-		});
-
 		this.emit("afterChange", changeEvent);
 		return rebaseResult;
 	}
 
 	/**
 	 * Apply all the divergent changes on the given branch to this branch.
-	 *
-	 * @remarks
-	 * Revertible events are emitted for new local commits merged into this branch.
 	 *
 	 * @param branch - the branch to merge into this branch
 	 * @returns the net change to this branch and the commits that were added to this branch by the merge,
@@ -620,8 +502,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			this.abortTransaction();
 		}
 
-		this.revertibles.forEach((revertible) => revertible.dispose());
-
 		this.disposed = true;
 		this.emit("dispose");
 	}
@@ -651,65 +531,4 @@ export function onForkTransitive<T extends ISubscribable<{ fork: (t: T) => void 
 		}),
 	);
 	return () => offs.forEach((off) => off());
-}
-
-class RevertibleRevision implements Revertible {
-	public readonly origin: Revertible["origin"];
-
-	private referenceCount = 1;
-
-	public constructor(
-		public readonly kind: RevertibleKind,
-		public readonly revision: RevisionTag,
-		private readonly onRevert: (revertible: RevertibleRevision) => void,
-		private readonly onDispose: (revertible: RevertibleRevision) => void,
-	) {
-		this.kind = kind;
-		this.revision = revision;
-		// This is currently always the case, but we may want to support reverting remote ops
-		this.origin = { isLocal: true };
-	}
-
-	public get status(): RevertibleStatus {
-		return this.referenceCount === 0 ? RevertibleStatus.Disposed : RevertibleStatus.Valid;
-	}
-
-	public revert(): RevertibleResult {
-		if (this.status === RevertibleStatus.Valid) {
-			this.onRevert(this);
-			// If reverting leads to a schema change then the revertible will be disposed as part of the revert.
-			this.dispose(false);
-			return RevertibleResult.Success;
-		}
-		return RevertibleResult.Failure;
-	}
-
-	public retain(): RevertibleResult {
-		if (this.status === RevertibleStatus.Valid) {
-			this.referenceCount += 1;
-			return RevertibleResult.Success;
-		}
-		return RevertibleResult.Failure;
-	}
-
-	public discard(): RevertibleResult {
-		if (this.status === RevertibleStatus.Valid) {
-			if (this.referenceCount === 1) {
-				this.dispose();
-			} else {
-				this.referenceCount -= 1;
-			}
-			return RevertibleResult.Success;
-		}
-		return RevertibleResult.Failure;
-	}
-
-	public dispose(validateStatus = true): void {
-		if (this.status === RevertibleStatus.Valid) {
-			this.referenceCount = 0;
-			this.onDispose(this);
-		} else {
-			assert(validateStatus === false, "Cannot dispose already disposed revertible");
-		}
-	}
 }

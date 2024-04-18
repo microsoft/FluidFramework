@@ -4,10 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import { LoggingError } from "@fluidframework/telemetry-utils";
-import { PartialSequenceLengths, verify, verifyExpected } from "../partialLengths";
-import { MergeTree } from "../mergeTree";
-import { ReconnectTestHelper } from "./reconnectHelper";
+
+import { LoggingError } from "@fluidframework/telemetry-utils/internal";
+
+import { MergeTree } from "../mergeTree.js";
+
+import { ReconnectTestHelper } from "./reconnectHelper.js";
+import { useStrictPartialLengthChecks } from "./testUtils.js";
 
 /**
  * Some tests contain ASCII diagrams of the trees to make it easier to reason about
@@ -41,15 +44,13 @@ import { ReconnectTestHelper } from "./reconnectHelper";
 
 for (const incremental of [true, false]) {
 	describe(`obliterate partial lengths incremental = ${incremental}`, () => {
+		useStrictPartialLengthChecks();
+
 		beforeEach(() => {
-			PartialSequenceLengths.options.verifier = verify;
-			PartialSequenceLengths.options.verifyExpected = verifyExpected;
 			MergeTree.options.incrementalUpdate = incremental;
 		});
 
 		afterEach(() => {
-			PartialSequenceLengths.options.verifier = undefined;
-			PartialSequenceLengths.options.verifyExpected = undefined;
 			MergeTree.options.incrementalUpdate = true;
 		});
 

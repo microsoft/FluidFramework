@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "node:assert";
-import { MockLogger } from "../mockLogger";
+
+import { MockLogger } from "../mockLogger.js";
 
 describe("MockLogger", () => {
 	describe("matchEvents", () => {

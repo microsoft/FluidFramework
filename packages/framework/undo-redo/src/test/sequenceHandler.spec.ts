@@ -4,14 +4,16 @@
  */
 
 import { strict as assert } from "assert";
-import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
+
+import { SharedString, SharedStringFactory } from "@fluidframework/sequence/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { SharedSegmentSequenceUndoRedoHandler } from "../sequenceHandler";
-import { UndoRedoStackManager } from "../undoRedoStackManager";
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { SharedSegmentSequenceUndoRedoHandler } from "../sequenceHandler.js";
+import { UndoRedoStackManager } from "../undoRedoStackManager.js";
 
 const text =
 	"The SharedSegmentSequenceRevertible does the heavy lifting of tracking and reverting changes on the underlying SharedSegmentSequence. This is accomplished via TrackingGroup objects.";

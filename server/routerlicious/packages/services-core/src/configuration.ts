@@ -26,6 +26,9 @@ export interface IDeliServerConfiguration {
 	// Enables creating join/leave signals for write clients
 	enableWriteClientSignals: boolean;
 
+	// Enables ephemeral container summary deletion on deli close
+	enableEphemeralContainerSummaryCleanup: boolean;
+
 	// Enables deli to maintain batches as it produces them to the next lambdas
 	maintainBatches: boolean;
 
@@ -130,6 +133,15 @@ export interface IScribeServerConfiguration {
 
 	// Controls how often scribe should checkpoint
 	checkpointHeuristics: ICheckpointHeuristicsServerConfiguration;
+
+	// Enables scrubbing user data from protocol state quorum in Summaries
+	scrubUserDataInSummaries: boolean;
+
+	// Enables scrubbing user data from protocol state quorum in local checkpoints
+	scrubUserDataInLocalCheckpoints: boolean;
+
+	// Enables scrubbing user data from protocol state quorum in global checkpoints
+	scrubUserDataInGlobalCheckpoints: boolean;
 }
 
 /**
@@ -220,6 +232,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
 		enableNackMessages: true,
 		enableOpHashing: true,
 		enableAutoDSNUpdate: false,
+		enableEphemeralContainerSummaryCleanup: true,
 		checkForIdleClientsOnStartup: false,
 		maintainBatches: false,
 		enableWriteClientSignals: false,
@@ -270,6 +283,9 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
 			maxTime: 1 * 60 * 1000,
 			maxMessages: 500,
 		},
+		scrubUserDataInSummaries: false,
+		scrubUserDataInLocalCheckpoints: false,
+		scrubUserDataInGlobalCheckpoints: false,
 	},
 	moira: {
 		enable: false,

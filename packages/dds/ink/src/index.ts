@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export { Ink } from "./ink";
-export { InkCanvas } from "./inkCanvas";
-export { InkFactory } from "./inkFactory";
+export { Ink } from "./ink.js";
+export { InkCanvas } from "./inkCanvas.js";
+export { InkFactory } from "./inkFactory.js";
 export {
 	IClearOperation,
 	IColor,
@@ -17,4 +17,4 @@ export {
 	IInkStroke,
 	IPen,
 	IStylusOperation,
-} from "./interfaces";
+} from "./interfaces.js";

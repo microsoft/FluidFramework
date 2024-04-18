@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
 	ApiClass,
 	ApiDeclaredItem,
@@ -11,6 +12,7 @@ import {
 	type ApiItem,
 	type ApiItemKind,
 	ApiReturnTypeMixin,
+	ApiTypeParameterListMixin,
 	type Excerpt,
 	ExcerptTokenKind,
 	type HeritageType,
@@ -25,7 +27,7 @@ import {
 	type DocSection,
 } from "@microsoft/tsdoc";
 
-import { type Heading } from "../../Heading";
+import { type Heading } from "../../Heading.js";
 import {
 	type DocumentationNode,
 	DocumentationNodeType,
@@ -41,8 +43,8 @@ import {
 	SingleLineSpanNode,
 	SpanNode,
 	UnorderedListNode,
-} from "../../documentation-domain";
-import { type Logger } from "../../Logging";
+} from "../../documentation-domain/index.js";
+import { type Logger } from "../../Logging.js";
 import {
 	type ApiFunctionLike,
 	injectSeparator,
@@ -52,17 +54,17 @@ import {
 	getDeprecatedBlock,
 	getExampleBlocks,
 	getReturnsBlock,
-} from "../../utilities";
+} from "../../utilities/index.js";
 import {
 	doesItemKindRequireOwnDocument,
 	doesItemRequireOwnDocument,
 	getAncestralHierarchy,
 	getLinkForApiItem,
-} from "../ApiItemTransformUtilities";
-import { transformTsdocSection } from "../TsdocNodeTransforms";
-import { getTsdocNodeTransformationOptions } from "../Utilities";
-import { type ApiItemTransformationConfiguration } from "../configuration";
-import { createParametersSummaryTable, createTypeParametersSummaryTable } from "./TableHelpers";
+} from "../ApiItemTransformUtilities.js";
+import { transformTsdocSection } from "../TsdocNodeTransforms.js";
+import { getTsdocNodeTransformationOptions } from "../Utilities.js";
+import { type ApiItemTransformationConfiguration } from "../configuration/index.js";
+import { createParametersSummaryTable, createTypeParametersSummaryTable } from "./TableHelpers.js";
 
 /**
  * Generates a section for an API signature.
@@ -182,16 +184,6 @@ export function createHeritageTypesParagraph(
 		if (renderedImplementsTypes !== undefined) {
 			contents.push(new ParagraphNode([renderedImplementsTypes]));
 		}
-
-		// Render type parameters if there are any.
-		const renderedTypeParameters = createTypeParametersSection(
-			apiItem.typeParameters,
-			apiItem,
-			config,
-		);
-		if (renderedTypeParameters !== undefined) {
-			contents.push(new ParagraphNode([renderedTypeParameters]));
-		}
 	}
 
 	if (apiItem instanceof ApiInterface) {
@@ -204,16 +196,16 @@ export function createHeritageTypesParagraph(
 		if (renderedExtendsTypes !== undefined) {
 			contents.push(new ParagraphNode([renderedExtendsTypes]));
 		}
+	}
 
-		// Render type parameters if there are any.
+	// Render type parameters if there are any.
+	if (ApiTypeParameterListMixin.isBaseClassOf(apiItem) && apiItem.typeParameters.length > 0) {
 		const renderedTypeParameters = createTypeParametersSection(
 			apiItem.typeParameters,
 			apiItem,
 			config,
 		);
-		if (renderedTypeParameters !== undefined) {
-			contents.push(new ParagraphNode([renderedTypeParameters]));
-		}
+		contents.push(new ParagraphNode([renderedTypeParameters]));
 	}
 
 	if (contents.length === 0) {
@@ -275,19 +267,13 @@ function createHeritageTypeListSpan(
  * @param contextApiItem - The API item with which the example is associated.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  *
- * @returns The doc section if any type parameters were provided, otherwise `undefined`.
- *
  * @public
  */
 export function createTypeParametersSection(
 	typeParameters: readonly TypeParameter[],
 	contextApiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
-): SectionNode | undefined {
-	if (typeParameters.length === 0) {
-		return undefined;
-	}
-
+): SectionNode {
 	const typeParametersTable = createTypeParametersSummaryTable(
 		typeParameters,
 		contextApiItem,

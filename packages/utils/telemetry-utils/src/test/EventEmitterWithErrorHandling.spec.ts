@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "node:assert";
-import { EventEmitterWithErrorHandling } from "../eventEmitterWithErrorHandling";
+
+import { EventEmitterWithErrorHandling } from "../eventEmitterWithErrorHandling.js";
 
 describe("EventEmitterWithErrorHandling", () => {
 	let errorHandlerCalled = false;

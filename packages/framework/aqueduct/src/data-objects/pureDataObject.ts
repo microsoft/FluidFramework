@@ -4,20 +4,21 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
 import {
-	IEvent,
-	IFluidHandle,
-	IFluidLoadable,
-	IProvideFluidHandle,
-	IRequest,
-	IResponse,
+	type IEvent,
+	type IFluidHandle,
+	type IFluidLoadable,
+	type IProvideFluidHandle,
+	type IRequest,
+	type IResponse,
 } from "@fluidframework/core-interfaces";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { AsyncFluidObjectProvider } from "@fluidframework/synthesize";
-import { create404Response } from "@fluidframework/runtime-utils";
-import { DataObjectTypes, IDataObjectProps } from "./types";
+import { assert } from "@fluidframework/core-utils/internal";
+import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { type IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import { create404Response } from "@fluidframework/runtime-utils/internal";
+import { type AsyncFluidObjectProvider } from "@fluidframework/synthesize/internal";
+
+import { type DataObjectTypes, type IDataObjectProps } from "./types.js";
 
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
@@ -54,13 +55,21 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 
 	protected initializeP: Promise<void> | undefined;
 
-	public get id() {
+	public get id(): string {
 		return this.runtime.id;
 	}
-	public get IFluidLoadable() {
+
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#IProvideFluidLoadable.IFluidLoadable}
+	 */
+	public get IFluidLoadable(): this {
 		return this;
 	}
-	public get IFluidHandle() {
+
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#IProvideFluidHandle.IFluidHandle}
+	 */
+	public get IFluidHandle(): IFluidHandle<this> {
 		return this.handle;
 	}
 
@@ -75,7 +84,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 		return this.runtime.entryPoint as IFluidHandle<this>;
 	}
 
-	public static async getDataObject(runtime: IFluidDataStoreRuntime) {
+	public static async getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject> {
 		const obj = await runtime.entryPoint.get();
 		return obj as PureDataObject;
 	}
@@ -87,11 +96,15 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 		this.providers = props.providers;
 		this.initProps = props.initProps;
 
+		/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+		/* eslint-disable @typescript-eslint/no-explicit-any */
 		assert(
 			(this.runtime as any)._dataObject === undefined,
 			0x0bd /* "Object runtime already has DataObject!" */,
 		);
 		(this.runtime as any)._dataObject = this;
+		/* eslint-enable @typescript-eslint/no-explicit-any */
+		/* eslint-enable @typescript-eslint/no-unsafe-member-access */
 	}
 
 	/**

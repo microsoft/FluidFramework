@@ -20,18 +20,23 @@ import type {
 import { FileHandle } from "fs/promises";
 import { Stream } from "stream";
 import { Abortable } from "events";
-import { Redis as IoRedis, RedisOptions as IoRedisOptions } from "ioredis";
-import sizeof from "object-sizeof";
-import { getRandomInt } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import { IFileSystemManager, IFileSystemManagerParams, IFileSystemPromises } from "../definitions";
-import { getStats, ISystemError, packedRefsFileName, SystemErrors } from "../fileSystemHelper";
+import { getStats, packedRefsFileName, SystemErrors } from "../fileSystemHelper";
 import { HashMapRedis, IRedis, Redis, RedisParams } from "./redis";
+import {
+	executeRedisFsApiWithMetric,
+	RedisFsApis,
+	RedisFSConstants,
+	RedisFsError,
+} from "./helpers";
 
 export interface RedisFsConfig {
 	enableRedisFsMetrics: boolean;
 	redisApiMetricsSamplingPeriod: number;
 	maxFileSizeBytes: number;
+	enableOptimizedStat: boolean;
 }
 
 export class RedisFsManager implements IFileSystemManager {
@@ -43,58 +48,49 @@ export class RedisFsManager implements IFileSystemManager {
 
 	constructor(
 		redisParam: RedisParams,
-		redisOptions: IoRedisOptions,
 		redisFsConfig: RedisFsConfig,
+		private readonly redisClientConnectionManager: IRedisClientConnectionManager,
 		fsManagerParams?: IFileSystemManagerParams,
-		createRedisClient?: (options: IoRedisOptions) => IoRedis,
 	) {
 		this.promises = RedisFs.getInstance(
 			redisParam,
-			redisOptions,
 			redisFsConfig,
+			this.redisClientConnectionManager,
 			fsManagerParams,
-			createRedisClient,
 		);
 	}
 }
 
 export class RedisFs implements IFileSystemPromises {
-	private static redisClientInstance: IoRedis;
 	public readonly redisFsClient: IRedis;
 
 	constructor(
 		redisParams: RedisParams,
-		redisOptions: IoRedisOptions,
 		private readonly redisFsConfig: RedisFsConfig,
+		private readonly redisClientConnectionManager: IRedisClientConnectionManager,
 		fsManagerParams?: IFileSystemManagerParams,
-		createRedisClient: (options: IoRedisOptions) => IoRedis = (opts) => new IoRedis(opts),
 	) {
-		if (!RedisFs.redisClientInstance) {
-			RedisFs.redisClientInstance = createRedisClient(redisOptions);
-		}
 		this.redisFsClient =
 			fsManagerParams?.rootDir && redisParams.enableHashmapRedisFs
 				? new HashMapRedis(
 						fsManagerParams.rootDir,
-						RedisFs.redisClientInstance,
+						this.redisClientConnectionManager,
 						redisParams,
 				  )
-				: new Redis(RedisFs.redisClientInstance, redisParams);
+				: new Redis(this.redisClientConnectionManager, redisParams);
 	}
 
 	public static getInstance(
 		redisParams: RedisParams,
-		redisOptions: IoRedisOptions,
 		redisFsConfig: RedisFsConfig,
+		redisClientConnectionManager: IRedisClientConnectionManager,
 		fsManagerParams?: IFileSystemManagerParams,
-		createRedisClient?: (options: IoRedisOptions) => IoRedis,
 	): RedisFs {
 		return new RedisFs(
 			redisParams,
-			redisOptions,
 			redisFsConfig,
+			redisClientConnectionManager,
 			fsManagerParams,
-			createRedisClient,
 		);
 	}
 
@@ -121,16 +117,16 @@ export class RedisFs implements IFileSystemPromises {
 		filepath: PathLike | FileHandle,
 		options?: any,
 	): Promise<Buffer | string> {
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		const filepathString = filepath.toString();
 		// Do not read packed-ref files which are not supported in r11s scenarios
 		if (filepathString.includes(packedRefsFileName)) {
 			return undefined;
 		}
 
-		const data = await executeRedisFsApi(
+		const data = await executeRedisFsApiWithMetric(
 			async () => this.redisFsClient.get<string | Buffer>(filepathString),
 			RedisFsApis.ReadFile,
-			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
 			this.redisFsConfig.redisApiMetricsSamplingPeriod,
 			{
@@ -138,6 +134,9 @@ export class RedisFs implements IFileSystemPromises {
 			},
 			true,
 		);
+		if (data === undefined) {
+			throw new RedisFsError(SystemErrors.ENOENT, filepathString);
+		}
 		return data;
 	}
 
@@ -163,12 +162,14 @@ export class RedisFs implements IFileSystemPromises {
 			// eslint-disable-next-line @rushstack/no-new-null
 			| null,
 	): Promise<void> {
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		const filepathString = filepath.toString();
 		// Do not write packed-ref files which are not supported in r11s scenarios
 		if (filepathString.includes(packedRefsFileName)) {
 			return;
 		}
 
+<<<<<<< HEAD
 		if (
 			this.redisFsConfig.maxFileSizeBytes > 0 &&
 			sizeof(data) > this.redisFsConfig.maxFileSizeBytes
@@ -177,9 +178,11 @@ export class RedisFs implements IFileSystemPromises {
 		}
 
 		const result = await executeRedisFsApi(
+=======
+		const result = await executeRedisFsApiWithMetric(
+>>>>>>> main
 			async () => this.redisFsClient.set(filepathString, data),
 			RedisFsApis.WriteFile,
-			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
 			this.redisFsConfig.redisApiMetricsSamplingPeriod,
 			{
@@ -201,10 +204,9 @@ export class RedisFs implements IFileSystemPromises {
 	public async unlink(filepath: PathLike): Promise<void> {
 		const filepathString = filepath.toString();
 
-		await executeRedisFsApi(
+		await executeRedisFsApiWithMetric(
 			async () => this.redisFsClient.del(filepathString),
 			RedisFsApis.Unlink,
-			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
 			this.redisFsConfig.redisApiMetricsSamplingPeriod,
 			{
@@ -250,10 +252,9 @@ export class RedisFs implements IFileSystemPromises {
 	): Promise<string[] | Buffer[] | Dirent[]> {
 		const folderpathString = folderpath.toString();
 
-		const result = await executeRedisFsApi(
+		const result = await executeRedisFsApiWithMetric(
 			async () => this.redisFsClient.keysByPrefix(folderpathString),
 			RedisFsApis.Readdir,
-			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
 			this.redisFsConfig.redisApiMetricsSamplingPeriod,
 			{
@@ -310,11 +311,10 @@ export class RedisFs implements IFileSystemPromises {
 			redisFsClient: IRedis,
 			redisFsConfig: RedisFsConfig,
 		): Promise<void> {
-			await executeRedisFsApi(
+			await executeRedisFsApiWithMetric(
 				async (): Promise<void> =>
 					redisFsClient.setMany(paths.map((path) => ({ key: path, value: "" }))),
 				RedisFsApis.Mkdir,
-				RedisFSConstants.RedisFsApi,
 				redisFsConfig.enableRedisFsMetrics,
 				redisFsConfig.redisApiMetricsSamplingPeriod,
 				{ folderpathString: paths.length > 1 ? paths.join(", ") : paths[0] },
@@ -335,10 +335,9 @@ export class RedisFs implements IFileSystemPromises {
 		// this method is used by `rm(..., {recursive: true}).
 		// If implementing this as an actual FS, this should fail if directory is not empty, and
 		// `delAll` usage should be moved to `rm` instead.
-		await executeRedisFsApi(
+		await executeRedisFsApiWithMetric(
 			async () => this.redisFsClient.delAll(folderpathString),
 			RedisFsApis.Rmdir,
-			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
 			this.redisFsConfig.redisApiMetricsSamplingPeriod,
 			{
@@ -372,10 +371,18 @@ export class RedisFs implements IFileSystemPromises {
 	public async stat(filepath: PathLike, options?: StatOptions): Promise<Stats | BigIntStats>;
 	public async stat(filepath: PathLike, options?: any): Promise<Stats | BigIntStats> {
 		const filepathString = filepath.toString();
-		const data = await executeRedisFsApi(
-			async () => this.redisFsClient.get<string | Buffer>(filepathString),
+		const dataLength = await executeRedisFsApiWithMetric(
+			async () => {
+				if (this.redisFsConfig.enableOptimizedStat) {
+					return this.redisFsClient.peek(filepathString);
+				}
+				const data = await this.redisFsClient.get<string | Buffer>(filepathString);
+				if (data === null || data === undefined) {
+					return -1;
+				}
+				return data.length;
+			},
 			RedisFsApis.Stat,
-			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
 			this.redisFsConfig.redisApiMetricsSamplingPeriod,
 			{
@@ -384,11 +391,11 @@ export class RedisFs implements IFileSystemPromises {
 			true,
 		);
 
-		if (data === null) {
+		if (dataLength === -1) {
 			throw new RedisFsError(SystemErrors.ENOENT, filepath.toString());
 		}
 
-		const fsEntityType = data === "" ? RedisFSConstants.directory : RedisFSConstants.file;
+		const fsEntityType = dataLength === 0 ? RedisFSConstants.directory : RedisFSConstants.file;
 
 		return getStats(fsEntityType);
 	}
@@ -409,10 +416,9 @@ export class RedisFs implements IFileSystemPromises {
 			return this.rmdir(filepath);
 		}
 
-		await executeRedisFsApi(
+		await executeRedisFsApiWithMetric(
 			async () => this.redisFsClient.del(filepathString),
 			RedisFsApis.Removefile,
-			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
 			this.redisFsConfig.redisApiMetricsSamplingPeriod,
 			{
@@ -491,66 +497,5 @@ export class RedisFs implements IFileSystemPromises {
 	 */
 	public async chmod(filepath: PathLike, mode: Mode): Promise<void> {
 		throw Error("Not implemented");
-	}
-}
-
-class RedisFsError extends Error {
-	public get code() {
-		return this.err.code;
-	}
-
-	constructor(
-		public readonly err: ISystemError,
-		message?: string,
-	) {
-		super(message ? `${err.description}: ${message}` : err.description);
-		this.name = "RedisFsError";
-	}
-}
-
-enum RedisFsApis {
-	ReadFile = "ReadFile",
-	WriteFile = "WriteFile",
-	Unlink = "Unlink",
-	Readdir = "Readdir",
-	Removefile = "Removefile",
-	Stat = "Stat",
-	Mkdir = "Mkdir",
-	Rmdir = "Rmdir",
-	KeysByPrefix = "keysByPrefix",
-}
-
-enum RedisFSConstants {
-	file = "file",
-	directory = "directory",
-	RedisFsApi = "RedisFsApi",
-}
-
-async function executeRedisFsApi<T>(
-	api: () => Promise<T>,
-	apiName: string,
-	metricName: string,
-	metricEnabled: boolean,
-	samplingPeriod: number,
-	telemetryProperties?: Record<string, any>,
-	logResponseSize: boolean = false,
-): Promise<T> {
-	if (!metricEnabled || (samplingPeriod && getRandomInt(samplingPeriod) !== 0)) {
-		return api();
-	}
-
-	const metric = Lumberjack.newLumberMetric(metricName, telemetryProperties);
-	try {
-		let responseSize;
-		const result = await api();
-		if (logResponseSize) {
-			responseSize = sizeof(result);
-		}
-		metric.setProperty("responseSize", responseSize);
-		metric.success(`${metricName}: ${apiName} success`);
-		return result;
-	} catch (error: any) {
-		metric.error(`${metricName}: ${apiName} error`, error);
-		throw error;
 	}
 }

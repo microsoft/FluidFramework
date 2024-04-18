@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
-import {
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	ChannelFactoryRegistry,
-	ITestFluidObject,
-} from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { benchmark } from "@fluid-tools/benchmark";
+import { ISharedCounter, SharedCounter } from "@fluidframework/counter/internal";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+} from "@fluidframework/test-utils/internal";
 
 const counterId = "counterKey";
 const registry: ChannelFactoryRegistry = [[counterId, SharedCounter.getFactory()]];
@@ -21,7 +21,7 @@ const testContainerConfig: ITestContainerConfig = {
 	registry,
 };
 
-describeCompat("SharedCounter - runtime benchmarks", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("SharedCounter - runtime benchmarks", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const counters: ISharedCounter[] = [];
 

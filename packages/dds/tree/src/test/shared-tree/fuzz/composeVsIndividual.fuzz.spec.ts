@@ -2,73 +2,80 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
+
+import { strict as assert, fail } from "assert";
+
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	AsyncGenerator,
 	combineReducersAsync,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import {
+	DDSFuzzHarnessEvents,
 	DDSFuzzModel,
 	DDSFuzzTestState,
 	createDDSFuzzSuite,
-	DDSFuzzHarnessEvents,
 } from "@fluid-private/test-dds-utils";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+
 import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils.js";
-import { ITreeViewFork, FlexTreeView } from "../../../shared-tree/index.js";
+
 import {
-	makeOpGenerator,
 	EditGeneratorOpWeights,
 	FuzzTestState,
+	FuzzTransactionView,
+	FuzzView,
+	makeOpGenerator,
 	viewFromState,
 } from "./fuzzEditGenerators.js";
-import { applyFieldEdit, applySynchronizationOp, applyUndoRedoEdit } from "./fuzzEditReducers.js";
 import {
-	deterministicIdCompressorFactory,
-	fuzzSchema,
-	isRevertibleSharedTreeView,
-} from "./fuzzUtils.js";
+	applyFieldEdit,
+	applySchemaOp,
+	applySynchronizationOp,
+	applyUndoRedoEdit,
+} from "./fuzzEditReducers.js";
+import { deterministicIdCompressorFactory, isRevertibleSharedTreeView } from "./fuzzUtils.js";
 import { Operation } from "./operationTypes.js";
 
 /**
  * This interface is meant to be used for tests that require you to store a branch of a tree
  */
 interface BranchedTreeFuzzTestState extends FuzzTestState {
-	main?: FlexTreeView<typeof fuzzSchema.rootFieldSchema>;
-	branch?: ITreeViewFork<typeof fuzzSchema.rootFieldSchema>;
+	main?: FuzzView;
+	branch?: FuzzTransactionView;
 }
 
 const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, BranchedTreeFuzzTestState>({
-	edit: async (state, operation) => {
-		const { contents } = operation;
-		switch (contents.type) {
+	treeEdit: async (state, { edit }) => {
+		switch (edit.type) {
 			case "fieldEdit": {
 				const tree = state.branch;
 				assert(tree !== undefined);
-				applyFieldEdit(tree, contents);
+				applyFieldEdit(tree, edit);
 				break;
 			}
 			default:
-				break;
+				fail("Unknown tree edit type");
 		}
 		return state;
 	},
-	transaction: async (state, operation) => {
+	transactionBoundary: async (state, operation) => {
 		assert.fail(
 			"Transactions are simulated manually in these tests and should not be generated.",
 		);
 	},
-	undoRedo: async (state, operation) => {
-		const { contents } = operation;
+	undoRedo: async (state, { operation }) => {
 		const tree = state.main ?? assert.fail();
 		assert(isRevertibleSharedTreeView(tree.checkout));
-		applyUndoRedoEdit(tree.checkout.undoStack, tree.checkout.redoStack, contents);
+		applyUndoRedoEdit(tree.checkout.undoStack, tree.checkout.redoStack, operation);
 		return state;
 	},
 	synchronizeTrees: async (state) => {
 		applySynchronizationOp(state);
 		return state;
+	},
+	schemaChange: async (state, operation) => {
+		applySchemaOp(state, operation);
 	},
 });
 
@@ -84,10 +91,15 @@ describe("Fuzz - composed vs individual changes", () => {
 	const runsPerBatch = 50;
 
 	// "start" and "commit" opWeights set to 0 in case there are changes to the default weights.
+	// AB#7593: schema weight is currently set to 0, as most tests are failing with various branch related asserts,
+	// assert 0x675, "Expected branch to be tracked"
 	const composeVsIndividualWeights: Partial<EditGeneratorOpWeights> = {
+		set: 2,
+		clear: 1,
 		insert: 1,
 		remove: 2,
-		move: 2,
+		intraFieldMove: 2,
+		crossFieldMove: 2,
 		fieldSelection: {
 			optional: 1,
 			required: 1,
@@ -96,6 +108,7 @@ describe("Fuzz - composed vs individual changes", () => {
 		},
 		start: 0,
 		commit: 0,
+		schema: 0,
 	};
 
 	describe("converges to the same tree", () => {
@@ -116,7 +129,8 @@ describe("Fuzz - composed vs individual changes", () => {
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: BranchedTreeFuzzTestState) => {
 			initialState.main = viewFromState(initialState, initialState.clients[0]);
-			initialState.branch = initialState.main.fork();
+			initialState.branch = initialState.main.fork() as FuzzTransactionView;
+			initialState.branch.currentSchema = initialState.main.currentSchema;
 			initialState.branch.checkout.transaction.start();
 		});
 		emitter.on("testEnd", (finalState: BranchedTreeFuzzTestState) => {
@@ -132,6 +146,12 @@ describe("Fuzz - composed vs individual changes", () => {
 			numberOfClients: 1,
 			emitter,
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
+			detachedStartOptions: {
+				numOpsBeforeAttach: 5,
+				// This test can't use rehydrate as it holds on to the original client instance.
+				// to hook into.
+				rehydrateDisabled: true,
+			},
 		});
 	});
 });

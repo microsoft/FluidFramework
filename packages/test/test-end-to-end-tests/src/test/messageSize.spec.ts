@@ -3,36 +3,36 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-nodejs-modules
 import * as crypto from "crypto";
-import { strict as assert } from "assert";
-import type { SharedMap } from "@fluidframework/map";
-import {
-	ITestFluidObject,
-	ChannelFactoryRegistry,
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
-	ConfigTypes,
-	FluidErrorTypes,
-	IConfigProviderBase,
-	IErrorBase,
-} from "@fluidframework/core-interfaces";
-import { FlushMode } from "@fluidframework/runtime-definitions";
-import { CompressionAlgorithms, ContainerMessageType } from "@fluidframework/container-runtime";
+	CompressionAlgorithms,
+	ContainerMessageType,
+} from "@fluidframework/container-runtime/internal";
+import { ConfigTypes, IConfigProviderBase, IErrorBase } from "@fluidframework/core-interfaces";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
+import type { ISharedMap } from "@fluidframework/map/internal";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { GenericError } from "@fluidframework/telemetry-utils";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import { GenericError } from "@fluidframework/telemetry-utils/internal";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
-describeCompat("Message size", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
+describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 	const mapId = "mapId";
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
@@ -51,8 +51,8 @@ describeCompat("Message size", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) =
 	let remoteContainer: IContainer;
 	let localDataObject: ITestFluidObject;
 	let remoteDataObject: ITestFluidObject;
-	let localMap: SharedMap;
-	let remoteMap: SharedMap;
+	let localMap: ISharedMap;
+	let remoteMap: ISharedMap;
 
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => {
 		return {
@@ -72,12 +72,12 @@ describeCompat("Message size", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) =
 		// Create a Container for the first client.
 		localContainer = await provider.makeTestContainer(configWithFeatureGates);
 		localDataObject = (await localContainer.getEntryPoint()) as ITestFluidObject;
-		localMap = await localDataObject.getSharedObject<SharedMap>(mapId);
+		localMap = await localDataObject.getSharedObject<ISharedMap>(mapId);
 
 		// Load the Container that was created by the first client.
 		remoteContainer = await provider.loadTestContainer(configWithFeatureGates);
 		remoteDataObject = (await remoteContainer.getEntryPoint()) as ITestFluidObject;
-		remoteMap = await remoteDataObject.getSharedObject<SharedMap>(mapId);
+		remoteMap = await remoteDataObject.getSharedObject<ISharedMap>(mapId);
 
 		await waitForContainerConnection(localContainer, true);
 		await waitForContainerConnection(remoteContainer, true);
@@ -91,13 +91,13 @@ describeCompat("Message size", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) =
 		crypto.randomBytes(sizeInBytes / 2).toString("hex");
 	const generateStringOfSize = (sizeInBytes: number): string =>
 		new Array(sizeInBytes + 1).join("0");
-	const setMapKeys = (map: SharedMap, count: number, item: string): void => {
+	const setMapKeys = (map: ISharedMap, count: number, item: string): void => {
 		for (let i = 0; i < count; i++) {
 			map.set(`key${i}`, item);
 		}
 	};
 
-	const assertMapValues = (map: SharedMap, count: number, expected: string): void => {
+	const assertMapValues = (map: ISharedMap, count: number, expected: string): void => {
 		for (let i = 0; i < count; i++) {
 			const value = map.get(`key${i}`);
 			assert.strictEqual(value, expected, `Wrong value for key${i}`);
@@ -391,7 +391,11 @@ describeCompat("Message size", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) =
 					).timeout(chunkingBatchesTimeoutMs);
 				}));
 
-			itExpects(
+			/**
+			 * ADO:6510 to investigate and re-enable.
+			 * The test times out likely due to its nature of creating large payloads.
+			 */
+			itExpects.skip(
 				"Large ops fail when compression chunking is disabled by feature gate",
 				[
 					{
@@ -635,7 +639,8 @@ describeCompat("Message size", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) =
 
 			it("Reconnects while sending chunks", async function () {
 				// This is not supported by the local server. See ADO:2690
-				if (provider.driver.type === "local") {
+				// This test is flaky on tinylicious. See ADO:7669
+				if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
 					this.skip();
 				}
 

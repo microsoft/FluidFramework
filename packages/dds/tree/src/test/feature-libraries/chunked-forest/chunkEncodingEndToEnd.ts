@@ -2,8 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
+
+import { SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
+
 import {
 	ChangesetLocalId,
 	IEditableForest,
@@ -12,6 +15,16 @@ import {
 } from "../../../core/index.js";
 import { leaf } from "../../../domains/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
+import {
+	Chunker,
+	defaultChunkPolicy,
+	tryShapeFromSchema,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/chunked-forest/chunkTree.js";
+// eslint-disable-next-line import/no-internal-modules
+import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
+// eslint-disable-next-line import/no-internal-modules
+import { TreeShape, UniformChunk } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
 	Context,
 	DefaultChangeFamily,
@@ -23,24 +36,16 @@ import {
 	buildChunkedForest,
 	createMockNodeKeyManager,
 	defaultSchemaPolicy,
+	fieldKindConfigurations,
 	getTreeContext,
 	intoStoredSchema,
 	makeFieldBatchCodec,
+	makeModularChangeCodecFamily,
 	nodeKeyFieldKey,
 } from "../../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { TreeShape, UniformChunk } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import { ForestType } from "../../../shared-tree/index.js";
-import { flexTreeViewWithContent, numberSequenceRootSchema } from "../../utils.js";
 import { brand } from "../../../util/index.js";
-import {
-	Chunker,
-	defaultChunkPolicy,
-	tryShapeFromSchema,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/chunked-forest/chunkTree.js";
-// eslint-disable-next-line import/no-internal-modules
-import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
+import { flexTreeViewWithContent, numberSequenceRootSchema } from "../../utils.js";
 
 const options = {
 	jsonValidator: typeboxValidator,
@@ -53,7 +58,7 @@ const context = {
 	schema: { schema: intoStoredSchema(numberSequenceRootSchema), policy: defaultSchemaPolicy },
 };
 
-const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: typeboxValidator });
+const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: typeboxValidator }, 1);
 const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
 const idCompressor = createIdCompressor(sessionId);
 const revisionTagCodec = new RevisionTagCodec(idCompressor);
@@ -83,10 +88,14 @@ describe("End to end chunked encoding", () => {
 			const changeReceiver = (change: ModularChangeset) => {
 				changeLog.push(change);
 			};
+			const codec = makeModularChangeCodecFamily(
+				fieldKindConfigurations,
+				revisionTagCodec,
+				fieldBatchCodec,
+				{ jsonValidator: typeboxValidator },
+			);
 			const dummyEditor = new DefaultEditBuilder(
-				new DefaultChangeFamily(revisionTagCodec, fieldBatchCodec, {
-					jsonValidator: typeboxValidator,
-				}),
+				new DefaultChangeFamily(codec),
 				changeReceiver,
 			);
 			return getTreeContext(

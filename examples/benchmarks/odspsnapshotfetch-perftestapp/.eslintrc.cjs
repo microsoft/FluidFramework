@@ -4,7 +4,7 @@
  */
 
 module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal")],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated")],
 	rules: {
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"import/no-extraneous-dependencies": "off",

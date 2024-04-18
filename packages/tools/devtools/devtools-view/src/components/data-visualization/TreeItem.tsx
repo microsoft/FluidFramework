@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
 import {
 	Tree as FluentTree,
 	TreeItem as FluentTreeItem,
 	TreeItemLayout as FluentTreeItemLayout,
-} from "@fluentui/react-components/unstable";
+} from "@fluentui/react-components";
+import React from "react";
 
 /**
  * Input to {@link TreeItem}
@@ -25,15 +25,15 @@ export type TreeItemProps = React.PropsWithChildren<{
 /**
  * Constructs a tree element from the provided header and child contents.
  *
- * Intended to be used inside an outer {@link @fluentui/react-components/unstable#Tree} context.
+ * Intended to be used inside an outer {@link @fluentui/react-components#Tree} context.
  */
 export function TreeItem(props: TreeItemProps): React.ReactElement {
 	const { children, header } = props;
 
-	const isLeaf = React.Children.count(children) === 0;
+	const itemType = React.Children.count(children) === 0 ? "leaf" : "branch";
 
 	return (
-		<FluentTreeItem leaf={isLeaf} data-testid="tree-button">
+		<FluentTreeItem itemType={itemType}>
 			<FluentTreeItemLayout>{header}</FluentTreeItemLayout>
 
 			<FluentTree>{children}</FluentTree>

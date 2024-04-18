@@ -193,16 +193,18 @@
 	> li li > a {
 		padding: 5px 25px;
 		position: relative;
-
-
-		/* Further increased padding for specific API endpoints */
-		&.leaf-node {
-			padding: 5px 45px;
-		}
 	}
 
-	.docs-home {
-		padding-bottom: 16px;
+	.padding-35px {
+		padding: 5px 35px;
+	}
+
+	.padding-45px {
+		padding: 5px 45px;
+	}
+
+	.padding-55px {
+		padding: 5px 55px;
 	}
 
 	> li > .area {
@@ -239,6 +241,9 @@
 				&:hover {
 					background-image: url("/expand-up.svg");
 				}
+				&.nav-page {
+						background-image: none;
+				}
 			}
 		}
 	
@@ -246,6 +251,9 @@
 			a, div {
 				&:hover {
 					background-image: url("/expand-down.svg");
+				}
+				&.nav-page {
+						background-image: none;
 				}
 			}
 		}

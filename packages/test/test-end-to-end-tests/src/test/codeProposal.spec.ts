@@ -4,24 +4,25 @@
  */
 
 import { strict as assert } from "assert";
+
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import {
 	IContainer,
 	IFluidCodeDetails,
 	IFluidCodeDetailsComparer,
 	IFluidPackage,
 	isFluidPackage,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
+import type { ISharedMap } from "@fluidframework/map/internal";
 import {
-	createAndAttachContainer,
-	createDocumentId,
-	getContainerEntryPointBackCompat,
 	ITestFluidObject,
 	ITestObjectProvider,
 	SupportedExportInterfaces,
 	TestFluidObjectFactory,
-} from "@fluidframework/test-utils";
-import type { ISharedMap } from "@fluidframework/map";
-import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
+	createAndAttachContainer,
+	createDocumentId,
+	getContainerEntryPointBackCompat,
+} from "@fluidframework/test-utils/internal";
 
 interface ICodeProposalTestPackage extends IFluidPackage {
 	version: number;
@@ -38,7 +39,7 @@ function isCodeProposalTestPackage(pkg: unknown): pkg is ICodeProposalTestPackag
 }
 
 // REVIEW: enable compat testing?
-describeCompat("CodeProposal.EndToEnd", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
+describeCompat("CodeProposal.EndToEnd", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 	const packageV1: ICodeProposalTestPackage = {
 		name: "test",

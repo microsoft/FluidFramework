@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-const fluidRoute = require("@fluid-tools/webpack-fluid-loader");
+const fluidRoute = require("@fluid-example/webpack-fluid-loader");
 const path = require("path");
 const { merge } = require("webpack-merge");
 const webpack = require("webpack");
@@ -20,7 +20,7 @@ module.exports = (env) => {
 				// This ensures that webpack understands fully-specified relative module imports.
 				// See https://github.com/webpack/webpack/issues/13252 for more discussion.
 				extensionAlias: {
-					".js": [".ts", ".tsx", ".js"],
+					".js": [".ts", ".tsx", ".js", ".cjs", ".mjs"],
 					".mjs": [".mts", ".mtsx", ".mjs"],
 				},
 				fallback: {

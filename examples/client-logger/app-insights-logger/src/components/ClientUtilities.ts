@@ -2,13 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { createLogger } from "@fluidframework/app-insights-logger";
+
+import { createLogger } from "@fluidframework/app-insights-logger/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import {
 	TinyliciousClient,
 	TinyliciousContainerServices,
-} from "@fluidframework/tinylicious-client";
+} from "@fluidframework/tinylicious-client/internal";
 import { ApplicationInsights } from "@microsoft/applicationinsights-web";
 
 /**

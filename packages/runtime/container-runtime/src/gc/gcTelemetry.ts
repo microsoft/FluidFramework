@@ -3,27 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryGenericEvent } from "@fluidframework/core-interfaces";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
-	generateStack,
+	type ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
-	MonitoringContext,
-	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
-import { RuntimeHeaderData } from "../containerRuntime";
-import { ICreateContainerMetadata } from "../summary";
 import {
-	GCNodeType,
-	UnreferencedState,
-	IGarbageCollectorConfigs,
-	disableTombstoneKey,
-	throwOnTombstoneUsageKey,
-	throwOnTombstoneLoadOverrideKey,
-	runSweepKey,
+	MonitoringContext,
+	generateStack,
+	tagCodeArtifacts,
+} from "@fluidframework/telemetry-utils/internal";
+
+import { RuntimeHeaderData } from "../containerRuntime.js";
+import { ICreateContainerMetadata } from "../summary/index.js";
+
+import {
 	GCFeatureMatrix,
-} from "./gcDefinitions";
-import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
+	GCNodeType,
+	IGarbageCollectorConfigs,
+	UnreferencedState,
+	disableTombstoneKey,
+	runSweepKey,
+	throwOnTombstoneLoadOverrideKey,
+	throwOnTombstoneUsageKey,
+} from "./gcDefinitions.js";
+import { getGCVersionInEffect } from "./gcHelpers.js";
+import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker.js";
 
 type NodeUsageType = "Changed" | "Loaded" | "Revived";
 
@@ -343,7 +348,9 @@ export class GCTelemetryTracker {
 			}
 
 			if (missingExplicitRoutes.length > 0) {
-				logger.sendErrorEvent({
+				// Send as Generic not Error since there are known corner cases where this will fire.
+				// E.g. If an old client re-references a node via an attach op (that doesn't include GC Data)
+				logger.sendTelemetryEvent({
 					eventName: "gcUnknownOutboundReferences",
 					...tagCodeArtifacts({
 						id: nodeId,
@@ -411,7 +418,7 @@ export class GCTelemetryTracker {
  */
 export function sendGCUnexpectedUsageEvent(
 	mc: MonitoringContext,
-	event: ITelemetryGenericEvent & {
+	event: ITelemetryGenericEventExt & {
 		category: "error" | "generic";
 		gcTombstoneEnforcementAllowed: boolean | undefined;
 	},
@@ -427,6 +434,7 @@ export function sendGCUnexpectedUsageEvent(
 	event.sweepFlags = JSON.stringify({
 		EnableSweepFlag: mc.config.getBoolean(runSweepKey),
 	});
+	event.gcVersion = getGCVersionInEffect(mc.config);
 
 	mc.logger.sendTelemetryEvent(event, error);
 }

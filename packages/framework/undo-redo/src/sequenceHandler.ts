@@ -4,14 +4,15 @@
  */
 
 import {
-	appendToMergeTreeDeltaRevertibles,
-	discardMergeTreeDeltaRevertible,
 	ISegment,
 	MergeTreeDeltaRevertible,
+	appendToMergeTreeDeltaRevertibles,
+	discardMergeTreeDeltaRevertible,
 	revertMergeTreeDeltaRevertibles,
-} from "@fluidframework/merge-tree";
-import { SequenceDeltaEvent, SharedSegmentSequence } from "@fluidframework/sequence";
-import { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager";
+} from "@fluidframework/merge-tree/internal";
+import { SequenceDeltaEvent, SharedSegmentSequence } from "@fluidframework/sequence/internal";
+
+import { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager.js";
 
 /**
  * A shared segment sequence undo redo handler that will add all local sequences changes to the provided

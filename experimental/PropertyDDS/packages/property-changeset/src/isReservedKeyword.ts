@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * Checks whether the given key from a ChangeSet is not a typeid, but one of the
  * reserved keywords.

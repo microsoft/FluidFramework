@@ -4,27 +4,27 @@
 
 ```ts
 
-import { createLocalResolverCreateNewRequest } from '@fluidframework/local-driver';
-import { createOdspCreateContainerRequest } from '@fluidframework/odsp-driver';
-import { createOdspUrl } from '@fluidframework/odsp-driver';
-import { HostStoragePolicy } from '@fluidframework/odsp-driver-definitions';
-import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
+import { createLocalResolverCreateNewRequest } from '@fluidframework/local-driver/internal';
+import { createOdspCreateContainerRequest } from '@fluidframework/odsp-driver/internal';
+import { createOdspUrl } from '@fluidframework/odsp-driver/internal';
+import { HostStoragePolicy } from '@fluidframework/odsp-driver-definitions/internal';
+import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
 import { ILocalDeltaConnectionServer } from '@fluidframework/server-local-server';
-import { InsecureTinyliciousUrlResolver } from '@fluidframework/tinylicious-driver';
-import { InsecureUrlResolver } from '@fluidframework/driver-utils';
+import { InsecureTinyliciousUrlResolver } from '@fluidframework/tinylicious-driver/internal';
+import { InsecureUrlResolver } from '@fluidframework/driver-utils/internal';
 import { IRequest } from '@fluidframework/core-interfaces';
-import { IResolvedUrl } from '@fluidframework/driver-definitions';
-import { ITestDriver } from '@fluidframework/test-driver-definitions';
-import { IUrlResolver } from '@fluidframework/driver-definitions';
+import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
+import { ITestDriver } from '@fluid-internal/test-driver-definitions';
+import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
 import { LocalDeltaConnectionServer } from '@fluidframework/server-local-server';
-import { LocalDocumentServiceFactory } from '@fluidframework/local-driver';
-import { LocalResolver } from '@fluidframework/local-driver';
-import { OdspDocumentServiceFactory } from '@fluidframework/odsp-driver';
-import { OdspDriverUrlResolver } from '@fluidframework/odsp-driver';
-import { OdspEndpoint } from '@fluidframework/test-driver-definitions';
-import { RouterliciousDocumentServiceFactory } from '@fluidframework/routerlicious-driver';
-import { RouterliciousEndpoint } from '@fluidframework/test-driver-definitions';
-import { TestDriverTypes } from '@fluidframework/test-driver-definitions';
+import { LocalDocumentServiceFactory } from '@fluidframework/local-driver/internal';
+import { LocalResolver } from '@fluidframework/local-driver/internal';
+import { OdspDocumentServiceFactory } from '@fluidframework/odsp-driver/internal';
+import { OdspDriverUrlResolver } from '@fluidframework/odsp-driver/internal';
+import { OdspEndpoint } from '@fluid-internal/test-driver-definitions';
+import { RouterliciousDocumentServiceFactory } from '@fluidframework/routerlicious-driver/internal';
+import { RouterliciousEndpoint } from '@fluid-internal/test-driver-definitions';
+import { TestDriverTypes } from '@fluid-internal/test-driver-definitions';
 
 // @internal (undocumented)
 export function assertOdspEndpoint(endpoint: string | undefined): asserts endpoint is OdspEndpoint | undefined;
@@ -76,7 +76,7 @@ export type LocalDriverApiType = typeof LocalDriverApi;
 
 // @internal (undocumented)
 export class LocalServerTestDriver implements ITestDriver {
-    constructor(api?: LocalDriverApiType);
+    constructor(api?: LocalDriverApiType, maxOpsBeforeSummary?: number);
     // (undocumented)
     createContainerUrl(testId: string): Promise<string>;
     // (undocumented)

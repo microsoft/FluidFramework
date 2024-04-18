@@ -4,7 +4,7 @@
  */
 
 module.exports = {
-	extends: ["@fluidframework/eslint-config-fluid/minimal", "prettier"],
+	extends: ["@fluidframework/eslint-config-fluid/minimal-deprecated", "prettier"],
 	parserOptions: {
 		project: ["./tsconfig.json"],
 	},
@@ -15,8 +15,5 @@ module.exports = {
 		"@typescript-eslint/no-non-null-assertion": "off",
 		"@typescript-eslint/unbound-method": "off",
 		"import/no-unassigned-import": "off",
-
-		// This library is used in the browser, so we don't want dependencies on most node libraries.
-		"import/no-nodejs-modules": ["error", { allow: ["events"] }],
 	},
 };

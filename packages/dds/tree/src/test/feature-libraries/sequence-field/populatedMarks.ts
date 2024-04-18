@@ -4,10 +4,9 @@
  */
 
 import { IIdCompressor } from "@fluidframework/id-compressor";
-import { SequenceField as SF } from "../../../feature-libraries/index.js";
-import { brand, Populated } from "../../../util/index.js";
+
 import { ChangeAtomId } from "../../../core/index.js";
-import { TestChange } from "../../testChange.js";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { CellMark, DetachIdOverrideType } from "../../../feature-libraries/sequence-field/index.js";
 import {
@@ -17,10 +16,11 @@ import {
 	MarkEffect,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/types.js";
+import { TestNodeId } from "../../testNodeId.js";
+import { Populated, brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
 
-export type PopulatedMark<TNodeChange = TestChange> = Populated<
-	CellMark<Populated<MarkEffect>, TNodeChange>
->;
+export type PopulatedMark = Populated<CellMark<Populated<MarkEffect>>>;
 
 /**
  * Generates a list of marks with all fields populated.
@@ -44,7 +44,7 @@ export function generatePopulatedMarks(idCompressor: IIdCompressor): PopulatedMa
 		lineage: [lineageEvent],
 		adjacentCells: [adjacentCell],
 	};
-	const changes = TestChange.mint([], 1);
+	const changes = TestNodeId.create({ localId: brand(2) }, TestChange.mint([], 1));
 	const unattachIdOverride: Populated<DetachIdOverride> = {
 		type: DetachIdOverrideType.Unattach,
 		id: cellId,

@@ -5,23 +5,23 @@
 
 import assert from "assert";
 
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	DefaultSummaryConfiguration,
 	IAckedSummary,
 	IContainerRuntimeOptions,
-	SummaryCollection,
 	ISummaryConfiguration,
-} from "@fluidframework/container-runtime";
-import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
+	SummaryCollection,
+} from "@fluidframework/container-runtime/internal";
+import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
+} from "@fluidframework/test-utils/internal";
 
-describeCompat("Generate Summary Stats", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
+describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, apis) => {
 	const {
 		dataRuntime: { DataObject, DataObjectFactory },
 		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },

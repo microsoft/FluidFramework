@@ -6,29 +6,29 @@
 import { strict as assert } from "assert";
 
 import {
-	FlexFieldSchema,
-	FullSchemaPolicy,
-	ViewSchema,
-	FieldKinds,
-	defaultSchemaPolicy,
-	FlexTreeSchema,
-} from "../../../feature-libraries/index.js";
-import {
-	TreeFieldStoredSchema,
-	TreeNodeStoredSchema,
-	TreeNodeSchemaIdentifier,
-	TreeStoredSchemaRepository,
 	Adapters,
 	Compatibility,
-	storedEmptyFieldSchema,
+	TreeFieldStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeNodeStoredSchema,
 	TreeStoredSchema,
+	TreeStoredSchemaRepository,
+	storedEmptyFieldSchema,
 } from "../../../core/index.js";
+import { SchemaBuilder, leaf } from "../../../domains/index.js";
+import {
+	FieldKinds,
+	FlexFieldSchema,
+	FlexTreeSchema,
+	FullSchemaPolicy,
+	ViewSchema,
+	defaultSchemaPolicy,
+} from "../../../feature-libraries/index.js";
 import {
 	allowsFieldSuperset,
 	allowsTreeSuperset,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-import { SchemaBuilder, leaf } from "../../../domains/index.js";
 
 class TestSchemaRepository extends TreeStoredSchemaRepository {
 	public constructor(
@@ -229,7 +229,7 @@ describe("Schema Evolution Examples", () => {
 			);
 			assert(stored.tryUpdateTreeSchema(text.name, text.stored));
 			assert(stored.tryUpdateTreeSchema(codePoint.name, codePoint.stored));
-			assert(stored.tryUpdateRootFieldSchema(tolerantRoot));
+			assert(stored.tryUpdateRootFieldSchema(tolerantRoot.stored));
 			assert(stored.tryUpdateTreeSchema(leaf.number.name, leaf.number.stored));
 			assert(stored.tryUpdateTreeSchema(leaf.boolean.name, leaf.boolean.stored));
 			assert(stored.tryUpdateTreeSchema(leaf.string.name, leaf.string.stored));
@@ -389,7 +389,7 @@ describe("Schema Evolution Examples", () => {
 	// 	);
 	// 	const builder = new SchemaBuilder("adapters examples", defaultContentLibrary);
 	// 	const formattedText = builder.objectRecursive(formattedTextIdentifier, {
-	// 		content: TreeFieldSchema.createUnsafe(
+	// 		content: FlexFieldSchema.createUnsafe(
 	// 			FieldKinds.sequence,
 	// 			() => formattedText,
 	// 			codePoint,
@@ -411,7 +411,7 @@ describe("Schema Evolution Examples", () => {
 	// 	});
 	// 	// And canvas is still the same storage wise, but its view schema references the updated positionedCanvasItem2:
 	// 	const canvas2 = builder.object(canvasIdentifier, {
-	// 		items: TreeFieldSchema.create(FieldKinds.sequence, positionedCanvasItemNew),
+	// 		items: FlexFieldSchema.create(FieldKinds.sequence, positionedCanvasItemNew),
 	// 	});
 
 	// 	const viewCollection: SchemaCollection = builder.intoSchema(

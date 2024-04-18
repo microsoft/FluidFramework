@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { assert } from "@fluidframework/core-utils";
-import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import type { EventEmitter } from "@fluid-example/example-utils";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
+import { ISharedCounter, SharedCounter } from "@fluidframework/counter/internal";
 
 /**
  * IDiceCounter describes the public API surface for our dice counter data object.

@@ -5,16 +5,18 @@
 
 import child_process from "child_process";
 import fs from "fs";
-import ps from "ps-node";
-import commander from "commander";
+
 import {
-	TestDriverTypes,
 	DriverEndpoint,
 	ITestDriver,
-} from "@fluidframework/test-driver-definitions";
+	TestDriverTypes,
+} from "@fluid-internal/test-driver-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ILoadTestConfig } from "./testConfigFile";
-import { createLogger, createTestDriver, getProfile, initialize, safeExit } from "./utils";
+import commander from "commander";
+import ps from "ps-node";
+
+import { ILoadTestConfig } from "./testConfigFile.js";
+import { createLogger, createTestDriver, getProfile, initialize, safeExit } from "./utils.js";
 
 interface ITestUserConfig {
 	/* Credentials' key/value description:

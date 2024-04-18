@@ -3,18 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/telemetry-utils";
-import { fail } from "../util/index.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import { EmptyObject } from "../feature-libraries/index.js";
-import { SchemaFactory } from "./schemaFactory.js";
-import {
-	InsertableObjectFromSchemaRecord,
-	NodeFromSchema,
-	NodeKind,
-	ObjectFromSchemaRecord,
-	TreeNodeSchemaClass,
-} from "./schemaTypes.js";
+import { fail } from "../util/index.js";
+
+import { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
+import { NodeFromSchema, NodeKind, TreeNodeSchemaClass } from "./schemaTypes.js";
 import { TreeNode } from "./types.js";
+import { InsertableObjectFromSchemaRecord, ObjectFromSchemaRecord } from "./objectNode.js";
 
 /**
  * Create a schema for a node with no state.
@@ -46,7 +43,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 	// This is avoided by doing this type conversion.
 	// The conversion is done via assignment instead of `as` to get stronger type safety.
 	const toReturn: TreeNodeSchemaClass<
-		`${TScope}.${TName}`,
+		ScopedSchemaName<TScope, TName>,
 		NodeKind.Object,
 		NodeType,
 		object & InsertableObjectFromSchemaRecord<EmptyObject>,

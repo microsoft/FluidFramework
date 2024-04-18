@@ -66,7 +66,6 @@ describe("Routerlicious", () => {
 						kafkaMessageFactory.getHeadOffset(testDocumentId),
 					);
 
-					console.log(kafkaMessageFactory.getHeadOffset(testDocumentId));
 					assert.equal(
 						numMessages,
 						countOps(

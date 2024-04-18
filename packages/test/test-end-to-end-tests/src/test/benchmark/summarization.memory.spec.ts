@@ -4,14 +4,18 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer } from "@fluidframework/container-definitions";
-import { ContainerRuntime, DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
-import { channelsTreeName } from "@fluidframework/runtime-definitions";
-import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
-import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
-import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
+
 import { bufferToString } from "@fluid-internal/client-utils";
+import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
+import { IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import {
+	ContainerRuntime,
+	DefaultSummaryConfiguration,
+} from "@fluidframework/container-runtime/internal";
+import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
+import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
+import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 const defaultDataStoreId = "default";
 const testContainerConfig: ITestContainerConfig = {
@@ -31,7 +35,7 @@ function readBlobContent(content: ISummaryBlob["content"]): unknown {
 	return JSON.parse(json);
 }
 
-describeCompat("Summarization - runtime benchmarks", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("Summarization - runtime benchmarks", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
 	before(async () => {

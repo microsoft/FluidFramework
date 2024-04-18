@@ -2,13 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Command, Flags } from "@oclif/core";
 import chalk from "chalk";
 import { Machine } from "jssm";
 
 import { BaseCommand } from "./base";
-import { StateHandler } from "./handlers";
 import { testModeFlag } from "./flags";
+import { StateHandler } from "./handlers";
 
 /**
  * A base CLI command that uses an internal state machine to govern its behavior. Subclasses must provide a state

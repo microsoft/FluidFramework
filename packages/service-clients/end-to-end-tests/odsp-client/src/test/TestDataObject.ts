@@ -2,9 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DataObject, DataObjectFactory, IDataObjectProps } from "@fluidframework/aqueduct";
+
+import { DataObject, DataObjectFactory, IDataObjectProps } from "@fluidframework/aqueduct/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedCounter } from "@fluidframework/counter";
+import { SharedCounter } from "@fluidframework/counter/internal";
 
 export class TestDataObject extends DataObject {
 	public static readonly Name = "@fluid-example/test-data-object";

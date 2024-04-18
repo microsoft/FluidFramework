@@ -3,21 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { getUnexpectedLogErrorException, ITestObjectProvider } from "@fluidframework/test-utils";
-import { assert } from "@fluidframework/core-utils";
-import { CompatKind, driver, r11sEndpointName, tenantIndex } from "../compatOptions.cjs";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	getUnexpectedLogErrorException,
+	ITestObjectProvider,
+} from "@fluidframework/test-utils/internal";
+
+import { testBaseVersion } from "./baseVersion.js";
 import {
 	CompatConfig,
 	configList,
 	isCompatVersionBelowMinVersion,
 	mochaGlobalSetup,
 } from "./compatConfig.js";
+import { CompatKind, driver, r11sEndpointName, tenantIndex } from "./compatOptions.js";
 import {
 	getVersionedTestObjectProviderFromApis,
 	getCompatVersionedTestObjectProviderFromApis,
 } from "./compatUtils.js";
-import { testBaseVersion } from "./baseVersion.js";
+import { pkgVersion } from "./packageVersion.js";
 import {
 	getContainerRuntimeApi,
 	getDataRuntimeApi,
@@ -25,6 +30,7 @@ import {
 	CompatApis,
 	getDriverApi,
 } from "./testApi.js";
+import { getRequestedVersion } from "./versionUtils.js";
 
 // See doc comment on mochaGlobalSetup.
 await mochaGlobalSetup();
@@ -101,7 +107,7 @@ function createCompatSuite(
 				}, apis);
 
 				afterEach(function (done: Mocha.Done) {
-					const logErrors = getUnexpectedLogErrorException(provider.logger);
+					const logErrors = getUnexpectedLogErrorException(provider.tracker);
 					// if the test failed for another reason
 					// then we don't need to check errors
 					// and fail the after each as well
@@ -126,71 +132,41 @@ function getVersionedApis(config: CompatConfig): CompatApis {
 	// If this is cross version compat scenario, make sure we use the correct versions
 	if (config.kind === CompatKind.CrossVersion) {
 		assert(
-			config.createWith !== undefined,
-			"createWith must be defined for cross version tests",
+			config.createVersion !== undefined,
+			"createVersion must be defined for cross version tests",
 		);
-		assert(config.loadWith !== undefined, "loadWith must be defined for cross version tests");
-		const dataRuntime = getDataRuntimeApi(
-			config.createWith.base,
-			config.createWith.delta,
-			/** adjustMajorPublic */ true,
+		assert(
+			config.loadVersion !== undefined,
+			"loadVersion must be defined for cross version tests",
 		);
-		const dataRuntimeForLoading = getDataRuntimeApi(
-			config.loadWith.base,
-			config.loadWith.delta,
-			/** adjustMajorPublic */ true,
-		);
+
+		const dataRuntime = getDataRuntimeApi(config.createVersion);
+		const dataRuntimeForLoading = getDataRuntimeApi(config.loadVersion);
 		return {
-			containerRuntime: getContainerRuntimeApi(
-				config.createWith.base,
-				config.createWith.delta,
-				/** adjustMajorPublic */ true,
-			),
-			containerRuntimeForLoading: getContainerRuntimeApi(
-				config.loadWith.base,
-				config.loadWith.delta,
-				/** adjustMajorPublic */ true,
-			),
+			containerRuntime: getContainerRuntimeApi(config.createVersion),
+			containerRuntimeForLoading: getContainerRuntimeApi(config.loadVersion),
 			dataRuntime,
 			dataRuntimeForLoading,
 			dds: dataRuntime.dds,
 			ddsForLoading: dataRuntimeForLoading.dds,
-			driver: getDriverApi(
-				config.createWith.base,
-				config.createWith.delta,
-				/** adjustMajorPublic */ true,
-			),
-			driverForLoading: getDriverApi(
-				config.loadWith.base,
-				config.loadWith.delta,
-				/** adjustMajorPublic */ true,
-			),
-			loader: getLoaderApi(
-				config.createWith.base,
-				config.createWith.delta,
-				/** adjustMajorPublic */ true,
-			),
-			loaderForLoading: getLoaderApi(
-				config.loadWith.base,
-				config.loadWith.delta,
-				/** adjustMajorPublic */ true,
-			),
+			driver: getDriverApi(config.createVersion),
+			driverForLoading: getDriverApi(config.loadVersion),
+			loader: getLoaderApi(config.createVersion),
+			loaderForLoading: getLoaderApi(config.loadVersion),
 		};
 	}
 
 	const dataRuntimeApi = getDataRuntimeApi(
-		testBaseVersion(config.dataRuntime),
-		config.dataRuntime,
+		getRequestedVersion(testBaseVersion(config.dataRuntime), config.dataRuntime),
 	);
 	return {
 		containerRuntime: getContainerRuntimeApi(
-			testBaseVersion(config.containerRuntime),
-			config.containerRuntime,
+			getRequestedVersion(testBaseVersion(config.containerRuntime), config.containerRuntime),
 		),
 		dataRuntime: dataRuntimeApi,
 		dds: dataRuntimeApi.dds,
-		driver: getDriverApi(testBaseVersion(config.driver), config.driver),
-		loader: getLoaderApi(testBaseVersion(config.loader), config.loader),
+		driver: getDriverApi(getRequestedVersion(testBaseVersion(config.driver), config.driver)),
+		loader: getLoaderApi(getRequestedVersion(testBaseVersion(config.loader), config.loader)),
 	};
 }
 
@@ -209,7 +185,7 @@ export interface ITestObjectProviderOptions {
  */
 export type DescribeCompatSuite = (
 	name: string,
-	compatVersion: string,
+	compatVersion: CompatType,
 	tests: (
 		this: Mocha.Suite,
 		provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider,
@@ -220,33 +196,56 @@ export type DescribeCompatSuite = (
 /**
  * @internal
  */
-export type DescribeCompat = DescribeCompatSuite &
-	Record<"skip" | "only" | "noCompat", DescribeCompatSuite>;
+export type DescribeCompat = DescribeCompatSuite & {
+	/**
+	 * Like Mocha's `describe.skip`, but for compat tests.
+	 */
+	skip: DescribeCompatSuite;
+
+	/**
+	 * Like Mocha's `describe.only`, but for compat tests.
+	 */
+	only: DescribeCompatSuite;
+
+	/**
+	 * Run the test suite ignoring the compatibility matrix. In other words, all Fluid layers will
+	 * reference the current code version.
+	 *
+	 * This is meant as a debug utility for e2e tests: do not check in tests that use it as they won't have any
+	 * compat coverage (attempting to do so will fail the PR gate anyway).
+	 */
+	noCompat: DescribeCompatSuite;
+};
+
+/** @internal */
+export type CompatType = "FullCompat" | "LoaderCompat" | "NoCompat";
 
 function createCompatDescribe(): DescribeCompat {
 	const createCompatSuiteWithDefault = (
 		tests: (this: Mocha.Suite, provider: () => ITestObjectProvider, apis: CompatApis) => void,
-		compatVersion: string,
+		compatVersion: CompatType,
 	) => {
 		switch (compatVersion) {
 			case "FullCompat":
 				return createCompatSuite(tests, undefined);
 			case "LoaderCompat":
 				return createCompatSuite(tests, [CompatKind.None, CompatKind.Loader]);
+			case "NoCompat":
+				return createCompatSuite(tests, [CompatKind.None]);
 			default:
-				return createCompatSuite(tests, undefined, compatVersion);
+				unreachableCase(compatVersion, "unknown compat version");
 		}
 	};
-	const d: DescribeCompat = (name: string, compatVersion: string, tests) =>
+	const d: DescribeCompat = (name: string, compatVersion: CompatType, tests) =>
 		describe(name, createCompatSuiteWithDefault(tests, compatVersion));
-	d.skip = (name, compatVersion, tests) =>
+	d.skip = (name, compatVersion: CompatType, tests) =>
 		describe.skip(name, createCompatSuiteWithDefault(tests, compatVersion));
 
-	d.only = (name, compatVersion, tests) =>
+	d.only = (name, compatVersion: CompatType, tests) =>
 		describe.only(name, createCompatSuiteWithDefault(tests, compatVersion));
 
-	d.noCompat = (name, compatVersion, tests) =>
-		describe(name, createCompatSuiteWithDefault(tests, "NoCompat"));
+	d.noCompat = (name, _, tests) =>
+		describe(name, createCompatSuite(tests, undefined, pkgVersion));
 
 	return d;
 }
@@ -258,7 +257,6 @@ function createCompatDescribe(): DescribeCompat {
  * `LoaderCompat`: generate test variants with compat combinations that only varies the loader version.
  * Specific version (String) : specify a minimum compat version (e.g. "2.0.0-rc.1.0.0") which will be the minimum version a
  * test suite will test against. This should be equal to the value of pkgVersion at the time you're writing the new test suite.
- *
  *
  * @internal
  */

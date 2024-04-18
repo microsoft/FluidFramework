@@ -4,23 +4,24 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { ConnectionState, Loader } from "@fluidframework/container-loader";
 
-import {
-	LocalCodeLoader,
-	LoaderContainerTracker,
-	ITestObjectProvider,
-	TestFluidObjectFactory,
-	waitForContainerConnection,
-	timeoutPromise,
-} from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader";
+import { Loader } from "@fluidframework/container-loader/internal";
+import {
+	ITestObjectProvider,
+	LoaderContainerTracker,
+	LocalCodeLoader,
+	TestFluidObjectFactory,
+	timeoutPromise,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 const codeDetails: IFluidCodeDetails = { package: "test" };
 
 describe("Pong", () => {
-	describeCompat("Pong", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+	describeCompat("Pong", "NoCompat", (getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
 		const loaderContainerTracker = new LoaderContainerTracker();
 

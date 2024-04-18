@@ -165,4 +165,12 @@ export interface ISummaryTree {
 	 * If this is not present, the tree entry is considered referenced.
 	 */
 	unreferenced?: true;
+
+	/**
+	 * Represents the loading group to which the summary tree belongs to. Please refer to this readme for more context.
+	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}
+	 * Also note that "groupId" is the same as "loadingGroupId" used elsewhere in the repo. The naming discrepancy is
+	 * intentional to minimize snapshot/summary size.
+	 */
+	groupId?: string;
 }

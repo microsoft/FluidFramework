@@ -4,23 +4,22 @@
  */
 
 import { strict as assert } from "assert";
+
+import { describeStress } from "@fluid-private/stochastic-test-utils";
 import { SessionId } from "@fluidframework/id-compressor";
-import { ChangeFamily, ChangeFamilyEditor, GraphCommit } from "../../../core/index.js";
-import { brand, makeArray } from "../../../util/index.js";
+
+import { ChangeFamily, ChangeFamilyEditor } from "../../../core/index.js";
 import { Commit, EditManager } from "../../../shared-tree-core/index.js";
-import { TestChange, NoOpChangeRebaser } from "../../testChange.js";
-import { createTestUndoRedoStacks, mintRevisionTag } from "../../utils.js";
-import { checkChangeList, testChangeEditManagerFactory } from "./editManagerTestUtils.js";
+import { brand, makeArray } from "../../../util/index.js";
+import { NoOpChangeRebaser, TestChange } from "../../testChange.js";
+import { mintRevisionTag } from "../../utils.js";
+
 import { buildScenario, runUnitTestScenario } from "./editManagerScenario.js";
+import { checkChangeList, testChangeEditManagerFactory } from "./editManagerTestUtils.js";
 
 const localSessionId: SessionId = "0" as SessionId;
 const peer1: SessionId = "1" as SessionId;
 const peer2: SessionId = "2" as SessionId;
-
-// TODO:#4557: Change the number of steps back to 5 once the way these tests are run changes
-const NUM_STEPS = 4;
-const NUM_PEERS = 2;
-const peers: SessionId[] = makeArray(NUM_PEERS, (i) => String(i + 1) as SessionId);
 
 export function testCorrectness() {
 	describe("Correctness", () => {
@@ -415,75 +414,6 @@ export function testCorrectness() {
 					manager.advanceMinimumSequenceNumber(brand(4));
 					checkChangeList(manager, [6, 7, 8]);
 				});
-
-				it("does not evict commits including and after the oldest revertible commit", () => {
-					const { manager } = testChangeEditManagerFactory({
-						autoDiscardRevertibles: false,
-					});
-					const { unsubscribe } = createTestUndoRedoStacks(manager.localBranch);
-
-					const commit1 = applyLocalCommit(manager, [], 1);
-					const commit2 = applyLocalCommit(manager, [], 1);
-					const commit3 = applyLocalCommit(manager, [], 1);
-					const commit4 = applyLocalCommit(manager, [], 1);
-					manager.addSequencedChange(commit1, brand(1), brand(0));
-					manager.addSequencedChange(commit2, brand(2), brand(0));
-					manager.addSequencedChange(commit3, brand(3), brand(0));
-					manager.addSequencedChange(commit4, brand(4), brand(0));
-					manager.advanceMinimumSequenceNumber(brand(4));
-
-					// check that commits are all still in the trunk
-					let current: GraphCommit<TestChange> | undefined = manager.getTrunkHead();
-					assert.equal(current.revision, commit4.revision);
-					current = current.parent;
-					assert(current !== undefined);
-					assert.equal(current.revision, commit3.revision);
-					current = current.parent;
-					assert(current !== undefined);
-					assert.equal(current.revision, commit2.revision);
-					current = current.parent;
-					assert(current !== undefined);
-					assert.equal(current.revision, commit1.revision);
-
-					unsubscribe();
-				});
-
-				it("advances the oldest revertible commit when that revertible is disposed", () => {
-					const { manager } = testChangeEditManagerFactory({
-						autoDiscardRevertibles: false,
-					});
-					const { undoStack, unsubscribe } = createTestUndoRedoStacks(
-						manager.localBranch,
-					);
-
-					const commit1 = applyLocalCommit(manager, [], 1);
-					const commit2 = applyLocalCommit(manager, [], 1);
-					const commit3 = applyLocalCommit(manager, [], 1);
-					const commit4 = applyLocalCommit(manager, [], 1);
-					manager.addSequencedChange(commit1, brand(1), brand(0));
-					manager.addSequencedChange(commit2, brand(2), brand(0));
-					manager.addSequencedChange(commit3, brand(3), brand(0));
-					manager.addSequencedChange(commit4, brand(4), brand(0));
-
-					// discard the oldest revertible and trim the trunk
-					undoStack[0].discard();
-					manager.advanceMinimumSequenceNumber(brand(4));
-
-					// check that all commits except the first are still in the trunk
-					let current: GraphCommit<TestChange> | undefined = manager.getTrunkHead();
-					assert.equal(current.revision, commit4.revision);
-					current = current.parent;
-					assert(current !== undefined);
-					assert.equal(current.revision, commit3.revision);
-					current = current.parent;
-					assert(current !== undefined);
-					assert.equal(current.revision, commit2.revision);
-					current = current.parent;
-					assert(current !== undefined);
-					assert.notEqual(current.revision, commit1.revision);
-
-					unsubscribe();
-				});
 			});
 
 			it("Updates local branch when loading from summary", () => {
@@ -500,7 +430,7 @@ export function testCorrectness() {
 							sequenceNumber: brand(1),
 						},
 					],
-					branches: new Map(),
+					peerLocalBranches: new Map(),
 				});
 				manager.addSequencedChange(
 					{
@@ -665,28 +595,37 @@ export function testCorrectness() {
 		 * - They help diagnose issues with the more complicated exhaustive test (e.g., if one of the above tests fails,
 		 * but this one doesn't, then there might be something wrong with this test).
 		 */
-		it("Combinatorial test", () => {
+		describeStress("Combinatorial exhaustive", function ({ isStress }) {
+			const NUM_STEPS = isStress ? 5 : 4;
+			const NUM_PEERS = isStress ? 3 : 2;
+			if (isStress) {
+				this.timeout(60_000);
+			}
+
+			const peers: SessionId[] = makeArray(NUM_PEERS, (i) => String(i + 1) as SessionId);
 			const meta = {
 				peerRefs: makeArray(NUM_PEERS, () => 0),
 				seq: 0,
 				inFlight: 0,
 			};
-			for (const scenario of buildScenario([], meta, peers, NUM_STEPS)) {
-				// Uncomment the code below to log the titles of generated scenarios.
-				// This is helpful for creating a unit test out of a generated scenario that fails.
-				// const title = scenario
-				// 	.map((s) => {
-				// 		if (s.type === "Pull") {
-				// 			return `Pull(${s.seq}) from:${s.from} ref:${s.ref}`;
-				// 		} else if (s.type === "Ack") {
-				// 			return `Ack(${s.seq})`;
-				// 		}
-				// 		return `Push(${s.seq})`;
-				// 	})
-				// 	.join("|");
-				// console.debug(title);
-				runUnitTestScenario(undefined, scenario);
-			}
+			it(`for ${NUM_PEERS} peers and ${NUM_STEPS} steps`, () => {
+				for (const scenario of buildScenario([], meta, peers, NUM_STEPS)) {
+					// Uncomment the code below to log the titles of generated scenarios.
+					// This is helpful for creating a unit test out of a generated scenario that fails.
+					// const title = scenario
+					// 	.map((s) => {
+					// 		if (s.type === "Pull") {
+					// 			return `Pull(${s.seq}) from:${s.from} ref:${s.ref}`;
+					// 		} else if (s.type === "Ack") {
+					// 			return `Ack(${s.seq})`;
+					// 		}
+					// 		return `Push(${s.seq})`;
+					// 	})
+					// 	.join("|");
+					// console.debug(title);
+					runUnitTestScenario(undefined, scenario);
+				}
+			});
 		});
 	});
 }

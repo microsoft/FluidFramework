@@ -2,6 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import * as fs from "fs";
 import * as path from "path";
 import * as ts from "typescript";
 import { sha256 } from "./hash";
@@ -10,6 +12,13 @@ const defaultTscUtil = createTscUtil(ts);
 export const parseCommandLine = defaultTscUtil.parseCommandLine;
 export const findConfigFile = defaultTscUtil.findConfigFile;
 export const readConfigFile = defaultTscUtil.readConfigFile;
+
+/**
+ * Matches fluid-tsc command start.
+ * Upon match index 1 and group.type will be "commonjs"|"module".
+ * Remaining string will be tsc arguments.
+ */
+export const fluidTscRegEx = /^fluid-tsc\s+(?<type>commonjs|module)/;
 
 // See convertToProgramBuildInfoCompilerOptions in typescript src/compiler/builder.ts
 const incrementalOptions = [
@@ -139,9 +148,7 @@ function createGetCanonicalFileName(tsLib: typeof ts) {
 	return tsLib.sys.useCaseSensitiveFileNames
 		? (x: string) => x
 		: (x: string) =>
-				fileNameLowerCaseRegExp.test(x)
-					? x.replace(fileNameLowerCaseRegExp, toLowerCase)
-					: x;
+				fileNameLowerCaseRegExp.test(x) ? x.replace(fileNameLowerCaseRegExp, toLowerCase) : x;
 }
 
 function createGetSourceFileVersion(tsLib: typeof ts) {
@@ -182,7 +189,11 @@ function createTscUtil(tsLib: typeof ts) {
 		tsLib,
 		parseCommandLine: (command: string) => {
 			// TODO: parse the command line for real, split space for now.
-			const args = command.split(" ");
+			// In case of fluid-tsc, replace those parts with 'tsc' before split.
+			const args = command.replace(fluidTscRegEx, "tsc").split(" ");
+			if (command.includes("&&")) {
+				console.warn("Warning: '&&' is not supported in tsc command.");
+			}
 
 			const parsedCommand = tsLib.parseCommandLine(args.slice(1));
 			if (parsedCommand.errors.length) {
@@ -196,7 +207,11 @@ function createTscUtil(tsLib: typeof ts) {
 			const project = parsedCommand?.options.project;
 			if (project !== undefined) {
 				tsConfigFullPath = path.resolve(directory, project);
+				if (fs.existsSync(tsConfigFullPath) && fs.statSync(tsConfigFullPath).isDirectory()) {
+					tsConfigFullPath = path.join(tsConfigFullPath, "tsconfig.json");
+				}
 			} else {
+				// Does a search from given directory and up to find tsconfig.json.
 				const foundConfigFile = tsLib.findConfigFile(
 					directory,
 					tsLib.sys.fileExists,
@@ -205,7 +220,9 @@ function createTscUtil(tsLib: typeof ts) {
 				if (foundConfigFile) {
 					tsConfigFullPath = foundConfigFile;
 				} else {
+					// Assume there will be a local tsconfig.json and it is just currently missing.
 					tsConfigFullPath = path.join(directory, "tsconfig.json");
+					console.warn(`Warning: no config file found; assuming ${tsConfigFullPath}`);
 				}
 			}
 			return tsConfigFullPath;
@@ -249,4 +266,10 @@ export function getTscUtils(path: string): TscUtil {
 	tscUtilPathCache.set(path, tscUtil);
 	tscUtilLibPathCache.set(tsPath, tscUtil);
 	return tscUtil;
+}
+
+// Any paths given by typescript will be normalized to forward slashes.
+// Local paths should be normalized to make any comparisons.
+export function normalizeSlashes(path: string): string {
+	return path.replace(/\\/g, "/");
 }

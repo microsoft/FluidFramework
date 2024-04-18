@@ -67,6 +67,9 @@ export function combineReducersAsync<TOperation extends {
 // @internal (undocumented)
 export function createFuzzDescribe(optionsArg?: FuzzDescribeOptions): DescribeFuzz;
 
+// @internal (undocumented)
+export type CreateMochaSuite<TArgs> = (name: string, createTests: (this: Mocha.Suite, args: TArgs) => void) => Mocha.Suite | void;
+
 // @internal
 export function createWeightedAsyncGenerator<T, TState extends BaseFuzzTestState>(weights: AsyncWeights<T, TState>): AsyncGenerator_2<T, TState>;
 
@@ -77,13 +80,16 @@ export function createWeightedGenerator<T, TState extends BaseFuzzTestState>(wei
 export const defaultOptions: Required<FuzzDescribeOptions>;
 
 // @internal (undocumented)
-export type DescribeFuzz = DescribeFuzzSuite & Record<"skip" | "only", DescribeFuzzSuite>;
+export type DescribeFuzz = MochaSuiteWithArguments<FuzzSuiteArguments>;
 
 // @internal
 export const describeFuzz: DescribeFuzz;
 
 // @internal (undocumented)
-export type DescribeFuzzSuite = (name: string, tests: (this: Mocha.Suite, args: FuzzSuiteArguments) => void) => Mocha.Suite | void;
+export type DescribeStress = MochaSuiteWithArguments<StressSuiteArguments>;
+
+// @internal
+export const describeStress: DescribeStress;
 
 // @internal (undocumented)
 export const done: unique symbol;
@@ -103,8 +109,7 @@ export interface FuzzDescribeOptions {
 }
 
 // @internal (undocumented)
-export interface FuzzSuiteArguments {
-    isStress: boolean;
+export interface FuzzSuiteArguments extends StressSuiteArguments {
     testCount: number;
 }
 
@@ -151,6 +156,9 @@ export abstract class MarkovChain<PredictionPointType, OutputType> {
     // (undocumented)
     static readonly MARKOV_SENTENCE_END_KEY = "MARKOV_SENTENCE_END_KEY_01$#@%^#";
 }
+
+// @internal
+export type MochaSuiteWithArguments<TArgs> = CreateMochaSuite<TArgs> & Record<"skip" | "only", CreateMochaSuite<TArgs>>;
 
 // @internal (undocumented)
 export class PerformanceWordMarkovChain extends MarkovChain<string, string> {
@@ -201,12 +209,16 @@ export function repeat<T, TState = void>(t: T): Generator_2<T, TState>;
 export function repeatAsync<T, TState = void>(t: T): AsyncGenerator_2<T, TState>;
 
 // @internal (undocumented)
+export interface SaveDestination {
+    readonly path: string;
+}
+
+// @internal (undocumented)
 export interface SaveInfo {
-    filepath: string;
     // (undocumented)
-    saveOnFailure: boolean;
+    saveOnFailure: false | SaveDestination;
     // (undocumented)
-    saveOnSuccess?: boolean;
+    saveOnSuccess: false | SaveDestination;
 }
 
 // @internal
@@ -223,6 +235,11 @@ export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
     initialize(sentences: string[][]): void;
     // (undocumented)
     readonly random: IRandom;
+}
+
+// @internal (undocumented)
+export interface StressSuiteArguments {
+    isStress: boolean;
 }
 
 // @internal

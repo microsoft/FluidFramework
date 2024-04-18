@@ -4,7 +4,10 @@
  */
 
 module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
+	extends: [
+		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
+		"prettier",
+	],
 	rules: {
 		"@typescript-eslint/consistent-type-assertions": "off",
 		"@typescript-eslint/no-dynamic-delete": "off",

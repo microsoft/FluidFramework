@@ -3,16 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { DriverErrorTypes, IDriverErrorBase } from "@fluidframework/driver-definitions";
 import {
-	IThrottlingWarning,
-	IDriverErrorBase,
 	IAuthorizationError,
 	ILocationRedirectionError,
 	IResolvedUrl,
-	DriverErrorTypes,
-} from "@fluidframework/driver-definitions";
-import { ITelemetryProperties } from "@fluidframework/core-interfaces";
-import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils";
+	IThrottlingWarning,
+} from "@fluidframework/driver-definitions/internal";
+import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * @internal
@@ -44,7 +43,7 @@ export function isOnline(): OnlineStatus {
  * Telemetry props with driver-specific required properties
  * @internal
  */
-export type DriverErrorTelemetryProps = ITelemetryProperties & {
+export type DriverErrorTelemetryProps = ITelemetryBaseProperties & {
 	driverVersion: string | undefined;
 };
 

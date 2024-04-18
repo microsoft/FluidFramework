@@ -2,10 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { IRequest } from "@fluidframework/core-interfaces";
-import { DriverHeader } from "@fluidframework/driver-definitions";
-import { ISharingLinkKind } from "@fluidframework/odsp-driver-definitions";
-import { buildOdspShareLinkReqParams } from "./odspUtils";
+import { DriverHeader } from "@fluidframework/driver-definitions/internal";
+import { ISharingLinkKind } from "@fluidframework/odsp-driver-definitions/internal";
+
+import { buildOdspShareLinkReqParams } from "./odspUtils.js";
 
 /**
  * Create the request object with url and headers for creating a new file on OneDrive Sharepoint

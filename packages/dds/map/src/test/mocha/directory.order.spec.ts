@@ -4,6 +4,9 @@
  */
 
 import { strict as assert } from "node:assert";
+
+import { AttachState } from "@fluidframework/container-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
@@ -11,41 +14,60 @@ import {
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
+
 import {
-	DirectoryFactory,
 	DirectoryLocalOpMetadata,
 	IDirectoryOperation,
-	SharedDirectory,
-} from "../../directory";
-import { ISharedDirectory } from "../../interfaces";
+	SharedDirectory as SharedDirectoryInternal,
+} from "../../directory.js";
+import { DirectoryFactory, ISharedDirectory, SharedDirectory } from "../../index.js";
 
 function createConnectedDirectory(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactory,
-): SharedDirectory {
+): ISharedDirectory {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
-	const directory = new SharedDirectory(id, dataStoreRuntime, DirectoryFactory.Attributes);
+	const directory = SharedDirectory.getFactory().create(dataStoreRuntime, id);
 	directory.connect(services);
 	return directory;
 }
 
-class TestSharedDirectory extends SharedDirectory {
-	public testApplyStashedOp(content: IDirectoryOperation): DirectoryLocalOpMetadata {
-		return this.applyStashedOp(content) as DirectoryLocalOpMetadata;
+class TestSharedDirectory extends SharedDirectoryInternal {
+	private lastMetadata?: DirectoryLocalOpMetadata;
+	public testApplyStashedOp(content: IDirectoryOperation): DirectoryLocalOpMetadata | undefined {
+		this.lastMetadata = undefined;
+		this.applyStashedOp(content);
+		return this.lastMetadata;
+	}
+
+	public submitLocalMessage(op: IDirectoryOperation, localOpMetadata: unknown): void {
+		this.lastMetadata = localOpMetadata as DirectoryLocalOpMetadata;
+		super.submitLocalMessage(op, localOpMetadata);
 	}
 }
 
-async function populate(directory: SharedDirectory, content: unknown): Promise<void> {
-	const storage = new MockSharedObjectServices({
-		header: JSON.stringify(content),
+async function populate(content: unknown): Promise<ISharedDirectory> {
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({
+		attachState: AttachState.Detached,
 	});
-	return directory.load(storage);
+	const factory = SharedDirectory.getFactory();
+
+	const directory = await factory.load(
+		dataStoreRuntime,
+		"A",
+		new MockSharedObjectServices({
+			header: JSON.stringify(content),
+		}),
+		factory.attributes,
+	);
+
+	return directory;
 }
 
 function assertDirectoryIterationOrder(
@@ -61,17 +83,12 @@ function assertDirectoryIterationOrder(
 
 describe("Directory Iteration Order", () => {
 	describe("Local state", () => {
-		let directory: SharedDirectory;
+		let directory: ISharedDirectory;
 		let dataStoreRuntime: MockFluidDataStoreRuntime;
 
 		beforeEach("createDirectory", async () => {
-			dataStoreRuntime = new MockFluidDataStoreRuntime();
-			dataStoreRuntime.local = true;
-			directory = new SharedDirectory(
-				"directory",
-				dataStoreRuntime,
-				DirectoryFactory.Attributes,
-			);
+			dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
+			directory = SharedDirectory.getFactory().create(dataStoreRuntime, "directory");
 		});
 
 		it("create subdirectories", () => {
@@ -139,8 +156,8 @@ describe("Directory Iteration Order", () => {
 
 	describe("Connected state", () => {
 		let containerRuntimeFactory: MockContainerRuntimeFactory;
-		let directory1: SharedDirectory;
-		let directory2: SharedDirectory;
+		let directory1: ISharedDirectory;
+		let directory2: ISharedDirectory;
 
 		beforeEach("createDirectories", async () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
@@ -227,18 +244,15 @@ describe("Directory Iteration Order", () => {
 	});
 
 	describe("Serialization/Load", () => {
-		let directory1: SharedDirectory;
+		let directory1: ISharedDirectory;
+		let factory: DirectoryFactory;
+
+		beforeEach("createDirectory", () => {
+			factory = SharedDirectory.getFactory();
+		});
 
 		it("can be compatible with the old format summary", async () => {
-			const dataStoreRuntime = new MockFluidDataStoreRuntime();
-			dataStoreRuntime.local = true;
-			directory1 = new SharedDirectory(
-				"directory",
-				dataStoreRuntime,
-				DirectoryFactory.Attributes,
-			);
-
-			await populate(directory1, {
+			directory1 = await populate({
 				storage: {
 					key1: {
 						type: "Plain",
@@ -280,15 +294,7 @@ describe("Directory Iteration Order", () => {
 		});
 
 		it("can be compatible with the new format summary", async () => {
-			const dataStoreRuntime = new MockFluidDataStoreRuntime();
-			dataStoreRuntime.local = true;
-			directory1 = new SharedDirectory(
-				"directory",
-				dataStoreRuntime,
-				DirectoryFactory.Attributes,
-			);
-
-			await populate(directory1, {
+			directory1 = await populate({
 				storage: {
 					key1: {
 						type: "Plain",
@@ -368,11 +374,8 @@ describe("Directory Iteration Order", () => {
 		});
 
 		it("serialize the contents, load it into another directory and maintain the order", async () => {
-			directory1 = new SharedDirectory(
-				"dir1",
-				new MockFluidDataStoreRuntime(),
-				DirectoryFactory.Attributes,
-			);
+			directory1 = factory.create(new MockFluidDataStoreRuntime(), "dir1");
+
 			directory1.createSubDirectory("c");
 			directory1.createSubDirectory("b");
 			directory1.createSubDirectory("a");
@@ -386,14 +389,46 @@ describe("Directory Iteration Order", () => {
 			);
 			services.deltaConnection = dataStoreRuntime.createDeltaConnection();
 
-			const directory2 = new SharedDirectory(
-				"map2",
+			const directory2 = await factory.load(
 				dataStoreRuntime,
-				DirectoryFactory.Attributes,
+				"dir2",
+				services,
+				factory.attributes,
 			);
-			await directory2.load(services);
 
 			assertDirectoryIterationOrder(directory2, ["c", "b", "a"]);
+		});
+
+		it("can be compatible with the detached scenario", async () => {
+			// It is to reproduce the regression bug causing the corruption of the summarization, indicated by 0x85c
+			// https://dev.azure.com/fluidframework/internal/_workitems/edit/7013
+			const runtimeFactory = new MockContainerRuntimeFactory();
+			const dataStoreRuntime = new MockFluidDataStoreRuntime();
+			runtimeFactory.createContainerRuntime(dataStoreRuntime);
+
+			const summaryContent =
+				'{"blobs":[],"content":{"ci":{"csn":0,"ccIds":[]},"subdirectories":{"detached1":{"ci":{"csn":0,"ccIds":["97cd0b77-34b1-46a8-bbe2-5fbefb3e014b"]}},"detached2":{"ci":{"csn":0,"ccIds":["97cd0b77-34b1-46a8-bbe2-5fbefb3e014b"]}},"detached3":{"ci":{"csn":-1,"ccIds":["97cd0b77-34b1-46a8-bbe2-5fbefb3e014b"]}}}}}';
+			const summary: ISummaryTree = {
+				type: 1,
+				tree: {
+					header: {
+						type: 2,
+						content: summaryContent,
+					},
+				},
+			};
+
+			const directory = await factory.load(
+				dataStoreRuntime,
+				"A",
+				{
+					deltaConnection: dataStoreRuntime.createDeltaConnection(),
+					objectStorage: MockStorage.createFromSummary(summary),
+				},
+				factory.attributes,
+			);
+
+			await directory.summarize();
 		});
 	});
 
@@ -401,12 +436,13 @@ describe("Directory Iteration Order", () => {
 		let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
 		let containerRuntime1: MockContainerRuntimeForReconnection;
 		let containerRuntime2: MockContainerRuntimeForReconnection;
-		let directory1: SharedDirectory;
-		let directory2: SharedDirectory;
+		let directory1: ISharedDirectory;
+		let directory2: ISharedDirectory;
+		let factory: DirectoryFactory;
 
 		beforeEach("createDirectories", async () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
-
+			factory = SharedDirectory.getFactory();
 			// Create the first SharedDirectory
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
@@ -414,11 +450,7 @@ describe("Directory Iteration Order", () => {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
-			directory1 = new SharedDirectory(
-				"dir1",
-				dataStoreRuntime1,
-				DirectoryFactory.Attributes,
-			);
+			directory1 = factory.create(dataStoreRuntime1, "dir1");
 			directory1.connect(services1);
 
 			// Create the second SharedDirectory
@@ -428,11 +460,7 @@ describe("Directory Iteration Order", () => {
 				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
-			directory2 = new SharedDirectory(
-				"dir1",
-				dataStoreRuntime2,
-				DirectoryFactory.Attributes,
-			);
+			directory2 = factory.create(dataStoreRuntime2, "dir2");
 			directory2.connect(services2);
 		});
 

@@ -4,6 +4,9 @@ on:
     types: [opened, synchronize, reopened, labeled, unlabeled]
     branches: [main, next, release/*]
 
+permissions:
+  pull-requests: write
+
 jobs:
   areas_label:
     runs-on: ubuntu-latest

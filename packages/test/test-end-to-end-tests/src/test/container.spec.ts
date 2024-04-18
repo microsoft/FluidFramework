@@ -4,8 +4,29 @@
  */
 
 import { strict as assert } from "assert";
-import { v4 as uuid } from "uuid";
+import { useFakeTimers } from "sinon";
 import { MockDocumentDeltaConnection } from "@fluid-private/test-loader-utils";
+import {
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+	getDataStoreFactory,
+	itExpects,
+} from "@fluid-private/test-version-utils";
+import {
+	ContainerErrorTypes,
+	IContainer,
+	IFluidCodeDetails,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader";
+import {
+	IContainerExperimental,
+	ILoaderProps,
+	Loader,
+	waitContainerToCatchUp,
+} from "@fluidframework/container-loader/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -13,59 +34,38 @@ import {
 	IRequest,
 	IRequestHeader,
 } from "@fluidframework/core-interfaces";
-import {
-	ContainerErrorTypes,
-	IFluidCodeDetails,
-	IContainer,
-	LoaderHeader,
-} from "@fluidframework/container-definitions";
-import {
-	ConnectionState,
-	Loader,
-	ILoaderProps,
-	waitContainerToCatchUp,
-	IContainerExperimental,
-} from "@fluidframework/container-loader";
-import {
-	DriverErrorTypes,
-	FiveDaysMs,
-	IAnyDriverError,
-	IDocumentServiceFactory,
-} from "@fluidframework/driver-definitions";
-import {
-	LocalCodeLoader,
-	TestObjectProvider,
-	LoaderContainerTracker,
-	TestContainerRuntimeFactory,
-	ITestObjectProvider,
-	TestFluidObjectFactory,
-	timeoutPromise,
-	ITestContainerConfig,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
-import {
-	getDataStoreFactory,
-	ITestDataObject,
-	TestDataObjectType,
-	describeCompat,
-	itExpects,
-} from "@fluid-private/test-version-utils";
-import { DataCorruptionError } from "@fluidframework/telemetry-utils";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IClient } from "@fluidframework/protocol-definitions";
+import { Deferred } from "@fluidframework/core-utils/internal";
+import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions";
+import { FiveDaysMs, IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import {
 	DeltaStreamConnectionForbiddenError,
 	NonRetryableError,
-} from "@fluidframework/driver-utils";
-import { Deferred } from "@fluidframework/core-utils";
+	RetryableError,
+} from "@fluidframework/driver-utils/internal";
+import { IClient } from "@fluidframework/protocol-definitions";
+import { DataCorruptionError } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITestContainerConfig,
+	ITestObjectProvider,
+	LoaderContainerTracker,
+	LocalCodeLoader,
+	TestContainerRuntimeFactory,
+	TestFluidObjectFactory,
+	TestObjectProvider,
+	timeoutPromise,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
+import { v4 as uuid } from "uuid";
 
-const id = "fluid-test://localhost/containerTest";
+import { wrapObjectAndOverride } from "../mocking.js";
+
+const id = "https://localhost/containerTest";
 const testRequest: IRequest = { url: id };
 const codeDetails: IFluidCodeDetails = { package: "test" };
 const timeoutMs = 500;
 
 // REVIEW: enable compat testing?
-describeCompat("Container", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const loaderContainerTracker = new LoaderContainerTracker();
 	before(function () {
@@ -140,17 +140,16 @@ describeCompat("Container", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 			},
 		],
 		async () => {
-			const documentServiceFactory = provider.documentServiceFactory;
-			const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
-			// Issue typescript-eslint/typescript-eslint #1256
-			mockFactory.createDocumentService = async (resolvedUrl) => {
-				const service = await documentServiceFactory.createDocumentService(resolvedUrl);
-				// Issue typescript-eslint/typescript-eslint #1256
-				service.connectToStorage = () => {
-					throw new Error("expectedFailure");
-				};
-				return service;
-			};
+			const mockFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
+				provider.documentServiceFactory,
+				{
+					createDocumentService: {
+						connectToStorage: (_ds) => () => {
+							throw new Error("expectedFailure");
+						},
+					},
+				},
+			);
 
 			await loadContainer({ documentServiceFactory: mockFactory });
 		},
@@ -171,16 +170,16 @@ describeCompat("Container", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 			},
 		],
 		async () => {
-			const documentServiceFactory = provider.documentServiceFactory;
-			const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
-			// Issue typescript-eslint/typescript-eslint #1256
-			mockFactory.createDocumentService = async (resolvedUrl) => {
-				const service = await documentServiceFactory.createDocumentService(resolvedUrl);
-				// Issue typescript-eslint/typescript-eslint #1256
-				service.connectToDeltaStorage = async () =>
-					Promise.reject(new Error("expectedFailure"));
-				return service;
-			};
+			const mockFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
+				provider.documentServiceFactory,
+				{
+					createDocumentService: {
+						connectToDeltaStorage: (_ds) => () => {
+							throw new Error("expectedFailure");
+						},
+					},
+				},
+			);
 			const container2 = await loadContainer({ documentServiceFactory: mockFactory });
 			await waitContainerToCatchUp(container2);
 		},
@@ -188,16 +187,14 @@ describeCompat("Container", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 
 	it("Raise disconnected event", async () => {
 		const deltaConnection = new MockDocumentDeltaConnection("test");
-		const documentServiceFactory = provider.documentServiceFactory;
-		const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
-		// Issue typescript-eslint/typescript-eslint #1256
-		mockFactory.createDocumentService = async (resolvedUrl) => {
-			const service = await documentServiceFactory.createDocumentService(resolvedUrl);
-			// Issue typescript-eslint/typescript-eslint #1256
-			service.connectToDeltaStream = async () => deltaConnection;
-			return service;
-		};
-
+		const mockFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
+			provider.documentServiceFactory,
+			{
+				createDocumentService: {
+					connectToDeltaStream: (_ds) => async () => deltaConnection,
+				},
+			},
+		);
 		const container = await loadContainer({ documentServiceFactory: mockFactory });
 		assert.strictEqual(
 			container.connectionState,
@@ -228,15 +225,14 @@ describeCompat("Container", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 
 	it("Raise connection error event", async () => {
 		const deltaConnection = new MockDocumentDeltaConnection("test");
-		const documentServiceFactory = provider.documentServiceFactory;
-		const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
-		// Issue typescript-eslint/typescript-eslint #1256
-		mockFactory.createDocumentService = async (resolvedUrl) => {
-			const service = await documentServiceFactory.createDocumentService(resolvedUrl);
-			// Issue typescript-eslint/typescript-eslint #1256
-			service.connectToDeltaStream = async () => deltaConnection;
-			return service;
-		};
+		const mockFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
+			provider.documentServiceFactory,
+			{
+				createDocumentService: {
+					connectToDeltaStream: (_ds) => async () => deltaConnection,
+				},
+			},
+		);
 		const container = await loadContainer({ documentServiceFactory: mockFactory });
 		assert.strictEqual(
 			container.connectionState,
@@ -267,15 +263,14 @@ describeCompat("Container", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 
 	it("Close called on container", async () => {
 		const deltaConnection = new MockDocumentDeltaConnection("test");
-		const documentServiceFactory = provider.documentServiceFactory;
-		const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
-		// Issue typescript-eslint/typescript-eslint #1256
-		mockFactory.createDocumentService = async (resolvedUrl) => {
-			const service = await documentServiceFactory.createDocumentService(resolvedUrl);
-			// Issue typescript-eslint/typescript-eslint #1256
-			service.connectToDeltaStream = async () => deltaConnection;
-			return service;
-		};
+		const mockFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
+			provider.documentServiceFactory,
+			{
+				createDocumentService: {
+					connectToDeltaStream: (_ds) => async () => deltaConnection,
+				},
+			},
+		);
 		const container = await loadContainer({ documentServiceFactory: mockFactory });
 
 		assert.strictEqual(
@@ -589,21 +584,21 @@ describeCompat("Container", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	});
 
 	it("DeltaStreamConnectionForbidden error on connectToDeltaStream sends deltamanager readonly event", async () => {
-		const documentServiceFactory = provider.documentServiceFactory;
+		const mockFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
+			provider.documentServiceFactory,
+			{
+				createDocumentService: {
+					connectToDeltaStream: (_ds) => async () => {
+						throw new DeltaStreamConnectionForbiddenError(
+							"deltaStreamConnectionForbidden",
+							{ driverVersion: "1" },
+							"deltaStreamConnectionForbidden",
+						);
+					},
+				},
+			},
+		);
 
-		const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
-		mockFactory.createDocumentService = async (resolvedUrl) => {
-			const service = await documentServiceFactory.createDocumentService(resolvedUrl);
-			const realDeltaStream = service.connectToDeltaStream;
-			service.connectToDeltaStream = async (client) => {
-				throw new DeltaStreamConnectionForbiddenError(
-					"deltaStreamConnectionForbidden",
-					{ driverVersion: "1" },
-					"deltaStreamConnectionForbidden",
-				);
-			};
-			return service;
-		};
 		const container = await loadContainer(
 			{ documentServiceFactory: mockFactory },
 			{ [LoaderHeader.loadMode]: { deltaConnection: "none" } },
@@ -623,21 +618,20 @@ describeCompat("Container", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	});
 
 	it("OutOfStorageError sends deltamanager readonly event", async () => {
-		const documentServiceFactory = provider.documentServiceFactory;
-
-		const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
-		mockFactory.createDocumentService = async (resolvedUrl) => {
-			const service = await documentServiceFactory.createDocumentService(resolvedUrl);
-			const realDeltaStream = service.connectToDeltaStream;
-			service.connectToDeltaStream = async (client) => {
-				throw new NonRetryableError(
-					"outOfStorageError",
-					DriverErrorTypes.outOfStorageError,
-					{ driverVersion: "1" },
-				);
-			};
-			return service;
-		};
+		const mockFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
+			provider.documentServiceFactory,
+			{
+				createDocumentService: {
+					connectToDeltaStream: (_ds) => async () => {
+						throw new NonRetryableError(
+							"outOfStorageError",
+							DriverErrorTypes.outOfStorageError,
+							{ driverVersion: "1" },
+						);
+					},
+				},
+			},
+		);
 		const container = await loadContainer(
 			{ documentServiceFactory: mockFactory },
 			{ [LoaderHeader.loadMode]: { deltaConnection: "none" } },
@@ -852,7 +846,7 @@ describeCompat("Container", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	});
 });
 
-describeCompat("Driver", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("Driver", "NoCompat", (getTestObjectProvider) => {
 	it("Driver Storage Policy Values", async () => {
 		const provider = getTestObjectProvider();
 		const fiveDaysMs: FiveDaysMs = 432_000_000;
@@ -862,5 +856,96 @@ describeCompat("Driver", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 		const ds = await provider.documentServiceFactory.createDocumentService(resolvedUrl);
 		const storage = await ds.connectToStorage();
 		assert.equal(storage.policies?.maximumCacheDurationMs, fiveDaysMs);
+	});
+});
+
+describeCompat("Container connections", "NoCompat", (getTestObjectProvider) => {
+	let provider: ITestObjectProvider;
+	let clock;
+	before(() => {
+		clock = useFakeTimers();
+	});
+	beforeEach("", async function () {
+		provider = getTestObjectProvider();
+		if (provider.driver.type !== "local") {
+			this.skip();
+		}
+	});
+	afterEach(() => {
+		clock.reset();
+	});
+	after(() => {
+		clock.restore();
+	});
+	it("container disconnect() stops the connection re-attempt loop", async () => {
+		let emulateThrowErrorOnConnection = false;
+		const retryAfter = 3;
+		let reconnectionAttemptCount = 0;
+		(provider as any)._documentServiceFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
+			provider.documentServiceFactory,
+			{
+				createDocumentService: {
+					connectToDeltaStream: (_ds) => async (client) => {
+						// We let the container get created first before starting emulate throwing of errors.
+						if (emulateThrowErrorOnConnection) {
+							reconnectionAttemptCount++;
+							throw new RetryableError("Test message", "ThrottlingError", {
+								retryAfterSeconds: retryAfter,
+								driverVersion: "1",
+							});
+						} else {
+							return _ds.connectToDeltaStream(client);
+						}
+					},
+				},
+			},
+		);
+		// Create container
+		const container = await provider.makeTestContainer();
+		await waitForContainerConnection(container);
+		emulateThrowErrorOnConnection = true;
+
+		// This flag will ensure that the container warnings were observed when throttling error was thrown
+		let didReceiveContainerWarning = false;
+
+		// Host apps can chose to listen to container warning events and disconnect the container if they observe throttling errors
+		container.once("warning", (warning) => {
+			assert.equal(
+				warning.errorType,
+				"throttlingError",
+				"Error type thrown by the warning message is incorrect",
+			);
+
+			// disconnecting the container should also stop re-connects to the service
+			container.disconnect();
+			const countUntilDisconnectWasCalled = reconnectionAttemptCount;
+
+			clock.tick(retryAfter * 1000 + 10);
+			// Check if there has been any retry attempt after some time greater than retry after has elapsed
+			assert.equal(
+				reconnectionAttemptCount,
+				countUntilDisconnectWasCalled,
+				"Connection should not have been attempted, even after the retry timedout",
+			);
+
+			clock.tick(retryAfter * 1000 + 10);
+			// Check if there has been any retry attempt after more time has elapsed
+			assert.equal(
+				reconnectionAttemptCount,
+				countUntilDisconnectWasCalled,
+				"Connection should not have been attempted after some more time",
+			);
+			didReceiveContainerWarning = true;
+		});
+
+		// Disconnect and connect the container again to trigger the connection to the delta service
+		// to test the container warning behavior above
+		container.disconnect();
+		container.connect();
+		await clock.tickAsync(retryAfter * 1000 + 20);
+		assert(
+			didReceiveContainerWarning,
+			"Container warning event should happen when throttling error occurs",
+		);
 	});
 });

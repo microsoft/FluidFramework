@@ -13,9 +13,9 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { SharedObject } from '@fluidframework/shared-object-base';
+import { SharedObject } from '@fluidframework/shared-object-base/internal';
 
-// @internal
+// @alpha
 export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
     abandon(taskId: string): void;
     assigned(taskId: string): boolean;
@@ -27,7 +27,7 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
     volunteerForTask(taskId: string): Promise<boolean>;
 }
 
-// @internal
+// @alpha
 export interface ITaskManagerEvents extends ISharedObjectEvents {
     // @eventProperty
     (event: "assigned", listener: TaskEventListener): any;
@@ -37,15 +37,15 @@ export interface ITaskManagerEvents extends ISharedObjectEvents {
     (event: "lost", listener: TaskEventListener): any;
 }
 
-// @internal
+// @alpha
 export type TaskEventListener = (taskId: string) => void;
 
-// @internal @sealed
+// @alpha @sealed
 export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITaskManager {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     abandon(taskId: string): void;
     // (undocumented)
-    applyStashedOp(): void;
+    protected applyStashedOp(content: any): void;
     assigned(taskId: string): boolean;
     canVolunteer(): boolean;
     complete(taskId: string): void;
@@ -53,11 +53,8 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     static getFactory(): IChannelFactory;
     // (undocumented)
     protected initializeLocalCore(): void;
-    // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // (undocumented)
     protected onConnect(): void;
-    // (undocumented)
     protected onDisconnect(): void;
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     queued(taskId: string): boolean;

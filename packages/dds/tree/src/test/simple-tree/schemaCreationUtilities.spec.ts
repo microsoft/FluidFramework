@@ -5,21 +5,22 @@
 
 import { strict as assert } from "node:assert";
 
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { unreachableCase } from "@fluidframework/core-utils";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	NodeFromSchema,
 	SchemaFactory,
 	TreeConfiguration,
 	TreeView,
 } from "../../simple-tree/index.js";
-import { TreeFactory } from "../../treeFactory.js";
 import {
+	adaptEnum,
 	enumFromStrings,
 	typedObjectValues,
-	adaptEnum,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaCreationUtilities.js";
+import { TreeFactory } from "../../treeFactory.js";
 import { testIdCompressor } from "../utils.js";
 
 const schema = new SchemaFactory("test");
@@ -41,7 +42,7 @@ describe("schemaCreationUtilities", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
 			"tree",
 		);
-		const view: TreeView<Parent> = tree.schematize(config);
+		const view: TreeView<typeof Parent> = tree.schematize(config);
 		const mode = view.root.mode;
 		switch (true) {
 			case mode instanceof Mode.Bonus: {
@@ -115,7 +116,7 @@ describe("schemaCreationUtilities", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
 			"tree",
 		);
-		const view: TreeView<Parent> = tree.schematize(config);
+		const view: TreeView<typeof Parent> = tree.schematize(config);
 		const mode = view.root.mode;
 		switch (mode.value) {
 			case "Fun": {

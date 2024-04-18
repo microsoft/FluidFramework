@@ -2,38 +2,42 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
-import { AsyncGenerator, takeAsync } from "@fluid-private/stochastic-test-utils";
+
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
+	DDSFuzzHarnessEvents,
 	DDSFuzzModel,
 	DDSFuzzTestState,
 	createDDSFuzzSuite,
-	DDSFuzzHarnessEvents,
 } from "@fluid-private/test-dds-utils";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { UpPath, Anchor, Value } from "../../../core/index.js";
-import { TreeContent } from "../../../shared-tree/index.js";
+
+import { Anchor, UpPath, Value } from "../../../core/index.js";
 import {
 	cursorsFromContextualData,
 	jsonableTreeFromFieldCursor,
 	typeNameSymbol,
 } from "../../../feature-libraries/index.js";
+import { TreeContent } from "../../../shared-tree/index.js";
 import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils.js";
+
 import {
-	makeOpGenerator,
 	EditGeneratorOpWeights,
 	FuzzTestState,
+	makeOpGenerator,
 	viewFromState,
 } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
 import {
-	createAnchors,
-	validateAnchors,
-	fuzzNode,
-	fuzzSchema,
-	failureDirectory,
 	RevertibleSharedTreeView,
+	createAnchors,
 	deterministicIdCompressorFactory,
+	failureDirectory,
+	fuzzNode,
+	initialFuzzSchema,
+	validateAnchors,
 } from "./fuzzUtils.js";
 import { Operation } from "./operationTypes.js";
 
@@ -43,7 +47,7 @@ interface AnchorFuzzTestState extends FuzzTestState {
 }
 
 const config = {
-	schema: fuzzSchema,
+	schema: initialFuzzSchema,
 	// Setting the tree to have an initial value is more interesting for this targeted test than if it's empty:
 	// returning to an empty state is arguably "easier" than returning to a non-empty state after some undos.
 	initialTree: {
@@ -75,15 +79,19 @@ describe("Fuzz - anchor stability", () => {
 	const runsPerBatch = 50;
 	describe("Anchors are unaffected by aborted transaction", () => {
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
+			set: 2,
+			clear: 1,
 			insert: 1,
 			remove: 2,
-			move: 2,
+			intraFieldMove: 2,
+			crossFieldMove: 2,
 			fieldSelection: {
 				optional: 1,
 				required: 1,
 				sequence: 2,
 				recurse: 1,
 			},
+			schema: 1,
 		};
 		const generatorFactory = () =>
 			takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
@@ -131,16 +139,19 @@ describe("Fuzz - anchor stability", () => {
 			},
 			// AB#5745: Starting a transaction while detached, submitting edits, then attaching hits 0x428.
 			// Once this is fixed, this fuzz test could also include working from a detached state if desired.
-			detachedStartOptions: { enabled: false, attachProbability: 1 },
+			detachedStartOptions: { numOpsBeforeAttach: 0 },
 			clientJoinOptions: { maxNumberOfClients: 1, clientAddProbability: 0 },
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		});
 	});
 	describe("Anchors are stable", () => {
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
+			set: 2,
+			clear: 1,
 			insert: 2,
 			remove: 2,
-			move: 2,
+			intraFieldMove: 2,
+			crossFieldMove: 2,
 			undo: 1,
 			redo: 1,
 			synchronizeTrees: 1,
@@ -150,10 +161,10 @@ describe("Fuzz - anchor stability", () => {
 				sequence: 2,
 				recurse: 1,
 			},
+			schema: 1,
 		};
 		const generatorFactory = () =>
 			takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
-		const generator = generatorFactory() as AsyncGenerator<Operation, AnchorFuzzTestState>;
 		const model: DDSFuzzModel<
 			SharedTreeTestFactory,
 			Operation,
@@ -161,7 +172,7 @@ describe("Fuzz - anchor stability", () => {
 		> = {
 			workloadName: "anchors-undo-redo",
 			factory: new SharedTreeTestFactory(() => undefined),
-			generatorFactory: () => generator,
+			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: () => {},
 		};
@@ -177,8 +188,10 @@ describe("Fuzz - anchor stability", () => {
 					// This is a kludge to force the invocation of schematize for each client.
 					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 					viewFromState(initialState, client, config.initialTree).checkout;
+					// synchronization here (instead of once after this loop) prevents the second client from having to rebase an initialize,
+					// which invalidates its view due to schema change.
+					initialState.containerRuntimeFactory.processAllMessages();
 				}
-				initialState.containerRuntimeFactory.processAllMessages();
 			}
 			initialState.anchors = [];
 			for (const client of initialState.clients) {
@@ -201,14 +214,13 @@ describe("Fuzz - anchor stability", () => {
 
 		createDDSFuzzSuite(model, {
 			defaultTestCount: runsPerBatch,
-			detachedStartOptions: { enabled: false, attachProbability: 1 },
+			detachedStartOptions: { numOpsBeforeAttach: 0 },
 			numberOfClients: 2,
 			emitter,
 			saveFailures: {
 				directory: failureDirectory,
 			},
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
-			skip: [0],
 		});
 	});
 });

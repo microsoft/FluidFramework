@@ -3,23 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
-	readAndParse,
 	blobHeadersBlobName as blobNameForBlobHeaders,
-} from "@fluidframework/driver-utils";
+	readAndParse,
+} from "@fluidframework/driver-utils/internal";
 import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import {
-	channelsTreeName,
-	gcTreeKey,
-	ISummaryTreeWithStats,
-} from "@fluidframework/runtime-definitions";
-import { IGCMetadata } from "../gc";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
+
+import { IGCMetadata } from "../gc/index.js";
+
+import { IDocumentSchema } from "./documentSchema.js";
 
 type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
 interface IFluidDataStoreAttributes0 {
@@ -90,16 +90,18 @@ export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): b
  */
 export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
 	readonly summaryFormatVersion: 1;
+	/** @deprecated - used by old (prior to 2.0 RC3) runtimes */
+	readonly message?: ISummaryMetadataMessage;
 	/** The last message processed at the time of summary. Only primitive property types are added to the summary. */
-	readonly message: ISummaryMetadataMessage | undefined;
+	readonly lastMessage?: ISummaryMetadataMessage;
 	/** True if channels are not isolated in .channels subtrees, otherwise isolated. */
 	readonly disableIsolatedChannels?: true;
 	/** The summary number for a container's summary. Incremented on summaries throughout its lifetime. */
 	readonly summaryNumber?: number;
 	/** GUID to identify a document in telemetry */
 	readonly telemetryDocumentId?: string;
-	/** True if the runtime IdCompressor is enabled */
-	readonly idCompressorEnabled?: boolean;
+
+	readonly documentSchema?: IDocumentSchema;
 }
 
 /**

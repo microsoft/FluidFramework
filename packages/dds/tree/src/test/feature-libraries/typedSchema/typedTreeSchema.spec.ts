@@ -4,34 +4,38 @@
  */
 
 import { strict as assert } from "assert";
-import { jsonArray, jsonObject, jsonSchema, leaf, SchemaBuilder } from "../../../domains/index.js";
+
+import { jsonArray, jsonObject, jsonSchema, leaf } from "../../../domains/index.js";
+import { FieldKinds, SchemaBuilderBase } from "../../../feature-libraries/index.js";
+import {
+	Any,
+	FlexFieldNodeSchema,
+	FlexFieldSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	LeafNodeSchema,
+	allowedTypesIsAny,
+	schemaIsFieldNode,
+	schemaIsLeaf,
+	schemaIsMap,
+	schemaIsObjectNode,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/typed-schema/typedTreeSchema.js";
 import {
 	isAssignableTo,
 	requireAssignableTo,
 	requireFalse,
 	requireTrue,
 } from "../../../util/index.js";
-import {
-	Any,
-	FlexFieldNodeSchema,
-	FlexFieldSchema,
-	FlexObjectNodeSchema,
-	allowedTypesIsAny,
-	schemaIsFieldNode,
-	schemaIsLeaf,
-	schemaIsMap,
-	schemaIsObjectNode,
-	LeafNodeSchema,
-	FlexMapNodeSchema,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/typed-schema/typedTreeSchema.js";
-import { FieldKinds } from "../../../feature-libraries/index.js";
 
 describe("typedTreeSchema", () => {
-	const builder = new SchemaBuilder({ scope: "test", libraries: [jsonSchema] });
+	const builder = new SchemaBuilderBase(FieldKinds.optional, {
+		scope: "test",
+		libraries: [jsonSchema],
+	});
 	const emptyObjectSchema = builder.object("empty", {});
-	const basicObjectSchema = builder.object("basicObject", { foo: builder.optional(Any) });
-	const basicFieldNode = builder.fieldNode("field", builder.optional(Any));
+	const basicObjectSchema = builder.object("basicObject", { foo: Any });
+	const basicFieldNode = builder.fieldNode("field", Any);
 	// TODO: once schema kinds are separated, test object with EmptyKey.
 
 	const recursiveObject = builder.objectRecursive("recursiveObject", {

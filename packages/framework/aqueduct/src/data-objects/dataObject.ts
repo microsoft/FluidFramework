@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map";
-import { PureDataObject } from "./pureDataObject";
-import { DataObjectTypes } from "./types";
+import { type ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map/internal";
+
+import { PureDataObject } from "./pureDataObject.js";
+import { type DataObjectTypes } from "./types.js";
 
 /**
  * DataObject is a base data store that is primed with a root directory. It
@@ -41,11 +42,7 @@ export abstract class DataObject<
 	 * Caller is responsible for ensuring this is only invoked once.
 	 */
 	public async initializeInternal(existing: boolean): Promise<void> {
-		if (!existing) {
-			// Create a root directory and register it before calling initializingFirstTime
-			this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
-			this.internalRoot.bindToContext();
-		} else {
+		if (existing) {
 			// data store has a root directory so we just need to set it before calling initializingFromExisting
 			this.internalRoot = (await this.runtime.getChannel(
 				this.rootDirectoryId,
@@ -62,6 +59,10 @@ export abstract class DataObject<
 						"Legacy document, SharedMap is masquerading as SharedDirectory in DataObject",
 				});
 			}
+		} else {
+			// Create a root directory and register it before calling initializingFirstTime
+			this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
+			this.internalRoot.bindToContext();
 		}
 
 		await super.initializeInternal(existing);

@@ -4,22 +4,22 @@
 
 ```ts
 
-import { BaseSegment } from '@fluidframework/merge-tree';
+import { BaseSegment } from '@fluidframework/merge-tree/internal';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IJSONRunSegment } from '@fluidframework/sequence';
-import { IJSONSegment } from '@fluidframework/merge-tree';
-import { ISegment } from '@fluidframework/merge-tree';
+import { IJSONRunSegment } from '@fluidframework/sequence/internal';
+import { IJSONSegment } from '@fluidframework/merge-tree/internal';
+import { ISegment } from '@fluidframework/merge-tree/internal';
 import { ISharedObject } from '@fluidframework/shared-object-base';
-import { Jsonable } from '@fluidframework/datastore-definitions';
-import { PropertySet } from '@fluidframework/merge-tree';
-import { Serializable } from '@fluidframework/datastore-definitions';
-import { SharedSegmentSequence } from '@fluidframework/sequence';
-import { SharedSequence } from '@fluidframework/sequence';
-import { SubSequence } from '@fluidframework/sequence';
+import { Jsonable } from '@fluidframework/datastore-definitions/internal';
+import { PropertySet } from '@fluidframework/merge-tree/internal';
+import { Serializable } from '@fluidframework/datastore-definitions/internal';
+import { SharedSegmentSequence } from '@fluidframework/sequence/internal';
+import { SharedSequence } from '@fluidframework/sequence/internal';
+import { SubSequence } from '@fluidframework/sequence/internal';
 
 export { IJSONRunSegment }
 
@@ -129,7 +129,7 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
     get attributes(): IChannelAttributes;
     // @deprecated (undocumented)
     create(document: IFluidDataStoreRuntime, id: string): ISharedObject;
-    // @deprecated (undocumented)
+    // @deprecated
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedObject>;
     // @deprecated (undocumented)
     static segmentFromSpec(segSpec: IJSONSegment): SubSequence<number>;
@@ -161,7 +161,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
     get attributes(): IChannelAttributes;
     // @deprecated (undocumented)
     create(document: IFluidDataStoreRuntime, id: string): ISharedObject;
-    // @deprecated (undocumented)
+    // @deprecated
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedObject>;
     // @deprecated (undocumented)
     static segmentFromSpec(segSpec: IJSONSegment): SubSequence<object>;
@@ -213,7 +213,6 @@ export class SparseMatrixFactory implements IChannelFactory {
     get attributes(): IChannelAttributes;
     // (undocumented)
     create(document: IFluidDataStoreRuntime, id: string): ISharedObject;
-    // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedObject>;
     // (undocumented)
     static segmentFromSpec(spec: IJSONSegment): ISegment;

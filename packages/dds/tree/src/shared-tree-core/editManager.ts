@@ -3,42 +3,43 @@
  * Licensed under the MIT License.
  */
 
-import { BTree } from "@tylerbu/sorted-btree-es6";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { SessionId } from "@fluidframework/id-compressor";
+import { BTree } from "@tylerbu/sorted-btree-es6";
+
 import {
+	ChangeFamily,
+	ChangeFamilyEditor,
+	GraphCommit,
+	RevisionTag,
+	findAncestor,
+	findCommonAncestor,
+	mintCommit,
+	rebaseChange,
+} from "../core/index.js";
+import {
+	Mutable,
+	RecursiveReadonly,
 	brand,
 	fail,
 	getOrCreate,
 	mapIterable,
-	Mutable,
-	RecursiveReadonly,
 } from "../util/index.js";
-import {
-	ChangeFamily,
-	ChangeFamilyEditor,
-	findAncestor,
-	findCommonAncestor,
-	GraphCommit,
-	mintCommit,
-	rebaseChange,
-	Revertible,
-	RevisionTag,
-} from "../core/index.js";
-import { getChangeReplaceType, onForkTransitive, SharedTreeBranch } from "./branch.js";
+
+import { SharedTreeBranch, getChangeReplaceType, onForkTransitive } from "./branch.js";
 import {
 	Commit,
-	SequenceId,
-	SummarySessionBranch,
 	SeqNumber,
+	SequenceId,
 	SequencedCommit,
+	SummarySessionBranch,
 } from "./editManagerFormat.js";
 import {
-	sequenceIdComparator,
-	equalSequenceIds,
-	minSequenceId,
 	decrementSequenceId,
+	equalSequenceIds,
 	maxSequenceId,
+	minSequenceId,
+	sequenceIdComparator,
 } from "./sequenceIdUtils.js";
 
 export const minimumPossibleSequenceNumber: SeqNumber = brand(Number.MIN_SAFE_INTEGER);
@@ -108,12 +109,6 @@ export class EditManager<
 	private minimumSequenceNumber = minimumPossibleSequenceNumber;
 
 	/**
-	 * The sequence ID corresponding to the oldest revertible commit owned by the local branch. This is used
-	 * to prevent the trunk from trimming this commit or commits after it as they're needed for undo.
-	 */
-	private _oldestRevertibleSequenceId?: SequenceId;
-
-	/**
 	 * A special commit that is a "base" (tail) of the trunk, though not part of the trunk itself.
 	 * This makes it possible to model the trunk in the same way as any other branch (it branches off of a base commit)
 	 * which allows it to use branching APIs to interact with the other branches.
@@ -161,7 +156,6 @@ export class EditManager<
 				);
 			}
 		});
-		this.localBranch.on("revertibleDisposed", this.onRevertibleDisposed.bind(this));
 
 		// Track all forks of the local branch for purposes of trunk eviction. Unlike the local branch, they have
 		// an unknown lifetime and rebase frequency, so we can not make any assumptions about which trunk commits
@@ -253,45 +247,8 @@ export class EditManager<
 	}
 
 	/**
-	 * Returns the sequence id of the oldest sequenced revertible commit on the local branch.
-	 *
-	 * TODO: may be more performant to maintain the oldest revertible on the branches themselves
-	 * this should be tested and revisited once branches are supported
-	 */
-	private getOldestRevertibleSequenceId(): SequenceId | undefined {
-		if (this._oldestRevertibleSequenceId === undefined) {
-			let oldest: SequenceId | undefined;
-			for (const revision of this.localBranch.revertibleCommits()) {
-				if (oldest === undefined) {
-					oldest = this.trunkMetadata.get(revision)?.sequenceId;
-				} else {
-					const current = this.trunkMetadata.get(revision)?.sequenceId;
-					if (current !== undefined) {
-						oldest = minSequenceId(oldest, current);
-					}
-				}
-			}
-			this._oldestRevertibleSequenceId = oldest;
-		}
-
-		return this._oldestRevertibleSequenceId;
-	}
-
-	private onRevertibleDisposed(revertible: Revertible, revision: RevisionTag): void {
-		const metadata = this.trunkMetadata.get(revision);
-
-		// if this revision hasn't been sequenced, it won't be evicted
-		if (metadata !== undefined) {
-			const { sequenceId: id } = metadata;
-			// if this revision corresponds with the current oldest revertible sequence id, replace it with the new oldest
-			if (id === this._oldestRevertibleSequenceId) {
-				this._oldestRevertibleSequenceId = undefined;
-			}
-		}
-	}
-
-	/**
-	 * Advances the minimum sequence number, and removes all commits from the trunk which lie outside the collaboration window.
+	 * Advances the minimum sequence number, and removes all commits from the trunk which lie outside the collaboration window,
+	 * if they are not retained by revertibles or local branches.
 	 * @param minimumSequenceNumber - the sequence number of the newest commit that all peers (including this one) have received and applied to their trunks.
 	 *
 	 * @remarks If there are more than one commit with the same sequence number we assume this refers to the last commit in the batch.
@@ -332,19 +289,6 @@ export class EditManager<
 			trunkTailSequenceId = minSequenceId(
 				trunkTailSequenceId,
 				sequenceIdBeforeMinimumBranchBase,
-			);
-		}
-
-		// TODO get the oldest revertible sequence id from all registered branches, not just the local branch
-		const oldestRevertibleSequenceId = this.getOldestRevertibleSequenceId();
-		if (oldestRevertibleSequenceId !== undefined) {
-			// use a smaller sequence number so that the oldest revertible is not trimmed
-			const sequenceIdBeforeOldestRevertible = decrementSequenceId(
-				oldestRevertibleSequenceId,
-			);
-			trunkTailSequenceId = minSequenceId(
-				trunkTailSequenceId,
-				sequenceIdBeforeOldestRevertible,
 			);
 		}
 
@@ -438,7 +382,18 @@ export class EditManager<
 			0x428 /* Clients with local changes cannot be used to generate summaries */,
 		);
 
-		const trunk = getPathFromBase(this.trunk.getHead(), this.trunkBase).map((c) => {
+		let oldestCommitInCollabWindow = this.getClosestTrunkCommit(this.minimumSequenceNumber)[1];
+		assert(
+			oldestCommitInCollabWindow.parent !== undefined ||
+				oldestCommitInCollabWindow === this.trunkBase,
+			0x8c7 /* Expected oldest commit in collab window to have a parent or be the trunk base */,
+		);
+
+		// Path construction is exclusive, so we need to use the parent of the oldest commit in the window if it exists
+		oldestCommitInCollabWindow =
+			oldestCommitInCollabWindow.parent ?? oldestCommitInCollabWindow;
+
+		const trunk = getPathFromBase(this.trunk.getHead(), oldestCommitInCollabWindow).map((c) => {
 			const metadata =
 				this.trunkMetadata.get(c.revision) ?? fail("Expected metadata for trunk commit");
 			const commit: SequencedCommit<TChangeset> = {
@@ -453,7 +408,7 @@ export class EditManager<
 			return commit;
 		});
 
-		const branches = new Map<SessionId, SummarySessionBranch<TChangeset>>(
+		const peerLocalBranches = new Map<SessionId, SummarySessionBranch<TChangeset>>(
 			mapIterable(this.peerLocalBranches.entries(), ([sessionId, branch]) => {
 				const branchPath: GraphCommit<TChangeset>[] = [];
 				const ancestor =
@@ -477,7 +432,7 @@ export class EditManager<
 			}),
 		);
 
-		return { trunk, branches };
+		return { trunk, peerLocalBranches };
 	}
 
 	public loadSummaryData(data: SummaryData<TChangeset>): void {
@@ -513,7 +468,7 @@ export class EditManager<
 
 		this.localBranch.setHead(this.trunk.getHead());
 
-		for (const [sessionId, branch] of data.branches) {
+		for (const [sessionId, branch] of data.peerLocalBranches) {
 			const commit =
 				trunkRevisionCache.get(branch.base) ??
 				fail("Expected summary branch to be based off of a revision in the trunk");
@@ -670,7 +625,6 @@ export class EditManager<
 		sessionId: SessionId,
 	): void {
 		this.trunk.setHead(graphCommit);
-		this.localBranch.updateRevertibleCommit(graphCommit);
 		const trunkHead = this.trunk.getHead();
 		this.sequenceMap.set(sequenceId, trunkHead);
 		this.trunkMetadata.set(trunkHead.revision, { sequenceId, sessionId });
@@ -720,7 +674,7 @@ export class EditManager<
  */
 export interface SummaryData<TChangeset> {
 	readonly trunk: readonly SequencedCommit<TChangeset>[];
-	readonly branches: ReadonlyMap<SessionId, SummarySessionBranch<TChangeset>>;
+	readonly peerLocalBranches: ReadonlyMap<SessionId, SummarySessionBranch<TChangeset>>;
 }
 
 /**

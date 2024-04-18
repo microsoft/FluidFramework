@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
+
 import { ChangeAtomId } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import {
@@ -14,14 +14,12 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/utils.js";
 import { brand } from "../../../util/index.js";
-import { deepFreeze } from "../../utils.js";
-import { TestChange } from "../../testChange.js";
+import { deepFreeze, testIdCompressor } from "../../utils.js";
 import { generatePopulatedMarks } from "./populatedMarks.js";
 import { describeForBothConfigs, withOrderingMethod } from "./utils.js";
 
-const idCompressor = createIdCompressor("ca239bfe-7ce4-49dc-93a5-5e72ce8f089c" as SessionId);
 const vestigialEndpoint: ChangeAtomId = {
-	revision: idCompressor.generateCompressedId(),
+	revision: testIdCompressor.generateCompressedId(),
 	localId: brand(42),
 };
 
@@ -29,7 +27,7 @@ export function testUtils() {
 	describeForBothConfigs("Utils", (config) => {
 		const withConfig = (fn: () => void) => withOrderingMethod(config.cellOrdering, fn);
 		describe("round-trip splitMark and tryMergeMarks", () => {
-			const marks = generatePopulatedMarks(idCompressor);
+			const marks = generatePopulatedMarks(testIdCompressor);
 			[
 				...marks,
 				...marks
@@ -38,7 +36,7 @@ export function testUtils() {
 			].forEach((mark, index) => {
 				it(`${index}: ${"type" in mark ? mark.type : "NoOp"}`, () =>
 					withConfig(() => {
-						const splitable: SF.Mark<TestChange> = { ...mark, count: 3 };
+						const splitable: SF.Mark = { ...mark, count: 3 };
 						delete splitable.changes;
 						deepFreeze(splitable);
 						const [part1, part2] = splitMark(splitable, 2);

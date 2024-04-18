@@ -54,7 +54,7 @@ Here are some remarks about the class
 | Property | Modifiers | Type | Description |
 | --- | --- | --- | --- |
 | [abstractPropertyGetter](./simple-suite-test/testclass-class#abstractpropertygetter-property) | `readonly` | [TestMappedType](./simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
-| [testClassGetterProperty](./simple-suite-test/testclass-class#testclassgetterproperty-property) | `readonly`, `virtual` | number | Test class getter-only property |
+| [testClassGetterProperty](./simple-suite-test/testclass-class#testclassgetterproperty-property) | `virtual` | number | Test class property with both a getter and a setter. |
 | [testClassProperty](./simple-suite-test/testclass-class#testclassproperty-property) | `readonly` | TTypeParameterB | Test class property |
 
 ## Methods
@@ -120,13 +120,14 @@ get abstractPropertyGetter(): TestMappedType;
 
 ### testClassGetterProperty {#testclassgetterproperty-property}
 
-Test class getter-only property
+Test class property with both a getter and a setter.
 
 #### Signature {#testclassgetterproperty-signature}
 
 ```typescript
 /** @virtual */
 get testClassGetterProperty(): number;
+set testClassGetterProperty(newValue: number);
 ```
 
 #### Remarks {#testclassgetterproperty-remarks}

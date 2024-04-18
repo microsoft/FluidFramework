@@ -3,44 +3,40 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-internal-modules */
-import isEmpty from "lodash/isEmpty";
-import findIndex from "lodash/findIndex";
-import find from "lodash/find";
-import isEqual from "lodash/isEqual";
-import range from "lodash/range";
-import { copy as cloneDeep } from "fastest-json-copy";
-import { Packr } from "msgpackr";
+import lodash from "lodash";
 
-import { AttachState } from "@fluidframework/container-definitions";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import {
-	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-	IChannelFactory,
-} from "@fluidframework/datastore-definitions";
-
-import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+// eslint-disable-next-line @typescript-eslint/unbound-method -- 'lodash' import workaround.
+const { isEmpty, findIndex, find, isEqual, range } = lodash;
 
 import {
 	ChangeSet,
 	Utils as ChangeSetUtils,
 	rebaseToRemoteChanges,
 } from "@fluid-experimental/property-changeset";
-
 import {
-	PropertyFactory,
 	BaseProperty,
 	NodeProperty,
+	PropertyFactory,
 } from "@fluid-experimental/property-properties";
-
-import { v4 as uuidv4 } from "uuid";
+import { IsoBuffer, bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { AttachState } from "@fluidframework/container-definitions";
+import {
+	IChannelAttributes,
+	IChannelFactory,
+	IChannelStorageService,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import axios from "axios";
-import { PropertyTreeFactory } from "./propertyTreeFactory";
+import { copy as cloneDeep } from "fastest-json-copy";
+import { Packr } from "msgpackr";
+import { v4 as uuidv4 } from "uuid";
+
+import { PropertyTreeFactory } from "./propertyTreeFactory.js";
 
 /**
  * @internal
@@ -118,7 +114,10 @@ export interface ISharedPropertyTreeEncDec {
 		encode: (IPropertyTreeMessage) => IPropertyTreeMessage;
 		decode: (IPropertyTreeMessage) => IPropertyTreeMessage;
 	};
-	summaryEncoder: { encode: (ISnapshotSummary) => Buffer; decode: (Buffer) => ISnapshotSummary };
+	summaryEncoder: {
+		encode: (ISnapshotSummary) => IsoBuffer;
+		decode: (IsoBuffer) => ISnapshotSummary;
+	};
 }
 
 /**
@@ -975,7 +974,7 @@ export class SharedPropertyTree extends SharedObject {
 		}
 	}
 
-	protected applyStashedOp() {
+	protected applyStashedOp(): void {
 		throw new Error("not implemented");
 	}
 }

@@ -3,36 +3,38 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { UsageError } from "@fluidframework/telemetry-utils";
-import { readAndParse } from "@fluidframework/driver-utils";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
-	IChannelServices,
-	IChannelFactory,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
+import { RedBlackTree } from "@fluidframework/merge-tree/internal";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
-import { IFluidSerializer, SharedObject, ValueType } from "@fluidframework/shared-object-base";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { SharedObject, ValueType, parseHandles } from "@fluidframework/shared-object-base/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import path from "path-browserify";
-import { RedBlackTree } from "@fluidframework/merge-tree";
+
 import {
 	IDirectory,
 	IDirectoryEvents,
 	IDirectoryValueChanged,
-	// eslint-disable-next-line import/no-deprecated
-	ISerializableValue,
-	ISerializedValue,
 	ISharedDirectory,
 	ISharedDirectoryEvents,
 	IValueChanged,
-} from "./interfaces";
-import { ILocalValue, LocalValueMaker, makeSerializable } from "./localValues";
-import { pkgVersion } from "./packageVersion";
+} from "./interfaces.js";
+import {
+	// eslint-disable-next-line import/no-deprecated
+	ISerializableValue,
+	ISerializedValue,
+} from "./internalInterfaces.js";
+import { ILocalValue, LocalValueMaker, makeSerializable } from "./localValues.js";
 
 // We use path-browserify since this code can run safely on the server or the browser.
 // We standardize on using posix slashes everywhere.
@@ -65,8 +67,6 @@ interface IDirectoryMessageHandler {
 	 * @param localOpMetadata - The metadata to be submitted with the message.
 	 */
 	submit(op: IDirectoryOperation, localOpMetadata: unknown): void;
-
-	applyStashedOp(op: IDirectoryOperation): unknown;
 }
 
 /**
@@ -266,67 +266,6 @@ export interface IDirectoryNewStorageFormat {
 }
 
 /**
- * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedDirectory}.
- *
- * @sealed
- * @alpha
- */
-export class DirectoryFactory implements IChannelFactory {
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
-	 */
-	public static readonly Type = "https://graph.microsoft.com/types/directory";
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
-	 */
-	public static readonly Attributes: IChannelAttributes = {
-		type: DirectoryFactory.Type,
-		snapshotFormatVersion: "0.1",
-		packageVersion: pkgVersion,
-	};
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
-	 */
-	public get type(): string {
-		return DirectoryFactory.Type;
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
-	 */
-	public get attributes(): IChannelAttributes {
-		return DirectoryFactory.Attributes;
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-	 */
-	public async load(
-		runtime: IFluidDataStoreRuntime,
-		id: string,
-		services: IChannelServices,
-		attributes: IChannelAttributes,
-	): Promise<ISharedDirectory> {
-		const directory = new SharedDirectory(id, runtime, attributes);
-		await directory.load(services);
-
-		return directory;
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
-	 */
-	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedDirectory {
-		const directory = new SharedDirectory(id, runtime, DirectoryFactory.Attributes);
-		directory.initializeLocal();
-
-		return directory;
-	}
-}
-
-/**
  * The comparator essentially performs the following procedure to determine the order of subdirectory creation:
  * 1. If subdirectory A has a non-negative 'seq' and subdirectory B has a negative 'seq', subdirectory A is always placed first due to
  * the policy that acknowledged subdirectories precede locally created ones that have not been committed yet.
@@ -433,6 +372,10 @@ class DirectoryCreationTracker {
 		}, keys);
 		return keys;
 	}
+
+	public get size(): number {
+		return this.keyToIndex.size;
+	}
 }
 
 /**
@@ -453,26 +396,6 @@ export class SharedDirectory
 	extends SharedObject<ISharedDirectoryEvents>
 	implements ISharedDirectory
 {
-	/**
-	 * Create a new shared directory
-	 *
-	 * @param runtime - Data store runtime the new shared directory belongs to
-	 * @param id - Optional name of the shared directory
-	 * @returns Newly create shared directory (but not attached yet)
-	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedDirectory {
-		return runtime.createChannel(id, DirectoryFactory.Type) as SharedDirectory;
-	}
-
-	/**
-	 * Get a factory for SharedDirectory to register with the data store.
-	 *
-	 * @returns A factory that creates and load SharedDirectory
-	 */
-	public static getFactory(): IChannelFactory {
-		return new DirectoryFactory();
-	}
-
 	/**
 	 * String representation for the class.
 	 */
@@ -498,6 +421,7 @@ export class SharedDirectory
 		this.runtime,
 		this.serializer,
 		posix.sep,
+		this.logger,
 	);
 
 	/**
@@ -518,7 +442,7 @@ export class SharedDirectory
 		attributes: IChannelAttributes,
 	) {
 		super(id, runtime, attributes, "fluid_directory_");
-		this.localValueMaker = new LocalValueMaker(this.serializer);
+		this.localValueMaker = new LocalValueMaker();
 		this.setMessageHandlers();
 		// Mirror the containedValueChanged op on the SharedDirectory
 		this.root.on("containedValueChanged", (changed: IValueChanged, local: boolean) => {
@@ -781,10 +705,7 @@ export class SharedDirectory
 						// guaranteed during the serialization process. As a result, it is only essential to utilize the
 						// "fake" client sequence number to signify the loading order, and there is no need to retain
 						// the actual client sequence number at this point.
-						if (createInfo !== undefined && createInfo.csn > -1) {
-							// If csn is -1, then initialize it with 0, otherwise we will never process ops for this
-							// sub directory. This could be done at serialization time too, but we need to maintain
-							// back compat too and also we will actually know the state when it was serialized.
+						if (createInfo !== undefined && createInfo.csn > 0) {
 							if (!tempSeqNums.has(createInfo.csn)) {
 								tempSeqNums.set(createInfo.csn, 0);
 							}
@@ -792,6 +713,13 @@ export class SharedDirectory
 							seqData = { seq: createInfo.csn, clientSeq: fakeClientSeq };
 							tempSeqNums.set(createInfo.csn, ++fakeClientSeq);
 						} else {
+							/**
+							 * 1. If csn is -1, then initialize it with 0, otherwise we will never process ops for this
+							 * sub directory. This could be done at serialization time too, but we need to maintain
+							 * back compat too and also we will actually know the state when it was serialized.
+							 * 2. We need to make the csn = -1 and csn = 0 share the same counter, there are cases
+							 * where both -1 and 0 coexist within a single document.
+							 */
 							seqData = {
 								seq: 0,
 								clientSeq: ++currentSubDir.localCreationSeq,
@@ -806,6 +734,7 @@ export class SharedDirectory
 							this.runtime,
 							this.serializer,
 							posix.join(currentSubDir.absolutePath, subdirName),
+							this.logger,
 						);
 						currentSubDir.populateSubDirectory(subdirName, newSubDir);
 						// Record the newly inserted subdirectory to the creation tracker
@@ -822,7 +751,8 @@ export class SharedDirectory
 					const localValue = this.makeLocal(
 						key,
 						currentSubDir.absolutePath,
-						serializable,
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+						parseHandles(serializable, this.serializer),
 					);
 					currentSubDir.populateStorage(key, localValue);
 				}
@@ -886,7 +816,7 @@ export class SharedDirectory
 				serializable.type === ValueType[ValueType.Shared],
 			0x1e4 /* "Unexpected serializable type" */,
 		);
-		return this.localValueMaker.fromSerializable(serializable);
+		return this.localValueMaker.fromSerializable(serializable, this.serializer, this.handle);
 	}
 
 	/**
@@ -940,12 +870,6 @@ export class SharedDirectory
 					subdir.resubmitClearMessage(op, localOpMetadata);
 				}
 			},
-			applyStashedOp: (op: IDirectoryClearOperation): IClearLocalOpMetadata | undefined => {
-				const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-				if (subdir) {
-					return subdir.applyStashedClearMessage(op);
-				}
-			},
 		});
 		this.messageHandlers.set("delete", {
 			process: (
@@ -965,14 +889,6 @@ export class SharedDirectory
 				const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
 				if (subdir) {
 					subdir.resubmitKeyMessage(op, localOpMetadata);
-				}
-			},
-			applyStashedOp: (
-				op: IDirectoryDeleteOperation,
-			): IKeyEditLocalOpMetadata | undefined => {
-				const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-				if (subdir) {
-					return subdir.applyStashedDeleteMessage(op);
 				}
 			},
 		});
@@ -995,13 +911,6 @@ export class SharedDirectory
 				const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
 				if (subdir) {
 					subdir.resubmitKeyMessage(op, localOpMetadata);
-				}
-			},
-			applyStashedOp: (op: IDirectorySetOperation): IKeyEditLocalOpMetadata | undefined => {
-				const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-				if (subdir) {
-					const context = this.makeLocal(op.key, op.path, op.value);
-					return subdir.applyStashedSetMessage(op, context);
 				}
 			},
 		});
@@ -1027,14 +936,6 @@ export class SharedDirectory
 					parentSubdir.resubmitSubDirectoryMessage(op, localOpMetadata);
 				}
 			},
-			applyStashedOp: (
-				op: IDirectoryCreateSubDirectoryOperation,
-			): ICreateSubDirLocalOpMetadata | undefined => {
-				const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-				if (parentSubdir) {
-					return parentSubdir.applyStashedCreateSubDirMessage(op);
-				}
-			},
 		});
 
 		this.messageHandlers.set("deleteSubDirectory", {
@@ -1058,26 +959,47 @@ export class SharedDirectory
 					parentSubdir.resubmitSubDirectoryMessage(op, localOpMetadata);
 				}
 			},
-			applyStashedOp: (
-				op: IDirectoryDeleteSubDirectoryOperation,
-			): IDeleteSubDirLocalOpMetadata | undefined => {
-				const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-				if (parentSubdir) {
-					return parentSubdir.applyStashedDeleteSubDirMessage(op);
-				}
-			},
 		});
 	}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
-	protected applyStashedOp(op: unknown): unknown {
-		const handler = this.messageHandlers.get((op as IDirectoryOperation).type);
-		if (handler === undefined) {
-			throw new Error("no apply stashed op handler");
+	protected applyStashedOp(op: unknown): void {
+		const directoryOp = op as IDirectoryOperation;
+		const dir = this.getWorkingDirectory(directoryOp.path);
+		switch (directoryOp.type) {
+			case "clear": {
+				dir?.clear();
+				break;
+			}
+			case "createSubDirectory": {
+				dir?.createSubDirectory(directoryOp.subdirName);
+				break;
+			}
+			case "delete": {
+				dir?.delete(directoryOp.key);
+				break;
+			}
+			case "deleteSubDirectory": {
+				dir?.deleteSubDirectory(directoryOp.subdirName);
+				break;
+			}
+			case "set": {
+				dir?.set(
+					directoryOp.key,
+					this.localValueMaker.fromSerializable(
+						directoryOp.value,
+						this.serializer,
+						this.handle,
+					).value,
+				);
+				break;
+			}
+			default: {
+				unreachableCase(directoryOp);
+			}
 		}
-		return handler.applyStashedOp(op as IDirectoryOperation);
 	}
 
 	private serializeDirectory(
@@ -1216,6 +1138,8 @@ function assertNonNullClientId(clientId: string | null): asserts clientId is str
 	assert(clientId !== null, 0x6af /* client id should never be null */);
 }
 
+let hasLoggedDirectoryInconsistency = false;
+
 /**
  * Node of the directory tree.
  * @sealed
@@ -1306,6 +1230,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly serializer: IFluidSerializer,
 		public readonly absolutePath: string,
+		private readonly logger: ITelemetryLoggerExt,
 	) {
 		super();
 		this.localCreationSeqTracker = new DirectoryCreationTracker();
@@ -1509,10 +1434,24 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 		const subdirNames = [...ackedSubdirsInOrder, ...localSubdirsInOrder];
 
-		assert(
-			subdirNames.length === this._subdirectories.size,
-			0x85c /* The count of keys for iteration should be consistent with the size of actual data */,
-		);
+		if (subdirNames.length !== this._subdirectories.size) {
+			// TODO: AB#7022: Hitting this block indicates that the eventual consistency scheme for ordering subdirectories
+			// has failed. Fall back to previous directory behavior, which didn't guarantee ordering.
+			// It's not currently clear how to reach this state, so log some diagnostics to help understand the issue.
+			// This whole block should eventually be replaced by an assert that the two sizes align.
+			if (!hasLoggedDirectoryInconsistency) {
+				this.logger.sendTelemetryEvent({
+					eventName: "inconsistentSubdirectoryOrdering",
+					localKeyCount: this.localCreationSeqTracker.size,
+					ackedKeyCount: this.ackedCreationSeqTracker.size,
+					subdirNamesLength: subdirNames.length,
+					subdirectoriesSize: this._subdirectories.size,
+				});
+				hasLoggedDirectoryInconsistency = true;
+			}
+
+			return this._subdirectories.entries();
+		}
 
 		const entriesIterator = {
 			index: 0,
@@ -1521,7 +1460,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				if (this.index < subdirNames.length) {
 					const subdirName = subdirNames[this.index++];
 					const subdir = this.dirs.get(subdirName);
-					assert(subdir !== undefined, "Could not find expected sub-directory.");
+					assert(
+						subdir !== undefined,
+						0x8ac /* Could not find expected sub-directory. */,
+					);
 					return { value: [subdirName, subdir], done: false };
 				}
 				return { value: undefined, done: true };
@@ -1689,7 +1631,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
-	 * @internal
 	 */
 	public processClearMessage(
 		msg: ISequencedDocumentMessage,
@@ -1717,32 +1658,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	}
 
 	/**
-	 * Apply clear operation locally and generate metadata
-	 * @param op - Op to apply
-	 * @returns metadata generated for stahed op
-	 */
-	public applyStashedClearMessage(op: IDirectoryClearOperation): IClearLocalOpMetadata {
-		this.throwIfDisposed();
-		const previousValue = new Map<string, ILocalValue>(this._storage);
-		this.clearExceptPendingKeys(true);
-		const pendingMsgId = ++this.pendingMessageId;
-		this.pendingClearMessageIds.push(pendingMsgId);
-		const metadata: IClearLocalOpMetadata = {
-			type: "clear",
-			pendingMessageId: pendingMsgId,
-			previousStorage: previousValue,
-		};
-		return metadata;
-	}
-
-	/**
 	 * Process a delete operation.
 	 * @param msg - The message from the server to apply.
 	 * @param op - The op to process
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
-	 * @internal
 	 */
 	public processDeleteMessage(
 		msg: ISequencedDocumentMessage,
@@ -1763,30 +1684,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	}
 
 	/**
-	 * Apply delete operation locally and generate metadata
-	 * @param op - Op to apply
-	 * @returns metadata generated for stahed op
-	 */
-	public applyStashedDeleteMessage(op: IDirectoryDeleteOperation): IKeyEditLocalOpMetadata {
-		this.throwIfDisposed();
-		const previousValue = this.deleteCore(op.key, true);
-		const pendingMessageId = this.getKeyMessageId(op);
-		const localMetadata: IKeyEditLocalOpMetadata = {
-			type: "edit",
-			pendingMessageId,
-			previousValue,
-		};
-		return localMetadata;
-	}
-
-	/**
 	 * Process a set operation.
 	 * @param msg - The message from the server to apply.
 	 * @param op - The op to process
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
-	 * @internal
 	 */
 	public processSetMessage(
 		msg: ISequencedDocumentMessage,
@@ -1812,35 +1715,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	}
 
 	/**
-	 * Apply set operation locally and generate metadata
-	 * @param op - Op to apply
-	 * @returns metadata generated for stahed op
-	 */
-	public applyStashedSetMessage(
-		op: IDirectorySetOperation,
-		context: ILocalValue,
-	): IKeyEditLocalOpMetadata {
-		this.throwIfDisposed();
-		// Set the value locally.
-		const previousValue = this.setCore(op.key, context, true);
-
-		// Create metadata
-		const pendingMessageId = this.getKeyMessageId(op);
-		const localMetadata: IKeyEditLocalOpMetadata = {
-			type: "edit",
-			pendingMessageId,
-			previousValue,
-		};
-		return localMetadata;
-	}
-	/**
 	 * Process a create subdirectory operation.
 	 * @param msg - The message from the server to apply.
 	 * @param op - The op to process
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
-	 * @internal
 	 */
 	public processCreateSubDirectoryMessage(
 		msg: ISequencedDocumentMessage,
@@ -1867,37 +1747,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	}
 
 	/**
-	 * Apply createSubDirectory operation locally and generate metadata
-	 * @param op - Op to apply
-	 * @returns metadata generated for stahed op
-	 */
-	public applyStashedCreateSubDirMessage(
-		op: IDirectoryCreateSubDirectoryOperation,
-	): ICreateSubDirLocalOpMetadata {
-		this.throwIfDisposed();
-		// Create the sub directory locally first.
-		this.createSubDirectoryCore(
-			op.subdirName,
-			true,
-			this.getLocalSeq(),
-			this.runtime.clientId ?? "detached",
-		);
-		this.updatePendingSubDirMessageCount(op);
-
-		const localOpMetadata: ICreateSubDirLocalOpMetadata = {
-			type: "createSubDir",
-		};
-		return localOpMetadata;
-	}
-
-	/**
 	 * Process a delete subdirectory operation.
 	 * @param msg - The message from the server to apply.
 	 * @param op - The op to process
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
-	 * @internal
 	 */
 	public processDeleteSubDirectoryMessage(
 		msg: ISequencedDocumentMessage,
@@ -1915,24 +1770,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			return;
 		}
 		this.deleteSubDirectoryCore(op.subdirName, local);
-	}
-
-	/**
-	 * Apply deleteSubDirectory operation locally and generate metadata
-	 * @param op - Op to apply
-	 * @returns metadata generated for stahed op
-	 */
-	public applyStashedDeleteSubDirMessage(
-		op: IDirectoryDeleteSubDirectoryOperation,
-	): IDeleteSubDirLocalOpMetadata {
-		this.throwIfDisposed();
-		const subDir = this.deleteSubDirectoryCore(op.subdirName, true);
-		this.updatePendingSubDirMessageCount(op);
-		const metadata: IDeleteSubDirLocalOpMetadata = {
-			type: "deleteSubDir",
-			subDirectory: subDir,
-		};
-		return metadata;
 	}
 
 	/**
@@ -1957,7 +1794,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	/**
 	 * Resubmit a clear operation.
 	 * @param op - The operation
-	 * @internal
 	 */
 	public resubmitClearMessage(op: IDirectoryClearOperation, localOpMetadata: unknown): void {
 		assert(
@@ -2004,7 +1840,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * Submit a key message to remote clients based on a previous submit.
 	 * @param op - The map key message
 	 * @param localOpMetadata - Metadata from the previous submit
-	 * @internal
 	 */
 	public resubmitKeyMessage(op: IDirectoryKeyOperation, localOpMetadata: unknown): void {
 		assert(
@@ -2097,7 +1932,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * Submit a subdirectory operation again
 	 * @param op - The operation
 	 * @param localOpMetadata - metadata submitted with the op originally
-	 * @internal
 	 */
 	public resubmitSubDirectoryMessage(
 		op: IDirectorySubDirectoryOperation,
@@ -2141,7 +1975,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * Get the storage of this subdirectory in a serializable format, to be used in snapshotting.
 	 * @param serializer - The serializer to use to serialize handles in its values.
 	 * @returns The JSONable string representing the storage of this subdirectory
-	 * @internal
 	 */
 	public *getSerializedStorage(
 		serializer: IFluidSerializer,
@@ -2167,7 +2000,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * Populate a key value in this subdirectory's storage, to be used when loading from snapshot.
 	 * @param key - The key to populate
 	 * @param localValue - The local value to populate into it
-	 * @internal
 	 */
 	public populateStorage(key: string, localValue: ILocalValue): void {
 		this.throwIfDisposed();
@@ -2178,7 +2010,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * Populate a subdirectory into this subdirectory, to be used when loading from snapshot.
 	 * @param subdirName - The name of the subdirectory to add
 	 * @param newSubDir - The new subdirectory to add
-	 * @internal
 	 */
 	public populateSubDirectory(subdirName: string, newSubDir: SubDirectory): void {
 		this.throwIfDisposed();
@@ -2190,7 +2021,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * value so op handlers can be retrieved
 	 * @param key - The key to retrieve from
 	 * @returns The local value
-	 * @internal
 	 */
 	public getLocalValue<T extends ILocalValue = ILocalValue>(key: string): T {
 		this.throwIfDisposed();
@@ -2244,10 +2074,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			}
 		} else if ((op.type === "delete" || op.type === "set") && localOpMetadata.type === "edit") {
 			const key: unknown = op.key;
-			assert(key !== undefined, '"key" property is missing from edit operation.');
+			assert(key !== undefined, 0x8ad /* "key" property is missing from edit operation. */);
 			assert(
 				typeof key === "string",
-				'"key" property in edit operation is misconfigured. Expected a string.',
+				0x8ae /* "key" property in edit operation is misconfigured. Expected a string. */,
 			);
 
 			if (localOpMetadata.previousValue === undefined) {
@@ -2261,11 +2091,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			const subdirName: unknown = op.subdirName;
 			assert(
 				subdirName !== undefined,
-				'"subdirName" property is missing from "createSubDirectory" operation.',
+				0x8af /* "subdirName" property is missing from "createSubDirectory" operation. */,
 			);
 			assert(
 				typeof subdirName === "string",
-				'"subdirName" property in "createSubDirectory" operation is misconfigured. Expected a string.',
+				0x8b0 /* "subdirName" property in "createSubDirectory" operation is misconfigured. Expected a string. */,
 			);
 
 			this.deleteSubDirectoryCore(subdirName, true);
@@ -2274,11 +2104,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			const subdirName: unknown = op.subdirName;
 			assert(
 				subdirName !== undefined,
-				'"subdirName" property is missing from "deleteSubDirectory" operation.',
+				0x8b1 /* "subdirName" property is missing from "deleteSubDirectory" operation. */,
 			);
 			assert(
 				typeof subdirName === "string",
-				'"subdirName" property in "deleteSubDirectory" operation is misconfigured. Expected a string.',
+				0x8b2 /* "subdirName" property in "deleteSubDirectory" operation is misconfigured. Expected a string. */,
 			);
 
 			if (localOpMetadata.subDirectory !== undefined) {
@@ -2610,6 +2440,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				this.runtime,
 				this.serializer,
 				absolutePath,
+				this.logger,
 			);
 			/**
 			 * Store the sequnce numbers of newly created subdirectory to the proper creation tracker, based

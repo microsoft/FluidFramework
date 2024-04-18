@@ -3,20 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { BaseSegment, IJSONSegment, ISegment, PropertySet } from "@fluidframework/merge-tree";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelServices,
 	IChannelFactory,
-	Jsonable,
+	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import { Jsonable } from "@fluidframework/datastore-definitions/internal";
+import {
+	BaseSegment,
+	IJSONSegment,
+	ISegment,
+	PropertySet,
+} from "@fluidframework/merge-tree/internal";
+import { SharedSegmentSequence } from "@fluidframework/sequence/internal";
 import { ISharedObject } from "@fluidframework/shared-object-base";
-import { SharedSegmentSequence } from "@fluidframework/sequence";
-import { pkgVersion } from "./packageVersion";
-import { SubSequence } from "./sharedSequence";
+
+import { pkgVersion } from "./packageVersion.js";
+import { SubSequence } from "./sharedSequence.js";
 
 /**
  * An empty segment that occupies 'cachedLength' positions.

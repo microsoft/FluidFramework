@@ -4,8 +4,10 @@
  */
 
 import { strict as assert } from "assert";
+
 import { ISequencedClient } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	IOrderedClientCollection,
 	IOrderedClientElection,
@@ -13,8 +15,9 @@ import {
 	ITrackedClient,
 	OrderedClientCollection,
 	OrderedClientElection,
-} from "../../summary";
-import { TestQuorumClients } from "./testQuorumClients";
+} from "../../summary/index.js";
+
+import { TestQuorumClients } from "./testQuorumClients.js";
 
 describe("Ordered Client Collection", () => {
 	let orderedClients: IOrderedClientCollection;

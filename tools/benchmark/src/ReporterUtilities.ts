@@ -41,11 +41,11 @@ export function getName(name: string): string {
 }
 
 /**
+ * Creates and returns a padding string consisting of `num` copies of `chr`
  * @param num - Number of characters to pad
  * @param chr - Character to use for padding (space by default)
- * @returns a padding string consisting of `num` copies of `chr`
  */
-export const pad = (num: number, chr = " "): string => Array(num + 1).join(chr);
+export const pad = (num: number, chr = " "): string => Array.from({ length: num + 1 }).join(chr);
 
 /**
  * Nicely format a decimal number to make it human-readable.
@@ -62,7 +62,6 @@ export function prettyNumber(num: number, numDecimals = 3): string {
 	}
 	// Add commas to the numbers before the decimal.
 	// Since this only ever runs on strings <= 9 characters, its not a performance problem problem.
-	// eslint-disable-next-line unicorn/no-unsafe-regex
 	split[0] = split[0].replace(/(\d)(?=(\d{3})+$)/g, "$1,");
 	return split.join(".");
 }
@@ -162,10 +161,10 @@ export function getArrayStatistics(array: number[], fractionOfSamplesToUse: numb
 	}
 
 	const n = finalSamples.length;
-	let max = -Infinity;
-	let min = Infinity;
+	let max = Number.NEGATIVE_INFINITY;
+	let min = Number.POSITIVE_INFINITY;
 	let mean = 0;
-	finalSamples.forEach((x) => {
+	for (const x of finalSamples) {
 		mean += x;
 		if (x > max) {
 			max = x;
@@ -173,7 +172,7 @@ export function getArrayStatistics(array: number[], fractionOfSamplesToUse: numb
 		if (x < min) {
 			min = x;
 		}
-	});
+	}
 	mean /= n;
 
 	// We want the the sample variance, not population variance (since the dataset is only a subset of the infinite population of possible samples).
@@ -184,7 +183,7 @@ export function getArrayStatistics(array: number[], fractionOfSamplesToUse: numb
 	const sem = deviation / Math.sqrt(n); // Standard Error of the Mean
 	const df = n - 1; // Degrees of Freedom
 	const propName = df === 0 ? "1" : df.toString();
-	const critical = tTable[propName] ?? tTable.infinity;
+	const critical = (tTable[propName] as number) ?? tTable.infinity;
 	const moe = sem * critical; // Margin of Error
 	const rme = (moe / Math.abs(mean)) * 100; // Relative Margin of Error
 

@@ -4,12 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	TestField,
-	mapSchema,
-	testGeneralPurposeTreeCursor,
-	testSpecializedFieldCursor,
-} from "../../cursorTestSuite.js";
+
 import {
 	EmptyKey,
 	ITreeCursor,
@@ -17,18 +12,13 @@ import {
 	JsonableTree,
 	TreeNodeSchemaIdentifier,
 } from "../../../core/index.js";
-import {
-	jsonableTreeFromCursor,
-	cursorForJsonableTreeNode,
-	chunkTree,
-	TreeChunk,
-} from "../../../feature-libraries/index.js";
-import { brand, ReferenceCountedBase } from "../../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { uniformChunk } from "../../../feature-libraries/chunked-forest/index.js";
+import { leaf } from "../../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
-
+import {
+	ChunkedCursor,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/chunked-forest/chunk.js";
 import {
 	basicChunkTree,
 	basicOnlyChunkPolicy,
@@ -36,14 +26,25 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
 // eslint-disable-next-line import/no-internal-modules
+import { uniformChunk } from "../../../feature-libraries/chunked-forest/index.js";
+// eslint-disable-next-line import/no-internal-modules
 import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
-import { leaf } from "../../../domains/index.js";
 import {
-	ChunkedCursor,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/chunked-forest/chunk.js";
-import { emptyShape, testData } from "./uniformChunkTestData.js";
+	TreeChunk,
+	chunkTree,
+	cursorForJsonableTreeNode,
+	jsonableTreeFromCursor,
+} from "../../../feature-libraries/index.js";
+import { ReferenceCountedBase, brand } from "../../../util/index.js";
+import {
+	TestField,
+	mapSchema,
+	testGeneralPurposeTreeCursor,
+	testSpecializedFieldCursor,
+} from "../../cursorTestSuite.js";
+
 import { numberSequenceField, validateChunkCursor } from "./fieldCursorTestUtilities.js";
+import { emptyShape, testData } from "./uniformChunkTestData.js";
 
 describe("basic chunk", () => {
 	it("calling chunkTree on existing chunk adds a reference", () => {
@@ -232,7 +233,7 @@ class WrapperChunk extends ReferenceCountedBase implements TreeChunk {
 		chunk.referenceAdded();
 	}
 
-	protected dispose(): void {
+	protected onUnreferenced(): void {
 		this.chunk.referenceRemoved();
 	}
 

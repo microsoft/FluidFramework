@@ -4,10 +4,13 @@
  */
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
-import { IBlob, ISummaryTree, ITree } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
-import { convertSummaryTreeToITree, listBlobsAtTreePath } from "@fluidframework/runtime-utils";
+import { IBlob, ISummaryTree, ITree } from "@fluidframework/protocol-definitions";
+import {
+	convertSummaryTreeToITree,
+	listBlobsAtTreePath,
+} from "@fluidframework/runtime-utils/internal";
 
 /**
  * Mock implementation of IChannelStorageService based on ITree input.

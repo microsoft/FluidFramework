@@ -4,23 +4,23 @@
  */
 
 import { strict as assert } from "assert";
-import { DataObject, DataObjectFactory, PureDataObject } from "@fluidframework/aqueduct";
-import { IContainer } from "@fluidframework/container-definitions";
-import { IContainerRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime";
+
+import { describeCompat } from "@fluid-private/test-version-utils";
+import type { PureDataObject } from "@fluidframework/aqueduct/internal";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { IContainerRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime/internal";
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
-import { SharedMatrix } from "@fluidframework/matrix";
-import type { SharedMap } from "@fluidframework/map";
+import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
+import type { ISharedMap } from "@fluidframework/map/internal";
+import type { SharedMatrix } from "@fluidframework/matrix/internal";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestObjectProvider,
-	waitForContainerConnection,
-	summarizeNow,
-	createSummarizerFromFactory,
 	createContainerRuntimeFactoryWithDefaultDataStore,
-} from "@fluidframework/test-utils";
-import { describeCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { pkgVersion } from "../packageVersion.js";
+	createSummarizerFromFactory,
+	summarizeNow,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 interface ProvideSearchContent {
 	SearchContent: SearchContent;
@@ -39,38 +39,43 @@ const runtimeOptions: IContainerRuntimeOptions = {
 export const TestDataObjectType1 = "@fluid-example/test-dataStore1";
 export const TestDataObjectType2 = "@fluid-example/test-dataStore2";
 
-function createDataStoreRuntime(factory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime) {
-	return mixinSummaryHandler(async (runtime: FluidDataStoreRuntime) => {
-		const obj: PureDataObject & FluidObject<SearchContent> =
-			await DataObject.getDataObject(runtime);
-		const searchObj = obj.SearchContent;
-		if (searchObj === undefined) {
-			return undefined;
-		}
-
-		// ODSP parser requires every search blob end with a line-feed character.
-		const searchContent = await searchObj.getSearchContent();
-		if (searchContent === undefined) {
-			return undefined;
-		}
-		const content = searchContent.endsWith("\n") ? searchContent : `${searchContent}\n`;
-		return {
-			// This is the path in snapshot that ODSP expects search blob (in plain text) to be for components
-			// that want to provide search content.
-			path: ["_search", "01"],
-			content,
-		};
-	}, factory);
-}
-
 /**
  * Validates the scenario in which, during summarization, a data store is loaded out of order.
  */
 describeCompat(
 	"Summary where data store is loaded out of order",
-	"2.0.0-rc.1.0.0",
+	"NoCompat",
 	(getTestObjectProvider, apis) => {
-		const { SharedMap } = apis.dds;
+		const { SharedMap, SharedMatrix } = apis.dds;
+		const { DataObject, DataObjectFactory, FluidDataStoreRuntime } = apis.dataRuntime;
+		const { mixinSummaryHandler } = apis.dataRuntime.packages.datastore;
+		const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+
+		function createDataStoreRuntime(
+			factory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
+		) {
+			return mixinSummaryHandler(async (runtime: FluidDataStoreRuntime) => {
+				const obj: PureDataObject & FluidObject<SearchContent> =
+					await DataObject.getDataObject(runtime);
+				const searchObj = obj.SearchContent;
+				if (searchObj === undefined) {
+					return undefined;
+				}
+
+				// ODSP parser requires every search blob end with a line-feed character.
+				const searchContent = await searchObj.getSearchContent();
+				if (searchContent === undefined) {
+					return undefined;
+				}
+				const content = searchContent.endsWith("\n") ? searchContent : `${searchContent}\n`;
+				return {
+					// This is the path in snapshot that ODSP expects search blob (in plain text) to be for components
+					// that want to provide search content.
+					path: ["_search", "01"],
+					content,
+				};
+			}, factory);
+		}
 
 		class TestDataObject2 extends DataObject {
 			public get _root() {
@@ -80,7 +85,7 @@ describeCompat(
 				return this.context;
 			}
 			private readonly mapKey = "SharedMap";
-			public map!: SharedMap;
+			public map!: ISharedMap;
 
 			protected async initializingFirstTime() {
 				const sharedMap = SharedMap.create(this.runtime, this.mapKey);
@@ -88,7 +93,7 @@ describeCompat(
 			}
 
 			protected async hasInitialized() {
-				const mapHandle = this.root.get<IFluidHandle<SharedMap>>(this.mapKey);
+				const mapHandle = this.root.get<IFluidHandle<ISharedMap>>(this.mapKey);
 				assert(mapHandle !== undefined, "SharedMap not found");
 				this.map = await mapHandle.get();
 			}
@@ -164,10 +169,9 @@ describeCompat(
 			[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
 			[dataStoreFactory2.type, Promise.resolve(dataStoreFactory2)],
 		]);
-		const containerRuntimeFactoryWithDefaultDataStore =
-			getContainerRuntimeApi(pkgVersion).ContainerRuntimeFactoryWithDefaultDataStore;
+
 		const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-			containerRuntimeFactoryWithDefaultDataStore,
+			ContainerRuntimeFactoryWithDefaultDataStore,
 			{
 				defaultFactory: dataStoreFactory1,
 				registryEntries: registryStoreEntries,
@@ -185,7 +189,7 @@ describeCompat(
 				container,
 				dataStoreFactory1,
 				summaryVersion,
-				containerRuntimeFactoryWithDefaultDataStore,
+				ContainerRuntimeFactoryWithDefaultDataStore,
 				registryStoreEntries,
 			);
 			return createSummarizerResult.summarizer;
