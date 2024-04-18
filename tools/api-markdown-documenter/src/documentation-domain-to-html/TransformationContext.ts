@@ -34,7 +34,7 @@ export interface TransformationContext extends ConfigurationBase {
 }
 
 /**
- * Constructs a {@link TransformationContext} using provided optional parameters, and filling in the rest with
+ * Constructs a {@link TransformationContext} using provided optional parameters, filling in the rest with
  * system defaults.
  */
 export function createTransformationContext(
