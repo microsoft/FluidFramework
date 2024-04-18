@@ -1,4 +1,4 @@
-# @fluid-example/bubblebench-editable-shared-tree
+# @fluid-example/bubblebench-shared-tree-flex-tree
 
 ## 2.0.0-rc.3.0.0
 

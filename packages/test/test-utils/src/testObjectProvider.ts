@@ -27,8 +27,8 @@ import {
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import { type ITelemetryGenericEventExt } from "@fluidframework/telemetry-utils";
 import {
+	type ITelemetryGenericEventExt,
 	createChildLogger,
 	createMultiSinkLogger,
 	type ITelemetryLoggerPropertyBags,
