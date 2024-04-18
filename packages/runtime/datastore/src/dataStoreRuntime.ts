@@ -233,6 +233,8 @@ export class FluidDataStoreRuntime
 		private readonly sharedObjectRegistry: ISharedObjectRegistry,
 		existing: boolean,
 		provideEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
+		//* Put the actual type here (would need to go in a definitions package)
+		private readonly gcNodeUpdated?: (props: any) => void,
 	) {
 		super();
 
@@ -359,6 +361,8 @@ export class FluidDataStoreRuntime
 		return this.request(request);
 	}
 
+	//* Annoying: Crossing the Runtime boundary. So needs to start undefined and it's harder to share the type
+
 	public async request(request: IRequest): Promise<IResponse> {
 		try {
 			const parser = RequestParser.create(request);
@@ -374,6 +378,15 @@ export class FluidDataStoreRuntime
 				try {
 					const channel = await context.getChannel();
 
+					// Notify GC that this channel is being loaded
+					this.gcNodeUpdated?.({
+						nodePath: `/${this.id}/${id}`,
+						reason: "Loaded",
+						packagePath: this.dataStoreContext.packagePath,
+						//* request: undefined, -- it's relative to dataStore which will be unexpected, and not really needed anyway
+						headerData: { allowTombstone: true, allowInactive: true },
+					});
+
 					return { mimeType: "fluid/object", status: 200, value: channel };
 				} catch (error) {
 					this.mc.logger.sendErrorEvent(
@@ -383,6 +396,18 @@ export class FluidDataStoreRuntime
 
 					return createResponseError(500, `Failed to get Channel: ${error}`, request);
 				}
+			}
+
+			// FF doesn't know what's actually being requested and how to track it for GC other than to equate it to the DataStore itself
+			if (id !== undefined && id !== "") {
+				this.gcNodeUpdated?.({
+					nodePath: `/${this.id}`,
+					reason: "Loaded",
+					packagePath: this.dataStoreContext.packagePath,
+					//* request: undefined, -- it's relative to dataStore which will be unexpected, and not really needed anyway
+					headerData: { allowTombstone: true, allowInactive: true },
+					fullPath: `/${this.id}/${id}`, //* instead of proxyNodePath. Then nodePath is always the source of truth
+				});
 			}
 
 			// Otherwise defer to an attached request handler
@@ -1277,6 +1302,7 @@ export const mixinRequestHandler = (
 		public async request(request: IRequest) {
 			const response = await super.request(request);
 			if (response.status === 404) {
+				//* gcNodeUsed - DataStore
 				return requestHandler(request, this);
 			}
 			return response;
