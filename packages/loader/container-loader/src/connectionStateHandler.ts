@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDeltaManager } from "@fluidframework/container-definitions";
+import { IDeltaManager, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert, Timer } from "@fluidframework/core-utils/internal";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
@@ -12,6 +12,7 @@ import { ITelemetryLoggerExt, type TelemetryEventCategory } from "@fluidframewor
 import {
 	PerformanceEvent,
 	loggerToMonitoringContext,
+	normalizeError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor.js";
@@ -48,6 +49,9 @@ export interface IConnectionStateHandlerInputs {
 	) => void;
 	/** Callback to note that an old local client ID is still present in the Quorum that should have left and should now be considered invalid */
 	clientShouldHaveLeft: (clientId: string) => void;
+
+	/** Some critical error was hit. Container should be closed and error logged. */
+	onCriticalError: (error: ICriticalContainerError) => void;
 }
 
 /**
@@ -195,6 +199,10 @@ class ConnectionStateHandlerPassThrough
 	}
 	public clientShouldHaveLeft(clientId: string) {
 		return this.inputs.clientShouldHaveLeft(clientId);
+	}
+
+	public onCriticalError(error: ICriticalContainerError) {
+		return this.inputs.onCriticalError(error);
 	}
 }
 
@@ -357,11 +365,15 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 			// the max time on server after which leave op is sent.
 			this.handler.maxClientLeaveWaitTime ?? 300000,
 			() => {
-				assert(
-					this.connectionState !== ConnectionState.Connected,
-					0x2ac /* "Connected when timeout waiting for leave from previous session fired!" */,
-				);
-				this.applyForConnectedState("timeout");
+				try {
+					assert(
+						this.connectionState !== ConnectionState.Connected,
+						0x2ac /* "Connected when timeout waiting for leave from previous session fired!" */,
+					);
+					this.applyForConnectedState("timeout");
+				} catch (error) {
+					this.handler.onCriticalError(normalizeError(error));
+				}
 			},
 		);
 
