@@ -12,7 +12,7 @@ import {
 	ISummarizeResult,
 } from "@fluidframework/runtime-definitions/internal";
 import { ReadAndParseBlob } from "@fluidframework/runtime-utils/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { RuntimeHeaderData } from "../containerRuntime.js";
 import { ContainerRuntimeGCMessage } from "../messageTypes.js";

@@ -99,11 +99,9 @@ import {
 	responseToException,
 	seqFromTree,
 } from "@fluidframework/runtime-utils/internal";
+import type { ITelemetryGenericEventExt } from "@fluidframework/telemetry-utils/internal";
 import {
-	type ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils";
-import {
 	DataCorruptionError,
 	DataProcessingError,
 	GenericError,
@@ -493,6 +491,11 @@ export interface IContainerRuntimeOptions {
 	readonly explicitSchemaControl?: boolean;
 }
 
+/**
+ * Error responses when requesting a deleted object will have this header set to true
+ * @alpha
+ */
+export const DeletedResponseHeaderKey = "wasDeleted";
 /**
  * Tombstone error responses will have this header set to true
  * @alpha
