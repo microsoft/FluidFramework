@@ -12,7 +12,7 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import {
-	// eslint-disable-next-line import/no-deprecated
+	/* eslint-disable import/no-deprecated */
 	Client,
 	IJSONSegment,
 	IMergeTreeAnnotateMsg,
@@ -32,12 +32,13 @@ import {
 	ReferenceType,
 	SegmentGroup,
 	SlidingPreference,
-	createAnnotateRangeOp, // eslint-disable-next-line import/no-deprecated
+	createAnnotateRangeOp,
 	createGroupOp,
 	createInsertOp,
 	createObliterateRangeOp,
 	createRemoveRangeOp,
 	matchProperties,
+	/* eslint-enable import/no-deprecated */
 } from "@fluidframework/merge-tree/internal";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
@@ -180,6 +181,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				}
 
 				case MergeTreeDeltaType.OBLITERATE: {
+					// eslint-disable-next-line import/no-deprecated
 					const lastRem = ops[ops.length - 1] as IMergeTreeObliterateMsg;
 					if (lastRem?.pos1 === r.position) {
 						assert(
@@ -243,6 +245,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	/** `Deferred` that triggers once the object is loaded */
 	protected loadedDeferred = new Deferred<void>();
 	// cache out going ops created when partial loading
+	// eslint-disable-next-line import/no-deprecated
 	private readonly loadedDeferredOutgoingOps: [IMergeTreeOp, SegmentGroup | SegmentGroup[]][] =
 		[];
 	// cache incoming ops that arrive when partial loading
@@ -340,6 +343,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * release, as group ops are redundant with the native batching capabilities
 	 * of the runtime
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	public groupOperation(groupOp: IMergeTreeGroupMsg) {
 		this.guardReentrancy(() => this.client.localTransaction(groupOp));
 	}
@@ -654,6 +658,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				this.submitSequenceMessage(
 					this.client.regeneratePendingOp(
 						content as IMergeTreeOp,
+						// eslint-disable-next-line import/no-deprecated
 						localOpMetadata as SegmentGroup | SegmentGroup[],
 					),
 				);
