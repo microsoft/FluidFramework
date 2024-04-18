@@ -20,7 +20,7 @@ export interface IRedisClientConnectionManager {
 
 export class RedisClientConnectionManager implements IRedisClientConnectionManager {
 	private client: Redis.default | Redis.Cluster | undefined;
-	private readonly redisOptions: Redis.RedisOptions;
+	private readonly redisOptions: Partial<Redis.RedisOptions & Redis.ClusterOptions>;
 	private readonly enableClustering: boolean;
 	private readonly slotsRefreshTimeout: number;
 	private readonly retryDelays: {
@@ -32,7 +32,7 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 	};
 
 	constructor(
-		redisOptions?: Redis.RedisOptions,
+		redisOptions?: Partial<Redis.RedisOptions & Redis.ClusterOptions>,
 		redisConfig?: any,
 		enableClustering: boolean = false,
 		slotsRefreshTimeout: number = 50000,
@@ -66,10 +66,7 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 				enableReadyCheck: true,
 				maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 				enableOfflineQueue: redisConfig.enableOfflineQueue,
-				retryStrategy: getRedisClusterRetryStrategy({
-					delayPerAttemptMs: 50,
-					maxDelayMs: 2000,
-				}),
+				retryStrategy: getRedisClusterRetryStrategy(redisConfig.retryStrategyParams),
 			};
 			if (redisConfig.enableAutoPipelining) {
 				/**
@@ -95,10 +92,21 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 			}
 			this.redisOptions = redisOptions;
 		}
+
+		if (!this.redisOptions.retryStrategy) {
+			this.redisOptions.retryStrategy = getRedisClusterRetryStrategy({
+				delayPerAttemptMs: 50,
+				maxDelayMs: 2000,
+			});
+		}
 		this.authenticateAndCreateRedisClient();
 	}
 
 	private authenticateAndCreateRedisClient(): void {
+		if (this.enableClustering) {
+			this.redisOptions.clusterRetryStrategy = this.redisOptions.retryStrategy;
+		}
+
 		this.client = this.enableClustering
 			? new Redis.Cluster([{ port: this.redisOptions.port, host: this.redisOptions.host }], {
 					redisOptions: this.redisOptions,

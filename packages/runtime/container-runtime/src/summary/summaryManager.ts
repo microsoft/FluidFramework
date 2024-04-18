@@ -12,8 +12,11 @@ import {
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { IThrottler } from "../throttler.js";
 

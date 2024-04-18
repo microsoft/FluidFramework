@@ -67,8 +67,8 @@ import {
 	processAttachMessageGCData,
 	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
+	ITelemetryLoggerExt,
 	DataProcessingError,
 	LoggingError,
 	MonitoringContext,

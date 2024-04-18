@@ -5,7 +5,7 @@
 
 import { performance } from "@fluid-internal/client-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Extract and return the w3c data.

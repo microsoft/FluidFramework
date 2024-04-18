@@ -75,8 +75,9 @@ import {
 	MessageType,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, type TelemetryEventCategory } from "@fluidframework/telemetry-utils";
 import {
+	type TelemetryEventCategory,
+	ITelemetryLoggerExt,
 	EventEmitterWithErrorHandling,
 	GenericError,
 	IFluidErrorBase,
@@ -372,7 +373,7 @@ export class Container
 
 		return PerformanceEvent.timedExecAsync(
 			container.mc.logger,
-			{ eventName: "Load" },
+			{ eventName: "Load", ...loadMode },
 			async (event) =>
 				new Promise<Container>((resolve, reject) => {
 					const defaultMode: IContainerLoadMode = { opsBeforeReturn: "cached" };
@@ -397,7 +398,7 @@ export class Container
 						})
 						.then(
 							(props) => {
-								event.end({ ...props, ...loadMode });
+								event.end({ ...props });
 								resolve(container);
 							},
 							(error) => {
@@ -721,6 +722,7 @@ export class Container
 				},
 				error,
 			);
+			this.close(normalizeError(error));
 		});
 
 		const {
@@ -892,6 +894,9 @@ export class Container
 				},
 				clientShouldHaveLeft: (clientId: string) => {
 					this.clientsWhoShouldHaveLeft.add(clientId);
+				},
+				onCriticalError: (error: ICriticalContainerError) => {
+					this.close(error);
 				},
 			},
 			this.deltaManager,

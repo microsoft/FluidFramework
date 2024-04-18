@@ -15,8 +15,11 @@ import {
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	LoggingError,
+	UsageError,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
