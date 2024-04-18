@@ -361,7 +361,7 @@ class OpPerfTelemetry {
 			// The threshold could be adjusted, but ideally it stays  workload-agnostic, as service
 			// performance impacts all workloads relying on service.
 			const category = duration > latencyThreshold ? "error" : "performance";
-			if (message.type !== "noop") {
+			if (message.type !== MessageType.NoOp) {
 				this.opLatencyLogger.sendPerformanceEvent({
 					eventName: "OpRoundtripTime",
 					sequenceNumber,
