@@ -14,6 +14,7 @@ import type { DocumentationNode, SectionNode } from "../../documentation-domain/
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createMemberTables, wrapInSection } from "../helpers/index.js";
 import { filterChildMembers } from "../ApiItemTransformUtilities.js";
+import { getScopedMemberNameForDiagnostics } from "../Utilities.js";
 
 /**
  * Default documentation transform for `Enum` items.
@@ -36,7 +37,11 @@ export function transformApiEnum(
 					break;
 				}
 				default: {
-					config.logger?.error(`Unsupported Enum child kind: "${child.kind}"`);
+					config.logger?.error(
+						`Unsupported child kind under Enum "${getScopedMemberNameForDiagnostics(
+							apiEnum,
+						)}": "${child.kind}"`,
+					);
 					break;
 				}
 			}

@@ -16,7 +16,7 @@ import {
 import { AzureFunctionTokenProvider } from "@fluidframework/azure-client/internal";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import commander from "commander";
 import { v4 as uuid } from "uuid";

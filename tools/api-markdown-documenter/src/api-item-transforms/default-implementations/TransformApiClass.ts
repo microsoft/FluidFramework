@@ -19,6 +19,7 @@ import { ApiModifier, isStatic } from "../../utilities/index.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createChildDetailsSection, createMemberTables } from "../helpers/index.js";
 import { filterChildMembers } from "../ApiItemTransformUtilities.js";
+import { getScopedMemberNameForDiagnostics } from "../Utilities.js";
 
 /**
  * Default documentation transform for `Class` items.
@@ -97,7 +98,11 @@ export function transformApiClass(
 					break;
 				}
 				default: {
-					config.logger?.error(`Unsupported Class child kind: "${child.kind}"`);
+					config.logger?.error(
+						`Unsupported child kind under Class "${getScopedMemberNameForDiagnostics(
+							apiClass,
+						)}": "${child.kind}"`,
+					);
 					break;
 				}
 			}

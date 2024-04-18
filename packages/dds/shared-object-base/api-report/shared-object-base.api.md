@@ -22,7 +22,7 @@ import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 
 // @internal
 export function bindHandles(value: any, serializer: IFluidSerializer, bind: IFluidHandle): void;

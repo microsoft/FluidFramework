@@ -19,8 +19,11 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	LoggingError,
+	UsageError,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { runWithRetry } from "./retryUtils.js";
 

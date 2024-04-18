@@ -7795,7 +7795,6 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.37.0
       '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.42.3
       '@microsoft/applicationinsights-web': ^2.8.11
       '@types/mocha': ^9.1.1
@@ -7818,7 +7817,6 @@ importers:
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
-      '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
       '@microsoft/applicationinsights-web': 2.8.16_tslib@1.14.1
       '@ungap/structured-clone': 1.2.0
     devDependencies:
