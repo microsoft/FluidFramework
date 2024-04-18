@@ -69,7 +69,8 @@ interface INodeUsageProps extends ICommonProps {
 	packagePath: readonly string[] | undefined;
 	fromId?: string;
 	autorecovery?: true;
-	subpath?: boolean;
+	/** The original nodePath passed in. May differ from id. */
+	fullPath?: string;
 }
 
 /**

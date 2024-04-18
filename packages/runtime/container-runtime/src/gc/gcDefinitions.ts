@@ -245,7 +245,7 @@ export const GCNodeType = {
 	Blob: "Blob",
 	// Nodes that are neither of the above. For example, root node.
 	Other: "Other",
-};
+} as const;
 
 /**
  * @alpha
@@ -370,14 +370,7 @@ export interface IGarbageCollector {
 	 * Called when a node with the given path is updated. If the node is inactive or tombstoned, this will log an error
 	 * or throw an error if failing on incorrect usage is configured.
 	 */
-	nodeUpdated(
-		nodePath: string,
-		reason: "Loaded" | "Changed" | "SubpathLoaded" | "SubpathChanged",
-		timestampMs?: number,
-		packagePath?: readonly string[],
-		request?: IRequest,
-		headerData?: RuntimeHeaderData,
-	): void;
+	nodeUpdated(props: IGCNodeUpdatedProps): void;
 	/** Called when a reference is added to a node. Used to identify nodes that were referenced between summaries. */
 	addedOutboundReference(fromNodePath: string, toNodePath: string, autorecovery?: true): void;
 	/** Called to process a garbage collection message. */
@@ -386,6 +379,16 @@ export interface IGarbageCollector {
 	isNodeDeleted(nodePath: string): boolean;
 	setConnectionState(connected: boolean, clientId?: string): void;
 	dispose(): void;
+}
+
+export interface IGCNodeUpdatedProps {
+	nodePath: string;
+	reason: "Loaded" | "Changed";
+	timestampMs?: number;
+	packagePath?: readonly string[];
+	request?: IRequest;
+	headerData?: RuntimeHeaderData;
+	proxyNodePath?: string;
 }
 
 /** Parameters necessary for creating a GarbageCollector. */

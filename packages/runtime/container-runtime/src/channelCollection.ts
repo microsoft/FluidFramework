@@ -83,6 +83,7 @@ import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
 import {
 	GCNodeType,
 	detectOutboundRoutesViaDDSKey,
+	IGCNodeUpdatedProps,
 	trimLeadingAndTrailingSlashes,
 } from "./gc/index.js";
 import { ContainerMessageType, LocalContainerRuntimeMessage } from "./messageTypes.js";
@@ -281,14 +282,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		protected readonly baseSnapshot: ISnapshotTree | undefined,
 		public readonly parentContext: IFluidParentContext,
 		baseLogger: ITelemetryBaseLogger,
-		private readonly gcNodeUpdated: (
-			nodePath: string,
-			reason: "Loaded" | "Changed" | "SubpathLoaded" | "SubpathChanged",
-			timestampMs?: number,
-			packagePath?: readonly string[],
-			request?: IRequest,
-			headerData?: RuntimeHeaderData,
-		) => void,
+		private readonly gcNodeUpdated: (props: IGCNodeUpdatedProps) => void,
 		private readonly isDataStoreDeleted: (nodePath: string) => boolean,
 		private readonly aliasMap: Map<string, string>,
 		provideEntryPoint: (runtime: ChannelCollection) => Promise<FluidObject>,
@@ -881,12 +875,12 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 		// Notify that a GC node for the data store changed. This is used to detect if a deleted data store is
 		// being used.
-		this.gcNodeUpdated(
-			`/${address}`,
-			"Changed",
-			message.timestamp,
-			context.isLoaded ? context.packagePath : undefined,
-		);
+		this.gcNodeUpdated({
+			nodePath: `/${address}`,
+			reason: "Changed",
+			timestampMs: message.timestamp,
+			packagePath: context.isLoaded ? context.packagePath : undefined,
+		});
 	}
 
 	public async getDataStore(
@@ -1363,6 +1357,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		// We allow Tombstone requests for sub-DataStore objects
 		if (requestForChild) {
 			headerData.allowTombstone = true;
+			headerData.allowInactive = true;
 		}
 
 		await this.waitIfPendingAlias(id);
@@ -1377,26 +1372,25 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 		// Note that this will throw if the data store is inactive or tombstoned and throwing on incorrect usage
 		// is configured.
-		this.gcNodeUpdated(
-			`/${urlWithoutQuery}`,
-			"Loaded",
-			undefined /* timestampMs */,
-			details.pkg,
+		this.gcNodeUpdated({
+			nodePath: `/${urlWithoutQuery}`,
+			reason: "Loaded",
+			packagePath: details.pkg,
 			request,
 			headerData,
-		);
+		});
 
 		// If this is a sub-DataStore url, we need to also notify GC that the parent is used.
 		// This is in case the url is to a route that Fluid doesn't understand or track for GC (handled by app's request handler)
 		if (requestForChild) {
-			this.gcNodeUpdated(
-				urlToGCNodePath(id),
-				"SubpathLoaded",
-				undefined /* timestampMs */,
-				details.pkg,
+			this.gcNodeUpdated({
+				nodePath: `/${urlWithoutQuery}`,
+				reason: "Loaded",
+				packagePath: details.pkg,
 				request,
 				headerData,
-			);
+				proxyNodePath: urlToGCNodePath(id),
+			});
 		}
 
 		const dataStore = await dataStoreContext.realize();

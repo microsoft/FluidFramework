@@ -23,6 +23,7 @@ export {
 	IGarbageCollectorCreateParams,
 	IGCMetadata,
 	IGCMetadata_Deprecated,
+	IGCNodeUpdatedProps,
 	IGCResult,
 	IGCRuntimeOptions,
 	IMarkPhaseStats,

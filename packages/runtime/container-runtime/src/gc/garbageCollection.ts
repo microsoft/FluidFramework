@@ -23,11 +23,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { BlobManager } from "../blobManager.js";
-import {
-	InactiveResponseHeaderKey,
-	RuntimeHeaderData,
-	TombstoneResponseHeaderKey,
-} from "../containerRuntime.js";
+import { InactiveResponseHeaderKey, TombstoneResponseHeaderKey } from "../containerRuntime.js";
 import { ClientSessionExpiredError } from "../error.js";
 import { ContainerMessageType, ContainerRuntimeGCMessage } from "../messageTypes.js";
 import { IRefreshSummaryResult } from "../summary/index.js";
@@ -48,6 +44,7 @@ import {
 	ISweepPhaseStats,
 	UnreferencedState,
 	disableAutoRecoveryKey,
+	type IGCNodeUpdatedProps,
 } from "./gcDefinitions.js";
 import {
 	cloneGCData,
@@ -987,29 +984,28 @@ export class GarbageCollector implements IGarbageCollector {
 	 * @param request - The original request for loads to preserve it in telemetry.
 	 * @param requestHeaders - If the node was loaded via request path, the headers in the request.
 	 */
-	public nodeUpdated(
-		nodePath: string,
-		reason: "Loaded" | "Changed" | "SubpathLoaded" | "SubpathChanged",
-		timestampMs?: number,
-		packagePath?: readonly string[],
-		request?: IRequest,
-		headerData?: RuntimeHeaderData,
-	) {
+	public nodeUpdated({
+		nodePath: originalPath,
+		reason,
+		timestampMs,
+		packagePath,
+		request,
+		headerData,
+		proxyNodePath,
+	}: IGCNodeUpdatedProps) {
 		if (!this.configs.shouldRunGC) {
 			return;
 		}
+
+		// This is the nodePath we should use when checking GC state. proxyNodePath overrides the provided nodePath
+		const nodePath = proxyNodePath ?? originalPath;
 
 		const isTombstoned = this.tombstones.includes(nodePath);
 
 		// This will log if appropriate
 		this.telemetryTracker.nodeUsed({
 			id: nodePath,
-			usageType:
-				reason === "SubpathLoaded"
-					? "Loaded"
-					: reason === "SubpathChanged"
-					? "Changed"
-					: reason,
+			usageType: reason,
 			currentReferenceTimestampMs:
 				timestampMs ?? this.runtime.getCurrentReferenceTimestampMs(),
 			packagePath,
@@ -1017,7 +1013,7 @@ export class GarbageCollector implements IGarbageCollector {
 			isTombstoned,
 			lastSummaryTime: this.getLastSummaryTimestampMs(),
 			headers: headerData,
-			subpath: reason === "SubpathLoaded" || reason === "SubpathChanged",
+			fullPath: originalPath,
 		});
 
 		// Any time we log a Tombstone Loaded error (via Telemetry Tracker),
@@ -1029,10 +1025,15 @@ export class GarbageCollector implements IGarbageCollector {
 			this.triggerAutoRecovery(nodePath);
 		}
 
+		//* TODO: Not sure about this.  Maybe should go off originalPath.  Yuck.  Will be ok due to headerData anyway...
+		//* Maybe just remove the nodeType check below.
 		const nodeType = this.runtime.getNodeType(nodePath);
 
 		// Unless this is a Loaded event for a Blob or DataStore, we're done after telemetry tracking
-		if (reason !== "Loaded" || ![GCNodeType.Blob, GCNodeType.DataStore].includes(nodeType)) {
+		if (
+			reason !== "Loaded" ||
+			!([GCNodeType.Blob, GCNodeType.DataStore] as GCNodeType[]).includes(nodeType)
+		) {
 			return;
 		}
 

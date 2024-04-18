@@ -77,7 +77,7 @@ export const AllowTombstoneRequestHeaderKey = "allowTombstone";
 
 // @internal
 export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
-    constructor(baseSnapshot: ISnapshotTree | undefined, parentContext: IFluidParentContext, baseLogger: ITelemetryBaseLogger, gcNodeUpdated: (nodePath: string, reason: "Loaded" | "Changed", timestampMs?: number, packagePath?: readonly string[], request?: IRequest, headerData?: RuntimeHeaderData) => void, isDataStoreDeleted: (nodePath: string) => boolean, aliasMap: Map<string, string>, provideEntryPoint: (runtime: ChannelCollection) => Promise<FluidObject>);
+    constructor(baseSnapshot: ISnapshotTree | undefined, parentContext: IFluidParentContext, baseLogger: ITelemetryBaseLogger, gcNodeUpdated: (props: IGCNodeUpdatedProps) => void, isDataStoreDeleted: (nodePath: string) => boolean, aliasMap: Map<string, string>, provideEntryPoint: (runtime: ChannelCollection) => Promise<FluidObject>);
     // (undocumented)
     get aliases(): ReadonlyMap<string, string>;
     // (undocumented)
@@ -590,10 +590,10 @@ export type GCFeatureMatrix = {
 
 // @alpha
 export const GCNodeType: {
-    DataStore: string;
-    SubDataStore: string;
-    Blob: string;
-    Other: string;
+    readonly DataStore: "DataStore";
+    readonly SubDataStore: "SubDataStore";
+    readonly Blob: "Blob";
+    readonly Other: "Other";
 };
 
 // @alpha (undocumented)
