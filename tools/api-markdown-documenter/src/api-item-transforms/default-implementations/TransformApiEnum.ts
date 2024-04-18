@@ -40,7 +40,7 @@ export function transformApiEnum(
 					config.logger?.error(
 						`Child item "${
 							child.displayName
-						}" Enum "${getScopedMemberNameForDiagnostics(
+						}" of Enum "${getScopedMemberNameForDiagnostics(
 							apiEnum,
 						)}" is of unsupported API item kind: "${child.kind}"`,
 					);

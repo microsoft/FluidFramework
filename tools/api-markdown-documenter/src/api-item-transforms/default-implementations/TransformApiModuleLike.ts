@@ -108,7 +108,7 @@ export function transformApiModuleLike(
 				}
 				default: {
 					config.logger?.error(
-						`Child item "${child.displayName}" ${
+						`Child item "${child.displayName}" of ${
 							apiItem.kind
 						} "${getScopedMemberNameForDiagnostics(
 							apiItem,

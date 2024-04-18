@@ -95,7 +95,7 @@ export function transformApiInterface(
 					config.logger?.error(
 						`Child item "${
 							child.displayName
-						}" Interface "${getScopedMemberNameForDiagnostics(
+						}" of Interface "${getScopedMemberNameForDiagnostics(
 							apiInterface,
 						)}" is of unsupported API item kind: "${child.kind}"`,
 					);

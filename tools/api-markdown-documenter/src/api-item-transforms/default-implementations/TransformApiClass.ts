@@ -102,7 +102,7 @@ export function transformApiClass(
 					config.logger?.error(
 						`Child item "${
 							child.displayName
-						}" Class "${getScopedMemberNameForDiagnostics(
+						}" of Class "${getScopedMemberNameForDiagnostics(
 							apiClass,
 						)}" is of unsupported API item kind: "${child.kind}"`,
 					);
