@@ -517,7 +517,11 @@ function parseFluidImports(
 }
 
 function isFluidImport(packageName: PackageName): boolean {
-	return packageName.startsWith("@fluid") || unscopedFFPackages.has(packageName);
+	return (
+		packageName.startsWith("@fluidframework") ||
+		packageName.startsWith("@fluid-") ||
+		unscopedFFPackages.has(packageName)
+	);
 }
 
 function isImportUnassigned(importDeclaration: ImportDeclaration): boolean {
