@@ -81,7 +81,6 @@ export function transformApiClass(
 					constructors.push(child as ApiConstructor);
 					break;
 				}
-				case ApiItemKind.PropertySignature:
 				case ApiItemKind.Property: {
 					allProperties.push(child as ApiPropertyItem);
 					break;
