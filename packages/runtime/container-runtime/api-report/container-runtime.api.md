@@ -112,8 +112,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
     // (undocumented)
     readonly entryPoint: IFluidHandle<FluidObject>;
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
-    // (undocumented)
-    getDataStore(id: string, requestHeaderData: RuntimeHeaderData): Promise<IFluidDataStoreContextInternal>;
     getDataStoreIfAvailable(id: string, requestHeaderData: RuntimeHeaderData): Promise<IFluidDataStoreContextInternal | undefined>;
     getDataStorePackagePath(nodePath: string): Promise<readonly string[] | undefined>;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
@@ -386,6 +384,8 @@ export class DataStoreContexts implements Iterable<[string, FluidDataStoreContex
     // (undocumented)
     get(id: string): FluidDataStoreContext | undefined;
     getBoundOrRemoted(id: string, wait: boolean): Promise<FluidDataStoreContext | undefined>;
+    // (undocumented)
+    getRecentlyDeletedContext(id: string): FluidDataStoreContext | undefined;
     getUnbound(id: string): LocalFluidDataStoreContext | undefined;
     // (undocumented)
     has(id: string): boolean;
@@ -399,6 +399,9 @@ export class DataStoreContexts implements Iterable<[string, FluidDataStoreContex
 
 // @alpha (undocumented)
 export const DefaultSummaryConfiguration: ISummaryConfiguration;
+
+// @alpha
+export const DeletedResponseHeaderKey = "wasDeleted";
 
 // @internal
 export function detectOutboundReferences(address: string, contents: unknown, addedOutboundReference: (fromNodePath: string, toNodePath: string) => void): void;
