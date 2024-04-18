@@ -4,7 +4,7 @@
  */
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
-import { RevisionTag } from "../../core/index.js";
+import { RevisionTag, replaceAtomRevisions } from "../../core/index.js";
 import { MarkListFactory } from "./markListFactory.js";
 import { Changeset, HasRevisionTag, Mark, MarkEffect, NoopMarkType } from "./types.js";
 
@@ -28,8 +28,12 @@ function updateMark(
 	newRevision: RevisionTag,
 ): Mark {
 	const updatedMark = updateEffect(mark, revisionsToReplace, newRevision);
-	if (updatedMark.cellId !== undefined && revisionsToReplace.has(updatedMark.cellId.revision)) {
-		updatedMark.cellId = { ...updatedMark.cellId, revision: newRevision };
+	if (mark.cellId !== undefined) {
+		updatedMark.cellId = replaceAtomRevisions(mark.cellId, revisionsToReplace, newRevision);
+	}
+
+	if (mark.changes !== undefined) {
+		updatedMark.changes = replaceAtomRevisions(mark.changes, revisionsToReplace, newRevision);
 	}
 
 	return updatedMark;

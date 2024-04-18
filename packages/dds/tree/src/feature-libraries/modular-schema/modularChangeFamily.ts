@@ -1043,8 +1043,30 @@ export class ModularChangeFamily
 			]),
 		);
 
-		// TODO: Builds, destroys, refreshers, revisions
-		return { ...change, fieldChanges: updatedFields, nodeChanges: updatedNodes };
+		const updated: Mutable<ModularChangeset> = {
+			...change,
+			fieldChanges: updatedFields,
+			nodeChanges: updatedNodes,
+		};
+
+		if (change.builds !== undefined) {
+			updated.builds = replaceIdMapRevisions(change.builds, oldRevisions, newRevision);
+		}
+
+		if (change.destroys !== undefined) {
+			updated.destroys = replaceIdMapRevisions(change.destroys, oldRevisions, newRevision);
+		}
+
+		if (change.refreshers !== undefined) {
+			updated.refreshers = replaceIdMapRevisions(
+				change.refreshers,
+				oldRevisions,
+				newRevision,
+			);
+		}
+
+		// TODO: Also update `updated.revisions`.
+		return updated;
 	}
 
 	private replaceNodeChangesetRevisions(
@@ -1094,6 +1116,20 @@ function replaceRevision(
 	newRevision: RevisionTag,
 ): RevisionTag | undefined {
 	return oldRevisions.has(revision) ? newRevision : revision;
+}
+
+function replaceIdMapRevisions<T>(
+	map: ChangeAtomIdMap<T>,
+	oldRevisions: Set<RevisionTag | undefined>,
+	newRevision: RevisionTag,
+): ChangeAtomIdMap<T> {
+	return nestedMapFromFlatList(
+		nestedMapToFlatList(map).map(([revision, id, value]) => [
+			replaceRevision(revision, oldRevisions, newRevision),
+			id,
+			value,
+		]),
+	);
 }
 
 function composeBuildsDestroysAndRefreshers(changes: TaggedChange<ModularChangeset>[]) {

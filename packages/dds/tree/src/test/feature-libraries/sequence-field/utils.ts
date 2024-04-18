@@ -793,3 +793,10 @@ export function areComposable(changes: TaggedChange<Changeset>[]): boolean {
 	}
 	return true;
 }
+
+export function tagChangeInline(change: Changeset, revision: RevisionTag): TaggedChange<Changeset> {
+	return tagChange(
+		SF.sequenceFieldChangeRebaser.replaceRevisions(change, new Set([undefined]), revision),
+		revision,
+	);
+}

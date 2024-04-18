@@ -17,6 +17,7 @@ import {
 	TaggedChange,
 	areEqualChangeAtomIds,
 	makeChangeAtomId,
+	replaceAtomRevisions,
 	taggedAtomId,
 	taggedOptAtomId,
 } from "../../core/index.js";
@@ -458,7 +459,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		for (const [id, childChange] of change.childChanges) {
 			childChanges.push([
 				replaceRegisterRevisions(id, oldRevisions, newRevision),
-				childChange,
+				replaceAtomRevisions(childChange, oldRevisions, newRevision),
 			]);
 		}
 
@@ -508,14 +509,6 @@ function replaceRegisterRevisions(
 	return register === "self"
 		? register
 		: replaceAtomRevisions(register, oldRevisions, newRevision);
-}
-
-function replaceAtomRevisions(
-	id: ChangeAtomId,
-	oldRevisions: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag,
-): ChangeAtomId {
-	return oldRevisions.has(id.revision) ? { ...id, revision: newRevision } : id;
 }
 
 function getComposedReplaceDst(

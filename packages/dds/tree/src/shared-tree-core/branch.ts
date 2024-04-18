@@ -192,14 +192,20 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	): [change: TChange, newCommit: GraphCommit<TChange>] {
 		this.assertNotDisposed();
 
+		const changeWithRevision = this.changeFamily.rebaser.replaceRevisions(
+			change,
+			new Set([undefined]),
+			revision,
+		);
+
 		const newHead = mintCommit(this.head, {
 			revision,
-			change,
+			change: changeWithRevision,
 		});
 
 		const changeEvent = {
 			type: "append",
-			change: tagChange(change, revision),
+			change: tagChange(changeWithRevision, revision),
 			newCommits: [newHead],
 		} as const;
 
@@ -212,7 +218,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 
 		this.emit("afterChange", changeEvent);
-		return [change, newHead];
+		return [changeWithRevision, newHead];
 	}
 
 	/**
