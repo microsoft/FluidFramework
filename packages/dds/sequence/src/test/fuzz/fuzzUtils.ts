@@ -60,7 +60,7 @@ export interface RemoveRange extends RangeSpec {
 
 export interface AnnotateRange extends RangeSpec {
 	type: "annotateRange";
-	props: PropertySet;
+	props: { key: string; value?: any }[];
 }
 
 export interface ObliterateRange extends RangeSpec {
@@ -232,7 +232,11 @@ export function makeReducer(
 			client.channel.removeRange(start, end);
 		},
 		annotateRange: async ({ client }, { start, end, props }) => {
-			client.channel.annotateRange(start, end, props);
+			const propertySet: PropertySet = {};
+			for (const { key, value } of props) {
+				propertySet[key] = value;
+			}
+			client.channel.annotateRange(start, end, propertySet);
 		},
 		obliterateRange: async ({ client }, { start, end }) => {
 			client.channel.obliterateRange(start, end);
@@ -321,7 +325,7 @@ export function createSharedStringGeneratorOperations(
 		return {
 			type: "annotateRange",
 			...exclusiveRange(state),
-			props: { [key]: value },
+			props: [{ key, value }],
 		};
 	}
 

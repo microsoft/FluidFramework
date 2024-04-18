@@ -110,20 +110,30 @@ export function assertEquivalentSharedStrings(a: SharedString, b: SharedString) 
 
 function assertPropertiesEqual(a: SharedString, b: SharedString): void {
 	for (let i = 0; i < a.getLength(); i++) {
-		const aProps = a.getPropertiesAtPosition(i);
-		const bProps = b.getPropertiesAtPosition(i);
-		const aKeys = aProps === undefined ? [] : Object.keys(aProps);
-		const bKeys = bProps === undefined ? [] : Object.keys(bProps);
+		const aProps = a.getPropertiesAtPosition(i) ?? [];
+		const bProps = b.getPropertiesAtPosition(i) ?? [];
+		const aKeys =
+			aProps === undefined
+				? []
+				: Object.keys(aProps).filter((key) => aProps[key] !== undefined);
+		const bKeys =
+			bProps === undefined
+				? []
+				: Object.keys(bProps).filter((key) => bProps[key] !== undefined);
+		for (const key of aKeys) {
+			const aVal: unknown = aProps[key];
+			const bVal: unknown = bProps[key];
+			assert.deepEqual(
+				aVal,
+				bVal,
+				`Property sets have different values for key ${key}: ${aVal} vs ${bVal}`,
+			);
+		}
 		assert.equal(
 			aKeys.length,
 			bKeys.length,
 			`Property sets have different lengths: ${aKeys.length} vs ${bKeys.length}`,
 		);
-		for (const key of Object.keys(aKeys)) {
-			const aVal: unknown = aProps[key];
-			const bVal: unknown = bProps[key];
-			assert.deepEqual(aVal, bVal, `Property sets have different values for key ${key}`);
-		}
 	}
 }
 
