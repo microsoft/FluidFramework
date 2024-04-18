@@ -36,7 +36,9 @@ export function transformApiEnum(
 					break;
 				}
 				default: {
-					config.logger?.error(`Unsupported Enum child kind: "${child.kind}"`);
+					config.logger?.error(
+						`Unsupported child kind under Enum "${apiEnum.displayName}": "${child.kind}"`,
+					);
 					break;
 				}
 			}

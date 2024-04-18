@@ -106,7 +106,9 @@ export function transformApiModuleLike(
 					break;
 				}
 				default: {
-					config.logger?.error(`Unsupported ${apiItem.kind} child kind: "${child.kind}"`);
+					config.logger?.error(
+						`Unsupported child kind under ${apiItem.kind} "${apiItem.displayName}": "${child.kind}"`,
+					);
 					break;
 				}
 			}

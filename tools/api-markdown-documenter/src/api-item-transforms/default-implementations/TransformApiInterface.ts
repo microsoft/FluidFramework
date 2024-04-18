@@ -91,7 +91,9 @@ export function transformApiInterface(
 					break;
 				}
 				default: {
-					config.logger?.error(`Unsupported Interface child kind: "${child.kind}"`);
+					config.logger?.error(
+						`Unsupported child kind under Interface "${apiInterface.displayName}": "${child.kind}"`,
+					);
 					break;
 				}
 			}

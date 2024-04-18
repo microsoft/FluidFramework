@@ -97,7 +97,9 @@ export function transformApiClass(
 					break;
 				}
 				default: {
-					config.logger?.error(`Unsupported Class child kind: "${child.kind}"`);
+					config.logger?.error(
+						`Unsupported child kind under Class "${apiClass.displayName}": "${child.kind}"`,
+					);
 					break;
 				}
 			}
