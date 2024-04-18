@@ -27,7 +27,7 @@ const snapshotFileName = "header";
 
 /**
  * {@inheritDoc ISharedMap}
- * @deprecated Please use SharedTree for new containers.  SharedMap is supported for loading preexisting Fluid Framework 1.0 containers only.
+ * @alpha
  */
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
 	/**

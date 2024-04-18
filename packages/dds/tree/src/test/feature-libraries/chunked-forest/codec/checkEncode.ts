@@ -29,7 +29,7 @@ import {
 	cursorForJsonableTreeNode,
 } from "../../../../feature-libraries/index.js";
 import { assertChunkCursorBatchEquals } from "../fieldCursorTestUtilities.js";
-import { isFluidHandle } from "@fluidframework/core-interfaces/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 export function checkNodeEncode(
 	shape: NodeEncoder,

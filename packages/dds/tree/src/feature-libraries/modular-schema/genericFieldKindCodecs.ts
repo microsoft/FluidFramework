@@ -13,10 +13,10 @@ export function makeGenericChangeCodec(): ICodecFamily<
 	GenericChangeset,
 	FieldChangeEncodingContext
 > {
-	return makeCodecFamily([[0, makeV0Codec()]]);
+	return makeCodecFamily([[1, makeV1Codec()]]);
 }
 
-function makeV0Codec(): IJsonCodec<
+function makeV1Codec(): IJsonCodec<
 	GenericChangeset,
 	EncodedGenericChangeset,
 	EncodedGenericChangeset,

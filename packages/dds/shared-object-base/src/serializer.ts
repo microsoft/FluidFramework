@@ -16,6 +16,7 @@ import {
 import {
 	generateHandleContextPath,
 	isSerializedHandle,
+	isFluidHandle,
 } from "@fluidframework/runtime-utils/internal";
 
 import { RemoteFluidObjectHandle } from "./remoteObjectHandle.js";

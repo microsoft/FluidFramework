@@ -4,10 +4,14 @@
  */
 
 /**
- * "Erased" handle which can be used to expose a opaque/erased version of a type without referencing the actual type.
+ * Erased type which can be used to expose a opaque/erased version of a type without referencing the actual type.
  * @remarks
- * This similar to the standard [type erasure](https://en.wikipedia.org/wiki/Type_erasure) pattern,
+ * This similar to the [type erasure](https://en.wikipedia.org/wiki/Type_erasure) pattern,
  * but for erasing types at the package boundary.
+ *
+ * This can be used to implement the TypeScript typing for the [handle](https://en.wikipedia.org/wiki/Handle_(computing)) pattern,
+ * allowing code outside of a package to have a reference/handle to something in the package in a type safe way without the package having to publicly export the types of the object.
+ * This should not be confused with the more specific IFluidHandle which is also named after this design pattern.
  *
  * Recommended usage is to use `interface` instead of `type` so tooling (such as tsc and refactoring tools)
  * uses the type name instead of expanding it.

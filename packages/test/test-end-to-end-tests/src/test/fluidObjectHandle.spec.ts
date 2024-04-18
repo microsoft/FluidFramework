@@ -13,7 +13,7 @@ import {
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { toFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import type { ISharedMap } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map/internal";
 import {
 	ITestObjectProvider,
 	TestFluidObject,

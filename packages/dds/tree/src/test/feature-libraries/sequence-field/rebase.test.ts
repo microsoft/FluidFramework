@@ -963,6 +963,36 @@ export function testRebase() {
 				assertChangesetsEqual(rebased, expected);
 			}));
 
+		it("move and remove ↷ same", () =>
+			withConfig(() => {
+				const moveCellId: SF.CellId = { revision: tag1, localId: brand(0) };
+				const removeCellId: SF.CellId = { revision: tag1, localId: brand(1) };
+				const returnCellId: SF.CellId = { revision: tag2, localId: brand(0) };
+				const moveAndRemove = [
+					{ count: 1 },
+					Mark.attachAndDetach(
+						Mark.returnTo(1, returnCellId, moveCellId),
+						Mark.remove(1, removeCellId),
+					),
+					{ count: 1 },
+					Mark.moveOut(1, returnCellId),
+				];
+				const rebased = rebase(moveAndRemove, moveAndRemove);
+				const expected = [
+					{ count: 1 },
+					Mark.remove(1, removeCellId, {
+						cellId: {
+							...removeCellId,
+							adjacentCells: [{ id: removeCellId.localId, count: 1 }],
+						},
+					}),
+					{ count: 1 },
+					Mark.tomb(returnCellId.revision, returnCellId.localId),
+				];
+
+				assertChangesetsEqual(rebased, expected);
+			}));
+
 		it("revive ↷ [revive, move]", () =>
 			withConfig(() => {
 				const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };

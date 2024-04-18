@@ -260,6 +260,8 @@ export {
 	SharedTreeFormatVersion,
 	Tree,
 	TreeApi,
+	TransactionConstraint,
+	NodeInDocumentConstraint,
 } from "./shared-tree/index.js";
 
 export {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { isFluidHandle, toFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
+import { isFluidHandle } from '@fluidframework/runtime-utils/internal';
 import { compareArrays } from '@fluidframework/core-utils/internal';
 
 import { Payload } from './persisted-types/index.js';
@@ -65,14 +65,16 @@ export function comparePayloads(a: Payload, b: Payload): boolean {
 	}
 
 	// Special case IFluidHandles, comparing them only by their absolutePath
-	if (isFluidHandle(a)) {
-		if (isFluidHandle(b)) {
-			return toFluidHandleInternal(a).absolutePath === toFluidHandleInternal(b).absolutePath;
+	// Detect them using JavaScript feature detection pattern: they have a `IFluidHandle` field that is set to the parent object.
+	{
+		const aHandle = a as IFluidHandle;
+		const bHandle = b as IFluidHandle;
+		if (aHandle.IFluidHandle === a) {
+			if (bHandle.IFluidHandle !== b) {
+				return false;
+			}
+			return a.absolutePath === b.absolutePath;
 		}
-		return false;
-	}
-	if (isFluidHandle(b)) {
-		return false;
 	}
 
 	// Fluid Serialization (like Json) only keeps enumerable properties, so we can ignore non-enumerable ones.

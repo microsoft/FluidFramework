@@ -12,8 +12,8 @@ import {
 	gcTreeKey,
 } from "@fluidframework/runtime-definitions/internal";
 import { createResponseError, responseToException } from "@fluidframework/runtime-utils/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
+	ITelemetryLoggerExt,
 	DataProcessingError,
 	MonitoringContext,
 	PerformanceEvent,

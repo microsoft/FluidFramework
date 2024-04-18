@@ -13,6 +13,12 @@ export abstract class ErasedType<out Name = unknown> {
     protected abstract brand(dummy: never): Name;
 }
 
+// @public @sealed
+export abstract class ErasedType<out Name = unknown> {
+    static [Symbol.hasInstance](value: never): value is never;
+    protected abstract brand(dummy: never): Name;
+}
+
 // @public
 export type ExtendEventProvider<TBaseEvent extends IEvent, TBase extends IEventProvider<TBaseEvent>, TEvent extends TBaseEvent> = Omit<Omit<Omit<TBase, "on">, "once">, "off"> & IEventProvider<TBaseEvent> & IEventProvider<TEvent>;
 
@@ -243,8 +249,13 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 export const IFluidHandle = "IFluidHandle";
 
 // @public
-export interface IFluidHandle<out T = unknown> {
-    readonly [fluidHandleSymbol]: IFluidHandleErased<T>;
+export interface IFluidHandle<T = FluidObject & IFluidLoadable> extends IProvideFluidHandle {
+    // @deprecated (undocumented)
+    readonly absolutePath: string;
+    // @deprecated (undocumented)
+    attachGraph(): void;
+    // @deprecated (undocumented)
+    bind(handle: IFluidHandle): void;
     get(): Promise<T>;
     readonly isAttached: boolean;
 }
@@ -307,8 +318,8 @@ export interface ILoggingError extends Error {
 
 // @alpha @deprecated (undocumented)
 export interface IProvideFluidHandle {
-    // @deprecated (undocumented)
-    readonly [IFluidHandle]: IFluidHandleInternal;
+    // (undocumented)
+    readonly IFluidHandle: IFluidHandle;
 }
 
 // @public (undocumented)

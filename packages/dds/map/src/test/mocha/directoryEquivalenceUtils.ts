@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { isFluidHandle } from "@fluidframework/core-interfaces/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { isObject } from "@fluidframework/core-utils/internal";
 import { IDirectory } from "../../interfaces.js";
 

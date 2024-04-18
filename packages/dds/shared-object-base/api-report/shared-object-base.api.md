@@ -24,7 +24,7 @@ import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 
 // @internal
 export function bindHandles(value: any, serializer: IFluidSerializer, bind: IFluidHandle_2): void;
@@ -113,8 +113,13 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     emit(event: EventEmitterEventType, ...args: any[]): boolean;
     abstract getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     abstract getGCData(fullGC?: boolean): IGarbageCollectionData;
+<<<<<<< HEAD
     readonly handle: IFluidHandleInternal;
     protected handleDecoded(decodedHandle: IFluidHandle): void;
+=======
+    readonly handle: IFluidHandle_2;
+    protected handleDecoded(decodedHandle: IFluidHandle_2): void;
+>>>>>>> 4f577897fa4d2683f4e6912264dd607187c9b428
     // (undocumented)
     id: string;
     // (undocumented)
@@ -143,7 +148,11 @@ export class SummarySerializer extends FluidSerializer {
     // (undocumented)
     getSerializedRoutes(): string[];
     // (undocumented)
+<<<<<<< HEAD
     protected serializeHandle(handle: IFluidHandleInternal, bind: IFluidHandleInternal): {
+=======
+    protected serializeHandle(handle: IFluidHandle_2, bind: IFluidHandle_2): {
+>>>>>>> 4f577897fa4d2683f4e6912264dd607187c9b428
         type: string;
         url: string;
     };

@@ -27,7 +27,7 @@ import { ISocketStorageDiscovery } from '@fluidframework/odsp-driver-definitions
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
 import { OdspResourceTokenFetchOptions } from '@fluidframework/odsp-driver-definitions/internal';
 import { PromiseCache } from '@fluidframework/core-utils/internal';

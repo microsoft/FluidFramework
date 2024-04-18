@@ -18,7 +18,7 @@ import { JsonCompatible } from "../../util/index.js";
 import { leaf } from "../leafDomain.js";
 
 import { jsonArray, jsonObject } from "./jsonDomainSchema.js";
-import { isFluidHandle } from "@fluidframework/core-interfaces/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 const adapter: CursorAdapter<JsonCompatible> = {
 	value: (node: JsonCompatible) =>

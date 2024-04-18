@@ -37,8 +37,8 @@ import {
 describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 	// Since these tests depend on these timing windows, they should not be run against drivers talking over the network
 	// (see this.skip() call below)
-	const tombstoneTimeoutMs = 200; // Tombstone at 200ms
-	const sweepGracePeriodMs = 200; // Sweep at 400ms
+	const tombstoneTimeoutMs = 300; // Tombstone at 300ms
+	const sweepGracePeriodMs = 300; // Sweep at 600ms
 
 	const configProvider = createTestConfigProvider();
 	const gcOptions: IGCRuntimeOptions = {
