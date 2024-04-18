@@ -14,29 +14,8 @@ import {
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../feature-libraries/valueUtilities.js";
-import { isFluidHandle } from "@fluidframework/core-interfaces/internal";
 
 describe("valueUtilities", () => {
-	// TODO: @fluidframework/core-interfaces is not setup for unit tests, so these tests are living here for now.
-	it("isFluidHandle", () => {
-		assert(!isFluidHandle(0));
-		assert(!isFluidHandle({}));
-		assert(!isFluidHandle(undefined));
-		assert(!isFluidHandle(null));
-		assert(!isFluidHandle([]));
-		assert(!isFluidHandle({ get: () => {} }));
-		assert(!isFluidHandle({ IFluidHandle: 5, get: () => {} }));
-		assert(isFluidHandle(new MockHandle(5)));
-
-		// Legacy compatibility for non symbol based handle
-		const loopy = { IFluidHandle: {} };
-		loopy.IFluidHandle = loopy;
-		assert(isFluidHandle(loopy));
-		assert(!isFluidHandle({ IFluidHandle: 5 }));
-		assert(!isFluidHandle({ IFluidHandle: {} }));
-		assert(!isFluidHandle({ IFluidHandle: null }));
-	});
-
 	it("allowsValue", () => {
 		assert(!allowsValue(ValueSchema.FluidHandle, undefined));
 		assert(!allowsValue(ValueSchema.Boolean, undefined));

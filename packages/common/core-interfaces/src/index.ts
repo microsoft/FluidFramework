@@ -28,7 +28,7 @@ export { IFluidLoadable, IFluidRunnable } from "./fluidLoadable.js";
 export type { IRequest, IRequestHeader, IResponse } from "./fluidRouter.js";
 
 export type { IProvideFluidHandleContext, IProvideFluidHandle } from "./handles.js";
-export { IFluidHandleContext, IFluidHandle, isFluidHandle } from "./handles.js";
+export { IFluidHandleContext, IFluidHandle } from "./handles.js";
 
 export type {
 	ILoggingError,
