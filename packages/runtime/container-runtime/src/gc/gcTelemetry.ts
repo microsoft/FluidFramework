@@ -43,6 +43,7 @@ interface ICommonProps {
 
 /** The event that is logged when unreferenced node is used after a certain time. */
 interface IUnreferencedEventProps extends ICreateContainerMetadata, ICommonProps {
+	gcId: string;
 	state: UnreferencedState;
 	id: {
 		value: string;
@@ -145,17 +146,23 @@ export class GCTelemetryTracker {
 	}
 
 	/**
-	 * Called when a node is used. If the node is not active or tombstoned, log telemetry indicating object is used
+	 * Called when a node is used. If the node is inactive or tombstoned, log telemetry indicating object is used
 	 * when it should not have been.
 	 */
-	public nodeUsed(nodeUsageProps: INodeUsageProps) {
+	public nodeUsed(gcId: string, nodeUsageProps: INodeUsageProps) {
 		// If there is no reference timestamp to work with, no ops have been processed after creation. If so, skip
 		// logging as nothing interesting would have happened worth logging.
 		if (nodeUsageProps.currentReferenceTimestampMs === undefined) {
 			return;
 		}
 
-		const nodeStateTracker = this.getNodeStateTracker(nodeUsageProps.id);
+		//* Always get the DataStores tracker - ignore subDataStore tracker
+		//* Or consider getting it by fullPath first and falling back
+		const nodeStateTracker = this.getNodeStateTracker(gcId);
+
+		//* nodeUsageProps.id = nodeUsageProps.fullPath ?? ""; //*
+
+		//* Use the request URL for getting the node type. It's more descriptive/accurate
 		const nodeType = this.getNodeType(nodeUsageProps.id);
 		const timeout = (() => {
 			switch (nodeStateTracker?.state) {
@@ -176,12 +183,13 @@ export class GCTelemetryTracker {
 			usageType,
 			currentReferenceTimestampMs,
 			packagePath,
-			id: untaggedId,
+			id: untaggedId, //* Switch to fullPath
 			fromId: untaggedFromId,
 			...propsToLog
 		} = nodeUsageProps;
 		const { persistedGcFeatureMatrix, ...configs } = this.configs;
 		const unrefEventProps: Omit<IUnreferencedEventProps, "state" | "usageType"> = {
+			gcId,
 			type: nodeType,
 			unrefTime: nodeStateTracker?.unreferencedTimestampMs ?? -1,
 			age:
@@ -375,7 +383,7 @@ export class GCTelemetryTracker {
 		// SweepReadyObject_Loaded, SweepReadyObject_Changed, SweepReadyObject_Revived
 		for (const eventProps of this.pendingEventsQueue) {
 			// const { usageType, state, id, fromId, ...propsToLog } = eventProps;
-			const { usageType, state, id, fromId, headers, gcConfigs, ...detailedProps } =
+			const { gcId, usageType, state, id, fromId, headers, gcConfigs, ...detailedProps } =
 				eventProps;
 			/**
 			 * Revived event is logged only if the node is active. If the node is not active, the reference to it was
@@ -383,7 +391,7 @@ export class GCTelemetryTracker {
 			 * Loaded and Changed events are logged only if the node is not active. If the node is active, it was
 			 * revived and a Revived event will be logged for it.
 			 */
-			const nodeStateTracker = this.getNodeStateTracker(eventProps.id.value);
+			const nodeStateTracker = this.getNodeStateTracker(gcId); //* This is never SubDataStore path
 			const active =
 				nodeStateTracker === undefined ||
 				nodeStateTracker.state === UnreferencedState.Active;

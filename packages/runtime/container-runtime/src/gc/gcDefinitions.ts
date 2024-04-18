@@ -382,6 +382,7 @@ export interface IGarbageCollector {
 }
 
 export interface IGCNodeUpdatedProps {
+	//* TODO: Update nodePath to include explicit nodeType - either blob or dataStore. Maybe use term id instead of path?
 	nodePath: string;
 	reason: "Loaded" | "Changed";
 	timestampMs?: number;

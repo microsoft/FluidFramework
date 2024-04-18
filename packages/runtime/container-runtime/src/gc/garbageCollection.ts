@@ -985,26 +985,27 @@ export class GarbageCollector implements IGarbageCollector {
 	 * @param requestHeaders - If the node was loaded via request path, the headers in the request.
 	 */
 	public nodeUpdated({
-		nodePath: originalPath,
+		nodePath,
 		reason,
 		timestampMs,
 		packagePath,
 		request,
 		headerData,
-		proxyNodePath,
 	}: IGCNodeUpdatedProps) {
 		if (!this.configs.shouldRunGC) {
 			return;
 		}
 
-		// This is the nodePath we should use when checking GC state. proxyNodePath overrides the provided nodePath
-		const nodePath = proxyNodePath ?? originalPath;
-
 		const isTombstoned = this.tombstones.includes(nodePath);
+		const isInactive = this.unreferencedNodesState.get(nodePath)?.state === "Inactive";
 
+		//* Then use request.url for the rest?
+		const fullPath = request?.url ?? nodePath; //* Convert to GC path format
+
+		//* Use fullPath?
 		// This will log if appropriate
-		this.telemetryTracker.nodeUsed({
-			id: nodePath,
+		this.telemetryTracker.nodeUsed(nodePath, {
+			id: fullPath,
 			usageType: reason,
 			currentReferenceTimestampMs:
 				timestampMs ?? this.runtime.getCurrentReferenceTimestampMs(),
@@ -1013,7 +1014,6 @@ export class GarbageCollector implements IGarbageCollector {
 			isTombstoned,
 			lastSummaryTime: this.getLastSummaryTimestampMs(),
 			headers: headerData,
-			fullPath: originalPath,
 		});
 
 		// Any time we log a Tombstone Loaded error (via Telemetry Tracker),
@@ -1022,12 +1022,12 @@ export class GarbageCollector implements IGarbageCollector {
 		// to be loaded by the Summarizer, and auto-recovery will be triggered then.
 		if (isTombstoned && reason === "Loaded") {
 			// Note that when a DataStore and its DDS are all loaded, each will trigger AutoRecovery for itself.
-			this.triggerAutoRecovery(nodePath);
+			this.triggerAutoRecovery(fullPath);
 		}
 
 		//* TODO: Not sure about this.  Maybe should go off originalPath.  Yuck.  Will be ok due to headerData anyway...
 		//* Maybe just remove the nodeType check below.
-		const nodeType = this.runtime.getNodeType(nodePath);
+		const nodeType = this.runtime.getNodeType(fullPath);
 
 		// Unless this is a Loaded event for a Blob or DataStore, we're done after telemetry tracking
 		if (
@@ -1036,8 +1036,9 @@ export class GarbageCollector implements IGarbageCollector {
 		) {
 			return;
 		}
+		//* Consider tying request and reason together in input type?
 
-		const errorRequest: IRequest = request ?? { url: nodePath };
+		const errorRequest: IRequest = request ?? { url: fullPath };
 		if (isTombstoned && this.throwOnTombstoneLoad && headerData?.allowTombstone !== true) {
 			// The requested data store is removed by gc. Create a 404 gc response exception.
 			throw responseToException(
@@ -1049,7 +1050,7 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		// If the object is inactive and inactive enforcement is configured, throw an error.
-		if (this.unreferencedNodesState.get(nodePath)?.state === "Inactive") {
+		if (isInactive) {
 			const shouldThrowOnInactiveLoad =
 				!this.isSummarizerClient &&
 				this.configs.throwOnInactiveLoad === true &&
@@ -1121,7 +1122,8 @@ export class GarbageCollector implements IGarbageCollector {
 		outboundRoutes.push(toNodePath);
 		this.newReferencesSinceLastRun.set(fromNodePath, outboundRoutes);
 
-		this.telemetryTracker.nodeUsed({
+		const gcId = toNodePath;
+		this.telemetryTracker.nodeUsed(gcId, {
 			id: toNodePath,
 			usageType: "Revived",
 			currentReferenceTimestampMs: this.runtime.getCurrentReferenceTimestampMs(),
