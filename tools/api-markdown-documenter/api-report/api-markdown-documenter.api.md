@@ -723,7 +723,7 @@ export interface ToHtmlConfig extends ConfigurationBase {
 
 // @alpha
 export interface ToHtmlContext extends ConfigurationBase {
-    headingLevel: number;
+    readonly headingLevel: number;
     readonly transformations: ToHtmlTransformations;
 }
 

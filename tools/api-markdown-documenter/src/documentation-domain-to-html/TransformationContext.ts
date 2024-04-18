@@ -12,7 +12,7 @@ import {
 } from "./configuration/index.js";
 
 /**
- * Context passed down during recursive {@link DocumentationNode} rendering.
+ * Context passed to recursive {@link DocumentationNode} transformations.
  *
  * @alpha
  */
@@ -25,7 +25,7 @@ export interface TransformationContext extends ConfigurationBase {
 	 * Will automatically increment based on {@link SectionNode}s encountered, such that heading
 	 * levels can be increased automatically based on content hierarchy.
 	 */
-	headingLevel: number;
+	readonly headingLevel: number;
 
 	/**
 	 * Complete set of transformations (includes defaults and user-specified).
