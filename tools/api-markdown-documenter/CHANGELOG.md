@@ -2,7 +2,7 @@
 
 ## 0.12.2
 
--   Fixed a bug where property signatures under class items did not get documentation generated for them.
+-   Further improved error messages when an unexpected child kind is encountered when iterating over children in default ApiItem transformations.
 
 ## 0.12.1
 
