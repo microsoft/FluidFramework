@@ -41,7 +41,7 @@ import {
 } from "../../../feature-libraries/index.js";
 import { brand, JsonCompatible } from "../../../util/index.js";
 
-import { testRevisionTagCodec } from "../../utils.js";
+import { testIdCompressor, testRevisionTagCodec } from "../../utils.js";
 import { averageTwoValues, sum, sumMap } from "./benchmarks.js";
 import { Canada, generateCanada } from "./canada.js";
 import { CitmCatalog, generateCitmJson } from "./citm.js";
@@ -114,6 +114,7 @@ function bench(
 							forest,
 							[cursorForJsonableTreeNode(encodedTree)],
 							testRevisionTagCodec,
+							testIdCompressor
 						);
 						const cursor = forest.allocateCursor();
 						moveToDetachedField(forest, cursor);
@@ -141,6 +142,7 @@ function bench(
 							forest,
 							[cursorForJsonableTreeNode(encodedTree)],
 							testRevisionTagCodec,
+							testIdCompressor
 						);
 						const cursor = forest.allocateCursor();
 						moveToDetachedField(forest, cursor);

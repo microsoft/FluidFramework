@@ -24,8 +24,10 @@ import { JsonCompatibleReadOnly } from "../util/index.js";
 
 import { Message } from "./messageFormat.js";
 import { DecodedMessage } from "./messageTypes.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 export interface MessageEncodingContext {
+	idCompressor: IIdCompressor;
 	schema?: SchemaAndPolicy;
 }
 
@@ -106,22 +108,23 @@ function makeV1CodecWithVersion<TChangeset>(
 				context: MessageEncodingContext,
 			) => {
 				const message: Message = {
-					revision: revisionTagCodec.encode(commit.revision, { originatorId }),
+					revision: revisionTagCodec.encode(commit.revision, { originatorId, idCompressor: context.idCompressor }),
 					originatorId,
 					changeset: changeCodec.encode(commit.change, {
 						originatorId,
+						idCompressor: context.idCompressor,
 						schema: context.schema,
 					}),
 					version,
 				};
 				return message as unknown as JsonCompatibleReadOnly;
 			},
-			decode: (encoded: JsonCompatibleReadOnly) => {
+			decode: (encoded: JsonCompatibleReadOnly, context: MessageEncodingContext) => {
 				const { revision, originatorId, changeset } = encoded as unknown as Message;
 				return {
 					commit: {
-						revision: revisionTagCodec.decode(revision, { originatorId }),
-						change: changeCodec.decode(changeset, { originatorId }),
+						revision: revisionTagCodec.decode(revision, { originatorId, idCompressor: context.idCompressor }),
+						change: changeCodec.decode(changeset, { originatorId, idCompressor: context.idCompressor }),
 					},
 					sessionId: originatorId,
 				};

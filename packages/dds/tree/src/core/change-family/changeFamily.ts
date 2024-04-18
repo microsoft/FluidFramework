@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/id-compressor";
+import { SessionId, type IIdCompressor } from "@fluidframework/id-compressor";
 
 import { ICodecFamily, IJsonCodec } from "../../codec/index.js";
 import { SchemaAndPolicy } from "../../core/index.js";
@@ -19,6 +19,7 @@ export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
 
 export interface ChangeEncodingContext {
 	readonly originatorId: SessionId;
+	readonly idCompressor: IIdCompressor;
 	readonly schema?: SchemaAndPolicy;
 }
 

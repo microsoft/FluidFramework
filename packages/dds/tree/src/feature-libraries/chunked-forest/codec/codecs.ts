@@ -15,9 +15,11 @@ import { FieldBatch } from "./fieldBatch.js";
 import { EncodedFieldBatch, validVersions } from "./format.js";
 import { schemaCompressedEncode } from "./schemaBasedEncoding.js";
 import { uncompressedEncode } from "./uncompressedEncode.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 export interface FieldBatchEncodingContext {
 	readonly encodeType: TreeCompressionStrategy;
+	readonly idCompressor: IIdCompressor
 	readonly schema?: SchemaAndPolicy;
 }
 

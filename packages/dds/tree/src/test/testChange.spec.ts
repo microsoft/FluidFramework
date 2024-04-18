@@ -21,7 +21,7 @@ import { brand } from "../util/index.js";
 import { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils.js";
 import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests.js";
 import { TestChange } from "./testChange.js";
-import { deepFreeze, mintRevisionTag } from "./utils.js";
+import { deepFreeze, mintRevisionTag, testIdCompressor } from "./utils.js";
 
 describe("TestChange", () => {
 	it("can be composed", () => {
@@ -92,7 +92,7 @@ describe("TestChange", () => {
 	it("can be encoded in JSON", () => {
 		const codec = TestChange.codec;
 		const empty = TestChange.emptyChange;
-		const context: ChangeEncodingContext = { originatorId: "session1" as SessionId };
+		const context: ChangeEncodingContext = { originatorId: "session1" as SessionId, idCompressor: testIdCompressor };
 		const normal = TestChange.mint([0, 1], [2, 3]);
 		assert.deepEqual(empty, codec.decode(codec.encode(empty, context), context));
 		assert.deepEqual(normal, codec.decode(codec.encode(normal, context), context));

@@ -181,6 +181,7 @@ describe("DetachedFieldIndex", () => {
 			"test",
 			idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
 			testRevisionTagCodec,
+			testIdCompressor,
 			{ jsonValidator: typeboxValidator },
 		);
 		const expected = {
@@ -193,7 +194,7 @@ describe("DetachedFieldIndex", () => {
 	describe("round-trip through JSON", () => {
 		const codec = makeDetachedNodeToFieldCodec(testRevisionTagCodec, {
 			jsonValidator: typeboxValidator,
-		});
+		}, testIdCompressor);
 		for (const { name, data } of generateTestCases(testIdCompressor)) {
 			it(name, () => {
 				const encoded = codec.encode(data);
@@ -209,7 +210,7 @@ describe("DetachedFieldIndex", () => {
 					const detachedFieldIndex = new DetachedFieldIndex(
 						"test",
 						idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
-						testRevisionTagCodec,
+						testRevisionTagCodec, testIdCompressor,
 						{
 							jsonValidator: typeboxValidator,
 						},
@@ -226,6 +227,7 @@ describe("DetachedFieldIndex", () => {
 						"test",
 						id,
 						malformedRevisionTagCodec,
+						testIdCompressor,
 						{
 							jsonValidator: typeboxValidator,
 						},
@@ -244,7 +246,7 @@ describe("DetachedFieldIndex", () => {
 		const snapshotRevisionTagCodec = new RevisionTagCodec(snapshotIdCompressor);
 		const codec = makeDetachedNodeToFieldCodec(snapshotRevisionTagCodec, {
 			jsonValidator: typeboxValidator,
-		});
+		}, testIdCompressor);
 
 		const testCases = generateTestCases(snapshotIdCompressor);
 

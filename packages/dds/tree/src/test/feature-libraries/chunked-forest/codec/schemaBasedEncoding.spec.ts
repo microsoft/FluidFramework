@@ -55,6 +55,7 @@ import {
 import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities.js";
 
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode.js";
+import { testIdCompressor } from "../../../utils.js";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
 const onlyTypeShape = new NodeShape(undefined, false, [], undefined);
@@ -258,6 +259,7 @@ describe("schemaBasedEncoding", () => {
 
 				const context: FieldBatchEncodingContext = {
 					encodeType: TreeCompressionStrategy.Compressed,
+					idCompressor: testIdCompressor,
 					schema: { schema: storedSchema, policy: defaultSchemaPolicy },
 				};
 				const codec = makeFieldBatchCodec({ jsonValidator: ajvValidator }, 1);

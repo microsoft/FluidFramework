@@ -25,11 +25,11 @@ import { ChangeMaker as Change, cases } from "./testEdits.js";
 
 type TestCase = [string, Changeset, FieldChangeEncodingContext];
 
-const sessionId = { originatorId: "session1" as SessionId };
+const baseContext = { originatorId: "session1" as SessionId , idCompressor: testIdCompressor};
 const context: FieldChangeEncodingContext = {
-	baseContext: sessionId,
-	encodeNode: (node) => TestNodeId.encode(node, sessionId),
-	decodeNode: (node) => TestNodeId.decode(node, sessionId),
+	baseContext,
+	encodeNode: (node) => TestNodeId.encode(node, baseContext),
+	decodeNode: (node) => TestNodeId.decode(node, baseContext),
 };
 
 const encodingTestData: EncodingTestData<Changeset, unknown, FieldChangeEncodingContext> = {

@@ -33,7 +33,7 @@ import { makeSharedTreeChangeCodecFamily } from "../../shared-tree/sharedTreeCha
 // eslint-disable-next-line import/no-internal-modules
 import { brand } from "../../util/brand.js";
 import { ajvValidator } from "../codec/index.js";
-import { testRevisionTagCodec } from "../utils.js";
+import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 
 const codecOptions: ICodecOptions = { jsonValidator: ajvValidator };
 
@@ -62,6 +62,7 @@ describe("sharedTreeChangeCodec", () => {
 		const dummyTestSchema = new TreeStoredSchemaRepository();
 		const dummyContext = {
 			originatorId: "dummySessionID" as SessionId,
+			idCompressor: testIdCompressor,
 			schema: { policy: defaultSchemaPolicy, schema: dummyTestSchema },
 		};
 		const changeA: SequenceField.Changeset = [];

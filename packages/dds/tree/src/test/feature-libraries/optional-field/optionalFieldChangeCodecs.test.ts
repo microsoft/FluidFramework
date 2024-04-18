@@ -6,7 +6,7 @@
 import { SessionId } from "@fluidframework/id-compressor";
 
 import { brand } from "../../../util/index.js";
-import { EncodingTestData, makeEncodingTestSuite, testRevisionTagCodec } from "../../utils.js";
+import { EncodingTestData, makeEncodingTestSuite, testIdCompressor, testRevisionTagCodec } from "../../utils.js";
 import {
 	OptionalChangeset,
 	makeOptionalFieldCodecFamily,
@@ -46,11 +46,11 @@ const pin = Change.pin(brand(4));
 
 export function testCodecs() {
 	describe("Codecs", () => {
-		const sessionId = { originatorId: "session1" as SessionId };
+		const baseContext = { originatorId: "session1" as SessionId, idCompressor: testIdCompressor };
 		const context: FieldChangeEncodingContext = {
-			baseContext: sessionId,
-			encodeNode: (nodeId) => TestNodeId.encode(nodeId, sessionId),
-			decodeNode: (nodeId) => TestNodeId.decode(nodeId, sessionId),
+			baseContext,
+			encodeNode: (nodeId) => TestNodeId.encode(nodeId, baseContext),
+			decodeNode: (nodeId) => TestNodeId.decode(nodeId, baseContext),
 		};
 
 		const encodingTestData: EncodingTestData<

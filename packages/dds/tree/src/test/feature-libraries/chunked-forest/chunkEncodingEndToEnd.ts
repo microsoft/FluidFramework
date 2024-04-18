@@ -53,15 +53,18 @@ const options = {
 	summaryEncodeType: TreeCompressionStrategy.Compressed,
 };
 
-const context = {
-	encodeType: options.summaryEncodeType,
-	schema: { schema: intoStoredSchema(numberSequenceRootSchema), policy: defaultSchemaPolicy },
-};
+
 
 const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: typeboxValidator }, 1);
 const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
 const idCompressor = createIdCompressor(sessionId);
 const revisionTagCodec = new RevisionTagCodec(idCompressor);
+
+const context = {
+	encodeType: options.summaryEncodeType,
+	idCompressor,
+	schema: { schema: intoStoredSchema(numberSequenceRootSchema), policy: defaultSchemaPolicy },
+};
 
 describe("End to end chunked encoding", () => {
 	it(`insert ops shares reference with the original chunk.`, () => {
@@ -137,6 +140,7 @@ describe("End to end chunked encoding", () => {
 			fieldBatchCodec,
 			context,
 			options,
+			idCompressor
 		);
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
@@ -165,6 +169,7 @@ describe("End to end chunked encoding", () => {
 			fieldBatchCodec,
 			context,
 			options,
+			idCompressor,
 		);
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.

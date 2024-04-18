@@ -18,6 +18,7 @@ import {
 	EncodingTestData,
 	defaultRevisionMetadataFromChanges,
 	makeEncodingTestSuite,
+	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
 import {
@@ -295,7 +296,7 @@ describe("GenericField", () => {
 	});
 
 	describe("Encoding", () => {
-		const baseContext = { originatorId: "session1" as SessionId };
+		const baseContext = { originatorId: "session1" as SessionId, idCompressor: testIdCompressor };
 
 		const encodingTestData: EncodingTestData<
 			GenericChangeset,
