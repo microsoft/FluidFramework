@@ -79,6 +79,7 @@ async function writeManifestToFile(
 	devVersion: string,
 	log?: Logger,
 ): Promise<string | undefined> {
+	const ignorePackageList = new Set(["@types/jest-environment-puppeteer"]);
 	try {
 		const manifestData = await fs.readFile(`${path}/${jsonFile}`, "utf8");
 
@@ -86,6 +87,10 @@ async function writeManifestToFile(
 		const manifestFile: PackageVersionList = JSON.parse(manifestData);
 
 		for (const key of Object.keys(manifestFile)) {
+			if (ignorePackageList.has(key)) {
+				continue;
+			}
+
 			if (
 				isInternalVersionRange(manifestFile[key], true) ||
 				manifestFile[key].includes("-rc.")
@@ -96,8 +101,16 @@ async function writeManifestToFile(
 
 		const currentDate = new Date().toISOString().slice(0, 10);
 
+		const versionParts: string[] = devVersion.split(".");
+
+		// Extract the last part of the version, which is the number you're looking for
+		const buildNumber: number = Number.parseInt(versionParts[versionParts.length - 1], 10);
+
+		console.log(`Build Number: ${buildNumber}`);
+
 		await fs.writeFile(`${path}/${jsonFile}`, JSON.stringify(manifestFile, undefined, 2));
-		await fs.rename(`${path}/${jsonFile}`, `${path}/${revisedFileName}-${currentDate}.json`);
+		await fs.copyFile(`${path}/${jsonFile}`, `${path}/${revisedFileName}-${currentDate}.json`);
+		await fs.copyFile(`${path}/${jsonFile}`, `${path}/${revisedFileName}-${buildNumber}.json`);
 	} catch (error) {
 		log?.errorLog("Error writing manifest to file:", error);
 		return undefined;

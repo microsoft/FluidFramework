@@ -48,7 +48,7 @@ steps:
       fi
 
       for file in $(find . -type f \( -name 'manifest-*.json' -o -name 'simpleManifest-*.json' \)); do
-          az storage blob upload -f "$file" -c 'manifest-files' -n "$(basename "$file")" --account-name ${{ parameters.STORAGE_ACCOUNT }} --account-key ${{ parameters.STORAGE_KEY }} --verbose
+          az storage blob upload -f "$file" -c 'manifest-files' -n "$(basename "$file")" --account-name ${{ parameters.STORAGE_ACCOUNT }} --account-key ${{ parameters.STORAGE_KEY }} --overwrite true --verbose
       done
 
 - task: Bash@3
@@ -57,9 +57,9 @@ steps:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
-      # Delete files ending with caret.json, simple.json, tilde.json, and full.json
-      for file in *.caret.json *.simple.json *.tilde.json *.full.json; do
-          if [ -e "$file" ]; then
-              rm -f "$file"
-          fi
+      # Delete files ending with caret.json, simple.json, tilde.json, full.json and files uploaded to azure blob
+      for file in simpleManifest-*.json manifest-*.json *.caret.json *.simple.json *.tilde.json *.full.json; do
+        if [ -e "$file" ]; then
+            rm -f "$file"
+        fi
       done

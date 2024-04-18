@@ -143,57 +143,11 @@ steps:
     workingDirectory: ${{ parameters.buildDirectory }}
     filePath: $(Build.SourcesDirectory)/scripts/update-package-version.sh
 
-- task: Bash@3
-  displayName: Generate Manifest Files
-  inputs:
-    targetType: 'inline'
-    workingDirectory: ${{ parameters.buildDirectory }}
-    script: |
-      flub release report -g client -o .
-
-- task: Bash@3
-  displayName: Update Version in Manifest Files
-  env:
-    DEV_VERSION: $(SetVersion.version)
-  inputs:
-    targetType: 'inline'
-    workingDirectory: ${{ parameters.buildDirectory }}
-    script: |
-      echo VERSION=$SetVersion.version
-      flub release report-unreleased -p .
-
-- task: AzureCLI@2
-  displayName: Upload Manifest Files
-  continueOnError: true
-  inputs:
-    azureSubscription: 'fluid-docs'
-    scriptType: bash
-    scriptLocation: inlineScript
-    inlineScript: |
-
-      if az storage container show --name 'manifest-files' --account-name ${{ parameters.STORAGE_ACCOUNT }} --account-key ${{ parameters.STORAGE_KEY }} &>/dev/null; then
-          echo "Container 'manifest-files' already exists."
-      else
-          az storage container create --name 'manifest-files' --account-name ${{ parameters.STORAGE_ACCOUNT }} --account-key ${{ parameters.STORAGE_KEY }}
-          echo "Container 'manifest-files' created."
-      fi
-
-      for file in $(find . -type f \( -name 'manifest-*.json' -o -name 'simpleManifest-*.json' \)); do
-          az storage blob upload -f "$file" -c 'manifest-files' -n "$(basename "$file")" --account-name ${{ parameters.STORAGE_ACCOUNT }} --account-key ${{ parameters.STORAGE_KEY }} --overwrite true --verbose
-      done
-
-- task: Bash@3
-  displayName: Delete manifest files from root
-  inputs:
-    targetType: 'inline'
-    workingDirectory: ${{ parameters.buildDirectory }}
-    script: |
-      # Delete files ending with caret.json, simple.json, tilde.json, and full.json
-      for file in simpleManifest-*.json manifest-*.json *.tilde.json *.full.json; do
-        if [ -e "$file" ]; then
-            rm -f "$file"
-        fi
-      done
+- template: /tools/pipelines/templates/upload-dev-manifest.yml
+  parameters:
+    buildDirectory: '${{ parameters.buildDirectory }}'
+    STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
+    STORAGE_KEY: $(STORAGE_KEY)
 
 # This task is a last-minute verification that no Fluid internal versions show up with caret dependencies. This is to
 # help find and prevent bugs in the version bumping tools.
