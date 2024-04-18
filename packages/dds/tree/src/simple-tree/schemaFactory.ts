@@ -40,10 +40,10 @@ import {
 	type FieldProps,
 	createFieldSchema,
 } from "./schemaTypes.js";
-import { TreeArrayNode, arraySchema } from "./arrayNode.js";
+import { TreeArrayNode, arraySchema, type ArrayNodeSchema } from "./arrayNode.js";
 import { TreeNode } from "./types.js";
 import { InsertableObjectFromSchemaRecord, TreeObjectNode, objectSchema } from "./objectNode.js";
-import { TreeMapNode, mapSchema } from "./mapNode.js";
+import { TreeMapNode, mapSchema, type MapNodeSchema } from "./mapNode.js";
 import {
 	InsertableObjectFromSchemaRecordUnsafe,
 	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
@@ -406,14 +406,7 @@ export class SchemaFactory<
 		allowedTypes: T,
 		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
-	): TreeNodeSchemaClass<
-		ScopedSchemaName<TScope, Name>,
-		NodeKind.Map,
-		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
-		Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
-		ImplicitlyConstructable,
-		T
-	> {
+	): MapNodeSchema<ScopedSchemaName<TScope, Name>, T, ImplicitlyConstructable> {
 		return mapSchema(
 			this.nodeSchema(name, NodeKind.Map, allowedTypes, implicitlyConstructable),
 			// The current policy is customizable nodes don't get fake prototypes.
@@ -535,14 +528,7 @@ export class SchemaFactory<
 		allowedTypes: T,
 		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
-	): TreeNodeSchemaClass<
-		ScopedSchemaName<TScope, Name>,
-		NodeKind.Array,
-		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>>,
-		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		ImplicitlyConstructable,
-		T
-	> {
+	): ArrayNodeSchema<ScopedSchemaName<TScope, Name>, T, ImplicitlyConstructable> {
 		return arraySchema(
 			this.nodeSchema(name, NodeKind.Array, allowedTypes, implicitlyConstructable),
 			customizable,
