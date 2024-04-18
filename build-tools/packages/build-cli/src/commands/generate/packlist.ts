@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import path from "node:path";
 import type { Package } from "@fluidframework/build-tools";
 import Arborist from "@npmcli/arborist";
 import { Flags } from "@oclif/core";
 import { writeFile } from "fs-extra";
 import packlist from "npm-packlist";
-
 import { PackageCommand } from "../../BasePackageCommand";
-import path from "node:path";
 
 /**
  * Outputs a list of files that will be included in a package based on its 'files' property in package.json and any
@@ -48,7 +47,7 @@ export default class GeneratePackListCommand extends PackageCommand<
 			if (dirCountA < dirCountB) {
 				return -1;
 			}
-			if (dirCountA > dirCountB || a > b) {
+			if (dirCountA > dirCountB) {
 				return 1;
 			}
 
