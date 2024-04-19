@@ -17,6 +17,7 @@ import {
 	makeAnonChange,
 	revisionMetadataSourceFromInfo,
 	tagChange,
+	tagRollbackInverse,
 } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -794,9 +795,18 @@ export function areComposable(changes: TaggedChange<Changeset>[]): boolean {
 	return true;
 }
 
-export function tagChangeInline(change: Changeset, revision: RevisionTag): TaggedChange<Changeset> {
-	return tagChange(
-		SF.sequenceFieldChangeRebaser.replaceRevisions(change, new Set([undefined]), revision),
+export function tagChangeInline(
+	change: Changeset,
+	revision: RevisionTag,
+	rollbackOf?: RevisionTag,
+): TaggedChange<Changeset> {
+	const inverse = SF.sequenceFieldChangeRebaser.replaceRevisions(
+		change,
+		new Set([undefined]),
 		revision,
 	);
+
+	return rollbackOf !== undefined
+		? tagRollbackInverse(inverse, revision, rollbackOf)
+		: tagChange(inverse, revision);
 }
