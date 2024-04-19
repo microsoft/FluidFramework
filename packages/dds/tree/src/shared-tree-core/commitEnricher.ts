@@ -18,13 +18,13 @@ export interface CommitEnricher<TChange> {
 	enrichCommit(commit: GraphCommit<TChange>): GraphCommit<TChange>;
 
 	/**
-	 * Must be called at the start of a resubmission phase before calling `enrichCommit`.
+	 * Must be called before calling `enrichCommit` as part of a resubmit phase.
 	 * @param toResubmit - the commits that will be resubmitted (from oldest to newest).
 	 * This must be the most rebased version of these commits (i.e., rebased over all known concurrent edits)
 	 * as opposed to the version which was last submitted.
 	 * Can be safely mutated after this call returns.
 	 */
-	startResubmitPhase(toResubmit: readonly GraphCommit<TChange>[]): void;
+	prepareForResubmit(toResubmit: readonly GraphCommit<TChange>[]): void;
 
 	/**
 	 * Is true iff the commit enricher is currently in a resubmit phase.

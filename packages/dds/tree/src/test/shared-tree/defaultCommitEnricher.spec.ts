@@ -149,7 +149,7 @@ describe("DefaultCommitEnricher", () => {
 
 			TestChangeEnricher.resetCounters();
 			assert.equal(enricher.isInResubmitPhase, false);
-			enricher.startResubmitPhase([commit2]);
+			enricher.prepareForResubmit([commit2]);
 			assert.equal(enricher.isInResubmitPhase, true);
 			enricher.enrichCommit(commit2);
 			assert.equal(enricher.isInResubmitPhase, false);
@@ -178,7 +178,7 @@ describe("DefaultCommitEnricher", () => {
 
 			TestChangeEnricher.resetCounters();
 			assert.equal(enricher.isInResubmitPhase, false);
-			enricher.startResubmitPhase([rebased2]);
+			enricher.prepareForResubmit([rebased2]);
 			assert.equal(enricher.isInResubmitPhase, true);
 			enricher.enrichCommit(rebased2);
 			assert.equal(enricher.isInResubmitPhase, false);
@@ -205,7 +205,7 @@ describe("DefaultCommitEnricher", () => {
 
 			TestChangeEnricher.resetCounters();
 			assert.equal(enricher.isInResubmitPhase, false);
-			enricher.startResubmitPhase([]);
+			enricher.prepareForResubmit([]);
 			assert.equal(enricher.isInResubmitPhase, false);
 			// No new enrichment should be necessary
 			assert.equal(TestChangeEnricher.checkoutsCreated, 0);
@@ -226,7 +226,7 @@ describe("DefaultCommitEnricher", () => {
 
 			TestChangeEnricher.resetCounters();
 			assert.equal(enricher.isInResubmitPhase, false);
-			enricher.startResubmitPhase([commit1, commit2]);
+			enricher.prepareForResubmit([commit1, commit2]);
 			assert.equal(enricher.isInResubmitPhase, true);
 			const enriched1Resubmit = enricher.enrichCommit(commit1);
 			assert.equal(enricher.isInResubmitPhase, true);
@@ -240,7 +240,7 @@ describe("DefaultCommitEnricher", () => {
 			assert.equal(TestChangeEnricher.commitsApplied, 0);
 
 			// Verify that the enricher can resubmit those commits again
-			enricher.startResubmitPhase([commit1, commit2]);
+			enricher.prepareForResubmit([commit1, commit2]);
 			assert.equal(enricher.isInResubmitPhase, true);
 			assert.equal(enricher.enrichCommit(commit1), enriched1Resubmit);
 			assert.equal(enricher.isInResubmitPhase, true);
@@ -279,7 +279,7 @@ describe("DefaultCommitEnricher", () => {
 				};
 				TestChangeEnricher.resetCounters();
 				assert.equal(enricher.isInResubmitPhase, false);
-				enricher.startResubmitPhase([rebased1, rebased2]);
+				enricher.prepareForResubmit([rebased1, rebased2]);
 				assert.equal(enricher.isInResubmitPhase, true);
 				const enriched1Resubmit = enricher.enrichCommit(rebased1);
 				assert.equal(enricher.isInResubmitPhase, true);
@@ -310,7 +310,7 @@ describe("DefaultCommitEnricher", () => {
 				assert.equal(TestChangeEnricher.commitsApplied, 3);
 
 				// Verify that the enricher can resubmit those commits again
-				enricher.startResubmitPhase([rebased1, rebased2]);
+				enricher.prepareForResubmit([rebased1, rebased2]);
 				assert.equal(enricher.isInResubmitPhase, true);
 				assert.equal(enricher.enrichCommit(rebased1), enriched1Resubmit);
 				assert.equal(enricher.isInResubmitPhase, true);
@@ -347,7 +347,7 @@ describe("DefaultCommitEnricher", () => {
 
 			TestChangeEnricher.resetCounters();
 			assert.equal(enricher.isInResubmitPhase, false);
-			enricher.startResubmitPhase([rebased1, rebased2, commit3]);
+			enricher.prepareForResubmit([rebased1, rebased2, commit3]);
 			assert.equal(enricher.isInResubmitPhase, true);
 			const enriched1Resubmit = enricher.enrichCommit(rebased1);
 			assert.equal(enricher.isInResubmitPhase, true);
@@ -383,7 +383,7 @@ describe("DefaultCommitEnricher", () => {
 			assert.equal(TestChangeEnricher.commitsApplied, 4);
 
 			// Verify that the enricher can resubmit those commits again
-			enricher.startResubmitPhase([rebased1, rebased2, commit3]);
+			enricher.prepareForResubmit([rebased1, rebased2, commit3]);
 			assert.equal(enricher.isInResubmitPhase, true);
 			assert.equal(enricher.enrichCommit(rebased1), enriched1Resubmit);
 			assert.equal(enricher.isInResubmitPhase, true);

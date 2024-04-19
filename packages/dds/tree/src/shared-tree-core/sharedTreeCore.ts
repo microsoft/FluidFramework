@@ -332,7 +332,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 					commit === toResubmit[0],
 					"Resubmit phase should start with the oldest local commit",
 				);
-				this.commitEnricher.startResubmitPhase(toResubmit);
+				this.commitEnricher.prepareForResubmit(toResubmit);
 			}
 		}
 		this.submitCommit(commit, true);

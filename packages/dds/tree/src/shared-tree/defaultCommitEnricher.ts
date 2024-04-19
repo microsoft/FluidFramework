@@ -95,7 +95,7 @@ export class DefaultCommitEnricher<TChange> implements ICommitEnricher<TChange> 
 		}
 	}
 
-	public startResubmitPhase(toResubmit: readonly GraphCommit<TChange>[]): void {
+	public prepareForResubmit(toResubmit: readonly GraphCommit<TChange>[]): void {
 		assert(
 			!this.isInResubmitPhase,
 			"Invalid resubmit phase start during incomplete resubmit phase",

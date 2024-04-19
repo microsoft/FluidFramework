@@ -361,7 +361,7 @@ describe("SharedTreeCore", () => {
 			public isInResubmitPhase: boolean = false;
 			public toResubmit?: GraphCommit<DefaultChangeset>[];
 
-			public startResubmitPhase(toResubmit: Iterable<GraphCommit<DefaultChangeset>>): void {
+			public prepareForResubmit(toResubmit: Iterable<GraphCommit<DefaultChangeset>>): void {
 				assert.equal(this.toResubmit, undefined);
 				this.toResubmit = Array.from(toResubmit);
 				assert.equal(this.toResubmit.length, this.enrichmentLog.length);
