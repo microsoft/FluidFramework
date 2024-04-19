@@ -1676,7 +1676,10 @@ export class ContainerRuntime
 				}
 			},
 			blobRequested: (blobPath: string) =>
-				this.garbageCollector.nodeUpdated({ nodePath: blobPath, reason: "Loaded" }),
+				this.garbageCollector.nodeUpdated({
+					node: { type: "Blob", path: blobPath },
+					reason: "Loaded",
+				}),
 			isBlobDeleted: (blobPath: string) => this.garbageCollector.isNodeDeleted(blobPath),
 			runtime: this,
 			stashedBlobs: pendingRuntimeState?.pendingAttachmentBlobs,
@@ -2901,7 +2904,7 @@ export class ContainerRuntime
 			);
 		}
 		this.garbageCollector.nodeUpdated({
-			nodePath: `/${internalId}`,
+			node: { type: "DataStore", path: `/${internalId}` },
 			reason: "Loaded",
 			packagePath: context.packagePath,
 		});

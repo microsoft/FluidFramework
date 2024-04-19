@@ -381,15 +381,23 @@ export interface IGarbageCollector {
 	dispose(): void;
 }
 
+/**
+ * Info needed by GC when notified that a node was updated (loaded or changed)
+ * @internal
+ */
 export interface IGCNodeUpdatedProps {
-	//* TODO: Update nodePath to include explicit nodeType - either blob or dataStore. Maybe use term id instead of path?
-	nodePath: string;
+	/** Type and path of the updated node */
+	node: { type: (typeof GCNodeType)["DataStore" | "Blob"]; path: string };
+	/** Whether the node (or a subpath) was loaded or changed. */
 	reason: "Loaded" | "Changed";
+	/** The op-based timestamp when the node changed, if applicable */
 	timestampMs?: number;
+	/** The package path of the node. This may not be available if the node hasn't been loaded yet */
 	packagePath?: readonly string[];
+	/** The original request for loads to preserve it in telemetry */
 	request?: IRequest;
+	/** If the node was loaded via request path, the header data. May be modified from the original request */
 	headerData?: RuntimeHeaderData;
-	proxyNodePath?: string;
 }
 
 /** Parameters necessary for creating a GarbageCollector. */

@@ -47,8 +47,8 @@ export {
 	cloneGCData,
 	concatGarbageCollectionStates,
 	getGCVersionInEffect,
-	trimLeadingAndTrailingSlashes,
 	unpackChildNodesGCDetails,
+	urlToGCNodePath,
 } from "./gcHelpers.js";
 export { runGarbageCollection } from "./gcReferenceGraphAlgorithm.js";
 export {

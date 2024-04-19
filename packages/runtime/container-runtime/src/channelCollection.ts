@@ -88,7 +88,7 @@ import {
 	GCNodeType,
 	detectOutboundRoutesViaDDSKey,
 	IGCNodeUpdatedProps,
-	trimLeadingAndTrailingSlashes,
+	urlToGCNodePath,
 } from "./gc/index.js";
 import { ContainerMessageType, LocalContainerRuntimeMessage } from "./messageTypes.js";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs.js";
@@ -237,11 +237,6 @@ export function wrapContextForInnerChannel(
 	};
 
 	return context;
-}
-
-/** Reformats a request URL to match expected format for a GC node path */
-function urlToGCNodePath(url: string): string {
-	return `/${trimLeadingAndTrailingSlashes(url.split("?")[0])}`;
 }
 
 /**
@@ -880,7 +875,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		// Notify that a GC node for the data store changed. This is used to detect if a deleted data store is
 		// being used.
 		this.gcNodeUpdated({
-			nodePath: `/${address}`,
+			node: { type: "DataStore", path: `/${address}` },
 			reason: "Changed",
 			timestampMs: message.timestamp,
 			packagePath: context.isLoaded ? context.packagePath : undefined,
@@ -1412,7 +1407,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			headerData.allowInactive = request.headers[AllowInactiveRequestHeaderKey];
 		}
 
-		// We allow Tombstone requests for sub-DataStore objects
+		// We allow Tombstone/Inactive requests for sub-DataStore objects
 		if (requestForChild) {
 			headerData.allowTombstone = true;
 			headerData.allowInactive = true;
@@ -1425,34 +1420,15 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		// Get the initial snapshot details which contain the data store package path.
 		const details = await dataStoreContext.getInitialSnapshotDetails();
 
-		//* Going to only tell GC about the datastore, regardless of the request.  And not worry about nested datastores
-		// Note that this will throw if the data store is inactive or tombstoned and throwing on incorrect usage
-		// is configured.
-		// if (!requestForChild) {
-		// 	this.gcNodeUpdated({
-		// 		nodePath: `/${urlWithoutQuery}`,
-		// 		reason: "Loaded",
-		// 		packagePath: details.pkg,
-		// 		request,
-		// 		headerData,
-		// 	});
-		// }
-
-		//* Pass nodeType from here?
-
-		//* Rephrase comment
-		// If this is a sub-DataStore url, we need to also notify GC that the parent is used.
-		// This is in case the url is to a route that Fluid doesn't understand or track for GC (handled by app's request handler)
-		// if (requestForChild) {
+		// When notifying GC of this node being loaded, we only indicate the DataStore itself, not the full subDataStore url if applicable.
+		// This is in case the url is to a route that Fluid doesn't understand or track for GC (e.g. if suited for a custom request handler)
 		this.gcNodeUpdated({
-			nodePath: urlToGCNodePath(id),
+			node: { type: "DataStore", path: `/${id}` },
 			reason: "Loaded",
 			packagePath: details.pkg,
 			request,
 			headerData,
-			//* proxyNodePath: urlToGCNodePath(id),
 		});
-		// }
 
 		const dataStore = await dataStoreContext.realize();
 

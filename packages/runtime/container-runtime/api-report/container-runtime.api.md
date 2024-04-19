@@ -834,6 +834,19 @@ export interface IGCMetadata {
     readonly tombstoneTimeoutMs?: number;
 }
 
+// @internal
+export interface IGCNodeUpdatedProps {
+    headerData?: RuntimeHeaderData;
+    node: {
+        type: (typeof GCNodeType)["DataStore" | "Blob"];
+        path: string;
+    };
+    packagePath?: readonly string[];
+    reason: "Loaded" | "Changed";
+    request?: IRequest;
+    timestampMs?: number;
+}
+
 // @alpha (undocumented)
 export interface IGCRuntimeOptions {
     [key: string]: any;

@@ -50,7 +50,9 @@ import {
 	cloneGCData,
 	compatBehaviorAllowsGCMessageType,
 	concatGarbageCollectionData,
+	dataStoreNodePathOnly,
 	getGCDataFromSnapshot,
+	urlToGCNodePath,
 } from "./gcHelpers.js";
 import { runGarbageCollection } from "./gcReferenceGraphAlgorithm.js";
 import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions.js";
@@ -977,15 +979,10 @@ export class GarbageCollector implements IGarbageCollector {
 	/**
 	 * Called when a node with the given id is updated. If the node is inactive or tombstoned, this will log an error
 	 * or throw an error if failing on incorrect usage is configured.
-	 * @param nodePath - The path of the node that changed.
-	 * @param reason - Whether the node (or a subpath) was loaded or changed.
-	 * @param timestampMs - The timestamp when the node changed.
-	 * @param packagePath - The package path of the node. This may not be available if the node hasn't been loaded yet.
-	 * @param request - The original request for loads to preserve it in telemetry.
-	 * @param requestHeaders - If the node was loaded via request path, the headers in the request.
+	 * @param IGCNodeUpdatedProps - Details about the node and how it was updated
 	 */
 	public nodeUpdated({
-		nodePath,
+		node,
 		reason,
 		timestampMs,
 		packagePath,
@@ -996,15 +993,15 @@ export class GarbageCollector implements IGarbageCollector {
 			return;
 		}
 
-		const isTombstoned = this.tombstones.includes(nodePath);
-		const isInactive = this.unreferencedNodesState.get(nodePath)?.state === "Inactive";
+		// trackedId will be either DataStore or Blob ID (not sub-DataStore ID, since some of those are unrecognized by GC)
+		const trackedId = node.path;
+		const isTombstoned = this.tombstones.includes(trackedId);
+		const isInactive = this.unreferencedNodesState.get(trackedId)?.state === "Inactive";
 
-		//* Then use request.url for the rest?
-		const fullPath = request?.url ?? nodePath; //* Convert to GC path format
+		const fullPath = request !== undefined ? urlToGCNodePath(request.url) : trackedId;
 
-		//* Use fullPath?
 		// This will log if appropriate
-		this.telemetryTracker.nodeUsed(nodePath, {
+		this.telemetryTracker.nodeUsed(trackedId, {
 			id: fullPath,
 			usageType: reason,
 			currentReferenceTimestampMs:
@@ -1014,6 +1011,8 @@ export class GarbageCollector implements IGarbageCollector {
 			isTombstoned,
 			lastSummaryTime: this.getLastSummaryTimestampMs(),
 			headers: headerData,
+			requestUrl: request?.url,
+			requestHeaders: JSON.stringify(request?.headers),
 		});
 
 		// Any time we log a Tombstone Loaded error (via Telemetry Tracker),
@@ -1025,18 +1024,15 @@ export class GarbageCollector implements IGarbageCollector {
 			this.triggerAutoRecovery(fullPath);
 		}
 
-		//* TODO: Not sure about this.  Maybe should go off originalPath.  Yuck.  Will be ok due to headerData anyway...
-		//* Maybe just remove the nodeType check below.
 		const nodeType = this.runtime.getNodeType(fullPath);
 
 		// Unless this is a Loaded event for a Blob or DataStore, we're done after telemetry tracking
-		if (
-			reason !== "Loaded" ||
-			!([GCNodeType.Blob, GCNodeType.DataStore] as GCNodeType[]).includes(nodeType)
-		) {
+		const loadedBlobOrDataStore =
+			reason === "Loaded" &&
+			(nodeType === GCNodeType.Blob || nodeType === GCNodeType.DataStore);
+		if (!loadedBlobOrDataStore) {
 			return;
 		}
-		//* Consider tying request and reason together in input type?
 
 		const errorRequest: IRequest = request ?? { url: fullPath };
 		if (isTombstoned && this.throwOnTombstoneLoad && headerData?.allowTombstone !== true) {
@@ -1122,23 +1118,30 @@ export class GarbageCollector implements IGarbageCollector {
 		outboundRoutes.push(toNodePath);
 		this.newReferencesSinceLastRun.set(fromNodePath, outboundRoutes);
 
-		const gcId = toNodePath;
-		this.telemetryTracker.nodeUsed(gcId, {
+		// GC won't recognize some subDataStore paths that we encounter (e.g. a path suited for a custom request handler)
+		// So for subDataStore paths we need to check the parent dataStore for current tombstone/inactive status.
+		const trackedId =
+			this.runtime.getNodeType(toNodePath) === "SubDataStore"
+				? dataStoreNodePathOnly(toNodePath)
+				: toNodePath;
+		this.telemetryTracker.nodeUsed(trackedId, {
 			id: toNodePath,
+			fromId: fromNodePath,
 			usageType: "Revived",
 			currentReferenceTimestampMs: this.runtime.getCurrentReferenceTimestampMs(),
 			packagePath: undefined,
 			completedGCRuns: this.completedRuns,
-			isTombstoned: this.tombstones.includes(toNodePath),
+			isTombstoned: this.tombstones.includes(trackedId),
 			lastSummaryTime: this.getLastSummaryTimestampMs(),
-			fromId: fromNodePath,
 			autorecovery,
 		});
 
-		// This node is referenced - Clear its unreferenced state
+		// This node is referenced - Clear its unreferenced state if present
 		// But don't delete the node id from the map yet.
 		// When generating GC stats, the set of nodes in here is used as the baseline for
 		// what was unreferenced in the last GC run.
+		// NOTE: We pass toNodePath here even though it may be an unrecognized subDataStore route (hence no-op),
+		// because a reference to such a path is not sufficient to consider the DataStore referenced.
 		this.unreferencedNodesState.get(toNodePath)?.stopTracking();
 	}
 

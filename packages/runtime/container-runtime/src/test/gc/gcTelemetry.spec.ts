@@ -124,7 +124,7 @@ describe("GC Telemetry Tracker", () => {
 	// Mock node loaded and changed activity for the given nodes.
 	function mockNodeChanges(nodeIds: string[]) {
 		nodeIds.forEach((id) => {
-			telemetryTracker.nodeUsed({
+			telemetryTracker.nodeUsed(id, {
 				id,
 				usageType: "Loaded",
 				currentReferenceTimestampMs: Date.now(),
@@ -132,7 +132,7 @@ describe("GC Telemetry Tracker", () => {
 				completedGCRuns: 0,
 				isTombstoned: false,
 			});
-			telemetryTracker.nodeUsed({
+			telemetryTracker.nodeUsed(id, {
 				id,
 				usageType: "Changed",
 				currentReferenceTimestampMs: Date.now(),
@@ -145,7 +145,7 @@ describe("GC Telemetry Tracker", () => {
 
 	// Mock node revived activity for the given nodes.
 	function reviveNode(fromId: string, toId: string, isTombstoned = false) {
-		telemetryTracker.nodeUsed({
+		telemetryTracker.nodeUsed(toId, {
 			id: toId,
 			usageType: "Revived",
 			currentReferenceTimestampMs: Date.now(),
