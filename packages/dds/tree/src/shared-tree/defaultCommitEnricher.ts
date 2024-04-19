@@ -45,7 +45,7 @@ export class DefaultCommitEnricher<TChange> implements ICommitEnricher<TChange> 
 	private tip: ChangeEnricherCheckout<TChange>;
 
 	/**
-	 * The list of commits (from oldest to most recent) that are have been submitted but not sequenced.
+	 * The list of commits (from oldest to most recent) that have been submitted but not sequenced.
 	 */
 	private inFlightQueue: GraphCommit<TChange>[] = [];
 
