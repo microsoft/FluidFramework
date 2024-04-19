@@ -19,7 +19,9 @@ import { releaseGroupFlag } from "../flags";
  * Note that this applies to all packages in the release group.
  */
 export default class UpdateDepCommand extends BaseCommand<typeof UpdateDepCommand> {
-	static readonly description = `Updates a dependency in the lockfile to the latest version of a specified semver range.`;
+	static readonly description =
+		`Updates a dependency in the lockfile to the latest version of a specified semver range.`;
+
 	static readonly enableJsonFlag = true;
 
 	static readonly flags = {
@@ -44,7 +46,9 @@ export default class UpdateDepCommand extends BaseCommand<typeof UpdateDepComman
 		}
 
 		// Add override to package.json
-		this.info(`Adding pnpm override for ${this.flags.dependencyName}: ${this.flags.version} to package.json`);
+		this.info(
+			`Adding pnpm override for ${this.flags.dependencyName}: ${this.flags.version} to package.json`,
+		);
 		updatePackageJsonFile(releaseGroup.directory, (json) => {
 			if (json.pnpm === undefined) {
 				json.pnpm = {};
