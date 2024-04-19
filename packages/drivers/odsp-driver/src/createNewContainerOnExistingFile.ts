@@ -11,7 +11,7 @@ import {
 	InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { IWriteSummaryResponse } from "./contracts.js";
 import { ClpCompliantAppHeader } from "./contractsPublic.js";

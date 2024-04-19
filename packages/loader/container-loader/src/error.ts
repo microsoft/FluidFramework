@@ -6,9 +6,9 @@
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IFluidErrorBase,
+	ITelemetryLoggerExt,
 	LoggingError,
 	wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils/internal";

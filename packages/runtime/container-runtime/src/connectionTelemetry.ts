@@ -13,9 +13,9 @@ import {
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IEventSampler,
+	ITelemetryLoggerExt,
 	ISampledTelemetryLogger,
 	createChildLogger,
 	createSampledLogger,
