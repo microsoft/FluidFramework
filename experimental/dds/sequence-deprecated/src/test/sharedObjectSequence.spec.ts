@@ -35,7 +35,7 @@ function createConnectedSequence(id: string, runtimeFactory: MockContainerRuntim
 
 function createLocalSequence(id: string) {
 	const factory = new SharedObjectSequenceFactory();
-	return factory.create(new MockFluidDataStoreRuntime(), id);
+	return factory.create(new MockFluidDataStoreRuntime(), id) as SharedObjectSequence<unknown>;
 }
 
 describe("SharedObjectSequence", () => {
