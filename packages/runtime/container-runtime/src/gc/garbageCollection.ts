@@ -1140,7 +1140,7 @@ export class GarbageCollector implements IGarbageCollector {
 		// But don't delete the node id from the map yet.
 		// When generating GC stats, the set of nodes in here is used as the baseline for
 		// what was unreferenced in the last GC run.
-		// NOTE: We pass toNodePath here even though it may be an unrecognized subDataStore route (hence no-op),
+		// NOTE: We use toNodePath not trackedId even though it may be an unrecognized subDataStore route (hence no-op),
 		// because a reference to such a path is not sufficient to consider the DataStore referenced.
 		this.unreferencedNodesState.get(toNodePath)?.stopTracking();
 	}

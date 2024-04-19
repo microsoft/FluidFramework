@@ -380,23 +380,15 @@ export class GCTelemetryTracker {
 		// InactiveObject_Loaded, InactiveObject_Changed, InactiveObject_Revived
 		// SweepReadyObject_Loaded, SweepReadyObject_Changed, SweepReadyObject_Revived
 		for (const eventProps of this.pendingEventsQueue) {
-			const {
-				trackedId,
-				usageType,
-				state,
-				id,
-				fromId,
-				headers,
-				gcConfigs,
-				...detailedProps
-			} = eventProps;
+			const { usageType, state, id, fromId, headers, gcConfigs, ...detailedProps } =
+				eventProps;
 			/**
 			 * Revived event is logged only if the node is active. If the node is not active, the reference to it was
 			 * from another unreferenced node and this scenario is not interesting to log.
 			 * Loaded and Changed events are logged only if the node is not active. If the node is active, it was
 			 * revived and a Revived event will be logged for it.
 			 */
-			const nodeStateTracker = this.getNodeStateTracker(trackedId); // Note: This is never SubDataStore path
+			const nodeStateTracker = this.getNodeStateTracker(detailedProps.trackedId); // Note: This is never SubDataStore path
 			const active =
 				nodeStateTracker === undefined ||
 				nodeStateTracker.state === UnreferencedState.Active;
