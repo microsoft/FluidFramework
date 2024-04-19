@@ -80,17 +80,12 @@ export class DefaultCommitEnricher<TChange> implements ICommitEnricher<TChange> 
 		this.tip = this.checkoutFactory();
 	}
 
-	public enrichCommit(commit: GraphCommit<TChange>, isResubmit: boolean): GraphCommit<TChange> {
-		if (isResubmit) {
-			const enriched = this.resubmitQueue.shift();
-			assert(enriched !== undefined, "Invalid resubmit outside of resubmit phase");
-			this.inFlightQueue.push(enriched);
-			return enriched;
+	public enrichCommit(commit: GraphCommit<TChange>): GraphCommit<TChange> {
+		const toResubmit = this.resubmitQueue.shift();
+		if (toResubmit !== undefined) {
+			this.inFlightQueue.push(toResubmit);
+			return toResubmit;
 		} else {
-			assert(
-				this.resubmitQueue.length === 0,
-				"Invalid enrichment call during incomplete resubmit phase",
-			);
 			const updatedChange = this.tip.updateChangeEnrichments(commit.change, commit.revision);
 			const updatedCommit = { ...commit, change: updatedChange };
 			this.inFlightQueue.push(updatedCommit);

@@ -13,11 +13,9 @@ export interface CommitEnricher<TChange> {
 	 * Enriches a commit with adequate refreshers.
 	 * Assumes that the commit will be submitted.
 	 * @param commit - the commit to enrich. Not mutated.
-	 * @param isResubmit - whether the commit is a resubmission of a previously submitted commit.
-	 * Must be true if and only if `isInResubmitPhase` is true.
 	 * @returns the enriched commit. Possibly the same as the one passed in.
 	 */
-	enrichCommit(commit: GraphCommit<TChange>, isResubmit: boolean): GraphCommit<TChange>;
+	enrichCommit(commit: GraphCommit<TChange>): GraphCommit<TChange>;
 
 	/**
 	 * Must be called at the start of a resubmission phase before calling `enrichCommit`.

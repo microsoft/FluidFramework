@@ -344,7 +344,6 @@ describe("SharedTreeCore", () => {
 	describe("commit enrichment", () => {
 		interface Enrichment {
 			readonly input: GraphCommit<DefaultChangeset>;
-			readonly isResubmit: boolean;
 			readonly output: GraphCommit<DefaultChangeset>;
 		}
 
@@ -353,10 +352,9 @@ describe("SharedTreeCore", () => {
 
 			public enrichCommit(
 				commit: GraphCommit<DefaultChangeset>,
-				isResubmit: boolean,
 			): GraphCommit<DefaultChangeset> {
 				const enriched = { ...commit };
-				this.enrichmentLog.push({ input: commit, isResubmit, output: enriched });
+				this.enrichmentLog.push({ input: commit, output: enriched });
 				return enriched;
 			}
 
@@ -412,7 +410,6 @@ describe("SharedTreeCore", () => {
 			changeTree(tree);
 			assert.equal(enricher.enrichmentLog.length, 1);
 			assert.equal(enricher.enrichmentLog[0].input, tree.getLocalBranch().getHead());
-			assert.equal(enricher.enrichmentLog[0].isResubmit, false);
 			assert.equal(enricher.enrichmentLog[0].output, tree.submitted[0]);
 		});
 
@@ -441,8 +438,6 @@ describe("SharedTreeCore", () => {
 			assert.equal(enricher.toResubmit[0], enricher.enrichmentLog[2].input);
 			assert.equal(enricher.toResubmit[1], enricher.enrichmentLog[1].input);
 			assert.equal(enricher.toResubmit[1], enricher.enrichmentLog[3].input);
-			assert.equal(enricher.enrichmentLog[2].isResubmit, true);
-			assert.equal(enricher.enrichmentLog[3].isResubmit, true);
 			assert.equal(enricher.enrichmentLog[2].output, tree.submitted[2]);
 			assert.equal(enricher.enrichmentLog[3].output, tree.submitted[3]);
 		});

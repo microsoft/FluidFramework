@@ -252,7 +252,24 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			return;
 		}
 
-		const enrichedCommit = this.commitEnricher?.enrichCommit(commit, isResubmit) ?? commit;
+		let enrichedCommit: GraphCommit<TChange>;
+		if (this.commitEnricher !== undefined) {
+			if (isResubmit) {
+				assert(
+					this.commitEnricher.isInResubmitPhase,
+					"Invalid resubmit outside of resubmit phase",
+				);
+			} else {
+				assert(
+					!this.commitEnricher.isInResubmitPhase,
+					"Invalid enrichment call during resubmit phase",
+				);
+			}
+			enrichedCommit = this.commitEnricher.enrichCommit(commit);
+		} else {
+			enrichedCommit = commit;
+		}
+
 		const message = this.messageCodec.encode(
 			{
 				commit: enrichedCommit,

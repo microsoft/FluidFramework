@@ -113,7 +113,7 @@ describe("DefaultCommitEnricher", () => {
 		const factory = () => new TestChangeEnricher(currentRevision);
 		const enricher = new DefaultCommitEnricher(inverter, factory);
 		currentRevision = revision1;
-		const enriched1 = enricher.enrichCommit(commit1, false);
+		const enriched1 = enricher.enrichCommit(commit1);
 		assert.deepEqual(enriched1, {
 			change: {
 				inputContext: revision0,
@@ -123,7 +123,7 @@ describe("DefaultCommitEnricher", () => {
 			revision: revision1,
 		});
 		currentRevision = revision2;
-		const enriched2 = enricher.enrichCommit(commit2, false);
+		const enriched2 = enricher.enrichCommit(commit2);
 		assert.deepEqual(enriched2, {
 			change: {
 				inputContext: revision1,
@@ -141,9 +141,9 @@ describe("DefaultCommitEnricher", () => {
 			const factory = () => new TestChangeEnricher(currentRevision);
 			const enricher = new DefaultCommitEnricher(inverter, factory);
 			currentRevision = revision1;
-			enricher.enrichCommit(commit1, false);
+			enricher.enrichCommit(commit1);
 			currentRevision = revision2;
-			enricher.enrichCommit(commit2, false);
+			enricher.enrichCommit(commit2);
 			// Simulate the sequencing of commit 1
 			enricher.onSequencedCommitApplied(true);
 
@@ -151,7 +151,7 @@ describe("DefaultCommitEnricher", () => {
 			assert.equal(enricher.isInResubmitPhase, false);
 			enricher.startResubmitPhase([commit2]);
 			assert.equal(enricher.isInResubmitPhase, true);
-			enricher.enrichCommit(commit2, true);
+			enricher.enrichCommit(commit2);
 			assert.equal(enricher.isInResubmitPhase, false);
 			// No new enrichment should be necessary
 			assert.equal(TestChangeEnricher.checkoutsCreated, 0);
@@ -164,9 +164,9 @@ describe("DefaultCommitEnricher", () => {
 			const factory = () => new TestChangeEnricher(currentRevision);
 			const enricher = new DefaultCommitEnricher(inverter, factory);
 			currentRevision = revision1;
-			enricher.enrichCommit(commit1, false);
+			enricher.enrichCommit(commit1);
 			currentRevision = revision2;
-			enricher.enrichCommit(commit2, false);
+			enricher.enrichCommit(commit2);
 			// Simulate the sequencing of a peer commit. This would lead to the rebasing of commits 1 and 2.
 			enricher.onSequencedCommitApplied(false);
 			// Simulate the sequencing of commit 1
@@ -180,7 +180,7 @@ describe("DefaultCommitEnricher", () => {
 			assert.equal(enricher.isInResubmitPhase, false);
 			enricher.startResubmitPhase([rebased2]);
 			assert.equal(enricher.isInResubmitPhase, true);
-			enricher.enrichCommit(rebased2, true);
+			enricher.enrichCommit(rebased2);
 			assert.equal(enricher.isInResubmitPhase, false);
 			// One enrichment should be necessary
 			assert.equal(TestChangeEnricher.checkoutsCreated, 1);
@@ -193,9 +193,9 @@ describe("DefaultCommitEnricher", () => {
 			const factory = () => new TestChangeEnricher(currentRevision);
 			const enricher = new DefaultCommitEnricher(inverter, factory);
 			currentRevision = revision1;
-			enricher.enrichCommit(commit1, false);
+			enricher.enrichCommit(commit1);
 			currentRevision = revision2;
-			enricher.enrichCommit(commit2, false);
+			enricher.enrichCommit(commit2);
 			// Simulate the sequencing of commit 1
 			enricher.onSequencedCommitApplied(true);
 			// Simulate the sequencing of a peer commit. This would lead to the rebasing of commit 2.
@@ -220,17 +220,17 @@ describe("DefaultCommitEnricher", () => {
 			const factory = () => new TestChangeEnricher(currentRevision);
 			const enricher = new DefaultCommitEnricher(inverter, factory);
 			currentRevision = revision1;
-			const enriched1 = enricher.enrichCommit(commit1, false);
+			const enriched1 = enricher.enrichCommit(commit1);
 			currentRevision = revision2;
-			const enriched2 = enricher.enrichCommit(commit2, false);
+			const enriched2 = enricher.enrichCommit(commit2);
 
 			TestChangeEnricher.resetCounters();
 			assert.equal(enricher.isInResubmitPhase, false);
 			enricher.startResubmitPhase([commit1, commit2]);
 			assert.equal(enricher.isInResubmitPhase, true);
-			const enriched1Resubmit = enricher.enrichCommit(commit1, true);
+			const enriched1Resubmit = enricher.enrichCommit(commit1);
 			assert.equal(enricher.isInResubmitPhase, true);
-			const enriched2Resubmit = enricher.enrichCommit(commit2, true);
+			const enriched2Resubmit = enricher.enrichCommit(commit2);
 			assert.equal(enricher.isInResubmitPhase, false);
 			assert.equal(enriched1Resubmit, enriched1);
 			assert.equal(enriched2Resubmit, enriched2);
@@ -242,9 +242,9 @@ describe("DefaultCommitEnricher", () => {
 			// Verify that the enricher can resubmit those commits again
 			enricher.startResubmitPhase([commit1, commit2]);
 			assert.equal(enricher.isInResubmitPhase, true);
-			assert.equal(enricher.enrichCommit(commit1, true), enriched1Resubmit);
+			assert.equal(enricher.enrichCommit(commit1), enriched1Resubmit);
 			assert.equal(enricher.isInResubmitPhase, true);
-			assert.equal(enricher.enrichCommit(commit2, true), enriched2Resubmit);
+			assert.equal(enricher.enrichCommit(commit2), enriched2Resubmit);
 			assert.equal(enricher.isInResubmitPhase, false);
 		});
 
@@ -254,7 +254,7 @@ describe("DefaultCommitEnricher", () => {
 				const factory = () => new TestChangeEnricher(currentRevision);
 				const enricher = new DefaultCommitEnricher(inverter, factory);
 				currentRevision = revision1;
-				enricher.enrichCommit(commit1, false);
+				enricher.enrichCommit(commit1);
 
 				if (scenario === "and before") {
 					// Simulate the sequencing of a peer commit
@@ -262,7 +262,7 @@ describe("DefaultCommitEnricher", () => {
 				}
 
 				currentRevision = revision2;
-				enricher.enrichCommit(commit2, false);
+				enricher.enrichCommit(commit2);
 
 				// Simulate the sequencing of a peer commit as part of the resubmit phase
 				enricher.onSequencedCommitApplied(false);
@@ -281,9 +281,9 @@ describe("DefaultCommitEnricher", () => {
 				assert.equal(enricher.isInResubmitPhase, false);
 				enricher.startResubmitPhase([rebased1, rebased2]);
 				assert.equal(enricher.isInResubmitPhase, true);
-				const enriched1Resubmit = enricher.enrichCommit(rebased1, true);
+				const enriched1Resubmit = enricher.enrichCommit(rebased1);
 				assert.equal(enricher.isInResubmitPhase, true);
-				const enriched2Resubmit = enricher.enrichCommit(rebased2, true);
+				const enriched2Resubmit = enricher.enrichCommit(rebased2);
 				assert.equal(enricher.isInResubmitPhase, false);
 				assert.deepEqual(enriched1Resubmit, {
 					change: {
@@ -312,9 +312,9 @@ describe("DefaultCommitEnricher", () => {
 				// Verify that the enricher can resubmit those commits again
 				enricher.startResubmitPhase([rebased1, rebased2]);
 				assert.equal(enricher.isInResubmitPhase, true);
-				assert.equal(enricher.enrichCommit(rebased1, true), enriched1Resubmit);
+				assert.equal(enricher.enrichCommit(rebased1), enriched1Resubmit);
 				assert.equal(enricher.isInResubmitPhase, true);
-				assert.equal(enricher.enrichCommit(rebased2, true), enriched2Resubmit);
+				assert.equal(enricher.enrichCommit(rebased2), enriched2Resubmit);
 				assert.equal(enricher.isInResubmitPhase, false);
 			});
 		}
@@ -324,9 +324,9 @@ describe("DefaultCommitEnricher", () => {
 			const factory = () => new TestChangeEnricher(currentRevision);
 			const enricher = new DefaultCommitEnricher(inverter, factory);
 			currentRevision = revision1;
-			enricher.enrichCommit(commit1, false);
+			enricher.enrichCommit(commit1);
 			currentRevision = revision2;
-			enricher.enrichCommit(commit2, false);
+			enricher.enrichCommit(commit2);
 
 			// Simulate the sequencing of a peer commit
 			enricher.onSequencedCommitApplied(false);
@@ -343,17 +343,17 @@ describe("DefaultCommitEnricher", () => {
 			};
 
 			currentRevision = revision3;
-			const enriched3 = enricher.enrichCommit(commit3, false);
+			const enriched3 = enricher.enrichCommit(commit3);
 
 			TestChangeEnricher.resetCounters();
 			assert.equal(enricher.isInResubmitPhase, false);
 			enricher.startResubmitPhase([rebased1, rebased2, commit3]);
 			assert.equal(enricher.isInResubmitPhase, true);
-			const enriched1Resubmit = enricher.enrichCommit(rebased1, true);
+			const enriched1Resubmit = enricher.enrichCommit(rebased1);
 			assert.equal(enricher.isInResubmitPhase, true);
-			const enriched2Resubmit = enricher.enrichCommit(rebased2, true);
+			const enriched2Resubmit = enricher.enrichCommit(rebased2);
 			assert.equal(enricher.isInResubmitPhase, true);
-			const enriched3Resubmit = enricher.enrichCommit(commit3, true);
+			const enriched3Resubmit = enricher.enrichCommit(commit3);
 			assert.equal(enricher.isInResubmitPhase, false);
 			assert.deepEqual(enriched1Resubmit, {
 				change: {
@@ -385,11 +385,11 @@ describe("DefaultCommitEnricher", () => {
 			// Verify that the enricher can resubmit those commits again
 			enricher.startResubmitPhase([rebased1, rebased2, commit3]);
 			assert.equal(enricher.isInResubmitPhase, true);
-			assert.equal(enricher.enrichCommit(rebased1, true), enriched1Resubmit);
+			assert.equal(enricher.enrichCommit(rebased1), enriched1Resubmit);
 			assert.equal(enricher.isInResubmitPhase, true);
-			assert.equal(enricher.enrichCommit(rebased2, true), enriched2Resubmit);
+			assert.equal(enricher.enrichCommit(rebased2), enriched2Resubmit);
 			assert.equal(enricher.isInResubmitPhase, true);
-			assert.equal(enricher.enrichCommit(commit3, true), enriched3Resubmit);
+			assert.equal(enricher.enrichCommit(commit3), enriched3Resubmit);
 			assert.equal(enricher.isInResubmitPhase, false);
 		});
 	});
