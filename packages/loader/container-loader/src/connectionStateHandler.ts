@@ -389,7 +389,11 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 					clientJoined: this.hasMember(this.pendingClientId),
 					waitingForLeaveOp: this.waitingForLeaveOp,
 				};
-				this.handler.logConnectionIssue("NoJoinOp", "error", details);
+				this.handler.logConnectionIssue(
+					this.connection?.mode === "read" ? "NoJoinSignal" : "NoJoinOp", // eventName
+					"error", // category
+					details,
+				);
 			},
 		);
 	}
@@ -436,7 +440,10 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 				// This is generic event, as it by itself is not an error.
 				// We also have a case where NoJoinOp happens during container boot (we do not report it as error in such case),
 				// if this log statement happens after boot - we do not want to consider it error case.
-				this.handler.logConnectionIssue("ReceivedJoinOp", "generic");
+				this.handler.logConnectionIssue(
+					this.connection?.mode === "read" ? "ReceivedJoinSignal" : "ReceivedJoinOp", // eventName
+					"generic", // category
+				);
 			}
 			// Start the event in case we are waiting for leave or timeout.
 			if (this.waitingForLeaveOp) {
