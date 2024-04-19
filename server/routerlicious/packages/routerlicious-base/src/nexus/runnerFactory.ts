@@ -56,7 +56,10 @@ export class OrdererManager implements core.IOrdererManager {
 	) {}
 
 	public async getOrderer(tenantId: string, documentId: string): Promise<core.IOrderer> {
-		const tenant = await this.tenantManager.getTenant(tenantId, documentId);
+		// Using getTenantConfig instead of getTenant reduces an API call while still returning the orderer information.
+		const tenant = this.tenantManager.getTenantConfig
+			? await this.tenantManager.getTenantConfig(tenantId)
+			: await this.tenantManager.getTenant(tenantId, documentId);
 
 		const messageMetaData = { documentId, tenantId };
 		winston.info(`tenant orderer: ${JSON.stringify(tenant.orderer)}`, { messageMetaData });

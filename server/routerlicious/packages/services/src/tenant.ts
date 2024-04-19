@@ -77,6 +77,10 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		return result;
 	}
 
+	// This method makes two API calls to get the tenant config and git manager.
+	// However, git manager is only used in tinylicious. To avoid an extra API call to
+	// getTenatGitManager use getTenantConfig. getTenantConfig is now an optional method in the
+	// interface to support backward compatibility with existing implementations.
 	public async getTenant(
 		tenantId: string,
 		documentId: string,
@@ -199,7 +203,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		return tenantConfig?.customData?.storageName as string;
 	}
 
-	private async getTenantConfig(
+	public async getTenantConfig(
 		tenantId: string,
 		includeDisabledTenant = false,
 	): Promise<core.ITenantConfig> {
