@@ -520,7 +520,8 @@ export class Container
 			// This call does not look like needed any more, with delaying all connection-related events
 			// past loaded phase. Yet, there could be some customer code that would break if we do not delivery it.
 			// Will be removed in further PRs with proper changeset.
-			this.propagateConnectionState(true /* initial transition */);
+			assert(this.connectionState !== ConnectionState.Connected, "not connected yet");
+			this.setContextConnectedState(false /* connected */, this.readOnlyInfo.readonly ?? false);
 
 			// Deliver delayed calls to DeltaManager - we ignored "connect" events while loading.
 			const cm = this._deltaManager.connectionManager;
@@ -862,7 +863,6 @@ export class Container
 					}
 					this.logConnectionStateChangeTelemetry(value, oldState, reason);
 					this.propagateConnectionState(
-						false /* initial transition */,
 						value === ConnectionState.Disconnected
 							? reason
 							: undefined /* disconnectedReason */,
@@ -1139,7 +1139,7 @@ export class Container
 	}
 
 	private async getPendingLocalStateCore(props: IGetPendingLocalStateProps) {
-		if (this.closed) {
+		if (this.closed || this._disposed) {
 			throw new UsageError(
 				"Pending state cannot be retried if the container is closed or disposed",
 			);
@@ -2187,17 +2187,14 @@ export class Container
 	}
 
 	private propagateConnectionState(
-		initialTransition: boolean,
 		disconnectedReason?: IConnectionStateChangeReason,
 	) {
-		// When container loaded, we want to propagate initial connection state.
-		// After that, we communicate only transitions to Connected & Disconnected states, skipping all other states.
+		// We communicate only transitions to Connected & Disconnected states, skipping all other states.
 		// This can be changed in the future, for example we likely should add "CatchingUp" event on Container.
 		if (
 			!this.loaded ||
-			(!initialTransition &&
-				this.connectionState !== ConnectionState.Connected &&
-				this.connectionState !== ConnectionState.Disconnected)
+			(this.connectionState !== ConnectionState.Connected &&
+			this.connectionState !== ConnectionState.Disconnected)
 		) {
 			return;
 		}
@@ -2446,10 +2443,10 @@ export class Container
 	/**
 	 * Set the connected state of the ContainerContext
 	 * This controls the "connected" state of the ContainerRuntime as well
-	 * @param state - Is the container currently connected?
+	 * @param connected - Is the container currently connected?
 	 * @param readonly - Is the container in readonly mode?
 	 */
-	private setContextConnectedState(state: boolean, readonly: boolean): void {
+	private setContextConnectedState(connected: boolean, readonly: boolean): void {
 		if (this._runtime?.disposed === false) {
 			/**
 			 * We want to lie to the ContainerRuntime when we are in readonly mode to prevent issues with pending
@@ -2457,7 +2454,7 @@ export class Container
 			 * The ContainerRuntime's "connected" state simply means it is ok to send ops
 			 * See https://dev.azure.com/fluidframework/internal/_workitems/edit/1246
 			 */
-			this.runtime.setConnectionState(state && !readonly, this.clientId);
+			this.runtime.setConnectionState(connected && !readonly, this.clientId);
 		}
 	}
 
