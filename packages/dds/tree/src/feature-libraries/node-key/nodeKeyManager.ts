@@ -78,7 +78,7 @@ export function createNodeKeyManager(idCompressor?: IIdCompressor | undefined): 
 		tryRecompress: (key: StableNodeKey) => {
 			assert(
 				idCompressor !== undefined,
-				0x6e7 /* Runtime IdCompressor must be available to convert node keys */,
+				0x6e9 /* Runtime IdCompressor must be available to convert node keys */,
 			);
 			const compressedKey = idCompressor.tryRecompress(key);
 			if (compressedKey !== undefined) {

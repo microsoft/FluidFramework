@@ -1067,6 +1067,7 @@ export const shortCodeMap = {
 	"0x6e6": "Runtime IdCompressor must be available to convert node keys",
 	"0x6e7": "UUID offset may not be negative",
 	"0x6e8": "UUID offset must be at most 16^12",
+	"0x6e9": "Runtime IdCompressor must be available to convert node keys",
 	"0x6ed": "Mark with changes can only target a single cell",
 	"0x6f0": "Only move marks have move IDs",
 	"0x6f3": "Expected effect to cover entire mark",
