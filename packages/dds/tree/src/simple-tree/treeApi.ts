@@ -195,7 +195,7 @@ export const treeNodeApi: TreeNodeApi = {
 			if (field.schema.kind === FieldKinds.identifier) {
 				const identifier = field.boxedAt(0);
 				assert(identifier !== undefined, 0x927 /* The identifier must exist */);
-				const localNodeKey = identifier.context.nodeKeys.tryRecompress(
+				const localNodeKey = identifier.context.nodeKeys.tryLocalize(
 					identifier.value as StableNodeKey,
 				);
 				return localNodeKey !== undefined
