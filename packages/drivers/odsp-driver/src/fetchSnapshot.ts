@@ -227,22 +227,23 @@ async function redeemSharingLink(
 		{
 			eventName: "RedeemShareLink",
 		},
-		async () =>
-			getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
-				assert(
-					!!odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
-					0x1ed /* "Share link should be present" */,
-				);
-				const storageToken = await storageTokenFetcher(
-					tokenFetchOptions,
-					"RedeemShareLink",
-				);
-				const encodedShareUrl = getEncodedShareUrl(
-					odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
-				);
+		async () => {
+			assert(
+				!!odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
+				0x1ed /* "Share link should be present" */,
+			);
 
-				let redeemUrl: string | undefined;
-				async function callSharesAPI(baseUrl: string): Promise<void> {
+			const encodedShareUrl = getEncodedShareUrl(
+				odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
+			);
+
+			let redeemUrl: string | undefined;
+			async function callSharesAPI(baseUrl: string): Promise<void> {
+				await getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
+					const storageToken = await storageTokenFetcher(
+						tokenFetchOptions,
+						"RedeemShareLink",
+					);
 					redeemUrl = `${baseUrl}/_api/v2.0/shares/${encodedShareUrl}`;
 					const { url, headers } = getUrlAndHeadersWithAuth(
 						redeemUrl,
@@ -251,30 +252,39 @@ async function redeemSharingLink(
 					);
 					headers.prefer = "redeemSharingLink";
 					await fetchAndParseAsJSONHelper(url, { headers });
-				}
+				});
+			}
 
-				const disableUsingTenantDomain = loggerToMonitoringContext(
-					logger,
-				).config.getBoolean("Fluid.Driver.Odsp.DisableUsingTenantDomainForSharesApi");
-				// There is an issue where if we use the siteUrl in /shares, then the allowed length of url is just a few hundred characters
-				// and we fail to do the redeem. But if we use the tenant domain in the url, then the allowed length becomes 2048. So, first
-				// construct the url for /shares using tenant domain but to be on safer side, fallback to what we were using before.
-				if (!disableUsingTenantDomain) {
-					try {
-						await callSharesAPI(new URL(odspResolvedUrl.siteUrl).origin);
-						return;
-					} catch (error) {
-						logger.sendTelemetryEvent(
-							{
-								eventName: "ShareLinkRedeemFailedWithDomain",
+			const disableUsingTenantDomain = loggerToMonitoringContext(logger).config.getBoolean(
+				"Fluid.Driver.Odsp.DisableUsingTenantDomainForSharesApi",
+			);
+			// There is an issue where if we use the siteUrl in /shares, then the allowed length of url is just a few hundred characters
+			// and we fail to do the redeem. But if we use the tenant domain in the url, then the allowed length becomes 2048. So, first
+			// construct the url for /shares using tenant domain but to be on safer side, fallback to what we were using before.
+			if (!disableUsingTenantDomain) {
+				try {
+					await callSharesAPI(new URL(odspResolvedUrl.siteUrl).origin);
+					return;
+				} catch (error) {
+					logger.sendTelemetryEvent(
+						{
+							eventName: "ShareLinkRedeemFailedWithTenantDomain",
+							details: JSON.stringify({
 								length: redeemUrl?.length,
-							},
-							error,
-						);
-					}
+								shareLinkUrlLength:
+									odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem.length,
+								queryParamsLength: new URL(
+									odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
+								).search.length,
+								useHeaders: forceAccessTokenViaAuthorizationHeader,
+							}),
+						},
+						error,
+					);
 				}
-				await callSharesAPI(odspResolvedUrl.siteUrl);
-			}),
+			}
+			await callSharesAPI(odspResolvedUrl.siteUrl);
+		},
 	);
 }
 
