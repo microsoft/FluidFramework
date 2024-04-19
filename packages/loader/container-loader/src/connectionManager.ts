@@ -255,6 +255,14 @@ export class ConnectionManager implements IConnectionManager {
 	public get clientId() {
 		return this.connection?.clientId;
 	}
+
+	private _connectionDetails?: IConnectionDetailsInternal;
+	public get connectionDetails() {
+		assert(this.connection !== undefined, "connected");
+		assert(this._connectionDetails !== undefined, "details");
+		return this._connectionDetails;
+	}
+
 	/**
 	 * Automatic reconnecting enabled or disabled.
 	 * If set to Never, then reconnecting will never be allowed.
@@ -758,6 +766,7 @@ export class ConnectionManager implements IConnectionManager {
 		const connection = this.connection;
 		// Avoid any re-entrancy - clear object reference
 		this.connection = undefined;
+		this._connectionDetails = undefined;
 
 		// Remove listeners first so we don't try to retrigger this flow accidentally through reconnectOnError
 		connection.off("op", this.opHandler);
@@ -910,9 +919,9 @@ export class ConnectionManager implements IConnectionManager {
 			this.connectFirstConnection ? "InitialOps" : "ReconnectOps",
 		);
 
-		const details = ConnectionManager.detailsFromConnection(connection, reason);
-		details.checkpointSequenceNumber = checkpointSequenceNumber;
-		this.props.connectHandler(details);
+		this._connectionDetails = ConnectionManager.detailsFromConnection(connection, reason);
+		this._connectionDetails.checkpointSequenceNumber = checkpointSequenceNumber;
+		this.props.connectHandler(this._connectionDetails);
 
 		this.connectFirstConnection = false;
 
@@ -973,7 +982,7 @@ export class ConnectionManager implements IConnectionManager {
 	 * @param error - Error reconnect information including whether or not to reconnect
 	 * @returns A promise that resolves when the connection is reestablished or we stop trying
 	 */
-	private async reconnect(
+	public async reconnect(
 		requestedMode: ConnectionMode,
 		reason: IConnectionStateChangeReason<IAnyDriverError>,
 	) {
