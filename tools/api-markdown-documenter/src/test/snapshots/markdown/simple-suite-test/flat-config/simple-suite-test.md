@@ -178,6 +178,8 @@ Test interface event property
 readonly testClassEventProperty: () => void;
 ```
 
+**Type:** () =&gt; void
+
 ##### Remarks {#testclasseventproperty-remarks}
 
 Here are some remarks about the event property
@@ -194,6 +196,8 @@ A test getter-only interface property.
 get getterProperty(): boolean;
 ```
 
+**Type:** boolean
+
 #### setterProperty {#testinterface-setterproperty-property}
 
 A test property with a getter and a setter.
@@ -205,6 +209,8 @@ get setterProperty(): boolean;
 set setterProperty(newValue: boolean);
 ```
 
+**Type:** boolean
+
 #### testInterfaceProperty {#testinterface-testinterfaceproperty-propertysignature}
 
 Test interface property
@@ -214,6 +220,8 @@ Test interface property
 ```typescript
 testInterfaceProperty: number;
 ```
+
+**Type:** number
 
 ##### Remarks {#testinterfaceproperty-remarks}
 
@@ -228,6 +236,8 @@ Test optional property
 ```typescript
 testOptionalInterfaceProperty?: number;
 ```
+
+**Type:** number
 
 ### Method Details
 
@@ -411,6 +421,8 @@ A test interface property using generic type parameter
 testProperty: T;
 ```
 
+**Type:** T
+
 ##### Remarks {#testproperty-remarks}
 
 Here are some remarks about the property
@@ -479,6 +491,8 @@ A test abstract getter property.
 abstract get abstractPropertyGetter(): TestMappedType;
 ```
 
+**Type:** [TestMappedType](docs/simple-suite-test#testmappedtype-typealias)
+
 #### protectedProperty {#testabstractclass-protectedproperty-property}
 
 A test protected property.
@@ -488,6 +502,8 @@ A test protected property.
 ```typescript
 protected readonly protectedProperty: TestEnum;
 ```
+
+**Type:** [TestEnum](docs/simple-suite-test#testenum-enum)
 
 ### Method Details
 
@@ -635,6 +651,8 @@ Test class event property
 readonly testClassEventProperty: () => void;
 ```
 
+**Type:** () =&gt; void
+
 ##### Remarks {#testclasseventproperty-remarks}
 
 Here are some remarks about the property
@@ -651,6 +669,8 @@ A test abstract getter property.
 get abstractPropertyGetter(): TestMappedType;
 ```
 
+**Type:** [TestMappedType](docs/simple-suite-test#testmappedtype-typealias)
+
 #### testClassGetterProperty {#testclass-testclassgetterproperty-property}
 
 Test class property with both a getter and a setter.
@@ -662,6 +682,8 @@ Test class property with both a getter and a setter.
 get testClassGetterProperty(): number;
 set testClassGetterProperty(newValue: number);
 ```
+
+**Type:** number
 
 ##### Remarks {#testclassgetterproperty-remarks}
 
@@ -677,6 +699,8 @@ Test class property
 readonly testClassProperty: TTypeParameterB;
 ```
 
+**Type:** TTypeParameterB
+
 ##### Remarks {#testclassproperty-remarks}
 
 Here are some remarks about the property
@@ -690,6 +714,8 @@ Test static class property
 ```typescript
 static testClassStaticProperty: (foo: number) => string;
 ```
+
+**Type:** (foo: number) =&gt; string
 
 ### Method Details
 
@@ -978,6 +1004,8 @@ I have a `@deprecated` tag with an empty comment block.
 testConstWithEmptyDeprecatedBlock: string
 ```
 
+**Type:** string
+
 # Namespace Details
 
 ## TestModule {#testmodule-namespace}
@@ -1126,6 +1154,8 @@ Test interface property
 ```typescript
 readonly testClassProperty: string;
 ```
+
+**Type:** string
 
 ##### Method Details
 
