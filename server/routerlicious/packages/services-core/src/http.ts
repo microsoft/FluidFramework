@@ -26,6 +26,8 @@ export interface IWebServerFactory {
 export interface IWebSocket {
 	id: string;
 
+	internalSocketInstance?: unknown;
+
 	on(event: string, listener: (...args: any[]) => void);
 
 	join(id: string): Promise<void>;
@@ -61,6 +63,8 @@ export interface IWebServer {
  * @alpha
  */
 export interface IWebSocketServer {
+	internalServerInstance?: unknown;
+
 	on(event: string, listener: (...args: any[]) => void);
 
 	close(): Promise<void>;

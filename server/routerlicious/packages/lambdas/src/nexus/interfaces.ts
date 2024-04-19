@@ -20,6 +20,7 @@ import type {
 import { IEvent } from "../events";
 import type { IRuntimeSignalEnvelope } from "../utils";
 import type { ExpirationTimer } from "./utils";
+import type { SocketIoServerHelper, SocketIoSocketHelper } from "./socketIo";
 
 /**
  * Connection details of a client.
@@ -118,6 +119,8 @@ export interface INexusLambdaDependencies {
 	clusterDrainingChecker?: IClusterDrainingChecker;
 
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>;
+
+	socketIoServerHelper: SocketIoServerHelper;
 }
 
 export interface INexusLambdaConnectionStateTrackers {
@@ -128,4 +131,5 @@ export interface INexusLambdaConnectionStateTrackers {
 	roomMap: Map<string, IRoom>;
 	disconnectedOrdererConnections: Set<string>;
 	disconnectedClients: Set<string>;
+	socketIoSocketHelper: SocketIoSocketHelper;
 }

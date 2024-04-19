@@ -19,7 +19,10 @@ function selectProtocolVersion(connectVersions: string[]): string | undefined {
 	return undefined;
 }
 
-export function checkProtocolVersion(versions: string[]): [string[], string] {
+export function checkProtocolVersion(versions: string[]): {
+	connectVersions: string[];
+	version: string;
+} {
 	// Iterate over the version ranges provided by the client and select the best one that works
 	const connectVersions = versions || ["^0.1.0"];
 	const version = selectProtocolVersion(connectVersions);
@@ -29,5 +32,5 @@ export function checkProtocolVersion(versions: string[]): [string[], string] {
 			`Unsupported client protocol. Server: ${ProtocolVersions}. Client: ${connectVersions}`,
 		);
 	}
-	return [connectVersions, version];
+	return { connectVersions, version };
 }

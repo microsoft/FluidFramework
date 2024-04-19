@@ -39,6 +39,7 @@ import {
 import { addNexusMessageTrace } from "./trace";
 import { connectDocument } from "./connect";
 import { disconnectDocument } from "./disconnect";
+import { SocketIoServerHelper, SocketIoSocketHelper } from "./socketIo";
 
 export { IBroadcastSignalEventPayload, ICollaborationSessionEvents, IRoom } from "./interfaces";
 
@@ -121,6 +122,7 @@ export function configureWebSocketServices(
 		revokedTokenChecker,
 		clusterDrainingChecker,
 		collaborationSessionEventEmitter,
+		socketIoServerHelper: new SocketIoServerHelper(webSocketServer),
 	};
 	const lambdaSettings: INexusLambdaSettings = {
 		maxTokenLifetimeSec,
@@ -153,6 +155,7 @@ export function configureWebSocketServices(
 			expirationTimer,
 			disconnectedOrdererConnections,
 			disconnectedClients,
+			socketIoSocketHelper: new SocketIoSocketHelper(socket),
 		};
 
 		let connectDocumentComplete: boolean = false;

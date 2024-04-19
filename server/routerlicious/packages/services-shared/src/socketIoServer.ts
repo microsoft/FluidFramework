@@ -26,6 +26,10 @@ class SocketIoSocket implements core.IWebSocket {
 		return this.socket.id;
 	}
 
+	public get internalSocketInstance(): Socket {
+		return this.socket;
+	}
+
 	constructor(private readonly socket: Socket) {}
 
 	public on(event: string, listener: (...args: any[]) => void) {
@@ -69,6 +73,10 @@ function isSocketIoConnectionError(error: unknown): error is ISocketIoConnection
 
 class SocketIoServer implements core.IWebSocketServer {
 	private readonly events = new EventEmitter();
+
+	public get internalServerInstance(): Server {
+		return this.io;
+	}
 
 	constructor(
 		private readonly io: Server,
@@ -138,7 +146,7 @@ class SocketIoServer implements core.IWebSocketServer {
 					res.status(503).send("Graceful Shutdown");
 				});
 
-				const connections = await this.io.fetchSockets();
+				const connections = await this.io.local.fetchSockets();
 				const connectionCount = connections.length;
 				const telemetryProperties = {
 					drainTime,
@@ -191,7 +199,7 @@ class SocketIoServer implements core.IWebSocketServer {
 					);
 				} else {
 					metricForTimeTaken.success("Graceful shutdown finished");
-					const reconnections = await this.io.fetchSockets();
+					const reconnections = await this.io.local.fetchSockets();
 					Lumberjack.info("Graceful shutdown. Closing last reconnected connections", {
 						connectionsCount: reconnections.length,
 					});

@@ -277,10 +277,9 @@ async function joinRoomAndSubscribeToChannel(
 	socket: IWebSocket,
 	tenantId: string,
 	documentId: string,
+	clientId: string,
 	{ logger }: INexusLambdaDependencies,
-): Promise<[string, IRoom]> {
-	const clientId = generateClientId();
-
+): Promise<IRoom> {
 	const room: IRoom = {
 		tenantId,
 		documentId,
@@ -289,7 +288,7 @@ async function joinRoomAndSubscribeToChannel(
 	try {
 		// Subscribe to channels.
 		await Promise.all([socket.join(getRoomId(room)), socket.join(`client#${clientId}`)]);
-		return [clientId, room];
+		return room;
 	} catch (err) {
 		const errMsg = `Could not subscribe to channels. Error: ${safeStringify(
 			err,
@@ -344,7 +343,7 @@ async function retrieveClients(
 	return clients;
 }
 
-function createMessageClientAndJoinRoom(
+function createMessageClient(
 	mode: ConnectionMode,
 	client: IClient,
 	claims: ITokenClaims,
@@ -474,7 +473,7 @@ export async function connectDocument(
 	let documentId = message.id;
 	let uncaughtError: any;
 	try {
-		const [connectVersions, version] = checkProtocolVersion(message.versions);
+		const { connectVersions, version } = checkProtocolVersion(message.versions);
 		connectionTrace.stampStage(ConnectDocumentStage.VersionsChecked);
 
 		checkThrottle(tenantId, lambdaDependencies);
@@ -487,10 +486,12 @@ export async function connectDocument(
 		documentId = claims.documentId;
 		connectionTrace.stampStage(ConnectDocumentStage.TokenVerified);
 
-		const [clientId, room] = await joinRoomAndSubscribeToChannel(
+		const clientId = generateClientId();
+		const room = await joinRoomAndSubscribeToChannel(
 			socket,
 			tenantId,
 			documentId,
+			clientId,
 			lambdaDependencies,
 		);
 		connectionTrace.stampStage(ConnectDocumentStage.RoomJoined);
@@ -509,7 +510,7 @@ export async function connectDocument(
 		connectionTrace.stampStage(ConnectDocumentStage.ClientsRetrieved);
 
 		const connectedTimestamp = Date.now();
-		const messageClient = createMessageClientAndJoinRoom(
+		const messageClient = createMessageClient(
 			message.mode,
 			message.client,
 			claims,
@@ -519,6 +520,14 @@ export async function connectDocument(
 			lambdaConnectionStateTrackers,
 		);
 		connectionTrace.stampStage(ConnectDocumentStage.MessageClientCreated);
+
+		// Set metadata for the connection once we have clientId and IClient details.
+		lambdaConnectionStateTrackers.socketIoSocketHelper.data = {
+			clientId,
+			tenantId,
+			documentId,
+			client: messageClient as IClient,
+		};
 
 		await addMessageClientToClientManager(
 			tenantId,
