@@ -46,7 +46,7 @@ export class LocalWebSocket implements IWebSocket {
 		this.events.emit(event, ...args);
 	}
 
-	public async emitToRoom(roomId: string, event: string, ...args: any[]) {
+	public emitToRoom(roomId: string, event: string, ...args: any[]) {
 		this.server.pubsub.publish(roomId, event, ...args);
 	}
 
