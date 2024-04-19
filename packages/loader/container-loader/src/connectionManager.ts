@@ -493,7 +493,7 @@ export class ConnectionManager implements IConnectionManager {
 		}
 	}
 
-	public connect(reason: IConnectionStateChangeReason, connectionMode: ConnectionMode) {
+	public connect(reason: IConnectionStateChangeReason, connectionMode?: ConnectionMode) {
 		this.connectCore(reason, connectionMode).catch((e) => {
 			const normalizedError = normalizeError(e, { props: fatalConnectErrorProp });
 			this.props.closeHandler(normalizedError);
@@ -502,11 +502,11 @@ export class ConnectionManager implements IConnectionManager {
 
 	private async connectCore(
 		reason: IConnectionStateChangeReason,
-		connectionMode: ConnectionMode,
+		connectionMode?: ConnectionMode,
 	): Promise<void> {
 		assert(!this._disposed, 0x26a /* "not closed" */);
 
-		let requestedMode = connectionMode;
+		let requestedMode = connectionMode ?? this.defaultReconnectionMode;
 
 		// if we have any non-acked ops from last connection, reconnect as "write".
 		// without that we would connect in view-only mode, which will result in immediate
