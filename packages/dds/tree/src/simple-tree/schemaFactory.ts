@@ -555,10 +555,10 @@ export class SchemaFactory<
 	 * @param t - The types allowed under the field.
 	 * @param props - Optional properties to associate with the field.
 	 */
-	public optional<const T extends ImplicitAllowedTypes>(
+	public optional<const T extends ImplicitAllowedTypes, const TMetadata = unknown>(
 		t: T,
-		props?: FieldProps,
-	): FieldSchema<FieldKind.Optional, T> {
+		props?: FieldProps<TMetadata>,
+	): FieldSchema<FieldKind.Optional, T, TMetadata> {
 		return createFieldSchema(FieldKind.Optional, t, props);
 	}
 
@@ -572,10 +572,10 @@ export class SchemaFactory<
 	 * Fields are required by default, but this API can be used to make the required nature explicit in the schema,
 	 * and allows associating custom {@link FieldProps | properties} with the field.
 	 */
-	public required<const T extends ImplicitAllowedTypes>(
+	public required<const T extends ImplicitAllowedTypes, const TMetadata = unknown>(
 		t: T,
-		props?: FieldProps,
-	): FieldSchema<FieldKind.Required, T> {
+		props?: FieldProps<TMetadata>,
+	): FieldSchema<FieldKind.Required, T, TMetadata> {
 		return createFieldSchema(FieldKind.Required, t, props);
 	}
 

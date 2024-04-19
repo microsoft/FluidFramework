@@ -197,7 +197,7 @@ export function getExplicitStoredKey(fieldSchema: ImplicitFieldSchema): string |
  *
  * @public
  */
-export interface FieldProps {
+export interface FieldProps<TMetadata = unknown> {
 	/**
 	 * The unique identifier of a field, used in the persisted form of the tree.
 	 *
@@ -249,6 +249,11 @@ export interface FieldProps {
 	 * @defaultValue If not specified, the key that is persisted is the property key that was specified in the schema.
 	 */
 	readonly key?: string;
+
+	/**
+	 * Optional metadata to associate with the field.
+	 */
+	readonly metadata?: TMetadata;
 }
 
 /**
@@ -257,11 +262,12 @@ export interface FieldProps {
 export let createFieldSchema: <
 	Kind extends FieldKind = FieldKind,
 	Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+	TMetadata = unknown,
 >(
 	kind: Kind,
 	allowedTypes: Types,
-	props?: FieldProps,
-) => FieldSchema<Kind, Types>;
+	props?: FieldProps<TMetadata>,
+) => FieldSchema<Kind, Types, TMetadata>;
 
 /**
  * All policy for a specific field,
@@ -277,15 +283,17 @@ export let createFieldSchema: <
 export class FieldSchema<
 	out Kind extends FieldKind = FieldKind,
 	out Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+	out TMetadata = unknown,
 > {
 	static {
 		createFieldSchema = <
 			Kind2 extends FieldKind = FieldKind,
 			Types2 extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+			TMetadata2 = unknown,
 		>(
 			kind: Kind2,
 			allowedTypes: Types2,
-			props?: FieldProps,
+			props?: FieldProps<TMetadata2>,
 		) => new FieldSchema(kind, allowedTypes, props);
 	}
 	/**
@@ -304,6 +312,13 @@ export class FieldSchema<
 		return this.lazyTypes.value;
 	}
 
+	/**
+	 * {@inheritDoc FieldProps.metadata}
+	 */
+	public get metadata(): TMetadata | undefined {
+		return this.props?.metadata;
+	}
+
 	private constructor(
 		/**
 		 * The {@link https://en.wikipedia.org/wiki/Kind_(type_theory) | kind } of this field.
@@ -317,7 +332,7 @@ export class FieldSchema<
 		/**
 		 * Optional properties associated with the field.
 		 */
-		public readonly props?: FieldProps,
+		public readonly props?: FieldProps<TMetadata>,
 	) {
 		this.lazyTypes = new Lazy(() => normalizeAllowedTypes(this.allowedTypes));
 	}
