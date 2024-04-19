@@ -110,8 +110,8 @@ export function assertEquivalentSharedStrings(a: SharedString, b: SharedString) 
 
 function assertPropertiesEqual(a: SharedString, b: SharedString): void {
 	for (let i = 0; i < a.getLength(); i++) {
-		const aProps = a.getPropertiesAtPosition(i) ?? [];
-		const bProps = b.getPropertiesAtPosition(i) ?? [];
+		const aProps = a.getPropertiesAtPosition(i) ?? {};
+		const bProps = b.getPropertiesAtPosition(i) ?? {};
 		const aKeys =
 			aProps === undefined
 				? []
