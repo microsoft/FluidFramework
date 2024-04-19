@@ -51,6 +51,7 @@ export class Tenant implements core.ITenant {
 	) {
 		this.managerPromise
 			.then((manager) => {
+				Lumberjack.info("[DHRUV DEBUG] Tenant managerPromise resolved");
 				this.manager = manager;
 			})
 			.catch((error) => {
