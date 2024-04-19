@@ -238,7 +238,7 @@ export function rebaseBranch<TChange>(
 	// For each source commit, rebase backwards over the inverses of any commits already rebased, and then
 	// rebase forwards over the rest of the commits up to the new base before advancing the new base.
 	let newHead = newBase;
-	const revInfos = getRevInfoFromTaggedChanges(targetRebasePath);
+	const revInfos = getRevInfoFromTaggedChanges([...targetRebasePath, ...sourcePath]);
 	// Note that the `revisionMetadata` gets updated as `revInfos` gets updated.
 	const revisionMetadata = revisionMetadataSourceFromInfo(revInfos);
 	let currentComposedEdit = makeAnonChange(changeRebaser.compose(targetRebasePath));

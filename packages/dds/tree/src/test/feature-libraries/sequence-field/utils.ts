@@ -325,7 +325,7 @@ export function rebaseOverChanges(
 	revInfos?: RevisionInfo[],
 ): TaggedChange<TestChangeset> {
 	let currChange = change;
-	const revisionInfo = revInfos ?? defaultRevInfosFromChanges(baseChanges);
+	const revisionInfo = revInfos ?? defaultRevInfosFromChanges([...baseChanges, change]);
 	for (const base of baseChanges) {
 		currChange = tagChange(
 			rebase(currChange.change, base, {
