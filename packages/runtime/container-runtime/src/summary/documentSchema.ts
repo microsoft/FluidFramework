@@ -552,6 +552,7 @@ export class DocumentsSchemaController {
 	 */
 	public maybeSendSchemaMessage(): IDocumentSchemaChangeMessage | undefined {
 		if (this.sendOp && this.futureSchema !== undefined) {
+			this.sendOp = false;
 			assert(
 				this.explicitSchemaControl &&
 					this.futureSchema.runtime.explicitSchemaControl === true,
@@ -562,7 +563,6 @@ export class DocumentsSchemaController {
 				refSeq: this.documentSchema.refSeq,
 			};
 		}
-		this.sendOp = false;
 	}
 
 	/**
