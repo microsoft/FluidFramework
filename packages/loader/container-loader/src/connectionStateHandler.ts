@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDeltaManager, ICriticalContainerError } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert, Timer } from "@fluidframework/core-utils/internal";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
@@ -13,7 +13,6 @@ import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
 	loggerToMonitoringContext,
-	normalizeError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor.js";
@@ -52,7 +51,7 @@ export interface IConnectionStateHandlerInputs {
 	clientShouldHaveLeft: (clientId: string) => void;
 
 	/** Some critical error was hit. Container should be closed and error logged. */
-	onCriticalError: (error: ICriticalContainerError) => void;
+	onCriticalError: (error: unknown) => void;
 }
 
 /**
@@ -202,7 +201,7 @@ class ConnectionStateHandlerPassThrough
 		return this.inputs.clientShouldHaveLeft(clientId);
 	}
 
-	public onCriticalError(error: ICriticalContainerError) {
+	public onCriticalError(error: unknown) {
 		return this.inputs.onCriticalError(error);
 	}
 }
