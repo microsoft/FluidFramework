@@ -892,13 +892,13 @@ export class Container
 					});
 
 					// This is important for many reasons:
-					// 1) Cosmetic / OCE burden: It's useless to raise NoJoinOp error events, if we are loading,
-					//    as that's most likely to to snapshot taking too long to load. During this time we are not processing ops
-					//    so there is no way to move to "connected" state, and thus timer would fire. But these events do not tell us
-					//    anything about connectivity pipeline / op processing pipeline, only that boot is slow, and we have events for that.
-					// 2) Doing recovery below is useless in loading mode, for the reasons described above. At the same time
-					//    we can't not do it, as maybe we actually lost JoinSignal for "self", and when loading is done, we never move to
-					//    connected state. So we would have to do (in most cases) useless infinite reconnect loop while we are loading.
+					// 1) Cosmetic / OCE burden: It's useless to raise NoJoinOp error events, if we are loading, as that's most
+					//    likely to to snapshot taking too long to load. During this time we are not processing ops so there is no
+					//    way to move to "connected" state, and thus timer would fire. But these events do not tell us anything
+					//    about connectivity pipeline / op processing pipeline, only that boot is slow, and we have events for that.
+					// 2) Doing recovery below is useless in loading mode, for the reasons described above. At the same time we can't
+					//    not do it, as maybe we lost JoinSignal for "self", and when loading is done, we never move to connected
+					//    state. So we would have to do (in most cases) useless infinite reconnect loop while we are loading.
 					assert(this.loaded, "loaded");
 
 					// If this is "write" connection, it took too long to receive join op. But in most cases that's due
@@ -906,12 +906,9 @@ export class Container
 					// For "read" connections, we get here due to join signal for "self" not arriving on time.
 					// Attempt to recover by reconnecting.
 					if (mode === "read" && category === "error") {
-						this._deltaManager.connectionManager
-							.reconnect(
-								"write", // connectionMode
-								{ text: "NoJoinSignal" }, // reason
-							)
-							.catch((error) => this.close(error));
+						const reason = { text: "NoJoinSignal" };
+						this.disconnectInternal(reason);
+						this.connectInternal({ reason, fetchOpsFromStorage: false });
 					}
 				},
 				clientShouldHaveLeft: (clientId: string) => {
@@ -2046,8 +2043,8 @@ export class Container
 			//    without recovery (after we loaded).
 			// 3. We expose non-consistent view. ContainerRuntime may start loading in non-connected state, but end in connected, with
 			//    no events telling about it (until we loaded). Most of the code relies on a fact that state changes when events fire.
-			// Please note that this will not delay any processes (as observed by the user)
-			// I.e. once container moves to loaded phase, we immediately would transition across all phases, if we have proper signals / ops ready.
+			// This will not delay any processes (as observed by the user). I.e. once container moves to loaded phase,
+			// we immediately would transition across all phases, if we have proper signals / ops ready.
 			if (this.loaded) {
 				this.connectionStateHandler.receivedConnectEvent(details);
 			}
