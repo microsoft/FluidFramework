@@ -66,7 +66,9 @@ function rebaseTagged<TChangeset>(
 	let currChange = change;
 	const revisionInfo = defaultRevInfosFromChanges([...rebasePath, change]);
 	for (const base of rebasePath) {
-		const metadata = rebaseRevisionMetadataFromInfo(revisionInfo, [base.revision]);
+		const metadata = rebaseRevisionMetadataFromInfo(revisionInfo, change.revision, [
+			base.revision,
+		]);
 		currChange = tagChange(rebase(currChange.change, base, metadata), currChange.revision);
 	}
 
@@ -525,6 +527,7 @@ function sandwichRebaseWithCompose<TChangeset>(
 		];
 		const rebaseMetadata = rebaseRevisionMetadataFromInfo(
 			defaultRevInfosFromChanges([...rebasePath, edit]),
+			edit.revision,
 			[editToRebaseOver.revision],
 		);
 		const rebasedEdit = tagChange(
@@ -585,6 +588,7 @@ function rebaseOverSinglesVsRebaseOverCompositions<TChangeset>(
 	// Rebase over the composition of base edits
 	const metadata = rebaseRevisionMetadataFromInfo(
 		defaultRevInfosFromChanges([...editsToRebaseOver, edit]),
+		edit.revision,
 		editsToRebaseOver.map(({ revision }) => revision),
 	);
 	const rebaseWithCompose = fieldRebaser.rebaseComposed(
@@ -692,7 +696,7 @@ function verifyRebaseLeftDistributivity<TChangeset>(
 
 	const editB = editsToRebaseOver[0];
 	const editC = editsToRebaseOver[1];
-	const rebaseMetaData = rebaseRevisionMetadataFromInfo(revInfo, [
+	const rebaseMetaData = rebaseRevisionMetadataFromInfo(revInfo, edit.revision, [
 		editB.revision,
 		editC.revision,
 	]);

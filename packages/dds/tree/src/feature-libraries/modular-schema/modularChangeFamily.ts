@@ -692,8 +692,9 @@ export class ModularChangeFamily
 		const getBaseRevisions = () =>
 			revisionInfoFromTaggedChange(over).map((info) => info.revision);
 
-		const rebaseMetadata = {
+		const rebaseMetadata: RebaseRevisionMetadata = {
 			...revisionMetadata,
+			getRevisionToRebase: () => taggedChange.revision,
 			getBaseRevisions,
 		};
 
@@ -1380,6 +1381,7 @@ function deltaFromNodeChange(
  */
 export function rebaseRevisionMetadataFromInfo(
 	revInfos: readonly RevisionInfo[],
+	revisionToRebase: RevisionTag | undefined,
 	baseRevisions: (RevisionTag | undefined)[],
 ): RebaseRevisionMetadata {
 	const filteredRevisions: RevisionTag[] = [];
@@ -1392,6 +1394,7 @@ export function rebaseRevisionMetadataFromInfo(
 	const getBaseRevisions = () => filteredRevisions;
 	return {
 		...revisionMetadataSourceFromInfo(revInfos),
+		getRevisionToRebase: () => revisionToRebase,
 		getBaseRevisions,
 	};
 }

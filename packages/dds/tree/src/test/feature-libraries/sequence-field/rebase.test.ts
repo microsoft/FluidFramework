@@ -1224,6 +1224,7 @@ export function testRebase() {
 						removes,
 						rebaseRevisionMetadataFromInfo(
 							[{ revision: tag1 }, { revision: tag2 }],
+							undefined,
 							[tag1, tag2],
 						),
 					);
@@ -1261,6 +1262,7 @@ export function testRebase() {
 						removes,
 						rebaseRevisionMetadataFromInfo(
 							[{ revision: tag1 }, { revision: tag2 }],
+							undefined,
 							[tag1, tag2],
 						),
 					);

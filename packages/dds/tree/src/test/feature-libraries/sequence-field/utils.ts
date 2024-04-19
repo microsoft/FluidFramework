@@ -282,7 +282,7 @@ export function rebase(
 
 	const metadata =
 		config.metadata ??
-		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([cleanBase]), [
+		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([cleanBase]), undefined, [
 			cleanBase.revision,
 		]);
 
@@ -329,7 +329,9 @@ export function rebaseOverChanges(
 	for (const base of baseChanges) {
 		currChange = tagChange(
 			rebase(currChange.change, base, {
-				metadata: rebaseRevisionMetadataFromInfo(revisionInfo, [base.revision]),
+				metadata: rebaseRevisionMetadataFromInfo(revisionInfo, change.revision, [
+					base.revision,
+				]),
 			}),
 			currChange.revision,
 		);

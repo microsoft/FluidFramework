@@ -179,7 +179,9 @@ function rebase(
 
 	const metadata =
 		metadataArg ??
-		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([base]), [base.revision]);
+		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([base]), undefined, [
+			base.revision,
+		]);
 	const moveEffects = failCrossFieldManager;
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
 	const rebased = optionalChangeRebaser.rebase(

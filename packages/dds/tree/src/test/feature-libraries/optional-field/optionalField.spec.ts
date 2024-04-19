@@ -280,9 +280,11 @@ describe("optionalField", () => {
 						failingDelegate,
 						fakeIdAllocator,
 						failCrossFieldManager,
-						rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([change1]), [
-							change1.revision,
-						]),
+						rebaseRevisionMetadataFromInfo(
+							defaultRevInfosFromChanges([change1]),
+							undefined,
+							[change1.revision],
+						),
 					),
 					change2.change,
 				);
@@ -303,7 +305,11 @@ describe("optionalField", () => {
 						TestNodeId.rebaseChild,
 						fakeIdAllocator,
 						failCrossFieldManager,
-						rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([]), []),
+						rebaseRevisionMetadataFromInfo(
+							defaultRevInfosFromChanges([]),
+							undefined,
+							[],
+						),
 					),
 					expected,
 				);
@@ -341,9 +347,11 @@ describe("optionalField", () => {
 					childRebaser,
 					fakeIdAllocator,
 					failCrossFieldManager,
-					rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([deletion]), [
-						deletion.revision,
-					]),
+					rebaseRevisionMetadataFromInfo(
+						defaultRevInfosFromChanges([deletion]),
+						undefined,
+						[deletion.revision],
+					),
 				);
 
 				const changeToRebase3 = optionalChangeRebaser.rebase(
@@ -352,9 +360,11 @@ describe("optionalField", () => {
 					childRebaser,
 					fakeIdAllocator,
 					failCrossFieldManager,
-					rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([revive]), [
-						revive.revision,
-					]),
+					rebaseRevisionMetadataFromInfo(
+						defaultRevInfosFromChanges([revive]),
+						undefined,
+						[revive.revision],
+					),
 				);
 
 				assert.deepEqual(changeToRebase3, changeToRebase);
@@ -380,7 +390,7 @@ describe("optionalField", () => {
 					childRebaser,
 					fakeIdAllocator,
 					failCrossFieldManager,
-					rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([clear]), [
+					rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([clear]), undefined, [
 						clear.revision,
 					]),
 				);
@@ -408,7 +418,7 @@ describe("optionalField", () => {
 					childRebaser,
 					fakeIdAllocator,
 					failCrossFieldManager,
-					rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([pin]), [
+					rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([pin]), undefined, [
 						pin.revision,
 					]),
 				);
@@ -455,9 +465,11 @@ describe("optionalField", () => {
 					childRebaser,
 					fakeIdAllocator,
 					failCrossFieldManager,
-					rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([taggedBaseChange]), [
-						taggedBaseChange.revision,
-					]),
+					rebaseRevisionMetadataFromInfo(
+						defaultRevInfosFromChanges([taggedBaseChange]),
+						undefined,
+						[taggedBaseChange.revision],
+					),
 				);
 				assert.deepEqual(actual, expected);
 			});
@@ -601,6 +613,7 @@ describe("optionalField", () => {
 						failCrossFieldManager,
 						rebaseRevisionMetadataFromInfo(
 							defaultRevInfosFromChanges([clear, hasChildChanges]),
+							undefined,
 							[clear.revision],
 						),
 					),
@@ -689,6 +702,7 @@ describe("optionalField", () => {
 						failCrossFieldManager,
 						rebaseRevisionMetadataFromInfo(
 							defaultRevInfosFromChanges([clear, hasChildChanges]),
+							undefined,
 							[clear.revision],
 						),
 					),

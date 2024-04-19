@@ -503,6 +503,7 @@ export function testRebaserAxioms() {
 												{ revision: tag7 },
 												{ revision: tag5 },
 											],
+											tag5,
 											[tag6, tag7],
 										),
 									);
