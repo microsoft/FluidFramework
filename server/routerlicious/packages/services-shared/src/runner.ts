@@ -32,17 +32,17 @@ export async function run<T extends IResources>(
 		? resourceFactory.customize(config)
 		: undefined);
 	const resources = await resourceFactory.create(config, customizations).catch((error) => {
-		error.errorLabel = `resourceFactory:create:${error.errorLabel ?? ""}`;
+		prefixErrorLabel(error, "resourceFactory:create");
 		throw error;
 	});
 	const runner = await runnerFactory.create(resources).catch((error) => {
-		error.errorLabel = `runnerFactory:create:${error.errorLabel ?? ""}`;
+		prefixErrorLabel(error, "runnerFactory:create");
 		throw error;
 	});
 
 	// Start the runner and then listen for the message to stop it
 	const runningP = runner.start(logger).catch(async (error) => {
-		error.errorLabel = `runner:start:${error.errorLabel ?? ""}`;
+		prefixErrorLabel(error, "runner:start");
 		logger?.error(`Encountered exception while running service: ${serializeError(error)}`);
 		Lumberjack.error(`Encountered exception while running service`, undefined, error);
 		await runner.stop().catch((innerError) => {
@@ -140,11 +140,11 @@ export function runService<T extends IResources>(
 		})
 		.catch(async (error) => {
 			runnerMetric.setProperties({
-				[CommonProperties.restartReason]: error.uncaughtException
+				[CommonProperties.restartReason]: error?.uncaughtException
 					? "uncaughtException"
 					: undefined,
-				[CommonProperties.errorLabel]: error.errorLabel,
-				[CommonProperties.isGlobalDb]: error.isGlobalDb,
+				[CommonProperties.errorLabel]: error?.errorLabel,
+				[CommonProperties.isGlobalDb]: error?.isGlobalDb,
 			});
 			await executeAndWait(() => {
 				logger?.error(`${group} service exiting due to error`);
@@ -169,4 +169,23 @@ async function executeAndWait(func: () => void, waitInMs: number) {
 	return new Promise((resolve) => {
 		setTimeout(resolve, waitInMs);
 	});
+}
+
+/**
+ * Prefixes a caught error if possible.
+ * ```ts
+ * asyncCall().catch((error: any) => {
+ *   prefixErrorLabel(error, "my:prefix");
+ *   log("AsyncCall Failed", error);
+ * });
+ * // Example Result: "AsyncCall Failed" { errorLabel: "my:prefix" }
+ * ```
+ */
+function prefixErrorLabel(error: any, prefix: string): void {
+	if (typeof error !== "object" || error === null) return;
+	const errorLabel = [prefix];
+	if (error.errorLabel) {
+		errorLabel.push(error.errorLabel);
+	}
+	error.errorLabel = errorLabel.join(":");
 }
