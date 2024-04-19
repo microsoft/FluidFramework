@@ -40,7 +40,7 @@ function createConnectedCell(
 	return cell;
 }
 
-function createDetachedCell(id: string, options?: ICellOptions): ISharedCell {
+function createDetachedCell(id: string, options?: ICellOptions): SharedCell {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	dataStoreRuntime.options = options ?? dataStoreRuntime.options;
 	const subCell = new SharedCell(id, dataStoreRuntime, CellFactory.Attributes);
