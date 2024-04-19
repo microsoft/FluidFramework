@@ -400,17 +400,27 @@ export class GarbageCollector implements IGarbageCollector {
 			return;
 		}
 
-		// If the GC state hasn't been initialized yet, initialize it and return.
-		if (this.gcDataFromLastRun === undefined) {
-			await this.initializeGCStateFromBaseSnapshotP;
-			return;
-		}
+		const initialized = this.gcDataFromLastRun !== undefined;
+		await PerformanceEvent.timedExecAsync(
+			this.mc.logger,
+			{
+				eventName: "InitializeOrUpdateGCState",
+				details: { initialized, unrefNodeCount: this.unreferencedNodesState.size },
+			},
+			async () => {
+				// If the GC state hasn't been initialized yet, initialize it and return.
+				if (!initialized) {
+					await this.initializeGCStateFromBaseSnapshotP;
+					return;
+				}
 
-		// If the GC state has been initialized, update the tracking of unreferenced nodes as per the current
-		// reference timestamp.
-		for (const [, nodeStateTracker] of this.unreferencedNodesState) {
-			nodeStateTracker.updateTracking(currentReferenceTimestampMs);
-		}
+				// If the GC state has been initialized, update the tracking of unreferenced nodes as per the current
+				// reference timestamp.
+				for (const [, nodeStateTracker] of this.unreferencedNodesState) {
+					nodeStateTracker.updateTracking(currentReferenceTimestampMs);
+				}
+			},
+		);
 	}
 
 	/**
