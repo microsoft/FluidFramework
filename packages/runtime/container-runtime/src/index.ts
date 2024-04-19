@@ -47,6 +47,7 @@ export {
 	IGCRuntimeOptions,
 	IMarkPhaseStats,
 	ISweepPhaseStats,
+	IGCNodeUpdatedProps,
 	IGCStats,
 } from "./gc/index.js";
 export {
