@@ -1,8 +1,14 @@
 nyc
 *.log
 **/*.tsbuildinfo
-src/test
+src
 dist/test
 lib/test
-lib/test
 **/_api-extractor-temp/**
+packlist.txt
+docs
+test
+.eslintignore
+.eslintrc.cjs
+.mocharc.json
+.prettierignore
