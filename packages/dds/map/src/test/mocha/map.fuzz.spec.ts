@@ -18,7 +18,6 @@ import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 import { isObject } from "@fluidframework/core-utils/internal";
 import { ISharedMap, MapFactory } from "../../index.js";

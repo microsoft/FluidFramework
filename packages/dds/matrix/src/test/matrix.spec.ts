@@ -47,7 +47,7 @@ function createConnectedMatrix(
 
 function createLocalMatrix(id: string) {
 	const factory = new SharedMatrixFactory();
-	return factory.create(new MockFluidDataStoreRuntime(), id);
+	return factory.create(new MockFluidDataStoreRuntime(), id) as SharedMatrix;
 }
 
 function createMatrixForReconnection(
