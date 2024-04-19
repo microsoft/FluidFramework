@@ -119,7 +119,7 @@ class MockNodeKeyManager implements NodeKeyManager {
 	}
 
 	public tryLocalizeNodeKey(key: string): LocalNodeKey | undefined {
-		const localNodeKey = Number.parseInt(key.substring(30), 16);
+		const localNodeKey = Number.parseInt(key.substring(24), 16);
 		if (Number.isNaN(localNodeKey)) {
 			return undefined;
 		} else {
