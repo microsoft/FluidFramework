@@ -51,9 +51,7 @@ describe("Fuzz - Top-Level", () => {
 		crossFieldMove: 5,
 		start: 1,
 		commit: 1,
-		// TODO: Enabling abort fails because aborting a transaction involves applying rollback ops, which may attempt to place
-		// repair data content in places it already exists. This should be fixed by pending work to generate forest deltas
-		// which destroy trees for rollbacks. See AB#6456 for more information.
+		// TODO: AB#7780 investigate failures when abort is enabled
 		abort: 0,
 		fieldSelection: { optional: 1, required: 1, sequence: 3, recurse: 3 },
 		schema: 1,

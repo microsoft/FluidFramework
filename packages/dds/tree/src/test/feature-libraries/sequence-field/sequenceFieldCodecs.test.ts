@@ -41,7 +41,7 @@ const encodingTestData: EncodingTestData<Changeset, unknown, FieldChangeEncoding
 		],
 		["without child change", Change.remove(2, 2), context],
 		[
-			"with repair data",
+			"with a revive",
 			Change.revive(0, 1, { revision: mintRevisionTag(), localId: brand(10) }),
 			context,
 		],

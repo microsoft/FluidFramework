@@ -33,7 +33,7 @@ export class TransactionStack {
 
 	/**
 	 * Ends the current transaction. Fails if there is currently no ongoing transaction.
-	 * @returns The revision that the closed transaction began on, and its repair data store if it has one.
+	 * @returns The revision that the closed transaction began on.
 	 */
 	public pop(): {
 		startRevision: RevisionTag;

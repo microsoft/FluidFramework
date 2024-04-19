@@ -171,7 +171,7 @@ export class SharedTree
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
 				: buildForest();
 		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
-		const removedRoots = makeDetachedFieldIndex("detached", revisionTagCodec, options);
+		const removedRoots = makeDetachedFieldIndex("repair", revisionTagCodec, options);
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options, {
 			getCurrentSeq: () => this.runtime.deltaManager.lastSequenceNumber,
 		});

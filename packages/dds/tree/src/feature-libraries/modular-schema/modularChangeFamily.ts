@@ -1041,7 +1041,7 @@ function composeBuildsDestroysAndRefreshers(changes: TaggedChange<ModularChanges
 				);
 				for (const [id, chunk] of innerMap) {
 					// Check for duplicate builds and prefer earlier ones.
-					// This can happen in compositions of commits that needed to include repair data refreshers (e.g., undos):
+					// This can happen in compositions of commits that needed to include detached tree refreshers (e.g., undos):
 					// In that case, it's possible for the refreshers to contain different trees because the latter
 					// refresher may already reflect the changes made by the commit that includes the earlier
 					// refresher. This composition includes the changes made by the commit that includes the
