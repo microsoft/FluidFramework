@@ -307,6 +307,23 @@ describe("Timers", () => {
 			clock.tick(2);
 			assert((exceptionCounter as unknown) === 3);
 		});
+
+		it("Timer - no exception handler", () => {
+			const handler = (): never => {
+				throw new Error("Exception in timer callback");
+			};
+
+			timer = new Timer(defaultTimeout, handler);
+
+			timer.start();
+			let failed = false;
+			try {
+				clock.tick(defaultTimeout + 10);
+			} catch {
+				failed = true;
+			}
+			assert(failed);
+		});
 	});
 
 	describe("PromiseTimer", () => {
