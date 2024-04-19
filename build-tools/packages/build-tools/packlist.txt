@@ -12,6 +12,7 @@ tsconfig.json
 bin/fluid-build
 bin/fluid-doc-stats
 bin/fluid-named-exports
+bin/fluid-tsc
 bin/fluid-type-test-generator
 dist/common/commonOptions.d.ts
 dist/common/commonOptions.d.ts.map

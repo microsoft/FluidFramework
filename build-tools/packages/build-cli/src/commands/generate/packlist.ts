@@ -5,11 +5,31 @@
 
 import path from "node:path";
 import type { Package } from "@fluidframework/build-tools";
-import Arborist from "@npmcli/arborist";
 import { Flags } from "@oclif/core";
+import execa from "execa";
 import { writeFile } from "fs-extra";
-import packlist from "npm-packlist";
 import { PackageCommand } from "../../BasePackageCommand";
+
+/**
+ * JSON results from running npm pack --json.
+ */
+interface NpmPackJson {
+	id: string;
+	name: string;
+	version: string;
+	size: number;
+	unpackedSize: number;
+	shasum: string;
+	integrity: string;
+	filename: string;
+	files: {
+		path: string;
+		size: number;
+		mode: number;
+	}[];
+	entryCount: number;
+	bundled: unknown[];
+}
 
 /**
  * Outputs a list of files that will be included in a package based on its 'files' property in package.json and any
@@ -35,9 +55,20 @@ export default class GeneratePackListCommand extends PackageCommand<
 		const { out } = this.flags;
 
 		const outFile = path.join(pkg.directory, out);
-		const arborist = new Arborist({ path: pkg.directory });
-		const tree = await arborist.loadActual();
-		const files = await packlist(tree);
+		const packOutput = await execa(
+			"npm",
+			["pack", "--dry-run", "--json", "--ignore-scripts"],
+			{
+				cwd: pkg.directory,
+			},
+		);
+		if (packOutput.stdout === undefined) {
+			this.error(`npm pack had no output.`, { exit: 1 });
+		}
+
+		// The npm pack JSON is an array, so treat it as such and extract the first item.
+		const raw = JSON.parse(packOutput.stdout.trim()) as NpmPackJson[];
+		const files = raw[0].files.map((entry) => entry.path);
 
 		// Sort root files first, then sort nested paths.
 		files.sort((a, b) => {
