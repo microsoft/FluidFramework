@@ -51,6 +51,11 @@ export type FluidPackageJson = {
 	 * fluid-build config. Some properties only apply when set in the root or release group root package.json.
 	 */
 	fluidBuild?: IFluidBuildConfig;
+
+	/**
+	 * pnpm config
+	 */
+	pnpm?: any;
 };
 
 /**

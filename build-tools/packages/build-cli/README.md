@@ -49,6 +49,7 @@ USAGE
 * [`flub rename-types`](docs/rename-types.md) - Renames type declaration files from .d.ts to .d.mts.
 * [`flub run`](docs/run.md) - Generate a report from input bundle stats collected through the collect bundleStats command.
 * [`flub typetests`](docs/typetests.md) - Updates configuration for type tests in package.json files. If the previous version changes after running preparation, then npm install must be run before building.
+* [`flub update-dep`](docs/update-dep.md) - Updates a dependency in the lockfile to the latest version of a specified semver range.
 
 <!-- commandsstop -->
 <!-- prettier-ignore-stop -->
