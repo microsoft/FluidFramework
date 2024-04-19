@@ -5,7 +5,6 @@
 
 import { existsSync } from "node:fs";
 import path from "node:path";
-import { IExtractorConfigPrepareOptions } from "@microsoft/api-extractor";
 import { PackageName } from "@rushstack/node-core-library";
 import { readJsonSync } from "fs-extra";
 import { Project, SourceFile } from "ts-morph";
@@ -47,47 +46,6 @@ export function tryGetPreviousPackageJsonPath(previousBasePath: string): string 
 		throw new Error(`${previousPackageJsonPath} not found.`);
 	}
 	return previousPackageJsonPath;
-}
-
-/**
- * Attempts to retrieve a specified type of rollup file path for type definitions from the API Extractor config.
- * @param rollupType - The type of rollup file path to retrieve (ex: "alpha", "beta", "public").
- * @param extractorConfig - The API Extractor config object.
- * @returns The path to the type definitions file for the specified rollupType, or undefined if it cannot be found.
- * @throws If api-extractor config cannot be loaded.
- */
-export function getTypeRollupPathFromExtractorConfig(
-	rollupType: "alpha" | "beta" | "public" | "untrimmed",
-	extractorConfig: IExtractorConfigPrepareOptions,
-): string | undefined {
-	try {
-		if (!extractorConfig || !extractorConfig.configObject) {
-			console.log("API Extractor configuration not found. Falling back to default behavior.");
-			return undefined;
-		}
-		const apiExtractorConfig = extractorConfig.configObject;
-		// Get rollupPath based on release tag
-		// https://api-extractor.com/pages/setup/configure_rollup/#trimming-based-on-release-tags
-		if (apiExtractorConfig.dtsRollup) {
-			let rollupPath: string | undefined;
-			if (rollupType === "untrimmed") {
-				rollupPath = apiExtractorConfig.dtsRollup.untrimmedFilePath;
-			} else {
-				rollupPath = apiExtractorConfig.dtsRollup[`${rollupType}TrimmedFilePath`];
-			}
-			if (!rollupPath) {
-				console.warn(`Rollup path for "${rollupType}" not found.`);
-				return undefined;
-			}
-			return rollupPath;
-		} else {
-			console.warn(`dtsRollup configuration not found in the API Extractor configuration.`);
-			return undefined;
-		}
-	} catch (error) {
-		console.error("Error loading API Extractor configuration:", error);
-		throw error;
-	}
 }
 
 /**

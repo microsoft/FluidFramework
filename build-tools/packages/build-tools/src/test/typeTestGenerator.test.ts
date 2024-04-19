@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 import * as fs from "fs";
 import * as path from "path";
-import { IExtractorConfigPrepareOptions } from "@microsoft/api-extractor";
 import { PackageJson } from "../common/npmPackage";
 import * as utils from "../type-test-generator/typeTestUtils";
 
@@ -76,78 +75,6 @@ describe("typeTestUtils", () => {
 		it("Should return undefined if the previous package.json path does not exist", () => {
 			const previousBasePath = path.join(nodeModulesDir, "does-not-exist");
 			assert.throws(() => utils.tryGetPreviousPackageJsonPath(previousBasePath));
-		});
-	});
-
-	describe("getTypeRollupPathFromExtractorConfig", () => {
-		// Create temp directory for testing
-		const nodeModulesDir = path.join(__dirname, "node_modules");
-		const previousBasePath = path.join(nodeModulesDir, previousPackageName);
-		let extractorConfigOptions: IExtractorConfigPrepareOptions;
-
-		before(() => {
-			fs.mkdirSync(nodeModulesDir);
-			fs.mkdirSync(previousBasePath);
-		});
-
-		after(() => {
-			fs.rmSync(nodeModulesDir, { recursive: true });
-		});
-
-		it("Should return undefined if API Extractor config is not found", () => {
-			const result = utils.getTypeRollupPathFromExtractorConfig(
-				"alpha",
-				extractorConfigOptions,
-			);
-			assert.strictEqual(result, undefined);
-		});
-
-		it("Should return undefined if dtsRollup config is not found", () => {
-			fs.writeFileSync(path.join(previousBasePath, "api-extractor.json"), "{}");
-			const result = utils.getTypeRollupPathFromExtractorConfig(
-				"alpha",
-				extractorConfigOptions,
-			);
-			assert.strictEqual(result, undefined);
-			fs.rmSync(path.join(previousBasePath, "api-extractor.json"));
-		});
-
-		it("Should return undefined if rollup path for the specified type is not found", () => {
-			extractorConfigOptions = {
-				configObject: {
-					mainEntryPointFilePath: "",
-					dtsRollup: {
-						enabled: true,
-						untrimmedFilePath: "untrimmed.d.ts",
-					},
-				},
-				configObjectFullPath: "",
-				packageJsonFullPath: "",
-			};
-			const result = utils.getTypeRollupPathFromExtractorConfig(
-				"alpha",
-				extractorConfigOptions,
-			);
-			assert.strictEqual(result, undefined);
-		});
-
-		it("Should return the rollup path for the specified type", () => {
-			extractorConfigOptions = {
-				configObject: {
-					mainEntryPointFilePath: "",
-					dtsRollup: {
-						enabled: true,
-						alphaTrimmedFilePath: "alpha.d.ts",
-					},
-				},
-				configObjectFullPath: "",
-				packageJsonFullPath: "",
-			};
-			const result = utils.getTypeRollupPathFromExtractorConfig(
-				"alpha",
-				extractorConfigOptions,
-			);
-			assert.strictEqual(result, "alpha.d.ts");
 		});
 	});
 
