@@ -654,6 +654,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		createProps?: any,
 		loadingGroupId?: string,
 	) {
+		assert(loadingGroupId !== "", "loadingGroupId should not be the empty string");
 		const context = new contextCtor({
 			id,
 			pkg,
