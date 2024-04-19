@@ -19,20 +19,14 @@ import {
 	DDSFuzzTestState,
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
-import {
-	IChannelAttributes,
-	IChannelServices,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 import { isObject } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
-import { SharedMatrix } from "../matrix.js";
 import { MatrixItem } from "../ops.js";
-import { SharedMatrixFactory } from "../runtime.js";
+import { SharedMatrixFactory, SharedMatrix } from "../runtime.js";
 
 import { _dirname } from "./dirname.cjs";
 
@@ -71,27 +65,8 @@ interface SetCell {
 
 type Operation = InsertRows | InsertColumns | RemoveRows | RemoveColumns | SetCell;
 
-/**
- * @remarks - This makes the DDS fuzz harness typecheck state fields as SharedMatrix<Value> instead of IChannel,
- * which avoids the need to cast elsewhere.
- */
-class TypedMatrixFactory extends SharedMatrixFactory {
-	public async load(
-		runtime: IFluidDataStoreRuntime,
-		id: string,
-		services: IChannelServices,
-		attributes: IChannelAttributes,
-	): Promise<SharedMatrix<Value>> {
-		return (await super.load(runtime, id, services, attributes)) as SharedMatrix<Value>;
-	}
-
-	public create(document: IFluidDataStoreRuntime, id: string): SharedMatrix<Value> {
-		return super.create(document, id) as SharedMatrix<Value>;
-	}
-}
-
 // This type gets used a lot as the state object of the suite; shorthand it here.
-type State = DDSFuzzTestState<TypedMatrixFactory>;
+type State = DDSFuzzTestState<SharedMatrixFactory>;
 
 async function assertMatricesAreEquivalent<T>(a: SharedMatrix<T>, b: SharedMatrix<T>) {
 	assert.equal(a.colCount, b.colCount, `${a.id} and ${b.id} have different number of columns.`);
@@ -244,8 +219,8 @@ describe("Matrix fuzz tests", function () {
 	 * underlying harness (which affects which seeds are the slow ones).
 	 */
 	this.timeout(30_000);
-	const model: Omit<DDSFuzzModel<TypedMatrixFactory, Operation>, "workloadName"> = {
-		factory: new TypedMatrixFactory(),
+	const model: Omit<DDSFuzzModel<SharedMatrixFactory, Operation>, "workloadName"> = {
+		factory: SharedMatrix.getFactory(),
 		generatorFactory: () => takeAsync(50, makeGenerator()),
 		reducer: async (state, operation) => reducer(state, operation),
 		validateConsistency: assertMatricesAreEquivalent,
@@ -267,7 +242,7 @@ describe("Matrix fuzz tests", function () {
 		saveFailures: { directory: path.join(_dirname, "../../src/test/results") },
 	};
 
-	const nameModel = (workloadName: string): DDSFuzzModel<TypedMatrixFactory, Operation> => ({
+	const nameModel = (workloadName: string): DDSFuzzModel<SharedMatrixFactory, Operation> => ({
 		...model,
 		workloadName,
 	});

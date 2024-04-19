@@ -13,8 +13,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { MatrixItem } from "../index.js";
-import { SharedMatrix } from "../matrix.js";
+import { MatrixItem, SharedMatrix } from "../index.js";
 
 import { TestConsumer } from "./testconsumer.js";
 import { UndoRedoStackManager } from "./undoRedoStackManager.js";

@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-
 import { AttachState } from "@fluidframework/container-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
@@ -15,7 +13,6 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { SharedMatrix } from "../index.js";
-import { SharedMatrix as SharedMatrixClass } from "../matrix.js";
 
 import { checkCorners, expectSize, setCorners, matrixFactory } from "./utils.js";
 
@@ -28,7 +25,6 @@ const enum Const {
 // Summarizes the given `SharedMatrix`, loads the summary into a 2nd SharedMatrix, vets that the two are
 // equivalent, and then returns the 2nd matrix.
 async function summarize<T>(matrix: SharedMatrix<T>): Promise<SharedMatrix<T>> {
-	assert(matrix instanceof SharedMatrixClass);
 	// Create a summary
 	const objectStorage = MockStorage.createFromSummary(matrix.getAttachSummary().summary);
 
@@ -48,7 +44,7 @@ async function summarize<T>(matrix: SharedMatrix<T>): Promise<SharedMatrix<T>> {
 	// Vet that the 2nd matrix is equivalent to the original.
 	expectSize(matrix2, matrix.rowCount, matrix.colCount);
 
-	return matrix2 as SharedMatrix<T>;
+	return matrix2;
 }
 
 [false, true].forEach((isSetCellPolicyFWW: boolean) => {
@@ -56,8 +52,8 @@ async function summarize<T>(matrix: SharedMatrix<T>): Promise<SharedMatrix<T>> {
 		this.timeout(10000);
 
 		describe(`Excel-size matrix (${Const.excelMaxRows}x${Const.excelMaxCols})`, () => {
-			let matrix1: SharedMatrixClass;
-			let matrix2: SharedMatrixClass;
+			let matrix1: SharedMatrix;
+			let matrix2: SharedMatrix;
 			let dataStoreRuntime1: MockFluidDataStoreRuntime;
 			let containerRuntimeFactory: MockContainerRuntimeFactory;
 

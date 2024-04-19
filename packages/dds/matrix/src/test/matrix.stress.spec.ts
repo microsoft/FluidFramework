@@ -104,12 +104,12 @@ import { expectSize, extract, matrixFactory } from "./utils.js";
 						undoProbability === 0 ? undefined : [];
 
 					containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
-					let summarizer: SharedMatrixClass | undefined;
+					let summarizer: SharedMatrix | undefined;
 
 					// Summarizes the given `SharedMatrix`, loads the summarize into a 2nd SharedMatrix, vets that the two are
 					// equivalent, and then returns the 2nd matrix.
 					const createNewClientFromSummary = async function summarize<T>(
-						summarizer: SharedMatrixClass<T>,
+						summarizer: SharedMatrix<T>,
 					) {
 						// Create a summary
 						const objectStorage = MockStorage.createFromSummary(

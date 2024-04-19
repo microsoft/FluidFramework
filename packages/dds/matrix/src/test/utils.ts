@@ -6,43 +6,13 @@
 import { strict as assert } from "assert";
 
 import { IMatrixConsumer, IMatrixProducer, IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
-import type {
-	IFluidDataStoreRuntime,
-	IChannelServices,
-	IChannelAttributes,
-	IChannel,
-} from "@fluidframework/datastore-definitions";
 
-import { SharedMatrix, SharedMatrixFactory } from "../index.js";
-import { SharedMatrix as SharedMatrixClass } from "../matrix.js";
-
-class TestMatrixFactory extends SharedMatrixFactory {
-	public async load(
-		runtime: IFluidDataStoreRuntime,
-		id: string,
-		services: IChannelServices,
-		attributes: IChannelAttributes,
-	): Promise<SharedMatrixClass & IChannel> {
-		const result = await super.load(runtime, id, services, attributes);
-		assert(result instanceof SharedMatrixClass);
-		return result;
-	}
-
-	public create(runtime: IFluidDataStoreRuntime, id: string): SharedMatrixClass {
-		const result = super.create(runtime, id);
-		assert(result instanceof SharedMatrixClass);
-		return result;
-	}
-}
+import { SharedMatrix } from "../index.js";
 
 /**
- * A factory for creating SharedMatrix instances.
- *
- * Unlike the production factory, this factory is typed to return the concrete SharedMatrix class.
- * This allows unit testing aspects of the DDS that aren't exposed to FF consumers without additional casting,
- * like summarization and the load/attach flow.
+ * Convenience export of SharedMatrix's factory for usage in tests.
  */
-export const matrixFactory = new TestMatrixFactory();
+export const matrixFactory = SharedMatrix.getFactory();
 
 export type IMatrix<T> = IMatrixReader<T> & IMatrixWriter<T>;
 

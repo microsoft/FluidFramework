@@ -82,7 +82,6 @@ describe("Matrix1", () => {
 				// Summarizes the given `SharedMatrix`, loads the summarize into a 2nd SharedMatrix, vets that the two are
 				// equivalent, and then returns the 2nd matrix.
 				async function summarize<T>(matrix: SharedMatrix<T>) {
-					assert(matrix instanceof SharedMatrixClass);
 					// Create a summary
 					const objectStorage = MockStorage.createFromSummary(
 						matrix.getAttachSummary().summary,
@@ -124,10 +123,7 @@ describe("Matrix1", () => {
 				}
 
 				beforeEach("createMatrix", async () => {
-					matrix = matrixFactory.create(
-						new MockFluidDataStoreRuntime(),
-						"matrix1",
-					) as SharedMatrix<number>;
+					matrix = matrixFactory.create(new MockFluidDataStoreRuntime(), "matrix1");
 					if (isSetCellPolicyFWW) {
 						matrix.switchSetCellPolicy();
 					}
@@ -1068,22 +1064,27 @@ describe("Matrix1", () => {
 					private colCount = 0;
 					private subMatrixCount = 0;
 					private _expectedRoutes: string[] = [];
+					// The GC test harness requires a SharedObject, not just ISharedObject.
 					private readonly matrix1: SharedMatrixClass;
 					private readonly matrix2: SharedMatrixClass;
 					private readonly containerRuntimeFactory: MockContainerRuntimeFactory;
 
 					constructor() {
 						this.containerRuntimeFactory = new MockContainerRuntimeFactory();
-						this.matrix1 = createConnectedMatrix(
+						const matrix1 = createConnectedMatrix(
 							"matrix1",
 							this.containerRuntimeFactory,
 							isSetCellPolicyFWW,
 						);
-						this.matrix2 = createConnectedMatrix(
+						assert(matrix1 instanceof SharedMatrixClass);
+						this.matrix1 = matrix1;
+						const matrix2 = createConnectedMatrix(
 							"matrix2",
 							this.containerRuntimeFactory,
 							isSetCellPolicyFWW,
 						);
+						assert(matrix2 instanceof SharedMatrixClass);
+						this.matrix2 = matrix2;
 						// Insert a row into the matrix where we will set cells.
 						this.matrix1.insertRows(0, 1);
 					}
@@ -1224,7 +1225,6 @@ describe("Matrix1", () => {
 				containerRuntime: MockContainerRuntimeForReconnection;
 				consumer: TestConsumer;
 			}> {
-				assert(matrix instanceof SharedMatrixClass);
 				// Create a summary
 				const objectStorage = MockStorage.createFromSummary(
 					matrix.getAttachSummary().summary,
@@ -1299,8 +1299,7 @@ describe("Matrix1", () => {
 					assert(col === 0, "col should be correct");
 					assert(currentVal === "A", "currentVal should be correct");
 					assert(rejectedVal === "B", "rejectedVal should be correct");
-					assert(instance instanceof SharedMatrixClass);
-					assert((instance.id = "matrix2"), "matrix should be correct");
+					assert(instance.id === "matrix2", "matrix should be correct");
 					eventRaised = true;
 				});
 
@@ -1371,8 +1370,7 @@ describe("Matrix1", () => {
 					assert(col === 0, "col should be correct");
 					assert(currentVal === "A", "currentVal should be correct");
 					assert(rejectedVal === "B", "rejectedVal should be correct");
-					assert(instance instanceof SharedMatrixClass);
-					assert((instance.id = "matrix2"), "matrix should be correct");
+					assert(instance.id === "matrix2", "matrix should be correct");
 					eventRaised = true;
 				});
 
@@ -1492,8 +1490,7 @@ describe("Matrix1", () => {
 						rejectedVal === (eventRaisedCount === 0 ? "4th" : "1st"),
 						"rejectedVal should be correct",
 					);
-					assert(instance instanceof SharedMatrixClass);
-					assert((instance.id = "matrix2"), "matrix should be correct");
+					assert(instance.id === "matrix2", "matrix should be correct");
 					eventRaisedCount++;
 				});
 
@@ -1529,8 +1526,7 @@ describe("Matrix1", () => {
 				matrix2.on("conflict", (row, col, currentVal, rejectedVal, instance) => {
 					assert(row === 0, "row should be correct");
 					assert(col === 0, "col should be correct");
-					assert(instance instanceof SharedMatrixClass);
-					assert((instance.id = "matrix2"), "matrix should be correct");
+					assert(instance.id === "matrix2", "matrix should be correct");
 					eventRaisedCount++;
 				});
 

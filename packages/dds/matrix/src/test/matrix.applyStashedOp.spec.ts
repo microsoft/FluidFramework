@@ -14,7 +14,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedMatrix } from "../matrix.js";
+import { SharedMatrix } from "../index.js";
 
 import { extract, matrixFactory } from "./utils.js";
 

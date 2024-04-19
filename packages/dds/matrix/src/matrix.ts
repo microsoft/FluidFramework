@@ -3,12 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
+import {
+	IEvent,
+	IEventThisPlaceHolder,
+	type IEventProvider,
+} from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
+	type IChannel,
 } from "@fluidframework/datastore-definitions";
 import {
 	// eslint-disable-next-line import/no-deprecated
@@ -103,7 +108,8 @@ export interface ISharedMatrix<T = any>
 	extends IEventProvider<ISharedMatrixEvents<T>>,
 		IMatrixProducer<MatrixItem<T>>,
 		IMatrixReader<MatrixItem<T>>,
-		IMatrixWriter<MatrixItem<T>> {
+		IMatrixWriter<MatrixItem<T>>,
+		IChannel {
 	/**
 	 * Inserts columns into the matrix.
 	 * @param colStart - Index of the first column to insert.
