@@ -12,8 +12,11 @@ import {
 	canRetryOnError,
 } from "@fluidframework/driver-utils/internal";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	wrapError,
+} from "@fluidframework/telemetry-utils/internal";
 import io from "socket.io-client";
 
 import { ICache } from "./cache.js";

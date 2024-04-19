@@ -3,15 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { IDeltaManager } from "@fluidframework/container-definitions";
+import { IDeltaManager, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert, Timer } from "@fluidframework/core-utils/internal";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { IClient, ISequencedClient } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, type TelemetryEventCategory } from "@fluidframework/telemetry-utils";
 import {
+	type TelemetryEventCategory,
+	ITelemetryLoggerExt,
 	PerformanceEvent,
 	loggerToMonitoringContext,
+	normalizeError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor.js";
@@ -25,7 +27,7 @@ import { IProtocolHandler } from "./protocol.js";
 const JoinOpTimeoutMs = 45000;
 
 // Timeout waiting for "self" join signal, before giving up
-const JoinSignalTimeoutMs = 10000;
+const JoinSignalTimeoutMs = 5000;
 
 /** Constructor parameter type for passing in dependencies needed by the ConnectionStateHandler */
 export interface IConnectionStateHandlerInputs {
@@ -48,6 +50,9 @@ export interface IConnectionStateHandlerInputs {
 	) => void;
 	/** Callback to note that an old local client ID is still present in the Quorum that should have left and should now be considered invalid */
 	clientShouldHaveLeft: (clientId: string) => void;
+
+	/** Some critical error was hit. Container should be closed and error logged. */
+	onCriticalError: (error: ICriticalContainerError) => void;
 }
 
 /**
@@ -55,19 +60,7 @@ export interface IConnectionStateHandlerInputs {
  */
 export interface IConnectionStateHandler {
 	readonly connectionState: ConnectionState;
-	/**
-	 * Pending clientID.
-	 * Changes whenever socket connection is established.
-	 * Resets to undefined when connection is lost
-	 */
 	readonly pendingClientId: string | undefined;
-	/**
-	 * clientId of a last established connection.
-	 * Does not reset on disconnect.
-	 * Changes only when new connection is established, client is fully caught up, and
-	 * there is no chance to ops from previous connection (i.e. if needed, we have waited and observed leave op from previous connection)
-	 */
-	readonly clientId: string | undefined;
 
 	containerSaved(): void;
 	dispose(): void;
@@ -90,8 +83,8 @@ export function createConnectionStateHandler(
 ) {
 	const mc = loggerToMonitoringContext(inputs.logger);
 	return createConnectionStateHandlerCore(
-		mc.config.getBoolean("Fluid.Container.DisableCatchUpBeforeDeclaringConnected") !== true, // connectedRaisedWhenCaughtUp
-		mc.config.getBoolean("Fluid.Container.DisableJoinSignalWait") !== true, // readClientsWaitForJoinSignal
+		mc.config.getBoolean("Fluid.Container.CatchUpBeforeDeclaringConnected") === true, // connectedRaisedWhenCaughtUp
+		mc.config.getBoolean("Fluid.Container.EnableJoinSignalWait") === true, // readClientsWaitForJoinSignal
 		inputs,
 		deltaManager,
 		clientId,
@@ -152,9 +145,6 @@ class ConnectionStateHandlerPassThrough
 	public get pendingClientId() {
 		return this.pimpl.pendingClientId;
 	}
-	public get clientId() {
-		return this.pimpl.clientId;
-	}
 
 	public containerSaved() {
 		return this.pimpl.containerSaved();
@@ -210,6 +200,10 @@ class ConnectionStateHandlerPassThrough
 	}
 	public clientShouldHaveLeft(clientId: string) {
 		return this.inputs.clientShouldHaveLeft(clientId);
+	}
+
+	public onCriticalError(error: ICriticalContainerError) {
+		return this.inputs.onCriticalError(error);
 	}
 }
 
@@ -353,7 +347,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		return this._connectionState;
 	}
 
-	public get clientId(): string | undefined {
+	private get clientId(): string | undefined {
 		return this._clientId;
 	}
 
@@ -372,11 +366,15 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 			// the max time on server after which leave op is sent.
 			this.handler.maxClientLeaveWaitTime ?? 300000,
 			() => {
-				assert(
-					this.connectionState !== ConnectionState.Connected,
-					0x2ac /* "Connected when timeout waiting for leave from previous session fired!" */,
-				);
-				this.applyForConnectedState("timeout");
+				try {
+					assert(
+						this.connectionState !== ConnectionState.Connected,
+						0x2ac /* "Connected when timeout waiting for leave from previous session fired!" */,
+					);
+					this.applyForConnectedState("timeout");
+				} catch (error) {
+					this.handler.onCriticalError(normalizeError(error));
+				}
 			},
 		);
 
