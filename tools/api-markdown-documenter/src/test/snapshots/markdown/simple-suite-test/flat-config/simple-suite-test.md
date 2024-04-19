@@ -78,10 +78,10 @@ const foo = bar;
 
 # Variables
 
-| Variable | Alerts | Modifiers | Description |
-| --- | --- | --- | --- |
-| [testConst](docs/simple-suite-test#testconst-variable) | `BETA` | `readonly` | Test Constant |
-| [testConstWithEmptyDeprecatedBlock](docs/simple-suite-test#testconstwithemptydeprecatedblock-variable) | `DEPRECATED` | `readonly` | I have a `@deprecated` tag with an empty comment block. |
+| Variable | Alerts | Modifiers | Type | Description |
+| --- | --- | --- | --- | --- |
+| [testConst](docs/simple-suite-test#testconst-variable) | `BETA` | `readonly` |  | Test Constant |
+| [testConstWithEmptyDeprecatedBlock](docs/simple-suite-test#testconstwithemptydeprecatedblock-variable) | `DEPRECATED` | `readonly` | string | I have a `@deprecated` tag with an empty comment block. |
 
 # Namespaces
 
@@ -975,7 +975,7 @@ I have a `@deprecated` tag with an empty comment block.
 ### Signature {#testconstwithemptydeprecatedblock-signature}
 
 ```typescript
-testConstWithEmptyDeprecatedBlock = "I have a `@deprecated` tag with an empty comment block."
+testConstWithEmptyDeprecatedBlock: string
 ```
 
 # Namespace Details
@@ -984,9 +984,9 @@ testConstWithEmptyDeprecatedBlock = "I have a `@deprecated` tag with an empty co
 
 ### Variables
 
-| Variable | Modifiers | Description |
-| --- | --- | --- |
-| [foo](docs/simple-suite-test#testmodule-foo-variable) | `readonly` | Test constant in module. |
+| Variable | Modifiers | Type | Description |
+| --- | --- | --- | --- |
+| [foo](docs/simple-suite-test#testmodule-foo-variable) | `readonly` |  | Test constant in module. |
 
 ### Variable Details
 
@@ -1054,9 +1054,9 @@ const bar = foo
 
 ### Variables
 
-| Variable | Alerts | Modifiers | Description |
-| --- | --- | --- | --- |
-| [TestConst](docs/simple-suite-test#testnamespace-testconst-variable) | `BETA` | `readonly` | Test Constant |
+| Variable | Alerts | Modifiers | Type | Description |
+| --- | --- | --- | --- | --- |
+| [TestConst](docs/simple-suite-test#testnamespace-testconst-variable) | `BETA` | `readonly` |  | Test Constant |
 
 ### Namespaces
 
