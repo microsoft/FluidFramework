@@ -517,11 +517,16 @@ export class Container
 			this._lifecycleState = "loaded";
 
 			// Propagate current connection state through the system.
-			// This call does not look like needed any more, with delaying all connection-related events
-			// past loaded phase. Yet, there could be some customer code that would break if we do not delivery it.
-			// Will be removed in further PRs with proper changeset.
+			const readonly = this.readOnlyInfo.readonly ?? false;
 			assert(this.connectionState !== ConnectionState.Connected, "not connected yet");
-			this.setContextConnectedState(false /* connected */, this.readOnlyInfo.readonly ?? false);
+			// This call does not look like needed any more, with delaying all connection-related events past loaded phase.
+			// Yet, there could be some customer code that would break if we do not delivery it.
+			// Will be removed in further PRs with proper changeset.
+			this.setContextConnectedState(false /* connected */, readonly);
+			// Deliver delayed 'readonly' event
+			if (readonly) {
+				this.emit("readonly", true);
+			}
 
 			// Deliver delayed calls to DeltaManager - we ignored "connect" events while loading.
 			const cm = this._deltaManager.connectionManager;
@@ -862,11 +867,13 @@ export class Container
 						this._clientId = this.connectionStateHandler.pendingClientId;
 					}
 					this.logConnectionStateChangeTelemetry(value, oldState, reason);
-					this.propagateConnectionState(
-						value === ConnectionState.Disconnected
-							? reason
-							: undefined /* disconnectedReason */,
-					);
+					if (this.loaded) {
+						this.propagateConnectionState(
+							value === ConnectionState.Disconnected
+								? reason
+								: undefined /* disconnectedReason */,
+						);
+					}
 				},
 				shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
 				maxClientLeaveWaitTime: options.maxClientLeaveWaitTime,
@@ -1397,10 +1404,7 @@ export class Container
 			// container is not ready yet to receive them. We can hit it only if some internal code call into here,
 			// as public API like Container.connect() can be only called when user got back container object, i.e.
 			// it is already fully loaded.
-			assert(
-				this._lifecycleState === "loaded",
-				"connect() can be called only in fully loaded state",
-			);
+			assert(this.loaded, "connect() can be called only in fully loaded state");
 
 			this.inboundQueuePausedFromInit = false;
 			this._deltaManager.inbound.resume();
@@ -2186,15 +2190,12 @@ export class Container
 		}
 	}
 
-	private propagateConnectionState(
-		disconnectedReason?: IConnectionStateChangeReason,
-	) {
+	private propagateConnectionState(disconnectedReason?: IConnectionStateChangeReason) {
 		// We communicate only transitions to Connected & Disconnected states, skipping all other states.
 		// This can be changed in the future, for example we likely should add "CatchingUp" event on Container.
 		if (
-			!this.loaded ||
-			(this.connectionState !== ConnectionState.Connected &&
-			this.connectionState !== ConnectionState.Disconnected)
+			this.connectionState !== ConnectionState.Connected &&
+			this.connectionState !== ConnectionState.Disconnected
 		) {
 			return;
 		}
