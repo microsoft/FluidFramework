@@ -48,7 +48,7 @@ export class ConsensusRegisterCollectionFactory implements IConsensusRegisterCol
 		return collection;
 	}
 
-	public create(document: IFluidDataStoreRuntime, id: string): ConsensusRegisterCollection<any> {
+	public create(document: IFluidDataStoreRuntime, id: string): IConsensusRegisterCollection {
 		const collection = new ConsensusRegisterCollection(
 			id,
 			document,

@@ -31,14 +31,14 @@ function createConnectedCollection(id: string, runtimeFactory: MockContainerRunt
 	};
 
 	const crcFactory = new ConsensusRegisterCollectionFactory();
-	const collection = crcFactory.create(dataStoreRuntime, id);
+	const collection = crcFactory.create(dataStoreRuntime, id) as ConsensusRegisterCollection<any>;
 	collection.connect(services);
 	return collection;
 }
 
 function createLocalCollection(id: string) {
 	const factory = new ConsensusRegisterCollectionFactory();
-	return factory.create(new MockFluidDataStoreRuntime(), id);
+	return factory.create(new MockFluidDataStoreRuntime(), id) as ConsensusRegisterCollection<any>;
 }
 
 function createCollectionForReconnection(

@@ -4,23 +4,15 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { toFluidHandleErased } from "@fluidframework/runtime-utils/internal";
-import { fluidHandleSymbol } from "@fluidframework/core-interfaces/internal";
-import type {
-	IFluidHandleErased,
-	IFluidHandleInternal,
-} from "@fluidframework/core-interfaces/internal";
+import { FluidHandleBase } from "@fluidframework/runtime-utils/internal";
 
 /**
  * Mock implementation of IFluidHandle.
  * @alpha
  */
-export class MockHandle<T> implements IFluidHandleInternal<T> {
+export class MockHandle<T> extends FluidHandleBase<T> {
 	private graphAttachState: AttachState = AttachState.Detached;
 
-	public get IFluidHandle(): IFluidHandleInternal {
-		return this;
-	}
 	public get isAttached(): boolean {
 		return this.graphAttachState === AttachState.Attached;
 	}
@@ -29,10 +21,8 @@ export class MockHandle<T> implements IFluidHandleInternal<T> {
 		protected readonly value: T,
 		public readonly path = `mock-handle-${Math.random().toString(36).slice(2)}`,
 		public readonly absolutePath: string = `/${path}`,
-	) {}
-
-	public get [fluidHandleSymbol](): IFluidHandleErased<T> {
-		return toFluidHandleErased(this);
+	) {
+		super();
 	}
 
 	public async get(): Promise<T> {

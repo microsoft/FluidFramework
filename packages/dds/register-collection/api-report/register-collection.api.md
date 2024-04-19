@@ -45,7 +45,7 @@ export class ConsensusRegisterCollectionFactory implements IConsensusRegisterCol
     // (undocumented)
     get attributes(): IChannelAttributes;
     // (undocumented)
-    create(document: IFluidDataStoreRuntime, id: string): ConsensusRegisterCollection<any>;
+    create(document: IFluidDataStoreRuntime, id: string): IConsensusRegisterCollection;
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<IConsensusRegisterCollection>;
     // (undocumented)
     static Type: string;

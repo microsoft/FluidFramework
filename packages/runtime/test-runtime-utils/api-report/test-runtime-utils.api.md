@@ -8,7 +8,7 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { CreateChildSummarizerNodeFn } from '@fluidframework/runtime-definitions/internal';
 import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions/internal';
 import { EventEmitter } from '@fluid-internal/client-utils';
-import { fluidHandleSymbol } from '@fluidframework/core-interfaces/internal';
+import { FluidHandleBase } from '@fluidframework/runtime-utils/internal';
 import { FluidObject } from '@fluidframework/core-interfaces/internal';
 import { FlushMode } from '@fluidframework/runtime-definitions/internal';
 import { IAudience } from '@fluidframework/container-definitions';
@@ -33,7 +33,6 @@ import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/int
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces/internal';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces/internal';
-import type { IFluidHandleErased } from '@fluidframework/core-interfaces/internal';
 import { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions/internal';
@@ -551,9 +550,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
 }
 
 // @alpha
-export class MockHandle<T> implements IFluidHandleInternal<T> {
-    // (undocumented)
-    get [fluidHandleSymbol](): IFluidHandleErased<T>;
+export class MockHandle<T> extends FluidHandleBase<T> {
     constructor(value: T, path?: string, absolutePath?: string);
     // (undocumented)
     readonly absolutePath: string;
@@ -563,8 +560,6 @@ export class MockHandle<T> implements IFluidHandleInternal<T> {
     bind(): void;
     // (undocumented)
     get(): Promise<T>;
-    // (undocumented)
-    get IFluidHandle(): IFluidHandleInternal;
     // (undocumented)
     get isAttached(): boolean;
     // (undocumented)
