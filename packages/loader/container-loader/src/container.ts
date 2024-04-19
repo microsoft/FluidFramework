@@ -1120,7 +1120,7 @@ export class Container
 	}
 
 	private async getPendingLocalStateCore(props: IGetPendingLocalStateProps) {
-		if (this.closed || this._disposed) {
+		if (this.closed) {
 			throw new UsageError(
 				"Pending state cannot be retried if the container is closed or disposed",
 			);
@@ -1289,13 +1289,10 @@ export class Container
 					const snapshotWithBlobs = await attachP;
 					this.serializedStateManager.setInitialSnapshot(snapshotWithBlobs);
 					if (!this.closed) {
-						this.handleDeltaConnectionArg(
-							{
-								fetchOpsFromStorage: false,
-								reason: { text: "createDetached" },
-							},
-							attachProps?.deltaConnection,
-						);
+						this.handleDeltaConnectionArg(attachProps?.deltaConnection, {
+							fetchOpsFromStorage: false,
+							reason: { text: "createDetached" },
+						});
 					}
 				},
 				{ start: true, end: true, cancel: "generic" },
@@ -1348,12 +1345,12 @@ export class Container
 			0x2c6 /* "Attempting to connect() a container that is not attached" */,
 		);
 
-		// Resume processing ops and connect to delta stream
-		this.resumeInternal(args);
-
 		// Set Auto Reconnect Mode
 		const mode = ReconnectMode.Enabled;
 		this.setAutoReconnectInternal(mode, args.reason);
+
+		// Resume processing ops and connect to delta stream
+		this.resumeInternal(args);
 	}
 
 	public disconnect() {
@@ -1377,6 +1374,15 @@ export class Container
 
 		// Resume processing ops
 		if (this.inboundQueuePausedFromInit) {
+			// If this assert fires guards against possibility to allow ops/signals in too soon, while
+			// container is not ready yet to receive them. We can hit it only if some internal code call into here,
+			// as public API like Container.connect() can be only called when user got back container object, i.e.
+			// it is already fully loaded.
+			assert(
+				this._lifecycleState === "loaded",
+				"connect() can be called only in fully loaded state",
+			);
+
 			this.inboundQueuePausedFromInit = false;
 			this._deltaManager.inbound.resume();
 			this._deltaManager.inboundSignal.resume();
@@ -1539,7 +1545,7 @@ export class Container
 
 		// Start websocket connection as soon as possible. Note that there is no op handler attached yet, but the
 		// DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
-		if (loadMode.deltaConnection === undefined && !pendingLocalState) {
+		if (loadMode.deltaConnection === undefined) {
 			this.connectToDeltaStream(connectionArgs);
 		}
 
@@ -1700,11 +1706,7 @@ export class Container
 				this._deltaManager.inbound.pause();
 			}
 
-			this.handleDeltaConnectionArg(
-				connectionArgs,
-				loadMode.deltaConnection,
-				pendingLocalState !== undefined,
-			);
+			this.handleDeltaConnectionArg(loadMode.deltaConnection);
 		}
 
 		// If we have not yet reached `loadToSequenceNumber`, we will wait for ops to arrive until we reach it
@@ -2417,13 +2419,12 @@ export class Container
 	}
 
 	private handleDeltaConnectionArg(
-		connectionArgs: IConnectionArgs,
 		deltaConnectionArg?: "none" | "delayed",
-		canConnect: boolean = true,
+		connectionArgs?: IConnectionArgs,
 	) {
 		switch (deltaConnectionArg) {
 			case undefined:
-				if (canConnect) {
+				if (connectionArgs) {
 					// connect to delta stream now since we did not before
 					this.connectToDeltaStream(connectionArgs);
 				}
