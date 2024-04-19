@@ -17,6 +17,7 @@ import * as core from "@fluidframework/server-services-core";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import {
 	CommonProperties,
+	Lumberjack,
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
 import { RawAxiosRequestHeaders } from "axios";
@@ -26,11 +27,13 @@ import { IsEphemeralContainer } from ".";
  * @internal
  */
 export class Tenant implements core.ITenant {
+	private manager: IGitManager;
 	public get id(): string {
 		return this.config.id;
 	}
 
 	public get gitManager(): IGitManager {
+		Lumberjack.info("[DHRUV DEBUG] Tenant gitManager getter called");
 		return this.manager;
 	}
 
@@ -44,8 +47,16 @@ export class Tenant implements core.ITenant {
 
 	constructor(
 		private readonly config: core.ITenantConfig,
-		private readonly manager: IGitManager,
-	) {}
+		private readonly managerPromise: Promise<IGitManager>,
+	) {
+		this.managerPromise
+			.then((manager) => {
+				this.manager = manager;
+			})
+			.catch((error) => {
+				Lumberjack.error("Failed to get tenant manager", undefined, error);
+			});
+	}
 }
 
 /**
@@ -82,12 +93,14 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		documentId: string,
 		includeDisabledTenant = false,
 	): Promise<core.ITenant> {
-		const [details, gitManager] = await Promise.all([
-			this.getTenantConfig(tenantId, includeDisabledTenant),
-			this.getTenantGitManager(tenantId, documentId, undefined, includeDisabledTenant),
-		]);
+		const details = await this.getTenantConfig(tenantId, includeDisabledTenant);
 
-		const tenant = new Tenant(details, gitManager);
+		// Remove await from the getTenantGitManager call to avoid blocking the rest of the code
+		// The caller function does not use the IGitManager instance immediately
+		const tenant = new Tenant(
+			details,
+			this.getTenantGitManager(tenantId, documentId, undefined, includeDisabledTenant),
+		);
 
 		return tenant;
 	}
