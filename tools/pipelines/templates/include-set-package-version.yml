@@ -147,8 +147,8 @@ steps:
   - template: /tools/pipelines/templates/upload-dev-manifest.yml
     parameters:
       buildDirectory: '${{ parameters.buildDirectory }}'
-      STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
-      STORAGE_KEY: $(STORAGE_KEY)
+      STORAGE_ACCOUNT: '${{ parameters.STORAGE_ACCOUNT }}'
+      STORAGE_KEY: '${{ parameters.STORAGE_KEY }}'
 
 # This task is a last-minute verification that no Fluid internal versions show up with caret dependencies. This is to
 # help find and prevent bugs in the version bumping tools.
