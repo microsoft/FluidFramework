@@ -129,7 +129,7 @@ export class SharedMatrixFactory implements IChannelFactory<ISharedMatrix> {
     // (undocumented)
     get attributes(): IChannelAttributes;
     // (undocumented)
-    create(document: IFluidDataStoreRuntime, id: string): SharedMatrix & IChannel;
+    create(document: IFluidDataStoreRuntime, id: string): ISharedMatrix & IChannel;
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedMatrix & IChannel>;
     // (undocumented)
     static Type: string;

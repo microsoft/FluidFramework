@@ -493,6 +493,11 @@ export interface IContainerRuntimeOptions {
 }
 
 /**
+ * Error responses when requesting a deleted object will have this header set to true
+ * @alpha
+ */
+export const DeletedResponseHeaderKey = "wasDeleted";
+/**
  * Tombstone error responses will have this header set to true
  * @alpha
  */
