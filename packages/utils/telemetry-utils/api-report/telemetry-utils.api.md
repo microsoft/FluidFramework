@@ -392,7 +392,7 @@ export type TelemetryEventPropertyTypeExt = string | number | boolean | undefine
 };
 
 // @alpha (undocumented)
-export type TelemetryEventPropertyTypes = ITelemetryBaseProperties[string];
+export type TelemetryEventPropertyTypes = ITelemetryPropertiesExt[string];
 
 // @internal
 export class ThresholdCounter {
