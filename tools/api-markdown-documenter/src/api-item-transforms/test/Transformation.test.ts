@@ -457,6 +457,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 								new TableBodyCellNode([
 									CodeSpanNode.createFromPlainText("readonly"),
 								]), // Modifier
+								TableBodyCellNode.Empty, // Type
 								TableBodyCellNode.Empty, // Description
 							]),
 							// Table row for `foo`
@@ -471,6 +472,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 								new TableBodyCellNode([
 									CodeSpanNode.createFromPlainText("readonly"),
 								]), // Modifier
+								TableBodyCellNode.Empty, // Type
 								TableBodyCellNode.Empty, // Description
 							]),
 							// No entry should be included for `baz` because it is `@alpha`
@@ -479,6 +481,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 							TableHeaderCellNode.createFromPlainText("Variable"),
 							TableHeaderCellNode.createFromPlainText("Alerts"),
 							TableHeaderCellNode.createFromPlainText("Modifiers"),
+							TableHeaderCellNode.createFromPlainText("Type"),
 							TableHeaderCellNode.createFromPlainText("Description"),
 						]),
 					),
@@ -631,12 +634,14 @@ describe("ApiItem to Documentation transformation tests", () => {
 											new TableBodyCellNode([
 												CodeSpanNode.createFromPlainText("readonly"),
 											]),
+											TableBodyCellNode.Empty, // Type
 											TableBodyCellNode.createFromPlainText("Test Constant"),
 										]),
 									],
 									new TableHeaderRowNode([
 										TableHeaderCellNode.createFromPlainText("Variable"),
 										TableHeaderCellNode.createFromPlainText("Modifiers"),
+										TableHeaderCellNode.createFromPlainText("Type"),
 										TableHeaderCellNode.createFromPlainText("Description"),
 									]),
 								),
@@ -712,11 +717,13 @@ describe("ApiItem to Documentation transformation tests", () => {
 													"./test-package#world-variable",
 												),
 											]),
+											TableBodyCellNode.Empty, // Type
 											TableBodyCellNode.createFromPlainText("Test Constant"),
 										]),
 									],
 									new TableHeaderRowNode([
 										TableHeaderCellNode.createFromPlainText("Variable"),
+										TableHeaderCellNode.createFromPlainText("Type"),
 										TableHeaderCellNode.createFromPlainText("Description"),
 									]),
 								),
