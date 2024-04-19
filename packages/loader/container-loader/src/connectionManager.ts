@@ -528,10 +528,10 @@ export class ConnectionManager implements IConnectionManager {
 			// That all said, let's understand better where such mismatches are coming from.
 			const mode = this.connection?.mode ?? this.pendingConnection?.connectionMode;
 			if (mode !== requestedMode) {
-				this.logger.sendErrorEvent({
+				this.logger.sendTelemetryEvent({
 					eventName: "ConnectionModeMismatch",
-					hasConnection: this.connection !== undefined,
-					connectionMode: mode,
+					connected: this.connection !== undefined,
+					mode,
 					requestedMode,
 					stack: generateStack(),
 				});
