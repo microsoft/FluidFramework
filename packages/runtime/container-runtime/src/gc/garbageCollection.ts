@@ -974,8 +974,6 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 	}
 
-	//* TODO: switch to params object
-
 	/**
 	 * Called when a node with the given id is updated. If the node is inactive or tombstoned, this will log an error
 	 * or throw an error if failing on incorrect usage is configured.
