@@ -925,6 +925,7 @@ export class Container
 			detachedBlobStorage,
 			this.mc.logger,
 			pendingLocalState?.snapshotBlobs,
+			pendingLocalState?.loadedGroupIdSnapshots,
 			addProtocolSummaryIfMissing,
 			forceEnableSummarizeProtocolTree,
 		);
@@ -1677,6 +1678,7 @@ export class Container
 				await this.runtime.notifyOpReplay?.(message);
 			}
 			pendingLocalState.savedOps = [];
+			this.storageAdapter.clearPendingState();
 		}
 
 		// We might have hit some failure that did not manifest itself in exception in this flow,

@@ -83,7 +83,7 @@ export const AllowTombstoneRequestHeaderKey = "allowTombstone";
 
 // @internal
 export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
-    constructor(baseSnapshot: ISnapshotTree | undefined, parentContext: IFluidParentContext, baseLogger: ITelemetryBaseLogger, gcNodeUpdated: (nodePath: string, reason: "Loaded" | "Changed", timestampMs?: number, packagePath?: readonly string[], request?: IRequest_2, headerData?: RuntimeHeaderData) => void, isDataStoreDeleted: (nodePath: string) => boolean, aliasMap: Map<string, string>, provideEntryPoint: (runtime: ChannelCollection) => Promise<FluidObject_2>);
+    constructor(baseSnapshot: ISnapshotTree | undefined, parentContext: IFluidParentContext, baseLogger: ITelemetryBaseLogger, gcNodeUpdated: (props: IGCNodeUpdatedProps) => void, isDataStoreDeleted: (nodePath: string) => boolean, aliasMap: Map<string, string>, provideEntryPoint: (runtime: ChannelCollection) => Promise<FluidObject>);
     // (undocumented)
     get aliases(): ReadonlyMap<string, string>;
     // (undocumented)
@@ -599,10 +599,10 @@ export type GCFeatureMatrix = {
 
 // @alpha
 export const GCNodeType: {
-    DataStore: string;
-    SubDataStore: string;
-    Blob: string;
-    Other: string;
+    readonly DataStore: "DataStore";
+    readonly SubDataStore: "SubDataStore";
+    readonly Blob: "Blob";
+    readonly Other: "Other";
 };
 
 // @alpha (undocumented)
@@ -838,6 +838,19 @@ export interface IGCMetadata {
     // @deprecated
     readonly sweepEnabled?: boolean;
     readonly tombstoneTimeoutMs?: number;
+}
+
+// @internal
+export interface IGCNodeUpdatedProps {
+    headerData?: RuntimeHeaderData;
+    node: {
+        type: (typeof GCNodeType)["DataStore" | "Blob"];
+        path: string;
+    };
+    packagePath?: readonly string[];
+    reason: "Loaded" | "Changed";
+    request?: IRequest;
+    timestampMs?: number;
 }
 
 // @alpha (undocumented)
