@@ -239,7 +239,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 							trackedId: url,
 							type: "SubDataStore",
 							id: {
-								value: dataObject._root.handle.absolutePath,
+								value: toFluidHandleInternal(dataObject._root.handle).absolutePath,
 								tag: TelemetryDataTag.CodeArtifact,
 							},
 							pkg: { value: TestDataObjectType, tag: TelemetryDataTag.CodeArtifact },
