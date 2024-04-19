@@ -56,6 +56,6 @@ export class SimpleNodeKeys implements NodeKeys {
 		return this.manager.localizeNodeKey(key);
 	}
 	public tryRecompress(key: StableNodeKey): LocalNodeKey | undefined {
-		return this.manager.tryRecompress(key);
+		return this.manager.tryLocalizeNodeKey(key);
 	}
 }

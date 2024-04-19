@@ -1915,7 +1915,7 @@ export interface TreeNodeApi {
     on<K extends keyof TreeChangeEvents>(node: TreeNode, eventName: K, listener: TreeChangeEvents[K]): () => void;
     parent(node: TreeNode): TreeNode | undefined;
     schema<T extends TreeNode | TreeLeafValue>(node: T): TreeNodeSchema<string, NodeKind, unknown, T>;
-    shortId(node: TreeNode): number | undefined;
+    shortId(node: TreeNode): number | string | undefined;
     readonly status: (node: TreeNode) => TreeStatus;
 }
 

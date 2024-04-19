@@ -96,9 +96,9 @@ export interface TreeNodeApi {
 
 	/**
 	 * If the given node has an identifier specified by a field of kind "identifier" then this returns the compressed form of that identifier.
-	 * Otherwise returns undefined.
+	 * Otherwise returns the uncompressed node value.
 	 */
-	shortId(node: TreeNode): number | undefined;
+	shortId(node: TreeNode): number | string | undefined;
 }
 
 /**
@@ -189,7 +189,7 @@ export const treeNodeApi: TreeNodeApi = {
 			T
 		>;
 	},
-	shortId(node: TreeNode): number | undefined {
+	shortId(node: TreeNode): number | string | undefined{
 		const flexNode = getFlexNode(node);
 		for (const field of flexNode.boxedIterator()) {
 			if (field.schema.kind === FieldKinds.identifier) {
@@ -198,7 +198,7 @@ export const treeNodeApi: TreeNodeApi = {
 				const localNodeKey = identifier.context.nodeKeys.tryRecompress(
 					identifier.value as StableNodeKey,
 				);
-				return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : undefined;
+				return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : identifier.value as string;
 			}
 		}
 	},
