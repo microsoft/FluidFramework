@@ -12,7 +12,7 @@ import type { PackageVersionList } from "../../library";
 
 export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReportCommand> {
 	static readonly description =
-		`Creates a release report for the most recent build of the client release group published to an internal ADO feed. It does this by finding the most recent build in ADO produced from a provided branch, and creates a report using that version. The report is a combination of the "simple" and "caret" report formats. Packages released as part of the client release group will have an exact version range, while other packages, such as server packages or independent packages, will have a caret-equivalent version range.`;
+		`Creates a release report for each build of the client release group published to an internal ADO feed. It creates a report using the version set in the pipeline run. The report is a combination of the "simple" and "caret" report formats. Packages released as part of the client release group will have an exact version range, while other packages, such as server packages or independent packages, will have a caret-equivalent version range.`;
 
 	static readonly flags = {
 		devVersion: Flags.string({
@@ -36,8 +36,9 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 			await generateReleaseReportForUnreleasedVersions(
 				flags.path_to_manifest_file,
 				flags.devVersion,
+				this.logger,
 			);
-			console.log("Files processed successfully.");
+			this.log("Files processed successfully.");
 		} catch (error: unknown) {
 			this.error(`Unable to process manifest files: ${error}`);
 		}
@@ -54,8 +55,8 @@ async function generateReleaseReportForUnreleasedVersions(
 	const caretJsonFile = files.find((file) => file.endsWith(".caret.json"));
 	const simpleJsonFile = files.find((file) => file.endsWith(".simple.json"));
 
-	console.log(`Caret manifest file name: ${caretJsonFile}`);
-	console.log(`Simple manifest file name: ${simpleJsonFile}`);
+	log?.log(`Caret manifest file name: ${caretJsonFile}`);
+	log?.log(`Simple manifest file name: ${simpleJsonFile}`);
 
 	if (caretJsonFile === undefined || simpleJsonFile === undefined) {
 		throw new Error(
@@ -106,7 +107,7 @@ async function writeManifestToFile(
 		// Extract the last part of the version, which is the number you're looking for
 		const buildNumber: number = Number.parseInt(versionParts[versionParts.length - 1], 10);
 
-		console.log(`Build Number: ${buildNumber}`);
+		log?.log(`Build Number: ${buildNumber}`);
 
 		await fs.writeFile(`${path}/${jsonFile}`, JSON.stringify(manifestFile, undefined, 2));
 		await fs.copyFile(`${path}/${jsonFile}`, `${path}/${revisedFileName}-${currentDate}.json`);

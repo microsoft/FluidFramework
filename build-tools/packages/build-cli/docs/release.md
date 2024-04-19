@@ -208,7 +208,7 @@ _See code: [src/commands/release/report.ts](https://github.com/microsoft/FluidFr
 
 ## `flub release report-unreleased`
 
-Creates a release report for the most recent build of the client release group published to an internal ADO feed. It does this by finding the most recent build in ADO produced from a provided branch, and creates a report using that version. The report is a combination of the "simple" and "caret" report formats. Packages released as part of the client release group will have an exact version range, while other packages, such as server packages or independent packages, will have a caret-equivalent version range.
+Creates a release report for each build of the client release group published to an internal ADO feed. It creates a report using the version set in the pipeline run. The report is a combination of the "simple" and "caret" report formats. Packages released as part of the client release group will have an exact version range, while other packages, such as server packages or independent packages, will have a caret-equivalent version range.
 
 ```
 USAGE
@@ -224,11 +224,10 @@ LOGGING FLAGS
       --quiet    Disable all logging.
 
 DESCRIPTION
-  Creates a release report for the most recent build of the client release group published to an internal ADO feed. It
-  does this by finding the most recent build in ADO produced from a provided branch, and creates a report using that
-  version. The report is a combination of the "simple" and "caret" report formats. Packages released as part of the
-  client release group will have an exact version range, while other packages, such as server packages or independent
-  packages, will have a caret-equivalent version range.
+  Creates a release report for each build of the client release group published to an internal ADO feed. It creates a
+  report using the version set in the pipeline run. The report is a combination of the "simple" and "caret" report
+  formats. Packages released as part of the client release group will have an exact version range, while other packages,
+  such as server packages or independent packages, will have a caret-equivalent version range.
 ```
 
 _See code: [src/commands/release/report-unreleased.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/release/report-unreleased.ts)_
