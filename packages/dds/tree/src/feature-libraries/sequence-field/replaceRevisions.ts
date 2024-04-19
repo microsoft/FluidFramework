@@ -27,7 +27,7 @@ function updateMark(
 	revisionsToReplace: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag,
 ): Mark {
-	const updatedMark = updateEffect(mark, revisionsToReplace, newRevision);
+	const updatedMark = { ...updateEffect(mark, revisionsToReplace, newRevision) };
 	if (mark.cellId !== undefined) {
 		updatedMark.cellId = replaceAtomRevisions(mark.cellId, revisionsToReplace, newRevision);
 	}

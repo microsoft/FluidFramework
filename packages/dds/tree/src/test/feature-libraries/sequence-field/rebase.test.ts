@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { mintRevisionTag } from "../../utils.js";
 import { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
-import { ChangeAtomId, RevisionTag, tagChange } from "../../../core/index.js";
+import { ChangeAtomId, RevisionTag } from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { TestNodeId } from "../../testNodeId.js";
@@ -619,13 +619,14 @@ export function testRebase() {
 
 		it("concurrent inserts ↷ remove", () =>
 			withConfig(() => {
+				const tagC = mintRevisionTag();
 				const delA = tagChangeInline(Change.remove(0, 1), mintRevisionTag());
 				const insertB = tagChangeInline(Change.insert(0, 1), mintRevisionTag());
-				const insertC = tagChangeInline(Change.insert(1, 1), mintRevisionTag());
+				const insertC = tagChangeInline(Change.insert(1, 1), tagC);
 				const insertB2 = rebaseTagged(insertB, delA);
 				const insertC2 = rebaseOverChanges(insertC, [delA, insertB2]);
-				const expected = Change.insert(1, 1);
-				checkDeltaEquality(insertC2.change, expected);
+				const expected = tagChangeInline(Change.insert(1, 1), tagC);
+				checkDeltaEquality(insertC2.change, expected.change);
 			}));
 
 		it("concurrent inserts ↷ connected remove", () =>
@@ -635,22 +636,25 @@ export function testRebase() {
 				const delC = tagChangeInline(Change.remove(0, 1), mintRevisionTag());
 
 				const insertD = tagChangeInline(Change.insert(0, 1), mintRevisionTag());
-				const insertE = tagChangeInline(Change.insert(3, 1), mintRevisionTag());
+
+				const tagE = mintRevisionTag();
+				const insertE = tagChangeInline(Change.insert(3, 1), tagE);
 				const insertD2 = rebaseOverChanges(insertD, [delA, delB, delC]);
 				const insertE2 = rebaseOverChanges(insertE, [delA, delB, delC, insertD2]);
-				const expected = Change.insert(1, 1);
-				checkDeltaEquality(insertE2.change, expected);
+				const expected = tagChangeInline(Change.insert(1, 1), tagE);
+				checkDeltaEquality(insertE2.change, expected.change);
 			}));
 
 		it("concurrent insert and move ↷ remove", () =>
 			withConfig(() => {
 				const delA = tagChangeInline(Change.remove(0, 1), mintRevisionTag());
 				const insertB = tagChangeInline(Change.insert(0, 1), mintRevisionTag());
-				const moveC = tagChangeInline(Change.move(2, 1, 1), mintRevisionTag());
+				const tagC = mintRevisionTag();
+				const moveC = tagChangeInline(Change.move(2, 1, 1), tagC);
 				const insertB2 = rebaseTagged(insertB, delA);
 				const moveC2 = rebaseOverChanges(moveC, [delA, insertB2]);
-				const expected = Change.move(2, 1, 1);
-				checkDeltaEquality(moveC2.change, expected);
+				const expected = tagChangeInline(Change.move(2, 1, 1), tagC);
+				checkDeltaEquality(moveC2.change, expected.change);
 			}));
 
 		it("modify ↷ move right", () =>
@@ -678,7 +682,7 @@ export function testRebase() {
 		it("modify ↷ move left + modify", () =>
 			withConfig(() => {
 				const nodeId: NodeId = { localId: brand(0) };
-				const baseNodeId: NodeId = { localId: brand(1) };
+				const baseNodeId: NodeId = { revision: tag1, localId: brand(1) };
 
 				const inputChildChange = TestNodeId.create(nodeId, TestChange.mint([], 2));
 				const baseChildChange = TestNodeId.create(baseNodeId, TestChange.mint([], 1));

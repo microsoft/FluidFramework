@@ -243,20 +243,14 @@ export function compareCellPositionsUsingTombstones(
 		// into a transaction, in which case the new mark cell should also have no revision, which is handled above.
 		// In all other cases, the old mark cell should have a revision.
 		assert(
-			oldMarkCell.revision !== undefined && newMarkCell.revision !== undefined,
-			"Cells should have a revision",
+			oldMarkCell.revision !== undefined,
+			0x8a1 /* Old mark cell should have a revision */,
 		);
 
 		// Note that these indices are for ordering the revisions in which the cells were named, not the revisions
 		// of the changesets in which the marks targeting these cells appear.
 		const oldCellRevisionIndex = metadata.getIndex(oldMarkCell.revision);
 		const newCellRevisionIndex = metadata.getIndex(newMarkCell.revision);
-
-		// In the context of rebase, an unknown revision means that the cell was created on the branch that
-		// is undergoing rebasing, which means the cell from the newer changeset is younger.
-		if (newCellRevisionIndex === undefined) {
-			return CellOrder.NewThenOld;
-		}
 
 		// If the metadata defines an ordering for the revisions then the cell from the newer revision comes first.
 		if (newCellRevisionIndex !== undefined && oldCellRevisionIndex !== undefined) {
