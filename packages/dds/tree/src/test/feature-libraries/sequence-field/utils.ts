@@ -66,7 +66,6 @@ import {
 	defaultRevisionMetadataFromChanges,
 } from "../../utils.js";
 
-import { TestChangeset } from "./testEdits.js";
 import { ChangesetWrapper } from "../../changesetWrapper.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
@@ -170,9 +169,9 @@ export function composeDeep(
 }
 
 export function composeNoVerify(
-	changes: TaggedChange<TestChangeset>[],
+	changes: TaggedChange<SF.Changeset>[],
 	revInfos?: RevisionInfo[],
-): TestChangeset {
+): SF.Changeset {
 	return composeI(changes, (id1, id2) => TestNodeId.composeChild(id1, id2, false), revInfos);
 }
 
@@ -184,10 +183,10 @@ export function composeShallow(changes: TaggedChange<SF.Changeset>[]): SF.Change
 }
 
 export function compose(
-	changes: TaggedChange<TestChangeset>[],
+	changes: TaggedChange<SF.Changeset>[],
 	revInfos?: RevisionInfo[] | RevisionMetadataSource,
 	childComposer?: (change1: NodeId | undefined, change2: NodeId | undefined) => NodeId,
-): TestChangeset {
+): SF.Changeset {
 	return composeI(changes, childComposer ?? TestNodeId.composeChild, revInfos);
 }
 
@@ -196,9 +195,9 @@ export function pruneDeep(change: WrappedChange): WrappedChange {
 }
 
 export function prune(
-	change: TestChangeset,
+	change: SF.Changeset,
 	childPruner?: (child: NodeId) => NodeId | undefined,
-): TestChangeset {
+): SF.Changeset {
 	return SF.sequenceFieldChangeRebaser.prune(change, childPruner ?? ((child: NodeId) => child));
 }
 
@@ -271,10 +270,10 @@ export interface RebaseConfig {
 }
 
 export function rebase(
-	change: TestChangeset,
-	base: TaggedChange<TestChangeset>,
+	change: SF.Changeset,
+	base: TaggedChange<SF.Changeset>,
 	config: RebaseConfig = {},
-): TestChangeset {
+): SF.Changeset {
 	const cleanChange = purgeUnusedCellOrderingInfo(change);
 	const cleanBase = { ...base, change: purgeUnusedCellOrderingInfo(base.change) };
 	deepFreeze(cleanChange);
@@ -313,17 +312,17 @@ export function rebase(
 }
 
 export function rebaseTagged(
-	change: TaggedChange<TestChangeset>,
-	baseChange: TaggedChange<TestChangeset>,
-): TaggedChange<TestChangeset> {
+	change: TaggedChange<SF.Changeset>,
+	baseChange: TaggedChange<SF.Changeset>,
+): TaggedChange<SF.Changeset> {
 	return rebaseOverChanges(change, [baseChange]);
 }
 
 export function rebaseOverChanges(
-	change: TaggedChange<TestChangeset>,
-	baseChanges: TaggedChange<TestChangeset>[],
+	change: TaggedChange<SF.Changeset>,
+	baseChanges: TaggedChange<SF.Changeset>[],
 	revInfos?: RevisionInfo[],
-): TaggedChange<TestChangeset> {
+): TaggedChange<SF.Changeset> {
 	let currChange = change;
 	const revisionInfo = revInfos ?? defaultRevInfosFromChanges(baseChanges);
 	for (const base of baseChanges) {
@@ -339,10 +338,10 @@ export function rebaseOverChanges(
 }
 
 export function rebaseOverComposition(
-	change: TestChangeset,
-	base: TestChangeset,
+	change: SF.Changeset,
+	base: SF.Changeset,
 	metadata: RebaseRevisionMetadata,
-): TestChangeset {
+): SF.Changeset {
 	return rebase(change, makeAnonChange(base), { metadata });
 }
 
@@ -406,11 +405,11 @@ export function invert(change: TaggedChange<SF.Changeset>): SF.Changeset {
 	return inverted;
 }
 
-export function checkDeltaEquality(actual: TestChangeset, expected: TestChangeset) {
+export function checkDeltaEquality(actual: SF.Changeset, expected: SF.Changeset) {
 	assertFieldChangesEqual(toDelta(actual), toDelta(expected));
 }
 
-export function toDelta(change: TestChangeset, revision?: RevisionTag): DeltaFieldChanges {
+export function toDelta(change: SF.Changeset, revision?: RevisionTag): DeltaFieldChanges {
 	deepFreeze(change);
 	return SF.sequenceFieldToDelta(tagChange(change, revision), TestNodeId.deltaFromChild);
 }

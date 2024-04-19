@@ -22,7 +22,7 @@ import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { assertFieldChangesEqual, mintRevisionTag } from "../../utils.js";
 import { TestNodeId } from "../../testNodeId.js";
-import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
+import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
 import { toDelta } from "./utils.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
@@ -35,7 +35,7 @@ const fooField = brand<FieldKey>("foo");
 const cellId = { revision: tag1, localId: brand<ChangesetLocalId>(0) };
 const deltaNodeId: DeltaDetachedNodeId = { major: cellId.revision, minor: cellId.localId };
 
-function toDeltaShallow(change: TestChangeset): DeltaFieldChanges {
+function toDeltaShallow(change: SF.Changeset): DeltaFieldChanges {
 	deepFreeze(change);
 	return SF.sequenceFieldToDelta(makeAnonChange(change), () =>
 		fail("Unexpected call to child ToDelta"),
@@ -221,7 +221,7 @@ export function testToDelta() {
 		});
 
 		it("multiple changes", () => {
-			const changeset: TestChangeset = [
+			const changeset: SF.Changeset = [
 				Mark.remove(10, brand(42)),
 				{ count: 3 },
 				Mark.insert(1, brand(52)),
