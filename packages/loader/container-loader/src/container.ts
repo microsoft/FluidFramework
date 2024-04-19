@@ -532,6 +532,7 @@ export class Container
 			const cm = this._deltaManager.connectionManager;
 			if (cm.connected) {
 				const details = cm.connectionDetails;
+				assert(details !== undefined, "should have details if connected");
 				this.connectionStateHandler.receivedConnectEvent(details);
 			}
 		}

@@ -258,8 +258,6 @@ export class ConnectionManager implements IConnectionManager {
 
 	private _connectionDetails?: IConnectionDetailsInternal;
 	public get connectionDetails() {
-		assert(this.connection !== undefined, "connected");
-		assert(this._connectionDetails !== undefined, "details");
 		return this._connectionDetails;
 	}
 
