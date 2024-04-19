@@ -172,7 +172,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	 * @remarks
 	 *
 	 * This should only be called when the container is in the
-	 * {@link @fluidframework/container-definitions#AttachState.Detatched} state.
+	 * {@link @fluidframework/container-definitions#AttachState.Detached} state.
 	 *
 	 * This can be determined by observing {@link IFluidContainer.attachState}.
 	 *
