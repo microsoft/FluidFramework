@@ -48,7 +48,7 @@
           - Good link (no alias): <a href='docs/simple-suite-test#testclass-class'>TestClass</a>
         </p>
         <p>
-          - Good link (with alias): <a href='docs/simple-suite-test#testfunction-function'>function alias text</a>
+          - Good link (with alias): <span><i>function alias text</i></span>
         </p>
         <p>
           - Bad link (no alias): <span><i>InvalidItem</i></span>
@@ -525,6 +525,37 @@
             <tbody>
               <tr>
                 <td>
+                  <a href='docs/simple-suite-test#testinterface-getterproperty-property'>getterProperty</a>
+                </td>
+                <td>
+                  <code>readonly</code>
+                </td>
+                <td>
+                </td>
+                <td>
+                  <span>boolean</span>
+                </td>
+                <td>
+                  A test getter-only interface property.
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <a href='docs/simple-suite-test#testinterface-setterproperty-property'>setterProperty</a>
+                </td>
+                <td>
+                </td>
+                <td>
+                </td>
+                <td>
+                  <span>boolean</span>
+                </td>
+                <td>
+                  A test property with a getter and a setter.
+                </td>
+              </tr>
+              <tr>
+                <td>
                   <a href='docs/simple-suite-test#testinterface-testinterfaceproperty-propertysignature'>testInterfaceProperty</a>
                 </td>
                 <td>
@@ -692,6 +723,46 @@
           <h3>
             Property Details
           </h3>
+          <section>
+            <h4 id="testinterface-getterproperty-property">
+              getterProperty
+            </h4>
+            <section>
+              <p>
+                A test getter-only interface property.
+              </p>
+            </section>
+            <section>
+              <h5 id="getterproperty-signature">
+                Signature
+              </h5>
+              <code>
+                get getterProperty(): boolean;
+              </code>
+            </section>
+          </section>
+          <section>
+            <h4 id="testinterface-setterproperty-property">
+              setterProperty
+            </h4>
+            <section>
+              <p>
+                A test property with a getter and a setter.
+              </p>
+            </section>
+            <section>
+              <h5 id="setterproperty-signature">
+                Signature
+              </h5>
+              <code>
+                get setterProperty(): boolean;
+                <br>
+                <br>
+                <br>
+                set setterProperty(newValue: boolean);
+              </code>
+            </section>
+          </section>
           <section>
             <h4 id="testinterface-testinterfaceproperty-propertysignature">
               testInterfaceProperty
@@ -1787,13 +1858,13 @@
                   <a href='docs/simple-suite-test#testclass-testclassgetterproperty-property'>testClassGetterProperty</a>
                 </td>
                 <td>
-                  <code>readonly</code>, <code>virtual</code>
+                  <code>virtual</code>
                 </td>
                 <td>
                   <span>number</span>
                 </td>
                 <td>
-                  Test class getter-only property
+                  Test class property with both a getter and a setter.
                 </td>
               </tr>
               <tr>
@@ -2039,7 +2110,7 @@
             </h4>
             <section>
               <p>
-                Test class getter-only property
+                Test class property with both a getter and a setter.
               </p>
             </section>
             <section>
@@ -2050,6 +2121,10 @@
                 /** @virtual */
                 <br>
                 get testClassGetterProperty(): number;
+                <br>
+                <br>
+                <br>
+                set testClassGetterProperty(newValue: number);
               </code>
             </section>
             <section>

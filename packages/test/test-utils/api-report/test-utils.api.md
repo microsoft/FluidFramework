@@ -48,7 +48,7 @@ import { ISummaryContext } from '@fluidframework/driver-definitions/internal';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITelemetryGenericEventExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryGenericEventExt } from '@fluidframework/telemetry-utils/internal';
 import { ITelemetryLoggerPropertyBags } from '@fluidframework/telemetry-utils/internal';
 import { ITestDriver } from '@fluid-internal/test-driver-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions/internal';

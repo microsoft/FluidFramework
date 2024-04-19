@@ -1,5 +1,9 @@
 # @fluidframework/test-tools
 
+## vNext
+
+Dependency updates.
+
 ## 2.0.0
 
 ### ⚠ BREAKING CHANGES

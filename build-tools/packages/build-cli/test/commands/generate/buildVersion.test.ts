@@ -19,6 +19,10 @@ const test_tags = [
 	"client_v2.0.1",
 	"client_v2.1.0",
 	"client_v2.1.1",
+	"client_v2.0.0-rc.3.0.0",
+	"client_v2.0.0-rc.4.0.0",
+	"client_v2.0.0-rc.5.0.0",
+	"client_v2.0.0-rc.6.0.0",
 	"build-tools_v0.5.2002",
 	"build-tools_v0.4.2001",
 	"build-tools_v0.4.2000",
@@ -425,12 +429,12 @@ describe("generate:buildVersion", () => {
 		.command([
 			"generate:buildVersion",
 			"--fileVersion",
-			"2.0.0-rc.3.0.0",
+			"2.0.0-rc.7.0.0",
 			"--tags",
 			...test_tags,
 		])
 		.it("RC version, release", (ctx) => {
-			expect(ctx.stdout).to.contain("version=2.0.0-rc.3.0.0");
+			expect(ctx.stdout).to.contain("version=2.0.0-rc.7.0.0");
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
 

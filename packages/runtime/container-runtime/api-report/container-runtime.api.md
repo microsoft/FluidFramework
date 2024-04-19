@@ -59,7 +59,7 @@ import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { MessageType } from '@fluidframework/protocol-definitions';
 import { MonitoringContext } from '@fluidframework/telemetry-utils/internal';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions/internal';
@@ -112,8 +112,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
     // (undocumented)
     readonly entryPoint: IFluidHandle<FluidObject>;
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
-    // (undocumented)
-    getDataStore(id: string, requestHeaderData: RuntimeHeaderData): Promise<IFluidDataStoreContextInternal>;
     getDataStoreIfAvailable(id: string, requestHeaderData: RuntimeHeaderData): Promise<IFluidDataStoreContextInternal | undefined>;
     getDataStorePackagePath(nodePath: string): Promise<readonly string[] | undefined>;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
@@ -252,14 +250,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     readonly disposeFn: (error?: ICriticalContainerError) => void;
     // (undocumented)
-    get documentSchema(): {
-        explicitSchemaControl?: true | undefined;
-        compressionLz4?: true | undefined;
-        idCompressorMode?: IdCompressorMode;
-        opGroupingEnabled?: true | undefined;
-        disallowedVersions?: string[] | undefined;
-    };
-    // (undocumented)
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
     ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
@@ -329,6 +319,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
     get scope(): FluidObject;
+    get sessionSchema(): {
+        explicitSchemaControl?: true | undefined;
+        compressionLz4?: true | undefined;
+        idCompressorMode?: IdCompressorMode;
+        opGroupingEnabled?: true | undefined;
+        disallowedVersions?: string[] | undefined;
+    };
     // (undocumented)
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     // (undocumented)
@@ -386,6 +383,8 @@ export class DataStoreContexts implements Iterable<[string, FluidDataStoreContex
     // (undocumented)
     get(id: string): FluidDataStoreContext | undefined;
     getBoundOrRemoted(id: string, wait: boolean): Promise<FluidDataStoreContext | undefined>;
+    // (undocumented)
+    getRecentlyDeletedContext(id: string): FluidDataStoreContext | undefined;
     getUnbound(id: string): LocalFluidDataStoreContext | undefined;
     // (undocumented)
     has(id: string): boolean;
@@ -400,6 +399,9 @@ export class DataStoreContexts implements Iterable<[string, FluidDataStoreContex
 // @alpha (undocumented)
 export const DefaultSummaryConfiguration: ISummaryConfiguration;
 
+// @alpha
+export const DeletedResponseHeaderKey = "wasDeleted";
+
 // @internal
 export function detectOutboundReferences(address: string, contents: unknown, addedOutboundReference: (fromNodePath: string, toNodePath: string) => void): void;
 
@@ -411,7 +413,7 @@ export type DocumentSchemaValueType = string | string[] | true | number | undefi
 
 // @alpha
 export class DocumentsSchemaController {
-    constructor(existing: boolean, documentMetadataSchema: IDocumentSchema | undefined, features: IDocumentSchemaFeatures, onSchemaChange: (schema: IDocumentSchemaCurrent) => void);
+    constructor(existing: boolean, snapshotSequenceNumber: number, documentMetadataSchema: IDocumentSchema | undefined, features: IDocumentSchemaFeatures, onSchemaChange: (schema: IDocumentSchemaCurrent) => void);
     maybeSendSchemaMessage(): IDocumentSchemaChangeMessage | undefined;
     // (undocumented)
     onDisconnect(): void;
