@@ -98,15 +98,12 @@ export function createConnectionStateHandlerCore(
 	deltaManager: IDeltaManager<any, any>,
 	clientId?: string,
 ) {
-	if (!connectedRaisedWhenCaughtUp) {
-		return new ConnectionStateHandler(inputs, readClientsWaitForJoinSignal, clientId);
-	}
-	return new ConnectionStateCatchup(
-		inputs,
-		(handler: IConnectionStateHandlerInputs) =>
-			new ConnectionStateHandler(handler, readClientsWaitForJoinSignal, clientId),
-		deltaManager,
-	);
+	const factory = (handler: IConnectionStateHandlerInputs) =>
+		new ConnectionStateHandler(handler, readClientsWaitForJoinSignal, clientId);
+
+	return connectedRaisedWhenCaughtUp
+		? new ConnectionStateCatchup(inputs, factory, deltaManager)
+		: factory(inputs);
 }
 
 /**
@@ -334,7 +331,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 	/**
 	 * Tracks that we observe our own "join" op within the timeout after receiving a "connected" event from the DeltaManager
 	 */
-	private readonly joinOpTimer: Timer;
+	private readonly joinTimer: Timer;
 
 	private protocol?: IProtocolHandler;
 	private connection?: IConnectionDetailsInternal;
@@ -378,8 +375,8 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 			},
 		);
 
-		this.joinOpTimer = new Timer(
-			0, // default value is not used - startJoinOpTimer() explicitly provides timeout
+		this.joinTimer = new Timer(
+			0, // default value is not used - startjoinTimer() explicitly provides timeout
 			() => {
 				// I've observed timer firing within couple ms from disconnect event, looks like
 				// queued timer callback is not cancelled if timer is cancelled while callback sits in the queue.
@@ -392,22 +389,26 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 					clientJoined: this.hasMember(this.pendingClientId),
 					waitingForLeaveOp: this.waitingForLeaveOp,
 				};
-				this.handler.logConnectionIssue("NoJoinOp", "error", details);
+				this.handler.logConnectionIssue(
+					this.connection?.mode === "read" ? "NoJoinSignal" : "NoJoinOp", // eventName
+					"error", // category
+					details,
+				);
 			},
 		);
 	}
 
-	private startJoinOpTimer() {
-		assert(!this.joinOpTimer.hasTimer, 0x234 /* "has joinOpTimer" */);
+	private startjoinTimer() {
+		assert(!this.joinTimer.hasTimer, 0x234 /* "has joinTimer" */);
 		assert(this.connection !== undefined, 0x4b3 /* have connection */);
-		this.joinOpTimer.start(
+		this.joinTimer.start(
 			this.connection.mode === "write" ? JoinOpTimeoutMs : JoinSignalTimeoutMs,
 		);
 	}
 
-	private stopJoinOpTimer() {
-		assert(this.joinOpTimer.hasTimer, 0x235 /* "no joinOpTimer" */);
-		this.joinOpTimer.clear();
+	private stopjoinTimer() {
+		assert(this.joinTimer.hasTimer, 0x235 /* "no joinTimer" */);
+		this.joinTimer.clear();
 	}
 
 	private get waitingForLeaveOp() {
@@ -415,7 +416,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 	}
 
 	public dispose() {
-		assert(!this.joinOpTimer.hasTimer, 0x2a5 /* "join timer" */);
+		assert(!this.joinTimer.hasTimer, 0x2a5 /* "join timer" */);
 		this.prevClientLeftTimer.clear();
 	}
 
@@ -431,15 +432,18 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 	private receivedAddMemberEvent(clientId: string) {
 		// This is the only one that requires the pending client ID
 		if (clientId === this.pendingClientId) {
-			if (this.joinOpTimer.hasTimer) {
-				this.stopJoinOpTimer();
-			} else if (this.shouldWaitForJoinSignal()) {
+			if (this.joinTimer.hasTimer) {
+				this.stopjoinTimer();
+			} else if (this.shouldWaitForSelf()) {
 				// timer has already fired, meaning it took too long to get join op/signal.
 				// Record how long it actually took to recover.
 				// This is generic event, as it by itself is not an error.
 				// We also have a case where NoJoinOp happens during container boot (we do not report it as error in such case),
 				// if this log statement happens after boot - we do not want to consider it error case.
-				this.handler.logConnectionIssue("ReceivedJoinOp", "generic");
+				this.handler.logConnectionIssue(
+					this.connection?.mode === "read" ? "ReceivedJoinSignal" : "ReceivedJoinOp", // eventName
+					"generic", // category
+				);
 			}
 			// Start the event in case we are waiting for leave or timeout.
 			if (this.waitingForLeaveOp) {
@@ -527,7 +531,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 			this._connectionState === ConnectionState.EstablishingConnection,
 			0x6d3 /* Connection state should be EstablishingConnection */,
 		);
-		assert(this.connection === undefined, 0x6d4 /* No connetion should be present */);
+		assert(this.connection === undefined, 0x6d4 /* No connection should be present */);
 		const oldState = this._connectionState;
 		this._connectionState = ConnectionState.Disconnected;
 		this.handler.connectionStateChanged(ConnectionState.Disconnected, oldState, reason);
@@ -542,7 +546,12 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		});
 	}
 
-	private shouldWaitForJoinSignal() {
+	/**
+	 * Tells if need to wait for "self" to show up in audience.
+	 * @returns - true if we should wait for "self" to appear in audience.
+	 * false is returned only for "read" connections, and only if this.readClientsWaitForJoinSignal is false.
+	 */
+	private shouldWaitForSelf() {
 		assert(
 			this.connection !== undefined,
 			0x4b4 /* all callers call here with active connection */,
@@ -589,10 +598,10 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		//    We are fetching ops from storage in parallel to connecting to Relay Service,
 		//    and given async processes, it's possible that we have already processed our own join message before
 		//    connection was fully established.
-		if (!this.hasMember(this._pendingClientId) && this.shouldWaitForJoinSignal()) {
+		if (!this.hasMember(this._pendingClientId) && this.shouldWaitForSelf()) {
 			// We are waiting for our own join op / signal. When it is processed
 			// we'll attempt to transition to Connected state via receivedAddMemberEvent() flow.
-			this.startJoinOpTimer();
+			this.startjoinTimer();
 		} else if (!this.waitingForLeaveOp) {
 			// We're not waiting for Join or Leave op (if read-only connection those don't even apply),
 			// go ahead and declare the state to be Connected!
@@ -641,8 +650,8 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 			// Clear pending state immediately to prepare for reconnect
 			this._pendingClientId = undefined;
 
-			if (this.joinOpTimer.hasTimer) {
-				this.stopJoinOpTimer();
+			if (this.joinTimer.hasTimer) {
+				this.stopjoinTimer();
 			}
 
 			// Only wait for "leave" message if the connected client exists in the quorum and had some non-acked ops
@@ -673,15 +682,10 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		this.handler.connectionStateChanged(this._connectionState, oldState, reason);
 	}
 
-	// Helper method to switch between quorum and audience.
-	// Old design was checking only quorum for "write" clients.
-	// Latest change checks audience for all types of connections.
 	protected get membership(): IMembership | undefined {
-		// We could always use audience here, and in practice it will probably be correct.
-		// (including case when this.readClientsWaitForJoinSignal === false).
-		// But only if it's superset of quorum, i.e. when filtered to "write" clients, they are always identical!
-		// It's safer to assume that we have bugs and engaging kill-bit switch should bring us back to well-known
-		// and tested state!
+		// We could always use audience here.
+		// This is true because Audience is a superset of quorum, i.e. when we filter Audience to "write" clients,
+		// it is exactly the same as quorum! Please see asserts in Audience callbacks setup by initProtocol() enforcing that.
 		return this.readClientsWaitForJoinSignal ? this.protocol?.audience : this.protocol?.quorum;
 	}
 
@@ -689,6 +693,9 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		this.protocol = protocol;
 
 		this.membership?.on("addMember", (clientId, details) => {
+			// This is very important constrain. We rely on it when testing presence of "self" in Audience.
+			// We do not want to move to "connected" state for "write" connections when JoinSignal shows up
+			// for "self" - we want to move to "connected" state only when "join" op is received.
 			assert(
 				(details as IClient).mode === "read" ||
 					protocol.quorum.getMember(clientId) !== undefined,
