@@ -7,18 +7,20 @@ import { updatePackageJsonFile } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import execa from "execa";
 
-import { BaseCommand } from "../base";
-import { releaseGroupFlag } from "../flags";
+import { BaseCommand } from "../../base";
+import { releaseGroupFlag } from "../../flags";
 
 /**
- * Updates the a transitive dependency in the lockfile.
+ * Updates the version of a dependency in the lockfile.
  *
  * @remarks
  * This command is primarily used manually to update transitive dependencies when we need to address CVEs.
  *
- * Note that this applies to all packages in the release group.
+ * Note that this applies to all packages in the specified release group.
  */
-export default class UpdateDepCommand extends BaseCommand<typeof UpdateDepCommand> {
+export default class UpdateDependencyInLockfileCommand extends BaseCommand<
+	typeof UpdateDependencyInLockfileCommand
+> {
 	static readonly description =
 		`Updates a dependency in the lockfile to the latest version of a specified semver range.`;
 
@@ -53,7 +55,6 @@ export default class UpdateDepCommand extends BaseCommand<typeof UpdateDepComman
 			if (json.pnpm === undefined) {
 				json.pnpm = {};
 			}
-			/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 			if (json.pnpm.overrides === undefined) {
 				json.pnpm.overrides = {};
 			}
@@ -67,12 +68,11 @@ export default class UpdateDepCommand extends BaseCommand<typeof UpdateDepComman
 				);
 			}
 			json.pnpm.overrides[this.flags.dependencyName] = this.flags.version;
-			/* eslint-enable @typescript-eslint/no-unsafe-member-access */
 		});
 
 		// Update lockfile
 		this.info(`Updating lockfile`);
-		await execa(`pnpm`, [`install`], {
+		await execa(`pnpm`, [`install`, `--no-frozen-lockfile`], {
 			cwd: releaseGroup.directory,
 		});
 
@@ -84,7 +84,7 @@ export default class UpdateDepCommand extends BaseCommand<typeof UpdateDepComman
 
 		// Install again to remove the override from the lockfile
 		this.info(`Updating lockfile to remove override`);
-		await execa(`pnpm`, [`install`], {
+		await execa(`pnpm`, [`install`, `--no-frozen-lockfile`], {
 			cwd: releaseGroup.directory,
 		});
 	}

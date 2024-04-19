@@ -55,7 +55,9 @@ export type FluidPackageJson = {
 	/**
 	 * pnpm config
 	 */
-	pnpm?: any;
+	pnpm?: {
+		overrides?: Record<string, string>;
+	};
 };
 
 /**
