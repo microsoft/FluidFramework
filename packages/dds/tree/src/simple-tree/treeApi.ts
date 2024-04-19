@@ -99,6 +99,11 @@ export interface TreeNodeApi {
 	 * Otherwise returns undefined.
 	 */
 	shortId(node: TreeNode): number | undefined;
+
+	/**
+	 * Gets the field metadata associated with the given node under its parent
+	 */
+	metadata(node: TreeNode): unknown;
 }
 
 /**
@@ -201,6 +206,9 @@ export const treeNodeApi: TreeNodeApi = {
 				);
 			}
 		}
+	},
+	metadata(node: TreeNode): unknown {
+		return getFlexNode(node).parentField.parent.schema.metadata;
 	},
 };
 
