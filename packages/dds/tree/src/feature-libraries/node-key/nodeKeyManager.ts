@@ -109,8 +109,8 @@ class MockNodeKeyManager implements NodeKeyManager {
 	}
 
 	public localizeNodeKey(key: StableNodeKey): LocalNodeKey {
-		const localNodeKey = this.tryLocalizeNodeKey(key)
-		assert(localNodeKey !== undefined, "Key is not compressible")
+		const localNodeKey = this.tryLocalizeNodeKey(key);
+		assert(localNodeKey !== undefined, "Key is not compressible");
 		return localNodeKey;
 	}
 
@@ -119,11 +119,13 @@ class MockNodeKeyManager implements NodeKeyManager {
 	}
 
 	public tryLocalizeNodeKey(key: string): LocalNodeKey | undefined {
-		const localNodeKey =  Number.parseInt(key.substring(30), 16)
-		if(Number.isNaN(localNodeKey)){
-			return undefined
-		} else{
-			return localNodeKey < this.count? brand(localNodeKey as SessionSpaceCompressedId) : undefined
+		const localNodeKey = Number.parseInt(key.substring(30), 16);
+		if (Number.isNaN(localNodeKey)) {
+			return undefined;
+		} else {
+			return localNodeKey < this.count
+				? brand(localNodeKey as SessionSpaceCompressedId)
+				: undefined;
 		}
 	}
 

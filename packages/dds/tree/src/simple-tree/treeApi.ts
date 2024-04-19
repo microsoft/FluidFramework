@@ -189,7 +189,7 @@ export const treeNodeApi: TreeNodeApi = {
 			T
 		>;
 	},
-	shortId(node: TreeNode): number | string | undefined{
+	shortId(node: TreeNode): number | string | undefined {
 		const flexNode = getFlexNode(node);
 		for (const field of flexNode.boxedIterator()) {
 			if (field.schema.kind === FieldKinds.identifier) {
@@ -198,7 +198,9 @@ export const treeNodeApi: TreeNodeApi = {
 				const localNodeKey = identifier.context.nodeKeys.tryRecompress(
 					identifier.value as StableNodeKey,
 				);
-				return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : identifier.value as string;
+				return localNodeKey !== undefined
+					? extractFromOpaque(localNodeKey)
+					: (identifier.value as string);
 			}
 		}
 	},
