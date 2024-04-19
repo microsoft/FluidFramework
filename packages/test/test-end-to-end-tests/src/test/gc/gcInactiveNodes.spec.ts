@@ -340,6 +340,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 				const dataObject = await createNewDataObject();
 				const dataStoreUrl = dataObject.handle.absolutePath;
 				const ddsUrl = dataObject._root.handle.absolutePath;
+				const untrackedUrl = `${dataStoreUrl}/unrecognizedSubPath`;
 
 				defaultDataStore._root.set("dataStore1", dataObject.handle);
 				await provider.ensureSynchronized();
@@ -360,12 +361,18 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 				// Make changes to the inactive data store and validate that we get the changedEvent.
 				dataObject._root.set("key", "value");
 				await provider.ensureSynchronized();
-				// Load the DDS and validate that we get loadedEvent.
-				const response = await summarizerRuntime.resolveHandle({ url: ddsUrl });
+				// Load the DDS and untracked subDataStore path and validate that we get loadedEvents.
+				const response1 = await summarizerRuntime.resolveHandle({ url: ddsUrl });
 				assert.equal(
-					response.status,
+					response1.status,
 					200,
 					"Loading the inactive object should succeed on summarizer despite throwOnInactiveLoad option",
+				);
+				const response2 = await summarizerRuntime.resolveHandle({ url: untrackedUrl });
+				assert.equal(
+					response2.status,
+					404,
+					"404 would fall back to custom request handler (not implemented here)",
 				);
 				await summarize(summarizerRuntime);
 				mockLogger.assertMatch(
@@ -375,12 +382,23 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 							timeout: inactiveTimeoutMs,
 							id: { value: dataStoreUrl, tag: TelemetryDataTag.CodeArtifact },
 							pkg: { value: TestDataObjectType, tag: TelemetryDataTag.CodeArtifact },
+							type: "DataStore",
 						},
 						{
 							eventName: loadedEvent,
 							timeout: inactiveTimeoutMs,
 							id: { value: ddsUrl, tag: TelemetryDataTag.CodeArtifact },
 							pkg: { value: TestDataObjectType, tag: TelemetryDataTag.CodeArtifact },
+							trackedId: dataStoreUrl,
+							type: "SubDataStore",
+						},
+						{
+							eventName: loadedEvent,
+							timeout: inactiveTimeoutMs,
+							id: { value: untrackedUrl, tag: TelemetryDataTag.CodeArtifact },
+							pkg: { value: TestDataObjectType, tag: TelemetryDataTag.CodeArtifact },
+							trackedId: dataStoreUrl,
+							type: "SubDataStore",
 						},
 					],
 					"changed and loaded events not generated as expected",
