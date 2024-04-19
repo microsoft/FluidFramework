@@ -101,7 +101,10 @@ export abstract class RdkafkaBase extends EventEmitter {
 
 			this.connect();
 		} catch (ex) {
-			this.error(ex);
+			this.error(ex, {
+				restart: false,
+				errorLabel: `${this.constructor.name}:rdKafkaBase:initialize`,
+			});
 
 			this.initialize().catch((error) => {
 				Lumberjack.error("Error initializing rdkafka", undefined, error);

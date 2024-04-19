@@ -1653,22 +1653,7 @@ export class ContainerRuntime
 			getSummaryForDatastores(baseSnapshot, metadata),
 			parentContext,
 			this.mc.logger,
-			(
-				path: string,
-				reason: "Loaded" | "Changed",
-				timestampMs?: number,
-				packagePath?: readonly string[],
-				request?: IRequest,
-				headerData?: RuntimeHeaderData,
-			) =>
-				this.garbageCollector.nodeUpdated(
-					path,
-					reason,
-					timestampMs,
-					packagePath,
-					request,
-					headerData,
-				),
+			(props) => this.garbageCollector.nodeUpdated(props),
 			(path: string) => this.garbageCollector.isNodeDeleted(path),
 			new Map<string, string>(dataStoreAliasMap),
 			async (runtime: ChannelCollection) => provideEntryPoint,
@@ -1691,7 +1676,10 @@ export class ContainerRuntime
 				}
 			},
 			blobRequested: (blobPath: string) =>
-				this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
+				this.garbageCollector.nodeUpdated({
+					node: { type: "Blob", path: blobPath },
+					reason: "Loaded",
+				}),
 			isBlobDeleted: (blobPath: string) => this.garbageCollector.isNodeDeleted(blobPath),
 			runtime: this,
 			stashedBlobs: pendingRuntimeState?.pendingAttachmentBlobs,
@@ -2915,12 +2903,11 @@ export class ContainerRuntime
 				"entryPoint must be defined on data store runtime for using getAliasedDataStoreEntryPoint",
 			);
 		}
-		this.garbageCollector.nodeUpdated(
-			`/${internalId}`,
-			"Loaded",
-			undefined /* timestampMs */,
-			context.packagePath,
-		);
+		this.garbageCollector.nodeUpdated({
+			node: { type: "DataStore", path: `/${internalId}` },
+			reason: "Loaded",
+			packagePath: context.packagePath,
+		});
 		return channel.entryPoint;
 	}
 
@@ -3506,11 +3493,19 @@ export class ContainerRuntime
 				latestSummaryRefSeqNum,
 			);
 
+			/**
+			 * This was added to validate that the summarizer node tree has the same reference sequence number from the
+			 * top running summarizer down to the lowest summarizer node.
+			 *
+			 * The order of mismatch numbers goes (validate sequence number)-(node sequence number).
+			 * Generally the validate sequence number comes from the running summarizer and the node sequence number comes from the
+			 * summarizer nodes.
+			 */
 			if (
 				startSummaryResult.invalidNodes > 0 ||
 				startSummaryResult.mismatchNumbers.size > 0
 			) {
-				summaryLogger.sendErrorEvent({
+				summaryLogger.sendTelemetryEvent({
 					eventName: "LatestSummaryRefSeqNumMismatch",
 					details: {
 						...startSummaryResult,
