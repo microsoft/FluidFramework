@@ -1050,7 +1050,7 @@ describeCompat("Container connections", "NoCompat", (getTestObjectProvider) => {
 		deferredSnapshot.resolve();
 
 		await finishLoadingTestContainers(container, await containerP);
-	});
+	}).timeout(62000); // this is actual 2 second timeout, 60 seconds are fake
 
 	async function testEarlySnapshot(deltaConnection?: "delayed" | "none") {
 		// Create container
@@ -1093,13 +1093,13 @@ describeCompat("Container connections", "NoCompat", (getTestObjectProvider) => {
 
 	it("Test early snapshot, deltaConnection = undefined ", async () => {
 		await testEarlySnapshot(undefined);
-	});
+	}).timeout(62000); // this is actual 2 second timeout, 60 seconds are fake
 
 	it("Test early snapshot, deltaConnection = 'delayed' ", async () => {
 		await testEarlySnapshot("delayed");
-	});
+	}).timeout(62000); // this is actual 2 second timeout, 60 seconds are fake
 
 	it("Test early snapshot, deltaConnection = 'none' ", async () => {
 		await testEarlySnapshot("none");
-	});
+	}).timeout(62000); // this is actual 2 second timeout, 60 seconds are fake
 });
