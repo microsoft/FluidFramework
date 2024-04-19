@@ -11,10 +11,7 @@ import {
 } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	IFluidHandleContext,
-	type IFluidHandleErased,
 	type IFluidHandleInternal,
-	fluidHandleSymbol,
-	toFluidHandleErased,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
@@ -30,6 +27,7 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import {
+	FluidHandleBase,
 	SummaryTreeBuilder,
 	createResponseError,
 	generateHandleContextPath,
@@ -54,12 +52,8 @@ import { IBlobMetadata } from "./metadata.js";
  * DataObject.request() recognizes requests in the form of `/blobs/<id>`
  * and loads blob.
  */
-export class BlobHandle implements IFluidHandleInternal<ArrayBufferLike> {
+export class BlobHandle extends FluidHandleBase<ArrayBufferLike> {
 	private attached: boolean = false;
-
-	public get IFluidHandle(): IFluidHandleInternal {
-		return this;
-	}
 
 	public get isAttached(): boolean {
 		return this.routeContext.isAttached && this.attached;
@@ -73,11 +67,8 @@ export class BlobHandle implements IFluidHandleInternal<ArrayBufferLike> {
 		public get: () => Promise<ArrayBufferLike>,
 		private readonly onAttachGraph?: () => void,
 	) {
+		super();
 		this.absolutePath = generateHandleContextPath(path, this.routeContext);
-	}
-
-	public get [fluidHandleSymbol](): IFluidHandleErased<ArrayBufferLike> {
-		return toFluidHandleErased(this);
 	}
 
 	public attachGraph() {

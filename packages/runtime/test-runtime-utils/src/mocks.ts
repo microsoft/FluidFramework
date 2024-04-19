@@ -15,7 +15,6 @@ import {
 	IRequest,
 	IResponse,
 	type ITelemetryBaseLogger,
-	toFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
@@ -46,6 +45,7 @@ import {
 import {
 	getNormalizedObjectStoragePathParts,
 	mergeStats,
+	toFluidHandleInternal,
 } from "@fluidframework/runtime-utils/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";

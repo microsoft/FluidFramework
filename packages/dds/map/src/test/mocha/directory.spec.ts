@@ -7,10 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import {
-	type IFluidHandleInternal,
-	toFluidHandleInternal,
-} from "@fluidframework/core-interfaces/internal";
+import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -20,6 +17,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { IDirectoryNewStorageFormat } from "../../directory.js";
 import {
 	IDirectory,

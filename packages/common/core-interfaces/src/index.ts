@@ -33,14 +33,7 @@ export type {
 	IFluidHandleInternal,
 	IFluidHandleErased,
 } from "./handles.js";
-export {
-	IFluidHandleContext,
-	IFluidHandle,
-	fluidHandleSymbol,
-	toFluidHandleInternal,
-	toFluidHandleErased,
-	isFluidHandle,
-} from "./handles.js";
+export { IFluidHandleContext, IFluidHandle, fluidHandleSymbol } from "./handles.js";
 
 export type {
 	ILoggingError,

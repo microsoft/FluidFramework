@@ -11,12 +11,12 @@ import {
 	IFluidLoadable,
 	IProvideFluidHandle,
 	IProvideFluidLoadable,
-	toFluidHandleInternal,
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { IFluidDependencySynthesizer } from "../IFluidDependencySynthesizer.js";
 import { DependencyContainer } from "../index.js";
 import {

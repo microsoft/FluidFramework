@@ -12,11 +12,7 @@ import {
 	IResponse,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
-import {
-	toFluidHandleInternal,
-	type IEvent,
-	type IFluidHandleInternal,
-} from "@fluidframework/core-interfaces/internal";
+import { type IEvent, type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils/internal";
@@ -55,7 +51,7 @@ import {
 	channelsTreeName,
 	gcDataBlobKey,
 } from "@fluidframework/runtime-definitions/internal";
-import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
+import { addBlobToSummary, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	DataCorruptionError,
 	DataProcessingError,

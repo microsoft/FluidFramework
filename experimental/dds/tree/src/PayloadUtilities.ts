@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { toFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
-import { isFluidHandle } from '@fluidframework/runtime-utils/internal';
+import { isFluidHandle, toFluidHandleInternal } from '@fluidframework/runtime-utils/internal';
 import { compareArrays } from '@fluidframework/core-utils/internal';
 
 import { Payload } from './persisted-types/index.js';

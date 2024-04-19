@@ -7,14 +7,11 @@ import { RuntimeHeaders } from "@fluidframework/container-runtime/internal";
 import {
 	FluidObject,
 	IFluidHandleContext,
-	type IFluidHandleErased,
 	type IFluidHandleInternal,
 	IRequest,
-	fluidHandleSymbol,
-	toFluidHandleErased,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { responseToException } from "@fluidframework/runtime-utils/internal";
+import { FluidHandleBase, responseToException } from "@fluidframework/runtime-utils/internal";
 
 /**
  * This handle is used to dynamically load a Fluid object on a remote client and is created on parsing a serialized
@@ -23,11 +20,8 @@ import { responseToException } from "@fluidframework/runtime-utils/internal";
  * custom objects) that are stored in SharedObjects. The Data Store or SharedObject corresponding to the
  * IFluidHandle can be retrieved by calling `get` on it.
  */
-export class RemoteFluidObjectHandle implements IFluidHandleInternal<FluidObject> {
+export class RemoteFluidObjectHandle extends FluidHandleBase<FluidObject> {
 	public get IFluidHandleContext() {
-		return this;
-	}
-	public get IFluidHandle(): IFluidHandleInternal {
 		return this;
 	}
 
@@ -43,14 +37,11 @@ export class RemoteFluidObjectHandle implements IFluidHandleInternal<FluidObject
 		public readonly absolutePath: string,
 		public readonly routeContext: IFluidHandleContext,
 	) {
+		super();
 		assert(
 			absolutePath.startsWith("/"),
 			0x19d /* "Handles should always have absolute paths" */,
 		);
-	}
-
-	public get [fluidHandleSymbol](): IFluidHandleErased<FluidObject> {
-		return toFluidHandleErased(this);
 	}
 
 	public async get(): Promise<FluidObject> {

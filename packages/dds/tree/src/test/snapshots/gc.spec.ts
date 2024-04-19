@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
-import { toFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	MockContainerRuntimeFactory,

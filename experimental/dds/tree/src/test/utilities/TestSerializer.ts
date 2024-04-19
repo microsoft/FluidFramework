@@ -3,14 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandleErased, IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
-import {
-	IFluidHandle,
-	IRequest,
-	IResponse,
-	fluidHandleSymbol,
-	toFluidHandleErased,
-} from '@fluidframework/core-interfaces/internal';
+import { IFluidHandle, IRequest, IResponse } from '@fluidframework/core-interfaces/internal';
+import { FluidHandleBase } from '@fluidframework/runtime-utils/internal';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 
 export class TestFluidSerializer implements IFluidSerializer {
@@ -37,13 +31,9 @@ export class TestFluidSerializer implements IFluidSerializer {
 	}
 }
 
-export class TestFluidHandle implements IFluidHandleInternal {
+export class TestFluidHandle extends FluidHandleBase<unknown> {
 	public absolutePath;
 	public isAttached;
-
-	public get IFluidHandle(): IFluidHandleInternal {
-		return this;
-	}
 
 	public async get(): Promise<any> {
 		throw new Error('Method not implemented.');
@@ -59,9 +49,5 @@ export class TestFluidHandle implements IFluidHandleInternal {
 
 	public async resolveHandle(request: IRequest): Promise<IResponse> {
 		throw new Error('Method not implemented.');
-	}
-
-	public get [fluidHandleSymbol](): IFluidHandleErased<unknown> {
-		return toFluidHandleErased(this);
 	}
 }

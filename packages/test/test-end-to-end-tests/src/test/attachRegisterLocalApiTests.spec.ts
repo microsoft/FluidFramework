@@ -9,7 +9,7 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import { IRequest, toFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { IRequest } from "@fluidframework/core-interfaces/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import {
 	IContainerRuntimeBase,
@@ -25,6 +25,7 @@ import {
 	TestFluidObjectFactory,
 	createDocumentId,
 } from "@fluidframework/test-utils/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
 /*
 Context no longer provides observability point to when context changes its attach states

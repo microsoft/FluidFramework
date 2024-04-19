@@ -4,7 +4,8 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { fluidHandleSymbol, toFluidHandleErased } from "@fluidframework/core-interfaces/internal";
+import { toFluidHandleErased } from "@fluidframework/runtime-utils/internal";
+import { fluidHandleSymbol } from "@fluidframework/core-interfaces/internal";
 import type {
 	IFluidHandleErased,
 	IFluidHandleInternal,

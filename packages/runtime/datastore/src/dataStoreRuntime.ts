@@ -11,7 +11,6 @@ import {
 	IFluidHandleContext,
 	IRequest,
 	IResponse,
-	toFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import {
@@ -67,6 +66,7 @@ import {
 	exceptionToResponse,
 	generateHandleContextPath,
 	processAttachMessageGCData,
+	toFluidHandleInternal,
 	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils/internal";
 import {

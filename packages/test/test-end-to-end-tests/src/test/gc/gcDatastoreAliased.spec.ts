@@ -13,7 +13,7 @@ import {
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { toFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	ITestObjectProvider,
 	createSummarizer,

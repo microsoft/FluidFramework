@@ -3,38 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	IFluidHandleErased,
-	IFluidHandleInternal,
-} from "@fluidframework/core-interfaces/internal";
-import {
-	FluidObject,
-	IFluidHandleContext,
-	fluidHandleSymbol,
-	toFluidHandleErased,
-} from "@fluidframework/core-interfaces/internal";
-import { generateHandleContextPath } from "@fluidframework/runtime-utils/internal";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { FluidObject, IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import { generateHandleContextPath, FluidHandleBase } from "@fluidframework/runtime-utils/internal";
 
 /**
  * Handle for a shared {@link @fluidframework/core-interfaces#FluidObject}.
  * @alpha
  */
-export class FluidObjectHandle<T extends FluidObject = FluidObject>
-	implements IFluidHandleInternal<T>
-{
+export class FluidObjectHandle<T extends FluidObject = FluidObject> extends FluidHandleBase<T> {
 	private readonly pendingHandlesToMakeVisible: Set<IFluidHandleInternal> = new Set();
 
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#IFluidHandle.absolutePath}
 	 */
 	public readonly absolutePath: string;
-
-	/**
-	 * {@inheritDoc @fluidframework/core-interfaces#IProvideFluidHandle.IFluidHandle}
-	 */
-	public get IFluidHandle(): IFluidHandleInternal {
-		return this;
-	}
 
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#IFluidHandle.isAttached}
@@ -80,11 +63,8 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject>
 		public readonly path: string,
 		public readonly routeContext: IFluidHandleContext,
 	) {
+		super();
 		this.absolutePath = generateHandleContextPath(path, this.routeContext);
-	}
-
-	public get [fluidHandleSymbol](): IFluidHandleErased<T> {
-		return toFluidHandleErased(this);
 	}
 
 	/**

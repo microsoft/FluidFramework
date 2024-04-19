@@ -62,6 +62,10 @@ export const IFluidHandle = "IFluidHandle";
 export interface IProvideFluidHandle {
 	/**
 	 * @deprecated {@link IFluidHandleInternal} and {@link IFluidHandleInternal} should be identified should be identified using the {@link fluidHandleSymbol} symbol.
+	 * @privateRemarks
+	 * This field must be kept so that code to detect Fluid handles from before 2.0.0-rc.4.0.0 (When fluidHandleSymbol was added) still detects handles.
+	 * This is required due to some use-cases mixing package versions.
+	 * More details in packages/runtime/runtime-utils/src/handles.ts and on {@link fluidHandleSymbol}.
 	 */
 	readonly [IFluidHandle]: IFluidHandleInternal;
 }
@@ -91,18 +95,6 @@ export interface IFluidHandleInternal<
 	 */
 	bind(handle: IFluidHandleInternal): void;
 }
-
-/**
- * Setting to opt into compatibility with handles from before {@link fluidHandleSymbol} existed.
- *
- * Some code which uses this library might dynamically load multiple versions of it,
- * as well as old or duplicated versions of packages which produce or implement handles.
- * To correctly interoperate with this old packages and object produced by them, the old in-memory format for handles, without the symbol, are explicitly supported.
- *
- * This setting mostly exists as a way to easily find any code that only exists to provide this compatibility and clarify how to remove that compatibility.
- * At some point this might be removed or turned into an actual configuration option, but for now its really just documentation.
- */
-const enableBackwardsCompatibility = true;
 
 /**
  * Symbol which must only be used on {@link FluidObject}, and is used to identify such objects.
@@ -149,52 +141,3 @@ export interface IFluidHandle<out T = unknown> {
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IFluidHandleErased<T> extends ErasedType<readonly ["IFluidHandle", T]> {}
-
-/**
- * Downcast an IFluidHandle to an IFluidHandleInternal.
- * @alpha
- */
-export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleInternal<T> {
-	if (!(fluidHandleSymbol in handle) || !(fluidHandleSymbol in handle[fluidHandleSymbol])) {
-		if (enableBackwardsCompatibility && IFluidHandle in handle) {
-			return handle[IFluidHandle] as IFluidHandleInternal<T>;
-		}
-		throw new TypeError("Invalid IFluidHandle");
-	}
-
-	// This casts the IFluidHandleErased from the symbol instead of `handle` to ensure that if someone
-	// implements their own IFluidHandle in terms of an existing handle, it won't break anything.
-	return handle[fluidHandleSymbol] as unknown as IFluidHandleInternal<T>;
-}
-
-/**
- * Type erase IFluidHandleInternal for use with {@link fluidHandleSymbol}.
- * @alpha
- */
-export function toFluidHandleErased<T>(handle: IFluidHandleInternal<T>): IFluidHandleErased<T> {
-	return handle as unknown as IFluidHandleErased<T>;
-}
-
-/**
- * Type erase IFluidHandleInternal for use with {@link fluidHandleSymbol}.
- * @internal
- */
-export function isFluidHandle(value: unknown): value is IFluidHandle {
-	// `in` gives a type error on non-objects and null, so filter them out
-	if (typeof value !== "object" || value === null) {
-		return false;
-	}
-	if (fluidHandleSymbol in value) {
-		return true;
-	}
-	// If enableBackwardsCompatibility, run check for FluidHandles predating use of fluidHandleSymbol.
-	if (enableBackwardsCompatibility && IFluidHandle in value) {
-		// Since this check can have false positives, make it a bit more robust by checking value[IFluidHandle][IFluidHandle]
-		const inner = value[IFluidHandle] as IFluidHandle;
-		if (typeof inner !== "object" || inner === null) {
-			return false;
-		}
-		return IFluidHandle in inner;
-	}
-	return false;
-}

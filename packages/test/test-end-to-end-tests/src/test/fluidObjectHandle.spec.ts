@@ -11,7 +11,7 @@ import {
 	describeCompat,
 } from "@fluid-private/test-version-utils";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
-import { toFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import {

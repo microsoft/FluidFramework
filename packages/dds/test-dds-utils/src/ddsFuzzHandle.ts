@@ -4,24 +4,16 @@
  */
 
 import {
-	fluidHandleSymbol,
-	toFluidHandleErased,
 	type IFluidHandle,
 	type IFluidHandleContext,
-	type IFluidHandleErased,
-	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
-import { generateHandleContextPath } from "@fluidframework/runtime-utils/internal";
+import { FluidHandleBase, generateHandleContextPath } from "@fluidframework/runtime-utils/internal";
 
 /**
  * @internal
  */
-export class DDSFuzzHandle implements IFluidHandleInternal<string> {
+export class DDSFuzzHandle extends FluidHandleBase<string> {
 	private attached: boolean = false;
-
-	public get IFluidHandle(): IFluidHandleInternal<string> {
-		return this;
-	}
 
 	public get isAttached(): boolean {
 		return this.routeContext.isAttached && this.attached;
@@ -33,6 +25,7 @@ export class DDSFuzzHandle implements IFluidHandleInternal<string> {
 		public readonly id: string,
 		public readonly routeContext: IFluidHandleContext,
 	) {
+		super();
 		this.absolutePath = generateHandleContextPath(id, this.routeContext);
 	}
 
@@ -48,8 +41,4 @@ export class DDSFuzzHandle implements IFluidHandleInternal<string> {
 	}
 
 	public bind(handle: IFluidHandle): void {}
-
-	public get [fluidHandleSymbol](): IFluidHandleErased<string> {
-		return toFluidHandleErased(this);
-	}
 }

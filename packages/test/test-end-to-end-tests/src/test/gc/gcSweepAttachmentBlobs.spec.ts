@@ -26,7 +26,7 @@ import {
 	defaultMaxAttemptsForSubmitFailures,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/summary";
-import { toFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { delay } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";

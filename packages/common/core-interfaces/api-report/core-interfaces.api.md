@@ -359,9 +359,6 @@ export interface IResponse {
     value: any;
 }
 
-// @internal
-export function isFluidHandle(value: unknown): value is IFluidHandle;
-
 // @internal (undocumented)
 export interface ISignalEnvelope {
     address?: string;
@@ -430,12 +427,6 @@ export interface Tagged<V, T extends string = string> {
 
 // @public
 export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
-
-// @alpha
-export function toFluidHandleErased<T>(handle: IFluidHandleInternal<T>): IFluidHandleErased<T>;
-
-// @alpha
-export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleInternal<T>;
 
 // @public
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;

@@ -10,12 +10,12 @@ import {
 	IFluidHandle,
 	IFluidHandleContext,
 	type IFluidHandleInternal,
-	toFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import {
 	generateHandleContextPath,
 	isSerializedHandle,
 	isFluidHandle,
+	toFluidHandleInternal,
 } from "@fluidframework/runtime-utils/internal";
 
 import { RemoteFluidObjectHandle } from "./remoteObjectHandle.js";

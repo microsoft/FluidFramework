@@ -13,13 +13,8 @@ import {
 	IFluidHandleContext,
 	IRequest,
 	IResponse,
-	fluidHandleSymbol,
-	toFluidHandleErased,
 } from "@fluidframework/core-interfaces/internal";
-import type {
-	IFluidHandleErased,
-	IFluidHandleInternal,
-} from "@fluidframework/core-interfaces/internal";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 // This test doesn't care to test compat of the Fluid handle implementation, it's just used for convenience
 // to simulate an unknown object.
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
@@ -30,6 +25,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
+import { FluidHandleBase } from "@fluidframework/runtime-utils/internal";
 import { defaultGCConfig } from "./gcTestConfigs.js";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
@@ -37,13 +33,9 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
  * An IFluidHandle implementation that has a random path / url. This is used to test that adding this handle to
  * a DDS doesn't yield unexpected results for GC.
  */
-export class TestFluidHandle implements IFluidHandleInternal {
+export class TestFluidHandle extends FluidHandleBase<unknown> {
 	public absolutePath: string = "/randomPath";
 	public isAttached: boolean = false;
-
-	public get IFluidHandle(): IFluidHandleInternal {
-		return this;
-	}
 
 	public async get(): Promise<any> {
 		throw new Error("Method not implemented.");
@@ -59,10 +51,6 @@ export class TestFluidHandle implements IFluidHandleInternal {
 
 	public async resolveHandle(request: IRequest): Promise<IResponse> {
 		throw new Error("Method not implemented.");
-	}
-
-	public get [fluidHandleSymbol](): IFluidHandleErased<unknown> {
-		return toFluidHandleErased(this);
 	}
 }
 
