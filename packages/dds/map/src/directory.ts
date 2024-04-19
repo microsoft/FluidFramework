@@ -17,8 +17,7 @@ import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtim
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { SharedObject, ValueType, parseHandles } from "@fluidframework/shared-object-base/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
 import path from "path-browserify";
 
 import {

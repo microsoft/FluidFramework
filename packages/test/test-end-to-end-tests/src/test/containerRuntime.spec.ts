@@ -195,7 +195,15 @@ describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider
 		provider = getTestObjectProvider();
 	});
 
-	it("upgrade", async () => {
+	it("upgrade with explicitSchemaControl = false", async () => {
+		await testUpgrade(false);
+	});
+
+	it("upgrade with explicitSchemaControl = true", async () => {
+		await testUpgrade(true);
+	});
+
+	async function testUpgrade(explicitSchemaControl: boolean) {
 		const options: ITestContainerConfig = {
 			runtimeOptions: {
 				explicitSchemaControl: true,
@@ -216,7 +224,7 @@ describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider
 
 		const container2 = await loadContainer({
 			runtimeOptions: {
-				explicitSchemaControl: true,
+				explicitSchemaControl,
 				enableRuntimeIdCompressor: "delayed",
 			},
 		});
@@ -242,11 +250,22 @@ describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider
 		entry2._root.set("someKey4", "someValue");
 		await provider.ensureSynchronized();
 
-		// Now ID compressor should give us short IDs!
-		const id = entry2._context.containerRuntime.generateDocumentUniqueId();
-		assert(Number.isInteger(id));
+		const id = entry._context.containerRuntime.generateDocumentUniqueId();
+		const id2 = entry2._context.containerRuntime.generateDocumentUniqueId();
 
-		const id2 = entry._context.containerRuntime.generateDocumentUniqueId();
-		assert(Number.isInteger(id2));
-	});
+		if (explicitSchemaControl) {
+			// Now ID compressor should give us short IDs!
+			assert(Number.isInteger(id));
+			assert(Number.isInteger(id2));
+		} else {
+			// Runtime will not change enableRuntimeIdCompressor setting if explicitSchemaControl is off
+			// Other containers will not expect ID compressor ops and will fail, thus runtime does not allow this upgrade.
+			// generateDocumentUniqueId() works, but gives long IDs
+			assert(!Number.isInteger(id));
+			assert(!Number.isInteger(id2));
+		}
+
+		assert(!container.closed);
+		assert(!container2.closed);
+	}
 });

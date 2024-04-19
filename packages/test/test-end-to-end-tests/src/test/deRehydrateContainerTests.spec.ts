@@ -36,6 +36,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 import { createDataStoreFactory } from "@fluidframework/runtime-utils/internal";
 import * as semver from "semver";
+import { pkgVersion } from "../packageVersion.js";
 
 // eslint-disable-next-line import/no-internal-modules
 import type { SnapshotWithBlobs } from "../../../../loader/container-loader/lib/serializedStateManager.js";
@@ -278,8 +279,9 @@ describeCompat(
 				// Thus there is no value in running more pairs that are essentially exactly the same as other tests.
 				provider.type === "TestObjectProviderWithVersionedLoad" ||
 				// These tests only work with the latest version of loader -
-				// they do make assumptions about structure of the tree (.channels nodes) that differs from 1.x.
-				apis.loader.version.startsWith("1.") ||
+				// they do make certain assumptions that are not valid for older loaders. This check could be relaxed in
+				// the future.
+				apis.loader.version !== pkgVersion ||
 				(semver.compare(provider.driver.version, "0.46.0") === -1 &&
 					(provider.driver.type === "routerlicious" ||
 						provider.driver.type === "tinylicious"))

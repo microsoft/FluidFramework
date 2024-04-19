@@ -25,8 +25,8 @@ import {
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
 } from "@fluidframework/runtime-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
+	ITelemetryLoggerExt,
 	DataProcessingError,
 	EventEmitterWithErrorHandling,
 	MonitoringContext,

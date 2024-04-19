@@ -22,8 +22,8 @@ import {
 	TokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
+	ITelemetryLoggerExt,
 	MonitoringContext,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
