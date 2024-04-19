@@ -289,7 +289,7 @@ describe("Timers", () => {
 
 		it("Timer exception handler", () => {
 			let exceptionCounter = 0;
-			const handler = () => {
+			const handler = (): never => {
 				throw new Error("err");
 			};
 
@@ -301,11 +301,11 @@ describe("Timers", () => {
 
 			timer.restart();
 			clock.tick(defaultTimeout + 10);
-			assert((exceptionCounter as any) === 2);
+			assert((exceptionCounter as unknown) === 2);
 
 			timer.restart(1, handler);
 			clock.tick(2);
-			assert((exceptionCounter as any) === 3);
+			assert((exceptionCounter as unknown) === 3);
 		});
 	});
 
