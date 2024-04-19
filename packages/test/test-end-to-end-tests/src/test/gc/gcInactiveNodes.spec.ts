@@ -224,15 +224,38 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 				await summarize(summarizerRuntime);
 				validateNoInactiveEvents();
 
-				// Revive the inactive data store and validate that we get the revivedEvent event.
+				// Revive the inactive data store (via both DDS reference and DataStore reference) and validate that we get the revivedEvent events.
+				defaultDataStore._root.set("dataStore_root", dataObject._root.handle);
 				defaultDataStore._root.set("dataStore1", dataObject.handle);
 				await summarize(summarizerRuntime);
 				mockLogger.assertMatch(
 					[
+						// For DDS
 						{
 							eventName: revivedEvent,
 							timeout: inactiveTimeoutMs,
-							id: { value: url, tag: TelemetryDataTag.CodeArtifact },
+							trackedId: url,
+							type: "SubDataStore",
+							id: {
+								value: dataObject._root.handle.absolutePath,
+								tag: TelemetryDataTag.CodeArtifact,
+							},
+							pkg: { value: TestDataObjectType, tag: TelemetryDataTag.CodeArtifact },
+							fromId: {
+								value: defaultDataStore._root.handle.absolutePath,
+								tag: TelemetryDataTag.CodeArtifact,
+							},
+						},
+						// For DataStore
+						{
+							eventName: revivedEvent,
+							timeout: inactiveTimeoutMs,
+							trackedId: url,
+							type: "DataStore",
+							id: {
+								value: url,
+								tag: TelemetryDataTag.CodeArtifact,
+							},
 							pkg: { value: TestDataObjectType, tag: TelemetryDataTag.CodeArtifact },
 							fromId: {
 								value: defaultDataStore._root.handle.absolutePath,
@@ -240,7 +263,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 							},
 						},
 					],
-					"revived event not generated as expected",
+					"revived events not generated as expected",
 					true /* inlineDetailsProp */,
 				);
 			},
