@@ -110,11 +110,12 @@ export class Timer implements ITimer {
 	}
 
 	private runningState: IRunningTimerState | undefined;
+	private readonly getCurrentTick: () => number = (): number => Date.now();
 
 	public constructor(
 		private readonly defaultTimeout: number,
 		private readonly defaultHandler: () => void,
-		private readonly getCurrentTick: () => number = (): number => Date.now(),
+		private readonly exceptionHandler?: (error: unknown) => void,
 	) {}
 
 	/**
@@ -206,7 +207,11 @@ export class Timer implements ITimer {
 			// Run clear first, in case the handler decides to start again
 			const handler = this.runningState.handler;
 			this.clear();
-			handler();
+			try {
+				handler();
+			} catch (error) {
+				this.exceptionHandler?.(error);
+			}
 		} else {
 			// Restart with remaining time
 			const remainingTime = this.calculateRemainingTime(restart);

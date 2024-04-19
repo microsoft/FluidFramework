@@ -361,21 +361,19 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		clientIdFromPausedSession?: string,
 	) {
 		this._clientId = clientIdFromPausedSession;
+		const errorHandler = (error) => this.handler.onCriticalError(error);
 		this.prevClientLeftTimer = new Timer(
 			// Default is 5 min for which we are going to wait for its own "leave" message. This is same as
 			// the max time on server after which leave op is sent.
 			this.handler.maxClientLeaveWaitTime ?? 300000,
 			() => {
-				try {
-					assert(
-						this.connectionState !== ConnectionState.Connected,
-						0x2ac /* "Connected when timeout waiting for leave from previous session fired!" */,
-					);
-					this.applyForConnectedState("timeout");
-				} catch (error) {
-					this.handler.onCriticalError(normalizeError(error));
-				}
+				assert(
+					this.connectionState !== ConnectionState.Connected,
+					0x2ac /* "Connected when timeout waiting for leave from previous session fired!" */,
+				);
+				this.applyForConnectedState("timeout");
 			},
+			errorHandler,
 		);
 
 		this.joinOpTimer = new Timer(
@@ -394,6 +392,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 				};
 				this.handler.logConnectionIssue("NoJoinOp", "error", details);
 			},
+			errorHandler,
 		);
 	}
 
