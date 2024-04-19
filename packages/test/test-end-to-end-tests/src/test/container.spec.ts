@@ -1079,13 +1079,14 @@ describeCompat("Container connections", "NoCompat", (getTestObjectProvider) => {
 		// Wait for connection to happen
 		await snapshotP;
 
-		// Simulate really long snapshot load
+		// Simulate really long time to establish connection
 		await clock.tickAsync(60 * 1000);
+
+		// Validate that connection attempt was made (or not) depending on input parameters
+		assert(connectionCalled === (deltaConnection === undefined));
 
 		// Allow connection to keep going.
 		deferredConnect.resolve();
-
-		assert(connectionCalled === (deltaConnection === undefined));
 
 		await finishLoadingTestContainers(container, await containerP);
 	}
