@@ -15,8 +15,10 @@ import {
 	ISequencedClient,
 	ITokenClaims,
 } from "@fluidframework/protocol-definitions";
-import { TelemetryEventCategory } from "@fluidframework/telemetry-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	TelemetryEventCategory,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 
 import { Audience } from "../audience.js";
@@ -157,6 +159,10 @@ describe("ConnectionStateHandler Tests", () => {
 			connectionStateChanged: () => {},
 			logger: createChildLogger(),
 			clientShouldHaveLeft: (clientId: string) => {},
+			onCriticalError: (error) => {
+				// eslint-disable-next-line @typescript-eslint/no-throw-literal
+				throw error;
+			},
 		};
 
 		deltaManagerForCatchingUp = new MockDeltaManagerForCatchingUp();

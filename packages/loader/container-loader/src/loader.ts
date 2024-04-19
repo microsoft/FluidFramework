@@ -26,8 +26,8 @@ import {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import { IClientDetails } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
+	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
 	UsageError,

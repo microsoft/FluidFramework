@@ -36,6 +36,15 @@ export {
 export * from "./documentation-domain/index.js";
 
 export {
+	documentToHtml,
+	documentationNodeToHtml,
+	documentationNodesToHtml,
+	type Transformation as ToHtmlTransformation,
+	type Transformations as ToHtmlTransformations,
+	type TransformationConfig as ToHtmlConfig,
+	type TransformationContext as ToHtmlContext,
+} from "./documentation-domain-to-html/index.js";
+export {
 	DocumentWriter,
 	type HtmlRenderContext,
 	type HtmlRenderers,

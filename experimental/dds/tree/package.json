@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/tree",
-	"version": "2.0.0-rc.3.0.0",
+	"version": "2.0.0-rc.4.0.0",
 	"description": "Distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -72,6 +72,7 @@
 		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/runtime-definitions": "workspace:~",
+		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
