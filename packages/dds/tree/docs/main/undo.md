@@ -1,6 +1,9 @@
 # Undo
 
 This document offers a high-level description of the undo system.
+This is largely a theoretical discussion,
+for a more concrete description of the currently implemented system,
+[V1 Undo](./v1-undo.md).
 
 ## Undo Model and Semantics
 
