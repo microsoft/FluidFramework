@@ -148,6 +148,18 @@ describe("treeApi", () => {
 			const root = getView(config).root;
 			assert.equal(Tree.shortId(root), undefined);
 		});
+		it("returns undefined when the provided identifier is an unknown stable id by the idCompressor.", () => {
+			const schemaWithIdentifier = schema.object("parent", {
+				identifier: schema.identifier,
+			});
+			const config = new TreeConfiguration(schemaWithIdentifier, () => ({
+				identifier: "invalidUUID",
+			}));
+
+			const root = getView(config).root;
+
+			assert.equal(Tree.shortId(root), undefined);
+		});
 	});
 
 	describe("on", () => {
