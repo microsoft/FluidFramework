@@ -103,7 +103,7 @@ describe("ModularChangeFamily integration", () => {
 
 			const [move, remove, expected] = getChanges();
 			const rebased = family.rebase(
-				remove,
+				makeAnonChange(remove),
 				tagChange(move, tag1),
 				revisionMetadataSourceFromInfo([{ revision: tag1 }]),
 			);
@@ -128,7 +128,7 @@ describe("ModularChangeFamily integration", () => {
 			const restore = family.invert(tagChange(remove, baseTag), false);
 			const expected = family.compose([makeAnonChange(restore), makeAnonChange(move)]);
 			const rebased = family.rebase(
-				move,
+				makeAnonChange(move),
 				tagChange(remove, baseTag),
 				revisionMetadataSourceFromInfo([{ revision: baseTag }]),
 			);
@@ -179,7 +179,7 @@ describe("ModularChangeFamily integration", () => {
 
 			const taggedMoves = tagChange(moves, tag1);
 			const rebased = family.rebase(
-				modify,
+				makeAnonChange(modify),
 				taggedMoves,
 				defaultRevisionMetadataFromChanges([taggedMoves]),
 			);
@@ -271,7 +271,7 @@ describe("ModularChangeFamily integration", () => {
 			const [move, remove, expected] = getChanges();
 			const baseTag = mintRevisionTag();
 			const rebased = family.rebase(
-				remove,
+				makeAnonChange(remove),
 				tagChange(move, baseTag),
 				revisionMetadataSourceFromInfo([{ revision: baseTag }]),
 			);

@@ -672,10 +672,11 @@ export class ModularChangeFamily
 	}
 
 	public rebase(
-		change: ModularChangeset,
+		taggedChange: TaggedChange<ModularChangeset>,
 		over: TaggedChange<ModularChangeset>,
 		revisionMetadata: RevisionMetadataSource,
 	): ModularChangeset {
+		const change = taggedChange.change;
 		const maxId = Math.max(change.maxId ?? -1, over.change.maxId ?? -1);
 		const idState: IdAllocationState = { maxId };
 		const genId: IdAllocator = idAllocatorFromState(idState);

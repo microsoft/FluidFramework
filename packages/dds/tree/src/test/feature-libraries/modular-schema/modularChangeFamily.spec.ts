@@ -983,7 +983,7 @@ describe("ModularChangeFamily", () => {
 	describe("rebase", () => {
 		it("rebase specific ↷ specific", () => {
 			const rebased = family.rebase(
-				rootChange1b,
+				makeAnonChange(rootChange1b),
 				makeAnonChange(rootChange1a),
 				revisionMetadataSourceFromInfo([]),
 			);
@@ -992,7 +992,7 @@ describe("ModularChangeFamily", () => {
 
 		it("rebase specific ↷ generic", () => {
 			const rebased = family.rebase(
-				rootChange1b,
+				makeAnonChange(rootChange1b),
 				makeAnonChange(rootChange1aGeneric),
 				revisionMetadataSourceFromInfo([]),
 			);
@@ -1001,7 +1001,7 @@ describe("ModularChangeFamily", () => {
 
 		it("rebase generic ↷ specific", () => {
 			const rebased = family.rebase(
-				rootChange1bGeneric,
+				makeAnonChange(rootChange1bGeneric),
 				makeAnonChange(rootChange1a),
 				revisionMetadataSourceFromInfo([]),
 			);
@@ -1010,7 +1010,7 @@ describe("ModularChangeFamily", () => {
 
 		it("rebase generic ↷ generic", () => {
 			const rebased = family.rebase(
-				rootChange1bGeneric,
+				makeAnonChange(rootChange1bGeneric),
 				makeAnonChange(rootChange1aGeneric),
 				revisionMetadataSourceFromInfo([]),
 			);

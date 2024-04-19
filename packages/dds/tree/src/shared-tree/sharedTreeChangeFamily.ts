@@ -135,15 +135,15 @@ export class SharedTreeChangeFamily
 	}
 
 	public rebase(
-		change: SharedTreeChange,
+		change: TaggedChange<SharedTreeChange>,
 		over: TaggedChange<SharedTreeChange>,
 		revisionMetadata: RevisionMetadataSource,
 	): SharedTreeChange {
-		if (change.changes.length === 0 || over.change.changes.length === 0) {
-			return change;
+		if (change.change.changes.length === 0 || over.change.changes.length === 0) {
+			return change.change;
 		}
 
-		if (hasSchemaChange(change) || hasSchemaChange(over.change)) {
+		if (hasSchemaChange(change.change) || hasSchemaChange(over.change)) {
 			// Any SharedTreeChange (a list of sub-changes) that contains a schema change will cause ANY change that rebases over it to conflict.
 			// Similarly, any SharedTreeChange containing a schema change will fail to rebase over ANY change.
 			// Those two combine to mean: no concurrency with schema changes is supported.
@@ -155,11 +155,11 @@ export class SharedTreeChangeFamily
 			return SharedTreeChangeFamily.emptyChange;
 		}
 		assert(
-			change.changes.length === 1 && over.change.changes.length === 1,
+			change.change.changes.length === 1 && over.change.changes.length === 1,
 			0x884 /* SharedTreeChange should have exactly one inner change if no schema change is present. */,
 		);
 
-		const dataChangeIntention = change.changes[0];
+		const dataChangeIntention = change.change.changes[0];
 		const dataChangeOver = over.change.changes[0];
 		assert(
 			dataChangeIntention.type === "data" && dataChangeOver.type === "data",
@@ -171,7 +171,7 @@ export class SharedTreeChangeFamily
 				{
 					type: "data",
 					innerChange: this.modularChangeFamily.rebase(
-						dataChangeIntention.innerChange,
+						mapTaggedChange(change, dataChangeIntention.innerChange),
 						mapTaggedChange(over, dataChangeOver.innerChange),
 						revisionMetadata,
 					),
