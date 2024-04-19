@@ -1280,6 +1280,7 @@ importers:
       puppeteer: ^22.2.0
       react: ^17.0.1
       rimraf: ^4.4.0
+      source-map-loader: ^2.0.0
       ts-jest: ^29.1.1
       ts-loader: ^9.3.0
       typescript: ~5.1.6
@@ -1321,6 +1322,7 @@ importers:
       prettier: 3.0.3
       puppeteer: 22.2.0_typescript@5.1.6
       rimraf: 4.4.1
+      source-map-loader: 2.0.2_webpack@5.89.0
       ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
@@ -5220,6 +5222,7 @@ importers:
       '@fluidframework/id-compressor': link:../../../packages/runtime/id-compressor
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
+      '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/shared-object-base': link:../../../packages/dds/shared-object-base
       '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
       '@fluidframework/tree': link:../../../packages/dds/tree
@@ -5240,7 +5243,6 @@ importers:
       '@fluidframework/container-loader': link:../../../packages/loader/container-loader
       '@fluidframework/container-runtime': link:../../../packages/runtime/container-runtime
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
       '@fluidframework/undo-redo': link:../../../packages/framework/undo-redo

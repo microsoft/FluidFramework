@@ -51,13 +51,13 @@ export interface IFluidHandleContext extends IProvideFluidHandleContext {
 /**
  * @public
  */
-export const IFluidHandle: keyof IProvideFluidHandle = "IFluidHandle";
+export const IFluidHandle = "IFluidHandle";
 
 /**
  * @public
  */
 export interface IProvideFluidHandle {
-	readonly IFluidHandle: IFluidHandle;
+	readonly [IFluidHandle]: IFluidHandle;
 }
 
 /**
@@ -66,7 +66,7 @@ export interface IProvideFluidHandle {
  */
 export interface IFluidHandle<
 	// REVIEW: Constrain `T` to something? How do we support dds and datastores safely?
-	T = FluidObject & IFluidLoadable,
+	out T = FluidObject & IFluidLoadable,
 > extends IProvideFluidHandle {
 	/**
 	 * @deprecated Do not use handle's path for routing. Use `get` to get the underlying object.

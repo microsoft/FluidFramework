@@ -62,7 +62,7 @@ export {
 	getAllowedTypes,
 } from "./contextuallyTyped.js";
 
-export { allowsValue, assertAllowedValue, isFluidHandle, isTreeValue } from "./valueUtilities.js";
+export { allowsValue, assertAllowedValue, isTreeValue } from "./valueUtilities.js";
 
 export { FieldGenerator, TreeDataContext } from "./fieldGenerator.js";
 
