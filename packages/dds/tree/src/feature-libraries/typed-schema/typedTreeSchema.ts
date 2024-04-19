@@ -331,6 +331,7 @@ export type FlexMapFieldSchema = FlexFieldSchema<
 export class FlexFieldSchema<
 	out TKind extends FlexFieldKind = FlexFieldKind,
 	const out TTypes extends Unenforced<FlexAllowedTypes> = FlexAllowedTypes,
+	const out TMetadata = unknown,
 > {
 	/**
 	 * Schema for a field which must always be empty.
@@ -342,11 +343,12 @@ export class FlexFieldSchema<
 	 * @privateRemarks
 	 * Alias for the constructor, but with extends clause for the `Types` parameter that {@link FlexFieldSchema} can not have (due to recursive type issues).
 	 */
-	public static create<TKind extends FlexFieldKind, const Types extends FlexAllowedTypes>(
-		kind: TKind,
-		allowedTypes: Types,
-	): FlexFieldSchema<TKind, Types> {
-		return new FlexFieldSchema(kind, allowedTypes);
+	public static create<
+		TKind extends FlexFieldKind,
+		const Types extends FlexAllowedTypes,
+		const TMetadata = unknown,
+	>(kind: TKind, allowedTypes: Types, metadata?: TMetadata): FlexFieldSchema<TKind, Types> {
+		return new FlexFieldSchema(kind, allowedTypes, metadata);
 	}
 
 	/**
@@ -358,8 +360,9 @@ export class FlexFieldSchema<
 	public static createUnsafe<
 		TKind extends FlexFieldKind,
 		const Types extends Unenforced<FlexAllowedTypes>,
-	>(kind: TKind, allowedTypes: Types): FlexFieldSchema<TKind, Types> {
-		return new FlexFieldSchema(kind, allowedTypes);
+		const TMetadata = unknown,
+	>(kind: TKind, allowedTypes: Types, metadata?: TMetadata): FlexFieldSchema<TKind, Types> {
+		return new FlexFieldSchema(kind, allowedTypes, metadata);
 	}
 
 	protected _typeCheck?: MakeNominal;
@@ -381,6 +384,7 @@ export class FlexFieldSchema<
 	private constructor(
 		public readonly kind: TKind,
 		public readonly allowedTypes: TTypes,
+		public readonly metadata: TMetadata | undefined,
 	) {
 		// Since this class can't have the desired extends clause, do some extra runtime validation:
 		assert(Array.isArray(allowedTypes), 0x7bc /* Invalid allowedTypes */);
