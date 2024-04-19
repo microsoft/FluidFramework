@@ -58,6 +58,10 @@ GLOBAL FLAGS
 
 DESCRIPTION
   Updates a dependency in the lockfile to the latest version of a specified semver range.
+
+  Note that if the version passed in to the command is not within the range of versions naturally accepted by the
+  packages that depend on it, after this command runs the lockfile might not reflect the version that was passed in, but
+  the latest version that complies with the semver range declared by the dependent packages.
 ```
 
 _See code: [src/commands/modify/lockfile.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/modify/lockfile.ts)_

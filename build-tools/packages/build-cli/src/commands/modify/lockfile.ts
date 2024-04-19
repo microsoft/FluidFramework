@@ -21,8 +21,13 @@ import { releaseGroupFlag } from "../../flags";
 export default class UpdateDependencyInLockfileCommand extends BaseCommand<
 	typeof UpdateDependencyInLockfileCommand
 > {
+	static readonly summary =
+		"Updates a dependency in the lockfile to the latest version of a specified semver range.";
+
 	static readonly description =
-		`Updates a dependency in the lockfile to the latest version of a specified semver range.`;
+		`Note that if the version passed in to the command is not within the range of versions ` +
+		`naturally accepted by the packages that depend on it, after this command runs the lockfile might not reflect the ` +
+		`version that was passed in, but the latest version that complies with the semver range declared by the dependent packages.`;
 
 	static readonly enableJsonFlag = true;
 
