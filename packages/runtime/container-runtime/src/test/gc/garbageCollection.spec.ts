@@ -129,6 +129,22 @@ describe("Garbage Collection Tests", () => {
 		return sweepReadyRoutes;
 	}
 
+	/** More concise signature for calling IGarbageCollector.nodeUpdated */
+	function nodeUpdated(
+		garbageCollector: IGarbageCollector,
+		path: string,
+		reason: "Loaded" | "Changed",
+		timestampMs?: number,
+		packagePath?: readonly string[],
+	) {
+		garbageCollector.nodeUpdated({
+			node: { type: "DataStore", path },
+			reason,
+			timestampMs,
+			packagePath,
+		});
+	}
+
 	function createGarbageCollector(
 		params: {
 			createParams?: Partial<IGarbageCollectorCreateParams>;
@@ -471,7 +487,7 @@ describe("Garbage Collection Tests", () => {
 			assert.deepEqual(gc.tombstones, [nodes[0]], "node 0 should be in the Tombstones list");
 
 			// Simulate usage to trigger TombstoneLoaded op.
-			gc.nodeUpdated(nodes[0], "Loaded");
+			nodeUpdated(gc, nodes[0], "Loaded");
 			const [gcTombstoneLoadedMessage] = spies.gc.submitMessage.args[0];
 			assert.deepEqual(
 				gcTombstoneLoadedMessage,
@@ -534,8 +550,8 @@ describe("Garbage Collection Tests", () => {
 		// Mock node loaded and changed activity for all the nodes in the graph.
 		async function mockNodeChangesAndRunGC(garbageCollector: IGarbageCollector) {
 			nodes.forEach((nodeId) => {
-				garbageCollector.nodeUpdated(nodeId, "Loaded", Date.now(), testPkgPath);
-				garbageCollector.nodeUpdated(nodeId, "Changed", Date.now(), testPkgPath);
+				nodeUpdated(garbageCollector, nodeId, "Loaded", Date.now(), testPkgPath);
+				nodeUpdated(garbageCollector, nodeId, "Changed", Date.now(), testPkgPath);
 			});
 			await garbageCollector.collectGarbage({});
 		}
@@ -698,8 +714,8 @@ describe("Garbage Collection Tests", () => {
 
 				// Expire the timeout and validate that only revived event is generated for node 2.
 				clock.tick(1);
-				garbageCollector.nodeUpdated(nodes[2], "Changed", Date.now(), testPkgPath);
-				garbageCollector.nodeUpdated(nodes[2], "Loaded", Date.now(), testPkgPath);
+				nodeUpdated(garbageCollector, nodes[2], "Changed", Date.now(), testPkgPath);
+				nodeUpdated(garbageCollector, nodes[2], "Loaded", Date.now(), testPkgPath);
 				garbageCollector.addedOutboundReference(nodes[1], nodes[2]);
 				await garbageCollector.collectGarbage({});
 
@@ -811,8 +827,8 @@ describe("Garbage Collection Tests", () => {
 				// Run GC to trigger loading the GC details from the base summary. Will also generate Delete logs
 				await garbageCollector.collectGarbage({});
 				// Validate that all events are logged as expected.
-				garbageCollector.nodeUpdated(nodes[3], "Loaded", Date.now(), testPkgPath);
-				garbageCollector.nodeUpdated(nodes[3], "Changed", Date.now(), testPkgPath);
+				nodeUpdated(garbageCollector, nodes[3], "Loaded", Date.now(), testPkgPath);
+				nodeUpdated(garbageCollector, nodes[3], "Changed", Date.now(), testPkgPath);
 				await garbageCollector.collectGarbage({});
 				mockLogger.assertMatch(
 					[
@@ -890,8 +906,8 @@ describe("Garbage Collection Tests", () => {
 				await garbageCollector.initializeBaseState();
 
 				// Simulate sending op and loading the node in unreferenced state.
-				garbageCollector.nodeUpdated(nodes[3], "Loaded", Date.now(), testPkgPath);
-				garbageCollector.nodeUpdated(nodes[3], "Changed", Date.now(), testPkgPath);
+				nodeUpdated(garbageCollector, nodes[3], "Loaded", Date.now(), testPkgPath);
+				nodeUpdated(garbageCollector, nodes[3], "Changed", Date.now(), testPkgPath);
 
 				// Log pending events explicitly. This is needed because summarizer clients don't log these events
 				// until the next GC run which calls this function.
@@ -975,8 +991,8 @@ describe("Garbage Collection Tests", () => {
 				await garbageCollector.collectGarbage({});
 
 				// Validate that no events are generated since none of the timeouts have passed
-				garbageCollector.nodeUpdated(nodes[3], "Loaded", Date.now(), testPkgPath);
-				garbageCollector.nodeUpdated(nodes[3], "Changed", Date.now(), testPkgPath);
+				nodeUpdated(garbageCollector, nodes[3], "Loaded", Date.now(), testPkgPath);
+				nodeUpdated(garbageCollector, nodes[3], "Changed", Date.now(), testPkgPath);
 				await garbageCollector.collectGarbage({});
 				mockLogger.assertMatchNone(
 					[
@@ -1069,9 +1085,9 @@ describe("Garbage Collection Tests", () => {
 				await garbageCollector.collectGarbage({});
 
 				// Validate that all events are logged as expected.
-				garbageCollector.nodeUpdated(nodes[3], "Loaded", Date.now(), testPkgPath);
-				garbageCollector.nodeUpdated(nodes[1], "Changed", Date.now(), testPkgPath);
-				garbageCollector.nodeUpdated(nodes[2], "Changed", Date.now(), testPkgPath);
+				nodeUpdated(garbageCollector, nodes[3], "Loaded", Date.now(), testPkgPath);
+				nodeUpdated(garbageCollector, nodes[1], "Changed", Date.now(), testPkgPath);
+				nodeUpdated(garbageCollector, nodes[2], "Changed", Date.now(), testPkgPath);
 				await garbageCollector.collectGarbage({});
 				mockLogger.assertMatch(
 					[
