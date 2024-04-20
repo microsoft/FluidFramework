@@ -902,7 +902,10 @@ export class Container
 					// 2) Doing recovery below is useless in loading mode, for the reasons described above. At the same time we can't
 					//    not do it, as maybe we lost JoinSignal for "self", and when loading is done, we never move to connected
 					//    state. So we would have to do (in most cases) useless infinite reconnect loop while we are loading.
-					assert(this.loaded, "connection issues can be raised only after container is loaded");
+					assert(
+						this.loaded,
+						"connection issues can be raised only after container is loaded",
+					);
 
 					// If this is "write" connection, it took too long to receive join op. But in most cases that's due
 					// to very slow op fetches and we will eventually get there.
