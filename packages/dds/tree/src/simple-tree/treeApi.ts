@@ -9,7 +9,6 @@ import { Multiplicity, rootFieldKey } from "../core/index.js";
 import {
 	FieldKinds,
 	LeafNodeSchema,
-	StableNodeKey,
 	TreeStatus,
 	isTreeValue,
 	valueSchemaAllows,
@@ -95,8 +94,11 @@ export interface TreeNodeApi {
 	readonly status: (node: TreeNode) => TreeStatus;
 
 	/**
-	 * If the given node has an identifier specified by a field of kind "identifier" then this returns the compressed form of that identifier.
-	 * Otherwise returns the uncompressed node value.
+	 * Returns the {@link FieldKind.Identifier | identifier} of the given node in the most compressed form possible.
+	 * @remarks
+	 * If the node's identifier is a valid {@link StableNodeKey}, then this will return a unique process-local integer corresponding to that identifier.
+	 * If the node's identifier is any other string, then this will return that string.
+	 * If the node has no identifier (that is, it has no field of an {@link FieldKind.Identifier | identifier} field kind), then this returns undefined.
 	 */
 	shortId(node: TreeNode): number | string | undefined;
 }
@@ -195,12 +197,15 @@ export const treeNodeApi: TreeNodeApi = {
 			if (field.schema.kind === FieldKinds.identifier) {
 				const identifier = field.boxedAt(0);
 				assert(identifier !== undefined, 0x927 /* The identifier must exist */);
-				const localNodeKey = identifier.context.nodeKeys.tryLocalize(
-					identifier.value as StableNodeKey,
-				);
-				return localNodeKey !== undefined
-					? extractFromOpaque(localNodeKey)
-					: (identifier.value as string);
+				const identifierValue = identifier.value as string;
+				if (!identifier.context.nodeKeys.isStableNodeKey(identifierValue)) {
+					return identifierValue
+				} else {
+					const localNodeKey = identifier.context.nodeKeys.tryLocalize(identifierValue);
+					return localNodeKey !== undefined
+						? extractFromOpaque(localNodeKey)
+						: identifierValue;
+				}
 			}
 		}
 	},

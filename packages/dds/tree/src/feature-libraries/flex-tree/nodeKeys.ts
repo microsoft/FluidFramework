@@ -36,6 +36,10 @@ export interface NodeKeys {
 	 */
 	tryLocalize(key: StableNodeKey): LocalNodeKey | undefined;
 	/**
+	 * type guard to check if a key is a {@link StableNodeKey}
+	 */
+	isStableNodeKey(key: string): key is StableNodeKey;
+	/**
 	 * A map of all {@link LocalNodeKey}s in the document to their corresponding nodes.
 	 */
 	readonly map: ReadonlyMap<LocalNodeKey, FlexTreeObjectNode>;
@@ -57,5 +61,8 @@ export class SimpleNodeKeys implements NodeKeys {
 	}
 	public tryLocalize(key: string): LocalNodeKey | undefined {
 		return this.manager.tryLocalizeNodeKey(key as StableNodeKey);
+	}
+	public isStableNodeKey(key: string): key is StableNodeKey {
+		return this.manager.isStableNodeKey(key);
 	}
 }

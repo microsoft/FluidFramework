@@ -160,7 +160,7 @@ describe("Node Key Index", () => {
 				allowedSchemaModifications: AllowedUpdateType.Initialize,
 			},
 			() => undefined,
-			createMockNodeKeyManager(),
+			manager1,
 		);
 
 		await provider.ensureSynchronized();
@@ -180,7 +180,7 @@ describe("Node Key Index", () => {
 			},
 			() => undefined,
 			// Since the key was produced with a MockNodeKeyManager, we must use one to process it.
-			createMockNodeKeyManager(),
+			manager1,
 		);
 		assertIds(view2.context.nodeKeys, [
 			view2.context.nodeKeys.localize(manager1.stabilizeNodeKey(key)),
