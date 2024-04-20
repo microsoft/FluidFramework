@@ -78,9 +78,8 @@ export interface IAudience extends IEventProvider<IAudienceEvents> {
     getSelf: () => ISelf | undefined;
 }
 
-// @public (undocumented)
+// @public
 export interface IAudienceEvents extends IEvent {
-    // (undocumented)
     (event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): void;
     (event: "selfChanged", listener: (oldValue: ISelf | undefined, newValue: ISelf) => void): void;
 }

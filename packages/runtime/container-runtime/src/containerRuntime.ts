@@ -2433,8 +2433,8 @@ export class ContainerRuntime
 	public setConnectionState(connected: boolean, clientId?: string) {
 		// Validate we have consistent state
 		const currentClientId = this._audience.getSelf()?.clientId;
-		assert(clientId === currentClientId, "same clientId");
-		assert(this.clientId === currentClientId, "same clientId");
+		assert(clientId === currentClientId, "input clientId does not match Audience");
+		assert(this.clientId === currentClientId, "this.clientId does not match Audience");
 
 		if (connected && this.idCompressorMode === "delayed") {
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
