@@ -7,7 +7,7 @@
 Audience & connection sequencing improvements
 
 Here are breaking changes in Audience behavior:
-1. IAudience no longer implements EventEmmiter. If you used addListener() or removeListener(), please replance with on() & off() respectively.
+1. IAudience no longer implements EventEmmiter. If you used addListener() or removeListener(), please replace with on() & off() respectively.
 2. IAudience interface implements getSelf() method and "selfChanged" event.
 3. IContainerContext.audience is no longer optional
 4. "connected" events are now raised (various API surfaces - IContainer, IContainerRuntime, IFluidDataStoreRuntime, etc.) a bit later in reconnection sequence for "read" connections - only after client receives its own "join" signal and caught up on ops, which makes it symmetrical with "write" connections.

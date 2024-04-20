@@ -557,151 +557,6 @@ describe("Runtime", () => {
 				});
 			}));
 
-		describe("Op reentry enforcement", () => {
-			let containerRuntime: ContainerRuntime;
-
-			it("By default, don't enforce the op reentry check", async () => {
-				containerRuntime = await ContainerRuntime.loadRuntime({
-					context: getMockContext() as IContainerContext,
-					registryEntries: [],
-					provideEntryPoint: mockProvideEntryPoint,
-					existing: false,
-				});
-
-				assert.ok(
-					containerRuntime.ensureNoDataModelChanges(() => {
-						submitDataStoreOp(containerRuntime, "id", "test");
-						return true;
-					}),
-				);
-
-				assert.ok(
-					containerRuntime.ensureNoDataModelChanges(() =>
-						containerRuntime.ensureNoDataModelChanges(() =>
-							containerRuntime.ensureNoDataModelChanges(() => {
-								submitDataStoreOp(containerRuntime, "id", "test");
-								return true;
-							}),
-						),
-					),
-				);
-			});
-
-			it("If option enabled, enforce the op reentry check", async () => {
-				containerRuntime = await ContainerRuntime.loadRuntime({
-					context: getMockContext() as IContainerContext,
-					registryEntries: [],
-					runtimeOptions: {
-						enableOpReentryCheck: true,
-					},
-					provideEntryPoint: mockProvideEntryPoint,
-					existing: false,
-				});
-
-				assert.throws(() =>
-					containerRuntime.ensureNoDataModelChanges(() =>
-						submitDataStoreOp(containerRuntime, "id", "test"),
-					),
-				);
-
-				assert.throws(() =>
-					containerRuntime.ensureNoDataModelChanges(() =>
-						containerRuntime.ensureNoDataModelChanges(() =>
-							containerRuntime.ensureNoDataModelChanges(() =>
-								submitDataStoreOp(containerRuntime, "id", "test"),
-							),
-						),
-					),
-				);
-			});
-
-			it("If option enabled but disabled via feature gate, don't enforce the op reentry check", async () => {
-				containerRuntime = await ContainerRuntime.loadRuntime({
-					context: getMockContext({
-						"Fluid.ContainerRuntime.DisableOpReentryCheck": true,
-					}) as IContainerContext,
-					registryEntries: [],
-					runtimeOptions: {
-						enableOpReentryCheck: true,
-					},
-					provideEntryPoint: mockProvideEntryPoint,
-					existing: false,
-				});
-
-				containerRuntime.ensureNoDataModelChanges(() =>
-					submitDataStoreOp(containerRuntime, "id", "test"),
-				);
-
-				containerRuntime.ensureNoDataModelChanges(() =>
-					containerRuntime.ensureNoDataModelChanges(() =>
-						containerRuntime.ensureNoDataModelChanges(() =>
-							submitDataStoreOp(containerRuntime, "id", "test"),
-						),
-					),
-				);
-			});
-
-			it("Report at most 5 reentrant ops", async () => {
-				const mockLogger = new MockLogger();
-				containerRuntime = await ContainerRuntime.loadRuntime({
-					context: getMockContext({}, mockLogger) as IContainerContext,
-					registryEntries: [],
-					provideEntryPoint: mockProvideEntryPoint,
-					existing: false,
-				});
-
-				mockLogger.clear();
-				containerRuntime.ensureNoDataModelChanges(() => {
-					for (let i = 0; i < 10; i++) {
-						submitDataStoreOp(containerRuntime, "id", "test");
-					}
-				});
-
-				// We expect only 5 events
-				mockLogger.assertMatchStrict(
-					Array.from(Array(5).keys()).map(() => ({
-						eventName: "ContainerRuntime:OpReentry",
-						error: "Op was submitted from within a `ensureNoDataModelChanges` callback",
-					})),
-				);
-			});
-
-			it("Can't call flush() inside ensureNoDataModelChanges's callback", async () => {
-				containerRuntime = await ContainerRuntime.loadRuntime({
-					context: getMockContext() as IContainerContext,
-					registryEntries: [],
-					runtimeOptions: {
-						flushMode: FlushMode.Immediate,
-					},
-					provideEntryPoint: mockProvideEntryPoint,
-					existing: false,
-				});
-
-				assert.throws(() =>
-					containerRuntime.ensureNoDataModelChanges(() => {
-						containerRuntime.orderSequentially(() => {});
-					}),
-				);
-			});
-
-			it("Can't create an infinite ensureNoDataModelChanges recursive call ", async () => {
-				containerRuntime = await ContainerRuntime.loadRuntime({
-					context: getMockContext() as IContainerContext,
-					registryEntries: [],
-					provideEntryPoint: mockProvideEntryPoint,
-					existing: false,
-				});
-
-				const callback = () => {
-					containerRuntime.ensureNoDataModelChanges(() => {
-						submitDataStoreOp(containerRuntime, "id", "test");
-						callback();
-					});
-				};
-				assert.throws(() => callback());
-			});
-		});
-
 		describe("orderSequentially with rollback", () =>
 			[
 				FlushMode.TurnBased,
@@ -1594,7 +1449,6 @@ describe("Runtime", () => {
 				maxBatchSizeInBytes: 700 * 1024,
 				chunkSizeInBytes: 204800,
 				enableRuntimeIdCompressor: undefined,
-				enableOpReentryCheck: false,
 				enableGroupedBatching: false,
 				explicitSchemaControl: false,
 			} satisfies IContainerRuntimeOptions;
@@ -1623,7 +1477,6 @@ describe("Runtime", () => {
 				const featureGates = {
 					"Fluid.ContainerRuntime.CompressionDisabled": true,
 					"Fluid.ContainerRuntime.CompressionChunkingDisabled": true,
-					"Fluid.ContainerRuntime.DisableOpReentryCheck": false,
 					"Fluid.ContainerRuntime.IdCompressorEnabled": true,
 					"Fluid.ContainerRuntime.DisableGroupedBatching": true,
 				};
@@ -1644,7 +1497,6 @@ describe("Runtime", () => {
 						featureGates: JSON.stringify({
 							disableGroupedBatching: true,
 							disableCompression: true,
-							disableOpReentryCheck: false,
 							disableChunking: true,
 						}),
 						groupedBatchingEnabled: false,

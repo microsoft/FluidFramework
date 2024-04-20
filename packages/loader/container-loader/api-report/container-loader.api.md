@@ -23,7 +23,7 @@ import { IQuorumSnapshot } from '@fluidframework/protocol-base';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
 
 // @public
@@ -88,7 +88,7 @@ export interface ILoaderServices {
     readonly urlResolver: IUrlResolver;
 }
 
-// @internal
+// @alpha
 export interface IParsedUrl {
     id: string;
     path: string;
@@ -132,7 +132,7 @@ export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot:
 // @alpha
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
 
-// @internal
+// @alpha
 export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined;
 
 // @alpha

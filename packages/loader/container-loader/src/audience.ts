@@ -30,8 +30,7 @@ export class Audience extends TypedEventEmitter<IAudienceEvents> implements IAud
 	}
 
 	public setCurrentClientId(clientId: string): void {
-		const oldId = this.self?.clientId;
-		if (oldId !== clientId) {
+		if (this.self?.clientId !== clientId) {
 			const oldSelf = this.self;
 			// this.getMember(clientId) could resolve to undefined in these two cases:
 			// 1) Feature gates controlling ConnectionStateHandler() behavior are off

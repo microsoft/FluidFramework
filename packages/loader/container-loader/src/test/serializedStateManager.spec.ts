@@ -10,10 +10,8 @@ import {
 	IGetPendingLocalStateProps,
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
-import { Deferred } from "@fluidframework/core-utils/internal";
 import {
 	FetchSource,
-	IDocumentStorageService,
 	IResolvedUrl,
 	ISnapshot,
 	ISnapshotFetchOptions,
@@ -27,13 +25,13 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { type IPendingContainerState, SerializedStateManager } from "../serializedStateManager.js";
-import { failProxy } from "./failProxy.js";
-
-type ISerializedStateManagerDocumentStorageService = Pick<
-	IDocumentStorageService,
-	"getSnapshot" | "getSnapshotTree" | "getVersions" | "readBlob"
->;
+import { Deferred } from "@fluidframework/core-utils/internal";
+import {
+	type IPendingContainerState,
+	SerializedStateManager,
+	type ISerializedStateManagerDocumentStorageService,
+} from "../serializedStateManager.js";
+import { failSometimeProxy } from "./failProxy.js";
 
 const snapshot = {
 	id: "fromStorage",
@@ -70,6 +68,11 @@ class MockStorageAdapter implements ISerializedStateManagerDocumentStorageServic
 			"attributesId",
 			stringToBuffer(`{"minimumSequenceNumber" : 0, "sequenceNumber": 0}`, "utf8"),
 		);
+	}
+
+	public async updateGroupIdSnapshots(): Promise<void> {}
+	public get loadedGroupIdSnapshots(): Record<string, ISnapshot> {
+		return {};
 	}
 
 	public async getSnapshot(
@@ -191,7 +194,9 @@ describe("serializedStateManager", () => {
 		const serializedStateManager = new SerializedStateManager(
 			undefined,
 			logger.toTelemetryLogger(),
-			failProxy(), // no calls to storage expected
+			failSometimeProxy<ISerializedStateManagerDocumentStorageService>({
+				loadedGroupIdSnapshots: {},
+			}),
 			true,
 		);
 		// equivalent to attach
@@ -271,17 +276,12 @@ describe("serializedStateManager", () => {
 			baseSnapshot: { ...snapshot, id: "fromPending" },
 		};
 		const storageAdapter = new MockStorageAdapter();
-		const getLatestSnapshotInfoP = new Deferred<void>();
 		// callback to help us identify when the background fetch finished.
-		const newSnapshotFetched = () => {
-			getLatestSnapshotInfoP.resolve();
-		};
 		const serializedStateManager = new SerializedStateManager(
 			pending,
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
-			newSnapshotFetched,
 		);
 		let seq = 1;
 		while (seq < 10) {
@@ -295,7 +295,7 @@ describe("serializedStateManager", () => {
 		assert.strictEqual(version, undefined);
 		// It'll wait until getLatestSnapshotInfo finish. This ensures we attempted to refresh
 		// serializedStateManager.snapshot
-		await getLatestSnapshotInfoP.promise;
+		await serializedStateManager.waitForInitialRefresh;
 		logger.assertMatchAny([
 			{
 				eventName: "serializedStateManager:OldSnapshotFetchWhileRefreshing",
@@ -324,16 +324,11 @@ describe("serializedStateManager", () => {
 			baseSnapshot: { ...snapshot, id: "fromPending" },
 		};
 		const storageAdapter = new MockStorageAdapter();
-		const getLatestSnapshotInfoP = new Deferred<void>();
-		const newSnapshotFetched = () => {
-			getLatestSnapshotInfoP.resolve();
-		};
 		const serializedStateManager = new SerializedStateManager(
 			pending,
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
-			newSnapshotFetched,
 		);
 
 		const firstProcessedOpSequenceNumber = 13; // greater than snapshotSequenceNumber + 1
@@ -345,7 +340,7 @@ describe("serializedStateManager", () => {
 		const snapshotSequenceNumber = 11; // uploading an snapshot too old to be the latest
 		storageAdapter.uploadSummary(snapshotSequenceNumber);
 		await serializedStateManager.fetchSnapshot(undefined, false);
-		await getLatestSnapshotInfoP.promise;
+		await serializedStateManager.waitForInitialRefresh;
 		logger.assertMatchAny([
 			{
 				eventName: "serializedStateManager:OldSnapshotFetchWhileRefreshing",
@@ -372,16 +367,11 @@ describe("serializedStateManager", () => {
 			baseSnapshot: { ...snapshot, id: "fromPending" },
 		};
 		const storageAdapter = new MockStorageAdapter();
-		const getLatestSnapshotInfoP = new Deferred<void>();
-		const newSnapshotFetched = () => {
-			getLatestSnapshotInfoP.resolve();
-		};
 		const serializedStateManager = new SerializedStateManager(
 			pending,
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
-			newSnapshotFetched,
 		);
 
 		const lastProcessedOpSequenceNumber = 20;
@@ -396,7 +386,7 @@ describe("serializedStateManager", () => {
 		await serializedStateManager.fetchSnapshot(undefined, false);
 		// wait to get latest snapshot
 		// this time the snapshot should have been refreshed
-		await getLatestSnapshotInfoP.promise;
+		await serializedStateManager.waitForInitialRefresh;
 		const state = await serializedStateManager.getPendingLocalStateCore(
 			{ notifyImminentClosure: false },
 			"clientId",
@@ -430,22 +420,17 @@ describe("serializedStateManager", () => {
 			baseSnapshot: { ...snapshot, id: "fromPending" },
 		};
 		const storageAdapter = new MockStorageAdapter();
-		const getLatestSnapshotInfoP = new Deferred<void>();
-		const newSnapshotFetched = () => {
-			getLatestSnapshotInfoP.resolve();
-		};
 		const serializedStateManager = new SerializedStateManager(
 			pending,
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
-			newSnapshotFetched,
 		);
 		const snapshotSequenceNumber = 11;
 		storageAdapter.uploadSummary(snapshotSequenceNumber);
 
 		await serializedStateManager.fetchSnapshot(undefined, false);
-		await getLatestSnapshotInfoP.promise;
+		await serializedStateManager.waitForInitialRefresh;
 		const state = await serializedStateManager.getPendingLocalStateCore(
 			{ notifyImminentClosure: false },
 			"clientId",
@@ -464,16 +449,11 @@ describe("serializedStateManager", () => {
 			baseSnapshot: { ...snapshot, id: "fromPending" },
 		};
 		const storageAdapter = new MockStorageAdapter();
-		const getLatestSnapshotInfoP = new Deferred<void>();
-		const newSnapshotFetched = () => {
-			getLatestSnapshotInfoP.resolve();
-		};
 		const serializedStateManager = new SerializedStateManager(
 			pending,
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
-			newSnapshotFetched,
 		);
 		let seq = 1;
 		let lastProcessedOpSequenceNumber = 20;
@@ -487,7 +467,7 @@ describe("serializedStateManager", () => {
 		await serializedStateManager.fetchSnapshot(undefined, false);
 		// latest snapshot fetched but we're still behind the snapshot.
 		// next addProcessedOp calls will be responsible for refreshing
-		await getLatestSnapshotInfoP.promise;
+		await serializedStateManager.waitForInitialRefresh;
 
 		lastProcessedOpSequenceNumber = 40;
 		while (seq <= lastProcessedOpSequenceNumber) {
@@ -528,15 +508,14 @@ describe("serializedStateManager", () => {
 		};
 		const storageAdapter = new MockStorageAdapter();
 		const getLatestSnapshotInfoP = new Deferred<void>();
-		const newSnapshotFetched = () => {
-			getLatestSnapshotInfoP.resolve();
-		};
 		const serializedStateManager = new SerializedStateManager(
 			pending,
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
-			newSnapshotFetched,
+		);
+		void serializedStateManager.waitForInitialRefresh?.then(() =>
+			getLatestSnapshotInfoP.resolve(),
 		);
 		let seq = 1;
 		let lastProcessedOpSequenceNumber = 20;
@@ -551,7 +530,7 @@ describe("serializedStateManager", () => {
 		while (seq <= lastProcessedOpSequenceNumber) {
 			serializedStateManager.addProcessedOp(generateSavedOp(seq++));
 		}
-		// getting peding state without waiting for fetching new snapshot.
+		// getting pending state without waiting for fetching new snapshot.
 		assert.strictEqual(getLatestSnapshotInfoP.isCompleted, false);
 		const state = await serializedStateManager.getPendingLocalStateCore(
 			{ notifyImminentClosure: false },
@@ -578,16 +557,11 @@ describe("serializedStateManager", () => {
 			baseSnapshot: { ...snapshot, id: "fromPending" },
 		};
 		const storageAdapter = new MockStorageAdapter();
-		const getLatestSnapshotInfoP = new Deferred<void>();
-		const newSnapshotFetched = () => {
-			getLatestSnapshotInfoP.resolve();
-		};
 		const serializedStateManager = new SerializedStateManager(
 			pending,
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
-			newSnapshotFetched,
 		);
 		let seq = 1;
 		let lastProcessedOpSequenceNumber = 20;
@@ -600,7 +574,7 @@ describe("serializedStateManager", () => {
 
 		await serializedStateManager.fetchSnapshot(undefined, false);
 		// new snapshot fetched but not refreshed since processed ops are behind the snapshot
-		await getLatestSnapshotInfoP.promise;
+		await serializedStateManager.waitForInitialRefresh;
 
 		lastProcessedOpSequenceNumber = 29; // keep adding ops but not enough to refresh the snapshot
 		while (seq <= lastProcessedOpSequenceNumber) {
@@ -645,16 +619,11 @@ describe("serializedStateManager", () => {
 				},
 			},
 		});
-		const getLatestSnapshotInfoP = new Deferred<void>();
-		const newSnapshotFetched = () => {
-			getLatestSnapshotInfoP.resolve();
-		};
 		const serializedStateManager = new SerializedStateManager(
 			pending,
 			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
-			newSnapshotFetched,
 		);
 		const lastProcessedOpSequenceNumber = 20;
 		let seq = 1;
@@ -666,7 +635,7 @@ describe("serializedStateManager", () => {
 		storageAdapter.uploadSummary(snapshotSequenceNumber);
 
 		await serializedStateManager.fetchSnapshot(undefined, false);
-		await getLatestSnapshotInfoP.promise;
+		await serializedStateManager.waitForInitialRefresh;
 
 		const state = await serializedStateManager.getPendingLocalStateCore(
 			{ notifyImminentClosure: false },

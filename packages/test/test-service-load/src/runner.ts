@@ -18,7 +18,7 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { getRetryDelayFromError } from "@fluidframework/driver-utils/internal";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import commander from "commander";
 
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver.js";
