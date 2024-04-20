@@ -32,16 +32,12 @@ export class Audience extends TypedEventEmitter<IAudienceEvents> implements IAud
 	public setCurrentClientId(clientId: string): void {
 		if (this.self?.clientId !== clientId) {
 			const oldSelf = this.self;
-			// this.getMember(clientId) could resolve to undefined in these two cases:
-			// 1) Feature gates controlling ConnectionStateHandler() behavior are off
-			// 2) we are loading from stashed state and audience is empty, but we remember and set prior clientId
-			this.self =
-				clientId === undefined
-					? undefined
-					: {
-							clientId,
-							client: this.getMember(clientId),
-					  };
+			// this.getMember(clientId) could resolve to undefined if feature gates controlling ConnectionStateHandler()
+			// behavior to wait for "join" signal are off
+			this.self = {
+				clientId,
+				client: this.getMember(clientId),
+			};
 
 			this.emit("selfChanged", oldSelf, this.self);
 		}
@@ -52,7 +48,7 @@ export class Audience extends TypedEventEmitter<IAudienceEvents> implements IAud
 	 */
 	public addMember(clientId: string, details: IClient) {
 		if (clientId === this.self?.clientId) {
-			// see check below - it will ensure that if we ever overwrite it, it is same value
+			// Check below will ensure that if we ever overwrite the value, we overwrite with the same value
 			this.self.client = details;
 		}
 		// Given that signal delivery is unreliable process, we might observe same client being added twice
