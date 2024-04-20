@@ -520,14 +520,9 @@ export class Container
 			const readonly = this.readOnlyInfo.readonly ?? false;
 			assert(this.connectionState !== ConnectionState.Connected, "not connected yet");
 			// This call does not look like needed any more, with delaying all connection-related events past loaded phase.
-			// Yet, there could be some customer code that would break if we do not delivery it.
+			// Yet, there could be some customer code that would break if we do not deliver it.
 			// Will be removed in further PRs with proper changeset.
 			this.setContextConnectedState(false /* connected */, readonly);
-			// Deliver delayed 'readonly' event
-			if (readonly) {
-				this.emit("readonly", true);
-			}
-
 			// Deliver delayed calls to DeltaManager - we ignored "connect" events while loading.
 			const cm = this._deltaManager.connectionManager;
 			if (cm.connected) {
@@ -907,7 +902,7 @@ export class Container
 					// 2) Doing recovery below is useless in loading mode, for the reasons described above. At the same time we can't
 					//    not do it, as maybe we lost JoinSignal for "self", and when loading is done, we never move to connected
 					//    state. So we would have to do (in most cases) useless infinite reconnect loop while we are loading.
-					assert(this.loaded, "loaded");
+					assert(this.loaded, "connection issues can be raised only after container is loaded");
 
 					// If this is "write" connection, it took too long to receive join op. But in most cases that's due
 					// to very slow op fetches and we will eventually get there.
@@ -1401,7 +1396,7 @@ export class Container
 
 		// Resume processing ops
 		if (this.inboundQueuePausedFromInit) {
-			// If this assert fires guards against possibility to allow ops/signals in too soon, while
+			// This assert guards against possibility of ops/signals showing up too soon, while
 			// container is not ready yet to receive them. We can hit it only if some internal code call into here,
 			// as public API like Container.connect() can be only called when user got back container object, i.e.
 			// it is already fully loaded.
@@ -2070,7 +2065,7 @@ export class Container
 			if (this.loaded) {
 				this.connectionStateHandler.receivedDisconnectEvent(reason);
 			} else if (!this.closed) {
-				// Raise cancelation to get state machine back to initial state
+				// Raise cancellation to get state machine back to initial state
 				this.connectionStateHandler.cancelEstablishingConnection(reason);
 			}
 		});
@@ -2091,8 +2086,8 @@ export class Container
 					this.connectionState === ConnectionState.Connected,
 					readonly,
 				);
-				this.emit("readonly", readonly);
 			}
+			this.emit("readonly", readonly);
 		});
 
 		deltaManager.on("closed", (error?: ICriticalContainerError) => {
