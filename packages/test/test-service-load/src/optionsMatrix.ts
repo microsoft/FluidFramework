@@ -102,7 +102,6 @@ export function generateRuntimeOptions(
 			{ minimumBatchSizeInBytes: 500, compressionAlgorithm: CompressionAlgorithms.lz4 },
 		],
 		maxBatchSizeInBytes: [716800],
-		enableOpReentryCheck: [true],
 		// Compressed payloads exceeding this size will be chunked into messages of exactly this size
 		chunkSizeInBytes: [204800],
 		enableRuntimeIdCompressor: ["on", undefined, "delayed"],

@@ -113,15 +113,10 @@ function resolveSymbolicLink(
 		apiModel.resolveDeclarationReference(codeDestination, contextApiItem);
 
 	if (resolvedReference.resolvedApiItem === undefined) {
-		const linkSource =
-			contextApiItem.kind === ApiItemKind.Package
-				? (contextApiItem as ApiPackage).displayName
-				: `${
-						contextApiItem.getAssociatedPackage()?.displayName ?? "<NO-PACKAGE>"
-				  }#${contextApiItem.getScopedNameWithinPackage()}`;
-
 		logger.warning(
-			`Unable to resolve reference "${codeDestination.emitAsTsdoc()}" from "${linkSource}":`,
+			`Unable to resolve reference "${codeDestination.emitAsTsdoc()}" from "${getScopedMemberNameForDiagnostics(
+				contextApiItem,
+			)}":`,
 			resolvedReference.errorMessage,
 		);
 
@@ -136,4 +131,18 @@ function resolveSymbolicLink(
 	}
 
 	return getLinkForApiItem(resolvedReference.resolvedApiItem, config);
+}
+
+/**
+ * Creates a scoped member specifier for the provided API item, including the name of the package the item belongs to
+ * if applicable.
+ *
+ * Intended for use in diagnostic messaging.
+ */
+export function getScopedMemberNameForDiagnostics(apiItem: ApiItem): string {
+	return apiItem.kind === ApiItemKind.Package
+		? (apiItem as ApiPackage).displayName
+		: `${
+				apiItem.getAssociatedPackage()?.displayName ?? "<NO-PACKAGE>"
+		  }#${apiItem.getScopedNameWithinPackage()}`;
 }

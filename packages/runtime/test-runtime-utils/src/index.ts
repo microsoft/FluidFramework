@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export { deepFreeze } from "./deepFreeze.js";
 export { IInsecureUser } from "./insecureUsers.js";
 export { InsecureTokenProvider } from "./insecureTokenProvider.js";
 export { MockFluidDataStoreContext } from "./mocksDataStoreContext.js";

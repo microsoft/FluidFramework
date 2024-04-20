@@ -6,9 +6,9 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IFluidErrorBase,
+	ITelemetryLoggerExt,
 	LoggingError,
 	UsageError,
 	createChildLogger,

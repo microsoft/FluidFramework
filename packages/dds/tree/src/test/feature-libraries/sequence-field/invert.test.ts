@@ -23,7 +23,7 @@ import {
 	withOrderingMethod,
 	assertChangesetsEqual,
 } from "./utils.js";
-import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
+import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
 
 function invert(change: SF.Changeset, tag?: RevisionTag): SF.Changeset {
 	return invertChange(tagChange(change, tag ?? tag1));
@@ -43,16 +43,16 @@ export function testInvert() {
 		const withConfig = (fn: () => void) => withOrderingMethod(config.cellOrdering, fn);
 		it("no changes", () =>
 			withConfig(() => {
-				const input: TestChangeset = [];
-				const expected: TestChangeset = [];
+				const input: SF.Changeset = [];
+				const expected: SF.Changeset = [];
 				const actual = invert(input);
 				assertChangesetsEqual(actual, expected);
 			}));
 
 		it("tombstones", () =>
 			withConfig(() => {
-				const input: TestChangeset = [Mark.tomb(tag1, brand(0))];
-				const expected: TestChangeset = [Mark.tomb(tag1, brand(0))];
+				const input: SF.Changeset = [Mark.tomb(tag1, brand(0))];
+				const expected: SF.Changeset = [Mark.tomb(tag1, brand(0))];
 				const actual = invert(input);
 				assertChangesetsEqual(actual, expected);
 			}));
@@ -136,7 +136,7 @@ export function testInvert() {
 					type: SF.DetachIdOverrideType.Redetach,
 					id: { revision: tag2, localId: brand(0) },
 				};
-				const input: TestChangeset = [Mark.remove(2, brand(5), { idOverride })];
+				const input: SF.Changeset = [Mark.remove(2, brand(5), { idOverride })];
 				const expected = [Mark.revive(2, idOverride.id, { id: brand(5) })];
 				const actual = invert(input);
 				assertChangesetsEqual(actual, expected);
@@ -154,7 +154,7 @@ export function testInvert() {
 					type: SF.DetachIdOverrideType.Redetach,
 					id: cellId,
 				};
-				const expected: TestChangeset = [Mark.remove(2, brand(0), { idOverride })];
+				const expected: SF.Changeset = [Mark.remove(2, brand(0), { idOverride })];
 				const actual = invert(input);
 				assertChangesetsEqual(actual, expected);
 			}));
@@ -219,7 +219,7 @@ export function testInvert() {
 					type: SF.DetachIdOverrideType.Redetach,
 					id: cellId,
 				};
-				const expected: TestChangeset = [
+				const expected: SF.Changeset = [
 					Mark.returnTo(2, brand(42), { revision: tag1, localId: brand(42) }),
 					{ count: 3 },
 					Mark.moveOut(1, brand(42), {
@@ -237,7 +237,7 @@ export function testInvert() {
 		it("pin live nodes => skip", () =>
 			withConfig(() => {
 				const input = [Mark.pin(1, brand(0), { changes: childChange1 })];
-				const expected: TestChangeset = [Mark.modify(childChange1)];
+				const expected: SF.Changeset = [Mark.modify(childChange1)];
 				const actual = invert(input);
 				assertChangesetsEqual(actual, expected);
 			}));
@@ -246,7 +246,7 @@ export function testInvert() {
 			withConfig(() => {
 				const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
 				const input = [Mark.pin(1, brand(0), { cellId, changes: childChange1 })];
-				const expected: TestChangeset = [
+				const expected: SF.Changeset = [
 					Mark.remove(1, brand(0), {
 						idOverride: {
 							type: SF.DetachIdOverrideType.Redetach,

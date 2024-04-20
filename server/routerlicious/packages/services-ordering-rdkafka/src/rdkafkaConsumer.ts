@@ -218,7 +218,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				} else {
 					this.error(new Error(`Unknown commit for partition ${offset.partition}`), {
 						restart: false,
-						errorLabel: "rdkakfaConsumer:offset.commit",
+						errorLabel: "rdkafkaConsumer:offset.commit",
 					});
 				}
 			}

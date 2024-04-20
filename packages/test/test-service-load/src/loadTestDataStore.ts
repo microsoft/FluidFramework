@@ -25,7 +25,7 @@ import { IDirectory, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframe
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { ILoadTestConfig } from "./testConfigFile.js";
 

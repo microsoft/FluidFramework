@@ -11,8 +11,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
