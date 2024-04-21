@@ -1667,8 +1667,7 @@ export class Container
 		await this.instantiateRuntime(
 			codeDetails,
 			baseSnapshot,
-			// give runtime a dummy value so it knows we're loading from a stash blob
-			pendingLocalState ? pendingLocalState?.pendingRuntimeState ?? {} : undefined,
+			pendingLocalState?.pendingRuntimeState,
 			isInstanceOfISnapshot(baseSnapshot) ? baseSnapshot : undefined,
 		);
 

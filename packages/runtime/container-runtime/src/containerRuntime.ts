@@ -150,7 +150,7 @@ import {
 	type OutboundContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
-import { IBatchMetadata, IIdAllocationMetadata } from "./metadata.js";
+import { IBatchMetadata, ISavedOpMetadata } from "./metadata.js";
 import {
 	BatchMessage,
 	IBatch,
@@ -660,11 +660,13 @@ type MessageWithContext =
 			message: InboundSequencedContainerRuntimeMessage;
 			modernRuntimeMessage: true;
 			local: boolean;
+			savedOp?: boolean;
 	  }
 	| {
 			message: InboundSequencedContainerRuntimeMessageOrSystemMessage;
 			modernRuntimeMessage: false;
 			local: boolean;
+			savedOp?: boolean;
 	  };
 
 const summarizerRequestUrl = "_summarizer";
@@ -1126,7 +1128,7 @@ export class ContainerRuntime
 	// Id Compressor serializes final state (see getPendingLocalState()). As result, it needs to skip all ops that preceeded that state
 	// (such ops will be marked by Loader layer as savedOp === true)
 	// That said, in "delayed" mode it's possible that Id Compressor was never initialized before getPendingLocalState() is called.
-	// In such case we have to process all ops, including those marked with saveOp === true.
+	// In such case we have to process all ops, including those marked with savedOp === true.
 	private readonly skipSavedCompressorOps: boolean;
 
 	public get idCompressorMode() {
@@ -2549,6 +2551,7 @@ export class ContainerRuntime
 		// We do not need to make a deep copy. Each layer will just replace message.contents itself,
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
+		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
 		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
 			const msg: MessageWithContext = modernRuntimeMessage
 				? {
@@ -2566,6 +2569,7 @@ export class ContainerRuntime
 						local,
 						modernRuntimeMessage,
 				  };
+			msg.savedOp = savedOp;
 
 			// ensure that we observe any re-entrancy, and if needed, rebase ops
 			this.ensureNoDataModelChanges(() => this.processCore(msg));
@@ -2656,13 +2660,7 @@ export class ContainerRuntime
 				// stashed ops flow. The compressor is stashed with these ops already processed.
 				// That said, in idCompressorMode === "delayed", we might not serialize ID compressor, and
 				// thus we need to process all the ops.
-				if (
-					!(
-						this.skipSavedCompressorOps &&
-						(messageWithContext.message.metadata as IIdAllocationMetadata)?.savedOp ===
-							true
-					)
-				) {
+				if (!(this.skipSavedCompressorOps && messageWithContext.savedOp)) {
 					const range = messageWithContext.message.contents;
 					// Some other client turned on the id compressor. If we have not turned it on,
 					// put it in a pending queue and delay finalization.
@@ -4290,10 +4288,6 @@ export class ContainerRuntime
 			pendingAttachmentBlobs?: IPendingBlobs,
 		): IPendingRuntimeState | undefined => {
 			const pending = this.pendingStateManager.getLocalState();
-			if (pendingAttachmentBlobs === undefined && !this.hasPendingMessages()) {
-				return; // no pending state to save
-			}
-
 			const pendingIdCompressorState = this._idCompressor?.serialize(true);
 
 			return {

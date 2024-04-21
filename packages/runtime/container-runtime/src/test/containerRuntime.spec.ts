@@ -1755,38 +1755,6 @@ describe("Runtime", () => {
 		});
 
 		describe("GetPendingState", () => {
-			it("No Props. No pending state", async () => {
-				const logger = new MockLogger();
-
-				const containerRuntime = await ContainerRuntime.loadRuntime({
-					context: getMockContext({}, logger) as IContainerContext,
-					registryEntries: [],
-					existing: false,
-					runtimeOptions: {
-						flushMode: FlushMode.TurnBased,
-						enableRuntimeIdCompressor: "on",
-					},
-					provideEntryPoint: mockProvideEntryPoint,
-				});
-
-				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
-					get: (_t, p: keyof PendingStateManager, _r) => {
-						switch (p) {
-							case "getLocalState":
-								return () => undefined;
-							case "pendingMessagesCount":
-								return 0;
-							default:
-								assert.fail(`unexpected access to pendingStateManager.${p}`);
-						}
-					},
-				});
-
-				(containerRuntime as any).pendingStateManager = mockPendingStateManager;
-
-				const state = containerRuntime.getPendingLocalState();
-				assert.strictEqual(state, undefined);
-			});
 			it("No Props. Some pending state", async () => {
 				const logger = new MockLogger();
 

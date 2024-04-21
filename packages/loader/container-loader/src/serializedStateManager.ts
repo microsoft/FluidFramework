@@ -303,8 +303,7 @@ export class SerializedStateManager {
 						: undefined,
 					savedOps: this.processedOps,
 					url: resolvedUrl.url,
-					// no need to save this if there is no pending runtime state
-					clientId: pendingRuntimeState !== undefined ? clientId : undefined,
+					clientId,
 				};
 
 				return JSON.stringify(pendingState);
