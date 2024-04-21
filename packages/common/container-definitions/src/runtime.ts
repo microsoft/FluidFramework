@@ -266,4 +266,9 @@ export interface IGetPendingLocalStateProps {
 	 * base snapshot since we won't be referencing ops older than the new snapshot.
 	 */
 	readonly sessionExpiryTimerStarted?: number;
+
+	/**
+	 * Snapshot sequence number. It will help the runtime to know which ops should still be stashed.
+	 */
+	readonly snapshotSequenceNumber?: number;
 }

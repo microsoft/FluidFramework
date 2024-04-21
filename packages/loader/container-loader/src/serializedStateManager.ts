@@ -84,6 +84,8 @@ export class SerializedStateManager {
 	private refreshSnapshot: Promise<void> | undefined;
 	private snapshotFetchedTime: number | undefined;
 	private updateSessionExpiryTime: boolean = false;
+	private readonly lastSavedOpSequenceNumber: number | undefined;
+	private allSavedOpsProcessed: boolean = true;
 
 	constructor(
 		private readonly pendingLocalState: IPendingContainerState | undefined,
@@ -101,6 +103,12 @@ export class SerializedStateManager {
 			logger: subLogger,
 			namespace: "serializedStateManager",
 		});
+		if (pendingLocalState && pendingLocalState.savedOps.length > 0) {
+			this.allSavedOpsProcessed = false;
+			const savedOpsSize = pendingLocalState.savedOps.length;
+			this.lastSavedOpSequenceNumber =
+				pendingLocalState?.savedOps[savedOpsSize - 1].sequenceNumber;
+		}
 		containerEvent.once("saved", () => {
 			if (this.snapshotFetchedTime !== undefined) {
 				this.updateSessionExpiryTime = true;
@@ -116,6 +124,9 @@ export class SerializedStateManager {
 	public addProcessedOp(message: ISequencedDocumentMessage) {
 		if (this.offlineLoadEnabled) {
 			this.processedOps.push(message);
+			if (message.sequenceNumber === this.lastSavedOpSequenceNumber) {
+				this.allSavedOpsProcessed = true;
+			}
 			this.updateSnapshotAndProcessedOpsMaybe();
 		}
 	}
@@ -160,7 +171,7 @@ export class SerializedStateManager {
 					supportGetSnapshotApi,
 				);
 				this.snapshotFetchedTime = Date.now();
-				if (!this.containerDirty()) {
+				if (!this.containerDirty() && this.allSavedOpsProcessed) {
 					this.updateSessionExpiryTime = true;
 					this.updateSnapshotAndProcessedOpsMaybe();
 				}
@@ -175,7 +186,11 @@ export class SerializedStateManager {
 	 * Updates class snapshot and processedOps if we have a new snapshot and it's among processedOps range.
 	 */
 	private updateSnapshotAndProcessedOpsMaybe() {
-		if (this.latestSnapshot === undefined || this.processedOps.length === 0) {
+		if (
+			this.latestSnapshot === undefined ||
+			this.processedOps.length === 0 ||
+			!this.allSavedOpsProcessed
+		) {
 			// can't refresh latest snapshot until we have processed the ops up to it.
 			// Pending state would be behind the latest snapshot.
 			return;
@@ -260,6 +275,7 @@ export class SerializedStateManager {
 				assert(this.snapshot !== undefined, 0x8e5 /* no base data */);
 				const pendingRuntimeState = await runtime.getPendingLocalState({
 					...props,
+					snapshotSequenceNumber: this.snapshot.snapshotSequenceNumber,
 					sessionExpiryTimerStarted: this.updateSessionExpiryTime
 						? this.snapshotFetchedTime
 						: undefined,

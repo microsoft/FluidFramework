@@ -4316,7 +4316,7 @@ export class ContainerRuntime
 		const getSyncState = (
 			pendingAttachmentBlobs?: IPendingBlobs,
 		): IPendingRuntimeState | undefined => {
-			const pending = this.pendingStateManager.getLocalState();
+			const pending = this.pendingStateManager.getLocalState(props?.snapshotSequenceNumber);
 			const sessionExpiryTimerStarted =
 				props?.sessionExpiryTimerStarted ?? this.garbageCollector.sessionExpiryTimerStarted;
 

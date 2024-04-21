@@ -367,6 +367,7 @@ export { IGenericError }
 export interface IGetPendingLocalStateProps {
     readonly notifyImminentClosure: boolean;
     readonly sessionExpiryTimerStarted?: number;
+    readonly snapshotSequenceNumber?: number;
     readonly stopBlobAttachingSignal?: AbortSignal;
 }
 
