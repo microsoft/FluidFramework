@@ -1781,6 +1781,7 @@ describe("Runtime", () => {
 							case "getLocalState":
 								return (): IPendingLocalState => ({
 									pendingStates,
+									nonAckedMessageCount: pendingStates.length,
 								});
 							case "pendingMessagesCount":
 								return 5;
@@ -1823,6 +1824,7 @@ describe("Runtime", () => {
 							case "getLocalState":
 								return (): IPendingLocalState => ({
 									pendingStates,
+									nonAckedMessageCount: pendingStates.length,
 								});
 							case "pendingMessagesCount":
 								return 5;

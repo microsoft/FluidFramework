@@ -294,7 +294,7 @@ describe("Pending State Manager", () => {
 	});
 
 	describe("Local state processing", () => {
-		function createPendingStateManager(pendingStates): PendingStateManager_WithPrivates {
+		function createPendingStateManager(pendingState): PendingStateManager_WithPrivates {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return new PendingStateManager(
 				{
@@ -307,7 +307,7 @@ describe("Pending State Manager", () => {
 					isActiveConnection: () => false,
 					isAttached: () => true,
 				},
-				{ pendingStates },
+				pendingState,
 				undefined /* logger */,
 			) as any;
 		}
@@ -319,7 +319,10 @@ describe("Pending State Manager", () => {
 					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), []);
 				}
 				{
-					const pendingStateManager = createPendingStateManager([]);
+					const pendingStateManager = createPendingStateManager({
+						pendingStates: [],
+						nonAckedMessageCount: 0,
+					});
 					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), []);
 				}
 			});
@@ -332,14 +335,20 @@ describe("Pending State Manager", () => {
 						content: '{"type": "component", "contents": {"prop1": "value"}}',
 					},
 				];
-				const pendingStateManager = createPendingStateManager(messages);
+				const pendingStateManager = createPendingStateManager({
+					pendingStates: messages,
+					nonAckedMessageCount: messages.length,
+				});
 				assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), messages);
 			});
 		});
 
 		describe("Future op compat behavior", () => {
 			it("pending op roundtrip", async () => {
-				const pendingStateManager = createPendingStateManager([]);
+				const pendingStateManager = createPendingStateManager({
+					pendingStates: [],
+					nonAckedMessageCount: 0,
+				});
 				const futureRuntimeMessage: Pick<ISequencedDocumentMessage, "type" | "contents"> &
 					RecentlyAddedContainerRuntimeMessageDetails = {
 					type: "FROM_THE_FUTURE",
@@ -383,7 +392,7 @@ describe("Pending State Manager", () => {
 					isActiveConnection: () => false,
 					isAttached: () => true,
 				},
-				{ pendingStates },
+				{ pendingStates, nonAckedMessageCount: 0 },
 				undefined /* logger */,
 			) as any;
 		}
