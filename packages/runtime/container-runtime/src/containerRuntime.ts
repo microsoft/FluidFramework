@@ -4288,6 +4288,10 @@ export class ContainerRuntime
 			pendingAttachmentBlobs?: IPendingBlobs,
 		): IPendingRuntimeState | undefined => {
 			const pending = this.pendingStateManager.getLocalState();
+			if (pendingAttachmentBlobs === undefined && pending === undefined) {
+				return; // no pending state to save
+			}
+
 			const pendingIdCompressorState = this._idCompressor?.serialize(true);
 
 			return {
