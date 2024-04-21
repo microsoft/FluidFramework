@@ -16,23 +16,21 @@ import { ChangeAtomId } from "../../../core/index.js";
 
 const tag: RevisionTag = mintRevisionTag();
 
-// TODO: Remove this
-export type TestChangeset = SF.Changeset;
-
 const nodeId1: NodeId = { localId: brand(1) };
 const nodeId2: NodeId = { localId: brand(2) };
 
 export const cases: {
-	no_change: TestChangeset;
-	insert: TestChangeset;
-	modify: TestChangeset;
-	modify_insert: TestChangeset;
-	remove: TestChangeset;
-	revive: TestChangeset;
-	pin: TestChangeset;
-	move: TestChangeset;
-	return: TestChangeset;
-	transient_insert: TestChangeset;
+	no_change: SF.Changeset;
+	insert: SF.Changeset;
+	modify: SF.Changeset;
+	modify_insert: SF.Changeset;
+	remove: SF.Changeset;
+	revive: SF.Changeset;
+	pin: SF.Changeset;
+	move: SF.Changeset;
+	moveAndRemove: SF.Changeset;
+	return: SF.Changeset;
+	transient_insert: SF.Changeset;
 } = {
 	no_change: [],
 	insert: createInsertChangeset(1, 2, brand(1)),
@@ -50,6 +48,10 @@ export const cases: {
 	revive: createReviveChangeset(2, 2, { revision: tag, localId: brand(0) }),
 	pin: [createPinMark(4, brand(0))],
 	move: createMoveChangeset(1, 2, 4),
+	moveAndRemove: [
+		createMoveOutMark(1, brand(0)),
+		createAttachAndDetachMark(createMoveInMark(1, brand(0)), createRemoveMark(1, brand(1))),
+	],
 	return: createReturnChangeset(1, 3, 0, { revision: tag, localId: brand(0) }),
 	transient_insert: [
 		{ count: 1 },
@@ -181,15 +183,19 @@ function createReviveMark(
 
 function createPinMark(
 	count: number,
-	id: SF.MoveId,
+	id: SF.MoveId | SF.CellId,
 	overrides?: Partial<SF.CellMark<SF.Insert>>,
 ): SF.CellMark<SF.Insert> {
-	return {
+	const cellIdObject: SF.CellId = typeof id === "object" ? id : { localId: id };
+	const mark: SF.CellMark<SF.Insert> = {
 		type: "Insert",
 		count,
-		id,
-		...overrides,
+		id: cellIdObject.localId,
 	};
+	if (cellIdObject.revision !== undefined) {
+		mark.revision = cellIdObject.revision;
+	}
+	return { ...mark, ...overrides };
 }
 
 /**

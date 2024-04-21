@@ -75,8 +75,9 @@ import {
 	MessageType,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, type TelemetryEventCategory } from "@fluidframework/telemetry-utils";
 import {
+	type TelemetryEventCategory,
+	ITelemetryLoggerExt,
 	EventEmitterWithErrorHandling,
 	GenericError,
 	IFluidErrorBase,
@@ -372,7 +373,7 @@ export class Container
 
 		return PerformanceEvent.timedExecAsync(
 			container.mc.logger,
-			{ eventName: "Load" },
+			{ eventName: "Load", ...loadMode },
 			async (event) =>
 				new Promise<Container>((resolve, reject) => {
 					const defaultMode: IContainerLoadMode = { opsBeforeReturn: "cached" };
@@ -397,7 +398,7 @@ export class Container
 						})
 						.then(
 							(props) => {
-								event.end({ ...props, ...loadMode });
+								event.end({ ...props });
 								resolve(container);
 							},
 							(error) => {
@@ -513,9 +514,9 @@ export class Container
 		// It's conceivable the container could be closed when this is called
 		// Only transition states if currently loading
 		if (this._lifecycleState === "loading") {
+			this._lifecycleState = "loaded";
 			// Propagate current connection state through the system.
 			this.propagateConnectionState(true /* initial transition */);
-			this._lifecycleState = "loaded";
 		}
 	}
 
@@ -626,17 +627,20 @@ export class Container
 	}
 
 	private get connected(): boolean {
-		return this.connectionStateHandler.connectionState === ConnectionState.Connected;
+		// "connected" event is delayed until runtime is fully loaded - see setLoaded()
+		return (
+			this.connectionStateHandler.connectionState === ConnectionState.Connected &&
+			this._lifecycleState === "loaded"
+		);
 	}
 
-	private _clientId: string | undefined;
-
 	/**
-	 * The server provided id of the client.
-	 * Set once this.connected is true, otherwise undefined
+	 * clientId of the latest connection. Changes only once client is connected, caught up and fully loaded.
+	 * Changes to clientId are delayed through container loading sequence and delived once container is fully loaded.
+	 * clientId does not reset on lost connection - old value persists until new connection is fully established.
 	 */
 	public get clientId(): string | undefined {
-		return this._clientId;
+		return this.protocolHandler.audience.getSelf()?.clientId;
 	}
 
 	private get isInteractiveClient(): boolean {
@@ -721,6 +725,7 @@ export class Container
 				},
 				error,
 			);
+			this.close(normalizeError(error));
 		});
 
 		const {
@@ -738,7 +743,6 @@ export class Container
 
 		this.connectionTransitionTimes[ConnectionState.Disconnected] = performance.now();
 		const pendingLocalState = loadProps?.pendingLocalState;
-		this._clientId = pendingLocalState?.clientId;
 
 		this._canReconnect = canReconnect ?? true;
 		this.clientDetailsOverride = clientDetailsOverride;
@@ -840,9 +844,6 @@ export class Container
 			{
 				logger: this.mc.logger,
 				connectionStateChanged: (value, oldState, reason) => {
-					if (value === ConnectionState.Connected) {
-						this._clientId = this.connectionStateHandler.pendingClientId;
-					}
 					this.logConnectionStateChangeTelemetry(value, oldState, reason);
 					if (this._lifecycleState === "loaded") {
 						this.propagateConnectionState(
@@ -893,6 +894,9 @@ export class Container
 				clientShouldHaveLeft: (clientId: string) => {
 					this.clientsWhoShouldHaveLeft.add(clientId);
 				},
+				onCriticalError: (error: ICriticalContainerError) => {
+					this.close(error);
+				},
 			},
 			this.deltaManager,
 			pendingLocalState?.clientId,
@@ -920,6 +924,7 @@ export class Container
 			detachedBlobStorage,
 			this.mc.logger,
 			pendingLocalState?.snapshotBlobs,
+			pendingLocalState?.loadedGroupIdSnapshots,
 			addProtocolSummaryIfMissing,
 			forceEnableSummarizeProtocolTree,
 		);
@@ -1652,6 +1657,13 @@ export class Container
 			baseSnapshot,
 		);
 
+		// If we are loading from pending state, we start with old clientId.
+		// We switch to latest connection clientId only after setLoaded().
+		assert(this.clientId === undefined, "there should be no clientId yet");
+		if (pendingLocalState?.clientId !== undefined) {
+			this.protocolHandler.audience.setCurrentClientId(pendingLocalState?.clientId);
+		}
+
 		timings.phase3 = performance.now();
 		const codeDetails = this.getCodeDetailsFromQuorum();
 		await this.instantiateRuntime(
@@ -1674,6 +1686,7 @@ export class Container
 				await this.runtime.notifyOpReplay?.(message);
 			}
 			pendingLocalState.savedOps = [];
+			this.storageAdapter.clearPendingState();
 		}
 
 		// We might have hit some failure that did not manifest itself in exception in this flow,
@@ -2119,7 +2132,7 @@ export class Container
 				reason: reason?.text,
 				connectionInitiationReason,
 				pendingClientId: this.connectionStateHandler.pendingClientId,
-				clientId: this.clientId,
+				clientId: this.connectionStateHandler.clientId,
 				autoReconnect,
 				opsBehind,
 				online: OnlineStatus[isOnline()],
@@ -2144,6 +2157,12 @@ export class Container
 		initialTransition: boolean,
 		disconnectedReason?: IConnectionStateChangeReason,
 	) {
+		if (this.connectionState === ConnectionState.Connected) {
+			const clientId = this.connectionStateHandler.clientId;
+			assert(clientId !== undefined, "there has to be clientId");
+			this.protocolHandler.audience.setCurrentClientId(clientId);
+		}
+
 		// When container loaded, we want to propagate initial connection state.
 		// After that, we communicate only transitions to Connected & Disconnected states, skipping all other states.
 		// This can be changed in the future, for example we likely should add "CatchingUp" event on Container.
@@ -2402,7 +2421,7 @@ export class Container
 	 * @param readonly - Is the container in readonly mode?
 	 */
 	private setContextConnectedState(state: boolean, readonly: boolean): void {
-		if (this._runtime?.disposed === false) {
+		if (this._runtime?.disposed === false && this._lifecycleState === "loaded") {
 			/**
 			 * We want to lie to the ContainerRuntime when we are in readonly mode to prevent issues with pending
 			 * ops getting through to the DeltaManager.

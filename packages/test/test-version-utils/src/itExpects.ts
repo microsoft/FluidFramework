@@ -4,8 +4,10 @@
  */
 
 import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
-import { type ITelemetryGenericEventExt } from "@fluidframework/telemetry-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	type ITelemetryGenericEventExt,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	getUnexpectedLogErrorException,
 	TestObjectProvider,

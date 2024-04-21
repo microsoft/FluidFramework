@@ -8,6 +8,7 @@ export {
 	knownApiLevels,
 	isKnownApiLevel,
 } from "./apiLevel";
+export { ApiTag } from "./apiTag";
 export {
 	generateBumpVersionBranchName,
 	generateBumpVersionCommitMessage,
