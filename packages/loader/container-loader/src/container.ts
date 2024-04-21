@@ -1136,10 +1136,11 @@ export class Container
 
 		// Save Audience state. We only need to save "read" clients, as "write" clients will be rehydrated
 		// as part of Quorum rehydration.
-		// At the moment we only need information about "self" to make our API consistent (there is Container.clientId -> there is Audience.getSelf())
+		// At the moment we only need information about "self" to make our API consistent:
+		// if Container.clientId present -> Audience.getSelf().client present
 		// But having full audience might be useful for various consumer scenarios.
 		//
-		// NOTE: grab readClients & clientId at the same time - either before or after calling runtime.getPendingLocalState().
+		// Make sure to capture readClients & clientId at the same time - either before or after calling runtime.getPendingLocalState().
 		// Later flushes ops, which would trigger reconnect flow if container is in "read" connection mode.
 		// And reconnection flow results in changes to clientId & audience.
 		const readClients: Record<string, IClient> = {};
