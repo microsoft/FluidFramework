@@ -126,7 +126,7 @@ export class PendingStateManager implements IDisposable {
 		return {
 			pendingStates: [...this.savedOps, ...this.pendingMessages.toArray()]
 				.filter(
-					(message) => message.referenceSequenceNumber > (snapshotSequenceNumber ?? 0),
+					(message) => message.referenceSequenceNumber >= (snapshotSequenceNumber ?? 0),
 				)
 				.map((message) => {
 					// delete localOpMetadata since it may not be serializable

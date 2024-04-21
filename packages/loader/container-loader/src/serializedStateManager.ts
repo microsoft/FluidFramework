@@ -97,9 +97,9 @@ export class SerializedStateManager {
 	private latestSnapshot: ISnapshotInfo | undefined;
 	private refreshSnapshot: Promise<void> | undefined;
 	private snapshotFetchedTime: number | undefined;
-	private updateSessionExpiryTime: boolean = false;
+	private latestSnapshotFetchedTime: number | undefined;
 	private readonly lastSavedOpSequenceNumber: number | undefined;
-	private allSavedOpsProcessed: boolean = true;
+	private allSavedOpsProcessed: boolean;
 
 	constructor(
 		private readonly pendingLocalState: IPendingContainerState | undefined,
@@ -113,18 +113,17 @@ export class SerializedStateManager {
 			logger: subLogger,
 			namespace: "serializedStateManager",
 		});
+
 		if (pendingLocalState && pendingLocalState.savedOps.length > 0) {
 			this.allSavedOpsProcessed = false;
 			const savedOpsSize = pendingLocalState.savedOps.length;
 			this.lastSavedOpSequenceNumber =
-				pendingLocalState?.savedOps[savedOpsSize - 1].sequenceNumber;
+				pendingLocalState.savedOps[savedOpsSize - 1].sequenceNumber;
+		} else {
+			// Necessary for case where we don't have saved ops.
+			this.allSavedOpsProcessed = true;
 		}
-		containerEvent.once("saved", () => {
-			if (this.snapshotFetchedTime !== undefined) {
-				this.updateSessionExpiryTime = true;
-				this.updateSnapshotAndProcessedOpsMaybe();
-			}
-		});
+		containerEvent.once("saved", () => this.updateSnapshotAndProcessedOpsMaybe());
 	}
 
 	public get offlineLoadEnabled(): boolean {
@@ -208,11 +207,10 @@ export class SerializedStateManager {
 			assert(snapshot !== undefined, "Snapshot should exist");
 			return convertSnapshotToSnapshotInfo(snapshot);
 		}
-		this.snapshotFetchedTime = Date.now();
-				if (!this.containerDirty() && this.allSavedOpsProcessed) {
-					this.updateSessionExpiryTime = true;
-					this.updateSnapshotAndProcessedOpsMaybe();
-				}
+		this.latestSnapshotFetchedTime = Date.now();
+		if (!this.containerDirty() && this.allSavedOpsProcessed) {
+			this.updateSnapshotAndProcessedOpsMaybe();
+		}
 	}
 
 	/**
@@ -252,6 +250,7 @@ export class SerializedStateManager {
 				snapshotSequenceNumber - firstProcessedOpSequenceNumber + 1,
 			);
 			this.snapshot = this.latestSnapshot;
+			this.snapshotFetchedTime = this.latestSnapshotFetchedTime;
 			this.latestSnapshot = undefined;
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "SnapshotRefreshed",
@@ -315,7 +314,7 @@ export class SerializedStateManager {
 				const pendingRuntimeState = await runtime.getPendingLocalState({
 					...props,
 					snapshotSequenceNumber: this.snapshot.snapshotSequenceNumber,
-					sessionExpiryTimerStarted: this.updateSessionExpiryTime
+					sessionExpiryTimerStarted: this.allSavedOpsProcessed
 						? this.snapshotFetchedTime
 						: undefined,
 				});

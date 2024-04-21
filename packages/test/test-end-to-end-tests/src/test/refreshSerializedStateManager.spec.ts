@@ -197,6 +197,10 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		assert(/sequenceNumber[^\w,}]*0/.test(pendingOps));
 
 		const container1: IContainerExperimental = await loader.resolve({ url }, pendingOps);
+		const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
+		const map1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
+		map1.set(testKey, testValue);
+		await provider.ensureSynchronized();
 		await timeoutAwait(getLatestSnapshotInfoP.promise, {
 			errorMsg: "Timeout on waiting for getLatestSnapshotInfo",
 		});

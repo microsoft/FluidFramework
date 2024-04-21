@@ -48,12 +48,19 @@ const snapshot = {
 	},
 };
 
+const savedOpsSize = 10;
+const savedOps: ISequencedDocumentMessage[] = [];
+
+for (let i = 1; i <= savedOpsSize; i++) {
+	savedOps.push(generateSavedOp(i));
+}
+
 const pendingLocalState: IPendingContainerState = {
 	attached: true,
 	baseSnapshot: snapshot,
 	snapshotBlobs: { attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}' },
 	pendingRuntimeState: {},
-	savedOps: [],
+	savedOps,
 	url: "fluid",
 };
 
@@ -150,16 +157,17 @@ const getAttributesFromPendingState = (
 	return JSON.parse(attributes) as IDocumentAttributes;
 };
 
+function generateSavedOp(seq: number): ISequencedDocumentMessage {
+	return {
+		clientId: "Some client ID",
+		minimumSequenceNumber: 0,
+		sequenceNumber: seq,
+		type: MessageType.Operation,
+	} as any as ISequencedDocumentMessage;
+}
+
 describe("serializedStateManager", () => {
 	let logger: MockLogger;
-	function generateSavedOp(seq: number): ISequencedDocumentMessage {
-		return {
-			clientId: "Some client ID",
-			minimumSequenceNumber: 0,
-			sequenceNumber: seq,
-			type: MessageType.Operation,
-		} as any as ISequencedDocumentMessage;
-	}
 
 	beforeEach("setup", () => {
 		logger = new MockLogger();
@@ -275,246 +283,6 @@ describe("serializedStateManager", () => {
 		assert.strictEqual(attributes.minimumSequenceNumber, 0);
 	});
 
-	it("fetched snapshot is the same as pending snapshot", async () => {
-		const pending: IPendingContainerState = {
-			...pendingLocalState,
-			baseSnapshot: { ...snapshot, id: "fromPending" },
-		};
-		const storageAdapter = new MockStorageAdapter();
-		// callback to help us identify when the background fetch finished.
-		const serializedStateManager = new SerializedStateManager(
-			pending,
-			logger.toTelemetryLogger(),
-			storageAdapter,
-			true,
-			eventEmitter,
-			() => false,
-			newSnapshotFetched,
-		);
-		let seq = 1;
-		while (seq < 10) {
-			serializedStateManager.addProcessedOp(generateSavedOp(seq++));
-		}
-		const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(
-			undefined,
-			false,
-		);
-		assert.strictEqual(baseSnapshot.id, "fromPending");
-		assert.strictEqual(version, undefined);
-		// It'll wait until getLatestSnapshotInfo finish. This ensures we attempted to refresh
-		// serializedStateManager.snapshot
-		await serializedStateManager.waitForInitialRefresh;
-		eventEmitter.emit("saved");
-		logger.assertMatchAny([
-			{
-				eventName: "serializedStateManager:OldSnapshotFetchWhileRefreshing",
-				snapshotSequenceNumber: 0,
-				firstProcessedOpSequenceNumber: 1,
-			},
-		]);
-		const state = await serializedStateManager.getPendingLocalStateCore(
-			{ notifyImminentClosure: false },
-			"clientId",
-			new MockRuntime(),
-			resolvedUrl,
-		);
-		const parsed = JSON.parse(state);
-		// We keep using the pending snapshot since there were no summaries since then.
-		assert.strictEqual(parsed.baseSnapshot.id, "fromPending");
-		const attributes = getAttributesFromPendingState(parsed);
-		assert.strictEqual(attributes.sequenceNumber, 0);
-		assert.strictEqual(attributes.minimumSequenceNumber, 0);
-	});
-
-	it("snapshot is older than first processed op", async () => {
-		const pending: IPendingContainerState = {
-			...pendingLocalState,
-			baseSnapshot: { ...snapshot, id: "fromPending" },
-		};
-		const storageAdapter = new MockStorageAdapter();
-		const serializedStateManager = new SerializedStateManager(
-			pending,
-			logger.toTelemetryLogger(),
-			storageAdapter,
-			true,
-			eventEmitter,
-			() => false,
-		);
-
-		const firstProcessedOpSequenceNumber = 13; // greater than snapshotSequenceNumber + 1
-		const lastProcessedOpSequenceNumber = 40;
-		let seq = firstProcessedOpSequenceNumber;
-		while (seq <= lastProcessedOpSequenceNumber) {
-			serializedStateManager.addProcessedOp(generateSavedOp(seq++));
-		}
-		const snapshotSequenceNumber = 11; // uploading an snapshot too old to be the latest
-		storageAdapter.uploadSummary(snapshotSequenceNumber);
-		await serializedStateManager.fetchSnapshot(undefined, false);
-		await serializedStateManager.waitForInitialRefresh;
-		eventEmitter.emit("saved");
-		logger.assertMatchAny([
-			{
-				eventName: "serializedStateManager:OldSnapshotFetchWhileRefreshing",
-				snapshotSequenceNumber,
-				firstProcessedOpSequenceNumber,
-				lastProcessedOpSequenceNumber,
-				stashedSnapshotSequenceNumber: snapshotSequenceNumber,
-			},
-		]);
-		const state = await serializedStateManager.getPendingLocalStateCore(
-			{ notifyImminentClosure: false },
-			"clientId",
-			new MockRuntime(),
-			resolvedUrl,
-		);
-		const parsed = JSON.parse(state) as IPendingContainerState;
-		assert.strictEqual(parsed.baseSnapshot.id, "fromPending");
-	});
-
-	it("refresh snapshot when snapshot sequence number is among processed ops", async () => {
-		const pending: IPendingContainerState = {
-			...pendingLocalState,
-			baseSnapshot: { ...snapshot, id: "fromPending" },
-		};
-		const storageAdapter = new MockStorageAdapter();
-		const serializedStateManager = new SerializedStateManager(
-			pending,
-			logger.toTelemetryLogger(),
-			storageAdapter,
-			true,
-			eventEmitter,
-			() => false,
-		);
-
-		const lastProcessedOpSequenceNumber = 20;
-		let seq = 1;
-		while (seq <= lastProcessedOpSequenceNumber) {
-			serializedStateManager.addProcessedOp(generateSavedOp(seq++));
-		}
-
-		const snapshotSequenceNumber = 11; // latest snapshot will be among processed ops
-		storageAdapter.uploadSummary(snapshotSequenceNumber);
-
-		await serializedStateManager.fetchSnapshot(undefined, false);
-		// wait to get latest snapshot
-		// this time the snapshot should have been refreshed
-		await serializedStateManager.waitForInitialRefresh;
-		eventEmitter.emit("saved");
-		const state = await serializedStateManager.getPendingLocalStateCore(
-			{ notifyImminentClosure: false },
-			"clientId",
-			new MockRuntime(),
-			resolvedUrl,
-		);
-		const parsed = JSON.parse(state) as IPendingContainerState;
-		assert.strictEqual(parsed.baseSnapshot.id, "fromStorage", "snapshot was not updated");
-		const attributes = getAttributesFromPendingState(parsed);
-		assert.strictEqual(
-			attributes.sequenceNumber,
-			snapshotSequenceNumber,
-			"wrong snapshot sequence number",
-		);
-		assert.strictEqual(
-			parsed.savedOps[0].sequenceNumber,
-			snapshotSequenceNumber + 1,
-			"wrong first saved op",
-		);
-		assert.strictEqual(
-			parsed.savedOps[parsed.savedOps.length - 1].sequenceNumber,
-			lastProcessedOpSequenceNumber,
-			"wrong last saved op",
-		);
-	});
-
-	it("refresh snapshot when there are no processed ops", async () => {
-		const pending: IPendingContainerState = {
-			...pendingLocalState,
-			baseSnapshot: { ...snapshot, id: "fromPending" },
-		};
-		const storageAdapter = new MockStorageAdapter();
-		const serializedStateManager = new SerializedStateManager(
-			pending,
-			logger.toTelemetryLogger(),
-			storageAdapter,
-			true,
-			eventEmitter,
-			() => false,
-		);
-		const snapshotSequenceNumber = 11;
-		storageAdapter.uploadSummary(snapshotSequenceNumber);
-
-		await serializedStateManager.fetchSnapshot(undefined, false);
-		await serializedStateManager.waitForInitialRefresh;
-		const state = await serializedStateManager.getPendingLocalStateCore(
-			{ notifyImminentClosure: false },
-			"clientId",
-			new MockRuntime(),
-			resolvedUrl,
-		);
-		const parsed = JSON.parse(state) as IPendingContainerState;
-		assert.strictEqual(parsed.baseSnapshot.id, "fromPending");
-		assert.strictEqual(parsed.savedOps.length, 0, "should not be savedOps");
-	});
-
-	it("refresh snapshot when snapshot sequence number is above processed ops", async () => {
-		const pending: IPendingContainerState = {
-			...pendingLocalState,
-			baseSnapshot: { ...snapshot, id: "fromPending" },
-		};
-		const storageAdapter = new MockStorageAdapter();
-		const serializedStateManager = new SerializedStateManager(
-			pending,
-			logger.toTelemetryLogger(),
-			storageAdapter,
-			true,
-			eventEmitter,
-			() => false,
-		);
-		let seq = 1;
-		let lastProcessedOpSequenceNumber = 20;
-		while (seq <= lastProcessedOpSequenceNumber) {
-			serializedStateManager.addProcessedOp(generateSavedOp(seq++));
-		}
-
-		const snapshotSequenceNumber = 30;
-		storageAdapter.uploadSummary(snapshotSequenceNumber);
-
-		await serializedStateManager.fetchSnapshot(undefined, false);
-		// latest snapshot fetched but we're still behind the snapshot.
-		// next addProcessedOp calls will be responsible for refreshing
-		await serializedStateManager.waitForInitialRefresh;
-
-		lastProcessedOpSequenceNumber = 40;
-		while (seq <= lastProcessedOpSequenceNumber) {
-			serializedStateManager.addProcessedOp(generateSavedOp(seq++));
-		}
-
-		const state = await serializedStateManager.getPendingLocalStateCore(
-			{ notifyImminentClosure: false },
-			"clientId",
-			new MockRuntime(),
-			resolvedUrl,
-		);
-		const parsed = JSON.parse(state) as IPendingContainerState;
-		assert.strictEqual(parsed.baseSnapshot.id, "fromStorage");
-		const attributes = getAttributesFromPendingState(parsed);
-		assert.strictEqual(
-			attributes.sequenceNumber,
-			snapshotSequenceNumber,
-			"wrong snapshot sequence number",
-		);
-		assert.strictEqual(
-			parsed.savedOps[0].sequenceNumber,
-			snapshotSequenceNumber + 1,
-			"wrong first saved op",
-		);
-		assert.strictEqual(
-			parsed.savedOps[parsed.savedOps.length - 1].sequenceNumber,
-			lastProcessedOpSequenceNumber,
-			"wrong last saved op",
-		);
-	});
-
 	it("get pending state again before getting latest snapshot", async () => {
 		const pending: IPendingContainerState = {
 			...pendingLocalState,
@@ -566,7 +334,7 @@ describe("serializedStateManager", () => {
 		);
 	});
 
-	it("get pending state again before refreshing latest snapshot", async () => {
+	it("pending state again before refreshing latest snapshot", async () => {
 		const pending: IPendingContainerState = {
 			...pendingLocalState,
 			baseSnapshot: { ...snapshot, id: "fromPending" },
@@ -665,6 +433,252 @@ describe("serializedStateManager", () => {
 		assert.strictEqual(parsed.baseSnapshot.id, "fromPending");
 	});
 
+	for (const isDirty of [true, false]) {
+		it(`fetched snapshot is the same as pending snapshot, isDirty: ${isDirty}`, async () => {
+			const pending: IPendingContainerState = {
+				...pendingLocalState,
+				baseSnapshot: { ...snapshot, id: "fromPending" },
+			};
+			const storageAdapter = new MockStorageAdapter();
+			const serializedStateManager = new SerializedStateManager(
+				pending,
+				logger.toTelemetryLogger(),
+				storageAdapter,
+				true,
+				eventEmitter,
+				() => isDirty,
+			);
+			savedOps.forEach((savedOp) => serializedStateManager.addProcessedOp(savedOp));
+
+			const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(
+				undefined,
+				false,
+			);
+			assert.strictEqual(baseSnapshot.id, "fromPending");
+			assert.strictEqual(version, undefined);
+			// It'll wait until getLatestSnapshotInfo finish. This ensures we attempted to refresh
+			// serializedStateManager.snapshot
+			await serializedStateManager.waitForInitialRefresh;
+			if (isDirty) {
+				eventEmitter.emit("saved");
+			}
+			logger.assertMatchAny([
+				{
+					eventName: "serializedStateManager:OldSnapshotFetchWhileRefreshing",
+					snapshotSequenceNumber: 0,
+					firstProcessedOpSequenceNumber: 1,
+				},
+			]);
+			const state = await serializedStateManager.getPendingLocalStateCore(
+				{ notifyImminentClosure: false },
+				"clientId",
+				new MockRuntime(),
+				resolvedUrl,
+			);
+			const parsed = JSON.parse(state);
+			// We keep using the pending snapshot since there were no summaries since then.
+			assert.strictEqual(parsed.baseSnapshot.id, "fromPending");
+			const attributes = getAttributesFromPendingState(parsed);
+			assert.strictEqual(attributes.sequenceNumber, 0);
+			assert.strictEqual(attributes.minimumSequenceNumber, 0);
+		});
+
+		it(`snapshot is older than first processed op, isDirty: ${isDirty}`, async () => {
+			const pending: IPendingContainerState = {
+				...pendingLocalState,
+				baseSnapshot: { ...snapshot, id: "fromPending" },
+				savedOps: [generateSavedOp(13)],
+			};
+			const storageAdapter = new MockStorageAdapter();
+			const serializedStateManager = new SerializedStateManager(
+				pending,
+				logger.toTelemetryLogger(),
+				storageAdapter,
+				true,
+				eventEmitter,
+				() => isDirty,
+			);
+
+			const firstProcessedOpSequenceNumber = 13; // greater than snapshotSequenceNumber + 1
+			const lastProcessedOpSequenceNumber = 40;
+			let seq = firstProcessedOpSequenceNumber;
+			while (seq <= lastProcessedOpSequenceNumber) {
+				serializedStateManager.addProcessedOp(generateSavedOp(seq++));
+			}
+			const snapshotSequenceNumber = 11; // uploading an snapshot too old to be the latest
+			storageAdapter.uploadSummary(snapshotSequenceNumber);
+			await serializedStateManager.fetchSnapshot(undefined, false);
+			await serializedStateManager.waitForInitialRefresh;
+			if (isDirty) {
+				eventEmitter.emit("saved");
+			}
+			logger.assertMatchAny([
+				{
+					eventName: "serializedStateManager:OldSnapshotFetchWhileRefreshing",
+					snapshotSequenceNumber,
+					firstProcessedOpSequenceNumber,
+					lastProcessedOpSequenceNumber,
+					stashedSnapshotSequenceNumber: snapshotSequenceNumber,
+				},
+			]);
+			const state = await serializedStateManager.getPendingLocalStateCore(
+				{ notifyImminentClosure: false },
+				"clientId",
+				new MockRuntime(),
+				resolvedUrl,
+			);
+			const parsed = JSON.parse(state) as IPendingContainerState;
+			assert.strictEqual(parsed.baseSnapshot.id, "fromPending");
+		});
+
+		it(`refresh snapshot when snapshot sequence number is among processed ops, isDirty: ${isDirty}`, async () => {
+			const pending: IPendingContainerState = {
+				...pendingLocalState,
+				baseSnapshot: { ...snapshot, id: "fromPending" },
+			};
+			const storageAdapter = new MockStorageAdapter();
+			const serializedStateManager = new SerializedStateManager(
+				pending,
+				logger.toTelemetryLogger(),
+				storageAdapter,
+				true,
+				eventEmitter,
+				() => isDirty,
+			);
+
+			const lastProcessedOpSequenceNumber = 20;
+			let seq = 1;
+			while (seq <= lastProcessedOpSequenceNumber) {
+				serializedStateManager.addProcessedOp(generateSavedOp(seq++));
+			}
+
+			const snapshotSequenceNumber = 11; // latest snapshot will be among processed ops
+			storageAdapter.uploadSummary(snapshotSequenceNumber);
+
+			await serializedStateManager.fetchSnapshot(undefined, false);
+			// wait to get latest snapshot
+			// this time the snapshot should have been refreshed
+			await serializedStateManager.waitForInitialRefresh;
+			if (isDirty) {
+				eventEmitter.emit("saved");
+			}
+			const state = await serializedStateManager.getPendingLocalStateCore(
+				{ notifyImminentClosure: false },
+				"clientId",
+				new MockRuntime(),
+				resolvedUrl,
+			);
+			const parsed = JSON.parse(state) as IPendingContainerState;
+			assert.strictEqual(parsed.baseSnapshot.id, "fromStorage", "snapshot was not updated");
+			const attributes = getAttributesFromPendingState(parsed);
+			assert.strictEqual(
+				attributes.sequenceNumber,
+				snapshotSequenceNumber,
+				"wrong snapshot sequence number",
+			);
+			assert.strictEqual(
+				parsed.savedOps[0].sequenceNumber,
+				snapshotSequenceNumber + 1,
+				"wrong first saved op",
+			);
+			assert.strictEqual(
+				parsed.savedOps[parsed.savedOps.length - 1].sequenceNumber,
+				lastProcessedOpSequenceNumber,
+				"wrong last saved op",
+			);
+		});
+
+		it(`refresh snapshot when there are no processed ops, isDirty: ${isDirty}`, async () => {
+			const pending: IPendingContainerState = {
+				...pendingLocalState,
+				baseSnapshot: { ...snapshot, id: "fromPending" },
+				savedOps: [],
+			};
+			const storageAdapter = new MockStorageAdapter();
+			const serializedStateManager = new SerializedStateManager(
+				pending,
+				logger.toTelemetryLogger(),
+				storageAdapter,
+				true,
+				eventEmitter,
+				() => isDirty,
+			);
+			const snapshotSequenceNumber = 11;
+			storageAdapter.uploadSummary(snapshotSequenceNumber);
+
+			await serializedStateManager.fetchSnapshot(undefined, false);
+			await serializedStateManager.waitForInitialRefresh;
+			const state = await serializedStateManager.getPendingLocalStateCore(
+				{ notifyImminentClosure: false },
+				"clientId",
+				new MockRuntime(),
+				resolvedUrl,
+			);
+			const parsed = JSON.parse(state) as IPendingContainerState;
+			assert.strictEqual(parsed.baseSnapshot.id, "fromPending");
+			assert.strictEqual(parsed.savedOps.length, 0, "should not be savedOps");
+		});
+
+		it(`refresh snapshot when snapshot sequence number is above processed ops, isDirty: ${isDirty}`, async () => {
+			const pending: IPendingContainerState = {
+				...pendingLocalState,
+				baseSnapshot: { ...snapshot, id: "fromPending" },
+			};
+			const storageAdapter = new MockStorageAdapter();
+			const serializedStateManager = new SerializedStateManager(
+				pending,
+				logger.toTelemetryLogger(),
+				storageAdapter,
+				true,
+				eventEmitter,
+				() => isDirty,
+			);
+			let seq = 1;
+			let lastProcessedOpSequenceNumber = 20;
+			while (seq <= lastProcessedOpSequenceNumber) {
+				serializedStateManager.addProcessedOp(generateSavedOp(seq++));
+			}
+
+			const snapshotSequenceNumber = 30;
+			storageAdapter.uploadSummary(snapshotSequenceNumber);
+
+			await serializedStateManager.fetchSnapshot(undefined, false);
+			// latest snapshot fetched but we're still behind the snapshot.
+			// next addProcessedOp calls will be responsible for refreshing
+			await serializedStateManager.waitForInitialRefresh;
+
+			lastProcessedOpSequenceNumber = 40;
+			while (seq <= lastProcessedOpSequenceNumber) {
+				serializedStateManager.addProcessedOp(generateSavedOp(seq++));
+			}
+
+			const state = await serializedStateManager.getPendingLocalStateCore(
+				{ notifyImminentClosure: false },
+				"clientId",
+				new MockRuntime(),
+				resolvedUrl,
+			);
+			const parsed = JSON.parse(state) as IPendingContainerState;
+			assert.strictEqual(parsed.baseSnapshot.id, "fromStorage");
+			const attributes = getAttributesFromPendingState(parsed);
+			assert.strictEqual(
+				attributes.sequenceNumber,
+				snapshotSequenceNumber,
+				"wrong snapshot sequence number",
+			);
+			assert.strictEqual(
+				parsed.savedOps[0].sequenceNumber,
+				snapshotSequenceNumber + 1,
+				"wrong first saved op",
+			);
+			assert.strictEqual(
+				parsed.savedOps[parsed.savedOps.length - 1].sequenceNumber,
+				lastProcessedOpSequenceNumber,
+				"wrong last saved op",
+			);
+		});
+	}
+
 	describe("session expiry time", () => {
 		for (const isDirty of [true, false]) {
 			it(`session expiry time when snapshot is not refreshed, isDirty: ${isDirty}`, async () => {
@@ -673,10 +687,6 @@ describe("serializedStateManager", () => {
 					baseSnapshot: { ...snapshot, id: "fromPending" },
 				};
 				const storageAdapter = new MockStorageAdapter();
-				const getLatestSnapshotInfoP = new Deferred<void>();
-				const newSnapshotFetched = () => {
-					getLatestSnapshotInfoP.resolve();
-				};
 				const serializedStateManager = new SerializedStateManager(
 					pending,
 					logger.toTelemetryLogger(),
@@ -684,11 +694,10 @@ describe("serializedStateManager", () => {
 					true,
 					eventEmitter,
 					() => isDirty,
-					newSnapshotFetched,
 				);
 
 				await serializedStateManager.fetchSnapshot(undefined, false);
-				await getLatestSnapshotInfoP.promise;
+				await serializedStateManager.waitForInitialRefresh;
 
 				const mockRuntime: ISerializedStateManagerRuntime = {
 					getPendingLocalState: (props) => {
@@ -702,14 +711,7 @@ describe("serializedStateManager", () => {
 					resolvedUrl,
 				);
 				const parsed = JSON.parse(state);
-				if (isDirty) {
-					assert.strictEqual(
-						parsed.pendingRuntimeState.sessionExpiryTimerStarted,
-						undefined,
-					);
-				} else {
-					assert.ok(parsed.pendingRuntimeState.sessionExpiryTimerStarted);
-				}
+				assert.strictEqual(parsed.pendingRuntimeState.sessionExpiryTimerStarted, undefined);
 			});
 
 			it(`session expiry time when snapshot is refreshed but no saved event. isDirty: ${isDirty}`, async () => {
@@ -718,10 +720,6 @@ describe("serializedStateManager", () => {
 					baseSnapshot: { ...snapshot, id: "fromPending" },
 				};
 				const storageAdapter = new MockStorageAdapter();
-				const getLatestSnapshotInfoP = new Deferred<void>();
-				const newSnapshotFetched = () => {
-					getLatestSnapshotInfoP.resolve();
-				};
 				const serializedStateManager = new SerializedStateManager(
 					pending,
 					logger.toTelemetryLogger(),
@@ -729,7 +727,6 @@ describe("serializedStateManager", () => {
 					true,
 					eventEmitter,
 					() => isDirty,
-					newSnapshotFetched,
 				);
 
 				const lastProcessedOpSequenceNumber = 10;
@@ -741,7 +738,7 @@ describe("serializedStateManager", () => {
 				storageAdapter.uploadSummary(snapshotSequenceNumber);
 
 				await serializedStateManager.fetchSnapshot(undefined, false);
-				await getLatestSnapshotInfoP.promise;
+				await serializedStateManager.waitForInitialRefresh;
 
 				const mockRuntime: ISerializedStateManagerRuntime = {
 					getPendingLocalState: (props) => {
@@ -755,6 +752,8 @@ describe("serializedStateManager", () => {
 					resolvedUrl,
 				);
 				const parsed = JSON.parse(state);
+				// Since there is no saved event, it should only update the expiry timer
+				// when we're not dirty at fetching time.
 				if (isDirty) {
 					assert.strictEqual(
 						parsed.pendingRuntimeState.sessionExpiryTimerStarted,
@@ -771,10 +770,6 @@ describe("serializedStateManager", () => {
 					baseSnapshot: { ...snapshot, id: "fromPending" },
 				};
 				const storageAdapter = new MockStorageAdapter();
-				const getLatestSnapshotInfoP = new Deferred<void>();
-				const newSnapshotFetched = () => {
-					getLatestSnapshotInfoP.resolve();
-				};
 				const serializedStateManager = new SerializedStateManager(
 					pending,
 					logger.toTelemetryLogger(),
@@ -782,7 +777,6 @@ describe("serializedStateManager", () => {
 					true,
 					eventEmitter,
 					() => isDirty,
-					newSnapshotFetched,
 				);
 
 				const lastProcessedOpSequenceNumber = 10;
@@ -794,7 +788,7 @@ describe("serializedStateManager", () => {
 				storageAdapter.uploadSummary(snapshotSequenceNumber);
 
 				await serializedStateManager.fetchSnapshot(undefined, false);
-				await getLatestSnapshotInfoP.promise;
+				await serializedStateManager.waitForInitialRefresh;
 
 				eventEmitter.emit("saved");
 

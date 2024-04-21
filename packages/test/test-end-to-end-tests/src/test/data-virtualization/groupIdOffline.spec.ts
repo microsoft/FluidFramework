@@ -335,13 +335,6 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		dataObjectA2._root.set("A2", "A2");
 		dataObjectB2._root.set("B2", "B2");
 
-		// Hack to make sure we don't immediately fail/close the container on pending ops
-		// Another way around this is to simply have a different container send remote messages.
-		// What happens is that the last two synced ops we made are considered "saved", This may be useful for testing an offline edge case
-		// The last two saved ops (setting A and B) have reference sequence numbers that point to a sequence number
-		// before the snapshot
-		(dataObjectA2.containerRuntime as any).pendingStateManager.savedOps = [];
-
 		// Get Pending state and close
 		assert(container2.closeAndGetPendingLocalState !== undefined, "Missing method!");
 		const pendingState = await container2.closeAndGetPendingLocalState();
