@@ -198,7 +198,8 @@ export const treeNodeApi: TreeNodeApi = {
 				const identifier = field.boxedAt(0);
 				assert(identifier !== undefined, 0x927 /* The identifier must exist */);
 				const identifierValue = identifier.value as string;
-				const localNodeKey = identifier.context.nodeKeyManager.tryLocalizeNodeKey(identifierValue);
+				const localNodeKey =
+					identifier.context.nodeKeyManager.tryLocalizeNodeKey(identifierValue);
 				return localNodeKey !== undefined
 					? extractFromOpaque(localNodeKey)
 					: identifierValue;

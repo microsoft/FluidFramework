@@ -1325,6 +1325,7 @@ export interface NodeKeyManager {
     generateLocalNodeKey(): LocalNodeKey;
     localizeNodeKey(key: StableNodeKey): LocalNodeKey;
     stabilizeNodeKey(key: LocalNodeKey): StableNodeKey;
+    tryLocalizeNodeKey(key: string): LocalNodeKey | undefined;
 }
 
 // @public
