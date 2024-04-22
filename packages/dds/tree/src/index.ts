@@ -374,7 +374,7 @@ export {
 	FlexibleNodeSubSequence,
 	flexTreeMarker,
 	FlexTreeEntityKind,
-	NodeKeys,
+	NodeKeyManager,
 	CollectOptions,
 	TypedFields,
 	UnbrandedName,

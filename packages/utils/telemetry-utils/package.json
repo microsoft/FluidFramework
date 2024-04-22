@@ -153,6 +153,9 @@
 			"RemovedClassDeclaration_TelemetryNullLogger": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_TelemetryEventPropertyTypes": {
+				"backCompat": false
 			}
 		}
 	}
