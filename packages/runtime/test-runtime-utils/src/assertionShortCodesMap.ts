@@ -1093,6 +1093,7 @@ export const shortCodeMap = {
 	"0x713": "Expected change sequence number to exceed the last known minimum sequence number",
 	"0x716": "only never trees have undefined schema",
 	"0x717": "only never trees have undefined schema",
+	"0x718": "Runtime IdCompressor must be available to convert node keys",
 	"0x71c": "Unexpected mark type",
 	"0x71d": "Expected generative mark",
 	"0x71f": "Should have cell ID",

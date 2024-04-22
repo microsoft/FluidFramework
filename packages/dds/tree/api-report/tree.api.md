@@ -1323,7 +1323,6 @@ export interface NodeKeyFieldKind extends FlexFieldKind<"NodeKey", Multiplicity.
 // @internal
 export interface NodeKeys {
     generate(): LocalNodeKey;
-    isStableNodeKey(key: string): key is StableNodeKey;
     localize(key: StableNodeKey): LocalNodeKey;
     readonly map: ReadonlyMap<LocalNodeKey, FlexTreeObjectNode>;
     stabilize(key: LocalNodeKey): StableNodeKey;

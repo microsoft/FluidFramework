@@ -198,14 +198,10 @@ export const treeNodeApi: TreeNodeApi = {
 				const identifier = field.boxedAt(0);
 				assert(identifier !== undefined, 0x927 /* The identifier must exist */);
 				const identifierValue = identifier.value as string;
-				if (!identifier.context.nodeKeys.isStableNodeKey(identifierValue)) {
-					return identifierValue;
-				} else {
-					const localNodeKey = identifier.context.nodeKeys.tryLocalize(identifierValue);
-					return localNodeKey !== undefined
-						? extractFromOpaque(localNodeKey)
-						: identifierValue;
-				}
+				const localNodeKey = identifier.context.nodeKeys.tryLocalize(identifierValue);
+				return localNodeKey !== undefined
+					? extractFromOpaque(localNodeKey)
+					: identifierValue;
 			}
 		}
 	},
