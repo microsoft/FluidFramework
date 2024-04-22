@@ -194,7 +194,6 @@ export class AzureClient {
 		version: AzureContainerVersion,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
-		services: AzureContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
 		const url = new URL(this.properties.connection.endpoint);
@@ -220,8 +219,7 @@ export class AzureClient {
 			container,
 			rootDataObject,
 		});
-		const services = this.getContainerServices(container);
-		return { container: fluidContainer, services };
+		return { container: fluidContainer };
 	}
 
 	/**

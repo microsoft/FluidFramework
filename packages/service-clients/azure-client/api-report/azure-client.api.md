@@ -32,7 +32,6 @@ export class AzureClient {
     getContainerVersions(id: string, options?: AzureGetVersionsOptions): Promise<AzureContainerVersion[]>;
     viewContainerVersion<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version: AzureContainerVersion): Promise<{
         container: IFluidContainer<TContainerSchema>;
-        services: AzureContainerServices;
     }>;
 }
 
