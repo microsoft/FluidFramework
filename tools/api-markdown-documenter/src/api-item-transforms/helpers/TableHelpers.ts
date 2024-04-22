@@ -164,7 +164,7 @@ export function createSummaryTable(
 		case ApiItemKind.Method:
 		case ApiItemKind.MethodSignature: {
 			return createFunctionLikeSummaryTable(
-				apiItems.map((apiItem) => apiItem as ApiFunctionLike),
+				apiItems as ApiFunctionLike[],
 				itemKind,
 				config,
 				options,
@@ -173,26 +173,15 @@ export function createSummaryTable(
 
 		case ApiItemKind.Property:
 		case ApiItemKind.PropertySignature: {
-			return createPropertiesTable(
-				apiItems.map((apiItem) => apiItem as ApiPropertyItem),
-				config,
-				options,
-			);
+			return createPropertiesTable(apiItems as ApiPropertyItem[], config, options);
 		}
 
 		case ApiItemKind.Variable: {
-			return createVariablesTable(
-				apiItems.map((apiItem) => apiItem as ApiVariable),
-				config,
-				options,
-			);
+			return createVariablesTable(apiItems as ApiVariable[], config, options);
 		}
 
 		case ApiItemKind.Package: {
-			return createPackagesTable(
-				apiItems.map((apiItem) => apiItem as ApiPackage),
-				config,
-			);
+			return createPackagesTable(apiItems as ApiPackage[], config);
 		}
 
 		default: {
