@@ -17,7 +17,6 @@ import * as core from "@fluidframework/server-services-core";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import {
 	CommonProperties,
-	Lumberjack,
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
 import { RawAxiosRequestHeaders } from "axios";
@@ -78,16 +77,11 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		return result;
 	}
 
-	// This method makes two API calls to get the tenant config and git manager.
-	// However, git manager is only used in tinylicious. To avoid an extra API call to
-	// getTenatGitManager use getTenantConfig. getTenantConfig is now an optional method in the
-	// interface to support backward compatibility with existing implementations.
 	public async getTenant(
 		tenantId: string,
 		documentId: string,
 		includeDisabledTenant = false,
 	): Promise<core.ITenant> {
-		Lumberjack.info(`[DHRUV DEBUG] getTenant called`);
 		const [details, gitManager] = await Promise.all([
 			this.getTenantConfig(tenantId, includeDisabledTenant),
 			this.getTenantGitManager(tenantId, documentId, undefined, includeDisabledTenant),
@@ -209,7 +203,6 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		tenantId: string,
 		includeDisabledTenant = false,
 	): Promise<core.ITenantConfig> {
-		Lumberjack.info(`[DHRUV DEBUG] getTenantConfig called`);
 		const restWrapper = new BasicRestWrapper(
 			undefined /* baseUrl */,
 			undefined /* defaultQueryString */,
