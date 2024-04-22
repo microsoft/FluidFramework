@@ -584,7 +584,7 @@ export class LazyNodeKeyField<TTypes extends FlexAllowedTypes>
 	public get localNodeKey(): LocalNodeKey {
 		// TODO: Optimize this to be a fast path that gets a LocalNodeKey directly from the
 		// forest rather than getting the StableNodeKey and the compressing it.
-		return this.context.nodeKeys.localize(this.stableNodeKey);
+		return this.context.nodeKeyManager.localizeNodeKey(this.stableNodeKey);
 	}
 
 	public get stableNodeKey(): StableNodeKey {
