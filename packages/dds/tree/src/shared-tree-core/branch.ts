@@ -283,7 +283,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		const newHead = mintCommit(startCommit, {
 			revision,
-			change: squashedChange,
+			change: this.changeFamily.rebaser.replaceRevisions(
+				squashedChange,
+				new Set([undefined]),
+				revision,
+			),
 		});
 
 		const changeEvent = {
