@@ -148,7 +148,7 @@ describe("treeApi", () => {
 			const root = getView(config).root;
 			assert.equal(Tree.shortId(root), undefined);
 		});
-		it("returns the uncompressed identifier value when the provided identifier is an unknown stable id by the idCompressor.", () => {
+		it("returns the uncompressed identifier value when the provided identifier is an invalid stable id.", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				identifier: schema.identifier,
 			});
@@ -159,6 +159,24 @@ describe("treeApi", () => {
 			const root = getView(config).root;
 
 			assert.equal(Tree.shortId(root), "invalidUUID");
+		});
+		it("returns the uncompressed identifier value when the provided identifier is a valid stable id, but unknown by the idCompressor.", () => {
+			const schemaWithIdentifier = schema.object("parent", {
+				identifier: schema.identifier,
+			});
+			// Create a valid stableNodeKey which is not known by the tree's idCompressor.
+			const nodeKeyManager = createMockNodeKeyManager();
+			const stableNodeKey = nodeKeyManager.stabilizeNodeKey(
+				nodeKeyManager.generateLocalNodeKey(),
+			);
+
+			const config = new TreeConfiguration(schemaWithIdentifier, () => ({
+				identifier: stableNodeKey,
+			}));
+
+			const root = getView(config).root;
+
+			assert.equal(Tree.shortId(root), stableNodeKey);
 		});
 	});
 
