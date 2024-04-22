@@ -69,6 +69,7 @@ import {
 	MergeTreeDeltaType,
 	ReferenceType,
 } from "./ops.js";
+// eslint-disable-next-line import/no-deprecated
 import { PropertySet, createMap } from "./properties.js";
 import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
 import { SnapshotLoader } from "./snapshotLoader.js";
