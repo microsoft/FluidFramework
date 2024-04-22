@@ -96,7 +96,7 @@ export interface TreeNodeApi {
 	/**
 	 * Returns the {@link FieldKind.Identifier | identifier} of the given node in the most compressed form possible.
 	 * @remarks
-	 * If the node's identifier is a valid {@link StableNodeKey}, then this will return a unique process-local integer corresponding to that identifier.
+	 * If the node's identifier is a valid `StableNodeKey`, then this will return a unique process-local integer corresponding to that identifier.
 	 * If the node's identifier is any other string, then this will return that string.
 	 * If the node has no identifier (that is, it has no field of an {@link FieldKind.Identifier | identifier} field kind), then this returns undefined.
 	 */
@@ -199,7 +199,7 @@ export const treeNodeApi: TreeNodeApi = {
 				assert(identifier !== undefined, 0x927 /* The identifier must exist */);
 				const identifierValue = identifier.value as string;
 				if (!identifier.context.nodeKeys.isStableNodeKey(identifierValue)) {
-					return identifierValue
+					return identifierValue;
 				} else {
 					const localNodeKey = identifier.context.nodeKeys.tryLocalize(identifierValue);
 					return localNodeKey !== undefined

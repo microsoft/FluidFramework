@@ -86,13 +86,12 @@ export function createNodeKeyManager(idCompressor?: IIdCompressor | undefined): 
 				idCompressor !== undefined,
 				0x6e9 /* Runtime IdCompressor must be available to convert node keys */,
 			);
-			if(isStableId(key)){
+			if (isStableId(key)) {
 				const compressedKey = idCompressor.tryRecompress(key);
 				if (compressedKey !== undefined) {
 					return brand(compressedKey);
 				}
 			}
-			
 		},
 		isStableNodeKey: (key: string): key is StableNodeKey => {
 			return isStableId(key);
