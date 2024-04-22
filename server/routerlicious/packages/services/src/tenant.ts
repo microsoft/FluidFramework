@@ -205,7 +205,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		return tenantConfig?.customData?.storageName as string;
 	}
 
-	public async getTenantConfig(
+	private async getTenantConfig(
 		tenantId: string,
 		includeDisabledTenant = false,
 	): Promise<core.ITenantConfig> {

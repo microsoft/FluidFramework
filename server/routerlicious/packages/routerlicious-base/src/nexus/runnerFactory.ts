@@ -56,29 +56,32 @@ export class OrdererManager implements core.IOrdererManager {
 	) {}
 
 	public async getOrderer(tenantId: string, documentId: string): Promise<core.IOrderer> {
-		// Using getTenantConfig instead of getTenant reduces an API call while still returning the orderer information.
-		const tenant = this.tenantManager.getTenantConfig
-			? await this.tenantManager.getTenantConfig(tenantId)
-			: await this.tenantManager.getTenant(tenantId, documentId);
+		if (!this.globalDbEnabled) {
+			const messageMetaData = { documentId, tenantId };
+			Lumberjack.info(`Global db is disabled, checking order URL`, messageMetaData);
+			const tenant = await this.tenantManager.getTenant(tenantId, documentId);
 
-		const messageMetaData = { documentId, tenantId };
-		winston.info(`tenant orderer: ${JSON.stringify(tenant.orderer)}`, { messageMetaData });
-		Lumberjack.info(
-			`tenant orderer: ${JSON.stringify(tenant.orderer)}`,
-			getLumberBaseProperties(documentId, tenantId),
-		);
+			winston.info(`tenant orderer: ${JSON.stringify(tenant.orderer)}`, { messageMetaData });
+			Lumberjack.info(
+				`tenant orderer: ${JSON.stringify(tenant.orderer)}`,
+				getLumberBaseProperties(documentId, tenantId),
+			);
 
-		if (tenant.orderer.url !== this.ordererUrl && !this.globalDbEnabled) {
-			Lumberjack.error(`Invalid ordering service endpoint`, { messageMetaData });
-			throw new Error("Invalid ordering service endpoint");
-		}
+			if (tenant.orderer.url !== this.ordererUrl) {
+				Lumberjack.error(`Invalid ordering service endpoint`, { messageMetaData });
+				throw new Error("Invalid ordering service endpoint");
+			}
 
-		switch (tenant.orderer.type) {
-			case "kafka":
-				return this.kafkaFactory.create(tenantId, documentId);
-			default:
+			if (tenant.orderer.type !== "kafka") {
+				Lumberjack.info(
+					`Using local orderer`,
+					getLumberBaseProperties(documentId, tenantId),
+				);
 				return this.localOrderManager.get(tenantId, documentId);
+			}
 		}
+		Lumberjack.info(`Using Kafka orderer`, getLumberBaseProperties(documentId, tenantId));
+		return this.kafkaFactory.create(tenantId, documentId);
 	}
 }
 

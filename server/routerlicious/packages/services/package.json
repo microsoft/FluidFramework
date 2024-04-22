@@ -111,10 +111,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_TenantManager": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

@@ -149,12 +149,6 @@ export interface ITenantManager {
 	 * Retrieves the key for the given tenant. This is a privileged op and should be used with care.
 	 */
 	getKey(tenantId: string): Promise<string>;
-
-	/**
-	 * Retrieves the config for a given tenant. Currently this is optional to support backward
-	 * compatibility with existing implementations.
-	 */
-	getTenantConfig?(tenantId: string, includeDisabledTenant?: boolean): Promise<ITenantConfig>;
 }
 
 /**
