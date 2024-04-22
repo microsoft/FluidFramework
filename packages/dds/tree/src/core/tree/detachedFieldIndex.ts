@@ -42,7 +42,7 @@ export type ForestRootId = Brand<number, "tree.ForestRootId">;
  */
 export class DetachedFieldIndex {
 	// TODO: don't store the field key in the index, it can be derived from the root ID
-	// The data structure designed to store a `contiguous` range of detached nodes sharing the same root.
+	// For each `Marjor`, stores contiguous `ForestRootId`s for contiguous `DetachedNodeId.minor`s.
 	private readonly detachedNodeRangeMap: Map<Major, RangeMap<ForestRootId>> = new Map();
 	private readonly codec: IJsonCodec<DetachedFieldSummaryData, Format>;
 	private readonly options: ICodecOptions;
