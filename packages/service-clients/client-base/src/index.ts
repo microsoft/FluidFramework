@@ -9,8 +9,9 @@
  * @packageDocumentation
  */
 
-export { AzureClient } from "./AzureClient.js";
-export { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";
+export { isAzureLocalConnectionConfig, isAzureRemoteConnectionConfig } from "./utils.js";
+
+export { createAzureAudienceMember } from "./AzureAudience.js";
 export type {
 	AzureClientProps,
 	AzureConnectionConfig,

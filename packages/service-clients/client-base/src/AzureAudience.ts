@@ -12,6 +12,7 @@ import { type AzureMember, type AzureUser } from "./interfaces.js";
  *
  * @remarks
  * The provided `audienceMember`'s {@link @fluidframework/protocol-definitions#IClient.user} must be an {@link AzureUser}.
+ * @public
  */
 export function createAzureAudienceMember(audienceMember: IClient): AzureMember {
 	const user = audienceMember.user;

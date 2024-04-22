@@ -6,7 +6,7 @@
 import { type ITokenProvider, type ITokenResponse } from "@fluidframework/routerlicious-driver";
 import axios from "axios";
 
-import { type AzureMember } from "./interfaces.js";
+import { type AzureMember } from "@fluidframework/client-base";
 
 /**
  * Token Provider implementation for connecting to an Azure Function endpoint for

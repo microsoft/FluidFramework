@@ -123,7 +123,7 @@ export interface AzureLocalConnectionConfig extends AzureConnectionConfig {
  *
  * @remarks
  *
- * Returned by the {@link AzureClient} alongside a {@link @fluidframework/fluid-static#FluidContainer}.
+ * Returned by the AzureClient alongside a {@link @fluidframework/fluid-static#FluidContainer}.
  *
  * Any functionality regarding how the data is handled within the FluidContainer itself, i.e. which data objects
  * or DDSes to use, will not be included here but rather on the FluidContainer class itself.
@@ -144,7 +144,7 @@ export interface AzureContainerServices {
  * @typeParam T - See {@link AzureUser.additionalDetails}.
  * Note: must be JSON-serializable.
  * Passing a non-serializable object (e.g. a `class`) will result in undefined behavior.
- * @internal
+ * @public
  */
 // TODO: this should be updated to use something other than `any` (unknown)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

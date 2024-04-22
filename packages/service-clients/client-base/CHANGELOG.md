@@ -1,4 +1,4 @@
-# @fluidframework/azure-client
+# @fluidframework/client-base
 
 ## 2.0.0-rc.3.0.0
 

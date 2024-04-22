@@ -4,12 +4,19 @@
 
 ```ts
 
+import { AzureClientProps } from '@fluidframework/client-base';
+import { AzureConnectionConfig } from '@fluidframework/client-base';
+import { AzureConnectionConfigType } from '@fluidframework/client-base';
+import { AzureContainerServices } from '@fluidframework/client-base';
+import { AzureContainerVersion } from '@fluidframework/client-base';
+import { AzureGetVersionsOptions } from '@fluidframework/client-base';
+import { AzureLocalConnectionConfig } from '@fluidframework/client-base';
+import { AzureMember } from '@fluidframework/client-base';
+import { AzureRemoteConnectionConfig } from '@fluidframework/client-base';
+import { AzureUser } from '@fluidframework/client-base';
 import { ContainerSchema } from '@fluidframework/fluid-static';
-import { ICompressionStorageConfig } from '@fluidframework/driver-utils';
-import { IConfigProviderBase } from '@fluidframework/core-interfaces';
+import { IAzureAudience } from '@fluidframework/client-base';
 import { IFluidContainer } from '@fluidframework/fluid-static';
-import { IMember } from '@fluidframework/fluid-static';
-import { IServiceAudience } from '@fluidframework/fluid-static';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
@@ -36,75 +43,36 @@ export class AzureClient {
     getContainerVersions(id: string, options?: AzureGetVersionsOptions): Promise<AzureContainerVersion[]>;
 }
 
-// @public
-export interface AzureClientProps {
-    readonly configProvider?: IConfigProviderBase;
-    readonly connection: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
-    readonly logger?: ITelemetryBaseLogger;
-    // (undocumented)
-    readonly summaryCompression?: boolean | ICompressionStorageConfig;
-}
+export { AzureClientProps }
 
-// @public
-export interface AzureConnectionConfig {
-    endpoint: string;
-    tokenProvider: ITokenProvider;
-    type: AzureConnectionConfigType;
-}
+export { AzureConnectionConfig }
 
-// @public
-export type AzureConnectionConfigType = "local" | "remote";
+export { AzureConnectionConfigType }
 
-// @public
-export interface AzureContainerServices {
-    audience: IAzureAudience;
-}
+export { AzureContainerServices }
 
-// @public
-export interface AzureContainerVersion {
-    date?: string;
-    id: string;
-}
+export { AzureContainerVersion }
 
 // @internal @deprecated
 export class AzureFunctionTokenProvider implements ITokenProvider {
-    constructor(azFunctionUrl: string, user?: Pick<AzureMember<any>, "additionalDetails" | "userId" | "userName"> | undefined);
+    constructor(azFunctionUrl: string, user?: Pick<AzureMember<any>, "userId" | "userName" | "additionalDetails"> | undefined);
     // (undocumented)
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     // (undocumented)
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
 }
 
-// @public
-export interface AzureGetVersionsOptions {
-    maxCount: number;
-}
+export { AzureGetVersionsOptions }
 
-// @public
-export interface AzureLocalConnectionConfig extends AzureConnectionConfig {
-    type: "local";
-}
+export { AzureLocalConnectionConfig }
 
-// @public
-export interface AzureMember<T = any> extends IMember {
-    additionalDetails?: T;
-    userName: string;
-}
+export { AzureMember }
 
-// @public
-export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
-    tenantId: string;
-    type: "remote";
-}
+export { AzureRemoteConnectionConfig }
 
-// @internal
-export interface AzureUser<T = any> extends IUser {
-    additionalDetails?: T;
-    name: string;
-}
+export { AzureUser }
 
-// @public
-export type IAzureAudience = IServiceAudience<AzureMember>;
+export { IAzureAudience }
 
 export { ITelemetryBaseEvent }
 
