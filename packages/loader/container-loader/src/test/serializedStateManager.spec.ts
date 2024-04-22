@@ -440,13 +440,15 @@ describe("serializedStateManager", () => {
 				baseSnapshot: { ...snapshot, id: "fromPending" },
 			};
 			const storageAdapter = new MockStorageAdapter();
+			let saved = false;
+			const isDirtyF = () => saved ? false : isDirty;
 			const serializedStateManager = new SerializedStateManager(
 				pending,
 				logger.toTelemetryLogger(),
 				storageAdapter,
 				true,
 				eventEmitter,
-				() => isDirty,
+				isDirtyF,
 			);
 			savedOps.forEach((savedOp) => serializedStateManager.addProcessedOp(savedOp));
 
@@ -460,6 +462,7 @@ describe("serializedStateManager", () => {
 			// serializedStateManager.snapshot
 			await serializedStateManager.waitForInitialRefresh;
 			if (isDirty) {
+				saved = true;
 				eventEmitter.emit("saved");
 			}
 			logger.assertMatchAny([
@@ -489,6 +492,8 @@ describe("serializedStateManager", () => {
 				baseSnapshot: { ...snapshot, id: "fromPending" },
 				savedOps: [generateSavedOp(13)],
 			};
+			let saved = false;
+			const isDirtyF = () => saved ? false : isDirty;
 			const storageAdapter = new MockStorageAdapter();
 			const serializedStateManager = new SerializedStateManager(
 				pending,
@@ -496,7 +501,7 @@ describe("serializedStateManager", () => {
 				storageAdapter,
 				true,
 				eventEmitter,
-				() => isDirty,
+				isDirtyF,
 			);
 
 			const firstProcessedOpSequenceNumber = 13; // greater than snapshotSequenceNumber + 1
@@ -510,6 +515,7 @@ describe("serializedStateManager", () => {
 			await serializedStateManager.fetchSnapshot(undefined, false);
 			await serializedStateManager.waitForInitialRefresh;
 			if (isDirty) {
+				saved = true;
 				eventEmitter.emit("saved");
 			}
 			logger.assertMatchAny([
@@ -536,6 +542,8 @@ describe("serializedStateManager", () => {
 				...pendingLocalState,
 				baseSnapshot: { ...snapshot, id: "fromPending" },
 			};
+			let saved = false;
+			const isDirtyF = () => saved ? false : isDirty;
 			const storageAdapter = new MockStorageAdapter();
 			const serializedStateManager = new SerializedStateManager(
 				pending,
@@ -543,7 +551,7 @@ describe("serializedStateManager", () => {
 				storageAdapter,
 				true,
 				eventEmitter,
-				() => isDirty,
+				isDirtyF,
 			);
 
 			const lastProcessedOpSequenceNumber = 20;
@@ -560,6 +568,7 @@ describe("serializedStateManager", () => {
 			// this time the snapshot should have been refreshed
 			await serializedStateManager.waitForInitialRefresh;
 			if (isDirty) {
+				saved = true;
 				eventEmitter.emit("saved");
 			}
 			const state = await serializedStateManager.getPendingLocalStateCore(
@@ -624,6 +633,8 @@ describe("serializedStateManager", () => {
 				...pendingLocalState,
 				baseSnapshot: { ...snapshot, id: "fromPending" },
 			};
+			let saved = false;
+			const isDirtyF = () => saved ? false : isDirty;
 			const storageAdapter = new MockStorageAdapter();
 			const serializedStateManager = new SerializedStateManager(
 				pending,
@@ -631,7 +642,7 @@ describe("serializedStateManager", () => {
 				storageAdapter,
 				true,
 				eventEmitter,
-				() => isDirty,
+				isDirtyF,
 			);
 			let seq = 1;
 			let lastProcessedOpSequenceNumber = 20;
@@ -650,6 +661,10 @@ describe("serializedStateManager", () => {
 			lastProcessedOpSequenceNumber = 40;
 			while (seq <= lastProcessedOpSequenceNumber) {
 				serializedStateManager.addProcessedOp(generateSavedOp(seq++));
+			}
+			if (isDirty) {
+				saved = true;
+				eventEmitter.emit("saved");
 			}
 
 			const state = await serializedStateManager.getPendingLocalStateCore(
@@ -769,6 +784,8 @@ describe("serializedStateManager", () => {
 					...pendingLocalState,
 					baseSnapshot: { ...snapshot, id: "fromPending" },
 				};
+				let saved = false;
+				const isDirtyF = () => saved ? false : isDirty;
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
 					pending,
@@ -776,7 +793,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
-					() => isDirty,
+					isDirtyF,
 				);
 
 				const lastProcessedOpSequenceNumber = 10;
@@ -789,9 +806,10 @@ describe("serializedStateManager", () => {
 
 				await serializedStateManager.fetchSnapshot(undefined, false);
 				await serializedStateManager.waitForInitialRefresh;
-
-				eventEmitter.emit("saved");
-
+				if (isDirty) {
+					saved = true;
+					eventEmitter.emit("saved");
+				}
 				const mockRuntime: ISerializedStateManagerRuntime = {
 					getPendingLocalState: (props) => {
 						return props;

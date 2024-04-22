@@ -92,8 +92,8 @@ export type ISerializedStateManagerDocumentStorageService = Pick<
 
 export class SerializedStateManager {
 	private readonly processedOps: ISequencedDocumentMessage[] = [];
-	private snapshot: ISnapshotInfo | undefined;
 	private readonly mc: MonitoringContext;
+	private snapshot: ISnapshotInfo | undefined;
 	private latestSnapshot: ISnapshotInfo | undefined;
 	private refreshSnapshot: Promise<void> | undefined;
 	private snapshotFetchedTime: number | undefined;
@@ -208,9 +208,7 @@ export class SerializedStateManager {
 			return convertSnapshotToSnapshotInfo(snapshot);
 		}
 		this.latestSnapshotFetchedTime = Date.now();
-		if (!this.containerDirty() && this.allSavedOpsProcessed) {
-			this.updateSnapshotAndProcessedOpsMaybe();
-		}
+		this.updateSnapshotAndProcessedOpsMaybe();
 	}
 
 	/**
@@ -220,7 +218,8 @@ export class SerializedStateManager {
 		if (
 			this.latestSnapshot === undefined ||
 			this.processedOps.length === 0 ||
-			!this.allSavedOpsProcessed
+			!this.allSavedOpsProcessed ||
+			this.containerDirty()
 		) {
 			// can't refresh latest snapshot until we have processed the ops up to it.
 			// Pending state would be behind the latest snapshot.
@@ -314,9 +313,7 @@ export class SerializedStateManager {
 				const pendingRuntimeState = await runtime.getPendingLocalState({
 					...props,
 					snapshotSequenceNumber: this.snapshot.snapshotSequenceNumber,
-					sessionExpiryTimerStarted: this.allSavedOpsProcessed
-						? this.snapshotFetchedTime
-						: undefined,
+					sessionExpiryTimerStarted: this.snapshotFetchedTime,
 				});
 				// This conversion is required because ArrayBufferLike doesn't survive JSON.stringify
 				const loadedGroupIdSnapshots = {};
