@@ -257,8 +257,8 @@ export class SharedTree
 			moveToDetachedField(this.checkout.forest, cursor);
 			return {
 				schema: this.storedSchema.clone(),
-				tree: jsonableTreeFromFieldCursor(cursor),
-				removed: this.checkout.getRemovedRoots(),
+				tree: this.serializer.encode(jsonableTreeFromFieldCursor(cursor), this.handle),
+				removed: this.serializer.encode(this.checkout.getRemovedRoots(), this.handle),
 			};
 		} finally {
 			cursor.free();
