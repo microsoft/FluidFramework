@@ -63,7 +63,6 @@ interface Client {
 	clientId: string;
 	signalPromise?: Promise<ISignalMessage>;
 	signalCount?: number;
-	signalNottReceivedPromise?: Promise<void>;
 }
 
 describe("Routerlicious", () => {
@@ -399,7 +398,7 @@ describe("Routerlicious", () => {
 
 					let clients: Client[];
 
-					const numberOfClients = 3; // Change the amount of clients to test with (at leat 2 required)
+					const numberOfClients = 4; // Change the amount of clients to test with (at leat 2 required)
 
 					assert(numberOfClients > 1, "Test requires at least 2 clients");
 
