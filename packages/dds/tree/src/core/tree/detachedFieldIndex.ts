@@ -90,7 +90,7 @@ export class DetachedFieldIndex {
 						? { major, minor: rangeEntry.start }
 						: { minor: rangeEntry.start };
 				for (let offset = 0; offset < rangeEntry.length; offset++) {
-					yield { id: { ...id, minor: id.minor + offset }, root: rangeEntry.value };
+					yield { id: { ...id, minor: id.minor + offset }, root: brand(rangeEntry.value + offset) };
 				}
 			}
 		}
