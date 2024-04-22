@@ -335,6 +335,7 @@ class OpPerfTelemetry {
 
 		if (
 			this.clientId === message.clientId &&
+			message.type === MessageType.Operation &&
 			(this.opLatencyLogger.isSamplingDisabled ||
 				this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber)
 		) {
@@ -361,20 +362,18 @@ class OpPerfTelemetry {
 			// The threshold could be adjusted, but ideally it stays  workload-agnostic, as service
 			// performance impacts all workloads relying on service.
 			const category = duration > latencyThreshold ? "error" : "performance";
-			if (message.type !== MessageType.NoOp) {
-				this.opLatencyLogger.sendPerformanceEvent({
-					eventName: "OpRoundtripTime",
-					sequenceNumber,
-					referenceSequenceNumber: message.referenceSequenceNumber,
-					duration,
-					category,
-					pingLatency: this.pingLatency,
-					msnDistance:
-						this.deltaManager.lastSequenceNumber -
-						this.deltaManager.minimumSequenceNumber,
-					...latencyData.opPerfData,
-				});
-			}
+			this.opLatencyLogger.sendPerformanceEvent({
+				eventName: "OpRoundtripTime",
+				sequenceNumber,
+				referenceSequenceNumber: message.referenceSequenceNumber,
+				duration,
+				category,
+				pingLatency: this.pingLatency,
+				msnDistance:
+					this.deltaManager.lastSequenceNumber - this.deltaManager.minimumSequenceNumber,
+				...latencyData.opPerfData,
+			});
+
 			this.clientSequenceNumberForLatencyStatistics = undefined;
 			this.latencyStatistics.delete(message.clientSequenceNumber);
 		}
