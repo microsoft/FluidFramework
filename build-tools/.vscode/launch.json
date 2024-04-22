@@ -14,8 +14,7 @@
 		{
 			"name": "flub generate entrypoints",
 			"program": "${workspaceFolder}/packages/build-cli/bin/dev.js",
-			// "cwd": "${workspaceFolder}",
-			"cwd": "D:\\code\\FluidFramework\\experimental\\framework\\tree-react-api",
+			"cwd": "${workspaceFolder}",
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
