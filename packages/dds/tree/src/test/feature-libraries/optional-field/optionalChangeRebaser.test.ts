@@ -55,7 +55,6 @@ import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js"
 // Search this file for "as any" and "as NodeChangeset"
 import { TestChange } from "../../testChange.js";
 import {
-	deepFreeze,
 	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
 	isDeltaVisible,
@@ -63,6 +62,7 @@ import {
 import { TestNodeId } from "../../testNodeId.js";
 import { Change, assertTaggedEqual, verifyContextChain } from "./optionalFieldUtils.js";
 import { ChangesetWrapper } from "../../changesetWrapper.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 type RevisionTagMinter = () => RevisionTag;
 

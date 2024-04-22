@@ -26,9 +26,10 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 import { isObject } from "@fluidframework/core-utils/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { SharedMatrix } from "../matrix.js";
 import { MatrixItem } from "../ops.js";
 import { SharedMatrixFactory } from "../runtime.js";
@@ -100,14 +101,12 @@ async function assertMatricesAreEquivalent<T>(a: SharedMatrix<T>, b: SharedMatri
 			const aVal = a.getCell(row, col);
 			const bVal = b.getCell(row, col);
 			if (isObject(aVal) === true) {
-				const aObj: FluidObject<IFluidHandle> = aVal as FluidObject<IFluidHandle>;
 				assert(
 					isObject(bVal),
 					`${a.id} and ${b.id} differ at (${row}, ${col}): a is an object, b is not`,
 				);
-				const bObj: FluidObject<IFluidHandle> = bVal as FluidObject<IFluidHandle>;
-				const aHandle = aObj.IFluidHandle ? await aObj.IFluidHandle?.get() : aObj;
-				const bHandle = bObj.IFluidHandle ? await bObj.IFluidHandle?.get() : bObj;
+				const aHandle = isFluidHandle(aVal) ? await aVal.get() : aVal;
+				const bHandle = isFluidHandle(bVal) ? await bVal.get() : bVal;
 				assert.deepEqual(
 					aHandle,
 					bHandle,
