@@ -17,6 +17,7 @@ import { LocalNodeKey, StableNodeKey } from "./nodeKey.js";
 
 /**
  * An object which handles the generation of node keys as well as conversion between their two types ({@link StableNodeKey} and {@link LocalNodeKey}).
+ * @internal
  */
 export interface NodeKeyManager {
 	/**
