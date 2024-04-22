@@ -516,9 +516,14 @@ export class Container
 		if (this._lifecycleState === "loading") {
 			this._lifecycleState = "loaded";
 
+			// Connections transitions are delayed till we are loaded.
+			// This is done by holding ops and signals until the end of load sequence
+			// (calling this.handleDeltaConnectionArg() after setLoaded() call)
+			// If this assert fires, it means our logic managing connection flow is wrong, and the logic below is also wrong.
+			assert(this.connectionState !== ConnectionState.Connected, "not connected yet");
+
 			// Propagate current connection state through the system.
 			const readonly = this.readOnlyInfo.readonly ?? false;
-			assert(this.connectionState !== ConnectionState.Connected, "not connected yet");
 			// This call does not look like needed any more, with delaying all connection-related events past loaded phase.
 			// Yet, there could be some customer code that would break if we do not deliver it.
 			// Will be removed in further PRs with proper changeset.
@@ -644,17 +649,20 @@ export class Container
 	}
 
 	private get connected(): boolean {
-		return this.connectionStateHandler.connectionState === ConnectionState.Connected;
+		// "connected" event is delayed until runtime is fully loaded - see setLoaded()
+		return (
+			this.connectionStateHandler.connectionState === ConnectionState.Connected &&
+			this._lifecycleState === "loaded"
+		);
 	}
 
-	private _clientId: string | undefined;
-
 	/**
-	 * The server provided id of the client.
-	 * Set once this.connected is true, otherwise undefined
+	 * clientId of the latest connection. Changes only once client is connected, caught up and fully loaded.
+	 * Changes to clientId are delayed through container loading sequence and delived once container is fully loaded.
+	 * clientId does not reset on lost connection - old value persists until new connection is fully established.
 	 */
 	public get clientId(): string | undefined {
-		return this._clientId;
+		return this.protocolHandler.audience.getSelf()?.clientId;
 	}
 
 	private get isInteractiveClient(): boolean {
@@ -757,7 +765,6 @@ export class Container
 
 		this.connectionTransitionTimes[ConnectionState.Disconnected] = performance.now();
 		const pendingLocalState = loadProps?.pendingLocalState;
-		this._clientId = pendingLocalState?.clientId;
 
 		this._canReconnect = canReconnect ?? true;
 		this.clientDetailsOverride = clientDetailsOverride;
@@ -859,9 +866,6 @@ export class Container
 			{
 				logger: this.mc.logger,
 				connectionStateChanged: (value, oldState, reason) => {
-					if (value === ConnectionState.Connected) {
-						this._clientId = this.connectionStateHandler.pendingClientId;
-					}
 					this.logConnectionStateChangeTelemetry(value, oldState, reason);
 					if (this.loaded) {
 						this.propagateConnectionState(
@@ -952,6 +956,7 @@ export class Container
 			detachedBlobStorage,
 			this.mc.logger,
 			pendingLocalState?.snapshotBlobs,
+			pendingLocalState?.loadedGroupIdSnapshots,
 			addProtocolSummaryIfMissing,
 			forceEnableSummarizeProtocolTree,
 		);
@@ -1685,6 +1690,13 @@ export class Container
 			baseSnapshot,
 		);
 
+		// If we are loading from pending state, we start with old clientId.
+		// We switch to latest connection clientId only after setLoaded().
+		assert(this.clientId === undefined, "there should be no clientId yet");
+		if (pendingLocalState?.clientId !== undefined) {
+			this.protocolHandler.audience.setCurrentClientId(pendingLocalState?.clientId);
+		}
+
 		timings.phase3 = performance.now();
 		const codeDetails = this.getCodeDetailsFromQuorum();
 		await this.instantiateRuntime(
@@ -1707,6 +1719,7 @@ export class Container
 				await this.runtime.notifyOpReplay?.(message);
 			}
 			pendingLocalState.savedOps = [];
+			this.storageAdapter.clearPendingState();
 		}
 
 		// We might have hit some failure that did not manifest itself in exception in this flow,
@@ -2170,7 +2183,7 @@ export class Container
 				reason: reason?.text,
 				connectionInitiationReason,
 				pendingClientId: this.connectionStateHandler.pendingClientId,
-				clientId: this.clientId,
+				clientId: this.connectionStateHandler.clientId,
 				autoReconnect,
 				opsBehind,
 				online: OnlineStatus[isOnline()],
@@ -2449,7 +2462,7 @@ export class Container
 	 * @param readonly - Is the container in readonly mode?
 	 */
 	private setContextConnectedState(connected: boolean, readonly: boolean): void {
-		if (this._runtime?.disposed === false) {
+		if (this._runtime?.disposed === false && this._lifecycleState === "loaded") {
 			/**
 			 * We want to lie to the ContainerRuntime when we are in readonly mode to prevent issues with pending
 			 * ops getting through to the DeltaManager.

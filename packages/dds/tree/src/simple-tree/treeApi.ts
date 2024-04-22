@@ -197,7 +197,9 @@ export const treeNodeApi: TreeNodeApi = {
 				assert(identifier !== undefined, 0x927 /* The identifier must exist */);
 
 				return extractFromOpaque(
-					identifier.context.nodeKeys.localize(identifier.value as StableNodeKey),
+					identifier.context.nodeKeyManager.localizeNodeKey(
+						identifier.value as StableNodeKey,
+					),
 				);
 			}
 		}
