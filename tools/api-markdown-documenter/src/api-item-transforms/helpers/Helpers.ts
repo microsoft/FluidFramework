@@ -236,7 +236,7 @@ export function createHeritageTypesParagraph(
 /**
  * Renders a labeled type-information entry.
  *
- * @remarks Displayed as `Type: <type>`
+ * @remarks Displayed as `Type: <type>`. Type excerpt will be rendered with the appropriate hyperlinks for other types in the API model.
  *
  * @param excerpt - The type excerpt to be displayed.
  * @param config - See {@link ApiItemTransformationConfiguration}.
