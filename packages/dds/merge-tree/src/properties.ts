@@ -102,7 +102,7 @@ export function clone<T>(extension: MapLike<T> | undefined) {
 export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet) {
 	const _oldProps = oldProps ?? createMap<any>();
 	extend(_oldProps, newProps);
-	return _oldProps;
+	return { ..._oldProps };
 }
 
 /**
