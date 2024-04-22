@@ -9,3 +9,5 @@ I have a `@deprecated` tag with an empty comment block.
 ```typescript
 testConstWithEmptyDeprecatedBlock: string
 ```
+
+**Type:** string
