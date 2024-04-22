@@ -12,12 +12,14 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import {
-	/* eslint-disable import/no-deprecated */
+	// eslint-disable-next-line import/no-deprecated
 	Client,
 	IJSONSegment,
 	IMergeTreeAnnotateMsg,
 	IMergeTreeDeltaOp,
+	// eslint-disable-next-line import/no-deprecated
 	IMergeTreeGroupMsg,
+	// eslint-disable-next-line import/no-deprecated
 	IMergeTreeObliterateMsg,
 	IMergeTreeOp,
 	IMergeTreeRemoveMsg,
@@ -30,9 +32,11 @@ import {
 	PropertySet,
 	ReferencePosition,
 	ReferenceType,
+	// eslint-disable-next-line import/no-deprecated
 	SegmentGroup,
 	SlidingPreference,
 	createAnnotateRangeOp,
+	// eslint-disable-next-line import/no-deprecated
 	createGroupOp,
 	createInsertOp,
 	createObliterateRangeOp,
