@@ -182,7 +182,7 @@ export class DetachedFieldIndex {
 		const innerRangeMap = this.detachedNodeRangeMap.get(nodeId.major)!;
 		assert(
 			getFirstEntryFromRangeMap(innerRangeMap, nodeId.minor, count) === undefined,
-			"The detached node range already exists in the map",
+			"The detached node range already exists in the index",
 		);
 		setInRangeMap(innerRangeMap, nodeId.minor, count, root);
 	}
