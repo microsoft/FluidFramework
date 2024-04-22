@@ -58,10 +58,9 @@ export class OrdererManager implements core.IOrdererManager {
 	public async getOrderer(tenantId: string, documentId: string): Promise<core.IOrderer> {
 		if (!this.globalDbEnabled) {
 			const messageMetaData = { documentId, tenantId };
-			Lumberjack.info(`Global db is disabled, checking order URL`, messageMetaData);
+			Lumberjack.info(`Global db is disabled, checking orderer URL`, messageMetaData);
 			const tenant = await this.tenantManager.getTenant(tenantId, documentId);
 
-			winston.info(`tenant orderer: ${JSON.stringify(tenant.orderer)}`, { messageMetaData });
 			Lumberjack.info(
 				`tenant orderer: ${JSON.stringify(tenant.orderer)}`,
 				getLumberBaseProperties(documentId, tenantId),
