@@ -475,7 +475,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 				this.setConnectionState(connected);
 			},
 			reSubmit: (content: any, localOpMetadata: unknown) => {
-				this.reSubmit(content, localOpMetadata);
+				this.reSubmit(this.serializer.decode(content), localOpMetadata);
 			},
 			applyStashedOp: (content: any): void => {
 				this.applyStashedOp(parseHandles(content, this.serializer));
