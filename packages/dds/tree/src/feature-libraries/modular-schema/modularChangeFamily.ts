@@ -1027,7 +1027,7 @@ export class ModularChangeFamily
 	public replaceRevisions(
 		change: ModularChangeset,
 		oldRevisions: Set<RevisionTag | undefined>,
-		newRevision: RevisionTag,
+		newRevision: RevisionTag | undefined,
 	): ModularChangeset {
 		const updatedFields = this.replaceFieldMapRevisions(
 			change.fieldChanges,
@@ -1072,7 +1072,7 @@ export class ModularChangeFamily
 	private replaceNodeChangesetRevisions(
 		nodeChangeset: NodeChangeset,
 		oldRevisions: Set<RevisionTag | undefined>,
-		newRevision: RevisionTag,
+		newRevision: RevisionTag | undefined,
 	): NodeChangeset {
 		const updated = { ...nodeChangeset };
 		if (nodeChangeset.fieldChanges !== undefined) {
@@ -1089,7 +1089,7 @@ export class ModularChangeFamily
 	private replaceFieldMapRevisions(
 		fields: FieldChangeMap,
 		oldRevisions: Set<RevisionTag | undefined>,
-		newRevision: RevisionTag,
+		newRevision: RevisionTag | undefined,
 	): FieldChangeMap {
 		const updatedFields: FieldChangeMap = new Map();
 		for (const [field, fieldChange] of fields) {
@@ -1113,7 +1113,7 @@ export class ModularChangeFamily
 function replaceRevision(
 	revision: RevisionTag | undefined,
 	oldRevisions: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag,
+	newRevision: RevisionTag | undefined,
 ): RevisionTag | undefined {
 	return oldRevisions.has(revision) ? newRevision : revision;
 }
@@ -1121,7 +1121,7 @@ function replaceRevision(
 function replaceIdMapRevisions<T>(
 	map: ChangeAtomIdMap<T>,
 	oldRevisions: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag,
+	newRevision: RevisionTag | undefined,
 ): ChangeAtomIdMap<T> {
 	return nestedMapFromFlatList(
 		nestedMapToFlatList(map).map(([revision, id, value]) => [

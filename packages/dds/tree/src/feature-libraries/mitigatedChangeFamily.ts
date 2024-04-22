@@ -71,7 +71,7 @@ export function makeMitigatedRebaser<TChange>(
 		replaceRevisions: (
 			change: TChange,
 			oldRevisions: Set<RevisionTag | undefined>,
-			newRevision: RevisionTag,
+			newRevision: RevisionTag | undefined,
 		): TChange =>
 			withFallback(() =>
 				unmitigatedRebaser.replaceRevisions(change, oldRevisions, newRevision),

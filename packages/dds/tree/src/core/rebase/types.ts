@@ -112,9 +112,18 @@ export function taggedOptAtomId(
 export function replaceAtomRevisions(
 	id: ChangeAtomId,
 	oldRevisions: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag,
+	newRevision: RevisionTag | undefined,
 ): ChangeAtomId {
-	return oldRevisions.has(id.revision) ? { ...id, revision: newRevision } : id;
+	return oldRevisions.has(id.revision) ? atomWithRevision(id, newRevision) : id;
+}
+
+function atomWithRevision(id: ChangeAtomId, revision: RevisionTag | undefined): ChangeAtomId {
+	const updated = { ...id, revision };
+	if (revision === undefined) {
+		delete updated.revision;
+	}
+
+	return updated;
 }
 
 /**

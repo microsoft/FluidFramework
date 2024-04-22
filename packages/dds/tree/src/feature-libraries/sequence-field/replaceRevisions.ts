@@ -11,7 +11,7 @@ import { Changeset, HasRevisionTag, Mark, MarkEffect, NoopMarkType } from "./typ
 export function replaceRevisions(
 	changeset: Changeset,
 	revisionsToReplace: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag,
+	newRevision: RevisionTag | undefined,
 ): Changeset {
 	const updatedMarks = new MarkListFactory();
 	for (const mark of changeset) {
@@ -25,7 +25,7 @@ export function replaceRevisions(
 function updateMark(
 	mark: Mark,
 	revisionsToReplace: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag,
+	newRevision: RevisionTag | undefined,
 ): Mark {
 	const updatedMark = { ...updateEffect(mark, revisionsToReplace, newRevision) };
 	if (mark.cellId !== undefined) {
@@ -42,7 +42,7 @@ function updateMark(
 function updateEffect<TMark extends MarkEffect>(
 	mark: TMark,
 	revisionsToReplace: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag,
+	newRevision: RevisionTag | undefined,
 ): TMark {
 	const type = mark.type;
 	switch (type) {
@@ -67,7 +67,21 @@ function updateEffect<TMark extends MarkEffect>(
 function updateEffectRevision<TMark extends MarkEffect & HasRevisionTag>(
 	effect: TMark,
 	revisionsToReplace: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag,
+	newRevision: RevisionTag | undefined,
 ): TMark {
-	return revisionsToReplace.has(effect.revision) ? { ...effect, revision: newRevision } : effect;
+	return revisionsToReplace.has(effect.revision)
+		? effectWithRevision(effect, newRevision)
+		: effect;
+}
+
+function effectWithRevision<TEffect extends MarkEffect & HasRevisionTag>(
+	effect: TEffect,
+	revision: RevisionTag | undefined,
+): TEffect {
+	const updated = { ...effect, revision };
+	if (revision === undefined) {
+		delete updated.revision;
+	}
+
+	return updated;
 }

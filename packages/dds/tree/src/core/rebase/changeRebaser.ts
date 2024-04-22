@@ -87,7 +87,7 @@ export interface ChangeRebaser<TChangeset> {
 	replaceRevisions(
 		change: TChangeset,
 		oldRevisions: Set<RevisionTag | undefined>,
-		newRevision: RevisionTag,
+		newRevision: RevisionTag | undefined,
 	): TChangeset;
 }
 

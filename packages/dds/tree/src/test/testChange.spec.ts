@@ -102,14 +102,14 @@ describe("TestChange", () => {
 
 	function rebaseComposed(
 		metadata: RevisionMetadataSource,
-		change: TestChange,
+		change: TaggedChange<TestChange>,
 		...baseChanges: TaggedChange<TestChange>[]
 	): TestChange {
 		baseChanges.forEach((base) => deepFreeze(base));
 		deepFreeze(change);
 
 		const composed = TestChange.composeList(baseChanges.map((c) => c.change));
-		const rebaseResult = TestChange.rebase(change, composed);
+		const rebaseResult = TestChange.rebase(change.change, composed);
 		assert(rebaseResult !== undefined, "Shouldn't get undefined.");
 		return rebaseResult;
 	}
@@ -150,7 +150,9 @@ describe("TestChange", () => {
 				generateChildStates,
 				{
 					rebase: (change, base) => {
-						return TestChange.rebase(change, base.change) ?? TestChange.emptyChange;
+						return (
+							TestChange.rebase(change.change, base.change) ?? TestChange.emptyChange
+						);
 					},
 					compose: (change1, change2) => {
 						return TestChange.compose(change1.change, change2.change);
@@ -159,6 +161,7 @@ describe("TestChange", () => {
 						return TestChange.invert(change.change);
 					},
 					rebaseComposed,
+					inlineRevision: (change, revision) => change,
 					createEmpty: () => TestChange.emptyChange,
 					isEmpty: TestChange.isEmpty,
 					assertChangesetsEquivalent,

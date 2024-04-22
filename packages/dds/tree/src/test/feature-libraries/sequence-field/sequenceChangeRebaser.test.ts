@@ -56,12 +56,12 @@ import {
 	withoutTombstonesDeep,
 	assertWrappedChangesetsEqual,
 	composeDeep,
-	rebaseDeep,
 	withNormalizedLineageDeep,
 	pruneDeep,
 	WrappedChange,
 	withoutTombstones,
 	tagChangeInline,
+	inlineRevision,
 } from "./utils.js";
 import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
 
@@ -506,8 +506,8 @@ export function testRebaserAxioms() {
 									const a2 = rebaseDeepTagged(a, b);
 									const rebasedIndividually = rebaseDeepTagged(a2, c).change;
 									const bc = composeDeep([b, c]);
-									const rebasedOverComposition = rebaseDeep(
-										a.change,
+									const rebasedOverComposition = rebaseDeepTagged(
+										a,
 										makeAnonChange(bc),
 										rebaseRevisionMetadataFromInfo(
 											[
@@ -520,8 +520,9 @@ export function testRebaserAxioms() {
 										),
 									);
 
-									const normalizedComposition =
-										withNormalizedLineageDeep(rebasedOverComposition);
+									const normalizedComposition = withNormalizedLineageDeep(
+										rebasedOverComposition.change,
+									);
 
 									const normalizedIndividual =
 										withNormalizedLineageDeep(rebasedIndividually);
@@ -720,16 +721,17 @@ const generateChildStates: ChildStateGenerator<TestState, WrappedChange> = funct
 
 const fieldRebaser: BoundFieldChangeRebaser<WrappedChange> = {
 	rebase: (
-		change: WrappedChange,
+		change: TaggedChange<WrappedChange>,
 		base: TaggedChange<WrappedChange>,
 		metadata?: RebaseRevisionMetadata,
-	): WrappedChange => rebaseDeep(change, base, metadata),
+	): WrappedChange => rebaseDeepTagged(change, base, metadata).change,
 	invert: invertDeep,
 	compose: (change1, change2, metadata) => composeDeep([change1, change2], metadata),
 	rebaseComposed: (metadata, change, ...baseChanges) => {
 		const composedChanges = composeDeep(baseChanges, metadata);
-		return rebaseDeep(change, makeAnonChange(composedChanges), metadata);
+		return rebaseDeepTagged(change, makeAnonChange(composedChanges), metadata).change;
 	},
+	inlineRevision: inlineRevisionWrapped,
 	createEmpty: () => ChangesetWrapper.create([]),
 	assertEqual: (change1, change2) => {
 		if (change1 === undefined && change2 === undefined) {
@@ -1162,20 +1164,15 @@ export function testExamples() {
 
 function tagWrappedChangeInline(
 	change: WrappedChange,
-	tag: RevisionTag,
+	revision: RevisionTag,
 	rollbackOf?: RevisionTag,
 ): TaggedChange<WrappedChange> {
-	const fieldChange = tagChangeInline(change.fieldChange, tag).change;
-	const nodes = nestedMapFromFlatList(
-		nestedMapToFlatList(change.nodes).map(([revision, id, node]) => [
-			revision ?? tag,
-			id,
-			node,
-		]),
-	);
-
-	const inlined = { fieldChange, nodes };
+	const inlined = inlineRevisionWrapped(change, revision);
 	return rollbackOf !== undefined
-		? tagRollbackInverse(inlined, tag, rollbackOf)
-		: tagChange(inlined, tag);
+		? tagRollbackInverse(inlined, revision, rollbackOf)
+		: tagChange(inlined, revision);
+}
+
+function inlineRevisionWrapped(change: WrappedChange, revision: RevisionTag): WrappedChange {
+	return ChangesetWrapper.inlineRevision(change, revision, inlineRevision);
 }

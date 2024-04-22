@@ -447,7 +447,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	replaceRevisions: (
 		change: OptionalChangeset,
 		oldRevisions: Set<RevisionTag | undefined>,
-		newRevision: RevisionTag,
+		newRevision: RevisionTag | undefined,
 	): OptionalChangeset => {
 		const valueReplace = replaceReplaceRevisions(
 			change.valueReplace,
@@ -483,7 +483,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 function replaceReplaceRevisions(
 	replace: Replace | undefined,
 	oldRevisions: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag,
+	newRevision: RevisionTag | undefined,
 ): Replace | undefined {
 	if (replace === undefined) {
 		return undefined;
@@ -504,7 +504,7 @@ function replaceReplaceRevisions(
 function replaceRegisterRevisions(
 	register: RegisterId,
 	oldRevisions: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag,
+	newRevision: RevisionTag | undefined,
 ): RegisterId {
 	return register === "self"
 		? register

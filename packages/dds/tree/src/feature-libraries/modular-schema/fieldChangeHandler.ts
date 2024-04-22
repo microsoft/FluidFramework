@@ -127,7 +127,7 @@ export interface FieldChangeRebaser<TChangeset> {
 	replaceRevisions(
 		change: TChangeset,
 		oldRevisions: Set<RevisionTag | undefined>,
-		newRevisions: RevisionTag,
+		newRevisions: RevisionTag | undefined,
 	): TChangeset;
 }
 

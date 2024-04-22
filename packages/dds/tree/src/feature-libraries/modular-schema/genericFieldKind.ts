@@ -170,7 +170,7 @@ function pruneGenericChange(
 function replaceRevisions(
 	changeset: GenericChangeset,
 	oldRevisions: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag,
+	newRevision: RevisionTag | undefined,
 ): GenericChangeset {
 	return changeset.map((change) => ({
 		...change,

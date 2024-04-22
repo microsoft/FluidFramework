@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { mintRevisionTag } from "../../utils.js";
 import { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
-import { ChangeAtomId, RevisionTag } from "../../../core/index.js";
+import { ChangeAtomId, RevisionTag, makeAnonChange } from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { TestNodeId } from "../../testNodeId.js";
@@ -38,7 +38,7 @@ function rebase(
 	baseRev?: RevisionTag,
 	config?: RebaseConfig,
 ): TestChangeset {
-	return rebaseI(change, tagChangeInline(base, baseRev ?? tag1), config);
+	return rebaseI(makeAnonChange(change), tagChangeInline(base, baseRev ?? tag1), config);
 }
 
 export function testRebase() {
