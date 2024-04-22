@@ -7,7 +7,6 @@ import { IsomorphicPerformance, performance } from "@fluid-internal/client-utils
 import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
-	ITelemetryBaseProperties,
 	LogLevel,
 	Tagged,
 	TelemetryBaseEventPropertyType,
@@ -64,7 +63,7 @@ export enum TelemetryDataTag {
 /**
  * @alpha
  */
-export type TelemetryEventPropertyTypes = ITelemetryBaseProperties[string];
+export type TelemetryEventPropertyTypes = ITelemetryPropertiesExt[string];
 
 /**
  * @alpha

@@ -4,3 +4,4 @@
  */
 
 export { after, before, devServerConfig } from "./routes.js";
+export { defaultWebpackConfig } from "./defaultWebpackConfig.js";
