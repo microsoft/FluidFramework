@@ -240,12 +240,13 @@ export function rebaseBranch<TChange>(
 	const revInfos = getRevInfoFromTaggedChanges(targetRebasePath);
 	// Note that the `revisionMetadata` gets updated as `revInfos` gets updated.
 	const revisionMetadata = revisionMetadataSourceFromInfo(revInfos);
-	let currentComposedEdit = makeAnonChange(changeRebaser.compose(targetRebasePath));
+	let editsToCompose: TaggedChange<TChange>[] = targetRebasePath.slice();
 	for (const c of sourcePath) {
 		const inverseTag = mintRevisionTag();
 		const inverse = tagRollbackInverse(changeRebaser.invert(c, true), inverseTag, c.revision);
-		const editsToCompose: TaggedChange<TChange>[] = [inverse, currentComposedEdit];
 		if (sourceSet.has(c.revision)) {
+			const currentComposedEdit = makeAnonChange(changeRebaser.compose(editsToCompose));
+			editsToCompose = [currentComposedEdit];
 			const change = changeRebaser.rebase(c.change, currentComposedEdit, revisionMetadata);
 			newHead = {
 				revision: c.revision,
@@ -255,14 +256,20 @@ export function rebaseBranch<TChange>(
 			sourceCommits.push(newHead);
 			editsToCompose.push(tagChange(change, c.revision));
 		}
-		currentComposedEdit = makeAnonChange(changeRebaser.compose(editsToCompose));
-		revInfos.unshift({ revision: inverseTag, rollbackOf: inverse.rollbackOf });
 		revInfos.push({ revision: c.revision });
+		editsToCompose.unshift(inverse);
+		revInfos.unshift({ revision: inverseTag, rollbackOf: inverse.rollbackOf });
 	}
 
+	let netChange: TChange | undefined;
 	return {
 		newSourceHead: newHead,
-		sourceChange: currentComposedEdit.change,
+		get sourceChange() {
+			if (netChange === undefined) {
+				netChange = changeRebaser.compose(editsToCompose);
+			}
+			return netChange;
+		},
 		commits: {
 			deletedSourceCommits,
 			targetCommits,
