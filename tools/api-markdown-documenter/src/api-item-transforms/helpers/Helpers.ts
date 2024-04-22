@@ -234,11 +234,11 @@ export function createHeritageTypesParagraph(
 }
 
 /**
- * Renders a labeled, type information entry.
+ * Renders a labeled type-information entry.
  *
- * @remarks Displayed as `<label>: <type>`
+ * @remarks Displayed as `Type: <type>`
  *
- * @param excerpt - List of types to display.
+ * @param excerpt - The type excerpt to be displayed.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 function createTypeSpan(
