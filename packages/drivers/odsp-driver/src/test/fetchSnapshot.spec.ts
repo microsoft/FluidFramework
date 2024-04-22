@@ -7,9 +7,13 @@ import { strict as assert } from "assert";
 import { stub } from "sinon";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryLoggerExt,
+	MockLogger,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils";
 import { EpochTracker } from "../epochTracker";
-import { HostStoragePolicyInternal } from "../contracts";
+import { HostStoragePolicyInternal, IOdspSnapshot } from "../contracts";
 import * as fetchSnapshotImport from "../fetchSnapshot";
 import { LocalPersistentCache, NonPersistentCache } from "../odspCache";
 import { INewFileInfo, IOdspResponse } from "../odspUtils";
@@ -18,7 +22,7 @@ import { getHashedDocumentId, ISnapshotContents } from "../odspPublicUtils";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { ISnapshotRequestAndResponseOptions } from "../fetchSnapshot";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
-import { createResponse } from "./mockFetch";
+import { createResponse, mockFetchMultiple, notFound, okResponse } from "./mockFetch";
 
 const createUtLocalCache = () => new LocalPersistentCache();
 
@@ -56,8 +60,10 @@ describe("Tests for snapshot fetch", () => {
 
 	const resolver = new OdspDriverUrlResolver();
 	const nonPersistentCache = new NonPersistentCache();
-	const logger = createChildLogger();
+	let logger: ITelemetryLoggerExt;
+	let mockLogger: MockLogger;
 	const odspUrl = createOdspUrl({ ...newFileParams, itemId, dataStorePath: "/" });
+	let resolved: IOdspResolvedUrl;
 
 	const content: ISnapshotContents = {
 		snapshotTree: {
@@ -70,13 +76,26 @@ describe("Tests for snapshot fetch", () => {
 		sequenceNumber: 0,
 		latestSequenceNumber: 0,
 	};
+
+	const odspSnapshot: IOdspSnapshot = {
+		id: "id",
+		trees: [
+			{
+				entries: [{ path: "path", type: "tree" }],
+				id: "id",
+				sequenceNumber: 1,
+			},
+		],
+		blobs: [],
+	};
 	before(async () => {
 		hashedDocumentId = await getHashedDocumentId(driveId, itemId);
 	});
 
 	beforeEach(async () => {
 		localCache = createUtLocalCache();
-		// use null logger here as we expect errors
+		mockLogger = new MockLogger();
+		logger = createChildLogger({ logger: mockLogger });
 		epochTracker = new EpochTracker(
 			localCache,
 			{
@@ -86,7 +105,7 @@ describe("Tests for snapshot fetch", () => {
 			logger,
 		);
 		epochTracker.setEpoch("epoch1", true, "test");
-		const resolved = await resolver.resolve({ url: odspUrl });
+		resolved = await resolver.resolve({ url: odspUrl });
 		service = new OdspDocumentStorageService(
 			resolved,
 			async (_options) => "token",
@@ -187,5 +206,79 @@ describe("Tests for snapshot fetch", () => {
 			);
 			assert.strictEqual(error.contentType, "unknown", "content type should be unknown");
 		}
+	});
+
+	it("RedeemFallback behavior when fallback succeeds with using tenant domain", async () => {
+		resolved.shareLinkInfo = {
+			sharingLinkToRedeem: "https://microsoft.sharepoint-df.com/sharelink",
+		};
+		hostPolicy.enableRedeemFallback = true;
+
+		const response = (await createResponse(
+			{ "x-fluid-epoch": "epoch1", "content-type": "application/json" },
+			odspSnapshot,
+			200,
+		)) as unknown as Response;
+
+		await assert.doesNotReject(
+			async () =>
+				mockFetchMultiple(
+					async () => service.getVersions(null, 1),
+					[
+						notFound,
+						async (): Promise<Response> => okResponse({}, {}) as unknown as Response,
+						async (): Promise<Response> => {
+							return response;
+						},
+					],
+				),
+			"Should succeed",
+		);
+		assert(
+			mockLogger.matchEvents([
+				{ eventName: "TreesLatest_cancel", shareLinkPresent: true },
+				{ eventName: "RedeemShareLink_end" },
+				{ eventName: "RedeemFallback", errorType: "fileNotFoundOrAccessDeniedError" },
+				{ eventName: "TreesLatest_end" },
+			]),
+		);
+	});
+
+	it("RedeemFallback behavior when fallback succeeds with using siteUrl", async () => {
+		resolved.shareLinkInfo = {
+			sharingLinkToRedeem: "https://microsoft.sharepoint-df.com/sharelink",
+		};
+		hostPolicy.enableRedeemFallback = true;
+
+		const response = (await createResponse(
+			{ "x-fluid-epoch": "epoch1", "content-type": "application/json" },
+			odspSnapshot,
+			200,
+		)) as unknown as Response;
+
+		await assert.doesNotReject(
+			async () =>
+				mockFetchMultiple(
+					async () => service.getVersions(null, 1),
+					[
+						notFound,
+						notFound,
+						async (): Promise<Response> => okResponse({}, {}) as unknown as Response,
+						async (): Promise<Response> => {
+							return response;
+						},
+					],
+				),
+			"Should succeed",
+		);
+		assert(
+			mockLogger.matchEvents([
+				{ eventName: "TreesLatest_cancel", shareLinkPresent: true },
+				{ eventName: "ShareLinkRedeemFailedWithTenantDomain", statusCode: 404 },
+				{ eventName: "RedeemShareLink_end" },
+				{ eventName: "RedeemFallback", errorType: "fileNotFoundOrAccessDeniedError" },
+				{ eventName: "TreesLatest_end" },
+			]),
+		);
 	});
 });
