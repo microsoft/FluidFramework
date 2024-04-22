@@ -42,7 +42,6 @@ import {
 	createObliterateRangeOp,
 	createRemoveRangeOp,
 	matchProperties,
-	/* eslint-enable import/no-deprecated */
 } from "@fluidframework/merge-tree/internal";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
