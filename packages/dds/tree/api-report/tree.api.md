@@ -1327,7 +1327,7 @@ export interface NodeKeys {
     localize(key: StableNodeKey): LocalNodeKey;
     readonly map: ReadonlyMap<LocalNodeKey, FlexTreeObjectNode>;
     stabilize(key: LocalNodeKey): StableNodeKey;
-    tryLocalize(key: StableNodeKey): LocalNodeKey | undefined;
+    tryLocalize(key: string): LocalNodeKey | undefined;
 }
 
 // @public
