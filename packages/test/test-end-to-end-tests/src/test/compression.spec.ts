@@ -26,6 +26,7 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
 import { pkgVersion } from "../packageVersion.js";
@@ -59,11 +60,13 @@ const compressionSuite = (getProvider) => {
 			localDataObject =
 				await getContainerEntryPointBackCompat<ITestFluidObject>(localContainer);
 			localMap = await localDataObject.getSharedObject<ISharedMap>("mapKey");
+			await waitForContainerConnection(localContainer);
 
 			const remoteContainer = await provider.loadTestContainer(containerConfig);
 			const remoteDataObject =
 				await getContainerEntryPointBackCompat<ITestFluidObject>(remoteContainer);
 			remoteMap = await remoteDataObject.getSharedObject<ISharedMap>("mapKey");
+			await waitForContainerConnection(remoteContainer);
 		}
 
 		afterEach(() => {

@@ -26,6 +26,7 @@ import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 	timeoutPromise,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
 const map1Id = "map1Key";
@@ -130,12 +131,14 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		dataObject1map1 = await dataObject1.getSharedObject<ISharedMap>(map1Id);
 		dataObject1map2 = await dataObject1.getSharedObject<ISharedMap>(map2Id);
+		await waitForContainerConnection(container1);
 
 		// Load the Container that was created by the first client.
 		const container2 = await provider.loadTestContainer(configCopy);
 		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 		dataObject2map1 = await dataObject2.getSharedObject<ISharedMap>(map1Id);
 		dataObject2map2 = await dataObject2.getSharedObject<ISharedMap>(map2Id);
+		await waitForContainerConnection(container2);
 
 		// To precisely control batch boundary, we need to force the container into write mode upfront
 		// So that the first flush doesn't result in reconnect to write mode and cause batches

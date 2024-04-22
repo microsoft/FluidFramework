@@ -12,6 +12,7 @@ import {
 	type ITestContainerConfig,
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
 describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectProvider, apis) => {
@@ -122,6 +123,7 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 		};
 		const container = await provider.makeTestContainer(options);
 		entry = await getEntryPoint(container);
+		await waitForContainerConnection(container);
 
 		assert(entry);
 		entry.root.set("key", generateStringOfSize(10000));
@@ -135,6 +137,7 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 
 		const container2 = await loadContainer(options);
 		const entry2 = await getEntryPoint(container2);
+		await waitForContainerConnection(container2);
 		assert(entry.root.get("key").length === 10000);
 
 		entry2.root.set("key2", generateStringOfSize(5000));
@@ -146,6 +149,7 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 
 		const container3 = await loadContainer(options);
 		const entry3 = await getEntryPoint(container3);
+		await waitForContainerConnection(container3);
 		await provider.ensureSynchronized();
 
 		assert.equal(crash, container.closed);
