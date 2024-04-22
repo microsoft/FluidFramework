@@ -649,11 +649,7 @@ export class Container
 	}
 
 	private get connected(): boolean {
-		// "connected" event is delayed until runtime is fully loaded - see setLoaded()
-		return (
-			this.connectionStateHandler.connectionState === ConnectionState.Connected &&
-			this._lifecycleState === "loaded"
-		);
+		return this.connectionStateHandler.connectionState === ConnectionState.Connected;
 	}
 
 	/**
@@ -1743,6 +1739,11 @@ export class Container
 				this._deltaManager.inbound.pause();
 			}
 
+			// Internal context is fully loaded at this point
+			// Move to loaded before calling this.handleDeltaConnectionArg() - latter allows ops & signals in, which
+			// may result in container moving to "connected" state. Such transitions are allowed only in loaded state.
+			this.setLoaded();
+
 			this.handleDeltaConnectionArg(loadMode.deltaConnection);
 		}
 
@@ -1771,8 +1772,6 @@ export class Container
 			throw new Error("Container was closed while load()");
 		}
 
-		// Internal context is fully loaded at this point
-		this.setLoaded();
 		timings.end = performance.now();
 		this.subLogger.sendTelemetryEvent(
 			{
@@ -2164,10 +2163,7 @@ export class Container
 				// This info is of most interesting while Catching Up.
 				checkpointSequenceNumber = this.deltaManager.lastKnownSeqNumber;
 				// Need to check that we have already loaded and fetched the snapshot.
-				if (
-					this.deltaManager.hasCheckpointSequenceNumber &&
-					this._lifecycleState === "loaded"
-				) {
+				if (this.deltaManager.hasCheckpointSequenceNumber && this.loaded) {
 					opsBehind = checkpointSequenceNumber - this.deltaManager.lastSequenceNumber;
 				}
 			}
@@ -2205,6 +2201,14 @@ export class Container
 	}
 
 	private propagateConnectionState(disconnectedReason?: IConnectionStateChangeReason) {
+		const connected = this.connectionState === ConnectionState.Connected;
+
+		if (connected) {
+			const clientId = this.connectionStateHandler.clientId;
+			assert(clientId !== undefined, "there has to be clientId");
+			this.protocolHandler.audience.setCurrentClientId(clientId);
+		}
+
 		// We communicate only transitions to Connected & Disconnected states, skipping all other states.
 		// This can be changed in the future, for example we likely should add "CatchingUp" event on Container.
 		if (
@@ -2214,13 +2218,11 @@ export class Container
 			return;
 		}
 
-		const state = this.connectionState === ConnectionState.Connected;
-
 		// Both protocol and context should not be undefined if we got so far.
 
-		this.setContextConnectedState(state, this.readOnlyInfo.readonly ?? false);
-		this.protocolHandler.setConnectionState(state, this.clientId);
-		raiseConnectedEvent(this.mc.logger, this, state, this.clientId, disconnectedReason?.text);
+		this.setContextConnectedState(connected, this.readOnlyInfo.readonly ?? false);
+		this.protocolHandler.setConnectionState(connected, this.clientId);
+		raiseConnectedEvent(this.mc.logger, this, connected, this.clientId, disconnectedReason?.text);
 	}
 
 	// back-compat: ADO #1385: Remove in the future, summary op should come through submitSummaryMessage()
@@ -2462,7 +2464,7 @@ export class Container
 	 * @param readonly - Is the container in readonly mode?
 	 */
 	private setContextConnectedState(connected: boolean, readonly: boolean): void {
-		if (this._runtime?.disposed === false && this._lifecycleState === "loaded") {
+		if (this._runtime?.disposed === false && this.loaded) {
 			/**
 			 * We want to lie to the ContainerRuntime when we are in readonly mode to prevent issues with pending
 			 * ops getting through to the DeltaManager.
@@ -2477,6 +2479,12 @@ export class Container
 		deltaConnectionArg?: "none" | "delayed",
 		connectionArgs?: IConnectionArgs,
 	) {
+		// This ensures that we allow transitions to "connected" state only after container has been fully loaded
+		// and we propagate such events to container runtime. All events prior to being loaded are ignored.
+		// This means if we get here in non-loaded state, we might not deliver proper events to container runtime,
+		// and runtime implementation may miss such events.
+		assert(this.loaded, "has to be called after container transitions to loaded state");
+
 		switch (deltaConnectionArg) {
 			case undefined:
 				if (connectionArgs) {
