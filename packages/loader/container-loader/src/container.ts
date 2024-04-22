@@ -539,7 +539,7 @@ export class Container
 		);
 	}
 
-	public get loaded(): boolean {
+	protected get loaded(): boolean {
 		return this._lifecycleState === "loaded";
 	}
 
@@ -894,11 +894,13 @@ export class Container
 						...(details === undefined ? {} : { details: JSON.stringify(details) }),
 					});
 
-					// This is important for many reasons:
+					// This assert is important for many reasons:
 					// 1) Cosmetic / OCE burden: It's useless to raise NoJoinOp error events, if we are loading, as that's most
-					//    likely to to snapshot taking too long to load. During this time we are not processing ops so there is no
-					//    way to move to "connected" state, and thus timer would fire. But these events do not tell us anything
-					//    about connectivity pipeline / op processing pipeline, only that boot is slow, and we have events for that.
+					//    likely to happen if snapshot loading takes too long. During this time we are not processing ops so there is no
+					//    way to move to "connected" state, and thus "NoJoin" timer would fire (see
+					//    IConnectionStateHandler.logConnectionIssue() callback and related code in ConnectStateHandler class implementation).
+					//    But these events do not tell us anything about connectivity pipeline / op processing pipeline,
+					//    only that boot is slow, and we have events for that.
 					// 2) Doing recovery below is useless in loading mode, for the reasons described above. At the same time we can't
 					//    not do it, as maybe we lost JoinSignal for "self", and when loading is done, we never move to connected
 					//    state. So we would have to do (in most cases) useless infinite reconnect loop while we are loading.

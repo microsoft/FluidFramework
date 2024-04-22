@@ -203,6 +203,9 @@ export class ConnectionManager implements IConnectionManager {
 	private pendingConnection: IPendingConnection | undefined;
 	private connection: IDocumentDeltaConnection | undefined;
 
+	/** Details about connection. undefined if there is no active connection. */
+	private _connectionDetails?: IConnectionDetailsInternal;
+
 	/** file ACL - whether user has only read-only access to a file */
 	private _readonlyPermissions: boolean | undefined;
 
@@ -256,7 +259,7 @@ export class ConnectionManager implements IConnectionManager {
 		return this.connection?.clientId;
 	}
 
-	private _connectionDetails?: IConnectionDetailsInternal;
+	/** Details about connection. undefined if there is no active connection. */
 	public get connectionDetails() {
 		return this._connectionDetails;
 	}
