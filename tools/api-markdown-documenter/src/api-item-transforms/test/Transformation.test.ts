@@ -369,15 +369,23 @@ describe("ApiItem to Documentation transformation tests", () => {
 				[
 					wrapInSection(
 						[
+							// Summary section
 							wrapInSection([
 								ParagraphNode.createFromPlainText("Test optional property"),
 							]),
+							// Signature section
 							wrapInSection(
 								[
 									FencedCodeBlockNode.createFromPlainText(
 										"testOptionalInterfaceProperty?: number;",
 										"typescript",
 									),
+									new ParagraphNode([
+										new SpanNode([
+											SpanNode.createFromPlainText("Type: ", { bold: true }),
+											SpanNode.createFromPlainText("number"),
+										]),
+									]),
 								],
 								{
 									title: "Signature",
