@@ -441,7 +441,7 @@ describe("serializedStateManager", () => {
 			};
 			const storageAdapter = new MockStorageAdapter();
 			let saved = false;
-			const isDirtyF = () => saved ? false : isDirty;
+			const isDirtyF = () => (saved ? false : isDirty);
 			const serializedStateManager = new SerializedStateManager(
 				pending,
 				logger.toTelemetryLogger(),
@@ -493,7 +493,7 @@ describe("serializedStateManager", () => {
 				savedOps: [generateSavedOp(13)],
 			};
 			let saved = false;
-			const isDirtyF = () => saved ? false : isDirty;
+			const isDirtyF = () => (saved ? false : isDirty);
 			const storageAdapter = new MockStorageAdapter();
 			const serializedStateManager = new SerializedStateManager(
 				pending,
@@ -543,7 +543,7 @@ describe("serializedStateManager", () => {
 				baseSnapshot: { ...snapshot, id: "fromPending" },
 			};
 			let saved = false;
-			const isDirtyF = () => saved ? false : isDirty;
+			const isDirtyF = () => (saved ? false : isDirty);
 			const storageAdapter = new MockStorageAdapter();
 			const serializedStateManager = new SerializedStateManager(
 				pending,
@@ -634,7 +634,7 @@ describe("serializedStateManager", () => {
 				baseSnapshot: { ...snapshot, id: "fromPending" },
 			};
 			let saved = false;
-			const isDirtyF = () => saved ? false : isDirty;
+			const isDirtyF = () => (saved ? false : isDirty);
 			const storageAdapter = new MockStorageAdapter();
 			const serializedStateManager = new SerializedStateManager(
 				pending,
@@ -785,7 +785,7 @@ describe("serializedStateManager", () => {
 					baseSnapshot: { ...snapshot, id: "fromPending" },
 				};
 				let saved = false;
-				const isDirtyF = () => saved ? false : isDirty;
+				const isDirtyF = () => (saved ? false : isDirty);
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
 					pending,
