@@ -2,6 +2,7 @@
 
 ## 0.12.2
 
+-   Fixed an issue where variable item tables did not include type information.
 -   Further improved error messages when an unexpected child kind is encountered when iterating over children in default ApiItem transformations.
 
 ## 0.12.1
