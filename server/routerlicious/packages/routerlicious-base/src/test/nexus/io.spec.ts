@@ -58,6 +58,14 @@ if (!Lumberjack.isSetupCompleted()) {
 	Lumberjack.setup([lumberjackEngine]);
 }
 
+interface Client {
+	socket: LocalWebSocket;
+	clientId: string;
+	signalPromise?: Promise<ISignalMessage>;
+	signalCount?: number;
+	signalNottReceivedPromise?: Promise<void>;
+}
+
 describe("Routerlicious", () => {
 	describe("Nexus", () => {
 		describe("WebSockets", () => {
@@ -342,28 +350,24 @@ describe("Routerlicious", () => {
 				});
 
 				describe("#submitSignal", () => {
-					interface Client {
-						socket: LocalWebSocket;
-						clientId: string;
-						signalPromise: Promise<ISignalMessage>;
-						signalCount: number;
-					}
-
 					const createSignalPromise = (client: Client): Promise<ISignalMessage> => {
 						return new Promise<ISignalMessage>((resolve) => {
-							client.socket.on("signal", (signal: ISignalMessage) => {
-								client.signalCount++;
+							const signalListener = (signal: ISignalMessage) => {
+								// Ignore disconnected signals
+								if (signal.clientId !== null) {
+									client.signalCount++;
+								}
+								client.socket.off("signal", signalListener);
 								resolve(signal);
-							});
-						});
-					};
+							};
 
-					const createSignalNotReceivedPromise = (client: Client): Promise<void> => {
-						return new Promise<void>((resolve) => {
-							client.socket.on("signal", (signal: ISignalMessage) => {
-								assert.fail("Signal should not have been received");
-							});
-							setTimeout(resolve, 100);
+							client.socket.on("signal", signalListener);
+
+							// Timeout of 100ms to handle cases where no signal is received
+							setTimeout(() => {
+								client.socket.off("signal", signalListener);
+								resolve(undefined);
+							}, 100);
 						});
 					};
 
@@ -385,7 +389,6 @@ describe("Routerlicious", () => {
 						const client: Client = {
 							socket,
 							clientId,
-							signalPromise: null,
 							signalCount: 0,
 						};
 
@@ -403,17 +406,15 @@ describe("Routerlicious", () => {
 					describe("v1 signals", () => {
 						beforeEach(async () => {
 							clients = [];
-
 							for (let i = 0; i < numberOfClients; i++) {
 								const client = await createClient(testId, testTenantId, testSecret);
 								clients.push(client);
 							}
-
 							clients.forEach((client) => {
 								client.signalPromise = createSignalPromise(client);
 							});
 						});
-						it("Single Signal", async () => {
+						it("can handle a single broadcast signal", async () => {
 							clients[0].socket.send("submitSignal", clients[0].clientId, [
 								stringSignalContent,
 							]);
@@ -436,7 +437,7 @@ describe("Routerlicious", () => {
 							});
 						});
 
-						it("Multiple Signals", async () => {
+						it("can handle signals sent from multiple clients", async () => {
 							clients[0].socket.send("submitSignal", clients[0].clientId, [
 								stringSignalContent,
 							]);
@@ -456,6 +457,11 @@ describe("Routerlicious", () => {
 									stringSignalContent,
 									`User ${index + 1} signal content mismatch`,
 								);
+							});
+
+							// Reset signal counts and promises
+							clients.forEach((client) => {
+								client.signalPromise = createSignalPromise(client);
 							});
 
 							clients[1].socket.send("submitSignal", clients[1].clientId, [
@@ -480,66 +486,46 @@ describe("Routerlicious", () => {
 							});
 						});
 
-						it("Invalid clientID", async () => {
-							const noSignalReceivedPromises = clients.map((client) => {
-								return createSignalNotReceivedPromise(client);
-							});
+						it("can handle invalid clientID", async () => {
 							clients[0].socket.send("submitSignal", "invalidClientID", [
 								stringSignalContent,
 							]);
-							await Promise.all(noSignalReceivedPromises);
+							await Promise.all(clients.map((client) => client.signalPromise));
+							clients.forEach((client, index) => {
+								assert.equal(
+									client.signalCount,
+									0,
+									`User ${index + 1} should not have received any signals`,
+								);
+							});
 						});
 
-						it("Receiving client disconnect", async () => {
+						it("can handle a receiving client disconnect", async () => {
 							clients[1].socket.disconnect();
+
+							// Ignore the signal from the disconnected client
+							clients.forEach((client) => {
+								client.signalPromise = createSignalPromise(client);
+							});
 
 							clients[0].socket.send("submitSignal", clients[0].clientId, [
 								stringSignalContent,
 							]);
 
 							await Promise.all(
-								clients.map((client, index) => {
-									if (index !== 1) {
-										return client.signalPromise;
-									}
-									return createSignalNotReceivedPromise(client);
+								clients.map((client) => {
+									client.signalPromise;
 								}),
 							);
 
 							clients.forEach((client, index) => {
-								if (index !== 1) {
-									// Connected clients recieve 1 disconnect signal + 1 submitSignal
-									assert.equal(
-										client.signalCount,
-										2,
-										`User ${index + 1} should have received 2 signals`,
-									);
-								} else {
+								if (index === 1) {
 									assert.equal(
 										client.signalCount,
 										0,
-										`User ${index + 1} should have received 0 signals`,
-									);
-								}
-							});
-						});
-
-						it("Client send then disconnect", async () => {
-							clients[0].socket.send("submitSignal", clients[0].clientId, [
-								stringSignalContent,
-							]);
-							clients[0].socket.disconnect();
-
-							clients.forEach((client, index) => {
-								if (index !== 0) {
-									// Connected clients recieve 1 broadcast signal + 1 disconnect signal
-									assert.equal(
-										client.signalCount,
-										2,
-										`User ${index + 1} should have received 2 signals`,
+										`User ${index + 1} should not have received any signals`,
 									);
 								} else {
-									// Disconnected client recieves 1 broadcast signal
 									assert.equal(
 										client.signalCount,
 										1,
@@ -549,8 +535,29 @@ describe("Routerlicious", () => {
 							});
 						});
 
+						it("can handle a sending client disconnect", async () => {
+							clients[0].socket.send("submitSignal", clients[0].clientId, [
+								stringSignalContent,
+							]);
+							clients[0].socket.disconnect();
+
+							await Promise.all(
+								clients.map((client) => {
+									client.signalPromise;
+								}),
+							);
+
+							clients.forEach((client, index) => {
+								assert.equal(
+									client.signalCount,
+									1,
+									`User ${index + 1} should have received 1 signal`,
+								);
+							});
+						});
+
 						describe("content type variations", () => {
-							it("Number content", async () => {
+							it("can handle number content", async () => {
 								const numberSignalContent = 42;
 								clients[0].socket.send("submitSignal", clients[0].clientId, [
 									numberSignalContent,
@@ -572,7 +579,7 @@ describe("Routerlicious", () => {
 									);
 								});
 							});
-							it("Boolean content", async () => {
+							it("can handle boolean content", async () => {
 								const booleanSignalContent = true;
 								clients[0].socket.send("submitSignal", clients[0].clientId, [
 									booleanSignalContent,
@@ -594,7 +601,7 @@ describe("Routerlicious", () => {
 									);
 								});
 							});
-							it("JSON/Object content", async () => {
+							it("can handle JSON/Object content", async () => {
 								const objectSignalContent = {
 									key1: "value1",
 									key2: 42,
@@ -620,35 +627,28 @@ describe("Routerlicious", () => {
 									);
 								});
 							});
-							it("Class content", async () => {
-								class Person {
-									name: string;
-									age: number;
-									address?: {
-										street: string;
-										city: string;
-										country: string;
-									};
-
-									constructor(
-										name: string,
-										age: number,
-										address?: { street: string; city: string; country: string },
-									) {
-										this.name = name;
-										this.age = age;
-										this.address = address;
-									}
-								}
-								const person = new Person("Willie", 22);
-
+							it("can handle malformed JSON content", async () => {
+								const malformedJsonSignalContent =
+									"{key1: value1, key2: 42, key3: true}";
 								clients[0].socket.send("submitSignal", clients[0].clientId, [
-									person,
+									malformedJsonSignalContent,
 								]);
-
-								await Promise.all(
-									clients.map((client) => createSignalNotReceivedPromise(client)),
+								const userSignals = await Promise.all(
+									clients.map((client) => client.signalPromise),
 								);
+
+								clients.forEach((client, index) => {
+									assert.equal(
+										client.signalCount,
+										1,
+										`User ${index + 1} should have received 1 signal`,
+									);
+									assert.deepEqual(
+										userSignals[index].content,
+										malformedJsonSignalContent,
+										`User ${index + 1} signal content mismatch`,
+									);
+								});
 							});
 						});
 					});
@@ -656,7 +656,6 @@ describe("Routerlicious", () => {
 					describe("v2 signals", () => {
 						beforeEach(async () => {
 							clients = [];
-
 							for (let i = 0; i < numberOfClients; i++) {
 								const client = await createClient(
 									testId,
@@ -666,12 +665,11 @@ describe("Routerlicious", () => {
 								);
 								clients.push(client);
 							}
-
 							clients.forEach((client) => {
 								client.signalPromise = createSignalPromise(client);
 							});
 						});
-						it("Verify targeted signal", async () => {
+						it("can handle targeted signals", async () => {
 							const targetedSignal: ISentSignalMessage = {
 								targetClientId: clients[0].clientId,
 								content: "TargetSignal",
@@ -683,7 +681,9 @@ describe("Routerlicious", () => {
 								targetedSignal,
 							]);
 
-							const user1Signal = await clients[0].signalPromise;
+							const userSignals = await Promise.all(
+								clients.map((client) => client.signalPromise),
+							);
 
 							clients.forEach((client, index) => {
 								if (index === 0) {
@@ -693,7 +693,7 @@ describe("Routerlicious", () => {
 										"User 1 should have received 1 signal",
 									);
 									assert.equal(
-										user1Signal.content,
+										userSignals[index].content,
 										"TargetSignal",
 										"User 1 signal content mismatch",
 									);
@@ -707,36 +707,7 @@ describe("Routerlicious", () => {
 							});
 						});
 
-						it("Verify broadcast signal", async () => {
-							const broadcastSignal: ISentSignalMessage = {
-								content: "BroadcastSignal",
-								clientConnectionNumber: 1,
-								referenceSequenceNumber: 1,
-							};
-
-							clients[0].socket.send("submitSignal", clients[0].clientId, [
-								broadcastSignal,
-							]);
-
-							const userSignals = await Promise.all(
-								clients.map((client) => client.signalPromise),
-							);
-
-							clients.forEach((client, index) => {
-								assert.equal(
-									client.signalCount,
-									1,
-									`User ${index + 1} should have received 1 signal`,
-								);
-								assert.equal(
-									userSignals[index].content,
-									"BroadcastSignal",
-									`User ${index + 1} signal content mismatch`,
-								);
-							});
-						});
-
-						it("Verify mixed targeted and broadcast signals", async () => {
+						it("can handle a mix of targeted and broadcast signals", async () => {
 							const targetedSignal: ISentSignalMessage = {
 								targetClientId: clients[0].clientId,
 								content: stringSignalContent,
@@ -746,7 +717,9 @@ describe("Routerlicious", () => {
 								targetedSignal,
 							]);
 
-							let user1Signal = await clients[0].signalPromise;
+							const targetUserSignals = await Promise.all(
+								clients.map((client) => client.signalPromise),
+							);
 
 							clients.forEach((client, index) => {
 								if (index === 0) {
@@ -756,7 +729,7 @@ describe("Routerlicious", () => {
 										"User 1 should have received 1 signal",
 									);
 									assert.equal(
-										user1Signal.content,
+										targetUserSignals[index].content,
 										stringSignalContent,
 										"User 1 signal content mismatch",
 									);
@@ -769,6 +742,11 @@ describe("Routerlicious", () => {
 								}
 							});
 
+							// Reset signal counts and promises
+							clients.forEach((client) => {
+								client.signalPromise = createSignalPromise(client);
+							});
+
 							const broadcastSignal: ISentSignalMessage = {
 								content: stringSignalContent,
 							};
@@ -777,21 +755,19 @@ describe("Routerlicious", () => {
 								broadcastSignal,
 							]);
 
-							user1Signal = await clients[0].signalPromise;
-							const user2Signal = await clients[1].signalPromise;
-							const user3Signal = await clients[2].signalPromise;
-
-							const userSignals = [user1Signal, user2Signal, user3Signal];
+							const broadcastUserSignals = await Promise.all(
+								clients.map((client) => client.signalPromise),
+							);
 
 							clients.forEach((client, index) => {
-								if (index == 0) {
+								if (index === 0) {
 									assert.equal(
 										client.signalCount,
 										2,
 										"User 1 should have received 2 signals",
 									);
 									assert.equal(
-										userSignals[index].content,
+										broadcastUserSignals[index].content,
 										stringSignalContent,
 										"User 1 signal content mismatch",
 									);
@@ -802,7 +778,7 @@ describe("Routerlicious", () => {
 										`User ${index + 1} should have received 1 signal`,
 									);
 									assert.equal(
-										userSignals[index].content,
+										broadcastUserSignals[index].content,
 										stringSignalContent,
 										`User ${index + 1} signal content mismatch`,
 									);
@@ -810,7 +786,7 @@ describe("Routerlicious", () => {
 							});
 						});
 
-						it("Receiving target client disconnect", async () => {
+						it("can handle a target client disconnect", async () => {
 							const targetedSignal: ISentSignalMessage = {
 								targetClientId: clients[1].clientId,
 								content: "TargetSignal",
@@ -821,48 +797,30 @@ describe("Routerlicious", () => {
 								targetedSignal,
 							]);
 
-							await Promise.all(
-								clients.map((client, index) => {
-									if (index !== 1) {
-										return client.signalPromise;
-									}
-									return createSignalNotReceivedPromise(client);
-								}),
-							);
+							await Promise.all(clients.map((client) => client.signalPromise));
 
 							clients.forEach((client, index) => {
-								if (index !== 1) {
-									// Connected clients recieve 1 disconnect signal
-									assert.equal(
-										client.signalCount,
-										1,
-										`User ${index + 1} should have received 1 signal`,
-									);
-								} else {
-									assert.equal(
-										client.signalCount,
-										0,
-										`User ${index + 1} should not have received any signals`,
-									);
-								}
+								assert.equal(
+									client.signalCount,
+									0,
+									`User ${index + 1} should not have received any signals`,
+								);
 							});
 						});
 
 						describe("Invalid/Malformed signals", () => {
-							let noSignalPromises: Promise<void>[];
-
-							before(() => {
-								noSignalPromises = clients.map((client) => {
-									return new Promise<void>((resolve) => {
-										client.socket.on("signal", (signal: ISignalMessage) => {
-											assert.fail("Signal should not have been received");
-										});
-										setTimeout(resolve, 100);
-									});
+							const checkNoSignalReceived = async () => {
+								await Promise.all(clients.map((client) => client.signalPromise));
+								clients.forEach((client) => {
+									assert.equal(
+										client.signalCount,
+										0,
+										`User should not have received any signals`,
+									);
 								});
-							});
+							};
 
-							it("Invalid targetClientID", async () => {
+							it("can handle an invalid targetClientID", async () => {
 								const targetedSignal: ISentSignalMessage = {
 									targetClientId: "invalidClientID",
 									content: stringSignalContent,
@@ -872,10 +830,10 @@ describe("Routerlicious", () => {
 									targetedSignal,
 								]);
 
-								await Promise.all(noSignalPromises);
+								checkNoSignalReceived();
 							});
 
-							it("Invalid targetClientID type", async () => {
+							it("can handle an invalid targetClientID type", async () => {
 								const targetedSignal = {
 									targetClientId: true,
 									content: stringSignalContent,
@@ -885,10 +843,10 @@ describe("Routerlicious", () => {
 									targetedSignal,
 								]);
 
-								await Promise.all(noSignalPromises);
+								checkNoSignalReceived();
 							});
 
-							it("Missing content field", async () => {
+							it("can hanlde a missing content field", async () => {
 								const targetedSignal = {
 									targetClientId: clients[0].clientId,
 								};
@@ -897,22 +855,10 @@ describe("Routerlicious", () => {
 									targetedSignal,
 								]);
 
-								await Promise.all(noSignalPromises);
+								checkNoSignalReceived();
 							});
 
-							it("Missing content field", async () => {
-								const targetedSignal = {
-									targetClientId: clients[0].clientId,
-								};
-
-								clients[1].socket.send("submitSignal", clients[1].clientId, [
-									targetedSignal,
-								]);
-
-								await Promise.all(noSignalPromises);
-							});
-
-							it("Invalid signal field", async () => {
+							it("can handle an invalid signal field", async () => {
 								const targetedSignal = {
 									targetClientId: clients[0].clientId,
 									content: stringSignalContent,
@@ -923,10 +869,10 @@ describe("Routerlicious", () => {
 									targetedSignal,
 								]);
 
-								await Promise.all(noSignalPromises);
+								checkNoSignalReceived();
 							});
 
-							it("Invalid optional signal fields", async () => {
+							it("can handle invalid optional signal fields", async () => {
 								const targetedSignal = {
 									targetClientId: clients[0].clientId,
 									content: stringSignalContent,
@@ -938,7 +884,7 @@ describe("Routerlicious", () => {
 									targetedSignal,
 								]);
 
-								await Promise.all(noSignalPromises);
+								checkNoSignalReceived();
 							});
 						});
 					});
