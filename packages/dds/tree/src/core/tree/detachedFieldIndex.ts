@@ -235,7 +235,7 @@ export class DetachedFieldIndex {
 			const innerMap = new Map();
 			for (const rangeEntry of rangeMap) {
 				for (let offset = 0; offset < rangeEntry.length; offset++) {
-					innerMap.set(rangeEntry.start + offset, rangeEntry.value);
+					innerMap.set(rangeEntry.start + offset, brand(rangeEntry.value + offset));
 				}
 			}
 			if (innerMap.size > 0) {
