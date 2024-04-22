@@ -155,11 +155,13 @@ describe.skip("SharedString fuzz testing with rebased batches and reconnect", ()
 });
 
 // Skipped due to eventual consistency issues with undefined properties - AB#7805, #7806
-describe.skip("SharedString fuzz testing with annotates", () => {
+// Also remember to re-enable the undefined value for annotate in fuzz utils once issue fixed
+describe("SharedString fuzz testing with annotates", () => {
 	createDDSFuzzSuite(
 		{ ...annotateSharedStringModel, workloadName: "SharedString with annotates" },
 		{
 			...defaultFuzzOptions,
+			skip: [14, 33, 39, 66, 77, 79, 95],
 		},
 	);
 });
