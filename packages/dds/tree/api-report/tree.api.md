@@ -6,7 +6,6 @@
 
 import type { ErasedType } from '@fluidframework/core-interfaces';
 import { FluidObject } from '@fluidframework/core-interfaces';
-import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -1077,7 +1076,7 @@ export interface ITransaction {
 }
 
 // @public
-export interface ITree extends IChannel {
+export interface ITree extends IFluidLoadable {
     schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TRoot>;
 }
 

@@ -4,7 +4,7 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, type IFluidLoadable } from "@fluidframework/core-interfaces";
 import {
 	type ITree,
 	NodeFromSchema,
@@ -132,7 +132,10 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 	};
 
 	protected async initializingFirstTime(): Promise<void> {
-		this._sharedTree = this.runtime.createChannel(undefined, newTreeFactory.type) as ITree;
+		this._sharedTree = this.runtime.createChannel(
+			undefined,
+			newTreeFactory.type,
+		) as IFluidLoadable as ITree;
 		this.root.set(sharedTreeKey, this._sharedTree.handle);
 		// Convenient repro for bug AB#5975
 		// const retrievedSharedTree = await this._sharedTree.handle.get();

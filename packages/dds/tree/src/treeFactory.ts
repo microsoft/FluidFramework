@@ -4,6 +4,7 @@
  */
 
 import {
+	IChannel,
 	IChannelAttributes,
 	IChannelFactory,
 	IChannelServices,
@@ -36,13 +37,13 @@ export class TreeFactory implements IChannelFactory<ITree> {
 		id: string,
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
-	): Promise<ITree> {
+	): Promise<SharedTreeImpl> {
 		const tree = new SharedTreeImpl(id, runtime, channelAttributes, this.options, "SharedTree");
 		await tree.load(services);
 		return tree;
 	}
 
-	public create(runtime: IFluidDataStoreRuntime, id: string): ITree {
+	public create(runtime: IFluidDataStoreRuntime, id: string): SharedTreeImpl {
 		const tree = new SharedTreeImpl(id, runtime, this.attributes, this.options, "SharedTree");
 		tree.initializeLocal();
 		return tree;
@@ -88,8 +89,8 @@ export function configuredSharedTree(options: SharedTreeOptions): ISharedObjectK
 			return factory;
 		},
 
-		create(runtime: IFluidDataStoreRuntime, id?: string): ITree {
-			return runtime.createChannel(id, TreeFactory.type) as ITree;
+		create(runtime: IFluidDataStoreRuntime, id?: string): ITree & IChannel {
+			return runtime.createChannel(id, TreeFactory.type) as ITree & IChannel;
 		},
 	};
 }
