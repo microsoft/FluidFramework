@@ -81,6 +81,14 @@ export function getFirstEntryFromRangeMap<T>(
 	return undefined;
 }
 
+export function cloneRangeMap<T>(map: RangeMap<T>): RangeMap<T> {
+	const clonedRangeMap = [];
+	for (const entry of map) {
+		clonedRangeMap.push({ ...entry });
+	}
+	return clonedRangeMap;
+}
+
 /**
  * Sets the keys from `start` to `start + length - 1` to `value`.
  */

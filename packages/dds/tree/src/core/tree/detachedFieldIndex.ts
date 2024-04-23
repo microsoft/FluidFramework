@@ -20,6 +20,7 @@ import {
 	getFirstEntryFromRangeMap,
 	getAllValidEntriesFromMap,
 	getFromRangeMap,
+	cloneRangeMap,
 } from "../../util/index.js";
 import { RevisionTagCodec } from "../rebase/index.js";
 import { FieldKey } from "../schema-stored/index.js";
@@ -70,11 +71,7 @@ export class DetachedFieldIndex {
 		);
 		// populate the rangeMap of detached nodes
 		for (const [major, innerRangeMap] of this.detachedNodeRangeMap) {
-			const clonedRangeMap: RangeMap<ForestRootId> = [];
-			for (const rangeEntry of innerRangeMap) {
-				clonedRangeMap.push({ ...rangeEntry });
-			}
-			clone.detachedNodeRangeMap.set(major, clonedRangeMap);
+			clone.detachedNodeRangeMap.set(major, cloneRangeMap(innerRangeMap));
 		}
 		return clone;
 	}
@@ -90,7 +87,10 @@ export class DetachedFieldIndex {
 						? { major, minor: rangeEntry.start }
 						: { minor: rangeEntry.start };
 				for (let offset = 0; offset < rangeEntry.length; offset++) {
-					yield { id: { ...id, minor: id.minor + offset }, root: brand(rangeEntry.value + offset) };
+					yield {
+						id: { ...id, minor: id.minor + offset },
+						root: brand(rangeEntry.value + offset),
+					};
 				}
 			}
 		}

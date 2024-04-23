@@ -102,6 +102,7 @@ export {
 	RangeEntry,
 	RangeMap,
 	RangeQueryResult,
+	cloneRangeMap,
 	setInRangeMap,
 	deleteFromRangeMap,
 	getAllValidEntriesFromMap,
