@@ -263,12 +263,14 @@ async function runnerProcess(
 
 			if (enableOpsMetrics) {
 				const testRuntime = await test.getRuntime();
-				metricsCleanup = await setupOpsMetrics(
-					container,
-					runConfig.logger,
-					runConfig.testConfig.progressIntervalMs,
-					testRuntime,
-				);
+				if (testRuntime !== undefined) {
+					metricsCleanup = await setupOpsMetrics(
+						container,
+						runConfig.logger,
+						runConfig.testConfig.progressIntervalMs,
+						testRuntime,
+					);
+				}
 			}
 
 			// Control fault injection period through config.
