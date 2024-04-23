@@ -26,7 +26,7 @@ export interface IRedisClientConnectionManager {
 	 * If this lambda returns true it will completely override the existing error handling/logging, otherwise it will do both.
 	 */
 	addErrorHandler(
-		lumberProperties?: Map<string, any> | Record<string, any> | undefined,
+		lumberProperties?: Record<string, any>,
 		errorMessage?: string,
 		additionalLoggingFunctionality?: (error: Error) => boolean,
 	): void;
@@ -121,18 +121,38 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 			this.redisOptions.clusterRetryStrategy = this.redisOptions.retryStrategy;
 		}
 
+		const redisClusteringOptions: Partial<Redis.ClusterOptions> = {
+			redisOptions: this.redisOptions,
+			slotsRefreshTimeout: this.slotsRefreshTimeout,
+			dnsLookup: (adr, callback) => callback(null, adr),
+			showFriendlyErrorStack: true,
+			retryDelayOnFailover: this.retryDelays.retryDelayOnFailover,
+			retryDelayOnClusterDown: this.retryDelays.retryDelayOnClusterDown,
+			retryDelayOnTryAgain: this.retryDelays.retryDelayOnTryAgain,
+			retryDelayOnMoved: this.retryDelays.retryDelayOnMoved,
+			maxRedirections: this.retryDelays.maxRedirections,
+		};
+
+		// Remove password from the options objects that will be logged
+		const loggableRedisOptions = { ...this.redisOptions };
+		loggableRedisOptions.password = undefined;
+
+		const loggableClusteringOptions = { ...redisClusteringOptions };
+		loggableClusteringOptions.redisOptions = loggableRedisOptions;
+
+		const stringifiedOptions = this.enableClustering
+			? JSON.stringify(loggableClusteringOptions)
+			: JSON.stringify(loggableRedisOptions);
+
+		Lumberjack.verbose(
+			`Creating a redis client with the following configs: ${stringifiedOptions}`,
+		);
+
 		this.client = this.enableClustering
-			? new Redis.Cluster([{ port: this.redisOptions.port, host: this.redisOptions.host }], {
-					redisOptions: this.redisOptions,
-					slotsRefreshTimeout: this.slotsRefreshTimeout,
-					dnsLookup: (adr, callback) => callback(null, adr),
-					showFriendlyErrorStack: true,
-					retryDelayOnFailover: this.retryDelays.retryDelayOnFailover,
-					retryDelayOnClusterDown: this.retryDelays.retryDelayOnClusterDown,
-					retryDelayOnTryAgain: this.retryDelays.retryDelayOnTryAgain,
-					retryDelayOnMoved: this.retryDelays.retryDelayOnMoved,
-					maxRedirections: this.retryDelays.maxRedirections,
-			  })
+			? new Redis.Cluster(
+					[{ port: this.redisOptions.port, host: this.redisOptions.host }],
+					redisClusteringOptions,
+			  )
 			: new Redis.default(this.redisOptions);
 		Lumberjack.info("Redis client created");
 	}
@@ -145,7 +165,7 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 	}
 
 	public addErrorHandler(
-		lumberProperties?: Map<string, any> | Record<string, any> | undefined,
+		lumberProperties: Record<string, any> = {},
 		errorMessage: string = "Error with Redis",
 		additionalLoggingFunctionality?: (error: Error) => boolean,
 	): void {
@@ -155,8 +175,19 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 
 		this.client.on("error", (error) => {
 			if (additionalLoggingFunctionality && additionalLoggingFunctionality(error)) {
+				// If the additionalLoggingFunctionality returns true, it means it has completely handled the error
 				return;
 			}
+
+			const commandName: string | undefined =
+				error.commandName ?? error.lastNodeError?.commandName;
+			const args: string[] = error.args ?? error.lastNodeError?.args ?? [];
+			// Grab only the lengths of each arg, to avoid logging sensitive information
+			const argSizes: number[] = args.map((arg) => arg.length);
+
+			// Set additional logging info in lumberProperties
+			lumberProperties.commandName = commandName;
+			lumberProperties.commandArgSizes = argSizes;
 
 			Lumberjack.error(errorMessage, lumberProperties, error);
 		});
