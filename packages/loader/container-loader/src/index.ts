@@ -13,8 +13,8 @@ export {
 	ILoaderProps,
 	ILoaderServices,
 	Loader,
-	loadContainerPaused,
 } from "./loader.js";
+export { loadContainerPaused } from "./loadPaused.js";
 export {
 	isLocationRedirectionError,
 	resolveWithLocationRedirectionHandling,
