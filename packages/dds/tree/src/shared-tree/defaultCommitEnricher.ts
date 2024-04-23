@@ -9,7 +9,15 @@ import { ICommitEnricher } from "../shared-tree-core/index.js";
 import { disposeSymbol } from "../util/index.js";
 
 /**
- * A checkout whose state can be controlled and used to enrich changes with refreshers.
+ * A checkout whose state can be controlled by a {@link CommitEnricher} to enrich changes with refreshers.
+ *
+ * This is similar to a {@link TreeCheckout} in that it represents the state of the tree at a specific revision.
+ * But unlike a `TreeCheckout`...
+ * - It is not backed by a branch because the `CommitEnricher` that owns it controls which revision it should represent.
+ * - The host application has no knowledge of it, so applying changes to it has not impact on the application.
+ * - It need not maintain any state or indexes that do not play a role in enriching changes.
+ *
+ * See implementations for examples.
  */
 export interface ChangeEnricherCheckout<TChange> {
 	/**
