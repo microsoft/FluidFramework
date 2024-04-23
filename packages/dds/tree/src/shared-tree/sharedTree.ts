@@ -293,7 +293,7 @@ export class SharedTree
 		);
 		// As a subjective API design choice, we initialize the tree here if it is not already initialized.
 		if (view.compatibility.canInitialize === true) {
-			view.upgradeSchema();
+			view.initialize(config.initialTree());
 		}
 		return view;
 	}
@@ -301,7 +301,12 @@ export class SharedTree
 	public async viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeConfiguration<TRoot>,
 	): Promise<TreeView<TRoot>> {
-		return this.schematize(config);
+		return new SchematizingSimpleTreeView(
+			this.checkout,
+			config,
+			createNodeKeyManager(this.runtime.idCompressor),
+			brand(defaultNodeKeyFieldKey),
+		);
 	}
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {

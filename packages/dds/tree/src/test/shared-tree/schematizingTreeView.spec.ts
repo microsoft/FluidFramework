@@ -62,15 +62,15 @@ describe("SchematizingSimpleTreeView", () => {
 		);
 		const { compatibility } = view;
 		assert.equal(compatibility.canView, false);
-		assert.equal(compatibility.canUpgrade, true);
-		// TODO: This test needs updated expectations when tweaking the API to have explicit initialize.
-		// const error: SchematizeError | undefined = view.error;
-		// assert(error instanceof SchematizeError);
-		// assert(error.canInitialize === true);
-		// assert(error.canUpgrade === true);
-		// assert(error.updateType === UpdateType.Initialize);
+		assert.equal(compatibility.canUpgrade, false);
+		assert.equal(compatibility.canInitialize, true);
 
-		view.upgradeSchema();
+		assert.throws(
+			() => view.upgradeSchema(),
+			(e) => e instanceof UsageError,
+		);
+		view.initialize(5);
+
 		assert.equal(view.root, 5);
 	});
 

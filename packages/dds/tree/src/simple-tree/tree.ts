@@ -148,7 +148,7 @@ export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposab
 	readonly compatibility: SchemaCompatibilityStatus;
 
 	/**
-	 * When the schemas are not an exact match {@link SchemaCompatibilityStatus.canUpgrade} is true,
+	 * When the schemas are not an exact match and {@link SchemaCompatibilityStatus.canUpgrade} is true,
 	 * this can be used to modify the stored schema to make it match the view schema.
 	 * This will update the compatibility state, and allow access to `root`.
 	 * Beware that this may impact other clients' ability to view the document depending on the application's schema compatibility policy!

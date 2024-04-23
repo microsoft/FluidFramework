@@ -32,9 +32,16 @@ import {
 } from "../simple-tree/index.js";
 import { disposeSymbol } from "../util/index.js";
 
-import { TreeContent, UpdateType, ensureSchema, evaluateUpdate } from "./schematizeTree.js";
+import {
+	TreeContent,
+	UpdateType,
+	canInitialize,
+	ensureSchema,
+	initialize,
+} from "./schematizeTree.js";
 import { TreeCheckout } from "./treeCheckout.js";
 import { CheckoutFlexTreeView } from "./treeView.js";
+import { cursorFromUnhydratedRoot } from "../simple-tree/toFlexSchema.js";
 
 /**
  * Implementation of TreeView wrapping a FlexTreeView.
@@ -61,7 +68,15 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	private readonly viewSchema: ViewSchema;
 
 	private readonly unregisterCallbacks = new Set<() => void>();
+
 	private disposed = false;
+	/**
+	 * This is set to true while an edit impacting the document schema is in progress.
+	 * This allows suppressing extra rootChanged / schemaChanged events until the edit concludes.
+	 * This is useful especially for some initialization edits, since document initialization can involve transient schemas
+	 * which are implementation details and should not be exposed to the user.
+	 */
+	private midUpgrade = false;
 
 	private readonly rootFieldSchema: FieldSchema;
 
@@ -74,6 +89,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
 		this.flexConfig = toFlexConfig(config);
 		this.viewSchema = new ViewSchema(defaultSchemaPolicy, {}, this.flexConfig.schema);
+		// This must be initialized before `update` can be called.
 		this.currentCompatibility = {
 			canView: false,
 			canUpgrade: true,
@@ -91,7 +107,25 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		);
 	}
 
-	private midUpgrade = false;
+	public initialize(content: InsertableTreeFieldFromImplicitField<TRootSchema>): void {
+		this.ensureUndisposed();
+
+		const compatibility = this.compatibility;
+		if (!compatibility.canInitialize) {
+			throw new UsageError("Tree cannot be initialized more than once.");
+		}
+
+		this.runSchemaEdit(() => {
+			initialize(this.checkout, {
+				schema: this.flexConfig.schema,
+				initialTree:
+					content === undefined
+						? undefined
+						: cursorFromUnhydratedRoot(this.config.schema, content),
+			});
+		});
+	}
+
 	public upgradeSchema(): void {
 		this.ensureUndisposed();
 
@@ -107,8 +141,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 			);
 		}
 
-		this.midUpgrade = true;
-		try {
+		this.runSchemaEdit(() => {
 			const result = ensureSchema(
 				this.viewSchema,
 				// eslint-disable-next-line no-bitwise
@@ -117,11 +150,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 				this.flexConfig,
 			);
 			assert(result, 0x8bf /* Schema upgrade should always work if canUpgrade is set. */);
-		} finally {
-			this.midUpgrade = false;
-		}
-		this.events.emit("schemaChanged");
-		this.events.emit("rootChanged");
+		});
 	}
 
 	/**
@@ -144,37 +173,29 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	}
 
 	/**
-	 * Updates `this.view`.
+	 * Updates `this.view` and the current compatibility status.
 	 * Invoked during initialization and when `this.view` needs to be replaced due to stored schema changes.
 	 * Handles re-registering for events to call update in the future.
 	 * @remarks
 	 * This does not check if the view needs to be replaced, it replaces it unconditionally:
 	 * callers should do any checking to detect if it's really needed before calling `update`.
+	 * @privateRemarks
+	 * This implementation avoids making any edits, which prevents it from being invoked reentrantly.
+	 * If implicit initialization (or some other edit) is desired, it should be done outside of this method.
 	 */
 	private update(): void {
-		// This implementation avoids making any edits, which prevents it from being invoked reentrantly.
-		// If implicit initialization (or some other edit) is desired, it should be done outside of this method.
-
-		const updateType = evaluateUpdate(
-			this.viewSchema,
-			// eslint-disable-next-line no-bitwise
-			AllowedUpdateType.SchemaCompatible | AllowedUpdateType.Initialize,
-			this.checkout,
-		);
-		// TODO: At some point, dedupe many calls to checkCompatibility.
-		const result = this.viewSchema.checkCompatibility(this.checkout.storedSchema);
 		this.disposeView();
 
+		const result = this.viewSchema.checkCompatibility(this.checkout.storedSchema);
+
+		const canView = result.write === Compatibility.Compatible;
+		const canUpgrade = result.read === Compatibility.Compatible;
+		const isExactMatch = canView && canUpgrade;
 		const compatibility: SchemaCompatibilityStatus = {
-			canView: result.write === Compatibility.Compatible,
-			canUpgrade:
-				result.read === Compatibility.Compatible ||
-				// Seems kinda weird that we need to 'or' here, but maybe ok.
-				updateType === UpdateType.Initialize,
-			isExactMatch:
-				result.write === Compatibility.Compatible &&
-				result.read === Compatibility.Compatible,
-			canInitialize: updateType === UpdateType.Initialize,
+			canView,
+			canUpgrade,
+			isExactMatch,
+			canInitialize: canInitialize(this.checkout),
 			differences: [],
 			metadata: undefined,
 		};
@@ -183,21 +204,6 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		this.currentCompatibility = compatibility;
 
 		if (compatibility.canView) {
-			this.view = requireSchema(
-				this.checkout,
-				this.viewSchema,
-				() => {
-					assert(cleanupCheckOutEvents !== undefined, 0x8c1 /* missing cleanup */);
-					cleanupCheckOutEvents();
-					this.view = undefined;
-					if (!this.disposed) {
-						this.update();
-					}
-				},
-				this.nodeKeyManager,
-				this.nodeKeyFieldKey,
-			);
-
 			// Trigger "rootChanged" if the root changes in the future.
 			// Currently there is no good way to do this as FlexTreeField has no events for changes.
 			// this.view.flexTree.on(????)
@@ -205,13 +211,31 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 			// which isn't the correct time since we normally do events during the batch when the forest is modified, but its better than nothing.
 			// TODO: provide a better event: this.view.flexTree.on(????)
 			const cleanupCheckOutEvents = this.checkout.events.on("afterBatch", () => {
+				// Due to how the initialization flow currently works, this event is
 				if (!this.midUpgrade && lastRoot !== this.root) {
 					lastRoot = this.root;
 					this.events.emit("rootChanged");
 				}
 			});
+
+			const onViewDispose = () => {
+				cleanupCheckOutEvents();
+				this.view = undefined;
+				if (!this.disposed) {
+					this.update();
+				}
+			};
+
+			this.view = requireSchema(
+				this.checkout,
+				this.viewSchema,
+				onViewDispose,
+				this.nodeKeyManager,
+				this.nodeKeyFieldKey,
+			);
 		} else {
 			this.view = undefined;
+
 			const unregister = this.checkout.storedSchema.on("afterSchemaChange", () => {
 				unregister();
 				this.unregisterCallbacks.delete(unregister);
@@ -221,14 +245,20 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		}
 
 		if (!this.midUpgrade) {
-			this.events.emit("rootChanged");
-			// TODO: Maybe not on initialization?
 			this.events.emit("schemaChanged");
+			this.events.emit("rootChanged");
 		}
 	}
 
-	public initialize(_content: InsertableTreeFieldFromImplicitField<TRootSchema>): void {
-		// Not yet implemented. `viewWith` currently implicitly initializes the tree.
+	private runSchemaEdit(edit: () => void): void {
+		this.midUpgrade = true;
+		try {
+			edit();
+		} finally {
+			this.midUpgrade = false;
+		}
+		this.events.emit("schemaChanged");
+		this.events.emit("rootChanged");
 	}
 
 	private disposeView(): void {
@@ -274,23 +304,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	}
 }
 
-export class SchematizeError {
-	public constructor(public readonly updateType: UpdateType) {}
-
-	public get canUpgrade(): boolean {
-		return (
-			this.updateType === UpdateType.Initialize ||
-			this.updateType === UpdateType.SchemaCompatible
-		);
-	}
-
-	public get canInitialize(): boolean {
-		return this.updateType === UpdateType.Initialize;
-	}
-}
-
 /**
- * Flex-Tree schematizing layer.
  * Creates a view that self-disposes whenenever the stored schema changes.
  * This may only be called when the schema is already known to be read-compatible (typically via ensureSchema).
  */

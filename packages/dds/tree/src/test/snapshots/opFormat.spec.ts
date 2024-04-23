@@ -57,23 +57,23 @@ describe("SharedTree op format snapshots", () => {
 		});
 	});
 
-	it("schema change", () => {
+	it("schema change", async () => {
 		const messages = spyOnFutureMessages(containerRuntime);
-		tree.schematize({
+		const view = await tree.viewWith({
 			schema: Point,
-			metadata: undefined,
 			initialTree: () => new Point({ x: 0, y: 0 }),
 		});
+		view.initialize(new Point({ x: 0, y: 0 }));
 
 		takeJsonSnapshot(messages);
 	});
 
-	it("field change", () => {
-		const view = tree.schematize({
+	it("field change", async () => {
+		const view = await tree.viewWith({
 			schema: Point,
-			metadata: undefined,
 			initialTree: () => new Point({ x: 0, y: 2 }),
 		});
+		view.initialize(new Point({ x: 0, y: 2 }));
 
 		const messages = spyOnFutureMessages(containerRuntime);
 		view.root.x = 1;
