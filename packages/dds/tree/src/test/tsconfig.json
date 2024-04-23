@@ -8,6 +8,7 @@
 		"rootDir": "./",
 		"outDir": "../../lib/test",
 		"types": ["node", "mocha"],
+		"customConditions": ["allow-ff-test-exports"],
 	},
 	"include": ["./**/*"],
 	"references": [
