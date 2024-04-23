@@ -7,7 +7,7 @@ import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/data
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { ICodecOptions } from "../../codec/index.js";
-import { TreeStoredSchemaRepository } from "../../core/index.js";
+import { RevisionTagCodec, TreeStoredSchemaRepository } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	DefaultChangeFamily,
@@ -20,7 +20,7 @@ import {
 	makeModularChangeCodecFamily,
 } from "../../feature-libraries/index.js";
 import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tree-core/index.js";
-import { testRevisionTagCodec } from "../utils.js";
+import { testIdCompressor } from "../utils.js";
 
 /**
  * A `SharedTreeCore` with
@@ -47,7 +47,7 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		const formatVersions = { editManager: 1, message: 1, fieldBatch: 1 };
 		const codec = makeModularChangeCodecFamily(
 			fieldKindConfigurations,
-			testRevisionTagCodec,
+			new RevisionTagCodec(runtime.idCompressor ?? testIdCompressor),
 			makeFieldBatchCodec(codecOptions, formatVersions.fieldBatch),
 			codecOptions,
 			chunkCompressionStrategy,
