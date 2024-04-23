@@ -310,6 +310,20 @@ describe("Pending State Manager", () => {
 				pendingState = pendingStateManager.getLocalState(10).pendingStates;
 				assert.strictEqual(pendingState.length, 0);
 			});
+
+			it("throws when trying to get unprocessed ops older than snapshot", () => {
+				const messages = Array.from({ length: 10 }, (_, i) => ({
+					clientId: "clientId",
+					type: MessageType.Operation,
+					clientSequenceNumber: 0,
+					contents: { prop1: true },
+					referenceSequenceNumber: i,
+				}));
+				submitBatch(messages);
+				assert.throws(() => pendingStateManager.getLocalState(1));
+				const pendingState = pendingStateManager.getLocalState(0).pendingStates;
+				assert.strictEqual(pendingState.length, 10);
+			});
 		});
 	});
 
