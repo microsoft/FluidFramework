@@ -9,6 +9,7 @@ import { FluidObject as FluidObject_2 } from '@fluidframework/core-interfaces';
 import { IFluidHandle as IFluidHandle_2 } from '@fluidframework/core-interfaces';
 import { IFluidLoadable as IFluidLoadable_2 } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
+import { TypedEventTransform } from '@fluid-internal/client-utils';
 
 // @public
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
@@ -2772,6 +2773,8 @@ export interface TreeViewEvents {
 export const type: unique symbol;
 
 export { TypedEventEmitter }
+
+export { TypedEventTransform }
 
 // @public
 export type Unenforced<_DesiredExtendsConstraint> = unknown;

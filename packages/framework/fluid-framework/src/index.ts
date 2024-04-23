@@ -147,7 +147,12 @@ export * from "@fluidframework/tree";
 export { SharedObject, SharedObjectCore } from "@fluidframework/shared-object-base/internal";
 
 // TODO: these specific exports end up still producing imports, then having those imports reexported.
-export type { EventEmitterEventType, TypedEventEmitter } from "@fluid-internal/client-utils";
+export type {
+	EventEmitterEventType,
+	TypedEventEmitter,
+	// It is unclear why ae-forgotten-export requires this since its not referenced.
+	TypedEventTransform,
+} from "@fluid-internal/client-utils";
 
 export type {
 	EventEmitterWithErrorHandling,
