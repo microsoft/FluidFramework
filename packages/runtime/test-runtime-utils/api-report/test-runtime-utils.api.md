@@ -12,9 +12,12 @@ import { FluidHandleBase } from '@fluidframework/runtime-utils/internal';
 import { FluidObject } from '@fluidframework/core-interfaces/internal';
 import { FlushMode } from '@fluidframework/runtime-definitions/internal';
 import { IAudience } from '@fluidframework/container-definitions';
+import { IAudienceEvents } from '@fluidframework/container-definitions';
+import { IAudienceOwner } from '@fluidframework/container-definitions/internal';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import type { IClient } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions/internal';
@@ -62,6 +65,9 @@ import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import { VisibilityState } from '@fluidframework/runtime-definitions/internal';
 
 // @internal
+export function deepFreeze<T>(object: T): void;
+
+// @internal
 export interface IInsecureUser extends IUser {
     name: string;
 }
@@ -100,6 +106,26 @@ export class InsecureTokenProvider implements ITokenProvider {
     scopes?: ScopeType[] | undefined);
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
+}
+
+// @internal (undocumented)
+export class MockAudience extends TypedEventEmitter<IAudienceEvents> implements IAudienceOwner {
+    constructor();
+    // (undocumented)
+    addMember(clientId: string, member: IClient): void;
+    // (undocumented)
+    getMember(clientId: string): IClient | undefined;
+    // (undocumented)
+    getMembers(): Map<string, IClient>;
+    // (undocumented)
+    getSelf(): {
+        clientId: string;
+        client: undefined;
+    } | undefined;
+    // (undocumented)
+    removeMember(clientId: string): boolean;
+    // (undocumented)
+    setCurrentClientId(clientId: string): void;
 }
 
 // @alpha
@@ -465,9 +491,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     readonly documentId: string;
     // (undocumented)
-    ensureNoDataModelChanges<T>(callback: () => T): T;
-    // (undocumented)
-    readonly entryPoint: IFluidHandleInternal<FluidObject>;
+    readonly entryPoint: IFluidHandle<FluidObject>;
     // (undocumented)
     readonly existing: boolean;
     // (undocumented)

@@ -149,7 +149,8 @@
 				"forwardCompat": false
 			},
 			"ClassDeclaration_FluidObjectHandle": {
-				"forwardCompat": false
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

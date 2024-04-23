@@ -90,6 +90,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		throw new Error("Method not implemented.");
 	}
 
+	// back-compat: to be removed in 2.0
 	public ensureNoDataModelChanges<T>(callback: () => T): T {
 		return callback();
 	}

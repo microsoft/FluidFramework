@@ -154,8 +154,8 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_SharedMatrix": {
-				"forwardCompat": false
+			"RemovedClassDeclaration_SharedMatrix": {
+				"backCompat": false
 			}
 		}
 	}

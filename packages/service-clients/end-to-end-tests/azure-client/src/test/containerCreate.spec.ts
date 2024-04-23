@@ -168,14 +168,7 @@ describe("Container create with feature flags", () => {
 
 	beforeEach("createAzureClient", () => {
 		mockLogger = new MockLogger();
-		client = createAzureClient(
-			undefined,
-			undefined,
-			mockLogger,
-			configProvider({
-				"Fluid.ContainerRuntime.DisableOpReentryCheck": true,
-			}),
-		);
+		client = createAzureClient(undefined, undefined, mockLogger, configProvider({}));
 		schema = {
 			initialObjects: {
 				map1: SharedMap,
@@ -193,6 +186,6 @@ describe("Container create with feature flags", () => {
 		const event = mockLogger.events.find((e) => e.eventName.endsWith("ContainerLoadStats"));
 		assert(event !== undefined, "ContainerLoadStats event should exist");
 		const featureGates = event.featureGates as string;
-		assert(featureGates.includes('"disableOpReentryCheck":true'));
+		assert(featureGates.length > 0);
 	});
 });

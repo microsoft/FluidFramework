@@ -168,6 +168,7 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 		getAudience: (...args) => {
 			return context.getAudience(...args);
 		},
+		// back-compat, to be removed in 2.0
 		ensureNoDataModelChanges: (...args) => {
 			return context.ensureNoDataModelChanges(...args);
 		},

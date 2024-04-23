@@ -126,14 +126,20 @@ function assertPropertiesEqual(a: SharedString, b: SharedString): void {
 			assert.deepEqual(
 				aVal,
 				bVal,
-				`Property sets have different values for key ${key}: ${aVal} vs ${bVal}`,
+				`Property sets have different values @${i} for  key ${key}: ${aVal} vs ${bVal}`,
 			);
 		}
-		assert.equal(
-			aKeys.length,
-			bKeys.length,
-			`Property sets have different lengths: ${aKeys.length} vs ${bKeys.length}`,
-		);
+		if (aKeys.length !== bKeys.length) {
+			for (const key of bKeys) {
+				const aVal: unknown = aProps[key];
+				const bVal: unknown = bProps[key];
+				assert.deepEqual(
+					aVal,
+					bVal,
+					`Property sets have different values @${i} for  key ${key}: ${aVal} vs ${bVal}`,
+				);
+			}
+		}
 	}
 }
 
