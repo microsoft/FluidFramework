@@ -27,7 +27,6 @@ const snapshotFileName = "header";
 
 /**
  * {@inheritDoc ISharedMap}
- * @alpha
  */
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
 	/**

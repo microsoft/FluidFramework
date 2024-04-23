@@ -9,6 +9,7 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
+	FetchSource,
 	IDocumentStorageService,
 	IResolvedUrl,
 	ISnapshot,
@@ -20,8 +21,8 @@ import {
 	ISnapshotTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
+	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
 	UsageError,
@@ -29,7 +30,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter.js";
-import { getDocumentAttributes } from "./utils.js";
+import { convertSnapshotToSnapshotInfo, getDocumentAttributes } from "./utils.js";
 
 export interface SnapshotWithBlobs {
 	/**
@@ -45,11 +46,17 @@ export interface SnapshotWithBlobs {
 /**
  * State saved by a container at close time, to be used to load a new instance
  * of the container to the same state
+ *
+ * This is very similar to {@link @fluidframework/protocol-definitions/internal#ISnapshot}, but the difference is
+ * that the blobs of ISnapshot of are ArrayBufferLike, while the blobs of this interface are serializable because
+ * they are already converted to string.
+ *
  * @internal
  */
 export interface IPendingContainerState extends SnapshotWithBlobs {
 	attached: true;
 	pendingRuntimeState: unknown;
+	loadedGroupIdSnapshots?: Record<string, ISnapshotInfo>;
 	/**
 	 * All ops since base snapshot sequence number up to the latest op
 	 * seen when the container was closed. Used to apply stashed (saved pending)
@@ -75,6 +82,13 @@ export interface ISnapshotInfo extends SnapshotWithBlobs {
 	snapshotSequenceNumber: number;
 }
 
+export type ISerializedStateManagerDocumentStorageService = Pick<
+	IDocumentStorageService,
+	"getSnapshot" | "getSnapshotTree" | "getVersions" | "readBlob"
+> & {
+	loadedGroupIdSnapshots: Record<string, ISnapshot>;
+};
+
 export class SerializedStateManager {
 	private readonly processedOps: ISequencedDocumentMessage[] = [];
 	private snapshot: ISnapshotInfo | undefined;
@@ -85,12 +99,8 @@ export class SerializedStateManager {
 	constructor(
 		private readonly pendingLocalState: IPendingContainerState | undefined,
 		subLogger: ITelemetryLoggerExt,
-		private readonly storageAdapter: Pick<
-			IDocumentStorageService,
-			"readBlob" | "getSnapshotTree" | "getSnapshot" | "getVersions"
-		>,
+		private readonly storageAdapter: ISerializedStateManagerDocumentStorageService,
 		private readonly _offlineLoadEnabled: boolean,
-		private readonly newSnapshotFetched?: () => void,
 	) {
 		this.mc = createChildMonitoringContext({
 			logger: subLogger,
@@ -100,6 +110,10 @@ export class SerializedStateManager {
 
 	public get offlineLoadEnabled(): boolean {
 		return this._offlineLoadEnabled;
+	}
+
+	public get waitForInitialRefresh(): Promise<void> | undefined {
+		return this.refreshSnapshot;
 	}
 
 	public addProcessedOp(message: ISequencedDocumentMessage) {
@@ -143,17 +157,36 @@ export class SerializedStateManager {
 				snapshotSequenceNumber: attributes.sequenceNumber,
 			};
 			this.refreshSnapshot ??= (async () => {
-				this.latestSnapshot = await getLatestSnapshotInfo(
-					this.mc,
-					this.storageAdapter,
-					supportGetSnapshotApi,
-				);
-				this.newSnapshotFetched?.();
-				this.updateSnapshotAndProcessedOpsMaybe();
+				await this.refreshLatestSnapshot(supportGetSnapshotApi);
 			})();
 
 			return { baseSnapshot, version: undefined };
 		}
+	}
+
+	public async refreshLatestSnapshot(supportGetSnapshotApi: boolean) {
+		this.latestSnapshot = await getLatestSnapshotInfo(
+			this.mc,
+			this.storageAdapter,
+			supportGetSnapshotApi,
+		);
+
+		// These are loading groupIds that the containerRuntime has requested over its lifetime.
+		const downloadedGroupIds = Object.keys(this.storageAdapter.loadedGroupIdSnapshots);
+		// We are making two network calls because it requires work for storage to add a special base groupId.
+		if (supportGetSnapshotApi && downloadedGroupIds.length > 0) {
+			assert(this.storageAdapter.getSnapshot !== undefined, "getSnapshot should exist");
+			const snapshot = await this.storageAdapter.getSnapshot({
+				versionId: undefined,
+				scenarioName: "getLatestSnapshotInfo",
+				cacheSnapshot: false,
+				loadingGroupIds: downloadedGroupIds,
+				fetchSource: FetchSource.noCache,
+			});
+			assert(snapshot !== undefined, "Snapshot should exist");
+			return convertSnapshotToSnapshotInfo(snapshot);
+		}
+		this.updateSnapshotAndProcessedOpsMaybe();
 	}
 
 	/**
@@ -250,11 +283,24 @@ export class SerializedStateManager {
 				}
 				assert(this.snapshot !== undefined, 0x8e5 /* no base data */);
 				const pendingRuntimeState = await runtime.getPendingLocalState(props);
+				// This conversion is required because ArrayBufferLike doesn't survive JSON.stringify
+				const loadedGroupIdSnapshots = {};
+				let hasGroupIdSnapshots = false;
+				const groupIdSnapshots = Object.entries(this.storageAdapter.loadedGroupIdSnapshots);
+				if (groupIdSnapshots.length > 0) {
+					for (const [groupId, snapshot] of groupIdSnapshots) {
+						hasGroupIdSnapshots = true;
+						loadedGroupIdSnapshots[groupId] = convertSnapshotToSnapshotInfo(snapshot);
+					}
+				}
 				const pendingState: IPendingContainerState = {
 					attached: true,
 					pendingRuntimeState,
 					baseSnapshot: this.snapshot.baseSnapshot,
 					snapshotBlobs: this.snapshot.snapshotBlobs,
+					loadedGroupIdSnapshots: hasGroupIdSnapshots
+						? loadedGroupIdSnapshots
+						: undefined,
 					savedOps: this.processedOps,
 					url: resolvedUrl.url,
 					// no need to save this if there is no pending runtime state
@@ -277,10 +323,7 @@ export class SerializedStateManager {
  */
 export async function getLatestSnapshotInfo(
 	mc: MonitoringContext,
-	storageAdapter: Pick<
-		IDocumentStorageService,
-		"getSnapshot" | "getSnapshotTree" | "getVersions" | "readBlob"
-	>,
+	storageAdapter: ISerializedStateManagerDocumentStorageService,
 	supportGetSnapshotApi: boolean,
 ): Promise<ISnapshotInfo | undefined> {
 	return PerformanceEvent.timedExecAsync(

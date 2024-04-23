@@ -14,7 +14,7 @@ import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
-import { RedisOptions } from "ioredis";
+import { RedisOptions, ClusterOptions } from "ioredis";
 import * as winston from "winston";
 import {
 	RedisClientConnectionManager,
@@ -72,6 +72,11 @@ export async function deliCreate(
 	core.DefaultServiceConfiguration.deli.enableEphemeralContainerSummaryCleanup =
 		enableEphemeralContainerSummaryCleanup;
 
+	const ephemeralContainerSoftDeleteTimeInMs =
+		(config.get("deli:ephemeralContainerSoftDeleteTimeInMs") as number | undefined) ?? -1; // -1 means not soft deletion but hard deletion directly
+	core.DefaultServiceConfiguration.deli.ephemeralContainerSoftDeleteTimeInMs =
+		ephemeralContainerSoftDeleteTimeInMs;
+
 	let globalDb: core.IDb;
 	if (globalDbEnabled) {
 		const globalDbReconnect = (config.get("mongo:globalDbReconnect") as boolean) ?? false;
@@ -121,7 +126,7 @@ export async function deliCreate(
 	);
 
 	const redisConfig = config.get("redis");
-	const redisOptions: RedisOptions = {
+	const redisOptions: RedisOptions & ClusterOptions = {
 		host: redisConfig.host,
 		port: redisConfig.port,
 		password: redisConfig.pass,

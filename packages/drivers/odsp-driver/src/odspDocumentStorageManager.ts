@@ -22,8 +22,8 @@ import {
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import * as api from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
+	ITelemetryLoggerExt,
 	PerformanceEvent,
 	generateStack,
 	loggerToMonitoringContext,
