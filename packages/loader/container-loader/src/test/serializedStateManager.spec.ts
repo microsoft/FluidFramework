@@ -692,6 +692,56 @@ describe("serializedStateManager", () => {
 				"wrong last saved op",
 			);
 		});
+
+		it(`does not refresh snapshot when we haven't processed all saved ops, isDirty: ${isDirty}`, async () => {
+			const lastProcessedOpSequenceNumber = 10;
+			const pending: IPendingContainerState = {
+				...pendingLocalState,
+				baseSnapshot: { ...snapshot, id: "fromPending" },
+				savedOps: [generateSavedOp(lastProcessedOpSequenceNumber)],
+			};
+			let saved = false;
+			const isDirtyF = () => (saved ? false : isDirty);
+			const storageAdapter = new MockStorageAdapter();
+			const serializedStateManager = new SerializedStateManager(
+				pending,
+				logger.toTelemetryLogger(),
+				storageAdapter,
+				true,
+				eventEmitter,
+				isDirtyF,
+			);
+			let seq = 1;
+			while (seq <= 5) {
+				serializedStateManager.addProcessedOp(generateSavedOp(seq++));
+			}
+
+			const snapshotSequenceNumber = 7;
+			storageAdapter.uploadSummary(snapshotSequenceNumber);
+
+			await serializedStateManager.fetchSnapshot(undefined, false);
+			// latest snapshot fetched but we're still behind the snapshot.
+			await serializedStateManager.waitForInitialRefresh;
+			while (seq < lastProcessedOpSequenceNumber) {
+				serializedStateManager.addProcessedOp(generateSavedOp(seq++));
+			}
+			// we passed the snapshot but haven't processed the last saved op
+			// so update is not expected
+
+			if (isDirty) {
+				saved = true;
+				eventEmitter.emit("saved");
+			}
+
+			const state = await serializedStateManager.getPendingLocalStateCore(
+				{ notifyImminentClosure: false },
+				"clientId",
+				new MockRuntime(),
+				resolvedUrl,
+			);
+			const parsed = JSON.parse(state) as IPendingContainerState;
+			assert.strictEqual(parsed.baseSnapshot.id, "fromPending");
+		});
 	}
 
 	describe("session expiry time", () => {
