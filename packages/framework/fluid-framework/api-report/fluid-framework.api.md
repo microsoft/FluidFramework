@@ -51,16 +51,6 @@ import { SlidingPreference } from '@fluidframework/merge-tree/internal';
 import { TextSegment } from '@fluidframework/merge-tree/internal';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
-// @public (undocumented)
-export interface AllowedTypeIncompatibility {
-    // (undocumented)
-    identifier: string;
-    // (undocumented)
-    mismatch: "allowedTypes";
-    stored: string[];
-    view: string[];
-}
-
 // @public
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
@@ -184,26 +174,11 @@ export type Events<E> = {
 // @public
 export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
-// @public (undocumented)
-export type FieldIncompatibility = AllowedTypeIncompatibility | FieldKindIncompatibility;
-
 // @public
 export enum FieldKind {
     Identifier = 2,
     Optional = 0,
     Required = 1
-}
-
-// @public (undocumented)
-export interface FieldKindIncompatibility {
-    // (undocumented)
-    identifier: string;
-    // (undocumented)
-    mismatch: "fieldKind";
-    // (undocumented)
-    stored: SchemaFactoryFieldKind | undefined;
-    // (undocumented)
-    view: SchemaFactoryFieldKind | undefined;
 }
 
 // @public
@@ -565,7 +540,7 @@ export class IterableTreeArrayContent<T> implements Iterable<T> {
 export interface ITree extends IChannel {
     // @deprecated
     schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TRoot>;
-    viewWith<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): Promise<TreeView<TRoot>>;
+    viewWith<TRoot extends ImplicitFieldSchema>(config: TreeViewConfiguration<TRoot>): Promise<TreeView<TRoot>>;
 }
 
 // @alpha @sealed
@@ -611,24 +586,11 @@ export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema
 // @public
 export type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchema<string, NodeKind, unknown, infer TBuild> ? TBuild : never;
 
-// @public (undocumented)
-export interface NodeFieldsIncompatibility {
-    // (undocumented)
-    differences: FieldIncompatibility[];
-    // (undocumented)
-    identifier: string;
-    // (undocumented)
-    mismatch: "fields";
-}
-
 // @public
 export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<string, NodeKind, infer TNode> ? TNode : never;
 
 // @public
 export type NodeFromSchemaUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchema<string, NodeKind, infer TNode> ? TNode : never;
-
-// @public (undocumented)
-export type NodeIncompatibility = NodeTypeIncompatibility | NodeFieldsIncompatibility;
 
 // @public
 export interface NodeInDocumentConstraint {
@@ -644,18 +606,6 @@ export enum NodeKind {
     Leaf = 3,
     Map = 0,
     Object = 2
-}
-
-// @public (undocumented)
-export interface NodeTypeIncompatibility {
-    // (undocumented)
-    identifier: string;
-    // (undocumented)
-    mismatch: "nodeType";
-    // (undocumented)
-    stored: SchemaFactoryNodeType;
-    // (undocumented)
-    view: SchemaFactoryNodeType;
 }
 
 // @public
@@ -695,9 +645,7 @@ export interface SchemaCompatibilityStatus {
     readonly canInitialize: boolean;
     readonly canUpgrade: boolean;
     readonly canView: boolean;
-    readonly differences: NodeIncompatibility[];
     readonly isExactMatch: boolean;
-    readonly metadata: unknown;
 }
 
 // @public @sealed
@@ -730,12 +678,6 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     readonly scope: TScope;
     readonly string: TreeNodeSchema<"com.fluidframework.leaf.string", NodeKind.Leaf, string, string>;
 }
-
-// @public (undocumented)
-export type SchemaFactoryFieldKind = "required" | "optional" | "array";
-
-// @public (undocumented)
-export type SchemaFactoryNodeType = "object" | "array" | "map";
 
 // @public
 export type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
@@ -991,11 +933,9 @@ export interface TreeChangeEvents {
 
 // @public
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
-    constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>, metadata?: unknown);
+    constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>);
     // (undocumented)
     readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>;
-    // (undocumented)
-    readonly metadata?: unknown;
     // (undocumented)
     readonly schema: TSchema;
 }
@@ -1089,6 +1029,11 @@ export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposab
     get root(): TreeFieldFromImplicitField<TSchema>;
     set root(newRoot: InsertableTreeFieldFromImplicitField<TSchema>);
     upgradeSchema(): void;
+}
+
+// @public
+export interface TreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
+    schema: TSchema;
 }
 
 // @public
