@@ -5,7 +5,7 @@
 
 /* Utilities to manage finding, installing and loading legacy versions */
 
-import { ExecOptions, exec, execSync } from "node:child_process";
+import { ExecOptions, execFileSync, execFile } from "node:child_process";
 import {
 	existsSync,
 	mkdirSync,
@@ -112,6 +112,11 @@ async function removeInstalled(version: string) {
 	}
 }
 
+// See https://github.com/nodejs/node-v0.x-archive/issues/2318.
+// Note that execFile and execFileSync are used to avoid command injection vulnerability flagging from CodeQL.
+const npmCmd =
+	process.platform.includes("win") && !process.platform.includes("darwin") ? "npm.cmd" : "npm";
+
 /**
  * @internal
  */
@@ -148,8 +153,9 @@ export function resolveVersion(requested: string, installed: boolean) {
 	} else {
 		let result: string | undefined;
 		try {
-			result = execSync(
-				`npm v @fluidframework/container-loader@"${requested}" version --json`,
+			result = execFileSync(
+				npmCmd,
+				["v", `@fluidframework/container-loader@${requested}`, "version", "--json"],
 				{ encoding: "utf8" },
 			);
 		} catch (error: any) {
@@ -235,26 +241,35 @@ export async function ensureInstalled(
 			};
 			// Install the packages
 			await new Promise<void>((resolve, reject) =>
-				// Added --verbose to try to troubleshoot AB#6195.
-				// We should probably remove it if when find the root cause and fix for that.
-				exec(`npm init --yes --verbose`, options, (error, stdout, stderr) => {
-					if (error) {
-						reject(
-							new Error(
-								`Failed to initialize install directory ${modulePath}\n${stderr}`,
-							),
-						);
-					}
-					resolve();
-				}),
+				execFile(
+					npmCmd,
+					// Added --verbose to try to troubleshoot AB#6195.
+					// We should probably remove it if when find the root cause and fix for that.
+					["init", "--yes", "--verbose"],
+					options,
+					(error, stdout, stderr) => {
+						if (error) {
+							reject(
+								new Error(
+									`Failed to initialize install directory ${modulePath}\n${stderr}`,
+								),
+							);
+						}
+						resolve();
+					},
+				),
 			);
 			await new Promise<void>((resolve, reject) =>
-				// Added --verbose to try to troubleshoot AB#6195.
-				// We should probably remove it when we find the root cause and fix for that.
-				exec(
-					`npm i --no-package-lock --verbose ${adjustedPackageList
-						.map((pkg) => `${pkg}@${version}`)
-						.join(" ")}`,
+				execFile(
+					npmCmd,
+					// Added --verbose to try to troubleshoot AB#6195.
+					// We should probably remove it when we find the root cause and fix for that.
+					[
+						"i",
+						"--no-package-lock",
+						"--verbose",
+						...adjustedPackageList.map((pkg) => `${pkg}@${version}`),
+					],
 					options,
 					(error, stdout, stderr) => {
 						if (error) {

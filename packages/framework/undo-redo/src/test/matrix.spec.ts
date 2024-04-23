@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix/internal";
+import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { UndoRedoStackManager } from "../undoRedoStackManager.js";
@@ -21,7 +21,8 @@ describe("Matrix", () => {
 
 	beforeEach(async () => {
 		dataStoreRuntime = new MockFluidDataStoreRuntime();
-		matrix = new SharedMatrix(dataStoreRuntime, "matrix1", SharedMatrixFactory.Attributes);
+		const matrixFactory = SharedMatrix.getFactory();
+		matrix = matrixFactory.create(dataStoreRuntime, "matrix1");
 
 		undo = new UndoRedoStackManager();
 		matrix.openUndo(undo);
