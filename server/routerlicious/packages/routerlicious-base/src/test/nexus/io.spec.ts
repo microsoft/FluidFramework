@@ -53,6 +53,10 @@ import { OrdererManager } from "../../nexus";
 import { Throttler, ThrottlerHelper } from "@fluidframework/server-services";
 import Sinon from "sinon";
 import { isNetworkError, type NetworkError } from "@fluidframework/server-services-client";
+import {
+	isTokenRevokedError,
+	type IRevokedTokenChecker,
+} from "@fluidframework/server-services-core/dist/tokenRevocationManager";
 
 const lumberjackEngine = new TestEngine1();
 if (!Lumberjack.isSetupCompleted()) {
@@ -63,6 +67,13 @@ class TestClusterDrainingChecker implements IClusterDrainingChecker {
 	public isDraining = false;
 	public async isClusterDraining(): Promise<boolean> {
 		return this.isDraining;
+	}
+}
+
+class TestRevokedTokenChecker implements IRevokedTokenChecker {
+	public isRevoked = false;
+	public async isTokenRevoked(): Promise<boolean> {
+		return this.isRevoked;
 	}
 }
 
@@ -81,6 +92,7 @@ describe("Routerlicious", () => {
 				let testTenantManager: TestTenantManager;
 				let testClientManager: IClientManager;
 				let testClusterDrainingChecker: TestClusterDrainingChecker;
+				let testRevokedTokenChecker: TestRevokedTokenChecker;
 
 				const throttleLimitTenant = 7;
 				const throttleLimitConnectDoc = 4;
@@ -137,6 +149,7 @@ describe("Routerlicious", () => {
 					);
 					const testSubmitOpThrottler = new TestThrottler(throttleLimitTenant);
 					testClusterDrainingChecker = new TestClusterDrainingChecker();
+					testRevokedTokenChecker = new TestRevokedTokenChecker();
 
 					configureWebSocketServices(
 						webSocketServer,
@@ -160,7 +173,7 @@ describe("Routerlicious", () => {
 						undefined,
 						undefined,
 						undefined,
-						undefined,
+						testRevokedTokenChecker,
 						undefined,
 						testClusterDrainingChecker,
 					);
@@ -324,10 +337,33 @@ describe("Routerlicious", () => {
 						testClusterDrainingChecker.isDraining = true;
 						const socket = webSocketServer.createConnection();
 						await assert.rejects(
-							async () => connectToServer(testId, testTenantId, testSecret, socket),
+							connectToServer(testId, testTenantId, testSecret, socket),
 							(err) => {
 								assert.strictEqual(isNetworkError(err), true);
 								assert.strictEqual((err as NetworkError).code, 503);
+								return true;
+							},
+						);
+					});
+
+					it("Should fail when token is revoked", async () => {
+						testRevokedTokenChecker.isRevoked = true;
+						const socket = webSocketServer.createConnection();
+						await assert.rejects(
+							connectToServer(testId, testTenantId, testSecret, socket),
+							(err) => {
+								assert.strictEqual(
+									isNetworkError(err),
+									true,
+									"Error should be a NetworkError",
+								);
+								assert.strictEqual(
+									isTokenRevokedError(err),
+									true,
+									"Error should be a TokenRevokedError",
+								);
+								assert.strictEqual((err as NetworkError).code, 403);
+								return true;
 							},
 						);
 					});
