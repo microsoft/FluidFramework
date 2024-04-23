@@ -4,7 +4,7 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { type IAudience, type IDeltaManager } from "@fluidframework/container-definitions";
+import { type IDeltaManager } from "@fluidframework/container-definitions";
 import { type IContainerContext } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
@@ -13,6 +13,7 @@ import { type FluidObject, type IRequest, type IResponse } from "@fluidframework
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	type IDocumentMessage,
+	type IQuorumClients,
 	type ISequencedDocumentMessage,
 	type ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
@@ -152,10 +153,10 @@ export const mixinAttributor = (
 			const baseSnapshot: ISnapshotTree | undefined =
 				pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
 
-			const { audience, deltaManager, taggedLogger } = context;
+			const { quorum, deltaManager, taggedLogger } = context;
 			assert(
-				audience !== undefined,
-				0x508 /* Audience must exist when instantiating attribution-providing runtime */,
+				quorum !== undefined,
+				"quorum must exist when instantiating attribution-providing runtime",
 			);
 
 			const mc = loggerToMonitoringContext(taggedLogger);
@@ -197,7 +198,7 @@ export const mixinAttributor = (
 				async (event) => {
 					await runtime.runtimeAttributor?.initialize(
 						deltaManager,
-						audience,
+						quorum,
 						baseSnapshot,
 						async (id) => runtime.storage.readBlob(id),
 						shouldTrackAttribution,
@@ -279,7 +280,7 @@ class RuntimeAttributor implements IRuntimeAttributor {
 
 	public async initialize(
 		deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-		audience: IAudience,
+		quorum: IQuorumClients,
 		baseSnapshot: ISnapshotTree | undefined,
 		readBlob: (id: string) => Promise<ArrayBufferLike>,
 		shouldAddAttributorOnNewFile: boolean,
@@ -299,14 +300,14 @@ class RuntimeAttributor implements IRuntimeAttributor {
 		this.isEnabled = true;
 		this.encoder = chain(
 			new AttributorSerializer(
-				(entries) => new OpStreamAttributor(deltaManager, audience, entries),
+				(entries) => new OpStreamAttributor(deltaManager, quorum, entries),
 				deltaEncoder,
 			),
 			makeLZ4Encoder(),
 		);
 
 		if (attributorTree === undefined) {
-			this.opAttributor = new OpStreamAttributor(deltaManager, audience);
+			this.opAttributor = new OpStreamAttributor(deltaManager, quorum);
 		} else {
 			const id = attributorTree.blobs[opBlobName];
 			assert(

@@ -54,7 +54,7 @@ Here are some remarks about the class
 | Property | Modifiers | Type | Description |
 | --- | --- | --- | --- |
 | [abstractPropertyGetter](./simple-suite-test/testclass-class#abstractpropertygetter-property) | `readonly` | [TestMappedType](./simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
-| [testClassGetterProperty](./simple-suite-test/testclass-class#testclassgetterproperty-property) | `readonly`, `virtual` | number | Test class getter-only property |
+| [testClassGetterProperty](./simple-suite-test/testclass-class#testclassgetterproperty-property) | `virtual` | number | Test class property with both a getter and a setter. |
 | [testClassProperty](./simple-suite-test/testclass-class#testclassproperty-property) | `readonly` | TTypeParameterB | Test class property |
 
 ## Methods
@@ -102,6 +102,8 @@ Test class event property
 readonly testClassEventProperty: () => void;
 ```
 
+**Type:** () =&gt; void
+
 #### Remarks {#testclasseventproperty-remarks}
 
 Here are some remarks about the property
@@ -118,16 +120,21 @@ A test abstract getter property.
 get abstractPropertyGetter(): TestMappedType;
 ```
 
+**Type:** [TestMappedType](./simple-suite-test#testmappedtype-typealias)
+
 ### testClassGetterProperty {#testclassgetterproperty-property}
 
-Test class getter-only property
+Test class property with both a getter and a setter.
 
 #### Signature {#testclassgetterproperty-signature}
 
 ```typescript
 /** @virtual */
 get testClassGetterProperty(): number;
+set testClassGetterProperty(newValue: number);
 ```
+
+**Type:** number
 
 #### Remarks {#testclassgetterproperty-remarks}
 
@@ -143,6 +150,8 @@ Test class property
 readonly testClassProperty: TTypeParameterB;
 ```
 
+**Type:** TTypeParameterB
+
 #### Remarks {#testclassproperty-remarks}
 
 Here are some remarks about the property
@@ -156,6 +165,8 @@ Test static class property
 ```typescript
 static testClassStaticProperty: (foo: number) => string;
 ```
+
+**Type:** (foo: number) =&gt; string
 
 ## Method Details
 

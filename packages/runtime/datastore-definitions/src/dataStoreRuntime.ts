@@ -73,16 +73,6 @@ export interface IFluidDataStoreRuntime
 	getChannel(id: string): Promise<IChannel>;
 
 	/**
-	 * Invokes the given callback and expects that no ops are submitted
-	 * until execution finishes. If an op is submitted, an error will be raised.
-	 *
-	 * Can be disabled by feature gate `Fluid.ContainerRuntime.DisableOpReentryCheck`
-	 *
-	 * @param callback - the callback to be invoked
-	 */
-	ensureNoDataModelChanges<T>(callback: () => T): T;
-
-	/**
 	 * Creates a new channel of the given type.
 	 * @param id - ID of the channel to be created.  A unique ID will be generated if left undefined.
 	 * @param type - Type of the channel.

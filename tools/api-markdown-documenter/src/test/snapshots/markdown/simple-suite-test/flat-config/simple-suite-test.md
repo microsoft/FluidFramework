@@ -78,10 +78,10 @@ const foo = bar;
 
 # Variables
 
-| Variable | Alerts | Modifiers | Description |
-| --- | --- | --- | --- |
-| [testConst](docs/simple-suite-test#testconst-variable) | `BETA` | `readonly` | Test Constant |
-| [testConstWithEmptyDeprecatedBlock](docs/simple-suite-test#testconstwithemptydeprecatedblock-variable) | `DEPRECATED` | `readonly` | I have a `@deprecated` tag with an empty comment block. |
+| Variable | Alerts | Modifiers | Type | Description |
+| --- | --- | --- | --- | --- |
+| [testConst](docs/simple-suite-test#testconst-variable) | `BETA` | `readonly` |  | Test Constant |
+| [testConstWithEmptyDeprecatedBlock](docs/simple-suite-test#testconstwithemptydeprecatedblock-variable) | `DEPRECATED` | `readonly` | string | I have a `@deprecated` tag with an empty comment block. |
 
 # Namespaces
 
@@ -132,6 +132,8 @@ Here are some remarks about the interface
 
 | Property | Modifiers | Default Value | Type | Description |
 | --- | --- | --- | --- | --- |
+| [getterProperty](docs/simple-suite-test#testinterface-getterproperty-property) | `readonly` |  | boolean | A test getter-only interface property. |
+| [setterProperty](docs/simple-suite-test#testinterface-setterproperty-property) |  |  | boolean | A test property with a getter and a setter. |
 | [testInterfaceProperty](docs/simple-suite-test#testinterface-testinterfaceproperty-propertysignature) |  |  | number | Test interface property |
 | [testOptionalInterfaceProperty](docs/simple-suite-test#testinterface-testoptionalinterfaceproperty-propertysignature) | `optional` | 0 | number | Test optional property |
 
@@ -176,11 +178,38 @@ Test interface event property
 readonly testClassEventProperty: () => void;
 ```
 
+**Type:** () =&gt; void
+
 ##### Remarks {#testclasseventproperty-remarks}
 
 Here are some remarks about the event property
 
 ### Property Details
+
+#### getterProperty {#testinterface-getterproperty-property}
+
+A test getter-only interface property.
+
+##### Signature {#getterproperty-signature}
+
+```typescript
+get getterProperty(): boolean;
+```
+
+**Type:** boolean
+
+#### setterProperty {#testinterface-setterproperty-property}
+
+A test property with a getter and a setter.
+
+##### Signature {#setterproperty-signature}
+
+```typescript
+get setterProperty(): boolean;
+set setterProperty(newValue: boolean);
+```
+
+**Type:** boolean
 
 #### testInterfaceProperty {#testinterface-testinterfaceproperty-propertysignature}
 
@@ -191,6 +220,8 @@ Test interface property
 ```typescript
 testInterfaceProperty: number;
 ```
+
+**Type:** number
 
 ##### Remarks {#testinterfaceproperty-remarks}
 
@@ -205,6 +236,8 @@ Test optional property
 ```typescript
 testOptionalInterfaceProperty?: number;
 ```
+
+**Type:** number
 
 ### Method Details
 
@@ -388,6 +421,8 @@ A test interface property using generic type parameter
 testProperty: T;
 ```
 
+**Type:** T
+
 ##### Remarks {#testproperty-remarks}
 
 Here are some remarks about the property
@@ -456,6 +491,8 @@ A test abstract getter property.
 abstract get abstractPropertyGetter(): TestMappedType;
 ```
 
+**Type:** [TestMappedType](docs/simple-suite-test#testmappedtype-typealias)
+
 #### protectedProperty {#testabstractclass-protectedproperty-property}
 
 A test protected property.
@@ -465,6 +502,8 @@ A test protected property.
 ```typescript
 protected readonly protectedProperty: TestEnum;
 ```
+
+**Type:** [TestEnum](docs/simple-suite-test#testenum-enum)
 
 ### Method Details
 
@@ -564,7 +603,7 @@ Here are some remarks about the class
 | Property | Modifiers | Type | Description |
 | --- | --- | --- | --- |
 | [abstractPropertyGetter](docs/simple-suite-test#testclass-abstractpropertygetter-property) | `readonly` | [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
-| [testClassGetterProperty](docs/simple-suite-test#testclass-testclassgetterproperty-property) | `readonly`, `virtual` | number | Test class getter-only property |
+| [testClassGetterProperty](docs/simple-suite-test#testclass-testclassgetterproperty-property) | `virtual` | number | Test class property with both a getter and a setter. |
 | [testClassProperty](docs/simple-suite-test#testclass-testclassproperty-property) | `readonly` | TTypeParameterB | Test class property |
 
 ### Methods
@@ -612,6 +651,8 @@ Test class event property
 readonly testClassEventProperty: () => void;
 ```
 
+**Type:** () =&gt; void
+
 ##### Remarks {#testclasseventproperty-remarks}
 
 Here are some remarks about the property
@@ -628,16 +669,21 @@ A test abstract getter property.
 get abstractPropertyGetter(): TestMappedType;
 ```
 
+**Type:** [TestMappedType](docs/simple-suite-test#testmappedtype-typealias)
+
 #### testClassGetterProperty {#testclass-testclassgetterproperty-property}
 
-Test class getter-only property
+Test class property with both a getter and a setter.
 
 ##### Signature {#testclassgetterproperty-signature}
 
 ```typescript
 /** @virtual */
 get testClassGetterProperty(): number;
+set testClassGetterProperty(newValue: number);
 ```
+
+**Type:** number
 
 ##### Remarks {#testclassgetterproperty-remarks}
 
@@ -653,6 +699,8 @@ Test class property
 readonly testClassProperty: TTypeParameterB;
 ```
 
+**Type:** TTypeParameterB
+
 ##### Remarks {#testclassproperty-remarks}
 
 Here are some remarks about the property
@@ -666,6 +714,8 @@ Test static class property
 ```typescript
 static testClassStaticProperty: (foo: number) => string;
 ```
+
+**Type:** (foo: number) =&gt; string
 
 ### Method Details
 
@@ -951,8 +1001,10 @@ I have a `@deprecated` tag with an empty comment block.
 ### Signature {#testconstwithemptydeprecatedblock-signature}
 
 ```typescript
-testConstWithEmptyDeprecatedBlock = "I have a `@deprecated` tag with an empty comment block."
+testConstWithEmptyDeprecatedBlock: string
 ```
+
+**Type:** string
 
 # Namespace Details
 
@@ -960,9 +1012,9 @@ testConstWithEmptyDeprecatedBlock = "I have a `@deprecated` tag with an empty co
 
 ### Variables
 
-| Variable | Modifiers | Description |
-| --- | --- | --- |
-| [foo](docs/simple-suite-test#testmodule-foo-variable) | `readonly` | Test constant in module. |
+| Variable | Modifiers | Type | Description |
+| --- | --- | --- | --- |
+| [foo](docs/simple-suite-test#testmodule-foo-variable) | `readonly` |  | Test constant in module. |
 
 ### Variable Details
 
@@ -1030,9 +1082,9 @@ const bar = foo
 
 ### Variables
 
-| Variable | Alerts | Modifiers | Description |
-| --- | --- | --- | --- |
-| [TestConst](docs/simple-suite-test#testnamespace-testconst-variable) | `BETA` | `readonly` | Test Constant |
+| Variable | Alerts | Modifiers | Type | Description |
+| --- | --- | --- | --- | --- |
+| [TestConst](docs/simple-suite-test#testnamespace-testconst-variable) | `BETA` | `readonly` |  | Test Constant |
 
 ### Namespaces
 
@@ -1102,6 +1154,8 @@ Test interface property
 ```typescript
 readonly testClassProperty: string;
 ```
+
+**Type:** string
 
 ##### Method Details
 

@@ -8,6 +8,8 @@ Test interface event property
 readonly testClassEventProperty: () => void;
 ```
 
+**Type:** () =&gt; void
+
 ### Remarks {#testclasseventproperty-remarks}
 
 Here are some remarks about the event property

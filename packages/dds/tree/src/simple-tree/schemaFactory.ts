@@ -11,7 +11,6 @@ import {
 	FlexTreeNode,
 	Unenforced,
 	isFlexTreeNode,
-	isFluidHandle,
 	isLazy,
 	markEager,
 } from "../feature-libraries/index.js";
@@ -42,6 +41,7 @@ import {
 } from "./schemaTypes.js";
 import { TreeArrayNode, arraySchema } from "./arrayNode.js";
 import { TreeNode } from "./types.js";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { InsertableObjectFromSchemaRecord, TreeObjectNode, objectSchema } from "./objectNode.js";
 import { TreeMapNode, mapSchema } from "./mapNode.js";
 import {
@@ -416,7 +416,8 @@ export class SchemaFactory<
 	> {
 		return mapSchema(
 			this.nodeSchema(name, NodeKind.Map, allowedTypes, implicitlyConstructable),
-			customizable,
+			// The current policy is customizable nodes don't get fake prototypes.
+			!customizable,
 		);
 	}
 
