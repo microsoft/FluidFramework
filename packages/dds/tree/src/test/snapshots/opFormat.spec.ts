@@ -61,7 +61,6 @@ describe("SharedTree op format snapshots", () => {
 		const messages = spyOnFutureMessages(containerRuntime);
 		const view = await tree.viewWith({
 			schema: Point,
-			initialTree: () => new Point({ x: 0, y: 0 }),
 		});
 		view.initialize(new Point({ x: 0, y: 0 }));
 
@@ -71,7 +70,6 @@ describe("SharedTree op format snapshots", () => {
 	it("field change", async () => {
 		const view = await tree.viewWith({
 			schema: Point,
-			initialTree: () => new Point({ x: 0, y: 2 }),
 		});
 		view.initialize(new Point({ x: 0, y: 2 }));
 

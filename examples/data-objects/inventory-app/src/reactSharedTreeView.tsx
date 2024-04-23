@@ -220,7 +220,13 @@ function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 	const compatibility = useViewCompatibility(view);
 	const root = useViewRoot(view);
 
-	if (!compatibility.canView) {
+	// Note: this policy is on the stricter side and ensures that clients will only be able to submit edits when their view schema
+	// exactly matches the document's stored schema.
+	// A realistic production application using this strategy would need to take steps to attempt to open the document using
+	// several different view schemas in order to ensure that their users don't temporarily lose access to documents while
+	// code rollout is in progress.
+	// Alternative policies can be implemented, see "Schema Evolvability" in SharedTree's README for more information.
+	if (!compatibility.isExactMatch) {
 		const Error = ErrorComponent ?? TreeErrorComponent;
 		return <Error compatibility={compatibility} upgradeSchema={() => view.upgradeSchema()} />;
 	}

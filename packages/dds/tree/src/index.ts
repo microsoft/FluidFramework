@@ -273,6 +273,7 @@ export {
 	ITree,
 	TreeNodeSchema,
 	TreeConfiguration,
+	TreeViewConfiguration,
 	TreeView,
 	TreeViewEvents,
 	SchemaFactory,

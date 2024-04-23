@@ -1084,7 +1084,7 @@ export interface ITransaction {
 export interface ITree extends IChannel {
     // @deprecated
     schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TRoot>;
-    viewWith<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): Promise<TreeView<TRoot>>;
+    viewWith<TRoot extends ImplicitFieldSchema>(config: TreeViewConfiguration<TRoot>): Promise<TreeView<TRoot>>;
 }
 
 // @internal
@@ -2035,6 +2035,11 @@ export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposab
     get root(): TreeFieldFromImplicitField<TSchema>;
     set root(newRoot: InsertableTreeFieldFromImplicitField<TSchema>);
     upgradeSchema(): void;
+}
+
+// @public
+export interface TreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
+    schema: TSchema;
 }
 
 // @public

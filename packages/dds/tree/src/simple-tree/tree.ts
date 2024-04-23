@@ -56,14 +56,14 @@ export interface ITree extends IChannel {
 	 * this initialization could become just another out of schema content adapter and this initialization is no longer a special case.
 	 */
 	viewWith<TRoot extends ImplicitFieldSchema>(
-		config: TreeConfiguration<TRoot>,
+		config: TreeViewConfiguration<TRoot>,
 	): Promise<TreeView<TRoot>>;
 
 	/**
 	 * Returns a {@link TreeView} using the provided schema.
-	 * If the stored schema is compatible with the view schema specified by `config`,
+	 * If the stored schema is view-compatible with the view schema specified by `config`,
 	 * the returned {@link TreeView} will expose the root with a schema-aware API based on the provided view schema.
-	 * If the provided schema is incompatible with the stored schema, the view will instead expose a status indicating the incompatibility.
+	 * See {@link TreeView.compatibility} for information about the compatibility between the view and stored schemas.
 	 *
 	 * @remarks
 	 * If the tree is uninitialized, it will be implicitly initialized by this function.
@@ -82,6 +82,17 @@ export interface ITree extends IChannel {
 
 /**
  * Configuration for {@link ITree.viewWith}.
+ * @public
+ */
+export interface TreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
+	/**
+	 * The schema which the application wants to view the tree with.
+	 */
+	schema: TSchema;
+}
+
+/**
+ * Configuration for {@link ITree.schematize}.
  * @public
  */
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
@@ -249,7 +260,8 @@ export interface TreeViewEvents {
 	 * This may affect the compatibility between the view schema and the stored schema, and thus the ability to use the view.
 	 *
 	 * @remarks
-	 * This event implies that the old {@link TreeView.root} is no longer valid, but applications
+	 * This event implies that the old {@link TreeView.root} is no longer valid, but applications need not handle that separately:
+	 * {@link TreeViewEvents.rootChanged} will be fired after this event.
 	 */
 	schemaChanged(): void;
 
