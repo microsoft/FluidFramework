@@ -35,6 +35,7 @@ import {
 	MongoManager,
 	RawOperationType,
 	signalUsageStorageId,
+	type IClusterDrainingChecker,
 } from "@fluidframework/server-services-core";
 import { TestEngine1, Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
@@ -51,10 +52,18 @@ import {
 import { OrdererManager } from "../../nexus";
 import { Throttler, ThrottlerHelper } from "@fluidframework/server-services";
 import Sinon from "sinon";
+import { isNetworkError, type NetworkError } from "@fluidframework/server-services-client";
 
 const lumberjackEngine = new TestEngine1();
 if (!Lumberjack.isSetupCompleted()) {
 	Lumberjack.setup([lumberjackEngine]);
+}
+
+class TestClusterDrainingChecker implements IClusterDrainingChecker {
+	public isDraining = false;
+	public async isClusterDraining(): Promise<boolean> {
+		return this.isDraining;
+	}
 }
 
 describe("Routerlicious", () => {
@@ -71,6 +80,7 @@ describe("Routerlicious", () => {
 				let testOrderer: IOrdererManager;
 				let testTenantManager: TestTenantManager;
 				let testClientManager: IClientManager;
+				let testClusterDrainingChecker: TestClusterDrainingChecker;
 
 				const throttleLimitTenant = 7;
 				const throttleLimitConnectDoc = 4;
@@ -126,6 +136,7 @@ describe("Routerlicious", () => {
 						throttleLimitConnectDoc,
 					);
 					const testSubmitOpThrottler = new TestThrottler(throttleLimitTenant);
+					testClusterDrainingChecker = new TestClusterDrainingChecker();
 
 					configureWebSocketServices(
 						webSocketServer,
@@ -147,6 +158,11 @@ describe("Routerlicious", () => {
 						testSubmitOpThrottler,
 						undefined,
 						undefined,
+						undefined,
+						undefined,
+						undefined,
+						undefined,
+						testClusterDrainingChecker,
 					);
 				});
 
@@ -302,6 +318,18 @@ describe("Routerlicious", () => {
 							NackErrorType.ThrottlingError,
 						);
 						assert.strictEqual(failedConnectMessage2.retryAfter, 1);
+					});
+
+					it("Should fail when cluster is draining", async () => {
+						testClusterDrainingChecker.isDraining = true;
+						const socket = webSocketServer.createConnection();
+						await assert.rejects(
+							async () => connectToServer(testId, testTenantId, testSecret, socket),
+							(err) => {
+								assert.strictEqual(isNetworkError(err), true);
+								assert.strictEqual((err as NetworkError).code, 503);
+							},
+						);
 					});
 				});
 
