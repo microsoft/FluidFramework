@@ -146,11 +146,11 @@
 	"typeValidation": {
 		"broken": {
 			"ClassDeclaration_FluidDataStoreRuntime": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_FluidObjectHandle": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"ClassDeclaration_FluidObjectHandle": {
+				"forwardCompat": false
 			}
 		}
 	}

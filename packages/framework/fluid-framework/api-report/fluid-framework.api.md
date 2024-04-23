@@ -6,7 +6,6 @@
 
 import { Client } from '@fluidframework/merge-tree/internal';
 import { Deferred } from '@fluidframework/core-utils/internal';
-import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
