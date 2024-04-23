@@ -114,7 +114,6 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 			this.loader,
 			{
 				url: id,
-				headers: {},
 			},
 			sequenceNumber,
 		);

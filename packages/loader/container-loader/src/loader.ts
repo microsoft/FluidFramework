@@ -406,7 +406,7 @@ export async function loadContainerPaused(
 	const container = await loader.resolve({
 		url: request.url,
 		headers: {
-			...Headers,
+			...request.headers,
 			// ensure we do not process any ops.
 			[LoaderHeader.loadMode]: { opsBeforeReturn: undefined, deltaConnection: "none" },
 		},
@@ -455,6 +455,12 @@ export async function loadContainerPaused(
 		container.on("op", opHandler);
 	}
 
+	// There are no guarantees on when ops will land in storage.
+	// No guarantees that driver implements ops caching (i.e. ops observed in previous session can be served from cache)
+	// or that browser will provide caching capabilities / keep the data (localStorage).
+	// So we have to ensure we connect to delta storage in order to make forward progress with ops.
+	// We also instructed not to fetch / apply any ops from storage above (to be able to install callback above before ops are processed),
+	// connect() call will fetch ops as needed.
 	container.connect();
 
 	// If we have not yet reached `loadToSequenceNumber`, we will wait for ops to arrive until we reach it
