@@ -146,6 +146,20 @@ export * from "@fluidframework/tree";
 
 export { SharedObject, SharedObjectCore } from "@fluidframework/shared-object-base/internal";
 
+// TODO: these specific exports end up still producing imports, then having those imports reexported.
+export type { EventEmitterEventType, TypedEventEmitter } from "@fluid-internal/client-utils";
+
+export type {
+	EventEmitterWithErrorHandling,
+	ITelemetryLoggerExt,
+	ITelemetryGenericEventExt,
+	ITelemetryErrorEventExt,
+	ITelemetryPerformanceEventExt,
+	TelemetryEventCategory,
+	ITelemetryPropertiesExt,
+	TelemetryEventPropertyTypeExt,
+} from "@fluidframework/telemetry-utils/internal";
+
 export { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 
 export type {
@@ -195,3 +209,74 @@ export {
 	SharedString,
 	SharedStringFactory,
 } from "@fluidframework/sequence/internal";
+
+export type {
+	Client,
+	IJSONSegment,
+	IMergeTreeDeltaCallbackArgs,
+	IMergeTreeDeltaOpArgs,
+	IMergeTreeGroupMsg,
+	IMergeTreeMaintenanceCallbackArgs,
+	IRelativePosition,
+	ISegment,
+	ISegmentAction,
+	LocalReferencePosition,
+	Marker,
+	MergeTreeDeltaOperationType,
+	MergeTreeDeltaOperationTypes,
+	MergeTreeMaintenanceType,
+	MergeTreeRevertibleDriver,
+	PropertiesManager,
+	PropertySet,
+	ReferencePosition,
+	ReferenceType,
+	SlidingPreference,
+	TextSegment,
+	IClientEvents,
+	IMergeTreeOptions,
+	SegmentGroup,
+	IMergeTreeAnnotateMsg,
+	IMergeTreeRemoveMsg,
+	IMergeTreeObliterateMsg,
+	IMergeTreeInsertMsg,
+	CollaborationWindow,
+	IMergeTreeOp,
+	IMergeTreeTextHelper,
+	IMergeTreeAttributionOptions,
+	IMergeNodeCommon,
+	IRemovalInfo,
+	IMergeTreeSegmentDelta,
+	IMoveInfo,
+	SegmentGroupCollection,
+	TrackingGroupCollection,
+	IAttributionCollection,
+	IAttributionCollectionSpec,
+	AttributionPolicy,
+	IAttributionCollectionSerializer,
+	LocalReferenceCollection,
+	PropertiesRollback,
+	BaseSegment,
+	IJSONMarkerSegment,
+	IMergeTreeDelta,
+	MergeTreeDeltaType,
+	IMergeTreeDeltaOp,
+	MapLike,
+	IJSONTextSegment,
+	IMarkerDef,
+	TrackingGroup,
+	Trackable,
+	ITrackingGroup,
+	SerializedAttributionCollection,
+	SequenceOffsets,
+} from "@fluidframework/merge-tree/internal";
+
+export { Deferred } from "@fluidframework/core-utils/internal";
+
+export type {
+	AttributionKey,
+	OpAttributionKey,
+	DetachedAttributionKey,
+	LocalAttributionKey,
+	// Linked in docs
+	AttributionInfo,
+} from "@fluidframework/runtime-definitions/internal";

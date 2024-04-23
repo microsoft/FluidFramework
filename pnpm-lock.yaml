@@ -8022,22 +8022,26 @@ importers:
     specifiers:
       '@arethetypeswrong/cli': ^0.15.2
       '@biomejs/biome': ^1.6.2
+      '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.37.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.37.0
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/fluid-static': workspace:~
       '@fluidframework/id-compressor': workspace:~
       '@fluidframework/map': workspace:~
+      '@fluidframework/merge-tree': workspace:~
       '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/sequence': workspace:~
       '@fluidframework/shared-object-base': workspace:~
+      '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/tree': workspace:~
       '@microsoft/api-extractor': ^7.42.3
       '@types/node': ^18.19.0
@@ -8047,18 +8051,22 @@ importers:
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
+      '@fluid-internal/client-utils': link:../../common/client-utils
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
+      '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/fluid-static': link:../fluid-static
       '@fluidframework/id-compressor': link:../../runtime/id-compressor
       '@fluidframework/map': link:../../dds/map
+      '@fluidframework/merge-tree': link:../../dds/merge-tree
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/sequence': link:../../dds/sequence
       '@fluidframework/shared-object-base': link:../../dds/shared-object-base
+      '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       '@fluidframework/tree': link:../../dds/tree
     devDependencies:
       '@arethetypeswrong/cli': 0.15.2
