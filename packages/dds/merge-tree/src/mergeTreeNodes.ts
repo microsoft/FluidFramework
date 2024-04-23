@@ -397,6 +397,19 @@ export class MergeBlock implements IMergeNodeCommon {
 	public ordinal: string = "";
 	public cachedLength: number | undefined = 0;
 
+	/**
+	 * Maps each tile label in this block to the rightmost (i.e. furthest) marker associated with that tile label.
+	 * When combined with the tree structure of MergeBlocks, this allows accelerated queries for nearest tile
+	 * with a certain label before a given position
+	 */
+	public rightmostTiles: Readonly<MapLike<Marker>>;
+	/**
+	 * Maps each tile label in this block to the leftmost (i.e. nearest) marker associated with that tile label.
+	 * When combined with the tree structure of MergeBlocks, this allows accelerated queries for nearest tile
+	 * with a certain label before a given position
+	 */
+	public leftmostTiles: Readonly<MapLike<Marker>>;
+
 	isLeaf(): this is ISegment {
 		return false;
 	}
@@ -413,10 +426,10 @@ export class MergeBlock implements IMergeNodeCommon {
 
 	public constructor(public childCount: number) {
 		this.children = new Array<IMergeNode>(MaxNodesInBlock);
-	}
-
-	public hierBlock(): this is HierMergeBlock {
-		return false;
+		// eslint-disable-next-line import/no-deprecated
+		this.rightmostTiles = createMap<Marker>();
+		// eslint-disable-next-line import/no-deprecated
+		this.leftmostTiles = createMap<Marker>();
 	}
 
 	public setOrdinal(child: IMergeNode, index: number) {
@@ -440,23 +453,6 @@ export class MergeBlock implements IMergeNodeCommon {
 			this.setOrdinal(child, index);
 		}
 		this.children[index] = child;
-	}
-}
-
-export class HierMergeBlock extends MergeBlock {
-	public rightmostTiles: MapLike<ReferencePosition>;
-	public leftmostTiles: MapLike<ReferencePosition>;
-
-	constructor(childCount: number) {
-		super(childCount);
-		// eslint-disable-next-line import/no-deprecated
-		this.rightmostTiles = createMap<ReferencePosition>();
-		// eslint-disable-next-line import/no-deprecated
-		this.leftmostTiles = createMap<ReferencePosition>();
-	}
-
-	public hierBlock(): this is HierMergeBlock {
-		return true;
 	}
 }
 
@@ -540,7 +536,7 @@ export abstract class BaseSegment implements ISegment {
 
 	protected addSerializedProps(jseg: IJSONSegment) {
 		if (this.properties) {
-			jseg.props = this.properties;
+			jseg.props = { ...this.properties };
 		}
 	}
 
@@ -692,9 +688,10 @@ export abstract class BaseSegment implements ISegment {
  *
  * @remarks In general, marker ids should be accessed using the inherent method
  * {@link Marker.getId}. Marker ids should not be updated after creation.
- * @internal
+ * @alpha
  */
 export const reservedMarkerIdKey = "markerId";
+
 /**
  * @internal
  */

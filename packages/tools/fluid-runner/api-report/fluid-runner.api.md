@@ -10,7 +10,7 @@ import { FluidObject } from '@fluidframework/core-interfaces';
 import { ICodeDetailsLoader } from '@fluidframework/container-definitions/internal';
 import { IContainer } from '@fluidframework/container-definitions/internal';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 
 // @internal
 export function createContainerAndExecute(localOdspSnapshot: string | Uint8Array, fluidFileConverter: IFluidFileConverter, logger: ITelemetryLoggerExt, options?: string, timeout?: number, disableNetworkFetch?: boolean): Promise<string>;

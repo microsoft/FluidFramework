@@ -23,8 +23,7 @@ import {
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 /**
@@ -87,6 +86,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		throw new Error("Method not implemented.");
 	}
 
+	// back-compat: to be removed in 2.0
 	public ensureNoDataModelChanges<T>(callback: () => T): T {
 		return callback();
 	}
