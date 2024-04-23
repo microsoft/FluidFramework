@@ -4,12 +4,7 @@
  */
 
 import path from "node:path";
-import {
-	type Logger,
-	type Package,
-	type PackageJson,
-	typeOnly,
-} from "@fluidframework/build-tools";
+import { type Package, type PackageJson, typeOnly } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { mkdirSync, readJson, rmSync, writeFileSync } from "fs-extra";
 import * as resolve from "resolve.exports";
@@ -22,7 +17,6 @@ import {
 	initializeProjectsAndLoadFiles,
 	typeDataFromFile,
 } from "../../typeTestUtils";
-import type { ExportsRecordValue } from "./entrypoints";
 
 export default class GenerateTypetestsCommand extends PackageCommand<
 	typeof GenerateTypetestsCommand
@@ -141,12 +135,12 @@ import type * as current from "../../index.js";
 	): [string, ApiLevel] {
 		let chosenLevel: ApiLevel = level;
 		// First try the requested paths, but fall back to public otherwise if configured.
-		let typeDefs: string | undefined = getTypesPathFromPackage(packageJson, level, this);
+		let typeDefs: string | undefined = getTypesPathFromPackage(packageJson, level);
 
 		if (typeDefs === undefined) {
 			// Try the public types if configured to do so. If public types are found adjust the level accordingly.
 			typeDefs = this.flags.publicFallback
-				? getTypesPathFromPackage(packageJson, ApiLevel.public, this)
+				? getTypesPathFromPackage(packageJson, ApiLevel.public)
 				: undefined;
 			if (typeDefs === undefined) {
 				this.error(`No type definitions found for ${packageJson.name}`, { exit: 1 });
@@ -167,11 +161,7 @@ import type * as current from "../../index.js";
  * @param level - An API level to get types paths for.
  * @returns A package relative path to the types.
  */
-export function getTypesPathFromPackage(
-	packageJson: PackageJson,
-	level: ApiLevel,
-	log: Logger,
-): string {
+export function getTypesPathFromPackage(packageJson: PackageJson, level: ApiLevel): string {
 	const exports =
 		// resolve.exports sets some conditions by default, so the ones we supply supplement the defaults. For clarity the
 		// applied conditions are noted in comments.
@@ -196,38 +186,4 @@ export function getTypesPathFromPackage(
 		);
 	}
 	return typesPath;
-}
-
-/**
- * Finds the path to the types of a package using the package's export map.
- * If the path is found, it is returned. Otherwise it returns undefined.
- *
- * This implementation iterates through the individual exports entries recursively
- *
- * @param exports - The exports from package.json
- * @param level - An API level to get types paths for.
- * @returns A package relative path to the types.
- */
-export function findTypesPathForApiLevel(
-	exports: ExportsRecordValue,
-	level: ApiLevel,
-	log: Logger,
-): string | undefined {
-	for (const [entry, exportsValue] of Object.entries(exports)) {
-		if (typeof exportsValue === "string") {
-			if (entry === "types") {
-				return exportsValue;
-			}
-		} else if (exportsValue !== null) {
-			if (Array.isArray(exportsValue)) {
-				continue;
-			}
-			const deepFind = findTypesPathForApiLevel(exportsValue, level, log);
-			if (deepFind !== undefined) {
-				return deepFind;
-			}
-		}
-	}
-
-	return undefined;
 }

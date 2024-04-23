@@ -201,7 +201,7 @@ function getLocalUnscopedPackageName(packageJson: PackageJson): string {
 /**
  * Only the value types of exports that are records.
  */
-export type ExportsRecordValue = Exclude<Extract<PackageJson["exports"], object>, unknown[]>;
+type ExportsRecordValue = Exclude<Extract<PackageJson["exports"], object>, unknown[]>;
 
 function findTypesPathMatching(
 	mapQueryPathToApiTagLevel: Map<string | RegExp, ApiTag | undefined>,
