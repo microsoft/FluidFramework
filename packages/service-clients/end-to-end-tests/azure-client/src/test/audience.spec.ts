@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { AxiosResponse } from "axios";
 
 import { AzureClient } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -13,8 +14,9 @@ import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-import { createAzureClient } from "./AzureClientFactory.js";
+import { createAzureClient, createContainerFromPayload } from "./AzureClientFactory.js";
 import { waitForMember } from "./utils.js";
+import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -40,8 +42,17 @@ describe("Fluid audience", () => {
 	 * Expected behavior: container should have a single member upon creation.
 	 */
 	it("can find original member", async () => {
-		const { container, services } = await client.createContainer(schema);
-		const containerId = await container.attach();
+		const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+			ephemeralSummaryTrees.findOriginalMember,
+			"test-user-id-1",
+			"test-user-name-1",
+		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		const containerId: string = containerResponse?.data?.id as string;
+		const { container, services } = await client.getContainer(containerId, schema);
+
+		// const { container, services } = await client.createContainer(schema);
+		// const containerId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -72,8 +83,17 @@ describe("Fluid audience", () => {
 	 * to resolve original member.
 	 */
 	it("can find partner member", async () => {
-		const { container, services } = await client.createContainer(schema);
-		const containerId = await container.attach();
+		const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+			ephemeralSummaryTrees.findPartnerMember,
+			"test-user-id-1",
+			"test-user-name-1",
+		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		const containerId: string = containerResponse?.data?.id as string;
+		const { container, services } = await client.getContainer(containerId, schema);
+
+		// const { container, services } = await client.createContainer(schema);
+		// const containerId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -124,8 +144,17 @@ describe("Fluid audience", () => {
 	 * memberRemoved event and have correct partner count.
 	 */
 	it("can observe member leaving", async () => {
-		const { container } = await client.createContainer(schema);
-		const containerId = await container.attach();
+		const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+			ephemeralSummaryTrees.observeMemberLeaving,
+			"test-user-id-1",
+			"test-user-name-1",
+		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		const containerId: string = containerResponse?.data?.id as string;
+		const { container } = await client.getContainer(containerId, schema);
+
+		// const { container } = await client.createContainer(schema);
+		// const containerId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {

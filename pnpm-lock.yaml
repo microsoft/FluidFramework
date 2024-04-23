@@ -9205,6 +9205,7 @@ importers:
       '@fluidframework/map': workspace:~
       '@fluidframework/matrix': workspace:~
       '@fluidframework/sequence': workspace:~
+      '@fluidframework/server-services-client': ^4.0.0
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/test-utils': workspace:~
@@ -9213,12 +9214,14 @@ importers:
       '@types/node': ^18.19.0
       '@types/sinon': ^17.0.3
       '@types/uuid': ^9.0.2
+      axios: ^1.6.2
       c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
+      mochawesome: ^7.1.3
       moment: ^2.21.0
       nock: ^13.3.3
       prettier: ~3.0.3
@@ -9240,9 +9243,11 @@ importers:
       '@fluidframework/map': link:../../../dds/map
       '@fluidframework/matrix': link:../../../dds/matrix
       '@fluidframework/sequence': link:../../../dds/sequence
+      '@fluidframework/server-services-client': 4.0.0
       '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
       '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../../../test/test-utils
+      axios: 1.6.2
       cross-env: 7.0.3
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
@@ -9264,6 +9269,7 @@ importers:
       '@types/uuid': 9.0.7
       c8: 8.0.1
       eslint: 8.55.0
+      mochawesome: 7.1.3_mocha@10.2.0
       nock: 13.4.0
       prettier: 3.0.3
       rimraf: 4.4.1
@@ -30672,6 +30678,10 @@ packages:
     requiresBuild: true
     optional: true
 
+  /fsu/1.1.1:
+    resolution: {integrity: sha512-xQVsnjJ/5pQtcKh+KjUoZGzVWn4uNkchxTF6Lwjr4Gf7nQr8fmUfhKJ62zE77+xQg9xnxi5KUps7XGs+VC986A==}
+    dev: true
+
   /function-bind/1.1.2:
     resolution: {integrity: sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA==}
 
@@ -34536,8 +34546,16 @@ packages:
   /lodash.isboolean/3.0.3:
     resolution: {integrity: sha512-Bz5mupy2SVbPHURB98VAcw+aHh4vRV5IPNhILUCsOzRmsTmSQ17jIuqopAentWoehktxGd9e/hbIXq980/1QJg==}
 
+  /lodash.isempty/4.4.0:
+    resolution: {integrity: sha512-oKMuF3xEeqDltrGMfDxAPGIVMSSRv8tbRSODbrs4KGsRRLEhrW8N8Rd4DRgB2+621hY8A8XwwrTVhXWpxFvMzg==}
+    dev: true
+
   /lodash.isequal/4.5.0:
     resolution: {integrity: sha512-pDo3lu8Jhfjqls6GkMgpahsF9kCyayhgykjyLMNFTKWrpVdAQtYyB4muAMWozBB4ig/dtWAmsMxLEI8wuz+DYQ==}
+
+  /lodash.isfunction/3.0.9:
+    resolution: {integrity: sha512-AirXNj15uRIMMPihnkInB4i3NHeb4iBtNg9WRWuK2o31S+ePwwNmDPaTL3o7dTJ+VXNZim7rFs4rxN4YU1oUJw==}
+    dev: true
 
   /lodash.isinteger/4.0.4:
     resolution: {integrity: sha512-DBwtEWN2caHQ9/imiNeEA5ys1JoRtRfY3d7V9wkqtbycnAmTvRRmbHKDV4a0EYc678/dia0jrte4tjYwVBaZUA==}
@@ -35712,6 +35730,42 @@ packages:
       yargs: 16.2.0
       yargs-parser: 20.2.4
       yargs-unparser: 2.0.0
+
+  /mochawesome-report-generator/6.2.0:
+    resolution: {integrity: sha512-Ghw8JhQFizF0Vjbtp9B0i//+BOkV5OWcQCPpbO0NGOoxV33o+gKDYU0Pr2pGxkIHnqZ+g5mYiXF7GMNgAcDpSg==}
+    hasBin: true
+    dependencies:
+      chalk: 4.1.2
+      dateformat: 4.6.3
+      escape-html: 1.0.3
+      fs-extra: 10.1.0
+      fsu: 1.1.1
+      lodash.isfunction: 3.0.9
+      opener: 1.5.2
+      prop-types: 15.8.1
+      tcomb: 3.2.29
+      tcomb-validation: 3.4.1
+      validator: 13.11.0
+      yargs: 17.7.2
+    dev: true
+
+  /mochawesome/7.1.3_mocha@10.2.0:
+    resolution: {integrity: sha512-Vkb3jR5GZ1cXohMQQ73H3cZz7RoxGjjUo0G5hu0jLaW+0FdUxUwg3Cj29bqQdh0rFcnyV06pWmqmi5eBPnEuNQ==}
+    peerDependencies:
+      mocha: '>=7'
+    dependencies:
+      chalk: 4.1.2
+      diff: 5.1.0
+      json-stringify-safe: 5.0.1
+      lodash.isempty: 4.4.0
+      lodash.isfunction: 3.0.9
+      lodash.isobject: 3.0.2
+      lodash.isstring: 4.0.1
+      mocha: 10.2.0
+      mochawesome-report-generator: 6.2.0
+      strip-ansi: 6.0.1
+      uuid: 8.3.2
+    dev: true
 
   /module-details-from-path/1.0.3:
     resolution: {integrity: sha512-ySViT69/76t8VhE1xXHK6Ch4NcDd26gx0MzKXLO+F7NOtnqH68d9zF94nT8ZWSxXh8ELOERsnJO/sWt1xZYw5A==}
@@ -41420,6 +41474,16 @@ packages:
       yallist: 4.0.0
     dev: true
 
+  /tcomb-validation/3.4.1:
+    resolution: {integrity: sha512-urVVMQOma4RXwiVCa2nM2eqrAomHROHvWPuj6UkDGz/eb5kcy0x6P0dVt6kzpUZtYMNoAqJLWmz1BPtxrtjtrA==}
+    dependencies:
+      tcomb: 3.2.29
+    dev: true
+
+  /tcomb/3.2.29:
+    resolution: {integrity: sha512-di2Hd1DB2Zfw6StGv861JoAF5h/uQVu/QJp2g8KVbtfKnoHdBQl5M32YWq6mnSYBQ1vFFrns5B1haWJL7rKaOQ==}
+    dev: true
+
   /teamcity-service-messages/0.1.14:
     resolution: {integrity: sha512-29aQwaHqm8RMX74u2o/h1KbMLP89FjNiMxD9wbF2BbWOnbM+q+d1sCEC+MqCc4QW3NJykn77OMpTFw/xTHIc0w==}
     dev: true
@@ -41501,7 +41565,7 @@ packages:
       schema-utils: 3.3.0
       serialize-javascript: 6.0.1
       terser: 5.24.0
-      webpack: 5.89.0_webpack-cli@4.10.0
+      webpack: 5.89.0
 
   /terser/4.8.1:
     resolution: {integrity: sha512-4GnLC0x667eJG0ewJTa6z/yXrbLGv80D9Ru6HIpCQmO+Q4PfEtBFi0ObSckqwL6VyQv/7ENJieXHo2ANmdQwgw==}
@@ -43648,7 +43712,6 @@ packages:
       - '@swc/core'
       - esbuild
       - uglify-js
-    dev: true
 
   /webpack/5.89.0_webpack-cli@4.10.0:
     resolution: {integrity: sha512-qyfIC10pOr70V+jkmud8tMfajraGCZMBWJtrmuBymQKCrLTRejBI8STDp1MCyZu/QTdZSeacCQYpYNQVOzX5kw==}

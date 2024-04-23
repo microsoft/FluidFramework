@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { AxiosResponse } from "axios";
 
 import { AzureClient } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -12,8 +13,9 @@ import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-import { createAzureClient } from "./AzureClientFactory.js";
+import { createAzureClient, createContainerFromPayload } from "./AzureClientFactory.js";
 import { mapWait } from "./utils.js";
+import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
 
 describe("Container copy scenarios", () => {
 	const connectTimeoutMs = 10_000;
@@ -41,8 +43,17 @@ describe("Container copy scenarios", () => {
 	 * be returned. Upon creation, we should recieve back 1 version of the container.
 	 */
 	it("can get versions of current document", async () => {
-		const { container } = await client.createContainer(schema);
-		const containerId = await container.attach();
+		const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+			ephemeralSummaryTrees.getVersionsOfCurrentDocument,
+			"test-user-id-1",
+			"test-user-name-1",
+		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		const containerId: string = containerResponse?.data?.id as string;
+		const { container } = await client.getContainer(containerId, schema);
+
+		// const { container } = await client.createContainer(schema);
+		// const containerId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -91,8 +102,17 @@ describe("Container copy scenarios", () => {
 	 * be returned.
 	 */
 	it("can copy document successfully", async () => {
-		const { container } = await client.createContainer(schema);
-		const containerId = await container.attach();
+		const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+			ephemeralSummaryTrees.copyDocumentSuccessfully,
+			"test-user-id-1",
+			"test-user-name-1",
+		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		const containerId: string = containerResponse?.data?.id as string;
+		const { container } = await client.getContainer(containerId, schema);
+
+		// const { container } = await client.createContainer(schema);
+		// const containerId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -128,8 +148,17 @@ describe("Container copy scenarios", () => {
 	 * be returned.
 	 */
 	it("can successfully copy an existing container at a specific version", async () => {
-		const { container } = await client.createContainer(schema);
-		const containerId = await container.attach();
+		const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+			ephemeralSummaryTrees.copyExistingContainerAtSpecificVersion,
+			"test-user-id-1",
+			"test-user-name-1",
+		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		const containerId: string = containerResponse?.data?.id as string;
+		const { container } = await client.getContainer(containerId, schema);
+
+		// const { container } = await client.createContainer(schema);
+		// const containerId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -170,14 +199,25 @@ describe("Container copy scenarios", () => {
 	 * container.
 	 */
 	it("correctly copies DDS values when copying container", async () => {
-		const { container } = await client.createContainer(schema);
+		const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+			ephemeralSummaryTrees.copyDDSValuesWhenCopyingContainer,
+			"test-user-id-1",
+			"test-user-name-1",
+		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		const containerId: string = containerResponse?.data?.id as string;
+		const { container } = await client.getContainer(containerId, schema);
 
-		const initialObjectsCreate = container.initialObjects;
-		const map1Create = initialObjectsCreate.map1;
-		map1Create.set("new-key", "new-value");
-		const valueCreate: string | undefined = map1Create.get("new-key");
+		const valueCreate: string | undefined = "new-value";
 
-		const containerId = await container.attach();
+		// const { container } = await client.createContainer(schema);
+
+		// const initialObjectsCreate = container.initialObjects;
+		// const map1Create = initialObjectsCreate.map1;
+		// map1Create.set("new-key", "new-value");
+		// const valueCreate: string | undefined = map1Create.get("new-key");
+
+		// const containerId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {

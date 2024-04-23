@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { default as Axios, AxiosResponse, type AxiosRequestConfig } from "axios";
+import { v4 as uuid } from "uuid";
 import {
 	AzureClient,
 	AzureLocalConnectionConfig,
@@ -12,7 +14,6 @@ import {
 import { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
-import { v4 as uuid } from "uuid";
 
 import { createAzureTokenProvider } from "./AzureTokenFactory.js";
 
@@ -69,4 +70,61 @@ export function createAzureClient(
 		logger: getLogger(),
 		configProvider,
 	});
+}
+
+export async function createContainerFromPayload(
+	requestPayload: object,
+	userID?: string,
+	userName?: string,
+): Promise<AxiosResponse | undefined> {
+	const useAzure = process.env.FLUID_CLIENT === "azure";
+	const tenantId = useAzure
+		? (process.env.azure__fluid__relay__service__tenantId as string)
+		: "frs-client-tenant";
+	const user = {
+		id: userID ?? uuid(),
+		name: userName ?? uuid(),
+	};
+	const endPoint = useAzure
+		? (process.env.azure__fluid__relay__service__endpoint as string)
+		: "http://localhost:7071";
+	if (useAzure && endPoint === undefined) {
+		throw new Error("Azure FRS endpoint is missing");
+	}
+
+	const tokenProvider = useAzure
+		? createAzureTokenProvider(userID ?? "foo", userName ?? "bar")
+		: new InsecureTokenProvider("fooBar", user);
+	const ordererToken = await tokenProvider.fetchOrdererToken(tenantId, undefined, false);
+
+	const headers = {
+		"Authorization": `Basic ${ordererToken.jwt}`,
+		"Content-Type": "application/json",
+	};
+
+	const url = `/documents/${tenantId}`;
+
+	const options: AxiosRequestConfig = {
+		baseURL: endPoint,
+		data: requestPayload,
+		headers,
+		maxBodyLength: 1048576000,
+		maxContentLength: 1048576000,
+		method: "POST",
+		url,
+	};
+
+	try {
+		const response: AxiosResponse = await Axios(options);
+
+		if (response.status === 201) {
+			console.log("Container created successfully");
+		} else {
+			console.error(`Error creating container. Status code: ${response.status}`);
+		}
+		return response;
+	} catch (error) {
+		console.error("An error occurred:", error);
+	}
+	return undefined;
 }

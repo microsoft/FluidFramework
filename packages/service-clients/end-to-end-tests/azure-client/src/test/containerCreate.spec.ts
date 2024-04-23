@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { AxiosResponse } from "axios";
 
 import { AzureClient } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -14,7 +15,8 @@ import { SharedMap } from "@fluidframework/map/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-import { createAzureClient } from "./AzureClientFactory.js";
+import { createAzureClient, createContainerFromPayload } from "./AzureClientFactory.js";
+import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -61,8 +63,17 @@ describe("Container create scenarios", () => {
 	 * be returned.
 	 */
 	it("can attach a container", async () => {
-		const { container } = await client.createContainer(schema);
-		const containerId = await container.attach();
+		const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+			ephemeralSummaryTrees.canAttachContainer,
+			"test-user-id-1",
+			"test-user-name-1",
+		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		const containerId: string = containerResponse?.data?.id as string;
+		const { container } = await client.getContainer(containerId, schema);
+
+		// const { container } = await client.createContainer(schema);
+		// const containerId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -86,8 +97,17 @@ describe("Container create scenarios", () => {
 	 * be returned.
 	 */
 	it("cannot attach a container twice", async () => {
-		const { container } = await client.createContainer(schema);
-		const containerId = await container.attach();
+		const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+			ephemeralSummaryTrees.cannotAttachContainerTwice,
+			"test-user-id-1",
+			"test-user-name-1",
+		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		const containerId: string = containerResponse?.data?.id as string;
+		const { container } = await client.getContainer(containerId, schema);
+
+		// const { container } = await client.createContainer(schema);
+		// const containerId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -112,8 +132,17 @@ describe("Container create scenarios", () => {
 	 * be returned.
 	 */
 	it("can retrieve existing Azure Fluid Relay container successfully", async () => {
-		const { container: newContainer } = await client.createContainer(schema);
-		const containerId = await newContainer.attach();
+		const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+			ephemeralSummaryTrees.retrieveExistingAFRContainer,
+			"test-user-id-1",
+			"test-user-name-1",
+		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		const containerId: string = containerResponse?.data?.id as string;
+		const { container: newContainer } = await client.getContainer(containerId, schema);
+
+		// const { container: newContainer } = await client.createContainer(schema);
+		// const containerId = await newContainer.attach();
 
 		if (newContainer.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => newContainer.once("connected", () => resolve()), {
