@@ -22,6 +22,7 @@ import {
 import { FieldKinds, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 import {
 	allowsFieldSuperset,
+	allowsRepoSuperset,
 	allowsTreeSchemaIdentifierSuperset,
 	allowsTreeSuperset,
 	allowsValueSuperset,
@@ -198,6 +199,113 @@ describe("Schema Comparison", () => {
 			],
 			[[neverField, neverField2]],
 		);
+	});
+
+	/**
+	 * This test suite is designed to test backward compatibility when the document
+	 * schema is upgraded. For the types of changes listed below, we aim for the
+	 * upgraded schema to be a superset of the original one.
+	 *
+	 * 1. Adding an optional field to an object node
+	 * 2. Adding to the set of allowed types for a field
+	 * 3. Relaxing a field kind to a more general field kind
+	 */
+	describe("allowRepoSuperset-Point/Circle Examples", () => {
+		const repo1 = new TreeStoredSchemaRepository();
+		const repo2 = new TreeStoredSchemaRepository();
+
+		const pointLocalFieldTree = {
+			name: brand<TreeNodeSchemaIdentifier>("pointLocalFieldTree"),
+			schema: new ObjectNodeStoredSchema(
+				new Map([
+					[brand("x"), fieldSchema(FieldKinds.required, [emptyTree.name])],
+					[brand("y"), fieldSchema(FieldKinds.required, [emptyTree.name])],
+				]),
+			),
+		};
+
+		const circleLocalFieldTree = {
+			name: brand<TreeNodeSchemaIdentifier>("circleLocalFieldTree"),
+			schema: new ObjectNodeStoredSchema(
+				new Map([
+					[brand("point"), fieldSchema(FieldKinds.required, [pointLocalFieldTree.name])],
+					[brand("radius"), fieldSchema(FieldKinds.required, [emptyTree.name])],
+				]),
+			),
+		};
+
+		it("Adding an optional field", () => {
+			const circleLocalFieldTree2 = {
+				name: brand<TreeNodeSchemaIdentifier>("circleLocalFieldTree2"),
+				schema: new ObjectNodeStoredSchema(
+					new Map([
+						[
+							brand("point"),
+							fieldSchema(FieldKinds.required, [pointLocalFieldTree.name]),
+						],
+						[brand("radius"), fieldSchema(FieldKinds.required, [emptyTree.name])],
+						[brand("color"), fieldSchema(FieldKinds.optional)],
+					]),
+				),
+			};
+
+			updateTreeSchema(repo1, circleLocalFieldTree.name, circleLocalFieldTree.schema);
+			updateTreeSchema(repo2, circleLocalFieldTree2.name, circleLocalFieldTree2.schema);
+			assert(allowsRepoSuperset(defaultSchemaPolicy, repo1, repo2));
+		});
+
+		it("Adding to the set of allowed types for a field", () => {
+			const squareLocalFieldTree = {
+				name: brand<TreeNodeSchemaIdentifier>("squareLocalFieldTree"),
+				schema: new ObjectNodeStoredSchema(
+					new Map([
+						[brand("length"), fieldSchema(FieldKinds.required, [emptyTree.name])],
+					]),
+				),
+			};
+			const planeLocalFieldTree = {
+				name: brand<TreeNodeSchemaIdentifier>("planeLocalFieldTree"),
+				schema: new ObjectNodeStoredSchema(
+					new Map([
+						[
+							brand("point"),
+							fieldSchema(FieldKinds.required, [pointLocalFieldTree.name]),
+						],
+						[
+							brand("square"),
+							fieldSchema(FieldKinds.required, [squareLocalFieldTree.name]),
+						],
+						[
+							brand("circle"),
+							fieldSchema(FieldKinds.required, [circleLocalFieldTree.name]),
+						],
+					]),
+				),
+			};
+
+			updateTreeSchema(repo1, squareLocalFieldTree.name, squareLocalFieldTree.schema);
+			updateTreeSchema(repo2, planeLocalFieldTree.name, planeLocalFieldTree.schema);
+			assert(allowsRepoSuperset(defaultSchemaPolicy, repo1, repo2));
+		});
+
+		it("Relaxing a field", () => {
+			const circleLocalFieldTree2 = {
+				name: brand<TreeNodeSchemaIdentifier>("circleLocalFieldTree2"),
+				schema: new ObjectNodeStoredSchema(
+					new Map([
+						[
+							brand("point"),
+							fieldSchema(FieldKinds.required, [pointLocalFieldTree.name]),
+						],
+						[brand("radius"), fieldSchema(FieldKinds.optional)],
+					]),
+				),
+			};
+
+			updateTreeSchema(repo1, circleLocalFieldTree.name, circleLocalFieldTree.schema);
+			updateTreeSchema(repo2, circleLocalFieldTree2.name, circleLocalFieldTree2.schema);
+			assert(allowsRepoSuperset(defaultSchemaPolicy, repo1, repo2));
+		});
 	});
 
 	it("allowsTreeSuperset-no leaf values", () => {
