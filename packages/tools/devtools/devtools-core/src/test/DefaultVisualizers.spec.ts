@@ -850,7 +850,7 @@ describe("DefaultVisualizers unit tests", () => {
 
 		const expected = {
 			fluidObjectId: "test",
-			nodeKind: "FluidTreeNode",
+			nodeKind: "FluidUnknownObjectNode",
 			tooltipContents: {
 				schema: {
 					nodeKind: "TreeNode",
@@ -913,8 +913,7 @@ describe("DefaultVisualizers unit tests", () => {
 				foo: {
 					children: {
 						apple: {
-							fluidObjectId: "test-string",
-							nodeKind: "FluidHandleNode",
+							nodeKind: "UnknownObjectNode",
 							tooltipContents: {
 								schema: {
 									nodeKind: "TreeNode",
