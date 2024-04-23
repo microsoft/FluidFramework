@@ -48,7 +48,7 @@ import {
 	nodeKeyFieldKey,
 	typeNameSymbol,
 } from "../../../feature-libraries/index.js";
-import { TreeContent } from "../../../shared-tree/index.js";
+import { TreeContent, type ITreeCheckout } from "../../../shared-tree/index.js";
 import { brand, capitalize } from "../../../util/index.js";
 import { failCodecFamily, flexTreeViewWithContent, forestWithContent } from "../../utils.js";
 
@@ -334,8 +334,7 @@ describe("LazyNode", () => {
 		});
 		const context = getTreeContext(
 			schema,
-			forest,
-			editBuilder,
+			{ forest, editor: editBuilder } as unknown as ITreeCheckout,
 			createMockNodeKeyManager(),
 			brand(nodeKeyFieldKey),
 		);
@@ -431,8 +430,7 @@ describe("LazyNode", () => {
 		const forest = forestWithContent({ schema, initialTree });
 		const context = getTreeContext(
 			schema,
-			forest,
-			editBuilder,
+			{ forest, editor: editBuilder } as unknown as ITreeCheckout,
 			createMockNodeKeyManager(),
 			brand(nodeKeyFieldKey),
 		);

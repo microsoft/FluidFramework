@@ -23,6 +23,7 @@ import { FlexTreeSchema } from "../typed-schema/index.js";
 import { FlexTreeField } from "./flexTreeTypes.js";
 import { LazyEntity, prepareForEditSymbol } from "./lazyEntity.js";
 import { makeField } from "./lazyField.js";
+import type { ITreeCheckout } from "../../shared-tree/index.js";
 
 /**
  * A common context of a "forest" of FlexTrees.
@@ -51,6 +52,11 @@ export interface FlexTreeContext extends ISubscribable<ForestEvents> {
 	 * The forest containing the tree data associated with this context
 	 */
 	readonly forest: IForestSubscription;
+
+	/**
+	 * The checkout object associated with this context.
+	 */
+	readonly checkout: ITreeCheckout;
 }
 
 /**
@@ -75,19 +81,31 @@ export class Context implements FlexTreeContext, IDisposable {
 	private disposed = false;
 
 	/**
-	 * @param forest - the Forest
-	 * @param editor - an editor that makes changes to the forest.
+	 * The forest from the {@link checkout}.
+	 */
+	public readonly forest: IForestSubscription;
+
+	/**
+	 * An editor that makes changes to the {@link forest}.
+	 */
+	public readonly editor: IDefaultEditBuilder;
+
+	/**
+	 * @param schema -
+	 * @param checkout -
 	 * @param nodeKeyManager - an object which handles node key generation and conversion
 	 * @param nodeKeyFieldKey - an optional field key under which node keys are stored in this tree.
 	 * If present, clients may query the {@link LocalNodeKey} of a node directly via the {@link localNodeKeySymbol}.
 	 */
 	public constructor(
 		public readonly schema: FlexTreeSchema,
-		public readonly forest: IForestSubscription,
-		public readonly editor: IDefaultEditBuilder,
+		public readonly checkout: ITreeCheckout,
 		public readonly nodeKeyManager: NodeKeyManager,
 		public readonly nodeKeyFieldKey: FieldKey,
 	) {
+		this.forest = checkout.forest;
+		this.editor = checkout.editor;
+
 		this.eventUnregister = [
 			this.forest.on("beforeChange", () => {
 				this.prepareForEdit();
@@ -173,10 +191,9 @@ export class Context implements FlexTreeContext, IDisposable {
  */
 export function getTreeContext(
 	schema: FlexTreeSchema,
-	forest: IForestSubscription,
-	editor: IDefaultEditBuilder,
+	checkout: ITreeCheckout,
 	nodeKeyManager: NodeKeyManager,
 	nodeKeyFieldKey: FieldKey,
 ): Context {
-	return new Context(schema, forest, editor, nodeKeyManager, nodeKeyFieldKey);
+	return new Context(schema, checkout, nodeKeyManager, nodeKeyFieldKey);
 }

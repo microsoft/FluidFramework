@@ -43,7 +43,7 @@ import {
 	makeModularChangeCodecFamily,
 	nodeKeyFieldKey,
 } from "../../../feature-libraries/index.js";
-import { ForestType } from "../../../shared-tree/index.js";
+import { ForestType, type ITreeCheckout } from "../../../shared-tree/index.js";
 import { brand } from "../../../util/index.js";
 import { flexTreeViewWithContent, numberSequenceRootSchema } from "../../utils.js";
 
@@ -100,8 +100,10 @@ describe("End to end chunked encoding", () => {
 			);
 			return getTreeContext(
 				schema,
-				editableForest,
-				dummyEditor,
+				{
+					forest: editableForest,
+					editor: dummyEditor,
+				} as unknown as ITreeCheckout,
 				createMockNodeKeyManager(),
 				brand(nodeKeyFieldKey),
 			);

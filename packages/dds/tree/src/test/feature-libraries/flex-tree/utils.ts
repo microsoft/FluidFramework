@@ -15,24 +15,26 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { Context, getTreeContext } from "../../../feature-libraries/flex-tree/context.js";
 import {
-	DefaultEditBuilder,
 	FlexAllowedTypes,
 	FlexFieldKind,
 	FlexTreeSchema,
 	createMockNodeKeyManager,
 	nodeKeyFieldKey,
 } from "../../../feature-libraries/index.js";
-import { TreeContent } from "../../../shared-tree/index.js";
+import {
+	TreeContent,
+	type ISharedTreeEditor,
+	type ITreeCheckout,
+} from "../../../shared-tree/index.js";
 import { brand } from "../../../util/index.js";
 import { forestWithContent } from "../../utils.js";
 
 export function getReadonlyContext(forest: IEditableForest, schema: FlexTreeSchema): Context {
 	// This will error if someone tries to call mutation methods on it
-	const dummyEditor = {} as unknown as DefaultEditBuilder;
+	const dummyEditor = {} as unknown as ISharedTreeEditor;
 	return getTreeContext(
 		schema,
-		forest,
-		dummyEditor,
+		{ forest, editor: dummyEditor } as unknown as ITreeCheckout,
 		createMockNodeKeyManager(),
 		brand(nodeKeyFieldKey),
 	);
