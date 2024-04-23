@@ -10,10 +10,11 @@ import {
 	type PackageJson,
 	typeOnly,
 } from "@fluidframework/build-tools";
+import { Flags } from "@oclif/core";
 import { mkdirSync, readJson, rmSync, writeFileSync } from "fs-extra";
 import * as resolve from "resolve.exports";
 import { PackageCommand } from "../../BasePackageCommand";
-import { ApiLevel } from "../../library";
+import { ApiLevel, knownApiLevels } from "../../library";
 import {
 	ensureDevDependencyExists,
 	generateCompatibilityTestCases,
@@ -29,28 +30,27 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 	static readonly description = "Generates type tests for a package or group of packages.";
 
 	static readonly flags = {
+		level: Flags.string({
+			description: "What API level to generate tests for.",
+			default: ApiLevel.internal,
+			options: knownApiLevels,
+		}),
+		publicFallback: Flags.boolean({
+			description:
+				"Use the public entrypoint as a fallback if the API at the requested level is not found. Pass --no-publicFallback to disable.",
+			default: true,
+		}),
 		...PackageCommand.flags,
 	} as const;
 
-	// public async init(): Promise<void> {
-	// 	await super.init();
-	// 	if (this.flags.version === undefined) {
-	// 		if (this.flags.path === undefined) {
-	// 			this.error("Either version or path must be specified.");
-	// 		}
-	// 		const pkg = new Package(path.join(this.flags.path, "package.json"), "none");
-	// 		this.versionToCheck = pkg.version;
-	// 	} else {
-	// 		this.versionToCheck = this.flags.version;
-	// 	}
-	// }
-
-	// private readonly invalidVersions: Package[] = [];
 	protected async processPackage(pkg: Package): Promise<void> {
 		// Do not check that file exists before opening:
 		// Doing so is a time of use vs time of check issue so opening the file could fail anyway.
 		// Do not catch error from opening file since the default behavior is fine (exits process with error showing useful message)
 
+		const { level: levelFlag, publicFallback } = this.flags;
+		// This cast is safe because oclif has already ensured only known ApiLevel values get to this point.
+		const level = levelFlag as ApiLevel;
 		const currentPackageJson = (await readJson("package.json")) as PackageJson;
 		const currentPackageName = currentPackageJson.name;
 		const previousPackageName = `${currentPackageJson.name}-previous`;
@@ -74,11 +74,13 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		}
 
 		const [currentTypeDefs, previousTypeDefs] = [
-			// First try the internal paths, but fall back to public otherwise.
-			getTypesPathFromPackage(currentPackageJson, ApiLevel.internal, this) ??
-				getTypesPathFromPackage(currentPackageJson, ApiLevel.public, this),
-			getTypesPathFromPackage(previousPackageJson, ApiLevel.internal, this) ??
-				getTypesPathFromPackage(previousPackageJson, ApiLevel.public, this),
+			// First try the requested paths, but fall back to public otherwise if configured.
+			getTypesPathFromPackage(currentPackageJson, level, this) ?? publicFallback
+				? getTypesPathFromPackage(currentPackageJson, level, this)
+				: undefined,
+			getTypesPathFromPackage(previousPackageJson, level, this) ?? publicFallback
+				? getTypesPathFromPackage(previousPackageJson, level, this)
+				: undefined,
 		];
 
 		if (currentTypeDefs === undefined) {
@@ -154,7 +156,7 @@ import type * as current from "../../index.js";
  */
 export function getTypesPathFromPackage(
 	packageJson: PackageJson,
-	level: ApiLevel = ApiLevel.internal,
+	level: ApiLevel,
 	log: Logger,
 ): string {
 	const exports =
@@ -185,7 +187,7 @@ export function getTypesPathFromPackage(
 
 /**
  * Finds the path to the types of a package using the package's export map.
- * If the path is found, it is returned. Otherwise, an error is thrown.
+ * If the path is found, it is returned. Otherwise it returns undefined.
  *
  * This implementation iterates through the individual exports entries recursively
  *
@@ -195,17 +197,12 @@ export function getTypesPathFromPackage(
  */
 export function findTypesPathForApiLevel(
 	exports: ExportsRecordValue,
-	level: ApiLevel = ApiLevel.internal,
+	level: ApiLevel,
 	log: Logger,
 ): string | undefined {
 	for (const [entry, exportsValue] of Object.entries(exports)) {
 		if (typeof exportsValue === "string") {
 			if (entry === "types") {
-				// const isTypeOnly = !(
-				// 	"default" in exports ||
-				// 	"import" in exports ||
-				// 	"require" in exports
-				// );
 				return exportsValue;
 			}
 		} else if (exportsValue !== null) {
