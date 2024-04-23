@@ -40,7 +40,7 @@ const user = {
 
 const azureUser = {
 	userId: user.id,
-	userName: user.name,
+	name: user.name,
 	additionalDetails: userDetails,
 };
 

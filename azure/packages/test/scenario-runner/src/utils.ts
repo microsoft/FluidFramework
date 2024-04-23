@@ -70,7 +70,7 @@ export function createAzureTokenProvider(
 	// eslint-disable-next-line import/no-deprecated
 	return new AzureFunctionTokenProvider(`${fnUrl}/api/GetFrsToken`, {
 		userId: userID ?? "foo",
-		userName: userName ?? "bar",
+		name: userName ?? "bar",
 	});
 }
 
