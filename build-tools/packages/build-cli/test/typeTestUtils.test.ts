@@ -27,7 +27,7 @@ const mockPackageObject: PackageJson = {
  */
 describe("typeTestUtils", () => {
 	const packageObject: PackageJson = mockPackageObject;
-	const previousPackageName = `${packageObject.name}-previous`;
+	// const previousPackageName = `${packageObject.name}-previous`;
 
 	describe("ensureDevDependencyExists", () => {
 		it("Should not throw an error if dev dependency exists", () => {
