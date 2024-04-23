@@ -1243,7 +1243,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				continue;
 			}
 			const dataStoreId = pathParts[1];
-			assert(this.contexts.has(dataStoreId), 0x2d7 /* No data store with specified id */);
+			assert(
+				this.contexts.has(dataStoreId),
+				"updateUnusedRoutes: No data store with specified id",
+			);
 			// Delete the contexts of unused data stores.
 			this.contexts.delete(dataStoreId);
 			// Delete the summarizer node of the unused data stores.
