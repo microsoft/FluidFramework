@@ -127,6 +127,7 @@ system:
 usage:
   clientConnectivityCountingEnabled: false
   signalUsageCountingEnabled: false
+  httpUsageCountingEnabled: false
 
 shared:
   transientTenants: []
