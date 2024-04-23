@@ -307,9 +307,9 @@ function makeModularChangeCodec(
 				// `undefined` does not round-trip through JSON strings, so it needs special handling.
 				// Most entries will have an undefined revision due to the revision information being inherited from the `ModularChangeset`.
 				// We therefore optimize for the common case by omitting the revision when it is undefined.
-				return r !== undefined
-					? [commitBuildsEncoded, revisionTagCodec.encode(r, context)]
-					: [commitBuildsEncoded];
+				return r === undefined || r === context.revision
+					? [commitBuildsEncoded]
+					: [commitBuildsEncoded, revisionTagCodec.encode(r, context)];
 			},
 		);
 		return buildsArray.length === 0
@@ -343,7 +343,9 @@ function makeModularChangeCodec(
 		encoded.builds.forEach((build) => {
 			// EncodedRevisionTag cannot be an array so this ensures that we can isolate the tuple
 			const revision =
-				build[1] === undefined ? undefined : revisionTagCodec.decode(build[1], context);
+				build[1] === undefined
+					? context.revision
+					: revisionTagCodec.decode(build[1], context);
 			map.set(revision, new Map(build[0].map(([i, n]) => [i, getChunk(n)])));
 		});
 

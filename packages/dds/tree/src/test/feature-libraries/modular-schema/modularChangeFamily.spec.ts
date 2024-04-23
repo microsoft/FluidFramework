@@ -1549,7 +1549,7 @@ describe("ModularChangeFamily", () => {
 		}
 
 		const sessionId = "session1" as SessionId;
-		const context: ChangeEncodingContext = { originatorId: sessionId };
+		const context: ChangeEncodingContext = { originatorId: sessionId, revision: undefined };
 		const encodingTestData: EncodingTestData<
 			ModularChangeset,
 			EncodedModularChangeset,

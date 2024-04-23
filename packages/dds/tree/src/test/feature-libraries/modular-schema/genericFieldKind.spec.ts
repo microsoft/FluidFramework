@@ -296,7 +296,7 @@ describe("GenericField", () => {
 	});
 
 	describe("Encoding", () => {
-		const baseContext = { originatorId: "session1" as SessionId };
+		const baseContext = { originatorId: "session1" as SessionId, revision: undefined };
 
 		const encodingTestData: EncodingTestData<
 			GenericChangeset,
