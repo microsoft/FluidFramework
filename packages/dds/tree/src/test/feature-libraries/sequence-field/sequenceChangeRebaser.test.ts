@@ -24,14 +24,7 @@ import {
 import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js";
 import { TestChange } from "../../testChange.js";
 import { deepFreeze, defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
-import {
-	IdAllocator,
-	brand,
-	idAllocatorFromMaxId,
-	makeArray,
-	nestedMapFromFlatList,
-	nestedMapToFlatList,
-} from "../../../util/index.js";
+import { IdAllocator, brand, idAllocatorFromMaxId, makeArray } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { NodeId, RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import/no-internal-modules
