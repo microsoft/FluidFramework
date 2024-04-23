@@ -17,12 +17,14 @@ export {
 	RuntimeHeaders,
 	AllowTombstoneRequestHeaderKey,
 	AllowInactiveRequestHeaderKey,
+	DeletedResponseHeaderKey,
 	TombstoneResponseHeaderKey,
 	InactiveResponseHeaderKey,
 	ISummaryConfiguration,
 	DefaultSummaryConfiguration,
 	ICompressionRuntimeOptions,
 	CompressionAlgorithms,
+	RuntimeHeaderData,
 } from "./containerRuntime";
 export {
 	ContainerMessageType,
@@ -41,6 +43,7 @@ export {
 	IGCRuntimeOptions,
 	IMarkPhaseStats,
 	ISweepPhaseStats,
+	IGCNodeUpdatedProps,
 	IGCStats,
 } from "./gc";
 export {

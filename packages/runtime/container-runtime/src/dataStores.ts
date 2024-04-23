@@ -8,6 +8,7 @@ import {
 	IDisposable,
 	IFluidHandle,
 	IRequest,
+	IResponse,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
@@ -37,6 +38,7 @@ import {
 	GCDataBuilder,
 	isSerializedHandle,
 	processAttachMessageGCData,
+	RequestParser,
 	responseToException,
 	SummaryTreeBuilder,
 	unpackChildNodesUsedRoutes,
@@ -67,6 +69,7 @@ import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs";
 import { GCNodeType, detectOutboundRoutesViaDDSKey } from "./gc";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summary";
+import { RuntimeHeaders } from "./containerRuntime.js";
 
 type PendingAliasResolve = (success: boolean) => void;
 
@@ -102,6 +105,9 @@ export class DataStores implements IDisposable {
 		Promise<AliasResult>
 	>();
 
+	private readonly contexts: DataStoreContexts;
+	private readonly aliasedDataStores: Set<string>;
+
 	constructor(
 		private readonly baseSnapshot: ISnapshotTree | undefined,
 		private readonly runtime: ContainerRuntime,
@@ -112,11 +118,7 @@ export class DataStores implements IDisposable {
 		) => CreateChildSummarizerNodeFn,
 		private readonly deleteChildSummarizerNodeFn: (id: string) => void,
 		baseLogger: ITelemetryBaseLogger,
-		private readonly gcNodeUpdated: (
-			nodePath: string,
-			timestampMs: number,
-			packagePath?: readonly string[],
-		) => void,
+		private readonly gcNodeUpdated: (props: IGCNodeUpdatedProps) => void,
 		private readonly isDataStoreDeleted: (nodePath: string) => boolean,
 		private readonly aliasMap: Map<string, string>,
 		private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
@@ -127,6 +129,7 @@ export class DataStores implements IDisposable {
 			"/",
 			this.runtime.IFluidHandleContext,
 		);
+		this.aliasedDataStores = new Set(aliasMap.values());
 
 		// Extract stores stored inside the snapshot
 		const fluidDataStores = new Map<string, ISnapshotTree>();
@@ -338,6 +341,7 @@ export class DataStores implements IDisposable {
 		this.runtime.addedGCOutboundReference(this.containerRuntimeHandle, handle);
 
 		this.aliasMap.set(aliasMessage.alias, context.id);
+		this.aliasedDataStores.add(context.id);
 		context.setInMemoryRoot();
 		return true;
 	}
@@ -541,16 +545,18 @@ export class DataStores implements IDisposable {
 
 		// Notify that a GC node for the data store changed. This is used to detect if a deleted data store is
 		// being used.
-		this.gcNodeUpdated(
-			`/${envelope.address}`,
-			message.timestamp,
-			context.isLoaded ? context.packagePath : undefined,
-		);
+		this.gcNodeUpdated({
+			node: { type: "DataStore", path: `/${envelope.address}` },
+			reason: "Changed",
+			timestampMs: message.timestamp,
+			packagePath: context.isLoaded ? context.packagePath : undefined,
+		});
 	}
 
 	public async getDataStore(
 		id: string,
 		requestHeaderData: RuntimeHeaderData,
+		originalRequest: IRequest,
 	): Promise<FluidDataStoreContext> {
 		const headerData = { ...defaultRuntimeHeaderData, ...requestHeaderData };
 		if (
@@ -560,13 +566,15 @@ export class DataStores implements IDisposable {
 				"Requested",
 				"getDataStore",
 				requestHeaderData,
+				originalRequest,
 			)
 		) {
 			// The requested data store has been deleted by gc. Create a 404 response exception.
-			const request: IRequest = { url: id };
 			throw responseToException(
-				createResponseError(404, "DataStore was deleted", request),
-				request,
+				createResponseError(404, "DataStore was deleted", originalRequest, {
+					[DeletedResponseHeaderKey]: true,
+				}),
+				originalRequest,
 			);
 		}
 
@@ -610,28 +618,69 @@ export class DataStores implements IDisposable {
 	 * Checks if the data store has been deleted by GC. If so, log an error.
 	 * @param id - The data store's id.
 	 * @param context - The data store context.
+	 * @param deletedLogSuffix - Whether it was Changed or Requested (will go into the eventName)
 	 * @param callSite - The function name this is called from.
 	 * @param requestHeaderData - The request header information to log if the data store is deleted.
+	 * @param originalRequest - The original request (could be for a child of the DataStore)
 	 * @returns true if the data store is deleted. Otherwise, returns false.
 	 */
 	private checkAndLogIfDeleted(
 		id: string,
 		context: FluidDataStoreContext | undefined,
-		deletedLogSuffix: string,
+		deletedLogSuffix: "Changed" | "Requested",
 		callSite: string,
 		requestHeaderData?: RuntimeHeaderData,
+		originalRequest?: IRequest,
 	) {
 		const dataStoreNodePath = `/${id}`;
 		if (!this.isDataStoreDeleted(dataStoreNodePath)) {
 			return false;
 		}
 
+		const idToLog =
+			originalRequest !== undefined
+				? urlToGCNodePath(originalRequest.url)
+				: dataStoreNodePath;
+
+		// Log the package details asynchronously since getInitialSnapshotDetails is async
+		const recentelyDeletedContext = this.contexts.getRecentlyDeletedContext(id);
+		if (recentelyDeletedContext !== undefined) {
+			recentelyDeletedContext
+				.getInitialSnapshotDetails()
+				.then((details) => {
+					return details.pkg.join("/");
+				})
+				.then(
+					(pkg) => ({ pkg, error: undefined }),
+					(error) => ({ pkg: undefined, error }),
+				)
+				.then(({ pkg, error }) => {
+					this.mc.logger.sendTelemetryEvent(
+						{
+							eventName: `GC_DeletedDataStore_PathInfo`,
+							...tagCodeArtifacts({
+								id: idToLog,
+								pkg,
+							}),
+							callSite,
+						},
+						error,
+					);
+				})
+				.catch(() => {});
+		}
+
 		this.mc.logger.sendErrorEvent({
 			eventName: `GC_Deleted_DataStore_${deletedLogSuffix}`,
-			...tagCodeArtifacts({ id }),
+			...tagCodeArtifacts({ id: idToLog }),
 			callSite,
 			headers: JSON.stringify(requestHeaderData),
 			exists: context !== undefined,
+			details: {
+				url: originalRequest?.url,
+				headers: JSON.stringify(originalRequest?.headers),
+				aliased: this.aliasedDataStores.has(id),
+			},
 		});
 		return true;
 	}
@@ -881,12 +930,37 @@ export class DataStores implements IDisposable {
 				continue;
 			}
 			const dataStoreId = pathParts[1];
-			assert(this.contexts.has(dataStoreId), 0x2d7 /* No data store with specified id */);
+			assert(
+				this.contexts.has(dataStoreId),
+				"updateUnusedRoutes: No data store with specified id",
+			);
 			// Delete the contexts of unused data stores.
 			this.contexts.delete(dataStoreId);
 			// Delete the summarizer node of the unused data stores.
 			this.deleteChildSummarizerNodeFn(dataStoreId);
 		}
+	}
+
+	private deleteChild(dataStoreId: string) {
+		const dataStoreContext = this.contexts.get(dataStoreId);
+		assert(dataStoreContext !== undefined, 0x2d7 /* No data store with specified id */);
+
+		if (dataStoreContext.isLoaded) {
+			this.mc.logger.sendTelemetryEvent({
+				eventName: "GC_DeletingLoadedDataStore",
+				...tagCodeArtifacts({
+					id: dataStoreId,
+					pkg: dataStoreContext.packagePath.join("/"),
+				}),
+			});
+		}
+
+		dataStoreContext.delete();
+
+		// Delete the contexts of sweep ready data stores.
+		this.contexts.delete(dataStoreId);
+		// Delete the summarizer node of the sweep ready data stores.
+		this.parentContext.deleteChildSummarizerNode?.(dataStoreId);
 	}
 
 	/**
@@ -922,12 +996,7 @@ export class DataStores implements IDisposable {
 				continue;
 			}
 
-			dataStoreContext.delete();
-
-			// Delete the contexts of sweep ready data stores.
-			this.contexts.delete(dataStoreId);
-			// Delete the summarizer node of the sweep ready data stores.
-			this.deleteChildSummarizerNodeFn(dataStoreId);
+			this.deleteChild(dataStoreId);
 		}
 		return Array.from(sweepReadyDataStoreRoutes);
 	}
@@ -965,8 +1034,9 @@ export class DataStores implements IDisposable {
 	 */
 	private async getOutboundRoutes(): Promise<string[]> {
 		const outboundRoutes: string[] = [];
+		// Getting this information is a performance optimization that reduces network calls for virtualized datastores
 		for (const [contextId, context] of this.contexts) {
-			const isRootDataStore = await context.isRoot();
+			const isRootDataStore = await context.isRoot(this.aliasedDataStores);
 			if (isRootDataStore) {
 				outboundRoutes.push(`/${contextId}`);
 			}
@@ -1001,7 +1071,6 @@ export class DataStores implements IDisposable {
 		}
 		return GCNodeType.SubDataStore;
 	}
-}
 
 export function getSummaryForDatastores(
 	snapshot: ISnapshotTree | undefined,

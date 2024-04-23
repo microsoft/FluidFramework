@@ -487,6 +487,11 @@ export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in th
  */
 export const AllowInactiveRequestHeaderKey = "allowInactive"; // Belongs in the enum above, but avoiding the breaking change
 
+/*
+ * Error responses when requesting a deleted object will have this header set to true
+ * @alpha
+ */
+export const DeletedResponseHeaderKey = "wasDeleted";
 /**
  * Tombstone error responses will have this header set to true
  * @alpha
@@ -500,6 +505,7 @@ export const InactiveResponseHeaderKey = "isInactive";
 
 /**
  * The full set of parsed header data that may be found on Runtime requests
+ * @internal
  */
 export interface RuntimeHeaderData {
 	wait?: boolean;
@@ -1445,8 +1451,7 @@ export class ContainerRuntime
 					),
 			(id: string) => this.summarizerNode.deleteChild(id),
 			this.mc.logger,
-			(path: string, timestampMs: number, packagePath?: readonly string[]) =>
-				this.garbageCollector.nodeUpdated(path, "Changed", timestampMs, packagePath),
+			(props) => this.garbageCollector.nodeUpdated(props),
 			(path: string) => this.garbageCollector.isNodeDeleted(path),
 			new Map<string, string>(dataStoreAliasMap),
 		);
@@ -1467,7 +1472,11 @@ export class ContainerRuntime
 					);
 				}
 			},
-			(blobPath: string) => this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
+			(blobPath: string) =>
+				this.garbageCollector.nodeUpdated({
+					node: { type: "Blob", path: blobPath },
+					reason: "Loaded",
+				}),
 			(blobPath: string) => this.garbageCollector.isNodeDeleted(blobPath),
 			this,
 			pendingRuntimeState?.pendingAttachmentBlobs,
@@ -1830,31 +1839,33 @@ export class ContainerRuntime
 			headerData.allowInactive = request.headers[AllowInactiveRequestHeaderKey];
 		}
 
-		// We allow Tombstone requests for sub-DataStore objects
+		// We allow Tombstone/Inactive requests for sub-DataStore objects
 		if (requestForChild) {
 			headerData.allowTombstone = true;
+			headerData.allowInactive = true;
 		}
 
 		await this.dataStores.waitIfPendingAlias(id);
 		const internalId = this.internalId(id);
-		const dataStoreContext = await this.dataStores.getDataStore(internalId, headerData);
+		const dataStoreContext = await this.dataStores.getDataStore(
+			internalId,
+			headerData,
+			request,
+		);
 
-		// Remove query params, leading and trailing slashes from the url. This is done to make sure the format is
-		// the same as GC nodes id.
-		const urlWithoutQuery = trimLeadingAndTrailingSlashes(request.url.split("?")[0]);
 		// Get the initial snapshot details which contain the data store package path.
 		const details = await dataStoreContext.getInitialSnapshotDetails();
 
-		// Note that this will throw if the data store is inactive or tombstoned and throwing on incorrect usage
-		// is configured.
-		this.garbageCollector.nodeUpdated(
-			`/${urlWithoutQuery}`,
-			"Loaded",
-			undefined /* timestampMs */,
-			details.pkg,
+		// When notifying GC of this node being loaded, we only indicate the DataStore itself, not the full subDataStore url if applicable.
+		// This is in case the url is to a route that Fluid doesn't understand or track for GC (e.g. if suited for a custom request handler)
+		this.garbageCollector.gcNodeUpdated({
+			node: { type: "DataStore", path: `/${id}` },
+			reason: "Loaded",
+			packagePath: details.pkg,
 			request,
 			headerData,
-		);
+		});
+
 		return dataStoreContext.realize();
 	}
 
@@ -2492,12 +2503,11 @@ export class ContainerRuntime
 				"entryPoint must be defined on data store runtime for using getAliasedDataStoreEntryPoint",
 			);
 		}
-		this.garbageCollector.nodeUpdated(
-			`/${internalId}`,
-			"Loaded",
-			undefined /* timestampMs */,
-			context.packagePath,
-		);
+		this.garbageCollector.nodeUpdated({
+			node: { type: "DataStore", path: `/${internalId}` },
+			reason: "Loaded",
+			packagePath: context.packagePath,
+		});
 		return channel.entryPoint;
 	}
 

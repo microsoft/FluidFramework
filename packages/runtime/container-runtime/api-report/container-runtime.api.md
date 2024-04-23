@@ -266,10 +266,10 @@ export type GCFeatureMatrix = {
 
 // @alpha
 export const GCNodeType: {
-    DataStore: string;
-    SubDataStore: string;
-    Blob: string;
-    Other: string;
+    readonly DataStore: "DataStore";
+    readonly SubDataStore: "SubDataStore";
+    readonly Blob: "Blob";
+    readonly Other: "Other";
 };
 
 // @alpha (undocumented)
@@ -428,6 +428,19 @@ export interface IGCMetadata {
     // @deprecated
     readonly sweepEnabled?: boolean;
     readonly tombstoneTimeoutMs?: number;
+}
+
+// @internal
+export interface IGCNodeUpdatedProps {
+    headerData?: RuntimeHeaderData;
+    node: {
+        type: (typeof GCNodeType)["DataStore" | "Blob"];
+        path: string;
+    };
+    packagePath?: readonly string[];
+    reason: "Loaded" | "Changed";
+    request?: IRequest;
+    timestampMs?: number;
 }
 
 // @alpha (undocumented)
@@ -733,6 +746,18 @@ export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck |
 // @internal
 export interface RecentlyAddedContainerRuntimeMessageDetails {
     compatDetails: IContainerRuntimeMessageCompatDetails;
+}
+
+// @internal
+export interface RuntimeHeaderData {
+    // (undocumented)
+    allowInactive?: boolean;
+    // (undocumented)
+    allowTombstone?: boolean;
+    // (undocumented)
+    viaHandle?: boolean;
+    // (undocumented)
+    wait?: boolean;
 }
 
 // @internal
