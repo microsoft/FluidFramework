@@ -22,7 +22,7 @@ export interface CommitEnricher<TChange> {
 	 * @param toResubmit - the commits that will be resubmitted (from oldest to newest).
 	 * This must be the most rebased version of these commits (i.e., rebased over all known concurrent edits)
 	 * as opposed to the version which was last submitted.
-	 * Can be safely mutated after this call returns.
+	 * `toResubmit` can be safely mutated by the caller after this call returns.
 	 */
 	prepareForResubmit(toResubmit: readonly GraphCommit<TChange>[]): void;
 
