@@ -172,6 +172,27 @@
 			],
 		},
 		{
+			"name": "flub generate typetests",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
+			"cwd": "${workspaceFolder}/packages/dds/sequence",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": [
+				"generate",
+				"typetests",
+			],
+		},
+		{
+			"name": "fluid-type-test-generator",
+			"program": "${workspaceFolder}/build-tools/packages/build-tools/bin/fluid-type-test-generator",
+			"cwd": "${workspaceFolder}/packages/dds/sequence",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": [],
+		},
+		{
 			"type": "node",
 			"request": "attach",
 			"name": "Attach by Process ID",
