@@ -124,7 +124,7 @@ describe("GC Telemetry Tracker", () => {
 	// Mock node loaded and changed activity for the given nodes.
 	function mockNodeChanges(nodeIds: string[]) {
 		nodeIds.forEach((id) => {
-			telemetryTracker.nodeUsed({
+			telemetryTracker.nodeUsed(id, {
 				id,
 				usageType: "Loaded",
 				currentReferenceTimestampMs: Date.now(),
@@ -132,7 +132,7 @@ describe("GC Telemetry Tracker", () => {
 				completedGCRuns: 0,
 				isTombstoned: false,
 			});
-			telemetryTracker.nodeUsed({
+			telemetryTracker.nodeUsed(id, {
 				id,
 				usageType: "Changed",
 				currentReferenceTimestampMs: Date.now(),
@@ -145,7 +145,7 @@ describe("GC Telemetry Tracker", () => {
 
 	// Mock node revived activity for the given nodes.
 	function reviveNode(fromId: string, toId: string, isTombstoned = false) {
-		telemetryTracker.nodeUsed({
+		telemetryTracker.nodeUsed(toId, {
 			id: toId,
 			usageType: "Revived",
 			currentReferenceTimestampMs: Date.now(),
@@ -446,6 +446,37 @@ describe("GC Telemetry Tracker", () => {
 					],
 					"revived event not as expected",
 				);
+			});
+
+			it("generates events properly for untracked subDataStore paths", async () => {
+				// Mark node 1 as unreferenced.
+				markNodesUnreferenced([nodes[1]]);
+
+				// We'll mock a Loaded event for this path, passing the DataStore path as trackedId to ensure coverage
+				const subDataStorePath = `${nodes[1]}/something`;
+
+				// Expire the timeout, update nodes and validate that all events for node 1 are logged.
+				clock.tick(timeout);
+				telemetryTracker.nodeUsed(nodes[1], {
+					id: subDataStorePath,
+					usageType: "Loaded",
+					currentReferenceTimestampMs: Date.now(),
+					packagePath: testPkgPath,
+					completedGCRuns: 0,
+					isTombstoned: false,
+				});
+				await simulateGCToTriggerEvents(isSummarizerClient);
+				const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
+				expectedEvents.push({
+					eventName: loadedEventName,
+					timeout,
+					...tagCodeArtifacts({ id: subDataStorePath, pkg: testPkgPath.join("/") }),
+					createContainerRuntimeVersion: pkgVersion,
+					isTombstoned: false,
+					trackedId: nodes[1],
+					type: "SubDataStore",
+				});
+				assertMatchEvents(expectedEvents, "all events not as expected");
 			});
 
 			it("generates events once per node", async () => {

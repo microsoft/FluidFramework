@@ -14,10 +14,12 @@ import {
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
-import { Jsonable } from "@fluidframework/datastore-definitions/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
-import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { Serializable } from "@fluidframework/datastore-definitions/internal";
+import { isObject } from "@fluidframework/core-utils/internal";
 import { ISharedMap, MapFactory } from "../../index.js";
 
 import { _dirname } from "./dirname.cjs";
@@ -29,7 +31,7 @@ interface Clear {
 interface SetKey {
 	type: "setKey";
 	key: string;
-	value: Jsonable<unknown>;
+	value: Serializable<unknown>;
 }
 
 interface DeleteKey {
@@ -47,16 +49,13 @@ async function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap): Promise<vo
 	for (const key of a.keys()) {
 		const aVal: unknown = a.get(key);
 		const bVal: unknown = b.get(key);
-		if (
-			aVal !== null &&
-			typeof aVal === "object" &&
-			bVal !== null &&
-			typeof bVal === "object"
-		) {
-			const aObj: FluidObject<IFluidHandle> = aVal;
-			const bObj: FluidObject<IFluidHandle> = bVal;
-			const aHandle = aObj.IFluidHandle ? await aObj.IFluidHandle?.get() : aObj;
-			const bHandle = bObj.IFluidHandle ? await bObj.IFluidHandle?.get() : bObj;
+		if (isObject(aVal) === true) {
+			assert(
+				isObject(bVal),
+				`${a.id} and ${b.id} differ at ${key}: a is an object, b is not}`,
+			);
+			const aHandle = isFluidHandle(aVal) ? await aVal.get() : aVal;
+			const bHandle = isFluidHandle(bVal) ? await bVal.get() : bVal;
 			assert.equal(
 				aHandle,
 				bHandle,
@@ -105,7 +104,11 @@ function makeGenerator(optionsParam?: Partial<GeneratorOptions>): AsyncGenerator
 	const setKey: Generator<SetKey, State> = ({ random }) => ({
 		type: "setKey",
 		key: random.pick(keyNames),
-		value: random.bool() ? random.integer(1, 50) : random.string(random.integer(3, 7)),
+		value: random.pick([
+			(): number => random.integer(1, 50),
+			(): string => random.string(random.integer(3, 7)),
+			(): IFluidHandle => random.handle(),
+		])(),
 	});
 	const deleteKey: Generator<DeleteKey, State> = ({ random }) => ({
 		type: "deleteKey",

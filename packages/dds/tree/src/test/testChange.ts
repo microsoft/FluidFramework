@@ -20,8 +20,7 @@ import {
 	emptyDelta,
 } from "../core/index.js";
 import { JsonCompatibleReadOnly, RecursiveReadonly, brand } from "../util/index.js";
-
-import { deepFreeze } from "./utils.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 export interface NonEmptyTestChange {
 	/**
@@ -202,7 +201,10 @@ export interface AnchorRebaseData {
 	intentions: number[];
 }
 
-const emptyChange: TestChange = { intentions: [] };
+const emptyChange: TestChange = {
+	intentions: [],
+};
+
 const codec: IJsonCodec<
 	TestChange,
 	JsonCompatibleReadOnly,
@@ -225,7 +227,10 @@ export const TestChange = {
 	toDelta,
 	isEmpty,
 	codec,
-	codecs: makeCodecFamily([[0, codec]]),
+	codecs: makeCodecFamily([
+		[1, codec],
+		[2, codec],
+	]),
 };
 deepFreeze(TestChange);
 
@@ -239,7 +244,11 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 	}
 
 	public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
-		return rebase(change, over.change) ?? { intentions: [] };
+		return (
+			rebase(change, over.change) ?? {
+				intentions: [],
+			}
+		);
 	}
 }
 

@@ -101,11 +101,14 @@ describe("SharedTreeChangeEnricher", () => {
 			changes: [
 				{
 					type: "data",
-					innerChange: modularBuilder.buildChange(
-						{ parent: undefined, field: rootFieldKey },
-						optional.identifier,
-						brand(restore),
-					),
+					innerChange: modularBuilder.buildChanges([
+						{
+							type: "field",
+							field: { parent: undefined, field: rootFieldKey },
+							fieldKind: optional.identifier,
+							change: brand(restore),
+						},
+					]),
 				},
 			],
 		};

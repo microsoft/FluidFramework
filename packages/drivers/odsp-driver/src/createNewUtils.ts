@@ -19,8 +19,7 @@ import {
 	type SummaryObject,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import {
@@ -283,7 +282,6 @@ export async function createNewFluidContainerCore<T>(args: {
 				validateResponseCallback?.(fetchResponse.content);
 
 				event.end({
-					headers: Object.keys(headers).length > 0 ? true : undefined,
 					attempts: options.refresh ? 2 : 1,
 					...fetchResponse.propsToLog,
 				});

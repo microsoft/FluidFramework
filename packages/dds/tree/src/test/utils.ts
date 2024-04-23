@@ -115,6 +115,7 @@ import {
 	ISharedTree,
 	ITreeCheckout,
 	InitializeAndSchematizeConfiguration,
+	RevertibleFactory,
 	SharedTree,
 	SharedTreeContentSnapshot,
 	SharedTreeFactory,
@@ -129,30 +130,15 @@ import { SchematizingSimpleTreeView, requireSchema } from "../shared-tree/schema
 // eslint-disable-next-line import/no-internal-modules
 import { SharedTreeOptions } from "../shared-tree/sharedTree.js";
 import { ImplicitFieldSchema, TreeConfiguration, toFlexConfig } from "../simple-tree/index.js";
-import { JsonCompatible, Mutable, brand, nestedMapFromFlatList } from "../util/index.js";
+import {
+	JsonCompatible,
+	Mutable,
+	brand,
+	disposeSymbol,
+	nestedMapFromFlatList,
+} from "../util/index.js";
 
 // Testing utilities
-
-const frozenMethod = () => {
-	assert.fail("Object is frozen");
-};
-
-function freezeObjectMethods<T>(object: T, methods: (keyof T)[]): void {
-	if (Object.isFrozen(object)) {
-		for (const method of methods) {
-			assert.equal(object[method], frozenMethod);
-		}
-	} else {
-		for (const method of methods) {
-			Object.defineProperty(object, method, {
-				enumerable: false,
-				configurable: false,
-				writable: false,
-				value: frozenMethod,
-			});
-		}
-	}
-}
 
 /**
  * A {@link IJsonCodec} implementation which fails on encode and decode.
@@ -171,44 +157,6 @@ export const failCodecFamily: ICodecFamily<any, any> = {
 	resolve: () => assert.fail("Unexpected resolve"),
 	getSupportedFormats: () => [],
 };
-
-/**
- * Recursively freezes the given object.
- *
- * WARNING: this function mutates Map and Set instances to override their mutating methods in order to ensure that the
- * state of those instances cannot be changed. This is necessary because calling `Object.freeze` on a Set or Map does
- * not prevent it from being mutated.
- *
- * @param object - The object to freeze.
- */
-export function deepFreeze<T>(object: T): void {
-	if (object === undefined || object === null) {
-		return;
-	}
-	if (object instanceof Map) {
-		for (const [key, value] of object.entries()) {
-			deepFreeze(key);
-			deepFreeze(value);
-		}
-		freezeObjectMethods(object, ["set", "delete", "clear"]);
-	} else if (object instanceof Set) {
-		for (const key of object.keys()) {
-			deepFreeze(key);
-		}
-		freezeObjectMethods(object, ["add", "delete", "clear"]);
-	} else {
-		// Retrieve the property names defined on object
-		const propNames: (keyof T)[] = Object.getOwnPropertyNames(object) as (keyof T)[];
-		// Freeze properties before freezing self
-		for (const name of propNames) {
-			const value = object[name];
-			if (typeof value === "object") {
-				deepFreeze(value);
-			}
-		}
-	}
-	Object.freeze(object);
-}
 
 /**
  * Manages the creation, connection, and retrieval of SharedTrees and related components for ease of testing.
@@ -675,7 +623,12 @@ export function checkoutWithContent(
 			HasListeners<CheckoutEvents>;
 	},
 ): TreeCheckout {
-	return flexTreeViewWithContent(content, args).checkout;
+	const forest = forestWithContent(content);
+	return createTreeCheckout(testIdCompressor, mintRevisionTag, testRevisionTagCodec, {
+		...args,
+		forest,
+		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
+	});
 }
 
 export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
@@ -688,12 +641,7 @@ export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 		nodeKeyFieldKey?: FieldKey;
 	},
 ): CheckoutFlexTreeView<TRoot> {
-	const forest = forestWithContent(content);
-	const view = createTreeCheckout(testIdCompressor, mintRevisionTag, testRevisionTagCodec, {
-		...args,
-		forest,
-		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
-	});
+	const view = checkoutWithContent(content, args);
 	return new CheckoutFlexTreeView(
 		view,
 		content.schema,
@@ -1069,12 +1017,7 @@ export function rootFromDeltaFieldMap(
 	return rootDelta;
 }
 
-export function createTestUndoRedoStacks(
-	events: ISubscribable<{
-		commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
-		revertibleDisposed(revertible: Revertible, revision: RevisionTag): void;
-	}>,
-): {
+export function createTestUndoRedoStacks(events: ISubscribable<CheckoutEvents>): {
 	undoStack: Revertible[];
 	redoStack: Revertible[];
 	unsubscribe: () => void;
@@ -1082,37 +1025,37 @@ export function createTestUndoRedoStacks(
 	const undoStack: Revertible[] = [];
 	const redoStack: Revertible[] = [];
 
-	const unsubscribeFromNew = events.on("commitApplied", ({ kind }, getRevertible) => {
+	function onDispose(disposed: Revertible): void {
+		const redoIndex = redoStack.indexOf(disposed);
+		if (redoIndex !== -1) {
+			redoStack.splice(redoIndex, 1);
+		} else {
+			const undoIndex = undoStack.indexOf(disposed);
+			if (undoIndex !== -1) {
+				undoStack.splice(undoIndex, 1);
+			}
+		}
+	}
+
+	function onNewCommit(commit: CommitMetadata, getRevertible?: RevertibleFactory): void {
 		if (getRevertible !== undefined) {
-			const revertible = getRevertible();
-			if (kind === CommitKind.Undo) {
+			const revertible = getRevertible(onDispose);
+			if (commit.kind === CommitKind.Undo) {
 				redoStack.push(revertible);
 			} else {
 				undoStack.push(revertible);
 			}
 		}
-	});
+	}
 
-	const unsubscribeFromDisposed = events.on("revertibleDisposed", (revertible) => {
-		const redoIndex = redoStack.indexOf(revertible);
-		if (redoIndex !== -1) {
-			redoStack.splice(redoIndex, 1);
-		} else {
-			const undoIndex = undoStack.indexOf(revertible);
-			if (undoIndex !== -1) {
-				undoStack.splice(undoIndex, 1);
-			}
-		}
-	});
-
+	const unsubscribeFromCommitApplied = events.on("commitApplied", onNewCommit);
 	const unsubscribe = () => {
-		unsubscribeFromNew();
-		unsubscribeFromDisposed();
+		unsubscribeFromCommitApplied();
 		for (const revertible of undoStack) {
-			revertible.release();
+			revertible[disposeSymbol]();
 		}
 		for (const revertible of redoStack) {
-			revertible.release();
+			revertible[disposeSymbol]();
 		}
 	};
 	return { undoStack, redoStack, unsubscribe };
@@ -1198,13 +1141,14 @@ export function treeTestFactory(
  */
 export function getView<TSchema extends ImplicitFieldSchema>(
 	config: TreeConfiguration<TSchema>,
+	nodeKeyManager?: NodeKeyManager,
 ): SchematizingSimpleTreeView<TSchema> {
 	const flexConfig = toFlexConfig(config);
 	const checkout = checkoutWithContent(flexConfig);
 	return new SchematizingSimpleTreeView<TSchema>(
 		checkout,
 		config,
-		createMockNodeKeyManager(),
+		nodeKeyManager ?? createMockNodeKeyManager(),
 		brand(defaultNodeKeyFieldKey),
 	);
 }

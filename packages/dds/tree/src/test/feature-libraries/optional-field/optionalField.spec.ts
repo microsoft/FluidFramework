@@ -6,9 +6,8 @@
 import { strict as assert } from "assert";
 
 import {
+	ChangeAtomId,
 	DeltaFieldChanges,
-	DeltaFieldMap,
-	FieldKey,
 	TaggedChange,
 	makeAnonChange,
 	makeDetachedNodeId,
@@ -17,7 +16,7 @@ import {
 } from "../../../core/index.js";
 import {
 	CrossFieldManager,
-	NodeChangeset,
+	NodeId,
 	RelevantRemovedRootsFromChild,
 } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -37,21 +36,25 @@ import {
 	defaultRevisionMetadataFromChanges,
 	mintRevisionTag,
 } from "../../utils.js";
-import { changesetForChild, fooKey } from "../fieldKindTestUtils.js";
-
+import { TestNodeId } from "../../testNodeId.js";
+import { TestChange } from "../../testChange.js";
+import { Change, assertEqual } from "./optionalFieldUtils.js";
+import { testSnapshots } from "./optionalFieldSnapshots.test.js";
 import { testRebaserAxioms } from "./optionalChangeRebaser.test.js";
 import { testCodecs } from "./optionalFieldChangeCodecs.test.js";
-import { testSnapshots } from "./optionalFieldSnapshots.test.js";
-import { Change, assertEqual } from "./optionalFieldUtils.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 /**
  * A change to a child encoding as a simple placeholder string.
  * This change has no actual meaning, and can be used in tests where the type of child change in not relevant.
  */
-const arbitraryChildChange = changesetForChild("arbitraryChildChange");
+const arbitraryChildChange: NodeId = { localId: brand(42) };
 
-const nodeChange1 = changesetForChild("nodeChange1");
-const nodeChange2 = changesetForChild("nodeChange2");
+const nodeId1: NodeId = { localId: brand(1) };
+const nodeId2: NodeId = { localId: brand(2) };
+
+const nodeChange1 = TestNodeId.create(nodeId1, TestChange.mint([], 1));
+const nodeChange2 = TestNodeId.create(nodeId2, TestChange.mint([], 2));
 
 const failCrossFieldManager: CrossFieldManager = {
 	get: () => assert.fail("Should query CrossFieldManager"),
@@ -59,44 +62,6 @@ const failCrossFieldManager: CrossFieldManager = {
 };
 
 const failingDelegate = (): never => assert.fail("Should not be called");
-
-const deltaFromChild1 = ({ change, revision }: TaggedChange<NodeChangeset>): DeltaFieldMap => {
-	assert.deepEqual(change, nodeChange1);
-	const buildId = makeDetachedNodeId(revision, 1);
-	return new Map<FieldKey, DeltaFieldChanges>([
-		[
-			fooKey,
-			{
-				local: [
-					{
-						count: 1,
-						detach: makeDetachedNodeId(revision, 0),
-						attach: buildId,
-					},
-				],
-			},
-		],
-	]);
-};
-
-const deltaFromChild2 = ({ change, revision }: TaggedChange<NodeChangeset>): DeltaFieldMap => {
-	assert.deepEqual(change, nodeChange2);
-	const buildId = makeDetachedNodeId(revision, 1);
-	return new Map<FieldKey, DeltaFieldChanges>([
-		[
-			fooKey,
-			{
-				local: [
-					{
-						count: 1,
-						detach: makeDetachedNodeId(revision, 0),
-						attach: buildId,
-					},
-				],
-			},
-		],
-	]);
-};
 
 const tag = mintRevisionTag();
 const change1 = tagChange(
@@ -127,7 +92,7 @@ const change2PreChange1: TaggedChange<OptionalChangeset> = tagChange(
 );
 
 const change4: TaggedChange<OptionalChangeset> = tagChange(
-	optionalFieldEditor.buildChildChange(0, nodeChange2),
+	optionalFieldEditor.buildChildChange(0, TestNodeId.create(nodeId2, TestChange.mint([1], 2))),
 	mintRevisionTag(),
 );
 
@@ -154,17 +119,10 @@ describe("optionalField", () => {
 
 	describe("Rebaser", () => {
 		it("can be composed", () => {
-			const simpleChildComposer = (
-				c1: NodeChangeset | undefined,
-				c2: NodeChangeset | undefined,
-			) => {
-				assert(c1 === nodeChange1 && c2 === undefined);
-				return c1;
-			};
 			const composed = optionalChangeRebaser.compose(
 				change1,
 				change2,
-				simpleChildComposer,
+				TestNodeId.composeChild,
 				fakeIdAllocator,
 				failCrossFieldManager,
 				defaultRevisionMetadataFromChanges([change1, change2]),
@@ -183,24 +141,38 @@ describe("optionalField", () => {
 			assertEqual(composed, change1And2);
 		});
 
+		it("pin ○ child change", () => {
+			const detach: ChangeAtomId = { localId: brand(42), revision: tag };
+			const pin = makeAnonChange(Change.pin(detach));
+			const withChild = makeAnonChange(Change.childAt(detach, nodeChange1));
+			const composed = optionalChangeRebaser.compose(
+				pin,
+				withChild,
+				TestNodeId.composeChild,
+				fakeIdAllocator,
+				failCrossFieldManager,
+				defaultRevisionMetadataFromChanges([pin, withChild]),
+			);
+
+			const expected = Change.atOnce(pin.change, withChild.change);
+
+			assertEqual(composed, expected);
+		});
+
 		it("can compose child changes", () => {
 			const expected = Change.atOnce(
 				Change.move({ localId: brand(41), revision: change1.revision }, "self"),
 				Change.reserve("self", { localId: brand(1), revision: change1.revision }),
 				Change.childAt(
 					{ localId: brand(41), revision: change1.revision },
-					arbitraryChildChange,
+					TestNodeId.create(nodeId1, TestChange.mint([], [1, 2])),
 				),
 			);
 
 			const composed = optionalChangeRebaser.compose(
 				change1,
 				change4,
-				(c1: NodeChangeset | undefined, c2: NodeChangeset | undefined): NodeChangeset => {
-					assert.deepEqual(c1, nodeChange1);
-					assert.deepEqual(c2, nodeChange2);
-					return arbitraryChildChange;
-				},
+				TestNodeId.composeChild,
 				fakeIdAllocator,
 				failCrossFieldManager,
 				defaultRevisionMetadataFromChanges([change1, change4]),
@@ -210,26 +182,18 @@ describe("optionalField", () => {
 		});
 
 		describe("Invert", () => {
-			function undo(
-				change: TaggedChange<OptionalChangeset>,
-				childInverter?: (change: NodeChangeset) => NodeChangeset,
-			): OptionalChangeset {
+			function undo(change: TaggedChange<OptionalChangeset>): OptionalChangeset {
 				return optionalChangeRebaser.invert(
 					change,
-					childInverter ?? failingDelegate,
 					false,
 					idAllocatorFromMaxId(),
 					failCrossFieldManager,
 					defaultRevisionMetadataFromChanges([change]),
 				);
 			}
-			function rollback(
-				change: TaggedChange<OptionalChangeset>,
-				childInverter?: (change: NodeChangeset) => NodeChangeset,
-			): OptionalChangeset {
+			function rollback(change: TaggedChange<OptionalChangeset>): OptionalChangeset {
 				return optionalChangeRebaser.invert(
 					change,
-					childInverter ?? failingDelegate,
 					true,
 					idAllocatorFromMaxId(),
 					failCrossFieldManager,
@@ -280,28 +244,29 @@ describe("optionalField", () => {
 			});
 
 			it("set+child⁻¹", () => {
-				const childInverter = (change: NodeChangeset) => {
-					assert.deepEqual(change, nodeChange1);
-					return nodeChange2;
-				};
 				const expected = Change.atOnce(
-					Change.child(nodeChange2),
+					Change.child(nodeChange1),
 					Change.move("self", { localId: brand(41), revision: change1.revision }),
 				);
-				const actual = rollback(change1, childInverter);
+				const actual = rollback(change1);
 				assertEqual(actual, expected);
 			});
 
 			it("undo(set+child)", () => {
-				const childInverter = (change: NodeChangeset) => {
-					assert.deepEqual(change, nodeChange1);
-					return nodeChange2;
-				};
 				const expected = Change.atOnce(
-					Change.child(nodeChange2),
+					Change.child(nodeChange1),
 					Change.move("self", { localId: brand(0) }),
 				);
-				const actual = undo(change1, childInverter);
+				const actual = undo(change1);
+				assertEqual(actual, expected);
+			});
+
+			it("(pin+child)⁻¹", () => {
+				const input = makeAnonChange(
+					Change.atOnce(Change.child(nodeChange1), Change.pin({ localId: brand(42) })),
+				);
+				const expected = Change.child(nodeChange1);
+				const actual = rollback(input);
 				assertEqual(actual, expected);
 			});
 		});
@@ -324,25 +289,18 @@ describe("optionalField", () => {
 			});
 
 			it("can rebase child change", () => {
-				const baseChange = Change.child(nodeChange1);
-				const changeToRebase = Change.child(nodeChange2);
+				const baseChange = Change.child(TestNodeId.create(nodeId1, TestChange.mint([], 1)));
+				const changeToRebase = Change.child(
+					TestNodeId.create(nodeId2, TestChange.mint([], 2)),
+				);
 
-				const childRebaser = (
-					change: NodeChangeset | undefined,
-					base: NodeChangeset | undefined,
-				): NodeChangeset | undefined => {
-					assert.deepEqual(change, nodeChange2);
-					assert.deepEqual(base, nodeChange1);
-					return arbitraryChildChange;
-				};
-
-				const expected = Change.child(arbitraryChildChange);
+				const expected = Change.child(TestNodeId.create(nodeId2, TestChange.mint([1], 2)));
 
 				assert.deepEqual(
 					optionalChangeRebaser.rebase(
 						changeToRebase,
 						makeAnonChange(baseChange),
-						childRebaser,
+						TestNodeId.rebaseChild,
 						fakeIdAllocator,
 						failCrossFieldManager,
 						rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([]), []),
@@ -354,12 +312,11 @@ describe("optionalField", () => {
 			it("can rebase a child change over a remove and revive of target node", () => {
 				const tag1 = mintRevisionTag();
 				const tag2 = mintRevisionTag();
-				const changeToRebase = optionalFieldEditor.buildChildChange(0, nodeChange1);
+				const changeToRebase = optionalFieldEditor.buildChildChange(0, nodeId1);
 				const deletion = tagChange(optionalFieldEditor.clear(false, brand(1)), tag1);
 				const revive = tagRollbackInverse(
 					optionalChangeRebaser.invert(
 						deletion,
-						() => assert.fail("Should not need to invert children"),
 						false,
 						idAllocatorFromMaxId(),
 						failCrossFieldManager,
@@ -370,11 +327,11 @@ describe("optionalField", () => {
 				);
 
 				const childRebaser = (
-					nodeChange: NodeChangeset | undefined,
-					baseNodeChange: NodeChangeset | undefined,
+					nodeChange: NodeId | undefined,
+					baseNodeChange: NodeId | undefined,
 				) => {
 					assert(baseNodeChange === undefined);
-					assert(nodeChange === nodeChange1);
+					assert(nodeChange === nodeId1);
 					return nodeChange;
 				};
 
@@ -403,10 +360,66 @@ describe("optionalField", () => {
 				assert.deepEqual(changeToRebase3, changeToRebase);
 			});
 
+			it("can rebase a child change over a reserved detach on empty field", () => {
+				const changeToRebase = optionalFieldEditor.buildChildChange(0, nodeId1);
+				deepFreeze(changeToRebase);
+				const clear = tagChange(optionalFieldEditor.clear(true, brand(42)), tag);
+
+				const childRebaser = (
+					nodeChange: NodeId | undefined,
+					baseNodeChange: NodeId | undefined,
+				) => {
+					assert(baseNodeChange === undefined);
+					assert(nodeChange === nodeId1);
+					return nodeChange;
+				};
+
+				const actual = optionalChangeRebaser.rebase(
+					changeToRebase,
+					clear,
+					childRebaser,
+					fakeIdAllocator,
+					failCrossFieldManager,
+					rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([clear]), [
+						clear.revision,
+					]),
+				);
+
+				assert.deepEqual(actual, changeToRebase);
+			});
+
+			it("can rebase a child change over a reserved detach on field with a pinned node", () => {
+				const changeToRebase = optionalFieldEditor.buildChildChange(0, nodeId1);
+				deepFreeze(changeToRebase);
+				const pin = tagChange(Change.pin(brand(42)), tag);
+
+				const childRebaser = (
+					nodeChange: NodeId | undefined,
+					baseNodeChange: NodeId | undefined,
+				) => {
+					assert(baseNodeChange === undefined);
+					assert(nodeChange === nodeId1);
+					return nodeChange;
+				};
+
+				const actual = optionalChangeRebaser.rebase(
+					changeToRebase,
+					pin,
+					childRebaser,
+					fakeIdAllocator,
+					failCrossFieldManager,
+					rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([pin]), [
+						pin.revision,
+					]),
+				);
+
+				assert.deepEqual(actual, changeToRebase);
+			});
+
 			it("can rebase child change (field change ↷ field change)", () => {
 				const baseChange = Change.atOnce(
 					Change.clear("self", brand(0)),
-					Change.child(nodeChange1),
+					Change.child(nodeId1),
 				);
 				const taggedBaseChange = tagChange(baseChange, mintRevisionTag());
 
@@ -415,16 +428,16 @@ describe("optionalField", () => {
 				const changeToRebase = Change.atOnce(
 					Change.clear("self", brand(1)),
 					Change.move(brand(41), "self"),
-					Change.child(nodeChange2),
+					Change.child(nodeId2),
 				);
 
 				const childRebaser = (
-					change: NodeChangeset | undefined,
-					base: NodeChangeset | undefined,
-				): NodeChangeset | undefined => {
-					assert.deepEqual(change, nodeChange2);
-					assert.deepEqual(base, nodeChange1);
-					return arbitraryChildChange;
+					change: NodeId | undefined,
+					base: NodeId | undefined,
+				): NodeId | undefined => {
+					assert.deepEqual(change, nodeId2);
+					assert.deepEqual(base, nodeId1);
+					return change;
 				};
 
 				const expected = Change.atOnce(
@@ -432,7 +445,7 @@ describe("optionalField", () => {
 					Change.move(brand(41), "self"),
 					Change.childAt(
 						{ localId: brand(0), revision: taggedBaseChange.revision },
-						arbitraryChildChange,
+						nodeId2,
 					),
 				);
 
@@ -454,33 +467,17 @@ describe("optionalField", () => {
 	describe("IntoDelta", () => {
 		it("can be converted to a delta when field was empty", () => {
 			const outerNodeId = makeDetachedNodeId(tag, 41);
-			const innerNodeId = makeDetachedNodeId(tag, 1);
 			const expected: DeltaFieldChanges = {
 				global: [
 					{
 						id: outerNodeId,
-						fields: new Map<FieldKey, DeltaFieldChanges>([
-							[
-								fooKey,
-								{
-									local: [
-										{
-											count: 1,
-											attach: innerNodeId,
-											detach: { major: tag, minor: 0 },
-										},
-									],
-								},
-							],
-						]),
+						fields: TestNodeId.deltaFromChild(nodeChange1),
 					},
 				],
 				local: [{ count: 1, attach: outerNodeId }],
 			};
 
-			const actual = optionalFieldIntoDelta(change1, (change) =>
-				deltaFromChild1(tagChange(change, tag)),
-			);
+			const actual = optionalFieldIntoDelta(change1, TestNodeId.deltaFromChild);
 			assertFieldChangesEqual(actual, expected);
 		});
 
@@ -495,9 +492,7 @@ describe("optionalField", () => {
 				],
 			};
 
-			const actual = optionalFieldIntoDelta(revertChange2, (change) =>
-				deltaFromChild1(tagChange(change, revertChange2.revision)),
-			);
+			const actual = optionalFieldIntoDelta(revertChange2, TestNodeId.deltaFromChild);
 			assertFieldChangesEqual(actual, expected);
 		});
 
@@ -506,27 +501,12 @@ describe("optionalField", () => {
 				local: [
 					{
 						count: 1,
-						fields: new Map<FieldKey, DeltaFieldChanges>([
-							[
-								fooKey,
-								{
-									local: [
-										{
-											count: 1,
-											attach: { major: tag, minor: 1 },
-											detach: { major: tag, minor: 0 },
-										},
-									],
-								},
-							],
-						]),
+						fields: TestNodeId.deltaFromChild(nodeChange2),
 					},
 				],
 			};
 			assertFieldChangesEqual(
-				optionalFieldIntoDelta(change4, (change) =>
-					deltaFromChild2(tagChange(change, tag)),
-				),
+				optionalFieldIntoDelta(change4, TestNodeId.deltaFromChild),
 				expected,
 			);
 		});
@@ -539,13 +519,13 @@ describe("optionalField", () => {
 		);
 		const clear = tagChange(optionalFieldEditor.clear(false, brand(1)), mintRevisionTag());
 		const hasChildChanges = tagChange(
-			optionalFieldEditor.buildChildChange(0, nodeChange1),
+			optionalFieldEditor.buildChildChange(0, nodeId1),
 			mintRevisionTag(),
 		);
 		const relevantNestedTree = { minor: 4242 };
 		const noTreesDelegate: RelevantRemovedRootsFromChild = () => [];
 		const oneTreeDelegate: RelevantRemovedRootsFromChild = (child) => {
-			assert.deepEqual(child, nodeChange1);
+			assert.deepEqual(child, nodeId1);
 			return [relevantNestedTree];
 		};
 		describe("does not include", () => {
@@ -561,7 +541,7 @@ describe("optionalField", () => {
 					optionalChangeRebaser.compose(
 						hasChildChanges,
 						clear,
-						(): NodeChangeset => nodeChange1,
+						(): NodeId => nodeId1,
 						fakeIdAllocator,
 						failCrossFieldManager,
 						defaultRevisionMetadataFromChanges(changes),
@@ -599,7 +579,6 @@ describe("optionalField", () => {
 				const restore = makeAnonChange(
 					optionalChangeRebaser.invert(
 						clear,
-						() => assert.fail("Should not need to invert children"),
 						false,
 						idAllocatorFromMaxId(),
 						failCrossFieldManager,
@@ -617,7 +596,7 @@ describe("optionalField", () => {
 					optionalChangeRebaser.rebase(
 						hasChildChanges.change,
 						clear,
-						() => nodeChange1,
+						() => nodeId1,
 						fakeIdAllocator,
 						failCrossFieldManager,
 						rebaseRevisionMetadataFromInfo(
@@ -641,7 +620,7 @@ describe("optionalField", () => {
 					optionalChangeRebaser.compose(
 						fill,
 						hasChildChanges,
-						(): NodeChangeset => nodeChange1,
+						(): NodeId => nodeId1,
 						fakeIdAllocator,
 						failCrossFieldManager,
 						defaultRevisionMetadataFromChanges(changes),
@@ -661,7 +640,7 @@ describe("optionalField", () => {
 					optionalChangeRebaser.compose(
 						hasChildChanges,
 						clear,
-						(): NodeChangeset => nodeChange1,
+						(): NodeId => nodeId1,
 						fakeIdAllocator,
 						failCrossFieldManager,
 						defaultRevisionMetadataFromChanges(changes),
@@ -676,7 +655,6 @@ describe("optionalField", () => {
 				const restore = tagChange(
 					optionalChangeRebaser.invert(
 						clear,
-						() => assert.fail("Should not need to invert children"),
 						false,
 						idAllocatorFromMaxId(),
 						failCrossFieldManager,
@@ -689,7 +667,7 @@ describe("optionalField", () => {
 					optionalChangeRebaser.compose(
 						restore,
 						hasChildChanges,
-						(): NodeChangeset => nodeChange1,
+						(): NodeId => nodeId1,
 						fakeIdAllocator,
 						failCrossFieldManager,
 						defaultRevisionMetadataFromChanges(changes),
@@ -706,7 +684,7 @@ describe("optionalField", () => {
 					optionalChangeRebaser.rebase(
 						hasChildChanges.change,
 						clear,
-						() => nodeChange1,
+						() => nodeId1,
 						fakeIdAllocator,
 						failCrossFieldManager,
 						rebaseRevisionMetadataFromInfo(
@@ -732,7 +710,7 @@ describe("optionalField", () => {
 			});
 		});
 		it("uses passed down revision", () => {
-			const restore = tagChange(Change.childAt(brand(42), nodeChange1), tag);
+			const restore = tagChange(Change.childAt(brand(42), nodeId1), tag);
 			const actual = Array.from(
 				optionalChangeHandler.relevantRemovedRoots(restore, noTreesDelegate),
 			);

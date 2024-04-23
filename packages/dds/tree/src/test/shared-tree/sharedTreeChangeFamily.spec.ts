@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import { ICodecOptions } from "../../codec/index.js";
 import {
 	DeltaDetachedNodeId,
@@ -36,7 +37,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/sharedTreeChangeTypes.js";
 import { ajvValidator } from "../codec/index.js";
-import { deepFreeze, failCodecFamily, testRevisionTagCodec } from "../utils.js";
+import { failCodecFamily, testRevisionTagCodec } from "../utils.js";
 
 const dataChanges: ModularChangeset[] = [];
 const codecOptions: ICodecOptions = { jsonValidator: ajvValidator };

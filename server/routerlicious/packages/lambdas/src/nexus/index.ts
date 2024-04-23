@@ -69,9 +69,9 @@ function parseRelayUserAgent(relayUserAgent: string | undefined): Record<string,
 	const propertyKeyValuePairs: string[][] = relayUserAgent
 		.split(";")
 		.map((keyValuePair) => keyValuePair.split(":"));
-	// TODO: would be cleaner with `Object.fromEntries()` but tsconfig needs es2019 lib
 	for (const [key, value] of propertyKeyValuePairs) {
-		map[key] = value;
+		// Trim key and value so that a user agent like "prop1:val1; prop2:val2" is parsed correctly.
+		if (key && value) map[key.trim()] = value.trim();
 	}
 	return map;
 }

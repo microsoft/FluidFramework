@@ -31,6 +31,7 @@ describe("IntervalCollection fuzz testing", () => {
 		skip: [32, 56, 86],
 		// Note: there are some known eventual consistency issues which the tests don't currently reproduce.
 		// Search this package for AB#6552 (or look at that work item) for a skipped test and further details.
+		// Other relevant work items are AB#7806 and #7807.
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});
@@ -87,8 +88,6 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 
 	createDDSFuzzSuite(noReconnectWithRebaseModel, {
 		...defaultFuzzOptions,
-		// todo AB#5603
-		skip: [46, 56],
 		reconnectProbability: 0.0,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
@@ -99,6 +98,7 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 			flushMode: FlushMode.TurnBased,
 			enableGroupedBatching: true,
 		},
+		skip: [46, 56],
 		// Uncomment this line to replay a specific seed from its failure file:
 	});
 });

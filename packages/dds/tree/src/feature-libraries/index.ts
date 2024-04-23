@@ -62,7 +62,7 @@ export {
 	getAllowedTypes,
 } from "./contextuallyTyped.js";
 
-export { allowsValue, assertAllowedValue, isFluidHandle, isTreeValue } from "./valueUtilities.js";
+export { allowsValue, assertAllowedValue, isTreeValue } from "./valueUtilities.js";
 
 export { FieldGenerator, TreeDataContext } from "./fieldGenerator.js";
 
@@ -98,7 +98,6 @@ export {
 	FieldChangeHandler,
 	FieldChangeRebaser,
 	FieldEditor,
-	NodeChangeset,
 	FieldChangeMap,
 	FieldChange,
 	FieldChangeset,
@@ -108,6 +107,7 @@ export {
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
+	NodeChangePruner,
 	CrossFieldManager,
 	CrossFieldTarget,
 	FlexFieldKind,
@@ -123,6 +123,8 @@ export {
 	RelevantRemovedRootsFromChild,
 	EncodedModularChangeset,
 	updateRefreshers,
+	NodeId,
+	FieldChangeEncodingContext,
 	FieldKindConfiguration,
 	FieldKindConfigurationEntry,
 } from "./modular-schema/index.js";
@@ -159,7 +161,6 @@ export {
 	FlexObjectNodeFields,
 	intoStoredSchema,
 	intoStoredSchemaCollection,
-	ArrayToUnion,
 	ExtractItemType,
 	NormalizeLazyItem,
 	FlexList,
@@ -211,6 +212,7 @@ export {
 	Optional,
 	Sequence,
 	NodeKeyFieldKind,
+	Identifier,
 	Forbidden,
 	DefaultChangeset,
 	DefaultChangeFamily,
@@ -250,10 +252,10 @@ export {
 	CheckTypesOverlap,
 	TreeStatus,
 	Context,
-	TreeEvent,
 	FlexTreeNodeEvents,
 	FlexTreeUnknownUnboxed,
 	isFlexTreeNode,
+	ContextSlot,
 
 	// Internal
 	FlexTreeTypedFieldInner,
@@ -267,7 +269,6 @@ export {
 	FlexibleNodeSubSequence,
 	flexTreeMarker,
 	FlexTreeEntityKind,
-	NodeKeys,
 	PropertyNameFromFieldKey,
 	ReservedObjectNodeFieldPropertyNames,
 	ReservedObjectNodeFieldPropertyNamePrefixes,

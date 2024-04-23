@@ -7,6 +7,7 @@ import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	IAudience,
+	ISelf,
 	ICriticalContainerError,
 	IDeltaManager,
 } from "@fluidframework/container-definitions";
@@ -17,6 +18,7 @@ import {
 	ILoader,
 	IRuntime,
 	LoaderHeader,
+	type IAudienceEvents,
 } from "@fluidframework/container-definitions/internal";
 import {
 	IContainerRuntime,
@@ -99,11 +101,9 @@ import {
 	responseToException,
 	seqFromTree,
 } from "@fluidframework/runtime-utils/internal";
+import type { ITelemetryGenericEventExt } from "@fluidframework/telemetry-utils/internal";
 import {
-	type ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils";
-import {
 	DataCorruptionError,
 	DataProcessingError,
 	GenericError,
@@ -161,7 +161,6 @@ import {
 	OpSplitter,
 	Outbox,
 	RemoteMessageProcessor,
-	getLongStack,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
@@ -462,16 +461,6 @@ export interface IContainerRuntimeOptions {
 	readonly enableRuntimeIdCompressor?: IdCompressorMode;
 
 	/**
-	 * If enabled, the runtime will block all attempts to send an op inside the
-	 * {@link ContainerRuntime#ensureNoDataModelChanges} callback. The callback is used by
-	 * {@link @fluidframework/shared-object-base#SharedObjectCore} for event handlers so enabling this
-	 * will disallow modifying DDSes while handling DDS events.
-	 *
-	 * By default, the feature is disabled. If enabled from options, the `Fluid.ContainerRuntime.DisableOpReentryCheck`
-	 * can be used to disable it at runtime.
-	 */
-	readonly enableOpReentryCheck?: boolean;
-	/**
 	 * If enabled, the runtime will group messages within a batch into a single
 	 * message to be sent to the service.
 	 * The grouping an ungrouping of such messages is handled by the "OpGroupingManager".
@@ -493,6 +482,11 @@ export interface IContainerRuntimeOptions {
 	readonly explicitSchemaControl?: boolean;
 }
 
+/**
+ * Error responses when requesting a deleted object will have this header set to true
+ * @alpha
+ */
+export const DeletedResponseHeaderKey = "wasDeleted";
 /**
  * Tombstone error responses will have this header set to true
  * @alpha
@@ -805,7 +799,6 @@ export class ContainerRuntime
 			maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
 			enableRuntimeIdCompressor,
 			chunkSizeInBytes = defaultChunkSizeInBytes,
-			enableOpReentryCheck = false,
 			enableGroupedBatching = false,
 			explicitSchemaControl = false,
 		} = runtimeOptions;
@@ -852,9 +845,9 @@ export class ContainerRuntime
 
 		// Verify summary runtime sequence number matches protocol sequence number.
 		const runtimeSequenceNumber = messageAtLastSummary?.sequenceNumber;
+		const protocolSequenceNumber = context.deltaManager.initialSequenceNumber;
 		// When we load with pending state, we reuse an old snapshot so we don't expect these numbers to match
 		if (!context.pendingLocalState && runtimeSequenceNumber !== undefined) {
-			const protocolSequenceNumber = context.deltaManager.initialSequenceNumber;
 			// Unless bypass is explicitly set, then take action when sequence numbers mismatch.
 			if (
 				loadSequenceNumberVerification !== "bypass" &&
@@ -882,6 +875,19 @@ export class ContainerRuntime
 			}
 		}
 
+		let desiredIdCompressorMode: IdCompressorMode;
+		switch (mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled")) {
+			case true:
+				desiredIdCompressorMode = "on";
+				break;
+			case false:
+				desiredIdCompressorMode = undefined;
+				break;
+			default:
+				desiredIdCompressorMode = enableRuntimeIdCompressor;
+				break;
+		}
+
 		// Enabling the IdCompressor is a one-way operation and we only want to
 		// allow new containers to turn it on.
 		let idCompressorMode: IdCompressorMode;
@@ -893,23 +899,28 @@ export class ContainerRuntime
 			// 3) Same logic applies for "delayed" mode
 			// Maybe in the future we will need to enabled (and figure how to do it safely) "delayed" -> "on" change.
 			// We could do "off" -> "on" transition too, if all clients start loading compressor (but not using it initially) and
-			// do so for a while - this will allow clients to eventually to disregard "off" setting (when it's safe so) and start
+			// do so for a while - this will allow clients to eventually disregard "off" setting (when it's safe so) and start
 			// using compressor in future sessions.
 			// Everyting is possible, but it needs to be designed and executed carefully, when such need arises.
 			idCompressorMode = metadata?.documentSchema?.runtime
 				?.idCompressorMode as IdCompressorMode;
-		} else {
-			switch (mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled")) {
-				case true:
-					idCompressorMode = "on";
-					break;
-				case false:
-					idCompressorMode = undefined;
-					break;
-				default:
-					idCompressorMode = enableRuntimeIdCompressor;
-					break;
+
+			// This is the only exception to the rule above - we have proper plumbing to load ID compressor on schema change
+			// event. It is loaded async (relative to op processing), so this conversion is only safe for off -> delayed conversion!
+			// Clients do not expect ID compressor ops unless ID compressor is On for them, and that could be achieved only through
+			// explicit schema change, i.e. only if explicitSchemaControl is on.
+			// Note: it would be better if we throw on combination of options (explicitSchemaControl = off, desiredIdCompressorMode === "delayed")
+			// that is not supported. But our service tests are oblivious to these problems and throwing here will cause a ton of failures
+			// We ignored incompatible ID compressor changes from the start (they were sticky), so that's not a new problem being introduced...
+			if (
+				idCompressorMode === undefined &&
+				desiredIdCompressorMode === "delayed" &&
+				explicitSchemaControl
+			) {
+				idCompressorMode = desiredIdCompressorMode;
 			}
+		} else {
+			idCompressorMode = desiredIdCompressorMode;
 		}
 
 		const createIdCompressorFn = async () => {
@@ -964,6 +975,7 @@ export class ContainerRuntime
 
 		const documentSchemaController = new DocumentsSchemaController(
 			existing,
+			protocolSequenceNumber,
 			metadata?.documentSchema,
 			{
 				explicitSchemaControl,
@@ -999,7 +1011,6 @@ export class ContainerRuntime
 				chunkSizeInBytes,
 				// Requires<> drops undefined from IdCompressorType
 				enableRuntimeIdCompressor: enableRuntimeIdCompressor as "on" | "delayed",
-				enableOpReentryCheck,
 				enableGroupedBatching,
 				explicitSchemaControl,
 			},
@@ -1014,6 +1025,17 @@ export class ContainerRuntime
 			provideEntryPoint,
 			requestHandler,
 			undefined, // summaryConfiguration
+		);
+
+		runtime.blobManager.trackPendingStashedUploads().then(
+			() => {
+				// make sure we didn't reconnect before the promise resolved
+				if (runtime.delayConnectClientId !== undefined && !runtime.disposed) {
+					runtime.delayConnectClientId = undefined;
+					runtime.setConnectionStateCore(true, runtime.delayConnectClientId);
+				}
+			},
+			(error) => runtime.closeFn(error),
 		);
 
 		// Apply stashed ops with a reference sequence number equal to the sequence number of the snapshot,
@@ -1081,7 +1103,17 @@ export class ContainerRuntime
 		return this._getAttachState();
 	}
 
-	public get documentSchema() {
+	/**
+	 * Current session schema - defines what options are on & off.
+	 * It's overlap of document schema (controlled by summary & ops) and options controlling this session.
+	 * For example, document schema might have compression ON, but feature gates / runtime options turn it Off.
+	 * In such case it will be off in session schema (i.e. this session should not use compression), but this client
+	 * has to deal with compressed ops as other clients might send them.
+	 * And in reverse, session schema can have compression Off, but feature gates / runtime options want it On.
+	 * In such case it will be off in session schema, however this client will propose change to schema, and once / if
+	 * this op rountrips, compression will be On. Client can't send compressed ops until it's change in schema.
+	 */
+	public get sessionSchema() {
 		return this.documentsSchemaController.sessionSchema.runtime;
 	}
 
@@ -1098,7 +1130,7 @@ export class ContainerRuntime
 	private readonly skipSavedCompressorOps: boolean;
 
 	public get idCompressorMode() {
-		return this.documentSchema.idCompressorMode;
+		return this.sessionSchema.idCompressorMode;
 	}
 	/**
 	 * See IContainerRuntimeBase.idCompressor() for details.
@@ -1182,14 +1214,6 @@ export class ContainerRuntime
 	private ensureNoDataModelChangesCalls = 0;
 
 	/**
-	 * Tracks the number of detected reentrant ops to report,
-	 * in order to self-throttle the telemetry events.
-	 *
-	 * This should be removed as part of ADO:2322
-	 */
-	private opReentryCallsToReport = 5;
-
-	/**
 	 * Invokes the given callback and expects that no ops are submitted
 	 * until execution finishes. If an op is submitted, an error will be raised.
 	 *
@@ -1222,7 +1246,6 @@ export class ContainerRuntime
 
 	private dirtyContainer: boolean;
 	private emitDirtyDocumentEvent = true;
-	private readonly enableOpReentryCheck: boolean;
 	private readonly disableAttachReorder: boolean | undefined;
 	private readonly closeSummarizerDelayMs: number;
 	/**
@@ -1388,7 +1411,7 @@ export class ContainerRuntime
 		// If it's not in the list, then we will need to either use no compression, or fallback to some other (supported by format)
 		// compression.
 		const compressionOptions: ICompressionRuntimeOptions = {
-			minimumBatchSizeInBytes: this.documentSchema.compressionLz4
+			minimumBatchSizeInBytes: this.sessionSchema.compressionLz4
 				? runtimeOptions.compressionOptions.minimumBatchSizeInBytes
 				: Number.POSITIVE_INFINITY,
 			compressionAlgorithm: CompressionAlgorithms.lz4,
@@ -1506,14 +1529,6 @@ export class ContainerRuntime
 			this.validateSummaryHeuristicConfiguration(this.summaryConfiguration);
 		}
 
-		const disableOpReentryCheck = this.mc.config.getBoolean(
-			"Fluid.ContainerRuntime.DisableOpReentryCheck",
-		);
-		this.enableOpReentryCheck =
-			runtimeOptions.enableOpReentryCheck === true &&
-			// Allow for a break-glass config to override the options
-			disableOpReentryCheck !== true;
-
 		this.summariesDisabled = this.isSummariesDisabled();
 		this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
 		this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
@@ -1596,7 +1611,7 @@ export class ContainerRuntime
 		// Due to a mismatch between different layers in terms of
 		// what is the interface of passing signals, we need the
 		// downstream stores to wrap the signal.
-		parentContext.submitSignal = (type: string, content: any, targetClientId?: string) => {
+		parentContext.submitSignal = (type: string, content: unknown, targetClientId?: string) => {
 			const envelope1 = content as IEnvelope;
 			const envelope2 = this.createNewSignalEnvelope(
 				envelope1.address,
@@ -1610,32 +1625,17 @@ export class ContainerRuntime
 			getSummaryForDatastores(baseSnapshot, metadata),
 			parentContext,
 			this.mc.logger,
-			(
-				path: string,
-				reason: "Loaded" | "Changed",
-				timestampMs?: number,
-				packagePath?: readonly string[],
-				request?: IRequest,
-				headerData?: RuntimeHeaderData,
-			) =>
-				this.garbageCollector.nodeUpdated(
-					path,
-					reason,
-					timestampMs,
-					packagePath,
-					request,
-					headerData,
-				),
+			(props) => this.garbageCollector.nodeUpdated(props),
 			(path: string) => this.garbageCollector.isNodeDeleted(path),
 			new Map<string, string>(dataStoreAliasMap),
 			async (runtime: ChannelCollection) => provideEntryPoint,
 		);
 
-		this.blobManager = new BlobManager(
-			this.handleContext,
-			blobManagerSnapshot,
-			() => this.storage,
-			(localId: string, blobId?: string) => {
+		this.blobManager = new BlobManager({
+			routeContext: this.handleContext,
+			snapshot: blobManagerSnapshot,
+			getStorage: () => this.storage,
+			sendBlobAttachOp: (localId: string, blobId?: string) => {
 				if (!this.disposed) {
 					this.submit(
 						{ type: ContainerMessageType.BlobAttach, contents: undefined },
@@ -1647,12 +1647,16 @@ export class ContainerRuntime
 					);
 				}
 			},
-			(blobPath: string) => this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
-			(blobPath: string) => this.garbageCollector.isNodeDeleted(blobPath),
-			this,
-			pendingRuntimeState?.pendingAttachmentBlobs,
-			(error?: ICriticalContainerError) => this.closeFn(error),
-		);
+			blobRequested: (blobPath: string) =>
+				this.garbageCollector.nodeUpdated({
+					node: { type: "Blob", path: blobPath },
+					reason: "Loaded",
+				}),
+			isBlobDeleted: (blobPath: string) => this.garbageCollector.isNodeDeleted(blobPath),
+			runtime: this,
+			stashedBlobs: pendingRuntimeState?.pendingAttachmentBlobs,
+			closeContainer: (error?: ICriticalContainerError) => this.closeFn(error),
+		});
 
 		this.scheduleManager = new ScheduleManager(
 			this.innerDeltaManager,
@@ -1713,8 +1717,32 @@ export class ContainerRuntime
 			this.remoteMessageProcessor.clearPartialMessagesFor(clientId);
 		});
 
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this._audience = audience!;
+		this._audience = audience;
+		if (audience.getSelf === undefined) {
+			// back-compat, added in 2.0 RC3.
+			// Purpose: deal with cases when we run against old loader that does not have newly added capabilities
+			audience.getSelf = () => {
+				const clientId = this._getClientId();
+				return clientId === undefined
+					? undefined
+					: ({
+							clientId,
+							client: audience.getMember(clientId),
+					  } satisfies ISelf);
+			};
+
+			let oldClientId = this.clientId;
+			this.on("connected", () => {
+				const clientId = this.clientId;
+				assert(clientId !== undefined, "can't be undefined");
+				(audience as unknown as TypedEventEmitter<IAudienceEvents>).emit(
+					"selfChanged",
+					{ clientId: oldClientId },
+					{ clientId, client: audience.getMember(clientId) },
+				);
+				oldClientId = clientId;
+			});
+		}
 
 		const closeSummarizerDelayOverride = this.mc.config.getNumber(
 			"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs",
@@ -1836,7 +1864,6 @@ export class ContainerRuntime
 			idCompressorMode: this.idCompressorMode,
 			featureGates: JSON.stringify({
 				...featureGatesForTelemetry,
-				disableOpReentryCheck,
 				disableChunking,
 				disableAttachReorder: this.disableAttachReorder,
 				disablePartialFlush,
@@ -2404,6 +2431,11 @@ export class ContainerRuntime
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string) {
+		// Validate we have consistent state
+		const currentClientId = this._audience.getSelf()?.clientId;
+		assert(clientId === currentClientId, "input clientId does not match Audience");
+		assert(this.clientId === currentClientId, "this.clientId does not match Audience");
+
 		if (connected && this.idCompressorMode === "delayed") {
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.loadIdCompressor();
@@ -2425,23 +2457,13 @@ export class ContainerRuntime
 		// propagation of the "connected" event until we have uploaded them to
 		// ensure we don't submit ops referencing a blob that has not been uploaded
 		const connecting = connected && !this._connected;
-		if (connecting && this.blobManager.hasPendingStashedBlobs()) {
+		if (connecting && this.blobManager.hasPendingStashedUploads()) {
 			assert(
 				!this.delayConnectClientId,
 				0x791 /* Connect event delay must be canceled before subsequent connect event */,
 			);
 			assert(!!clientId, 0x792 /* Must have clientId when connecting */);
 			this.delayConnectClientId = clientId;
-			this.blobManager.processStashedChanges().then(
-				() => {
-					// make sure we didn't reconnect before the promise resolved
-					if (this.delayConnectClientId === clientId && !this.disposed) {
-						this.delayConnectClientId = undefined;
-						this.setConnectionStateCore(connected, clientId);
-					}
-				},
-				(error) => this.closeFn(error),
-			);
 			return;
 		}
 
@@ -2528,20 +2550,25 @@ export class ContainerRuntime
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
 		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
-			if (modernRuntimeMessage) {
-				this.processCore({
-					// Cast it since we expect it to be this based on modernRuntimeMessage computation above.
-					// There is nothing really ensuring that anytime original message.type is Operation that
-					// the result messages will be so. In the end modern bool being true only directs to
-					// throw error if ultimately unrecognized without compat details saying otherwise.
-					message: message as InboundSequencedContainerRuntimeMessage,
-					local,
-					modernRuntimeMessage,
-				});
-			} else {
-				// Unrecognized message will be ignored.
-				this.processCore({ message, local, modernRuntimeMessage });
-			}
+			const msg: MessageWithContext = modernRuntimeMessage
+				? {
+						// Cast it since we expect it to be this based on modernRuntimeMessage computation above.
+						// There is nothing really ensuring that anytime original message.type is Operation that
+						// the result messages will be so. In the end modern bool being true only directs to
+						// throw error if ultimately unrecognized without compat details saying otherwise.
+						message: message as InboundSequencedContainerRuntimeMessage,
+						local,
+						modernRuntimeMessage,
+				  }
+				: // Unrecognized message will be ignored.
+				  {
+						message,
+						local,
+						modernRuntimeMessage,
+				  };
+
+			// ensure that we observe any re-entrancy, and if needed, rebase ops
+			this.ensureNoDataModelChanges(() => this.processCore(msg));
 		}
 	}
 
@@ -2566,7 +2593,7 @@ export class ContainerRuntime
 			// 2) this.resetReconnectCount() below
 			assert(
 				message.type !== ContainerMessageType.ChunkedOp,
-				"we should never get here with chunked ops",
+				0x93b /* we should never get here with chunked ops */,
 			);
 
 			let localOpMetadata: unknown;
@@ -2640,6 +2667,10 @@ export class ContainerRuntime
 					// Some other client turned on the id compressor. If we have not turned it on,
 					// put it in a pending queue and delay finalization.
 					if (this._idCompressor === undefined) {
+						assert(
+							this.idCompressorMode !== undefined,
+							0x93c /* id compressor should be enabled */,
+						);
 						this.pendingIdCompressorOps.push(range);
 					} else {
 						this._idCompressor.finalizeCreationRange(range);
@@ -2652,7 +2683,7 @@ export class ContainerRuntime
 			case ContainerMessageType.ChunkedOp:
 				// From observability POV, we should not exppse the rest of the system (including "op" events on object) to these messages.
 				// Also resetReconnectCount() would be wrong - see comment that was there before this change was made.
-				assert(false, "should not even get here");
+				assert(false, 0x93d /* should not even get here */);
 			case ContainerMessageType.Rejoin:
 				break;
 			case ContainerMessageType.DocumentSchemaChange:
@@ -2792,9 +2823,9 @@ export class ContainerRuntime
 		let checkpoint: IBatchCheckpoint | undefined;
 		let result: T;
 		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
-			// Note: we are not touching this.pendingAttachBatch here, for two reasons:
-			// 1. It would not help, as we flush attach ops as they become available.
-			// 2. There is no way to undo process of data store creation.
+			// Note: we are not touching any batches other than mainBatch here, for two reasons:
+			// 1. It would not help, as other batches are flushed independently from main batch.
+			// 2. There is no way to undo process of data store creation, blob creation, ID compressor ops, or other things tracked by other batches.
 			checkpoint = this.outbox.checkpoint().mainBatch;
 		}
 		try {
@@ -2877,12 +2908,11 @@ export class ContainerRuntime
 				"entryPoint must be defined on data store runtime for using getAliasedDataStoreEntryPoint",
 			);
 		}
-		this.garbageCollector.nodeUpdated(
-			`/${internalId}`,
-			"Loaded",
-			undefined /* timestampMs */,
-			context.packagePath,
-		);
+		this.garbageCollector.nodeUpdated({
+			node: { type: "DataStore", path: `/${internalId}` },
+			reason: "Loaded",
+			packagePath: context.packagePath,
+		});
 		return channel.entryPoint;
 	}
 
@@ -3018,10 +3048,10 @@ export class ContainerRuntime
 	/**
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
-	 * @param content - Content of the signal.
+	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(type: string, content: any, targetClientId?: string) {
+	public submitSignal(type: string, content: unknown, targetClientId?: string) {
 		this.verifyNotClosed();
 		const envelope = this.createNewSignalEnvelope(undefined /* address */, type, content);
 		return this.submitSignalFn(envelope, targetClientId);
@@ -3068,7 +3098,7 @@ export class ContainerRuntime
 		if (idRange !== undefined) {
 			assert(
 				idRange.ids === undefined || idRange.ids.firstGenCount === 1,
-				"No other ranges should be taken while container is detached.",
+				0x93e /* No other ranges should be taken while container is detached. */,
 			);
 			this._idCompressor?.finalizeCreationRange(idRange);
 		}
@@ -3468,11 +3498,19 @@ export class ContainerRuntime
 				latestSummaryRefSeqNum,
 			);
 
+			/**
+			 * This was added to validate that the summarizer node tree has the same reference sequence number from the
+			 * top running summarizer down to the lowest summarizer node.
+			 *
+			 * The order of mismatch numbers goes (validate sequence number)-(node sequence number).
+			 * Generally the validate sequence number comes from the running summarizer and the node sequence number comes from the
+			 * summarizer nodes.
+			 */
 			if (
 				startSummaryResult.invalidNodes > 0 ||
 				startSummaryResult.mismatchNumbers.size > 0
 			) {
-				summaryLogger.sendErrorEvent({
+				summaryLogger.sendTelemetryEvent({
 					eventName: "LatestSummaryRefSeqNumMismatch",
 					details: {
 						...startSummaryResult,
@@ -3851,7 +3889,6 @@ export class ContainerRuntime
 		metadata?: { localId: string; blobId?: string },
 	): void {
 		this.verifyNotClosed();
-		this.verifyCanSubmitOps();
 
 		// There should be no ops in detached container state!
 		assert(
@@ -3862,7 +3899,7 @@ export class ContainerRuntime
 		assert(
 			metadata === undefined ||
 				containerRuntimeMessage.type === ContainerMessageType.BlobAttach,
-			"metadata",
+			0x93f /* metadata */,
 		);
 
 		const serializedContent = JSON.stringify(containerRuntimeMessage);
@@ -3899,6 +3936,14 @@ export class ContainerRuntime
 				// on this callback to do actual sending.
 				const contents = this.documentsSchemaController.maybeSendSchemaMessage();
 				if (contents) {
+					this.logger.sendTelemetryEvent({
+						eventName: "RuntimeDocSchemaChange",
+						refSeq: contents.refSeq,
+						version: contents.version,
+						newRuntimeSchema: JSON.stringify(contents.runtime),
+						sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
+						oldRuntimeSchema: JSON.stringify(this.metadata?.documentSchema?.runtime),
+					});
 					const msg: ContainerRuntimeDocumentSchemaMessage = {
 						type: ContainerMessageType.DocumentSchemaChange,
 						contents,
@@ -3909,33 +3954,7 @@ export class ContainerRuntime
 					});
 				}
 
-				// If this is attach message for new data store, and we are in a batch, send this op out of order
-				// Is it safe:
-				//    Yes, this should be safe reordering. Newly created data stores are not visible through API surface.
-				//    They become visible only when aliased, or handle to some sub-element of newly created datastore
-				//    is stored in some DDS, i.e. only after some other op.
-				// Why:
-				//    Attach ops are large, and expensive to process. Plus there are scenarios where a lot of new data
-				//    stores are created, causing issues like relay service throttling (too many ops) and catastrophic
-				//    failure (batch is too large). Pushing them earlier and outside of main batch should alleviate
-				//    these issues.
-				// Cons:
-				//    1. With large batches, relay service may throttle clients. Clients may disconnect while throttled.
-				//    This change creates new possibility of a lot of newly created data stores never being referenced
-				//    because client died before it had a change to submit the rest of the ops. This will create more
-				//    garbage that needs to be collected leveraging GC (Garbage Collection) feature.
-				//    2. Sending ops out of order means they are excluded from rollback functionality. This is not an issue
-				//    today as rollback can't undo creation of data store. To some extent not sending them is a bigger
-				//    issue than sending.
-				// Please note that this does not change file format, so it can be disabled in the future if this
-				// optimization no longer makes sense (for example, batch compression may make it less appealing).
-				if (
-					this.currentlyBatching() &&
-					type === ContainerMessageType.Attach &&
-					this.disableAttachReorder !== true
-				) {
-					this.outbox.submitAttach(message);
-				} else if (type === ContainerMessageType.BlobAttach) {
+				if (type === ContainerMessageType.BlobAttach) {
 					// BlobAttach ops must have their metadata visible and cannot be grouped (see opGroupingManager.ts)
 					this.outbox.submitBlobAttach(message);
 				} else {
@@ -4021,37 +4040,6 @@ export class ContainerRuntime
 	private verifyNotClosed() {
 		if (this._disposed) {
 			throw new Error("Runtime is closed");
-		}
-	}
-
-	private verifyCanSubmitOps() {
-		if (this.ensureNoDataModelChangesCalls > 0) {
-			const errorMessage =
-				"Op was submitted from within a `ensureNoDataModelChanges` callback";
-			if (this.opReentryCallsToReport > 0) {
-				this.mc.logger.sendTelemetryEvent(
-					{ eventName: "OpReentry" },
-					// We need to capture the call stack in order to inspect the source of this usage pattern
-					getLongStack(() => new UsageError(errorMessage)),
-				);
-				this.opReentryCallsToReport--;
-			}
-
-			// Creating ops while processing ops can lead
-			// to undefined behavior and events observed in the wrong order.
-			// For example, we have two callbacks registered for a DDS, A and B.
-			// Then if on change #1 callback A creates change #2, the invocation flow will be:
-			//
-			// A because of #1
-			// A because of #2
-			// B because of #2
-			// B because of #1
-			//
-			// The runtime must enforce op coherence by not allowing ops to be submitted
-			// while ops are being processed.
-			if (this.enableOpReentryCheck) {
-				throw new UsageError(errorMessage);
-			}
 		}
 	}
 
@@ -4403,6 +4391,6 @@ export class ContainerRuntime
 	}
 
 	private get groupedBatchingEnabled(): boolean {
-		return this.documentSchema.opGroupingEnabled === true;
+		return this.sessionSchema.opGroupingEnabled === true;
 	}
 }

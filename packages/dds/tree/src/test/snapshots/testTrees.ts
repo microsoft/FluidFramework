@@ -34,10 +34,12 @@ import {
 	ITreeCheckout,
 	InitializeAndSchematizeConfiguration,
 	SharedTreeFactory,
+	SharedTreeOptions,
+	SharedTreeFormatVersion,
 	runSynchronous,
 } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { SharedTreeOptions, defaultSharedTreeOptions } from "../../shared-tree/sharedTree.js";
+import { defaultSharedTreeOptions } from "../../shared-tree/sharedTree.js";
 import { brand } from "../../util/index.js";
 import {
 	TestTreeProviderLite,
@@ -138,12 +140,13 @@ function generateTreeRecursively(
 // TODO: The generated test trees should eventually be updated to use the chunked-forest.
 export function generateTestTrees(useUncompressedEncode?: boolean) {
 	const testEncodeType = useUncompressedEncode === true ? "uncompressed" : "default-compression";
-	const factoryOptions = {
+	const factoryOptions: SharedTreeOptions = {
 		jsonValidator: typeboxValidator,
 		treeEncodeType:
 			useUncompressedEncode === true
 				? TreeCompressionStrategy.Uncompressed
 				: defaultSharedTreeOptions.treeEncodeType,
+		formatVersion: SharedTreeFormatVersion.v1,
 	};
 	const factory = new SharedTreeFactory(factoryOptions);
 	const testTrees: {

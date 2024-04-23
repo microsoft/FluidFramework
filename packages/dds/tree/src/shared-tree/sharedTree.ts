@@ -43,13 +43,7 @@ import {
 	makeTreeChunker,
 } from "../feature-libraries/index.js";
 import { ExplicitCoreCodecVersions, SharedTreeCore } from "../shared-tree-core/index.js";
-import {
-	ITree,
-	ImplicitFieldSchema,
-	TreeConfiguration,
-	TreeFieldFromImplicitField,
-	TreeView,
-} from "../simple-tree/index.js";
+import { ITree, ImplicitFieldSchema, TreeConfiguration, TreeView } from "../simple-tree/index.js";
 import { brand } from "../util/index.js";
 
 import { DefaultCommitEnricher } from "./defaultCommitEnricher.js";
@@ -135,11 +129,12 @@ interface ExplicitCodecVersions extends ExplicitCoreCodecVersions {
 
 const formatVersionToTopLevelCodecVersions = new Map<number, ExplicitCodecVersions>([
 	[1, { forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 1, message: 1, fieldBatch: 1 }],
+	[2, { forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 2, message: 2, fieldBatch: 1 }],
 ]);
 
 function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
 	const versions = formatVersionToTopLevelCodecVersions.get(formatVersion);
-	assert(versions !== undefined, "Unknown format version");
+	assert(versions !== undefined, 0x90e /* Unknown format version */);
 	return versions;
 }
 
@@ -237,7 +232,8 @@ export class SharedTree
 			runtime,
 			attributes,
 			telemetryContextPrefix,
-			{ schema, policy: defaultSchemaPolicy },
+			schema,
+			defaultSchemaPolicy,
 			new DefaultCommitEnricher(
 				changeFamily.rebaser.invert.bind(changeFamily.rebaser),
 				() => {
@@ -301,7 +297,7 @@ export class SharedTree
 
 	public schematize<TRoot extends ImplicitFieldSchema>(
 		config: TreeConfiguration<TRoot>,
-	): TreeView<TreeFieldFromImplicitField<TRoot>> {
+	): TreeView<TRoot> {
 		const view = new SchematizingSimpleTreeView(
 			this.checkout,
 			config,
@@ -330,8 +326,16 @@ export class SharedTree
 export const SharedTreeFormatVersion = {
 	/**
 	 * Requires \@fluidframework/tree \>= 2.0.0.
+	 *
+	 * @deprecated - FF does not currently plan on supporting this format long-term.
+	 * Do not write production documents using this format, as they may not be loadable in the future.
 	 */
 	v1: 1,
+
+	/**
+	 * Requires \@fluidframework/tree \>= 2.0.0.
+	 */
+	v2: 2,
 } as const;
 
 /**
@@ -374,7 +378,7 @@ export interface SharedTreeFormatOptions {
 	 * To be safe, application authors should verify that they have saturated this version
 	 * of \@fluidframework/tree in their ecosystem before changing the format version.
 	 *
-	 * This option defaults to SharedTreeFormatVersion.v1.
+	 * This option defaults to SharedTreeFormatVersion.v2.
 	 */
 	formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
 }
@@ -398,7 +402,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 	jsonValidator: noopValidator,
 	forest: ForestType.Reference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,
-	formatVersion: SharedTreeFormatVersion.v1,
+	formatVersion: SharedTreeFormatVersion.v2,
 };
 
 /**

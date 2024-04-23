@@ -183,10 +183,10 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	/**
 	 * Submits a container runtime level signal to be sent to other clients.
 	 * @param type - Type of the signal.
-	 * @param content - Content of the signal.
+	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	submitSignal(type: string, content: any, targetClientId?: string): void;
+	submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
 
 	/**
 	 * @deprecated 0.16 Issue #1537, #3631
@@ -437,6 +437,9 @@ export interface IFluidParentContext
 	 * Can be disabled by feature gate `Fluid.ContainerRuntime.DisableOpReentryCheck`
 	 *
 	 * @param callback - the callback to be invoked
+	 *
+	 * @deprecated
+	 * // back-compat: to be removed in 2.0
 	 */
 	ensureNoDataModelChanges<T>(callback: () => T): T;
 
@@ -453,10 +456,10 @@ export interface IFluidParentContext
 	/**
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
-	 * @param content - Content of the signal.
+	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	submitSignal(type: string, content: any, targetClientId?: string): void;
+	submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
 
 	/**
 	 * Called to make the data store locally visible in the container. This happens automatically for root data stores

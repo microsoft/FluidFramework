@@ -427,16 +427,16 @@ function setUpSignalListenerForRoomBroadcasting(
 				try {
 					const runtimeMessage = createRuntimeMessage(signalContent);
 
-					socket
-						.emitToRoom(getRoomId(signalRoom), "signal", runtimeMessage)
-						.catch((error: any) => {
-							const errorMsg = `Failed to broadcast signal from external API.`;
-							Lumberjack.error(
-								errorMsg,
-								getLumberBaseProperties(signalRoom.documentId, signalRoom.tenantId),
-								error,
-							);
-						});
+					try {
+						socket.emitToRoom(getRoomId(signalRoom), "signal", runtimeMessage);
+					} catch (error) {
+						const errorMsg = `Failed to broadcast signal from external API.`;
+						Lumberjack.error(
+							errorMsg,
+							getLumberBaseProperties(signalRoom.documentId, signalRoom.tenantId),
+							error,
+						);
+					}
 				} catch (error) {
 					const errorMsg = `broadcast-signal content body is malformed`;
 					throw handleServerErrorAndConvertToNetworkError(
