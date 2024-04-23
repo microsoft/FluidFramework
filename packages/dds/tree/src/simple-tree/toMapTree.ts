@@ -20,6 +20,7 @@ import {
 	isTreeValue,
 	typeNameSymbol,
 	valueSchemaAllows,
+	NodeKeyManager,
 } from "../feature-libraries/index.js";
 import { brand, fail, isReadonlyArray } from "../util/index.js";
 
@@ -35,6 +36,8 @@ import {
 	normalizeAllowedTypes,
 	normalizeFieldSchema,
 	getStoredKey,
+	getDefaultProviderContext,
+	extractInsertableContent,
 } from "./schemaTypes.js";
 
 /**
@@ -58,11 +61,16 @@ import {
 export function cursorFromNodeData(
 	data: InsertableContent,
 	allowedTypes: ImplicitAllowedTypes,
+	nodeKeyManager: NodeKeyManager,
 ): CursorWithNode<MapTree> | undefined {
 	if (data === undefined) {
 		return undefined;
 	}
-	const mappedContent = nodeDataToMapTree(data, normalizeAllowedTypes(allowedTypes));
+	const mappedContent = nodeDataToMapTree(
+		data,
+		normalizeAllowedTypes(allowedTypes),
+		nodeKeyManager,
+	);
 	return cursorForMapTreeNode(mappedContent);
 }
 
@@ -74,10 +82,11 @@ export function cursorFromNodeData(
 export function cursorFromFieldData(
 	data: InsertableContent,
 	schema: FieldSchema,
+	nodeKeyManager: NodeKeyManager,
 ): CursorWithNode<MapTree> {
 	const mappedContent = Array.isArray(data)
-		? arrayToMapTreeFields(data, schema.allowedTypeSet)
-		: [nodeDataToMapTree(data, schema.allowedTypeSet)];
+		? arrayToMapTreeFields(data, schema.allowedTypeSet, nodeKeyManager)
+		: [nodeDataToMapTree(data, schema.allowedTypeSet, nodeKeyManager)];
 	return cursorForMapTreeField(mappedContent);
 }
 
@@ -101,6 +110,7 @@ export function cursorFromFieldData(
 export function nodeDataToMapTree(
 	data: InsertableContent,
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
+	nodeKeyManager: NodeKeyManager,
 ): MapTree {
 	assert(data !== undefined, 0x846 /* Cannot map undefined tree. */);
 
@@ -110,11 +120,11 @@ export function nodeDataToMapTree(
 		case NodeKind.Leaf:
 			return leafToMapTree(data, schema, allowedTypes);
 		case NodeKind.Array:
-			return arrayToMapTree(data, schema);
+			return arrayToMapTree(data, schema, nodeKeyManager);
 		case NodeKind.Map:
-			return mapToMapTree(data, schema);
+			return mapToMapTree(data, schema, nodeKeyManager);
 		case NodeKind.Object:
-			return objectToMapTree(data, schema);
+			return objectToMapTree(data, schema, nodeKeyManager);
 		default:
 			fail(`Unrecognized schema kind: ${schema.kind}.`);
 	}
@@ -192,6 +202,7 @@ function mapValueWithFallbacks(
 function arrayToMapTreeFields(
 	data: readonly InsertableContent[],
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
+	nodeKeyManager: NodeKeyManager,
 ): MapTree[] {
 	const mappedData: MapTree[] = [];
 	for (const child of data) {
@@ -205,7 +216,7 @@ function arrayToMapTreeFields(
 				throw new TypeError(`Received unsupported array entry value: ${child}.`);
 			}
 		}
-		const mappedChild = nodeDataToMapTree(childWithFallback, allowedTypes);
+		const mappedChild = nodeDataToMapTree(childWithFallback, allowedTypes, nodeKeyManager);
 		mappedData.push(mappedChild);
 	}
 
@@ -219,7 +230,11 @@ function arrayToMapTreeFields(
  * @param allowedTypes - The allowed types specified by the parent.
  * Used to determine which fallback values may be appropriate.
  */
-function arrayToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree {
+function arrayToMapTree(
+	data: InsertableContent,
+	schema: TreeNodeSchema,
+	nodeKeyManager: NodeKeyManager,
+): MapTree {
 	assert(schema.kind === NodeKind.Array, 0x922 /* Expected an array schema. */);
 	if (!isReadonlyArray(data)) {
 		throw new UsageError(`Input data is incompatible with Array schema: ${data}`);
@@ -227,7 +242,7 @@ function arrayToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTre
 
 	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
 
-	const mappedData = arrayToMapTreeFields(data, allowedChildTypes);
+	const mappedData = arrayToMapTreeFields(data, allowedChildTypes, nodeKeyManager);
 
 	// Array node children are represented as a single field entry denoted with `EmptyKey`
 	const fieldsEntries: [FieldKey, MapTree[]][] =
@@ -247,7 +262,11 @@ function arrayToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTre
  * @param allowedTypes - The allowed types specified by the parent.
  * Used to determine which fallback values may be appropriate.
  */
-function mapToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree {
+function mapToMapTree(
+	data: InsertableContent,
+	schema: TreeNodeSchema,
+	nodeKeyManager: NodeKeyManager,
+): MapTree {
 	assert(schema.kind === NodeKind.Map, 0x923 /* Expected a Map schema. */);
 	if (!(data instanceof Map)) {
 		throw new UsageError(`Input data is incompatible with Map schema: ${data}`);
@@ -261,7 +280,7 @@ function mapToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree 
 
 		// Omit undefined values - an entry with an undefined value is equivalent to one that has been removed or omitted
 		if (value !== undefined) {
-			const mappedField = nodeDataToMapTree(value, allowedChildTypes);
+			const mappedField = nodeDataToMapTree(value, allowedChildTypes, nodeKeyManager);
 			transformedFields.set(brand(key), [mappedField]);
 		}
 	}
@@ -279,7 +298,11 @@ function mapToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree 
  * @param allowedTypes - The allowed types specified by the parent.
  * Used to determine which fallback values may be appropriate.
  */
-function objectToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree {
+function objectToMapTree(
+	data: InsertableContent,
+	schema: TreeNodeSchema,
+	nodeKeyManager: NodeKeyManager,
+): MapTree {
 	assert(schema.kind === NodeKind.Object, 0x924 /* Expected an Object schema. */);
 	if (typeof data !== "object" || data === null) {
 		throw new UsageError(`Input data is incompatible with Object schema: ${data}`);
@@ -290,13 +313,55 @@ function objectToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTr
 	// Filter keys to only those that are strings - our trees do not support symbol or numeric property keys
 	const keys = Reflect.ownKeys(data).filter((key) => typeof key === "string") as FieldKey[];
 
+	const allKeys = Object.keys((schema as any).info) as FieldKey[];
+	const keysWithoutData = allKeys.filter((value) => !keys.includes(value));
+	for (const key of keysWithoutData) {
+		const fieldSchema = getObjectFieldSchema(schema, key);
+		if (fieldSchema.kind === FieldKind.Identifier) {
+			const fieldValue = nodeKeyManager.stabilizeNodeKey(
+				nodeKeyManager.generateLocalNodeKey(),
+			);
+			const mappedChildTree = nodeDataToMapTree(
+				fieldValue,
+				fieldSchema.allowedTypeSet,
+				nodeKeyManager,
+			);
+			const flexKey: FieldKey = brand(getStoredKey(key, fieldSchema));
+
+			// Note: SchemaFactory validates this at schema creation time, with a user-friendly error.
+			// So we don't expect to hit this, and if we do it is likely an internal bug.
+			assert(!fields.has(flexKey), 0x925 /* Keys must not be duplicated */);
+			fields.set(flexKey, [mappedChildTree]);
+		} else if (fieldSchema.kind === FieldKind.Optional) {
+			const defaultProvider = fieldSchema.props?.defaultProvider;
+			if (defaultProvider !== undefined) {
+				const fieldValue = defaultProvider(getDefaultProviderContext(nodeKeyManager));
+				const mappedChildTree = nodeDataToMapTree(
+					extractInsertableContent(fieldValue),
+					fieldSchema.allowedTypeSet,
+					nodeKeyManager,
+				);
+				const flexKey: FieldKey = brand(getStoredKey(key, fieldSchema));
+
+				// Note: SchemaFactory validates this at schema creation time, with a user-friendly error.
+				// So we don't expect to hit this, and if we do it is likely an internal bug.
+				assert(!fields.has(flexKey), 0x925 /* Keys must not be duplicated */);
+				fields.set(flexKey, [mappedChildTree]);
+			}
+		}
+	}
+
 	for (const viewKey of keys) {
 		const fieldValue = (data as Record<FieldKey, InsertableContent>)[viewKey];
 
 		// Omit undefined record entries - an entry with an undefined key is equivalent to no entry
 		if (fieldValue !== undefined) {
 			const fieldSchema = getObjectFieldSchema(schema, viewKey);
-			const mappedChildTree = nodeDataToMapTree(fieldValue, fieldSchema.allowedTypeSet);
+			const mappedChildTree = nodeDataToMapTree(
+				fieldValue,
+				fieldSchema.allowedTypeSet,
+				nodeKeyManager,
+			);
 			const flexKey: FieldKey = brand(getStoredKey(viewKey, fieldSchema));
 
 			// Note: SchemaFactory validates this at schema creation time, with a user-friendly error.

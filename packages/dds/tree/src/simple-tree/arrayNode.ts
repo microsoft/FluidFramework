@@ -325,7 +325,14 @@ const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 				simpleNodeSchema.info as ImplicitFieldSchema,
 			);
 
-			sequenceField.insertAt(index, cursorFromFieldData(content, simpleFieldSchema));
+			sequenceField.insertAt(
+				index,
+				cursorFromFieldData(
+					content,
+					simpleFieldSchema,
+					sequenceNode.context.nodeKeyManager,
+				),
+			);
 		},
 	},
 	insertAtStart: {
@@ -346,7 +353,13 @@ const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 				simpleNodeSchema.info as ImplicitFieldSchema,
 			);
 
-			sequenceField.insertAtStart(cursorFromFieldData(content, simpleFieldSchema));
+			sequenceField.insertAtStart(
+				cursorFromFieldData(
+					content,
+					simpleFieldSchema,
+					sequenceNode.context.nodeKeyManager,
+				),
+			);
 		},
 	},
 	insertAtEnd: {
@@ -367,7 +380,13 @@ const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 				simpleNodeSchema.info as ImplicitFieldSchema,
 			);
 
-			sequenceField.insertAtEnd(cursorFromFieldData(content, simpleFieldSchema));
+			sequenceField.insertAtEnd(
+				cursorFromFieldData(
+					content,
+					simpleFieldSchema,
+					sequenceNode.context.nodeKeyManager,
+				),
+			);
 		},
 	},
 	removeAt: {

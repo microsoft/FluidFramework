@@ -26,6 +26,8 @@ export {
 	InsertableTreeFieldFromImplicitField,
 	InsertableTypedNode,
 	NodeBuilderData,
+	DefaultProviderContext,
+	DefaultProviderValue,
 	type FieldProps,
 	normalizeFieldSchema,
 } from "./schemaTypes.js";

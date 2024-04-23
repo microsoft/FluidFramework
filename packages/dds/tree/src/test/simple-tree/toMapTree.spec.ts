@@ -18,13 +18,18 @@ import { normalizeAllowedTypes } from "../../simple-tree/schemaTypes.js";
 // eslint-disable-next-line import/no-internal-modules
 import { nodeDataToMapTree as nodeDataToMapTreeBase } from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
+import { createMockNodeKeyManager } from "../../feature-libraries/index.js";
 
 /**
  * Wrapper around {@link nodeDataToMapTreeBase} which handles the normalization of {@link ImplicitAllowedTypes} as a
  * convenience.
  */
 function nodeDataToMapTree(tree: InsertableContent, allowedTypes: ImplicitAllowedTypes): MapTree {
-	return nodeDataToMapTreeBase(tree, normalizeAllowedTypes(allowedTypes));
+	return nodeDataToMapTreeBase(
+		tree,
+		normalizeAllowedTypes(allowedTypes),
+		createMockNodeKeyManager(),
+	);
 }
 
 describe("toMapTree", () => {
