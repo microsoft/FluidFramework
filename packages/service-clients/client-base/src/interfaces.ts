@@ -13,10 +13,10 @@ import { type IUser } from "@fluidframework/protocol-definitions";
 import { type ITokenProvider } from "@fluidframework/routerlicious-driver";
 
 /**
- * Props for initializing a new AzureClient instance
+ * Props for initializing a new BaseClient instance
  * @public
  */
-export interface AzureClientProps {
+export interface BaseClientProps {
 	/**
 	 * Configuration for establishing a connection with the Azure Fluid Relay.
 	 */

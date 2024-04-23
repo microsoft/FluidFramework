@@ -94,7 +94,7 @@ export interface IAuthorizationError extends IDriverErrorBase {
     readonly tenantId?: string;
 }
 
-// @alpha
+// @public
 export interface IContainerPackageInfo {
     name: string;
 }
@@ -238,7 +238,7 @@ export interface ILocationRedirectionError extends IDriverErrorBase {
     readonly redirectUrl: IResolvedUrl;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface IResolvedUrl {
     // (undocumented)
     endpoints: {
@@ -308,7 +308,7 @@ export interface IThrottlingWarning extends IDriverErrorBase {
     readonly retryAfterSeconds: number;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface IUrlResolver {
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, packageInfoSource?: IContainerPackageInfo): Promise<string>;
     // (undocumented)

@@ -4,27 +4,22 @@
 
 ```ts
 
+import { ContainerSchema } from '@fluidframework/fluid-static';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { ICompressionStorageConfig } from '@fluidframework/driver-utils';
 import { IConfigProviderBase } from '@fluidframework/core-interfaces';
+import { IFluidContainer } from '@fluidframework/fluid-static';
 import { IMember } from '@fluidframework/fluid-static';
+import { IRequest } from '@fluidframework/core-interfaces';
 import { IServiceAudience } from '@fluidframework/fluid-static';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { ITokenResponse } from '@fluidframework/routerlicious-driver';
+import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
 import { IUser } from '@fluidframework/protocol-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
-
-// @public
-export interface AzureClientProps {
-    readonly configProvider?: IConfigProviderBase;
-    readonly connection: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
-    readonly logger?: ITelemetryBaseLogger;
-    // (undocumented)
-    readonly summaryCompression?: boolean | ICompressionStorageConfig;
-}
 
 // @public
 export interface AzureConnectionConfig {
@@ -73,6 +68,33 @@ export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
 export interface AzureUser<T = any> extends IUser {
     additionalDetails?: T;
     name: string;
+}
+
+// @public
+export abstract class BaseClient {
+    constructor(properties: BaseClientProps, urlResolver: IUrlResolver, createAzureCreateNewRequest: (endpointUrl: string, tenantId: string) => IRequest);
+    copyContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version?: AzureContainerVersion): Promise<{
+        container: IFluidContainer<TContainerSchema>;
+        services: AzureContainerServices;
+    }>;
+    createContainer<const TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema): Promise<{
+        container: IFluidContainer<TContainerSchema>;
+        services: AzureContainerServices;
+    }>;
+    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema): Promise<{
+        container: IFluidContainer<TContainerSchema>;
+        services: AzureContainerServices;
+    }>;
+    getContainerVersions(id: string, options?: AzureGetVersionsOptions): Promise<AzureContainerVersion[]>;
+}
+
+// @public
+export interface BaseClientProps {
+    readonly configProvider?: IConfigProviderBase;
+    readonly connection: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
+    readonly logger?: ITelemetryBaseLogger;
+    // (undocumented)
+    readonly summaryCompression?: boolean | ICompressionStorageConfig;
 }
 
 // @public

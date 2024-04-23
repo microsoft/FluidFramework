@@ -4,7 +4,6 @@
 
 ```ts
 
-import { AzureClientProps } from '@fluidframework/client-base';
 import { AzureConnectionConfig } from '@fluidframework/client-base';
 import { AzureConnectionConfigType } from '@fluidframework/client-base';
 import { AzureContainerServices } from '@fluidframework/client-base';
@@ -14,9 +13,9 @@ import { AzureLocalConnectionConfig } from '@fluidframework/client-base';
 import { AzureMember } from '@fluidframework/client-base';
 import { AzureRemoteConnectionConfig } from '@fluidframework/client-base';
 import { AzureUser } from '@fluidframework/client-base';
-import { ContainerSchema } from '@fluidframework/fluid-static';
+import { BaseClient } from '@fluidframework/client-base';
+import { BaseClientProps } from '@fluidframework/client-base';
 import { IAzureAudience } from '@fluidframework/client-base';
-import { IFluidContainer } from '@fluidframework/fluid-static';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
@@ -26,24 +25,9 @@ import { IUser } from '@fluidframework/protocol-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 
 // @public
-export class AzureClient {
-    constructor(properties: AzureClientProps);
-    copyContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version?: AzureContainerVersion): Promise<{
-        container: IFluidContainer<TContainerSchema>;
-        services: AzureContainerServices;
-    }>;
-    createContainer<const TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema): Promise<{
-        container: IFluidContainer<TContainerSchema>;
-        services: AzureContainerServices;
-    }>;
-    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema): Promise<{
-        container: IFluidContainer<TContainerSchema>;
-        services: AzureContainerServices;
-    }>;
-    getContainerVersions(id: string, options?: AzureGetVersionsOptions): Promise<AzureContainerVersion[]>;
+export class AzureClient extends BaseClient {
+    constructor(properties: BaseClientProps);
 }
-
-export { AzureClientProps }
 
 export { AzureConnectionConfig }
 
@@ -71,6 +55,8 @@ export { AzureMember }
 export { AzureRemoteConnectionConfig }
 
 export { AzureUser }
+
+export { BaseClientProps }
 
 export { IAzureAudience }
 

@@ -12,7 +12,7 @@
 export { AzureClient } from "./AzureClient.js";
 export { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";
 export type {
-	AzureClientProps,
+	BaseClientProps,
 	AzureConnectionConfig,
 	AzureConnectionConfigType,
 	AzureContainerServices,
