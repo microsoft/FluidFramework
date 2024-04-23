@@ -8,7 +8,6 @@ import {
 	IDisposable,
 	IFluidHandle,
 	IRequest,
-	IResponse,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
@@ -38,7 +37,6 @@ import {
 	GCDataBuilder,
 	isSerializedHandle,
 	processAttachMessageGCData,
-	RequestParser,
 	responseToException,
 	SummaryTreeBuilder,
 	unpackChildNodesUsedRoutes,
@@ -66,10 +64,15 @@ import {
 	LocalDetachedFluidDataStoreContext,
 } from "./dataStoreContext";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs";
-import { GCNodeType, detectOutboundRoutesViaDDSKey } from "./gc";
+import {
+	GCNodeType,
+	IGCNodeUpdatedProps,
+	detectOutboundRoutesViaDDSKey,
+	urlToGCNodePath,
+} from "./gc";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summary";
-import { RuntimeHeaders } from "./containerRuntime.js";
+import { DeletedResponseHeaderKey } from "./containerRuntime.js";
 
 type PendingAliasResolve = (success: boolean) => void;
 
@@ -105,7 +108,6 @@ export class DataStores implements IDisposable {
 		Promise<AliasResult>
 	>();
 
-	private readonly contexts: DataStoreContexts;
 	private readonly aliasedDataStores: Set<string>;
 
 	constructor(
@@ -960,7 +962,7 @@ export class DataStores implements IDisposable {
 		// Delete the contexts of sweep ready data stores.
 		this.contexts.delete(dataStoreId);
 		// Delete the summarizer node of the sweep ready data stores.
-		this.parentContext.deleteChildSummarizerNode?.(dataStoreId);
+		this.deleteChildSummarizerNodeFn?.(dataStoreId);
 	}
 
 	/**
@@ -1036,7 +1038,7 @@ export class DataStores implements IDisposable {
 		const outboundRoutes: string[] = [];
 		// Getting this information is a performance optimization that reduces network calls for virtualized datastores
 		for (const [contextId, context] of this.contexts) {
-			const isRootDataStore = await context.isRoot(this.aliasedDataStores);
+			const isRootDataStore = await context.isRoot();
 			if (isRootDataStore) {
 				outboundRoutes.push(`/${contextId}`);
 			}
@@ -1071,6 +1073,7 @@ export class DataStores implements IDisposable {
 		}
 		return GCNodeType.SubDataStore;
 	}
+}
 
 export function getSummaryForDatastores(
 	snapshot: ISnapshotTree | undefined,

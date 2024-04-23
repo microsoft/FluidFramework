@@ -168,7 +168,6 @@ import {
 	IGarbageCollector,
 	IGCRuntimeOptions,
 	IGCStats,
-	trimLeadingAndTrailingSlashes,
 } from "./gc";
 import { channelToDataStore, IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import { BindBatchTracker } from "./batchTracker";
@@ -487,7 +486,7 @@ export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in th
  */
 export const AllowInactiveRequestHeaderKey = "allowInactive"; // Belongs in the enum above, but avoiding the breaking change
 
-/*
+/**
  * Error responses when requesting a deleted object will have this header set to true
  * @alpha
  */
@@ -1858,7 +1857,7 @@ export class ContainerRuntime
 
 		// When notifying GC of this node being loaded, we only indicate the DataStore itself, not the full subDataStore url if applicable.
 		// This is in case the url is to a route that Fluid doesn't understand or track for GC (e.g. if suited for a custom request handler)
-		this.garbageCollector.gcNodeUpdated({
+		this.garbageCollector.nodeUpdated({
 			node: { type: "DataStore", path: `/${id}` },
 			reason: "Loaded",
 			packagePath: details.pkg,

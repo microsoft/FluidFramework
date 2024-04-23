@@ -236,6 +236,9 @@ export interface ContainerRuntimeMessage {
 // @alpha (undocumented)
 export const DefaultSummaryConfiguration: ISummaryConfiguration;
 
+// @alpha
+export const DeletedResponseHeaderKey = "wasDeleted";
+
 // @alpha (undocumented)
 export type EnqueueSummarizeResult = (ISummarizeResults & {
     readonly alreadyEnqueued?: undefined;

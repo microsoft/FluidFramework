@@ -227,17 +227,9 @@ export abstract class FluidDataStoreContext
 	 * 2. is root as part of the base snapshot that the datastore loaded from
 	 * @returns whether a datastore is root
 	 */
-	public async isRoot(aliasedDataStores?: Set<string>): Promise<boolean> {
+	public async isRoot(): Promise<boolean> {
 		if (this.isInMemoryRoot()) {
 			return true;
-		}
-
-		// This if is a performance optimization.
-		// We know that if the base snapshot is omitted, then the isRootDataStore flag is not set.
-		// That means we can skip the expensive call to getInitialSnapshotDetails for virtualized datastores,
-		// and get the information from the alias map directly.
-		if (aliasedDataStores !== undefined && this.baseSnapshot?.omitted === true) {
-			return aliasedDataStores.has(this.id);
 		}
 
 		return (await this.getInitialSnapshotDetails()).isRootDataStore;
