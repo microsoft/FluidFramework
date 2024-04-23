@@ -391,7 +391,7 @@ export const baseModel: Omit<
 		// makeReducer supports a param for logging output which tracks the provided intervalId over time:
 		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
 		makeReducer(),
-	validateConsistency: assertEquivalentSharedStrings,
+	validateConsistency: (a, b) => assertEquivalentSharedStrings(a.channel, b.channel),
 	factory: new SharedStringFuzzFactory(),
 	minimizationTransforms: [
 		(op) => {
