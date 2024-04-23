@@ -44,13 +44,15 @@
 			}
 		},
 		"./internal/test-utils": {
-			"import": {
-				"types": "./lib/test/index.d.ts",
-				"default": "./lib/test/index.js"
-			},
-			"require": {
-				"types": "./dist/test/index.d.ts",
-				"default": "./dist/test/index.js"
+			"allow-ff-test-exports": {
+				"import": {
+					"types": "./lib/test/index.d.ts",
+					"default": "./lib/test/index.js"
+				},
+				"require": {
+					"types": "./dist/test/index.d.ts",
+					"default": "./dist/test/index.js"
+				}
 			}
 		}
 	},
