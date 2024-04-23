@@ -21,6 +21,7 @@ import {
 	initializeProjectsAndLoadFiles,
 	typeDataFromFile,
 } from "../../typeTestUtils";
+import type { ExportsRecordValue } from "./entrypoints";
 
 export default class GenerateTypetestsCommand extends PackageCommand<
 	typeof GenerateTypetestsCommand
@@ -73,8 +74,11 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		}
 
 		const [currentTypeDefs, previousTypeDefs] = [
-			getTypePathFromPackage(currentPackageJson, ApiLevel.internal, this),
-			getTypePathFromPackage(previousPackageJson, ApiLevel.internal, this),
+			// First try the internal paths, but fall back to public otherwise.
+			getTypesPathFromPackage(currentPackageJson, ApiLevel.internal, this) ??
+				getTypesPathFromPackage(currentPackageJson, ApiLevel.public, this),
+			getTypesPathFromPackage(previousPackageJson, ApiLevel.internal, this) ??
+				getTypesPathFromPackage(previousPackageJson, ApiLevel.public, this),
 		];
 
 		if (currentTypeDefs === undefined) {
@@ -86,21 +90,6 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 			this.error(`No type definitions found for ${previousPackageName}`);
 		}
 		this.verbose(`Found previous type definitions at: ${previousTypeDefs}`);
-
-		// if (typeDefinitionFilePath === undefined) {
-		// 	throw new Error("Could not determine the type definition file path from package.json");
-		// }
-
-		// const reader = new ApiLevelReader(this, /(?:)/, false /* onlyInternal */);
-		// const currentExports = reader.get(currentPackageName);
-		// if (currentExports === undefined) {
-		// 	this.error(`No exports found for ${currentPackageName}`);
-		// }
-
-		// const previousExports = reader.get(previousPackageName);
-		// if (previousExports === undefined) {
-		// 	this.error(`No exports found for ${currentPackageName}`);
-		// }
 
 		const { currentFile, previousFile } = initializeProjectsAndLoadFiles(
 			previousTypeDefs,
@@ -135,6 +124,7 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 import type * as old from "${previousPackageName}/internal";
 import type * as current from "../../index.js";
 		`.trim(),
+			"\n",
 			typeOnly,
 		];
 
@@ -150,53 +140,34 @@ import type * as current from "../../index.js";
 		writeFileSync(typeTestOutputFile, testCases.join("\n"));
 		console.log(`generated ${path.resolve(typeTestOutputFile)}`);
 	}
-
-	public async run(): Promise<void> {
-		// Calls processPackage on all packages.
-		await super.run();
-	}
 }
 
-// /**
-//  * Checks the package.json's `exports` entries and `types` field for a type definition file path.
-//  * @returns string representing type definition file path
-//  */
-// export async function getTypeDefinitionFilePath(
-// 	packageBasePath: string,
-// ): Promise<string | undefined> {
-// 	const previousPackageJsonPath = tryGetPreviousPackageJsonPath(packageBasePath);
-// 	const packageJson = (await readJson(previousPackageJsonPath)) as PackageJson;
-// 	// Check the exports entries
-// 	if (packageJson.exports !== undefined) {
-// 		return getTypePathFromExport(packageJson, packageBasePath);
-// 	}
-
-// 	// Check the types field from the previous package.json as a fallback
-// 	if (packageJson.types === undefined) {
-// 		throw new Error(
-// 			`Type definition file path could not be determined from ${previousPackageJsonPath}. No 'exports' nor 'type' fields found.`,
-// 		);
-// 	} else {
-// 		return path.join(packageBasePath, packageJson.types);
-// 	}
-// }
-
 /**
- * Attempts to extract the type definition file path from the 'exports' field of a given package.json.
- * Checks both 'import' and 'require' resolution methods to find the appropriate path.
+ * Finds the path to the types of a package using the package's export map.
  * If the path is found, it is returned. Otherwise, an error is thrown.
- * @param packageJson - An object representing the previous package json
- * @param packageDirectory - A string representing the path to the root directory of the "previous" package dependency.
- * @returns A type definition filepath based on the appropriate export, or undefined if it cannot be found.
+ *
+ * This implementation uses resolve.exports to resolve the path to types for a level.
+ *
+ * @param packageJson - The package.json object to check for types paths.
+ * @param level - An API level to get types paths for.
+ * @returns A package relative path to the types.
  */
-export function getTypePathFromPackage(
+export function getTypesPathFromPackage(
 	packageJson: PackageJson,
-	level: ApiLevel,
+	level: ApiLevel = ApiLevel.internal,
 	log: Logger,
-): string | undefined {
-	// conditions: ["default", "types", "import", "node"]
+): string {
 	const exports =
+		// resolve.exports sets some conditions by default, so the ones we supply supplement the defaults. For clarity the
+		// applied conditions are noted in comments.
+
+		// First try to resolve with the "import" condition, assuming the package is either ESM-only or dual-format.
+		// conditions: ["default", "types", "import", "node"]
 		resolve.exports(packageJson, `./${level}`, { conditions: ["types"] }) ??
+		// If nothing is found when using the "import" condition, try the "require" condition. It may be possible to do this
+		// in a single call to resolve.exports, but the documentation is a little unclear. This seems a safe, if inelegant
+		// solution.
+		// conditions: ["default", "types", "require", "node"]
 		resolve.exports(packageJson, `./${level}`, { conditions: ["types"], require: true });
 
 	const typesPath =
@@ -210,4 +181,43 @@ export function getTypePathFromPackage(
 		);
 	}
 	return typesPath;
+}
+
+/**
+ * Finds the path to the types of a package using the package's export map.
+ * If the path is found, it is returned. Otherwise, an error is thrown.
+ *
+ * This implementation iterates through the individual exports entries recursively
+ *
+ * @param exports - The exports from package.json
+ * @param level - An API level to get types paths for.
+ * @returns A package relative path to the types.
+ */
+export function findTypesPathForApiLevel(
+	exports: ExportsRecordValue,
+	level: ApiLevel = ApiLevel.internal,
+	log: Logger,
+): string | undefined {
+	for (const [entry, exportsValue] of Object.entries(exports)) {
+		if (typeof exportsValue === "string") {
+			if (entry === "types") {
+				// const isTypeOnly = !(
+				// 	"default" in exports ||
+				// 	"import" in exports ||
+				// 	"require" in exports
+				// );
+				return exportsValue;
+			}
+		} else if (exportsValue !== null) {
+			if (Array.isArray(exportsValue)) {
+				continue;
+			}
+			const deepFind = findTypesPathForApiLevel(exportsValue, level, log);
+			if (deepFind !== undefined) {
+				return deepFind;
+			}
+		}
+	}
+
+	return undefined;
 }

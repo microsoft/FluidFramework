@@ -127,6 +127,7 @@ importers:
       prompts: ^2.4.2
       read-pkg-up: ^7.0.1
       replace-in-file: ^6.3.5
+      resolve.exports: ^2.0.2
       rimraf: ^4.4.1
       semver: ^7.5.4
       semver-utils: ^1.1.4
@@ -175,6 +176,7 @@ importers:
       prompts: 2.4.2
       read-pkg-up: 7.0.1
       replace-in-file: 6.3.5
+      resolve.exports: 2.0.2
       semver: 7.5.4
       semver-utils: 1.1.4
       simple-git: 3.19.1
@@ -10075,6 +10077,11 @@ packages:
   /resolve-pkg-maps/1.0.0:
     resolution: {integrity: sha512-seS2Tj26TBVOC2NIc2rOe2y2ZO7efxITtLZcGSOnHHNOQ7CkiUBfw0Iw2ck6xkIhPwLhKNLS8BO+hEpngQlqzw==}
     dev: true
+
+  /resolve.exports/2.0.2:
+    resolution: {integrity: sha512-X2UW6Nw3n/aMgDVy+0rSqgHlv39WZAlZrXCdnbyEiKm17DSqHX4MmQMaST3FbeWR5FTuRcUwYAziZajji0Y7mg==}
+    engines: {node: '>=10'}
+    dev: false
 
   /resolve/1.19.0:
     resolution: {integrity: sha512-rArEXAgsBG4UgRGcynxWIWKFvh/XZCcS8UJdHhwy91zwAvCZIbcs+vAbflgBnNjYMs/i/i+/Ux6IZhML1yPvxg==}
