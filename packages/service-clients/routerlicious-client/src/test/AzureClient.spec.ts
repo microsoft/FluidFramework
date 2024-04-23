@@ -18,7 +18,7 @@ import { SchemaFactory, SharedTree } from "@fluidframework/tree";
 import { v4 as uuid } from "uuid";
 import { type AzureLocalConnectionConfig } from "@fluidframework/base-client";
 
-import { AzureClient } from "../AzureClient.js";
+import { AzureClient } from "../RouterliciousClient.js";
 
 function createAzureClient(
 	props: {

@@ -31,25 +31,16 @@ import { type IClient, SummaryType } from "@fluidframework/protocol-definitions"
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 
+import { isAzureRemoteConnectionConfig } from "../../azure-client/src/utils.js";
 import type {
 	BaseClientProps,
-	AzureConnectionConfig,
 	AzureContainerServices,
 	AzureContainerVersion,
 	AzureGetVersionsOptions,
 } from "./interfaces.js";
 import { createAzureAudienceMember } from "./AzureAudience.js";
-import { isAzureRemoteConnectionConfig } from "./utils.js";
 
-/**
- * Strongly typed id for connecting to a local Azure Fluid Relay.
- */
-const LOCAL_MODE_TENANT_ID = "local";
-const getTenantId = (connectionProperties: AzureConnectionConfig): string => {
-	return isAzureRemoteConnectionConfig(connectionProperties)
-		? connectionProperties.tenantId
-		: LOCAL_MODE_TENANT_ID;
-};
+
 
 const MAX_VERSION_COUNT = 5;
 
@@ -101,10 +92,7 @@ export abstract class BaseClient {
 	public constructor(
 		private readonly properties: BaseClientProps,
 		private readonly urlResolver: IUrlResolver,
-		private readonly createAzureCreateNewRequest: (
-			endpointUrl: string,
-			tenantId: string,
-		) => IRequest,
+		private readonly createAzureCreateNewRequest: () => IRequest,
 	) {
 		// remove trailing slash from URL if any
 		properties.connection.endpoint = properties.connection.endpoint.replace(/\/$/, "");
@@ -315,13 +303,9 @@ export abstract class BaseClient {
 	}
 
 	private async createFluidContainer<TContainerSchema extends ContainerSchema>(
-		container: IContainer,
-		connection: AzureConnectionConfig,
+		container: IContainer
 	): Promise<IFluidContainer<TContainerSchema>> {
-		const createNewRequest = this.createAzureCreateNewRequest(
-			connection.endpoint,
-			getTenantId(connection),
-		);
+		const createNewRequest = this.createAzureCreateNewRequest();
 
 		const rootDataObject = await this.getContainerEntryPoint(container);
 

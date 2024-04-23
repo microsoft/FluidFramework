@@ -16,10 +16,11 @@
 @fluid-private/stochastic-test-utils
 @fluid-internal/mocha-test-setup
 @fluidframework/tinylicious-client
+@fluidframework/routerlicious-client
 @fluid-experimental/odsp-client
 @fluid-experimental/odsp-end-to-end-tests
 @fluidframework/azure-end-to-end-tests
-@fluidframework/client-base
+@fluidframework/base-client
 @fluidframework/azure-client
 @fluidframework/test-runtime-utils
 @fluidframework/runtime-utils

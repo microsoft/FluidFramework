@@ -1,12 +1,12 @@
 {
-	"name": "@fluidframework/client-base",
+	"name": "@fluidframework/routerlicious-client",
 	"version": "2.0.0-rc.4.0.0",
-	"description": "A tool to enable creation and loading of Fluid containers using the Azure Fluid Relay service",
+	"description": "A tool to enable creation and loading of Fluid containers using the Routerlicious reference server",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "packages/service-clients/client-base"
+		"directory": "packages/service-clients/routerlicious-client"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -79,8 +79,8 @@
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"postpack": "tar -cf ./client-base.test-files.tar ./dist/test ./lib/test",
-		"start:tinylicious:test": "npx @fluidframework/azure-local-service > tinylicious.log 2>&1",
+		"postpack": "tar -cf ./routerlicious-client.test-files.tar ./dist/test ./lib/test",
+		"start:tinylicious:test": "npx @fluidframework/routerlicious-local-service > tinylicious.log 2>&1",
 		"test": "npm run test:realsvc",
 		"test:realsvc": "npm run test:realsvc:tinylicious",
 		"test:realsvc:local:run": "mocha --recursive \"dist/test/**/*.spec.*js\" --exit --timeout 10000",
@@ -90,6 +90,7 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
+		"@fluidframework/base-client": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",

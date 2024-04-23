@@ -9,11 +9,8 @@
  * @packageDocumentation
  */
 
-export { isAzureLocalConnectionConfig, isAzureRemoteConnectionConfig } from "./utils.js";
-
-export { BaseClient } from "./BaseClient.js";
-
-export { createAzureAudienceMember } from "./AzureAudience.js";
+export { RouterliciousClient } from "./RouterliciousClient.js";
+export { RouterliciousFunctionTokenProvider } from "./RouterliciousFunctionTokenProvider.js";
 export type {
 	BaseClientProps,
 	AzureConnectionConfig,
@@ -26,7 +23,7 @@ export type {
 	AzureRemoteConnectionConfig,
 	AzureUser,
 	IAzureAudience,
-} from "./interfaces.js";
+} from "@fluidframework/base-client";
 
 export type { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 export type { ITokenClaims, IUser } from "@fluidframework/protocol-definitions";
