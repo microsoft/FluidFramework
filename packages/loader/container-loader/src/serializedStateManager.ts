@@ -100,8 +100,7 @@ export class SerializedStateManager {
 	private snapshot: ISnapshotInfo | undefined;
 	private latestSnapshot: ISnapshotInfo | undefined;
 	private refreshSnapshot: Promise<void> | undefined;
-	private readonly lastSavedOpSequenceNumber: number | undefined;
-	private allSavedOpsProcessed: boolean;
+	private readonly lastSavedOpSequenceNumber: number = 0;
 
 	constructor(
 		private readonly pendingLocalState: IPendingContainerState | undefined,
@@ -117,13 +116,9 @@ export class SerializedStateManager {
 		});
 
 		if (pendingLocalState && pendingLocalState.savedOps.length > 0) {
-			this.allSavedOpsProcessed = false;
 			const savedOpsSize = pendingLocalState.savedOps.length;
 			this.lastSavedOpSequenceNumber =
 				pendingLocalState.savedOps[savedOpsSize - 1].sequenceNumber;
-		} else {
-			// Necessary for case where we don't have saved ops.
-			this.allSavedOpsProcessed = true;
 		}
 		containerEvent.once("saved", () => this.updateSnapshotAndProcessedOpsMaybe());
 	}
@@ -139,9 +134,6 @@ export class SerializedStateManager {
 	public addProcessedOp(message: ISequencedDocumentMessage) {
 		if (this.offlineLoadEnabled) {
 			this.processedOps.push(message);
-			if (message.sequenceNumber === this.lastSavedOpSequenceNumber) {
-				this.allSavedOpsProcessed = true;
-			}
 			this.updateSnapshotAndProcessedOpsMaybe();
 		}
 	}
@@ -219,7 +211,8 @@ export class SerializedStateManager {
 		if (
 			this.latestSnapshot === undefined ||
 			this.processedOps.length === 0 ||
-			!this.allSavedOpsProcessed ||
+			this.processedOps[this.processedOps.length - 1].sequenceNumber <
+				this.lastSavedOpSequenceNumber ||
 			this.containerDirty()
 		) {
 			// can't refresh latest snapshot until we have processed the ops up to it.
