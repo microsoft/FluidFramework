@@ -45,6 +45,7 @@ import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { InsertableObjectFromSchemaRecord, TreeObjectNode, objectSchema } from "./objectNode.js";
 import { TreeMapNode, mapSchema } from "./mapNode.js";
 import {
+	FieldSchemaUnsafe,
 	InsertableObjectFromSchemaRecordUnsafe,
 	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
 	TreeArrayNodeUnsafe,
@@ -589,7 +590,7 @@ export class SchemaFactory<
 	public optionalRecursive<const T extends Unenforced<ImplicitAllowedTypes>>(
 		t: T,
 		props?: FieldProps,
-	) {
+	): FieldSchemaUnsafe<FieldKind.Optional, T> {
 		return createFieldSchemaUnsafe(FieldKind.Optional, t, props);
 	}
 
@@ -603,7 +604,7 @@ export class SchemaFactory<
 	public requiredRecursive<const T extends Unenforced<ImplicitAllowedTypes>>(
 		t: T,
 		props?: FieldProps,
-	) {
+	): FieldSchemaUnsafe<FieldKind.Required, T> {
 		return createFieldSchemaUnsafe(FieldKind.Required, t, props);
 	}
 
