@@ -50,7 +50,7 @@ import {
 	getGCStateFromSummary,
 	getGCTombstoneStateFromSummary,
 	manufactureHandle,
-} from "./gcTestSummaryUtils";
+} from "./gcTestSummaryUtils.js";
 
 type ExpectedTombstoneError = Error & {
 	code: number;
