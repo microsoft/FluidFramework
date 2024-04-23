@@ -16,6 +16,20 @@ export interface IRedisClientConnectionManager {
 	 * @returns The Redis client.
 	 */
 	getRedisClient(): Redis.default | Redis.Cluster;
+
+	/**
+	 * Adds an error handler to the Redis client, which will print telemetry when an error is encountered.
+	 *
+	 * @param lumberProperties - Lumber properties to be added to the telemetry.
+	 * @param errorMessage - The error message to be printed when an error is encountered.
+	 * @param additionalLoggingFunctionality - A lambda function that adds additional error handling and/or logging behavior.
+	 * If this lambda returns true it will completely override the existing error handling/logging, otherwise it will do both.
+	 */
+	addErrorHandler(
+		lumberProperties?: Map<string, any> | Record<string, any> | undefined,
+		errorMessage?: string,
+		additionalLoggingFunctionality?: (error: Error) => boolean,
+	): void;
 }
 
 export class RedisClientConnectionManager implements IRedisClientConnectionManager {
@@ -128,5 +142,23 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 			throw new Error("Redis client not initialized");
 		}
 		return this.client;
+	}
+
+	public addErrorHandler(
+		lumberProperties?: Map<string, any> | Record<string, any> | undefined,
+		errorMessage: string = "Error with Redis",
+		additionalLoggingFunctionality?: (error: Error) => boolean,
+	): void {
+		if (!this.client) {
+			throw new Error("Redis client not initialized");
+		}
+
+		this.client.on("error", (error) => {
+			if (additionalLoggingFunctionality && additionalLoggingFunctionality(error)) {
+				return;
+			}
+
+			Lumberjack.error(errorMessage, lumberProperties, error);
+		});
 	}
 }
