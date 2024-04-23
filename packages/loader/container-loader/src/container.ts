@@ -894,8 +894,8 @@ export class Container
 				clientShouldHaveLeft: (clientId: string) => {
 					this.clientsWhoShouldHaveLeft.add(clientId);
 				},
-				onCriticalError: (error: ICriticalContainerError) => {
-					this.close(error);
+				onCriticalError: (error: unknown) => {
+					this.close(normalizeError(error));
 				},
 			},
 			this.deltaManager,
