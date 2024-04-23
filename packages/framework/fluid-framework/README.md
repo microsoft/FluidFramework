@@ -2,6 +2,8 @@
 
 The `fluid-framework` package bundles a collection of Fluid Framework client libraries for easy use when paired with a corresponding service client package (e.g. `@fluidframework/azure-client`, `@fluidframework/tinylicious-client`, or `@fluid-experimental/osdp-client (BETA)`).
 
+This package reexports these APIs from other Fluid client packages: users of this package should not need direct production dependencies on any Fluid packages other than this one and the service client package.
+
 ## Contents
 
 The `fluid-framework` package consists primarily of two portions: the `IFluidContainer` and a selection of distributed data structures (DDSes).
