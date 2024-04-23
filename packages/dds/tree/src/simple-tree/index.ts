@@ -11,16 +11,6 @@ export {
 	SchemaCompatibilityStatus,
 } from "./tree.js";
 export {
-	NodeIncompatibility,
-	NodeFieldsIncompatibility,
-	NodeTypeIncompatibility,
-	SchemaFactoryNodeType,
-	SchemaFactoryFieldKind,
-	FieldIncompatibility,
-	FieldKindIncompatibility,
-	AllowedTypeIncompatibility,
-} from "./treeDiscrepancies.js";
-export {
 	TreeNodeSchema,
 	NodeFromSchema,
 	NodeKind,
@@ -48,7 +38,7 @@ export {
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 export { getFlexNode } from "./proxyBinding.js";
 export { treeNodeApi, TreeNodeApi, TreeChangeEvents } from "./treeApi.js";
-export { toFlexConfig } from "./toFlexSchema.js";
+export { toFlexConfig, cursorFromUnhydratedRoot } from "./toFlexSchema.js";
 export {
 	ObjectFromSchemaRecordUnsafe,
 	TreeObjectNodeUnsafe,

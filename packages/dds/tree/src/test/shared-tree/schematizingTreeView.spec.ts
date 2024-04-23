@@ -31,7 +31,6 @@ const configGeneralized = new TreeConfiguration([schema.number, schema.string], 
 const configGeneralized2 = new TreeConfiguration([schema.number, schema.boolean], () => false);
 const flexConfig = toFlexConfig(config);
 const flexConfigGeneralized = toFlexConfig(configGeneralized);
-const flexConfigGeneralized2 = toFlexConfig(configGeneralized);
 
 // Schema for tree that must always be empty.
 const emptySchema = new SchemaBuilderBase(FieldKinds.required, {
@@ -137,8 +136,7 @@ describe("SchematizingSimpleTreeView", () => {
 		]);
 	});
 
-	// TODO: Update test case name.
-	it("Schema becomes incompatible then comparable", () => {
+	it("Schema becomes un-upgradeable then exact match again", () => {
 		const checkout = checkoutWithContent(flexConfig);
 		const view = new SchematizingSimpleTreeView(
 			checkout,
@@ -158,10 +156,6 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.compatibility.isExactMatch, false);
 		assert.equal(view.compatibility.canUpgrade, false);
 		assert.equal(view.compatibility.canView, true);
-		// assert.throws(
-		// 	() => view.root,
-		// 	(e) => e instanceof UsageError,
-		// );
 
 		assert.throws(
 			() => view.upgradeSchema(),
@@ -170,6 +164,10 @@ describe("SchematizingSimpleTreeView", () => {
 
 		// Modify schema to be compatible again
 		checkout.updateSchema(intoStoredSchema(toFlexSchema([schema.number])));
+		assert.equal(view.compatibility.isExactMatch, true);
+		assert.equal(view.compatibility.canUpgrade, true);
+		assert.equal(view.compatibility.canView, true);
+
 		assert.deepEqual(log, [["schemaChanged", 5]]);
 		assert.equal(view.root, 5);
 		view[disposeSymbol]();

@@ -29,19 +29,13 @@ import {
 	setField,
 	normalizeFieldSchema,
 	InsertableContent,
+	cursorFromUnhydratedRoot,
 } from "../simple-tree/index.js";
 import { disposeSymbol } from "../util/index.js";
 
-import {
-	TreeContent,
-	UpdateType,
-	canInitialize,
-	ensureSchema,
-	initialize,
-} from "./schematizeTree.js";
+import { TreeContent, canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
 import { TreeCheckout } from "./treeCheckout.js";
 import { CheckoutFlexTreeView } from "./treeView.js";
-import { cursorFromUnhydratedRoot } from "../simple-tree/toFlexSchema.js";
 
 /**
  * Implementation of TreeView wrapping a FlexTreeView.
@@ -95,8 +89,6 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 			canUpgrade: true,
 			isExactMatch: false,
 			canInitialize: true,
-			differences: [],
-			metadata: undefined,
 		};
 		this.update();
 
@@ -196,8 +188,6 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 			canUpgrade,
 			isExactMatch,
 			canInitialize: canInitialize(this.checkout),
-			differences: [],
-			metadata: undefined,
 		};
 		let lastRoot =
 			this.compatibility.canView && this.view !== undefined ? this.root : undefined;
@@ -211,7 +201,11 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 			// which isn't the correct time since we normally do events during the batch when the forest is modified, but its better than nothing.
 			// TODO: provide a better event: this.view.flexTree.on(????)
 			const cleanupCheckOutEvents = this.checkout.events.on("afterBatch", () => {
-				// Due to how the initialization flow currently works, this event is
+				// In the initialization flow, this event is raised before the correct compatibility w.r.t the new schema is calculated.
+				// Accessing `this.root` in that case can throw. It's OK to ignore this because:
+				// - The rootChanged event will already be raised at the end of the current upgrade
+				// - It doesn't matter that `lastRoot` isn't updated in this case, because `update` will be called again before the upgrade
+				//   completes (at which point this callback and the `lastRoot` captured here will be out of scope anyway)
 				if (!this.midUpgrade && lastRoot !== this.root) {
 					lastRoot = this.root;
 					this.events.emit("rootChanged");

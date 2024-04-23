@@ -15,7 +15,6 @@ import {
 	InsertableTreeFieldFromImplicitField,
 	TreeFieldFromImplicitField,
 } from "./schemaTypes.js";
-import type { NodeIncompatibility } from "./treeDiscrepancies.js";
 
 /**
  * Channel for a Fluid Tree DDS.
@@ -92,17 +91,10 @@ export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFie
 	 * (meaning it does not even have any schema set at all).
 	 * If `initialTree` returns any actual node instances, they should be recreated each time `initialTree` runs.
 	 * This is because if the config is used a second time any nodes that were not recreated could error since nodes cannot be inserted into the tree multiple times.
-	 * @param metadata - Application-defined metadata to associate with the schema.
-	 * This metadata is intended to help the application reason about compatibility between `schema` (the view schema) and the stored schema.
-	 * It is not used by SharedTree, but is stored alongside the schema and provided to the application as part of {@link TreeView.compatibility}.
-	 * For example, this could be used to store a schema version number, a location to dynamically load the schema from, or a hash of the schema.
-	 * Passing `undefined` will store no metadata.
-	 * Contents must be JSON-serializable.
 	 */
 	public constructor(
 		public readonly schema: TSchema,
 		public readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>,
-		public readonly metadata?: unknown,
 	) {}
 }
 
@@ -228,31 +220,9 @@ export interface SchemaCompatibilityStatus {
 	 */
 	readonly canInitialize: boolean;
 
-	/**
-	 * Contains details about incompatibilities between the view schema and the stored schema.
-	 * Applications may find these details useful to implement policy around when it may be safe to proceed with a view schema that is not an exact match.
-	 *
-	 * @privateRemarks
-	 * TODO: I'm imagining that the information here is enough that applications could construct their own compatibility policies after reading some high-level documentation,
-	 * but it's also general enough that a few canned public APIs could be implemented for "strict" and "loose" policies.
-	 *
-	 * The "strict" API would prevent applications from opening documents unless the schema was an exact match.
-	 * The "loose" API would allow applications to open documents when the stored schema aligned with the view schema EXCEPT:
-	 * - The stored schema might have additional optional fields on object nodes
-	 * - The stored schema might allow additional types on some explicitly provided fields (typically arrays)
-	 * - The understanding here is that the application will have allow-listed a predefined set of fields which they know they have "forward-compatible" fallbacks for (ex: render placeholder for unknown types)
-	 *
-	 * Applications using strict/loose policies would have different expectations around what sort of code they must saturate before upgrading to a new schema version.
-	 */
-	readonly differences: NodeIncompatibility[];
-
-	/**
-	 * Application-defined metadata associated with the schema.
-	 *
-	 * This metadata reflects the metadata provided in the {@link TreeConfiguration} which last updated the schema
-	 * (either via {@link TreeView.initialize} or {@link TreeView.upgradeSchema})
-	 */
-	readonly metadata: unknown;
+	// TODO: Consider extending this status to include:
+	// - application-defined metadata about the stored schema
+	// - details about the differences between the stored and view schema sufficient for implementing "safe mismatch" policies
 }
 
 /**

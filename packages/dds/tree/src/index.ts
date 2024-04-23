@@ -304,14 +304,6 @@ export {
 	TreeNodeSchemaCore,
 	TreeNodeSchemaNonClass,
 	SchemaCompatibilityStatus,
-	NodeIncompatibility,
-	NodeFieldsIncompatibility,
-	NodeTypeIncompatibility,
-	SchemaFactoryNodeType,
-	SchemaFactoryFieldKind,
-	FieldIncompatibility,
-	FieldKindIncompatibility,
-	AllowedTypeIncompatibility,
 	type FieldProps,
 
 	// Recursive Schema APIs

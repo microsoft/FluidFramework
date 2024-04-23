@@ -35,16 +35,6 @@ export interface Adapters {
     readonly tree?: readonly TreeAdapter[];
 }
 
-// @public (undocumented)
-export interface AllowedTypeIncompatibility {
-    // (undocumented)
-    identifier: string;
-    // (undocumented)
-    mismatch: "allowedTypes";
-    stored: string[];
-    view: string[];
-}
-
 // @public
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
@@ -468,9 +458,6 @@ export interface FieldAnchor {
 // @internal
 export type FieldGenerator = () => MapTree[];
 
-// @public (undocumented)
-export type FieldIncompatibility = AllowedTypeIncompatibility | FieldKindIncompatibility;
-
 // @internal
 export type FieldKey = Brand<string, "tree.FieldKey">;
 
@@ -491,18 +478,6 @@ export interface FieldKindData {
 
 // @internal
 export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
-
-// @public (undocumented)
-export interface FieldKindIncompatibility {
-    // (undocumented)
-    identifier: string;
-    // (undocumented)
-    mismatch: "fieldKind";
-    // (undocumented)
-    stored: SchemaFactoryFieldKind | undefined;
-    // (undocumented)
-    view: SchemaFactoryFieldKind | undefined;
-}
 
 // @internal
 export const FieldKinds: {
@@ -1327,24 +1302,11 @@ export interface NodeExistsConstraint {
     violated: boolean;
 }
 
-// @public (undocumented)
-export interface NodeFieldsIncompatibility {
-    // (undocumented)
-    differences: FieldIncompatibility[];
-    // (undocumented)
-    identifier: string;
-    // (undocumented)
-    mismatch: "fields";
-}
-
 // @public
 export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<string, NodeKind, infer TNode> ? TNode : never;
 
 // @public
 export type NodeFromSchemaUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchema<string, NodeKind, infer TNode> ? TNode : never;
-
-// @public (undocumented)
-export type NodeIncompatibility = NodeTypeIncompatibility | NodeFieldsIncompatibility;
 
 // @internal
 export type NodeIndex = number;
@@ -1378,18 +1340,6 @@ export enum NodeKind {
     Leaf = 3,
     Map = 0,
     Object = 2
-}
-
-// @public (undocumented)
-export interface NodeTypeIncompatibility {
-    // (undocumented)
-    identifier: string;
-    // (undocumented)
-    mismatch: "nodeType";
-    // (undocumented)
-    stored: SchemaFactoryNodeType;
-    // (undocumented)
-    view: SchemaFactoryNodeType;
 }
 
 // @internal
@@ -1622,9 +1572,7 @@ export interface SchemaCompatibilityStatus {
     readonly canInitialize: boolean;
     readonly canUpgrade: boolean;
     readonly canView: boolean;
-    readonly differences: NodeIncompatibility[];
     readonly isExactMatch: boolean;
-    readonly metadata: unknown;
 }
 
 // @internal
@@ -1668,12 +1616,6 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     readonly scope: TScope;
     readonly string: TreeNodeSchema<"com.fluidframework.leaf.string", NodeKind.Leaf, string, string>;
 }
-
-// @public (undocumented)
-export type SchemaFactoryFieldKind = "required" | "optional" | "array";
-
-// @public (undocumented)
-export type SchemaFactoryNodeType = "object" | "array" | "map";
 
 // @internal
 export function schemaIsFieldNode(schema: FlexTreeNodeSchema): schema is FlexFieldNodeSchema;
@@ -1907,11 +1849,9 @@ export enum TreeCompressionStrategy {
 
 // @public
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
-    constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>, metadata?: unknown);
+    constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>);
     // (undocumented)
     readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>;
-    // (undocumented)
-    readonly metadata?: unknown;
     // (undocumented)
     readonly schema: TSchema;
 }
