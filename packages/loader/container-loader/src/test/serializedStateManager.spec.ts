@@ -462,6 +462,9 @@ describe("serializedStateManager", () => {
 			// serializedStateManager.snapshot
 			await serializedStateManager.waitForInitialRefresh;
 			if (isDirty) {
+				logger.assertMatchNone([
+					{ eventName: "serializedStateManager:OldSnapshotFetchWhileRefreshing" },
+				]);
 				saved = true;
 				eventEmitter.emit("saved");
 			}
@@ -515,6 +518,9 @@ describe("serializedStateManager", () => {
 			await serializedStateManager.fetchSnapshot(undefined, false);
 			await serializedStateManager.waitForInitialRefresh;
 			if (isDirty) {
+				logger.assertMatchNone([
+					{ eventName: "serializedStateManager:OldSnapshotFetchWhileRefreshing" },
+				]);
 				saved = true;
 				eventEmitter.emit("saved");
 			}
@@ -568,6 +574,10 @@ describe("serializedStateManager", () => {
 			// this time the snapshot should have been refreshed
 			await serializedStateManager.waitForInitialRefresh;
 			if (isDirty) {
+				logger.assertMatchNone([
+					{ eventName: "serializedStateManager:OldSnapshotFetchWhileRefreshing" },
+					{ eventName: "serializedStateManager:SnapshotRefreshed" },
+				]);
 				saved = true;
 				eventEmitter.emit("saved");
 			}
@@ -663,6 +673,10 @@ describe("serializedStateManager", () => {
 				serializedStateManager.addProcessedOp(generateSavedOp(seq++));
 			}
 			if (isDirty) {
+				logger.assertMatchNone([
+					{ eventName: "serializedStateManager:OldSnapshotFetchWhileRefreshing" },
+					{ eventName: "serializedStateManager:SnapshotRefreshed" },
+				]);
 				saved = true;
 				eventEmitter.emit("saved");
 			}
