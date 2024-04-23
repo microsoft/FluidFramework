@@ -327,8 +327,8 @@ class OpPerfTelemetry {
 		}
 
 		if (message.type == MessageType.NoOp) {
-			// Count the number of ops submitted by this client.
-			// The value is reset when we log the OpStats samopled event.
+			// Count the number of no-ops submitted by this client.
+			// The value is reset when we log the OpStats sampled event.
 			this.noOpCount++;
 		}
 
