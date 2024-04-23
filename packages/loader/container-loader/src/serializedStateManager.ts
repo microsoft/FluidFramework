@@ -28,8 +28,7 @@ import {
 	UsageError,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
-
-import type { EventEmitter } from "@fluid-internal/client-utils";
+import type { IEventProvider, IEvent } from "@fluidframework/core-interfaces";
 import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter.js";
 import { convertSnapshotToSnapshotInfo, getDocumentAttributes } from "./utils.js";
 
@@ -90,6 +89,10 @@ export type ISerializedStateManagerDocumentStorageService = Pick<
 	loadedGroupIdSnapshots: Record<string, ISnapshot>;
 };
 
+interface ISerializerEvent extends IEvent {
+	(event: "saved", listener: (dirty: boolean) => void): void;
+}
+
 export class SerializedStateManager {
 	private readonly processedOps: ISequencedDocumentMessage[] = [];
 	private readonly mc: MonitoringContext;
@@ -106,7 +109,7 @@ export class SerializedStateManager {
 		subLogger: ITelemetryLoggerExt,
 		private readonly storageAdapter: ISerializedStateManagerDocumentStorageService,
 		private readonly _offlineLoadEnabled: boolean,
-		containerEvent: EventEmitter,
+		containerEvent: IEventProvider<ISerializerEvent>,
 		private readonly containerDirty: () => boolean,
 	) {
 		this.mc = createChildMonitoringContext({
