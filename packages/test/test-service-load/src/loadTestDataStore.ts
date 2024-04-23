@@ -71,11 +71,9 @@ export class LoadTestDataStoreModel {
 					resolve();
 				}
 			};
-
-			resolveIfConnectedOrDisposed();
-
 			runtime.once("connected", resolveIfConnectedOrDisposed);
 			runtime.once("dispose", resolveIfConnectedOrDisposed);
+			resolveIfConnectedOrDisposed();
 		});
 
 		const lastKnownSeq = runtime.deltaManager.lastKnownSeqNumber;
