@@ -6,6 +6,7 @@
 import path from "node:path";
 import {
 	type BrokenCompatTypes,
+	type Logger,
 	type PackageJson,
 	type TestCaseTypeData,
 	type TypeData,
@@ -73,6 +74,7 @@ export function typeDataFromFile(file: SourceFile): Map<string, TypeData> {
 export function initializeProjectsAndLoadFiles(
 	previousTypeDefs: string,
 	previousBasePath: string,
+	log: Logger,
 ): { currentFile: SourceFile; previousFile: SourceFile } {
 	const currentFile = new Project({
 		skipFileDependencyResolution: true,

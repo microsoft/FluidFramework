@@ -54,17 +54,21 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		const currentPackageName = currentPackageJson.name;
 		const previousPackageName = `${currentPackageJson.name}-previous`;
 		const previousBasePath = path.join(pkg.directory, "node_modules", previousPackageName);
+		const previousPackagJsonPath = path.join(previousBasePath, "package.json");
 
 		ensureDevDependencyExists(currentPackageJson, previousPackageName);
-		const previousPackageJson = (await readJson(
-			path.join(previousBasePath, "package.json"),
-		)) as PackageJson;
+		this.verbose(`Reading package.json at ${previousPackagJsonPath}`);
+		const previousPackageJson = (await readJson(previousPackagJsonPath)) as PackageJson;
 
-		const typeTestFile = getTypeTestFilePath(currentPackageJson);
+		const typeTestOutputFile = getTypeTestFilePath(currentPackageJson);
 		if (currentPackageJson.typeValidation?.disabled === true) {
 			this.info("skipping type test generation because they are disabled in package.json");
-			// force means to ignore the error if the file does not exist.
-			rmSync(typeTestFile, { force: true });
+			rmSync(
+				typeTestOutputFile,
+				// force means to ignore the error if the file does not exist.
+				{ force: true },
+			);
+			this.verbose(`Deleted file: ${typeTestOutputFile}`);
 			this.exit(0);
 		}
 
@@ -76,9 +80,12 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		if (currentTypeDefs === undefined) {
 			this.error(`No type definitions found for ${currentPackageName}`);
 		}
+		this.verbose(`Found current type definitions at: ${currentTypeDefs}`);
+
 		if (previousTypeDefs === undefined) {
 			this.error(`No type definitions found for ${previousPackageName}`);
 		}
+		this.verbose(`Found previous type definitions at: ${previousTypeDefs}`);
 
 		// if (typeDefinitionFilePath === undefined) {
 		// 	throw new Error("Could not determine the type definition file path from package.json");
@@ -98,7 +105,12 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		const { currentFile, previousFile } = initializeProjectsAndLoadFiles(
 			previousTypeDefs,
 			previousBasePath,
+			this.logger,
 		);
+
+		this.verbose(`Loaded source file for current version: ${currentFile.getFilePath()}`);
+		this.verbose(`Loaded source file for previous version: ${previousFile.getFilePath()}`);
+
 		const currentTypeMap = typeDataFromFile(currentFile);
 		const previousData = [...typeDataFromFile(previousFile).values()];
 
@@ -135,8 +147,8 @@ import type * as current from "../../index.js";
 
 		mkdirSync("./src/test/types", { recursive: true });
 
-		writeFileSync(typeTestFile, testCases.join("\n"));
-		console.log(`generated ${path.resolve(typeTestFile)}`);
+		writeFileSync(typeTestOutputFile, testCases.join("\n"));
+		console.log(`generated ${path.resolve(typeTestOutputFile)}`);
 	}
 
 	public async run(): Promise<void> {

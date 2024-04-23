@@ -15,8 +15,6 @@ export function buildTestCase(
 	useType: TestCaseTypeData,
 	isCompatible: boolean,
 ) {
-	// Skip If the old/new types are incompatible because one of them doesn't exist (i.e new
-	// type that didn't exist before, or type that was removed in the new version)
 	if (!isCompatible && (getAsType.removed || useType.removed)) {
 		return "";
 	}

@@ -34,15 +34,6 @@ export {
 export { getEsLintConfigFilePath } from "./common/taskUtils";
 export * as TscUtils from "./common/tscUtils";
 
-// export {
-// 	ensureDevDependencyExists,
-// 	generateCompatibilityTestCases,
-// 	initializeProjectsAndLoadFiles,
-// 	getTypeTestFilePath,
-// 	tryGetPreviousPackageJsonPath,
-// 	typeDataFromFile,
-// } from "./type-test-generator/typeTestUtils";
-
-export { typeOnly } from "./type-test-generator/compatibility";
+export { typeOnly } from "./typeValidator/compatibility";
 export { type TestCaseTypeData, buildTestCase } from "./typeValidator/testGeneration";
 export { type TypeData, getFullTypeName, getNodeTypeData } from "./typeValidator/typeData";
