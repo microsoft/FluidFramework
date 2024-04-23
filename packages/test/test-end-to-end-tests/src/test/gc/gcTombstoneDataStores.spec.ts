@@ -46,9 +46,11 @@ import {
 import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
 import type { SharedMap } from "@fluidframework/map";
-import { getGCStateFromSummary,
+import {
+	getGCStateFromSummary,
+	getGCTombstoneStateFromSummary,
+	manufactureHandle,
 } from "./gcTestSummaryUtils";
->>>>>>> 4bc0eec50b (squash RC2 ports for cherry-picking onto RC1)
 
 type ExpectedTombstoneError = Error & {
 	code: number;

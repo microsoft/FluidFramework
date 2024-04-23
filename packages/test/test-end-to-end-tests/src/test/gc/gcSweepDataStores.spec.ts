@@ -39,7 +39,7 @@ import {
 } from "@fluidframework/container-runtime/test/summary";
 // eslint-disable-next-line import/no-internal-modules
 import { ISweepMessage } from "@fluidframework/container-runtime/test/gc";
-import { MockLogger, tagCodeArtifacts } from "@fluidframework/telemetry-utils/internal";
+import { MockLogger, tagCodeArtifacts } from "@fluidframework/telemetry-utils";
 import {
 	getGCDeletedStateFromSummary,
 	getGCStateFromSummary,
@@ -134,23 +134,25 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 	let testContainerConfig: ITestContainerConfig;
 	const mockLogger = new MockLogger();
 
+	const newTestContainerConfig: () => ITestContainerConfig = () => ({
+		runtimeOptions: {
+			summaryOptions: {
+				summaryConfigOverrides: {
+					state: "disabled",
+				},
+			},
+			gcOptions: newGCOptions(),
+		},
+		loaderProps: { configProvider: mockConfigProvider(settings) },
+	});
+
 	beforeEach(async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		if (provider.driver.type !== "local") {
 			this.skip();
 		}
 		settings["Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs"] = tombstoneTimeoutMs;
-		testContainerConfig = {
-			runtimeOptions: {
-				summaryOptions: {
-					summaryConfigOverrides: {
-						state: "disabled",
-					},
-				},
-				gcOptions: newGCOptions(),
-			},
-			loaderProps: { configProvider: mockConfigProvider(settings) },
-		};
+		testContainerConfig = newTestContainerConfig();
 	});
 
 	afterEach(() => {

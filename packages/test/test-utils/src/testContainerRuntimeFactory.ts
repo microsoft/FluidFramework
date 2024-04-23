@@ -83,12 +83,7 @@ export const createTestContainerRuntimeFactory = (
 		}
 
 		public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
-			// Back-compat - old code does not return IDataStore for rootContext.attachRuntime() call!
-			// Thus need to leverage old API createDetachedRootDataStore() that is gone in latest releases.
-			const rootContext =
-				"createDetachedRootDataStore" in runtime
-					? (runtime as any).createDetachedRootDataStore([this.type], "default")
-					: runtime.createDetachedDataStore([this.type]);
+			const rootContext = runtime.createDetachedRootDataStore([this.type], "default");
 
 			const rootRuntime = await this.dataStoreFactory.instantiateDataStore(
 				rootContext,
