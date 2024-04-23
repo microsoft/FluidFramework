@@ -467,6 +467,11 @@ export interface IContainerRuntimeOptions {
 }
 
 /**
+ * Error responses when requesting a deleted object will have this header set to true
+ * @alpha
+ */
+export const DeletedResponseHeaderKey = "wasDeleted";
+/**
  * Tombstone error responses will have this header set to true
  * @alpha
  */
@@ -479,6 +484,7 @@ export const InactiveResponseHeaderKey = "isInactive";
 
 /**
  * The full set of parsed header data that may be found on Runtime requests
+ * @internal
  */
 export interface RuntimeHeaderData {
 	wait?: boolean;
@@ -1512,22 +1518,7 @@ export class ContainerRuntime
 			getSummaryForDatastores(baseSnapshot, metadata),
 			parentContext,
 			this.mc.logger,
-			(
-				path: string,
-				reason: "Loaded" | "Changed",
-				timestampMs?: number,
-				packagePath?: readonly string[],
-				request?: IRequest,
-				headerData?: RuntimeHeaderData,
-			) =>
-				this.garbageCollector.nodeUpdated(
-					path,
-					reason,
-					timestampMs,
-					packagePath,
-					request,
-					headerData,
-				),
+			(props) => this.garbageCollector.nodeUpdated(props),
 			(path: string) => this.garbageCollector.isNodeDeleted(path),
 			new Map<string, string>(dataStoreAliasMap),
 			async (runtime: ChannelCollection) => provideEntryPoint,
@@ -1549,7 +1540,11 @@ export class ContainerRuntime
 					);
 				}
 			},
-			(blobPath: string) => this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
+			(blobPath: string) =>
+				this.garbageCollector.nodeUpdated({
+					node: { type: "Blob", path: blobPath },
+					reason: "Loaded",
+				}),
 			(blobPath: string) => this.garbageCollector.isNodeDeleted(blobPath),
 			this,
 			pendingRuntimeState?.pendingAttachmentBlobs,
@@ -2707,12 +2702,11 @@ export class ContainerRuntime
 				"entryPoint must be defined on data store runtime for using getAliasedDataStoreEntryPoint",
 			);
 		}
-		this.garbageCollector.nodeUpdated(
-			`/${internalId}`,
-			"Loaded",
-			undefined /* timestampMs */,
-			context.packagePath,
-		);
+		this.garbageCollector.nodeUpdated({
+			node: { type: "DataStore", path: `/${internalId}` },
+			reason: "Loaded",
+			packagePath: context.packagePath,
+		});
 		return channel.entryPoint;
 	}
 

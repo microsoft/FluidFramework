@@ -14,12 +14,14 @@ export {
 	RuntimeMessage,
 	agentSchedulerId,
 	ContainerRuntime,
+	DeletedResponseHeaderKey,
 	TombstoneResponseHeaderKey,
 	InactiveResponseHeaderKey,
 	ISummaryConfiguration,
 	DefaultSummaryConfiguration,
 	ICompressionRuntimeOptions,
 	CompressionAlgorithms,
+	RuntimeHeaderData,
 } from "./containerRuntime.js";
 export {
 	ContainerMessageType,
@@ -46,6 +48,7 @@ export {
 	IGCRuntimeOptions,
 	IMarkPhaseStats,
 	ISweepPhaseStats,
+	IGCNodeUpdatedProps,
 	IGCStats,
 } from "./gc/index.js";
 export {
