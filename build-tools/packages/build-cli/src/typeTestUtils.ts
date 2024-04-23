@@ -76,6 +76,8 @@ export function initializeProjectsAndLoadFiles(
 	previousBasePath: string,
 	log: Logger,
 ): { currentFile: SourceFile; previousFile: SourceFile } {
+	// For the current package, we'll load using the tsconfig file and get the root index.ts 
+	// file as the source file to read exports from.
 	const currentFile = new Project({
 		skipFileDependencyResolution: true,
 		tsConfigFilePath: "tsconfig.json",
