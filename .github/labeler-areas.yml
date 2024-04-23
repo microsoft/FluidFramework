@@ -5,8 +5,6 @@
 
 "area: azure-client":
   - azure/**
-
-"area: azure fluid relay":
   - packages/service-clients/azure-client/**
 
 "area: build":
