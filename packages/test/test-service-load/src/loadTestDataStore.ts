@@ -91,7 +91,6 @@ export class LoadTestDataStoreModel {
 				}
 			};
 
-			resolveIfDisposedOrCaughtUp();
 
 			runtime.deltaManager.on("op", resolveIfDisposedOrCaughtUp);
 			runtime.once("dispose", resolveIfDisposedOrCaughtUp);
