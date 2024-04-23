@@ -19,7 +19,6 @@ import { mintRevisionTag } from "../../utils.js";
 
 import { runUnitTestScenario } from "./editManagerScenario.js";
 import {
-	rebaseAdvancingPeerEditsOverTrunkEdits,
 	rebaseLocalEditsOverTrunkEdits,
 	rebasePeerEditsOverTrunkEdits,
 	testChangeEditManagerFactory,
