@@ -6,7 +6,7 @@
 import { GraphCommit } from "../core/index.js";
 
 /**
- * A component that can be used to enrich outbound commits.
+ * A component that can be used by a {@link SharedTreeCore} to enrich outbound commits.
  */
 export interface CommitEnricher<TChange> {
 	/**
