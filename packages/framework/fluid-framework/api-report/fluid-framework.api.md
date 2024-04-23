@@ -4,11 +4,36 @@
 
 ```ts
 
-import type { EventEmitter } from 'events_pkg';
+import { Client } from '@fluidframework/merge-tree/internal';
+import { Deferred } from '@fluidframework/core-utils/internal';
+import { EventEmitterEventType } from '@fluid-internal/client-utils';
+import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils/internal';
 import { FieldSchemaUnsafe as FieldSchemaUnsafe_2 } from './typesUnsafe.js';
 import { FluidObject as FluidObject_2 } from '@fluidframework/core-interfaces';
 import { IFluidHandle as IFluidHandle_2 } from '@fluidframework/core-interfaces';
 import { IFluidLoadable as IFluidLoadable_2 } from '@fluidframework/core-interfaces';
+import { IJSONSegment } from '@fluidframework/merge-tree/internal';
+import { IMergeTreeDeltaCallbackArgs } from '@fluidframework/merge-tree/internal';
+import { IMergeTreeDeltaOpArgs } from '@fluidframework/merge-tree/internal';
+import { IMergeTreeGroupMsg } from '@fluidframework/merge-tree/internal';
+import { IMergeTreeMaintenanceCallbackArgs } from '@fluidframework/merge-tree/internal';
+import { IRelativePosition } from '@fluidframework/merge-tree/internal';
+import { ISegment } from '@fluidframework/merge-tree/internal';
+import { ISegmentAction } from '@fluidframework/merge-tree/internal';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
+import { LocalReferencePosition } from '@fluidframework/merge-tree/internal';
+import { Marker } from '@fluidframework/merge-tree/internal';
+import { MergeTreeDeltaOperationType } from '@fluidframework/merge-tree/internal';
+import { MergeTreeDeltaOperationTypes } from '@fluidframework/merge-tree/internal';
+import { MergeTreeMaintenanceType } from '@fluidframework/merge-tree/internal';
+import { MergeTreeRevertibleDriver } from '@fluidframework/merge-tree/internal';
+import { PropertiesManager } from '@fluidframework/merge-tree/internal';
+import { PropertySet } from '@fluidframework/merge-tree/internal';
+import { ReferencePosition } from '@fluidframework/merge-tree/internal';
+import { ReferenceType } from '@fluidframework/merge-tree/internal';
+import { SlidingPreference } from '@fluidframework/merge-tree/internal';
+import { TextSegment } from '@fluidframework/merge-tree/internal';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @public
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
@@ -185,10 +210,16 @@ export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
 }
 
 // @public
-export interface IAudience extends EventEmitter {
+export interface IAudience extends IEventProvider<IAudienceEvents> {
     getMember(clientId: string): IClient | undefined;
     getMembers(): Map<string, IClient>;
-    on(event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): this;
+    getSelf: () => ISelf | undefined;
+}
+
+// @public
+export interface IAudienceEvents extends IEvent {
+    (event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): void;
+    (event: "selfChanged", listener: (oldValue: ISelf | undefined, newValue: ISelf) => void): void;
 }
 
 // @public
@@ -293,34 +324,6 @@ export interface IConnectionDetails {
 // @public
 export type ICriticalContainerError = IErrorBase;
 
-// @alpha
-export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable_2> {
-    readonly absolutePath: string;
-    countSubDirectory?(): number;
-    createSubDirectory(subdirName: string): IDirectory;
-    deleteSubDirectory(subdirName: string): boolean;
-    get<T = any>(key: string): T | undefined;
-    getSubDirectory(subdirName: string): IDirectory | undefined;
-    getWorkingDirectory(relativePath: string): IDirectory | undefined;
-    hasSubDirectory(subdirName: string): boolean;
-    set<T = unknown>(key: string, value: T): this;
-    subdirectories(): IterableIterator<[string, IDirectory]>;
-}
-
-// @alpha
-export interface IDirectoryEvents extends IEvent {
-    (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    (event: "disposed", listener: (target: IEventThisPlaceHolder) => void): any;
-    (event: "undisposed", listener: (target: IEventThisPlaceHolder) => void): any;
-}
-
-// @alpha
-export interface IDirectoryValueChanged extends IValueChanged {
-    path: string;
-}
-
 // @public
 export interface IDeltaConnection {
     // @deprecated (undocumented)
@@ -405,6 +408,34 @@ export interface IDeltaQueueEvents<T> extends IErrorEvent {
 // @public @sealed
 export interface IDeltaSender {
     flush(): void;
+}
+
+// @alpha
+export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable_2> {
+    readonly absolutePath: string;
+    countSubDirectory?(): number;
+    createSubDirectory(subdirName: string): IDirectory;
+    deleteSubDirectory(subdirName: string): boolean;
+    get<T = any>(key: string): T | undefined;
+    getSubDirectory(subdirName: string): IDirectory | undefined;
+    getWorkingDirectory(relativePath: string): IDirectory | undefined;
+    hasSubDirectory(subdirName: string): boolean;
+    set<T = unknown>(key: string, value: T): this;
+    subdirectories(): IterableIterator<[string, IDirectory]>;
+}
+
+// @alpha
+export interface IDirectoryEvents extends IEvent {
+    (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "disposed", listener: (target: IEventThisPlaceHolder) => void): any;
+    (event: "undisposed", listener: (target: IEventThisPlaceHolder) => void): any;
+}
+
+// @alpha
+export interface IDirectoryValueChanged extends IValueChanged {
+    path: string;
 }
 
 // @public
@@ -655,6 +686,125 @@ export interface IFluidContainerEvents extends IEvent {
     (event: "disposed", listener: (error?: ICriticalContainerError) => void): any;
 }
 
+// @public
+export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRuntimeEvents>, IDisposable_2 {
+    addChannel(channel: IChannel): void;
+    readonly attachState: AttachState;
+    bindChannel(channel: IChannel): void;
+    // (undocumented)
+    readonly channelsRoutingContext: IFluidHandleContext;
+    // (undocumented)
+    readonly clientId: string | undefined;
+    // (undocumented)
+    readonly connected: boolean;
+    createChannel(id: string | undefined, type: string): IChannel;
+    // (undocumented)
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    readonly entryPoint: IFluidHandle<FluidObject>;
+    getAudience(): IAudience;
+    getChannel(id: string): Promise<IChannel>;
+    getQuorum(): IQuorumClients;
+    // (undocumented)
+    readonly id: string;
+    // (undocumented)
+    readonly idCompressor?: IIdCompressor;
+    // (undocumented)
+    readonly IFluidHandleContext: IFluidHandleContext;
+    // (undocumented)
+    readonly logger: ITelemetryBaseLogger;
+    // (undocumented)
+    readonly objectsRoutingContext: IFluidHandleContext;
+    // (undocumented)
+    readonly options: Record<string | number, any>;
+    // (undocumented)
+    readonly rootRoutingContext: IFluidHandleContext;
+    submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
+    uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
+    waitAttached(): Promise<void>;
+}
+
+// @public
+export interface IFluidDataStoreRuntimeEvents extends IEvent {
+    // (undocumented)
+    (event: "disconnected" | "dispose" | "attaching" | "attached", listener: () => void): any;
+    // (undocumented)
+    (event: "op", listener: (message: ISequencedDocumentMessage) => void): any;
+    // (undocumented)
+    (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
+    // (undocumented)
+    (event: "connected", listener: (clientId: string) => void): any;
+}
+
+// @public (undocumented)
+export const IFluidHandle = "IFluidHandle";
+
+// @public
+export interface IFluidHandle<out T = FluidObject & IFluidLoadable> extends IProvideFluidHandle {
+    // @deprecated (undocumented)
+    readonly absolutePath: string;
+    // @deprecated (undocumented)
+    attachGraph(): void;
+    // @deprecated (undocumented)
+    bind(handle: IFluidHandle): void;
+    get(): Promise<T>;
+    readonly isAttached: boolean;
+}
+
+// @public (undocumented)
+export const IFluidHandleContext: keyof IProvideFluidHandleContext;
+
+// @public
+export interface IFluidHandleContext extends IProvideFluidHandleContext {
+    readonly absolutePath: string;
+    attachGraph(): void;
+    readonly isAttached: boolean;
+    // (undocumented)
+    resolveHandle(request: IRequest): Promise<IResponse>;
+    readonly routeContext?: IFluidHandleContext;
+}
+
+// @public (undocumented)
+export const IFluidLoadable: keyof IProvideFluidLoadable;
+
+// @public
+export interface IFluidLoadable extends IProvideFluidLoadable {
+    // (undocumented)
+    handle: IFluidHandle;
+}
+
+// @public (undocumented)
+export interface IFluidSerializer {
+    decode(input: any): any;
+    encode(value: any, bind: IFluidHandle): any;
+    parse(value: string): any;
+    stringify(value: any, bind: IFluidHandle): string;
+}
+
+// @public
+export interface IGarbageCollectionData {
+    gcNodes: {
+        [id: string]: string[];
+    };
+}
+
+// @public
+export interface IIdCompressor {
+    decompress(id: SessionSpaceCompressedId): StableId;
+    generateCompressedId(): SessionSpaceCompressedId;
+    generateDocumentUniqueId(): (SessionSpaceCompressedId & OpSpaceCompressedId) | StableId;
+    localSessionId: SessionId;
+    normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId;
+    normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId;
+    recompress(uncompressed: StableId): SessionSpaceCompressedId;
+    tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined;
+}
+
+// @public
+export interface IInboundSignalMessage extends ISignalMessage {
+    // (undocumented)
+    type: string;
+}
+
 // @alpha
 export interface IInterval {
     // (undocumented)
@@ -718,118 +868,6 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 }
 
 // @public
-export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRuntimeEvents>, IDisposable_2 {
-    addChannel(channel: IChannel): void;
-    readonly attachState: AttachState;
-    bindChannel(channel: IChannel): void;
-    // (undocumented)
-    readonly channelsRoutingContext: IFluidHandleContext;
-    // (undocumented)
-    readonly clientId: string | undefined;
-    // (undocumented)
-    readonly connected: boolean;
-    createChannel(id: string | undefined, type: string): IChannel;
-    // (undocumented)
-    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    ensureNoDataModelChanges<T>(callback: () => T): T;
-    readonly entryPoint: IFluidHandle<FluidObject>;
-    getAudience(): IAudience;
-    getChannel(id: string): Promise<IChannel>;
-    getQuorum(): IQuorumClients;
-    // (undocumented)
-    readonly id: string;
-    // (undocumented)
-    readonly idCompressor?: IIdCompressor;
-    // (undocumented)
-    readonly IFluidHandleContext: IFluidHandleContext;
-    // (undocumented)
-    readonly logger: ITelemetryBaseLogger;
-    // (undocumented)
-    readonly objectsRoutingContext: IFluidHandleContext;
-    // (undocumented)
-    readonly options: Record<string | number, any>;
-    // (undocumented)
-    readonly rootRoutingContext: IFluidHandleContext;
-    submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
-    uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
-    waitAttached(): Promise<void>;
-}
-
-// @public
-export interface IFluidDataStoreRuntimeEvents extends IEvent {
-    // (undocumented)
-    (event: "disconnected" | "dispose" | "attaching" | "attached", listener: () => void): any;
-    // (undocumented)
-    (event: "op", listener: (message: ISequencedDocumentMessage) => void): any;
-    // (undocumented)
-    (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
-    // (undocumented)
-    (event: "connected", listener: (clientId: string) => void): any;
-}
-
-// @public (undocumented)
-export const IFluidHandle: keyof IProvideFluidHandle;
-
-// @public
-export interface IFluidHandle<T = FluidObject & IFluidLoadable> extends IProvideFluidHandle {
-    // @deprecated (undocumented)
-    readonly absolutePath: string;
-    // @deprecated (undocumented)
-    attachGraph(): void;
-    // @deprecated (undocumented)
-    bind(handle: IFluidHandle): void;
-    get(): Promise<T>;
-    readonly isAttached: boolean;
-}
-
-// @public (undocumented)
-export const IFluidHandleContext: keyof IProvideFluidHandleContext;
-
-// @public
-export interface IFluidHandleContext extends IProvideFluidHandleContext {
-    readonly absolutePath: string;
-    attachGraph(): void;
-    readonly isAttached: boolean;
-    // (undocumented)
-    resolveHandle(request: IRequest): Promise<IResponse>;
-    readonly routeContext?: IFluidHandleContext;
-}
-
-// @public (undocumented)
-export const IFluidLoadable: keyof IProvideFluidLoadable;
-
-// @public
-export interface IFluidLoadable extends IProvideFluidLoadable {
-    // (undocumented)
-    handle: IFluidHandle;
-}
-
-// @public
-export interface IGarbageCollectionData {
-    gcNodes: {
-        [id: string]: string[];
-    };
-}
-
-// @public
-export interface IIdCompressor {
-    decompress(id: SessionSpaceCompressedId): StableId;
-    generateCompressedId(): SessionSpaceCompressedId;
-    generateDocumentUniqueId(): (SessionSpaceCompressedId & OpSpaceCompressedId) | StableId;
-    localSessionId: SessionId;
-    normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId;
-    normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId;
-    recompress(uncompressed: StableId): SessionSpaceCompressedId;
-    tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined;
-}
-
-// @public
-export interface IInboundSignalMessage extends ISignalMessage {
-    // (undocumented)
-    type: string;
-}
-
-// @public
 export interface IMember {
     readonly connections: IConnection[];
     readonly userId: string;
@@ -878,10 +916,44 @@ export type InsertableTypedNodeUnsafe<T extends Unenforced<TreeNodeSchema>> = Un
     implicitlyConstructable: true;
 } ? NodeBuilderDataUnsafe<T> : never);
 
+// @alpha
+export interface InteriorSequencePlace {
+    // (undocumented)
+    pos: number;
+    // (undocumented)
+    side: Side;
+}
+
+// @alpha
+export interface IntervalIndex<TInterval extends ISerializableInterval> {
+    add(interval: TInterval): void;
+    remove(interval: TInterval): void;
+}
+
+// @alpha
+export const IntervalStickiness: {
+    readonly NONE: 0;
+    readonly START: 1;
+    readonly END: 2;
+    readonly FULL: 3;
+};
+
+// @alpha
+export type IntervalStickiness = (typeof IntervalStickiness)[keyof typeof IntervalStickiness];
+
+// @alpha (undocumented)
+export enum IntervalType {
+    // (undocumented)
+    Simple = 0,
+    SlideOnRemove = 2,
+    // @internal
+    Transient = 4
+}
+
 // @public (undocumented)
 export interface IProvideFluidHandle {
     // (undocumented)
-    readonly IFluidHandle: IFluidHandle;
+    readonly [IFluidHandle]: IFluidHandle;
 }
 
 // @public (undocumented)
@@ -939,6 +1011,12 @@ export interface IResponse {
 }
 
 // @public
+export interface ISelf {
+    client?: IClient;
+    clientId: string;
+}
+
+// @public
 export interface ISequencedClient {
     client: IClient;
     sequenceNumber: number;
@@ -976,6 +1054,40 @@ export type ISequencedDocumentMessageExperimental = Omit<ISequencedDocumentMessa
     expHash1?: string;
     compression?: string;
 };
+
+// @alpha
+export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
+    operation: TOperation;
+    position: number;
+    propertyDeltas: PropertySet;
+    segment: ISegment;
+}
+
+// @alpha (undocumented)
+export interface ISerializableInterval extends IInterval {
+    // (undocumented)
+    addProperties(props: PropertySet, collaborating?: boolean, seq?: number): PropertySet | undefined;
+    getIntervalId(): string | undefined;
+    properties: PropertySet;
+    // (undocumented)
+    propertyManager: PropertiesManager;
+    // (undocumented)
+    serialize(): ISerializedInterval;
+}
+
+// @alpha
+export interface ISerializedInterval {
+    end: number | "start" | "end";
+    // (undocumented)
+    endSide?: Side;
+    intervalType: IntervalType;
+    properties?: PropertySet;
+    sequenceNumber: number;
+    start: number | "start" | "end";
+    // (undocumented)
+    startSide?: Side;
+    stickiness?: IntervalStickiness;
+}
 
 // @public
 export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents<M>> {
@@ -1030,23 +1142,6 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
-// @alpha
-export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
-    // (undocumented)
-    (event: "createIntervalCollection", listener: (label: string, local: boolean, target: IEventThisPlaceHolder) => void): void;
-    // (undocumented)
-    (event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: IEventThisPlaceHolder) => void): void;
-    // (undocumented)
-    (event: "maintenance", listener: (event: SequenceMaintenanceEvent, target: IEventThisPlaceHolder) => void): void;
-}
-
-// @alpha
-export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
-    insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): void;
-    insertText(pos: number, text: string, props?: PropertySet): void;
-    posFromRelativePos(relativePos: IRelativePosition): number;
-}
-
 // @public
 export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends IChannel, IEventProvider<TEvent> {
     bindToContext(): void;
@@ -1065,6 +1160,23 @@ export interface ISharedObjectEvents extends IErrorEvent {
 export interface ISharedObjectKind<TSharedObject> {
     create(runtime: IFluidDataStoreRuntime, id?: string): TSharedObject;
     getFactory(): IChannelFactory<TSharedObject>;
+}
+
+// @alpha
+export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
+    // (undocumented)
+    (event: "createIntervalCollection", listener: (label: string, local: boolean, target: IEventThisPlaceHolder) => void): void;
+    // (undocumented)
+    (event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: IEventThisPlaceHolder) => void): void;
+    // (undocumented)
+    (event: "maintenance", listener: (event: SequenceMaintenanceEvent, target: IEventThisPlaceHolder) => void): void;
+}
+
+// @alpha
+export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
+    insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): void;
+    insertText(pos: number, text: string, props?: PropertySet): void;
+    posFromRelativePos(relativePos: IRelativePosition): number;
 }
 
 // @public
@@ -1202,15 +1314,15 @@ export interface ITree extends IChannel {
     schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TRoot>;
 }
 
+// @public
+export interface IUser {
+    id: string;
+}
+
 // @alpha @sealed
 export interface IValueChanged {
     readonly key: string;
     readonly previousValue: any;
-}
-
-// @public
-export interface IUser {
-    id: string;
 }
 
 // @public
@@ -1444,6 +1556,16 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
 // @alpha
 export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
 
+// @public
+export type SessionId = StableId & {
+    readonly SessionId: "4498f850-e14e-4be9-8db0-89ec00997e58";
+};
+
+// @public
+export type SessionSpaceCompressedId = number & {
+    readonly SessionUnique: "cea55054-6b82-4cbf-ad19-1fa645ea3b3e";
+};
+
 // @alpha @sealed
 export const SharedDirectory: ISharedObjectKind<ISharedDirectory>;
 
@@ -1455,6 +1577,57 @@ export const SharedMap: ISharedObjectKind<ISharedMap>;
 
 // @alpha
 export type SharedMap = ISharedMap;
+
+// @alpha
+export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends SharedObjectCore<TEvent> {
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, telemetryContextPrefix: string);
+    getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+    getGCData(fullGC?: boolean): IGarbageCollectionData;
+    protected processGCDataCore(serializer: IFluidSerializer): void;
+    // (undocumented)
+    protected get serializer(): IFluidSerializer;
+    summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): Promise<ISummaryTreeWithStats>;
+    protected abstract summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): ISummaryTreeWithStats;
+}
+
+// @alpha
+export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
+    protected abstract applyStashedOp(content: any): void;
+    // (undocumented)
+    readonly attributes: IChannelAttributes;
+    bindToContext(): void;
+    connect(services: IChannelServices): void;
+    get connected(): boolean;
+    protected didAttach(): void;
+    protected dirty(): void;
+    emit(event: EventEmitterEventType, ...args: any[]): boolean;
+    abstract getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+    abstract getGCData(fullGC?: boolean): IGarbageCollectionData;
+    readonly handle: IFluidHandle;
+    protected handleDecoded(decodedHandle: IFluidHandle): void;
+    // (undocumented)
+    id: string;
+    // (undocumented)
+    get IFluidLoadable(): this;
+    initializeLocal(): void;
+    protected initializeLocalCore(): void;
+    isAttached(): boolean;
+    load(services: IChannelServices): Promise<void>;
+    protected abstract loadCore(services: IChannelStorageService): Promise<void>;
+    protected readonly logger: ITelemetryLoggerExt;
+    protected newAckBasedPromise<T>(executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void): Promise<T>;
+    protected onConnect(): void;
+    protected abstract onDisconnect(): any;
+    protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): any;
+    protected reSubmitCore(content: any, localOpMetadata: unknown): void;
+    protected rollback(content: any, localOpMetadata: unknown): void;
+    // (undocumented)
+    protected runtime: IFluidDataStoreRuntime;
+    protected abstract get serializer(): IFluidSerializer;
+    protected submitLocalMessage(content: any, localOpMetadata?: unknown): void;
+    abstract summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
+}
 
 // @alpha (undocumented)
 export abstract class SharedSegmentSequence<T extends ISegment> extends SharedObject<ISharedSegmentSequenceEvents> implements ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver {
@@ -1557,16 +1730,6 @@ export class SharedStringFactory implements IChannelFactory {
 
 // @alpha (undocumented)
 export type SharedStringSegment = TextSegment | Marker;
-
-// @public
-export type SessionId = StableId & {
-    readonly SessionId: "4498f850-e14e-4be9-8db0-89ec00997e58";
-};
-
-// @public
-export type SessionSpaceCompressedId = number & {
-    readonly SessionUnique: "cea55054-6b82-4cbf-ad19-1fa645ea3b3e";
-};
 
 // @public
 export const SharedTree: ISharedObjectKind<ITree>;

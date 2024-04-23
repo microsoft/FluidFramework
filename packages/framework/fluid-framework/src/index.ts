@@ -21,6 +21,8 @@ export type {
 	ReadOnlyInfo,
 	IConnectionDetails,
 	IDeltaQueueEvents,
+	IAudienceEvents,
+	ISelf,
 } from "@fluidframework/container-definitions";
 export { AttachState } from "@fluidframework/container-definitions";
 export { DriverErrorTypes } from "@fluidframework/driver-definitions";
@@ -84,6 +86,7 @@ export type {
 	ISharedObject,
 	ISharedObjectEvents,
 	ISharedObjectKind,
+	IFluidSerializer,
 } from "@fluidframework/shared-object-base";
 export type {
 	IClient,
@@ -112,7 +115,7 @@ export type {
 	ISequencedDocumentMessageExperimental,
 	ISequencedDocumentAugmentedMessage,
 
-	// public namespace with internal members ued in public types:
+	// public namespace with internal members used in public types:
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 export type {
@@ -140,6 +143,8 @@ export * from "@fluidframework/tree";
 
 // ===============================================================
 // Legacy exports
+
+export { SharedObject, SharedObjectCore } from "@fluidframework/shared-object-base/internal";
 
 export { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 
