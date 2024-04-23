@@ -484,6 +484,7 @@ export const InactiveResponseHeaderKey = "isInactive";
 
 /**
  * The full set of parsed header data that may be found on Runtime requests
+ * @internal
  */
 export interface RuntimeHeaderData {
 	wait?: boolean;

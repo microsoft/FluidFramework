@@ -47,6 +47,11 @@ import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
 import type { ISharedMap } from "@fluidframework/map";
 import {
+	getGCStateFromSummary,
+	getGCTombstoneStateFromSummary,
+	manufactureHandle,
+} from "./gcTestSummaryUtils";
+
 type ExpectedTombstoneError = Error & {
 	code: number;
 	underlyingResponseHeaders?: { [TombstoneResponseHeaderKey]: boolean };

@@ -21,6 +21,7 @@ export {
 	DefaultSummaryConfiguration,
 	ICompressionRuntimeOptions,
 	CompressionAlgorithms,
+	RuntimeHeaderData,
 } from "./containerRuntime.js";
 export {
 	ContainerMessageType,

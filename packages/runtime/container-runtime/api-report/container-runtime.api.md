@@ -780,6 +780,18 @@ export interface RecentlyAddedContainerRuntimeMessageDetails {
 }
 
 // @internal
+export interface RuntimeHeaderData {
+    // (undocumented)
+    allowInactive?: boolean;
+    // (undocumented)
+    allowTombstone?: boolean;
+    // (undocumented)
+    viaHandle?: boolean;
+    // (undocumented)
+    wait?: boolean;
+}
+
+// @internal
 export enum RuntimeHeaders {
     viaHandle = "viaHandle",
     wait = "wait"
