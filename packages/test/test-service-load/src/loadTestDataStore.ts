@@ -243,11 +243,14 @@ export class LoadTestDataStoreModel {
 						this.taskStartTime = 0;
 					}
 				},
-				(error) =>
-					this.config.logger.sendErrorEvent(
-						{ eventName: "TaskManager_OnValueChanged" },
-						error,
-					),
+				(error) => {
+					if (!runtime.disposed) {
+						this.config.logger.sendErrorEvent(
+							{ eventName: "TaskManager_OnValueChanged" },
+							error,
+						);
+					}
+				},
 			);
 		};
 		this.taskManager.on("lost", changed);
@@ -294,8 +297,11 @@ export class LoadTestDataStoreModel {
 							);
 						}
 					},
-					(error) =>
-						this.config.logger.sendErrorEvent({ eventName: "Counter_OnOp" }, error),
+					(error) => {
+						if (!runtime.disposed) {
+							this.config.logger.sendErrorEvent({ eventName: "Counter_OnOp" }, error);
+						}
+					},
 				),
 			);
 		}
@@ -314,13 +320,15 @@ export class LoadTestDataStoreModel {
 					.get<IFluidHandle>(key)!
 					.get()
 					.catch((error) => {
-						this.config.logger.sendErrorEvent(
-							{
-								eventName: "ReadBlobFailed_OnValueChanged",
-								key,
-							},
-							error,
-						);
+						if (!runtime.disposed) {
+							this.config.logger.sendErrorEvent(
+								{
+									eventName: "ReadBlobFailed_OnValueChanged",
+									key,
+								},
+								error,
+							);
+						}
 					});
 			}
 		};
