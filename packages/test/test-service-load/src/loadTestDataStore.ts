@@ -91,11 +91,9 @@ export class LoadTestDataStoreModel {
 				}
 			};
 
-
 			runtime.deltaManager.on("op", resolveIfDisposedOrCaughtUp);
 			runtime.once("dispose", resolveIfDisposedOrCaughtUp);
 			resolveIfDisposedOrCaughtUp();
-
 		});
 	}
 
