@@ -143,7 +143,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			},
 			gcOptions: newGCOptions(),
 		},
-		loaderProps: { configProvider: mockConfigProvider(settings) },
+		loaderProps: { configProvider: mockConfigProvider(settings), logger: mockLogger },
 	});
 
 	beforeEach(async function () {
