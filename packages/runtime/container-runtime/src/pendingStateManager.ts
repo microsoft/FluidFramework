@@ -118,7 +118,7 @@ export class PendingStateManager implements IDisposable {
 		return this.pendingMessagesCount !== 0;
 	}
 
-	public getLocalState(snapshotSequenceNumber?: number): IPendingLocalState | undefined {
+	public getLocalState(snapshotSequenceNumber?: number): IPendingLocalState {
 		assert(
 			this.initialMessages.isEmpty(),
 			0x2e9 /* "Must call getLocalState() after applying initial states" */,

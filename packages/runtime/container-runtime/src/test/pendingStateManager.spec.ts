@@ -337,6 +337,22 @@ describe("Pending State Manager", () => {
 			});
 		});
 
+		describe("getLocalState", () => {
+			it("removes ops with rsn lower than snapshot", () => {
+				const pendingStateManager = createPendingStateManager([]);
+				for (let i = 0; i < 10; i++) {
+					pendingStateManager.onSubmitMessage("content", i, undefined, undefined);
+				}
+
+				let pendingState = pendingStateManager.getLocalState(0).pendingStates;
+				assert.strictEqual(pendingState.length, 10);
+				pendingState = pendingStateManager.getLocalState(5).pendingStates;
+				assert.strictEqual(pendingState.length, 5);
+				pendingState = pendingStateManager.getLocalState(10).pendingStates;
+				assert.strictEqual(pendingState.length, 0);
+			});
+		});
+
 		describe("Future op compat behavior", () => {
 			it("pending op roundtrip", async () => {
 				const pendingStateManager = createPendingStateManager([]);
