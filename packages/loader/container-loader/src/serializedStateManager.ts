@@ -80,6 +80,7 @@ export interface IPendingDetachedContainerState extends SnapshotWithBlobs {
 
 export interface ISnapshotInfo extends SnapshotWithBlobs {
 	snapshotSequenceNumber: number;
+	snapshotFetchedTime?: number | undefined;
 }
 
 export type ISerializedStateManagerDocumentStorageService = Pick<
@@ -99,8 +100,6 @@ export class SerializedStateManager {
 	private snapshot: ISnapshotInfo | undefined;
 	private latestSnapshot: ISnapshotInfo | undefined;
 	private refreshSnapshot: Promise<void> | undefined;
-	private snapshotFetchedTime: number | undefined;
-	private latestSnapshotFetchedTime: number | undefined;
 	private readonly lastSavedOpSequenceNumber: number | undefined;
 	private allSavedOpsProcessed: boolean;
 
@@ -210,7 +209,6 @@ export class SerializedStateManager {
 			assert(snapshot !== undefined, "Snapshot should exist");
 			return convertSnapshotToSnapshotInfo(snapshot);
 		}
-		this.latestSnapshotFetchedTime = Date.now();
 		this.updateSnapshotAndProcessedOpsMaybe();
 	}
 
@@ -252,7 +250,6 @@ export class SerializedStateManager {
 				snapshotSequenceNumber - firstProcessedOpSequenceNumber + 1,
 			);
 			this.snapshot = this.latestSnapshot;
-			this.snapshotFetchedTime = this.latestSnapshotFetchedTime;
 			this.latestSnapshot = undefined;
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "SnapshotRefreshed",
@@ -316,7 +313,7 @@ export class SerializedStateManager {
 				const pendingRuntimeState = await runtime.getPendingLocalState({
 					...props,
 					snapshotSequenceNumber: this.snapshot.snapshotSequenceNumber,
-					sessionExpiryTimerStarted: this.snapshotFetchedTime,
+					sessionExpiryTimerStarted: this.snapshot.snapshotFetchedTime,
 				});
 				// This conversion is required because ArrayBufferLike doesn't survive JSON.stringify
 				const loadedGroupIdSnapshots = {};
@@ -370,13 +367,14 @@ export async function getLatestSnapshotInfo(
 				supportGetSnapshotApi,
 				undefined,
 			);
+			const snapshotFetchedTime = Date.now();
 			const snapshotBlobs = await getBlobContentsFromTree(baseSnapshot, storageAdapter);
 			const attributes: IDocumentAttributes = await getDocumentAttributes(
 				storageAdapter,
 				baseSnapshot,
 			);
 			const snapshotSequenceNumber = attributes.sequenceNumber;
-			return { baseSnapshot, snapshotBlobs, snapshotSequenceNumber };
+			return { baseSnapshot, snapshotBlobs, snapshotSequenceNumber, snapshotFetchedTime };
 		},
 	).catch(() => undefined);
 }
