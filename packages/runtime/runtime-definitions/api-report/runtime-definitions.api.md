@@ -33,7 +33,7 @@ import type { TelemetryBaseEventPropertyType } from '@fluidframework/core-interf
 // @alpha
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
-// @internal
+// @alpha
 export interface AttributionInfo {
     timestamp: number;
     user: IUser;
