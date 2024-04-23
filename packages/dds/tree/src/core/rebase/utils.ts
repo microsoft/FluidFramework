@@ -335,7 +335,7 @@ export function rebaseChangeOverChanges<TChange>(
 	changesToRebaseOver: TaggedChange<TChange>[],
 ) {
 	const revisionMetadata = revisionMetadataSourceFromInfo(
-		getRevInfoFromTaggedChanges(changesToRebaseOver),
+		getRevInfoFromTaggedChanges([...changesToRebaseOver, changeToRebase]),
 	);
 
 	return changesToRebaseOver.reduce(
