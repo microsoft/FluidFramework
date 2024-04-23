@@ -25,12 +25,11 @@ import {
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import { IClientDetails } from "@fluidframework/protocol-definitions";
+import { IClientDetails, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
-	UsageError,
 	createChildMonitoringContext,
 	mixinMonitoringContext,
 	sessionStorageConfigProvider,
@@ -369,24 +368,6 @@ export class Loader implements IHostLoader {
 		// If set in both query string and headers, use query string.  Also write the value from the query string into the header either way.
 		request.headers[LoaderHeader.version] =
 			parsed.version ?? request.headers[LoaderHeader.version];
-		const fromSequenceNumber = request.headers[LoaderHeader.sequenceNumber] as
-			| number
-			| undefined;
-		const opsBeforeReturn = request.headers[LoaderHeader.loadMode]?.opsBeforeReturn as
-			| string
-			| undefined;
-
-		if (
-			opsBeforeReturn === "sequenceNumber" &&
-			(fromSequenceNumber === undefined || fromSequenceNumber < 0)
-		) {
-			// If opsBeforeReturn is set to "sequenceNumber", then fromSequenceNumber should be set to a non-negative integer.
-			throw new UsageError("sequenceNumber must be set to a non-negative integer");
-		} else if (opsBeforeReturn !== "sequenceNumber" && fromSequenceNumber !== undefined) {
-			// If opsBeforeReturn is not set to "sequenceNumber", then fromSequenceNumber should be undefined (default value).
-			// In this case, we should throw an error since opsBeforeReturn is not explicitly set to "sequenceNumber".
-			throw new UsageError('opsBeforeReturn must be set to "sequenceNumber"');
-		}
 
 		return this.loadContainer(request, resolvedAsFluid, pendingLocalState);
 	}
@@ -402,7 +383,6 @@ export class Loader implements IHostLoader {
 				version: request.headers?.[LoaderHeader.version] ?? undefined,
 				loadMode: request.headers?.[LoaderHeader.loadMode],
 				pendingLocalState,
-				loadToSequenceNumber: request.headers?.[LoaderHeader.sequenceNumber],
 			},
 			{
 				canReconnect: request.headers?.[LoaderHeader.reconnect],
@@ -411,4 +391,87 @@ export class Loader implements IHostLoader {
 			},
 		);
 	}
+}
+
+/**
+ * Loads container and leaves it in a state where it does not process any ops
+ * If sequence number is provided, loads up to this sequence number and stops there, otherwise stops immediately after loading snapshot.
+ * @internal
+ * */
+export async function loadContainerPaused(
+	loader: ILoader,
+	request: IRequest,
+	loadToSequenceNumber?: number,
+) {
+	const container = await loader.resolve({
+		url: request.url,
+		headers: {
+			...Headers,
+			// ensure we do not process any ops.
+			[LoaderHeader.loadMode]: { opsBeforeReturn: undefined, deltaConnection: "none" },
+		},
+	});
+
+	// If we are trying to pause at a specific sequence number, ensure the latest snapshot is not newer than the desired sequence number.
+	if (loadToSequenceNumber !== undefined) {
+		const lastProcessedSequenceNumber = container.deltaManager.initialSequenceNumber;
+		if (lastProcessedSequenceNumber > loadToSequenceNumber) {
+			throw new Error(
+				"Cannot satisfy request to pause the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.",
+			);
+		}
+	}
+
+	// Force readonly mode - this will ensure we don't receive an error for the lack of join op
+	container.forceReadonly?.(true);
+
+	// We need to setup a listener to stop op processing once we reach the desired sequence number (if specified).
+	const opHandler = () => {
+		if (loadToSequenceNumber === undefined) {
+			// If there is no specified sequence number, pause after the inbound queue is empty.
+			if (container.deltaManager.inbound.length !== 0) {
+				return;
+			}
+		} else {
+			// If there is a specified sequence number, keep processing until we reach it.
+			if (container.deltaManager.lastSequenceNumber < loadToSequenceNumber) {
+				return;
+			}
+		}
+
+		// Pause op processing once we have processed the desired number of ops.
+		void container.deltaManager.inbound.pause();
+		void container.deltaManager.outbound.pause();
+		container.off("op", opHandler);
+	};
+	if (
+		(loadToSequenceNumber === undefined && container.deltaManager.inbound.length === 0) ||
+		container.deltaManager.lastSequenceNumber === loadToSequenceNumber
+	) {
+		// If we have already reached the desired sequence number, call opHandler() to pause immediately.
+		opHandler();
+	} else {
+		// If we have not yet reached the desired sequence number, setup a listener to pause once we reach it.
+		container.on("op", opHandler);
+	}
+
+	container.connect();
+
+	// If we have not yet reached `loadToSequenceNumber`, we will wait for ops to arrive until we reach it
+	if (
+		loadToSequenceNumber !== undefined &&
+		container.deltaManager.lastSequenceNumber < loadToSequenceNumber
+	) {
+		await new Promise<void>((resolve, reject) => {
+			const opHandler2 = (message: ISequencedDocumentMessage) => {
+				if (message.sequenceNumber >= loadToSequenceNumber) {
+					resolve();
+					container.off("op", opHandler2);
+				}
+			};
+			container.on("op", opHandler2);
+		});
+	}
+
+	return container;
 }

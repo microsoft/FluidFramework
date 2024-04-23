@@ -653,11 +653,6 @@ export interface IContainerLoadMode {
 	 */
 	| undefined
 		/*
-		 * Only fetch and apply trailing ops up until (and including) the specified sequence number.
-		 * Requires `ILoaderHeader["fluid-sequence-number"]` to also be defined.
-		 */
-		| "sequenceNumber"
-		/*
 		 * Only cached trailing ops are applied before returning container.
 		 * Caching is optional and could be implemented by the driver.
 		 * If driver does not implement any kind of local caching strategy, this is same as above.
@@ -690,11 +685,6 @@ export interface IContainerLoadMode {
 		 * Default value.
 		 */
 		| undefined;
-
-	/**
-	 * If set to true, will indefinitely pause all incoming and outgoing after the container is loaded.
-	 */
-	pauseAfterLoad?: boolean;
 }
 
 /**
@@ -708,11 +698,6 @@ export interface ILoaderHeader {
 	[LoaderHeader.cache]: boolean;
 	[LoaderHeader.clientDetails]: IClientDetails;
 	[LoaderHeader.loadMode]: IContainerLoadMode;
-	/**
-	 * Loads the container to at least the specified sequence number.
-	 * If not defined, behavior will fall back to `IContainerLoadMode.opsBeforeReturn`.
-	 */
-	[LoaderHeader.sequenceNumber]: number;
 	[LoaderHeader.reconnect]: boolean;
 	[LoaderHeader.version]: string | undefined;
 }
