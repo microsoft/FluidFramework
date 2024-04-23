@@ -326,16 +326,17 @@ class OpPerfTelemetry {
 			});
 		}
 
-		// Count the number of ops submitted by this client.
-		// The value is reset when we log the no-op sampled count
-		this.noOpCount++;
 		if (message.type == MessageType.NoOp) {
-			this.opsLogger.sendPerformanceEvent({
-				eventName: "OpStats",
-				submitOpCount: OpPerfTelemetry.OPS_SAMPLE_RATE,
-				noOpCount: this.noOpCount,
-			});
+			// Count the number of ops submitted by this client.
+			// The value is reset when we log the OpStats samopled event.
+			this.noOpCount++;
 		}
+
+		this.opsLogger.sendPerformanceEvent({
+			eventName: "OpStats",
+			submitOpCount: OpPerfTelemetry.OPS_SAMPLE_RATE,
+			noOpCount: this.noOpCount,
+		});
 	}
 
 	private afterProcessingOp(message: ISequencedDocumentMessage) {
