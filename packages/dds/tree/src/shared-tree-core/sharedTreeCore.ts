@@ -225,8 +225,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	/**
 	 * Submits an op to the Fluid runtime containing the given commit
 	 * @param commit - the commit to submit
+	 * @returns the submitted commit. This is undefined if the underlying `SharedObject` is not attached,
+	 * and may differ from `commit` due to enrichments like detached tree refreshers.
 	 */
-	private submitCommit(commit: GraphCommit<TChange>, isResubmit = false): void {
+	protected submitCommit(
+		commit: GraphCommit<TChange>,
+		isResubmit = false,
+	): GraphCommit<TChange> | undefined {
 		// Edits should not be submitted until all transactions finish
 		assert(
 			!this.getLocalBranch().isTransacting() || isResubmit,
@@ -280,10 +285,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			},
 		);
 		this.submitLocalMessage(message);
-		this.onCommitSubmitted(enrichedCommit, isResubmit);
+		return enrichedCommit;
 	}
-
-	protected onCommitSubmitted(commit: GraphCommit<TChange>, isResubmit: boolean): void {}
 
 	protected processCore(
 		message: ISequencedDocumentMessage,

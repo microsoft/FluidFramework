@@ -82,10 +82,14 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 
 	public readonly submitted: GraphCommit<DefaultChangeset>[] = [];
 
-	protected override onCommitSubmitted(
+	protected override submitCommit(
 		commit: GraphCommit<DefaultChangeset>,
-		isResubmit: boolean,
-	): void {
-		this.submitted.push(commit);
+		isResubmit = false,
+	): GraphCommit<DefaultChangeset> | undefined {
+		const submitted = super.submitCommit(commit, isResubmit);
+		if (submitted !== undefined) {
+			this.submitted.push(submitted);
+		}
+		return submitted;
 	}
 }
