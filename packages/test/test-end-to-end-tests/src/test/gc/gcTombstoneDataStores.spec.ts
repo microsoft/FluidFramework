@@ -486,6 +486,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
 					headers: expectedHeadersLogged.request,
 					clientType: "interactive",
+					category: "error",
 				},
 				// Interactive client's request w/ allowTombstone
 				{
@@ -493,6 +494,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
 					headers: expectedHeadersLogged.request_allowTombstone,
 					clientType: "interactive",
+					category: "generic",
 				},
 				// Summarizer client's request
 				{
@@ -500,6 +502,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
 					headers: expectedHeadersLogged.request,
 					clientType: "noninteractive/summarizer",
+					category: "generic",
 				},
 			],
 			async () => {
@@ -565,9 +568,9 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 					[
 						// request WITHOUT allowTombsone
 						{
-							category: "error",
 							eventName:
 								"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
+							error: "GC_Tombstone_DataStore_Requested",
 							clientType: "interactive",
 							headers: expectedHeadersLogged.request,
 							id: { value: `/${unreferencedId}`, tag: TelemetryDataTag.CodeArtifact },
@@ -575,7 +578,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 						},
 						// request WITH allowTombsone
 						{
-							category: "generic",
 							eventName:
 								"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
 							headers: expectedHeadersLogged.request_allowTombstone,
