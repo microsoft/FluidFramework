@@ -80,6 +80,9 @@ class OpPerfTelemetry {
 	private connectionStartTime = 0;
 	private gap = 0;
 
+	/**Count of no-ops sent by this client */
+	private noOpCount = 0;
+
 	private readonly logger: ITelemetryLoggerExt;
 
 	private static readonly OP_LATENCY_SAMPLE_RATE = 500;
@@ -87,6 +90,9 @@ class OpPerfTelemetry {
 
 	private static readonly DELTA_LATENCY_SAMPLE_RATE = 100;
 	private readonly deltaLatencyLogger: ISampledTelemetryLogger;
+
+	private static readonly OPS_SAMPLE_RATE = 50;
+	private readonly opsLogger: ISampledTelemetryLogger;
 
 	/**
 	 * Create an instance of OpPerfTelemetry which starts monitoring and generating telemetry related to op performance.
@@ -141,6 +147,23 @@ class OpPerfTelemetry {
 		// telemetry config properties. The actual sampling logic for op messages happens outside this SampledLogger
 		// due to complexity of the different asynchronus scenarios of the op message lifecycle.
 		this.opLatencyLogger = createSampledLogger(logger);
+
+		//
+		const submitOpEventSampler: IEventSampler = (() => {
+			let eventCount = 0;
+			return {
+				sample: () => {
+					eventCount++;
+					const shouldSample = eventCount % OpPerfTelemetry.OPS_SAMPLE_RATE === 0;
+					if (shouldSample) {
+						eventCount = 0;
+						this.noOpCount = 0;
+					}
+					return shouldSample;
+				},
+			};
+		})();
+		this.opsLogger = createSampledLogger(logger, submitOpEventSampler);
 
 		this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
 		this.deltaManager.on("submitOp", (message) => this.beforeOpSubmit(message));
@@ -300,6 +323,17 @@ class OpPerfTelemetry {
 					submitOpEventTime: Date.now(),
 				},
 				opPerfData: {},
+			});
+		}
+
+		// Count the number of ops submitted by this client.
+		// The value is reset when we log the no-op sampled count
+		this.noOpCount++;
+		if (message.type == MessageType.NoOp) {
+			this.opsLogger.sendPerformanceEvent({
+				eventName: "OpStats",
+				submitOpCount: OpPerfTelemetry.OPS_SAMPLE_RATE,
+				noOpCount: this.noOpCount,
 			});
 		}
 	}

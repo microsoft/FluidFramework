@@ -585,8 +585,6 @@ export class Container
 	private setAutoReconnectTime = performance.now();
 
 	private noopHeuristic: NoopHeuristic | undefined;
-	// Number of no-ops sent via this client in the current active connection
-	private noopCount: number = 0;
 
 	private get connectionMode() {
 		return this._deltaManager.connectionManager.connectionMode;
@@ -2119,13 +2117,10 @@ export class Container
 				checkpointSequenceNumber,
 				quorumSize: this._protocolHandler?.quorum.getMembers().size,
 				isDirty: this.isDirty,
-				noopCount: this.noopCount,
 				...this._deltaManager.connectionProps,
 			},
 			reason?.error,
 		);
-		// Reset noop count after it has been logged
-		this.noopCount = 0;
 
 		if (value === ConnectionState.Connected) {
 			this.firstConnection = false;
@@ -2235,9 +2230,7 @@ export class Container
 			this.mc.logger.sendErrorEvent({ eventName: "SubmitMessageWithNoConnection", type });
 			return -1;
 		}
-		if (type === MessageType.NoOp) {
-			this.noopCount++;
-		}
+
 		this.noopHeuristic?.notifyMessageSent();
 		return this._deltaManager.submit(
 			type,
