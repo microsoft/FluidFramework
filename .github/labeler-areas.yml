@@ -3,11 +3,11 @@
 # edited in the PR change. See https://github.com/microsoft/FluidFramework/blob/main/.github/workflows/pr-labeler.yml to
 # see how this config file is used.
 
-"area: azure-client"
-  - azure/packages/azure-client
+"area: azure-client":
+  - azure/**
 
-"area: azure fluid relay"
-  - azure/packages/azure
+"area: azure fluid relay":
+  - packages/service-clients/azure-client/**
 
 "area: build":
   - ".github/*"
