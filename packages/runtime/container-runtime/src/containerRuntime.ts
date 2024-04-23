@@ -45,7 +45,7 @@ import {
 	IDocumentStorageService,
 	type ISnapshot,
 } from "@fluidframework/driver-definitions/internal";
-import { isInstanceOfISnapshot, readAndParse } from "@fluidframework/driver-utils/internal";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IIdCompressorCore,
@@ -119,6 +119,7 @@ import {
 	createSampledLogger,
 	loggerToMonitoringContext,
 	raiseConnectedEvent,
+	validatePrecondition,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
@@ -1361,6 +1362,11 @@ export class ContainerRuntime
 	private readonly loadedFromVersionId: string | undefined;
 
 	/**
+	 * Container snapshot which also contains the contents for the blobs.
+	 */
+	private readonly snapshotWithContents: ISnapshot | undefined;
+
+	/**
 	 * It a cache for holding mapping for loading groupIds with its snapshot from the service. Add expiry policy of 1 minute.
 	 * Starting with 1 min and based on recorded usage we can tweak it later on.
 	 */
@@ -1445,12 +1451,7 @@ export class ContainerRuntime
 		this.submitSummaryFn = submitSummaryFn;
 		this.submitSignalFn = submitSignalFn;
 
-		if (isInstanceOfISnapshot(snapshotWithContents)) {
-			this.evaluateSnapshotForOmittedBlobContents(
-				snapshotWithContents.snapshotTree,
-				snapshotWithContents.blobContents,
-			);
-		}
+		this.snapshotWithContents = snapshotWithContents;
 		// TODO: After IContainerContext.options is removed, we'll just create a new blank object {} here.
 		// Values are generally expected to be set from the runtime side.
 		this.options = options ?? {};
@@ -2017,6 +2018,34 @@ export class ContainerRuntime
 		for (const [_, treeChild] of Object.entries(snapshotTree.trees)) {
 			this.evaluateSnapshotForOmittedBlobContents(treeChild, blobContents);
 		}
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.isSnapshotFetchRequired}
+	 */
+	public isSnapshotFetchRequired(pathParts: string[]): boolean {
+		validatePrecondition(
+			this.snapshotWithContents !== undefined,
+			"Use this api in case we fetched the complete snapshot along with the blob contents",
+		);
+		// Find the snapshotTree inside the snapshot based on the path as given in the request.
+		const hasIsolatedChannels = rootHasIsolatedChannels(this.metadata);
+		const snapshotTreeForPath = this.getSnapshotTreeForPath(
+			this.snapshotWithContents.snapshotTree,
+			pathParts,
+			hasIsolatedChannels,
+		);
+		if (snapshotTreeForPath === undefined) {
+			throw new UsageError("snapshotTree not found for given path", {
+				details: JSON.stringify({ pathPartsLength: pathParts.length }),
+			});
+		}
+		for (const [_, id] of Object.entries(snapshotTreeForPath.blobs)) {
+			if (!this.snapshotWithContents.blobContents.has(id)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

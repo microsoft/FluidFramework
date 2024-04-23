@@ -265,6 +265,17 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 		loadingGroupIds: string[],
 		pathParts: string[],
 	): Promise<{ snapshotTree: ISnapshotTree; sequenceNumber: number }>;
+
+	/**
+	 * API to find if any blobs in the snapshot tree represented by the path in 'pathParts' argument is
+	 * missing and if so return true to caller, telling that a snapshot fetch is required to get the missing
+	 * blobs. Only the blobs which are this level of tree will be evaluated, whether they are missing or not.
+	 * For  example, if a blob in child sub tree is missing but not at this level of tree, then this api will
+	 * return false.
+	 * @param pathParts - Parts of the path of the snapshot tree which we want to evaluate
+	 * for snapshot fetch.
+	 */
+	isSnapshotFetchRequired(pathParts: string[]): boolean;
 }
 
 /**

@@ -99,24 +99,29 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		const rawTree = await this.manager.getTree(versionId);
 		const snapshotTree = buildGitTreeHierarchy(rawTree, this.blobsShaCache, true);
 		const groupIds = new Set<string>(snapshotFetchOptions?.loadingGroupIds ?? []);
+		// Always keep the .metadata blob.
+		const metaDataBlobId = snapshotTree.blobs[".metadata"];
+		const blobIdsToKeep = new Set<string>([metaDataBlobId]);
 		if (groupIds.has("") || groupIds.size === 0) {
 			// If the root is in the groupIds, we don't need to filter the tree.
-			// We can just strip the tree of all groupIds.
-			// If we want to include the root groupId,
-			await this.stripTreeOfMissingLoadingGroupIds(snapshotTree, groupIds);
+			// We can just strip the  of all groupIds as in collect the blobIds so that we can
+			// return blob contents only for those ids.
+			await this.stripTreeOfMissingLoadingGroupIds(snapshotTree, groupIds, blobIdsToKeep);
 		} else {
 			const hasFoundTree = await this.filterTreeByLoadingGroupIds(
 				snapshotTree,
 				groupIds,
 				false,
+				blobIdsToKeep,
 			);
 			assert(hasFoundTree, 0x8dd /* No tree found for the given groupIds */);
 		}
 
+		// Onl populate contents for the blobs which are supposed to be returned.
 		const blobContents = new Map<string, ArrayBufferLike>();
-		await this.populateBlobContents(snapshotTree, blobContents);
+		await this.populateBlobContents(snapshotTree, blobContents, blobIdsToKeep);
 
-		const metadataString = IsoBuffer.from(blobContents.get(".metadata")).toString("utf-8");
+		const metadataString = IsoBuffer.from(blobContents.get(metaDataBlobId)).toString("utf-8");
 		const metadata = JSON.parse(metadataString);
 		const sequenceNumber: number = metadata.message?.sequenceNumber ?? 0;
 		return {
@@ -131,6 +136,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 
 	/**
 	 * Strips the tree or any subtree of data if it has a groupId.
+	 * Collect the blobIds to keep in the snapshot.
 	 *
 	 * @param tree - The tree to strip of loading groupIds
 	 * @returns a tree that has trees with groupIds that are empty
@@ -138,16 +144,24 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 	private async stripTreeOfMissingLoadingGroupIds(
 		tree: ISnapshotTreeEx,
 		loadingGroupIds: Set<string>,
+		blobIdsToKeep: Set<string>,
 	) {
 		const groupId = await this.readGroupId(tree);
 		if (groupId !== undefined && !loadingGroupIds.has(groupId)) {
-			// strip
-			this.stripTree(tree, groupId);
+			tree.groupId = groupId;
 			return;
+		} else {
+			for (const id of Object.values(tree.blobs)) {
+				blobIdsToKeep.add(id);
+			}
 		}
 		await Promise.all(
 			Object.values(tree.trees).map(async (childTree) => {
-				await this.stripTreeOfMissingLoadingGroupIds(childTree, loadingGroupIds);
+				await this.stripTreeOfMissingLoadingGroupIds(
+					childTree,
+					loadingGroupIds,
+					blobIdsToKeep,
+				);
 			}),
 		);
 	}
@@ -169,6 +183,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		tree: ISnapshotTreeEx,
 		loadingGroupIds: Set<string>,
 		ancestorGroupIdInLoadingGroup: boolean,
+		blobIdsToKeep: Set<string>,
 	): Promise<boolean> {
 		assert(loadingGroupIds.size > 0, 0x8de /* loadingGroupIds should not be empty */);
 		const groupId = await this.readGroupId(tree);
@@ -187,6 +202,12 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		// Keep tree if it has an ancestor that has a groupId that is in loadingGroupIds and it doesn't have groupId
 		const isChildOfAncestorWithGroupId = ancestorGroupIdInLoadingGroup && groupId === undefined;
 
+		// Collect blobsIds so that we can return blob contents only for these blobs.
+		if (groupIdInLoadingGroupIds || isChildOfAncestorWithGroupId) {
+			for (const id of Object.values(tree.blobs)) {
+				blobIdsToKeep.add(id);
+			}
+		}
 		// Keep tree if it has a child that has a groupId that is in loadingGroupIds
 		const descendants = await Promise.all<boolean>(
 			Object.values(tree.trees).map(async (childTree) => {
@@ -194,6 +215,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 					childTree,
 					loadingGroupIds,
 					ancestorGroupIdInLoadingGroup || groupIdInLoadingGroupIds,
+					blobIdsToKeep,
 				);
 			}),
 		);
@@ -218,16 +240,19 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 	private async populateBlobContents(
 		tree: ISnapshotTreeEx,
 		blobContents: Map<string, ArrayBufferLike>,
+		blobIdsToKeep: Set<string>,
 	): Promise<void> {
 		await Promise.all(
 			Object.entries(tree.blobs).map(async ([path, blobId]) => {
-				const content = await this.readBlob(blobId);
-				blobContents.set(path, content);
+				if (blobIdsToKeep.has(blobId)) {
+					const content = await this.readBlob(blobId);
+					blobContents.set(blobId, content);
+				}
 			}),
 		);
 		await Promise.all(
 			Object.values(tree.trees).map(async (childTree) => {
-				await this.populateBlobContents(childTree, blobContents);
+				await this.populateBlobContents(childTree, blobContents, blobIdsToKeep);
 			}),
 		);
 	}

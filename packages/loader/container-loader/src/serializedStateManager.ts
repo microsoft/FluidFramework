@@ -7,6 +7,7 @@ import {
 	IGetPendingLocalStateProps,
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
+import { stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentStorageService,
@@ -114,21 +115,27 @@ export class SerializedStateManager {
 		supportGetSnapshotApi: boolean,
 	) {
 		if (this.pendingLocalState === undefined) {
-			const { baseSnapshot, version } = await getSnapshotTree(
+			const { baseSnapshot, version } = await getSnapshot(
 				this.mc,
 				this.storageAdapter,
 				supportGetSnapshotApi,
 				specifiedVersion,
 			);
+			const baseSnapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(baseSnapshot)
+				? baseSnapshot.snapshotTree
+				: baseSnapshot;
 			// non-interactive clients will not have any pending state we want to save
 			if (this.offlineLoadEnabled) {
 				const snapshotBlobs = await getBlobContentsFromTree(
-					baseSnapshot,
+					baseSnapshotTree,
 					this.storageAdapter,
 				);
-				const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshot);
+				const attributes = await getDocumentAttributes(
+					this.storageAdapter,
+					baseSnapshotTree,
+				);
 				this.snapshot = {
-					baseSnapshot,
+					baseSnapshot: baseSnapshotTree,
 					snapshotBlobs,
 					snapshotSequenceNumber: attributes.sequenceNumber,
 				};
@@ -152,7 +159,19 @@ export class SerializedStateManager {
 				this.updateSnapshotAndProcessedOpsMaybe();
 			})();
 
-			return { baseSnapshot, version: undefined };
+			const blobContents = new Map<string, ArrayBuffer>();
+			for (const [id, value] of Object.entries(snapshotBlobs)) {
+				blobContents.set(id, stringToBuffer(value, "utf8"));
+			}
+			const iSnapshot: ISnapshot = {
+				sequenceNumber: this.snapshot.snapshotSequenceNumber,
+				snapshotTree: baseSnapshot,
+				blobContents,
+				latestSequenceNumber: undefined,
+				ops: [],
+				snapshotFormatV: 1,
+			};
+			return { baseSnapshot: iSnapshot, version: undefined };
 		}
 	}
 
@@ -287,19 +306,22 @@ export async function getLatestSnapshotInfo(
 		mc.logger,
 		{ eventName: "GetLatestSnapshotInfo" },
 		async () => {
-			const { baseSnapshot } = await getSnapshotTree(
+			const { baseSnapshot } = await getSnapshot(
 				mc,
 				storageAdapter,
 				supportGetSnapshotApi,
 				undefined,
 			);
-			const snapshotBlobs = await getBlobContentsFromTree(baseSnapshot, storageAdapter);
+			const baseSnapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(baseSnapshot)
+				? baseSnapshot.snapshotTree
+				: baseSnapshot;
+			const snapshotBlobs = await getBlobContentsFromTree(baseSnapshotTree, storageAdapter);
 			const attributes: IDocumentAttributes = await getDocumentAttributes(
 				storageAdapter,
-				baseSnapshot,
+				baseSnapshotTree,
 			);
 			const snapshotSequenceNumber = attributes.sequenceNumber;
-			return { baseSnapshot, snapshotBlobs, snapshotSequenceNumber };
+			return { baseSnapshot: baseSnapshotTree, snapshotBlobs, snapshotSequenceNumber };
 		},
 	).catch(() => undefined);
 }
@@ -313,7 +335,7 @@ export async function getLatestSnapshotInfo(
  * @param specifiedVersion - An optional version string specifying the version of the snapshot tree to fetch.
  * @returns - An ISnapshotTree and its version.
  */
-async function getSnapshotTree(
+async function getSnapshot(
 	mc: MonitoringContext,
 	storageAdapter: Pick<
 		IDocumentStorageService,
@@ -321,15 +343,12 @@ async function getSnapshotTree(
 	>,
 	supportGetSnapshotApi: boolean,
 	specifiedVersion: string | undefined,
-): Promise<{ baseSnapshot: ISnapshotTree; version?: IVersion }> {
+): Promise<{ baseSnapshot: ISnapshot | ISnapshotTree; version?: IVersion }> {
 	const { snapshot, version } = supportGetSnapshotApi
 		? await fetchISnapshot(mc, storageAdapter, specifiedVersion)
 		: await fetchISnapshotTree(mc, storageAdapter, specifiedVersion);
-	const baseSnapshot: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
-		? snapshot.snapshotTree
-		: snapshot;
-	assert(baseSnapshot !== undefined, 0x8e4 /* Snapshot should exist */);
-	return { baseSnapshot, version };
+	assert(snapshot !== undefined, 0x8e4 /* Snapshot should exist */);
+	return { baseSnapshot: snapshot, version };
 }
 
 /**

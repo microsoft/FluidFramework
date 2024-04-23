@@ -575,6 +575,8 @@ describe("Data Store Context Tests", () => {
 				IFluidDataStoreRegistry: registry,
 				on: (event, listener) => {},
 				clientDetails: {},
+				isSnapshotFetchRequired: (path) => false,
+				containerRuntime,
 			} as ContainerRuntime;
 		});
 

@@ -1558,10 +1558,13 @@ export class Container
 			specifiedVersion,
 			supportGetSnapshotApi,
 		);
+		const baseSnapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(baseSnapshot)
+			? baseSnapshot.snapshotTree
+			: baseSnapshot;
 		this._loadedFromVersion = version;
 		const attributes: IDocumentAttributes = await getDocumentAttributes(
 			this.storageAdapter,
-			baseSnapshot,
+			baseSnapshotTree,
 		);
 
 		// If we saved ops, we will replay them and don't need DeltaManager to fetch them
@@ -1651,14 +1654,14 @@ export class Container
 		await this.initializeProtocolStateFromSnapshot(
 			attributes,
 			this.storageAdapter,
-			baseSnapshot,
+			baseSnapshotTree,
 		);
 
 		timings.phase3 = performance.now();
 		const codeDetails = this.getCodeDetailsFromQuorum();
 		await this.instantiateRuntime(
 			codeDetails,
-			baseSnapshot,
+			baseSnapshotTree,
 			// give runtime a dummy value so it knows we're loading from a stash blob
 			pendingLocalState ? pendingLocalState?.pendingRuntimeState ?? {} : undefined,
 			isInstanceOfISnapshot(baseSnapshot) ? baseSnapshot : undefined,

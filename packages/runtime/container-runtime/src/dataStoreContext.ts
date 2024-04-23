@@ -1061,7 +1061,7 @@ export abstract class FluidDataStoreContext
 /** @internal */
 export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	// Tells whether we need to fetch the snapshot before use. This is to support Data Virtualization.
-	private snapshotFetchRequired: boolean;
+	private snapshotFetchRequired: boolean | undefined;
 	private readonly runtime: IContainerRuntimeBase;
 
 	constructor(props: IRemoteFluidDataStoreContextProps) {
@@ -1070,7 +1070,6 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		});
 
 		this._baseSnapshot = props.snapshotTree;
-		this.snapshotFetchRequired = !!props.snapshotTree?.omitted;
 		this.runtime = props.parentContext.containerRuntime;
 		if (props.snapshotTree !== undefined) {
 			this.summarizerNode.updateBaseSummaryState(props.snapshotTree);
@@ -1092,6 +1091,10 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		// Sequence number of the snapshot.
 		let sequenceNumber: number | undefined;
+		// Check whether we need to fetch the snapshot first to load.
+		if (this.snapshotFetchRequired === undefined) {
+			this.snapshotFetchRequired = this.runtime.isSnapshotFetchRequired([this.id]);
+		}
 		if (this.snapshotFetchRequired) {
 			assert(
 				this.loadingGroupId !== undefined,
