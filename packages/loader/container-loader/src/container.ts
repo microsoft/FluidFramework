@@ -2222,7 +2222,13 @@ export class Container
 
 		this.setContextConnectedState(connected, this.readOnlyInfo.readonly ?? false);
 		this.protocolHandler.setConnectionState(connected, this.clientId);
-		raiseConnectedEvent(this.mc.logger, this, connected, this.clientId, disconnectedReason?.text);
+		raiseConnectedEvent(
+			this.mc.logger,
+			this,
+			connected,
+			this.clientId,
+			disconnectedReason?.text,
+		);
 	}
 
 	// back-compat: ADO #1385: Remove in the future, summary op should come through submitSummaryMessage()
