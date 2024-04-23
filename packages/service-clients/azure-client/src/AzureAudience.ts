@@ -19,7 +19,7 @@ export function createAzureAudienceMember(audienceMember: IClient): AzureMember 
 
 	return {
 		userId: user.id,
-		userName: user.name,
+		name: user.name,
 		connections: [],
 		additionalDetails: user.additionalDetails,
 	};
