@@ -1050,6 +1050,9 @@ describeCompat("Container connections", "NoCompat", (getTestObjectProvider) => {
 
 		await finishLoadingTestContainers(container, await containerP);
 
+		// Connections we expect:
+		// "read" initial connection
+		// upgrade to "write" connection
 		assert(connectionCount === 2, "initial connect, `write` reconnect");
 	}).timeout(62000); // this is actual 2 second timeout, 60 seconds are fake
 
@@ -1092,6 +1095,10 @@ describeCompat("Container connections", "NoCompat", (getTestObjectProvider) => {
 
 		await finishLoadingTestContainers(container, await containerP);
 
+		// Connections we expect:
+		// "read" initial connection, disconnected by this test
+		// "read" reconnect
+		// upgrade to "write" connection
 		assert(connectionCount === 3, "initial connect, reconnect, `write` reconnect");
 	}).timeout(62000); // this is actual 2 second timeout, 60 seconds are fake
 
