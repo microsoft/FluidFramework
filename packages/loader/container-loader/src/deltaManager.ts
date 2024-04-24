@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	ICriticalContainerError,
 	IDeltaManager,
@@ -38,8 +37,6 @@ import {
 	type ITelemetryErrorEventExt,
 	type ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils";
-import {
 	DataCorruptionError,
 	DataProcessingError,
 	UsageError,
@@ -47,6 +44,7 @@ import {
 	isFluidError,
 	normalizeError,
 	safeRaiseEvent,
+	EventEmitterWithErrorHandling,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -149,7 +147,7 @@ function logIfFalse(
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
  */
 export class DeltaManager<TConnectionManager extends IConnectionManager>
-	extends TypedEventEmitter<IDeltaManagerInternalEvents>
+	extends EventEmitterWithErrorHandling<IDeltaManagerInternalEvents>
 	implements
 		IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		IEventProvider<IDeltaManagerInternalEvents>
@@ -411,7 +409,16 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		private readonly _active: () => boolean,
 		createConnectionManager: (props: IConnectionManagerFactoryArgs) => TConnectionManager,
 	) {
-		super();
+		super((name, error) => {
+			this.logger.sendErrorEvent(
+				{
+					eventName: "DeltaManagerEventHandlerException",
+					name: typeof name === "string" ? name : undefined,
+				},
+				error,
+			);
+			this.close(normalizeError(error));
+		});
 		const props: IConnectionManagerFactoryArgs = {
 			incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) => {
 				try {

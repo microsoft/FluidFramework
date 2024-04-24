@@ -29,7 +29,7 @@ import {
 	IRequest,
 } from "@fluidframework/core-interfaces";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	ITestContainerConfig,

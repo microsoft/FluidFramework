@@ -42,6 +42,8 @@ Test interface property
 testInterfaceProperty: boolean;
 ```
 
+**Type:** boolean
+
 ## Method Details
 
 ### testInterfaceMethod (ALPHA) {#testinterfacemethod-methodsignature}

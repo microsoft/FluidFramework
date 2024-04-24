@@ -22,8 +22,8 @@ import {
 	maximumCacheDurationMs,
 	snapshotKey,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
+	ITelemetryLoggerExt,
 	PerformanceEvent,
 	isFluidError,
 	loggerToMonitoringContext,

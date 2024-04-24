@@ -328,7 +328,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 
 	/**
 	 * Represents the resolved url to the Container.
-	 * Will be undefined only when the container is in the {@link AttachState.Detached | detatched} state.
+	 * Will be undefined only when the container is in the {@link AttachState.Detached | detached} state.
 	 */
 	resolvedUrl: IResolvedUrl | undefined;
 

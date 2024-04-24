@@ -20,8 +20,8 @@ import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions/internal";
-import { type ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
+	type ITelemetryLoggerExt,
 	UsageError,
 	createChildLogger,
 	tagCodeArtifacts,
