@@ -47,11 +47,14 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		const currentPackageJson = pkg.packageJson;
 		const previousPackageName = `${currentPackageJson.name}-previous`;
 		const previousBasePath = path.join(pkg.directory, "node_modules", previousPackageName);
-		const previousPackagJsonPath = path.join(previousBasePath, "package.json");
+		const previousPackageJsonPath = path.join(previousBasePath, "package.json");
 
 		ensureDevDependencyExists(currentPackageJson, previousPackageName);
-		this.verbose(`Reading package.json at ${previousPackagJsonPath}`);
-		const previousPackageJson = (await readJson(previousPackagJsonPath)) as PackageJson;
+		this.verbose(`Reading package.json at ${previousPackageJsonPath}`);
+		const previousPackageJson = (await readJson(previousPackageJsonPath)) as PackageJson;
+		// Set the name in the JSON to the calculated previous package name, since the name in the previous package.json is
+		// the same as current.
+		previousPackageJson.name = previousPackageName;
 
 		const typeTestOutputFile = getTypeTestFilePath(currentPackageJson);
 		if (currentPackageJson.typeValidation?.disabled === true) {
@@ -65,14 +68,16 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 			this.exit(0);
 		}
 
-		const { typesPath: currentTypesPath, levelUsed: currentPackageLevel } =
+		const { typesPath: currentTypesPathRelative, levelUsed: currentPackageLevel } =
 			getTypesPathWithFallback(currentPackageJson, level, fallbackLevel);
+		const currentTypesPath = path.join(pkg.directory, currentTypesPathRelative);
 		this.verbose(
 			`Found ${currentPackageLevel} type definitions for ${currentPackageJson.name} at: ${currentTypesPath}`,
 		);
 
-		const { typesPath: previousTypesPath, levelUsed: previousPackageLevel } =
+		const { typesPath: previousTypesPathRelative, levelUsed: previousPackageLevel } =
 			getTypesPathWithFallback(previousPackageJson, level, fallbackLevel);
+		const previousTypesPath = path.join(pkg.directory, previousTypesPathRelative);
 		this.verbose(
 			`Found ${previousPackageLevel} type definitions for ${previousPackageJson.name}: ${previousTypesPath}`,
 		);
@@ -131,7 +136,7 @@ import type * as current from "../../index.js";
 
 /**
  * Tries to find the path to types for a given API level, falling back to another API level (typically public) if the
- * requested one is not found.
+ * requested one is not found. The paths returned are relative to the package.
  */
 function getTypesPathWithFallback(
 	packageJson: PackageJson,
