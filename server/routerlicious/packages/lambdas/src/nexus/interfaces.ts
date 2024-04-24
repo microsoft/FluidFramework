@@ -128,5 +128,5 @@ export interface INexusLambdaConnectionStateTrackers {
 	roomMap: Map<string, IRoom>;
 	disconnectedOrdererConnections: Set<string>;
 	disconnectedClients: Set<string>;
-	supportedFeaturesMap: Map<string, Record<string, any>>;
+	supportedFeaturesMap: Map<string, Record<string, unknown>>;
 }

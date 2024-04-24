@@ -147,7 +147,7 @@ export function configureWebSocketServices(
 		// Map from client Ids to connection time.
 		const connectionTimeMap = new Map<string, number>();
 		// Map from client Ids to supportedFeatures
-		const supportedFeaturesMap = new Map<string, Record<string, any>>();
+		const supportedFeaturesMap = new Map<string, Record<string, unknown>>();
 		// Set of client Ids that have been disconnected from orderer.
 		const disconnectedOrdererConnections = new Set<string>();
 		// Set of client Ids that have been disconnected from room and client manager.
