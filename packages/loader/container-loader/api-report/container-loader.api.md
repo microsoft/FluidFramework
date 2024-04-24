@@ -109,7 +109,7 @@ export interface IProtocolHandler extends IProtocolHandler_2 {
 export function isLocationRedirectionError(error: any): error is ILocationRedirectionError;
 
 // @internal
-export function loadContainerPaused(loader: ILoader, request: IRequest, loadToSequenceNumber?: number): Promise<IContainer>;
+export function loadContainerPaused(loader: ILoader, request: IRequest, loadToSequenceNumber?: number, signal?: AbortSignal): Promise<IContainer>;
 
 // @alpha
 export class Loader implements IHostLoader {

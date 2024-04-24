@@ -664,6 +664,8 @@ export interface IContainerLoadMode {
 		 * This mode might have significant impact on boot speed (depends on storage perf characteristics)
 		 * Also there might be a lot of trailing ops and applying them might take time, so hosts are
 		 * recommended to have some progress UX / cancellation built into loading flow when using this option.
+		 * WARNING: This is the only option that may result in unbound wait. If machine is offline or hits some other
+		 * errors (like 429s), it may get into inifinite retry loop, with no ability to observe or cancel that process.
 		 */
 		| "all";
 
