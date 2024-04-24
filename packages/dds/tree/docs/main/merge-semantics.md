@@ -67,3 +67,73 @@ Understanding `SharedTree`'s merge semantics can help the application author ant
 Understanding `SharedTree`'s merge semantics will also enable the application author to understand how to remedy this danger,
 either by adopting a data model that prevents the issue (e.g., using a single array of pair),
 or by changing the application's editing code (transactions and constraints) to circumvent it.
+
+## A Holistic View
+
+`SharedTree` allows developers to describe the data model for their application in terms of a set of elementary building blocks,
+like objects nodes, map nodes, and array nodes.
+Each of these building blocks comes with its own editing API and associated merge semantics,
+so fully understanding the merge semantics of `SharedTree` entails understanding the individual merge semantics of each of these building blocks.
+That said, those merge semantics are in large part underpinned by a set design choices that apply to `SharedTree` as a whole.
+Understanding those design choices and their ramifications is the most crucial part of understanding `SharedTree`'s merge semantics,
+and often alleviates the need to remember the details of any building blocks's specific merge semantics.
+
+### Movement Is Not Copy
+
+`SharedTree` allows subtrees to be moved from one location to another,
+and such movement does not adversely affect concurrent edits that target the moved subtree.
+This is different from inserting a new copy of the moved subtree at the destination
+(and deleting the original at the source).
+
+Consider following scenario:
+Alice moves a sticky note from one list to another,
+while Bob concurrently edits the text of the note.
+If the move were just a copy, then if Alice's edit were to be sequenced first,
+Bob's edit would not apply to the copy at the destination.
+By contrast, `SharedTree`'s move semantics ensure that Bob's edit will apply no matter the sequencing order.
+
+### Removal as Movement
+
+`SharedTree` allows subtrees to be removed,
+such as when an element from an array node is removed,
+a key is deleted from a map node,
+or when the field on an object is overwritten.
+This removal does not adversely affect concurrent edits that target the removed subtree.
+
+Consider following scenario:
+Alice removes a whole list of sticky notes, while Bob concurrently moves a sticky note out of that list and into another (non-removed) list.
+`SharedTree`'s removal semantics ensure that Bob's edit will apply no matter the sequencing order.
+If that weren't the case, then there would be a race between Alice and Bob's edit,
+where Bob's edit would not apply if Alice's edit were sequenced first.
+
+Note that in a lot of cases, the changes to the removed subtree won't be immediately visible because the tree is removed.
+They will however become visible if that removal is undone.
+
+These merge semantics effectively make removal akin to a move whose destination is an abstract "removed" location.
+
+### Last Write Wins
+
+It's possible for concurrent edits represent fundamentally incompatible user intentions.
+Whenever that happens, the edit that is sequenced last will win out.
+
+Example 1:
+Alice and Bob concurrently change the background color of the same sticky note
+such that Alice would change it from yellow to red and Bob would change it from yellow to blue.
+If the edits are sequenced such that Alice's edit is applied first and Bob's edit is applied second,
+then the background color of the note will change from yellow to red then from red to blue.
+If the edits are sequenced in the reverse order,
+then the background color of the note will change from yellow to blue then from blue to red.
+
+Example 2:
+Alice and Bob concurrently move the same sticky note
+such that Alice would move it from location X to location A and Bob would move it from location X to location B.
+If the edits are sequenced such that Alice's edit is applied first and Bob's edit is applied second,
+then the note will first be moved from X to A then from A to B.
+If the edits are sequenced in the reverse order,
+then the note will first be moved from X to B then from B to A.
+
+### Putting It all Together
+
+### Constraints
+
+### Schema Changes
