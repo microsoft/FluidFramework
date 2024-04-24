@@ -14,7 +14,7 @@ import { PackageCommand } from "../../BasePackageCommand";
 import { ApiLevel, ensureDevDependencyExists, knownApiLevels } from "../../library";
 import {
 	generateCompatibilityTestCases,
-	initializeProjectsAndLoadFiles,
+	loadTypesSourceFile,
 	typeDataFromFile,
 } from "../../typeTestUtils";
 import { unscopedPackageNameString } from "./entrypoints";
@@ -94,14 +94,9 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 			`Found ${previousPackageLevel} type definitions for ${previousPackageJson.name}: ${previousTypesPath}`,
 		);
 
-		const { currentFile, previousFile } = initializeProjectsAndLoadFiles(
-			currentTypesPath,
-			pkg.directory,
-			previousTypesPath,
-			previousBasePath,
-		);
-
+		const currentFile = loadTypesSourceFile(pkg.directory, currentTypesPath);
 		this.verbose(`Loaded source file for current version: ${currentFile.getFilePath()}`);
+		const previousFile = loadTypesSourceFile(previousBasePath, previousTypesPath);
 		this.verbose(`Loaded source file for previous version: ${previousFile.getFilePath()}`);
 
 		const currentTypeMap = typeDataFromFile(currentFile);
@@ -140,7 +135,7 @@ import type * as current from "../../index.js";
 			fileHeader,
 		);
 
-		mkdirSync("./src/test/types", { recursive: true });
+		mkdirSync(outDir, { recursive: true });
 
 		writeFileSync(typeTestOutputFile, testCases.join("\n"));
 		console.log(`generated ${path.resolve(typeTestOutputFile)}`);

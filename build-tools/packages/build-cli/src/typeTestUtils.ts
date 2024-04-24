@@ -13,7 +13,6 @@ import {
 	getFullTypeName,
 	getNodeTypeData,
 } from "@fluidframework/build-tools";
-import { existsSync } from "fs-extra";
 import { Project, SourceFile } from "ts-morph";
 
 /**
@@ -44,40 +43,22 @@ export function typeDataFromFile(file: SourceFile): Map<string, TypeData> {
 
 /**
  * Initializes TypeScript projects for the current and previous package versions and loads specific source files.
- * @param currentBasePath - The path to the current version of the package.
- * @param previousTypeDefs - The path to the type definition file for the previous version.
- * @param previousBasePath - The path to the root of the previous package version.
- * @returns The loaded source files for the current and previous versions.
+ * @param basePath - The path to the current version of the package.
+ * @param typesPath - The path to the types file to load. This path is expected to be relative to
+ * @returns The loaded source file.
  */
-export function initializeProjectsAndLoadFiles(
-	currentTypeDefs: string,
-	currentBasePath: string,
-	previousTypeDefs: string,
-	previousBasePath: string,
-): { currentFile: SourceFile; previousFile: SourceFile } {
-	// For the current package, we'll load using the tsconfig file and get the root index.ts
-	// file as the source file to read exports from.
-	const currentTsConfigPath = path.join(currentBasePath, "tsconfig.json");
-	const currentProject = new Project({
-		skipFileDependencyResolution: true,
-		tsConfigFilePath: currentTsConfigPath,
-	});
-	currentProject.addSourceFilesAtPaths(`${path.dirname(currentTypeDefs)}/**/*.d.ts`);
-	const currentFile = currentProject.getSourceFileOrThrow(path.basename(currentTypeDefs));
-
-	// For the previous package version, we assume the tsconfig is included in the package published to npm, so we load
-	// using its settings. Then we manually add all type definitions, and finally retrieve the one matching the API level
-	// we're using.
-	const previousTsConfigPath = path.join(previousBasePath, "tsconfig.json");
+export function loadTypesSourceFile(basePath: string, typesPath: string): SourceFile {
+	// We assume the tsconfig is included in the package published to npm, so we load using its settings. Then we manually
+	// add all type definitions, and finally retrieve the one matching the API level we're using.
+	const tsconfigPath = path.join(basePath, "tsconfig.json");
 	const project = new Project({
 		skipFileDependencyResolution: true,
-		tsConfigFilePath: existsSync(previousTsConfigPath) ? previousTsConfigPath : undefined,
+		tsConfigFilePath: tsconfigPath,
 	});
+	project.addSourceFilesAtPaths(`${path.dirname(typesPath)}/**/*.d.ts`);
+	const sourceFile = project.getSourceFileOrThrow(path.basename(typesPath));
 
-	project.addSourceFilesAtPaths(`${path.dirname(previousTypeDefs)}/**/*.d.ts`);
-	const previousFile = project.getSourceFileOrThrow(path.basename(previousTypeDefs));
-
-	return { currentFile, previousFile };
+	return sourceFile;
 }
 
 /**
