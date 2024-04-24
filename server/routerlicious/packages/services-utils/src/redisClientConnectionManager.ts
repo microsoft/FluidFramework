@@ -163,6 +163,16 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 		return this.client;
 	}
 
+	private redactArg(arg: string, ind: number, commandName: string): string {
+		// For some commands argument 0 is the key, meaning we can safely log it
+		const safeCommands: string[] = ["get", "set", "del", "hget", "hset", "hdel"];
+		if (ind === 0 && safeCommands.includes(commandName?.toLowerCase() ?? "")) {
+			return arg;
+		}
+
+		return arg.length.toString();
+	}
+
 	public addErrorHandler(
 		lumberProperties: Record<string, any> = {},
 		errorMessage: string = "Error with Redis",
@@ -179,18 +189,28 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 			}
 
 			const commandName: string | undefined =
-				error.commandName ?? error.lastNodeError?.commandName;
-			const args: string[] = error.args ?? error.lastNodeError?.args ?? [];
+				error.command.name ?? error.lastNodeError?.command.name;
+			const args: string[] = error.command?.args ?? error.lastNodeError?.command.args ?? [];
 			// Grab only the lengths of each arg, to avoid logging sensitive information
-			const argSizes: string[] = args.map((arg, ind) => {
-				// For some commands argument 0 is the key, meaning we can safely log it
-				const safeCommands: string[] = ["get", "set", "del", "hget", "hset", "hdel"];
-				if (ind === 0 && safeCommands.includes(commandName?.toLowerCase() ?? "")) {
-					return arg;
-				}
-
-				return arg.length.toString();
-			});
+			if (commandName === "exec" && error.previousErrors) {
+				// Internally redact the previous errors of an exec command
+				lumberProperties.previousErrors = [];
+				error.previousErrors?.forEach((prevError) => {
+					if (prevError.command) {
+						const prevCommandName: string | undefined = prevError.command.name;
+						const prevArgs: string[] = prevError.command.args;
+						const prevArgsRedacted: string[] = prevArgs.map((arg, ind) =>
+							this.redactArg(arg, ind, prevCommandName ?? ""),
+						);
+						const prevErrorCopy = { ...prevError };
+						prevErrorCopy.command.args = prevArgsRedacted;
+						lumberProperties.previousErrors.push(prevErrorCopy);
+					}
+				});
+			}
+			const argSizes: string[] = args.map((arg, ind) =>
+				this.redactArg(arg, ind, commandName ?? ""),
+			);
 
 			// Set additional logging info in lumberProperties
 			lumberProperties.commandName = commandName;
