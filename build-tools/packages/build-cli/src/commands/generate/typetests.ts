@@ -6,16 +6,18 @@
 import path from "node:path";
 import { type Package, type PackageJson, typeOnly } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
+import { PackageName } from "@rushstack/node-core-library";
+import * as changeCase from "change-case";
 import { mkdirSync, readJson, rmSync, writeFileSync } from "fs-extra";
 import * as resolve from "resolve.exports";
 import { PackageCommand } from "../../BasePackageCommand";
 import { ApiLevel, ensureDevDependencyExists, knownApiLevels } from "../../library";
 import {
 	generateCompatibilityTestCases,
-	getTypeTestFilePath,
 	initializeProjectsAndLoadFiles,
 	typeDataFromFile,
 } from "../../typeTestUtils";
+import { unscopedPackageNameString } from "./entrypoints";
 
 export default class GenerateTypetestsCommand extends PackageCommand<
 	typeof GenerateTypetestsCommand
@@ -28,6 +30,14 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 			default: ApiLevel.internal,
 			options: knownApiLevels,
 		}),
+		outDir: Flags.directory({
+			description: "Directory to emit entrypoint declaration files.",
+			default: "./src/test/types",
+		}),
+		outFile: Flags.string({
+			description: `File name for the generated type tests. The pattern '${unscopedPackageNameString}' within the value will be replaced with the unscoped name of this package in PascalCase.`,
+			default: `validate${unscopedPackageNameString}Previous.generated.ts`,
+		}),
 		publicFallback: Flags.boolean({
 			description:
 				"Use the public entrypoint as a fallback if the API at the requested level is not found.",
@@ -37,6 +47,8 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 	} as const;
 
 	protected async processPackage(pkg: Package): Promise<void> {
+		const { outDir, outFile } = this.flags;
+
 		// This cast is safe because oclif has already ensured only known ApiLevel values get to this point.
 		const level = this.flags.level as ApiLevel;
 		const fallbackLevel = this.flags.publicFallback ? ApiLevel.public : undefined;
@@ -56,7 +68,7 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		// the same as current.
 		previousPackageJson.name = previousPackageName;
 
-		const typeTestOutputFile = getTypeTestFilePath(currentPackageJson);
+		const typeTestOutputFile = getTypeTestFilePath(currentPackageJson, outDir, outFile);
 		if (currentPackageJson.typeValidation?.disabled === true) {
 			this.info("skipping type test generation because they are disabled in package.json");
 			rmSync(
@@ -72,17 +84,18 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 			getTypesPathWithFallback(currentPackageJson, level, fallbackLevel);
 		const currentTypesPath = path.join(pkg.directory, currentTypesPathRelative);
 		this.verbose(
-			`Found ${currentPackageLevel} type definitions for ${currentPackageJson.name} at: ${currentTypesPath}`,
+			`Found ${currentPackageLevel} type definitions for ${currentPackageJson.name}: ${currentTypesPath}`,
 		);
 
 		const { typesPath: previousTypesPathRelative, levelUsed: previousPackageLevel } =
 			getTypesPathWithFallback(previousPackageJson, level, fallbackLevel);
-		const previousTypesPath = path.join(pkg.directory, previousTypesPathRelative);
+		const previousTypesPath = path.join(previousBasePath, previousTypesPathRelative);
 		this.verbose(
 			`Found ${previousPackageLevel} type definitions for ${previousPackageJson.name}: ${previousTypesPath}`,
 		);
 
 		const { currentFile, previousFile } = initializeProjectsAndLoadFiles(
+			pkg.directory,
 			previousTypesPath,
 			previousBasePath,
 		);
@@ -172,10 +185,9 @@ function getTypesPathWithFallback(
  * @returns A package relative path to the types.
  */
 export function getTypesPathFromPackage(packageJson: PackageJson, level: ApiLevel): string {
+	// resolve.exports sets some conditions by default, so the ones we supply supplement the defaults. For clarity the
+	// applied conditions are noted in comments.
 	const exports =
-		// resolve.exports sets some conditions by default, so the ones we supply supplement the defaults. For clarity the
-		// applied conditions are noted in comments.
-
 		// First try to resolve with the "import" condition, assuming the package is either ESM-only or dual-format.
 		// conditions: ["default", "types", "import", "node"]
 		resolve.exports(packageJson, `./${level}`, { conditions: ["types"] }) ??
@@ -196,4 +208,29 @@ export function getTypesPathFromPackage(packageJson: PackageJson, level: ApiLeve
 		);
 	}
 	return typesPath;
+}
+
+/**
+ * Calculates the file path for type validation tests.
+ *
+ * @param packageObject - The package.json object for the package whose type tests are being generated.
+ * @param outDir - The output directory for generated tests.
+ * @param outDir - The output directory for generated tests.
+ *
+ * @returns The path to write generated files to.
+ */
+function getTypeTestFilePath(
+	packageObject: PackageJson,
+	outDir: string,
+	outFile: string,
+): string {
+	return path.join(
+		outDir,
+		outFile.includes(unscopedPackageNameString)
+			? outFile.replace(
+					unscopedPackageNameString,
+					changeCase.capitalCase(PackageName.getUnscopedName(packageObject.name)),
+				)
+			: outFile,
+	);
 }

@@ -13,13 +13,7 @@ import {
 	getFullTypeName,
 	getNodeTypeData,
 } from "@fluidframework/build-tools";
-import { PackageName } from "@rushstack/node-core-library";
 import { Project, SourceFile } from "ts-morph";
-
-/**
- * The path to the test types directory
- */
-const typeTestFilePath = "./src/test/types";
 
 /**
  * Extracts type data from a TS source file and creates a map where each key is a type name and the value is its type
@@ -54,16 +48,21 @@ export function typeDataFromFile(file: SourceFile): Map<string, TypeData> {
  * @returns The loaded source files for the current and previous versions.
  */
 export function initializeProjectsAndLoadFiles(
+	currentBasePath: string,
 	previousTypeDefs: string,
 	previousBasePath: string,
 ): { currentFile: SourceFile; previousFile: SourceFile } {
 	// For the current package, we'll load using the tsconfig file and get the root index.ts
 	// file as the source file to read exports from.
+	const currentTsConfigPath = path.join(currentBasePath, "tsconfig.json");
 	const currentFile = new Project({
 		skipFileDependencyResolution: true,
-		tsConfigFilePath: "tsconfig.json",
+		tsConfigFilePath: currentTsConfigPath,
 	}).getSourceFileOrThrow("index.ts");
 
+	// For the previous package version, we assume the tsconfig is included in the package published to npm, so we load
+	// using its settings. Then we manually add all type definitions, and finally retrieve the one matching the API level
+	// we're using.
 	const previousTsConfigPath = path.join(previousBasePath, "tsconfig.json");
 	const project = new Project({
 		skipFileDependencyResolution: true,
@@ -138,32 +137,4 @@ export function generateCompatibilityTestCases(
 		);
 	}
 	return testString;
-}
-
-/**
- * Prepares the file path for type validation tests.
- * @param packageObject - the package.json object
- * @returns type validation file path
- */
-export function getTypeTestFilePath(packageObject: PackageJson): string {
-	const testPath = typeTestFilePath;
-	// remove scope if it exists
-	const unscopedName = PackageName.getUnscopedName(packageObject.name);
-
-	const fileBaseName = formatFileBaseName(unscopedName);
-
-	const filePath = `${testPath}/validate${fileBaseName}Previous.generated.ts`;
-	return filePath;
-}
-
-/**
- * Formats the file base name based on the package name
- * @param packageName - the package name
- * @returns the formatted file base name
- */
-function formatFileBaseName(packageName: string): string {
-	return packageName
-		.split("-")
-		.map((p) => p[0].toUpperCase() + p.slice(1))
-		.join("");
 }
