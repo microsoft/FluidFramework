@@ -179,7 +179,15 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 				error.commandName ?? error.lastNodeError?.commandName;
 			const args: string[] = error.args ?? error.lastNodeError?.args ?? [];
 			// Grab only the lengths of each arg, to avoid logging sensitive information
-			const argSizes: number[] = args.map((arg) => arg.length);
+			const argSizes: string[] = args.map((arg, ind) => {
+				// For some commands argument 0 is the key, meaning we can safely log it
+				const safeCommands: string[] = ["get", "set", "del", "hget", "hset", "hdel"];
+				if (ind === 0 && safeCommands.includes(commandName?.toLowerCase() ?? "")) {
+					return arg;
+				}
+
+				return arg.length.toString();
+			});
 
 			// Set additional logging info in lumberProperties
 			lumberProperties.commandName = commandName;
