@@ -2000,27 +2000,6 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Utility function to check if any blobs under a snapshot tree is missing and if so, then set
-	 * omitted flag to true for that snapshot tree.
-	 * @param snapshotTree - snapshotTree to be evaluated for missing blobs.
-	 * @param blobContents - blobContents of the snapshot.
-	 */
-	private evaluateSnapshotForOmittedBlobContents(
-		snapshotTree: ISnapshotTree,
-		blobContents: Map<string, ArrayBuffer>,
-	) {
-		for (const [_, id] of Object.entries(snapshotTree.blobs)) {
-			if (!blobContents.has(id)) {
-				snapshotTree.omitted = true;
-				break;
-			}
-		}
-		for (const [_, treeChild] of Object.entries(snapshotTree.trees)) {
-			this.evaluateSnapshotForOmittedBlobContents(treeChild, blobContents);
-		}
-	}
-
-	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.isSnapshotFetchRequired}
 	 */
 	public isSnapshotFetchRequired(pathParts: string[]): boolean {
@@ -2040,9 +2019,34 @@ export class ContainerRuntime
 				details: JSON.stringify({ pathPartsLength: pathParts.length }),
 			});
 		}
-		for (const [_, id] of Object.entries(snapshotTreeForPath.blobs)) {
-			if (!this.snapshotWithContents.blobContents.has(id)) {
+		return this.evaluateSnapshotTreeForMissingBlobs(
+			snapshotTreeForPath,
+			this.snapshotWithContents.blobContents,
+		);
+	}
+
+	/**
+	 * Utility function to check if any blobs under a snapshot tree is missing and if so, then return
+	 * true if that is the case.
+	 * @param snapshotTree - snapshotTree to be evaluated for missing blobs.
+	 * @param blobContents - blobContents of the snapshot.
+	 */
+	private evaluateSnapshotTreeForMissingBlobs(
+		snapshotTree: ISnapshotTree,
+		blobContents: Map<string, ArrayBuffer>,
+	): boolean {
+		for (const [_, id] of Object.entries(snapshotTree.blobs)) {
+			if (!blobContents.has(id)) {
 				return true;
+			}
+		}
+		for (const [_, childTree] of Object.entries(snapshotTree.trees)) {
+			// Only evaluate childTree if it does not have a loading groupId.
+			if (childTree.groupId === undefined) {
+				const value = this.evaluateSnapshotTreeForMissingBlobs(childTree, blobContents);
+				if (value) {
+					return true;
+				}
 			}
 		}
 		return false;
