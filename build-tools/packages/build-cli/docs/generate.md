@@ -262,8 +262,7 @@ FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
   --level=<option>       [default: internal] What API level to generate tests for.
                          <options: public|alpha|beta|internal|legacy>
-  --publicFallback       Use the public entrypoint as a fallback if the API at the requested level is not found. Pass
-                         --no-publicFallback to disable.
+  --publicFallback       Use the public entrypoint as a fallback if the API at the requested level is not found.
 
 PACKAGE SELECTION FLAGS
   -g, --releaseGroup=<option>...      Run on all child packages within the specified release groups. This does not

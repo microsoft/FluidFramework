@@ -6,7 +6,6 @@
 import path from "node:path";
 import {
 	type BrokenCompatTypes,
-	type Logger,
 	type PackageJson,
 	type TestCaseTypeData,
 	type TypeData,

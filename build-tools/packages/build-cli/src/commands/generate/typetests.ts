@@ -30,8 +30,8 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		}),
 		publicFallback: Flags.boolean({
 			description:
-				"Use the public entrypoint as a fallback if the API at the requested level is not found. Pass --no-publicFallback to disable.",
-			default: true,
+				"Use the public entrypoint as a fallback if the API at the requested level is not found.",
+			default: false,
 		}),
 		...PackageCommand.flags,
 	} as const;
@@ -80,7 +80,6 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		const { currentFile, previousFile } = initializeProjectsAndLoadFiles(
 			previousTypesPath,
 			previousBasePath,
-			this.logger,
 		);
 
 		this.verbose(`Loaded source file for current version: ${currentFile.getFilePath()}`);
