@@ -28,7 +28,7 @@ import {
 	UsageError,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
-
+import type { IEventProvider, IEvent } from "@fluidframework/core-interfaces";
 import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter.js";
 import { convertSnapshotToSnapshotInfo, getDocumentAttributes } from "./utils.js";
 
@@ -80,6 +80,7 @@ export interface IPendingDetachedContainerState extends SnapshotWithBlobs {
 
 export interface ISnapshotInfo extends SnapshotWithBlobs {
 	snapshotSequenceNumber: number;
+	snapshotFetchedTime?: number | undefined;
 }
 
 export type ISerializedStateManagerDocumentStorageService = Pick<
@@ -89,23 +90,37 @@ export type ISerializedStateManagerDocumentStorageService = Pick<
 	loadedGroupIdSnapshots: Record<string, ISnapshot>;
 };
 
+interface ISerializerEvent extends IEvent {
+	(event: "saved", listener: (dirty: boolean) => void): void;
+}
+
 export class SerializedStateManager {
 	private readonly processedOps: ISequencedDocumentMessage[] = [];
-	private snapshot: ISnapshotInfo | undefined;
 	private readonly mc: MonitoringContext;
+	private snapshot: ISnapshotInfo | undefined;
 	private latestSnapshot: ISnapshotInfo | undefined;
 	private refreshSnapshot: Promise<void> | undefined;
+	private readonly lastSavedOpSequenceNumber: number = 0;
 
 	constructor(
 		private readonly pendingLocalState: IPendingContainerState | undefined,
 		subLogger: ITelemetryLoggerExt,
 		private readonly storageAdapter: ISerializedStateManagerDocumentStorageService,
 		private readonly _offlineLoadEnabled: boolean,
+		containerEvent: IEventProvider<ISerializerEvent>,
+		private readonly containerDirty: () => boolean,
 	) {
 		this.mc = createChildMonitoringContext({
 			logger: subLogger,
 			namespace: "serializedStateManager",
 		});
+
+		if (pendingLocalState && pendingLocalState.savedOps.length > 0) {
+			const savedOpsSize = pendingLocalState.savedOps.length;
+			this.lastSavedOpSequenceNumber =
+				pendingLocalState.savedOps[savedOpsSize - 1].sequenceNumber;
+		}
+		containerEvent.once("saved", () => this.updateSnapshotAndProcessedOpsMaybe());
 	}
 
 	public get offlineLoadEnabled(): boolean {
@@ -193,7 +208,13 @@ export class SerializedStateManager {
 	 * Updates class snapshot and processedOps if we have a new snapshot and it's among processedOps range.
 	 */
 	private updateSnapshotAndProcessedOpsMaybe() {
-		if (this.latestSnapshot === undefined || this.processedOps.length === 0) {
+		if (
+			this.latestSnapshot === undefined ||
+			this.processedOps.length === 0 ||
+			this.processedOps[this.processedOps.length - 1].sequenceNumber <
+				this.lastSavedOpSequenceNumber ||
+			this.containerDirty()
+		) {
 			// can't refresh latest snapshot until we have processed the ops up to it.
 			// Pending state would be behind the latest snapshot.
 			return;
@@ -282,7 +303,11 @@ export class SerializedStateManager {
 					);
 				}
 				assert(this.snapshot !== undefined, 0x8e5 /* no base data */);
-				const pendingRuntimeState = await runtime.getPendingLocalState(props);
+				const pendingRuntimeState = await runtime.getPendingLocalState({
+					...props,
+					snapshotSequenceNumber: this.snapshot.snapshotSequenceNumber,
+					sessionExpiryTimerStarted: this.snapshot.snapshotFetchedTime,
+				});
 				// This conversion is required because ArrayBufferLike doesn't survive JSON.stringify
 				const loadedGroupIdSnapshots = {};
 				let hasGroupIdSnapshots = false;
@@ -303,8 +328,7 @@ export class SerializedStateManager {
 						: undefined,
 					savedOps: this.processedOps,
 					url: resolvedUrl.url,
-					// no need to save this if there is no pending runtime state
-					clientId: pendingRuntimeState !== undefined ? clientId : undefined,
+					clientId,
 				};
 
 				return JSON.stringify(pendingState);
@@ -336,13 +360,14 @@ export async function getLatestSnapshotInfo(
 				supportGetSnapshotApi,
 				undefined,
 			);
+			const snapshotFetchedTime = Date.now();
 			const snapshotBlobs = await getBlobContentsFromTree(baseSnapshot, storageAdapter);
 			const attributes: IDocumentAttributes = await getDocumentAttributes(
 				storageAdapter,
 				baseSnapshot,
 			);
 			const snapshotSequenceNumber = attributes.sequenceNumber;
-			return { baseSnapshot, snapshotBlobs, snapshotSequenceNumber };
+			return { baseSnapshot, snapshotBlobs, snapshotSequenceNumber, snapshotFetchedTime };
 		},
 	).catch(() => undefined);
 }
