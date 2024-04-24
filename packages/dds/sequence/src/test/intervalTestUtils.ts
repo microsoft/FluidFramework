@@ -122,7 +122,7 @@ async function assertPropertiesEqual(a: SharedString, b: SharedString): Promise<
 			bProps === undefined
 				? []
 				: Object.keys(bProps).filter((key) => bProps[key] !== undefined);
-		for (const key of aKeys) {
+		for (const key of aKeys.concat(bKeys)) {
 			const aVal: unknown = aProps[key];
 			const bVal: unknown = bProps[key];
 			if (isObject(aVal) === true) {
@@ -137,18 +137,6 @@ async function assertPropertiesEqual(a: SharedString, b: SharedString): Promise<
 					)} vs ${JSON.stringify(bHandle)}`,
 				);
 			} else {
-				assert.deepEqual(
-					aVal,
-					bVal,
-					`Property sets have different values @${i} for  key ${key}: ${aVal} vs ${bVal}`,
-				);
-			}
-		}
-		if (aKeys.length !== bKeys.length) {
-			for (const key of bKeys) {
-				const aVal: unknown = aProps[key];
-				const bVal: unknown = bProps[key];
-
 				assert.deepEqual(
 					aVal,
 					bVal,
