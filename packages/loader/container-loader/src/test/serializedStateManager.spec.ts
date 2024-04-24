@@ -457,7 +457,10 @@ describe("serializedStateManager", () => {
 				undefined,
 				false,
 			);
-			assert.strictEqual(baseSnapshot.id, "fromPending");
+			const baseSnapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(baseSnapshot)
+				? baseSnapshot.snapshotTree
+				: baseSnapshot;
+			assert.strictEqual(baseSnapshotTree.id, "fromPending");
 			assert.strictEqual(version, undefined);
 			// It'll wait until getLatestSnapshotInfo finish. This ensures we attempted to refresh
 			// serializedStateManager.snapshot

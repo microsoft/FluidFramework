@@ -2088,11 +2088,6 @@ export class ContainerRuntime
 			hasIsolatedChannels,
 		);
 		assert(snapshotTreeForPath !== undefined, 0x8ef /* no snapshotTree for the path */);
-		this.evaluateSnapshotForOmittedBlobContents(snapshotTreeForPath, snapshot.blobContents);
-		assert(
-			snapshotTreeForPath.omitted !== true,
-			"Blobs for the fetched Grouped snapshot should be present",
-		);
 		const snapshotSeqNumber = snapshot.sequenceNumber;
 		assert(snapshotSeqNumber !== undefined, 0x8f0 /* snapshotSeqNumber should be present */);
 
