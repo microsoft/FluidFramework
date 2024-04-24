@@ -4,18 +4,16 @@
 
 ```ts
 
-import { AzureConnectionConfig } from '@fluidframework/base-client';
-import { AzureConnectionConfigType } from '@fluidframework/base-client';
 import { AzureContainerServices } from '@fluidframework/base-client';
 import { AzureContainerVersion } from '@fluidframework/base-client';
 import { AzureGetVersionsOptions } from '@fluidframework/base-client';
-import { AzureLocalConnectionConfig } from '@fluidframework/base-client';
 import { AzureMember } from '@fluidframework/base-client';
-import { AzureRemoteConnectionConfig } from '@fluidframework/base-client';
 import { AzureUser } from '@fluidframework/base-client';
 import { BaseClient } from '@fluidframework/base-client';
-import { BaseClientProps } from '@fluidframework/base-client';
+import type { BaseClientProps } from '@fluidframework/base-client';
+import type { ContainerSchema } from '@fluidframework/fluid-static';
 import { IAzureAudience } from '@fluidframework/base-client';
+import type { IFluidContainer } from '@fluidframework/fluid-static';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
@@ -26,12 +24,34 @@ import { ScopeType } from '@fluidframework/protocol-definitions';
 
 // @public
 export class AzureClient extends BaseClient {
-    constructor(properties: BaseClientProps);
+    constructor(properties: AzureClientProps);
+    copyContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version?: AzureContainerVersion): Promise<{
+        container: IFluidContainer<TContainerSchema>;
+        services: AzureContainerServices;
+    }>;
+    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema): Promise<{
+        container: IFluidContainer<TContainerSchema>;
+        services: AzureContainerServices;
+    }>;
+    getContainerVersions(id: string, options?: AzureGetVersionsOptions): Promise<AzureContainerVersion[]>;
+    // (undocumented)
+    protected readonly properties: AzureClientProps;
 }
 
-export { AzureConnectionConfig }
+// @public
+export interface AzureClientProps extends BaseClientProps {
+    readonly connection: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
+}
 
-export { AzureConnectionConfigType }
+// @public
+export interface AzureConnectionConfig {
+    endpoint: string;
+    tokenProvider: ITokenProvider;
+    type: AzureConnectionConfigType;
+}
+
+// @public
+export type AzureConnectionConfigType = "local" | "remote";
 
 export { AzureContainerServices }
 
@@ -48,15 +68,20 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
 
 export { AzureGetVersionsOptions }
 
-export { AzureLocalConnectionConfig }
+// @public
+export interface AzureLocalConnectionConfig extends AzureConnectionConfig {
+    type: "local";
+}
 
 export { AzureMember }
 
-export { AzureRemoteConnectionConfig }
+// @public
+export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
+    tenantId: string;
+    type: "remote";
+}
 
 export { AzureUser }
-
-export { BaseClientProps }
 
 export { IAzureAudience }
 

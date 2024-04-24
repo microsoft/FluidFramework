@@ -9,21 +9,15 @@
  * @packageDocumentation
  */
 
-export { isAzureLocalConnectionConfig, isAzureRemoteConnectionConfig } from "../../azure-client/src/utils.js";
-
 export { BaseClient } from "./BaseClient.js";
 
 export { createAzureAudienceMember } from "./AzureAudience.js";
 export type {
 	BaseClientProps,
-	AzureConnectionConfig,
-	AzureConnectionConfigType,
 	AzureContainerServices,
 	AzureContainerVersion,
 	AzureGetVersionsOptions,
-	AzureLocalConnectionConfig,
 	AzureMember,
-	AzureRemoteConnectionConfig,
 	AzureUser,
 	IAzureAudience,
 } from "./interfaces.js";

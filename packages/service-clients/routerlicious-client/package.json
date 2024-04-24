@@ -103,7 +103,8 @@
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"axios": "^1.6.2"
+		"axios": "^1.6.2",
+		"jose": "^5.2.4"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",

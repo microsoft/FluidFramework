@@ -11,16 +11,13 @@
 
 export { RouterliciousClient } from "./RouterliciousClient.js";
 export { RouterliciousFunctionTokenProvider } from "./RouterliciousFunctionTokenProvider.js";
+export type { RouterliciousClientProps, RouterliciousConnectionConfig } from "./interfaces.js";
+
 export type {
-	BaseClientProps,
-	AzureConnectionConfig,
-	AzureConnectionConfigType,
 	AzureContainerServices,
 	AzureContainerVersion,
 	AzureGetVersionsOptions,
-	AzureLocalConnectionConfig,
 	AzureMember,
-	AzureRemoteConnectionConfig,
 	AzureUser,
 	IAzureAudience,
 } from "@fluidframework/base-client";

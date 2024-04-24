@@ -9115,9 +9115,9 @@ importers:
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/azure-client-previous': npm:@fluidframework/azure-client@2.0.0-internal.8.0.0
       '@fluidframework/azure-local-service': workspace:~
+      '@fluidframework/base-client': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.37.0
-      '@fluidframework/base-client': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/core-interfaces': workspace:~
@@ -9508,9 +9508,9 @@ importers:
       '@biomejs/biome': ^1.6.2
       '@fluid-tools/build-cli': ^0.37.0
       '@fluidframework/aqueduct': workspace:~
+      '@fluidframework/base-client': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.37.0
-      '@fluidframework/base-client': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/core-interfaces': workspace:~
@@ -9536,6 +9536,7 @@ importers:
       cross-env: ^7.0.3
       eslint: ~8.55.0
       eslint-config-prettier: ~9.0.0
+      jose: ^5.2.4
       mocha: ^10.2.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
@@ -9557,6 +9558,7 @@ importers:
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       axios: 1.6.2
+      jose: 5.2.4
     devDependencies:
       '@arethetypeswrong/cli': 0.15.2
       '@biomejs/biome': 1.6.2
@@ -33856,6 +33858,10 @@ packages:
       '@sideway/address': 4.1.5
       '@sideway/formula': 3.0.1
       '@sideway/pinpoint': 2.0.0
+
+  /jose/5.2.4:
+    resolution: {integrity: sha512-6ScbIk2WWCeXkmzF6bRPmEuaqy1m8SbsRFMa/FLrSCkGIhj8OLVG/IH+XHVmNMx/KUo8cVWEE6oKR4dJ+S0Rkg==}
+    dev: false
 
   /joycon/3.1.1:
     resolution: {integrity: sha512-34wB/Y7MW7bzjKRjUKTa46I2Z7eV62Rkhva+KkopW7Qvv/OSWBqvkSY7vusOPrNuZcUG3tApvdVgNB8POj3SPw==}

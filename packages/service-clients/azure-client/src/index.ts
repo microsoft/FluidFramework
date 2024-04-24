@@ -11,16 +11,18 @@
 
 export { AzureClient } from "./AzureClient.js";
 export { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";
-export type { AzureClientProps } from "./interfaces.js";
 export type {
+	AzureClientProps,
+	AzureRemoteConnectionConfig,
+	AzureLocalConnectionConfig,
 	AzureConnectionConfig,
 	AzureConnectionConfigType,
+} from "./interfaces.js";
+export type {
 	AzureContainerServices,
 	AzureContainerVersion,
 	AzureGetVersionsOptions,
-	AzureLocalConnectionConfig,
 	AzureMember,
-	AzureRemoteConnectionConfig,
 	AzureUser,
 	IAzureAudience,
 } from "@fluidframework/base-client";

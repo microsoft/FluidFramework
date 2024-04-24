@@ -27,6 +27,9 @@ export interface BaseClientProps {
 	readonly configProvider?: IConfigProviderBase;
 
 	readonly summaryCompression?: boolean | ICompressionStorageConfig;
+
+	readonly enableWholeSummaryUpload?: boolean;
+	readonly enableDiscovery?: boolean;
 }
 
 /**

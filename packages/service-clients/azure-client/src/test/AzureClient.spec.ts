@@ -16,7 +16,7 @@ import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/intern
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { SchemaFactory, SharedTree } from "@fluidframework/tree";
 import { v4 as uuid } from "uuid";
-import { type AzureLocalConnectionConfig } from "@fluidframework/base-client";
+import { type AzureLocalConnectionConfig } from "../interfaces.js";
 
 import { AzureClient } from "../AzureClient.js";
 

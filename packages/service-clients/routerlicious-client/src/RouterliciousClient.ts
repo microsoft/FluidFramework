@@ -11,7 +11,7 @@ import {
 import type { RouterliciousClientProps } from "./interfaces.js";
 
 /**
- * AzureClient provides the ability to have a Fluid object backed by the Azure Fluid Relay or,
+ * RouterliciousClient provides the ability to have a Fluid object backed by the Azure Fluid Relay or,
  * when running with local tenantId, have it be backed by a local Azure Fluid Relay instance.
  * @public
  */
@@ -20,6 +20,7 @@ export class RouterliciousClient extends BaseClient {
 		super(
 			properties,
 			new RouterliciousUrlResolver(properties.connection),
+			properties.connection.tokenProvider,
 			createRouterliciousCreateNewRequest,
 		);
 	}

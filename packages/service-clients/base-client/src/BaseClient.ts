@@ -28,10 +28,12 @@ import {
 	createServiceAudience,
 } from "@fluidframework/fluid-static/internal";
 import { type IClient, SummaryType } from "@fluidframework/protocol-definitions";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
+import {
+	RouterliciousDocumentServiceFactory,
+	type ITokenProvider,
+} from "@fluidframework/routerlicious-driver/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 
-import { isAzureRemoteConnectionConfig } from "../../azure-client/src/utils.js";
 import type {
 	BaseClientProps,
 	AzureContainerServices,
@@ -39,8 +41,6 @@ import type {
 	AzureGetVersionsOptions,
 } from "./interfaces.js";
 import { createAzureAudienceMember } from "./AzureAudience.js";
-
-
 
 const MAX_VERSION_COUNT = 5;
 
@@ -90,20 +90,15 @@ export abstract class BaseClient {
 	 * @param properties - Properties for initializing a new AzureClient instance
 	 */
 	public constructor(
-		private readonly properties: BaseClientProps,
-		private readonly urlResolver: IUrlResolver,
-		private readonly createAzureCreateNewRequest: () => IRequest,
+		protected readonly properties: BaseClientProps,
+		protected readonly urlResolver: IUrlResolver,
+		protected readonly tokenProvider: ITokenProvider,
+		protected readonly createAzureCreateNewRequest: () => IRequest,
 	) {
-		// remove trailing slash from URL if any
-		properties.connection.endpoint = properties.connection.endpoint.replace(/\/$/, "");
-		this.urlResolver = urlResolver;
-		// The local service implementation differs from the Azure Fluid Relay in blob
-		// storage format. Azure Fluid Relay supports whole summary upload. Local currently does not.
-		const isRemoteConnection = isAzureRemoteConnectionConfig(this.properties.connection);
 		const origDocumentServiceFactory: IDocumentServiceFactory =
-			new RouterliciousDocumentServiceFactory(this.properties.connection.tokenProvider, {
-				enableWholeSummaryUpload: isRemoteConnection,
-				enableDiscovery: isRemoteConnection,
+			new RouterliciousDocumentServiceFactory(this.tokenProvider, {
+				enableWholeSummaryUpload: properties.enableWholeSummaryUpload,
+				enableDiscovery: properties.enableDiscovery,
 			});
 
 		this.documentServiceFactory = applyStorageCompression(
@@ -133,10 +128,7 @@ export abstract class BaseClient {
 			config: {},
 		});
 
-		const fluidContainer = await this.createFluidContainer<TContainerSchema>(
-			container,
-			this.properties.connection,
-		);
+		const fluidContainer = await this.createFluidContainer<TContainerSchema>(container);
 		const services = this.getContainerServices(container);
 		return { container: fluidContainer, services };
 	}
@@ -160,14 +152,7 @@ export abstract class BaseClient {
 		services: AzureContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
-		const url = new URL(this.properties.connection.endpoint);
-		url.searchParams.append("storage", encodeURIComponent(this.properties.connection.endpoint));
-		url.searchParams.append(
-			"tenantId",
-			encodeURIComponent(getTenantId(this.properties.connection)),
-		);
-		url.searchParams.append("containerId", encodeURIComponent(id));
-		const sourceContainer = await loader.resolve({ url: url.href });
+		const sourceContainer = await loader.resolve({ url: id });
 
 		if (sourceContainer.resolvedUrl === undefined) {
 			throw new Error("Source container cannot resolve URL.");
@@ -186,10 +171,7 @@ export abstract class BaseClient {
 
 		const container = await loader.rehydrateDetachedContainerFromSnapshot(JSON.stringify(tree));
 
-		const fluidContainer = await this.createFluidContainer<TContainerSchema>(
-			container,
-			this.properties.connection,
-		);
+		const fluidContainer = await this.createFluidContainer<TContainerSchema>(container);
 		const services = this.getContainerServices(container);
 		return { container: fluidContainer, services };
 	}
@@ -210,14 +192,7 @@ export abstract class BaseClient {
 		services: AzureContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
-		const url = new URL(this.properties.connection.endpoint);
-		url.searchParams.append("storage", encodeURIComponent(this.properties.connection.endpoint));
-		url.searchParams.append(
-			"tenantId",
-			encodeURIComponent(getTenantId(this.properties.connection)),
-		);
-		url.searchParams.append("containerId", encodeURIComponent(id));
-		const container = await loader.resolve({ url: url.href });
+		const container = await loader.resolve({ url: id });
 		const rootDataObject = await this.getContainerEntryPoint(container);
 		const fluidContainer = createFluidContainer<TContainerSchema>({
 			container,
@@ -238,15 +213,7 @@ export abstract class BaseClient {
 		id: string,
 		options?: AzureGetVersionsOptions,
 	): Promise<AzureContainerVersion[]> {
-		const url = new URL(this.properties.connection.endpoint);
-		url.searchParams.append("storage", encodeURIComponent(this.properties.connection.endpoint));
-		url.searchParams.append(
-			"tenantId",
-			encodeURIComponent(getTenantId(this.properties.connection)),
-		);
-		url.searchParams.append("containerId", encodeURIComponent(id));
-
-		const resolvedUrl = await this.urlResolver.resolve({ url: url.href });
+		const resolvedUrl = await this.urlResolver.resolve({ url: id });
 		if (!resolvedUrl) {
 			throw new Error("Unable to resolved URL");
 		}
@@ -303,7 +270,7 @@ export abstract class BaseClient {
 	}
 
 	private async createFluidContainer<TContainerSchema extends ContainerSchema>(
-		container: IContainer
+		container: IContainer,
 	): Promise<IFluidContainer<TContainerSchema>> {
 		const createNewRequest = this.createAzureCreateNewRequest();
 
