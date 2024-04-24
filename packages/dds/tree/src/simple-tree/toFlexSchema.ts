@@ -43,7 +43,7 @@ import {
 	getStoredKey,
 } from "./schemaTypes.js";
 import { cursorFromNodeData } from "./toMapTree.js";
-import { TreeConfiguration } from "./tree.js";
+import { TreeConfiguration, type TreeViewConfiguration } from "./tree.js";
 
 /**
  * Returns a cursor (in nodes mode) for the root node.
@@ -65,8 +65,17 @@ export function cursorFromUnhydratedRoot(
 	);
 }
 
-export function toFlexConfig(config: TreeConfiguration): TreeContent {
-	const unhydrated = config.initialTree();
+function isTreeConfiguration(
+	config: TreeViewConfiguration | TreeConfiguration,
+): config is TreeConfiguration {
+	return (
+		(config as TreeConfiguration).initialTree !== undefined &&
+		typeof (config as TreeConfiguration).initialTree === "function"
+	);
+}
+
+export function toFlexConfig(config: TreeViewConfiguration | TreeConfiguration): TreeContent {
+	const unhydrated = isTreeConfiguration(config) ? config.initialTree() : undefined;
 	const initialTree =
 		unhydrated === undefined
 			? undefined

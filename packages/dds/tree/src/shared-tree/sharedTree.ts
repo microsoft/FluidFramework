@@ -42,7 +42,13 @@ import {
 	makeTreeChunker,
 } from "../feature-libraries/index.js";
 import { ExplicitCoreCodecVersions, SharedTreeCore } from "../shared-tree-core/index.js";
-import { ITree, ImplicitFieldSchema, TreeConfiguration, TreeView } from "../simple-tree/index.js";
+import {
+	ITree,
+	ImplicitFieldSchema,
+	TreeConfiguration,
+	TreeView,
+	type TreeViewConfiguration,
+} from "../simple-tree/index.js";
 import { brand } from "../util/index.js";
 
 import { InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
@@ -299,7 +305,7 @@ export class SharedTree
 	}
 
 	public async viewWith<TRoot extends ImplicitFieldSchema>(
-		config: TreeConfiguration<TRoot>,
+		config: TreeViewConfiguration<TRoot>,
 	): Promise<TreeView<TRoot>> {
 		return new SchematizingSimpleTreeView(
 			this.checkout,

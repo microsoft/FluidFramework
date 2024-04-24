@@ -30,6 +30,7 @@ import {
 	normalizeFieldSchema,
 	InsertableContent,
 	cursorFromUnhydratedRoot,
+	type TreeViewConfiguration,
 } from "../simple-tree/index.js";
 import { disposeSymbol } from "../util/index.js";
 
@@ -76,7 +77,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 
 	public constructor(
 		public readonly checkout: TreeCheckout,
-		public readonly config: TreeConfiguration<TRootSchema>,
+		public readonly config: TreeConfiguration<TRootSchema> | TreeViewConfiguration<TRootSchema>,
 		public readonly nodeKeyManager: NodeKeyManager,
 		public readonly nodeKeyFieldKey: FieldKey,
 	) {
