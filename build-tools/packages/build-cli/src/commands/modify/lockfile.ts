@@ -22,7 +22,7 @@ export default class UpdateDependencyInLockfileCommand extends BaseCommand<
 	typeof UpdateDependencyInLockfileCommand
 > {
 	static readonly summary =
-		"Updates a dependency in the lockfile to the latest version of a specified semver range.";
+		"Updates a dependency in the pnpm lockfile to the latest version of a specified semver range.";
 
 	static readonly description =
 		`Note that if the version passed in to the command is not within the range of versions ` +
@@ -34,7 +34,7 @@ export default class UpdateDependencyInLockfileCommand extends BaseCommand<
 	static readonly flags = {
 		releaseGroup: releaseGroupFlag({ required: true }),
 		dependencyName: Flags.string({
-			description: "Name of the dependency (npm package) to update",
+			description: "Name of the dependency (npm package) to update.",
 			required: true,
 		}),
 		version: Flags.string({
