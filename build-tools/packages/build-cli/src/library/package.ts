@@ -862,7 +862,7 @@ export function ensureDevDependencyExists(
 ): string {
 	const dependencyVersion = packageObject?.devDependencies?.[dependencyName];
 	if (dependencyVersion === undefined) {
-		throw new Error(`Did not find devDependency in package.json`);
+		throw new Error(`Did not find devDependency '${dependencyName}' in package.json`);
 	}
 	return dependencyVersion;
 }

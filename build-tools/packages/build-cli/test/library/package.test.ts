@@ -112,11 +112,11 @@ const mockPackageObject: PackageJson = {
  */
 describe("typeTestUtils", () => {
 	const packageObject: PackageJson = mockPackageObject;
-	// const previousPackageName = `${packageObject.name}-previous`;
 
 	describe("ensureDevDependencyExists", () => {
-		it("Should not throw an error if dev dependency exists", () => {
-			ensureDevDependencyExists(packageObject, "dependency1");
+		it("Should return expected version if dev dependency exists", () => {
+			const actual = ensureDevDependencyExists(packageObject, "dependency1");
+			assert.equal(actual, "1.0.0");
 		});
 
 		it("Should throw an error if dev dependency does not exist", () => {

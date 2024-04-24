@@ -50,15 +50,13 @@ export function typeDataFromFile(file: SourceFile): Map<string, TypeData> {
 
 /**
  * Initializes TypeScript projects for the current and previous package versions and loads specific source files.
- * @param typeDefinitionFilePath - The path to the type definition file for the previous version.
+ * @param previousTypeDefs - The path to the type definition file for the previous version.
  * @param previousBasePath - The path to the root of the previous package version.
- * @param previousPackageName - The name of the previous package version.
  * @returns The loaded source files for the current and previous versions.
  */
 export function initializeProjectsAndLoadFiles(
 	previousTypeDefs: string,
 	previousBasePath: string,
-	log: Logger,
 ): { currentFile: SourceFile; previousFile: SourceFile } {
 	// For the current package, we'll load using the tsconfig file and get the root index.ts
 	// file as the source file to read exports from.
@@ -144,7 +142,7 @@ export function generateCompatibilityTestCases(
 }
 
 /**
- * Prepares the file path for type validation tests and skips test generation if disabled in package.json.
+ * Prepares the file path for type validation tests.
  * @param packageObject - the package.json object
  * @returns type validation file path
  */
