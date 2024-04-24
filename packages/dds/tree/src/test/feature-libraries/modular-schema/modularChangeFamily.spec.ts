@@ -48,6 +48,7 @@ import {
 	ChangeAtomIdMap,
 	taggedAtomId,
 	Multiplicity,
+	replaceAtomRevisions,
 } from "../../../core/index.js";
 import {
 	brand,
@@ -93,7 +94,8 @@ const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
 	invert: (change) => change.change,
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base.change),
 	prune: (change, pruneChild) => (change === undefined ? undefined : pruneChild(change)),
-	replaceRevisions: (change) => change,
+	replaceRevisions: (change, oldRevisions, newRevision) =>
+		change !== undefined ? replaceAtomRevisions(change, oldRevisions, newRevision) : undefined,
 };
 
 const singleNodeEditor: FieldEditor<SingleNodeChangeset> = {
@@ -1549,17 +1551,21 @@ describe("ModularChangeFamily", () => {
 		}
 
 		const sessionId = "session1" as SessionId;
-		const context: ChangeEncodingContext = { originatorId: sessionId, revision: undefined };
+		const context: ChangeEncodingContext = { originatorId: sessionId, revision: tag1 };
 		const encodingTestData: EncodingTestData<
 			ModularChangeset,
 			EncodedModularChangeset,
 			ChangeEncodingContext
 		> = {
 			successes: [
-				["without constraint", rootChange1a, context],
-				["with constraint", rootChange3, context],
-				["with node existence constraint", rootChange4, context],
-				["without node field changes", rootChangeWithoutNodeFieldChanges, context],
+				["without constraint", inlineRevision(rootChange1a, tag1), context],
+				["with constraint", inlineRevision(rootChange3, tag1), context],
+				["with node existence constraint", inlineRevision(rootChange4, tag1), context],
+				[
+					"without node field changes",
+					inlineRevision(rootChangeWithoutNodeFieldChanges, tag1),
+					context,
+				],
 			],
 		};
 
@@ -1651,4 +1657,8 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 	const fieldChanges = normalizeFieldChanges(change.fieldChanges);
 	assert(nodeChanges.size === change.nodeChanges.size);
 	return { ...change, nodeChanges, fieldChanges };
+}
+
+function inlineRevision(change: ModularChangeset, revision: RevisionTag): ModularChangeset {
+	return family.replaceRevisions(change, new Set([undefined]), revision);
 }
