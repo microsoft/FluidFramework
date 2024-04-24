@@ -67,14 +67,16 @@ export const isWriter = (scopes: string[], mode: ConnectionMode) =>
 export const getRoomId = (room: IRoom) => `${room.tenantId}/${room.documentId}`;
 export const getClientSpecificRoomId = (clientId: string) => `client#${clientId}`;
 
-export function isSentSignalMessage(obj: unknown): obj is ISentSignalMessage {
+export function isSentSignalMessage(obj: any): obj is ISentSignalMessage {
 	return (
 		typeof obj === "object" &&
 		obj !== null &&
 		"content" in obj &&
-		(!("type" in obj) || typeof obj.type === "string") &&
-		(!("clientConnectionNumber" in obj) || typeof obj.clientConnectionNumber === "number") &&
-		(!("referenceSequenceNumber" in obj) || typeof obj.referenceSequenceNumber === "number") &&
-		(!("targetClientId" in obj) || typeof obj.targetClientId === "string")
+		(typeof obj.type === "string" || obj.type === undefined) &&
+		(typeof obj.clientConnectionNumber === "number" ||
+			obj.clientConnectionNumber === undefined) &&
+		(typeof obj.referenceSequenceNumber === "number" ||
+			obj.referenceSequenceNumber === undefined) &&
+		(typeof obj.targetClientId === "string" || obj.targetClientId === undefined)
 	);
 }
