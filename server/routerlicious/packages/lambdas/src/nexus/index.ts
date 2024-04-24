@@ -471,8 +471,8 @@ export function configureWebSocketServices(
 						for (const signal of contentBatches) {
 							if (isSentSignalMessage(signal)) {
 								const signalMessage: ISignalMessage = {
-									clientId,
 									...signal,
+									clientId,
 								};
 
 								const roomId: string =
