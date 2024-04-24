@@ -272,7 +272,6 @@ export interface RebaseConfig {
 	) => NodeId | undefined;
 }
 
-// should take tagged change and plumb revision to metadata
 export function rebase(
 	change: TaggedChange<TestChangeset>,
 	base: TaggedChange<TestChangeset>,
