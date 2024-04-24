@@ -98,7 +98,7 @@ export class MapFactory implements IChannelFactory<ISharedMap> {
     get type(): string;
 }
 
-// @alpha @sealed
+// @alpha
 export const SharedDirectory: ISharedObjectKind<ISharedDirectory>;
 
 // @alpha @deprecated
