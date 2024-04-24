@@ -38,7 +38,9 @@ import {
 	ReferencePosition,
 	ReferenceType,
 	MergeTreeRevertibleDriver,
+	// eslint-disable-next-line import/no-deprecated
 	SegmentGroup,
+	// eslint-disable-next-line import/no-deprecated
 	IMergeTreeObliterateMsg,
 	createObliterateRangeOp,
 	SlidingPreference,
