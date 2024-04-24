@@ -191,8 +191,8 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 			const commandName: string | undefined =
 				error.command.name ?? error.lastNodeError?.command.name;
 			const args: string[] = error.command?.args ?? error.lastNodeError?.command.args ?? [];
-			// Grab only the lengths of each arg, to avoid logging sensitive information
-			if (commandName === "exec" && error.previousErrors) {
+
+			if (error.previousErrors) {
 				// Internally redact the previous errors of an exec command
 				lumberProperties.previousErrors = [];
 				error.previousErrors?.forEach((prevError) => {
