@@ -1109,7 +1109,6 @@ export class ModularChangeFamily
 	}
 }
 
-// TODO: Instead of passing around old/new revisions everywhere, should we just pass this as a delegate?
 function replaceRevision(
 	revision: RevisionTag | undefined,
 	oldRevisions: Set<RevisionTag | undefined>,

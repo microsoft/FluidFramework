@@ -328,7 +328,6 @@ export function revisionMetadataSourceFromInfo(
 	return { getIndex, tryGetInfo, hasRollback };
 }
 
-// TODO: Should this return a tagged change?
 export function rebaseChangeOverChanges<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	changeToRebase: TaggedChange<TChange>,
