@@ -86,12 +86,28 @@ export abstract class TreeNode implements WithType {
 
 	protected constructor() {
 		if (!(this instanceof TreeNodeValid)) {
-			throw new UsageError("TreeNodes must derive schema classes created by SchemaFactory");
+			throw new UsageError("TreeNodes must extend schema classes created by SchemaFactory");
 		}
 	}
 }
 
+/**
+ * Class which all {@link TreeNode}s must extend.
+ * Since this is not exported, it allows robust detection of attempts to create TreeNodes which do not go through SchemaFactory which is the only place which exposes classes that extend this.
+ *
+ * This has static members which schema classes can override to provide schema specific functionality.
+ * These static members are only intended to be used / overridden by code within this package, and are used by the various node kinds.
+ * Access to these static members has to be done via `this.constructor.staticMember` to support the overrides, and thus can only be used in the constructor, after the base constructor has been invoked.
+ */
 export abstract class TreeNodeValid<TInput> extends TreeNode {
+	/**
+	 * Schema classes can override this to control what happens at the end of the constructor.
+	 * The return value from this is returned from the constructor, allowing substituting a proxy if desired.
+	 *
+	 * This is not simply done in the derived constructor to enable:
+	 * - this class to access the value which is being returned before its returned from the constructor.
+	 * - the derived class to be provided the input `FlexTreeNode` without relying on a field on the node to hold it.
+	 */
 	protected static prepareInstance<T>(
 		this: typeof TreeNodeValid<T>,
 		instance: TreeNodeValid<T>,
@@ -100,6 +116,9 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		return instance;
 	}
 
+	/**
+	 * Schema classes must override to provide an implementation of RawTreeNode construction.
+	 */
 	protected static buildRawNode<T>(
 		this: typeof TreeNodeValid<T>,
 		instance: TreeNodeValid<T>,
@@ -108,14 +127,28 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		return fail("Schema must override buildRawNode");
 	}
 
+	/**
+	 * Schema classes can override to provide a callback that once when the first node is constructed.
+	 * This is a good place to perform extra validation and cache schema derived data needed for the implementation of the node.
+	 */
 	protected static oneTimeSetup<T>(this: typeof TreeNodeValid<T>) {}
 
-	// Used to ensure we only use one most derived schema type.
+	/**
+	 * Used to ensure we only use one most derived schema type:
+	 * some level in the type hierarchy which should only have one most derived type must override this and default it to "undefined".
+	 * Typically this is done in the class that statically implements {@link TreeNodeSchema}.
+	 *
+	 * Also used to detect if oneTimeSetup has run.
+	 *
+	 * @privateRemarks
+	 * This defaults to TreeNodeValid, which is used to trigger an error if not overridden in the derived class.
+	 */
 	protected static constructorCached: typeof TreeNodeValid | undefined = TreeNodeValid;
 
 	public constructor(input: TInput | InternalTreeNode) {
 		super();
 		const schema = this.constructor as typeof TreeNodeValid & TreeNodeSchema;
+		assert("constructorCached" in schema, "invalid schema class");
 		if (schema.constructorCached !== schema) {
 			if (schema.constructorCached !== undefined) {
 				assert(
@@ -123,7 +156,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 					"Schema class schema must override static constructorCached member",
 				);
 				throw new UsageError(
-					`Two schema classes were instantiated (${schema} and ${schema.constructorCached}) which derived from the same SchemaFactory generated class. This is invalid`,
+					`Two schema classes were instantiated (${schema.name} and ${schema.constructorCached.name}) which derived from the same SchemaFactory generated class. This is invalid`,
 				);
 			}
 
@@ -133,6 +166,15 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 				"Schema class not properly configured",
 			);
 			schema.oneTimeSetup();
+			// Set the constructorCached on the layer of the prototype chain that declared it:
+			{
+				let schemaBase: typeof TreeNodeValid = schema;
+				while (!Object.prototype.hasOwnProperty.call(schemaBase, "constructorCached")) {
+					schemaBase = Reflect.getPrototypeOf(schema) as typeof TreeNodeValid;
+				}
+				assert(schemaBase.constructorCached === undefined, "overwriting wrong cache");
+				schemaBase.constructorCached = schema;
+			}
 		}
 
 		if (isTreeNode(input)) {
