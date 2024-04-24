@@ -36,7 +36,7 @@ _See code: [src/commands/modify/fluid-imports.ts](https://github.com/microsoft/F
 
 ## `flub modify lockfile`
 
-Updates a dependency in the lockfile to the latest version of a specified semver range.
+Updates a dependency in the pnpm lockfile to the latest version of a specified semver range.
 
 ```
 USAGE
@@ -46,7 +46,7 @@ USAGE
 FLAGS
   -g, --releaseGroup=<option>   (required) Name of a release group.
                                 <options: client|server|azure|build-tools|gitrest|historian>
-      --dependencyName=<value>  (required) Name of the dependency (npm package) to update
+      --dependencyName=<value>  (required) Name of the dependency (npm package) to update.
       --version=<value>         (required) Semver range specifier to use when updating the dependency.
 
 LOGGING FLAGS
@@ -57,7 +57,7 @@ GLOBAL FLAGS
   --json  Format output as json.
 
 DESCRIPTION
-  Updates a dependency in the lockfile to the latest version of a specified semver range.
+  Updates a dependency in the pnpm lockfile to the latest version of a specified semver range.
 
   Note that if the version passed in to the command is not within the range of versions naturally accepted by the
   packages that depend on it, after this command runs the lockfile might not reflect the version that was passed in, but
