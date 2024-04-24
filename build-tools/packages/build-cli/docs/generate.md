@@ -253,15 +253,19 @@ Generates type tests for a package or group of packages.
 
 ```
 USAGE
-  $ flub generate typetests [-v | --quiet] [--level public|alpha|beta|internal|legacy] [--publicFallback] [--concurrency
-    <value>] [--all | --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all |
-    --releaseGroupRoot client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope
-    <value>]
+  $ flub generate typetests [-v | --quiet] [--level public|alpha|beta|internal|legacy] [--outDir <value>] [--outFile
+    <value>] [--publicFallback] [--concurrency <value>] [--all | --dir <value> | --packages | -g
+    client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
+    client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
   --level=<option>       [default: internal] What API level to generate tests for.
                          <options: public|alpha|beta|internal|legacy>
+  --outDir=<value>       [default: ./src/test/types] Directory to emit entrypoint declaration files.
+  --outFile=<value>      [default: validate{@unscopedPackageName}Previous.generated.ts] File name for the generated type
+                         tests. The pattern '{@unscopedPackageName}' within the value will be replaced with the unscoped
+                         name of this package in PascalCase.
   --publicFallback       Use the public entrypoint as a fallback if the API at the requested level is not found.
 
 PACKAGE SELECTION FLAGS

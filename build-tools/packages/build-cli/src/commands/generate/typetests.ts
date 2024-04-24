@@ -68,7 +68,7 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		// the same as current.
 		previousPackageJson.name = previousPackageName;
 
-		const typeTestOutputFile = getTypeTestFilePath(currentPackageJson, outDir, outFile);
+		const typeTestOutputFile = getTypeTestFilePath(pkg, outDir, outFile);
 		if (currentPackageJson.typeValidation?.disabled === true) {
 			this.info("skipping type test generation because they are disabled in package.json");
 			rmSync(
@@ -95,6 +95,7 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		);
 
 		const { currentFile, previousFile } = initializeProjectsAndLoadFiles(
+			currentTypesPath,
 			pkg.directory,
 			previousTypesPath,
 			previousBasePath,
@@ -129,7 +130,6 @@ import type * as old from "${previousPackageName}${
 			}";
 import type * as current from "../../index.js";
 		`.trim(),
-			"\n",
 			typeOnly,
 		];
 
@@ -213,23 +213,20 @@ export function getTypesPathFromPackage(packageJson: PackageJson, level: ApiLeve
 /**
  * Calculates the file path for type validation tests.
  *
- * @param packageObject - The package.json object for the package whose type tests are being generated.
+ * @param pkg - The package whose type tests are being generated.
  * @param outDir - The output directory for generated tests.
  * @param outDir - The output directory for generated tests.
  *
  * @returns The path to write generated files to.
  */
-function getTypeTestFilePath(
-	packageObject: PackageJson,
-	outDir: string,
-	outFile: string,
-): string {
+function getTypeTestFilePath(pkg: Package, outDir: string, outFile: string): string {
 	return path.join(
+		pkg.directory,
 		outDir,
 		outFile.includes(unscopedPackageNameString)
 			? outFile.replace(
 					unscopedPackageNameString,
-					changeCase.capitalCase(PackageName.getUnscopedName(packageObject.name)),
+					changeCase.pascalCase(PackageName.getUnscopedName(pkg.name)),
 				)
 			: outFile,
 	);

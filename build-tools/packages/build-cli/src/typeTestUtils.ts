@@ -13,6 +13,7 @@ import {
 	getFullTypeName,
 	getNodeTypeData,
 } from "@fluidframework/build-tools";
+import { existsSync } from "fs-extra";
 import { Project, SourceFile } from "ts-morph";
 
 /**
@@ -43,11 +44,13 @@ export function typeDataFromFile(file: SourceFile): Map<string, TypeData> {
 
 /**
  * Initializes TypeScript projects for the current and previous package versions and loads specific source files.
+ * @param currentBasePath - The path to the current version of the package.
  * @param previousTypeDefs - The path to the type definition file for the previous version.
  * @param previousBasePath - The path to the root of the previous package version.
  * @returns The loaded source files for the current and previous versions.
  */
 export function initializeProjectsAndLoadFiles(
+	currentTypeDefs: string,
 	currentBasePath: string,
 	previousTypeDefs: string,
 	previousBasePath: string,
@@ -55,10 +58,12 @@ export function initializeProjectsAndLoadFiles(
 	// For the current package, we'll load using the tsconfig file and get the root index.ts
 	// file as the source file to read exports from.
 	const currentTsConfigPath = path.join(currentBasePath, "tsconfig.json");
-	const currentFile = new Project({
+	const currentProject = new Project({
 		skipFileDependencyResolution: true,
 		tsConfigFilePath: currentTsConfigPath,
-	}).getSourceFileOrThrow("index.ts");
+	});
+	currentProject.addSourceFilesAtPaths(`${path.dirname(currentTypeDefs)}/**/*.d.ts`);
+	const currentFile = currentProject.getSourceFileOrThrow(path.basename(currentTypeDefs));
 
 	// For the previous package version, we assume the tsconfig is included in the package published to npm, so we load
 	// using its settings. Then we manually add all type definitions, and finally retrieve the one matching the API level
@@ -66,7 +71,7 @@ export function initializeProjectsAndLoadFiles(
 	const previousTsConfigPath = path.join(previousBasePath, "tsconfig.json");
 	const project = new Project({
 		skipFileDependencyResolution: true,
-		tsConfigFilePath: previousTsConfigPath,
+		tsConfigFilePath: existsSync(previousTsConfigPath) ? previousTsConfigPath : undefined,
 	});
 
 	project.addSourceFilesAtPaths(`${path.dirname(previousTypeDefs)}/**/*.d.ts`);
