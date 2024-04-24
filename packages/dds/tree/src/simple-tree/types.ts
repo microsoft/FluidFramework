@@ -115,7 +115,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 
 	public constructor(input: TInput | InternalTreeNode) {
 		super();
-		const schema = this.constructor as typeof TreeNodeValid;
+		const schema = this.constructor as typeof TreeNodeValid & TreeNodeSchema;
 		if (schema.constructorCached !== schema) {
 			if (schema.constructorCached !== undefined) {
 				assert(
@@ -127,18 +127,28 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 				);
 			}
 
-			const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
+			const flexSchema = getFlexSchema(schema);
 			assert(
-				tryGetSimpleNodeSchema(flexSchema) === this.constructor,
+				tryGetSimpleNodeSchema(flexSchema) === schema,
 				"Schema class not properly configured",
 			);
 			schema.oneTimeSetup();
 		}
 
-		const node: FlexTreeNode = checkConstructorInput(this, input, (flexSchema, data) =>
-			(this.constructor as typeof TreeNodeValid).buildRawNode<TInput>(this, data),
+		if (isTreeNode(input)) {
+			// TODO: update this once we have better support for deep-copying and move operations.
+			throw new UsageError(
+				"Existing nodes may not be used as the constructor parameter for a new node. The existing node may be used directly instead of creating a new one, used as a child of the new node (if it has not yet been inserted into the tree). If the desired result is copying the provided node, it must be deep copied (since any child node would be parented under both the new and old nodes). Currently no API is provided to make deep copies, but it can be done manually with object spreads - for example `new Foo({...oldFoo})` will work if all fields of `oldFoo` are leaf nodes.",
+			);
+		}
+
+		const node: FlexTreeNode = isFlexTreeNode(input) ? input : schema.buildRawNode(this, input);
+		assert(
+			tryGetSimpleNodeSchema(node.schema) === schema,
+			0x83b /* building node with wrong schema */,
 		);
-		const result = (this.constructor as typeof TreeNodeValid).prepareInstance(this, node);
+
+		const result = schema.prepareInstance(this, node);
 		setFlexNode(result, node);
 		return result;
 	}
@@ -159,34 +169,4 @@ export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.Inter
 export function toFlexTreeNode(node: InternalTreeNode): FlexTreeNode {
 	assert(isFlexTreeNode(node), "Invalid InternalTreeNode");
 	return node;
-}
-
-export function checkConstructorInput<T>(
-	node: TreeNode,
-	input: InternalTreeNode | T,
-	build: (schema: FlexTreeNodeSchema, data: T) => RawTreeNode<FlexTreeNodeSchema, unknown>,
-): FlexTreeNode {
-	// Currently this just does validation. All other logic is in the subclass.
-	if (isFlexTreeNode(input)) {
-		assert(
-			tryGetSimpleNodeSchema(input.schema) === node.constructor,
-			0x83b /* building node with wrong schema */,
-		);
-		return input;
-	}
-
-	if (isTreeNode(input)) {
-		// TODO: update this once we have better support for deep-copying and move operations.
-		throw new UsageError(
-			"Existing nodes may not be used as the constructor parameter for a new node. The existing node may be used directly instead of creating a new one, used as a child of the new node (if it has not yet been inserted into the tree). If the desired result is copying the provided node, it must be deep copied (since any child node would be parented under both the new and old nodes). Currently no API is provided to make deep copies, but it can be done manually with object spreads - for example `new Foo({...oldFoo})` will work if all fields of `oldFoo` are leaf nodes.",
-		);
-	}
-
-	const flexSchema = getFlexSchema(node.constructor as TreeNodeSchema);
-	const raw = build(flexSchema, input as T);
-	assert(
-		tryGetSimpleNodeSchema(raw.schema) === node.constructor,
-		"building node with wrong schema",
-	);
-	return raw;
 }
