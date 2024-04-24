@@ -282,7 +282,7 @@ describe("optionalField", () => {
 						failCrossFieldManager,
 						rebaseRevisionMetadataFromInfo(
 							defaultRevInfosFromChanges([change1]),
-							undefined,
+							change2PreChange1.revision,
 							[change1.revision],
 						),
 					),
