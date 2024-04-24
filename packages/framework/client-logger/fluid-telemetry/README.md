@@ -266,7 +266,7 @@ customEvents
 | extend IsNewPeriod = iif(prevContainerId != containerId or Diff > (sessionGapSeconds) or isnull(Diff), 1, 0)
 | extend SessionId = row_cumsum(IsNewPeriod)
 | summarize sumCollaborators = dcount(containerInstanceId) by SessionId, containerId, bin(timestamp, summedDataPointInterval)
-| make-series avgContainers = avg(sumCollaborators) on timestamp from minTimestamp to maxTimestamp step averagedTimeInterval
+| make-series avgCollaborators = avg(sumCollaborators) on timestamp from minTimestamp to maxTimestamp step averagedTimeInterval
 | render timechart with (title = "Approximate Average Number Of Container Per Session Over 1 Hour Intervals")
 ```
 
