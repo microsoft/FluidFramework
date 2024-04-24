@@ -481,6 +481,13 @@ export function configureWebSocketServices(
 										: getRoomId(room);
 
 								socket.emitToRoom(roomId, "signal", signalMessage);
+							} else {
+								const nackMessage = createNackMessage(
+									400,
+									NackErrorType.BadRequestError,
+									"Invalid signal message",
+								);
+								socket.emit("nack", "", [nackMessage]);
 							}
 						}
 					} else {
