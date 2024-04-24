@@ -23,8 +23,8 @@ import {
 	ITokenClaims,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
+	ITelemetryLoggerExt,
 	EventEmitterWithErrorHandling,
 	MonitoringContext,
 	createChildMonitoringContext,
@@ -766,8 +766,6 @@ export class DocumentDeltaConnection
 				details: JSON.stringify({
 					...this.getConnectionDetailsProps(),
 				}),
-				// We use this param to clear the joinSession cache if the error happens in connect_document flow.
-				errorFrom: handler,
 			},
 		);
 	}

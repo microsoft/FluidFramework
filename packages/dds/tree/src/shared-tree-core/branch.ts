@@ -122,10 +122,20 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 }
 
 /**
+ * Events related to branch trimming. This is done as a performance optimization.
+ */
+export interface BranchTrimmingEvents {
+	/**
+	 * Fired when commits are trimmed from the branch.
+	 */
+	branchTrimmed(trimmedRevisions: RevisionTag[]): void;
+}
+
+/**
  * A branch of changes that can be applied to a SharedTree.
  */
 export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> extends EventEmitter<
-	SharedTreeBranchEvents<TEditor, TChange>
+	SharedTreeBranchEvents<TEditor, TChange> & BranchTrimmingEvents
 > {
 	public readonly editor: TEditor;
 	private readonly transactions = new TransactionStack();
@@ -153,20 +163,26 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 */
 	private readonly initialTransactionRevToRebasedRev = new Map<RevisionTag, RevisionTag>();
 	private disposed = false;
+	private readonly unsubscribeBranchTrimmer?: () => void;
 	/**
 	 * Construct a new branch.
 	 * @param head - the head of the branch
 	 * @param changeFamily - determines the set of changes that this branch can commit
+	 * @param branchTrimmer - an optional event emitter that informs the branch it has been trimmed
 	 */
 	public constructor(
 		private head: GraphCommit<TChange>,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private readonly mintRevisionTag: () => RevisionTag,
+		private readonly branchTrimmer?: ISubscribable<BranchTrimmingEvents>,
 	) {
 		super();
 		this.editor = this.changeFamily.buildEditor((change) =>
 			this.apply(change, mintRevisionTag()),
 		);
+		this.unsubscribeBranchTrimmer = branchTrimmer?.on("branchTrimmed", (commit) => {
+			this.emit("branchTrimmed", commit);
+		});
 	}
 
 	/**
@@ -366,7 +382,12 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 */
 	public fork(): SharedTreeBranch<TEditor, TChange> {
 		this.assertNotDisposed();
-		const fork = new SharedTreeBranch(this.head, this.changeFamily, this.mintRevisionTag);
+		const fork = new SharedTreeBranch(
+			this.head,
+			this.changeFamily,
+			this.mintRevisionTag,
+			this.branchTrimmer,
+		);
 		this.emit("fork", fork);
 		return fork;
 	}
@@ -501,6 +522,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		while (this.isTransacting()) {
 			this.abortTransaction();
 		}
+
+		this.unsubscribeBranchTrimmer?.();
 
 		this.disposed = true;
 		this.emit("dispose");

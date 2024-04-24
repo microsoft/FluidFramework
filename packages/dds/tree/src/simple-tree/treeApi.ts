@@ -9,12 +9,11 @@ import { Multiplicity, rootFieldKey } from "../core/index.js";
 import {
 	FieldKinds,
 	LeafNodeSchema,
-	StableNodeKey,
 	TreeStatus,
 	isTreeValue,
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
-import { fail } from "../util/index.js";
+import { fail, extractFromOpaque } from "../util/index.js";
 
 import { getOrCreateNodeProxy } from "./proxies.js";
 import { getFlexNode, tryGetFlexNode } from "./proxyBinding.js";
@@ -30,7 +29,6 @@ import {
 } from "./schemaTypes.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { TreeNode } from "./types.js";
-import { extractFromOpaque } from "../util/index.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -96,10 +94,13 @@ export interface TreeNodeApi {
 	readonly status: (node: TreeNode) => TreeStatus;
 
 	/**
-	 * If the given node has an identifier specified by a field of kind "identifier" then this returns the compressed form of that identifier.
-	 * Otherwise returns undefined.
+	 * Returns the {@link FieldKind.Identifier | identifier} of the given node in the most compressed form possible.
+	 * @remarks
+	 * If the node's identifier is a valid `StableNodeKey`, then this will return a unique process-local integer corresponding to that identifier.
+	 * If the node's identifier is any other string, then this will return that string.
+	 * If the node has no identifier (that is, it has no field of an {@link FieldKind.Identifier | identifier} field kind), then this returns undefined.
 	 */
-	shortId(node: TreeNode): number | undefined;
+	shortId(node: TreeNode): number | string | undefined;
 }
 
 /**
@@ -190,16 +191,18 @@ export const treeNodeApi: TreeNodeApi = {
 			T
 		>;
 	},
-	shortId(node: TreeNode): number | undefined {
+	shortId(node: TreeNode): number | string | undefined {
 		const flexNode = getFlexNode(node);
 		for (const field of flexNode.boxedIterator()) {
 			if (field.schema.kind === FieldKinds.identifier) {
 				const identifier = field.boxedAt(0);
-				assert(identifier !== undefined, "The identifier must exist");
-
-				return extractFromOpaque(
-					identifier.context.nodeKeys.localize(identifier.value as StableNodeKey),
-				);
+				assert(identifier !== undefined, 0x927 /* The identifier must exist */);
+				const identifierValue = identifier.value as string;
+				const localNodeKey =
+					identifier.context.nodeKeyManager.tryLocalizeNodeKey(identifierValue);
+				return localNodeKey !== undefined
+					? extractFromOpaque(localNodeKey)
+					: identifierValue;
 			}
 		}
 	},

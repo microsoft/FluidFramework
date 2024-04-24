@@ -800,6 +800,7 @@ declare function get_old_InterfaceDeclaration_IDeliServerConfiguration():
 declare function use_current_InterfaceDeclaration_IDeliServerConfiguration(
     use: TypeOnly<current.IDeliServerConfiguration>): void;
 use_current_InterfaceDeclaration_IDeliServerConfiguration(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IDeliServerConfiguration());
 
 /*

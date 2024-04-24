@@ -172,8 +172,7 @@ describe("selectAndFilterPackages", async () => {
 		expect(names).to.be.containingAllOf([
 			"@fluidframework/build-common",
 			"@fluidframework/eslint-config-fluid",
-			"@fluidframework/common-definitions",
-			"@fluidframework/common-utils",
+			"@fluid-internal/eslint-plugin-fluid",
 			"@fluidframework/protocol-definitions",
 			"@fluid-tools/api-markdown-documenter",
 			"@fluid-tools/benchmark",

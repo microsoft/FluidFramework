@@ -26,7 +26,12 @@ import {
 	mapIterable,
 } from "../util/index.js";
 
-import { SharedTreeBranch, getChangeReplaceType, onForkTransitive } from "./branch.js";
+import {
+	SharedTreeBranch,
+	BranchTrimmingEvents,
+	getChangeReplaceType,
+	onForkTransitive,
+} from "./branch.js";
 import {
 	Commit,
 	SeqNumber,
@@ -41,6 +46,7 @@ import {
 	minSequenceId,
 	sequenceIdComparator,
 } from "./sequenceIdUtils.js";
+import { IEmitter, ISubscribable, createEmitter } from "../events/index.js";
 
 export const minimumPossibleSequenceNumber: SeqNumber = brand(Number.MIN_SAFE_INTEGER);
 const minimumPossibleSequenceId: SequenceId = {
@@ -57,6 +63,8 @@ export class EditManager<
 	TChangeset,
 	TChangeFamily extends ChangeFamily<TEditor, TChangeset>,
 > {
+	private readonly _events: ISubscribable<BranchTrimmingEvents> & IEmitter<BranchTrimmingEvents>;
+
 	/** The "trunk" branch. The trunk represents the list of received sequenced changes. */
 	private readonly trunk: SharedTreeBranch<TEditor, TChangeset>;
 
@@ -94,6 +102,9 @@ export class EditManager<
 	/**
 	 * Tracks where on the trunk all registered branches are based. Each key is the sequence id of a commit on
 	 * the trunk, and the value is the set of all branches who have that commit as their common ancestor with the trunk.
+	 *
+	 * @remarks
+	 * This does not include the local branch.
 	 */
 	private readonly trunkBranches = new BTree<
 		SequenceId,
@@ -136,11 +147,18 @@ export class EditManager<
 			change: changeFamily.rebaser.compose([]),
 		};
 		this.sequenceMap.set(minimumPossibleSequenceId, this.trunkBase);
-		this.trunk = new SharedTreeBranch(this.trunkBase, changeFamily, mintRevisionTag);
+		this._events = createEmitter<BranchTrimmingEvents>();
+		this.trunk = new SharedTreeBranch(
+			this.trunkBase,
+			changeFamily,
+			mintRevisionTag,
+			this._events,
+		);
 		this.localBranch = new SharedTreeBranch(
 			this.trunk.getHead(),
 			changeFamily,
 			mintRevisionTag,
+			this._events,
 		);
 
 		this.localBranch.on("afterChange", (event) => {
@@ -318,6 +336,13 @@ export class EditManager<
 			const newTrunkBase = latestEvicted as Mutable<typeof latestEvicted>;
 			// The metadata for new trunk base revision needs to be deleted before modifying it.
 			this.trunkMetadata.delete(newTrunkBase.revision);
+			// collect the revisions that will be trimmed to send as part of the branch trimmed event
+			const trimmedRevisions: RevisionTag[] = [];
+			let currCommit: GraphCommit<TChangeset> | undefined = newTrunkBase;
+			while (currCommit !== undefined && currCommit.revision !== this.trunkBase.revision) {
+				trimmedRevisions.push(currCommit.revision);
+				currCommit = currCommit.parent;
+			}
 			// Copying the revision of the old trunk base into the new trunk base means we don't need to write out the original
 			// revision to summaries. All clients agree that the trunk base always has the same hardcoded revision.
 			newTrunkBase.revision = this.trunkBase.revision;
@@ -356,6 +381,8 @@ export class EditManager<
 				this.trunkMetadata.size === trunkSize,
 				0x745 /* The size of the trunkMetadata must be the same as the trunk */,
 			);
+
+			this._events.emit("branchTrimmed", trimmedRevisions);
 		}
 	}
 

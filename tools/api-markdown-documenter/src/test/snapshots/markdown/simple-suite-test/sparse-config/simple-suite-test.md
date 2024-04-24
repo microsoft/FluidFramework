@@ -22,7 +22,7 @@ Also, here is a link test, including a bad link, because we should have some rea
 
 - Good link (no alias): [TestClass](docs/simple-suite-test/testclass-class)
 
-- Good link (with alias): [function alias text](docs/simple-suite-test/testfunction-function)
+- Good link (with alias): _function alias text_
 
 - Bad link (no alias): _InvalidItem_
 
@@ -76,9 +76,9 @@ const foo = bar;
 
 ### Variables
 
-| Variable | Alerts | Modifiers | Description |
-| --- | --- | --- | --- |
-| [testConstWithEmptyDeprecatedBlock](docs/simple-suite-test/testconstwithemptydeprecatedblock-variable) | `DEPRECATED` | `readonly` | I have a `@deprecated` tag with an empty comment block. |
+| Variable | Alerts | Modifiers | Type | Description |
+| --- | --- | --- | --- | --- |
+| [testConstWithEmptyDeprecatedBlock](docs/simple-suite-test/testconstwithemptydeprecatedblock-variable) | `DEPRECATED` | `readonly` | string | I have a `@deprecated` tag with an empty comment block. |
 
 ### Namespaces
 

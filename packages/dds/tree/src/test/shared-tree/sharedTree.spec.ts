@@ -1868,6 +1868,34 @@ describe("SharedTree", () => {
 			validateTreeConsistency(provider.trees[0], provider.trees[1]);
 		});
 
+		it("do not break encoding for resubmitted data changes", async () => {
+			const provider = new TestTreeProviderLite(1);
+			const tree1 = provider.trees[0];
+			const view1 = schematizeFlexTree(tree1, {
+				schema: stringSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.Initialize,
+				initialTree: ["42"],
+			});
+
+			provider.processMessages();
+
+			tree1.setConnected(false);
+
+			view1.flexTree.insertAtEnd(["43"]);
+			const view1Json = schematizeFlexTree(tree1, {
+				schema: jsonSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
+				initialTree: [],
+			});
+			view1Json.flexTree.insertAtEnd([44]);
+
+			tree1.setConnected(true);
+
+			provider.processMessages();
+
+			assert.deepEqual([...view1Json.flexTree].length, 3);
+		});
+
 		// Undoing schema changes is not supported because it may render some of the forest contents invalid.
 		// This may be revisited in the future.
 		it.skip("can be undone at the tip", async () => {

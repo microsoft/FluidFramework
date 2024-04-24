@@ -461,7 +461,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 							dispose: () => {
 								assert(
 									revertible.status === RevertibleStatus.Valid,
-									"a disposed revertible cannot be disposed",
+									0x910 /* a disposed revertible cannot be disposed */,
 								);
 								this.disposeRevertible(revertible, revision);
 								onRevertibleDisposed?.(revertible);
@@ -489,7 +489,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	private checkNotDisposed(): void {
-		assert(!this.isDisposed, "Invalid operation on a disposed TreeCheckout");
+		assert(!this.isDisposed, 0x911 /* Invalid operation on a disposed TreeCheckout */);
 	}
 
 	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {

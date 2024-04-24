@@ -23,7 +23,7 @@ import {
 } from "../../exhaustiveRebaserUtils.js";
 import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js";
 import { TestChange } from "../../testChange.js";
-import { deepFreeze, defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
+import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
 import { IdAllocator, brand, idAllocatorFromMaxId, makeArray } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { NodeId, RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
@@ -56,6 +56,7 @@ import {
 	withoutTombstones,
 } from "./utils.js";
 import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 // TODO: Rename these to make it clear which ones are used in `testChanges`.
 const tag0: RevisionTag = mintRevisionTag();
@@ -578,7 +579,7 @@ const generateChildStates: ChildStateGenerator<TestState, WrappedChange> = funct
 	// if (state.mostRecentEdit !== undefined) {
 	// 	assert(state.parent?.content !== undefined, "Must have parent state to undo");
 	// 	const undoIntention = mintIntention();
-	// 	const invertedEdit = invert(state.mostRecentEdit.changeset);
+	// 	const invertedEdit = invertDeep(state.mostRecentEdit.changeset);
 	// 	yield {
 	// 		content: state.parent.content,
 	// 		mostRecentEdit: {
