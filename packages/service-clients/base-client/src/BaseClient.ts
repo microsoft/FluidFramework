@@ -36,11 +36,11 @@ import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/
 
 import type {
 	BaseClientProps,
-	AzureContainerServices,
-	AzureContainerVersion,
-	AzureGetVersionsOptions,
+	IContainerServices,
+	IContainerVersion,
+	IGetVersionsOptions,
 } from "./interfaces.js";
-import { createAzureAudienceMember } from "./AzureAudience.js";
+import { createAzureAudienceMember } from "./Audience.js";
 
 const MAX_VERSION_COUNT = 5;
 
@@ -119,7 +119,7 @@ export abstract class BaseClient {
 		containerSchema: TContainerSchema,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
-		services: AzureContainerServices;
+		services: IContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
 
@@ -146,10 +146,10 @@ export abstract class BaseClient {
 	public async copyContainer<TContainerSchema extends ContainerSchema>(
 		id: string,
 		containerSchema: TContainerSchema,
-		version?: AzureContainerVersion,
+		version?: IContainerVersion,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
-		services: AzureContainerServices;
+		services: IContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
 		const sourceContainer = await loader.resolve({ url: id });
@@ -189,7 +189,7 @@ export abstract class BaseClient {
 		containerSchema: TContainerSchema,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
-		services: AzureContainerServices;
+		services: IContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
 		const container = await loader.resolve({ url: id });
@@ -211,8 +211,8 @@ export abstract class BaseClient {
 	 */
 	public async getContainerVersions(
 		id: string,
-		options?: AzureGetVersionsOptions,
-	): Promise<AzureContainerVersion[]> {
+		options?: IGetVersionsOptions,
+	): Promise<IContainerVersion[]> {
 		const resolvedUrl = await this.urlResolver.resolve({ url: id });
 		if (!resolvedUrl) {
 			throw new Error("Unable to resolved URL");
@@ -230,7 +230,7 @@ export abstract class BaseClient {
 		});
 	}
 
-	private getContainerServices(container: IContainer): AzureContainerServices {
+	private getContainerServices(container: IContainer): IContainerServices {
 		return {
 			audience: createServiceAudience({
 				container,

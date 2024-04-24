@@ -11,15 +11,15 @@
 
 export { BaseClient } from "./BaseClient.js";
 
-export { createAzureAudienceMember } from "./AzureAudience.js";
+export { createAzureAudienceMember } from "./Audience.js";
 export type {
 	BaseClientProps,
-	AzureContainerServices,
-	AzureContainerVersion,
-	AzureGetVersionsOptions,
-	AzureMember,
-	AzureUser,
-	IAzureAudience,
+	IContainerServices,
+	IContainerVersion,
+	IGetVersionsOptions,
+	BaseMember,
+	BaseUser,
+	IAudience,
 } from "./interfaces.js";
 
 export type { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";

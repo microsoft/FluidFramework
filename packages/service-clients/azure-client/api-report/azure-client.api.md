@@ -4,16 +4,16 @@
 
 ```ts
 
-import { AzureContainerServices } from '@fluidframework/base-client';
-import { AzureContainerVersion } from '@fluidframework/base-client';
-import { AzureGetVersionsOptions } from '@fluidframework/base-client';
-import { AzureMember } from '@fluidframework/base-client';
-import { AzureUser } from '@fluidframework/base-client';
+import { BaseMember as AzureMember } from '@fluidframework/base-client';
+import { BaseUser as AzureUser } from '@fluidframework/base-client';
 import { BaseClient } from '@fluidframework/base-client';
 import type { BaseClientProps } from '@fluidframework/base-client';
 import type { ContainerSchema } from '@fluidframework/fluid-static';
-import { IAzureAudience } from '@fluidframework/base-client';
+import { IAudience } from '@fluidframework/base-client';
+import { IContainerServices } from '@fluidframework/base-client';
+import { IContainerVersion } from '@fluidframework/base-client';
 import type { IFluidContainer } from '@fluidframework/fluid-static';
+import { IGetVersionsOptions } from '@fluidframework/base-client';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
@@ -25,15 +25,15 @@ import { ScopeType } from '@fluidframework/protocol-definitions';
 // @public
 export class AzureClient extends BaseClient {
     constructor(properties: AzureClientProps);
-    copyContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version?: AzureContainerVersion): Promise<{
+    copyContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version?: IContainerVersion): Promise<{
         container: IFluidContainer<TContainerSchema>;
-        services: AzureContainerServices;
+        services: IContainerServices;
     }>;
     getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema): Promise<{
         container: IFluidContainer<TContainerSchema>;
-        services: AzureContainerServices;
+        services: IContainerServices;
     }>;
-    getContainerVersions(id: string, options?: AzureGetVersionsOptions): Promise<AzureContainerVersion[]>;
+    getContainerVersions(id: string, options?: IGetVersionsOptions): Promise<IContainerVersion[]>;
     // (undocumented)
     protected readonly properties: AzureClientProps;
 }
@@ -53,10 +53,6 @@ export interface AzureConnectionConfig {
 // @public
 export type AzureConnectionConfigType = "local" | "remote";
 
-export { AzureContainerServices }
-
-export { AzureContainerVersion }
-
 // @internal @deprecated
 export class AzureFunctionTokenProvider implements ITokenProvider {
     constructor(azFunctionUrl: string, user?: Pick<AzureMember<any>, "userId" | "userName" | "additionalDetails"> | undefined);
@@ -65,8 +61,6 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
     // (undocumented)
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
 }
-
-export { AzureGetVersionsOptions }
 
 // @public
 export interface AzureLocalConnectionConfig extends AzureConnectionConfig {
@@ -83,7 +77,13 @@ export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
 
 export { AzureUser }
 
-export { IAzureAudience }
+export { IAudience }
+
+export { IContainerServices }
+
+export { IContainerVersion }
+
+export { IGetVersionsOptions }
 
 export { ITelemetryBaseEvent }
 

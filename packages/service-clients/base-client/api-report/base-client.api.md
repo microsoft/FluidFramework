@@ -23,51 +23,23 @@ import { IUser } from '@fluidframework/protocol-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 
 // @public
-export interface AzureContainerServices {
-    audience: IAzureAudience;
-}
-
-// @public
-export interface AzureContainerVersion {
-    date?: string;
-    id: string;
-}
-
-// @public
-export interface AzureGetVersionsOptions {
-    maxCount: number;
-}
-
-// @public
-export interface AzureMember<T = any> extends IMember {
-    additionalDetails?: T;
-    userName: string;
-}
-
-// @public
-export interface AzureUser<T = any> extends IUser {
-    additionalDetails?: T;
-    name: string;
-}
-
-// @public
 export abstract class BaseClient {
     constructor(properties: BaseClientProps, urlResolver: IUrlResolver, tokenProvider: ITokenProvider_2, createAzureCreateNewRequest: () => IRequest);
-    copyContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version?: AzureContainerVersion): Promise<{
+    copyContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version?: IContainerVersion): Promise<{
         container: IFluidContainer<TContainerSchema>;
-        services: AzureContainerServices;
+        services: IContainerServices;
     }>;
     // (undocumented)
     protected readonly createAzureCreateNewRequest: () => IRequest;
     createContainer<const TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema): Promise<{
         container: IFluidContainer<TContainerSchema>;
-        services: AzureContainerServices;
+        services: IContainerServices;
     }>;
     getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema): Promise<{
         container: IFluidContainer<TContainerSchema>;
-        services: AzureContainerServices;
+        services: IContainerServices;
     }>;
-    getContainerVersions(id: string, options?: AzureGetVersionsOptions): Promise<AzureContainerVersion[]>;
+    getContainerVersions(id: string, options?: IGetVersionsOptions): Promise<IContainerVersion[]>;
     // (undocumented)
     protected readonly properties: BaseClientProps;
     // (undocumented)
@@ -89,10 +61,38 @@ export interface BaseClientProps {
 }
 
 // @public
-export function createAzureAudienceMember(audienceMember: IClient): AzureMember;
+export interface BaseMember<T = any> extends IMember {
+    additionalDetails?: T;
+    userName: string;
+}
 
 // @public
-export type IAzureAudience = IServiceAudience<AzureMember>;
+export interface BaseUser<T = any> extends IUser {
+    additionalDetails?: T;
+    name: string;
+}
+
+// @public
+export function createAzureAudienceMember(audienceMember: IClient): BaseMember;
+
+// @public
+export type IAudience = IServiceAudience<BaseMember>;
+
+// @public
+export interface IContainerServices {
+    audience: IAudience;
+}
+
+// @public
+export interface IContainerVersion {
+    date?: string;
+    id: string;
+}
+
+// @public
+export interface IGetVersionsOptions {
+    maxCount: number;
+}
 
 export { ITelemetryBaseEvent }
 

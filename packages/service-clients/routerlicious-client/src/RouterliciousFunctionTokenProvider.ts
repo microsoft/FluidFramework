@@ -5,7 +5,7 @@
 
 import * as jose from "jose";
 import type { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
-import type { AzureMember } from "@fluidframework/base-client";
+import type { BaseMember } from "@fluidframework/base-client";
 
 /**
  * Token Provider implementation for connecting to an Azure Function endpoint for
@@ -20,7 +20,7 @@ export class RouterliciousFunctionTokenProvider implements ITokenProvider {
 	 */
 	public constructor(
 		private readonly tenantKey: string,
-		private readonly user?: Pick<AzureMember, "userId" | "userName" | "additionalDetails">,
+		private readonly user?: Pick<BaseMember, "userId" | "userName" | "additionalDetails">,
 	) {}
 
 	public async fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse> {

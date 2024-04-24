@@ -36,7 +36,7 @@ export interface BaseClientProps {
  * Container version metadata.
  * @public
  */
-export interface AzureContainerVersion {
+export interface IContainerVersion {
 	/**
 	 * Version ID
 	 */
@@ -53,7 +53,7 @@ export interface AzureContainerVersion {
  * Options for "Get Container Versions" API.
  * @public
  */
-export interface AzureGetVersionsOptions {
+export interface IGetVersionsOptions {
 	/**
 	 * Max number of versions
 	 */
@@ -66,32 +66,32 @@ export interface AzureGetVersionsOptions {
  *
  * @remarks
  *
- * Returned by the AzureClient alongside a {@link @fluidframework/fluid-static#FluidContainer}.
+ * Returned by the BaseClient alongside a {@link @fluidframework/fluid-static#FluidContainer}.
  *
  * Any functionality regarding how the data is handled within the FluidContainer itself, i.e. which data objects
  * or DDSes to use, will not be included here but rather on the FluidContainer class itself.
  * @public
  */
-export interface AzureContainerServices {
+export interface IContainerServices {
 	/**
 	 * Provides an object that can be used to get the users that are present in this Fluid session and
 	 * listeners for when the roster has any changes from users joining/leaving the session
 	 */
-	audience: IAzureAudience;
+	audience: IAudience;
 }
 
 /**
  * Since Azure provides user names for all of its members, we extend the
  * {@link @fluidframework/protocol-definitions#IUser} interface to include this service-specific value.
  *
- * @typeParam T - See {@link AzureUser.additionalDetails}.
+ * @typeParam T - See {@link BaseUser.additionalDetails}.
  * Note: must be JSON-serializable.
  * Passing a non-serializable object (e.g. a `class`) will result in undefined behavior.
  * @public
  */
 // TODO: this should be updated to use something other than `any` (unknown)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface AzureUser<T = any> extends IUser {
+export interface BaseUser<T = any> extends IUser {
 	/**
 	 * The user's name
 	 */
@@ -108,22 +108,16 @@ export interface AzureUser<T = any> extends IUser {
  * {@link @fluidframework/fluid-static#IMember} interface to include this service-specific value.
  * It will be returned for all audience members connected to Azure.
  *
- * @typeParam T - See {@link AzureMember.additionalDetails}.
+ * @typeParam T - See {@link BaseMember.additionalDetails}.
  * Note: must be JSON-serializable.
  * Passing a non-serializable object (e.g. a `class`) will result in undefined behavior.
  * @public
  */
 // TODO: this should be updated to use something other than `any` (unknown)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface AzureMember<T = any> extends IMember {
-	/**
-	 * {@inheritDoc AzureUser.name}
-	 */
+export interface BaseMember<T = any> extends IMember {
 	userName: string;
 
-	/**
-	 * {@inheritDoc AzureUser.additionalDetails}
-	 */
 	additionalDetails?: T;
 }
 
@@ -131,4 +125,4 @@ export interface AzureMember<T = any> extends IMember {
  * Audience object for Azure Fluid Relay containers
  * @public
  */
-export type IAzureAudience = IServiceAudience<AzureMember>;
+export type IAudience = IServiceAudience<BaseMember>;

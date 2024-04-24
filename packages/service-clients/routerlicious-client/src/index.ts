@@ -14,12 +14,12 @@ export { RouterliciousFunctionTokenProvider } from "./RouterliciousFunctionToken
 export type { RouterliciousClientProps, RouterliciousConnectionConfig } from "./interfaces.js";
 
 export type {
-	AzureContainerServices,
-	AzureContainerVersion,
-	AzureGetVersionsOptions,
-	AzureMember,
-	AzureUser,
-	IAzureAudience,
+	IContainerServices,
+	IContainerVersion,
+	IGetVersionsOptions,
+	BaseMember as RouterliciousMember,
+	BaseUser as RouterliciousUser,
+	IAudience,
 } from "@fluidframework/base-client";
 
 export type { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";

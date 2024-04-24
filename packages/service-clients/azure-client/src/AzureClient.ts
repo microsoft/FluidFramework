@@ -5,9 +5,9 @@
 
 import {
 	BaseClient,
-	type AzureContainerServices,
-	type AzureContainerVersion,
-	type AzureGetVersionsOptions,
+	type IContainerServices,
+	type IContainerVersion,
+	type IGetVersionsOptions,
 } from "@fluidframework/base-client";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver.js";
@@ -66,10 +66,10 @@ export class AzureClient extends BaseClient {
 	public async copyContainer<TContainerSchema extends ContainerSchema>(
 		id: string,
 		containerSchema: TContainerSchema,
-		version?: AzureContainerVersion,
+		version?: IContainerVersion,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
-		services: AzureContainerServices;
+		services: IContainerServices;
 	}> {
 		const url = new URL(this.properties.connection.endpoint);
 		url.searchParams.append("storage", encodeURIComponent(this.properties.connection.endpoint));
@@ -94,7 +94,7 @@ export class AzureClient extends BaseClient {
 		containerSchema: TContainerSchema,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
-		services: AzureContainerServices;
+		services: IContainerServices;
 	}> {
 		const url = new URL(this.properties.connection.endpoint);
 		url.searchParams.append("storage", encodeURIComponent(this.properties.connection.endpoint));
@@ -115,8 +115,8 @@ export class AzureClient extends BaseClient {
 	 */
 	public async getContainerVersions(
 		id: string,
-		options?: AzureGetVersionsOptions,
-	): Promise<AzureContainerVersion[]> {
+		options?: IGetVersionsOptions,
+	): Promise<IContainerVersion[]> {
 		const url = new URL(this.properties.connection.endpoint);
 		url.searchParams.append("storage", encodeURIComponent(this.properties.connection.endpoint));
 		url.searchParams.append(

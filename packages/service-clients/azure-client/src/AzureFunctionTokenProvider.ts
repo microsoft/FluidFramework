@@ -6,7 +6,7 @@
 import { type ITokenProvider, type ITokenResponse } from "@fluidframework/routerlicious-driver";
 import axios from "axios";
 
-import { type AzureMember } from "@fluidframework/base-client";
+import { type BaseMember } from "@fluidframework/base-client";
 
 /**
  * Token Provider implementation for connecting to an Azure Function endpoint for
@@ -25,7 +25,7 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
 	 */
 	public constructor(
 		private readonly azFunctionUrl: string,
-		private readonly user?: Pick<AzureMember, "userId" | "userName" | "additionalDetails">,
+		private readonly user?: Pick<BaseMember, "userId" | "userName" | "additionalDetails">,
 	) {}
 
 	public async fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse> {

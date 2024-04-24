@@ -19,12 +19,12 @@ export type {
 	AzureConnectionConfigType,
 } from "./interfaces.js";
 export type {
-	AzureContainerServices,
-	AzureContainerVersion,
-	AzureGetVersionsOptions,
-	AzureMember,
-	AzureUser,
-	IAzureAudience,
+	IContainerServices,
+	IContainerVersion,
+	IGetVersionsOptions,
+	BaseMember as AzureMember,
+	BaseUser as AzureUser,
+	IAudience,
 } from "@fluidframework/base-client";
 
 export type { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
