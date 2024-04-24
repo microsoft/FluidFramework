@@ -4,7 +4,6 @@
 
 ```ts
 
-import type { EventEmitter } from 'events_pkg';
 import type { FluidObject } from '@fluidframework/core-interfaces';
 import type { IAnyDriverError } from '@fluidframework/driver-definitions';
 import type { IClient } from '@fluidframework/protocol-definitions';
@@ -73,16 +72,23 @@ export interface ContainerWarning extends IErrorBase_2 {
 }
 
 // @public
-export interface IAudience extends EventEmitter {
+export interface IAudience extends IEventProvider<IAudienceEvents> {
     getMember(clientId: string): IClient | undefined;
     getMembers(): Map<string, IClient>;
-    on(event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): this;
+    getSelf: () => ISelf | undefined;
+}
+
+// @public
+export interface IAudienceEvents extends IEvent {
+    (event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): void;
+    (event: "selfChanged", listener: (oldValue: ISelf | undefined, newValue: ISelf) => void): void;
 }
 
 // @alpha
 export interface IAudienceOwner extends IAudience {
     addMember(clientId: string, details: IClient): void;
     removeMember(clientId: string): boolean;
+    setCurrentClientId(clientId: string): void;
 }
 
 // @alpha
@@ -146,7 +152,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 export interface IContainerContext {
     readonly attachState: AttachState;
     // (undocumented)
-    readonly audience: IAudience | undefined;
+    readonly audience: IAudience;
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
     // (undocumented)
@@ -366,6 +372,8 @@ export { IGenericError }
 // @alpha
 export interface IGetPendingLocalStateProps {
     readonly notifyImminentClosure: boolean;
+    readonly sessionExpiryTimerStarted?: number;
+    readonly snapshotSequenceNumber?: number;
     readonly stopBlobAttachingSignal?: AbortSignal;
 }
 
@@ -452,6 +460,12 @@ export const IRuntimeFactory: keyof IProvideRuntimeFactory;
 // @alpha
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
     instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
+}
+
+// @public
+export interface ISelf {
+    client?: IClient;
+    clientId: string;
 }
 
 // @alpha

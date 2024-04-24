@@ -14,9 +14,9 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedMatrix, SharedMatrixFactory } from "../index.js";
+import { SharedMatrix } from "../index.js";
 
-import { extract } from "./utils.js";
+import { extract, matrixFactory } from "./utils.js";
 
 async function createMatrixForReconnection(
 	id: string,
@@ -37,12 +37,14 @@ async function createMatrixForReconnection(
 			summary !== undefined ? MockStorage.createFromSummary(summary) : new MockStorage(),
 	};
 
-	const matrix = new SharedMatrix(dataStoreRuntime, id, SharedMatrixFactory.Attributes);
+	let matrix: SharedMatrix;
 	if (summary !== undefined) {
-		await matrix.load(services);
+		matrix = await matrixFactory.load(dataStoreRuntime, id, services, matrixFactory.attributes);
 	} else {
+		matrix = matrixFactory.create(dataStoreRuntime, id);
 		matrix.connect(services);
 	}
+
 	return {
 		matrix,
 		containerRuntime,

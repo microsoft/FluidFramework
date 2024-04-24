@@ -35,7 +35,7 @@ export function createAnnotateMarkerOp(
 	}
 
 	return {
-		props,
+		props: { ...props },
 		relativePos1: { id, before: true },
 		relativePos2: { id },
 		type: MergeTreeDeltaType.ANNOTATE,
@@ -59,7 +59,7 @@ export function createAnnotateRangeOp(
 	return {
 		pos1: start,
 		pos2: end,
-		props,
+		props: { ...props },
 		type: MergeTreeDeltaType.ANNOTATE,
 	};
 }

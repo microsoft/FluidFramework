@@ -14,7 +14,7 @@ import {
 import { UsageError } from "@fluidframework/driver-utils/internal";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { LocalOdspDeltaStorageService } from "./localOdspDeltaStorageService.js";
 import { LocalOdspDocumentStorageService } from "./localOdspDocumentStorageManager.js";

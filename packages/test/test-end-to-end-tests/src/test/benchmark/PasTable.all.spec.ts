@@ -4,7 +4,7 @@
  */
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix/internal";
+import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence/internal";
 import {
 	MockContainerRuntimeFactory,
@@ -13,12 +13,10 @@ import {
 
 import { IBenchmarkParameters, benchmarkAll } from "./DocumentCreator.js";
 
+const matrixFactory = SharedMatrix.getFactory();
+
 function createLocalMatrix(id: string, dataStoreRuntime: MockFluidDataStoreRuntime) {
-	return new SharedMatrix<SharedString["handle"]>(
-		dataStoreRuntime,
-		"matrix1",
-		SharedMatrixFactory.Attributes,
-	);
+	return matrixFactory.create(dataStoreRuntime, id);
 }
 
 function createString(id: string, dataStoreRuntime: MockFluidDataStoreRuntime) {

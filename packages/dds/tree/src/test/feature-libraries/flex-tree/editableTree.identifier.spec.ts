@@ -64,7 +64,6 @@ describe("editable-tree: node keys", () => {
 			{ nodeKeyManager },
 		);
 
-		assert.equal(typedView.context.nodeKeys.map.size, 3);
 		return {
 			view: typedView,
 			parentKey,
@@ -96,15 +95,15 @@ describe("editable-tree: node keys", () => {
 		assert(childB !== undefined, "Tried to access node that doesn't exist (index 1)");
 		assert.equal(
 			parentNode[nodeKeyFieldKey].stableNodeKey,
-			view.context.nodeKeys.stabilize(parentKey),
+			view.context.nodeKeyManager.stabilizeNodeKey(parentKey),
 		);
 		assert.equal(
 			childA[nodeKeyFieldKey].stableNodeKey,
-			view.context.nodeKeys.stabilize(childAKey),
+			view.context.nodeKeyManager.stabilizeNodeKey(childAKey),
 		);
 		assert.equal(
 			childB[nodeKeyFieldKey].stableNodeKey,
-			view.context.nodeKeys.stabilize(childBKey),
+			view.context.nodeKeyManager.stabilizeNodeKey(childBKey),
 		);
 	});
 

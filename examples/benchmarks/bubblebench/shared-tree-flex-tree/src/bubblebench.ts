@@ -79,12 +79,12 @@ export class Bubblebench extends DataObject {
 	initializeTree(tree: ISharedTree) {
 		this.view = tree.schematizeFlexTree(
 			{
-				allowedSchemaModifications: AllowedUpdateType.None,
+				allowedSchemaModifications: AllowedUpdateType.Initialize,
 				initialTree: [],
 				schema: appSchemaData,
 			},
 			() => {
-				throw new Error("Schema changed");
+				throw new Error("view disposed");
 			},
 		);
 	}

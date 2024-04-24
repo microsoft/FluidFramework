@@ -1,5 +1,15 @@
 # @fluid-tools/api-markdown-documenter
 
+## 0.12.2
+
+-   Fixed an issue where variable item tables did not include type information in default ApiItem transformations.
+-   Add variable and property type information to associated details sections in default ApiItem transformations.
+-   Further improved error messages when an unexpected child kind is encountered when iterating over children in default ApiItem transformations.
+
+## 0.12.1
+
+-   Improved error messages when an unexpected child kind is encountered when iterating over children in default ApiItem transformations.
+
 ## 0.12.0
 
 -   Added functionality for transforming Documentation Domain trees to [hast](https://github.com/syntax-tree/hast).
