@@ -123,7 +123,7 @@ describe("typeTestUtils", () => {
 			const previousPackageName = `${packageObject.name}-does-not-exist`;
 			assert.throws(
 				() => ensureDevDependencyExists(packageObject, previousPackageName),
-				/Did not find devDependency in package.json/,
+				/Did not find devDependency '.*' in package.json/,
 			);
 		});
 	});
