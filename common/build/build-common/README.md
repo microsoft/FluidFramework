@@ -36,7 +36,7 @@ files](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-0
 -   tsconfig.node16.json - This config extends base and sets `module: Node16` and `moduleResolution: Node16`. It is intended for all
     builds.
 -   tsconfig.test.node16.json - This config disables some settings that we don't want to use in test code, like `declaration` and
-    `decarationMap`. It also enables the `node` types by default.
+    `decarationMap`. It also enables the `node` types by default, and turns on the "allow-ff-test-exports" [condition](https://nodejs.org/api/packages.html#conditional-exports), which allows imports for test-only indexes used in a few packages.
 
 ### Dual Build Pattern
 

@@ -203,7 +203,7 @@ export const visualizeSharedMatrix: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectTreeNode> => {
-	const sharedMatrix = sharedObject as SharedMatrix;
+	const sharedMatrix = sharedObject as unknown as SharedMatrix;
 
 	const { rowCount, colCount: columnCount, id: fluidObjectId } = sharedMatrix;
 

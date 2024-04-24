@@ -288,11 +288,7 @@ describe("DefaultVisualizers unit tests", () => {
 
 	it("SharedMatrix", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const sharedMatrix = new SharedMatrix(
-			runtime,
-			"test-matrix",
-			SharedMatrix.getFactory().attributes,
-		);
+		const sharedMatrix = SharedMatrix.getFactory().create(runtime, "test-matrix");
 		sharedMatrix.insertRows(0, 2);
 		sharedMatrix.insertCols(0, 3);
 		sharedMatrix.setCell(0, 0, "Hello");
@@ -306,7 +302,10 @@ describe("DefaultVisualizers unit tests", () => {
 			c: false,
 		});
 
-		const result = await visualizeSharedMatrix(sharedMatrix, visualizeChildData);
+		const result = await visualizeSharedMatrix(
+			sharedMatrix as unknown as ISharedObject,
+			visualizeChildData,
+		);
 
 		const expected: FluidObjectTreeNode = {
 			fluidObjectId: "test-matrix",

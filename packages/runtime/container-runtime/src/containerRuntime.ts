@@ -7,6 +7,7 @@ import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	IAudience,
+	ISelf,
 	ICriticalContainerError,
 	IDeltaManager,
 } from "@fluidframework/container-definitions";
@@ -17,6 +18,7 @@ import {
 	ILoader,
 	IRuntime,
 	LoaderHeader,
+	type IAudienceEvents,
 } from "@fluidframework/container-definitions/internal";
 import {
 	IContainerRuntime,
@@ -159,7 +161,6 @@ import {
 	OpSplitter,
 	Outbox,
 	RemoteMessageProcessor,
-	getLongStack,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
@@ -459,16 +460,6 @@ export interface IContainerRuntimeOptions {
 	 */
 	readonly enableRuntimeIdCompressor?: IdCompressorMode;
 
-	/**
-	 * If enabled, the runtime will block all attempts to send an op inside the
-	 * {@link ContainerRuntime#ensureNoDataModelChanges} callback. The callback is used by
-	 * {@link @fluidframework/shared-object-base#SharedObjectCore} for event handlers so enabling this
-	 * will disallow modifying DDSes while handling DDS events.
-	 *
-	 * By default, the feature is disabled. If enabled from options, the `Fluid.ContainerRuntime.DisableOpReentryCheck`
-	 * can be used to disable it at runtime.
-	 */
-	readonly enableOpReentryCheck?: boolean;
 	/**
 	 * If enabled, the runtime will group messages within a batch into a single
 	 * message to be sent to the service.
@@ -808,7 +799,6 @@ export class ContainerRuntime
 			maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
 			enableRuntimeIdCompressor,
 			chunkSizeInBytes = defaultChunkSizeInBytes,
-			enableOpReentryCheck = false,
 			enableGroupedBatching = false,
 			explicitSchemaControl = false,
 		} = runtimeOptions;
@@ -1021,7 +1011,6 @@ export class ContainerRuntime
 				chunkSizeInBytes,
 				// Requires<> drops undefined from IdCompressorType
 				enableRuntimeIdCompressor: enableRuntimeIdCompressor as "on" | "delayed",
-				enableOpReentryCheck,
 				enableGroupedBatching,
 				explicitSchemaControl,
 			},
@@ -1225,14 +1214,6 @@ export class ContainerRuntime
 	private ensureNoDataModelChangesCalls = 0;
 
 	/**
-	 * Tracks the number of detected reentrant ops to report,
-	 * in order to self-throttle the telemetry events.
-	 *
-	 * This should be removed as part of ADO:2322
-	 */
-	private opReentryCallsToReport = 5;
-
-	/**
 	 * Invokes the given callback and expects that no ops are submitted
 	 * until execution finishes. If an op is submitted, an error will be raised.
 	 *
@@ -1265,7 +1246,6 @@ export class ContainerRuntime
 
 	private dirtyContainer: boolean;
 	private emitDirtyDocumentEvent = true;
-	private readonly enableOpReentryCheck: boolean;
 	private readonly disableAttachReorder: boolean | undefined;
 	private readonly closeSummarizerDelayMs: number;
 	/**
@@ -1549,14 +1529,6 @@ export class ContainerRuntime
 			this.validateSummaryHeuristicConfiguration(this.summaryConfiguration);
 		}
 
-		const disableOpReentryCheck = this.mc.config.getBoolean(
-			"Fluid.ContainerRuntime.DisableOpReentryCheck",
-		);
-		this.enableOpReentryCheck =
-			runtimeOptions.enableOpReentryCheck === true &&
-			// Allow for a break-glass config to override the options
-			disableOpReentryCheck !== true;
-
 		this.summariesDisabled = this.isSummariesDisabled();
 		this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
 		this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
@@ -1653,22 +1625,7 @@ export class ContainerRuntime
 			getSummaryForDatastores(baseSnapshot, metadata),
 			parentContext,
 			this.mc.logger,
-			(
-				path: string,
-				reason: "Loaded" | "Changed",
-				timestampMs?: number,
-				packagePath?: readonly string[],
-				request?: IRequest,
-				headerData?: RuntimeHeaderData,
-			) =>
-				this.garbageCollector.nodeUpdated(
-					path,
-					reason,
-					timestampMs,
-					packagePath,
-					request,
-					headerData,
-				),
+			(props) => this.garbageCollector.nodeUpdated(props),
 			(path: string) => this.garbageCollector.isNodeDeleted(path),
 			new Map<string, string>(dataStoreAliasMap),
 			async (runtime: ChannelCollection) => provideEntryPoint,
@@ -1691,7 +1648,10 @@ export class ContainerRuntime
 				}
 			},
 			blobRequested: (blobPath: string) =>
-				this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
+				this.garbageCollector.nodeUpdated({
+					node: { type: "Blob", path: blobPath },
+					reason: "Loaded",
+				}),
 			isBlobDeleted: (blobPath: string) => this.garbageCollector.isNodeDeleted(blobPath),
 			runtime: this,
 			stashedBlobs: pendingRuntimeState?.pendingAttachmentBlobs,
@@ -1757,8 +1717,32 @@ export class ContainerRuntime
 			this.remoteMessageProcessor.clearPartialMessagesFor(clientId);
 		});
 
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this._audience = audience!;
+		this._audience = audience;
+		if (audience.getSelf === undefined) {
+			// back-compat, added in 2.0 RC3.
+			// Purpose: deal with cases when we run against old loader that does not have newly added capabilities
+			audience.getSelf = () => {
+				const clientId = this._getClientId();
+				return clientId === undefined
+					? undefined
+					: ({
+							clientId,
+							client: audience.getMember(clientId),
+					  } satisfies ISelf);
+			};
+
+			let oldClientId = this.clientId;
+			this.on("connected", () => {
+				const clientId = this.clientId;
+				assert(clientId !== undefined, "can't be undefined");
+				(audience as unknown as TypedEventEmitter<IAudienceEvents>).emit(
+					"selfChanged",
+					{ clientId: oldClientId },
+					{ clientId, client: audience.getMember(clientId) },
+				);
+				oldClientId = clientId;
+			});
+		}
 
 		const closeSummarizerDelayOverride = this.mc.config.getNumber(
 			"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs",
@@ -1880,7 +1864,6 @@ export class ContainerRuntime
 			idCompressorMode: this.idCompressorMode,
 			featureGates: JSON.stringify({
 				...featureGatesForTelemetry,
-				disableOpReentryCheck,
 				disableChunking,
 				disableAttachReorder: this.disableAttachReorder,
 				disablePartialFlush,
@@ -2448,6 +2431,11 @@ export class ContainerRuntime
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string) {
+		// Validate we have consistent state
+		const currentClientId = this._audience.getSelf()?.clientId;
+		assert(clientId === currentClientId, "input clientId does not match Audience");
+		assert(this.clientId === currentClientId, "this.clientId does not match Audience");
+
 		if (connected && this.idCompressorMode === "delayed") {
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.loadIdCompressor();
@@ -2562,20 +2550,25 @@ export class ContainerRuntime
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
 		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
-			if (modernRuntimeMessage) {
-				this.processCore({
-					// Cast it since we expect it to be this based on modernRuntimeMessage computation above.
-					// There is nothing really ensuring that anytime original message.type is Operation that
-					// the result messages will be so. In the end modern bool being true only directs to
-					// throw error if ultimately unrecognized without compat details saying otherwise.
-					message: message as InboundSequencedContainerRuntimeMessage,
-					local,
-					modernRuntimeMessage,
-				});
-			} else {
-				// Unrecognized message will be ignored.
-				this.processCore({ message, local, modernRuntimeMessage });
-			}
+			const msg: MessageWithContext = modernRuntimeMessage
+				? {
+						// Cast it since we expect it to be this based on modernRuntimeMessage computation above.
+						// There is nothing really ensuring that anytime original message.type is Operation that
+						// the result messages will be so. In the end modern bool being true only directs to
+						// throw error if ultimately unrecognized without compat details saying otherwise.
+						message: message as InboundSequencedContainerRuntimeMessage,
+						local,
+						modernRuntimeMessage,
+				  }
+				: // Unrecognized message will be ignored.
+				  {
+						message,
+						local,
+						modernRuntimeMessage,
+				  };
+
+			// ensure that we observe any re-entrancy, and if needed, rebase ops
+			this.ensureNoDataModelChanges(() => this.processCore(msg));
 		}
 	}
 
@@ -2915,12 +2908,11 @@ export class ContainerRuntime
 				"entryPoint must be defined on data store runtime for using getAliasedDataStoreEntryPoint",
 			);
 		}
-		this.garbageCollector.nodeUpdated(
-			`/${internalId}`,
-			"Loaded",
-			undefined /* timestampMs */,
-			context.packagePath,
-		);
+		this.garbageCollector.nodeUpdated({
+			node: { type: "DataStore", path: `/${internalId}` },
+			reason: "Loaded",
+			packagePath: context.packagePath,
+		});
 		return channel.entryPoint;
 	}
 
@@ -3506,11 +3498,19 @@ export class ContainerRuntime
 				latestSummaryRefSeqNum,
 			);
 
+			/**
+			 * This was added to validate that the summarizer node tree has the same reference sequence number from the
+			 * top running summarizer down to the lowest summarizer node.
+			 *
+			 * The order of mismatch numbers goes (validate sequence number)-(node sequence number).
+			 * Generally the validate sequence number comes from the running summarizer and the node sequence number comes from the
+			 * summarizer nodes.
+			 */
 			if (
 				startSummaryResult.invalidNodes > 0 ||
 				startSummaryResult.mismatchNumbers.size > 0
 			) {
-				summaryLogger.sendErrorEvent({
+				summaryLogger.sendTelemetryEvent({
 					eventName: "LatestSummaryRefSeqNumMismatch",
 					details: {
 						...startSummaryResult,
@@ -3889,7 +3889,6 @@ export class ContainerRuntime
 		metadata?: { localId: string; blobId?: string },
 	): void {
 		this.verifyNotClosed();
-		this.verifyCanSubmitOps();
 
 		// There should be no ops in detached container state!
 		assert(
@@ -4041,37 +4040,6 @@ export class ContainerRuntime
 	private verifyNotClosed() {
 		if (this._disposed) {
 			throw new Error("Runtime is closed");
-		}
-	}
-
-	private verifyCanSubmitOps() {
-		if (this.ensureNoDataModelChangesCalls > 0) {
-			const errorMessage =
-				"Op was submitted from within a `ensureNoDataModelChanges` callback";
-			if (this.opReentryCallsToReport > 0) {
-				this.mc.logger.sendTelemetryEvent(
-					{ eventName: "OpReentry" },
-					// We need to capture the call stack in order to inspect the source of this usage pattern
-					getLongStack(() => new UsageError(errorMessage)),
-				);
-				this.opReentryCallsToReport--;
-			}
-
-			// Creating ops while processing ops can lead
-			// to undefined behavior and events observed in the wrong order.
-			// For example, we have two callbacks registered for a DDS, A and B.
-			// Then if on change #1 callback A creates change #2, the invocation flow will be:
-			//
-			// A because of #1
-			// A because of #2
-			// B because of #2
-			// B because of #1
-			//
-			// The runtime must enforce op coherence by not allowing ops to be submitted
-			// while ops are being processed.
-			if (this.enableOpReentryCheck) {
-				throw new UsageError(errorMessage);
-			}
 		}
 	}
 
@@ -4321,10 +4289,9 @@ export class ContainerRuntime
 		const getSyncState = (
 			pendingAttachmentBlobs?: IPendingBlobs,
 		): IPendingRuntimeState | undefined => {
-			const pending = this.pendingStateManager.getLocalState();
-			if (pendingAttachmentBlobs === undefined && !this.hasPendingMessages()) {
-				return; // no pending state to save
-			}
+			const pending = this.pendingStateManager.getLocalState(props?.snapshotSequenceNumber);
+			const sessionExpiryTimerStarted =
+				props?.sessionExpiryTimerStarted ?? this.garbageCollector.sessionExpiryTimerStarted;
 
 			const pendingIdCompressorState = this._idCompressor?.serialize(true);
 
@@ -4332,7 +4299,7 @@ export class ContainerRuntime
 				pending,
 				pendingIdCompressorState,
 				pendingAttachmentBlobs,
-				sessionExpiryTimerStarted: this.garbageCollector.sessionExpiryTimerStarted,
+				sessionExpiryTimerStarted,
 			};
 		};
 		const perfEvent = {

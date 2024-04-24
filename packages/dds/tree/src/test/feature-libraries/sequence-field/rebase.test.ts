@@ -23,7 +23,7 @@ import {
 	withOrderingMethod,
 	withoutTombstones,
 } from "./utils.js";
-import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset, cases } from "./testEdits.js";
+import { ChangeMaker as Change, MarkMaker as Mark, cases } from "./testEdits.js";
 import { brand } from "../../../index.js";
 import { TestChange } from "../../testChange.js";
 
@@ -32,11 +32,11 @@ const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();
 
 function rebase(
-	change: TestChangeset,
-	base: TestChangeset,
+	change: SF.Changeset,
+	base: SF.Changeset,
 	baseRev?: RevisionTag,
 	config?: RebaseConfig,
-): TestChangeset {
+): SF.Changeset {
 	return rebaseI(change, tagChange(base, baseRev ?? tag1), config);
 }
 
@@ -1213,7 +1213,7 @@ export function testRebase() {
 		describe("Over composition", () => {
 			it("insert ↷ [remove, remove]", () =>
 				withConfig(() => {
-					const removes: TestChangeset = shallowCompose([
+					const removes: SF.Changeset = shallowCompose([
 						tagChange(Change.remove(1, 2), tag1),
 						tagChange(Change.remove(0, 2), tag2),
 					]);
@@ -1246,7 +1246,7 @@ export function testRebase() {
 
 			it("modify ↷ [remove, remove]", () =>
 				withConfig(() => {
-					const removes: TestChangeset = shallowCompose([
+					const removes: SF.Changeset = shallowCompose([
 						tagChange(Change.remove(1, 3), tag1),
 						tagChange(Change.remove(0, 2), tag2),
 					]);
