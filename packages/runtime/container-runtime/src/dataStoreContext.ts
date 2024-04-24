@@ -1092,7 +1092,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		// Sequence number of the snapshot.
 		let sequenceNumber: number | undefined;
 		// Check whether we need to fetch the snapshot first to load.
-		if (this.snapshotFetchRequired === undefined) {
+		if (this.snapshotFetchRequired === undefined && this._baseSnapshot?.groupId !== undefined) {
 			this.snapshotFetchRequired = this.runtime.isSnapshotFetchRequired([this.id]);
 		}
 		if (this.snapshotFetchRequired) {
