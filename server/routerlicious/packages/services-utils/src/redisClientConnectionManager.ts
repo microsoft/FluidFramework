@@ -150,7 +150,10 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 					redisClusteringOptions,
 			  )
 			: new Redis.default(this.redisOptions);
-		Lumberjack.info("Redis client created", {["constructorOptions"]: stringifiedOptions, ["clusteringEnabled"]: this.enableClustering});
+		Lumberjack.info("Redis client created", {
+			["constructorOptions"]: stringifiedOptions,
+			["clusteringEnabled"]: this.enableClustering,
+		});
 	}
 
 	public getRedisClient(): Redis.default | Redis.Cluster {
