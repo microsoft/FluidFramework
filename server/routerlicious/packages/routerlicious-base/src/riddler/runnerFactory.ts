@@ -45,6 +45,7 @@ export class RiddlerResources implements IResources {
 		public readonly secretManager: ISecretManager,
 		public readonly fetchTenantKeyMetricIntervalMs: number,
 		public readonly riddlerStorageRequestMetricIntervalMs: number,
+		public readonly tenantKeyGenerator: utils.ITenantKeyGenerator,
 		public readonly cache: RedisCache,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
@@ -158,6 +159,9 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 		const riddlerStorageRequestMetricIntervalMs = config.get(
 			"apiCounters:riddlerStorageRequestMetricMs",
 		);
+		const tenantKeyGenerator = customizations?.tenantKeyGenerator
+			? customizations.tenantKeyGenerator
+			: new utils.TenantKeyGenerator();
 
 		return new RiddlerResources(
 			config,
@@ -172,6 +176,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 			secretManager,
 			fetchTenantKeyMetricIntervalMs,
 			riddlerStorageRequestMetricIntervalMs,
+			tenantKeyGenerator,
 			cache,
 		);
 	}
@@ -193,6 +198,7 @@ export class RiddlerRunnerFactory implements IRunnerFactory<RiddlerResources> {
 			resources.secretManager,
 			resources.fetchTenantKeyMetricIntervalMs,
 			resources.riddlerStorageRequestMetricIntervalMs,
+			resources.tenantKeyGenerator,
 			resources.cache,
 			resources.config,
 		);
