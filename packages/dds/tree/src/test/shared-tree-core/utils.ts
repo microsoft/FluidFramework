@@ -21,6 +21,7 @@ import {
 } from "../../feature-libraries/index.js";
 import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tree-core/index.js";
 import { testIdCompressor } from "../utils.js";
+import { strict as assert } from "assert";
 
 /**
  * A `SharedTreeCore` with
@@ -35,19 +36,22 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 	};
 
 	public constructor(
-		runtime: IFluidDataStoreRuntime = new MockFluidDataStoreRuntime(),
+		runtime: IFluidDataStoreRuntime = new MockFluidDataStoreRuntime({
+			idCompressor: testIdCompressor,
+		}),
 		id = "TestSharedTreeCore",
 		summarizables: readonly Summarizable[] = [],
 		schema: TreeStoredSchemaRepository = new TreeStoredSchemaRepository(),
 		chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Uncompressed,
 	) {
+		assert(runtime.idCompressor !== undefined, "The runtime must provide an ID compressor");
 		const codecOptions: ICodecOptions = {
 			jsonValidator: typeboxValidator,
 		};
 		const formatVersions = { editManager: 1, message: 1, fieldBatch: 1 };
 		const codec = makeModularChangeCodecFamily(
 			fieldKindConfigurations,
-			new RevisionTagCodec(runtime.idCompressor ?? testIdCompressor),
+			new RevisionTagCodec(runtime.idCompressor),
 			makeFieldBatchCodec(codecOptions, formatVersions.fieldBatch),
 			codecOptions,
 			chunkCompressionStrategy,
