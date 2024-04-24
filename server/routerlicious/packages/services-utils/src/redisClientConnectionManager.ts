@@ -144,17 +144,13 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 			? JSON.stringify(loggableClusteringOptions)
 			: JSON.stringify(loggableRedisOptions);
 
-		Lumberjack.verbose(
-			`Creating a redis client with the following configs: ${stringifiedOptions}`,
-		);
-
 		this.client = this.enableClustering
 			? new Redis.Cluster(
 					[{ port: this.redisOptions.port, host: this.redisOptions.host }],
 					redisClusteringOptions,
 			  )
 			: new Redis.default(this.redisOptions);
-		Lumberjack.info("Redis client created");
+		Lumberjack.info("Redis client created", {["constructorOptions"]: stringifiedOptions, ["clusteringEnabled"]: this.enableClustering});
 	}
 
 	public getRedisClient(): Redis.default | Redis.Cluster {
