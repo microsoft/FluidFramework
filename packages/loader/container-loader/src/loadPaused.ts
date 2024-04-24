@@ -5,6 +5,8 @@
 
 import { ILoader, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { IRequest } from "@fluidframework/core-interfaces";
+import { GenericError } from "@fluidframework/telemetry-utils/internal";
+import type { IErrorBase } from "@fluidframework/core-interfaces";
 
 /* eslint-disable jsdoc/check-indentation */
 
@@ -54,46 +56,57 @@ export async function loadContainerPaused(
 	container.forceReadonly?.(true);
 
 	const dm = container.deltaManager;
+	const lastProcessedSequenceNumber = dm.initialSequenceNumber;
 
-	const promise = new Promise<void>((resolve, reject) => {
-		const pauseAndResolve = () => {
-			void dm.inbound.pause();
-			void dm.outbound.pause();
-			signal?.removeEventListener("abort", reject);
-			resolve();
-		};
+	const pauseContainer = () => {
+		void dm.inbound.pause();
+		void dm.outbound.pause();
+	};
+
+	// Happy path - we are already there.
+	if (
+		loadToSequenceNumber === undefined ||
+		lastProcessedSequenceNumber === loadToSequenceNumber
+	) {
+		// If we have already reached the desired sequence number, call opHandler() to pause immediately.
+		pauseContainer();
+		return container;
+	}
+
+	// If we are trying to pause at a specific sequence number, ensure the latest snapshot is not newer than the desired sequence number.
+	if (lastProcessedSequenceNumber > loadToSequenceNumber) {
+		const error = new GenericError(
+			"Cannot satisfy request to pause the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.",
+		);
+		container.close(error);
+		throw error;
+	}
+
+	let opHandler: () => void;
+	let onAbort: () => void;
+	let onClose: (error?: IErrorBase) => void;
+
+	const promise = new Promise<void>((resolve, rejectArg) => {
+		onAbort = () => rejectArg(new GenericError("Canceled due to cancellation request."));
+		onClose = (error?: IErrorBase) => rejectArg(error);
 
 		// We need to setup a listener to stop op processing once we reach the desired sequence number (if specified).
-		const opHandler = () => {
+		opHandler = () => {
 			// If there is a specified sequence number, keep processing until we reach it.
 			if (
 				loadToSequenceNumber !== undefined &&
 				dm.lastSequenceNumber >= loadToSequenceNumber
 			) {
 				// Pause op processing once we have processed the desired number of ops.
-				pauseAndResolve();
-				container.off("op", opHandler);
+				pauseContainer();
+				resolve();
 			}
 		};
 
-		const lastProcessedSequenceNumber = dm.initialSequenceNumber;
-
-		if (
-			loadToSequenceNumber === undefined ||
-			lastProcessedSequenceNumber === loadToSequenceNumber
-		) {
-			// If we have already reached the desired sequence number, call opHandler() to pause immediately.
-			pauseAndResolve();
-		} else if (lastProcessedSequenceNumber > loadToSequenceNumber) {
-			// If we are trying to pause at a specific sequence number, ensure the latest snapshot is not newer than the desired sequence number.
-			throw new Error(
-				"Cannot satisfy request to pause the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.",
-			);
-		} else {
-			// If we have not yet reached the desired sequence number, setup a listener to pause once we reach it.
-			signal?.addEventListener("abort", reject);
-			container.on("op", opHandler);
-		}
+		// If we have not yet reached the desired sequence number, setup a listener to pause once we reach it.
+		signal?.addEventListener("abort", onAbort);
+		container.on("op", opHandler);
+		container.on("closed", onClose);
 	});
 
 	// There are no guarantees on when ops will land in storage.
@@ -105,12 +118,21 @@ export async function loadContainerPaused(
 	container.connect();
 
 	// Wait for the ops to be processed.
-	await promise.finally(() => {
-		// There is not much value in leaving delta connection on. We are not processing ops, we also can't advance to "connected" state because of it.
-		// We are not sending ops (due to forceReadonly() call above). We are holding collab window and any consensus-based processes.
-		// It's better not to have connection in such case, as there are only nagatives, and no positives.
-		container.disconnect();
-	});
+	await promise
+		.catch((error) => {
+			container.close(error);
+			throw error;
+		})
+		.finally(() => {
+			// There is not much value in leaving delta connection on. We are not processing ops, we also can't advance to "connected" state because of it.
+			// We are not sending ops (due to forceReadonly() call above). We are holding collab window and any consensus-based processes.
+			// It's better not to have connection in such case, as there are only nagatives, and no positives.
+			container.disconnect();
+
+			container.off("op", opHandler);
+			container.off("closed", onClose);
+			signal?.removeEventListener("abort", onAbort);
+		});
 
 	return container;
 }

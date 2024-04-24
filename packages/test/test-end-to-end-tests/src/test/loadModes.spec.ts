@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { type CompatApis, describeCompat } from "@fluid-private/test-version-utils";
+import { type CompatApis, describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import type { IDataObjectProps } from "@fluidframework/aqueduct/internal";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { IFluidHandle, IRequestHeader } from "@fluidframework/core-interfaces";
@@ -363,41 +363,45 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 	});
 
 	describe("Expected error cases", () => {
-		it("Throw if attempting to pause at a sequence number before the latest summary", async () => {
-			const { summarizer } = await createSummarizerFromFactory(
-				provider,
-				container1,
-				testDataObjectFactory,
-			);
-			// Send 5 ops
-			const numIncrement = 5;
-			for (let i = 0; i < numIncrement; i++) {
-				dataObject1.increment();
-			}
-			await loaderContainerTracker.ensureSynchronized(container1);
-			const result = summarizer.summarizeOnDemand({ reason: "test" });
-			const submitResult = await result.receivedSummaryAckOrNack;
-			assert.ok(submitResult);
-
-			// Try to pause at sequence number 1 (before snapshot)
-			const sequenceNumber = 3;
-			const headers: IRequestHeader = {
-				[LoaderHeader.loadMode]: {
-					opsBeforeReturn: "sequenceNumber",
-				},
-			};
-			await assert.rejects(
-				loadContainer(
-					container1.resolvedUrl,
+		itExpects(
+			"Throw if attempting to pause at a sequence number before the latest summary",
+			[{ eventName: "fluid:telemetry:Container:ContainerClose" }],
+			async () => {
+				const { summarizer } = await createSummarizerFromFactory(
+					provider,
+					container1,
 					testDataObjectFactory,
-					headers,
-					sequenceNumber,
-				),
-				{
-					message:
-						"Cannot satisfy request to pause the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.",
-				},
-			);
-		});
+				);
+				// Send 5 ops
+				const numIncrement = 5;
+				for (let i = 0; i < numIncrement; i++) {
+					dataObject1.increment();
+				}
+				await loaderContainerTracker.ensureSynchronized(container1);
+				const result = summarizer.summarizeOnDemand({ reason: "test" });
+				const submitResult = await result.receivedSummaryAckOrNack;
+				assert.ok(submitResult);
+
+				// Try to pause at sequence number 1 (before snapshot)
+				const sequenceNumber = 3;
+				const headers: IRequestHeader = {
+					[LoaderHeader.loadMode]: {
+						opsBeforeReturn: "sequenceNumber",
+					},
+				};
+				await assert.rejects(
+					loadContainer(
+						container1.resolvedUrl,
+						testDataObjectFactory,
+						headers,
+						sequenceNumber,
+					),
+					{
+						message:
+							"Cannot satisfy request to pause the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.",
+					},
+				);
+			},
+		);
 	});
 });
