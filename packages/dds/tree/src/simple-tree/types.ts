@@ -170,7 +170,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 			{
 				let schemaBase: typeof TreeNodeValid = schema;
 				while (!Object.prototype.hasOwnProperty.call(schemaBase, "constructorCached")) {
-					schemaBase = Reflect.getPrototypeOf(schema) as typeof TreeNodeValid;
+					schemaBase = Reflect.getPrototypeOf(schemaBase) as typeof TreeNodeValid;
 				}
 				assert(schemaBase.constructorCached === undefined, "overwriting wrong cache");
 				schemaBase.constructorCached = schema;
