@@ -31,7 +31,7 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 			options: knownApiLevels,
 		}),
 		outDir: Flags.directory({
-			description: "Directory to emit entrypoint declaration files.",
+			description: "Where to emit the type tests file.",
 			default: "./src/test/types",
 		}),
 		outFile: Flags.string({
@@ -184,7 +184,7 @@ function getTypesPathWithFallback(
  * @param level - An API level to get types paths for.
  * @returns A package relative path to the types.
  */
-export function getTypesPathFromPackage(packageJson: PackageJson, level: ApiLevel): string {
+function getTypesPathFromPackage(packageJson: PackageJson, level: ApiLevel): string {
 	// resolve.exports sets some conditions by default, so the ones we supply supplement the defaults. For clarity the
 	// applied conditions are noted in comments.
 	const exports =
