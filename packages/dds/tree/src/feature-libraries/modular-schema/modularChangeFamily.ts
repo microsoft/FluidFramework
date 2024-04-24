@@ -1477,6 +1477,7 @@ function deltaFromNodeChange(
  * @param revInfos - This should describe all revisions in the rebase path, even if not part of the current base changeset.
  * For example, when rebasing change B from a local branch [A, B, C] over a branch [X, Y], the `revInfos` must include
  * the changes [A⁻¹ X, Y, A'] for each rebase step of B.
+ * @param revisionToRebase - The revision of the changeset which is being rebased.
  * @param baseRevisions - The set of revisions in the changeset being rebased over.
  * For example, when rebasing change B from a local branch [A, B, C] over a branch [X, Y], the `baseRevisions` must include
  * revisions [A⁻¹ X, Y, A'] if rebasing over the composition of all those changes, or
