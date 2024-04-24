@@ -40,6 +40,7 @@ export default class UpdateDependencyInLockfileCommand extends BaseCommand<
 		version: Flags.string({
 			description: "Semver range specifier to use when updating the dependency.",
 			required: true,
+			// Future improvement: use 'parse:' to validate that this is a valid semver range.
 		}),
 	};
 
