@@ -92,7 +92,7 @@ If the move were just a copy, then if Alice's edit were to be sequenced first,
 Bob's edit would not apply to the copy at the destination.
 By contrast, `SharedTree`'s move semantics ensure that Bob's edit will apply no matter the sequencing order.
 
-### Removal as Movement
+### Removal Is Movement
 
 `SharedTree` allows subtrees to be removed,
 such as when an element from an array node is removed,
@@ -121,7 +121,7 @@ Alice and Bob concurrently change the background color of the same sticky note
 such that Alice would change it from yellow to red and Bob would change it from yellow to blue.
 If the edits are sequenced such that Alice's edit is applied first and Bob's edit is applied second,
 then the background color of the note will change from yellow to red then from red to blue.
-If the edits are sequenced in the reverse order,
+If the edits are sequenced in the opposite order,
 then the background color of the note will change from yellow to blue then from blue to red.
 
 Example 2:
@@ -129,10 +129,74 @@ Alice and Bob concurrently move the same sticky note
 such that Alice would move it from location X to location A and Bob would move it from location X to location B.
 If the edits are sequenced such that Alice's edit is applied first and Bob's edit is applied second,
 then the note will first be moved from X to A then from A to B.
-If the edits are sequenced in the reverse order,
+If the edits are sequenced in the opposite order,
 then the note will first be moved from X to B then from B to A.
 
-### Putting It all Together
+### Putting It All Together
+
+Merge scenarios sometimes draw from multiple of the individual design choices presented above.
+
+Here is an example that draws from all three:
+Alice removes a sticky node, while Bob concurrently move that same sticky note.
+If the edits are sequenced such that Alice's edit is applied first and Bob's edit is applied second,
+then the note will first be removed then moved to the destination defined by Bob's edit.
+If the edits are sequenced in the opposite order,
+then the note will first be moved to the destination defined by Bob's edit then removed.
+
+More importantly, the high-level design choices presented above give rise to the following property:
+by default\*, _no matter what concurrent edits may have been sequenced and applied before it_,
+every edit is guaranteed to apply, and guaranteed to impact the document state in one predictable way.
+
+\* "By default" in this context means "in the absence of [constraints](#constraints)".
+
+By "guaranteed to apply", we mean that the edit (and by extension, the transaction it is part of) is not dropped.
+In the example above, Bob's edit to move the sticky note is not dropped when Alice's removal of that sticky note happens to be sequenced and applied first.
+
+By "guaranteed to impact the document state in one predictable way",
+we mean that the way the edit impacts the document is the same.
+This point is a little more nuanced because it is predicated on a specific definition of "the same".
+Each edit comes with such a definition.
+For moves, what remains the same is the node being moved and the location that the node is moved to under the given parent node.
+In the example above, Bob's edit to move the sticky note moves that specific sticky note to the specific destination picked by Bob under a specific parent node,
+no matter whether concurrent edits were sequenced or applied before that and no matter what those concurrent edits were.
+Concurrent edits could influence where the note was moved from, the properties of the note,
+or even move or remove the parent (or some further ancestor) of the destination,
+but none of that changes the fact that, immediately after Bob's edit is applied,
+that specific sticky note will be located at the location chosen by Bob under a specific parent node.
+
+This property is important because it makes reasoning about concurrent editing much more approachable.
+This is most palpable in the context of transactions
+because it reduces the number of possible states the document between could be in between the edits that make up the transaction,
+therefore making transactions easier to author correctly,
+and making the effect of a given transaction easier to understand.
+
+For example, consider an application that allows the end user to select a set of sticky notes across several lists,
+and group all of the selected notes under a new list, assigning to each one an ordinal number based on the selection order.
+This functionality is effectively allows user to make a numbered list out of set of sticky nodes.
+
+This can be achieved by writing a transaction that loops through the selected N notes in the order they were selected,
+assigning ordinals incrementally and moving each one to the end of the new list.
+
+By the time this transaction is sequenced and applied,
+concurrent edits may have affected the relevant sticky notes in different ways:
+some of them may have been assigned different ordinals,
+some of them may have been moved, removed,
+or their parent lists may have been moved or removed.
+Despite that, `SharedTree`'s semantics guarantee that by the end of the transaction all of the relevant sticky notes will reside in the new list,
+and that their ordinals will be assigned in order from 1 to N.
+If any of the concurrent changes had the power to prevent the relevant notes from being moved by our transaction,
+or prevented them from being annotated with the ordinals,
+then our transaction may lead to a state where the new list only contains a subset of the selected notes,
+and their ordinals may be have gaps, not be unique, and be out of order.
+
+More abstractly, for a transaction that is composed of `N` edits (`e1` through `eN`),
+you can think of each edit `ei` as having one of `ki` possible effects,
+where which of the `ki` possible effects is applied depends on what concurrent edits were sequenced before the transaction.
+In aggregate, the effect of a transaction is therefore one of `k0 * k1 * ... * kN` possible effects.
+For a transaction that is composed with 10 edits with each edit having one of two possible effects,
+that would mean the transaction would have one of 1024 possible different effects.
+`SharedTree`'s semantics guarantee that each and every `ki` is equal to 1,
+meaning each transaction has only one possible effect.
 
 ### Constraints
 
