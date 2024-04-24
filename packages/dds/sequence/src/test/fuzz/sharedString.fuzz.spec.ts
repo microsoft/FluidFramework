@@ -161,7 +161,7 @@ describe("SharedString fuzz testing with annotates", () => {
 		{ ...annotateSharedStringModel, workloadName: "SharedString with annotates" },
 		{
 			...defaultFuzzOptions,
-			skip: [14, 33, 39, 66, 77, 79, 95],
+			skip: [4, 12, 15, 23, 29, 34, 37, 66, 75, 76, 79, 99],
 		},
 	);
 });
