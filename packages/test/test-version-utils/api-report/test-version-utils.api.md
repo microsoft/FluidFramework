@@ -88,7 +88,7 @@ export const DataRuntimeApi: {
         SharedCounter: typeof counter.SharedCounter;
         SharedDirectory: ISharedObjectKind<map.ISharedDirectory>;
         SharedMap: ISharedObjectKind<map.ISharedMap>;
-        SharedMatrix: typeof matrix.SharedMatrix;
+        SharedMatrix: ISharedObjectKind<matrix.ISharedMatrix<any>>;
         ConsensusQueue: typeof orderedCollection.ConsensusQueue;
         ConsensusRegisterCollection: typeof registerCollection.ConsensusRegisterCollection;
         SharedString: typeof sequence.SharedString;

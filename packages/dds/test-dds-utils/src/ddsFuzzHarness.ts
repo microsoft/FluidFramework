@@ -1014,7 +1014,14 @@ export function mixinSynchronization<
 			if (connectedClients.length > 0) {
 				const readonlyChannel = state.summarizerClient.channel;
 				for (const { channel } of connectedClients) {
-					await model.validateConsistency(readonlyChannel, channel);
+					try {
+						await model.validateConsistency(readonlyChannel, channel);
+					} catch (error: unknown) {
+						if (error instanceof Error) {
+							error.message = `Comparing client ${readonlyChannel.id} vs client ${channel.id}\n${error.message}`;
+						}
+						throw error;
+					}
 				}
 			}
 
@@ -1499,7 +1506,7 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 		//
 		// it should be noted that if a timeout occurs during minimization, the
 		// intermediate results are not lost and will still be written to the file.
-		const noMinimizationTimeout = Math.max(2000, this.timeout());
+		const noMinimizationTimeout = this.timeout() === 0 ? 0 : Math.max(2000, this.timeout());
 		this.timeout(shouldMinimize ? 5 * noMinimizationTimeout : noMinimizationTimeout);
 
 		try {

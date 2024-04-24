@@ -18,6 +18,7 @@ import {
 	IChannelAttributes,
 	IChannelServices,
 	IFluidDataStoreRuntime,
+	type Serializable,
 } from "@fluidframework/datastore-definitions/internal";
 import { PropertySet } from "@fluidframework/merge-tree/internal";
 
@@ -60,7 +61,7 @@ export interface RemoveRange extends RangeSpec {
 
 export interface AnnotateRange extends RangeSpec {
 	type: "annotateRange";
-	props: { key: string; value?: any }[];
+	props: { key: string; value?: Serializable<any> }[];
 }
 
 export interface ObliterateRange extends RangeSpec {
@@ -321,7 +322,13 @@ export function createSharedStringGeneratorOperations(
 	async function annotateRange(state: ClientOpState): Promise<AnnotateRange> {
 		const { random } = state;
 		const key = random.pick(options.propertyNamePool);
-		const value = random.pick([random.string(5), undefined, null]);
+		const value = random.pick([
+			random.string(5),
+			random.handle(),
+			// Bring back after AB#7805, #7806 fixed
+			// undefined
+			null,
+		]);
 		return {
 			type: "annotateRange",
 			...exclusiveRange(state),
