@@ -6,7 +6,7 @@ Target audience: `SharedTree` users and maintainers.
 
 ## What Are Merge Semantics?
 
-Merge semantics define how `SharedTree` reconciles concurrent edits that affect the same (or related) parts of the shared document.
+Merge semantics define how `SharedTree` reconciles concurrent edits.
 
 ### Concurrent Edits
 
@@ -43,6 +43,27 @@ then there are multiple reasonable outcomes:
 -   change the color to blue
 -   keep the color yellow
 
-`SharedTree`'s built in merge semantics define which outcome will be picked.
+`SharedTree`'s merge semantics define which outcome will be picked.
 
 ## Why/When Should You Care?
+
+`SharedTree`'s merge semantics have been designed so that concurrent edits,
+even when they target overlapping data,
+are merged in a way that is typically satisfactory and unsurprising.
+This means that, on a daily basis, users of `SharedTree` should be able ignore the question of merge semantics.
+
+There are however situations that warrant an awareness and understanding of merge semantics.
+Those are commonly:
+
+-   The need to understand the end-user experience that users will face in a given scenario that involves concurrent editing.
+-   The need to select a data model (i.e., how a document is structured) for an application so that the application's invariants are upheld by `SharedTree`'s merge semantics.
+-   The need to structure the application's editing code such that it can guarantee that the application's invariants are upheld by `SharedTree`'s merge semantics.
+
+For example, consider an the application whose data model includes two arrays,
+with the invariant that the length of one array is expected always be the same as the length of the other array.
+The application's editing code may attempt to keep the two arrays' length in sync by always adding to and removing from both array in equal measure.
+Despite that, `SharedTree`'s merge semantics are such that a scenario involving concurrent edits may still lead to a state where the arrays end up with different length.
+Understanding `SharedTree`'s merge semantics can help the application author anticipate this invariant violation or (failing that) diagnose it after the fact.
+Understanding `SharedTree`'s merge semantics will also enable the application author to understand how to remedy this danger,
+either by adopting a data model that prevents the issue (e.g., using a single array of pair),
+or by changing the application's editing code (transactions and constraints) to circumvent it.
