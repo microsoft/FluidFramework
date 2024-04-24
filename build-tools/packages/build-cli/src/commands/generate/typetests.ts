@@ -9,9 +9,8 @@ import { Flags } from "@oclif/core";
 import { mkdirSync, readJson, rmSync, writeFileSync } from "fs-extra";
 import * as resolve from "resolve.exports";
 import { PackageCommand } from "../../BasePackageCommand";
-import { ApiLevel, knownApiLevels } from "../../library";
+import { ApiLevel, ensureDevDependencyExists, knownApiLevels } from "../../library";
 import {
-	ensureDevDependencyExists,
 	generateCompatibilityTestCases,
 	getTypeTestFilePath,
 	initializeProjectsAndLoadFiles,

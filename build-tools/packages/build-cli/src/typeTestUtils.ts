@@ -23,25 +23,9 @@ import { Project, SourceFile } from "ts-morph";
 const typeTestFilePath = "./src/test/types";
 
 /**
- * Checks the package object to verify that the specified dependency exists
- * @param packageObject - the package.json object to check for the dependency
- * @param dependencyName - the dependency to check for in the package object
- * @remarks Information about the previous package from the package.json is not needed,
- * but error if it's missing since it's nice to separate errors for the dep missing here vs not installed.
- * This ensures that a critical dependency (the previous package version) is correctly declared in the project's package.json.
- */
-export function ensureDevDependencyExists(
-	packageObject: PackageJson,
-	dependencyName: string,
-): void {
-	const dependencyVersion = packageObject?.devDependencies?.[dependencyName];
-	if (dependencyVersion === undefined) {
-		throw new Error(`Did not find devDependency in package.json`);
-	}
-}
-
-/**
- * Extracts type data from a TS source file and creates a map where each key is a type name and the value is its type data.
+ * Extracts type data from a TS source file and creates a map where each key is a type name and the value is its type
+ * data.
+ *
  * @param file - The source code file containing type data
  * @returns The mapping between item and its type
  */
