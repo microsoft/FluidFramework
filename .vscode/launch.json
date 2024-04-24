@@ -75,6 +75,15 @@
 			"args": ["generate", "bundleStats", "-v"],
 		},
 		{
+			"name": "flub generate packlist",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
+			"cwd": "${workspaceFolder}",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": ["generate", "packlist", "-g", "build-tools", "-v"],
+		},
+		{
 			// Runs the `flub release report --all` command with a debugger attached.
 			"name": "flub release report",
 			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
