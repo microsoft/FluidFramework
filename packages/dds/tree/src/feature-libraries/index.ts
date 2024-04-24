@@ -268,7 +268,6 @@ export {
 	FlexibleNodeSubSequence,
 	flexTreeMarker,
 	FlexTreeEntityKind,
-	NodeKeys,
 	PropertyNameFromFieldKey,
 	ReservedObjectNodeFieldPropertyNames,
 	ReservedObjectNodeFieldPropertyNamePrefixes,
