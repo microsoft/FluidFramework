@@ -40,6 +40,7 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 	protected async processPackage(pkg: Package): Promise<void> {
 		// This cast is safe because oclif has already ensured only known ApiLevel values get to this point.
 		const level = this.flags.level as ApiLevel;
+		const fallbackLevel = this.flags.publicFallback ? ApiLevel.public : undefined;
 
 		// Do not check that file exists before opening:
 		// Doing so is a time of use vs time of check issue so opening the file could fail anyway.
@@ -65,20 +66,20 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 			this.exit(0);
 		}
 
-		const [currentTypeDefs, currentPackageLevel] = this.getTypesPathWithFallback(
-			currentPackageJson,
-			level,
+		const { typesPath: currentTypesPath, levelUsed: currentPackageLevel } =
+			getTypesPathWithFallback(currentPackageJson, level, fallbackLevel);
+		this.verbose(
+			`Found ${currentPackageLevel} type definitions for ${currentPackageJson.name} at: ${currentTypesPath}`,
 		);
-		this.verbose(`Found ${currentPackageLevel} type definitions at: ${currentTypeDefs}`);
 
-		const [previousTypeDefs, previousPackageLevel] = this.getTypesPathWithFallback(
-			previousPackageJson,
-			level,
+		const { typesPath: previousTypesPath, levelUsed: previousPackageLevel } =
+			getTypesPathWithFallback(previousPackageJson, level, fallbackLevel);
+		this.verbose(
+			`Found ${previousPackageLevel} type definitions for ${previousPackageJson.name}: ${previousTypesPath}`,
 		);
-		this.verbose(`Found ${previousPackageLevel} type definitions at: ${previousTypeDefs}`);
 
 		const { currentFile, previousFile } = initializeProjectsAndLoadFiles(
-			previousTypeDefs,
+			previousTypesPath,
 			previousBasePath,
 			this.logger,
 		);
@@ -128,27 +129,33 @@ import type * as current from "../../index.js";
 		writeFileSync(typeTestOutputFile, testCases.join("\n"));
 		console.log(`generated ${path.resolve(typeTestOutputFile)}`);
 	}
+}
 
-	private getTypesPathWithFallback(
-		packageJson: PackageJson,
-		level: ApiLevel,
-	): [string, ApiLevel] {
-		let chosenLevel: ApiLevel = level;
-		// First try the requested paths, but fall back to public otherwise if configured.
-		let typeDefs: string | undefined = getTypesPathFromPackage(packageJson, level);
+/**
+ * Tries to find the path to types for a given API level, falling back to another API level (typically public) if the
+ * requested one is not found.
+ */
+function getTypesPathWithFallback(
+	packageJson: PackageJson,
+	level: ApiLevel,
+	fallbackLevel?: ApiLevel,
+): { typesPath: string; levelUsed: ApiLevel } {
+	let chosenLevel: ApiLevel = level;
+	// First try the requested paths, but fall back to public otherwise if configured.
+	let typesPath: string | undefined = getTypesPathFromPackage(packageJson, level);
 
-		if (typeDefs === undefined) {
-			// Try the public types if configured to do so. If public types are found adjust the level accordingly.
-			typeDefs = this.flags.publicFallback
-				? getTypesPathFromPackage(packageJson, ApiLevel.public)
-				: undefined;
-			if (typeDefs === undefined) {
-				this.error(`No type definitions found for ${packageJson.name}`, { exit: 1 });
-			}
-			chosenLevel = ApiLevel.public;
+	if (typesPath === undefined) {
+		// Try the public types if configured to do so. If public types are found adjust the level accordingly.
+		typesPath =
+			fallbackLevel === undefined
+				? undefined
+				: getTypesPathFromPackage(packageJson, fallbackLevel);
+		if (typesPath === undefined) {
+			throw new Error(`No type definitions found for ${packageJson.name}`);
 		}
-		return [typeDefs, chosenLevel];
+		chosenLevel = fallbackLevel ?? level;
 	}
+	return { typesPath: typesPath, levelUsed: chosenLevel };
 }
 
 /**
