@@ -63,7 +63,7 @@ export interface IProvideFluidHandle {
 	/**
 	 * @deprecated {@link IFluidHandleInternal} and {@link IFluidHandleInternal} should be identified should be identified using the {@link fluidHandleSymbol} symbol.
 	 * @privateRemarks
-	 * This field must be kept so that code to detect Fluid handles from before 2.0.0-rc.4.0.0 (When fluidHandleSymbol was added) still detects handles.
+	 * This field must be kept so that code from before 2.0.0-rc.4.0.0 (When fluidHandleSymbol was added) still detects handles.
 	 * This is required due to some use-cases mixing package versions.
 	 * More details in packages/runtime/runtime-utils/src/handles.ts and on {@link fluidHandleSymbol}.
 	 */
