@@ -217,6 +217,11 @@ export interface IDeliLambdaEvents extends IEvent {
 	 * Emitted when the lambda is closing.
 	 */
 	(event: "close", listener: (type: LambdaCloseType) => void);
+
+	/**
+	 * NoClient message received
+	 */
+	(event: "noClient", listener: () => void);
 }
 
 /**
@@ -665,6 +670,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			if (this.localCheckpointEnabled) {
 				this.globalCheckpointOnly = true;
 			}
+
+			// TODO: it means no client is in the session, since Deli get NoClient message it sends itself
+			// Do update activity idle timer here? or emit a event?
+			this.emit("noClient");
 		}
 
 		const checkpointReason = this.getCheckpointReason(this.lastMessageType);

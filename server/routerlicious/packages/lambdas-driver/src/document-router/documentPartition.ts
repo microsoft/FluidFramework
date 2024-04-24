@@ -185,8 +185,14 @@ export class DocumentPartition {
 		}
 	}
 
-	private updateActivityTime() {
-		this.activityTimeoutTime =
+	private updateActivityTime(activityTime?: number) {
+		// TODO: add input arg and set it to input timestamp if provided.
+		const cacluatedActivityTimeout =
 			Date.now() + (this.lambda?.activityTimeout ?? this.activityTimeout);
+		this.activityTimeoutTime =
+			activityTime !== undefined ? activityTime : cacluatedActivityTimeout;
+		console.log(
+			`Updating activity time, input: ${activityTime}, calculated: ${cacluatedActivityTimeout}`,
+		);
 	}
 }
