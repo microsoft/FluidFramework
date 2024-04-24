@@ -10,10 +10,10 @@ import {
 	FlexFieldNodeSchema,
 	FlexTreeFieldNode,
 	FlexTreeNode,
+	FlexTreeNodeSchema,
 	FlexTreeSequenceField,
 	FlexTreeTypedField,
 	FlexTreeUnboxField,
-	isFlexTreeNode,
 } from "../feature-libraries/index.js";
 import {
 	FactoryContent,
@@ -22,7 +22,7 @@ import {
 	markContentType,
 	prepareContentForInsert,
 } from "./proxies.js";
-import { getFlexNode, setFlexNode } from "./proxyBinding.js";
+import { getFlexNode } from "./proxyBinding.js";
 import { getSimpleFieldSchema, getSimpleNodeSchema } from "./schemaCaching.js";
 import {
 	NodeKind,
@@ -33,9 +33,10 @@ import {
 	TreeNodeSchemaClass,
 	WithType,
 	TreeNodeSchema,
+	type,
 } from "./schemaTypes.js";
 import { cursorFromFieldData } from "./toMapTree.js";
-import { TreeNode } from "./types.js";
+import { TreeNode, TreeNodeValid } from "./types.js";
 import { fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { RawTreeNode, rawError } from "./rawNode.js";
@@ -672,6 +673,25 @@ function createArrayNodeProxy(
 	return proxy;
 }
 
+abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes> extends TreeNodeValid<
+	Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>
+> {
+	public static readonly kind = NodeKind.Array;
+
+	public toJSON(): unknown {
+		// This override causes the class instance to `JSON.stringify` as `[a, b]` rather than `{0: a, 1: b}`.
+		return Array.from(this as unknown as TreeArrayNode);
+	}
+
+	// Instances of this class are used as the dispatch object for the proxy,
+	// and thus its set of keys is used to implement `has` (for the `in` operator) for the non-numeric cases.
+	// Therefore it must must include `length`,
+	// even though this "length" is never invoked (due to being shadowed by the proxy provided own property).
+	public get length() {
+		return fail("Proxy should intercept length");
+	}
+}
+
 /**
  * Define a {@link TreeNodeSchema} for a {@link (TreeArrayNode:interface)}.
  *
@@ -682,28 +702,27 @@ export function arraySchema<
 	const T extends ImplicitAllowedTypes,
 	const ImplicitlyConstructable extends boolean,
 >(
-	base: TreeNodeSchemaClass<
-		TName,
-		NodeKind.Array,
-		TreeNode & WithType<TName>,
-		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		ImplicitlyConstructable,
-		T
-	>,
+	identifier: TName,
+	info: T,
+	implicitlyConstructable: ImplicitlyConstructable,
 	customizable: boolean,
 ) {
+	let flexSchema: FlexFieldNodeSchema;
+
 	// This class returns a proxy from its constructor to handle numeric indexing.
 	// Alternatively it could extend a normal class which gets tons of numeric properties added.
-	class schema extends base {
-		public constructor(input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>) {
-			super(input);
-
-			const proxyTarget = customizable ? this : [];
+	class schema extends CustomArrayNodeBase<T> {
+		public static override prepareInstance<T2>(
+			this: typeof TreeNodeValid<T2>,
+			instance: TreeNodeValid<T2>,
+			flexNode: FlexTreeNode,
+		): TreeNodeValid<T2> {
+			const proxyTarget = customizable ? instance : [];
 
 			if (customizable) {
 				// Since proxy reports this as a "non-configurable" property, it must exist on the underlying object used as the proxy target, not as an inherited property.
 				// This should not get used as the proxy should intercept all use.
-				Object.defineProperty(this, "length", {
+				Object.defineProperty(instance, "length", {
 					value: NaN,
 					writable: true,
 					enumerable: false,
@@ -711,35 +730,44 @@ export function arraySchema<
 				});
 			}
 
-			const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
-			assert(flexSchema instanceof FlexFieldNodeSchema, 0x915 /* invalid flex schema */);
-			const flexNode: FlexTreeNode = isFlexTreeNode(input)
-				? input
-				: new RawFieldNode(flexSchema, copyContent(flexSchema.name, input) as object);
-
-			const proxy: TreeNode = createArrayNodeProxy(customizable, proxyTarget, this);
-			setFlexNode(proxy, flexNode);
+			const proxy: TreeNode = createArrayNodeProxy(customizable, proxyTarget, instance);
 			return proxy as unknown as schema;
 		}
 
-		public toJSON(): unknown {
-			// This override causes the class instance to `JSON.stringify` as `[a, b]` rather than `{0: a, 1: b}`.
-			return Array.from(this as unknown as TreeArrayNode);
+		public static override buildRawNode<T2>(
+			this: typeof TreeNodeValid<T2>,
+			instance: TreeNodeValid<T2>,
+			input: T2,
+		): RawTreeNode<FlexTreeNodeSchema, unknown> {
+			return new RawFieldNode(
+				flexSchema,
+				copyContent(
+					flexSchema.name,
+					input as Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+				) as object,
+			);
 		}
 
-		// Instances of this class are used as the dispatch object for the proxy,
-		// and thus its set of keys is used to implement `has` (for the `in` operator) for the non-numeric cases.
-		// Therefore it must must include `length`,
-		// even though this "length" is never invoked (due to being shadowed by the proxy provided own property).
-		public get length() {
-			return fail("Proxy should intercept length");
+		protected static override constructorCached: typeof TreeNodeValid | undefined = undefined;
+
+		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>) {
+			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema) as FlexFieldNodeSchema;
+		}
+
+		public static readonly identifier = identifier;
+		public static readonly info = info;
+		public static readonly implicitlyConstructable: ImplicitlyConstructable =
+			implicitlyConstructable;
+
+		public get [type](): TName {
+			return identifier;
 		}
 	}
 
 	// Setup array functionality
 	Object.defineProperties(schema.prototype, arrayNodePrototypeProperties);
 
-	return schema as typeof base as TreeNodeSchemaClass<
+	return schema as unknown as TreeNodeSchemaClass<
 		TName,
 		NodeKind.Array,
 		TreeArrayNode<T> & WithType<TName>,

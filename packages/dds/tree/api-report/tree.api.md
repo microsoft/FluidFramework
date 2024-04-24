@@ -4,7 +4,7 @@
 
 ```ts
 
-import type { ErasedType } from '@fluidframework/core-interfaces';
+import { ErasedType } from '@fluidframework/core-interfaces';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
@@ -1023,6 +1023,10 @@ export type InsertableTypedNodeUnsafe<T extends Unenforced<TreeNodeSchema>> = Un
     implicitlyConstructable: true;
 } ? NodeBuilderDataUnsafe<T> : never);
 
+// @public
+export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {
+}
+
 // @internal
 export interface Invariant<in out T> extends Contravariant<T>, Covariant<T> {
 }
@@ -1905,6 +1909,7 @@ export const enum TreeNavigationResult {
 // @public
 export abstract class TreeNode implements WithType {
     abstract get [type](): string;
+    protected constructor();
 }
 
 // @public
@@ -1947,7 +1952,7 @@ export abstract class TreeNodeSchemaBase<const out Name extends string = string,
 // @public
 export interface TreeNodeSchemaClass<out Name extends string = string, out Kind extends NodeKind = NodeKind, out TNode = unknown, in TInsertable = never, out ImplicitlyConstructable extends boolean = boolean, out Info = unknown> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
     // @sealed
-    new (data: TInsertable): Unhydrated<TNode>;
+    new (data: TInsertable | InternalTreeNode): Unhydrated<TNode>;
 }
 
 // @public
