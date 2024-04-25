@@ -50,22 +50,22 @@ then there are multiple reasonable outcomes:
 `SharedTree`'s merge semantics have been designed so that concurrent edits,
 even when they target overlapping data,
 are merged in a way that is typically satisfactory and unsurprising.
-This means that, on a daily basis, users of `SharedTree` should be able ignore the question of merge semantics.
+This means that, on a daily basis, users of `SharedTree` should be able to ignore the question of merge semantics.
 
-There are however situations that warrant an awareness and understanding of merge semantics.
+There are, however, situations that warrant an awareness and understanding of merge semantics.
 Those are commonly:
 
 -   The need to understand the end-user experience that users will face in a given scenario that involves concurrent editing.
 -   The need to select a data model (i.e., how a document is structured) for an application so that the application's invariants are upheld by `SharedTree`'s merge semantics.
 -   The need to structure the application's editing code such that it can guarantee that the application's invariants are upheld by `SharedTree`'s merge semantics.
 
-For example, consider an the application whose data model includes two arrays,
+For example, consider an application whose data model includes two arrays,
 with the invariant that the length of one array is expected to always be the same as the length of the other array.
 The application's editing code may attempt to keep the two arrays' length in sync by always adding to and removing from both array in equal measure.
 Despite that, `SharedTree`'s merge semantics are such that a scenario involving concurrent edits may still lead to a state where the arrays end up with different length.
 Understanding `SharedTree`'s merge semantics can help the application author anticipate this invariant violation or (failing that) diagnose it after the fact.
 Understanding `SharedTree`'s merge semantics will also enable the application author to understand how to remedy this danger,
-either by adopting a data model that prevents the issue (e.g., using a single array of pair),
+either by adopting a data model that prevents the issue (e.g., using a single array of pairs),
 or by changing the application's editing code (transactions and constraints) to circumvent it.
 
 ## A Holistic View
@@ -74,7 +74,7 @@ or by changing the application's editing code (transactions and constraints) to 
 like objects nodes, map nodes, and array nodes.
 Each of these building blocks comes with its own editing API and associated merge semantics,
 so fully understanding the merge semantics of `SharedTree` entails understanding the individual merge semantics of each of these building blocks.
-That said, those merge semantics are in large part underpinned by a set design choices that apply to `SharedTree` as a whole.
+That said, those merge semantics are in large part underpinned by a set of design choices that apply to `SharedTree` as a whole.
 Understanding those design choices and their ramifications is the most crucial part of understanding `SharedTree`'s merge semantics,
 and often alleviates the need to remember the details of any building blocks's specific merge semantics.
 
@@ -85,7 +85,7 @@ and such movement does not adversely affect concurrent edits that target the mov
 This is different from inserting a new copy of the moved subtree at the destination
 (and deleting the original at the source).
 
-Consider following scenario:
+Consider the following scenario:
 Alice moves a sticky note from one list to another,
 while Bob concurrently edits the text of the note.
 If the move were just a copy, then if Alice's edit were to be sequenced first,
@@ -100,20 +100,20 @@ a key is deleted from a map node,
 or when the field on an object is overwritten.
 This removal does not adversely affect concurrent edits that target the removed subtree.
 
-Consider following scenario:
+Consider the following scenario:
 Alice removes a whole list of sticky notes, while Bob concurrently moves a sticky note out of that list and into another (non-removed) list.
 `SharedTree`'s removal semantics ensure that Bob's edit will apply no matter the sequencing order.
 If that weren't the case, then there would be a race between Alice and Bob's edit,
 where Bob's edit would not apply if Alice's edit were sequenced first.
 
 Note that in a lot of cases, the changes to the removed subtree won't be immediately visible because the tree is removed.
-They will however become visible if that removal is undone.
+They will, however, become visible if that removal is undone.
 
 These merge semantics effectively make removal akin to a move whose destination is an abstract "removed" location.
 
 ### Last Write Wins
 
-It's possible for concurrent edits represent fundamentally incompatible user intentions.
+It's possible for concurrent edits to represent fundamentally incompatible user intentions.
 Whenever that happens, the edit that is sequenced last will win out.
 
 Example 1:
@@ -125,7 +125,7 @@ If the edits are sequenced in the opposite order,
 then the background color of the note will change from yellow to blue then from blue to red.
 
 Example 2:
-Alice and Bob concurrently move the same sticky note
+Alice and Bob concurrently moves the same sticky note
 such that Alice would move it from location X to location A and Bob would move it from location X to location B.
 If the edits are sequenced such that Alice's edit is applied first and Bob's edit is applied second,
 then the note will first be moved from X to A then from A to B.
@@ -137,7 +137,7 @@ then the note will first be moved from X to B then from B to A.
 Merge scenarios sometimes draw from multiple of the individual design choices presented above.
 
 Here is an example that draws from all three:
-Alice removes a sticky node, while Bob concurrently move that same sticky note.
+Alice removes a sticky node, while Bob concurrently moves that same sticky note.
 If the edits are sequenced such that Alice's edit is applied first and Bob's edit is applied second,
 then the note will first be removed then moved to the destination defined by Bob's edit.
 If the edits are sequenced in the opposite order,
@@ -145,7 +145,7 @@ then the note will first be moved to the destination defined by Bob's edit then 
 
 More importantly, the high-level design choices presented above give rise to the following property:
 by default\*, _no matter what concurrent edits may have been sequenced and applied before it_,
-every edit is guaranteed to apply, and guaranteed to impact the document state in one predictable way.
+every edit is guaranteed to apply and guaranteed to impact the document state in one predictable way.
 
 \* "By default" in this context means "in the absence of [constraints](#constraints)".
 
@@ -172,7 +172,7 @@ and making the effect of a given transaction easier to understand.
 
 For example, consider an application that allows the end user to select a set of sticky notes across several lists,
 and group all of the selected notes under a new list, assigning to each one an ordinal number based on the selection order.
-This functionality is effectively allows user to make a numbered list out of set of sticky nodes.
+This functionality effectively allows a user to make a numbered list out of set of sticky nodes.
 
 This can be achieved by writing a transaction that loops through the selected N notes in the order they were selected,
 assigning ordinals incrementally and moving each one to the end of the new list.
@@ -186,9 +186,9 @@ Despite that, `SharedTree`'s merge semantics guarantee that
 by the end of the transaction all of the relevant sticky notes will reside in the new list,
 and that their ordinals will be assigned in order from 1 to N.
 If any of the concurrent changes had the power to prevent the relevant notes from being moved by our transaction,
-or prevented them from being annotated with the ordinals,
+or to prevent them from being annotated with the ordinals,
 then our transaction may lead to a state where the new list only contains a subset of the selected notes,
-and their ordinals may be have gaps, not be unique, and be out of order.
+and their ordinals may have gaps, not be unique, and be out of order.
 
 More abstractly, for a transaction that is composed of `N` edits (`e1` through `eN`),
 you can think of each edit `ei` as having one of `ki` possible effects,
@@ -196,7 +196,7 @@ where which of the `ki` possible effects is applied depends on what concurrent e
 In aggregate, the effect of a transaction is therefore, in the worst case, one of `k0 * k1 * ... * kN` possible effects.
 For a transaction that is composed of 10 edits where each edit has one of two possible effects,
 that would mean the transaction would at worst have one of 1024 possible different effects.
-`SharedTree`'s semantics guarantee that each and every `ki` is equal to 1,
+`SharedTree`'s semantics guarantee that every `ki` is equal to 1,
 meaning each transaction has only one possible effect.
 
 ### Constraints
@@ -237,8 +237,8 @@ At the time of writing,
 all edits/transactions have the implicit constraint that the schema is not changed concurrently to them.
 Similarly, all schema changes have the implicit constraint that neither the schema nor the document data is changed concurrently to them.
 
-This is tolerable because schema changes are rare, but will be improved in the future to be less conservative.
+This is tolerable because schema changes are rare but will be improved in the future to be less conservative.
 
-## Merge Semantics By Node Kind
+## Merge Semantics by Node Kind
 
 TODO: add a separate document for each node kind and link to them from here.
