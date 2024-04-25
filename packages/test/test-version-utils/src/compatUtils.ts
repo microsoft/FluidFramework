@@ -3,22 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import * as semver from "semver";
+import { mixinAttributor } from "@fluid-experimental/attributor";
+import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/test-drivers";
+import {
+	IContainerRuntimeOptions,
+	DefaultSummaryConfiguration,
+	CompressionAlgorithms,
+	ICompressionRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
 import {
 	FluidObject,
 	IFluidHandleContext,
 	IFluidLoadable,
 	IRequest,
 } from "@fluidframework/core-interfaces";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
+import { ISharedDirectory } from "@fluidframework/map/internal";
 import {
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
-import { ISharedDirectory } from "@fluidframework/map";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestContainerConfig,
 	DataObjectFactoryType,
@@ -26,15 +33,9 @@ import {
 	createTestContainerRuntimeFactory,
 	TestObjectProvider,
 	TestObjectProviderWithVersionedLoad,
-} from "@fluidframework/test-utils";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { mixinAttributor } from "@fluid-experimental/attributor";
-import {
-	IContainerRuntimeOptions,
-	DefaultSummaryConfiguration,
-	CompressionAlgorithms,
-	ICompressionRuntimeOptions,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/test-utils/internal";
+import * as semver from "semver";
+
 import { pkgVersion } from "./packageVersion.js";
 import {
 	getLoaderApi,
@@ -123,8 +124,9 @@ function filterRuntimeOptionsForVersion(
 		options = {
 			compressionOptions: compressorDisabled, // Can't use compression, need https://github.com/microsoft/FluidFramework/pull/20111 fix
 			enableGroupedBatching,
-			// Can't track it down, but enabling Id Compressor for this config results in small number of t9s tests to timeout.
-			enableRuntimeIdCompressor,
+			// control over schema was generalized in RC3 - see https://github.com/microsoft/FluidFramework/pull/20174
+			// IdCompressor settings moved around - can't enable them across versions without tripping on asserts
+			enableRuntimeIdCompressor: undefined,
 			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disabled, need https://github.com/microsoft/FluidFramework/pull/20115 fix
 			...options,
 		};
@@ -172,11 +174,15 @@ function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntime
 	function convertRegistry(registry: ChannelFactoryRegistry = []): ChannelFactoryRegistry {
 		const oldRegistry: [string | undefined, IChannelFactory][] = [];
 		for (const [key, factory] of registry) {
-			const oldFactory = registryMapping[factory.type];
-			if (oldFactory === undefined) {
-				throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
+			if (factory.type === "https://graph.microsoft.com/types/tree") {
+				oldRegistry.push([key, factory]);
+			} else {
+				const oldFactory = registryMapping[factory.type];
+				if (oldFactory === undefined) {
+					throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
+				}
+				oldRegistry.push([key, oldFactory]);
 			}
-			oldRegistry.push([key, oldFactory]);
 		}
 
 		return oldRegistry;
@@ -329,7 +335,14 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 	assert(versionForLoading !== undefined, "versionForLoading");
 
 	const minVersion =
-		semver.compare(versionForCreating, versionForLoading) < 0
+		// First, check if any of the versions is current version of the package.
+		// Current versions show up in the form of "2.0.0-dev-rc.3.0.0.251800", and semver.compare()
+		// incorrectly compares them with prior minors, like "2.0.0-rc.2.0.1"
+		versionForLoading === pkgVersion
+			? versionForCreating
+			: versionForCreating === pkgVersion
+			? versionForLoading
+			: semver.compare(versionForCreating, versionForLoading) < 0
 			? versionForCreating
 			: versionForLoading;
 
@@ -381,5 +394,14 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		driverForLoading,
 		createContainerFactoryFn,
 		loadContainerFactoryFn,
+		// telemetry props
+		{
+			all: {
+				testType: "TestObjectProviderWithVersionedLoad",
+				testCreateVersion: versionForCreating,
+				testLoadVersion: versionForLoading,
+				testRuntimeOptionsVersion: minVersion,
+			},
+		},
 	);
 }

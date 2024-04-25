@@ -4,11 +4,13 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
 	SchemaFactory,
 } from "../../simple-tree/index.js";
+
 import { hydrate, pretty } from "./utils.js";
 
 const schemaFactory = new SchemaFactory("Test");

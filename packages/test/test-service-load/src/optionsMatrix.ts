@@ -3,22 +3,23 @@
  * Licensed under the MIT License.
  */
 
+import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import {
 	OptionsMatrix,
 	booleanCases,
 	generatePairwiseOptions,
 	numberCases,
 } from "@fluid-private/test-pairwise-generator";
-import { ILoaderOptions } from "@fluidframework/container-loader";
+import { ILoaderOptions } from "@fluidframework/container-loader/internal";
 import {
 	CompressionAlgorithms,
 	IContainerRuntimeOptions,
 	IGCRuntimeOptions,
 	ISummaryRuntimeOptions,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import { ConfigTypes } from "@fluidframework/core-interfaces";
-import { LoggingError } from "@fluidframework/telemetry-utils";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { LoggingError } from "@fluidframework/telemetry-utils/internal";
+
 import { ILoadTestConfig, OptionOverride } from "./testConfigFile.js";
 
 const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
@@ -101,7 +102,6 @@ export function generateRuntimeOptions(
 			{ minimumBatchSizeInBytes: 500, compressionAlgorithm: CompressionAlgorithms.lz4 },
 		],
 		maxBatchSizeInBytes: [716800],
-		enableOpReentryCheck: [true],
 		// Compressed payloads exceeding this size will be chunked into messages of exactly this size
 		chunkSizeInBytes: [204800],
 		enableRuntimeIdCompressor: ["on", undefined, "delayed"],

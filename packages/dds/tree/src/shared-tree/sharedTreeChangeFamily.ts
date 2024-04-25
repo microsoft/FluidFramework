@@ -3,13 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { ICodecFamily, ICodecOptions } from "../codec/index.js";
 import {
 	ChangeEncodingContext,
 	ChangeFamily,
 	ChangeRebaser,
 	RevisionMetadataSource,
+	RevisionTag,
 	RevisionTagCodec,
 	TaggedChange,
 	mapTaggedChange,
@@ -19,9 +21,12 @@ import {
 	ModularChangeFamily,
 	ModularChangeset,
 	TreeCompressionStrategy,
+	fieldKindConfigurations,
 	fieldKinds,
+	makeModularChangeCodecFamily,
 } from "../feature-libraries/index.js";
 import { Mutable, fail } from "../util/index.js";
+
 import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs.js";
 import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
@@ -49,15 +54,16 @@ export class SharedTreeChangeFamily
 		codecOptions: ICodecOptions,
 		chunkCompressionStrategy?: TreeCompressionStrategy,
 	) {
-		this.modularChangeFamily = new ModularChangeFamily(
-			fieldKinds,
+		const modularChangeCodec = makeModularChangeCodecFamily(
+			fieldKindConfigurations,
 			revisionTagCodec,
 			fieldBatchCodec,
 			codecOptions,
 			chunkCompressionStrategy,
 		);
+		this.modularChangeFamily = new ModularChangeFamily(fieldKinds, modularChangeCodec);
 		this.codecs = makeSharedTreeChangeCodecFamily(
-			this.modularChangeFamily.latestCodec,
+			this.modularChangeFamily.codecs,
 			codecOptions,
 		);
 	}
@@ -116,6 +122,7 @@ export class SharedTreeChangeFamily
 								new: innerChange.innerChange.schema.old,
 								old: innerChange.innerChange.schema.new,
 							},
+							isInverse: true,
 						},
 					};
 				}
@@ -129,15 +136,15 @@ export class SharedTreeChangeFamily
 	}
 
 	public rebase(
-		change: SharedTreeChange,
+		change: TaggedChange<SharedTreeChange>,
 		over: TaggedChange<SharedTreeChange>,
 		revisionMetadata: RevisionMetadataSource,
 	): SharedTreeChange {
-		if (change.changes.length === 0 || over.change.changes.length === 0) {
-			return change;
+		if (change.change.changes.length === 0 || over.change.changes.length === 0) {
+			return change.change;
 		}
 
-		if (hasSchemaChange(change) || hasSchemaChange(over.change)) {
+		if (hasSchemaChange(change.change) || hasSchemaChange(over.change)) {
 			// Any SharedTreeChange (a list of sub-changes) that contains a schema change will cause ANY change that rebases over it to conflict.
 			// Similarly, any SharedTreeChange containing a schema change will fail to rebase over ANY change.
 			// Those two combine to mean: no concurrency with schema changes is supported.
@@ -149,11 +156,11 @@ export class SharedTreeChangeFamily
 			return SharedTreeChangeFamily.emptyChange;
 		}
 		assert(
-			change.changes.length === 1 && over.change.changes.length === 1,
+			change.change.changes.length === 1 && over.change.changes.length === 1,
 			0x884 /* SharedTreeChange should have exactly one inner change if no schema change is present. */,
 		);
 
-		const dataChangeIntention = change.changes[0];
+		const dataChangeIntention = change.change.changes[0];
 		const dataChangeOver = over.change.changes[0];
 		assert(
 			dataChangeIntention.type === "data" && dataChangeOver.type === "data",
@@ -165,7 +172,7 @@ export class SharedTreeChangeFamily
 				{
 					type: "data",
 					innerChange: this.modularChangeFamily.rebase(
-						dataChangeIntention.innerChange,
+						mapTaggedChange(change, dataChangeIntention.innerChange),
 						mapTaggedChange(over, dataChangeOver.innerChange),
 						revisionMetadata,
 					),
@@ -174,11 +181,32 @@ export class SharedTreeChangeFamily
 		};
 	}
 
+	public changeRevision(
+		change: SharedTreeChange,
+		newRevision: RevisionTag | undefined,
+		rollbackOf?: RevisionTag,
+	): SharedTreeChange {
+		return {
+			changes: change.changes.map((inner) => {
+				return inner.type === "data"
+					? {
+							...inner,
+							innerChange: this.modularChangeFamily.rebaser.changeRevision(
+								inner.innerChange,
+								newRevision,
+								rollbackOf,
+							),
+					  }
+					: inner;
+			}),
+		};
+	}
+
 	public get rebaser(): ChangeRebaser<SharedTreeChange> {
 		return this;
 	}
 }
 
-function hasSchemaChange(change: SharedTreeChange): boolean {
+export function hasSchemaChange(change: SharedTreeChange): boolean {
 	return change.changes.some((innerChange) => innerChange.type === "schema");
 }

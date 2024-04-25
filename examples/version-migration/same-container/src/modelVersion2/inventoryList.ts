@@ -4,9 +4,9 @@
  */
 
 import { EventEmitter } from "@fluid-example/example-utils";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { type ISharedMap, SharedMap } from "@fluidframework/map";
-import { SharedString } from "@fluidframework/sequence";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
 import { v4 as uuid } from "uuid";
 
 import type { IInventoryItem, IInventoryList } from "../modelInterfaces.js";

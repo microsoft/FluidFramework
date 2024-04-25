@@ -4,7 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils";
+
+import { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils/internal";
+
+import { isObject } from "@fluidframework/core-utils/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { IIntervalCollection } from "../intervalCollection.js";
 import { createOverlappingIntervalsIndex } from "../intervalIndex/index.js";
 import { SequenceInterval } from "../intervals/index.js";
@@ -19,7 +23,7 @@ export interface Client {
  * Validates that all shared strings in the provided array are consistent in the underlying text
  * and location of all intervals in any interval collections they have.
  * */
-export function assertConsistent(clients: Client[]): void {
+export async function assertConsistent(clients: Client[]): Promise<void> {
 	const connectedClients = clients.filter((client) => client.containerRuntime.connected);
 	if (connectedClients.length < 2) {
 		// No two strings are expected to be consistent.
@@ -27,13 +31,14 @@ export function assertConsistent(clients: Client[]): void {
 	}
 	const first = connectedClients[0].sharedString;
 	for (const { sharedString: other } of connectedClients.slice(1)) {
-		assertEquivalentSharedStrings(first, other);
+		await assertEquivalentSharedStrings(first, other);
 	}
 }
 
-export function assertEquivalentSharedStrings(a: SharedString, b: SharedString) {
+export async function assertEquivalentSharedStrings(a: SharedString, b: SharedString) {
 	assert.equal(a.getText(), b.getText(), `Non-equal text between strings ${a.id} and ${b.id}.`);
 	assert.equal(a.getLength(), b.getLength());
+	await assertPropertiesEqual(a, b);
 	const firstLabels = Array.from(a.getIntervalCollectionLabels()).sort();
 	const otherLabels = Array.from(b.getIntervalCollectionLabels()).sort();
 	assert.deepEqual(
@@ -101,6 +106,43 @@ export function assertEquivalentSharedStrings(a: SharedString, b: SharedString) 
 			);
 			assert.equal(interval.intervalType, otherInterval.intervalType);
 			assert.deepEqual(interval.properties, otherInterval.properties);
+		}
+	}
+}
+
+async function assertPropertiesEqual(a: SharedString, b: SharedString): Promise<void> {
+	for (let i = 0; i < a.getLength(); i++) {
+		const aProps = a.getPropertiesAtPosition(i) ?? {};
+		const bProps = b.getPropertiesAtPosition(i) ?? {};
+		const aKeys =
+			aProps === undefined
+				? []
+				: Object.keys(aProps).filter((key) => aProps[key] !== undefined);
+		const bKeys =
+			bProps === undefined
+				? []
+				: Object.keys(bProps).filter((key) => bProps[key] !== undefined);
+		for (const key of aKeys.concat(bKeys)) {
+			const aVal: unknown = aProps[key];
+			const bVal: unknown = bProps[key];
+			if (isObject(aVal) === true) {
+				assert(isObject(bVal), `Values differ at key ${key}: ${aVal} vs ${bVal}`);
+				const aHandle = isFluidHandle(aVal) ? await aVal.get() : aVal;
+				const bHandle = isFluidHandle(bVal) ? await bVal.get() : bVal;
+				assert.equal(
+					aHandle,
+					bHandle,
+					`${a.id} and ${b.id} differ at key ${key}: ${JSON.stringify(
+						aHandle,
+					)} vs ${JSON.stringify(bHandle)}`,
+				);
+			} else {
+				assert.deepEqual(
+					aVal,
+					bVal,
+					`Property sets have different values @${i} for  key ${key}: ${aVal} vs ${bVal}`,
+				);
+			}
 		}
 	}
 }

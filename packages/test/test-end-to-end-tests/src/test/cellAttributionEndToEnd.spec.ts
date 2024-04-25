@@ -4,16 +4,17 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	IRuntimeAttributor,
 	createRuntimeAttributor,
 	enableOnNewFileKey,
 } from "@fluid-experimental/attributor";
 import { describeCompat, itSkipsFailureOnSpecificDrivers } from "@fluid-private/test-version-utils";
-import type { SharedCell } from "@fluidframework/cell";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import type { ISharedCell } from "@fluidframework/cell/internal";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { AttributionInfo } from "@fluidframework/runtime-definitions";
+import { AttributionInfo } from "@fluidframework/runtime-definitions/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -21,10 +22,10 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 function assertAttributionMatches(
-	sharedCell: SharedCell,
+	sharedCell: ISharedCell,
 	attributor: IRuntimeAttributor,
 	expected: Partial<AttributionInfo> | "detached" | "local" | undefined,
 ): void {
@@ -91,7 +92,7 @@ describeCompat("Attributor for SharedCell", "NoCompat", (getTestObjectProvider, 
 
 	const sharedCellFromContainer = async (container: IContainer) => {
 		const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
-		return dataObject.getSharedObject<SharedCell>(cellId);
+		return dataObject.getSharedObject<ISharedCell>(cellId);
 	};
 
 	const getTestConfig = (runtimeAttributor?: IRuntimeAttributor): ITestContainerConfig => ({

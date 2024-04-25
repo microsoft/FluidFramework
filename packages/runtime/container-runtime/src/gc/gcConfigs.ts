@@ -7,8 +7,10 @@ import {
 	MonitoringContext,
 	UsageError,
 	validatePrecondition,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
+
 import { IContainerRuntimeMetadata } from "../summary/index.js";
+
 import {
 	GCFeatureMatrix,
 	GCVersion,

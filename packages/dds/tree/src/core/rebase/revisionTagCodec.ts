@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
+
 import { IJsonCodec } from "../../codec/index.js";
 import { ChangeEncodingContext } from "../change-family/index.js";
+
 import { EncodedRevisionTag, RevisionTag } from "./types.js";
 
 export class RevisionTagCodec
@@ -28,6 +30,7 @@ export class RevisionTagCodec
 		if (tag === "root") {
 			return tag;
 		}
+
 		assert(typeof tag === "number", 0x88d /* String revision tag must be the literal 'root' */);
 		return this.idCompressor.normalizeToSessionSpace(tag, context.originatorId);
 	}

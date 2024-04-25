@@ -3,16 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
-	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 	gcBlobPrefix,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
-} from "@fluidframework/runtime-definitions";
-import type { IConfigProvider } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/runtime-definitions/internal";
+import type { IConfigProvider } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	GCFeatureMatrix,
 	GCVersion,
@@ -279,8 +280,21 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
  * @param str - A string that may contain leading and / or trailing slashes.
  * @returns A new string without leading and trailing slashes.
  */
-export function trimLeadingAndTrailingSlashes(str: string) {
+function trimLeadingAndTrailingSlashes(str: string) {
 	return str.replace(/^\/+|\/+$/g, "");
+}
+
+/** Reformats a request URL to match expected format for a GC node path */
+export function urlToGCNodePath(url: string): string {
+	return `/${trimLeadingAndTrailingSlashes(url.split("?")[0])}`;
+}
+
+/**
+ * Pulls out the first path segment and formats it as a GC Node path
+ * e.g. "/dataStoreId/ddsId" yields "/dataStoreId"
+ */
+export function dataStoreNodePathOnly(subDataStorePath: string): string {
+	return `/${subDataStorePath.split("/")[1]}`;
 }
 
 /**

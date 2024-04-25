@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { Type } from "@sinclair/typebox";
 import structuredClone from "@ungap/structured-clone";
 
@@ -395,8 +395,8 @@ export function compareNamed(a: Named<string>, b: Named<string>): -1 | 0 | 1 {
 
 /**
  * Placeholder for `Symbol.dispose`.
- *
- * Replace this with `Symbol.dispose` when it is available.
+ * @privateRemarks
+ * TODO: replace this with `Symbol.dispose` when it is available or make it a valid polyfill.
  * @public
  */
 export const disposeSymbol: unique symbol = Symbol("Symbol.dispose placeholder");

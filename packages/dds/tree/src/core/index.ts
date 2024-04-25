@@ -123,7 +123,7 @@ export {
 	TreeStoredSchemaSubscription as TreeStoredSchemaSubscription,
 	MutableTreeStoredSchema,
 	FieldKindIdentifier,
-	FieldKindSpecifier,
+	FieldKindData,
 	TreeTypeSet,
 	TreeStoredSchema,
 	TreeStoredSchemaRepository,
@@ -136,11 +136,14 @@ export {
 	LeafNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
-	BrandedTreeNodeSchemaDataFormat,
+	toTreeNodeSchemaDataFormat,
 	decodeFieldSchema,
 	encodeFieldSchema,
 	storedSchemaDecodeDispatcher,
 	ErasedTreeNodeSchemaDataFormat,
+	SchemaAndPolicy,
+	Multiplicity,
+	SchemaPolicy,
 } from "./schema-stored/index.js";
 
 export {
@@ -186,6 +189,9 @@ export {
 	RevisionInfo,
 	EncodedRevisionTag,
 	EncodedChangeAtomId,
+	taggedAtomId,
+	taggedOptAtomId,
+	replaceAtomRevisions,
 } from "./rebase/index.js";
 
 export {

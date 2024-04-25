@@ -85,9 +85,10 @@ module.exports = {
 			dependsOn: ["build:esnext"],
 			script: true,
 		},
-		"build:docs": ["tsc"],
+		// With most packages in client building ESM first, there is ideally just "build:esnext" dependency.
 		// The package's local 'api-extractor.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.
+		"build:docs": ["tsc", "build:esnext"],
 		"ci:build:docs": ["tsc", "build:esnext"],
 		"build:readme": {
 			dependsOn: ["build:manifest"],
@@ -167,7 +168,6 @@ module.exports = {
 
 		// Independent packages
 		"build": "common/build",
-		"common-def": "common/lib/common-definitions",
 		"common-utils": "common/lib/common-utils",
 		"protocol-def": "common/lib/protocol-definitions",
 
@@ -207,6 +207,8 @@ module.exports = {
 				// eslint doesn't really depend on build. Doing so just slows down a package build.
 				"^packages/test/snapshots/package.json",
 				"^packages/test/test-utils/package.json",
+				// TODO: AB#7630 uses lint only ts projects for coverage which don't have representative tsc scripts
+				"^packages/tools/fluid-runner/package.json",
 			],
 			"fluid-build-tasks-tsc": [
 				// TODO: AB#7460 fix tsconfig reference path match on Windows
@@ -389,6 +391,7 @@ module.exports = {
 					"fluid-framework",
 					"@fluid-internal/client-utils",
 					"@fluid-internal/mocha-test-setup",
+					"@fluid-internal/test-driver-definitions",
 					"tinylicious",
 				],
 				// A list of packages published to our internal-build feed. Note that packages published
@@ -445,7 +448,6 @@ module.exports = {
 			"@fluid-tools/markdown-magic",
 			"@fluid-tools/telemetry-generator",
 			"@fluidframework/build-common",
-			"@fluidframework/common-definitions",
 			"@fluidframework/common-utils",
 			"@fluidframework/eslint-config-fluid",
 			"@fluid-internal/eslint-plugin-fluid",

@@ -4,22 +4,23 @@
  */
 
 import child_process from "child_process";
+
 import {
 	AzureClient,
-	// eslint-disable-next-line import/no-deprecated
-	AzureFunctionTokenProvider,
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
 	ITokenProvider,
 	IUser,
 } from "@fluidframework/azure-client";
+// eslint-disable-next-line import/no-deprecated
+import { AzureFunctionTokenProvider } from "@fluidframework/azure-client/internal";
 import { ContainerSchema } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map";
-import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
+import { SharedMap } from "@fluidframework/map/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import commander from "commander";
 import { v4 as uuid } from "uuid";
 
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { AzureClientConnectionConfig, ContainerFactorySchema, IRunConfig } from "./interface.js";
 
 export interface AzureClientConfig {

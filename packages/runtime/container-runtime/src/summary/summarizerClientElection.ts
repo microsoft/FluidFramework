@@ -6,7 +6,8 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 import { IClientDetails, MessageType } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	IOrderedClientElection,
 	ISerializedElection,

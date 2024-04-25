@@ -4,8 +4,8 @@
  */
 
 import { ISnapshotTree, SummaryObject } from "@fluidframework/protocol-definitions";
-import { channelsTreeName } from "@fluidframework/runtime-definitions";
-import { ITelemetryLoggerExt, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
+import { ITelemetryLoggerExt, TelemetryDataTag } from "@fluidframework/telemetry-utils/internal";
 
 export interface IRefreshSummaryResult {
 	/** Tells whether this summary is tracked by this client. */

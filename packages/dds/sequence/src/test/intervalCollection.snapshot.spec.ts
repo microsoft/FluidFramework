@@ -4,18 +4,21 @@
  */
 
 import { strict as assert } from "assert";
+
 import { AttachState } from "@fluidframework/container-definitions";
-import { ReferenceType, SlidingPreference } from "@fluidframework/merge-tree";
+import { ReferenceType, SlidingPreference } from "@fluidframework/merge-tree/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
+
 import { IIntervalCollection, Side, intervalLocatorFromEndpoint } from "../intervalCollection.js";
 import { IntervalStickiness, SequenceInterval } from "../intervals/index.js";
 import { SharedStringFactory } from "../sequenceFactory.js";
 import { SharedString } from "../sharedString.js";
+
 import { assertSequenceIntervals } from "./intervalTestUtils.js";
 
 async function loadSharedString(
@@ -24,7 +27,7 @@ async function loadSharedString(
 	summary: ISummaryTree,
 ): Promise<SharedString> {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	dataStoreRuntime.deltaManager.lastSequenceNumber = containerRuntimeFactory.sequenceNumber;
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),

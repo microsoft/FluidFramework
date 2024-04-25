@@ -4,7 +4,14 @@
  */
 
 import { EventEmitter, TypedEventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
-import { AttachState, IAudience, ILoader } from "@fluidframework/container-definitions";
+import {
+	AttachState,
+	IAudience,
+	IAudienceEvents,
+	ISelf,
+} from "@fluidframework/container-definitions";
+import { ILoader, IAudienceOwner } from "@fluidframework/container-definitions/internal";
+import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -13,11 +20,8 @@ import {
 	IResponse,
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
-import { IIdCompressor, IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-
-import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import type { IClient } from "@fluidframework/protocol-definitions";
 import {
 	IChannel,
 	IChannelServices,
@@ -26,6 +30,8 @@ import {
 	IDeltaHandler,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor/internal";
 import {
 	IQuorumClients,
 	ISequencedClient,
@@ -35,17 +41,22 @@ import {
 	MessageType,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
+import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
 	FlushMode,
 	IFluidDataStoreChannel,
-	IGarbageCollectionData,
-	ISummaryTreeWithStats,
 	VisibilityState,
-} from "@fluidframework/runtime-definitions";
-import { getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
+} from "@fluidframework/runtime-definitions/internal";
+import {
+	getNormalizedObjectStoragePathParts,
+	mergeStats,
+} from "@fluidframework/runtime-utils/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
+
 import { MockDeltaManager } from "./mockDeltas.js";
 import { MockHandle } from "./mockHandle.js";
+import { deepFreeze } from "./deepFreeze.js";
 
 /**
  * Mock implementation of IDeltaConnection for testing
@@ -110,7 +121,7 @@ type IMockContainerRuntimeSequencedIdAllocationMessage = ISequencedDocumentMessa
 	contents: IMockContainerRuntimeIdAllocationMessage;
 };
 
-interface IMockContainerRuntimeIdAllocationMessage {
+export interface IMockContainerRuntimeIdAllocationMessage {
 	type: "idAllocation";
 	contents: IdCreationRange;
 }
@@ -149,7 +160,10 @@ const makeContainerRuntimeOptions = (
 	...mockContainerRuntimeOptions,
 });
 
-interface IInternalMockRuntimeMessage {
+/**
+ * @alpha
+ */
+export interface IInternalMockRuntimeMessage {
 	content: any;
 	localOpMetadata?: unknown;
 }
@@ -168,7 +182,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	 */
 	protected readonly deltaConnections: MockDeltaConnection[] = [];
 	protected readonly pendingMessages: IMockContainerRuntimePendingMessage[] = [];
-	private readonly outbox: IInternalMockRuntimeMessage[] = [];
+	protected readonly outbox: IInternalMockRuntimeMessage[] = [];
 	private readonly idAllocationOutbox: IInternalMockRuntimeMessage[] = [];
 	/**
 	 * The runtime options this instance is using. See {@link IMockContainerRuntimeOptions}.
@@ -431,6 +445,10 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		}
 		return [local, localOpMetadata];
 	}
+
+	public async resolveHandle(handle: IFluidHandle) {
+		return this.dataStoreRuntime.resolveHandle({ url: handle.absolutePath });
+	}
 }
 
 /**
@@ -511,6 +529,7 @@ export class MockContainerRuntimeFactory {
 	}
 
 	public pushMessage(msg: Partial<ISequencedDocumentMessage>) {
+		deepFreeze(msg);
 		if (
 			msg.clientId &&
 			msg.referenceSequenceNumber !== undefined &&
@@ -680,6 +699,59 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 	}
 }
 
+/**
+ * @alpha
+ */
+export class MockAudience extends TypedEventEmitter<IAudienceEvents> implements IAudienceOwner {
+	private readonly audienceMembers: Map<string, IClient>;
+	private _currentClientId: string | undefined;
+
+	public constructor() {
+		super();
+		this.audienceMembers = new Map<string, IClient>();
+	}
+
+	public addMember(clientId: string, member: IClient): void {
+		this.audienceMembers.set(clientId, member);
+		this.emit("addMember", clientId, member);
+	}
+
+	public removeMember(clientId: string): boolean {
+		const member = this.audienceMembers.get(clientId);
+		const deleteResult = this.audienceMembers.delete(clientId);
+		this.emit("removeMember", clientId, member);
+		return deleteResult;
+	}
+
+	public getMembers(): Map<string, IClient> {
+		return new Map<string, IClient>(this.audienceMembers.entries());
+	}
+	public getMember(clientId: string): IClient | undefined {
+		return this.audienceMembers.get(clientId);
+	}
+
+	public getSelf() {
+		return this._currentClientId === undefined
+			? undefined
+			: {
+					clientId: this._currentClientId,
+					client: undefined,
+			  };
+	}
+
+	public setCurrentClientId(clientId: string): void {
+		if (this._currentClientId !== clientId) {
+			const oldId = this._currentClientId;
+			this._currentClientId = clientId;
+			this.emit(
+				"selfChanged",
+				oldId === undefined ? undefined : ({ clientId: oldId } satisfies ISelf),
+				{ clientId } satisfies ISelf,
+			);
+		}
+	}
+}
+
 const attachStatesToComparableNumbers = {
 	[AttachState.Detached]: 0,
 	[AttachState.Attaching]: 1,
@@ -740,6 +812,7 @@ export class MockFluidDataStoreRuntime
 	public readonly loader: ILoader = undefined as any;
 	public readonly logger: ITelemetryBaseLogger;
 	public quorum = new MockQuorumClients();
+	private readonly audience = new MockAudience();
 	public containerRuntime?: MockContainerRuntime;
 	public idCompressor?: IIdCompressor & IIdCompressorCore;
 	private readonly deltaConnections: MockDeltaConnection[] = [];
@@ -751,10 +824,6 @@ export class MockFluidDataStoreRuntime
 		);
 		this.deltaConnections.push(deltaConnection);
 		return deltaConnection;
-	}
-
-	public ensureNoDataModelChanges<T>(callback: () => T): T {
-		return callback();
 	}
 
 	public get absolutePath() {
@@ -829,7 +898,7 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public getAudience(): IAudience {
-		return null as any as IAudience;
+		return this.audience;
 	}
 
 	public save(message: string) {
@@ -895,6 +964,13 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public async resolveHandle(request: IRequest): Promise<IResponse> {
+		if (request.url !== undefined) {
+			return {
+				status: 200,
+				mimeType: "fluid/object",
+				value: request.url,
+			};
+		}
 		return this.request(request);
 	}
 

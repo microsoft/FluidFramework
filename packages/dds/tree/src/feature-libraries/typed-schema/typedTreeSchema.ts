@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Lazy } from "@fluidframework/core-utils";
+import { assert, Lazy } from "@fluidframework/core-utils/internal";
+
 import {
 	Adapters,
 	EmptyKey,
@@ -30,6 +31,7 @@ import {
 } from "../../util/index.js";
 import { FieldKinds } from "../default-schema/index.js";
 import { FlexFieldKind, FullSchemaPolicy } from "../modular-schema/index.js";
+
 import { LazyItem } from "./flexList.js";
 import { ObjectToMap, objectToMapTyped } from "./typeUtils.js";
 
@@ -53,7 +55,7 @@ export type NormalizeObjectNodeFields<T extends FlexObjectNodeFields> = {
  * These extends constraints only serve as documentation:
  * to avoid breaking compilation, this type has to not actually enforce anything, and thus is just `unknown`.
  * Therefore the type safety is the responsibility of the user of the API.
- * @beta
+ * @public
  */
 export type Unenforced<_DesiredExtendsConstraint> = unknown;
 
@@ -102,7 +104,7 @@ export class FlexMapNodeSchema<
 			builder,
 			name,
 			specification,
-			new MapNodeStoredSchema(specification),
+			new MapNodeStoredSchema(specification.stored),
 		);
 	}
 
@@ -185,7 +187,8 @@ export class FlexObjectNodeSchema<
 		// Stricter typing caused Specification to no longer be covariant, so has been removed.
 		public readonly objectNodeFields: ReadonlyMap<FieldKey, FlexFieldSchema>,
 	) {
-		super(builder, name, info, new ObjectNodeStoredSchema(objectNodeFields));
+		const fields = mapIterable(objectNodeFields, ([k, v]) => [k, v.stored] as const);
+		super(builder, name, info, new ObjectNodeStoredSchema(new Map(fields)));
 	}
 
 	public override getFieldSchema(field: FieldKey): FlexFieldSchema {
@@ -215,7 +218,7 @@ export class FlexFieldNodeSchema<
 		name: TreeNodeSchemaIdentifier<Name>,
 		info: Specification,
 	) {
-		const objectNodeFields = new Map([[EmptyKey, info as FlexFieldSchema]]);
+		const objectNodeFields = new Map([[EmptyKey, (info as FlexFieldSchema).stored]]);
 		super(builder, name, info, new ObjectNodeStoredSchema(objectNodeFields));
 	}
 
@@ -328,8 +331,7 @@ export type FlexMapFieldSchema = FlexFieldSchema<
 export class FlexFieldSchema<
 	out TKind extends FlexFieldKind = FlexFieldKind,
 	const out TTypes extends Unenforced<FlexAllowedTypes> = FlexAllowedTypes,
-> implements TreeFieldStoredSchema
-{
+> {
 	/**
 	 * Schema for a field which must always be empty.
 	 */
@@ -392,7 +394,8 @@ export class FlexFieldSchema<
 				);
 			}
 		}
-		this.lazyTypes = new Lazy(() => {
+
+		const lazy = new Lazy(() => {
 			const input = this.allowedTypes as unknown as FlexAllowedTypes;
 			const schema = allowedTypesSchemaSet(input);
 			return {
@@ -401,7 +404,18 @@ export class FlexFieldSchema<
 				monomorphicChildType: schema !== Any ? oneFromSet(schema) : undefined,
 			};
 		});
+
+		this.lazyTypes = lazy;
+
+		this.stored = {
+			kind: this.kind.identifier,
+			get types() {
+				return lazy.value.names;
+			},
+		};
 	}
+
+	public readonly stored: TreeFieldStoredSchema;
 
 	/**
 	 * Types which are allowed in this field (by {@link TreeNodeSchemaIdentifier}), in a format optimized for stored schema.
@@ -533,7 +547,7 @@ export interface FlexTreeSchema<out T extends FlexFieldSchema = FlexFieldSchema>
  */
 export function intoStoredSchema(treeSchema: FlexTreeSchema): TreeStoredSchema {
 	return {
-		rootFieldSchema: treeSchema.rootFieldSchema,
+		rootFieldSchema: treeSchema.rootFieldSchema.stored,
 		...intoStoredSchemaCollection(treeSchema),
 	};
 }

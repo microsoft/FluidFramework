@@ -4,7 +4,7 @@
  */
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import * as git from "@fluidframework/gitresources";
 import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
 import {

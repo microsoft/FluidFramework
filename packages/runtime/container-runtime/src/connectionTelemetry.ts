@@ -5,9 +5,9 @@
 
 import { performance } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
-import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
+import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import { IEventProvider } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
@@ -15,12 +15,12 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
 	IEventSampler,
-	ISampledTelemetryLogger,
 	ITelemetryLoggerExt,
+	ISampledTelemetryLogger,
 	createChildLogger,
 	createSampledLogger,
 	formatTick,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 
 /**
  * We report various latency-related errors when waiting for op roundtrip takes longer than that amout of time.
@@ -335,6 +335,7 @@ class OpPerfTelemetry {
 
 		if (
 			this.clientId === message.clientId &&
+			message.type === MessageType.Operation &&
 			(this.opLatencyLogger.isSamplingDisabled ||
 				this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber)
 		) {
@@ -372,6 +373,7 @@ class OpPerfTelemetry {
 					this.deltaManager.lastSequenceNumber - this.deltaManager.minimumSequenceNumber,
 				...latencyData.opPerfData,
 			});
+
 			this.clientSequenceNumberForLatencyStatistics = undefined;
 			this.latencyStatistics.delete(message.clientSequenceNumber);
 		}

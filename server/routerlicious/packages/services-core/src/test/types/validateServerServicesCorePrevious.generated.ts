@@ -55,7 +55,6 @@ declare function get_old_ClassDeclaration_CheckpointService():
 declare function use_current_ClassDeclaration_CheckpointService(
     use: TypeOnly<current.CheckpointService>): void;
 use_current_ClassDeclaration_CheckpointService(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_CheckpointService());
 
 /*
@@ -68,7 +67,6 @@ declare function get_current_ClassDeclaration_CheckpointService():
 declare function use_old_ClassDeclaration_CheckpointService(
     use: TypeOnly<old.CheckpointService>): void;
 use_old_ClassDeclaration_CheckpointService(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_CheckpointService());
 
 /*
@@ -466,7 +464,6 @@ declare function get_old_InterfaceDeclaration_ICheckpointService():
 declare function use_current_InterfaceDeclaration_ICheckpointService(
     use: TypeOnly<current.ICheckpointService>): void;
 use_current_InterfaceDeclaration_ICheckpointService(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ICheckpointService());
 
 /*
@@ -479,7 +476,6 @@ declare function get_current_InterfaceDeclaration_ICheckpointService():
 declare function use_old_InterfaceDeclaration_ICheckpointService(
     use: TypeOnly<old.ICheckpointService>): void;
 use_old_InterfaceDeclaration_ICheckpointService(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ICheckpointService());
 
 /*
@@ -529,6 +525,30 @@ declare function use_old_InterfaceDeclaration_IClientSequenceNumber(
     use: TypeOnly<old.IClientSequenceNumber>): void;
 use_old_InterfaceDeclaration_IClientSequenceNumber(
     get_current_InterfaceDeclaration_IClientSequenceNumber());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IClusterDrainingChecker": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IClusterDrainingChecker():
+    TypeOnly<old.IClusterDrainingChecker>;
+declare function use_current_InterfaceDeclaration_IClusterDrainingChecker(
+    use: TypeOnly<current.IClusterDrainingChecker>): void;
+use_current_InterfaceDeclaration_IClusterDrainingChecker(
+    get_old_InterfaceDeclaration_IClusterDrainingChecker());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IClusterDrainingChecker": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IClusterDrainingChecker():
+    TypeOnly<current.IClusterDrainingChecker>;
+declare function use_old_InterfaceDeclaration_IClusterDrainingChecker(
+    use: TypeOnly<old.IClusterDrainingChecker>): void;
+use_old_InterfaceDeclaration_IClusterDrainingChecker(
+    get_current_InterfaceDeclaration_IClusterDrainingChecker());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -2123,6 +2143,30 @@ use_old_InterfaceDeclaration_IServiceConfiguration(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IServiceMessageResourceManager": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IServiceMessageResourceManager():
+    TypeOnly<old.IServiceMessageResourceManager>;
+declare function use_current_InterfaceDeclaration_IServiceMessageResourceManager(
+    use: TypeOnly<current.IServiceMessageResourceManager>): void;
+use_current_InterfaceDeclaration_IServiceMessageResourceManager(
+    get_old_InterfaceDeclaration_IServiceMessageResourceManager());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IServiceMessageResourceManager": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IServiceMessageResourceManager():
+    TypeOnly<current.IServiceMessageResourceManager>;
+declare function use_old_InterfaceDeclaration_IServiceMessageResourceManager(
+    use: TypeOnly<old.IServiceMessageResourceManager>): void;
+use_old_InterfaceDeclaration_IServiceMessageResourceManager(
+    get_current_InterfaceDeclaration_IServiceMessageResourceManager());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IStorageNameAllocator": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IStorageNameAllocator():
@@ -2874,7 +2918,6 @@ declare function get_old_InterfaceDeclaration_IWebSocketTracker():
 declare function use_current_InterfaceDeclaration_IWebSocketTracker(
     use: TypeOnly<current.IWebSocketTracker>): void;
 use_current_InterfaceDeclaration_IWebSocketTracker(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IWebSocketTracker());
 
 /*

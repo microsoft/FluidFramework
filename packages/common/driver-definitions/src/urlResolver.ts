@@ -93,7 +93,11 @@ export interface IDriverHeader {
 }
 
 declare module "@fluidframework/core-interfaces" {
-	// TODO: This interface should be documented. AB#7164
-	// eslint-disable-next-line @typescript-eslint/no-empty-interface, jsdoc/require-jsdoc
+	/**
+	 * Interface to represent headers to include in the container or data store load request.
+	 * For example, caller can use this to pass on various loader options in the container
+	 * load request.
+	 */
+	// eslint-disable-next-line @typescript-eslint/no-empty-interface
 	export interface IRequestHeader extends Partial<IDriverHeader> {}
 }

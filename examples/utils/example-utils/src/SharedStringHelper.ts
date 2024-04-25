@@ -5,8 +5,8 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEvent } from "@fluidframework/core-interfaces";
-import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
-import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
+import { MergeTreeDeltaType } from "@fluidframework/merge-tree/internal";
+import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence/internal";
 
 /**
  * @internal

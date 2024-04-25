@@ -28,12 +28,23 @@
       ]
     },
     "changes": {
-      "inputContext": [],
-      "intentions": [
-        1
-      ],
-      "outputContext": [
-        1
+      "fieldChanges": [
+        {
+          "fieldKey": "",
+          "fieldKind": "",
+          "change": {
+            "localId": 2,
+            "testChange": {
+              "inputContext": [],
+              "intentions": [
+                1
+              ],
+              "outputContext": [
+                1
+              ]
+            }
+          }
+        }
       ]
     }
   }

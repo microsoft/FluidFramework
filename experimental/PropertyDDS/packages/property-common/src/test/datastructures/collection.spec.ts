@@ -9,7 +9,8 @@
 import lodash from "lodash";
 const { every, includes, keys } = lodash;
 import { expect } from "chai";
-import { Collection } from "../../index.js";
+
+import { Collection } from "../../index";
 
 describe("collection", function () {
 	const createObject = () => ({

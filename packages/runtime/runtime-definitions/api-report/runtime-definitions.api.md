@@ -11,7 +11,7 @@ import type { IClientDetails } from '@fluidframework/protocol-definitions';
 import type { IDeltaManager } from '@fluidframework/container-definitions';
 import type { IDisposable } from '@fluidframework/core-interfaces';
 import type { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import type { IDocumentStorageService } from '@fluidframework/driver-definitions';
+import type { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
 import type { IEvent } from '@fluidframework/core-interfaces';
 import type { IEventProvider } from '@fluidframework/core-interfaces';
 import type { IFluidHandle } from '@fluidframework/core-interfaces';
@@ -33,7 +33,7 @@ import type { TelemetryBaseEventPropertyType } from '@fluidframework/core-interf
 // @alpha
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
-// @internal
+// @alpha
 export interface AttributionInfo {
     timestamp: number;
     user: IUser;
@@ -138,7 +138,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
     orderSequentially(callback: () => void): void;
-    submitSignal(type: string, content: any, targetClientId?: string): void;
+    submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
@@ -257,6 +257,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     deleteChildSummarizerNode(id: string): void;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    // @deprecated
     ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     readonly gcThrowOnTombstoneUsage: boolean;
@@ -282,7 +283,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     // (undocumented)
     readonly storage: IDocumentStorageService;
     submitMessage(type: string, content: any, localOpMetadata: unknown): void;
-    submitSignal(type: string, content: any, targetClientId?: string): void;
+    submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }

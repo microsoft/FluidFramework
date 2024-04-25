@@ -6,13 +6,13 @@
 import * as assert from "assert";
 import * as fs from "fs";
 import path from "path";
-import * as tsTypes from "typescript";
 import isEqual from "lodash.isequal";
+import * as tsTypes from "typescript";
 
 import { readFileSync } from "fs-extra";
-import { existsSync, readFileAsync } from "../../../common/utils";
 import { getInstalledPackageVersion, getRecursiveFiles } from "../../../common/taskUtils";
-import { getTscUtils, TscUtil } from "../../../common/tscUtils";
+import { TscUtil, getTscUtils } from "../../../common/tscUtils";
+import { existsSync, readFileAsync } from "../../../common/utils";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 
 interface ITsBuildInfo {
@@ -458,8 +458,8 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 		try {
 			const tsBuildInfoFiles: ITsBuildInfo[] = [];
 			const tscTasks = [...this.getDependentLeafTasks()].filter(
-				(task) => task.executable === "tsc",
-			);
+				(task) => task instanceof TscTask,
+			) as TscTask[];
 			const ownTscTasks = tscTasks.filter((task) => task.package == this.package);
 
 			// Take only the tsc task in the same package if possible.
@@ -469,7 +469,7 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 			);
 
 			for (const dep of tasks) {
-				const tsBuildInfo = await (dep as TscTask).readTsBuildInfo();
+				const tsBuildInfo = await dep.readTsBuildInfo();
 				if (tsBuildInfo === undefined) {
 					// If any of the tsc task don't have build info, we can't track
 					return undefined;

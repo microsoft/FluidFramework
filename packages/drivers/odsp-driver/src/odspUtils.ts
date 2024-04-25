@@ -5,8 +5,8 @@
 
 import { performance } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
-import { IResolvedUrl, ISnapshot } from "@fluidframework/driver-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IResolvedUrl, ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	type AuthorizationError,
 	NetworkErrorBasic,
@@ -14,7 +14,7 @@ import {
 	OnlineStatus,
 	RetryableError,
 	isOnline,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import {
 	fetchIncorrectResponse,
 	getSPOAndGraphRequestIdsFromResponse,
@@ -26,6 +26,7 @@ import {
 	IOdspUrlParts,
 	ISharingLinkKind,
 	InstrumentedStorageTokenFetcher,
+	InstrumentedTokenFetcher,
 	OdspErrorTypes,
 	OdspResourceTokenFetchOptions,
 	TokenFetchOptions,
@@ -33,7 +34,7 @@ import {
 	isTokenFromCache,
 	snapshotKey,
 	tokenFromResponse,
-} from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type IFluidErrorBase,
 	ITelemetryLoggerExt,
@@ -41,19 +42,14 @@ import {
 	TelemetryDataTag,
 	createChildLogger,
 	wrapError,
-} from "@fluidframework/telemetry-utils";
-import { IOdspSnapshot } from "./contracts.js";
+} from "@fluidframework/telemetry-utils/internal";
+
 import { fetch } from "./fetch.js";
 // eslint-disable-next-line import/no-deprecated
 import { ISnapshotContents } from "./odspPublicUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRepeat";
-
-/**
- * Parse the given url and return the origin (host name)
- */
-export const getOrigin = (url: string): string => new URL(url).origin;
 
 /**
  * @alpha
@@ -340,40 +336,36 @@ export const createOdspLogger = (logger?: ITelemetryBaseLogger): ITelemetryLogge
 		},
 	});
 
-export function evalBlobsAndTrees(snapshot: IOdspSnapshot): {
-	numTrees: number;
-	numBlobs: number;
-	encodedBlobsSize: number;
-	decodedBlobsSize: number;
-} {
-	let numTrees = 0;
-	let numBlobs = 0;
-	let encodedBlobsSize = 0;
-	let decodedBlobsSize = 0;
-	for (const tree of snapshot.trees) {
-		for (const treeEntry of tree.entries) {
-			if (treeEntry.type === "blob") {
-				numBlobs++;
-			} else if (treeEntry.type === "tree") {
-				numTrees++;
-			}
-		}
-	}
-	if (snapshot.blobs !== undefined) {
-		for (const blob of snapshot.blobs) {
-			decodedBlobsSize += blob.size;
-			encodedBlobsSize += blob.content.length;
-		}
-	}
-	return { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize };
+/**
+ * Returns a function that can be used to fetch storage token.
+ * Storage token can not be empty - if original delegate (tokenFetcher argument) returns null result, exception will be thrown
+ */
+export function toInstrumentedOdspStorageTokenFetcher(
+	logger: ITelemetryLoggerExt,
+	resolvedUrlParts: IOdspUrlParts,
+	tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
+): InstrumentedStorageTokenFetcher {
+	const res = toInstrumentedOdspTokenFetcher(
+		logger,
+		resolvedUrlParts,
+		tokenFetcher,
+		true, // throwOnNullToken,
+	);
+	// Drop undefined from signature - we can do it safely due to throwOnNullToken == true above
+	return res as InstrumentedStorageTokenFetcher;
 }
 
+/**
+ * Returns a function that can be used to fetch storage or websocket token.
+ * There are scenarios where websocket token is not required / present (consumer stack and ordering service token),
+ * thus it could return null. Use toInstrumentedOdspStorageTokenFetcher if you deal with storage token.
+ */
 export function toInstrumentedOdspTokenFetcher(
 	logger: ITelemetryLoggerExt,
 	resolvedUrlParts: IOdspUrlParts,
 	tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
 	throwOnNullToken: boolean,
-): InstrumentedStorageTokenFetcher {
+): InstrumentedTokenFetcher {
 	return async (
 		options: TokenFetchOptions,
 		name: string,

@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { runWithRetry } from "@fluidframework/driver-utils";
+import { runWithRetry } from "@fluidframework/driver-utils/internal";
 import type * as git from "@fluidframework/gitresources";
 import {
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+
 import { IWholeFlatSnapshot } from "./contracts.js";
 import { IR11sResponse } from "./restWrapper.js";
 import { IGitManager } from "./storageContracts.js";

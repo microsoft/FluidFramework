@@ -4,12 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer } from "@fluidframework/container-definitions";
+
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	IGarbageCollectionState,
 	concatGarbageCollectionStates,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-runtime/test/gc";
+} from "@fluidframework/container-runtime/internal/test/gc";
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
@@ -17,8 +18,8 @@ import {
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
-} from "@fluidframework/runtime-definitions";
-import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
+} from "@fluidframework/runtime-definitions/internal";
+import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base/internal";
 
 /**
  * Returns the garbage collection state from the GC tree in the summary.

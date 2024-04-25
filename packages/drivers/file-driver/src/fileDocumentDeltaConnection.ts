@@ -8,7 +8,7 @@ import { IDisposable } from "@fluidframework/core-interfaces";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	ConnectionMode,
 	IClientConfiguration,
@@ -20,6 +20,7 @@ import {
 	ITokenClaims,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
+
 import { FileDeltaStorageService } from "./fileDeltaStorageService.js";
 
 const MaxBatchDeltas = 2000;

@@ -5,11 +5,11 @@
 
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { ISharedMap } from "@fluidframework/map";
+import { ISharedMap } from "@fluidframework/map/internal";
 import {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 
 /**
  * @alpha

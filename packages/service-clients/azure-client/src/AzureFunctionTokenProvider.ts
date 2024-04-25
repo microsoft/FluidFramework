@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import axios from "axios";
-
 import { type ITokenProvider, type ITokenResponse } from "@fluidframework/routerlicious-driver";
+import axios from "axios";
 
 import { type AzureMember } from "./interfaces.js";
 

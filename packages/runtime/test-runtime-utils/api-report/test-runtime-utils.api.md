@@ -5,38 +5,41 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
-import { CreateChildSummarizerNodeFn } from '@fluidframework/runtime-definitions';
-import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions';
+import { CreateChildSummarizerNodeFn } from '@fluidframework/runtime-definitions/internal';
+import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions/internal';
 import { EventEmitter } from '@fluid-internal/client-utils';
 import { FluidObject } from '@fluidframework/core-interfaces';
-import { FlushMode } from '@fluidframework/runtime-definitions';
+import { FlushMode } from '@fluidframework/runtime-definitions/internal';
 import { IAudience } from '@fluidframework/container-definitions';
+import { IAudienceEvents } from '@fluidframework/container-definitions';
+import { IAudienceOwner } from '@fluidframework/container-definitions/internal';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import type { IClient } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
-import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
-import type { IContainerRuntimeEvents } from '@fluidframework/container-runtime-definitions';
-import { IdCreationRange } from '@fluidframework/id-compressor';
+import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions/internal';
+import type { IContainerRuntimeEvents } from '@fluidframework/container-runtime-definitions/internal';
+import type { IdCreationRange } from '@fluidframework/id-compressor/internal';
 import { IDeltaConnection } from '@fluidframework/datastore-definitions';
 import { IDeltaHandler } from '@fluidframework/datastore-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDeltaManagerEvents } from '@fluidframework/container-definitions';
 import { IDeltaQueue } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions';
-import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
-import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
+import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
+import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions/internal';
+import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions/internal';
+import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
-import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions';
-import { IIdCompressor } from '@fluidframework/id-compressor';
-import { IIdCompressorCore } from '@fluidframework/id-compressor';
-import { ILoader } from '@fluidframework/container-definitions';
+import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions/internal';
+import type { IIdCompressor } from '@fluidframework/id-compressor';
+import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
+import { ILoader } from '@fluidframework/container-definitions/internal';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
@@ -47,7 +50,7 @@ import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { ITokenResponse } from '@fluidframework/routerlicious-driver';
 import { ITree } from '@fluidframework/protocol-definitions';
@@ -57,11 +60,22 @@ import { MessageType } from '@fluidframework/protocol-definitions';
 import { ReadOnlyInfo } from '@fluidframework/container-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
-import { VisibilityState } from '@fluidframework/runtime-definitions';
+import { VisibilityState } from '@fluidframework/runtime-definitions/internal';
+
+// @internal
+export function deepFreeze<T>(object: T): void;
 
 // @internal
 export interface IInsecureUser extends IUser {
     name: string;
+}
+
+// @alpha (undocumented)
+export interface IInternalMockRuntimeMessage {
+    // (undocumented)
+    content: any;
+    // (undocumented)
+    localOpMetadata?: unknown;
 }
 
 // @alpha
@@ -92,6 +106,26 @@ export class InsecureTokenProvider implements ITokenProvider {
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
 }
 
+// @alpha (undocumented)
+export class MockAudience extends TypedEventEmitter<IAudienceEvents> implements IAudienceOwner {
+    constructor();
+    // (undocumented)
+    addMember(clientId: string, member: IClient): void;
+    // (undocumented)
+    getMember(clientId: string): IClient | undefined;
+    // (undocumented)
+    getMembers(): Map<string, IClient>;
+    // (undocumented)
+    getSelf(): {
+        clientId: string;
+        client: undefined;
+    } | undefined;
+    // (undocumented)
+    removeMember(clientId: string): boolean;
+    // (undocumented)
+    setCurrentClientId(clientId: string): void;
+}
+
 // @alpha
 export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {
     constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactory, mockContainerRuntimeOptions?: IMockContainerRuntimeOptions, overrides?: {
@@ -119,6 +153,8 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     // (undocumented)
     get isDirty(): boolean;
     // (undocumented)
+    protected readonly outbox: IInternalMockRuntimeMessage[];
+    // (undocumented)
     protected readonly overrides?: {
         minimumSequenceNumber?: number | undefined;
     } | undefined;
@@ -127,6 +163,8 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     // (undocumented)
     process(message: ISequencedDocumentMessage): void;
     rebase(): void;
+    // (undocumented)
+    resolveHandle(handle: IFluidHandle): Promise<IResponse>;
     // (undocumented)
     protected reSubmitMessages(messagesToResubmit: {
         content: any;
@@ -450,8 +488,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     get disposed(): boolean;
     // (undocumented)
     readonly documentId: string;
-    // (undocumented)
-    ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     readonly entryPoint: IFluidHandle<FluidObject>;
     // (undocumented)

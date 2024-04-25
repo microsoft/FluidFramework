@@ -6,15 +6,18 @@
 import {
 	AttachState,
 	IAudience,
-	IBatchMessage,
-	IContainerContext,
 	ICriticalContainerError,
 	IDeltaManager,
+} from "@fluidframework/container-definitions";
+import {
+	IBatchMessage,
+	IContainerContext,
 	ILoader,
 	ILoaderOptions,
-} from "@fluidframework/container-definitions";
-import { type FluidObject, type ISignalEnvelope } from "@fluidframework/core-interfaces";
-import { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions";
+} from "@fluidframework/container-definitions/internal";
+import { type FluidObject } from "@fluidframework/core-interfaces";
+import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -25,7 +28,7 @@ import {
 	IVersion,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * {@inheritDoc @fluidframework/container-definitions#IContainerContext}

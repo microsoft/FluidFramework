@@ -4,16 +4,17 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	ITestDataObject,
 	TestDataObjectType,
 	describeCompat,
 } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
-import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
-import { delay } from "@fluidframework/core-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { IGCRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { delay } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { gcTreeKey } from "@fluidframework/runtime-definitions";
+import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -21,7 +22,8 @@ import {
 	createTestConfigProvider,
 	summarizeNow,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
+
 import {
 	getGCDeletedStateFromSummary,
 	getGCStateFromSummary,
@@ -34,8 +36,8 @@ import {
 describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 	// Since these tests depend on these timing windows, they should not be run against drivers talking over the network
 	// (see this.skip() call below)
-	const tombstoneTimeoutMs = 200; // Tombstone at 200ms
-	const sweepGracePeriodMs = 200; // Sweep at 400ms
+	const tombstoneTimeoutMs = 300; // Tombstone at 300ms
+	const sweepGracePeriodMs = 300; // Sweep at 600ms
 
 	const configProvider = createTestConfigProvider();
 	const gcOptions: IGCRuntimeOptions = {

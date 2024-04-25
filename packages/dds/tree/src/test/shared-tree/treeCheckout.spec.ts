@@ -4,10 +4,15 @@
  */
 
 import { strict as assert, fail } from "assert";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
+
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	AllowedUpdateType,
+	CommitKind,
 	FieldUpPath,
+	Revertible,
+	RevertibleStatus,
 	TreeNodeSchemaIdentifier,
 	TreeNodeStoredSchema,
 	TreeStoredSchema,
@@ -26,7 +31,7 @@ import {
 	cursorForJsonableTreeField,
 	intoStoredSchema,
 } from "../../feature-libraries/index.js";
-import { ITreeCheckout, TreeContent } from "../../shared-tree/index.js";
+import { ITreeCheckout, RevertibleFactory, TreeContent } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
 	checkoutWithContent,
@@ -40,6 +45,7 @@ import {
 	stringSequenceRootSchema,
 	validateTreeContent,
 } from "../utils.js";
+import { disposeSymbol } from "../../util/index.js";
 
 const rootField: FieldUpPath = {
 	parent: undefined,
@@ -141,6 +147,62 @@ describe("sharedTreeView", () => {
 				"unsubscribe",
 				"editStart",
 			]);
+		});
+
+		describe("commitApplied", () => {
+			it("is fired for data and schema changes", () => {
+				const provider = new TestTreeProviderLite(1);
+				const checkout = provider.trees[0].checkout;
+
+				const log: string[] = [];
+				const unsubscribe = checkout.events.on("commitApplied", () =>
+					log.push("commitApplied"),
+				);
+
+				assert.equal(log.length, 0);
+
+				checkout.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
+
+				assert.equal(log.length, 1);
+
+				checkout.editor
+					.sequenceField(rootField)
+					.insert(
+						0,
+						cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]),
+					);
+
+				assert.equal(log.length, 2);
+
+				checkout.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+
+				assert.equal(log.length, 3);
+				unsubscribe();
+			});
+
+			it("does not allow schema changes to be reverted", () => {
+				const provider = new TestTreeProviderLite(1);
+				const checkout = provider.trees[0].checkout;
+
+				const log: string[] = [];
+				const unsubscribe = checkout.events.on("commitApplied", (data, getRevertible) =>
+					log.push(getRevertible === undefined ? "not-revertible" : "revertible"),
+				);
+
+				assert.deepEqual(log, []);
+
+				checkout.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
+				checkout.editor
+					.sequenceField(rootField)
+					.insert(
+						0,
+						cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]),
+					);
+				checkout.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+
+				assert.deepEqual(log, ["not-revertible", "revertible", "not-revertible"]);
+				unsubscribe();
+			});
 		});
 	});
 
@@ -364,8 +426,7 @@ describe("sharedTreeView", () => {
 					rootFieldSchema: storedEmptyFieldSchema,
 				};
 				function getSchema(t: ITreeCheckout): "schemaA" | "schemaB" {
-					return t.storedSchema.rootFieldSchema.kind.identifier ===
-						FieldKinds.required.identifier
+					return t.storedSchema.rootFieldSchema.kind === FieldKinds.required.identifier
 						? "schemaA"
 						: "schemaB";
 				}
@@ -574,6 +635,22 @@ describe("sharedTreeView", () => {
 		});
 	});
 
+	describe("disposal", () => {
+		itView("forks can be disposed", (view) => {
+			const fork = view.fork();
+			fork[disposeSymbol]();
+		});
+
+		itView("disposed forks cannot be edited or double-disposed", (view) => {
+			const fork = view.fork();
+			fork[disposeSymbol]();
+
+			assert.throws(() => insertFirstNode(fork, "A"));
+			assert.throws(() => fork.updateSchema(intoStoredSchema(numberSequenceRootSchema)));
+			assert.throws(() => fork[disposeSymbol]());
+		});
+	});
+
 	it("schema edits do not cause clients to purge repair data or revertibles", () => {
 		const provider = new TestTreeProviderLite(2);
 		const checkout1 = provider.trees[0].checkout;
@@ -621,8 +698,8 @@ describe("sharedTreeView", () => {
 
 		checkout1.updateSchema(intoStoredSchema(numberSequenceRootSchema));
 
-		// The undo stack contains both the removal of A and the schema change
-		assert.equal(checkout1Revertibles.undoStack.length, 2);
+		// The undo stack contains the removal of A but not the schema change
+		assert.equal(checkout1Revertibles.undoStack.length, 1);
 		assert.equal(checkout1Revertibles.redoStack.length, 1);
 		assert.deepEqual(checkout1.getRemovedRoots().length, 2);
 
@@ -713,6 +790,204 @@ describe("sharedTreeView", () => {
 				schema: stringSequenceRootSchema,
 				initialTree: ["B", "C"],
 			});
+		});
+	});
+
+	describe("revertibles", () => {
+		itView("can be generated for changes made to the local branch", (view) => {
+			const revertiblesCreated: Revertible[] = [];
+			const unsubscribe = view.events.on("commitApplied", (_, getRevertible) => {
+				assert(getRevertible !== undefined, "commit should be revertible");
+				const revertible = getRevertible();
+				assert.equal(revertible.status, RevertibleStatus.Valid);
+				revertiblesCreated.push(revertible);
+			});
+
+			insertFirstNode(view, "A");
+
+			assert.equal(revertiblesCreated.length, 1);
+
+			insertFirstNode(view, "B");
+
+			assert.equal(revertiblesCreated.length, 2);
+
+			// Each revert also leads to the creation of a revertible event
+			revertiblesCreated[1].revert(false);
+
+			assert.equal(revertiblesCreated.length, 3);
+
+			unsubscribe();
+		});
+
+		itView(
+			"only invokes the onRevertibleDisposed callback when revertible is released",
+			(view) => {
+				const revertiblesCreated: Revertible[] = [];
+
+				const unsubscribe = view.events.on("commitApplied", (_, getRevertible) => {
+					assert(getRevertible !== undefined, "commit should be revertible");
+					const revertible = getRevertible(onRevertibleDisposed);
+					assert.equal(revertible.status, RevertibleStatus.Valid);
+					revertiblesCreated.push(revertible);
+				});
+
+				const revertiblesDisposed: Revertible[] = [];
+
+				function onRevertibleDisposed(disposed: Revertible): void {
+					assert.equal(disposed.status, RevertibleStatus.Disposed);
+					revertiblesDisposed.push(disposed);
+				}
+
+				insertFirstNode(view, "A");
+				insertFirstNode(view, "B");
+
+				assert.equal(revertiblesCreated.length, 2);
+				assert.equal(revertiblesDisposed.length, 0);
+
+				revertiblesCreated[0][disposeSymbol]();
+
+				assert.equal(revertiblesDisposed.length, 1);
+				assert.equal(revertiblesDisposed[0], revertiblesCreated[0]);
+
+				revertiblesCreated[1].revert(false);
+				assert.equal(revertiblesDisposed.length, 1);
+
+				revertiblesCreated[1].revert();
+				assert.equal(revertiblesDisposed.length, 2);
+
+				unsubscribe();
+			},
+		);
+
+		itView(
+			"revertibles cannot be acquired outside of the commitApplied event callback",
+			(view) => {
+				let acquireRevertible: RevertibleFactory | undefined;
+				const unsubscribe = view.events.on("commitApplied", (_, getRevertible) => {
+					assert(getRevertible !== undefined, "commit should be revertible");
+					acquireRevertible = getRevertible;
+				});
+
+				insertFirstNode(view, "A");
+				assert(acquireRevertible !== undefined);
+				assert.throws(() => acquireRevertible?.());
+				unsubscribe();
+			},
+		);
+
+		itView("revertibles cannot be acquired more than once", (view) => {
+			const revertiblesCreated: Revertible[] = [];
+			const unsubscribe1 = view.events.on("commitApplied", (_, getRevertible) => {
+				assert(getRevertible !== undefined, "commit should be revertible");
+				const revertible = getRevertible();
+				assert.equal(revertible.status, RevertibleStatus.Valid);
+				revertiblesCreated.push(revertible);
+			});
+			const unsubscribe2 = view.events.on("commitApplied", (_, getRevertible) => {
+				assert(getRevertible !== undefined, "commit should be revertible");
+				assert.throws(() => getRevertible());
+			});
+
+			insertFirstNode(view, "A");
+			unsubscribe1();
+			unsubscribe2();
+		});
+
+		itView("disposed revertibles cannot be released or reverted", (view) => {
+			const revertiblesCreated: Revertible[] = [];
+			const unsubscribe = view.events.on("commitApplied", (_, getRevertible) => {
+				assert(getRevertible !== undefined, "commit should be revertible");
+				const r = getRevertible();
+				assert.equal(r.status, RevertibleStatus.Valid);
+				revertiblesCreated.push(r);
+			});
+
+			insertFirstNode(view, "A");
+
+			assert.equal(revertiblesCreated.length, 1);
+			const revertible = revertiblesCreated[0];
+
+			revertible[disposeSymbol]();
+			assert.equal(revertible.status, RevertibleStatus.Disposed);
+
+			assert.throws(() => revertible[disposeSymbol]());
+			assert.throws(() => revertible.revert(false));
+
+			assert.equal(revertible.status, RevertibleStatus.Disposed);
+			unsubscribe();
+		});
+
+		itView("commitApplied events have the correct commit kinds", (view) => {
+			const revertiblesCreated: Revertible[] = [];
+			const commitKinds: CommitKind[] = [];
+			const unsubscribe = view.events.on("commitApplied", ({ kind }, getRevertible) => {
+				assert(getRevertible !== undefined, "commit should be revertible");
+				const revertible = getRevertible();
+				assert.equal(revertible.status, RevertibleStatus.Valid);
+				revertiblesCreated.push(revertible);
+				commitKinds.push(kind);
+			});
+
+			insertFirstNode(view, "A");
+			revertiblesCreated[0].revert();
+			revertiblesCreated[1].revert();
+
+			assert.deepEqual(commitKinds, [CommitKind.Default, CommitKind.Undo, CommitKind.Redo]);
+
+			unsubscribe();
+		});
+
+		itView("disposing of a view also disposes of its revertibles", (view) => {
+			const fork = view.fork();
+			const revertiblesCreated: Revertible[] = [];
+			const unsubscribe = fork.events.on("commitApplied", (_, getRevertible) => {
+				assert(getRevertible !== undefined, "commit should be revertible");
+				const r = getRevertible(onRevertibleDisposed);
+				assert.equal(r.status, RevertibleStatus.Valid);
+				revertiblesCreated.push(r);
+			});
+
+			const revertiblesDisposed: Revertible[] = [];
+			function onRevertibleDisposed(disposed: Revertible): void {
+				assert.equal(disposed.status, RevertibleStatus.Disposed);
+				revertiblesDisposed.push(disposed);
+			}
+
+			insertFirstNode(fork, "A");
+
+			assert.equal(revertiblesCreated.length, 1);
+			assert.equal(revertiblesDisposed.length, 0);
+
+			fork[disposeSymbol]();
+
+			assert.equal(revertiblesCreated.length, 1);
+			assert.equal(revertiblesDisposed.length, 1);
+			assert.equal(revertiblesCreated[0], revertiblesDisposed[0]);
+
+			unsubscribe();
+		});
+
+		itView("can be reverted after rebasing", (view) => {
+			const fork = view.fork();
+			insertFirstNode(fork, "A");
+
+			const stacks = createTestUndoRedoStacks(fork.events);
+			insertFirstNode(fork, "B");
+			insertFirstNode(fork, "C");
+
+			fork.rebaseOnto(view);
+
+			assert.equal(getTestValue(fork), "C");
+			// It should still be possible to revert the the child branch's revertibles
+			assert.equal(stacks.undoStack.length, 2);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			stacks.undoStack.pop()!.revert();
+			assert.equal(getTestValue(fork), "B");
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			stacks.undoStack.pop()!.revert();
+			assert.equal(getTestValue(fork), "A");
+
+			stacks.unsubscribe();
 		});
 	});
 });

@@ -10,14 +10,16 @@ import {
 	RevisionMetadataSource,
 	TaggedChange,
 	makeAnonChange,
+	Multiplicity,
+	RevisionTag,
+	replaceAtomRevisions,
 } from "../../core/index.js";
 import { IdAllocator, fail } from "../../util/index.js";
-import { Multiplicity } from "../multiplicity.js";
+
 import { CrossFieldManager } from "./crossFieldQueries.js";
 import {
 	FieldChangeHandler,
 	NodeChangeComposer,
-	NodeChangeInverter,
 	NodeChangePruner,
 	NodeChangeRebaser,
 	RelevantRemovedRootsFromChild,
@@ -25,8 +27,8 @@ import {
 } from "./fieldChangeHandler.js";
 import { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 import { makeGenericChangeCodec } from "./genericFieldKindCodecs.js";
-import { GenericChange, GenericChangeset } from "./genericFieldKindTypes.js";
-import { NodeChangeset } from "./modularChangeTypes.js";
+import { GenericChangeset } from "./genericFieldKindTypes.js";
+import { NodeId } from "./modularChangeTypes.js";
 
 /**
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.
@@ -72,19 +74,12 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			}
 			return composed;
 		},
-		invert: (
-			{ change }: TaggedChange<GenericChangeset>,
-			invertChild: NodeChangeInverter,
-		): GenericChangeset => {
-			return change.map(
-				({ index, nodeChange }: GenericChange): GenericChange => ({
-					index,
-					nodeChange: invertChild(nodeChange),
-				}),
-			);
+		invert: ({ change }: TaggedChange<GenericChangeset>): GenericChangeset => {
+			return change;
 		},
 		rebase: rebaseGenericChange,
 		prune: pruneGenericChange,
+		replaceRevisions,
 	},
 	codecsFactory: makeGenericChangeCodec,
 	editor: {
@@ -127,8 +122,8 @@ function rebaseGenericChange(
 		const b = over[iOver];
 		const aIndex = a?.index ?? Infinity;
 		const bIndex = b?.index ?? Infinity;
-		let nodeChangeA: NodeChangeset | undefined;
-		let nodeChangeB: NodeChangeset | undefined;
+		let nodeChangeA: NodeId | undefined;
+		let nodeChangeB: NodeId | undefined;
 		let index: number;
 		if (aIndex === bIndex) {
 			index = a.index;
@@ -170,6 +165,17 @@ function pruneGenericChange(
 		}
 	}
 	return pruned;
+}
+
+function replaceRevisions(
+	changeset: GenericChangeset,
+	oldRevisions: Set<RevisionTag | undefined>,
+	newRevision: RevisionTag | undefined,
+): GenericChangeset {
+	return changeset.map((change) => ({
+		...change,
+		nodeChange: replaceAtomRevisions(change.nodeChange, oldRevisions, newRevision),
+	}));
 }
 
 /**

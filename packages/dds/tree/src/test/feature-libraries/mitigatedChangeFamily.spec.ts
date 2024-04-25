@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { ChangeFamily, ChangeFamilyEditor, TaggedChange } from "../../core/index.js";
 import { makeMitigatedChangeFamily } from "../../feature-libraries/index.js";
 
@@ -27,10 +28,13 @@ const throwingFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 			assert.equal(isRollback, arg2);
 			throw new Error("invert");
 		},
-		rebase: (change: string, over: TaggedChange<string>): string => {
+		rebase: (change: TaggedChange<string>, over: TaggedChange<string>): string => {
 			assert.equal(change, arg1);
 			assert.equal(over, arg2);
 			throw new Error("rebase");
+		},
+		changeRevision: (): string => {
+			throw new Error("changeRevision");
 		},
 	},
 	codecs: {} as any,
@@ -50,11 +54,12 @@ const returningFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 			assert.equal(isRollback, arg2);
 			return "invert";
 		},
-		rebase: (change: string, over: TaggedChange<string>): string => {
+		rebase: (change: TaggedChange<string>, over: TaggedChange<string>): string => {
 			assert.equal(change, arg1);
 			assert.equal(over, arg2);
 			return "rebase";
 		},
+		changeRevision: (change: string): string => change,
 	},
 	codecs: {} as any,
 };

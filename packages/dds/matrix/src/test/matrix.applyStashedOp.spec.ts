@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	MockContainerRuntimeFactoryForReconnection,
@@ -11,9 +12,11 @@ import {
 	MockDeltaConnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { SharedMatrix, SharedMatrixFactory } from "../index.js";
-import { extract } from "./utils.js";
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { SharedMatrix } from "../index.js";
+
+import { extract, matrixFactory } from "./utils.js";
 
 async function createMatrixForReconnection(
 	id: string,
@@ -34,12 +37,14 @@ async function createMatrixForReconnection(
 			summary !== undefined ? MockStorage.createFromSummary(summary) : new MockStorage(),
 	};
 
-	const matrix = new SharedMatrix(dataStoreRuntime, id, SharedMatrixFactory.Attributes);
+	let matrix: SharedMatrix;
 	if (summary !== undefined) {
-		await matrix.load(services);
+		matrix = await matrixFactory.load(dataStoreRuntime, id, services, matrixFactory.attributes);
 	} else {
+		matrix = matrixFactory.create(dataStoreRuntime, id);
 		matrix.connect(services);
 	}
+
 	return {
 		matrix,
 		containerRuntime,

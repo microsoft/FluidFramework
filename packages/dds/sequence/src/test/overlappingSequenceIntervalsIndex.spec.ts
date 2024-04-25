@@ -6,9 +6,14 @@
 /* eslint-disable jsdoc/check-indentation */
 
 import { strict as assert } from "assert";
+
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { LocalReferencePosition, compareReferencePositions } from "@fluidframework/merge-tree";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import {
+	LocalReferencePosition,
+	compareReferencePositions,
+} from "@fluidframework/merge-tree/internal";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	createOverlappingIntervalsIndex,
 	createOverlappingSequenceIntervalsIndex,
@@ -16,6 +21,7 @@ import {
 import { SequenceInterval } from "../intervals/index.js";
 import { SharedStringFactory } from "../sequenceFactory.js";
 import { SharedString } from "../sharedString.js";
+
 import { RandomIntervalOptions } from "./intervalIndexTestUtils.js";
 
 function assertSequenceIntervalsEqual(
@@ -138,7 +144,6 @@ describe("findOverlappingIntervalsBySegoff", () => {
 	describe("find correct results", () => {
 		let interval1;
 		let interval2;
-		let interval3;
 
 		beforeEach(() => {
 			testSharedString.insertText(0, "ab");
@@ -146,7 +151,7 @@ describe("findOverlappingIntervalsBySegoff", () => {
 			testSharedString.insertText(5, "fg");
 			interval1 = collection.add({ start: 1, end: 1 }).getIntervalId();
 			interval2 = collection.add({ start: 2, end: 3 }).getIntervalId();
-			interval3 = collection.add({ start: 5, end: 6 }).getIntervalId();
+			collection.add({ start: 5, end: 6 });
 		});
 
 		it("when each interval is within a single segment", () => {

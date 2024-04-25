@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
+
 import { assertNotUndefined, fail } from './Common.js';
 import { PlaceValidationResult, RangeValidationResultKind } from './EditUtilities.js';
 import { SharedTreeEvent } from './EventTypes.js';

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { BaseSegment, ISegment } from "./mergeTreeNodes.js";
 import { IJSONSegment } from "./ops.js";
 import { PropertySet } from "./properties.js";
@@ -63,7 +64,7 @@ export class TextSegment extends BaseSegment {
 	public toJSONObject(): IJSONTextSegment | string {
 		// To reduce snapshot/ops size, we serialize a TextSegment as a plain 'string' if it is
 		// not annotated.
-		return this.properties ? { text: this.text, props: this.properties } : this.text;
+		return this.properties ? { text: this.text, props: { ...this.properties } } : this.text;
 	}
 
 	public clone(start = 0, end?: number) {

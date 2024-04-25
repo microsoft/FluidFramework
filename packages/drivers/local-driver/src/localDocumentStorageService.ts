@@ -9,7 +9,7 @@ import {
 	bufferToString,
 	stringToBuffer,
 } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
@@ -17,7 +17,7 @@ import {
 	type ISnapshot,
 	type ISnapshotFetchOptions,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
 import {
 	ICreateBlobResponse,
@@ -32,6 +32,7 @@ import {
 	ISummaryUploadManager,
 	SummaryTreeUploadManager,
 } from "@fluidframework/server-services-client";
+
 import { createDocument } from "./localCreateDocument.js";
 
 const minTTLInSeconds = 24 * 60 * 60; // Same TTL as ODSP
@@ -97,16 +98,19 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		}
 		const rawTree = await this.manager.getTree(versionId);
 		const snapshotTree = buildGitTreeHierarchy(rawTree, this.blobsShaCache, true);
-		if (snapshotFetchOptions?.loadingGroupIds !== undefined) {
-			const groupIds = new Set<string>(snapshotFetchOptions.loadingGroupIds);
+		const groupIds = new Set<string>(snapshotFetchOptions?.loadingGroupIds ?? []);
+		if (groupIds.has("") || groupIds.size === 0) {
+			// If the root is in the groupIds, we don't need to filter the tree.
+			// We can just strip the tree of all groupIds.
+			// If we want to include the root groupId,
+			await this.stripTreeOfMissingLoadingGroupIds(snapshotTree, groupIds);
+		} else {
 			const hasFoundTree = await this.filterTreeByLoadingGroupIds(
 				snapshotTree,
 				groupIds,
 				false,
 			);
 			assert(hasFoundTree, 0x8dd /* No tree found for the given groupIds */);
-		} else {
-			await this.stripTreeOfLoadingGroupIds(snapshotTree);
 		}
 
 		const blobContents = new Map<string, ArrayBufferLike>();
@@ -131,16 +135,19 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 	 * @param tree - The tree to strip of loading groupIds
 	 * @returns a tree that has trees with groupIds that are empty
 	 */
-	private async stripTreeOfLoadingGroupIds(tree: ISnapshotTreeEx) {
+	private async stripTreeOfMissingLoadingGroupIds(
+		tree: ISnapshotTreeEx,
+		loadingGroupIds: Set<string>,
+	) {
 		const groupId = await this.readGroupId(tree);
-		if (groupId !== undefined) {
+		if (groupId !== undefined && !loadingGroupIds.has(groupId)) {
 			// strip
 			this.stripTree(tree, groupId);
 			return;
 		}
 		await Promise.all(
 			Object.values(tree.trees).map(async (childTree) => {
-				await this.stripTreeOfLoadingGroupIds(childTree);
+				await this.stripTreeOfMissingLoadingGroupIds(childTree, loadingGroupIds);
 			}),
 		);
 	}

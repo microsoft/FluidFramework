@@ -5,21 +5,19 @@
 
 import { EventEmitter } from "@fluid-internal/client-utils";
 import { ReadOnlyInfo } from "@fluidframework/container-definitions";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IChannelFactory,
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import {
-	IFluidSerializer,
-	SharedObject,
-	createSingleBlobSummary,
-} from "@fluidframework/shared-object-base";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+
 import { ITaskManager, ITaskManagerEvents } from "./interfaces.js";
 import { TaskManagerFactory } from "./taskManagerFactory.js";
 
@@ -62,7 +60,7 @@ const placeholderClientId = "placeholder";
  * {@inheritDoc ITaskManager}
  *
  * @sealed
- * @internal
+ * @alpha
  */
 export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITaskManager {
 	/**

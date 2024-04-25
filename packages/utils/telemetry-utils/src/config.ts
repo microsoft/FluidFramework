@@ -8,7 +8,8 @@ import {
 	IConfigProviderBase,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { Lazy } from "@fluidframework/core-utils";
+import { Lazy } from "@fluidframework/core-utils/internal";
+
 import { createChildLogger, tagCodeArtifacts } from "./logger.js";
 import { ITelemetryLoggerExt } from "./telemetryTypes.js";
 

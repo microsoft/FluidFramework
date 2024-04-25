@@ -4,7 +4,7 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
@@ -16,7 +16,8 @@ import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+
 import { ICodecOptions, IJsonCodec } from "../../codec/index.js";
 import { MutableTreeStoredSchema, TreeStoredSchema, schemaDataIsEmpty } from "../../core/index.js";
 import {
@@ -26,6 +27,7 @@ import {
 } from "../../shared-tree-core/index.js";
 import { JsonCompatible } from "../../util/index.js";
 import { CollabWindow } from "../incrementalSummarizationUtils.js";
+
 import { encodeRepo, makeSchemaCodec } from "./codec.js";
 import { Format } from "./format.js";
 

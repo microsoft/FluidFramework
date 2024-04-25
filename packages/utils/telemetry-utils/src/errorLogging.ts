@@ -3,12 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ILoggingError,
-	ITelemetryBaseProperties,
-	Tagged,
-} from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseProperties, Tagged } from "@fluidframework/core-interfaces";
+import type { ILoggingError } from "@fluidframework/core-interfaces/internal";
 import { v4 as uuid } from "uuid";
+
 import {
 	IFluidErrorBase,
 	hasErrorInstanceId,

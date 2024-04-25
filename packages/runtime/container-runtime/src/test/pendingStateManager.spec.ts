@@ -4,14 +4,12 @@
  */
 
 import assert from "assert";
-import Deque from "double-ended-queue";
 
-import {
-	ContainerErrorTypes,
-	ICriticalContainerError,
-} from "@fluidframework/container-definitions";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { isILoggingError } from "@fluidframework/telemetry-utils";
+import { isILoggingError } from "@fluidframework/telemetry-utils/internal";
+import Deque from "double-ended-queue";
 
 import type {
 	RecentlyAddedContainerRuntimeMessageDetails,
@@ -292,6 +290,40 @@ describe("Pending State Manager", () => {
 				})),
 			);
 			assert.strictEqual(closeError, undefined, "unexpected close");
+		});
+
+		describe("getLocalState", () => {
+			it("removes ops with rsn lower than snapshot", () => {
+				const messages = Array.from({ length: 10 }, (_, i) => ({
+					clientId: "clientId",
+					type: MessageType.Operation,
+					clientSequenceNumber: 0,
+					contents: { prop1: true },
+					referenceSequenceNumber: i,
+				}));
+				submitBatch(messages);
+				process(messages);
+				let pendingState = pendingStateManager.getLocalState(0).pendingStates;
+				assert.strictEqual(pendingState.length, 10);
+				pendingState = pendingStateManager.getLocalState(5).pendingStates;
+				assert.strictEqual(pendingState.length, 5);
+				pendingState = pendingStateManager.getLocalState(10).pendingStates;
+				assert.strictEqual(pendingState.length, 0);
+			});
+
+			it("throws when trying to get unprocessed ops older than snapshot", () => {
+				const messages = Array.from({ length: 10 }, (_, i) => ({
+					clientId: "clientId",
+					type: MessageType.Operation,
+					clientSequenceNumber: 0,
+					contents: { prop1: true },
+					referenceSequenceNumber: i,
+				}));
+				submitBatch(messages);
+				assert.throws(() => pendingStateManager.getLocalState(1));
+				const pendingState = pendingStateManager.getLocalState(0).pendingStates;
+				assert.strictEqual(pendingState.length, 10);
+			});
 		});
 	});
 

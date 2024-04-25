@@ -4,6 +4,7 @@
  */
 
 import {
+	ChangeAtomId,
 	ChangeAtomIdMap,
 	ChangesetLocalId,
 	FieldKey,
@@ -22,15 +23,16 @@ export interface ModularChangeset extends HasFieldChanges {
 	 * The numerically highest `ChangesetLocalId` used in this changeset.
 	 * If undefined then this changeset contains no IDs.
 	 */
-	maxId?: ChangesetLocalId;
+	readonly maxId?: ChangesetLocalId;
 	/**
 	 * The revisions included in this changeset, ordered temporally (oldest to newest).
 	 * Undefined for anonymous changesets.
 	 * Should never be empty.
 	 */
 	readonly revisions?: readonly RevisionInfo[];
-	fieldChanges: FieldChangeMap;
-	constraintViolationCount?: number;
+	readonly fieldChanges: FieldChangeMap;
+	readonly nodeChanges: ChangeAtomIdMap<NodeChangeset>;
+	readonly constraintViolationCount?: number;
 	readonly builds?: ChangeAtomIdMap<TreeChunk>;
 	readonly destroys?: ChangeAtomIdMap<number>;
 	readonly refreshers?: ChangeAtomIdMap<TreeChunk>;
@@ -50,6 +52,8 @@ export interface NodeExistsConstraint {
 export interface NodeChangeset extends HasFieldChanges {
 	nodeExistsConstraint?: NodeExistsConstraint;
 }
+
+export type NodeId = ChangeAtomId;
 
 /**
  * @internal

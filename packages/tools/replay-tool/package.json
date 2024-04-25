@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/replay-tool",
-	"version": "2.0.0-rc.3.0.0",
+	"version": "2.0.0-rc.4.0.0",
 	"private": true,
 	"description": "A tool that lets the user to replay ops.",
 	"homepage": "https://fluidframework.com",
@@ -12,29 +12,38 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
+	"main": "lib/index.js",
+	"types": "lib/index.d.ts",
 	"bin": {
 		"replayTool": "bin/replayTool"
 	},
 	"scripts": {
-		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "api-extractor run --local",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "fluid-build . --task api",
-		"check:biome": "biome check .",
+		"build:esnext": "tsc --project ./tsconfig.json",
+		"check:are-the-types-wrong": "attw --pack .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
-		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "fluid-build --task format .",
-		"format:biome": "biome check --apply .",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"tsc": "tsc"
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
 		"@fluid-experimental/ink": "workspace:~",
@@ -67,12 +76,12 @@
 		"json-stable-stringify": "^1.0.1"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.6.2",
-		"@fluid-tools/build-cli": "^0.34.0",
+		"@fluid-tools/build-cli": "^0.37.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.34.0",
+		"@fluidframework/build-tools": "^0.37.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@microsoft/api-extractor": "^7.42.3",
 		"@types/json-stable-stringify": "^1.0.32",
 		"@types/node": "^18.19.0",
 		"copyfiles": "^2.4.1",
@@ -80,17 +89,6 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6"
-	},
-	"fluidBuild": {
-		"tasks": {
-			"build:docs": {
-				"dependsOn": [
-					"...",
-					"api-extractor:commonjs"
-				],
-				"script": false
-			}
-		}
 	},
 	"typeValidation": {
 		"disabled": true,

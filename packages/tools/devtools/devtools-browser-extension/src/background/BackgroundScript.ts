@@ -7,7 +7,7 @@ import {
 	type ISourcedDevtoolsMessage,
 	devtoolsMessageSource,
 	isDevtoolsMessage,
-} from "@fluidframework/devtools-core";
+} from "@fluidframework/devtools-core/internal";
 
 import { browser } from "../Globals.js";
 import {
@@ -20,6 +20,7 @@ import {
 	postMessageToPort,
 	relayMessageToPort,
 } from "../messaging/index.js";
+
 import {
 	backgroundScriptMessageLoggingOptions,
 	formatBackgroundScriptMessageForLogging,

@@ -11,6 +11,7 @@
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
 [SharedString]: {{< relref "/docs/data-structures/string.md" >}}
 [Sequences]: {{< relref "/docs/data-structures/sequences.md" >}}
+[SharedTree]: {{< relref "/docs/data-structures/tree.md" >}}
 
 <!-- API links -->
 

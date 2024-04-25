@@ -12,8 +12,8 @@ import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions';
-import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
+import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions/internal';
+import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntimeEvents } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
@@ -27,9 +27,9 @@ import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
-import { VisibilityState } from '@fluidframework/runtime-definitions';
+import { VisibilityState } from '@fluidframework/runtime-definitions/internal';
 
 // @alpha (undocumented)
 export enum DataStoreMessageType {
@@ -69,7 +69,6 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     dispose(): void;
     // (undocumented)
     get disposed(): boolean;
-    ensureNoDataModelChanges<T>(callback: () => T): T;
     readonly entryPoint: IFluidHandle<FluidObject>;
     getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
     // (undocumented)
@@ -116,7 +115,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     setConnectionState(connected: boolean, clientId?: string): void;
     // (undocumented)
     submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
-    submitSignal(type: string, content: any, targetClientId?: string): void;
+    submitSignal(type: string, content: unknown, targetClientId?: string): void;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
     updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
@@ -150,7 +149,7 @@ export interface ISharedObjectRegistry {
     get(name: string): IChannelFactory | undefined;
 }
 
-// @internal
+// @alpha
 export const mixinRequestHandler: (requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>, Base?: typeof FluidDataStoreRuntime) => typeof FluidDataStoreRuntime;
 
 // @alpha

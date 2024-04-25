@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
 	EmptyKey,
 	FieldKey,
@@ -12,14 +13,12 @@ import {
 	mapCursorField,
 	mapCursorFields,
 } from "../../core/index.js";
-import {
-	CursorAdapter,
-	isFluidHandle,
-	stackTreeNodeCursor,
-} from "../../feature-libraries/index.js";
+import { CursorAdapter, stackTreeNodeCursor } from "../../feature-libraries/index.js";
 import { JsonCompatible } from "../../util/index.js";
 import { leaf } from "../leafDomain.js";
+
 import { jsonArray, jsonObject } from "./jsonDomainSchema.js";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 const adapter: CursorAdapter<JsonCompatible> = {
 	value: (node: JsonCompatible) =>

@@ -6,33 +6,34 @@
 import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-nodejs-modules
 import * as crypto from "crypto";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import {
-	ConfigTypes,
-	IConfigProviderBase,
-	IFluidHandle,
-	IRequest,
-} from "@fluidframework/core-interfaces";
-import { type ISharedMap, SharedMap } from "@fluidframework/map";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import {
-	ChannelFactoryRegistry,
-	createSummarizerFromFactory,
-	summarizeNow,
-} from "@fluidframework/test-utils";
 
 import { assertDocumentTypeInfo, isDocumentMapInfo } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
-} from "@fluidframework/aqueduct";
+} from "@fluidframework/aqueduct/internal";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 	ISummarizer,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	IFluidHandle,
+	IRequest,
+} from "@fluidframework/core-interfaces";
+import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import {
+	ChannelFactoryRegistry,
+	createSummarizerFromFactory,
+	summarizeNow,
+} from "@fluidframework/test-utils/internal";
+
 import {
 	IDocumentLoaderAndSummarizer,
 	IDocumentProps,

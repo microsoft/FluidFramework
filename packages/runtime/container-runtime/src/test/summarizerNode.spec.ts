@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { ILoggingError } from "@fluidframework/core-interfaces";
+import { ILoggingError } from "@fluidframework/core-interfaces/internal";
 import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
@@ -17,9 +17,9 @@ import {
 	ISummarizerNode,
 	ISummarizerNodeConfig,
 	channelsTreeName,
-} from "@fluidframework/runtime-definitions";
-import { mergeStats } from "@fluidframework/runtime-utils";
-import { TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/runtime-definitions/internal";
+import { mergeStats } from "@fluidframework/runtime-utils/internal";
+import { TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { IRootSummarizerNode, createRootSummarizerNode } from "../summary/index.js";
 // eslint-disable-next-line import/no-internal-modules

@@ -6,7 +6,7 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IDisposable, IEvent } from "@fluidframework/core-interfaces";
-import { assert, Deferred } from "@fluidframework/core-utils";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
@@ -15,7 +15,7 @@ import {
 	ISummaryNack,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Interface for summary op messages with typed contents.

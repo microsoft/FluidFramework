@@ -4,7 +4,9 @@
  */
 
 import { strict } from "assert";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+
 import {
 	ChangesetLocalId,
 	DeltaFieldChanges,
@@ -13,12 +15,14 @@ import {
 	RevisionTag,
 	TaggedChange,
 	makeAnonChange,
+	mapTaggedChange,
 	revisionMetadataSourceFromInfo,
 	tagChange,
+	tagRollbackInverse,
 } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
+import { NodeId, RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
@@ -58,21 +62,26 @@ import {
 	getOrAddEmptyToMap,
 	idAllocatorFromMaxId,
 } from "../../../util/index.js";
-import { TestChange } from "../../testChange.js";
 import {
 	assertFieldChangesEqual,
-	deepFreeze,
 	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
 } from "../../utils.js";
-import { TestChangeset } from "./testEdits.js";
 
-export function assertChangesetsEqual<T>(actual: SF.Changeset<T>, expected: SF.Changeset<T>): void {
+import { ChangesetWrapper } from "../../changesetWrapper.js";
+import { TestNodeId } from "../../testNodeId.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+
+export function assertWrappedChangesetsEqual(actual: WrappedChange, expected: WrappedChange): void {
+	ChangesetWrapper.assertEqual(actual, expected, assertChangesetsEqual);
+}
+
+export function assertChangesetsEqual(actual: SF.Changeset, expected: SF.Changeset): void {
 	const updatedExpected = purgeUnusedCellOrderingInfo(expected);
 	strict.deepEqual(actual, updatedExpected);
 }
 
-export function purgeUnusedCellOrderingInfo<T>(change: SF.Changeset<T>): SF.Changeset<T> {
+export function purgeUnusedCellOrderingInfo(change: SF.Changeset): SF.Changeset {
 	switch (sequenceConfig.cellOrdering) {
 		case CellOrderingMethod.Tombstone:
 			return withoutLineage(change);
@@ -144,42 +153,60 @@ export function withOrderingMethod(
 	}
 }
 
+export function composeDeep(
+	changes: TaggedChange<WrappedChange>[],
+	revisionMetadata?: RevisionMetadataSource,
+): WrappedChange {
+	const metadata = revisionMetadata ?? defaultRevisionMetadataFromChanges(changes);
+
+	return changes.reduce(
+		(change1, change2) =>
+			makeAnonChange(
+				ChangesetWrapper.compose(change1, change2, (c1, c2, composeChild) =>
+					composePair(c1, c2, composeChild, metadata, idAllocatorFromMaxId()),
+				),
+			),
+		makeAnonChange(ChangesetWrapper.create([])),
+	).change;
+}
+
 export function composeNoVerify(
-	changes: TaggedChange<TestChangeset>[],
+	changes: TaggedChange<SF.Changeset>[],
 	revInfos?: RevisionInfo[],
-): TestChangeset {
+): SF.Changeset {
+	return composeI(changes, (id1, id2) => TestNodeId.composeChild(id1, id2, false), revInfos);
+}
+
+export function composeShallow(changes: TaggedChange<SF.Changeset>[]): SF.Changeset {
 	return composeI(
 		changes,
-		(change1, change2) => TestChange.compose(change1, change2, false),
-		revInfos,
+		(id1, id2) => id1 ?? id2 ?? fail("Should not compose two undefined IDs"),
 	);
 }
 
 export function compose(
-	changes: TaggedChange<TestChangeset>[],
+	changes: TaggedChange<SF.Changeset>[],
 	revInfos?: RevisionInfo[] | RevisionMetadataSource,
-	childComposer?: (
-		change1: TestChange | undefined,
-		change2: TestChange | undefined,
-	) => TestChange,
-): TestChangeset {
-	return composeI(changes, childComposer ?? TestChange.compose, revInfos);
+	childComposer?: (change1: NodeId | undefined, change2: NodeId | undefined) => NodeId,
+): SF.Changeset {
+	return composeI(changes, childComposer ?? TestNodeId.composeChild, revInfos);
+}
+
+export function pruneDeep(change: WrappedChange): WrappedChange {
+	return ChangesetWrapper.prune(change, (c, childPruner) => prune(c, childPruner));
 }
 
 export function prune(
-	change: TestChangeset,
-	childPruner?: (child: TestChange) => TestChange | undefined,
-): TestChangeset {
-	return SF.sequenceFieldChangeRebaser.prune(
-		change,
-		childPruner ?? ((child: TestChange) => (TestChange.isEmpty(child) ? undefined : child)),
-	);
+	change: SF.Changeset,
+	childPruner?: (child: NodeId) => NodeId | undefined,
+): SF.Changeset {
+	return SF.sequenceFieldChangeRebaser.prune(change, childPruner ?? ((child: NodeId) => child));
 }
 
-export function shallowCompose<T>(
-	changes: TaggedChange<SF.Changeset<T>>[],
+export function shallowCompose(
+	changes: TaggedChange<SF.Changeset>[],
 	revInfos?: RevisionInfo[],
-): SF.Changeset<T> {
+): SF.Changeset {
 	return composeI(
 		changes,
 		(child1, child2) => {
@@ -193,11 +220,11 @@ export function shallowCompose<T>(
 	);
 }
 
-function composeI<T>(
-	changes: TaggedChange<SF.Changeset<T>>[],
-	composer: (change1: T | undefined, change2: T | undefined) => T,
+function composeI(
+	changes: TaggedChange<SF.Changeset>[],
+	composer: (change1: NodeId | undefined, change2: NodeId | undefined) => NodeId,
 	revInfos?: RevisionInfo[] | RevisionMetadataSource,
-): SF.Changeset<T> {
+): SF.Changeset {
 	const updatedChanges = changes.map(({ change, revision, rollbackOf }) => ({
 		change: purgeUnusedCellOrderingInfo(change),
 		revision,
@@ -211,7 +238,7 @@ function composeI<T>(
 				: revInfos
 			: defaultRevisionMetadataFromChanges(updatedChanges);
 
-	let composed: SF.Changeset<T> = [];
+	let composed: SF.Changeset = [];
 	for (const change of updatedChanges) {
 		composed = composePair(makeAnonChange(composed), change, composer, metadata, idAllocator);
 	}
@@ -219,13 +246,13 @@ function composeI<T>(
 	return composed;
 }
 
-function composePair<T>(
-	change1: TaggedChange<SF.Changeset<T>>,
-	change2: TaggedChange<SF.Changeset<T>>,
-	composer: (change1: T | undefined, change2: T | undefined) => T,
+function composePair(
+	change1: TaggedChange<SF.Changeset>,
+	change2: TaggedChange<SF.Changeset>,
+	composer: (change1: NodeId | undefined, change2: NodeId | undefined) => NodeId,
 	metadata: RevisionMetadataSource,
 	idAllocator: IdAllocator,
-): SF.Changeset<T> {
+): SF.Changeset {
 	const moveEffects = SF.newCrossFieldTable();
 	let composed = SF.compose(change1, change2, composer, idAllocator, moveEffects, metadata);
 
@@ -239,28 +266,30 @@ function composePair<T>(
 export interface RebaseConfig {
 	readonly metadata?: RebaseRevisionMetadata;
 	readonly childRebaser?: (
-		child: TestChange | undefined,
-		base: TestChange | undefined,
-	) => TestChange | undefined;
+		child: NodeId | undefined,
+		base: NodeId | undefined,
+	) => NodeId | undefined;
 }
 
 export function rebase(
-	change: TestChangeset,
-	base: TaggedChange<TestChangeset>,
+	change: TaggedChange<SF.Changeset>,
+	base: TaggedChange<SF.Changeset>,
 	config: RebaseConfig = {},
-): TestChangeset {
-	const cleanChange = purgeUnusedCellOrderingInfo(change);
+): SF.Changeset {
+	const cleanChange = purgeUnusedCellOrderingInfo(change.change);
 	const cleanBase = { ...base, change: purgeUnusedCellOrderingInfo(base.change) };
 	deepFreeze(cleanChange);
 	deepFreeze(cleanBase);
 
 	const metadata =
 		config.metadata ??
-		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([cleanBase]), [
-			cleanBase.revision,
-		]);
+		rebaseRevisionMetadataFromInfo(
+			defaultRevInfosFromChanges([cleanBase, change]),
+			change.revision,
+			[cleanBase.revision],
+		);
 
-	const childRebaser = config.childRebaser ?? TestChange.rebase;
+	const childRebaser = config.childRebaser ?? TestNodeId.rebaseChild;
 
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = idAllocatorFromMaxId(getMaxId(cleanChange, cleanBase.change));
@@ -287,23 +316,25 @@ export function rebase(
 }
 
 export function rebaseTagged(
-	change: TaggedChange<TestChangeset>,
-	baseChange: TaggedChange<TestChangeset>,
-): TaggedChange<TestChangeset> {
+	change: TaggedChange<SF.Changeset>,
+	baseChange: TaggedChange<SF.Changeset>,
+): TaggedChange<SF.Changeset> {
 	return rebaseOverChanges(change, [baseChange]);
 }
 
 export function rebaseOverChanges(
-	change: TaggedChange<TestChangeset>,
-	baseChanges: TaggedChange<TestChangeset>[],
+	change: TaggedChange<SF.Changeset>,
+	baseChanges: TaggedChange<SF.Changeset>[],
 	revInfos?: RevisionInfo[],
-): TaggedChange<TestChangeset> {
+): TaggedChange<SF.Changeset> {
 	let currChange = change;
-	const revisionInfo = revInfos ?? defaultRevInfosFromChanges(baseChanges);
+	const revisionInfo = revInfos ?? defaultRevInfosFromChanges([...baseChanges, change]);
 	for (const base of baseChanges) {
 		currChange = tagChange(
-			rebase(currChange.change, base, {
-				metadata: rebaseRevisionMetadataFromInfo(revisionInfo, [base.revision]),
+			rebase(currChange, base, {
+				metadata: rebaseRevisionMetadataFromInfo(revisionInfo, change.revision, [
+					base.revision,
+				]),
 			}),
 			currChange.revision,
 		);
@@ -313,11 +344,26 @@ export function rebaseOverChanges(
 }
 
 export function rebaseOverComposition(
-	change: TestChangeset,
-	base: TestChangeset,
+	change: SF.Changeset,
+	base: SF.Changeset,
 	metadata: RebaseRevisionMetadata,
-): TestChangeset {
-	return rebase(change, makeAnonChange(base), { metadata });
+): SF.Changeset {
+	return rebase(makeAnonChange(change), makeAnonChange(base), { metadata });
+}
+
+export type WrappedChange = ChangesetWrapper<SF.Changeset>;
+
+export function rebaseDeepTagged(
+	change: TaggedChange<WrappedChange>,
+	base: TaggedChange<WrappedChange>,
+	metadata?: RebaseRevisionMetadata,
+): TaggedChange<WrappedChange> {
+	return mapTaggedChange(
+		change,
+		ChangesetWrapper.rebase(change, base, (c, b, childRebaser) =>
+			rebase(c, b, { childRebaser, metadata }),
+		),
+	);
 }
 
 function resetCrossFieldTable(table: SF.CrossFieldTable) {
@@ -326,14 +372,17 @@ function resetCrossFieldTable(table: SF.CrossFieldTable) {
 	table.dstQueries.clear();
 }
 
-export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
+export function invertDeep(change: TaggedChange<WrappedChange>): WrappedChange {
+	return ChangesetWrapper.invert(change, (c) => invert(c));
+}
+
+export function invert(change: TaggedChange<SF.Changeset>): SF.Changeset {
 	const cleanChange = { ...change, change: purgeUnusedCellOrderingInfo(change.change) };
 	deepFreeze(cleanChange);
 	const table = SF.newCrossFieldTable();
 	const revisionMetadata = defaultRevisionMetadataFromChanges([cleanChange]);
 	let inverted = SF.invert(
 		cleanChange,
-		TestChange.invert,
 		true,
 		// Sequence fields should not generate IDs during invert
 		fakeIdAllocator,
@@ -347,7 +396,6 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 		table.dstQueries.clear();
 		inverted = SF.invert(
 			cleanChange,
-			TestChange.invert,
 			true,
 			// Sequence fields should not generate IDs during invert
 			fakeIdAllocator,
@@ -359,18 +407,16 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 	return inverted;
 }
 
-export function checkDeltaEquality(actual: TestChangeset, expected: TestChangeset) {
+export function checkDeltaEquality(actual: SF.Changeset, expected: SF.Changeset) {
 	assertFieldChangesEqual(toDelta(actual), toDelta(expected));
 }
 
-export function toDelta(change: TestChangeset, revision?: RevisionTag): DeltaFieldChanges {
+export function toDelta(change: SF.Changeset, revision?: RevisionTag): DeltaFieldChanges {
 	deepFreeze(change);
-	return SF.sequenceFieldToDelta(tagChange(change, revision), (childChange) =>
-		TestChange.toDelta(tagChange(childChange, revision)),
-	);
+	return SF.sequenceFieldToDelta(tagChange(change, revision), TestNodeId.deltaFromChild);
 }
 
-export function getMaxId(...changes: SF.Changeset<unknown>[]): ChangesetLocalId | undefined {
+export function getMaxId(...changes: SF.Changeset[]): ChangesetLocalId | undefined {
 	let max: ChangesetLocalId | undefined;
 	for (const change of changes) {
 		for (const mark of change) {
@@ -384,17 +430,21 @@ export function getMaxId(...changes: SF.Changeset<unknown>[]): ChangesetLocalId 
 }
 
 export function getMaxIdTagged(
-	changes: TaggedChange<SF.Changeset<unknown>>[],
+	changes: TaggedChange<SF.Changeset>[],
 ): ChangesetLocalId | undefined {
 	return getMaxId(...changes.map((c) => c.change));
 }
 
-export function continuingAllocator(changes: TaggedChange<SF.Changeset<unknown>>[]): IdAllocator {
+export function continuingAllocator(changes: TaggedChange<SF.Changeset>[]): IdAllocator {
 	return idAllocatorFromMaxId(getMaxIdTagged(changes));
 }
 
-export function withoutLineage<T>(changeset: SF.Changeset<T>): SF.Changeset<T> {
-	const factory = new SF.MarkListFactory<T>();
+export function withoutLineageDeep(changeset: WrappedChange): WrappedChange {
+	return { ...changeset, fieldChange: withoutLineage(changeset.fieldChange) };
+}
+
+export function withoutLineage(changeset: SF.Changeset): SF.Changeset {
+	const factory = new SF.MarkListFactory();
 	for (const mark of changeset) {
 		const cloned = SF.cloneMark(mark);
 		if (cloned.cellId !== undefined) {
@@ -414,8 +464,12 @@ export function withoutLineage<T>(changeset: SF.Changeset<T>): SF.Changeset<T> {
 	return factory.list;
 }
 
-export function withoutTombstones<T>(changeset: SF.Changeset<T>): SF.Changeset<T> {
-	const factory = new SF.MarkListFactory<T>();
+export function withoutTombstonesDeep(changeset: WrappedChange): WrappedChange {
+	return { ...changeset, fieldChange: withoutTombstones(changeset.fieldChange) };
+}
+
+export function withoutTombstones(changeset: SF.Changeset): SF.Changeset {
+	const factory = new SF.MarkListFactory();
 	for (const mark of changeset) {
 		if (!isTombstone(mark)) {
 			factory.push(mark);
@@ -425,8 +479,12 @@ export function withoutTombstones<T>(changeset: SF.Changeset<T>): SF.Changeset<T
 	return factory.list;
 }
 
-export function withNormalizedLineage<T>(changeset: SF.Changeset<T>): SF.Changeset<T> {
-	const factory = new SF.MarkListFactory<T>();
+export function withNormalizedLineageDeep(changeset: WrappedChange): WrappedChange {
+	return { ...changeset, fieldChange: withNormalizedLineage(changeset.fieldChange) };
+}
+
+export function withNormalizedLineage(changeset: SF.Changeset): SF.Changeset {
+	const factory = new SF.MarkListFactory();
 	for (const mark of changeset) {
 		if (mark.cellId?.lineage === undefined) {
 			factory.push(mark);
@@ -494,7 +552,7 @@ export class DetachedNodeTracker {
 	 * @param change - The change that is being applied. Not mutated.
 	 * Must be applicable (i.e., `isApplicable(change)` must be true).
 	 */
-	public apply(change: TaggedChange<Changeset<unknown>>): void {
+	public apply(change: TaggedChange<Changeset>): void {
 		let index = 0;
 		for (const mark of change.change) {
 			const inputLength: number = getInputLength(mark);
@@ -561,7 +619,7 @@ export class DetachedNodeTracker {
 	 * @returns false iff `change`'s description of detached nodes is inconsistent with that of changes applied
 	 * earlier. Returns true otherwise.
 	 */
-	public isApplicable(change: Changeset<unknown>): boolean {
+	public isApplicable(change: Changeset): boolean {
 		for (const mark of change) {
 			if (isActiveReattach(mark)) {
 				const detachEvent = mark.cellId ?? fail("Unable to track detached nodes");
@@ -595,8 +653,8 @@ export class DetachedNodeTracker {
 	 * @returns A change equivalent to `change` that refers to detached nodes using the revision that last detached
 	 * them. May reuse parts of the input `change` structure.
 	 */
-	public update<T>(change: TaggedChange<Changeset<T>>): TaggedChange<Changeset<T>> {
-		const factory = new MarkListFactory<T>();
+	public update(change: TaggedChange<Changeset>): TaggedChange<Changeset> {
+		const factory = new MarkListFactory();
 		for (const mark of change.change) {
 			const cloned = cloneMark(mark);
 			if (areInputCellsEmpty(cloned) && !isNewAttach(cloned)) {
@@ -652,7 +710,7 @@ export class DetachedNodeTracker {
  * @returns false iff `branch`'s description of detached nodes is inconsistent with that of `target`.
  * Returns true otherwise.
  */
-export function areRebasable(branch: Changeset<unknown>, target: Changeset<unknown>): boolean {
+export function areRebasable(branch: Changeset, target: Changeset): boolean {
 	const indexToReattach: Map<number, string[]> = new Map();
 	const reattachToIndex: Map<string, number> = new Map();
 	let index = 0;
@@ -724,7 +782,7 @@ export function areRebasable(branch: Changeset<unknown>, target: Changeset<unkno
  * @returns false iff the changesets in `changes` are inconsistent/incompatible in their description of detached nodes.
  * Returns true otherwise.
  */
-export function areComposable(changes: TaggedChange<Changeset<unknown>>[]): boolean {
+export function areComposable(changes: TaggedChange<Changeset>[]): boolean {
 	const tracker = new DetachedNodeTracker();
 	for (const change of changes) {
 		if (!tracker.isApplicable(change.change)) {
@@ -733,4 +791,19 @@ export function areComposable(changes: TaggedChange<Changeset<unknown>>[]): bool
 		tracker.apply(change);
 	}
 	return true;
+}
+
+export function tagChangeInline(
+	change: Changeset,
+	revision: RevisionTag,
+	rollbackOf?: RevisionTag,
+): TaggedChange<Changeset> {
+	const inlined = inlineRevision(change, revision);
+	return rollbackOf !== undefined
+		? tagRollbackInverse(inlined, revision, rollbackOf)
+		: tagChange(inlined, revision);
+}
+
+export function inlineRevision(change: Changeset, revision: RevisionTag): Changeset {
+	return SF.sequenceFieldChangeRebaser.replaceRevisions(change, new Set([undefined]), revision);
 }

@@ -5,7 +5,8 @@
 
 import type { IMigrationTool } from "@fluid-example/example-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { AttachState, IContainer } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 
 import { parseStringDataVersionOne, readVersion } from "../dataTransform.js";

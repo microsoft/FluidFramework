@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
 import { leaf } from "../domains/index.js";
 import {
@@ -12,8 +13,9 @@ import {
 	isFlexTreeNode,
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
+
+import { setFlexSchemaFromClassSchema } from "./schemaCaching.js";
 import { NodeKind, TreeNodeSchema, TreeNodeSchemaNonClass } from "./schemaTypes.js";
-import { setFlexSchemaFromClassSchema } from "./toFlexSchema.js";
 
 type UnbrandedName<T extends FlexLeafNodeSchema> = T["name"] extends TreeNodeSchemaIdentifier<
 	infer Name extends string
@@ -40,7 +42,7 @@ class LeafNodeSchema<T extends FlexLeafNodeSchema>
 	public create(data: TreeValue<T["info"]> | FlexTreeNode): TreeValue<T["info"]> {
 		if (isFlexTreeNode(data)) {
 			const value = data.value;
-			assert(valueSchemaAllows(this.info, value), "invalid value");
+			assert(valueSchemaAllows(this.info, value), 0x916 /* invalid value */);
 			return value;
 		}
 		return data;

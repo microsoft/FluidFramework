@@ -10,8 +10,10 @@ import {
 	DDSFuzzTestState,
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+
 import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils.js";
+
 import { EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
 import { deterministicIdCompressorFactory, failureDirectory, onCreate } from "./fuzzUtils.js";
@@ -41,9 +43,12 @@ describe("Fuzz - Top-Level", () => {
 	const opsPerRun = 20;
 	// TODO: Enable other types of ops.
 	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
+		set: 3,
+		clear: 1,
 		insert: 5,
 		remove: 5,
-		move: 5,
+		intraFieldMove: 5,
+		crossFieldMove: 5,
 		start: 1,
 		commit: 1,
 		// TODO: Enabling abort fails because aborting a transaction involves applying rollback ops, which may attempt to place
@@ -51,6 +56,7 @@ describe("Fuzz - Top-Level", () => {
 		// which destroy trees for rollbacks. See AB#6456 for more information.
 		abort: 0,
 		fieldSelection: { optional: 1, required: 1, sequence: 3, recurse: 3 },
+		schema: 1,
 	};
 	const generatorFactory = () => takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
 	/**
@@ -67,8 +73,9 @@ describe("Fuzz - Top-Level", () => {
 			factory: new SharedTreeTestFactory(onCreate),
 			generatorFactory,
 			reducer: fuzzReducer,
-			validateConsistency: validateTreeConsistency,
+			validateConsistency: (a, b) => validateTreeConsistency(a.channel, b.channel),
 		};
+
 		const options: Partial<DDSFuzzSuiteOptions> = {
 			...baseOptions,
 			defaultTestCount: runsPerBatch,
@@ -101,7 +108,7 @@ describe("Fuzz - Top-Level", () => {
 			factory: new SharedTreeTestFactory(onCreate),
 			generatorFactory,
 			reducer: fuzzReducer,
-			validateConsistency: validateTreeConsistency,
+			validateConsistency: (a, b) => validateTreeConsistency(a.channel, b.channel),
 		};
 		const options: Partial<DDSFuzzSuiteOptions> = {
 			...baseOptions,
@@ -115,7 +122,6 @@ describe("Fuzz - Top-Level", () => {
 			// AB#7162: see comment above.
 			detachedStartOptions: {
 				numOpsBeforeAttach: 5,
-				rehydrateDisabled: true,
 			},
 			saveFailures: {
 				directory: failureDirectory,

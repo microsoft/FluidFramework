@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/core-utils';
+import { assert } from '@fluidframework/core-utils/internal';
+
 import { ReplaceRecursive, assertNotUndefined } from '../Common.js';
 import type {
 	Definition,
@@ -23,6 +24,7 @@ import type {
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
 } from '../id-compressor/index.js';
+
 import {
 	BuildInternal_0_0_2,
 	ChangeTypeInternal,

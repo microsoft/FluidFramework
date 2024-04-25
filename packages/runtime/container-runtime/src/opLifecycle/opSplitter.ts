@@ -3,16 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { IBatchMessage } from "@fluidframework/container-definitions";
+import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	DataCorruptionError,
 	createChildLogger,
 	extractSafePropertiesFromMessage,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
+
 import { ContainerMessageType, ContainerRuntimeChunkedOpMessage } from "../messageTypes.js";
+
 import { estimateSocketSize } from "./batchManager.js";
 import { BatchMessage, IBatch, IChunkedOp } from "./definitions.js";
 
@@ -180,7 +182,7 @@ export class OpSplitter {
 	}
 
 	public processChunk(message: ISequencedDocumentMessage): ProcessChunkResult {
-		assert(isChunkedContents(message.contents), "message not of type ChunkedOp");
+		assert(isChunkedContents(message.contents), 0x948 /* message not of type ChunkedOp */);
 		const contents: IChunkedContents = message.contents;
 
 		// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
