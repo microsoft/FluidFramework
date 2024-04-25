@@ -12,6 +12,7 @@
 			"**/*.generated.*",
 			"**/_api-extractor-temp/**",
 			"**/test/snapshots/content/**",
+			"**/snapshots/*.json",
 			"**/localOdspSnapshots/**",
 			"**/_package.json",
 			"**/biome.jsonc",
@@ -30,7 +31,8 @@
 		}
 	},
 	"formatter": {
-		"enabled": false,
+		"enabled": true,
+		"ignore": ["**/dist/**", "**/lib/**"],
 		"formatWithErrors": true,
 		"indentStyle": "tab",
 		"lineWidth": 95,
