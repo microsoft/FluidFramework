@@ -114,7 +114,7 @@ describe("Data Store Creation Tests", () => {
 				on: (event, listener) => {},
 				logger: createChildLogger(),
 				clientDetails: {},
-			} as ContainerRuntime;
+			} as unknown as ContainerRuntime;
 			const summarizerNode = createRootSummarizerNodeWithGC(
 				createChildLogger(),
 				(() => {}) as unknown as SummarizeInternalFn,

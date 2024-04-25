@@ -211,8 +211,8 @@ export abstract class FluidDataStoreContext
 		return this.parentContext.clientDetails;
 	}
 
-	public get logger() {
-		return this.parentContext.logger;
+	public get baseLogger() {
+		return this.parentContext.baseLogger;
 	}
 
 	public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
@@ -383,7 +383,7 @@ export abstract class FluidDataStoreContext
 		);
 
 		this.mc = createChildMonitoringContext({
-			logger: this.logger,
+			logger: this.baseLogger,
 			namespace: "FluidDataStoreContext",
 			properties: {
 				all: tagCodeArtifacts({

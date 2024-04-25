@@ -214,7 +214,7 @@ export enum ContainerMessageType {
 
 // @alpha
 export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents> implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider, IProvideFluidHandleContext {
-    protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, logger: ITelemetryLoggerExt, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>, documentsSchemaController: DocumentsSchemaController, featureGatesForTelemetry: Record<string, boolean | number | undefined>, provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration);
+    protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, baseLogger: ITelemetryBaseLogger, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>, documentsSchemaController: DocumentsSchemaController, featureGatesForTelemetry: Record<string, boolean | number | undefined>, provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration);
     // (undocumented)
     protected addContainerStateToSummary(summaryTree: ISummaryTreeWithStats, fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext): void;
     addedGCOutboundReference(srcHandle: {
@@ -224,6 +224,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     }): void;
     // (undocumented)
     get attachState(): AttachState;
+    // (undocumented)
+    readonly baseLogger: ITelemetryBaseLogger;
     // (undocumented)
     readonly clientDetails: IClientDetails;
     // (undocumented)
@@ -307,8 +309,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
         requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
         provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
     }): Promise<ContainerRuntime>;
-    // (undocumented)
-    readonly logger: ITelemetryLoggerExt;
     // (undocumented)
     makeLocallyVisible(): void;
     // (undocumented)
@@ -455,6 +455,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     // (undocumented)
     protected _attachState: AttachState;
     // (undocumented)
+    get baseLogger(): ITelemetryBaseLogger;
+    // (undocumented)
     get baseSnapshot(): ISnapshotTree | undefined;
     // (undocumented)
     protected _baseSnapshot: ISnapshotTree | undefined;
@@ -527,8 +529,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     isRoot(aliasedDataStores?: Set<string>): Promise<boolean>;
     // (undocumented)
     readonly loadingGroupId: string | undefined;
-    // (undocumented)
-    get logger(): ITelemetryBaseLogger;
     makeLocallyVisible(): void;
     // (undocumented)
     protected readonly mc: MonitoringContext;
@@ -1069,13 +1069,13 @@ export interface ISummarizerInternalsProvider {
 // @alpha (undocumented)
 export interface ISummarizerRuntime extends IConnectableRuntime {
     // (undocumented)
+    readonly baseLogger: ITelemetryBaseLogger;
+    // (undocumented)
     closeFn(): void;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     disposeFn(): void;
-    // (undocumented)
-    readonly logger: ITelemetryLoggerExt;
     // (undocumented)
     off(event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void): this;
     // (undocumented)

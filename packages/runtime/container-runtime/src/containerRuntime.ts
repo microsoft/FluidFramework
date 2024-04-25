@@ -1188,6 +1188,8 @@ export class ContainerRuntime
 
 	private readonly summarizerNode: IRootSummarizerNodeWithGC;
 
+	private readonly logger: ITelemetryLoggerExt;
+
 	private readonly maxConsecutiveReconnects: number;
 	private readonly defaultMaxConsecutiveReconnects = 7;
 
@@ -1348,7 +1350,7 @@ export class ContainerRuntime
 		dataStoreAliasMap: [string, string][],
 		private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
 		private readonly containerScope: FluidObject,
-		public readonly logger: ITelemetryLoggerExt,
+		readonly baseLogger: ITelemetryBaseLogger,
 		existing: boolean,
 		blobManagerSnapshot: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
@@ -1389,6 +1391,7 @@ export class ContainerRuntime
 			snapshotWithContents,
 		} = context;
 
+		this.logger = createChildLogger({ logger: this.baseLogger });
 		this.mc = createChildMonitoringContext({
 			logger: this.logger,
 			namespace: "ContainerRuntime",
@@ -1859,7 +1862,7 @@ export class ContainerRuntime
 		}
 
 		// logging hardware telemetry
-		logger.sendTelemetryEvent({
+		this.logger.sendTelemetryEvent({
 			eventName: "DeviceSpec",
 			...getDeviceSpec(),
 		});

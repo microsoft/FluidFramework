@@ -100,8 +100,13 @@
 			"InterfaceDeclaration_IDataStore": {
 				"forwardCompat": false
 			},
-			"InterfaceDeclaration_IFluidDataStoreChannel": {
-				"forwardCompat": false
+			"InterfaceDeclaration_IContainerRuntimeBase": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IFluidDataStoreContextEvents": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

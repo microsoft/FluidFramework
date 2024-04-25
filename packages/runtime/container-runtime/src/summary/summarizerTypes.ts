@@ -3,8 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IDeltaManager, ContainerWarning } from "@fluidframework/container-definitions/internal";
-import { IEvent, IEventProvider, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { IDeltaManager } from "@fluidframework/container-definitions";
+import { ContainerWarning } from "@fluidframework/container-definitions/internal";
+import {
+	IEvent,
+	IEventProvider,
+	ITelemetryBaseProperties,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
@@ -90,7 +96,7 @@ export interface IConnectableRuntime {
  * @alpha
  */
 export interface ISummarizerRuntime extends IConnectableRuntime {
-	readonly logger: ITelemetryLoggerExt;
+	readonly baseLogger: ITelemetryBaseLogger;
 	/** clientId of parent (non-summarizing) container that owns summarizer container */
 	readonly summarizerClientId: string | undefined;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
