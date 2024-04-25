@@ -1863,6 +1863,7 @@ export class ContainerRuntime
 			options: JSON.stringify(runtimeOptions),
 			idCompressorModeMetadata: metadata?.documentSchema?.runtime?.idCompressorMode,
 			idCompressorMode: this.idCompressorMode,
+			sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
 			featureGates: JSON.stringify({
 				...featureGatesForTelemetry,
 				disableChunking,
@@ -1894,6 +1895,11 @@ export class ContainerRuntime
 	}
 
 	public onSchemaChange(schema: IDocumentSchemaCurrent) {
+		this.logger.sendTelemetryEvent({
+			eventName: "SchemaChangeAccept",
+			sessionRuntimeSchema: JSON.stringify(schema),
+		});
+
 		// Most of the settings will be picked up only by new sessions (i.e. after reload).
 		// We can make it better in the future (i.e. start to use op compression right away), but for simplicity
 		// this is not done.
@@ -1943,9 +1949,9 @@ export class ContainerRuntime
 			this.idCompressorMode === "on" ||
 			(this.idCompressorMode === "delayed" && this.connected)
 		) {
+			this._idCompressor = await this.createIdCompressor();
 			// This is called from loadRuntime(), long before we process any ops, so there should be no ops accumulated yet.
 			assert(this.pendingIdCompressorOps.length === 0, 0x8ec /* no pending ops */);
-			this._idCompressor = await this.createIdCompressor();
 		}
 
 		await this.garbageCollector.initializeBaseState();
@@ -2416,12 +2422,14 @@ export class ContainerRuntime
 		) {
 			this._loadIdCompressor = this.createIdCompressor()
 				.then((compressor) => {
-					this._idCompressor = compressor;
 					// Finalize any ranges we received while the compressor was turned off.
-					for (const range of this.pendingIdCompressorOps) {
-						this._idCompressor.finalizeCreationRange(range);
-					}
+					const ops = this.pendingIdCompressorOps;
 					this.pendingIdCompressorOps = [];
+					for (const range of ops) {
+						compressor.finalizeCreationRange(range);
+					}
+					assert(this.pendingIdCompressorOps.length === 0, "No new ops added");
+					this._idCompressor = compressor;
 				})
 				.catch((error) => {
 					this.logger.sendErrorEvent({ eventName: "IdCompressorDelayedLoad" }, error);
@@ -2674,6 +2682,10 @@ export class ContainerRuntime
 						);
 						this.pendingIdCompressorOps.push(range);
 					} else {
+						assert(
+							this.pendingIdCompressorOps.length === 0,
+							"there should be no pending ops!",
+						);
 						this._idCompressor.finalizeCreationRange(range);
 					}
 				}
@@ -3938,7 +3950,7 @@ export class ContainerRuntime
 				const contents = this.documentsSchemaController.maybeSendSchemaMessage();
 				if (contents) {
 					this.logger.sendTelemetryEvent({
-						eventName: "RuntimeDocSchemaChange",
+						eventName: "SchemaChangeProposal",
 						refSeq: contents.refSeq,
 						version: contents.version,
 						newRuntimeSchema: JSON.stringify(contents.runtime),
