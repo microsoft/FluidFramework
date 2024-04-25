@@ -13,7 +13,7 @@ import {
 	getFullTypeName,
 	getNodeTypeData,
 } from "@fluidframework/build-tools";
-import { Project, SourceFile } from "ts-morph";
+import { ModuleKind, ModuleResolutionKind, Project, SourceFile } from "ts-morph";
 
 /**
  * Extracts type data from a TS source file and creates a map where each key is a type name and the value is its type
@@ -48,16 +48,15 @@ export function typeDataFromFile(file: SourceFile): Map<string, TypeData> {
  * @returns The loaded source file.
  */
 export function loadTypesSourceFile(basePath: string, typesPath: string): SourceFile {
-	// We assume the tsconfig is included in the package published to npm, so we load using its settings. Then we manually
-	// add all type definitions, and finally retrieve the one matching the API level we're using.
-	const tsconfigPath = path.join(basePath, "tsconfig.json");
 	const project = new Project({
-		skipFileDependencyResolution: true,
-		tsConfigFilePath: tsconfigPath,
+		skipAddingFilesFromTsConfig: true,
+		compilerOptions: {
+			module: ModuleKind.Node16,
+			moduleResolution: ModuleResolutionKind.Node16,
+		},
 	});
-	project.addSourceFilesAtPaths(`${path.dirname(typesPath)}/**/*.d.ts`);
+	project.addSourceFilesAtPaths(`${path.dirname(typesPath)}/**/*.d.*ts`);
 	const sourceFile = project.getSourceFileOrThrow(path.basename(typesPath));
-
 	return sourceFile;
 }
 

@@ -161,17 +161,19 @@ function getTypesPathWithFallback(
 			fallbackLevel === undefined
 				? undefined
 				: getTypesPathFromPackage(packageJson, fallbackLevel);
-		if (typesPath === undefined) {
-			throw new Error(`No type definitions found for ${packageJson.name}`);
-		}
 		chosenLevel = fallbackLevel ?? level;
+		if (typesPath === undefined) {
+			throw new Error(
+				`No type definitions found for "${chosenLevel}" API level in ${packageJson.name}`,
+			);
+		}
 	}
 	return { typesPath: typesPath, levelUsed: chosenLevel };
 }
 
 /**
- * Finds the path to the types of a package using the package's export map.
- * If the path is found, it is returned. Otherwise, an error is thrown.
+ * Finds the path to the types of a package using the package's export map or types/typings field.
+ * If the path is found, it is returned. Otherwise it returns undefined.
  *
  * This implementation uses resolve.exports to resolve the path to types for a level.
  *
@@ -179,29 +181,45 @@ function getTypesPathWithFallback(
  * @param level - An API level to get types paths for.
  * @returns A package relative path to the types.
  */
-export function getTypesPathFromPackage(packageJson: PackageJson, level: ApiLevel): string {
+export function getTypesPathFromPackage(
+	packageJson: PackageJson,
+	level: ApiLevel,
+): string | undefined {
+	const entrypoint = level === ApiLevel.public ? "." : `./${level}`;
+
 	// resolve.exports sets some conditions by default, so the ones we supply supplement the defaults. For clarity the
 	// applied conditions are noted in comments.
-	const exports =
+	let typesPath: string | undefined;
+	try {
 		// First try to resolve with the "import" condition, assuming the package is either ESM-only or dual-format.
 		// conditions: ["default", "types", "import", "node"]
-		resolve.exports(packageJson, `./${level}`, { conditions: ["types"] }) ??
+		const exports = resolve.exports(packageJson, entrypoint, { conditions: ["types"] });
+		typesPath =
+			exports === undefined || exports.length === 0
+				? packageJson.types ?? packageJson.typings
+				: exports[0];
+	} catch {
+		// Catch and ignore any exceptions here; we'll retry with the require condition.
+	}
+
+	try {
 		// If nothing is found when using the "import" condition, try the "require" condition. It may be possible to do this
 		// in a single call to resolve.exports, but the documentation is a little unclear. This seems a safe, if inelegant
 		// solution.
 		// conditions: ["default", "types", "require", "node"]
-		resolve.exports(packageJson, `./${level}`, { conditions: ["types"], require: true });
-
-	const typesPath =
-		exports === undefined || exports.length === 0
-			? packageJson.types ?? packageJson.typings
-			: exports[0];
-
-	if (typesPath === undefined) {
-		throw new Error(
-			`No types could be found in exports or types/typings field: ${packageJson.name}`,
-		);
+		const exports = resolve.exports(packageJson, entrypoint, {
+			conditions: ["types"],
+			require: true,
+		});
+		// Only assign typesPath if it wasn't already assigned earlier.
+		typesPath ??=
+			exports === undefined || exports.length === 0
+				? packageJson.types ?? packageJson.typings
+				: exports[0];
+	} catch {
+		// Catch any exceptions here; we'll return undefined instead of throwing them.
 	}
+
 	return typesPath;
 }
 
