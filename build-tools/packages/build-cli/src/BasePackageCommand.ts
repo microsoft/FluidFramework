@@ -7,7 +7,6 @@ import { strict as assert } from "node:assert";
 import { Package } from "@fluidframework/build-tools";
 import { Command, Flags, ux } from "@oclif/core";
 import async from "async";
-
 import { BaseCommand } from "./base";
 import {
 	PackageFilterOptions,
@@ -35,6 +34,13 @@ export abstract class PackageCommand<
 		...filterFlags,
 		...BaseCommand.flags,
 	};
+
+	/**
+	 * If set to true, then all packages will be selected if no package selection flags are used. This means that the user
+	 * does not need to pass --all to select all packages.
+	 */
+	protected abstract get selectAllByDefault(): boolean;
+	protected abstract set selectAllByDefault(value: boolean);
 
 	protected filterOptions: PackageFilterOptions | undefined;
 	protected selectionOptions: PackageSelectionCriteria | undefined;
@@ -67,7 +73,7 @@ export abstract class PackageCommand<
 	): Promise<void>;
 
 	protected parseFlags(): void {
-		this.selectionOptions = parsePackageSelectionFlags(this.flags);
+		this.selectionOptions = parsePackageSelectionFlags(this.flags, this.selectAllByDefault);
 		this.filterOptions = parsePackageFilterFlags(this.flags);
 	}
 

@@ -61,6 +61,8 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 		...PackageCommand.flags,
 	};
 
+	protected selectAllByDefault = false;
+
 	private readonly packageList: PackageTypesList = {
 		packagesNotUpdated: [],
 		packagesUpdated: [],

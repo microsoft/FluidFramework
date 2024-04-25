@@ -40,6 +40,7 @@ export default class FilterCommand extends PackageCommand<typeof FilterCommand> 
 	static readonly hidden = true;
 
 	static readonly enableJsonFlag = true;
+	protected selectAllByDefault = false;
 
 	protected async processPackage(pkg: Package): Promise<void> {
 		// do nothing

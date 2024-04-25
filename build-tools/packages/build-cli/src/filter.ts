@@ -67,21 +67,41 @@ export interface PackageFilterOptions {
  * Parses {@link selectionFlags} into a typed object that is more ergonomic than working with the flag values directly.
  *
  * @param flags - The parsed command flags.
+ * @param defaultAll - Controls what packages are selected when all flags are set to their default values. With the
+ * default value of `false`, no packages will be selected. Setting this to `true` will invert this logic, and select all
+ * packages by default.
  */
 export const parsePackageSelectionFlags = (
 	flags: selectionFlags,
+	defaultAll: boolean,
 ): PackageSelectionCriteria => {
-	const options: PackageSelectionCriteria =
-		flags.all === true
-			? AllPackagesSelectionCriteria
-			: {
-					independentPackages: flags.packages ?? false,
-					releaseGroups: (flags.releaseGroup as ReleaseGroup[]) ?? [],
-					releaseGroupRoots: (flags.releaseGroupRoot as ReleaseGroup[]) ?? [],
-					directory: flags.dir,
-				};
+	if (
+		flags.all === true ||
+		(defaultAll === true &&
+			flags.releaseGroup === undefined &&
+			flags.releaseGroupRoot === undefined &&
+			flags.dir === undefined &&
+			flags.packages === false)
+	) {
+		return AllPackagesSelectionCriteria;
+	}
 
-	return options;
+	const releaseGroups =
+		flags.releaseGroup?.includes("all") === true
+			? AllPackagesSelectionCriteria.releaseGroups
+			: flags.releaseGroup;
+
+	const roots =
+		flags.releaseGroupRoot?.includes("all") === true
+			? AllPackagesSelectionCriteria.releaseGroupRoots
+			: flags.releaseGroupRoot;
+
+	return {
+		independentPackages: flags.packages ?? false,
+		releaseGroups: (releaseGroups ?? []) as ReleaseGroup[],
+		releaseGroupRoots: (roots ?? []) as ReleaseGroup[],
+		directory: flags.dir,
+	};
 };
 
 /**

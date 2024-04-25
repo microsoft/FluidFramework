@@ -33,6 +33,7 @@ export default class CheckBuildVersionCommand extends PackageCommand<
 		...PackageCommand.flags,
 	} as const;
 
+	protected selectAllByDefault = false;
 	private versionToCheck: string | undefined;
 
 	public async init(): Promise<void> {
