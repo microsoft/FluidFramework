@@ -60,7 +60,7 @@ Those are commonly:
 -   The need to structure the application's editing code such that it can guarantee that the application's invariants are upheld by `SharedTree`'s merge semantics.
 
 For example, consider an the application whose data model includes two arrays,
-with the invariant that the length of one array is expected always be the same as the length of the other array.
+with the invariant that the length of one array is expected to always be the same as the length of the other array.
 The application's editing code may attempt to keep the two arrays' length in sync by always adding to and removing from both array in equal measure.
 Despite that, `SharedTree`'s merge semantics are such that a scenario involving concurrent edits may still lead to a state where the arrays end up with different length.
 Understanding `SharedTree`'s merge semantics can help the application author anticipate this invariant violation or (failing that) diagnose it after the fact.
@@ -182,7 +182,8 @@ concurrent edits may have affected the relevant sticky notes in different ways:
 some of them may have been assigned different ordinals,
 some of them may have been moved, removed,
 or their parent lists may have been moved or removed.
-Despite that, `SharedTree`'s semantics guarantee that by the end of the transaction all of the relevant sticky notes will reside in the new list,
+Despite that, `SharedTree`'s merge semantics guarantee that
+by the end of the transaction all of the relevant sticky notes will reside in the new list,
 and that their ordinals will be assigned in order from 1 to N.
 If any of the concurrent changes had the power to prevent the relevant notes from being moved by our transaction,
 or prevented them from being annotated with the ordinals,
@@ -192,12 +193,52 @@ and their ordinals may be have gaps, not be unique, and be out of order.
 More abstractly, for a transaction that is composed of `N` edits (`e1` through `eN`),
 you can think of each edit `ei` as having one of `ki` possible effects,
 where which of the `ki` possible effects is applied depends on what concurrent edits were sequenced before the transaction.
-In aggregate, the effect of a transaction is therefore one of `k0 * k1 * ... * kN` possible effects.
-For a transaction that is composed with 10 edits with each edit having one of two possible effects,
-that would mean the transaction would have one of 1024 possible different effects.
+In aggregate, the effect of a transaction is therefore, in the worst case, one of `k0 * k1 * ... * kN` possible effects.
+For a transaction that is composed of 10 edits where each edit has one of two possible effects,
+that would mean the transaction would at worst have one of 1024 possible different effects.
 `SharedTree`'s semantics guarantee that each and every `ki` is equal to 1,
 meaning each transaction has only one possible effect.
 
 ### Constraints
 
+The previous section established how `SharedTree`'s merge semantics guarantee that each transaction,
+no matter how complex, and no matter what concurrent edits may have been sequenced before it,
+has only one possible effect.
+Constrains are a mechanism to allow transactions authors to override this default
+so that their transaction will only have that effect if some specific conditions are met,
+and will have no effect at all otherwise.
+This is useful when the transaction's effect may be rendered undesirable by the effect of concurrent edits that are sequenced before the transaction.
+
+Consider an application whose data model includes two arrays,
+with the invariant that the length of one array is expected to always be the same as the length of the other array.
+The application allows users to perform the following operations as transactions:
+
+-   Add a new element in each array
+-   Remove a single existing element from each array
+
+There's no way for the adding of elements to violate the invariant that the lengths of the two arrays ought to remain the same.
+It's possible however for the removal of existing elements to violate this invariant:
+consider the starting state `{ arrayA: [1, 2], arrayB: [3, 4] }`.
+Suppose Alice tries to remove element 1 from `arrayA` and element 3 from `arrayB`.
+Concurrently to that, Bob tries to remove element 1 from `arrayA` and element 4 from `arrayB`.
+No matter the sequencing order between Alice and Bob's transactions,
+the resulting state once both are applied will be `{ arrayA: [2], arrayB: [] }`.
+
+This issue can be addressed by adding a constraint to the transactions that remove elements:
+each such transaction can establish a precondition that the nodes to be removed are not already removed.
+
+With such a constraint, the resulting state in the scenario above will depend on the sequencing order:
+It will be `{ arrayA: [2], arrayB: [4] }` if Alice's transaction was sequence before Bob's
+and `{ arrayA: [2], arrayB: [3] }` otherwise.
+
 ### Schema Changes
+
+At the time of writing,
+all edits/transactions have the implicit constraint that the schema is not changed concurrently to them.
+Similarly, all schema changes have the implicit constraint that neither the schema nor the document data is changed concurrently to them.
+
+This is tolerable because schema changes are rare, but will be improved in the future to be less conservative.
+
+## Merge Semantics By Node Kind
+
+TODO: add a separate document for each node kind and link to them from here.
