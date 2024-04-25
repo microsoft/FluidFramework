@@ -106,7 +106,7 @@ export class InsecureTokenProvider implements ITokenProvider {
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export class MockAudience extends TypedEventEmitter<IAudienceEvents> implements IAudienceOwner {
     constructor();
     // (undocumented)
