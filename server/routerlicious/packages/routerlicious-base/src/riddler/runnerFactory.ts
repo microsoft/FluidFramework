@@ -20,7 +20,6 @@ import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { RedisCache } from "@fluidframework/server-services";
-import { RedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import { RiddlerRunner } from "./runner";
 import { ITenantDocument } from "./tenantManager";
 import { IRiddlerResourcesCustomizations } from "./customizations";
@@ -90,7 +89,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 			const redisClientConnectionManagerForTenantCache =
 				customizations?.redisClientConnectionManagerForTenantCache
 					? customizations.redisClientConnectionManagerForTenantCache
-					: new RedisClientConnectionManager(
+					: new utils.RedisClientConnectionManager(
 							undefined,
 							redisConfig,
 							redisConfig.enableClustering,
