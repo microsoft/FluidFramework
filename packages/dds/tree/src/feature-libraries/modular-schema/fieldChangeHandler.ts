@@ -123,6 +123,12 @@ export interface FieldChangeRebaser<TChangeset> {
 	 * @returns `change` with any empty child node changesets removed.
 	 */
 	prune(change: TChangeset, pruneChild: NodeChangePruner): TChangeset;
+
+	replaceRevisions(
+		change: TChangeset,
+		oldRevisions: Set<RevisionTag | undefined>,
+		newRevisions: RevisionTag | undefined,
+	): TChangeset;
 }
 
 /**
@@ -150,6 +156,7 @@ export function isolatedFieldChangeRebaser<TChangeset>(data: {
 	return {
 		...data,
 		prune: (change) => change,
+		replaceRevisions: (change) => change,
 	};
 }
 
@@ -214,6 +221,7 @@ export type NodeChangePruner = (change: NodeId) => NodeId | undefined;
 export type RelevantRemovedRootsFromChild = (child: NodeId) => Iterable<DeltaDetachedNodeId>;
 
 export interface RebaseRevisionMetadata extends RevisionMetadataSource {
+	readonly getRevisionToRebase: () => RevisionTag | undefined;
 	readonly getBaseRevisions: () => RevisionTag[];
 }
 

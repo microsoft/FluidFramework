@@ -15,8 +15,10 @@ import {
 	RevisionTag,
 	TaggedChange,
 	makeAnonChange,
+	mapTaggedChange,
 	revisionMetadataSourceFromInfo,
 	tagChange,
+	tagRollbackInverse,
 } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -270,20 +272,22 @@ export interface RebaseConfig {
 }
 
 export function rebase(
-	change: SF.Changeset,
+	change: TaggedChange<SF.Changeset>,
 	base: TaggedChange<SF.Changeset>,
 	config: RebaseConfig = {},
 ): SF.Changeset {
-	const cleanChange = purgeUnusedCellOrderingInfo(change);
+	const cleanChange = purgeUnusedCellOrderingInfo(change.change);
 	const cleanBase = { ...base, change: purgeUnusedCellOrderingInfo(base.change) };
 	deepFreeze(cleanChange);
 	deepFreeze(cleanBase);
 
 	const metadata =
 		config.metadata ??
-		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([cleanBase]), [
-			cleanBase.revision,
-		]);
+		rebaseRevisionMetadataFromInfo(
+			defaultRevInfosFromChanges([cleanBase, change]),
+			change.revision,
+			[cleanBase.revision],
+		);
 
 	const childRebaser = config.childRebaser ?? TestNodeId.rebaseChild;
 
@@ -324,11 +328,13 @@ export function rebaseOverChanges(
 	revInfos?: RevisionInfo[],
 ): TaggedChange<SF.Changeset> {
 	let currChange = change;
-	const revisionInfo = revInfos ?? defaultRevInfosFromChanges(baseChanges);
+	const revisionInfo = revInfos ?? defaultRevInfosFromChanges([...baseChanges, change]);
 	for (const base of baseChanges) {
 		currChange = tagChange(
-			rebase(currChange.change, base, {
-				metadata: rebaseRevisionMetadataFromInfo(revisionInfo, [base.revision]),
+			rebase(currChange, base, {
+				metadata: rebaseRevisionMetadataFromInfo(revisionInfo, change.revision, [
+					base.revision,
+				]),
 			}),
 			currChange.revision,
 		);
@@ -342,7 +348,7 @@ export function rebaseOverComposition(
 	base: SF.Changeset,
 	metadata: RebaseRevisionMetadata,
 ): SF.Changeset {
-	return rebase(change, makeAnonChange(base), { metadata });
+	return rebase(makeAnonChange(change), makeAnonChange(base), { metadata });
 }
 
 export type WrappedChange = ChangesetWrapper<SF.Changeset>;
@@ -350,17 +356,13 @@ export type WrappedChange = ChangesetWrapper<SF.Changeset>;
 export function rebaseDeepTagged(
 	change: TaggedChange<WrappedChange>,
 	base: TaggedChange<WrappedChange>,
-): TaggedChange<WrappedChange> {
-	return { ...change, change: rebaseDeep(change.change, base) };
-}
-
-export function rebaseDeep(
-	change: WrappedChange,
-	base: TaggedChange<WrappedChange>,
 	metadata?: RebaseRevisionMetadata,
-): WrappedChange {
-	return ChangesetWrapper.rebase(change, base, (c, b, childRebaser) =>
-		rebase(c, b, { childRebaser, metadata }),
+): TaggedChange<WrappedChange> {
+	return mapTaggedChange(
+		change,
+		ChangesetWrapper.rebase(change, base, (c, b, childRebaser) =>
+			rebase(c, b, { childRebaser, metadata }),
+		),
 	);
 }
 
@@ -789,4 +791,19 @@ export function areComposable(changes: TaggedChange<Changeset>[]): boolean {
 		tracker.apply(change);
 	}
 	return true;
+}
+
+export function tagChangeInline(
+	change: Changeset,
+	revision: RevisionTag,
+	rollbackOf?: RevisionTag,
+): TaggedChange<Changeset> {
+	const inlined = inlineRevision(change, revision);
+	return rollbackOf !== undefined
+		? tagRollbackInverse(inlined, revision, rollbackOf)
+		: tagChange(inlined, revision);
+}
+
+export function inlineRevision(change: Changeset, revision: RevisionTag): Changeset {
+	return SF.sequenceFieldChangeRebaser.replaceRevisions(change, new Set([undefined]), revision);
 }

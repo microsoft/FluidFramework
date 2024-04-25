@@ -1,5 +1,5 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"extends": "../../../../../common/build/build-common/tsconfig.test.node16.json",
 	"compilerOptions": {
 		"lib": ["ES2019", "ES2018.Promise", "DOM", "DOM.Iterable"],
 		"noImplicitAny": true,
@@ -7,10 +7,7 @@
 		"noImplicitOverride": true,
 		"rootDir": "./",
 		"outDir": "../../lib/test",
-		"module": "Node16",
-		"moduleResolution": "Node16",
 		"types": ["node", "mocha"],
-		"customConditions": ["allow-ff-test-exports"],
 	},
 	"include": ["./**/*"],
 	"references": [
