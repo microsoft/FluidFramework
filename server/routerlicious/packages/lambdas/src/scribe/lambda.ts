@@ -759,11 +759,13 @@ export class ScribeLambda implements IPartitionLambda {
 			this.validParentSummaries = [];
 		}
 		this.validParentSummaries.push(summaryHandle);
-		if (
-			this.validParentSummaries.length >
-			this.serviceConfiguration.scribe.maxTrackedServiceSummaryVersionsSinceLastClientSummary
-		) {
+		const countOverLimit =
+			this.validParentSummaries.length -
+			this.serviceConfiguration.scribe.maxTrackedServiceSummaryVersionsSinceLastClientSummary;
+		if (countOverLimit === 1) {
 			this.validParentSummaries.shift();
+		} else if (countOverLimit > 1) {
+			this.validParentSummaries.splice(0, countOverLimit);
 		}
 	}
 
