@@ -12,7 +12,7 @@ import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IContainerExperimental, Loader } from "@fluidframework/container-loader/internal";
-import { IRequestHeader, LogLevel } from "@fluidframework/core-interfaces";
+import { IRequestHeader, LogLevel, type IErrorBase } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
@@ -223,6 +223,8 @@ async function runnerProcess(
 	let stashedOpP: Promise<string | undefined> | undefined;
 	while (!done) {
 		let container: IContainer | undefined;
+		let containerClosedError: IErrorBase | undefined;
+
 		try {
 			const nextFactoryPermutation = iterator.next();
 			if (nextFactoryPermutation.done === true) {
@@ -263,18 +265,8 @@ async function runnerProcess(
 
 			// Retain old behavior of runtime being disposed on container close
 			container.once("closed", (err) => {
-				// everywhere else we gracefully handle container close/dispose,
-				// and don't create more errors which add noise to the stress
-				// results. This should be the only place we on error close/dispose ,
-				// as this place catches closes with no error specified, which
-				// should never happen. if it does happen, the container is
-				// closing without error which could be a test or product bug,
-				// but we don't want silent failures.
-				container?.dispose(
-					err === undefined
-						? new GenericError("Container closed unexpectedly without error")
-						: undefined,
-				);
+				containerClosedError = err;
+				container?.dispose();
 			});
 
 			if (enableOpsMetrics) {
@@ -343,12 +335,25 @@ async function runnerProcess(
 				await delay(delayMs);
 			}
 		} finally {
-			if (container?.disposed === false) {
-				// this should be the only place we dispose the container
-				// to avoid the closed handler above. This is also
-				// the only expected, non-fault, closure.
-				container?.dispose();
+			// everywhere else we gracefully handle container close/dispose,
+			// and don't create more errors which add noise to the stress
+			// results. This should be the only place we log on error
+			// related to close/dispose, as this place catches close
+			// with no error specified, which should never happen.
+			// if it does happen, the container is closing without
+			// error which could be a test or product bug,
+			// but we don't want silent failures.
+			if (container?.closed === true && containerClosedError === undefined) {
+				runConfig.logger.sendErrorEvent(
+					{
+						eventName: "CloseWithoutError",
+						testHarnessEvent: true,
+					},
+					new GenericError("Container closed unexpectedly without error"),
+				);
 			}
+
+			container?.dispose();
 			metricsCleanup();
 		}
 	}
