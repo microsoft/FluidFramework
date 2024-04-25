@@ -19,7 +19,7 @@ import { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
-import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
+import { cases, ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
 import {
 	areComposable,
 	assertChangesetsEqual,
@@ -525,7 +525,7 @@ export function testCompose() {
 				const revive = [Mark.revive(1, detachEvent, { changes })];
 				const deletion = [Mark.remove(2, brand(0))];
 				const actual = shallowCompose([tagChange(revive, tag2), tagChange(deletion, tag3)]);
-				const expected: TestChangeset = [
+				const expected: SF.Changeset = [
 					Mark.remove(
 						1,
 						{ localId: brand(0), revision: tag3 },
@@ -1392,6 +1392,39 @@ export function testCompose() {
 						Mark.moveIn(1, { revision: tag2, localId: brand(0) }),
 						Mark.moveOut(1, { revision: tag3, localId: brand(0) }),
 					),
+				];
+
+				assertChangesetsEqual(composed, expected);
+			}));
+
+		it("move1 (back) ○ [return1, move2 (forward)]", () =>
+			withConfig(() => {
+				const move1 = tagChange(Change.move(2, 1, 0), tag1);
+				const return1 = tagChange(
+					[
+						Mark.moveOut(1, brand(0), {
+							idOverride: {
+								type: SF.DetachIdOverrideType.Redetach,
+								id: { revision: tag1, localId: brand(0) },
+							},
+						}),
+						Mark.skip(2),
+						Mark.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
+					],
+					tag2,
+				);
+
+				const move2 = tagChange(Change.move(2, 1, 1), tag3);
+
+				const returnAndMove = makeAnonChange(shallowCompose([return1, move2]));
+				const composed = shallowCompose([move1, returnAndMove]);
+
+				const expected = [
+					Mark.tomb(tag1, brand(0)),
+					Mark.skip(1),
+					Mark.moveIn(1, { revision: tag3, localId: brand(0) }),
+					Mark.skip(1),
+					Mark.moveOut(1, { revision: tag3, localId: brand(0) }),
 				];
 
 				assertChangesetsEqual(composed, expected);

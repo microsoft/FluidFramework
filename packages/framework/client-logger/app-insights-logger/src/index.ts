@@ -10,11 +10,10 @@
  */
 
 export {
+	type TelemetryEventCategory,
 	type FluidAppInsightsLoggerConfig,
 	type TelemetryFilter,
 	type CategoryFilter,
 	type NamespaceFilter,
 	createLogger,
 } from "./fluidAppInsightsLogger.js";
-
-export type { TelemetryEventCategory } from "@fluidframework/telemetry-utils";

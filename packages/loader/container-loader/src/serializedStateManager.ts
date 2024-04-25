@@ -9,6 +9,7 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
+	FetchSource,
 	IDocumentStorageService,
 	IResolvedUrl,
 	ISnapshot,
@@ -20,16 +21,16 @@ import {
 	ISnapshotTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	MonitoringContext,
 	PerformanceEvent,
 	UsageError,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
-
+import type { IEventProvider, IEvent } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter.js";
-import { getDocumentAttributes } from "./utils.js";
+import { convertSnapshotToSnapshotInfo, getDocumentAttributes } from "./utils.js";
 
 export interface SnapshotWithBlobs {
 	/**
@@ -45,11 +46,17 @@ export interface SnapshotWithBlobs {
 /**
  * State saved by a container at close time, to be used to load a new instance
  * of the container to the same state
+ *
+ * This is very similar to {@link @fluidframework/protocol-definitions/internal#ISnapshot}, but the difference is
+ * that the blobs of ISnapshot of are ArrayBufferLike, while the blobs of this interface are serializable because
+ * they are already converted to string.
+ *
  * @internal
  */
 export interface IPendingContainerState extends SnapshotWithBlobs {
 	attached: true;
 	pendingRuntimeState: unknown;
+	loadedGroupIdSnapshots?: Record<string, ISnapshotInfo>;
 	/**
 	 * All ops since base snapshot sequence number up to the latest op
 	 * seen when the container was closed. Used to apply stashed (saved pending)
@@ -73,33 +80,55 @@ export interface IPendingDetachedContainerState extends SnapshotWithBlobs {
 
 export interface ISnapshotInfo extends SnapshotWithBlobs {
 	snapshotSequenceNumber: number;
+	snapshotFetchedTime?: number | undefined;
+}
+
+export type ISerializedStateManagerDocumentStorageService = Pick<
+	IDocumentStorageService,
+	"getSnapshot" | "getSnapshotTree" | "getVersions" | "readBlob"
+> & {
+	loadedGroupIdSnapshots: Record<string, ISnapshot>;
+};
+
+interface ISerializerEvent extends IEvent {
+	(event: "saved", listener: (dirty: boolean) => void): void;
 }
 
 export class SerializedStateManager {
 	private readonly processedOps: ISequencedDocumentMessage[] = [];
-	private snapshot: ISnapshotInfo | undefined;
 	private readonly mc: MonitoringContext;
+	private snapshot: ISnapshotInfo | undefined;
 	private latestSnapshot: ISnapshotInfo | undefined;
 	private refreshSnapshot: Promise<void> | undefined;
+	private readonly lastSavedOpSequenceNumber: number = 0;
 
 	constructor(
 		private readonly pendingLocalState: IPendingContainerState | undefined,
-		subLogger: ITelemetryLoggerExt,
-		private readonly storageAdapter: Pick<
-			IDocumentStorageService,
-			"readBlob" | "getSnapshotTree" | "getSnapshot" | "getVersions"
-		>,
+		subLogger: ITelemetryBaseLogger,
+		private readonly storageAdapter: ISerializedStateManagerDocumentStorageService,
 		private readonly _offlineLoadEnabled: boolean,
-		private readonly newSnapshotFetched?: () => void,
+		containerEvent: IEventProvider<ISerializerEvent>,
+		private readonly containerDirty: () => boolean,
 	) {
 		this.mc = createChildMonitoringContext({
 			logger: subLogger,
 			namespace: "serializedStateManager",
 		});
+
+		if (pendingLocalState && pendingLocalState.savedOps.length > 0) {
+			const savedOpsSize = pendingLocalState.savedOps.length;
+			this.lastSavedOpSequenceNumber =
+				pendingLocalState.savedOps[savedOpsSize - 1].sequenceNumber;
+		}
+		containerEvent.once("saved", () => this.updateSnapshotAndProcessedOpsMaybe());
 	}
 
 	public get offlineLoadEnabled(): boolean {
 		return this._offlineLoadEnabled;
+	}
+
+	public get waitForInitialRefresh(): Promise<void> | undefined {
+		return this.refreshSnapshot;
 	}
 
 	public addProcessedOp(message: ISequencedDocumentMessage) {
@@ -142,25 +171,52 @@ export class SerializedStateManager {
 				snapshotBlobs,
 				snapshotSequenceNumber: attributes.sequenceNumber,
 			};
-			this.refreshSnapshot ??= (async () => {
-				this.latestSnapshot = await getLatestSnapshotInfo(
-					this.mc,
-					this.storageAdapter,
-					supportGetSnapshotApi,
-				);
-				this.newSnapshotFetched?.();
-				this.updateSnapshotAndProcessedOpsMaybe();
-			})();
+
+			if (this.mc.config.getBoolean("Fluid.Container.enableOfflineSnapshotRefresh") === true)
+				this.refreshSnapshot ??= (async () => {
+					await this.refreshLatestSnapshot(supportGetSnapshotApi);
+				})();
 
 			return { baseSnapshot, version: undefined };
 		}
+	}
+
+	public async refreshLatestSnapshot(supportGetSnapshotApi: boolean) {
+		this.latestSnapshot = await getLatestSnapshotInfo(
+			this.mc,
+			this.storageAdapter,
+			supportGetSnapshotApi,
+		);
+
+		// These are loading groupIds that the containerRuntime has requested over its lifetime.
+		const downloadedGroupIds = Object.keys(this.storageAdapter.loadedGroupIdSnapshots);
+		// We are making two network calls because it requires work for storage to add a special base groupId.
+		if (supportGetSnapshotApi && downloadedGroupIds.length > 0) {
+			assert(this.storageAdapter.getSnapshot !== undefined, "getSnapshot should exist");
+			const snapshot = await this.storageAdapter.getSnapshot({
+				versionId: undefined,
+				scenarioName: "getLatestSnapshotInfo",
+				cacheSnapshot: false,
+				loadingGroupIds: downloadedGroupIds,
+				fetchSource: FetchSource.noCache,
+			});
+			assert(snapshot !== undefined, "Snapshot should exist");
+			return convertSnapshotToSnapshotInfo(snapshot);
+		}
+		this.updateSnapshotAndProcessedOpsMaybe();
 	}
 
 	/**
 	 * Updates class snapshot and processedOps if we have a new snapshot and it's among processedOps range.
 	 */
 	private updateSnapshotAndProcessedOpsMaybe() {
-		if (this.latestSnapshot === undefined || this.processedOps.length === 0) {
+		if (
+			this.latestSnapshot === undefined ||
+			this.processedOps.length === 0 ||
+			this.processedOps[this.processedOps.length - 1].sequenceNumber <
+				this.lastSavedOpSequenceNumber ||
+			this.containerDirty()
+		) {
 			// can't refresh latest snapshot until we have processed the ops up to it.
 			// Pending state would be behind the latest snapshot.
 			return;
@@ -209,15 +265,21 @@ export class SerializedStateManager {
 	 */
 	public setInitialSnapshot(snapshot: SnapshotWithBlobs | undefined) {
 		if (this.offlineLoadEnabled) {
-			assert(this.snapshot === undefined, "inital snapshot should only be defined once");
-			assert(snapshot !== undefined, "attachment snapshot should be defined");
+			assert(
+				this.snapshot === undefined,
+				0x937 /* inital snapshot should only be defined once */,
+			);
+			assert(snapshot !== undefined, 0x938 /* attachment snapshot should be defined */);
 			const { baseSnapshot, snapshotBlobs } = snapshot;
 			const attributesHash =
 				".protocol" in baseSnapshot.trees
 					? baseSnapshot.trees[".protocol"].blobs.attributes
 					: baseSnapshot.blobs[".attributes"];
 			const attributes = JSON.parse(snapshotBlobs[attributesHash]);
-			assert(attributes.sequenceNumber === 0, "trying to set a non attachment snapshot");
+			assert(
+				attributes.sequenceNumber === 0,
+				0x939 /* trying to set a non attachment snapshot */,
+			);
 			this.snapshot = { ...snapshot, snapshotSequenceNumber: attributes.sequenceNumber };
 		}
 	}
@@ -243,16 +305,32 @@ export class SerializedStateManager {
 					);
 				}
 				assert(this.snapshot !== undefined, 0x8e5 /* no base data */);
-				const pendingRuntimeState = await runtime.getPendingLocalState(props);
+				const pendingRuntimeState = await runtime.getPendingLocalState({
+					...props,
+					snapshotSequenceNumber: this.snapshot.snapshotSequenceNumber,
+					sessionExpiryTimerStarted: this.snapshot.snapshotFetchedTime,
+				});
+				// This conversion is required because ArrayBufferLike doesn't survive JSON.stringify
+				const loadedGroupIdSnapshots = {};
+				let hasGroupIdSnapshots = false;
+				const groupIdSnapshots = Object.entries(this.storageAdapter.loadedGroupIdSnapshots);
+				if (groupIdSnapshots.length > 0) {
+					for (const [groupId, snapshot] of groupIdSnapshots) {
+						hasGroupIdSnapshots = true;
+						loadedGroupIdSnapshots[groupId] = convertSnapshotToSnapshotInfo(snapshot);
+					}
+				}
 				const pendingState: IPendingContainerState = {
 					attached: true,
 					pendingRuntimeState,
 					baseSnapshot: this.snapshot.baseSnapshot,
 					snapshotBlobs: this.snapshot.snapshotBlobs,
+					loadedGroupIdSnapshots: hasGroupIdSnapshots
+						? loadedGroupIdSnapshots
+						: undefined,
 					savedOps: this.processedOps,
 					url: resolvedUrl.url,
-					// no need to save this if there is no pending runtime state
-					clientId: pendingRuntimeState !== undefined ? clientId : undefined,
+					clientId,
 				};
 
 				return JSON.stringify(pendingState);
@@ -271,10 +349,7 @@ export class SerializedStateManager {
  */
 export async function getLatestSnapshotInfo(
 	mc: MonitoringContext,
-	storageAdapter: Pick<
-		IDocumentStorageService,
-		"getSnapshot" | "getSnapshotTree" | "getVersions" | "readBlob"
-	>,
+	storageAdapter: ISerializedStateManagerDocumentStorageService,
 	supportGetSnapshotApi: boolean,
 ): Promise<ISnapshotInfo | undefined> {
 	return PerformanceEvent.timedExecAsync(
@@ -287,13 +362,14 @@ export async function getLatestSnapshotInfo(
 				supportGetSnapshotApi,
 				undefined,
 			);
+			const snapshotFetchedTime = Date.now();
 			const snapshotBlobs = await getBlobContentsFromTree(baseSnapshot, storageAdapter);
 			const attributes: IDocumentAttributes = await getDocumentAttributes(
 				storageAdapter,
 				baseSnapshot,
 			);
 			const snapshotSequenceNumber = attributes.sequenceNumber;
-			return { baseSnapshot, snapshotBlobs, snapshotSequenceNumber };
+			return { baseSnapshot, snapshotBlobs, snapshotSequenceNumber, snapshotFetchedTime };
 		},
 	).catch(() => undefined);
 }

@@ -19,8 +19,7 @@ import {
 	type SummaryObject,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import {

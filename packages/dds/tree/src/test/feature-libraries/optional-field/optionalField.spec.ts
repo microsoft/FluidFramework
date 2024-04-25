@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 
 import {
+	ChangeAtomId,
 	DeltaFieldChanges,
 	TaggedChange,
 	makeAnonChange,
@@ -41,6 +42,7 @@ import { Change, assertEqual } from "./optionalFieldUtils.js";
 import { testSnapshots } from "./optionalFieldSnapshots.test.js";
 import { testRebaserAxioms } from "./optionalChangeRebaser.test.js";
 import { testCodecs } from "./optionalFieldChangeCodecs.test.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 /**
  * A change to a child encoding as a simple placeholder string.
@@ -137,6 +139,24 @@ describe("optionalField", () => {
 			);
 
 			assertEqual(composed, change1And2);
+		});
+
+		it("pin ○ child change", () => {
+			const detach: ChangeAtomId = { localId: brand(42), revision: tag };
+			const pin = makeAnonChange(Change.pin(detach));
+			const withChild = makeAnonChange(Change.childAt(detach, nodeChange1));
+			const composed = optionalChangeRebaser.compose(
+				pin,
+				withChild,
+				TestNodeId.composeChild,
+				fakeIdAllocator,
+				failCrossFieldManager,
+				defaultRevisionMetadataFromChanges([pin, withChild]),
+			);
+
+			const expected = Change.atOnce(pin.change, withChild.change);
+
+			assertEqual(composed, expected);
 		});
 
 		it("can compose child changes", () => {
@@ -240,6 +260,15 @@ describe("optionalField", () => {
 				const actual = undo(change1);
 				assertEqual(actual, expected);
 			});
+
+			it("(pin+child)⁻¹", () => {
+				const input = makeAnonChange(
+					Change.atOnce(Change.child(nodeChange1), Change.pin({ localId: brand(42) })),
+				);
+				const expected = Change.child(nodeChange1);
+				const actual = rollback(input);
+				assertEqual(actual, expected);
+			});
 		});
 
 		describe("Rebasing", () => {
@@ -329,6 +358,62 @@ describe("optionalField", () => {
 				);
 
 				assert.deepEqual(changeToRebase3, changeToRebase);
+			});
+
+			it("can rebase a child change over a reserved detach on empty field", () => {
+				const changeToRebase = optionalFieldEditor.buildChildChange(0, nodeId1);
+				deepFreeze(changeToRebase);
+				const clear = tagChange(optionalFieldEditor.clear(true, brand(42)), tag);
+
+				const childRebaser = (
+					nodeChange: NodeId | undefined,
+					baseNodeChange: NodeId | undefined,
+				) => {
+					assert(baseNodeChange === undefined);
+					assert(nodeChange === nodeId1);
+					return nodeChange;
+				};
+
+				const actual = optionalChangeRebaser.rebase(
+					changeToRebase,
+					clear,
+					childRebaser,
+					fakeIdAllocator,
+					failCrossFieldManager,
+					rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([clear]), [
+						clear.revision,
+					]),
+				);
+
+				assert.deepEqual(actual, changeToRebase);
+			});
+
+			it("can rebase a child change over a reserved detach on field with a pinned node", () => {
+				const changeToRebase = optionalFieldEditor.buildChildChange(0, nodeId1);
+				deepFreeze(changeToRebase);
+				const pin = tagChange(Change.pin(brand(42)), tag);
+
+				const childRebaser = (
+					nodeChange: NodeId | undefined,
+					baseNodeChange: NodeId | undefined,
+				) => {
+					assert(baseNodeChange === undefined);
+					assert(nodeChange === nodeId1);
+					return nodeChange;
+				};
+
+				const actual = optionalChangeRebaser.rebase(
+					changeToRebase,
+					pin,
+					childRebaser,
+					fakeIdAllocator,
+					failCrossFieldManager,
+					rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([pin]), [
+						pin.revision,
+					]),
+				);
+
+				assert.deepEqual(actual, changeToRebase);
 			});
 
 			it("can rebase child change (field change ↷ field change)", () => {

@@ -47,7 +47,8 @@ describe("Fuzz - Top-Level", () => {
 		clear: 1,
 		insert: 5,
 		remove: 5,
-		move: 5,
+		intraFieldMove: 5,
+		crossFieldMove: 5,
 		start: 1,
 		commit: 1,
 		// TODO: Enabling abort fails because aborting a transaction involves applying rollback ops, which may attempt to place
@@ -72,7 +73,7 @@ describe("Fuzz - Top-Level", () => {
 			factory: new SharedTreeTestFactory(onCreate),
 			generatorFactory,
 			reducer: fuzzReducer,
-			validateConsistency: validateTreeConsistency,
+			validateConsistency: (a, b) => validateTreeConsistency(a.channel, b.channel),
 		};
 
 		const options: Partial<DDSFuzzSuiteOptions> = {
@@ -107,7 +108,7 @@ describe("Fuzz - Top-Level", () => {
 			factory: new SharedTreeTestFactory(onCreate),
 			generatorFactory,
 			reducer: fuzzReducer,
-			validateConsistency: validateTreeConsistency,
+			validateConsistency: (a, b) => validateTreeConsistency(a.channel, b.channel),
 		};
 		const options: Partial<DDSFuzzSuiteOptions> = {
 			...baseOptions,

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-cli",
-	"version": "0.35.0",
+	"version": "0.38.0",
 	"description": "Build tools for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -24,7 +24,7 @@
 	"bin": {
 		"flub": "./bin/run.js"
 	},
-	"files": ["/bin", "/lib", "/oclif.manifest.json"],
+	"files": ["/bin", "/lib", "!lib/test", "/oclif.manifest.json"],
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint && concurrently npm:build:docs npm:build:diagrams",
 		"build:compile": "npm run tsc && npm run build:test && npm run build:copy && npm run build:readme",

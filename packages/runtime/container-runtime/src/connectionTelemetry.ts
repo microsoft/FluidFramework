@@ -13,9 +13,9 @@ import {
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IEventSampler,
+	ITelemetryLoggerExt,
 	ISampledTelemetryLogger,
 	createChildLogger,
 	createSampledLogger,
@@ -335,6 +335,7 @@ class OpPerfTelemetry {
 
 		if (
 			this.clientId === message.clientId &&
+			message.type === MessageType.Operation &&
 			(this.opLatencyLogger.isSamplingDisabled ||
 				this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber)
 		) {
@@ -372,6 +373,7 @@ class OpPerfTelemetry {
 					this.deltaManager.lastSequenceNumber - this.deltaManager.minimumSequenceNumber,
 				...latencyData.opPerfData,
 			});
+
 			this.clientSequenceNumberForLatencyStatistics = undefined;
 			this.latencyStatistics.delete(message.clientSequenceNumber);
 		}

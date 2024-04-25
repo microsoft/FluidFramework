@@ -62,9 +62,9 @@ const bar = foo
 
 ## Variables
 
-| Variable | Alerts | Modifiers | Description |
-| --- | --- | --- | --- |
-| [TestConst](./simple-suite-test/testnamespace-namespace#testconst-variable) | `BETA` | `readonly` | Test Constant |
+| Variable | Alerts | Modifiers | Type | Description |
+| --- | --- | --- | --- | --- |
+| [TestConst](./simple-suite-test/testnamespace-namespace#testconst-variable) | `BETA` | `readonly` |  | Test Constant |
 
 ## Namespaces
 
