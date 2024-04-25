@@ -22,7 +22,7 @@ import {
 	UpPath,
 	Value,
 } from "../../../core/index.js";
-import { SharedTreeTestFactory, toJsonableTree, validateTreeConsistency } from "../../utils.js";
+import { SharedTreeTestFactory, toJsonableTree, validateFuzzTreeConsistency } from "../../utils.js";
 
 import {
 	EditGeneratorOpWeights,
@@ -75,7 +75,7 @@ describe("Fuzz - revert", () => {
 			factory: new SharedTreeTestFactory(() => {}),
 			generatorFactory,
 			reducer: fuzzReducer,
-			validateConsistency: (a, b) => validateTreeConsistency(a.channel, b.channel),
+			validateConsistency: (a, b) => validateFuzzTreeConsistency(a, b),
 		};
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (state: UndoRedoFuzzTestState) => {
@@ -166,7 +166,7 @@ describe("Fuzz - revert", () => {
 			factory: new SharedTreeTestFactory(() => {}),
 			generatorFactory,
 			reducer: fuzzReducer,
-			validateConsistency: (a, b) => validateTreeConsistency(a.channel, b.channel),
+			validateConsistency: (a, b) => validateFuzzTreeConsistency(a, b),
 		};
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", init);

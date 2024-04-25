@@ -136,6 +136,8 @@ import {
 	disposeSymbol,
 	nestedMapFromFlatList,
 } from "../util/index.js";
+import type { Client } from "@fluid-private/test-dds-utils";
+import { FluidSerializer } from "@fluidframework/shared-object-base/internal";
 
 // Testing utilities
 
@@ -544,6 +546,19 @@ export function validateTreeConsistency(treeA: ISharedTree, treeB: ISharedTree):
 		treeA.contentSnapshot(),
 		treeB.contentSnapshot(),
 		`id: ${treeA.id} vs id: ${treeB.id}`,
+	);
+}
+
+export function validateFuzzTreeConsistency(
+	treeA: Client<SharedTreeFactory>,
+	treeB: Client<SharedTreeFactory>,
+): void {
+	const aSerializer = new FluidSerializer(treeA.dataStoreRuntime.IFluidHandleContext);
+	const bSerializer = new FluidSerializer(treeB.dataStoreRuntime.IFluidHandleContext);
+	validateSnapshotConsistency(
+		aSerializer.encode(treeA.channel.contentSnapshot(), treeA.channel.handle),
+		bSerializer.encode(treeB.channel.contentSnapshot(), treeB.channel.handle),
+		`id: ${treeA.channel.id} vs id: ${treeB.channel.id}`,
 	);
 }
 
