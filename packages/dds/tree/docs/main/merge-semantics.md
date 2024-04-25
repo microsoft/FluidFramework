@@ -92,7 +92,41 @@ If the move were just a copy, then if Alice's edit were to be sequenced first,
 Bob's edit would not apply to the copy at the destination.
 By contrast, `SharedTree`'s move semantics ensure that Bob's edit will apply no matter the sequencing order.
 
-### Removal Is Movement
+### Minimal Preconditions
+
+In the context of merge semantics,
+preconditions can be used to prevent an edit/transaction from being applied
+if concurrent edits that were sequenced earlier have impacted the document in a way that violates some specific requirements.
+
+By default, that is, in the absence of [constraints](#constraints),
+the only precondition that must be met in order for an edit to apply,
+is that the edit must not violate the document's schema.
+
+For example,
+when moving a node to a specific destination only requires that the node's type be allowed by the schema of the destination.
+
+One could imagine a host of potential additional preconditions for such an edit:
+
+-   The node being moved must not have been concurrently moved
+-   The node being moved must not have been concurrently removed
+-   Ancestors of the node being moved must not have been concurrently removed
+-   The parent and ancestors of destination must not have been concurrently removed
+
+`SharedTree`'s merge semantics are such that, by default, only the schema matters.
+The benefits of not violating the schema are obvious,
+but the benefits of not having more preconditions are more subtle.
+Indeed, while no one should wish for their edit to violate the schema,
+one may wish for their edit not to be carried out if some other precondition is not met.
+`SharedTree` does make that possible, but this is achieved bu using opt-in [constraints](#constraints).
+This effectively makes each editing API parameterizable so that any combination of preconditions is achievable.
+On the other hand, if `SharedTree`'s edits had some additional preconditions by default,
+then there would be no way for users to opt-out of these preconditions,
+thereby limiting their ability to express a more permissive edit.
+
+In the rest of this section, we call out some interesting implications that follow from the doctrine of minimal preconditions,
+the last of which is also a key benefit of this doctrine.
+
+#### Removal Is Movement
 
 `SharedTree` allows subtrees to be removed,
 such as when an element from an array node is removed,
@@ -110,8 +144,9 @@ Note that in a lot of cases, the changes to the removed subtree won't be immedia
 They will, however, become visible if that removal is undone.
 
 These merge semantics effectively make removal akin to a move whose destination is an abstract "removed" location.
+This is in tune with the return value of the `treeStatus()` API which will return `TreeStatus.Removed` in that situation.
 
-### Last Write Wins
+#### Last Write Wins
 
 It's possible for concurrent edits to represent fundamentally incompatible user intentions.
 Whenever that happens, the edit that is sequenced last will win out.
@@ -132,25 +167,12 @@ then the note will first be moved from X to A then from A to B.
 If the edits are sequenced in the opposite order,
 then the note will first be moved from X to B then from B to A.
 
-### Putting It All Together
+### Single Possible Effect
 
-Merge scenarios sometimes draw from multiple of the individual design choices presented above.
-
-Here is an example that draws from all three:
-Alice removes a sticky node, while Bob concurrently moves that same sticky note.
-If the edits are sequenced such that Alice's edit is applied first and Bob's edit is applied second,
-then the note will first be removed then moved to the destination defined by Bob's edit.
-If the edits are sequenced in the opposite order,
-then the note will first be moved to the destination defined by Bob's edit then removed.
-
-More importantly, the high-level design choices presented above give rise to the following property:
-by default\*, _no matter what concurrent edits may have been sequenced and applied before it_,
-every edit is guaranteed to apply and guaranteed to impact the document state in one predictable way.
-
-\* "By default" in this context means "in the absence of [constraints](#constraints)".
-
-By "guaranteed to apply", we mean that the edit (and by extension, the transaction it is part of) is not dropped.
-In the example above, Bob's edit to move the sticky note is not dropped when Alice's removal of that sticky note happens to be sequenced and applied first.
+Because of doctrine of minimal preconditions, in the absence of explicit constraints,
+_no matter what concurrent edits may have been sequenced and applied before it_,
+so long those were not [schema changes](#schema-changes),
+every edit is guaranteed to impact the document state in _one_ predictable way.
 
 By "guaranteed to impact the document state in one predictable way",
 we mean that the way the edit impacts the document is the same.
