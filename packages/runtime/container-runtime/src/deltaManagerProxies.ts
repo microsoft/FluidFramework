@@ -23,6 +23,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 
 import { summarizerClientType } from "./summary/index.js";
+import type { PendingStateManager } from "./pendingStateManager.js";
 
 /**
  * Base class for DeltaManager proxy that proxy's access to the real DeltaManager.
@@ -192,5 +193,21 @@ export class DeltaManagerSummarizerProxy extends BaseDeltaManagerProxy {
 	) {
 		super(deltaManager);
 		this.isSummarizerClient = this.deltaManager.clientDetails.type === summarizerClientType;
+	}
+}
+
+export class DeltaManagerPendingOpsProxy extends BaseDeltaManagerProxy {
+	public get minimumSequenceNumber(): number {
+		return (
+			this.pendingStateManager.minimumPendingMessageSequenceNumber ??
+			this.deltaManager.minimumSequenceNumber
+		);
+	}
+
+	constructor(
+		protected readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+		private readonly pendingStateManager: PendingStateManager,
+	) {
+		super(deltaManager);
 	}
 }

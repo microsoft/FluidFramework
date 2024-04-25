@@ -74,6 +74,23 @@ function buildPendingMessageContent(
 	return JSON.stringify({ type, contents, compatDetails });
 }
 
+class OrderedDeque extends Deque<IPendingMessage> {
+	public push(...items: IPendingMessage[]): number {
+		// We need to ensure that the items are pushed in order of their reference sequence number.
+		let totalPushed = this.length;
+		for (const item of items) {
+			const lastItem = this.peekBack();
+			assert(
+				lastItem === undefined ||
+					item.referenceSequenceNumber >= lastItem.referenceSequenceNumber,
+				"Items must be pushed in order of their reference sequence number",
+			);
+			totalPushed = super.push(item);
+		}
+		return totalPushed;
+	}
+}
+
 /**
  * PendingStateManager is responsible for maintaining the messages that have not been sent or have not yet been
  * acknowledged by the server. It also maintains the batch information for both automatically and manually flushed
@@ -84,8 +101,8 @@ function buildPendingMessageContent(
  * It verifies that all the ops are acked, are received in the right order and batch information is correct.
  */
 export class PendingStateManager implements IDisposable {
-	private readonly pendingMessages = new Deque<IPendingMessage>();
-	private readonly initialMessages = new Deque<IPendingMessage>();
+	private readonly pendingMessages = new OrderedDeque();
+	private readonly initialMessages = new OrderedDeque();
 
 	/**
 	 * Sequenced local ops that are saved when stashing since pending ops may depend on them
@@ -112,6 +129,29 @@ export class PendingStateManager implements IDisposable {
 	 */
 	public get pendingMessagesCount(): number {
 		return this.pendingMessages.length + this.initialMessages.length;
+	}
+
+	/**
+	 * The minimumPendingMessageSequenceNumber is the minimum of the first pending message and the first initial message.
+	 *
+	 * We need this so that we can properly keep local data and maintain the correct sequence window.
+	 */
+	public get minimumPendingMessageSequenceNumber(): number | undefined {
+		const firstInitialMessage = this.initialMessages.peekFront();
+		const firstPendingMessage = this.pendingMessages.peekFront();
+		// Messages get moved from initialMessages to pendingMessages. This means pending messages likely are older.
+		if (firstPendingMessage === undefined || firstInitialMessage === undefined) {
+			return (
+				firstPendingMessage?.referenceSequenceNumber ??
+				firstInitialMessage?.referenceSequenceNumber
+			);
+		}
+
+		// The minimum sequence number is the minimum of the first pending message and the first initial message.
+		return firstPendingMessage.referenceSequenceNumber >
+			firstInitialMessage.referenceSequenceNumber
+			? firstInitialMessage.referenceSequenceNumber
+			: firstPendingMessage.referenceSequenceNumber;
 	}
 
 	/**

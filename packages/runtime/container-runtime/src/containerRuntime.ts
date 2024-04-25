@@ -130,7 +130,7 @@ import { IPerfSignalReport, ReportOpPerfTelemetry } from "./connectionTelemetry.
 import { ContainerFluidHandleContext } from "./containerHandleContext.js";
 import { channelToDataStore } from "./dataStore.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
-import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy.js";
+import { DeltaManagerPendingOpsProxy, DeltaManagerSummarizerProxy } from "./deltaManagerProxies.js";
 import {
 	GCNodeType,
 	GarbageCollector,
@@ -1420,7 +1420,6 @@ export class ContainerRuntime
 		};
 
 		this.innerDeltaManager = deltaManager;
-		this.deltaManager = new DeltaManagerSummarizerProxy(this.innerDeltaManager);
 
 		// Here we could wrap/intercept on these functions to block/modify outgoing messages if needed.
 		// This makes ContainerRuntime the final gatekeeper for outgoing messages.
@@ -1525,6 +1524,34 @@ export class ContainerRuntime
 			opGroupingManager,
 		);
 
+		const deltaManagerSummarizerProxy = new DeltaManagerSummarizerProxy(this.innerDeltaManager);
+		const pendingRuntimeState = pendingLocalState as IPendingRuntimeState | undefined;
+		this.pendingStateManager = new PendingStateManager(
+			{
+				applyStashedOp: this.applyStashedOp.bind(this),
+				clientId: () => this.clientId,
+				close: this.closeFn,
+				connected: () => this.connected,
+				reSubmit: (message: IPendingBatchMessage) => {
+					this.reSubmit(message);
+					this.flush();
+				},
+				reSubmitBatch: this.reSubmitBatch.bind(this),
+				isActiveConnection: () => this.innerDeltaManager.active,
+				isAttached: () => this.attachState !== AttachState.Detached,
+			},
+			pendingRuntimeState?.pending,
+			this.logger,
+		);
+
+		const useDeltaManagerOpsProxy =
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") === true;
+		// The DeltaManagerPendingOpsProxy is used to control the minimum sequence number
+		// It allows us to lie to the layers below so that they can maintain enough local state for rebasing ops.
+		this.deltaManager = useDeltaManagerOpsProxy
+			? new DeltaManagerPendingOpsProxy(deltaManagerSummarizerProxy, this.pendingStateManager)
+			: deltaManagerSummarizerProxy;
+
 		this.handleContext = new ContainerFluidHandleContext("", this);
 
 		if (this.summaryConfiguration.state === "enabled") {
@@ -1549,8 +1576,6 @@ export class ContainerRuntime
 		} else {
 			this._flushMode = runtimeOptions.flushMode;
 		}
-
-		const pendingRuntimeState = pendingLocalState as IPendingRuntimeState | undefined;
 
 		if (context.attachState === AttachState.Attached) {
 			const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
@@ -1665,24 +1690,6 @@ export class ContainerRuntime
 			this,
 			() => this.clientId,
 			createChildLogger({ logger: this.logger, namespace: "ScheduleManager" }),
-		);
-
-		this.pendingStateManager = new PendingStateManager(
-			{
-				applyStashedOp: this.applyStashedOp.bind(this),
-				clientId: () => this.clientId,
-				close: this.closeFn,
-				connected: () => this.connected,
-				reSubmit: (message: IPendingBatchMessage) => {
-					this.reSubmit(message);
-					this.flush();
-				},
-				reSubmitBatch: this.reSubmitBatch.bind(this),
-				isActiveConnection: () => this.innerDeltaManager.active,
-				isAttached: () => this.attachState !== AttachState.Detached,
-			},
-			pendingRuntimeState?.pending,
-			this.logger,
 		);
 
 		const disablePartialFlush = this.mc.config.getBoolean(
