@@ -150,7 +150,7 @@ import {
 	type OutboundContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
-import { IBatchMetadata, IIdAllocationMetadata } from "./metadata.js";
+import { IBatchMetadata, ISavedOpMetadata } from "./metadata.js";
 import {
 	BatchMessage,
 	IBatch,
@@ -660,11 +660,13 @@ type MessageWithContext =
 			message: InboundSequencedContainerRuntimeMessage;
 			modernRuntimeMessage: true;
 			local: boolean;
+			savedOp?: boolean;
 	  }
 	| {
 			message: InboundSequencedContainerRuntimeMessageOrSystemMessage;
 			modernRuntimeMessage: false;
 			local: boolean;
+			savedOp?: boolean;
 	  };
 
 const summarizerRequestUrl = "_summarizer";
@@ -1126,7 +1128,7 @@ export class ContainerRuntime
 	// Id Compressor serializes final state (see getPendingLocalState()). As result, it needs to skip all ops that preceeded that state
 	// (such ops will be marked by Loader layer as savedOp === true)
 	// That said, in "delayed" mode it's possible that Id Compressor was never initialized before getPendingLocalState() is called.
-	// In such case we have to process all ops, including those marked with saveOp === true.
+	// In such case we have to process all ops, including those marked with savedOp === true.
 	private readonly skipSavedCompressorOps: boolean;
 
 	public get idCompressorMode() {
@@ -1862,6 +1864,7 @@ export class ContainerRuntime
 			options: JSON.stringify(runtimeOptions),
 			idCompressorModeMetadata: metadata?.documentSchema?.runtime?.idCompressorMode,
 			idCompressorMode: this.idCompressorMode,
+			sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
 			featureGates: JSON.stringify({
 				...featureGatesForTelemetry,
 				disableChunking,
@@ -1893,6 +1896,11 @@ export class ContainerRuntime
 	}
 
 	public onSchemaChange(schema: IDocumentSchemaCurrent) {
+		this.logger.sendTelemetryEvent({
+			eventName: "SchemaChangeAccept",
+			sessionRuntimeSchema: JSON.stringify(schema),
+		});
+
 		// Most of the settings will be picked up only by new sessions (i.e. after reload).
 		// We can make it better in the future (i.e. start to use op compression right away), but for simplicity
 		// this is not done.
@@ -1942,9 +1950,9 @@ export class ContainerRuntime
 			this.idCompressorMode === "on" ||
 			(this.idCompressorMode === "delayed" && this.connected)
 		) {
+			this._idCompressor = await this.createIdCompressor();
 			// This is called from loadRuntime(), long before we process any ops, so there should be no ops accumulated yet.
 			assert(this.pendingIdCompressorOps.length === 0, 0x8ec /* no pending ops */);
-			this._idCompressor = await this.createIdCompressor();
 		}
 
 		await this.garbageCollector.initializeBaseState();
@@ -2415,12 +2423,14 @@ export class ContainerRuntime
 		) {
 			this._loadIdCompressor = this.createIdCompressor()
 				.then((compressor) => {
-					this._idCompressor = compressor;
 					// Finalize any ranges we received while the compressor was turned off.
-					for (const range of this.pendingIdCompressorOps) {
-						this._idCompressor.finalizeCreationRange(range);
-					}
+					const ops = this.pendingIdCompressorOps;
 					this.pendingIdCompressorOps = [];
+					for (const range of ops) {
+						compressor.finalizeCreationRange(range);
+					}
+					assert(this.pendingIdCompressorOps.length === 0, "No new ops added");
+					this._idCompressor = compressor;
 				})
 				.catch((error) => {
 					this.logger.sendErrorEvent({ eventName: "IdCompressorDelayedLoad" }, error);
@@ -2549,6 +2559,7 @@ export class ContainerRuntime
 		// We do not need to make a deep copy. Each layer will just replace message.contents itself,
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
+		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
 		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
 			const msg: MessageWithContext = modernRuntimeMessage
 				? {
@@ -2566,6 +2577,7 @@ export class ContainerRuntime
 						local,
 						modernRuntimeMessage,
 				  };
+			msg.savedOp = savedOp;
 
 			// ensure that we observe any re-entrancy, and if needed, rebase ops
 			this.ensureNoDataModelChanges(() => this.processCore(msg));
@@ -2656,13 +2668,7 @@ export class ContainerRuntime
 				// stashed ops flow. The compressor is stashed with these ops already processed.
 				// That said, in idCompressorMode === "delayed", we might not serialize ID compressor, and
 				// thus we need to process all the ops.
-				if (
-					!(
-						this.skipSavedCompressorOps &&
-						(messageWithContext.message.metadata as IIdAllocationMetadata)?.savedOp ===
-							true
-					)
-				) {
+				if (!(this.skipSavedCompressorOps && messageWithContext.savedOp === true)) {
 					const range = messageWithContext.message.contents;
 					// Some other client turned on the id compressor. If we have not turned it on,
 					// put it in a pending queue and delay finalization.
@@ -2673,6 +2679,10 @@ export class ContainerRuntime
 						);
 						this.pendingIdCompressorOps.push(range);
 					} else {
+						assert(
+							this.pendingIdCompressorOps.length === 0,
+							"there should be no pending ops!",
+						);
 						this._idCompressor.finalizeCreationRange(range);
 					}
 				}
@@ -3937,7 +3947,7 @@ export class ContainerRuntime
 				const contents = this.documentsSchemaController.maybeSendSchemaMessage();
 				if (contents) {
 					this.logger.sendTelemetryEvent({
-						eventName: "RuntimeDocSchemaChange",
+						eventName: "SchemaChangeProposal",
 						refSeq: contents.refSeq,
 						version: contents.version,
 						newRuntimeSchema: JSON.stringify(contents.runtime),
@@ -4289,10 +4299,9 @@ export class ContainerRuntime
 		const getSyncState = (
 			pendingAttachmentBlobs?: IPendingBlobs,
 		): IPendingRuntimeState | undefined => {
-			const pending = this.pendingStateManager.getLocalState();
-			if (pendingAttachmentBlobs === undefined && !this.hasPendingMessages()) {
-				return; // no pending state to save
-			}
+			const pending = this.pendingStateManager.getLocalState(props?.snapshotSequenceNumber);
+			const sessionExpiryTimerStarted =
+				props?.sessionExpiryTimerStarted ?? this.garbageCollector.sessionExpiryTimerStarted;
 
 			const pendingIdCompressorState = this._idCompressor?.serialize(true);
 
@@ -4300,7 +4309,7 @@ export class ContainerRuntime
 				pending,
 				pendingIdCompressorState,
 				pendingAttachmentBlobs,
-				sessionExpiryTimerStarted: this.garbageCollector.sessionExpiryTimerStarted,
+				sessionExpiryTimerStarted,
 			};
 		};
 		const perfEvent = {

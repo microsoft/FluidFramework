@@ -343,7 +343,13 @@ async function generateEntrypoints(
 		// assume Node16 and no other special setup. However, currently configs are pretty
 		// standard with simple Node16 module specification and using a tsconfig for just
 		// part of its setting may be confusing to document and keep tidy with dual-emit.
-		compilerOptions: { module: ModuleKind.Node16 },
+		compilerOptions: {
+			module: ModuleKind.Node16,
+
+			// Without this, JSX files are not properly handled by ts-morph. "React" is the
+			// value we use in our base config, so it should be a safe value.
+			jsx: 2 /* JSXEmit.React */,
+		},
 	});
 	const mainSourceFile = project.addSourceFileAtPath(mainEntrypoint);
 	const exports = getApiExports(mainSourceFile);
