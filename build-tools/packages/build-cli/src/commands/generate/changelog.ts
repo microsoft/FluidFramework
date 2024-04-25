@@ -126,8 +126,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 		if (failures.length > 0) {
 			this.error(
 				`Error processing packages; failure reasons:\n${failures
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
-					.map((p) => (p as any).reason)
+					.map((p) => (p as PromiseRejectedResult).reason as string)
 					.join(", ")}`,
 				{ exit: 1 },
 			);
