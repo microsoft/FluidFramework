@@ -104,11 +104,7 @@ describe("DefaultVisualizers unit tests", () => {
 
 	it("SharedCounter", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const sharedCounter = new SharedCounter(
-			"test-counter",
-			runtime,
-			SharedCounter.getFactory().attributes,
-		);
+		const sharedCounter = SharedCounter.getFactory().create(runtime, "test-counter");
 		sharedCounter.increment(37);
 
 		const result = await visualizeSharedCounter(sharedCounter, visualizeChildData);
