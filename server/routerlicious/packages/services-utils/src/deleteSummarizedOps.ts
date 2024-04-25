@@ -42,6 +42,14 @@ export async function deleteSummarizedOps(
 				doc.documentId,
 			);
 
+			if (realDoc === null) {
+				Lumberjack.error(
+					`Unable to delete ops. Reason: Failed to get latest checkpoint`,
+					lumberjackProperties,
+				);
+				continue;
+			}
+
 			const lastSummarySequenceNumber = JSON.parse(realDoc.scribe).lastSummarySequenceNumber;
 
 			// first "soft delete" operations older than the offline window, which have been summarised
@@ -81,7 +89,6 @@ export async function deleteSummarizedOps(
 			}
 		} catch (error) {
 			Lumberjack.error(`Error while trying to delete ops`, lumberjackProperties, error);
-			throw error;
 		}
 	}
 }
