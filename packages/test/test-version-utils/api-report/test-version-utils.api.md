@@ -84,8 +84,8 @@ export const DataRuntimeApi: {
     FluidDataStoreRuntime: typeof datastore.FluidDataStoreRuntime;
     TestFluidObjectFactory: typeof TestFluidObjectFactory;
     dds: {
-        SharedCell: typeof cell.SharedCell;
-        SharedCounter: typeof counter.SharedCounter;
+        SharedCell: ISharedObjectKind<cell.ISharedCell<any>>;
+        SharedCounter: ISharedObjectKind<counter.ISharedCounter>;
         SharedDirectory: ISharedObjectKind<map.ISharedDirectory>;
         SharedMap: ISharedObjectKind<map.ISharedMap>;
         SharedMatrix: ISharedObjectKind<matrix.ISharedMatrix<any>>;
