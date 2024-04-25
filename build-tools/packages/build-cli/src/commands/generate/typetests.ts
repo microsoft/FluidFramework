@@ -71,7 +71,9 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		this.verbose(`Reading package.json at ${previousPackageJsonPath}`);
 		const previousPackageJson = (await readJson(previousPackageJsonPath)) as PackageJson;
 		// Set the name in the JSON to the calculated previous package name, since the name in the previous package.json is
-		// the same as current.
+		// the same as current. This enables us to pass the package.json object to more general functions but ensure those
+		// functions use the correct name. For example, when we write the `import { foo } from <PACKAGE>/internal`
+		// statements into the type test file, we need to use the previous version name.
 		previousPackageJson.name = previousPackageName;
 
 		const typeTestOutputFile = getTypeTestFilePath(pkg, outDir, outFile);
