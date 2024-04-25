@@ -43,6 +43,7 @@ export {
 	generateClientId,
 	isDocumentSessionValid,
 	isDocumentValid,
+	IRuntimeSignalEnvelope,
 	logCommonSessionEndMetrics,
 	NoOpLambda,
 } from "./utils";

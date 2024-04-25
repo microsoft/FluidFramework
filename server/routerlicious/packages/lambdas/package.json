@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-lambdas",
-	"version": "2.0.1",
+	"version": "2.0.2",
 	"description": "Fluid service lambdas",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -106,6 +106,10 @@
 		"broken": {
 			"ClassDeclaration_DeliLambda": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IBroadcastSignalEventPayload": {
+				"backCompat": false,
+				"forwardCompat": false
 			},
 			"InterfaceDeclaration_ICheckpointParams": {
 				"backCompat": false
