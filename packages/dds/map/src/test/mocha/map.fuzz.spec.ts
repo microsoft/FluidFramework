@@ -130,7 +130,7 @@ describe("Map fuzz tests", () => {
 		factory: new MapFactory(),
 		generatorFactory: () => takeAsync(100, makeGenerator()),
 		reducer: async (state, operation) => reducer(state, operation),
-		validateConsistency: assertMapsAreEquivalent,
+		validateConsistency: async (a, b) => assertMapsAreEquivalent(a.channel, b.channel),
 	};
 
 	createDDSFuzzSuite(model, {

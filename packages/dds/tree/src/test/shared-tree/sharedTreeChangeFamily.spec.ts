@@ -119,7 +119,7 @@ describe("SharedTreeChangeFamily", () => {
 	it("empty changes result in no-op rebases", () => {
 		assert.deepEqual(
 			sharedTreeFamily.rebase(
-				stSchemaChange,
+				makeAnonChange(stSchemaChange),
 				makeAnonChange(stEmptyChange),
 				revisionMetadataSourceFromInfo([]),
 			),
@@ -128,7 +128,7 @@ describe("SharedTreeChangeFamily", () => {
 
 		assert.deepEqual(
 			sharedTreeFamily.rebase(
-				stDataChange1,
+				makeAnonChange(stDataChange1),
 				makeAnonChange(stEmptyChange),
 				revisionMetadataSourceFromInfo([]),
 			),
@@ -139,7 +139,7 @@ describe("SharedTreeChangeFamily", () => {
 	it("schema edits cause all concurrent changes to conflict", () => {
 		assert.deepEqual(
 			sharedTreeFamily.rebase(
-				stSchemaChange,
+				makeAnonChange(stSchemaChange),
 				makeAnonChange(stDataChange1),
 				revisionMetadataSourceFromInfo([]),
 			),
@@ -150,7 +150,7 @@ describe("SharedTreeChangeFamily", () => {
 
 		assert.deepEqual(
 			sharedTreeFamily.rebase(
-				stDataChange1,
+				makeAnonChange(stDataChange1),
 				makeAnonChange(stSchemaChange),
 				revisionMetadataSourceFromInfo([]),
 			),
@@ -161,7 +161,7 @@ describe("SharedTreeChangeFamily", () => {
 
 		assert.deepEqual(
 			sharedTreeFamily.rebase(
-				stSchemaChange,
+				makeAnonChange(stSchemaChange),
 				makeAnonChange(stSchemaChange),
 				revisionMetadataSourceFromInfo([]),
 			),
@@ -195,7 +195,7 @@ describe("SharedTreeChangeFamily", () => {
 		it("when rebasing", () => {
 			assert.deepEqual(
 				sharedTreeFamily.rebase(
-					stDataChange1,
+					makeAnonChange(stDataChange1),
 					makeAnonChange(stDataChange2),
 					revisionMetadataSourceFromInfo([]),
 				),
@@ -204,7 +204,7 @@ describe("SharedTreeChangeFamily", () => {
 						{
 							type: "data",
 							innerChange: modularFamily.rebase(
-								dataChange1,
+								makeAnonChange(dataChange1),
 								makeAnonChange(dataChange2),
 								revisionMetadataSourceFromInfo([]),
 							),
