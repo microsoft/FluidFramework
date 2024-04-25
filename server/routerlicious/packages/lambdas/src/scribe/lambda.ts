@@ -763,8 +763,14 @@ export class ScribeLambda implements IPartitionLambda {
 			this.validParentSummaries.length -
 			this.serviceConfiguration.scribe.maxTrackedServiceSummaryVersionsSinceLastClientSummary;
 		if (countOverLimit === 1) {
+			// Remove the oldest handle if we have one over the limit.
+			// This is the most common case once a limit is enforced, and we only need to remove one,
+			// so we use shift() because it is over 2x more performant than splice()
+			// even when removing 2 elements: https://www.measurethat.net/Benchmarks/Show/12324/0/slice-vs-splice-vs-shift
 			this.validParentSummaries.shift();
 		} else if (countOverLimit > 1) {
+			// Older documents from before the limit was enforced can have many more handles than the limit.
+			// Use splice in this case to remove all but the last limit number of handles.
 			this.validParentSummaries.splice(0, countOverLimit);
 		}
 	}
