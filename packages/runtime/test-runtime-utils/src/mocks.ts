@@ -700,7 +700,7 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export class MockAudience extends TypedEventEmitter<IAudienceEvents> implements IAudienceOwner {
 	private readonly audienceMembers: Map<string, IClient>;
@@ -712,14 +712,15 @@ export class MockAudience extends TypedEventEmitter<IAudienceEvents> implements 
 	}
 
 	public addMember(clientId: string, member: IClient): void {
-		this.emit("addMember", clientId, member);
 		this.audienceMembers.set(clientId, member);
+		this.emit("addMember", clientId, member);
 	}
 
 	public removeMember(clientId: string): boolean {
 		const member = this.audienceMembers.get(clientId);
+		const deleteResult = this.audienceMembers.delete(clientId);
 		this.emit("removeMember", clientId, member);
-		return this.audienceMembers.delete(clientId);
+		return deleteResult;
 	}
 
 	public getMembers(): Map<string, IClient> {
@@ -811,6 +812,7 @@ export class MockFluidDataStoreRuntime
 	public readonly loader: ILoader = undefined as any;
 	public readonly logger: ITelemetryBaseLogger;
 	public quorum = new MockQuorumClients();
+	private readonly audience = new MockAudience();
 	public containerRuntime?: MockContainerRuntime;
 	public idCompressor?: IIdCompressor & IIdCompressorCore;
 	private readonly deltaConnections: MockDeltaConnection[] = [];
@@ -896,7 +898,7 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public getAudience(): IAudience {
-		return null as any as IAudience;
+		return this.audience;
 	}
 
 	public save(message: string) {

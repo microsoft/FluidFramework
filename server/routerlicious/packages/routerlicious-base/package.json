@@ -133,6 +133,9 @@
 		"broken": {
 			"ClassDeclaration_NexusResources": {
 				"backCompat": false
+			},
+			"ClassDeclaration_RiddlerResources": {
+				"forwardCompat": false
 			}
 		}
 	}
