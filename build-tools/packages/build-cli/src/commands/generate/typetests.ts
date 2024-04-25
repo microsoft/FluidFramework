@@ -31,7 +31,7 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 			options: knownApiLevels,
 		}),
 		outDir: Flags.directory({
-			description: "Directory to emit entrypoint declaration files.",
+			description: "Where to emit the type tests file.",
 			default: "./src/test/types",
 		}),
 		outFile: Flags.string({
