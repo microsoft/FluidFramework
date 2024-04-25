@@ -759,6 +759,12 @@ export class ScribeLambda implements IPartitionLambda {
 			this.validParentSummaries = [];
 		}
 		this.validParentSummaries.push(summaryHandle);
+		if (
+			this.validParentSummaries.length >
+			this.serviceConfiguration.scribe.maxTrackedServiceSummaryVersionsSinceLastClientSummary
+		) {
+			this.validParentSummaries.shift();
+		}
 	}
 
 	private async sendSummaryAck(contents: ISummaryAck) {
