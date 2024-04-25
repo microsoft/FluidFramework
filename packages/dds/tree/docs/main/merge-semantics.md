@@ -86,6 +86,10 @@ Note that in a transaction, each edit's preconditions are added to the precondit
 In other words, the preconditions of a transaction are the union of the preconditions of its edits,
 giving transactions "all or nothing" semantics.
 
+[Constraints](#constraints) is a feature that allows transaction authors to add additional preconditions to a transaction.
+This makes understanding preconditions a pre-requisite for using constraints,
+but constraints can be ignored when it comes to understanding how preconditions affect merge semantics in general.
+
 ### Postconditions
 
 The postconditions characterize what is guaranteed to be true about the effect of the edit provided the preconditions were satisfied.
@@ -291,13 +295,9 @@ meaning each transaction has only one possible effect.
 
 ## Constraints
 
-The previous section established how `SharedTree`'s merge semantics guarantee that each transaction,
-no matter how complex, and no matter what concurrent edits may have been sequenced before it,
-has only one possible effect.
-Constrains are a mechanism to allow transactions authors to override this default
-so that their transaction will only have that effect if some specific conditions are met,
-and will have no effect at all otherwise.
-This is useful when the transaction's effect may be rendered undesirable by the effect of concurrent edits that are sequenced before the transaction.
+Constrains is a feature that allows transactions authors to add additional preconditions to a transaction,
+thereby ensuring that its effect will only apply if some specific conditions are met.
+This is useful when the transaction's effect may be rendered undesirable by the effects of concurrent edits that are sequenced before the transaction.
 
 Consider an application whose data model includes two arrays,
 with the invariant that the length of one array is expected to always be the same as the length of the other array.
