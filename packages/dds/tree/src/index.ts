@@ -304,8 +304,7 @@ export {
 	TreeNodeSchemaCore,
 	TreeNodeSchemaNonClass,
 	SchemaIncompatible,
-	DefaultProviderContext,
-	DefaultProviderValue,
+	DefaultProvider,
 	type FieldProps,
 
 	// Recursive Schema APIs

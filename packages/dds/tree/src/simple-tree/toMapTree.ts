@@ -36,8 +36,7 @@ import {
 	normalizeAllowedTypes,
 	normalizeFieldSchema,
 	getStoredKey,
-	getDefaultProviderContext,
-	extractInsertableContent,
+	extractFieldProvider,
 } from "./schemaTypes.js";
 
 /**
@@ -335,9 +334,9 @@ function objectToMapTree(
 		} else if (fieldSchema.kind === FieldKind.Optional) {
 			const defaultProvider = fieldSchema.props?.defaultProvider;
 			if (defaultProvider !== undefined) {
-				const fieldValue = defaultProvider(getDefaultProviderContext(nodeKeyManager));
+				const fieldValue = extractFieldProvider(defaultProvider)(nodeKeyManager);
 				const mappedChildTree = nodeDataToMapTree(
-					extractInsertableContent(fieldValue),
+					fieldValue,
 					fieldSchema.allowedTypeSet,
 					nodeKeyManager,
 				);

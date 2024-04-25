@@ -13,7 +13,7 @@ import { TreeFactory } from "../../treeFactory.js";
 import { createMockNodeKeyManager } from "../../feature-libraries/index.js";
 import { getView } from "../utils.js";
 // eslint-disable-next-line import/no-internal-modules
-import { getDefaultProviderValue } from "../../simple-tree/schemaTypes.js";
+import { getDefaultProvider } from "../../simple-tree/schemaTypes.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -122,8 +122,7 @@ describe("class-tree tree", () => {
 		it("populates field when field defaulter is provided.", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				testOptionalField: schema.optional(schema.string, {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-					defaultProvider: () => getDefaultProviderValue("defaultOptionalValue"),
+					defaultProvider: getDefaultProvider(() => "defaultOptionalValue"),
 				}),
 			});
 			const nodeKeyManager = createMockNodeKeyManager();

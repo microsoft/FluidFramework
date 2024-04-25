@@ -250,34 +250,22 @@ export interface FieldProps {
 	 * @defaultValue If not specified, the key that is persisted is the property key that was specified in the schema.
 	 */
 	readonly key?: string;
-	readonly defaultProvider?: (context: DefaultProviderContext) => DefaultProviderValue;
+	readonly defaultProvider?: DefaultProvider;
 }
+
+export type FieldProvider = (context: NodeKeyManager) => InsertableContent;
 
 /**
  * @public
  */
-export interface DefaultProviderContext extends ErasedType<"@fluidframework/tree.NodeKeyManager"> {}
+export interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {}
 
-export function extractNodeKeyManager(input: DefaultProviderContext): NodeKeyManager {
-	return input as unknown as NodeKeyManager;
+export function extractFieldProvider(input: DefaultProvider): FieldProvider {
+	return input as unknown as FieldProvider;
 }
 
-export function getDefaultProviderContext(input: NodeKeyManager): DefaultProviderContext {
-	return input as unknown as DefaultProviderContext;
-}
-
-/**
- * @public
- */
-export interface DefaultProviderValue
-	extends ErasedType<"@fluidframework/tree.InsertableContent"> {}
-	
-export function extractInsertableContent(input: DefaultProviderValue): InsertableContent {
-	return input as unknown as InsertableContent;
-}
-
-export function getDefaultProviderValue(input: InsertableContent): DefaultProviderValue {
-	return input as unknown as DefaultProviderValue;
+export function getDefaultProvider(input: FieldProvider): DefaultProvider {
+	return input as unknown as DefaultProvider;
 }
 
 /**

@@ -313,11 +313,7 @@ export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
 }
 
 // @public (undocumented)
-export interface DefaultProviderContext extends ErasedType<"@fluidframework/tree.NodeKeyManager"> {
-}
-
-// @public (undocumented)
-export interface DefaultProviderValue extends ErasedType<"@fluidframework/tree.InsertableContent"> {
+export interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
 }
 
 // @internal
@@ -518,7 +514,7 @@ export interface FieldMapObject<TChild> {
 // @public
 export interface FieldProps {
     // (undocumented)
-    readonly defaultProvider?: (context: DefaultProviderContext) => DefaultProviderValue;
+    readonly defaultProvider?: DefaultProvider;
     readonly key?: string;
 }
 
