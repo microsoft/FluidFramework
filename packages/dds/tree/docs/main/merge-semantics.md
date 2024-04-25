@@ -13,7 +13,7 @@ Merge semantics define how `SharedTree` reconciles concurrent edits.
 When several peers edit the same document, it's possible for some of the edits to be concurrent.
 The edits of two clients are concurrent if they each made those edits before they had received the others’ edits from the server.
 
-For example, imagine Alice and Bob are editing a document that contains stick notes whose background color can be changed.
+For example, imagine Alice and Bob are editing a document that contains sticky notes whose background color can be changed.
 If Alice changes the background color of one sticky note from yellow to red,
 that edit will be sent to the server which will forward it to Bob.
 
@@ -172,7 +172,7 @@ If the move is sequenced last then the node will be removed then moved.
 
 ### Single Possible Effect
 
-Because of doctrine of minimal preconditions, in the absence of explicit constraints,
+Because of the doctrine of minimal preconditions, in the absence of explicit constraints,
 _no matter what concurrent edits may have been sequenced and applied before it_,
 so long those were not [schema changes](#schema-changes),
 every edit is guaranteed to impact the document state in _one_ predictable way.
