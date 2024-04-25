@@ -168,7 +168,7 @@ If the edits are sequenced in the opposite order,
 then the note will first be moved from X to B then from B to A.
 Note that this is true even when some of those locations are the "removed" location:
 if the removal is sequenced last then the node will be moved then removed.
-if the move is sequenced last then the node will be removed then moved.
+If the move is sequenced last then the node will be removed then moved.
 
 ### Single Possible Effect
 
