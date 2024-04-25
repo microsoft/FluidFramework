@@ -815,3 +815,21 @@ export interface ISharedObjectKind<TSharedObject> {
 	 */
 	create(runtime: IFluidDataStoreRuntime, id?: string): TSharedObject;
 }
+
+/**
+ * Utility for creating ISharedObjectKind instances.
+ * @internal
+ */
+export function createSharedObjectKind<TSharedObject>(
+	factory: (new () => IChannelFactory<TSharedObject>) & { Type: string },
+): ISharedObjectKind<TSharedObject> {
+	return {
+		getFactory(): IChannelFactory<TSharedObject> {
+			return new factory();
+		},
+
+		create(runtime: IFluidDataStoreRuntime, id?: string): TSharedObject {
+			return runtime.createChannel(id, factory.Type) as TSharedObject;
+		},
+	};
+}
