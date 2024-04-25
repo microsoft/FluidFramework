@@ -10,8 +10,12 @@
 
 import { SharedCell } from "@fluidframework/cell/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
-import { type ISharedMap, SharedMap } from "@fluidframework/map";
-import { type IDirectory, SharedDirectory } from "@fluidframework/map/internal";
+import {
+	type IDirectory,
+	SharedDirectory,
+	type ISharedMap,
+	SharedMap,
+} from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
@@ -21,7 +25,11 @@ import { SharedTree } from "@fluidframework/tree/internal";
 import { EditType } from "../CommonInterfaces.js";
 
 import { type VisualizeChildData, type VisualizeSharedObject } from "./DataVisualization.js";
-import { toVisualTree, visualizeSharedTreeNodeBySchema } from "./SharedTreeVisualizer.js";
+import {
+	determineNodeKind,
+	toVisualTree,
+	visualizeSharedTreeNodeBySchema,
+} from "./SharedTreeVisualizer.js";
 import {
 	type FluidObjectNode,
 	type FluidObjectTreeNode,
@@ -195,7 +203,7 @@ export const visualizeSharedMatrix: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectTreeNode> => {
-	const sharedMatrix = sharedObject as SharedMatrix;
+	const sharedMatrix = sharedObject as unknown as SharedMatrix;
 
 	const { rowCount, colCount: columnCount, id: fluidObjectId } = sharedMatrix;
 
@@ -256,25 +264,23 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	const treeSchema = contentSnapshot.schema.nodeSchema.get(treeView.type);
 
 	// Traverses the SharedTree and generates a visual representation of the tree and its schema.
-	const visualTreeRepresentation = visualizeSharedTreeNodeBySchema(
+	const visualTreeRepresentation = await visualizeSharedTreeNodeBySchema(
 		treeView,
 		treeSchema,
 		contentSnapshot,
+		visualizeChildData,
 	);
 
 	// Maps the `visualTreeRepresentation` in the format compatible to {@link visualizeChildData} function.
 	const visualTree = toVisualTree(visualTreeRepresentation);
 
-	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	// TODO: Validate the type casting.
 	const visualTreeResult: FluidObjectNode = {
 		...visualTree,
 		fluidObjectId: sharedTree.id,
 		typeMetadata: "SharedTree",
-		nodeKind:
-			visualTree.nodeKind === VisualNodeKind.TreeNode
-				? VisualNodeKind.FluidTreeNode
-				: VisualNodeKind.FluidValueNode,
-	} as FluidObjectNode;
+		nodeKind: determineNodeKind(visualTree.nodeKind),
+	} as unknown as FluidObjectNode;
 
 	return visualTreeResult;
 };

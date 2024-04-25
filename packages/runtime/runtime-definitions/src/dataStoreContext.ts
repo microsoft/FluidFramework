@@ -437,6 +437,9 @@ export interface IFluidParentContext
 	 * Can be disabled by feature gate `Fluid.ContainerRuntime.DisableOpReentryCheck`
 	 *
 	 * @param callback - the callback to be invoked
+	 *
+	 * @deprecated
+	 * // back-compat: to be removed in 2.0
 	 */
 	ensureNoDataModelChanges<T>(callback: () => T): T;
 

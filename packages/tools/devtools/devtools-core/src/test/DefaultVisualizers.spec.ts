@@ -11,8 +11,7 @@ import { SharedCell } from "@fluidframework/cell/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { SharedMap } from "@fluidframework/map";
-import { SharedDirectory } from "@fluidframework/map/internal";
+import { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
@@ -289,11 +288,7 @@ describe("DefaultVisualizers unit tests", () => {
 
 	it("SharedMatrix", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const sharedMatrix = new SharedMatrix(
-			runtime,
-			"test-matrix",
-			SharedMatrix.getFactory().attributes,
-		);
+		const sharedMatrix = SharedMatrix.getFactory().create(runtime, "test-matrix");
 		sharedMatrix.insertRows(0, 2);
 		sharedMatrix.insertCols(0, 3);
 		sharedMatrix.setCell(0, 0, "Hello");
@@ -307,7 +302,10 @@ describe("DefaultVisualizers unit tests", () => {
 			c: false,
 		});
 
-		const result = await visualizeSharedMatrix(sharedMatrix, visualizeChildData);
+		const result = await visualizeSharedMatrix(
+			sharedMatrix as unknown as ISharedObject,
+			visualizeChildData,
+		);
 
 		const expected: FluidObjectTreeNode = {
 			fluidObjectId: "test-matrix",
@@ -409,7 +407,7 @@ describe("DefaultVisualizers unit tests", () => {
 		);
 
 		const expected = {
-			value: "0",
+			value: 0,
 			nodeKind: "FluidValueNode",
 			tooltipContents: {
 				schema: {
@@ -462,7 +460,7 @@ describe("DefaultVisualizers unit tests", () => {
 				foo: {
 					children: {
 						"0": {
-							value: "0",
+							value: 0,
 							nodeKind: "ValueNode",
 							tooltipContents: {
 								schema: {
@@ -477,7 +475,7 @@ describe("DefaultVisualizers unit tests", () => {
 							},
 						},
 						"1": {
-							value: "1",
+							value: 1,
 							nodeKind: "ValueNode",
 							tooltipContents: {
 								schema: {
@@ -492,7 +490,7 @@ describe("DefaultVisualizers unit tests", () => {
 							},
 						},
 						"2": {
-							value: "2",
+							value: 2,
 							nodeKind: "ValueNode",
 							tooltipContents: {
 								schema: {
@@ -507,7 +505,7 @@ describe("DefaultVisualizers unit tests", () => {
 							},
 						},
 						"3": {
-							value: "3",
+							value: 3,
 							nodeKind: "ValueNode",
 							tooltipContents: {
 								schema: {
@@ -522,7 +520,7 @@ describe("DefaultVisualizers unit tests", () => {
 							},
 						},
 						"4": {
-							value: '"hello"',
+							value: "hello",
 							nodeKind: "ValueNode",
 							tooltipContents: {
 								schema: {
@@ -537,7 +535,7 @@ describe("DefaultVisualizers unit tests", () => {
 							},
 						},
 						"5": {
-							value: '"world"',
+							value: "world",
 							nodeKind: "ValueNode",
 							tooltipContents: {
 								schema: {
@@ -630,7 +628,7 @@ describe("DefaultVisualizers unit tests", () => {
 				foo: {
 					children: {
 						apple: {
-							value: "1",
+							value: 1,
 							nodeKind: "ValueNode",
 							tooltipContents: {
 								schema: {
@@ -645,7 +643,7 @@ describe("DefaultVisualizers unit tests", () => {
 							},
 						},
 						banana: {
-							value: "2",
+							value: 2,
 							nodeKind: "ValueNode",
 							tooltipContents: {
 								schema: {
@@ -660,7 +658,7 @@ describe("DefaultVisualizers unit tests", () => {
 							},
 						},
 						cherry: {
-							value: "3",
+							value: 3,
 							nodeKind: "ValueNode",
 							tooltipContents: {
 								schema: {
@@ -755,7 +753,7 @@ describe("DefaultVisualizers unit tests", () => {
 				foo: {
 					children: {
 						apple: {
-							value: "false",
+							value: false,
 							nodeKind: "ValueNode",
 							tooltipContents: {
 								schema: {
@@ -770,7 +768,7 @@ describe("DefaultVisualizers unit tests", () => {
 							},
 						},
 						banana: {
-							value: '"Taro Bubble Tea"',
+							value: "Taro Bubble Tea",
 							nodeKind: "ValueNode",
 							tooltipContents: {
 								schema: {
@@ -796,6 +794,151 @@ describe("DefaultVisualizers unit tests", () => {
 								},
 								allowedTypes: {
 									value: "{ apple : com.fluidframework.leaf.boolean, banana : com.fluidframework.leaf.string }",
+									nodeKind: "ValueNode",
+								},
+							},
+						},
+					},
+				},
+			},
+			nodeKind: "FluidTreeNode",
+			tooltipContents: {
+				schema: {
+					nodeKind: "TreeNode",
+					children: {
+						name: {
+							nodeKind: "ValueNode",
+							value: "shared-tree-test.root-item",
+						},
+						allowedTypes: {
+							value: "{ foo : shared-tree-test.bar-item }",
+							nodeKind: "ValueNode",
+						},
+					},
+				},
+			},
+			fluidObjectId: "test",
+			typeMetadata: "SharedTree",
+		};
+
+		expect(result).to.deep.equal(expected);
+	});
+
+	it("SharedTree: Handle at the root", async () => {
+		const factory = SharedTree.getFactory();
+		const builder = new SchemaFactory("shared-tree-test");
+		const runtime = new MockFluidDataStoreRuntime();
+
+		const sharedTree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"test",
+		);
+
+		const sharedString = new SharedString(
+			runtime,
+			"test-string",
+			SharedString.getFactory().attributes,
+		);
+		sharedString.insertText(0, "Hello World!");
+
+		sharedTree.schematize(new TreeConfiguration(builder.handle, () => sharedString.handle));
+
+		const result = await visualizeSharedTree(
+			sharedTree as unknown as ISharedObject,
+			visualizeChildData,
+		);
+
+		const expected = {
+			fluidObjectId: "test",
+			nodeKind: "FluidTreeNode",
+			tooltipContents: {
+				schema: {
+					nodeKind: "TreeNode",
+					children: {
+						name: {
+							nodeKind: "ValueNode",
+							value: "com.fluidframework.leaf.handle",
+						},
+					},
+				},
+			},
+			typeMetadata: "SharedTree",
+		};
+
+		expect(result).to.deep.equal(expected);
+	});
+
+	it("SharedTree: Handle", async () => {
+		const factory = SharedTree.getFactory();
+		const builder = new SchemaFactory("shared-tree-test");
+		const runtime = new MockFluidDataStoreRuntime();
+
+		const sharedTree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"test",
+		);
+
+		const sharedString = new SharedString(
+			runtime,
+			"test-string",
+			SharedString.getFactory().attributes,
+		);
+		sharedString.insertText(0, "Hello World!");
+
+		class RootNodeSchema extends builder.object("root-item", {
+			foo: builder.object("bar-item", {
+				apple: builder.handle,
+			}),
+		}) {}
+
+		sharedTree.schematize(
+			new TreeConfiguration(
+				RootNodeSchema,
+				() =>
+					new RootNodeSchema({
+						foo: {
+							apple: sharedString.handle,
+						},
+					}),
+			),
+		);
+
+		const result = await visualizeSharedTree(
+			sharedTree as unknown as ISharedObject,
+			visualizeChildData,
+		);
+
+		const expected = {
+			children: {
+				foo: {
+					children: {
+						apple: {
+							fluidObjectId: "test-string",
+							nodeKind: "FluidHandleNode",
+							tooltipContents: {
+								schema: {
+									nodeKind: "TreeNode",
+									children: {
+										name: {
+											nodeKind: "ValueNode",
+											value: "com.fluidframework.leaf.handle",
+										},
+									},
+								},
+							},
+						},
+					},
+					nodeKind: "TreeNode",
+					tooltipContents: {
+						schema: {
+							nodeKind: "TreeNode",
+							children: {
+								name: {
+									nodeKind: "ValueNode",
+									value: "shared-tree-test.bar-item",
+								},
+								allowedTypes: {
+									value: "{ apple : com.fluidframework.leaf.handle }",
 									nodeKind: "ValueNode",
 								},
 							},
@@ -943,7 +1086,7 @@ describe("DefaultVisualizers unit tests", () => {
 										"0": {
 											children: {
 												avocado: {
-													value: "16",
+													value: 16,
 													nodeKind: "ValueNode",
 													tooltipContents: {
 														schema: {
@@ -962,7 +1105,7 @@ describe("DefaultVisualizers unit tests", () => {
 														"0": {
 															children: {
 																alpaca: {
-																	value: '"Llama but cuter."',
+																	value: "Llama but cuter.",
 																	nodeKind: "ValueNode",
 																	tooltipContents: {
 																		schema: {
@@ -1052,7 +1195,7 @@ describe("DefaultVisualizers unit tests", () => {
 								banana: {
 									children: {
 										miniBanana: {
-											value: "true",
+											value: true,
 											nodeKind: "ValueNode",
 											tooltipContents: {
 												schema: {
@@ -1085,7 +1228,7 @@ describe("DefaultVisualizers unit tests", () => {
 									},
 								},
 								cherry: {
-									value: "32",
+									value: 32,
 									nodeKind: "ValueNode",
 									tooltipContents: {
 										schema: {
@@ -1124,7 +1267,7 @@ describe("DefaultVisualizers unit tests", () => {
 										"0": {
 											children: {
 												avocado: {
-													value: '"Avacado Advocate."',
+													value: "Avacado Advocate.",
 													nodeKind: "ValueNode",
 													tooltipContents: {
 														schema: {
@@ -1143,7 +1286,7 @@ describe("DefaultVisualizers unit tests", () => {
 														"0": {
 															children: {
 																alpaca: {
-																	value: '"Llama but not LLM."',
+																	value: "Llama but not LLM.",
 																	nodeKind: "ValueNode",
 																	tooltipContents: {
 																		schema: {
@@ -1233,7 +1376,7 @@ describe("DefaultVisualizers unit tests", () => {
 								banana: {
 									children: {
 										miniBanana: {
-											value: "false",
+											value: false,
 											nodeKind: "ValueNode",
 											tooltipContents: {
 												schema: {
@@ -1304,7 +1447,7 @@ describe("DefaultVisualizers unit tests", () => {
 				bar: {
 					children: {
 						americano: {
-							value: "false",
+							value: false,
 							nodeKind: "ValueNode",
 							tooltipContents: {
 								schema: {
@@ -1319,7 +1462,7 @@ describe("DefaultVisualizers unit tests", () => {
 							},
 						},
 						bubbleTea: {
-							value: '"Taro Bubble Tea"',
+							value: "Taro Bubble Tea",
 							nodeKind: "ValueNode",
 							tooltipContents: {
 								schema: {
@@ -1336,7 +1479,7 @@ describe("DefaultVisualizers unit tests", () => {
 						chaiLatte: {
 							children: {
 								appleCider: {
-									value: "true",
+									value: true,
 									nodeKind: "ValueNode",
 									tooltipContents: {
 										schema: {
@@ -1373,7 +1516,7 @@ describe("DefaultVisualizers unit tests", () => {
 								"0": {
 									children: {
 										avengers: {
-											value: "true",
+											value: true,
 											nodeKind: "ValueNode",
 											tooltipContents: {
 												schema: {
@@ -1426,7 +1569,7 @@ describe("DefaultVisualizers unit tests", () => {
 						espresso: {
 							children: {
 								"0": {
-									value: "256",
+									value: 256,
 									nodeKind: "ValueNode",
 									tooltipContents: {
 										schema: {
@@ -1441,7 +1584,7 @@ describe("DefaultVisualizers unit tests", () => {
 									},
 								},
 								"1": {
-									value: '"FiveHundredTwelve"',
+									value: "FiveHundredTwelve",
 									nodeKind: "ValueNode",
 									tooltipContents: {
 										schema: {
@@ -1492,7 +1635,7 @@ describe("DefaultVisualizers unit tests", () => {
 					},
 				},
 				baz: {
-					value: "128",
+					value: 128,
 					nodeKind: "ValueNode",
 					tooltipContents: {
 						schema: {
@@ -1509,7 +1652,7 @@ describe("DefaultVisualizers unit tests", () => {
 				foobar: {
 					children: {
 						anthropology: {
-							value: "1",
+							value: 1,
 							nodeKind: "ValueNode",
 							tooltipContents: {
 								schema: {
@@ -1524,7 +1667,7 @@ describe("DefaultVisualizers unit tests", () => {
 							},
 						},
 						biology: {
-							value: "2",
+							value: 2,
 							nodeKind: "ValueNode",
 							tooltipContents: {
 								schema: {
@@ -1539,7 +1682,7 @@ describe("DefaultVisualizers unit tests", () => {
 							},
 						},
 						choreography: {
-							value: "3",
+							value: 3,
 							nodeKind: "ValueNode",
 							tooltipContents: {
 								schema: {

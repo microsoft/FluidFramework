@@ -64,6 +64,8 @@ A test abstract getter property.
 abstract get abstractPropertyGetter(): TestMappedType;
 ```
 
+**Type:** [TestMappedType](./simple-suite-test#testmappedtype-typealias)
+
 ### protectedProperty {#protectedproperty-property}
 
 A test protected property.
@@ -73,6 +75,8 @@ A test protected property.
 ```typescript
 protected readonly protectedProperty: TestEnum;
 ```
+
+**Type:** [TestEnum](./simple-suite-test#testenum-enum)
 
 ## Method Details
 

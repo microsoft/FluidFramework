@@ -44,7 +44,7 @@ describe("OpCompressor", () => {
 			// small batch with small messages
 			createBatch(10, 100 * 1024),
 			// small batch with large messages
-			createBatch(2, 100 * 1024 * 1024),
+			createBatch(2, 2 * 1024 * 1024),
 			// large batch with small messages
 			createBatch(1000, 100 * 1024),
 		].forEach((batch) => {

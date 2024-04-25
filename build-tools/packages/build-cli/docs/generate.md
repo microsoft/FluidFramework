@@ -9,6 +9,7 @@ Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub generate changelog`](#flub-generate-changelog)
 * [`flub generate changeset`](#flub-generate-changeset)
 * [`flub generate entrypoints`](#flub-generate-entrypoints)
+* [`flub generate packlist`](#flub-generate-packlist)
 * [`flub generate upcoming`](#flub-generate-upcoming)
 
 ## `flub generate assertTags`
@@ -29,9 +30,9 @@ PACKAGE SELECTION FLAGS
                                       include release group root packages. To include those, use the --releaseGroupRoot
                                       argument. Cannot be used with --all, --dir, or --packages.
                                       <options: client|server|azure|build-tools|gitrest|historian|all>
-      --all                           Run on all packages and release groups. Cannot be used with --all, --dir,
+      --all                           Run on all packages and release groups. Cannot be used with --dir, --packages,
                                       --releaseGroup, or --releaseGroupRoot.
-      --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --dir,
+      --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --packages,
                                       --releaseGroup, or --releaseGroupRoot.
       --packages                      Run on all independent packages in the repo. Cannot be used with --all, --dir,
                                       --releaseGroup, or --releaseGroupRoot.
@@ -214,19 +215,24 @@ _See code: [src/commands/generate/changeset.ts](https://github.com/microsoft/Flu
 
 ## `flub generate entrypoints`
 
-Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.)
+Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.) as found in package.json "exports"
 
 ```
 USAGE
   $ flub generate entrypoints [-v | --quiet] [--mainEntrypoint <value>] [--outDir <value>] [--outFilePrefix <value>]
-    [--outFileSuffix <value>]
+    [--outFileAlpha <value>] [--outFileBeta <value>] [--outFilePublic <value>] [--outFileSuffix <value>]
+    [--node10TypeCompat]
 
 FLAGS
   --mainEntrypoint=<value>  [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
+  --node10TypeCompat        Optional generation of Node10 resolution compatible type entrypoints matching others.
   --outDir=<value>          [default: ./lib] Directory to emit entrypoint declaration files.
+  --outFileAlpha=<value>    [default: alpha] Base file name for alpha entrypoint declaration files.
+  --outFileBeta=<value>     [default: beta] Base file name for beta entrypoint declaration files.
   --outFilePrefix=<value>   File name prefix for emitting entrypoint declaration files. Pattern of
                             '{@unscopedPackageName}' within value will be replaced with the unscoped name of this
                             package.
+  --outFilePublic=<value>   [default: public] Base file name for public entrypoint declaration files.
   --outFileSuffix=<value>   [default: .d.ts] File name suffix including extension for emitting entrypoint declaration
                             files.
 
@@ -235,10 +241,60 @@ LOGGING FLAGS
       --quiet    Disable all logging.
 
 DESCRIPTION
-  Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.)
+  Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /beta. etc.) as found in package.json
+  "exports"
 ```
 
 _See code: [src/commands/generate/entrypoints.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/entrypoints.ts)_
+
+## `flub generate packlist`
+
+Outputs a list of files that will be included in a package based on its 'files' property in package.json and any .npmignore files.
+
+```
+USAGE
+  $ flub generate packlist [-v | --quiet] [--out <value>] [--concurrency <value>] [--all | --dir <value> | --packages |
+    -g client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
+    client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>]
+
+FLAGS
+  --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
+  --out=<value>          [default: packlist.txt] File to output the pack list to. This path is relative to the package
+                         whose contents is being listed.
+
+PACKAGE SELECTION FLAGS
+  -g, --releaseGroup=<option>...      Run on all child packages within the specified release groups. This does not
+                                      include release group root packages. To include those, use the --releaseGroupRoot
+                                      argument. Cannot be used with --all, --dir, or --packages.
+                                      <options: client|server|azure|build-tools|gitrest|historian|all>
+      --all                           Run on all packages and release groups. Cannot be used with --dir, --packages,
+                                      --releaseGroup, or --releaseGroupRoot.
+      --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --packages,
+                                      --releaseGroup, or --releaseGroupRoot.
+      --packages                      Run on all independent packages in the repo. Cannot be used with --all, --dir,
+                                      --releaseGroup, or --releaseGroupRoot.
+      --releaseGroupRoot=<option>...  Run on the root package of the specified release groups. This does not include any
+                                      child packages within the release group. To include those, use the --releaseGroup
+                                      argument. Cannot be used with --all, --dir, or --packages.
+                                      <options: client|server|azure|build-tools|gitrest|historian|all>
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+PACKAGE FILTER FLAGS
+  --[no-]private          Only include private packages. Use --no-private to exclude private packages instead.
+  --scope=<value>...      Package scopes to filter to. If provided, only packages whose scope matches the flag will be
+                          included. Cannot be used with --skipScope.
+  --skipScope=<value>...  Package scopes to filter out. If provided, packages whose scope matches the flag will be
+                          excluded. Cannot be used with --scope.
+
+DESCRIPTION
+  Outputs a list of files that will be included in a package based on its 'files' property in package.json and any
+  .npmignore files.
+```
+
+_See code: [src/commands/generate/packlist.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/packlist.ts)_
 
 ## `flub generate upcoming`
 

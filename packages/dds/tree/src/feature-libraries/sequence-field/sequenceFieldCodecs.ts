@@ -37,9 +37,9 @@ export const sequenceFieldChangeCodecFactory = (
 		EncodedRevisionTag,
 		ChangeEncodingContext
 	>,
-) => makeCodecFamily<Changeset, FieldChangeEncodingContext>([[0, makeV0Codec(revisionTagCodec)]]);
+) => makeCodecFamily<Changeset, FieldChangeEncodingContext>([[1, makeV1Codec(revisionTagCodec)]]);
 
-function makeV0Codec(
+function makeV1Codec(
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,

@@ -35,9 +35,9 @@ import {
 	snapshotKey,
 	tokenFromResponse,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	type IFluidErrorBase,
+	ITelemetryLoggerExt,
 	PerformanceEvent,
 	TelemetryDataTag,
 	createChildLogger,

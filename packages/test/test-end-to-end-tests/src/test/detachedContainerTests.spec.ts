@@ -20,8 +20,7 @@ import { ContainerMessageType } from "@fluidframework/container-runtime/internal
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import type { ISharedMap } from "@fluidframework/map";
-import type { SharedDirectory } from "@fluidframework/map/internal";
+import type { ISharedMap, SharedDirectory } from "@fluidframework/map/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree/internal";
 import type { ConsensusQueue } from "@fluidframework/ordered-collection/internal";

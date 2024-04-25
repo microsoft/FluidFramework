@@ -42,7 +42,7 @@ class LeafNodeSchema<T extends FlexLeafNodeSchema>
 	public create(data: TreeValue<T["info"]> | FlexTreeNode): TreeValue<T["info"]> {
 		if (isFlexTreeNode(data)) {
 			const value = data.value;
-			assert(valueSchemaAllows(this.info, value), "invalid value");
+			assert(valueSchemaAllows(this.info, value), 0x916 /* invalid value */);
 			return value;
 		}
 		return data;

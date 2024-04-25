@@ -7,7 +7,7 @@ import { IConstellation, ICoordinate } from "@fluid-example/multiview-coordinate
 import { Coordinate } from "@fluid-example/multiview-coordinate-model";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IValueChanged } from "@fluidframework/map";
+import { IValueChanged } from "@fluidframework/map/internal";
 
 const starListKey = "stars";
 const constellationName = "@fluid-example/constellation";
