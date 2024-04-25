@@ -24,7 +24,7 @@ import {
 describe("DataVisualizerGraph unit tests", () => {
 	it("Single root DDS (SharedCounter)", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const sharedCounter = SharedCounter.getFactory().create(runtime, "test-counter");
+		const sharedCounter = runtime.create(SharedCounter, "test-counter");
 
 		const visualizer = new DataVisualizerGraph(
 			{
@@ -68,7 +68,7 @@ describe("DataVisualizerGraph unit tests", () => {
 		const runtime = new MockFluidDataStoreRuntime();
 
 		// Create SharedMap
-		const sharedMap = SharedMap.getFactory().create(runtime, "test-map");
+		const sharedMap = runtime.create(SharedMap, "test-map");
 
 		const visualizer = new DataVisualizerGraph(
 			{
@@ -100,7 +100,7 @@ describe("DataVisualizerGraph unit tests", () => {
 			b: "2",
 			c: true,
 		});
-		const sharedCounter = SharedCounter.getFactory().create(runtime, "test-counter");
+		const sharedCounter = runtime.create(SharedCounter, "test-counter");
 		sharedMap.set("test-handle", sharedCounter.handle);
 
 		const childTreeAfterEdit = await visualizer.render(sharedMap.id);
@@ -149,12 +149,9 @@ describe("DataVisualizerGraph unit tests", () => {
 	it("Multiple root DDS_s", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
 
-		const sharedCounter = SharedCounter.getFactory().create(runtime, "test-counter");
+		const sharedCounter = runtime.create(SharedCounter, "test-counter");
 		sharedCounter.increment(42);
-		const sharedCell: ISharedCell<string> = SharedCell.getFactory().create(
-			runtime,
-			"test-cell",
-		);
+		const sharedCell: ISharedCell<string> = runtime.create(SharedCell, "test-cell");
 		sharedCell.set("Hello world");
 
 		const visualizer = new DataVisualizerGraph(

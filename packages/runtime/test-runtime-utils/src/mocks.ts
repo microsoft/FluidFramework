@@ -29,6 +29,7 @@ import {
 	IDeltaConnection,
 	IDeltaHandler,
 	IFluidDataStoreRuntime,
+	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor/internal";
@@ -1070,6 +1071,17 @@ export class MockFluidDataStoreRuntime
 
 	public rollback?(message: any, localOpMetadata: unknown): void {
 		return;
+	}
+
+	/**
+	 * Test utility to help shared object instances from a {@link @fluidframework/shared-object-base#ISharedObjectKind}.
+	 * @remarks
+	 * This is an alternative to {@link @fluidframework/shared-object-base#ISharedObjectKind.create} that avoids it's incompatibility with {@link MockFluidDataStoreRuntime}.
+	 *
+	 * If an `id` is not provided, a random UUID is used.
+	 */
+	public create<T>(factory: { getFactory(): IChannelFactory<T> }, id?: string): T & IChannel {
+		return factory.getFactory().create(this, id ?? uuid());
 	}
 }
 

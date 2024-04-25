@@ -804,12 +804,12 @@ export interface ISharedObjectKind<TSharedObject> {
 	 * const myTree = SharedTree.create(this.runtime, id);
 	 * ```
 	 * @remarks
+	 * The created object is local (detached): insert a handle to it into an attached object to share (attach) it.
 	 * If using `@fluidframework/fluid-static` (for example via `@fluidframework/azure-client`), use {@link @fluidframework/fluid-static#IFluidContainer.create} instead of calling this directly.
 	 *
 	 * @privateRemarks
 	 * TODO:
-	 * This returns null when used with MockFluidDataStoreRuntime, so its unclear how tests should create DDS instances unless using `RootDataObject.create` (which most tests shouldn't to minimize dependencies).
-	 * In practice tests either avoid mock runtimes, use getFactory(), or call the DDS constructor directly. It is unclear (from docs) how getFactory().create differs but it does not rely on runtime.createChannel so it works with mock runtimes.
+	 * This returns null when used with `MockFluidDataStoreRuntime`: instead tests can use `MockFluidDataStoreRuntime.create`.
 	 * TODO:
 	 * See note on ISharedObjectKind.getFactory.
 	 */

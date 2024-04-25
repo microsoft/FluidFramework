@@ -94,7 +94,7 @@ describe("SharedOT", () => {
 						objectStorage: new MockStorage(),
 					};
 
-					const docN = SharedDelta.getFactory().create(dataStoreRuntimeN, `doc-${i}`);
+					const docN = dataStoreRuntimeN.create(SharedDelta, `doc-${i}`);
 					docN.connect(servicesN);
 
 					docs.push(docN);

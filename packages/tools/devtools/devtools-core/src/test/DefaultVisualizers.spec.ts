@@ -52,10 +52,7 @@ async function visualizeChildData(data: unknown): Promise<VisualChildNode> {
 describe("DefaultVisualizers unit tests", () => {
 	it("SharedCell (Primitive data)", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const sharedCell: ISharedCell<string> = SharedCell.getFactory().create(
-			runtime,
-			"test-cell",
-		);
+		const sharedCell: ISharedCell<string> = runtime.create(SharedCell, "test-cell");
 
 		const result = await visualizeSharedCell(sharedCell, visualizeChildData);
 
@@ -74,10 +71,7 @@ describe("DefaultVisualizers unit tests", () => {
 
 	it("SharedCell (JSON data)", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const sharedCell: ISharedCell<object> = SharedCell.getFactory().create(
-			runtime,
-			"test-cell",
-		);
+		const sharedCell: ISharedCell<object> = runtime.create(SharedCell, "test-cell");
 
 		sharedCell.set({ test: undefined });
 
@@ -104,7 +98,7 @@ describe("DefaultVisualizers unit tests", () => {
 
 	it("SharedCounter", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const sharedCounter = SharedCounter.getFactory().create(runtime, "test-counter");
+		const sharedCounter = runtime.create(SharedCounter, "test-counter");
 		sharedCounter.increment(37);
 
 		const result = await visualizeSharedCounter(sharedCounter, visualizeChildData);
@@ -122,7 +116,7 @@ describe("DefaultVisualizers unit tests", () => {
 
 	it("SharedDirectory", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const sharedDirectory = SharedDirectory.getFactory().create(runtime, "test-directory");
+		const sharedDirectory = runtime.create(SharedDirectory, "test-directory");
 
 		sharedDirectory.set("foo", 37);
 		sharedDirectory.set("bar", false);
@@ -232,7 +226,7 @@ describe("DefaultVisualizers unit tests", () => {
 
 	it("SharedMap", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const sharedMap = SharedMap.getFactory().create(runtime, "test-map");
+		const sharedMap = runtime.create(SharedMap, "test-map");
 		sharedMap.set("foo", 42);
 		sharedMap.set("bar", true);
 		sharedMap.set("baz", {
@@ -290,7 +284,7 @@ describe("DefaultVisualizers unit tests", () => {
 
 	it("SharedMatrix", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const sharedMatrix = SharedMatrix.getFactory().create(runtime, "test-matrix");
+		const sharedMatrix = runtime.create(SharedMatrix, "test-matrix");
 		sharedMatrix.insertRows(0, 2);
 		sharedMatrix.insertCols(0, 3);
 		sharedMatrix.setCell(0, 0, "Hello");

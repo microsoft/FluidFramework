@@ -58,7 +58,7 @@ export function runSharedTreeVersioningTests(
 		};
 
 		it('defaults to latest version if no version is specified when creating factory', () => {
-			const sharedTree = SharedTree.getFactory().create(new MockFluidDataStoreRuntime(), 'SharedTree');
+			const sharedTree = new MockFluidDataStoreRuntime().create(SharedTree, 'SharedTree');
 			const writeFormats = Object.values(WriteFormat);
 			expect(sharedTree.getWriteFormat()).to.equal(writeFormats[writeFormats.length - 1]);
 		});

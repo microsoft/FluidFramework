@@ -39,13 +39,13 @@ export function createConnectedMap(
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
-	const map = SharedMap.getFactory().create(dataStoreRuntime, id);
+	const map = dataStoreRuntime.create(SharedMap, id);
 	map.connect(services);
 	return map;
 }
 
 function createLocalMap(id: string): ISharedMap {
-	const map = SharedMap.getFactory().create(new MockFluidDataStoreRuntime(), id);
+	const map = new MockFluidDataStoreRuntime().create(SharedMap, id);
 	return map;
 }
 

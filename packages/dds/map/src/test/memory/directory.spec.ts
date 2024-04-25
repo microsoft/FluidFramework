@@ -9,7 +9,7 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 import { ISharedDirectory, SharedDirectory } from "../../index.js";
 
 function createLocalDirectory(id: string): ISharedDirectory {
-	const directory = SharedDirectory.getFactory().create(new MockFluidDataStoreRuntime(), id);
+	const directory = new MockFluidDataStoreRuntime().create(SharedDirectory, id);
 	return directory;
 }
 
