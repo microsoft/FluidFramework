@@ -4,33 +4,23 @@
 
 ```ts
 
-import { AzureContainerServices } from '@fluidframework/base-client';
-import { AzureContainerVersion } from '@fluidframework/base-client';
-import { AzureGetVersionsOptions } from '@fluidframework/base-client';
-import { AzureMember } from '@fluidframework/base-client';
-import { AzureUser } from '@fluidframework/base-client';
 import { BaseClient } from '@fluidframework/base-client';
 import type { BaseClientProps } from '@fluidframework/base-client';
-import { IAzureAudience } from '@fluidframework/base-client';
+import { IAudience } from '@fluidframework/base-client';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { ITokenResponse } from '@fluidframework/routerlicious-driver';
 import { IUser } from '@fluidframework/protocol-definitions';
+import { IContainerServices as RouterliciousContainerServices } from '@fluidframework/base-client';
+import { IContainerVersion as RouterliciousContainerVersion } from '@fluidframework/base-client';
+import { IGetVersionsOptions as RouterliciousGetVersionsOptions } from '@fluidframework/base-client';
+import { BaseMember as RouterliciousMember } from '@fluidframework/base-client';
+import { BaseUser as RouterliciousUser } from '@fluidframework/base-client';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 
-export { AzureContainerServices }
-
-export { AzureContainerVersion }
-
-export { AzureGetVersionsOptions }
-
-export { AzureMember }
-
-export { AzureUser }
-
-export { IAzureAudience }
+export { IAudience }
 
 export { ITelemetryBaseEvent }
 
@@ -62,14 +52,24 @@ export interface RouterliciousConnectionConfig {
     tokenProvider: ITokenProvider;
 }
 
+export { RouterliciousContainerServices }
+
+export { RouterliciousContainerVersion }
+
 // @public
 export class RouterliciousFunctionTokenProvider implements ITokenProvider {
-    constructor(tenantKey: string, user?: Pick<AzureMember<any>, "userId" | "userName" | "additionalDetails"> | undefined);
+    constructor(tenantKey: string, user?: Pick<RouterliciousMember<any>, "userId" | "userName" | "additionalDetails"> | undefined);
     // (undocumented)
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     // (undocumented)
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
 }
+
+export { RouterliciousGetVersionsOptions }
+
+export { RouterliciousMember }
+
+export { RouterliciousUser }
 
 export { ScopeType }
 

@@ -62,7 +62,9 @@ export interface BaseClientProps {
 
 // @public
 export interface BaseMember<T = any> extends IMember {
+    // (undocumented)
     additionalDetails?: T;
+    // (undocumented)
     userName: string;
 }
 

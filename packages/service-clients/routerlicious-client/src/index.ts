@@ -14,9 +14,9 @@ export { RouterliciousFunctionTokenProvider } from "./RouterliciousFunctionToken
 export type { RouterliciousClientProps, RouterliciousConnectionConfig } from "./interfaces.js";
 
 export type {
-	IContainerServices,
-	IContainerVersion,
-	IGetVersionsOptions,
+	IContainerServices as RouterliciousContainerServices,
+	IContainerVersion as RouterliciousContainerVersion,
+	IGetVersionsOptions as RouterliciousGetVersionsOptions,
 	BaseMember as RouterliciousMember,
 	BaseUser as RouterliciousUser,
 	IAudience,
