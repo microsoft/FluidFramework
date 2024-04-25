@@ -2668,7 +2668,7 @@ export class ContainerRuntime
 				// stashed ops flow. The compressor is stashed with these ops already processed.
 				// That said, in idCompressorMode === "delayed", we might not serialize ID compressor, and
 				// thus we need to process all the ops.
-				if (!(this.skipSavedCompressorOps && messageWithContext.savedOp)) {
+				if (!(this.skipSavedCompressorOps && messageWithContext.savedOp === true)) {
 					const range = messageWithContext.message.contents;
 					// Some other client turned on the id compressor. If we have not turned it on,
 					// put it in a pending queue and delay finalization.
