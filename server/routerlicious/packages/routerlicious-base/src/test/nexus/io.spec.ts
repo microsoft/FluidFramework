@@ -872,18 +872,24 @@ describe("Routerlicious", () => {
 						});
 
 						describe("Invalid/Malformed signals", () => {
-							const checkNoSignalReceived = async () => {
-								await Promise.all(clients.map((client) => client.signalPromise));
-								clients.forEach((client) => {
-									assert.equal(
-										client.signalCount,
-										0,
-										`User should not have received any signals`,
-									);
+							const createNackPromise = (client: Client): Promise<INack> => {
+								return new Promise<INack>((resolve) => {
+									const nackListener = (nack: INack) => {
+										client.socket.off("nack", nackListener);
+										resolve(nack);
+									};
+
+									client.socket.on("nack", nackListener);
+
+									// Timeout of 100ms to handle cases where no nack is received
+									setTimeout(() => {
+										client.socket.off("nack", nackListener);
+										resolve(undefined);
+									}, 100);
 								});
 							};
 
-							it("can handle an invalid targetClientID", async () => {
+							it("recieves nack when an invalid targetClientID", async () => {
 								const targetedSignal: ISentSignalMessage = {
 									targetClientId: "invalidClientID",
 									content: stringSignalContent,
@@ -893,32 +899,15 @@ describe("Routerlicious", () => {
 									targetedSignal,
 								]);
 
-								checkNoSignalReceived();
-							});
+								await Promise.all(clients.map((client) => client.signalPromise));
 
-							it("can handle an invalid targetClientID type", async () => {
-								const targetedSignal = {
-									targetClientId: true,
-									content: stringSignalContent,
-								};
-
-								clients[1].socket.send("submitSignal", clients[1].clientId, [
-									targetedSignal,
-								]);
-
-								checkNoSignalReceived();
-							});
-
-							it("can hanlde a missing content field", async () => {
-								const targetedSignal = {
-									targetClientId: clients[0].clientId,
-								};
-
-								clients[1].socket.send("submitSignal", clients[1].clientId, [
-									targetedSignal,
-								]);
-
-								checkNoSignalReceived();
+								clients.forEach((client, index) => {
+									assert.equal(
+										client.signalCount,
+										0,
+										`User ${index + 1} should not have received any signals`,
+									);
+								});
 							});
 
 							it("can handle an invalid signal field", async () => {
@@ -932,7 +921,61 @@ describe("Routerlicious", () => {
 									targetedSignal,
 								]);
 
-								checkNoSignalReceived();
+								const userSignals = await Promise.all(
+									clients.map((client) => client.signalPromise),
+								);
+
+								clients.forEach((client, index) => {
+									if (index === 0) {
+										assert.equal(
+											client.signalCount,
+											1,
+											"User 1 should have received 1 signal",
+										);
+										assert.equal(
+											userSignals[index].content,
+											stringSignalContent,
+											"User 1 signal content mismatch",
+										);
+									} else {
+										assert.equal(
+											client.signalCount,
+											0,
+											`User ${
+												index + 1
+											} should not have received any signals`,
+										);
+									}
+								});
+							});
+
+							it("can handle an invalid targetClientID type", async () => {
+								const targetedSignal = {
+									targetClientId: true,
+									content: stringSignalContent,
+								};
+
+								const nackPromise = createNackPromise(clients[1]);
+
+								clients[1].socket.send("submitSignal", clients[1].clientId, [
+									targetedSignal,
+								]);
+
+								await nackPromise;
+							});
+
+							it("can handle a missing content field", async () => {
+								const targetedSignal = {
+									targetClientId: clients[0].clientId,
+								};
+
+								const nackPromise = createNackPromise(clients[1]);
+
+								clients[1].socket.send("submitSignal", clients[1].clientId, [
+									targetedSignal,
+								]);
+
+								await nackPromise;
 							});
 
 							it("can handle invalid optional signal fields", async () => {
@@ -943,11 +986,13 @@ describe("Routerlicious", () => {
 									referenceSequenceNumber: "invalid",
 								};
 
+								const nackPromise = createNackPromise(clients[1]);
+
 								clients[1].socket.send("submitSignal", clients[1].clientId, [
 									targetedSignal,
 								]);
 
-								checkNoSignalReceived();
+								await nackPromise;
 							});
 						});
 					});
