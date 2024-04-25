@@ -114,7 +114,8 @@ async function removeInstalled(version: string) {
 
 // See https://github.com/nodejs/node-v0.x-archive/issues/2318.
 // Note that execFile and execFileSync are used to avoid command injection vulnerability flagging from CodeQL.
-const npmCmd = process.platform.includes("win") ? "npm.cmd" : "npm";
+const npmCmd =
+	process.platform.includes("win") && !process.platform.includes("darwin") ? "npm.cmd" : "npm";
 
 /**
  * @internal

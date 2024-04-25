@@ -12,16 +12,19 @@ import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IContainerExperimental, Loader } from "@fluidframework/container-loader/internal";
-import { IRequestHeader, LogLevel } from "@fluidframework/core-interfaces";
+import { IRequestHeader, LogLevel, type IErrorBase } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { getRetryDelayFromError } from "@fluidframework/driver-utils/internal";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { GenericError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import commander from "commander";
 
-import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver.js";
+import {
+	FaultInjectionDocumentServiceFactory,
+	FaultInjectionError,
+} from "./faultInjectionDriver.js";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore.js";
 import {
 	generateConfigurations,
@@ -220,6 +223,8 @@ async function runnerProcess(
 	let stashedOpP: Promise<string | undefined> | undefined;
 	while (!done) {
 		let container: IContainer | undefined;
+		let containerClosedError: IErrorBase | undefined;
+
 		try {
 			const nextFactoryPermutation = iterator.next();
 			if (nextFactoryPermutation.done === true) {
@@ -259,16 +264,21 @@ async function runnerProcess(
 			const test = (await container.getEntryPoint()) as ILoadTest;
 
 			// Retain old behavior of runtime being disposed on container close
-			container.once("closed", () => container?.dispose());
+			container.once("closed", (err) => {
+				containerClosedError = err;
+				container?.dispose();
+			});
 
 			if (enableOpsMetrics) {
 				const testRuntime = await test.getRuntime();
-				metricsCleanup = await setupOpsMetrics(
-					container,
-					runConfig.logger,
-					runConfig.testConfig.progressIntervalMs,
-					testRuntime,
-				);
+				if (testRuntime !== undefined) {
+					metricsCleanup = await setupOpsMetrics(
+						container,
+						runConfig.logger,
+						runConfig.testConfig.progressIntervalMs,
+						testRuntime,
+					);
+				}
 			}
 
 			// Control fault injection period through config.
@@ -325,9 +335,25 @@ async function runnerProcess(
 				await delay(delayMs);
 			}
 		} finally {
-			if (container?.closed === false) {
-				container?.close();
+			// everywhere else we gracefully handle container close/dispose,
+			// and don't create more errors which add noise to the stress
+			// results. This should be the only place we log on error
+			// related to close/dispose, as this place catches close
+			// with no error specified, which should never happen.
+			// if it does happen, the container is closing without
+			// error which could be a test or product bug,
+			// but we don't want silent failures.
+			if (container?.closed === true && containerClosedError === undefined) {
+				runConfig.logger.sendErrorEvent(
+					{
+						eventName: "CloseWithoutError",
+						testHarnessEvent: true,
+					},
+					new GenericError("Container closed unexpectedly without error"),
+				);
 			}
+
+			container?.dispose();
 			metricsCleanup();
 		}
 	}
@@ -432,7 +458,9 @@ function scheduleContainerClose(
 						);
 						setTimeout(() => {
 							if (!container.closed) {
-								container.close();
+								container.close(
+									new FaultInjectionError("scheduleContainerClose", false),
+								);
 							}
 						}, leaveTime);
 					}

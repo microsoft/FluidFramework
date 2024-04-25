@@ -245,13 +245,13 @@ export const skipCheckFlag = Flags.boolean({
 export const selectionFlags = {
 	all: Flags.boolean({
 		description:
-			"Run on all packages and release groups. Cannot be used with --all, --dir, --releaseGroup, or --releaseGroupRoot.",
+			"Run on all packages and release groups. Cannot be used with --dir, --packages, --releaseGroup, or --releaseGroupRoot.",
 		exclusive: ["dir", "packages", "releaseGroup", "releaseGroupRoot"],
 		helpGroup: "PACKAGE SELECTION",
 	}),
 	dir: Flags.directory({
 		description:
-			"Run on the package in this directory. Cannot be used with --all, --dir, --releaseGroup, or --releaseGroupRoot.",
+			"Run on the package in this directory. Cannot be used with --all, --packages, --releaseGroup, or --releaseGroupRoot.",
 		exclusive: ["packages", "releaseGroup", "releaseGroupRoot", "all"],
 		helpGroup: "PACKAGE SELECTION",
 	}),
