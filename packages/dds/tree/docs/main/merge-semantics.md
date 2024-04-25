@@ -199,7 +199,7 @@ that would mean the transaction would at worst have one of 1024 possible differe
 `SharedTree`'s semantics guarantee that every `ki` is equal to 1,
 meaning each transaction has only one possible effect.
 
-### Constraints
+## Constraints
 
 The previous section established how `SharedTree`'s merge semantics guarantee that each transaction,
 no matter how complex, and no matter what concurrent edits may have been sequenced before it,
