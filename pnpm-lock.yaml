@@ -4335,7 +4335,7 @@ importers:
 
   experimental/PropertyDDS/packages/property-common:
     specifiers:
-      '@arethetypeswrong/cli': ^0.13.3
+      '@arethetypeswrong/cli': ^0.15.2
       '@biomejs/biome': ^1.6.2
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -4388,7 +4388,7 @@ importers:
       traverse: 0.6.6
       uuid: 9.0.1
     devDependencies:
-      '@arethetypeswrong/cli': 0.13.3
+      '@arethetypeswrong/cli': 0.15.2
       '@biomejs/biome': 1.6.2
       '@fluid-internal/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
       '@fluidframework/build-common': 2.0.3
