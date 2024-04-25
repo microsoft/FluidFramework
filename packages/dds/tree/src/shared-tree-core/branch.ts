@@ -263,14 +263,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			return undefined;
 		}
 
-		// Anonymize the commits from this transaction by stripping their revision tags.
-		// Otherwise, the change rebaser will record their tags and those tags no longer exist.
-		const anonymousCommits = commits.map((commit) => ({
-			change: this.changeFamily.rebaser.changeRevision(commit.change, undefined),
-			revision: undefined,
-		}));
 		// Squash the changes and make the squash commit the new head of this branch
-		const squashedChange = this.changeFamily.rebaser.compose(anonymousCommits);
+		const squashedChange = this.changeFamily.rebaser.compose(commits);
 		const revision = this.mintRevisionTag();
 
 		const newHead = mintCommit(startCommit, {
