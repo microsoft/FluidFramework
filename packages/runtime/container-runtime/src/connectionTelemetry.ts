@@ -149,8 +149,7 @@ class OpPerfTelemetry {
 		// due to complexity of the different asynchronus scenarios of the op message lifecycle.
 		this.opLatencyLogger = createSampledLogger(logger);
 
-		//
-		const submitOpEventSampler: IEventSampler = (() => {
+		const opsEventSampler: IEventSampler = (() => {
 			let eventCount = 0;
 			return {
 				sample: () => {
@@ -166,7 +165,7 @@ class OpPerfTelemetry {
 				},
 			};
 		})();
-		this.opsLogger = createSampledLogger(logger, submitOpEventSampler);
+		this.opsLogger = createSampledLogger(logger, opsEventSampler);
 
 		this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
 		this.deltaManager.on("submitOp", (message) => this.beforeOpSubmit(message));
