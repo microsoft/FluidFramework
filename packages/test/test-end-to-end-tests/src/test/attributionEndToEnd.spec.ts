@@ -133,7 +133,7 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 	 */
 	itSkipsFailureOnSpecificDrivers(
 		"Can attribute content from multiple collaborators",
-		["tinylicious", "t9s"],
+		["tinylicious", "t9s", "routerlicious", "r11s"],
 		async () => {
 			const attributor = createRuntimeAttributor();
 			const container1 = await provider.makeTestContainer(getTestConfig(attributor));
