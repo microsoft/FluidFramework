@@ -312,7 +312,7 @@ FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
   --level=<option>       [default: internal] What API level to generate tests for.
                          <options: public|alpha|beta|internal|legacy>
-  --outDir=<value>       [default: ./src/test/types] Directory to emit entrypoint declaration files.
+  --outDir=<value>       [default: ./src/test/types] Where to emit the type tests file.
   --outFile=<value>      [default: validate{@unscopedPackageName}Previous.generated.ts] File name for the generated type
                          tests. The pattern '{@unscopedPackageName}' within the value will be replaced with the unscoped
                          name of this package in PascalCase.
