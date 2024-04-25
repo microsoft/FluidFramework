@@ -17,7 +17,7 @@ import { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
-import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
+import { cases, ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
 import {
 	areComposable,
 	assertChangesetsEqual,
@@ -542,7 +542,7 @@ export function testCompose() {
 					tagChangeInline(revive, tag2),
 					tagChangeInline(deletion, tag3),
 				]);
-				const expected: TestChangeset = [
+				const expected: SF.Changeset = [
 					Mark.remove(
 						1,
 						{ localId: brand(0), revision: tag3 },

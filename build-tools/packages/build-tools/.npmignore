@@ -1,6 +1,14 @@
-nyc
+.eslintignore
+.eslintrc.cjs
+.mocharc.json
+.prettierignore
 *.log
+**/_api-extractor-temp/**
 **/*.tsbuildinfo
-src/test
 dist/test
+docs
 lib/test
+nyc
+packlist.txt
+src
+test

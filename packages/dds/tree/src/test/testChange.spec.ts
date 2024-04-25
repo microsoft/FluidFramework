@@ -21,7 +21,8 @@ import { brand } from "../util/index.js";
 import { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils.js";
 import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests.js";
 import { TestChange } from "./testChange.js";
-import { deepFreeze, mintRevisionTag } from "./utils.js";
+import { mintRevisionTag } from "./utils.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 describe("TestChange", () => {
 	it("can be composed", () => {

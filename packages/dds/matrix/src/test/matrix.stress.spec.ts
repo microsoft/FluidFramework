@@ -14,10 +14,11 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 import { Random } from "best-random";
 
-import { SharedMatrix, SharedMatrixFactory } from "../index.js";
+import { SharedMatrix } from "../index.js";
+import { SharedMatrix as SharedMatrixClass } from "../matrix.js";
 
 import { UndoRedoStackManager } from "./undoRedoStackManager.js";
-import { expectSize, extract } from "./utils.js";
+import { expectSize, extract, matrixFactory } from "./utils.js";
 
 /**
  * 0 means use LWW.
@@ -31,6 +32,12 @@ import { expectSize, extract } from "./utils.js";
 			let runtimes: MockContainerRuntimeForReconnection[] = [];
 			let trace: string[]; // Repro steps to be printed if a failure is encountered.
 			let matrixTrace: string[];
+
+			const logMatrix = (matrix: SharedMatrix) => {
+				// This avoids @typescript-eslint/no-base-to-string.
+				assert(matrix instanceof SharedMatrixClass);
+				matrixTrace.push(matrix.toString());
+			};
 
 			/**
 			 * Drains the queue of pending ops for each client and vets that all matrices converged on the same state.
@@ -120,13 +127,12 @@ import { expectSize, extract } from "./utils.js";
 							objectStorage,
 						};
 
-						const matrixN = new SharedMatrix(
+						const matrixN = await matrixFactory.load(
 							dataStoreRuntime,
 							`matrix-${matrices.length}`,
-							SharedMatrixFactory.Attributes,
+							servicesN,
+							matrixFactory.attributes,
 						);
-						await matrixN.load(servicesN);
-						matrixN.connect(servicesN);
 						if (undoRedoStacks) {
 							const undoRedo = new UndoRedoStackManager();
 							matrixN.openUndo(undoRedo);
@@ -155,12 +161,14 @@ import { expectSize, extract } from "./utils.js";
 							objectStorage: new MockStorage(),
 						};
 
-						const matrixN = new SharedMatrix(
+						const matrixN = matrixFactory.create(
 							dataStoreRuntimeN,
 							i === numClients ? "summarizer" : `matrix-${i}`,
-							SharedMatrixFactory.Attributes,
-							isSetCellPolicyFWW === 1 ? true : false,
 						);
+						if (isSetCellPolicyFWW === 1) {
+							matrixN.switchSetCellPolicy();
+						}
+
 						matrixN.connect(servicesN);
 						if (i < numClients) {
 							if (undoRedoStacks) {
@@ -239,9 +247,10 @@ import { expectSize, extract } from "./utils.js";
 
 					assert(summarizer !== undefined);
 					for (const m of matrices) {
-						matrixTrace.push(m.toString());
-						matrixTrace.push(summarizer.toString());
+						logMatrix(m);
 					}
+					logMatrix(summarizer);
+
 					// Loop for the prescribed number of iterations, randomly mutating one of matrices with one
 					// of the following operations:
 					//
@@ -415,9 +424,9 @@ import { expectSize, extract } from "./utils.js";
 							await expect();
 							matrixTrace = [];
 							for (const m of matrices) {
-								matrixTrace.push(m.toString());
-								matrixTrace.push(summarizer.toString());
+								logMatrix(m);
 							}
+							logMatrix(summarizer);
 						}
 					}
 
@@ -435,6 +444,7 @@ import { expectSize, extract } from "./utils.js";
 					}
 
 					for (const m of matrices) {
+						assert(m instanceof SharedMatrixClass);
 						console.log(
 							`Matrix id=${
 								m.id
@@ -444,6 +454,7 @@ import { expectSize, extract } from "./utils.js";
 
 					// Also dump the current state of the matrices.
 					for (const m of matrices) {
+						// eslint-disable-next-line @typescript-eslint/no-base-to-string
 						console.log(m.toString());
 					}
 
@@ -655,6 +666,7 @@ import { expectSize, extract } from "./utils.js";
 					);
 
 					// Note: Mocha reporter intercepts 'console.log()' so use 'process.stdout.write' instead.
+					// eslint-disable-next-line @typescript-eslint/no-base-to-string
 					process.stdout.write(matrices[0].toString());
 
 					process.stdout.write(

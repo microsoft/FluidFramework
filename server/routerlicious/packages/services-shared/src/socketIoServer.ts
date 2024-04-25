@@ -36,11 +36,11 @@ class SocketIoSocket implements core.IWebSocket {
 		return this.socket.join(id);
 	}
 
-	public async emit(event: string, ...args: any[]) {
+	public emit(event: string, ...args: any[]) {
 		this.socket.emit(event, ...args);
 	}
 
-	public async emitToRoom(roomId: string, event: string, ...args: any[]) {
+	public emitToRoom(roomId: string, event: string, ...args: any[]) {
 		this.socket.nsp.to(roomId).emit(event, ...args);
 	}
 

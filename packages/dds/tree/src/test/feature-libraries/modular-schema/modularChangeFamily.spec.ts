@@ -60,7 +60,6 @@ import {
 import {
 	EncodingTestData,
 	assertDeltaEqual,
-	deepFreeze,
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	testChangeReceiver,
@@ -87,6 +86,7 @@ import {
 	FieldChangeEncodingContext,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 type SingleNodeChangeset = NodeId | undefined;
 const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {

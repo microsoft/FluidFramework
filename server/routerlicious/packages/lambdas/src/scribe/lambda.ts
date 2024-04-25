@@ -547,9 +547,6 @@ export class ScribeLambda implements IPartitionLambda {
 				this.documentId,
 				LumberEventName.ScribeSessionResult,
 				this.serviceConfiguration,
-			);
-			this.scribeSessionMetric?.setProperty(
-				CommonProperties.isEphemeralContainer,
 				isEphemeralContainer,
 			);
 		}
