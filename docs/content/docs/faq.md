@@ -253,10 +253,10 @@ Instead, when a client joins a collaborative document, they can download a snaps
 
 #### Summary vs Snapshot
 Summary and snapshot both represent the contents for a container in a tree format. They differ in the following ways:
-- Summary is uploaded to storage and snapshot is downloaded from storage. A snapshot is basically the summary that was uploaded but in a different format.
-- Summary is generated at periodic intervals to summarize the state of the container's content at a point in time (sequenceNumber). Snapshot is typically downloaded when a client loads a Fluid document and is the container's content at a point in time (sequenceNumber).
-- Summary is incremental, i.e., parts of the container that have not changed will refer to the previous summary's sub-tree for its content. Snapshot is not incremental, i.e., the whole tree for the container is present in a snapshot.
-- Summary is not compressed by the client before it's uploaded to storage. Snapshot may be compressed by the service before it's returned to the client. If compressed, it includes the compression format that should be used to uncompress it.
-- Hence, the trees for summary and snapshot have different formats to support these requirements:
+  - Summary is uploaded to storage and snapshot is downloaded from storage. A snapshot is basically the summary that was uploaded but in a different format.
+  - Summary is generated at periodic intervals to summarize the state of the container's content at a point in time (sequenceNumber). Snapshot is typically downloaded when a client loads a Fluid document and is the container's content at a point in time (sequenceNumber).
+  - Summary is incremental, i.e., parts of the container that have not changed will refer to the previous summary's sub-tree for its content. Snapshot is not incremental, i.e., the whole tree for the container is present in a snapshot.
+  - Summary is not compressed by the client before it's uploaded to storage. Snapshot may be compressed by the service before it's returned to the client. If compressed, it includes the compression format that should be used to decompress it.
+  - Hence, the trees for summary and snapshot have different formats to support these requirements:
 Summary is represented by an ISummaryTree interface defined here.
 Snapshot is represented by an ISnapshotTree interface defined here.
