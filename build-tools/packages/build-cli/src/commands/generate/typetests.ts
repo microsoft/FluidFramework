@@ -228,7 +228,7 @@ export function getTypesPathFromPackage(
  *
  * @param pkg - The package whose type tests are being generated.
  * @param outDir - The output directory for generated tests.
- * @param outDir - The output directory for generated tests.
+ * @param outFile - The filename for generated tests.
  *
  * @returns The path to write generated files to.
  */
