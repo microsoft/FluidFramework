@@ -5412,7 +5412,7 @@ importers:
       '@fluidframework/build-tools': 0.37.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/tinylicious-client': link:../../../packages/service-clients/tinylicious-client
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/react': 17.0.71
