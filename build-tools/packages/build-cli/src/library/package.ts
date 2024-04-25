@@ -16,7 +16,13 @@ import {
 	isRangeOperator,
 	isWorkspaceRange,
 } from "@fluid-tools/version-tools";
-import { Logger, MonoRepo, Package, updatePackageJsonFile } from "@fluidframework/build-tools";
+import {
+	Logger,
+	MonoRepo,
+	Package,
+	type PackageJson,
+	updatePackageJsonFile,
+} from "@fluidframework/build-tools";
 import { PackageName } from "@rushstack/node-core-library";
 import { compareDesc, differenceInBusinessDays } from "date-fns";
 import execa from "execa";
@@ -841,4 +847,22 @@ export async function npmCheckUpdatesHomegrown(
 		updatedDependencies: dependencyVersionMap,
 		updatedPackages,
 	};
+}
+
+/**
+ * Checks the package object to verify that the specified devDependency exists.
+ *
+ * @param packageObject - the package.json object to check for the dependency
+ * @param dependencyName - the dependency to check for in the package object
+ * @returns The version of the dependency in package.json.
+ */
+export function ensureDevDependencyExists(
+	packageObject: PackageJson,
+	dependencyName: string,
+): string {
+	const dependencyVersion = packageObject?.devDependencies?.[dependencyName];
+	if (dependencyVersion === undefined) {
+		throw new Error(`Did not find devDependency '${dependencyName}' in package.json`);
+	}
+	return dependencyVersion;
 }
