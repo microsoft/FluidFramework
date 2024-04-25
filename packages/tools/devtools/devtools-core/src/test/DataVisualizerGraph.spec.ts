@@ -24,11 +24,7 @@ import {
 describe("DataVisualizerGraph unit tests", () => {
 	it("Single root DDS (SharedCounter)", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const sharedCounter = new SharedCounter(
-			"test-counter",
-			runtime,
-			SharedCounter.getFactory().attributes,
-		);
+		const sharedCounter = SharedCounter.getFactory().create(runtime, "test-counter");
 
 		const visualizer = new DataVisualizerGraph(
 			{
@@ -104,11 +100,7 @@ describe("DataVisualizerGraph unit tests", () => {
 			b: "2",
 			c: true,
 		});
-		const sharedCounter = new SharedCounter(
-			"test-counter",
-			runtime,
-			SharedCounter.getFactory().attributes,
-		);
+		const sharedCounter = SharedCounter.getFactory().create(runtime, "test-counter");
 		sharedMap.set("test-handle", sharedCounter.handle);
 
 		const childTreeAfterEdit = await visualizer.render(sharedMap.id);
@@ -157,11 +149,7 @@ describe("DataVisualizerGraph unit tests", () => {
 	it("Multiple root DDS_s", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
 
-		const sharedCounter = new SharedCounter(
-			"test-counter",
-			runtime,
-			SharedCounter.getFactory().attributes,
-		);
+		const sharedCounter = SharedCounter.getFactory().create(runtime, "test-counter");
 		sharedCounter.increment(42);
 		const sharedCell = new SharedCell("test-cell", runtime, SharedCell.getFactory().attributes);
 		sharedCell.set("Hello world");
