@@ -6,6 +6,7 @@
 import path from "node:path";
 import {
 	type BrokenCompatTypes,
+	type Logger,
 	type Package,
 	type PackageJson,
 	type TestCaseTypeData,
@@ -90,14 +91,16 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 
 		const { typesPath: currentTypesPathRelative, levelUsed: currentPackageLevel } =
 			getTypesPathWithFallback(currentPackageJson, level, fallbackLevel);
-		const currentTypesPath = path.join(pkg.directory, currentTypesPathRelative);
+		const currentTypesPath = path.resolve(path.join(pkg.directory, currentTypesPathRelative));
 		this.verbose(
 			`Found ${currentPackageLevel} type definitions for ${currentPackageJson.name}: ${currentTypesPath}`,
 		);
 
 		const { typesPath: previousTypesPathRelative, levelUsed: previousPackageLevel } =
 			getTypesPathWithFallback(previousPackageJson, level, fallbackLevel);
-		const previousTypesPath = path.join(previousBasePath, previousTypesPathRelative);
+		const previousTypesPath = path.resolve(
+			path.join(previousBasePath, previousTypesPathRelative),
+		);
 		this.verbose(
 			`Found ${previousPackageLevel} type definitions for ${previousPackageJson.name}: ${previousTypesPath}`,
 		);
@@ -113,14 +116,12 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 			}): ${previousFile.getFilePath()}`,
 		);
 
-		const currentTypeMap = typeDataFromFile(currentFile);
-		const previousData = [...typeDataFromFile(previousFile).values()];
+		const currentTypeMap = typeDataFromFile(currentFile, this.logger);
+		const previousData = [...typeDataFromFile(previousFile, this.logger).values()];
 
-		// eslint-disable-next-line unicorn/consistent-function-scoping
-		function compareString(a: string, b: string): number {
-			return a > b ? 1 : a < b ? -1 : 0;
-		}
-		previousData.sort((a, b) => compareString(a.name, b.name));
+		// Sort previous data lexicographically. To use locale-specific sort change the sort function to
+		// (a, b) => a.name.localeCompare(b.name)
+		previousData.sort((a, b) => (a.name > b.name ? 1 : a.name < b.name ? -1 : 0));
 
 		const fileHeader: string[] = [
 			`
@@ -152,7 +153,7 @@ import type * as current from "../../index.js";
 		mkdirSync(outDir, { recursive: true });
 
 		writeFileSync(typeTestOutputFile, testCases.join("\n"));
-		console.log(`generated ${path.resolve(typeTestOutputFile)}`);
+		this.info(`Generated type test file: ${path.resolve(typeTestOutputFile)}`);
 	}
 }
 
@@ -263,10 +264,11 @@ function getTypeTestFilePath(pkg: Package, outDir: string, outFile: string): str
  * Extracts type data from a TS source file and creates a map where each key is a type name and the value is its type
  * data.
  *
- * @param file - The source code file containing type data
- * @returns The mapping between item and its type
+ * @param file - The source code file containing type data.
+ * @param log - A logger to use.
+ * @returns The mapping between type name and its type data.
  */
-function typeDataFromFile(file: SourceFile): Map<string, TypeData> {
+function typeDataFromFile(file: SourceFile, log: Logger): Map<string, TypeData> {
 	const typeData = new Map<string, TypeData>();
 	const exportedDeclarations = file.getExportedDeclarations();
 
@@ -276,7 +278,9 @@ function typeDataFromFile(file: SourceFile): Map<string, TypeData> {
 				const fullName = getFullTypeName(typeDefinition);
 				if (typeData.has(fullName)) {
 					// This system does not properly handle overloads: instead it only keeps the last signature.
-					console.warn(`skipping overload for ${fullName}`);
+					log.warning(
+						`Skipping overload for ${fullName}; only the last signature will be used.`,
+					);
 				}
 				typeData.set(fullName, typeDefinition);
 			}
