@@ -28,6 +28,7 @@ export interface IPendingMessage {
 	content: string;
 	localOpMetadata: unknown;
 	opMetadata: Record<string, unknown> | undefined;
+	sequenceNumber?: number;
 }
 
 export interface IPendingLocalState {
@@ -127,13 +128,17 @@ export class PendingStateManager implements IDisposable {
 			this.initialMessages.isEmpty(),
 			0x2e9 /* "Must call getLocalState() after applying initial states" */,
 		);
-		const newSavedOps = [...this.savedOps].filter(
-			(message) => message.referenceSequenceNumber >= (snapshotSequenceNumber ?? 0),
-		);
+		const newSavedOps = [...this.savedOps].filter((message) => {
+			assert(
+				message.sequenceNumber !== undefined,
+				"saved op should already have a sequence number",
+			);
+			return message.sequenceNumber >= (snapshotSequenceNumber ?? 0);
+		});
 		return {
 			pendingStates: [...newSavedOps, ...this.pendingMessages.toArray()].map((message) => {
 				if (
-					snapshotSequenceNumber &&
+					snapshotSequenceNumber !== undefined &&
 					message.referenceSequenceNumber < snapshotSequenceNumber
 				) {
 					throw new LoggingError("trying to stash ops older than our latest snapshot");
@@ -229,13 +234,13 @@ export class PendingStateManager implements IDisposable {
 	public processPendingLocalMessage(message: InboundSequencedContainerRuntimeMessage): unknown {
 		// Pre-processing part - This may be the start of a batch.
 		this.maybeProcessBatchBegin(message);
-
 		// Get the next message from the pending queue. Verify a message exists.
 		const pendingMessage = this.pendingMessages.peekFront();
 		assert(
 			pendingMessage !== undefined,
 			0x169 /* "No pending message found for this remote message" */,
 		);
+		pendingMessage.sequenceNumber = message.sequenceNumber;
 		this.savedOps.push(pendingMessage);
 
 		this.pendingMessages.shift();
