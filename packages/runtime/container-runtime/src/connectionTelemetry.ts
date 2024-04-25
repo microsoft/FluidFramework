@@ -80,8 +80,9 @@ class OpPerfTelemetry {
 	private connectionStartTime = 0;
 	private gap = 0;
 
-	/**Count of no-ops sent by this client */
+	/** Count of no-ops sent by this client */
 	private noOpCount = 0;
+	private processedOpSize = 0;
 
 	private readonly logger: ITelemetryLoggerExt;
 
@@ -91,7 +92,7 @@ class OpPerfTelemetry {
 	private static readonly DELTA_LATENCY_SAMPLE_RATE = 100;
 	private readonly deltaLatencyLogger: ISampledTelemetryLogger;
 
-	private static readonly OPS_SAMPLE_RATE = 50;
+	private static readonly PROCESSED_OPS_SAMPLE_RATE = 500;
 	private readonly opsLogger: ISampledTelemetryLogger;
 
 	/**
@@ -154,10 +155,12 @@ class OpPerfTelemetry {
 			return {
 				sample: () => {
 					eventCount++;
-					const shouldSample = eventCount % OpPerfTelemetry.OPS_SAMPLE_RATE === 0;
+					const shouldSample =
+						eventCount % OpPerfTelemetry.PROCESSED_OPS_SAMPLE_RATE === 0;
 					if (shouldSample) {
 						eventCount = 0;
 						this.noOpCount = 0;
+						this.processedOpSize = 0;
 					}
 					return shouldSample;
 				},
@@ -167,9 +170,7 @@ class OpPerfTelemetry {
 
 		this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
 		this.deltaManager.on("submitOp", (message) => this.beforeOpSubmit(message));
-
 		this.deltaManager.on("op", (message) => this.afterProcessingOp(message));
-
 		this.deltaManager.on("connect", (details, opsBehind) => {
 			if (opsBehind !== undefined) {
 				this.connectionOpSeqNumber = this.deltaManager.lastKnownSeqNumber;
@@ -249,6 +250,9 @@ class OpPerfTelemetry {
 					latencyStats.opPerfData.lengthInboundQueue = this.deltaManager.inbound.length;
 				}
 			}
+			if (typeof message.contents === "string") {
+				this.processedOpSize += message.contents.length;
+			}
 		});
 
 		this.deltaManager.inbound.on("idle", (count: number, duration: number) => {
@@ -326,17 +330,11 @@ class OpPerfTelemetry {
 			});
 		}
 
-		if (message.type == MessageType.NoOp) {
+		if (message.type === MessageType.NoOp) {
 			// Count the number of no-ops submitted by this client.
 			// The value is reset when we log the OpStats sampled event.
 			this.noOpCount++;
 		}
-
-		this.opsLogger.sendPerformanceEvent({
-			eventName: "OpStats",
-			submitOpCount: OpPerfTelemetry.OPS_SAMPLE_RATE,
-			noOpCount: this.noOpCount,
-		});
 	}
 
 	private afterProcessingOp(message: ISequencedDocumentMessage) {
@@ -412,6 +410,16 @@ class OpPerfTelemetry {
 			this.clientSequenceNumberForLatencyStatistics = undefined;
 			this.latencyStatistics.delete(message.clientSequenceNumber);
 		}
+
+		// Sampled logging of Ops that have been processed by the current client, and the NoOp sent
+		this.opsLogger.sendPerformanceEvent({
+			eventName: "OpStats",
+			details: {
+				processedOpCount: OpPerfTelemetry.PROCESSED_OPS_SAMPLE_RATE,
+				processedOpSize: this.processedOpSize,
+				submitedNoOpCount: this.noOpCount,
+			},
+		});
 	}
 }
 export interface IPerfSignalReport {
