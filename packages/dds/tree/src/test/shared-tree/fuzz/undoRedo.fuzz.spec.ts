@@ -89,7 +89,7 @@ describe("Fuzz - revert", () => {
 		emitter.on("testEnd", (state: UndoRedoFuzzTestState) => {
 			// synchronize clients
 			state.containerRuntimeFactory.processAllMessages();
-			checkTreesAreSynchronized(state.clients.map((client) => client.channel));
+			checkTreesAreSynchronized(state.clients.map((client) => client));
 
 			const anchors = state.anchors ?? assert.fail("Anchors should be defined");
 			const undoStack = state.undoStack ?? assert.fail("undoStack should be defined");
@@ -105,7 +105,7 @@ describe("Fuzz - revert", () => {
 				undoStack[i].revert();
 				state.containerRuntimeFactory.processAllMessages();
 			}
-			checkTreesAreSynchronized(state.clients.map((client) => client.channel));
+			checkTreesAreSynchronized(state.clients.map((client) => client));
 			assert(redoStack.length === undoStack.length, "redoStack should now be full");
 
 			// Validate that undoing all the edits restored the initial state
@@ -123,7 +123,7 @@ describe("Fuzz - revert", () => {
 				redoStack[i].revert();
 				state.containerRuntimeFactory.processAllMessages();
 			}
-			checkTreesAreSynchronized(state.clients.map((client) => client.channel));
+			checkTreesAreSynchronized(state.clients.map((client) => client));
 
 			// Validate that redoing all the edits restored the final state
 			const stateAfterRedos = toJsonableTree(tree);
@@ -188,7 +188,7 @@ describe("Fuzz - revert", () => {
 			}
 
 			state.containerRuntimeFactory.processAllMessages();
-			checkTreesAreSynchronized(state.clients.map((client) => client.channel));
+			checkTreesAreSynchronized(state.clients.map((client) => client));
 
 			tearDown(state);
 		});
