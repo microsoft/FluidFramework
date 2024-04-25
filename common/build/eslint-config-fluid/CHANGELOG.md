@@ -17,6 +17,14 @@ The import/order rule is enabled with the following settings:
 ]
 ```
 
+### eslint-import-resolver-typescript preferred over node
+
+Lint configurations previously specified both the `node` and `typescript` [resolvers](https://github.com/import-js/eslint-plugin-import?tab=readme-ov-file#resolvers), with the `node` resolver taking precedence.
+
+The precedence has been reversed in this release: [eslint-import-resolver-typescript](https://github.com/import-js/eslint-import-resolver-typescript) is now the preferred resolver.
+
+This may result in lint rules dependent on imported _types_ (rather than values) to correctly apply, e.g. `import/no-deprecated`.
+
 ## [5.2.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.2.0)
 
 The import/order rule is now disabled in all configs.
