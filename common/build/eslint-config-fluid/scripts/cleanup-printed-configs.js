@@ -24,6 +24,6 @@ const sortJson = require("sort-json");
 		fs.writeFileSync(filePath, JSON.stringify(json, undefined, 4));
 
 		// Sort the JSON in-place.
-		sortJson.overwrite(filePath, { indentSize: 4 });
+		sortJson.overwrite(filePath, { indentSize: 4, depth: 2 });
 	}
 })();
