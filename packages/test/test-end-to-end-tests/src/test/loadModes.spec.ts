@@ -407,7 +407,10 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 		});
 
 		it("Throw if attempting to pause at a sequence number before the latest summary", async function () {
-			if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
+			if (
+				provider.driver.type === "routerlicious" &&
+				provider.driver.endpointName === "frs"
+			) {
 				this.skip();
 			}
 			const { summarizer } = await createSummarizerFromFactory(

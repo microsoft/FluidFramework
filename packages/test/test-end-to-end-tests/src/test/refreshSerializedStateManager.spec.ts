@@ -73,7 +73,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		});
 	};
 
-	it("snapshot was refreshed", async function() {
+	it("snapshot was refreshed", async function () {
 		const provider = getTestObjectProvider();
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();

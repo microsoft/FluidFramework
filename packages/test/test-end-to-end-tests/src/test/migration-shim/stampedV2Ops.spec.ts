@@ -212,7 +212,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		container.close();
 	});
 
-	it("MigrationShim can drop v1 ops and migrate ops", async function() {
+	it("MigrationShim can drop v1 ops and migrate ops", async function () {
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}
