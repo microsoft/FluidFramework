@@ -253,10 +253,10 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 		);
 	}
 
-	public replaceRevisions(
+	public changeRevision(
 		change: TestChange,
-		oldRevisions: Set<RevisionTag | undefined>,
 		newRevision: RevisionTag | undefined,
+		rollbackOf?: RevisionTag,
 	): TestChange {
 		return change;
 	}

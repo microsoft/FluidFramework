@@ -33,8 +33,8 @@ const throwingFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 			assert.equal(over, arg2);
 			throw new Error("rebase");
 		},
-		replaceRevisions: (): string => {
-			throw new Error("replace");
+		changeRevision: (): string => {
+			throw new Error("changeRevision");
 		},
 	},
 	codecs: {} as any,
@@ -59,7 +59,7 @@ const returningFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 			assert.equal(over, arg2);
 			return "rebase";
 		},
-		replaceRevisions: (change: string): string => change,
+		changeRevision: (change: string): string => change,
 	},
 	codecs: {} as any,
 };

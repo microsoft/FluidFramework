@@ -1660,5 +1660,5 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 }
 
 function inlineRevision(change: ModularChangeset, revision: RevisionTag): ModularChangeset {
-	return family.replaceRevisions(change, new Set([undefined]), revision);
+	return family.changeRevision(change, revision);
 }

@@ -461,11 +461,7 @@ describe("ModularChangeFamily integration", () => {
 			const [move, insert] = getChanges();
 			const moveTagged = tagChangeInline(move, tag1);
 			const returnTagged = tagRollbackInverse(
-				family.replaceRevisions(
-					family.invert(moveTagged, true),
-					new Set([undefined]),
-					tag3,
-				),
+				family.changeRevision(family.invert(moveTagged, true), tag3, moveTagged.revision),
 				tag3,
 				moveTagged.revision,
 			);
@@ -822,5 +818,5 @@ function tagChangeInline(
 	change: ModularChangeset,
 	revision: RevisionTag,
 ): TaggedChange<ModularChangeset> {
-	return tagChange(family.replaceRevisions(change, new Set([undefined]), revision), revision);
+	return tagChange(family.changeRevision(change, revision), revision);
 }

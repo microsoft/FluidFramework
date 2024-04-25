@@ -39,7 +39,7 @@ export class DummyChangeRebaser implements ChangeRebaser<typeof dummyChange> {
 		return {};
 	}
 
-	public replaceRevisions(): typeof dummyChange {
+	public changeRevision(): typeof dummyChange {
 		return {};
 	}
 }

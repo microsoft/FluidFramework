@@ -84,10 +84,10 @@ export interface ChangeRebaser<TChangeset> {
 		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
 
-	replaceRevisions(
+	changeRevision(
 		change: TChangeset,
-		oldRevisions: Set<RevisionTag | undefined>,
 		newRevision: RevisionTag | undefined,
+		rollBackOf?: RevisionTag,
 	): TChangeset;
 }
 

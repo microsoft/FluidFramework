@@ -192,11 +192,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	): [change: TChange, newCommit: GraphCommit<TChange>] {
 		this.assertNotDisposed();
 
-		const changeWithRevision = this.changeFamily.rebaser.replaceRevisions(
-			change,
-			new Set([undefined]),
-			revision,
-		);
+		const changeWithRevision = this.changeFamily.rebaser.changeRevision(change, revision);
 
 		const newHead = mintCommit(this.head, {
 			revision,
@@ -270,11 +266,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		// Anonymize the commits from this transaction by stripping their revision tags.
 		// Otherwise, the change rebaser will record their tags and those tags no longer exist.
 		const anonymousCommits = commits.map((commit) => ({
-			change: this.changeFamily.rebaser.replaceRevisions(
-				commit.change,
-				new Set([commit.revision]),
-				undefined,
-			),
+			change: this.changeFamily.rebaser.changeRevision(commit.change, undefined),
 			revision: undefined,
 		}));
 		// Squash the changes and make the squash commit the new head of this branch
@@ -283,11 +275,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		const newHead = mintCommit(startCommit, {
 			revision,
-			change: this.changeFamily.rebaser.replaceRevisions(
-				squashedChange,
-				new Set([undefined]),
-				revision,
-			),
+			change: this.changeFamily.rebaser.changeRevision(squashedChange, revision),
 		});
 
 		const changeEvent = {
@@ -330,10 +318,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const inverses: TaggedChange<TChange>[] = [];
 		for (let i = commits.length - 1; i >= 0; i--) {
 			const revision = this.mintRevisionTag();
-			const inverse = this.changeFamily.rebaser.replaceRevisions(
+			const inverse = this.changeFamily.rebaser.changeRevision(
 				this.changeFamily.rebaser.invert(commits[i], false),
-				new Set([undefined]),
 				revision,
+				commits[i].revision,
 			);
 
 			inverses.push(tagRollbackInverse(inverse, revision, commits[i].revision));

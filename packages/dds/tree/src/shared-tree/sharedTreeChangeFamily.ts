@@ -181,20 +181,20 @@ export class SharedTreeChangeFamily
 		};
 	}
 
-	public replaceRevisions(
+	public changeRevision(
 		change: SharedTreeChange,
-		oldRevisions: Set<RevisionTag | undefined>,
-		newRevision: RevisionTag,
+		newRevision: RevisionTag | undefined,
+		rollbackOf?: RevisionTag,
 	): SharedTreeChange {
 		return {
 			changes: change.changes.map((inner) => {
 				return inner.type === "data"
 					? {
 							...inner,
-							innerChange: this.modularChangeFamily.rebaser.replaceRevisions(
+							innerChange: this.modularChangeFamily.rebaser.changeRevision(
 								inner.innerChange,
-								oldRevisions,
 								newRevision,
+								rollbackOf,
 							),
 					  }
 					: inner;

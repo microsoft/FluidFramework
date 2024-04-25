@@ -595,17 +595,11 @@ export class ModularChangeFamily
 			0x89a /* Unexpected destroys in change to invert */,
 		);
 
-		const revInfo = change.change.revisions;
 		return makeModularChangeset(
 			invertedFields,
 			invertedNodes,
 			idState.maxId,
-			revInfo === undefined
-				? undefined
-				: (isRollback
-						? revInfo.map(({ revision }) => ({ revision, rollbackOf: revision }))
-						: Array.from(revInfo)
-				  ).reverse(),
+			[],
 			change.change.constraintViolationCount,
 			undefined,
 			destroys,
@@ -1024,11 +1018,16 @@ export class ModularChangeFamily
 		}
 	}
 
-	public replaceRevisions(
+	public changeRevision(
 		change: ModularChangeset,
-		oldRevisions: Set<RevisionTag | undefined>,
 		newRevision: RevisionTag | undefined,
+		rollbackOf?: RevisionTag,
 	): ModularChangeset {
+		const oldRevisions = new Set(
+			change.revisions === undefined
+				? [undefined]
+				: change.revisions.map((revInfo) => revInfo.revision),
+		);
 		const updatedFields = this.replaceFieldMapRevisions(
 			change.fieldChanges,
 			oldRevisions,
@@ -1065,7 +1064,17 @@ export class ModularChangeFamily
 			);
 		}
 
-		// TODO: Also update `updated.revisions`.
+		if (newRevision !== undefined) {
+			const revInfo: Mutable<RevisionInfo> = { revision: newRevision };
+			if (rollbackOf !== undefined) {
+				revInfo.rollbackOf = rollbackOf;
+			}
+
+			updated.revisions = [revInfo];
+		} else {
+			delete updated.revisions;
+		}
+
 		return updated;
 	}
 
