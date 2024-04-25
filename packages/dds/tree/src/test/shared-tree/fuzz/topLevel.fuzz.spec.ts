@@ -12,10 +12,7 @@ import {
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import {
-	SharedTreeTestFactory,
-	validateFuzzTreeConsistency,
-} from "../../utils.js";
+import { SharedTreeTestFactory, validateFuzzTreeConsistency } from "../../utils.js";
 
 import { EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
