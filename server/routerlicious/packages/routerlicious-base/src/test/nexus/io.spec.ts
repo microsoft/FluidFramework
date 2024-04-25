@@ -910,11 +910,11 @@ describe("Routerlicious", () => {
 								});
 							});
 
-							it("can handle an invalid signal field", async () => {
+							it("can handle an additional signal field", async () => {
 								const targetedSignal = {
 									targetClientId: clients[0].clientId,
 									content: stringSignalContent,
-									invalidField: "invalid",
+									additionalField: "test field",
 								};
 
 								clients[1].socket.send("submitSignal", clients[1].clientId, [
