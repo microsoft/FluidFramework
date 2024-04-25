@@ -10,6 +10,7 @@ import type {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
+import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { SharedDirectory as SharedDirectoryInternal } from "./directory.js";
 import type { ISharedDirectory } from "./interfaces.js";
@@ -78,37 +79,10 @@ export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
 
 /**
  * Entrypoint for {@link ISharedDirectory} creation.
- * @sealed
  * @alpha
  */
-export const SharedDirectory: ISharedObjectKind<ISharedDirectory> = {
-	/**
-	 * Create a new shared directory
-	 *
-	 * @param runtime - Data store runtime the new shared directory belongs to
-	 * @param id - Optional name of the shared directory
-	 * @returns Newly create shared directory (but not attached yet)
-	 *
-	 * @example
-	 * To create a `SharedDirectory`, call the static create method:
-	 *
-	 * ```typescript
-	 * const myDirectory = SharedDirectory.create(this.runtime, id);
-	 * ```
-	 */
-	create(runtime: IFluidDataStoreRuntime, id?: string): ISharedDirectory {
-		return runtime.createChannel(id, DirectoryFactory.Type) as ISharedDirectory;
-	},
-
-	/**
-	 * Get a factory for SharedDirectory to register with the data store.
-	 *
-	 * @returns A factory that creates and load SharedDirectory
-	 */
-	getFactory(): IChannelFactory<ISharedDirectory> {
-		return new DirectoryFactory();
-	},
-};
+export const SharedDirectory: ISharedObjectKind<ISharedDirectory> =
+	createSharedObjectKind(DirectoryFactory);
 
 /**
  * Entrypoint for {@link ISharedDirectory} creation.

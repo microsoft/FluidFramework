@@ -29,6 +29,11 @@ import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 export function bindHandles(value: any, serializer: IFluidSerializer, bind: IFluidHandle_2): void;
 
 // @internal
+export function createSharedObjectKind<TSharedObject>(factory: (new () => IChannelFactory<TSharedObject>) & {
+    Type: string;
+}): ISharedObjectKind<TSharedObject>;
+
+// @internal
 export function createSingleBlobSummary(key: string, content: string | Uint8Array): ISummaryTreeWithStats;
 
 // @internal
