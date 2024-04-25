@@ -47,17 +47,13 @@ then there are multiple reasonable outcomes:
 
 ## Why/When Should You Care?
 
-`SharedTree`'s merge semantics have been designed so that concurrent edits,
-even when they target overlapping data,
-are merged in a way that is typically satisfactory and unsurprising.
-This means that, on a daily basis, users of `SharedTree` should be able to ignore the question of merge semantics.
-
+Developers that use `SharedTree` should be able to be productive without constantly worrying about merge semantics.
 There are, however, situations that warrant an awareness and understanding of merge semantics.
 Those are commonly:
 
--   The need to understand the end-user experience that users will face in a given scenario that involves concurrent editing.
+-   The need to understand the experience that end-users will face given the host application's usage of `SharedTree`'s editing capabilities.
+-   The need to determine how to use `SharedTree`'s editing capabilities to achieve a desired end-user experience, and whether that experience is achievable in the first place.
 -   The need to select a data model (i.e., how a document is structured) for an application so that the application's invariants are upheld by `SharedTree`'s merge semantics.
--   The need to structure the application's editing code such that it can guarantee that the application's invariants are upheld by `SharedTree`'s merge semantics.
 
 For example, consider an application whose data model includes two arrays,
 with the invariant that the length of one array is expected to always be the same as the length of the other array.
@@ -66,9 +62,78 @@ Despite that, `SharedTree`'s merge semantics are such that a scenario involving 
 Understanding `SharedTree`'s merge semantics can help the application author anticipate this invariant violation or (failing that) diagnose it after the fact.
 Understanding `SharedTree`'s merge semantics will also enable the application author to understand how to remedy this danger,
 either by adopting a data model that prevents the issue (e.g., using a single array of pairs),
-or by changing the application's editing code (transactions and constraints) to circumvent it.
+or by changing the application's editing code (using transactions and constraints) to circumvent it.
 
-## A Holistic View
+## How We Describe Merge Semantics
+
+The merge semantics of a given kind of edit (e.g., moving a node) define what the impact of the edit will be
+depending on what concurrent edits were sequenced before it.
+This could be captured in a set of rules of the form:
+`if <specific-concurrent-edit> was sequenced before this edit then the outcome of this edit will be <specific-outcome>`.
+Capturing the semantics of edits in this way would however be cumbersome because the set of possible concurrent edits and the set possible matching outcome if often open-ended.
+We instead describe the merge semantics of each kind of edit by describing its preconditions and postconditions.
+
+It is these preconditions and postconditions that define whether an edit's merge semantics make it suitable for a given scenario.
+
+### Preconditions
+
+The preconditions characterize what must be true in order for the edit to be considered valid and have an effect.
+For example, inserting a node of type `Foo` in an array,
+requires that the schema associated with that array allows instances of type `Foo`.
+
+Note that in a transaction, each edit's preconditions are added to the preconditions of the transaction.
+In other words, the preconditions of a transaction are the union of the preconditions of its edits,
+giving transactions "all or nothing" semantics.
+
+### Postconditions
+
+The postconditions characterize what is guaranteed to be true about the effect of the edit provided the preconditions were satisfied.
+This is often expressed in terms of the resulting state after the edit is applied.
+For example, move edits guarantee that the targeted nodes end up at the specified destination.
+
+When expressed in terms of the document state,
+these postconditions typically only hold immediately after the edit as opposed to holding indefinitely.
+In our move example, edits that come after the move
+(whether they were made concurrently or not)
+may very well cause those nodes to end up in a different location.
+
+In a transaction, each edit's postconditions are added to the postconditions of the transaction,
+with later the postconditions of later edits overriding that of earlier ones whenever they are incompatible.
+For example, if a transaction moves a node from location A to location B,
+then moves that same node from location B to location C,
+the postcondition of the second move (that the node will be at location C) wins out.
+
+### The Absence of Preconditions and Postconditions Matters
+
+The preconditions and postconditions for an edit are important not only for what they include but also what they leave out.
+
+As an example, consider the effect of a move operation:
+It detaches some node `X` at location `A` under some parent node `Pa` and re-attaches it at some location `B` under some parent node `Pb`.
+The preconditions and postconditions for the current `SharedTree`'s current implementation of move are as follows.
+
+Preconditions:
+
+-   The document schema was not concurrently changed (see [schema changes](#schema-changes)).
+
+Postconditions:
+
+-   Node `X` is at location `B` under `Pb`.
+
+Here are some additional preconditions that one could consider for such an operation:
+
+-   Node `X` was not concurrently moved.
+-   Node `X` was not concurrently moved out from under `Pa`.
+-   Node `X` was not concurrently removed.
+-   Node `Pa` and its ancestors were not concurrently removed.
+-   Node `Pb` and its ancestors were not concurrently removed.
+-   No other node was moved to location `B`.
+
+By adding some of these preconditions, one might be able to make more guarantees about the effect of the edit, thus leading to additional postconditions.
+For example, by adding either of the top two preconditions,
+it would be possible to guarantee that there will be one fewer node under `Pa` and one more node under `Pb` than there had been before the edit,
+so long as `Pa` and `Pb` are different nodes.
+
+## High-Level Design Choices
 
 `SharedTree` allows developers to describe the data model for their application in terms of a set of elementary building blocks,
 like objects nodes, map nodes, and array nodes.
@@ -80,59 +145,47 @@ and often alleviates the need to remember the details of any building blocks's s
 
 ### Movement Is Not Copy
 
-`SharedTree` allows subtrees to be moved from one location to another,
-and such movement does not adversely affect concurrent edits that target the moved subtree.
+`SharedTree` allows subtrees to be moved from one location to another.
 This is different from inserting a new copy of the moved subtree at the destination
-(and deleting the original at the source).
+(and deleting the original at the source)
+because of what it means for concurrent edits.
 
 Consider the following scenario:
 Alice moves a sticky note from one list to another,
 while Bob concurrently edits the text of the note.
-If the move were just a copy, then if Alice's edit were to be sequenced first,
+If the move were just a copy, then, if Alice's edit were to be sequenced first,
 Bob's edit would not apply to the copy at the destination.
 By contrast, `SharedTree`'s move semantics ensure that Bob's edit will apply no matter the sequencing order.
 
 ### Minimal Preconditions
 
-In the context of merge semantics,
-preconditions can be used to prevent an edit/transaction from being applied
-if concurrent edits that were sequenced earlier have impacted the document in a way that violates some specific requirements.
+In choosing the merge semantics of the set of edits initially supported by `SharedTree`,
+we have strived to keep the preconditions of those edits minimal.
+At this time, with the exception of [schema changes](#schema-changes) which have more preconditions,
+all supported edits have the same single precondition:
+that the document schema must not have been concurrently changed.
 
-By default, that is, in the absence of [constraints](#constraints),
-the only precondition that must be met in order for an edit to apply,
-is that the edit must not violate the document's schema.
+As illustrated [above](#the-absence-of-preconditions-and-postconditions-matters),
+there are many other variations in merge semantics we could support for our initial set of edits.
+Many of those are likely desirable, and may be supported in the future,
+so our preference for minimal sets of preconditions is merely a question of prioritization.
 
-For example,
-when moving a node to a specific destination only requires that the node's type be allowed by the schema of the destination.
+The motivation for this prioritization is that more permissive edits offer support not only for scenarios where the resulting merge outcome is desirable,
+but also for scenarios where dropping the whole transaction would be acceptable.
+`SharedTree` make the latter possible by using opt-in [constraints](#constraints).
 
-One could imagine a host of potential additional preconditions for such an edit:
-
--   The node being moved must not have been concurrently moved
--   The node being moved must not have been concurrently removed
--   Ancestors of the node being moved must not have been concurrently removed
--   The parent and ancestors of destination must not have been concurrently removed
-
-`SharedTree`'s merge semantics are such that, by default, only the schema matters.
-The benefits of not violating the schema are obvious,
-but the benefits of not having more preconditions are more subtle.
-Indeed, while no one should wish for their edit to violate the schema,
-one may wish for their edit not to be carried out if some other precondition is not met.
-`SharedTree` does make that possible, but this is achieved bu using opt-in [constraints](#constraints).
-This effectively makes each editing API parameterizable so that any combination of preconditions is achievable.
-On the other hand, if `SharedTree`'s edits had some additional preconditions by default,
+On the other hand, if `SharedTree`'s edits had more preconditions by default,
 then there would be no way for users to opt-out of these preconditions,
 thereby limiting their ability to express a more permissive edit.
 
-In the rest of this section, we call out some interesting implications that follow from the doctrine of minimal preconditions,
-the last of which is also a key benefit of this doctrine.
+In the rest of this section, we call out some interesting implications that follow from our choice of giving our edits minimal preconditions.
 
 #### Removal Is Movement
 
-`SharedTree` allows subtrees to be removed,
-such as when an element from an array node is removed,
-a key is deleted from a map node,
-or when the field on an object is overwritten.
-This removal does not adversely affect concurrent edits that target the removed subtree.
+`SharedTree` allows subtrees to be removed from the document.
+This occurs when an element is removed from an array node,
+when a key is deleted from a map node,
+or when the field on an object is overwritten or cleared.
 
 Consider the following scenario:
 Alice removes a whole list of sticky notes, while Bob concurrently moves a sticky note out of that list and into another (non-removed) list.
@@ -170,26 +223,34 @@ Note that this is true even when some of those locations are the "removed" locat
 if the removal is sequenced last then the node will be moved then removed.
 If the move is sequenced last then the node will be removed then moved.
 
-### Single Possible Effect
+### Simple Postconditions
 
-Because of the doctrine of minimal preconditions, in the absence of explicit constraints,
-_no matter what concurrent edits may have been sequenced and applied before it_,
-so long those were not [schema changes](#schema-changes),
-every edit is guaranteed to impact the document state in _one_ predictable way.
+Similar to our choice regarding preconditions,
+we have chosen to prioritize edits whose postconditions are simple.
+"Simple" here refers to the property of having a single possible effect.
+This is in contrast to preconditions that are predicated on the existence or absence of concurrent edits,
+or predicated on some properties of the document state by the time the edit is applied.
 
-By "guaranteed to impact the document state in one predictable way",
-we mean that the way the edit impacts the document is the same.
-This point is a little more nuanced because it is predicated on a specific definition of "the same".
-Each edit comes with such a definition.
-For moves, what remains the same is the node being moved and the location that the node is moved to under the given parent node.
-In the example above, Bob's edit to move the sticky note moves that specific sticky note to the specific destination picked by Bob under a specific parent node,
-no matter whether concurrent edits were sequenced or applied before that and no matter what those concurrent edits were.
-Concurrent edits could influence where the note was moved from, the properties of the note,
-or even move or remove the parent (or some further ancestor) of the destination,
-but none of that changes the fact that, immediately after Bob's edit is applied,
-that specific sticky note will be located at the location chosen by Bob under a specific parent node.
+For example, the postcondition for our implementation of move
+(that the moved node will reside at the chosen destination)
+is not predicated on whether the node was concurrently removed or moved.
+This means that when it comes to the final location of the node that is targeted by the move,
+there is only one possible outcome
+(the node being at the chosen destination)
+so long as the preconditions of the move were met.
 
-This property is important because it makes reasoning about concurrent editing much more approachable.
+Note that such conditional postconditions would be different from additional preconditions.
+For example, adding a precondition that the node moved node must not have been concurrently removed would,
+in a situation where that did occur,
+render such a move _and the whole transactions it figures in_ invalid.
+By contrast, making the postcondition conditional on the node not having been concurrently removed would simply render the move ineffective,
+but not adversely affect the rest of the transaction.
+
+As with minimal preconditions, we may support more variations of our current set of edits in the future.
+
+This prioritization is partially guided by the same motivation that guided our choice with minimal preconditions:
+it makes more for a greater set of possible edits when combined with [constraints](#constraints).
+Another motivation is that simpler postconditions make reasoning about concurrent editing more approachable.
 This is most palpable in the context of transactions
 because it reduces the number of possible states the document between could be in between the edits that make up the transaction,
 therefore making transactions easier to author correctly,
@@ -197,7 +258,7 @@ and making the effect of a given transaction easier to understand.
 
 For example, consider an application that allows the end user to select a set of sticky notes across several lists,
 and group all of the selected notes under a new list, assigning to each one an ordinal number based on the selection order.
-This functionality effectively allows a user to make a numbered list out of set of sticky nodes.
+This functionality effectively allows a user to make a numbered list out of a set of sticky nodes.
 
 This can be achieved by writing a transaction that loops through the selected N notes in the order they were selected,
 assigning ordinals incrementally and moving each one to the end of the new list.
@@ -207,18 +268,20 @@ concurrent edits may have affected the relevant sticky notes in different ways:
 some of them may have been assigned different ordinals,
 some of them may have been moved, removed,
 or their parent lists may have been moved or removed.
-Despite that, `SharedTree`'s merge semantics guarantee that
+Despite that, `SharedTree`'s current merge semantics guarantee that
 by the end of the transaction all of the relevant sticky notes will reside in the new list,
 and that their ordinals will be assigned in order from 1 to N.
 If any of the concurrent changes had the power to prevent the relevant notes from being moved by our transaction,
 or to prevent them from being annotated with the ordinals,
 then our transaction may lead to a state where the new list only contains a subset of the selected notes,
 and their ordinals may have gaps, not be unique, and be out of order.
+In other words, it would be very hard to make any kind of valuable claim about the effect of the transaction,
+and end-users would experience some very confusing outcomes.
 
 More abstractly, for a transaction that is composed of `N` edits (`e1` through `eN`),
 you can think of each edit `ei` as having one of `ki` possible effects,
 where which of the `ki` possible effects is applied depends on what concurrent edits were sequenced before the transaction.
-In aggregate, the effect of a transaction is therefore, in the worst case, one of `k0 * k1 * ... * kN` possible effects.
+In aggregate, the effect of a transaction is therefore, in the worst case, one of `k1 * k2 * ... * kN` possible effects.
 For a transaction that is composed of 10 edits where each edit has one of two possible effects,
 that would mean the transaction would at worst have one of 1024 possible different effects.
 `SharedTree`'s semantics guarantee that every `ki` is equal to 1,
