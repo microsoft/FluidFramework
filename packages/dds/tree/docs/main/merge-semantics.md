@@ -37,11 +37,12 @@ This leads to a situation where there may be multiple reasonable outcomes
 
 For example, if Alice and Bob concurrently change the background color of _the same_ sticky note
 such that Alice would change it from yellow to red and Bob would change it from yellow to blue,
-then there are multiple reasonable outcomes:
+then one could imagine multiple possible outcomes:
 
 -   change the color to red
 -   change the color to blue
 -   keep the color yellow
+-   change the color to purple
 
 `SharedTree`'s merge semantics define which outcome will be picked.
 
@@ -146,12 +147,12 @@ and often alleviates the need to remember the details of any building blocks's s
 ### Movement Is Not Copy
 
 `SharedTree` allows subtrees to be moved from one location to another.
+Edits made to a subtree before it is moved will still apply even if they end up (because of concurrency) being applied after the subtree moves.
 This is different from inserting a new copy of the moved subtree at the destination
-(and deleting the original at the source)
-because of what it means for concurrent edits.
+(and deleting the original at the source).
 
 Consider the following scenario:
-Alice moves a sticky note from one list to another,
+Alice moves a sticky note from one page to another,
 while Bob concurrently edits the text of the note.
 If the move were just a copy, then, if Alice's edit were to be sequenced first,
 Bob's edit would not apply to the copy at the destination.
@@ -188,13 +189,14 @@ when a key is deleted from a map node,
 or when the field on an object is overwritten or cleared.
 
 Consider the following scenario:
-Alice removes a whole list of sticky notes, while Bob concurrently moves a sticky note out of that list and into another (non-removed) list.
-`SharedTree`'s removal semantics ensure that Bob's edit will apply no matter the sequencing order.
+Alice removes a whole page of sticky notes, while Bob concurrently moves a sticky note out of that page and into another (non-removed) page.
+`SharedTree`'s removal semantics ensure that Bob will still get his sticky note,
+whether or not it ends up happening before or after Alice removed the page where it came from.  
 If that weren't the case, then there would be a race between Alice and Bob's edit,
-where Bob's edit would not apply if Alice's edit were sequenced first.
+where Bob's edit would not apply if Alice's edit were sequenced first, and Bob would lose the sticky note.
 
-Note that in a lot of cases, the changes to the removed subtree won't be immediately visible because the tree is removed.
-They will, however, become visible if that removal is undone.
+In the case where the subtree is modified in some way as it is removed, those modifications may end up being moot.
+However, they will be preserved, and this matters if the removal is undone and the subtree is reintroduced - it will keep the modifications.
 
 These merge semantics effectively make removal akin to a move whose destination is an abstract "removed" location.
 This is in tune with the return value of the `treeStatus()` API which will return `TreeStatus.Removed` in that situation.
@@ -256,24 +258,24 @@ because it reduces the number of possible states the document between could be i
 therefore making transactions easier to author correctly,
 and making the effect of a given transaction easier to understand.
 
-For example, consider an application that allows the end user to select a set of sticky notes across several lists,
-and group all of the selected notes under a new list, assigning to each one an ordinal number based on the selection order.
+For example, consider an application that allows the end user to select a set of sticky notes across several pages,
+and group all of the selected notes under a new page, assigning to each one an ordinal number based on the selection order.
 This functionality effectively allows a user to make a numbered list out of a set of sticky nodes.
 
 This can be achieved by writing a transaction that loops through the selected N notes in the order they were selected,
-assigning ordinals incrementally and moving each one to the end of the new list.
+assigning ordinals incrementally and moving each one to the end of the new page.
 
 By the time this transaction is sequenced and applied,
 concurrent edits may have affected the relevant sticky notes in different ways:
 some of them may have been assigned different ordinals,
 some of them may have been moved, removed,
-or their parent lists may have been moved or removed.
+or their parent pages may have been moved or removed.
 Despite that, `SharedTree`'s current merge semantics guarantee that
-by the end of the transaction all of the relevant sticky notes will reside in the new list,
+by the end of the transaction all of the relevant sticky notes will reside in the new page,
 and that their ordinals will be assigned in order from 1 to N.
 If any of the concurrent changes had the power to prevent the relevant notes from being moved by our transaction,
 or to prevent them from being annotated with the ordinals,
-then our transaction may lead to a state where the new list only contains a subset of the selected notes,
+then our transaction may lead to a state where the new page only contains a subset of the selected notes,
 and their ordinals may have gaps, not be unique, and be out of order.
 In other words, it would be very hard to make any kind of valuable claim about the effect of the transaction,
 and end-users would experience some very confusing outcomes.
@@ -306,26 +308,27 @@ The application allows users to perform the following operations as transactions
 
 There's no way for the adding of elements to violate the invariant that the lengths of the two arrays ought to remain the same.
 It's possible however for the removal of existing elements to violate this invariant:
-consider the starting state `{ arrayA: [1, 2], arrayB: [3, 4] }`.
-Suppose Alice tries to remove element 1 from `arrayA` and element 3 from `arrayB`.
-Concurrently to that, Bob tries to remove element 1 from `arrayA` and element 4 from `arrayB`.
+consider the starting state `{ arrayA: [a1, a2], arrayB: [b1, b2] }`.
+Suppose Alice tries to remove `a1` and `b1`.
+Concurrently to that, Bob tries to remove `a1` and `b2`.
 No matter the sequencing order between Alice and Bob's transactions,
-the resulting state once both are applied will be `{ arrayA: [2], arrayB: [] }`.
+the resulting state once both are applied will be `{ arrayA: [a2], arrayB: [] }`.
 
 This issue can be addressed by adding a constraint to the transactions that remove elements:
 each such transaction can establish a precondition that the nodes to be removed are not already removed.
 
 With such a constraint, the resulting state in the scenario above will depend on the sequencing order:
-It will be `{ arrayA: [2], arrayB: [4] }` if Alice's transaction was sequence before Bob's
-and `{ arrayA: [2], arrayB: [3] }` otherwise.
+It will be `{ arrayA: [a2], arrayB: [b2] }` if Alice's transaction was sequence before Bob's
+and `{ arrayA: [a2], arrayB: [b1] }` otherwise.
 
 ### Schema Changes
 
-At the time of writing,
+As of 2024-04-25,
 all edits/transactions have the implicit constraint that the schema is not changed concurrently to them.
 Similarly, all schema changes have the implicit constraint that neither the schema nor the document data is changed concurrently to them.
 
-This is tolerable because schema changes are rare but will be improved in the future to be less conservative.
+This is tolerable because schema changes are rare.
+The merge semantics will be improved in the future to be less conservative.
 
 ## Merge Semantics by Node Kind
 
