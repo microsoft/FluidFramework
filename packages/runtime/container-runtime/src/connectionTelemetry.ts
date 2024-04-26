@@ -8,6 +8,7 @@ import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import { IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
@@ -249,7 +250,13 @@ class OpPerfTelemetry {
 					latencyStats.opPerfData.lengthInboundQueue = this.deltaManager.inbound.length;
 				}
 			}
-			if (typeof message.contents === "string") {
+			if (message.contents && isRuntimeMessage(message)) {
+				// This assert will ensure that if/when the 'contents' type changes, we make sure to update the
+				// processedOpSize calculation below as well.
+				assert(
+					typeof message.contents === "string",
+					"Op's contents are expected to be string",
+				);
 				this.processedOpSize += message.contents.length;
 			}
 		});
@@ -410,15 +417,24 @@ class OpPerfTelemetry {
 			this.latencyStatistics.delete(message.clientSequenceNumber);
 		}
 
-		// Sampled logging of Ops that have been processed by the current client, and the NoOp sent
-		this.opsLogger.sendPerformanceEvent({
-			eventName: "OpStats",
-			details: {
-				processedOpCount: OpPerfTelemetry.PROCESSED_OPS_SAMPLE_RATE,
-				processedOpSize: this.processedOpSize,
-				submitedNoOpCount: this.noOpCount,
-			},
-		});
+		if (isRuntimeMessage(message)) {
+			// Sampled logging of Ops that have been processed by the current client, the NoOp sent and the
+			// size of the ops processed within one sampling window of this log event.
+			// This data will be used to monitor the efficiency of NoOp-heuristics or to get approximate collab window size.
+			this.opsLogger.sendPerformanceEvent({
+				eventName: "OpStats",
+				// Logging as 'details' property to avoid adding new column name to the log tables */
+				details: {
+					// Count of the ops processed by the current client. Note: these counts are after
+					// compression/grouping/chunking (if enabled) of the ops.
+					processedOpCount: OpPerfTelemetry.PROCESSED_OPS_SAMPLE_RATE,
+					// Cumulative size of all the ops processed by the current client since the last OpStats event log
+					processedOpSize: this.processedOpSize,
+					// Count of all the NoOp sent by the current client since the last OpStats event log
+					submitedNoOpCount: this.noOpCount,
+				},
+			});
+		}
 	}
 }
 export interface IPerfSignalReport {
