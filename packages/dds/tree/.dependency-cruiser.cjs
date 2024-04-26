@@ -133,8 +133,8 @@ module.exports = {
 				pathNot: "^(src/test)",
 			},
 			to: {
-				// prettier-ignore
-				path: ".(spec|test).(js|mjs|cjs|ts|ls|coffee|litcoffee|coffee.md)$",
+				// biome-ignore format: This is a regular expression string so the '.' need to remain escaped
+				path: "\.(spec|test)\.(js|mjs|cjs|ts|ls|coffee|litcoffee|coffee.md)$",
 			},
 		},
 		{
