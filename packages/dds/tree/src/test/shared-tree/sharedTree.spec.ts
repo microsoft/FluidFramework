@@ -97,6 +97,15 @@ const DebugSharedTree = configuredSharedTree({
 	forest: ForestType.Reference,
 }) as ISharedObjectKind<SharedTree>;
 
+class MockSharedTreeRuntime extends MockFluidDataStoreRuntime {
+	public constructor() {
+		super({
+			idCompressor: createIdCompressor(),
+			registry: [DebugSharedTree.getFactory()],
+		});
+	}
+}
+
 describe("SharedTree", () => {
 	describe("schematize", () => {
 		const builder = new SchemaBuilderBase(FieldKinds.optional, {
@@ -143,9 +152,7 @@ describe("SharedTree", () => {
 		});
 
 		it("noop upgrade", () => {
-			const tree = new MockFluidDataStoreRuntime({
-				idCompressor: createIdCompressor(),
-			}).create(DebugSharedTree);
+			const tree = DebugSharedTree.create(new MockSharedTreeRuntime());
 			tree.checkout.updateSchema(storedSchema);
 
 			// No op upgrade with AllowedUpdateType.None does not error
@@ -159,9 +166,7 @@ describe("SharedTree", () => {
 		});
 
 		it("incompatible upgrade errors", () => {
-			const tree = new MockFluidDataStoreRuntime({
-				idCompressor: createIdCompressor(),
-			}).create(DebugSharedTree);
+			const tree = DebugSharedTree.create(new MockSharedTreeRuntime());
 			tree.checkout.updateSchema(storedSchemaGeneralized);
 			assert.throws(() => {
 				schematizeFlexTree(tree, {
@@ -173,9 +178,7 @@ describe("SharedTree", () => {
 		});
 
 		it("upgrade schema", () => {
-			const tree = new MockFluidDataStoreRuntime({
-				idCompressor: createIdCompressor(),
-			}).create(DebugSharedTree);
+			const tree = DebugSharedTree.create(new MockSharedTreeRuntime());
 			tree.checkout.updateSchema(storedSchema);
 			const schematized = schematizeFlexTree(tree, {
 				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
@@ -188,9 +191,7 @@ describe("SharedTree", () => {
 
 		// TODO: ensure unhydrated initialTree input is correctly hydrated.
 		it.skip("unhydrated tree input", () => {
-			const tree = new MockFluidDataStoreRuntime({
-				idCompressor: createIdCompressor(),
-			}).create(DebugSharedTree);
+			const tree = DebugSharedTree.create(new MockSharedTreeRuntime());
 			const sb = new SchemaFactory("test-factory");
 			class Foo extends sb.object("Foo", {}) {}
 

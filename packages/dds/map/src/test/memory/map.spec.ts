@@ -9,7 +9,10 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 import { ISharedMap, SharedMap } from "../../index.js";
 
 function createLocalMap(id: string): ISharedMap {
-	const map = new MockFluidDataStoreRuntime().create(SharedMap, id);
+	const map = SharedMap.create(
+		new MockFluidDataStoreRuntime({ registry: [SharedMap.getFactory()] }),
+		id,
+	);
 	return map;
 }
 

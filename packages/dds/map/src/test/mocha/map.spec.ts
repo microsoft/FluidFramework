@@ -33,19 +33,20 @@ export function createConnectedMap(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactory,
 ): ISharedMap {
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({ registry: [SharedMap.getFactory()] });
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
-	const map = dataStoreRuntime.create(SharedMap, id);
+	const map = SharedMap.create(dataStoreRuntime, id);
 	map.connect(services);
 	return map;
 }
 
 function createLocalMap(id: string): ISharedMap {
-	const map = new MockFluidDataStoreRuntime().create(SharedMap, id);
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({ registry: [SharedMap.getFactory()] });
+	const map = SharedMap.create(dataStoreRuntime, id);
 	return map;
 }
 

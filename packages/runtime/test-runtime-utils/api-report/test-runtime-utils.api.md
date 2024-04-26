@@ -478,9 +478,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     readonly connected = true;
     // (undocumented)
     containerRuntime?: MockContainerRuntime;
-    create<T>(factory: {
-        getFactory(): IChannelFactory<T>;
-    }, id?: string): T & IChannel;
     // (undocumented)
     createChannel(id: string | undefined, type: string): IChannel;
     // (undocumented)
