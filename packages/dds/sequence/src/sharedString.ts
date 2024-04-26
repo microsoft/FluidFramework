@@ -4,6 +4,7 @@
  */
 
 import {
+	// eslint-disable-next-line import/no-deprecated
 	IMergeTreeTextHelper,
 	IRelativePosition,
 	ISegment,
@@ -86,6 +87,7 @@ export class SharedString
 		return this;
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	private readonly mergeTreeTextHelper: IMergeTreeTextHelper;
 
 	constructor(
