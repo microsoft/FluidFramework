@@ -248,6 +248,7 @@ This also applies to Blazor, Xamarin, MAUI, and other mobile frameworks.
 ### Why do we need summaries and snapshots?
 
 Summaries capture the state of a container at a point in time. Snapshots allow new clients to quickly catch up to recent state. Without them, a client would have to apply every operation in the op log, even if those operations no longer affected the current state (e.g. op 1 inserts 'h' and op 2 deletes 'h'). For very large op logs, this would be very expensive both for the clients to process and to download from the service.
+
 Instead, when a client joins a collaborative document, they can download a snapshot of the container state, and simply process new operations from that point forward.
 
 ### What's the difference between a summary and a snapshot?
