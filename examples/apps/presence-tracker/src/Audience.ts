@@ -14,7 +14,7 @@ export function createMockServiceMember(audienceMember: IClient): TinyliciousMem
 	}
 
 	return {
-		userId: tinyliciousUser.id,
+		id: tinyliciousUser.id,
 		userName: tinyliciousUser.name,
 		connections: [],
 	};
