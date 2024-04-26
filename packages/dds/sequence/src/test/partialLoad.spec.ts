@@ -14,7 +14,8 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedString } from "../index.js";
+import { SharedString, SharedStringClass } from "../index.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
 
 function applyOperations(
 	sharedString: SharedString,
@@ -57,7 +58,11 @@ function generateSummaryTree(
 		deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
-	const sharedString = SharedString.getFactory().create(dataStoreRuntime1, "shared-string");
+	const sharedString = new SharedStringClass(
+		dataStoreRuntime1,
+		"shared-string",
+		SharedStringFactory.Attributes,
+	);
 	sharedString.initializeLocal();
 	sharedString.connect(services1);
 
@@ -65,7 +70,11 @@ function generateSummaryTree(
 	const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
 	dataStoreRuntime2.options = options;
 	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-	const sharedString2 = SharedString.getFactory().create(dataStoreRuntime2, "shared-string");
+	const sharedString2 = new SharedStringClass(
+		dataStoreRuntime2,
+		"shared-string",
+		SharedStringFactory.Attributes,
+	);
 	const services2: IChannelServices = {
 		deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 		objectStorage: new MockStorage(),
@@ -99,9 +108,10 @@ describe("SharedString Partial Load", () => {
 			deltaConnection: localDataStoreRuntime.createDeltaConnection(),
 			objectStorage: MockStorage.createFromSummary(summaryTree),
 		};
-		const localSharedString = SharedString.getFactory().create(
+		const localSharedString = new SharedStringClass(
 			localDataStoreRuntime,
 			"shared-string",
+			SharedStringFactory.Attributes,
 		);
 
 		await localSharedString.load(localServices);
@@ -124,9 +134,10 @@ describe("SharedString Partial Load", () => {
 			deltaConnection: localDataStoreRuntime.createDeltaConnection(),
 			objectStorage: MockStorage.createFromSummary(summaryTree),
 		};
-		const localSharedString = SharedString.getFactory().create(
+		const localSharedString = new SharedStringClass(
 			localDataStoreRuntime,
 			"shared-string",
+			SharedStringFactory.Attributes,
 		);
 
 		await localSharedString.load(localServices);
@@ -153,9 +164,10 @@ describe("SharedString Partial Load", () => {
 			deltaConnection: localDataStoreRuntime.createDeltaConnection(),
 			objectStorage: MockStorage.createFromSummary(summaryTree),
 		};
-		const localSharedString = SharedString.getFactory().create(
+		const localSharedString = new SharedStringClass(
 			localDataStoreRuntime,
 			"shared-string",
+			SharedStringFactory.Attributes,
 		);
 
 		await localSharedString.load(localServices);
@@ -186,9 +198,10 @@ describe("SharedString Partial Load", () => {
 			deltaConnection: localDataStoreRuntime.createDeltaConnection(),
 			objectStorage: MockStorage.createFromSummary(summaryTree),
 		};
-		const localSharedString = SharedString.getFactory().create(
+		const localSharedString = new SharedStringClass(
 			localDataStoreRuntime,
 			"shared-string",
+			SharedStringFactory.Attributes,
 		);
 
 		await localSharedString.load(localServices);
@@ -234,9 +247,10 @@ describe("SharedString Partial Load", () => {
 			deltaConnection: localDataStoreRuntime.createDeltaConnection(),
 			objectStorage: MockStorage.createFromSummary(summaryTree),
 		};
-		const localSharedString = SharedString.getFactory().create(
+		const localSharedString = new SharedStringClass(
 			localDataStoreRuntime,
 			"shared-string",
+			SharedStringFactory.Attributes,
 		);
 
 		await localSharedString.load(localServices);
@@ -279,9 +293,10 @@ describe("SharedString Partial Load", () => {
 			deltaConnection: localDataStoreRuntime.createDeltaConnection(),
 			objectStorage: MockStorage.createFromSummary(summaryTree),
 		};
-		const localSharedString = SharedString.getFactory().create(
+		const localSharedString = new SharedStringClass(
 			localDataStoreRuntime,
 			"shared-string",
+			SharedStringFactory.Attributes,
 		);
 
 		await localSharedString.load(localServices);
