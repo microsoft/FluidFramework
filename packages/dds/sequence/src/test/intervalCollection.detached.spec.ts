@@ -14,7 +14,7 @@ import {
 
 import { IIntervalCollection } from "../intervalCollection.js";
 import { SequenceInterval } from "../intervals/index.js";
-import { SharedString } from "../sharedString.js";
+import { SharedString } from "../sequenceFactory.js";
 
 import { assertEquivalentSharedStrings } from "./intervalTestUtils.js";
 
@@ -72,7 +72,7 @@ describe("IntervalCollection detached", () => {
 
 			sharedString2.removeText(2, 3);
 			containerRuntimeFactory.processAllMessages();
-			assertEquivalentSharedStrings(sharedString, sharedString2);
+			await assertEquivalentSharedStrings(sharedString, sharedString2);
 		});
 
 		it("can be changed by another client after attaching", async () => {
@@ -84,7 +84,7 @@ describe("IntervalCollection detached", () => {
 			const collection2 = sharedString2.getIntervalCollection("intervals");
 			collection2.change(interval.getIntervalId(), { start: 1, end: 1 });
 			containerRuntimeFactory.processAllMessages();
-			assertEquivalentSharedStrings(sharedString, sharedString2);
+			await assertEquivalentSharedStrings(sharedString, sharedString2);
 		});
 	});
 
@@ -109,7 +109,7 @@ describe("IntervalCollection detached", () => {
 
 			sharedString2.removeText(0, 1);
 			containerRuntimeFactory.processAllMessages();
-			assertEquivalentSharedStrings(sharedString, sharedString2);
+			await assertEquivalentSharedStrings(sharedString, sharedString2);
 		});
 
 		it("can be changed by another client after attaching", async () => {
@@ -122,7 +122,7 @@ describe("IntervalCollection detached", () => {
 			const collection2 = sharedString2.getIntervalCollection("intervals");
 			collection2.change(interval.getIntervalId(), { start: 1, end: 1 });
 			containerRuntimeFactory.processAllMessages();
-			assertEquivalentSharedStrings(sharedString, sharedString2);
+			await assertEquivalentSharedStrings(sharedString, sharedString2);
 		});
 	});
 
@@ -135,7 +135,7 @@ describe("IntervalCollection detached", () => {
 				await attachAndLoadSecondSharedString();
 
 			containerRuntimeFactory.processAllMessages();
-			assertEquivalentSharedStrings(sharedString, sharedString2);
+			await assertEquivalentSharedStrings(sharedString, sharedString2);
 			assert.equal(
 				collection.getIntervalById(interval.getIntervalId())?.properties.foo,
 				"a2",
@@ -153,7 +153,7 @@ describe("IntervalCollection detached", () => {
 			collection2.change(interval.getIntervalId(), { props: { foo: "b1" } });
 			containerRuntimeFactory.processAllMessages();
 
-			assertEquivalentSharedStrings(sharedString, sharedString2);
+			await assertEquivalentSharedStrings(sharedString, sharedString2);
 			assert.equal(
 				collection.getIntervalById(interval.getIntervalId())?.properties.foo,
 				"b1",
@@ -172,7 +172,7 @@ describe("IntervalCollection detached", () => {
 			const collection2 = sharedString2.getIntervalCollection("intervals");
 			assert.equal(Array.from(collection2).length, 0);
 			assert.equal(collection2.getIntervalById(id), undefined);
-			assertEquivalentSharedStrings(sharedString, sharedString2);
+			await assertEquivalentSharedStrings(sharedString, sharedString2);
 		});
 	});
 });

@@ -28,7 +28,7 @@
 		"operationsDbEndpoint": "mongodb://mongodb:27017",
 		"globalDbEndpoint": "mongodb://mongodb:27017",
 		"globalDbEnabled": false,
-		"expireAfterSeconds": -1,
+		"expireAfterSeconds": 9000,
 		"createCosmosDBIndexes": false,
 		"directConnection": true,
 		"softDeletionRetentionPeriodMs": 2592000000,

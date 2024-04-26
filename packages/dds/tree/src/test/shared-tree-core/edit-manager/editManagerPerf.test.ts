@@ -56,9 +56,9 @@ export function testPerf() {
 					{ seq: 4, type: "Ack" },
 				],
 				new ConstrainedTestChangeRebaser(
-					(change: TestChange, over: TaggedChange<TestChange>): boolean => {
+					(change: TaggedChange<TestChange>, over: TaggedChange<TestChange>): boolean => {
 						// This is the only rebase that should happen
-						assert.deepEqual(change.intentions, [4]);
+						assert.deepEqual(change.change.intentions, [4]);
 						assert.deepEqual(over.change.intentions, [3]);
 						return true;
 					},
@@ -73,9 +73,9 @@ export function testPerf() {
 					{ seq: 4, type: "Pull", ref: 0, from: peer1 },
 				],
 				new ConstrainedTestChangeRebaser(
-					(change: TestChange, over: TaggedChange<TestChange>): boolean => {
+					(change: TaggedChange<TestChange>, over: TaggedChange<TestChange>): boolean => {
 						// This is the only rebase that should happen
-						assert.deepEqual(change.intentions, [4]);
+						assert.deepEqual(change.change.intentions, [4]);
 						assert.deepEqual(over.change.intentions, [3]);
 						return true;
 					},

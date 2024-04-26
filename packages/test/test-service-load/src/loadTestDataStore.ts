@@ -41,8 +41,10 @@ export interface IRunConfig {
 
 export interface ILoadTest {
 	run(config: IRunConfig, reset: boolean): Promise<boolean>;
-	detached(config: Omit<IRunConfig, "runId" | "profileName">): Promise<LoadTestDataStoreModel>;
-	getRuntime(): Promise<IFluidDataStoreRuntime>;
+	detached(
+		config: Omit<IRunConfig, "runId" | "profileName">,
+	): Promise<LoadTestDataStoreModel | undefined>;
+	getRuntime(): Promise<IFluidDataStoreRuntime | undefined>;
 }
 
 const taskManagerKey = "taskManager";
@@ -60,52 +62,38 @@ const defaultBlobSize = 1024;
  * via task picking.
  */
 export class LoadTestDataStoreModel {
-	private static async waitForCatchup(runtime: IFluidDataStoreRuntime): Promise<void> {
-		if (!runtime.connected) {
-			await new Promise<void>((resolve, reject) => {
-				const connectListener = () => {
-					runtime.off("dispose", disposeListener);
+	private static async waitForCatchupOrDispose(runtime: IFluidDataStoreRuntime): Promise<void> {
+		await new Promise<void>((resolve) => {
+			const resolveIfConnectedOrDisposed = () => {
+				if (runtime.connected || runtime.disposed) {
+					runtime.off("dispose", resolveIfConnectedOrDisposed);
+					runtime.off("connected", resolveIfConnectedOrDisposed);
 					resolve();
-				};
-				const disposeListener = () => {
-					runtime.off("connected", connectListener);
-					reject(new Error("disposed"));
-				};
+				}
+			};
+			runtime.once("connected", resolveIfConnectedOrDisposed);
+			runtime.once("dispose", resolveIfConnectedOrDisposed);
+			resolveIfConnectedOrDisposed();
+		});
 
-				runtime.once("connected", connectListener);
-				runtime.once("dispose", disposeListener);
-			});
-		}
 		const lastKnownSeq = runtime.deltaManager.lastKnownSeqNumber;
 		assert(
 			runtime.deltaManager.lastSequenceNumber <= lastKnownSeq,
 			"lastKnownSeqNumber should never be below last processed sequence number",
 		);
-		if (runtime.deltaManager.lastSequenceNumber === lastKnownSeq) {
-			return;
-		}
 
-		return new Promise<void>((resolve, reject) => {
-			if (runtime.disposed) {
-				reject(new Error("disposed"));
-			}
-
-			const opListener = (op: ISequencedDocumentMessage) => {
-				if (lastKnownSeq <= op.sequenceNumber) {
-					runtime.deltaManager.off("op", opListener);
-					runtime.off("dispose", disposeListener);
+		await new Promise<void>((resolve) => {
+			const resolveIfDisposedOrCaughtUp = (op?: ISequencedDocumentMessage) => {
+				if (runtime.disposed || (op !== undefined && lastKnownSeq <= op.sequenceNumber)) {
+					runtime.deltaManager.off("op", resolveIfDisposedOrCaughtUp);
+					runtime.off("dispose", resolveIfDisposedOrCaughtUp);
 					resolve();
 				}
 			};
 
-			const disposeListener = () => {
-				runtime.deltaManager.off("op", opListener);
-				runtime.off("dispose", disposeListener);
-				reject(new Error("disposed"));
-			};
-
-			runtime.deltaManager.on("op", opListener);
-			runtime.on("dispose", disposeListener);
+			runtime.deltaManager.on("op", resolveIfDisposedOrCaughtUp);
+			runtime.once("dispose", resolveIfDisposedOrCaughtUp);
+			resolveIfDisposedOrCaughtUp();
 		});
 	}
 
@@ -153,7 +141,10 @@ export class LoadTestDataStoreModel {
 		runtime: IFluidDataStoreRuntime,
 		containerRuntime: IContainerRuntimeBase,
 	) {
-		await LoadTestDataStoreModel.waitForCatchup(runtime);
+		await LoadTestDataStoreModel.waitForCatchupOrDispose(runtime);
+		if (runtime.disposed) {
+			return;
+		}
 
 		if (!root.hasSubDirectory(config.runId.toString())) {
 			root.createSubDirectory(config.runId.toString());
@@ -200,7 +191,7 @@ export class LoadTestDataStoreModel {
 		);
 
 		if (reset) {
-			await LoadTestDataStoreModel.waitForCatchup(runtime);
+			await LoadTestDataStoreModel.waitForCatchupOrDispose(runtime);
 			runDir.set(startTimeKey, Date.now());
 			runDir.delete(taskTimeKey);
 			counter.increment(-1 * counter.value);
@@ -208,6 +199,9 @@ export class LoadTestDataStoreModel {
 			if (partnerCounter !== undefined && partnerCounter.value > 0) {
 				partnerCounter.increment(-1 * partnerCounter.value);
 			}
+		}
+		if (runtime.disposed) {
+			return;
 		}
 		return dataModel;
 	}
@@ -243,11 +237,14 @@ export class LoadTestDataStoreModel {
 						this.taskStartTime = 0;
 					}
 				},
-				(error) =>
-					this.config.logger.sendErrorEvent(
-						{ eventName: "TaskManager_OnValueChanged" },
-						error,
-					),
+				(error) => {
+					if (!runtime.disposed) {
+						this.config.logger.sendErrorEvent(
+							{ eventName: "TaskManager_OnValueChanged" },
+							error,
+						);
+					}
+				},
 			);
 		};
 		this.taskManager.on("lost", changed);
@@ -294,8 +291,11 @@ export class LoadTestDataStoreModel {
 							);
 						}
 					},
-					(error) =>
-						this.config.logger.sendErrorEvent({ eventName: "Counter_OnOp" }, error),
+					(error) => {
+						if (!runtime.disposed) {
+							this.config.logger.sendErrorEvent({ eventName: "Counter_OnOp" }, error);
+						}
+					},
 				),
 			);
 		}
@@ -314,13 +314,15 @@ export class LoadTestDataStoreModel {
 					.get<IFluidHandle>(key)!
 					.get()
 					.catch((error) => {
-						this.config.logger.sendErrorEvent(
-							{
-								eventName: "ReadBlobFailed_OnValueChanged",
-								key,
-							},
-							error,
-						);
+						if (!runtime.disposed) {
+							this.config.logger.sendErrorEvent(
+								{
+									eventName: "ReadBlobFailed_OnValueChanged",
+									key,
+								},
+								error,
+							);
+						}
 					});
 			}
 		};
@@ -521,6 +523,9 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 			this.runtime,
 			this.context.containerRuntime,
 		);
+		if (dataModel === undefined) {
+			return false;
+		}
 
 		// At every moment, we want half the client to be concurrent writers, and start and stop
 		// in a rotation fashion for every cycle.
@@ -551,7 +556,9 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 	}
 
 	async getRuntime() {
-		return this.runtime;
+		if (!this.runtime.disposed) {
+			return this.runtime;
+		}
 	}
 
 	async sendOps(dataModel: LoadTestDataStoreModel, config: IRunConfig) {

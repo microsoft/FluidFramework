@@ -221,8 +221,7 @@ export interface IContainerLoadMode {
     // (undocumented)
     deltaConnection?: "none" | "delayed" | undefined;
     // (undocumented)
-    opsBeforeReturn?: undefined | "sequenceNumber" | "cached" | "all";
-    pauseAfterLoad?: boolean;
+    opsBeforeReturn?: undefined | "cached" | "all";
 }
 
 // @public
@@ -372,6 +371,8 @@ export { IGenericError }
 // @alpha
 export interface IGetPendingLocalStateProps {
     readonly notifyImminentClosure: boolean;
+    readonly sessionExpiryTimerStarted?: number;
+    readonly snapshotSequenceNumber?: number;
     readonly stopBlobAttachingSignal?: AbortSignal;
 }
 
@@ -400,7 +401,6 @@ export interface ILoaderHeader {
     [LoaderHeader.clientDetails]: IClientDetails;
     // (undocumented)
     [LoaderHeader.reconnect]: boolean;
-    [LoaderHeader.sequenceNumber]: number;
     // (undocumented)
     [LoaderHeader.loadMode]: IContainerLoadMode;
     // (undocumented)

@@ -60,6 +60,8 @@ Test interface property
 readonly testClassProperty: string;
 ```
 
+**Type:** string
+
 ## Method Details
 
 ### testClassMethod {#testclassmethod-method}
