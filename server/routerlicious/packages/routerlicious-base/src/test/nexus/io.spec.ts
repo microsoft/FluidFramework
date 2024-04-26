@@ -874,11 +874,13 @@ describe("Routerlicious", () => {
 						describe("Invalid/Malformed signals", () => {
 							const createNackPromise = (client: Client): Promise<INack> => {
 								return new Promise<INack>((resolve) => {
-									const nackListener = (nack: INack) => {
+									const nackListener = (
+										reason: string,
+										nackMessages: INack[],
+									) => {
 										client.socket.off("nack", nackListener);
-										resolve(nack);
+										resolve(nackMessages[0]);
 									};
-
 									client.socket.on("nack", nackListener);
 
 									// Timeout of 100ms to handle cases where no nack is received
@@ -889,7 +891,17 @@ describe("Routerlicious", () => {
 								});
 							};
 
-							it("recieves nack when an invalid targetClientID", async () => {
+							const checkNack = (nackMessage: INack) => {
+								assert.ok(nackMessage, "Nack message should not be undefined");
+								assert.equal(nackMessage.content.code, 400);
+								assert.equal(
+									nackMessage.content.type,
+									NackErrorType.BadRequestError,
+								);
+								assert.equal(nackMessage.content.message, "Invalid signal message");
+							};
+
+							it("can handle invalid targetClientID", async () => {
 								const targetedSignal: ISentSignalMessage = {
 									targetClientId: "invalidClientID",
 									content: stringSignalContent,
@@ -949,7 +961,7 @@ describe("Routerlicious", () => {
 								});
 							});
 
-							it("can handle an invalid targetClientID type", async () => {
+							it("nacks invalid targetClientID type", async () => {
 								const targetedSignal = {
 									targetClientId: true,
 									content: stringSignalContent,
@@ -961,10 +973,12 @@ describe("Routerlicious", () => {
 									targetedSignal,
 								]);
 
-								await nackPromise;
+								const nackMessage = await nackPromise;
+
+								checkNack(nackMessage);
 							});
 
-							it("can handle a missing content field", async () => {
+							it("nacks missing content field", async () => {
 								const targetedSignal = {
 									targetClientId: clients[0].clientId,
 								};
@@ -975,10 +989,12 @@ describe("Routerlicious", () => {
 									targetedSignal,
 								]);
 
-								await nackPromise;
+								const nackMessage = await nackPromise;
+
+								checkNack(nackMessage);
 							});
 
-							it("can handle invalid optional signal fields", async () => {
+							it("nacks invalid optional signal fields", async () => {
 								const targetedSignal = {
 									targetClientId: clients[0].clientId,
 									content: stringSignalContent,
@@ -992,7 +1008,9 @@ describe("Routerlicious", () => {
 									targetedSignal,
 								]);
 
-								await nackPromise;
+								const nackMessage = await nackPromise;
+
+								checkNack(nackMessage);
 							});
 						});
 					});
