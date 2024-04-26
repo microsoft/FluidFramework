@@ -567,11 +567,11 @@ For another example, see the `Tree.parent()` method in [Node information](#node-
 
 ### Transactions
 
-If you want the `SharedTree` to treat a set of changes atomically, wrap these changes in a transaction. Using a transaction guarantees that all of the changes will be applied together or none of them will. Transactions will include the concept of a constraint in the future which will allow the changes in a transaction to fail if the constraint is not met.
+If you want the `SharedTree` to treat a set of changes atomically, wrap these changes in a transaction. Using a transaction guarantees that all of the changes will be applied together or none of them will. The Fluid Framework guarantees this already for any sequence of changes that are applied synchronously, in one JS turn, but grouping changes via a transaction when possible allows SharedTree to process them more efficiently. Transactions can also be given constraints, which cause a transaction to be ignored by all clients if the constraint is not met.
 
 Further, changes within a transaction are exposed through a single `Revertible` object so that they can be reverted as a single change by the undo/redo code. See [Undo/Redo support](#undoredo-support) for more information about `Revertible` objects.
 
-To create a transaction use the `Tree.runTransaction()` method. You can cancel a transaction from within the callback function by returning the string "rollback". Also, if an error occurs within the callback, the transaction will be canceled.
+To create a transaction use the `Tree.runTransaction()` method. You can cancel a transaction from within the callback function by returning the special "rollback object", available via `Tree.runTransaction.rollback`. Also, if an error occurs within the callback, the transaction will be canceled automatically before propagating the error.
 
 In this example, myNode can be any node in the SharedTree. It will be optionally passed into the callback function.
 
