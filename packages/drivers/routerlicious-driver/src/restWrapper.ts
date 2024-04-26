@@ -280,7 +280,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 		);
 	}
 
-	public static async load(
+	public static load(
 		tenantId: string,
 		tokenFetcher: TokenFetcher,
 		logger: ITelemetryLoggerExt,
@@ -288,7 +288,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 		useRestLess: boolean,
 		baseurl?: string,
 		initialTokenP?: Promise<ITokenResponse>,
-	): Promise<RouterliciousStorageRestWrapper> {
+	): RouterliciousStorageRestWrapper {
 		const defaultQueryString = {
 			token: `${fromUtf8ToBase64(tenantId)}`,
 		};
