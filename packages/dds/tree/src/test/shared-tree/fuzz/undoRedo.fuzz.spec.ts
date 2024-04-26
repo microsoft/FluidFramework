@@ -75,7 +75,7 @@ describe("Fuzz - revert", () => {
 			factory: new SharedTreeTestFactory(() => {}),
 			generatorFactory,
 			reducer: fuzzReducer,
-			validateConsistency: (a, b) => validateFuzzTreeConsistency(a, b),
+			validateConsistency: validateFuzzTreeConsistency,
 		};
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (state: UndoRedoFuzzTestState) => {
@@ -166,7 +166,7 @@ describe("Fuzz - revert", () => {
 			factory: new SharedTreeTestFactory(() => {}),
 			generatorFactory,
 			reducer: fuzzReducer,
-			validateConsistency: (a, b) => validateFuzzTreeConsistency(a, b),
+			validateConsistency: validateFuzzTreeConsistency,
 		};
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", init);

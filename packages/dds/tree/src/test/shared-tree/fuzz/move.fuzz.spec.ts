@@ -53,7 +53,7 @@ describe("Fuzz - move", () => {
 		factory: new SharedTreeTestFactory(() => undefined),
 		generatorFactory,
 		reducer: fuzzReducer,
-		validateConsistency: (a, b) => validateFuzzTreeConsistency(a, b),
+		validateConsistency: validateFuzzTreeConsistency,
 	};
 
 	const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
