@@ -95,7 +95,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 	 */
 	private sendFocusSignal(hasFocus: boolean) {
 		this.signaler.submitSignal(FocusTracker.focusSignalType, {
-			userId: this.audience.getMyself()?.userId,
+			userId: this.audience.getMyself()?.id,
 			focus: hasFocus,
 		});
 	}

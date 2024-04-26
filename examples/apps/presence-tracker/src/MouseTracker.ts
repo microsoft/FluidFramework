@@ -87,7 +87,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	 */
 	private sendMouseSignal(position: IMousePosition) {
 		this.signaler.submitSignal(MouseTracker.mouseSignalType, {
-			userId: this.audience.getMyself()?.userId,
+			userId: this.audience.getMyself()?.id,
 			pos: position,
 		});
 	}

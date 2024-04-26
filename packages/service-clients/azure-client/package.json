@@ -135,7 +135,8 @@
 	"typeValidation": {
 		"broken": {
 			"InterfaceDeclaration_AzureMember": {
-				"forwardCompat": false
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}
