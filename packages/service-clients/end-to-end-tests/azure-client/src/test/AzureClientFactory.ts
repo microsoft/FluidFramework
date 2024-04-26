@@ -9,6 +9,7 @@ import {
 	AzureRemoteConnectionConfig,
 	ITelemetryBaseLogger,
 } from "@fluidframework/azure-client";
+import { type ScopeType } from "@fluidframework/azure-client/internal";
 import { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
@@ -25,6 +26,7 @@ export function createAzureClient(
 	userName?: string,
 	logger?: MockLogger,
 	configProvider?: IConfigProviderBase,
+	scopes?: ScopeType[],
 ): AzureClient {
 	const useAzure = process.env.FLUID_CLIENT === "azure";
 	const tenantId = useAzure
@@ -45,13 +47,13 @@ export function createAzureClient(
 	const connectionProps: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure
 		? {
 				tenantId,
-				tokenProvider: createAzureTokenProvider(userID ?? "foo", userName ?? "bar"),
+				tokenProvider: createAzureTokenProvider(userID ?? "foo", userName ?? "bar", scopes),
 				endpoint: endPoint,
 				type: "remote",
 		  }
 		: {
-				tokenProvider: new InsecureTokenProvider("fooBar", user),
-				endpoint: "http://localhost:7071",
+				tokenProvider: new InsecureTokenProvider("fooBar", user, scopes),
+				endpoint: "http://localhost:7070",
 				type: "local",
 		  };
 	const getLogger = (): ITelemetryBaseLogger | undefined => {
