@@ -212,12 +212,11 @@ Creates a release report for each build of the client release group published to
 
 ```
 USAGE
-  $ flub release report-unreleased --devVersion <value> -p <value> [-v | --quiet]
+  $ flub release report-unreleased --devVersion <value> [-v | --quiet]
 
 FLAGS
-  -p, --path_to_manifest_file=<value>  (required) Path to manifest
-      --devVersion=<value>             (required) Dev version generated in the pipeline. This flag should be provided
-                                       via the DEV_VERSION environment variable for security reasons.
+  --devVersion=<value>  (required) Dev version generated in the pipeline. This flag should be provided via the
+                        DEV_VERSION environment variable for security reasons.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.

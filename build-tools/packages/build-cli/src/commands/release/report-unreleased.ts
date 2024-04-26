@@ -21,11 +21,6 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 			required: true,
 			env: "DEV_VERSION",
 		}),
-		path_to_manifest_file: Flags.string({
-			description: "Path to manifest",
-			char: "p",
-			required: true,
-		}),
 		...BaseCommand.flags,
 	};
 
@@ -33,11 +28,7 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 		const { flags } = this;
 
 		try {
-			await generateReleaseReportForUnreleasedVersions(
-				flags.path_to_manifest_file,
-				flags.devVersion,
-				this.logger,
-			);
+			await generateReleaseReportForUnreleasedVersions(".", flags.devVersion, this.logger);
 			this.log("Files processed successfully.");
 		} catch (error: unknown) {
 			this.error(`Unable to process manifest files: ${error}`);

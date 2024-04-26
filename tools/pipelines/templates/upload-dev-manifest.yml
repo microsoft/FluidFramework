@@ -29,7 +29,7 @@ steps:
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
       echo VERSION=$SetVersion.version
-      flub release report-unreleased -p .
+      flub release report-unreleased
 
 - task: AzureCLI@2
   displayName: Upload Manifest Files
