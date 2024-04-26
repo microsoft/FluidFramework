@@ -502,7 +502,7 @@ describe("Routerlicious", () => {
 
 						it("can handle signals sent from multiple clients", async () => {
 							clients[0].socket.send("submitSignal", clients[0].clientId, [
-								stringSignalContent,
+								"first signal",
 							]);
 
 							let userSignals = await Promise.all(
@@ -517,7 +517,7 @@ describe("Routerlicious", () => {
 								);
 								assert.equal(
 									userSignals[index].content,
-									stringSignalContent,
+									"first signal",
 									`User ${index + 1} signal content mismatch`,
 								);
 							});
@@ -528,7 +528,7 @@ describe("Routerlicious", () => {
 							});
 
 							clients[1].socket.send("submitSignal", clients[1].clientId, [
-								stringSignalContent,
+								"second signal",
 							]);
 
 							userSignals = await Promise.all(
@@ -543,7 +543,7 @@ describe("Routerlicious", () => {
 								);
 								assert.equal(
 									userSignals[index].content,
-									stringSignalContent,
+									"second signal",
 									`User ${index + 1} signal content mismatch`,
 								);
 							});
@@ -773,7 +773,7 @@ describe("Routerlicious", () => {
 						it("can handle a mix of targeted and broadcast signals", async () => {
 							const targetedSignal: ISentSignalMessage = {
 								targetClientId: clients[0].clientId,
-								content: stringSignalContent,
+								content: "TargetedSignal",
 							};
 
 							clients[1].socket.send("submitSignal", clients[1].clientId, [
@@ -793,7 +793,7 @@ describe("Routerlicious", () => {
 									);
 									assert.equal(
 										targetUserSignals[index].content,
-										stringSignalContent,
+										targetedSignal.content,
 										"User 1 signal content mismatch",
 									);
 								} else {
@@ -811,7 +811,7 @@ describe("Routerlicious", () => {
 							});
 
 							const broadcastSignal: ISentSignalMessage = {
-								content: stringSignalContent,
+								content: "BroadcastSignal",
 							};
 
 							clients[0].socket.send("submitSignal", clients[0].clientId, [
@@ -829,23 +829,18 @@ describe("Routerlicious", () => {
 										2,
 										"User 1 should have received 2 signals",
 									);
-									assert.equal(
-										broadcastUserSignals[index].content,
-										stringSignalContent,
-										"User 1 signal content mismatch",
-									);
 								} else {
 									assert.equal(
 										client.signalCount,
 										1,
 										`User ${index + 1} should have received 1 signal`,
 									);
-									assert.equal(
-										broadcastUserSignals[index].content,
-										stringSignalContent,
-										`User ${index + 1} signal content mismatch`,
-									);
 								}
+								assert.equal(
+									broadcastUserSignals[index].content,
+									broadcastSignal.content,
+									`User ${index + 1} signal content mismatch`,
+								);
 							});
 						});
 
