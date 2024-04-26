@@ -471,12 +471,8 @@ export function configureWebSocketServices(
 						for (const signal of contentBatches) {
 							if (isSentSignalMessage(signal)) {
 								const signalMessage: ISignalMessage = {
+									...signal,
 									clientId,
-									content: signal.content,
-									clientConnectionNumber: signal.clientConnectionNumber,
-									referenceSequenceNumber: signal.referenceSequenceNumber,
-									type: signal.type,
-									targetClientId: signal.targetClientId,
 								};
 
 								const roomId: string =
