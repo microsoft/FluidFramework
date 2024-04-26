@@ -9,6 +9,7 @@ import { IContainerContext } from '@fluidframework/container-definitions/interna
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions/internal';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
+import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
@@ -107,6 +108,9 @@ export interface ISerializedHandle {
     // (undocumented)
     url: string;
 }
+
+// @internal
+export function isFluidHandle(value: unknown): value is IFluidHandle;
 
 // @internal
 export const isSerializedHandle: (value: any) => value is ISerializedHandle;

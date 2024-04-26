@@ -986,9 +986,9 @@ function setMarkAdjacentCells(mark: Mark, adjacentCells: IdRange[]): void {
 function shouldReceiveLineage(
 	cellRevision: RevisionTag | undefined,
 	detachRevision: RevisionTag,
-	metadata: RevisionMetadataSource,
+	metadata: RebaseRevisionMetadata,
 ): boolean {
-	if (cellRevision === undefined) {
+	if (cellRevision === undefined || cellRevision === metadata.getRevisionToRebase()) {
 		// An undefined cell revision means that the cell was created by the changeset we are rebasing.
 		// Since this cell was been empty for all base revisions, it should receive lineage from all of them.
 		// TODO: This cell does not need lineage from roll-forward revisions.

@@ -75,6 +75,15 @@
 			"args": ["generate", "bundleStats", "-v"],
 		},
 		{
+			"name": "flub generate packlist",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
+			"cwd": "${workspaceFolder}",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": ["generate", "packlist", "-g", "build-tools", "-v"],
+		},
+		{
 			// Runs the `flub release report --all` command with a debugger attached.
 			"name": "flub release report",
 			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
@@ -170,6 +179,33 @@
 				"--no-commit",
 				"--no-install",
 			],
+		},
+		{
+			"name": "flub generate typetests",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
+			"cwd": "${workspaceFolder}",
+			// It's sometimes useful to run this command on a single package during debugging
+			// "cwd": "${workspaceFolder}/packages/dds/sequence",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": [
+				"generate",
+				"typetests",
+				"--dir",
+				".",
+			],
+		},
+		{
+			"name": "fluid-type-test-generator",
+			"program": "${workspaceFolder}/build-tools/packages/build-tools/bin/fluid-type-test-generator",
+			"cwd": "${workspaceFolder}",
+			// It's sometimes useful to run this command on a single package during debugging
+			// "cwd": "${workspaceFolder}/packages/dds/sequence",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": [],
 		},
 		{
 			"type": "node",

@@ -48,6 +48,7 @@ import {
 	ChangeAtomIdMap,
 	taggedAtomId,
 	Multiplicity,
+	replaceAtomRevisions,
 } from "../../../core/index.js";
 import {
 	brand,
@@ -59,7 +60,6 @@ import {
 import {
 	EncodingTestData,
 	assertDeltaEqual,
-	deepFreeze,
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	testChangeReceiver,
@@ -86,6 +86,7 @@ import {
 	FieldChangeEncodingContext,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 type SingleNodeChangeset = NodeId | undefined;
 const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
@@ -93,6 +94,8 @@ const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
 	invert: (change) => change.change,
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base.change),
 	prune: (change, pruneChild) => (change === undefined ? undefined : pruneChild(change)),
+	replaceRevisions: (change, oldRevisions, newRevision) =>
+		change !== undefined ? replaceAtomRevisions(change, oldRevisions, newRevision) : undefined,
 };
 
 const singleNodeEditor: FieldEditor<SingleNodeChangeset> = {
@@ -983,7 +986,7 @@ describe("ModularChangeFamily", () => {
 	describe("rebase", () => {
 		it("rebase specific ↷ specific", () => {
 			const rebased = family.rebase(
-				rootChange1b,
+				makeAnonChange(rootChange1b),
 				makeAnonChange(rootChange1a),
 				revisionMetadataSourceFromInfo([]),
 			);
@@ -992,7 +995,7 @@ describe("ModularChangeFamily", () => {
 
 		it("rebase specific ↷ generic", () => {
 			const rebased = family.rebase(
-				rootChange1b,
+				makeAnonChange(rootChange1b),
 				makeAnonChange(rootChange1aGeneric),
 				revisionMetadataSourceFromInfo([]),
 			);
@@ -1001,7 +1004,7 @@ describe("ModularChangeFamily", () => {
 
 		it("rebase generic ↷ specific", () => {
 			const rebased = family.rebase(
-				rootChange1bGeneric,
+				makeAnonChange(rootChange1bGeneric),
 				makeAnonChange(rootChange1a),
 				revisionMetadataSourceFromInfo([]),
 			);
@@ -1010,7 +1013,7 @@ describe("ModularChangeFamily", () => {
 
 		it("rebase generic ↷ generic", () => {
 			const rebased = family.rebase(
-				rootChange1bGeneric,
+				makeAnonChange(rootChange1bGeneric),
 				makeAnonChange(rootChange1aGeneric),
 				revisionMetadataSourceFromInfo([]),
 			);
@@ -1548,17 +1551,21 @@ describe("ModularChangeFamily", () => {
 		}
 
 		const sessionId = "session1" as SessionId;
-		const context: ChangeEncodingContext = { originatorId: sessionId };
+		const context: ChangeEncodingContext = { originatorId: sessionId, revision: tag1 };
 		const encodingTestData: EncodingTestData<
 			ModularChangeset,
 			EncodedModularChangeset,
 			ChangeEncodingContext
 		> = {
 			successes: [
-				["without constraint", rootChange1a, context],
-				["with constraint", rootChange3, context],
-				["with node existence constraint", rootChange4, context],
-				["without node field changes", rootChangeWithoutNodeFieldChanges, context],
+				["without constraint", inlineRevision(rootChange1a, tag1), context],
+				["with constraint", inlineRevision(rootChange3, tag1), context],
+				["with node existence constraint", inlineRevision(rootChange4, tag1), context],
+				[
+					"without node field changes",
+					inlineRevision(rootChangeWithoutNodeFieldChanges, tag1),
+					context,
+				],
 			],
 		};
 
@@ -1650,4 +1657,8 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 	const fieldChanges = normalizeFieldChanges(change.fieldChanges);
 	assert(nodeChanges.size === change.nodeChanges.size);
 	return { ...change, nodeChanges, fieldChanges };
+}
+
+function inlineRevision(change: ModularChangeset, revision: RevisionTag): ModularChangeset {
+	return family.changeRevision(change, revision);
 }

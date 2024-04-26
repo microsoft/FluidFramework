@@ -8,7 +8,7 @@ import { SessionId } from "@fluidframework/id-compressor";
 import { ICodecFamily, IJsonCodec } from "../../codec/index.js";
 import { SchemaAndPolicy } from "../../core/index.js";
 import { JsonCompatibleReadOnly } from "../../util/index.js";
-import { ChangeRebaser } from "../rebase/index.js";
+import { ChangeRebaser, RevisionTag } from "../rebase/index.js";
 
 export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
 	buildEditor(changeReceiver: (change: TChange) => void): TEditor;
@@ -19,6 +19,7 @@ export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
 
 export interface ChangeEncodingContext {
 	readonly originatorId: SessionId;
+	readonly revision: RevisionTag | undefined;
 	readonly schema?: SchemaAndPolicy;
 }
 

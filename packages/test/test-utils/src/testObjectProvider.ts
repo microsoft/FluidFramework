@@ -160,6 +160,7 @@ export interface ITestObjectProvider {
 		entryPoint: fluidEntryPoint,
 		loaderProps?: Partial<ILoaderProps>,
 		requestHeader?: IRequestHeader,
+		pendingLocalState?: string,
 	): Promise<IContainer>;
 
 	/**
@@ -586,9 +587,10 @@ export class TestObjectProvider implements ITestObjectProvider {
 		entryPoint: fluidEntryPoint,
 		loaderProps?: Partial<ILoaderProps>,
 		requestHeader?: IRequestHeader,
+		pendingState?: string,
 	): Promise<IContainer> {
 		const loader = this.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
-		return this.resolveContainer(loader, requestHeader);
+		return this.resolveContainer(loader, requestHeader, pendingState);
 	}
 
 	private async resolveContainer(
@@ -949,10 +951,11 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		entryPoint: fluidEntryPoint,
 		loaderProps?: Partial<ILoaderProps>,
 		requestHeader?: IRequestHeader,
+		pendingState?: string,
 	): Promise<IContainer> {
 		const driver = this.useCreateApi ? this.driverForCreating : this.driverForLoading;
 		const loader = this.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
-		return this.resolveContainer(loader, requestHeader, driver);
+		return this.resolveContainer(loader, requestHeader, driver, pendingState);
 	}
 
 	private async resolveContainer(

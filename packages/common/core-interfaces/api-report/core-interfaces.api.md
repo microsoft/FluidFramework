@@ -237,10 +237,10 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 } ? TransformedEvent<TThis, E0, A0> : TransformedEvent<TThis, string, any[]>;
 
 // @public (undocumented)
-export const IFluidHandle: keyof IProvideFluidHandle;
+export const IFluidHandle = "IFluidHandle";
 
 // @public
-export interface IFluidHandle<T = FluidObject & IFluidLoadable> extends IProvideFluidHandle {
+export interface IFluidHandle<out T = FluidObject & IFluidLoadable> extends IProvideFluidHandle {
     // @deprecated (undocumented)
     readonly absolutePath: string;
     // @deprecated (undocumented)
@@ -299,7 +299,7 @@ export interface ILoggingError extends Error {
 // @public (undocumented)
 export interface IProvideFluidHandle {
     // (undocumented)
-    readonly IFluidHandle: IFluidHandle;
+    readonly [IFluidHandle]: IFluidHandle;
 }
 
 // @public (undocumented)
