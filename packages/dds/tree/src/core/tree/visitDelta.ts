@@ -502,7 +502,7 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 							config,
 							visitor,
 						);
-						sourceRoot = config.detachedFieldIndex.getEntry(offsetAttachId);
+						sourceRoot = config.detachedFieldIndex.getEntry(offsetAttachId, true);
 					}
 					const sourceField = config.detachedFieldIndex.toFieldKey(sourceRoot);
 					const offsetIndex = index + offset;

@@ -199,7 +199,8 @@ describe("visitDelta", () => {
 		);
 		assert.deepEqual(Array.from(index.entries()), [
 			{ id: { minor: 42 }, root: 0 },
-			{ id: { minor: 43 }, root: 0 },
+			// { id: { minor: 43 }, root: 0 },
+			{ id: { minor: 43 }, root: 1 },
 		]);
 	});
 	it("remove child", () => {

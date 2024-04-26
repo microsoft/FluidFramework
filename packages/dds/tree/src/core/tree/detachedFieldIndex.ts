@@ -16,10 +16,11 @@ import {
 	idAllocatorFromMaxId,
 	setInRangeMap,
 	type RangeMap,
-	mergeRangesWithinMap,
+	// mergeRangesWithinMap,
 	getFirstEntryFromRangeMap,
 	getAllValidEntriesFromMap,
-	getFromRangeMap,
+	mergeRangesButIncremental,
+	// getFromRangeMap,
 	cloneRangeMap,
 } from "../../util/index.js";
 import { RevisionTagCodec } from "../rebase/index.js";
@@ -90,6 +91,7 @@ export class DetachedFieldIndex {
 					yield {
 						id: { ...id, minor: id.minor + offset },
 						root: brand(rangeEntry.value + offset),
+						// root: brand(rangeEntry.value),
 					};
 				}
 			}
@@ -132,10 +134,17 @@ export class DetachedFieldIndex {
 	 * Returns the FieldKey associated with the given id.
 	 * Returns undefined if no such id is known to the index.
 	 */
-	public tryGetEntry(id: Delta.DetachedNodeId): ForestRootId | undefined {
+	public tryGetEntry(id: Delta.DetachedNodeId, findRoot = false): ForestRootId | undefined {
 		const innerRangeMap = this.detachedNodeRangeMap.get(id.major);
 		if (innerRangeMap !== undefined) {
-			return getFromRangeMap(innerRangeMap, id.minor, 1).value;
+			const targetRange = getFirstEntryFromRangeMap(innerRangeMap, id.minor, 1);
+			if (targetRange !== undefined) {
+				return findRoot
+					? targetRange.value
+					: brand(targetRange.value + (id.minor - targetRange.start));
+			}
+
+			// return getFromRangeMap(innerRangeMap, id.minor, 1).value;
 		}
 		return undefined;
 	}
@@ -144,8 +153,8 @@ export class DetachedFieldIndex {
 	 * Returns the FieldKey associated with the given id.
 	 * Fails if no such id is known to the index.
 	 */
-	public getEntry(id: Delta.DetachedNodeId): ForestRootId {
-		const key = this.tryGetEntry(id);
+	public getEntry(id: Delta.DetachedNodeId, findRoot = false): ForestRootId {
+		const key = this.tryGetEntry(id, findRoot);
 		assert(key !== undefined, 0x7aa /* Unknown removed node ID */);
 		return key;
 	}
@@ -236,6 +245,7 @@ export class DetachedFieldIndex {
 			for (const rangeEntry of rangeMap) {
 				for (let offset = 0; offset < rangeEntry.length; offset++) {
 					innerMap.set(rangeEntry.start + offset, brand(rangeEntry.value + offset));
+					// innerMap.set(rangeEntry.start + offset, brand(rangeEntry.value));
 				}
 			}
 			if (innerMap.size > 0) {
@@ -262,10 +272,11 @@ export class DetachedFieldIndex {
 		// Build the rangeMap for detached nodes according to the nestedMap
 		for (const [major, innerMap] of detachedFieldIndex.data) {
 			const innerRangeMap = [];
-			for (const [minor, entry] of innerMap) {
-				innerRangeMap.push({ start: minor, length: 1, value: entry });
+			for (const [minor, root] of innerMap) {
+				innerRangeMap.push({ start: minor, length: 1, value: root });
 			}
-			this.detachedNodeRangeMap.set(major, mergeRangesWithinMap(innerRangeMap));
+			// this.detachedNodeRangeMap.set(major, mergeRangesWithinMap(innerRangeMap));
+			this.detachedNodeRangeMap.set(major, mergeRangesButIncremental(innerRangeMap));
 		}
 	}
 }
