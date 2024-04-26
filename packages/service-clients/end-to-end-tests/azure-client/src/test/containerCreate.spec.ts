@@ -10,7 +10,7 @@ import { AzureClient } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { ContainerSchema } from "@fluidframework/fluid-static";
+import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
@@ -26,6 +26,7 @@ describe("Container create scenarios", () => {
 	const connectTimeoutMs = 10_000;
 	let client: AzureClient;
 	let schema: ContainerSchema;
+	const isEphemeral: boolean = process.env.azure__fluid__relay__service__ephemeral === "true";
 
 	beforeEach("createAzureClient", () => {
 		client = createAzureClient();
@@ -43,7 +44,10 @@ describe("Container create scenarios", () => {
 	 * Expected behavior: an error should not be thrown nor should a rejected promise
 	 * be returned.
 	 */
-	it("Created container is detached", async () => {
+	it("Created container is detached", async function () {
+		if (isEphemeral) {
+			this.skip();
+		}
 		const { container } = await client.createContainer(schema);
 		assert.strictEqual(
 			container.attachState,
@@ -63,17 +67,21 @@ describe("Container create scenarios", () => {
 	 * be returned.
 	 */
 	it("can attach a container", async () => {
-		const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
-			ephemeralSummaryTrees.canAttachContainer,
-			"test-user-id-1",
-			"test-user-name-1",
-		);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const containerId: string = containerResponse?.data?.id as string;
-		const { container } = await client.getContainer(containerId, schema);
-
-		// const { container } = await client.createContainer(schema);
-		// const containerId = await container.attach();
+		let containerId: string;
+		let container: IFluidContainer;
+		if (isEphemeral) {
+			const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				ephemeralSummaryTrees.canAttachContainer,
+				"test-user-id-1",
+				"test-user-name-1",
+			);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			containerId = containerResponse?.data?.id as string;
+			({ container } = await client.getContainer(containerId, schema));
+		} else {
+			({ container } = await client.createContainer(schema));
+			containerId = await container.attach();
+		}
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -97,17 +105,21 @@ describe("Container create scenarios", () => {
 	 * be returned.
 	 */
 	it("cannot attach a container twice", async () => {
-		const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
-			ephemeralSummaryTrees.cannotAttachContainerTwice,
-			"test-user-id-1",
-			"test-user-name-1",
-		);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const containerId: string = containerResponse?.data?.id as string;
-		const { container } = await client.getContainer(containerId, schema);
-
-		// const { container } = await client.createContainer(schema);
-		// const containerId = await container.attach();
+		let containerId: string;
+		let container: IFluidContainer;
+		if (isEphemeral) {
+			const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				ephemeralSummaryTrees.cannotAttachContainerTwice,
+				"test-user-id-1",
+				"test-user-name-1",
+			);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			containerId = containerResponse?.data?.id as string;
+			({ container } = await client.getContainer(containerId, schema));
+		} else {
+			({ container } = await client.createContainer(schema));
+			containerId = await container.attach();
+		}
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -132,17 +144,21 @@ describe("Container create scenarios", () => {
 	 * be returned.
 	 */
 	it("can retrieve existing Azure Fluid Relay container successfully", async () => {
-		const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
-			ephemeralSummaryTrees.retrieveExistingAFRContainer,
-			"test-user-id-1",
-			"test-user-name-1",
-		);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const containerId: string = containerResponse?.data?.id as string;
-		const { container: newContainer } = await client.getContainer(containerId, schema);
-
-		// const { container: newContainer } = await client.createContainer(schema);
-		// const containerId = await newContainer.attach();
+		let containerId: string;
+		let newContainer: IFluidContainer;
+		if (isEphemeral) {
+			const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				ephemeralSummaryTrees.retrieveExistingAFRContainer,
+				"test-user-id-1",
+				"test-user-name-1",
+			);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			containerId = containerResponse?.data?.id as string;
+			({ container: newContainer } = await client.getContainer(containerId, schema));
+		} else {
+			({ container: newContainer } = await client.createContainer(schema));
+			containerId = await newContainer.attach();
+		}
 
 		if (newContainer.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => newContainer.once("connected", () => resolve()), {
@@ -194,6 +210,7 @@ describe("Container create with feature flags", () => {
 	let client: AzureClient;
 	let schema: ContainerSchema;
 	let mockLogger: MockLogger;
+	const isEphemeral: boolean = process.env.azure__fluid__relay__service__ephemeral === "true";
 
 	beforeEach("createAzureClient", () => {
 		mockLogger = new MockLogger();
@@ -217,7 +234,10 @@ describe("Container create with feature flags", () => {
 	 *
 	 * Expected behavior: An error should not be thrown and the logger should have logged the enabled feature gates.
 	 */
-	it("can create containers with feature gates", async () => {
+	it("can create containers with feature gates", async function () {
+		if (isEphemeral) {
+			this.skip();
+		}
 		await client.createContainer(schema);
 		const event = mockLogger.events.find((e) => e.eventName.endsWith("ContainerLoadStats"));
 		assert(event !== undefined, "ContainerLoadStats event should exist");

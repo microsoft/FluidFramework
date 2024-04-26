@@ -9,7 +9,7 @@ import { AxiosResponse } from "axios";
 import { AzureClient } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ContainerSchema } from "@fluidframework/fluid-static";
+import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
@@ -26,6 +26,7 @@ describe("Fluid data updates", () => {
 			map1: SharedMap,
 		},
 	} satisfies ContainerSchema;
+	const isEphemeral: boolean = process.env.azure__fluid__relay__service__ephemeral === "true";
 
 	beforeEach("createAzureClient", () => {
 		client = createAzureClient();
@@ -39,17 +40,21 @@ describe("Fluid data updates", () => {
 	 * be returned.
 	 */
 	it("can set DDSes as initial objects for a container", async () => {
-		const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
-			ephemeralSummaryTrees.setDDSesAsInitialObjectsForContainer,
-			"test-user-id-1",
-			"test-user-name-1",
-		);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const containerId: string = containerResponse?.data?.id as string;
-		const { container: newContainer } = await client.getContainer(containerId, schema);
-
-		// const { container: newContainer } = await client.createContainer(schema);
-		// const containerId = await newContainer.attach();
+		let containerId: string;
+		let newContainer: IFluidContainer;
+		if (isEphemeral) {
+			const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				ephemeralSummaryTrees.setDDSesAsInitialObjectsForContainer,
+				"test-user-id-1",
+				"test-user-name-1",
+			);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			containerId = containerResponse?.data?.id as string;
+			({ container: newContainer } = await client.getContainer(containerId, schema));
+		} else {
+			({ container: newContainer } = await client.createContainer(schema));
+			containerId = await newContainer.attach();
+		}
 
 		if (newContainer.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => newContainer.once("connected", () => resolve()), {
@@ -79,17 +84,21 @@ describe("Fluid data updates", () => {
 	 * each other after value is changed.
 	 */
 	it("can change DDSes within initialObjects value", async () => {
-		const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
-			ephemeralSummaryTrees.changeDDSesWithinInitialObjectsValue,
-			"test-user-id-1",
-			"test-user-name-1",
-		);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const containerId: string = containerResponse?.data?.id as string;
-		const { container } = await client.getContainer(containerId, schema);
-
-		// const { container } = await client.createContainer(schema);
-		// const containerId = await container.attach();
+		let containerId: string;
+		let container: IFluidContainer;
+		if (isEphemeral) {
+			const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				ephemeralSummaryTrees.changeDDSesWithinInitialObjectsValue,
+				"test-user-id-1",
+				"test-user-name-1",
+			);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			containerId = containerResponse?.data?.id as string;
+			({ container } = await client.getContainer(containerId, schema));
+		} else {
+			({ container } = await client.createContainer(schema));
+			containerId = await container.attach();
+		}
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -99,7 +108,7 @@ describe("Fluid data updates", () => {
 		}
 
 		const initialObjectsCreate = container.initialObjects;
-		const map1Create = initialObjectsCreate.map1;
+		const map1Create = initialObjectsCreate.map1 as SharedMap;
 		map1Create.set("new-key", "new-value");
 		const valueCreate: string | undefined = map1Create.get("new-key");
 
@@ -121,17 +130,21 @@ describe("Fluid data updates", () => {
 				mdo2: CounterTestDataObject,
 			},
 		};
-		const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
-			ephemeralSummaryTrees.setDataObjectsAsInitialObjectsForContainer,
-			"test-user-id-1",
-			"test-user-name-1",
-		);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const containerId: string = containerResponse?.data?.id as string;
-		const { container } = await client.getContainer(containerId, doSchema);
-
-		// const { container } = await client.createContainer(doSchema);
-		// const containerId = await container.attach();
+		let containerId: string;
+		let container: IFluidContainer;
+		if (isEphemeral) {
+			const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				ephemeralSummaryTrees.setDataObjectsAsInitialObjectsForContainer,
+				"test-user-id-1",
+				"test-user-name-1",
+			);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			containerId = containerResponse?.data?.id as string;
+			({ container } = await client.getContainer(containerId, doSchema));
+		} else {
+			({ container } = await client.createContainer(doSchema));
+			containerId = await container.attach();
+		}
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -177,17 +190,21 @@ describe("Fluid data updates", () => {
 				mdo3: CounterTestDataObject,
 			},
 		};
-		const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
-			ephemeralSummaryTrees.useMultipleDataObjectsOfSameType,
-			"test-user-id-1",
-			"test-user-name-1",
-		);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const containerId: string = containerResponse?.data?.id as string;
-		const { container } = await client.getContainer(containerId, doSchema);
-
-		// const { container } = await client.createContainer(doSchema);
-		// const containerId = await container.attach();
+		let containerId: string;
+		let container: IFluidContainer;
+		if (isEphemeral) {
+			const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				ephemeralSummaryTrees.useMultipleDataObjectsOfSameType,
+				"test-user-id-1",
+				"test-user-name-1",
+			);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			containerId = containerResponse?.data?.id as string;
+			({ container } = await client.getContainer(containerId, doSchema));
+		} else {
+			({ container } = await client.createContainer(doSchema));
+			containerId = await container.attach();
+		}
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -238,26 +255,33 @@ describe("Fluid data updates", () => {
 				mdo2: CounterTestDataObject,
 			},
 		};
+		let containerId: string;
+		let container: IFluidContainer;
+		if (isEphemeral) {
+			const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				ephemeralSummaryTrees.changeDataObjectsWithinInitialObjectsValue,
+				"test-user-id-1",
+				"test-user-name-1",
+			);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			containerId = containerResponse?.data?.id as string;
+			({ container } = await client.getContainer(containerId, doSchema));
 
-		const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
-			ephemeralSummaryTrees.changeDataObjectsWithinInitialObjectsValue,
-			"test-user-id-1",
-			"test-user-name-1",
-		);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const containerId: string = containerResponse?.data?.id as string;
-		const { container } = await client.getContainer(containerId, doSchema);
+			const mdo2 = container.initialObjects.mdo2 as CounterTestDataObject;
+			assert.strictEqual(mdo2.value, 3);
+		} else {
+			({ container } = await client.createContainer(doSchema));
 
-		// const { container } = await client.createContainer(doSchema);
-		// const initialObjectsCreate = container.initialObjects;
-		// const mdo2 = initialObjectsCreate.mdo2 as CounterTestDataObject;
-		// mdo2.increment();
-		// mdo2.increment();
-		// mdo2.increment();
+			const initialObjectsCreate = container.initialObjects;
+			const mdo2 = initialObjectsCreate.mdo2 as CounterTestDataObject;
+			mdo2.increment();
+			mdo2.increment();
+			mdo2.increment();
 
-		// assert.strictEqual(mdo2.value, 3);
+			assert.strictEqual(mdo2.value, 3);
 
-		// const containerId = await container.attach();
+			containerId = await container.attach();
+		}
 
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -292,18 +316,21 @@ describe("Fluid data updates", () => {
 			},
 			dynamicObjectTypes: [TestDataObject],
 		};
-
-		const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
-			ephemeralSummaryTrees.createAddLoadableObjectsDynamically,
-			"test-user-id-1",
-			"test-user-name-1",
-		);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const containerId: string = containerResponse?.data?.id as string;
-		const { container } = await client.getContainer(containerId, dynamicSchema);
-
-		// const { container } = await client.createContainer(dynamicSchema);
-		// await container.attach();
+		let containerId: string;
+		let container: IFluidContainer;
+		if (isEphemeral) {
+			const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				ephemeralSummaryTrees.createAddLoadableObjectsDynamically,
+				"test-user-id-1",
+				"test-user-name-1",
+			);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			containerId = containerResponse?.data?.id as string;
+			({ container } = await client.getContainer(containerId, dynamicSchema));
+		} else {
+			({ container } = await client.createContainer(dynamicSchema));
+			containerId = await container.attach();
+		}
 
 		const newDo = await container.create(TestDataObject);
 		assert.ok(newDo?.handle);
