@@ -90,9 +90,9 @@ import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 type SingleNodeChangeset = NodeId | undefined;
 const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
-	compose: (change1, change2, composeChild) => composeChild(change1.change, change2.change),
-	invert: (change) => change.change,
-	rebase: (change, base, rebaseChild) => rebaseChild(change, base.change),
+	compose: (change1, change2, composeChild) => composeChild(change1, change2),
+	invert: (change) => change,
+	rebase: (change, base, rebaseChild) => rebaseChild(change, base),
 	prune: (change, pruneChild) => (change === undefined ? undefined : pruneChild(change)),
 	replaceRevisions: (change, oldRevisions, newRevision) =>
 		change !== undefined ? replaceAtomRevisions(change, oldRevisions, newRevision) : undefined,
@@ -125,11 +125,11 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	rebaser: singleNodeRebaser,
 	codecsFactory: (revisionTagCodec) => makeCodecFamily([[1, singleNodeCodec]]),
 	editor: singleNodeEditor,
-	intoDelta: ({ change }, deltaFromChild): DeltaFieldChanges => ({
+	intoDelta: (change, deltaFromChild): DeltaFieldChanges => ({
 		local: [{ count: 1, fields: change !== undefined ? deltaFromChild(change) : undefined }],
 	}),
 	relevantRemovedRoots: (change, relevantRemovedRootsFromChild) =>
-		change.change !== undefined ? relevantRemovedRootsFromChild(change.change) : [],
+		change !== undefined ? relevantRemovedRootsFromChild(change) : [],
 	isEmpty: (change) => change === undefined,
 	createEmpty: () => undefined,
 };
