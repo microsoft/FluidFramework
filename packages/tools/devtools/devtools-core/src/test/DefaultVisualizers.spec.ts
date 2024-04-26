@@ -115,7 +115,7 @@ describe("DefaultVisualizers unit tests", () => {
 	});
 
 	it("SharedDirectory", async () => {
-		const runtime = new MockFluidDataStoreRuntime();
+		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedDirectory.getFactory()] });
 		const sharedDirectory = SharedDirectory.create(runtime, "test-directory");
 
 		sharedDirectory.set("foo", 37);

@@ -65,7 +65,9 @@ describe("DataVisualizerGraph unit tests", () => {
 	});
 
 	it("Single root DDS (SharedMap)", async () => {
-		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedCounter.getFactory()] });
+		const runtime = new MockFluidDataStoreRuntime({
+			registry: [SharedMap.getFactory(), SharedCounter.getFactory()],
+		});
 		// Create SharedMap
 		const sharedMap = SharedMap.create(runtime, "test-map");
 
@@ -146,7 +148,9 @@ describe("DataVisualizerGraph unit tests", () => {
 	});
 
 	it("Multiple root DDS_s", async () => {
-		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedCounter.getFactory()] });
+		const runtime = new MockFluidDataStoreRuntime({
+			registry: [SharedCounter.getFactory(), SharedCell.getFactory()],
+		});
 
 		const sharedCounter = SharedCounter.create(runtime, "test-counter");
 		sharedCounter.increment(42);
