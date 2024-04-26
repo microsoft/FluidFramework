@@ -450,6 +450,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
         logger?: ITelemetryBaseLogger;
         idCompressor?: IIdCompressor & IIdCompressorCore;
         attachState?: AttachState;
+        registry?: readonly IChannelFactory[];
     });
     // (undocumented)
     get absolutePath(): string;
@@ -481,7 +482,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
         getFactory(): IChannelFactory<T>;
     }, id?: string): T & IChannel;
     // (undocumented)
-    createChannel(id: string, type: string): IChannel;
+    createChannel(id: string | undefined, type: string): IChannel;
     // (undocumented)
     createDeltaConnection(): MockDeltaConnection;
     // (undocumented)
