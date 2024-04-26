@@ -1,0 +1,57 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+parameters:  
+- name: buildDirectory
+  type: string
+  
+- name: STORAGE_ACCOUNT
+  type: string
+
+- name: STORAGE_KEY
+  type: string
+
+steps:
+- task: Bash@3
+  displayName: Generate Manifest Files
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.buildDirectory }}
+    script: |
+      flub release report -g client -o .
+
+- task: Bash@3
+  displayName: Update Version in Manifest Files
+  env:
+    DEV_VERSION: $(SetVersion.version)
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.buildDirectory }}
+    script: |
+      echo VERSION=$SetVersion.version
+      flub release report-unreleased
+
+- task: AzureCLI@2
+  displayName: Upload Manifest Files
+  continueOnError: true
+  inputs:
+    azureSubscription: 'fluid-docs'
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: |
+      for file in $(find . -type f \( -name 'manifest-*.json' -o -name 'simpleManifest-*.json' \)); do
+          az storage blob upload -f "$file" -c 'manifest-files' -n "$(basename "$file")" --account-name ${{ parameters.STORAGE_ACCOUNT }} --account-key ${{ parameters.STORAGE_KEY }} --overwrite true --verbose
+      done
+
+- task: Bash@3
+  displayName: Delete manifest files from root
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.buildDirectory }}
+    script: |
+      # Delete files ending with caret.json, simple.json, tilde.json, full.json and files uploaded to azure blob
+      for file in simpleManifest-*.json manifest-*.json *.caret.json *.simple.json *.tilde.json *.full.json; do
+        if [ -e "$file" ]; then
+            rm -f "$file"
+        fi
+      done
