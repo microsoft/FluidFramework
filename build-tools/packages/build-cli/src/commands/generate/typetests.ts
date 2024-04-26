@@ -14,6 +14,7 @@ import {
 	buildTestCase,
 	getFullTypeName,
 	getNodeTypeData,
+	getTypeTestPreviousPackageDetails,
 	typeOnly,
 } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
@@ -64,9 +65,25 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		// Doing so is a time of use vs time of check issue so opening the file could fail anyway.
 		// Do not catch error from opening file since the default behavior is fine (exits process with error showing useful message)
 		const currentPackageJson = pkg.packageJson;
-		const previousPackageName = `${currentPackageJson.name}-previous`;
-		const previousBasePath = path.join(pkg.directory, "node_modules", previousPackageName);
-		const previousPackageJsonPath = path.join(previousBasePath, "package.json");
+		const { name: previousPackageName, packageJsonPath: previousPackageJsonPath } =
+			getTypeTestPreviousPackageDetails(pkg);
+		const previousBasePath = path.dirname(previousPackageJsonPath);
+
+		const typeTestOutputFile = getTypeTestFilePath(pkg, outDir, outFile);
+		if (currentPackageJson.typeValidation?.disabled === true) {
+			this.info(
+				"Skipping type test generation because typeValidation.disabled is true in package.json",
+			);
+			rmSync(
+				typeTestOutputFile,
+				// force means to ignore the error if the file does not exist.
+				{ force: true },
+			);
+			this.verbose(`Deleted file: ${typeTestOutputFile}`);
+
+			// Early exit; no error.
+			this.exit(0);
+		}
 
 		ensureDevDependencyExists(currentPackageJson, previousPackageName);
 		this.verbose(`Reading package.json at ${previousPackageJsonPath}`);
@@ -76,18 +93,6 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		// functions use the correct name. For example, when we write the `import { foo } from <PACKAGE>/internal`
 		// statements into the type test file, we need to use the previous version name.
 		previousPackageJson.name = previousPackageName;
-
-		const typeTestOutputFile = getTypeTestFilePath(pkg, outDir, outFile);
-		if (currentPackageJson.typeValidation?.disabled === true) {
-			this.info("skipping type test generation because they are disabled in package.json");
-			rmSync(
-				typeTestOutputFile,
-				// force means to ignore the error if the file does not exist.
-				{ force: true },
-			);
-			this.verbose(`Deleted file: ${typeTestOutputFile}`);
-			this.exit(0);
-		}
 
 		const { typesPath: currentTypesPathRelative, levelUsed: currentPackageLevel } =
 			getTypesPathWithFallback(currentPackageJson, level, fallbackLevel);
