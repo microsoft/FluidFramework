@@ -29,8 +29,8 @@ import {
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedStringFactory } from "../sequenceFactory.js";
-import { SharedString, getTextAndMarkers } from "../sharedString.js";
+import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
+import { SharedStringClass, getTextAndMarkers } from "../sharedString.js";
 
 describe("SharedString", () => {
 	let sharedString: SharedString;
@@ -38,7 +38,7 @@ describe("SharedString", () => {
 
 	beforeEach(() => {
 		dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-		sharedString = new SharedString(
+		sharedString = new SharedStringClass(
 			dataStoreRuntime1,
 			"shared-string-1",
 			SharedStringFactory.Attributes,
@@ -57,7 +57,7 @@ describe("SharedString", () => {
 				objectStorage: MockStorage.createFromSummary(summaryTree),
 			};
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-			const sharedString2 = new SharedString(
+			const sharedString2 = new SharedStringClass(
 				dataStoreRuntime2,
 				"shared-string-2",
 				SharedStringFactory.Attributes,
@@ -393,7 +393,7 @@ describe("SharedString", () => {
 				),
 			};
 
-			const sharedString2 = new SharedString(
+			const sharedString2 = new SharedStringClass(
 				dataStoreRuntime2,
 				"shared-string-2",
 				SharedStringFactory.Attributes,
@@ -466,7 +466,7 @@ describe("SharedString", () => {
 				objectStorage: new MockStorage(),
 			};
 
-			sharedString2 = new SharedString(
+			sharedString2 = new SharedStringClass(
 				dataStoreRuntime2,
 				"shared-string-2",
 				SharedStringFactory.Attributes,
@@ -677,7 +677,7 @@ describe("SharedString", () => {
 			// Create and connect a second SharedString.
 			const runtime2 = new MockFluidDataStoreRuntime();
 			containerRuntimeFactory.createContainerRuntime(runtime2);
-			sharedString2 = new SharedString(
+			sharedString2 = new SharedStringClass(
 				runtime2,
 				"shared-string-2",
 				SharedStringFactory.Attributes,

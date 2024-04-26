@@ -137,7 +137,7 @@ mongodb:
   operationsDbEndpoint: mongodb_url
   globalDbEndpoint: mongoglobaldb_url
   globalDbEnabled: false
-  expireAfterSeconds: -1
+  expireAfterSeconds: 9000 # Note: CosmosDB supports -1 to disable TTL but MongoDB does not
   createCosmosDBIndexes: false
   directConnection: true
   softDeletionRetentionPeriodMs: 2592000000

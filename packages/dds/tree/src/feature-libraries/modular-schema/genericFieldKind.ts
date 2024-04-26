@@ -11,6 +11,8 @@ import {
 	TaggedChange,
 	makeAnonChange,
 	Multiplicity,
+	RevisionTag,
+	replaceAtomRevisions,
 } from "../../core/index.js";
 import { IdAllocator, fail } from "../../util/index.js";
 
@@ -77,6 +79,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 		},
 		rebase: rebaseGenericChange,
 		prune: pruneGenericChange,
+		replaceRevisions,
 	},
 	codecsFactory: makeGenericChangeCodec,
 	editor: {
@@ -162,6 +165,17 @@ function pruneGenericChange(
 		}
 	}
 	return pruned;
+}
+
+function replaceRevisions(
+	changeset: GenericChangeset,
+	oldRevisions: Set<RevisionTag | undefined>,
+	newRevision: RevisionTag | undefined,
+): GenericChangeset {
+	return changeset.map((change) => ({
+		...change,
+		nodeChange: replaceAtomRevisions(change.nodeChange, oldRevisions, newRevision),
+	}));
 }
 
 /**
