@@ -55,7 +55,6 @@ import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js"
 // Search this file for "as any" and "as NodeChangeset"
 import { TestChange } from "../../testChange.js";
 import {
-	deepFreeze,
 	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
 	isDeltaVisible,
@@ -63,6 +62,7 @@ import {
 import { TestNodeId } from "../../testNodeId.js";
 import { Change, assertTaggedEqual, verifyContextChain } from "./optionalFieldUtils.js";
 import { ChangesetWrapper } from "../../changesetWrapper.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 type RevisionTagMinter = () => RevisionTag;
 
@@ -179,7 +179,9 @@ function rebase(
 
 	const metadata =
 		metadataArg ??
-		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([base]), [base.revision]);
+		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([base]), undefined, [
+			base.revision,
+		]);
 	const moveEffects = failCrossFieldManager;
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
 	const rebased = optionalChangeRebaser.rebase(
@@ -196,12 +198,12 @@ function rebase(
 }
 
 function rebaseWrapped(
-	change: WrappedChangeset,
+	change: TaggedChange<WrappedChangeset>,
 	base: TaggedChange<WrappedChangeset>,
 	metadataArg?: RebaseRevisionMetadata,
 ): WrappedChangeset {
 	return ChangesetWrapper.rebase(change, base, (c, b, rebaseChild) =>
-		rebase(c, b, metadataArg, rebaseChild),
+		rebase(c.change, b, metadataArg, rebaseChild),
 	);
 }
 
@@ -209,12 +211,12 @@ function rebaseWrappedTagged(
 	change: TaggedChange<WrappedChangeset>,
 	base: TaggedChange<WrappedChangeset>,
 ): TaggedChange<WrappedChangeset> {
-	return tagChange(rebaseWrapped(change.change, base), change.revision);
+	return tagChange(rebaseWrapped(change, base), change.revision);
 }
 
 function rebaseComposedWrapped(
 	metadata: RebaseRevisionMetadata,
-	change: WrappedChangeset,
+	change: TaggedChange<WrappedChangeset>,
 	...baseChanges: TaggedChange<WrappedChangeset>[]
 ): WrappedChangeset {
 	const composed = baseChanges.reduce(
@@ -551,6 +553,7 @@ export function testRebaserAxioms() {
 					rebaseComposed: rebaseComposedWrapped,
 					compose: composeWrapped,
 					invert: invertWrapped,
+					inlineRevision: inlineRevisionWrapped,
 					assertEqual: assertWrappedEqual,
 					createEmpty: () => ChangesetWrapper.create(Change.empty()),
 					isEmpty: isWrappedChangeEmpty,
@@ -578,4 +581,12 @@ function assertWrappedEqual(
 	ChangesetWrapper.assertEqual(a.change, b.change, (fieldA, fieldB) =>
 		assertTaggedEqual({ ...a, change: fieldA }, { ...b, change: fieldB }),
 	);
+}
+
+function inlineRevisionWrapped(change: WrappedChangeset, revision: RevisionTag): WrappedChangeset {
+	return ChangesetWrapper.inlineRevision(change, revision, inlineRevision);
+}
+
+function inlineRevision(change: OptionalChangeset, revision: RevisionTag): OptionalChangeset {
+	return optionalChangeRebaser.replaceRevisions(change, new Set([undefined]), revision);
 }

@@ -16,24 +16,21 @@ import { ChangeAtomId } from "../../../core/index.js";
 
 const tag: RevisionTag = mintRevisionTag();
 
-// TODO: Remove this
-export type TestChangeset = SF.Changeset;
-
 const nodeId1: NodeId = { localId: brand(1) };
 const nodeId2: NodeId = { localId: brand(2) };
 
 export const cases: {
-	no_change: TestChangeset;
-	insert: TestChangeset;
-	modify: TestChangeset;
-	modify_insert: TestChangeset;
-	remove: TestChangeset;
-	revive: TestChangeset;
-	pin: TestChangeset;
-	move: TestChangeset;
-	moveAndRemove: TestChangeset;
-	return: TestChangeset;
-	transient_insert: TestChangeset;
+	no_change: SF.Changeset;
+	insert: SF.Changeset;
+	modify: SF.Changeset;
+	modify_insert: SF.Changeset;
+	remove: SF.Changeset;
+	revive: SF.Changeset;
+	pin: SF.Changeset;
+	move: SF.Changeset;
+	moveAndRemove: SF.Changeset;
+	return: SF.Changeset;
+	transient_insert: SF.Changeset;
 } = {
 	no_change: [],
 	insert: createInsertChangeset(1, 2, brand(1)),

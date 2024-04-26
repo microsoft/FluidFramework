@@ -39,7 +39,6 @@ import {
 	cursorForJsonableTreeField,
 	defaultSchemaPolicy,
 	intoStoredSchema,
-	isFluidHandle,
 } from "../../../../feature-libraries/index.js";
 import { JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
 import { ajvValidator } from "../../../codec/index.js";
@@ -55,6 +54,7 @@ import {
 import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities.js";
 
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode.js";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
 const onlyTypeShape = new NodeShape(undefined, false, [], undefined);

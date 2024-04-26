@@ -69,7 +69,8 @@ import {
 	MergeTreeDeltaType,
 	ReferenceType,
 } from "./ops.js";
-import { PropertySet } from "./properties.js";
+// eslint-disable-next-line import/no-deprecated
+import { PropertySet, createMap } from "./properties.js";
 import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
 import { SnapshotLoader } from "./snapshotLoader.js";
 import { SnapshotV1 } from "./snapshotV1.js";
@@ -803,7 +804,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					let segInsertOp = segment;
 					if (typeof resetOp.seg === "object" && resetOp.seg.props !== undefined) {
 						segInsertOp = segment.clone();
-						segInsertOp.properties = resetOp.seg.props;
+						// eslint-disable-next-line import/no-deprecated
+						segInsertOp.properties = createMap();
+						segInsertOp.addProperties(resetOp.seg.props);
 					}
 					if (segment.movedSeq !== UnassignedSequenceNumber) {
 						removeMoveInfo(segment);

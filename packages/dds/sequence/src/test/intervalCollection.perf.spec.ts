@@ -12,8 +12,7 @@ import {
 	createOverlappingIntervalsIndex,
 } from "../intervalIndex/index.js";
 import { SequenceInterval } from "../intervals/index.js";
-import { SharedStringFactory } from "../sequenceFactory.js";
-import { SharedString } from "../sharedString.js";
+import { SharedString, SharedStringFactory } from "../sequenceFactory.js";
 
 /**
  * Note: Merge-tree has a number of perf tests for core operations (insert, remove, annotate).
