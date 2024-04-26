@@ -174,7 +174,7 @@ export class DocumentService
 				const rateLimiter = new RateLimiter(
 					this.driverPolicies.maxConcurrentOrdererRequests,
 				);
-				this.ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+				this.ordererRestWrapper = RouterliciousOrdererRestWrapper.load(
 					this.ordererTokenFetcher,
 					this.logger,
 					rateLimiter,

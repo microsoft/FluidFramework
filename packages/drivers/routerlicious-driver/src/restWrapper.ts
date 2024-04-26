@@ -341,14 +341,14 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
 		);
 	}
 
-	public static async load(
+	public static load(
 		tokenFetcher: TokenFetcher,
 		logger: ITelemetryLoggerExt,
 		rateLimiter: RateLimiter,
 		useRestLess: boolean,
 		baseurl?: string,
 		initialTokenP?: Promise<ITokenResponse>,
-	): Promise<RouterliciousOrdererRestWrapper> {
+	): RouterliciousOrdererRestWrapper {
 		const getAuthorizationHeader: AuthorizationHeaderGetter = (
 			token: ITokenResponse,
 		): string => {
