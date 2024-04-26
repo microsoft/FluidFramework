@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import fs from "fs";
 
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
-import { SharedCell } from "@fluidframework/cell/internal";
+import { SharedCell, ISharedCell } from "@fluidframework/cell/internal";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
@@ -68,7 +68,7 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 				await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 			const sharedString =
 				await defaultDataStore.getSharedObject<SharedString>(sharedStringId);
-			const sharedCell = await defaultDataStore.getSharedObject<SharedCell>(sharedCellId);
+			const sharedCell = await defaultDataStore.getSharedObject<ISharedCell>(sharedCellId);
 			const sharedCounter =
 				await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
 			const crc =
@@ -110,7 +110,7 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 				await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 			const sharedString =
 				await defaultDataStore.getSharedObject<SharedString>(sharedStringId);
-			const sharedCell = await defaultDataStore.getSharedObject<SharedCell>(sharedCellId);
+			const sharedCell = await defaultDataStore.getSharedObject<ISharedCell>(sharedCellId);
 			const sharedCounter =
 				await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
 			const crc =

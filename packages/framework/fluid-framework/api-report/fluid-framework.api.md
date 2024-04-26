@@ -747,7 +747,7 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
 // @alpha
 export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
 
-// @alpha @sealed
+// @alpha
 export const SharedDirectory: ISharedObjectKind<ISharedDirectory>;
 
 // @alpha @deprecated
