@@ -22,7 +22,7 @@ import type { CommandLogger } from "../../logging";
  * specification. A policy incorrectly thinks an argument like that should not be quoted.
  * It is just easier to use an alternate bracket style.
  */
-const unscopedPackageNameString = "{@unscopedPackageName}";
+export const unscopedPackageNameString = "{@unscopedPackageName}";
 
 interface ExportData {
 	/**

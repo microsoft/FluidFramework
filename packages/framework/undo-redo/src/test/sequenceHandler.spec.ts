@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { SharedString, SharedStringFactory } from "@fluidframework/sequence/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -59,11 +59,7 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
 			objectStorage: new MockStorage(undefined),
 		};
 
-		sharedString = new SharedString(
-			dataStoreRuntime,
-			documentId,
-			SharedStringFactory.Attributes,
-		);
+		sharedString = SharedString.getFactory().create(dataStoreRuntime, documentId);
 		sharedString.initializeLocal();
 		sharedString.bindToContext();
 		sharedString.connect(services);

@@ -7,7 +7,7 @@
 
 /* eslint-disable unicorn/no-null */
 
-import { SharedCell } from "@fluidframework/cell/internal";
+import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
@@ -52,7 +52,10 @@ async function visualizeChildData(data: unknown): Promise<VisualChildNode> {
 describe("DefaultVisualizers unit tests", () => {
 	it("SharedCell (Primitive data)", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const sharedCell = new SharedCell("test-cell", runtime, SharedCell.getFactory().attributes);
+		const sharedCell: ISharedCell<string> = SharedCell.getFactory().create(
+			runtime,
+			"test-cell",
+		);
 
 		const result = await visualizeSharedCell(sharedCell, visualizeChildData);
 
@@ -71,7 +74,10 @@ describe("DefaultVisualizers unit tests", () => {
 
 	it("SharedCell (JSON data)", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const sharedCell = new SharedCell("test-cell", runtime, SharedCell.getFactory().attributes);
+		const sharedCell: ISharedCell<object> = SharedCell.getFactory().create(
+			runtime,
+			"test-cell",
+		);
 
 		sharedCell.set({ test: undefined });
 
@@ -98,11 +104,7 @@ describe("DefaultVisualizers unit tests", () => {
 
 	it("SharedCounter", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const sharedCounter = new SharedCounter(
-			"test-counter",
-			runtime,
-			SharedCounter.getFactory().attributes,
-		);
+		const sharedCounter = SharedCounter.getFactory().create(runtime, "test-counter");
 		sharedCounter.increment(37);
 
 		const result = await visualizeSharedCounter(sharedCounter, visualizeChildData);
@@ -370,11 +372,7 @@ describe("DefaultVisualizers unit tests", () => {
 
 	it("SharedString", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const sharedString = new SharedString(
-			runtime,
-			"test-string",
-			SharedString.getFactory().attributes,
-		);
+		const sharedString = SharedString.getFactory().create(runtime, "test-string");
 		sharedString.insertText(0, "Hello World!");
 
 		const result = await visualizeSharedString(sharedString, visualizeChildData);
@@ -834,11 +832,7 @@ describe("DefaultVisualizers unit tests", () => {
 			"test",
 		);
 
-		const sharedString = new SharedString(
-			runtime,
-			"test-string",
-			SharedString.getFactory().attributes,
-		);
+		const sharedString = SharedString.getFactory().create(runtime, "test-string");
 		sharedString.insertText(0, "Hello World!");
 
 		sharedTree.schematize(new TreeConfiguration(builder.handle, () => sharedString.handle));
@@ -878,11 +872,7 @@ describe("DefaultVisualizers unit tests", () => {
 			"test",
 		);
 
-		const sharedString = new SharedString(
-			runtime,
-			"test-string",
-			SharedString.getFactory().attributes,
-		);
+		const sharedString = SharedString.getFactory().create(runtime, "test-string");
 		sharedString.insertText(0, "Hello World!");
 
 		class RootNodeSchema extends builder.object("root-item", {
