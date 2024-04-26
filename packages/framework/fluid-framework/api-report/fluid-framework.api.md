@@ -22,7 +22,6 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { IJSONSegment } from '@fluidframework/merge-tree/internal';
-import { IMergeTreeAnnotateMsg } from '@fluidframework/merge-tree/internal';
 import { IMergeTreeDeltaCallbackArgs } from '@fluidframework/merge-tree/internal';
 import { IMergeTreeDeltaOpArgs } from '@fluidframework/merge-tree/internal';
 import { IMergeTreeGroupMsg } from '@fluidframework/merge-tree/internal';
@@ -517,7 +516,7 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 
 // @alpha
 export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
-    annotateMarker(marker: Marker, props: PropertySet): IMergeTreeAnnotateMsg | undefined;
+    annotateMarker(marker: Marker, props: PropertySet): void;
     getMarkerFromId(id: string): ISegment | undefined;
     getText(start?: number, end?: number): string;
     // (undocumented)

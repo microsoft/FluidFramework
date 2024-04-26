@@ -15,7 +15,6 @@ import {
 	ReferenceType,
 	TextSegment,
 	refHasTileLabel,
-	type IMergeTreeAnnotateMsg,
 } from "@fluidframework/merge-tree/internal";
 
 import { SharedSegmentSequence } from "./sequence.js";
@@ -84,7 +83,7 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
 	 * @param marker - The marker to annotate
 	 * @param props - The properties to annotate the marker with
 	 */
-	annotateMarker(marker: Marker, props: PropertySet): IMergeTreeAnnotateMsg | undefined;
+	annotateMarker(marker: Marker, props: PropertySet): void;
 
 	/**
 	 * Searches a string for the nearest marker in either direction to a given start position.
@@ -228,7 +227,7 @@ export class SharedStringClass
 	/**
 	 * {@inheritDoc ISharedString.annotateMarker}
 	 */
-	public annotateMarker(marker: Marker, props: PropertySet): IMergeTreeAnnotateMsg | undefined {
+	public annotateMarker(marker: Marker, props: PropertySet): void {
 		this.guardReentrancy(() => this.client.annotateMarker(marker, props));
 	}
 
