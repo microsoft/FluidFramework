@@ -19,6 +19,7 @@ import {
 	OptionalChangeset,
 	RegisterId,
 	RegisterMap,
+	optionalChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
 import {
@@ -306,4 +307,11 @@ function registerEqual(a: RegisterId, b: RegisterId): boolean {
 		return a === b;
 	}
 	return a.revision === b.revision && a.localId === b.localId;
+}
+
+export function inlineRevision(
+	change: OptionalChangeset,
+	revision: RevisionTag,
+): OptionalChangeset {
+	return optionalChangeRebaser.replaceRevisions(change, new Set([undefined]), revision);
 }

@@ -17,6 +17,7 @@ import {
 	TaggedChange,
 	areEqualChangeAtomIds,
 	makeChangeAtomId,
+	replaceAtomRevisions,
 	taggedAtomId,
 	taggedOptAtomId,
 } from "../../core/index.js";
@@ -442,7 +443,73 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		return prunedChange;
 	},
+
+	replaceRevisions: (
+		change: OptionalChangeset,
+		oldRevisions: Set<RevisionTag | undefined>,
+		newRevision: RevisionTag | undefined,
+	): OptionalChangeset => {
+		const valueReplace = replaceReplaceRevisions(
+			change.valueReplace,
+			oldRevisions,
+			newRevision,
+		);
+
+		const childChanges: ChildChange[] = [];
+		for (const [id, childChange] of change.childChanges) {
+			childChanges.push([
+				replaceRegisterRevisions(id, oldRevisions, newRevision),
+				replaceAtomRevisions(childChange, oldRevisions, newRevision),
+			]);
+		}
+
+		const moves: Move[] = [];
+		for (const [src, dst] of change.moves) {
+			moves.push([
+				replaceAtomRevisions(src, oldRevisions, newRevision),
+				replaceAtomRevisions(dst, oldRevisions, newRevision),
+			]);
+		}
+
+		const updated: Mutable<OptionalChangeset> = { childChanges, moves };
+		if (valueReplace !== undefined) {
+			updated.valueReplace = valueReplace;
+		}
+
+		return updated;
+	},
 };
+
+function replaceReplaceRevisions(
+	replace: Replace | undefined,
+	oldRevisions: Set<RevisionTag | undefined>,
+	newRevision: RevisionTag | undefined,
+): Replace | undefined {
+	if (replace === undefined) {
+		return undefined;
+	}
+
+	const updated: Mutable<Replace> = {
+		...replace,
+		dst: replaceAtomRevisions(replace.dst, oldRevisions, newRevision),
+	};
+
+	if (replace.src !== undefined) {
+		updated.src = replaceRegisterRevisions(replace.src, oldRevisions, newRevision);
+	}
+
+	return updated;
+}
+
+function replaceRegisterRevisions(
+	register: RegisterId,
+	oldRevisions: Set<RevisionTag | undefined>,
+	newRevision: RevisionTag | undefined,
+): RegisterId {
+	return register === "self"
+		? register
+		: replaceAtomRevisions(register, oldRevisions, newRevision);
+}
 
 function getComposedReplaceDst(
 	change1: Replace | undefined,

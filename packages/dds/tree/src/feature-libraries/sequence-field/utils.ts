@@ -234,11 +234,8 @@ export function compareCellPositionsUsingTombstones(
 		// These cells are only ordered through tie-breaking.
 		// Since tie-breaking is hard-coded to "merge left", the younger cell comes first.
 
-		// In the context of rebase, an undefined revision means that the cell was created on the branch that
-		// is undergoing rebasing.
 		// In the context of compose, an undefined revision means we are composing anonymous changesets into
-		// a transaction.
-		// In both cases, it means the cell from the newer changeset is younger.
+		// a transaction, which means the cell from the newer changeset is younger.
 		if (newMarkCell.revision === undefined) {
 			return CellOrder.NewThenOld;
 		}
