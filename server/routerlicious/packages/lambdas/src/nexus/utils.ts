@@ -67,24 +67,14 @@ export const isWriter = (scopes: string[], mode: ConnectionMode) =>
 export const getRoomId = (room: IRoom) => `${room.tenantId}/${room.documentId}`;
 export const getClientSpecificRoomId = (clientId: string) => `client#${clientId}`;
 
-// assertion helper for typescript before 4.9.5
-function hasProperty<TValue extends object, TProperty extends string>(
-	obj: TValue,
-	prop: TProperty,
-): obj is TValue & Record<TProperty, unknown> {
-	return prop in obj;
-}
-
 export function isSentSignalMessage(obj: unknown): obj is ISentSignalMessage {
 	return (
 		typeof obj === "object" &&
 		obj !== null &&
 		"content" in obj &&
-		(!hasProperty(obj, "type") || typeof obj.type === "string") &&
-		(!hasProperty(obj, "clientConnectionNumber") ||
-			typeof obj.clientConnectionNumber === "number") &&
-		(!hasProperty(obj, "referenceSequenceNumber") ||
-			typeof obj.referenceSequenceNumber === "number") &&
-		(!hasProperty(obj, "targetClientId") || typeof obj.targetClientId === "string")
+		(!("type" in obj) || typeof obj.type === "string") &&
+		(!("clientConnectionNumber" in obj) || typeof obj.clientConnectionNumber === "number") &&
+		(!("referenceSequenceNumber" in obj) || typeof obj.referenceSequenceNumber === "number") &&
+		(!("targetClientId" in obj) || typeof obj.targetClientId === "string")
 	);
 }
