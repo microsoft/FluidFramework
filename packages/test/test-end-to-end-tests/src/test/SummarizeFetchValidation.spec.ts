@@ -8,7 +8,6 @@ import { strict as assert } from "assert";
 import {
 	describeCompat,
 	itExpects,
-	itSkipsFailureOnSpecificDrivers,
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
