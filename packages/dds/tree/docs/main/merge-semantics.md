@@ -17,12 +17,41 @@ For example, imagine Alice and Bob are editing a document that contains sticky n
 If Alice changes the background color of one sticky note from yellow to red,
 that edit will be sent to the server which will forward it to Bob.
 
+![One edit](../.attachments/ms-set-color-red.png)
+_A: Alice initiates the edit that changes the sticky note's color from yellow to red.
+The color of the note on Alice's device changes from yellow to red.
+B: The service receives Alice's edit and broadcasts it to all peers.
+C: Bob receives Alice's edit.
+The color of the note on Bob's device changes from yellow to red.
+D: Alice receives her own edit back from the service,
+which confirms to her that her edit is now part of the document's history._
+
 Now imagine Bob wants to change the background of that same sticky note to the color blue.
 If Bob makes this change _after_ receiving the edit from Alice, then he will be changing the color from red to blue.
 This is not a case of concurrent editing because Bob had received Alice's edit before changing the color.
 
+![Two non-concurrent edits](../.attachments/ms-set-color-red-then-blue.png)
+_A: Alice initiates the edit that changes the sticky note's color from yellow to red.
+The color of the note on Alice's device changes from yellow to red.
+B: Bob receives Alice's edit.
+The color of the note on Bob's device changes from yellow to red.
+C: Bob initiates the edit that changes the sticky note's color from red to blue.
+The color of the note on Bob's device changes from red to blue.
+D: Alice receives Bob's edit.
+The color of the note on Alice's device changes from red to blue._
+
 On the other hand, if Bob makes this change _before_ receiving the edit from Alice,
 then his edit will be concurrent to Alice's edit, and he will be changing the color from yellow to blue.
+
+![Two concurrent edits](../.attachments/ms-set-color-red-and-blue.png)
+_A: Alice initiates the edit that changes the sticky note's color from yellow to red.
+The color of the note on Alice's device changes from yellow to red.
+B: Bob initiates the edit that changes the sticky note's color from yellow to blue.
+The color of the note on Bob's device changes from yellow to blue.
+C: Bob receives Alice's edit.
+The two edits must be reconciled on Bob's device.
+D: Alice receives Bob's edit.
+The two edits must be reconciled on Alice's device._
 
 ### Reconciling Concurrent Edits
 
@@ -44,7 +73,8 @@ then one could imagine multiple possible outcomes:
 -   keep the color yellow
 -   change the color to purple
 
-`SharedTree`'s merge semantics define which outcome will be picked.
+`SharedTree`'s merge semantics define which outcome will be picked,
+and ensure that Alice and Bob get the same outcome.
 
 ## Why/When Should You Care?
 
