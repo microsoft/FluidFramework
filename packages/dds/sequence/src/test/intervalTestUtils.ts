@@ -12,7 +12,7 @@ import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { IIntervalCollection } from "../intervalCollection.js";
 import { createOverlappingIntervalsIndex } from "../intervalIndex/index.js";
 import { SequenceInterval } from "../intervals/index.js";
-import { SharedString } from "../sharedString.js";
+import { SharedString } from "../sequenceFactory.js";
 
 export interface Client {
 	sharedString: SharedString;

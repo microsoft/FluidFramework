@@ -25,6 +25,7 @@ import { ISegment } from '@fluidframework/merge-tree/internal';
 import { ISegmentAction } from '@fluidframework/merge-tree/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
+import type { ISharedObjectKind } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { LocalReferencePosition } from '@fluidframework/merge-tree/internal';
@@ -54,45 +55,45 @@ import { TypedEventEmitter } from '@fluid-internal/client-utils';
 export function appendAddIntervalToRevertibles(interval: SequenceInterval, revertibles: SharedStringRevertible[]): SharedStringRevertible[];
 
 // @alpha
-export function appendChangeIntervalToRevertibles(string: SharedString, newInterval: SequenceInterval, previousInterval: SequenceInterval, revertibles: SharedStringRevertible[]): SharedStringRevertible[];
+export function appendChangeIntervalToRevertibles(string: ISharedString, newInterval: SequenceInterval, previousInterval: SequenceInterval, revertibles: SharedStringRevertible[]): SharedStringRevertible[];
 
 // @alpha
-export function appendDeleteIntervalToRevertibles(string: SharedString, interval: SequenceInterval, revertibles: SharedStringRevertible[]): SharedStringRevertible[];
+export function appendDeleteIntervalToRevertibles(string: ISharedString, interval: SequenceInterval, revertibles: SharedStringRevertible[]): SharedStringRevertible[];
 
 // @alpha
 export function appendIntervalPropertyChangedToRevertibles(interval: SequenceInterval, deltas: PropertySet, revertibles: SharedStringRevertible[]): SharedStringRevertible[];
 
 // @alpha
-export function appendSharedStringDeltaToRevertibles(string: SharedString, delta: SequenceDeltaEvent, revertibles: SharedStringRevertible[]): void;
+export function appendSharedStringDeltaToRevertibles(string: ISharedString, delta: SequenceDeltaEvent, revertibles: SharedStringRevertible[]): void;
 
 export { BaseSegment }
 
 // @internal (undocumented)
-export function createEndpointIndex(sharedString: SharedString): IEndpointIndex<SequenceInterval>;
+export function createEndpointIndex(sharedString: ISharedString): IEndpointIndex<SequenceInterval>;
 
 // @internal (undocumented)
-export function createEndpointInRangeIndex(sharedString: SharedString): IEndpointInRangeIndex<SequenceInterval>;
+export function createEndpointInRangeIndex(sharedString: ISharedString): IEndpointInRangeIndex<SequenceInterval>;
 
 // @internal (undocumented)
 export function createIdIntervalIndex<TInterval extends ISerializableInterval>(): IIdIntervalIndex<TInterval>;
 
 // @alpha (undocumented)
-export function createOverlappingIntervalsIndex(sharedString: SharedString): IOverlappingIntervalsIndex<SequenceInterval>;
+export function createOverlappingIntervalsIndex(sharedString: ISharedString): IOverlappingIntervalsIndex<SequenceInterval>;
 
 // @internal (undocumented)
-export function createOverlappingSequenceIntervalsIndex(sharedString: SharedString): SequenceIntervalIndexes.Overlapping;
+export function createOverlappingSequenceIntervalsIndex(sharedString: ISharedString): SequenceIntervalIndexes.Overlapping;
 
 // @internal (undocumented)
-export function createStartpointInRangeIndex(sharedString: SharedString): IStartpointInRangeIndex<SequenceInterval>;
+export function createStartpointInRangeIndex(sharedString: ISharedString): IStartpointInRangeIndex<SequenceInterval>;
 
 // @alpha (undocumented)
 export type DeserializeCallback = (properties: PropertySet) => void;
 
 // @alpha
-export function discardSharedStringRevertibles(sharedString: SharedString, revertibles: SharedStringRevertible[]): void;
+export function discardSharedStringRevertibles(sharedString: ISharedString, revertibles: SharedStringRevertible[]): void;
 
 // @internal
-export function getTextAndMarkers(sharedString: SharedString, label: string, start?: number, end?: number): {
+export function getTextAndMarkers(sharedString: ISharedString, label: string, start?: number, end?: number): {
     parallelText: string[];
     parallelMarkers: Marker[];
 };
@@ -382,9 +383,19 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 
 // @alpha
 export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
+    annotateMarker(marker: Marker, props: PropertySet): void;
+    getMarkerFromId(id: string): ISegment | undefined;
+    getText(start?: number, end?: number): string;
+    // (undocumented)
+    getTextRangeWithMarkers(start: number, end: number): string;
+    getTextWithPlaceholders(start?: number, end?: number): string;
     insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): void;
+    insertMarkerRelative(relativePos1: IRelativePosition, refType: ReferenceType, props?: PropertySet): void;
     insertText(pos: number, text: string, props?: PropertySet): void;
-    posFromRelativePos(relativePos: IRelativePosition): number;
+    insertTextRelative(relativePos1: IRelativePosition, text: string, props?: PropertySet): void;
+    removeText(start: number, end: number): void;
+    replaceText(start: number, end: number, text: string, props?: PropertySet): void;
+    searchForMarker(startPos: number, markerLabel: string, forwards?: boolean): Marker | undefined;
 }
 
 // @internal
@@ -420,7 +431,7 @@ export { reservedRangeLabelsKey }
 export { reservedTileLabelsKey }
 
 // @alpha
-export function revertSharedStringRevertibles(sharedString: SharedString, revertibles: SharedStringRevertible[]): void;
+export function revertSharedStringRevertibles(sharedString: ISharedString, revertibles: SharedStringRevertible[]): void;
 
 // @alpha
 export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
@@ -628,11 +639,15 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 }
 
 // @alpha
-export class SharedString extends SharedSegmentSequence<SharedStringSegment> implements ISharedString {
+export const SharedString: ISharedObjectKind<ISharedString>;
+
+// @alpha
+export type SharedString = ISharedString;
+
+// @alpha
+export class SharedStringClass extends SharedSegmentSequence<SharedStringSegment> implements ISharedString {
     constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
     annotateMarker(marker: Marker, props: PropertySet): void;
-    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedString;
-    static getFactory(): SharedStringFactory;
     getMarkerFromId(id: string): ISegment | undefined;
     getText(start?: number, end?: number): string;
     // (undocumented)
@@ -650,22 +665,6 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     replaceText(start: number, end: number, text: string, props?: PropertySet): void;
     protected rollback(content: any, localOpMetadata: unknown): void;
     searchForMarker(startPos: number, markerLabel: string, forwards?: boolean): Marker | undefined;
-}
-
-// @alpha (undocumented)
-export class SharedStringFactory implements IChannelFactory {
-    // (undocumented)
-    static readonly Attributes: IChannelAttributes;
-    // (undocumented)
-    get attributes(): IChannelAttributes;
-    create(document: IFluidDataStoreRuntime, id: string): SharedString;
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<SharedString>;
-    // (undocumented)
-    static segmentFromSpec(spec: any): SharedStringSegment;
-    // (undocumented)
-    static Type: string;
-    // (undocumented)
-    get type(): string;
 }
 
 // @alpha

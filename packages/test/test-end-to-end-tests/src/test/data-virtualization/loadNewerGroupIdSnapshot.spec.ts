@@ -366,7 +366,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 
 			assert(result.stage === "base", "submitSummary should fail in base stage");
 			assert.equal(
-				result.error.message,
+				result.error?.message,
 				"Summarizer client behind, loaded newer snapshot with loadingGroupId",
 				"submitSummary should fail in base stage because summarizer is behind",
 			);
