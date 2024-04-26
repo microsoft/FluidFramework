@@ -225,10 +225,8 @@ export class OdspDelayLoadedDeltaStream {
 				// Also keeping an undefined check here to account for any unknown code path that is unable to stamp the value as in that case also
 				// it is safer to clear join session cache and start over.
 				if (
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-					(error as any).errorFrom === "connect_document_error" ||
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-					(error as any).errorFrom === undefined
+					(error as IOdspError).errorFrom === "connect_document_error" ||
+					(error as IOdspError).errorFrom === undefined
 				) {
 					this.clearJoinSessionTimer();
 					this.cache.sessionJoinCache.remove(this.joinSessionKey);

@@ -93,6 +93,11 @@ export interface IOdspErrorAugmentations {
  */
 export interface IOdspError extends Omit<IDriverErrorBase, "errorType">, IOdspErrorAugmentations {
 	readonly errorType: OdspErrorTypes;
+	/**
+	 * In case of socket io errors, this property captures the socket event which caused the error
+	 * i.e. connect_error, connect_document_error etc.
+	 */
+	errorFrom?: string;
 }
 
 /**

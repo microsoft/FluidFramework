@@ -16,12 +16,12 @@ import { pkgVersion as driverVersion } from "./packageVersion.js";
  */
 export function errorObjectFromSocketError(
 	socketError: IOdspSocketError,
-	handler: string,
+	socketEvent: string,
 ): IFluidErrorBase & OdspError {
 	// Make sure we always return something, and do not throw.
 	try {
 		// pre-0.58 error message prefix: OdspSocketError
-		const message = `ODSP socket error (${handler}): ${socketError.message}`;
+		const message = `ODSP socket error (${socketEvent}): ${socketError.message}`;
 		const error = createOdspNetworkError(
 			message,
 			socketError.code,
@@ -32,7 +32,11 @@ export function errorObjectFromSocketError(
 				: undefined, // responseText
 		);
 
-		error.addTelemetryProperties({ odspError: true, relayServiceError: true });
+		error.addTelemetryProperties({
+			odspError: true,
+			relayServiceError: true,
+			errorFrom: socketEvent,
+		});
 		return error;
 	} catch {
 		return new NonRetryableError(

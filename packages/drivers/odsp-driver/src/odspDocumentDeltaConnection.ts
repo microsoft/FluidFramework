@@ -362,19 +362,19 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	 * Error raising for socket.io issues
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
-	protected createErrorObject(handler: string, error?: any, canRetry = true): IAnyDriverError {
+	protected createErrorObject(
+		socketEvent: string,
+		error?: any,
+		canRetry = true,
+	): IAnyDriverError {
 		// Note: we suspect the incoming error object is either:
 		// - a socketError: add it to the OdspError object for driver to be able to parse it and reason over it.
 		// - anything else: let base class handle it
 		const errorObject =
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			canRetry && Number.isInteger(error?.code) && typeof error?.message === "string"
-				? errorObjectFromSocketError(error as IOdspSocketError, handler)
-				: super.createErrorObject(handler, error, canRetry);
-
-		// We use errorFrom param to clear the joinSession cache if the error happens in connect_document flow.
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-		(errorObject as any).errorFrom = handler;
+				? errorObjectFromSocketError(error as IOdspSocketError, socketEvent)
+				: super.createErrorObject(socketEvent, error, canRetry);
 		return errorObject;
 	}
 
