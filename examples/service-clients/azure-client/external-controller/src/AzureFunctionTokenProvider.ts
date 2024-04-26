@@ -21,7 +21,7 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
 	 */
 	public constructor(
 		private readonly azFunctionUrl: string,
-		private readonly user?: Pick<AzureMember, "userId" | "name" | "additionalDetails">,
+		private readonly user?: Pick<AzureMember, "id" | "name" | "additionalDetails">,
 	) {}
 
 	public async fetchOrdererToken(
@@ -51,7 +51,7 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
 			params: {
 				tenantId,
 				documentId,
-				userId: this.user?.userId,
+				userId: this.user?.id,
 				userName: this.user?.name,
 				additionalDetails: this.user?.additionalDetails as unknown,
 			},

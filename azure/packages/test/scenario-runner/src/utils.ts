@@ -63,13 +63,13 @@ export function convertConfigToScriptParams<T extends IRunConfig>(config: T): st
 
 export function createAzureTokenProvider(
 	fnUrl: string,
-	userID?: string,
+	id?: string,
 	userName?: string,
 	// eslint-disable-next-line import/no-deprecated
 ): AzureFunctionTokenProvider {
 	// eslint-disable-next-line import/no-deprecated
 	return new AzureFunctionTokenProvider(`${fnUrl}/api/GetFrsToken`, {
-		userId: userID ?? "foo",
+		id: id ?? "foo",
 		name: userName ?? "bar",
 	});
 }

@@ -18,7 +18,7 @@ export const waitForMember = async (
 	}
 	return new Promise((resolve) => {
 		const handler = (clientId: string, newMember: IMember): void => {
-			if (newMember.userId === userId) {
+			if (newMember.id === userId) {
 				resolve(newMember as AzureMember);
 			}
 		};

@@ -18,7 +18,7 @@ export function createAzureAudienceMember(audienceMember: IClient): AzureMember 
 	assertIsAzureUser(user);
 
 	return {
-		userId: user.id,
+		id: user.id,
 		name: user.name,
 		connections: [],
 		additionalDetails: user.additionalDetails,

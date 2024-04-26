@@ -39,7 +39,7 @@ const user = {
 };
 
 const azureUser = {
-	userId: user.id,
+	id: user.id,
 	name: user.name,
 	additionalDetails: userDetails,
 };

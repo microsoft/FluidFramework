@@ -338,7 +338,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 // @public
 export interface IMember {
     readonly connections: IConnection[];
-    readonly userId: string;
+    readonly id: string;
 }
 
 // @public

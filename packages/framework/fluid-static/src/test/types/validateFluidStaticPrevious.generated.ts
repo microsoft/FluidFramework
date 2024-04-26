@@ -154,6 +154,7 @@ declare function get_old_InterfaceDeclaration_IMember():
 declare function use_current_InterfaceDeclaration_IMember(
     use: TypeOnly<current.IMember>): void;
 use_current_InterfaceDeclaration_IMember(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IMember());
 
 /*
@@ -166,6 +167,7 @@ declare function get_current_InterfaceDeclaration_IMember():
 declare function use_old_InterfaceDeclaration_IMember(
     use: TypeOnly<old.IMember>): void;
 use_old_InterfaceDeclaration_IMember(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IMember());
 
 /*
@@ -406,6 +408,7 @@ declare function get_old_TypeAliasDeclaration_Myself():
 declare function use_current_TypeAliasDeclaration_Myself(
     use: TypeOnly<current.Myself>): void;
 use_current_TypeAliasDeclaration_Myself(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_Myself());
 
 /*
@@ -418,6 +421,7 @@ declare function get_current_TypeAliasDeclaration_Myself():
 declare function use_old_TypeAliasDeclaration_Myself(
     use: TypeOnly<old.Myself>): void;
 use_old_TypeAliasDeclaration_Myself(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_Myself());
 
 /*

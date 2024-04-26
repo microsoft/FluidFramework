@@ -143,6 +143,14 @@
 			"RemovedTypeAliasDeclaration_SharedObjectClass": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IMember": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_Myself": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}
