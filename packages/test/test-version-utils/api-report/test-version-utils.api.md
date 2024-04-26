@@ -91,7 +91,7 @@ export const DataRuntimeApi: {
         SharedMatrix: ISharedObjectKind<matrix.ISharedMatrix<any>>;
         ConsensusQueue: typeof orderedCollection.ConsensusQueue;
         ConsensusRegisterCollection: typeof registerCollection.ConsensusRegisterCollection;
-        SharedString: typeof sequence.SharedString;
+        SharedString: ISharedObjectKind<sequence.ISharedString>;
         SparseMatrix: typeof sequenceDeprecated.SparseMatrix;
     };
     packages: {

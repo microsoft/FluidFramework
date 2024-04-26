@@ -16,7 +16,7 @@ import {
 	SequenceInterval,
 	sequenceIntervalHelpers,
 } from "../intervals/index.js";
-import { SharedString } from "../sharedString.js";
+import { ISharedString } from "../sharedString.js";
 
 import { IntervalIndex } from "./intervalIndex.js";
 
@@ -182,7 +182,7 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
  * @alpha
  */
 export function createOverlappingIntervalsIndex(
-	sharedString: SharedString,
+	sharedString: ISharedString,
 ): IOverlappingIntervalsIndex<SequenceInterval> {
 	const client = (sharedString as unknown as { client: Client }).client;
 	return new OverlappingIntervalsIndex<SequenceInterval>(client, sequenceIntervalHelpers);
