@@ -107,7 +107,6 @@ export {
 	deleteFromRangeMap,
 	getAllValidEntriesFromMap,
 	mergeRangesWithinMap,
-	mergeRangesButIncremental,
 } from "./rangeMap.js";
 
 export {

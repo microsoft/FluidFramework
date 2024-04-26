@@ -408,7 +408,8 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 				visitNode(index, mark.fields, visitor, config);
 			}
 			if (isDetachMark(mark)) {
-				/* Create a single root for a contiguous range of detached nodes  */
+				// Currently the rootId of the first node within this block is used to
+				// "represent" this range. The logic may be refined in the future.
 				const root = config.detachedFieldIndex.createEntry(mark.detach, mark.count);
 				if (mark.fields !== undefined) {
 					config.attachPassRoots.set(root, mark.fields);
@@ -502,17 +503,19 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 							config,
 							visitor,
 						);
+						// Currently the rootId of the first node within this block is used to
+						// "represent" this range. The logic may be refined in the future.
 						sourceRoot = config.detachedFieldIndex.getEntry(offsetAttachId, true);
 					}
 					const sourceField = config.detachedFieldIndex.toFieldKey(sourceRoot);
 					const offsetIndex = index + offset;
 					if (isReplaceMark(mark)) {
-						const rootDestination = config.detachedFieldIndex.createEntry(
+						const destinationRoot = config.detachedFieldIndex.createEntry(
 							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							offsetDetachId(mark.detach!, offset),
 						);
 						const destinationField =
-							config.detachedFieldIndex.toFieldKey(rootDestination);
+							config.detachedFieldIndex.toFieldKey(destinationRoot);
 						visitor.replace(
 							sourceField,
 							{ start: offsetIndex, end: offsetIndex + length },
@@ -520,7 +523,7 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 						);
 						// We may need to do a second pass on the detached nodes
 						if (mark.fields !== undefined) {
-							config.attachPassRoots.set(rootDestination, mark.fields);
+							config.attachPassRoots.set(destinationRoot, mark.fields);
 						}
 					} else {
 						// This a simple attach

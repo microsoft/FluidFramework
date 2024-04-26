@@ -13,10 +13,7 @@ import {
 	setInRangeMap,
 	mergeRangesWithinMap,
 	getAllValidEntriesFromMap,
-	mergeRangesButIncremental,
-	brand,
 } from "../../../util/index.js";
-import type { ForestRootId } from "../../../core/index.js";
 
 function newRangeMap(): RangeMap<string | undefined> {
 	return [];
@@ -205,24 +202,6 @@ describe("RangeMap", () => {
 				{ start: 0, length: 1, value: "b" },
 				{ start: 1, length: 4, value: "a" },
 				{ start: 6, length: 1, value: "a" },
-			]);
-		});
-	});
-
-	describe("mergeRnagesButIncremental", () => {
-		it("merge the `connected` ranges within the map", () => {
-			const map: RangeEntry<ForestRootId>[] = [];
-
-			setInRangeMap(map, 0, 1, brand(1));
-			setInRangeMap(map, 1, 1, brand(2));
-			setInRangeMap(map, 2, 2, brand(3));
-			setInRangeMap(map, 4, 1, brand(4));
-
-			const newMap = mergeRangesButIncremental(map);
-
-			assert.deepEqual(newMap, [
-				{ start: 0, length: 4, value: 1 },
-				{ start: 4, length: 1, value: 4 },
 			]);
 		});
 	});
