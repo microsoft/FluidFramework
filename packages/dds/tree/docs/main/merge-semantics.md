@@ -79,8 +79,13 @@ It is these preconditions and postconditions that define whether an edit's merge
 ### Preconditions
 
 The preconditions characterize what must be true in order for the edit to be considered valid and have an effect.
-For example, inserting a node of type `Foo` in an array,
-requires that the schema associated with that array allows instances of type `Foo`.
+
+For example, imagine Alice inserts a node of type `Foo` in an array.
+Alice's edit has a precondition that, by the time it is finally applied, this array allow must instances of type `Foo`.
+Concurrently to that, Bob edits the document schema such that the array in question no longer allows instances of type `Foo`.
+Bob's edit has a precondition that, by the time it is finally applied, no instances of type `Foo` must exist in the array.
+If Alice's edit is sequenced first, then the node will successfully be inserted, and Bob's edit will be dropped.
+If Bob's edit is sequenced first, then the schema will successfully be changed, and Alice's edit will be dropped.
 
 Note that in a transaction, each edit's preconditions are added to the preconditions of the transaction.
 In other words, the preconditions of a transaction are the union of the preconditions of its edits,
@@ -256,11 +261,10 @@ As with minimal preconditions, we may support more variations of our current set
 
 This prioritization is partially guided by the same motivation that guided our choice with minimal preconditions:
 it makes more for a greater set of possible edits when combined with [constraints](#constraints).
-Another motivation is that simpler postconditions make reasoning about concurrent editing more approachable.
-This is most palpable in the context of transactions
-because it reduces the number of possible states the document between could be in between the edits that make up the transaction,
-therefore making transactions easier to author correctly,
-and making the effect of a given transaction easier to understand.
+
+The other motivation is that simpler postconditions make authoring transactions much more approachable.
+This is because they reduce the number of possible states the document between could be in between the edits that make up the transaction,
+and after the transaction.
 
 For example, consider an application that allows the end user to select a set of sticky notes across several pages,
 and group all of the selected notes under a new page, assigning to each one an ordinal number based on the selection order.
@@ -284,14 +288,14 @@ and their ordinals may have gaps, not be unique, and be out of order.
 In other words, it would be very hard to make any kind of valuable claim about the effect of the transaction,
 and end-users would experience some very confusing outcomes.
 
-More abstractly, for a transaction that is composed of `N` edits (`e1` through `eN`),
-you can think of each edit `ei` as having one of `ki` possible effects,
-where which of the `ki` possible effects is applied depends on what concurrent edits were sequenced before the transaction.
-In aggregate, the effect of a transaction is therefore, in the worst case, one of `k1 * k2 * ... * kN` possible effects.
-For a transaction that is composed of 10 edits where each edit has one of two possible effects,
-that would mean the transaction would at worst have one of 1024 possible different effects.
-`SharedTree`'s semantics guarantee that every `ki` is equal to 1,
-meaning each transaction has only one possible effect.
+To get a more general sense of the positive effect of simpler postconditions,
+we can model transactions as being composed of `N` edits (`e1` through `eN`),
+where each edit `ei` will have one of `ki` possible effects when the transaction is applied.
+Which one of the `ki` possible effects applied is for a given `ei` depends on what concurrent edits were sequenced before the transaction.
+Under this model, the set of possible effects for a transaction is therefore `k1 * k2 * ... * kN`.
+`SharedTree`'s supported set of edits all have exactly one possible effect, so any transaction is guaranteed to have `1 * 1 * ... * 1 = 1` effect.
+If `SharedTree`'s supported set of edits had not one but two possible effects,
+then a transaction of `N` edits would have `2^N` possible effects.
 
 ## Constraints
 
