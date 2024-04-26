@@ -13,12 +13,13 @@ import {
 	NestedMap,
 	brand,
 	deleteFromNestedMap,
+	getOrAddInMap,
 	idAllocatorFromMaxId,
 	populateNestedMap,
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../util/index.js";
-import { RevisionTagCodec } from "../rebase/index.js";
+import { RevisionTag, RevisionTagCodec } from "../rebase/index.js";
 import { FieldKey } from "../schema-stored/index.js";
 
 import * as Delta from "./delta.js";
@@ -39,7 +40,8 @@ export type ForestRootId = Brand<number, "tree.ForestRootId">;
  */
 export class DetachedFieldIndex {
 	private detachedNodeToField: NestedMap<Major, Minor, ForestRootId> = new Map();
-	private revisionToDetachedNodes: Map<ForestRootId, [Major, Minor][]> = new Map();
+	private readonly detachedFieldToRevision: Map<ForestRootId, Major> = new Map();
+	private readonly revisionToDetachedFields: Map<Major, Set<ForestRootId>> = new Map();
 	private readonly codec: IJsonCodec<DetachedFieldSummaryData, Format>;
 	private readonly options: ICodecOptions;
 
@@ -158,6 +160,30 @@ export class DetachedFieldIndex {
 			}
 		}
 		return root;
+	}
+
+	/**
+	 * Updates the latest revision that is relevant to the provided root
+	 */
+	public updateLatestRevision(root: ForestRootId, revision: RevisionTag | undefined) {
+		const previousRevision = this.detachedFieldToRevision.get(root);
+
+		// If there is a previous revision, remove this root from its set of roots
+		if (previousRevision !== undefined) {
+			const previousRevisionRoots = this.revisionToDetachedFields.get(previousRevision);
+			previousRevisionRoots?.delete(root);
+			if (previousRevisionRoots?.size === 0) {
+				this.revisionToDetachedFields.delete(previousRevision);
+			}
+		}
+
+		const latestRevisionRoots = getOrAddInMap(
+			this.revisionToDetachedFields,
+			revision,
+			new Set(),
+		);
+		latestRevisionRoots.add(root);
+		this.detachedFieldToRevision.set(root, revision);
 	}
 
 	public encode(): JsonCompatibleReadOnly {

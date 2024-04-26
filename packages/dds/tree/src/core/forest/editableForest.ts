@@ -52,7 +52,7 @@ export function initializeForest(
 ): void {
 	assert(forest.isEmpty, 0x747 /* forest must be empty */);
 	const delta: DeltaRoot = deltaForRootInitialization(content);
-	applyDelta(delta, forest, makeDetachedFieldIndex("init", revisionTagCodec));
+	applyDelta(delta, undefined, forest, makeDetachedFieldIndex("init", revisionTagCodec));
 }
 
 // TODO: Types below here may be useful for input into edit building APIs, but are no longer used here directly.

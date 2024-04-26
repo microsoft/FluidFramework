@@ -35,6 +35,8 @@ function visit(
 		delta,
 		visitor,
 		detachedFieldIndex ?? makeDetachedFieldIndex("", testRevisionTagCodec),
+		// todo
+		undefined,
 	);
 }
 

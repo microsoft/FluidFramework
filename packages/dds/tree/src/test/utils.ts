@@ -977,6 +977,7 @@ export function applyTestDelta(
 	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
 	applyDelta(
 		rootDelta,
+		undefined,
 		deltaProcessor,
 		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testRevisionTagCodec),
 	);
@@ -992,6 +993,7 @@ export function announceTestDelta(
 	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
 	announceDelta(
 		rootDelta,
+		undefined,
 		deltaProcessor,
 		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testRevisionTagCodec),
 	);

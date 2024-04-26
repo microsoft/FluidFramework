@@ -21,6 +21,7 @@ import {
 import { DetachedFieldIndex, ForestRootId } from "./detachedFieldIndex.js";
 import { Major, Minor } from "./detachedFieldIndexTypes.js";
 import { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
+import { RevisionTag } from "../index.js";
 
 /**
  * Implementation notes:
@@ -71,11 +72,13 @@ import { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
  * @param delta - The delta to be crawled.
  * @param visitor - The object to notify of the changes encountered.
  * @param detachedFieldIndex - Index responsible for keeping track of the existing detached fields.
+ * @param latestRevision - todo
  */
 export function visitDelta(
 	delta: Delta.Root,
 	visitor: DeltaVisitor,
 	detachedFieldIndex: DetachedFieldIndex,
+	latestRevision: RevisionTag | undefined,
 ): void {
 	const detachPassRoots: Map<ForestRootId, Delta.FieldMap> = new Map();
 	const attachPassRoots: Map<ForestRootId, Delta.FieldMap> = new Map();
@@ -90,6 +93,7 @@ export function visitDelta(
 	});
 	const detachConfig: PassConfig = {
 		func: detachPass,
+		latestRevision,
 		refreshers,
 		detachedFieldIndex,
 		detachPassRoots,
@@ -103,6 +107,7 @@ export function visitDelta(
 	transferRoots(rootTransfers, attachPassRoots, detachedFieldIndex, visitor);
 	const attachConfig: PassConfig = {
 		func: attachPass,
+		latestRevision,
 		refreshers,
 		detachedFieldIndex,
 		detachPassRoots,
@@ -308,6 +313,12 @@ export interface DeltaVisitor {
 
 interface PassConfig {
 	readonly func: Pass;
+
+	/**
+	 * todo
+	 */
+	readonly latestRevision: RevisionTag | undefined;
+
 	readonly detachedFieldIndex: DetachedFieldIndex;
 	/**
 	 * A mapping between forest root id and trees that represent refresher data. Each entry is only
@@ -390,6 +401,8 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 				buildTrees(id, [tree], config, visitor);
 				root = config.detachedFieldIndex.getEntry(id);
 			}
+			// the revision is updated for any refresher data included in the delta that is used
+			config.detachedFieldIndex.updateLatestRevision(root, config.latestRevision);
 			config.detachPassRoots.set(root, fields);
 			config.attachPassRoots.set(root, fields);
 		}
@@ -413,6 +426,7 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						offsetDetachId(mark.detach!, i),
 					);
+					config.detachedFieldIndex.updateLatestRevision(root, config.latestRevision);
 					if (mark.fields !== undefined) {
 						config.attachPassRoots.set(root, mark.fields);
 					}
