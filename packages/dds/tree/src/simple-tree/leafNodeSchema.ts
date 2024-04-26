@@ -60,7 +60,12 @@ class LeafNodeSchema<T extends FlexLeafNodeSchema>
  */
 function makeLeaf<T extends FlexLeafNodeSchema>(
 	schema: T,
-): TreeNodeSchema<UnbrandedName<T>, NodeKind.Leaf, TreeValue<T["info"]>, TreeValue<T["info"]>> {
+): TreeNodeSchema<
+	UnbrandedName<T>,
+	NodeKind.Leaf,
+	TreeValue<T["info"]>,
+	TreeValue<T["info"]>
+> {
 	return new LeafNodeSchema(schema);
 }
 

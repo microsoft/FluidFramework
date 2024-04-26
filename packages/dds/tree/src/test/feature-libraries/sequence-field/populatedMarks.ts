@@ -8,7 +8,10 @@ import { IIdCompressor } from "@fluidframework/id-compressor";
 import { ChangeAtomId } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { CellMark, DetachIdOverrideType } from "../../../feature-libraries/sequence-field/index.js";
+import {
+	CellMark,
+	DetachIdOverrideType,
+} from "../../../feature-libraries/sequence-field/index.js";
 import {
 	Attach,
 	Detach,

@@ -8,8 +8,16 @@ import { strict as assert, fail } from "assert";
 import { compareArrays } from "@fluidframework/core-utils/internal";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
-import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../../../codec/index.js";
-import { TreeFieldStoredSchema, TreeNodeSchemaIdentifier, Value } from "../../../../core/index.js";
+import {
+	ICodecOptions,
+	IJsonCodec,
+	makeVersionedValidatedCodec,
+} from "../../../../codec/index.js";
+import {
+	TreeFieldStoredSchema,
+	TreeNodeSchemaIdentifier,
+	Value,
+} from "../../../../core/index.js";
 import { typeboxValidator } from "../../../../external-utilities/index.js";
 import {
 	decode,
@@ -313,12 +321,7 @@ describe("compressedEncode", () => {
 			// Should use nestedArray, which will lookup the shape from cache:
 			assert.deepEqual(buffer, [
 				cache.nestedArray(anyNodeEncoder),
-				[
-					onlyTypeShape,
-					new IdentifierToken("foo"),
-					onlyTypeShape,
-					new IdentifierToken("bar"),
-				],
+				[onlyTypeShape, new IdentifierToken("foo"), onlyTypeShape, new IdentifierToken("bar")],
 			]);
 		});
 	});

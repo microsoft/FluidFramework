@@ -62,7 +62,9 @@
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack .",
-		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
+		"check:biome": "biome format .",
+		"check:format": "fluid-build . --task check:format",
+		"check:prettier:old": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
@@ -70,8 +72,9 @@
 		"depcruise:regen-known-issues": "depcruise-baseline src",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "fluid-build --task format .",
-		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
+		"format": "fluid-build . --task format",
+		"format:biome": "biome format . --write",
+		"format:prettier:old": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"postpack": "tar -cf ./tree.test-files.tar ./src/test ./dist/test ./lib/test",
@@ -91,21 +94,11 @@
 	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
-		"exclude": [
-			"src/test/**/*.*ts",
-			"lib/test/**/*.*js"
-		],
+		"exclude": ["src/test/**/*.*ts", "lib/test/**/*.*js"],
 		"exclude-after-remap": false,
-		"include": [
-			"src/**/*.*ts",
-			"lib/**/*.*js"
-		],
+		"include": ["src/**/*.*ts", "lib/**/*.*js"],
 		"report-dir": "nyc/report",
-		"reporter": [
-			"cobertura",
-			"html",
-			"text"
-		],
+		"reporter": ["cobertura", "html", "text"],
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
@@ -168,20 +161,10 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:test:cjs": [
-				"...",
-				"@fluidframework/id-compressor#build:test:cjs"
-			],
-			"build:test:esm": [
-				"...",
-				"@fluidframework/id-compressor#build:test:esm"
-			],
-			"check:release-tags": [
-				"build:esnext"
-			],
-			"ci:build:docs": [
-				"build:esnext"
-			]
+			"build:test:cjs": ["...", "@fluidframework/id-compressor#build:test:cjs"],
+			"build:test:esm": ["...", "@fluidframework/id-compressor#build:test:esm"],
+			"check:release-tags": ["build:esnext"],
+			"ci:build:docs": ["build:esnext"]
 		}
 	},
 	"typeValidation": {

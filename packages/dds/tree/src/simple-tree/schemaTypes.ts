@@ -327,7 +327,9 @@ export class FieldSchema<
  * Normalizes a {@link ImplicitFieldSchema} to a {@link FieldSchema}.
  */
 export function normalizeFieldSchema(schema: ImplicitFieldSchema): FieldSchema {
-	return schema instanceof FieldSchema ? schema : createFieldSchema(FieldKind.Required, schema);
+	return schema instanceof FieldSchema
+		? schema
+		: createFieldSchema(FieldKind.Required, schema);
 }
 /**
  * Normalizes a {@link ImplicitAllowedTypes} to a set of {@link TreeNodeSchema}s, by eagerly evaluating any
@@ -336,7 +338,9 @@ export function normalizeFieldSchema(schema: ImplicitFieldSchema): FieldSchema {
  * @remarks Note: this must only be called after all required schemas have been declared, otherwise evaluation of
  * recursive schemas may fail.
  */
-export function normalizeAllowedTypes(types: ImplicitAllowedTypes): ReadonlySet<TreeNodeSchema> {
+export function normalizeAllowedTypes(
+	types: ImplicitAllowedTypes,
+): ReadonlySet<TreeNodeSchema> {
 	const normalized = new Set<TreeNodeSchema>();
 	if (isReadonlyArray(types)) {
 		for (const lazyType of types) {
@@ -382,8 +386,8 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
 	TSchema extends FieldSchema<infer Kind, infer Types>
 		? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind>
 		: TSchema extends ImplicitAllowedTypes
-		? TreeNodeFromImplicitAllowedTypes<TSchema>
-		: unknown;
+			? TreeNodeFromImplicitAllowedTypes<TSchema>
+			: unknown;
 
 /**
  * Type of content that can be inserted into the tree for a field of the given schema.
@@ -394,8 +398,8 @@ export type InsertableTreeFieldFromImplicitField<
 > = TSchema extends FieldSchema<infer Kind, infer Types>
 	? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind>
 	: TSchema extends ImplicitAllowedTypes
-	? InsertableTreeNodeFromImplicitAllowedTypes<TSchema>
-	: unknown;
+		? InsertableTreeNodeFromImplicitAllowedTypes<TSchema>
+		: unknown;
 
 /**
  * Suitable for output.
@@ -415,8 +419,8 @@ export type TreeNodeFromImplicitAllowedTypes<
 > = TSchema extends TreeNodeSchema
 	? NodeFromSchema<TSchema>
 	: TSchema extends AllowedTypes
-	? NodeFromSchema<FlexListToUnion<TSchema>>
-	: unknown;
+		? NodeFromSchema<FlexListToUnion<TSchema>>
+		: unknown;
 
 /**
  * Type of content that can be inserted into the tree for a node of the given schema.
@@ -427,8 +431,8 @@ export type InsertableTreeNodeFromImplicitAllowedTypes<
 > = TSchema extends TreeNodeSchema
 	? InsertableTypedNode<TSchema>
 	: TSchema extends AllowedTypes
-	? InsertableTypedNode<FlexListToUnion<TSchema>>
-	: never;
+		? InsertableTypedNode<FlexListToUnion<TSchema>>
+		: never;
 
 /**
  * Takes in `TreeNodeSchema[]` and returns a TypedNode union.

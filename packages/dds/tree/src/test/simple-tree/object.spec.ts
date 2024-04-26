@@ -75,9 +75,9 @@ function testObjectLike(testCases: TestCase[]) {
 					for (const [key, descriptor] of Object.entries(
 						Object.getOwnPropertyDescriptors(Object.prototype),
 					)) {
-						it(`Object.getOwnPropertyDescriptor(${pretty(
-							initialTree,
-						)}, ${key}) -> ${pretty(descriptor)}`, () => {
+						it(`Object.getOwnPropertyDescriptor(${pretty(initialTree)}, ${key}) -> ${pretty(
+							descriptor,
+						)}`, () => {
 							const root = hydrate(schema, initialTree);
 							assert.deepEqual(
 								Object.getOwnPropertyDescriptor(findObjectPrototype(root), key),
@@ -106,10 +106,7 @@ function testObjectLike(testCases: TestCase[]) {
 
 				describe(`${pretty(initialTree)}.propertyIsEnumerable`, () => {
 					for (const key of Object.getOwnPropertyNames(initialTree)) {
-						const expected = Object.prototype.propertyIsEnumerable.call(
-							initialTree,
-							key,
-						);
+						const expected = Object.prototype.propertyIsEnumerable.call(initialTree, key);
 
 						it(`${key} -> ${expected}`, () => {
 							const root = hydrate(schema, initialTree);

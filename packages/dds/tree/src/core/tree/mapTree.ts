@@ -23,7 +23,11 @@ export interface MapTree extends NodeData {
 /**
  * Get a field from `node`, optionally modifying the tree to create it if missing.
  */
-export function getMapTreeField(node: MapTree, key: FieldKey, createIfMissing: boolean): MapTree[] {
+export function getMapTreeField(
+	node: MapTree,
+	key: FieldKey,
+	createIfMissing: boolean,
+): MapTree[] {
 	const field = node.fields.get(key);
 	if (field !== undefined) {
 		return field;

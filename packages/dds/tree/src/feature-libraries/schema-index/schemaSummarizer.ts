@@ -19,7 +19,11 @@ import {
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
 import { ICodecOptions, IJsonCodec } from "../../codec/index.js";
-import { MutableTreeStoredSchema, TreeStoredSchema, schemaDataIsEmpty } from "../../core/index.js";
+import {
+	MutableTreeStoredSchema,
+	TreeStoredSchema,
+	schemaDataIsEmpty,
+} from "../../core/index.js";
 import {
 	Summarizable,
 	SummaryElementParser,

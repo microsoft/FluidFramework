@@ -258,9 +258,7 @@ export class EventEmitter<E extends Events<E>> implements ISubscribable<E>, HasL
 		const listeners =
 			this.listeners.get(eventName) ??
 			// TODO: consider making this (and assert below) a usage error since it can be triggered by users of the public API: maybe separate those use cases somehow?
-			fail(
-				"Event has no listeners. Event deregistration functions may only be invoked once.",
-			);
+			fail("Event has no listeners. Event deregistration functions may only be invoked once.");
 		assert(
 			listeners.delete(listener),
 			0x4c1 /* Listener does not exist. Event deregistration functions may only be invoked once. */,
@@ -280,12 +278,18 @@ export class EventEmitter<E extends Events<E>> implements ISubscribable<E>, HasL
 }
 
 // This class exposes the constructor and the `emit` method of `EventEmitter`, elevating them from protected to public
-class ComposableEventEmitter<E extends Events<E>> extends EventEmitter<E> implements IEmitter<E> {
+class ComposableEventEmitter<E extends Events<E>>
+	extends EventEmitter<E>
+	implements IEmitter<E>
+{
 	public constructor(noListeners?: NoListenersCallback<E>) {
 		super(noListeners);
 	}
 
-	public override emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void {
+	public override emit<K extends keyof Events<E>>(
+		eventName: K,
+		...args: Parameters<E[K]>
+	): void {
 		return super.emit(eventName, ...args);
 	}
 

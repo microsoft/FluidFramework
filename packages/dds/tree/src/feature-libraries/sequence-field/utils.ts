@@ -637,7 +637,10 @@ export function compareCellsFromSameRevision(
 	cell2: CellId,
 	count2: number,
 ): number | undefined {
-	assert(cell1.revision === cell2.revision, 0x85b /* Expected cells to have the same revision */);
+	assert(
+		cell1.revision === cell2.revision,
+		0x85b /* Expected cells to have the same revision */,
+	);
 	if (areOverlappingIdRanges(cell1.localId, count1, cell2.localId, count2)) {
 		return cell1.localId - cell2.localId;
 	}
@@ -654,7 +657,10 @@ export function compareCellsFromSameRevision(
 	return undefined;
 }
 
-function getPositionAmongAdjacentCells(adjacentCells: IdRange[], id: ChangesetLocalId): number {
+function getPositionAmongAdjacentCells(
+	adjacentCells: IdRange[],
+	id: ChangesetLocalId,
+): number {
 	let priorCells = 0;
 	for (const range of adjacentCells) {
 		if (areOverlappingIdRanges(range.id, range.count, id, 1)) {
@@ -685,7 +691,9 @@ function areMergeableChangeAtoms(
 		return lhs === undefined && rhs === undefined;
 	}
 
-	return lhs.revision === rhs.revision && areAdjacentIdRanges(lhs.localId, lhsCount, rhs.localId);
+	return (
+		lhs.revision === rhs.revision && areAdjacentIdRanges(lhs.localId, lhsCount, rhs.localId)
+	);
 }
 
 function areAdjacentIdRanges(
@@ -696,7 +704,11 @@ function areAdjacentIdRanges(
 	return (firstStart as number) + firstLength === secondStart;
 }
 
-function haveMergeableIdOverrides(lhs: DetachFields, lhsCount: number, rhs: DetachFields): boolean {
+function haveMergeableIdOverrides(
+	lhs: DetachFields,
+	lhsCount: number,
+	rhs: DetachFields,
+): boolean {
 	if (lhs.idOverride !== undefined && rhs.idOverride !== undefined) {
 		return (
 			lhs.idOverride.type === rhs.idOverride.type &&
@@ -1044,7 +1056,9 @@ export function compareLineages(cell1: CellId, cell2: CellId): number {
 }
 
 // TODO: Refactor MarkEffect into a field of CellMark so this function isn't necessary.
-export function extractMarkEffect<TEffect extends MarkEffect>(mark: CellMark<TEffect>): TEffect {
+export function extractMarkEffect<TEffect extends MarkEffect>(
+	mark: CellMark<TEffect>,
+): TEffect {
 	const { cellId: _cellId, count: _count, changes: _changes, ...effect } = mark;
 	return effect as unknown as TEffect;
 }
@@ -1122,6 +1136,6 @@ export function getEndpoint(
 		? {
 				...effect.finalEndpoint,
 				revision: effect.finalEndpoint.revision ?? effectRevision,
-		  }
+			}
 		: { revision: effectRevision, localId: effect.id };
 }

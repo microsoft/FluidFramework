@@ -31,7 +31,10 @@ const parentNodeSchema = builder.object("ParentNode", {
 const schema = builder.intoSchema(parentNodeSchema);
 
 // TODO: this can probably be removed once daesun's stuff goes in
-function addKey(view: NodeKeyManager, key: LocalNodeKey): { [nodeKeyFieldKey]: StableNodeKey } {
+function addKey(
+	view: NodeKeyManager,
+	key: LocalNodeKey,
+): { [nodeKeyFieldKey]: StableNodeKey } {
 	return {
 		[nodeKeyFieldKey]: view.stabilizeNodeKey(key),
 	};

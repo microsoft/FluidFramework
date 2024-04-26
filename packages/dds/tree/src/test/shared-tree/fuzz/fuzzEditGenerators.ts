@@ -278,10 +278,7 @@ export const makeTreeEditGenerator = (
 						requiredChild: [
 							{
 								type: brand("com.fluidframework.leaf.number"),
-								value: state.random.integer(
-									Number.MIN_SAFE_INTEGER,
-									Number.MAX_SAFE_INTEGER,
-								),
+								value: state.random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
 							},
 						],
 					},
@@ -395,9 +392,7 @@ export const makeTreeEditGenerator = (
 			case "sequence": {
 				return mapBailout(
 					assertNotDone(
-						sequenceFieldEditGenerator(
-							state as FuzzTestStateForFieldEdit<SequenceFuzzField>,
-						),
+						sequenceFieldEditGenerator(state as FuzzTestStateForFieldEdit<SequenceFuzzField>),
 					),
 					(edit) => ({ type: "sequence", edit }),
 				);
@@ -406,18 +401,14 @@ export const makeTreeEditGenerator = (
 				return {
 					type: "optional",
 					edit: assertNotDone(
-						optionalFieldEditGenerator(
-							state as FuzzTestStateForFieldEdit<OptionalFuzzField>,
-						),
+						optionalFieldEditGenerator(state as FuzzTestStateForFieldEdit<OptionalFuzzField>),
 					),
 				};
 			case "required":
 				return {
 					type: "required",
 					edit: assertNotDone(
-						requiredFieldEditGenerator(
-							state as FuzzTestStateForFieldEdit<RequiredFuzzField>,
-						),
+						requiredFieldEditGenerator(state as FuzzTestStateForFieldEdit<RequiredFuzzField>),
 					),
 				};
 			default:
@@ -639,7 +630,10 @@ function selectField(
 
 	const value: FuzzField = { type: "required", content: node.boxedRequiredChild } as const;
 
-	const sequence: FuzzField = { type: "sequence", content: node.boxedSequenceChildren } as const;
+	const sequence: FuzzField = {
+		type: "sequence",
+		content: node.boxedSequenceChildren,
+	} as const;
 
 	const recurse = (state: { random: IRandom }): FuzzField | "no-valid-selections" => {
 		const childNodes: FuzzNode[] = [];
@@ -691,10 +685,10 @@ function trySelectTreeField(
 		weights.optional === 0
 			? ["recurse"]
 			: weights.recurse === 0
-			? ["optional"]
-			: random.bool(weights.optional / (weights.optional + weights.recurse))
-			? ["optional", "recurse"]
-			: ["recurse", "optional"];
+				? ["optional"]
+				: random.bool(weights.optional / (weights.optional + weights.recurse))
+					? ["optional", "recurse"]
+					: ["recurse", "optional"];
 	const nodeSchema = tree.currentSchema;
 	for (const option of options) {
 		switch (option) {
@@ -710,13 +704,7 @@ function trySelectTreeField(
 				// to the .is typeguard.
 				// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 				if (editable.content?.is(nodeSchema)) {
-					const result = selectField(
-						editable.content,
-						random,
-						weights,
-						filter,
-						nodeSchema,
-					);
+					const result = selectField(editable.content, random, weights, filter, nodeSchema);
 					if (result !== "no-valid-selections") {
 						return result;
 					}

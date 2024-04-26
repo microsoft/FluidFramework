@@ -1204,7 +1204,7 @@ describe("visitDelta", () => {
 									["exitField", rootKey],
 									["enterField", rootKey],
 									["exitField", rootKey],
-							  ]
+								]
 							: [
 									["enterField", rootKey],
 									["exitField", rootKey],
@@ -1213,11 +1213,9 @@ describe("visitDelta", () => {
 									["exitField", field0],
 									["enterField", rootKey],
 									["exitField", rootKey],
-							  ];
+								];
 						testTreeVisit(delta, expected, index);
-						assert.deepEqual(Array.from(index.entries()), [
-							{ id: end, root: cycle ? 0 : 1 },
-						]);
+						assert.deepEqual(Array.from(index.entries()), [{ id: end, root: cycle ? 0 : 1 }]);
 					});
 				});
 				describe("2-step", () => {

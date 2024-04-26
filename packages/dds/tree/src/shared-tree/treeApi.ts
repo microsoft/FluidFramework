@@ -154,8 +154,7 @@ export const treeApi: TreeApi = {
 			const context = getFlexNode(node).context;
 			assert(context instanceof Context, 0x901 /* Unsupported context */);
 			const treeView =
-				contextToTreeView.get(context) ??
-				fail("Expected view to be registered for context");
+				contextToTreeView.get(context) ?? fail("Expected view to be registered for context");
 
 			runTransaction(treeView.checkout, () => t(node), preconditions);
 		}

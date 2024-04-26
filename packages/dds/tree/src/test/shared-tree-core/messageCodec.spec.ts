@@ -50,7 +50,11 @@ const commitInvalid = {
 };
 
 const dummyContext = { originatorId: testIdCompressor.localSessionId, revision: undefined };
-const testCases: EncodingTestData<DecodedMessage<TestChange>, unknown, ChangeEncodingContext> = {
+const testCases: EncodingTestData<
+	DecodedMessage<TestChange>,
+	unknown,
+	ChangeEncodingContext
+> = {
 	successes: [
 		[
 			"Message with commit 1",

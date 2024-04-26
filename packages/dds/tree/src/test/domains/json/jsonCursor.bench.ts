@@ -85,11 +85,7 @@ function bench(
 				before: () => {
 					const cloned = clone(json);
 					assert.deepEqual(cloned, json, "clone() must return an equivalent tree.");
-					assert.notEqual(
-						cloned,
-						json,
-						"clone() must not return the same tree instance.",
-					);
+					assert.notEqual(cloned, json, "clone() must not return the same tree instance.");
 				},
 				benchmarkFn: () => {
 					clone(json);
@@ -102,9 +98,7 @@ function bench(
 				[
 					"MapCursor",
 					() =>
-						cursorForMapTreeNode(
-							mapTreeFromCursor(cursorForJsonableTreeNode(encodedTree)),
-						),
+						cursorForMapTreeNode(mapTreeFromCursor(cursorForJsonableTreeNode(encodedTree))),
 				],
 				[
 					"object-forest Cursor",
@@ -134,9 +128,7 @@ function bench(
 				[
 					"chunked-forest Cursor",
 					() => {
-						const forest = buildChunkedForest(
-							makeTreeChunker(schema, defaultSchemaPolicy),
-						);
+						const forest = buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy));
 						initializeForest(
 							forest,
 							[cursorForJsonableTreeNode(encodedTree)],
@@ -154,10 +146,7 @@ function bench(
 				string,
 				(
 					cursor: ITreeCursor,
-					dataConsumer: (
-						cursor: ITreeCursor,
-						calculate: (...operands: any[]) => void,
-					) => any,
+					dataConsumer: (cursor: ITreeCursor, calculate: (...operands: any[]) => void) => any,
 				) => void,
 			][] = [
 				["cursorToJsonObject", cursorToJsonObject],
@@ -308,13 +297,20 @@ function extractAvgValsFromCitm(
 }
 
 // The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
-const twitter = generateTwitterJsonByByteSize(isInPerformanceTestingMode ? 2500000 : 466906, true);
+const twitter = generateTwitterJsonByByteSize(
+	isInPerformanceTestingMode ? 2500000 : 466906,
+	true,
+);
 // The original benchmark citm_catalog.json 500299 Bytes according to getSizeInBytes.
 const citm = isInPerformanceTestingMode
 	? generateCitmJson(2, 2500000)
 	: generateCitmJson(1, 500299);
 describe("ITreeCursor", () => {
-	bench([{ name: "canada", getJson: () => canada, dataConsumer: extractCoordinatesFromCanada }]);
-	bench([{ name: "twitter", getJson: () => twitter, dataConsumer: extractAvgValsFromTwitter }]);
+	bench([
+		{ name: "canada", getJson: () => canada, dataConsumer: extractCoordinatesFromCanada },
+	]);
+	bench([
+		{ name: "twitter", getJson: () => twitter, dataConsumer: extractAvgValsFromTwitter },
+	]);
 	bench([{ name: "citm", getJson: () => citm, dataConsumer: extractAvgValsFromCitm }]);
 });

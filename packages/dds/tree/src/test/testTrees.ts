@@ -137,7 +137,10 @@ export const numericMap = builder.map(
 
 type NumericMapData = AllowedTypesToFlexInsertableTree<[typeof numericMap]>;
 
-export const anyMap = builder.map("anyMap", FlexFieldSchema.create(FieldKinds.sequence, [Any]));
+export const anyMap = builder.map(
+	"anyMap",
+	FlexFieldSchema.create(FieldKinds.sequence, [Any]),
+);
 
 export const recursiveType = builder.objectRecursive("recursiveType", {
 	field: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveType]),

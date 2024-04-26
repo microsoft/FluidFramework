@@ -137,7 +137,8 @@ export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
  * Opaque type erased handle to the encoded representation of the contents of a stored schema.
  * @internal
  */
-export interface ErasedTreeNodeSchemaDataFormat extends ErasedType<"TreeNodeSchemaDataFormat"> {}
+export interface ErasedTreeNodeSchemaDataFormat
+	extends ErasedType<"TreeNodeSchemaDataFormat"> {}
 
 function toErasedTreeNodeSchemaDataFormat(
 	data: TreeNodeSchemaDataFormat,

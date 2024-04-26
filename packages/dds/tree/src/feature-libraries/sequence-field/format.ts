@@ -148,7 +148,8 @@ const CellMark = <TMark extends TSchema, TNodeChange extends TSchema>(
 		noAdditionalProps,
 	);
 
-const Mark = <Schema extends TSchema>(tNodeChange: Schema) => CellMark(MarkEffect, tNodeChange);
+const Mark = <Schema extends TSchema>(tNodeChange: Schema) =>
+	CellMark(MarkEffect, tNodeChange);
 
 export const Changeset = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Array(Mark(tNodeChange));

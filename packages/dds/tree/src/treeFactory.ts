@@ -38,7 +38,13 @@ export class TreeFactory implements IChannelFactory<ITree> {
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
 	): Promise<ITree> {
-		const tree = new SharedTreeImpl(id, runtime, channelAttributes, this.options, "SharedTree");
+		const tree = new SharedTreeImpl(
+			id,
+			runtime,
+			channelAttributes,
+			this.options,
+			"SharedTree",
+		);
 		await tree.load(services);
 		return tree;
 	}

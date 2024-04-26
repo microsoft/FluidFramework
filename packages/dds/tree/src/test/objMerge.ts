@@ -154,7 +154,10 @@ function mergeArrays(lhs: unknown[], rhs: unknown[]): unknown[] | Conflicted {
 	return same ? out : new Conflicted(out);
 }
 
-function mergeMaps(lhs: Map<unknown, unknown>, rhs: Map<unknown, unknown>): Map<unknown, unknown> {
+function mergeMaps(
+	lhs: Map<unknown, unknown>,
+	rhs: Map<unknown, unknown>,
+): Map<unknown, unknown> {
 	// Fluid Serialization (like Json) only keeps enumerable properties, so we can ignore non-enumerable ones.
 	const lhsKeys = lhs.keys();
 	const rhsKeys = rhs.keys();

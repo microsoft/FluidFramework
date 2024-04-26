@@ -6,7 +6,11 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { TAnySchema } from "@sinclair/typebox";
 
-import { DiscriminatedUnionDispatcher, IJsonCodec, makeCodecFamily } from "../../codec/index.js";
+import {
+	DiscriminatedUnionDispatcher,
+	IJsonCodec,
+	makeCodecFamily,
+} from "../../codec/index.js";
 import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
 import { JsonCompatibleReadOnly, Mutable, fail } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
@@ -37,7 +41,8 @@ export const sequenceFieldChangeCodecFactory = (
 		EncodedRevisionTag,
 		ChangeEncodingContext
 	>,
-) => makeCodecFamily<Changeset, FieldChangeEncodingContext>([[1, makeV1Codec(revisionTagCodec)]]);
+) =>
+	makeCodecFamily<Changeset, FieldChangeEncodingContext>([[1, makeV1Codec(revisionTagCodec)]]);
 
 function makeV1Codec(
 	revisionTagCodec: IJsonCodec<
@@ -100,7 +105,7 @@ function makeV1Codec(
 									: {
 											type: effect.idOverride.type,
 											id: cellIdCodec.encode(effect.idOverride.id, context),
-									  },
+										},
 							id: effect.id,
 						},
 					};
@@ -118,21 +123,15 @@ function makeV1Codec(
 									: {
 											type: effect.idOverride.type,
 											id: cellIdCodec.encode(effect.idOverride.id, context),
-									  },
+										},
 							id: effect.id,
 						},
 					};
 				case "AttachAndDetach":
 					return {
 						attachAndDetach: {
-							attach: markEffectCodec.encode(
-								effect.attach,
-								context,
-							) as Encoded.Attach,
-							detach: markEffectCodec.encode(
-								effect.detach,
-								context,
-							) as Encoded.Detach,
+							attach: markEffectCodec.encode(effect.attach, context) as Encoded.Attach,
+							detach: markEffectCodec.encode(effect.detach, context) as Encoded.Detach,
 						},
 					};
 				case NoopMarkType:
@@ -234,7 +233,12 @@ function makeV1Codec(
 		},
 	});
 
-	const cellIdCodec: IJsonCodec<CellId, Encoded.CellId, Encoded.CellId, ChangeEncodingContext> = {
+	const cellIdCodec: IJsonCodec<
+		CellId,
+		Encoded.CellId,
+		Encoded.CellId,
+		ChangeEncodingContext
+	> = {
 		encode: (
 			{ localId, adjacentCells, lineage, revision }: CellId,
 			context: ChangeEncodingContext,
@@ -322,10 +326,7 @@ function makeV1Codec(
 				};
 
 				if (mark.effect !== undefined) {
-					Object.assign(
-						decodedMark,
-						markEffectCodec.decode(mark.effect, context.baseContext),
-					);
+					Object.assign(decodedMark, markEffectCodec.decode(mark.effect, context.baseContext));
 				}
 				if (mark.cellId !== undefined) {
 					decodedMark.cellId = cellIdCodec.decode(mark.cellId, context.baseContext);

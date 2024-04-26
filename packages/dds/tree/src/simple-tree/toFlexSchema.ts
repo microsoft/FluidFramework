@@ -130,7 +130,10 @@ export function getFlexSchema(root: TreeNodeSchema): FlexTreeNodeSchema {
 /**
  * Normalizes an {@link ImplicitFieldSchema} into a {@link TreeFieldSchema}.
  */
-export function convertField(schemaMap: SchemaMap, schema: ImplicitFieldSchema): FlexFieldSchema {
+export function convertField(
+	schemaMap: SchemaMap,
+	schema: ImplicitFieldSchema,
+): FlexFieldSchema {
 	let kind: FlexFieldKind;
 	let types: ImplicitAllowedTypes;
 	if (schema instanceof FieldSchema) {
@@ -196,8 +199,7 @@ export function convertNodeSchema(
 		switch (kind) {
 			case NodeKind.Leaf: {
 				const cached =
-					cachedFlexSchemaFromClassSchema(schema) ??
-					fail("leaf schema should be pre-cached");
+					cachedFlexSchemaFromClassSchema(schema) ?? fail("leaf schema should be pre-cached");
 				assert(schemaIsLeaf(cached), 0x840 /* expected leaf */);
 				return cached;
 			}
@@ -219,8 +221,7 @@ export function convertNodeSchema(
 					convertAllowedTypes(schemaMap, fieldInfo),
 				);
 				const cached = cachedFlexSchemaFromClassSchema(schema);
-				out =
-					cached ?? FlexFieldNodeSchema.create(builder, brand(schema.identifier), field);
+				out = cached ?? FlexFieldNodeSchema.create(builder, brand(schema.identifier), field);
 				break;
 			}
 			case NodeKind.Object: {
@@ -240,9 +241,7 @@ export function convertNodeSchema(
 					});
 				}
 				const cached = cachedFlexSchemaFromClassSchema(schema);
-				out =
-					cached ??
-					FlexObjectNodeSchema.create(builder, brand(schema.identifier), fields);
+				out = cached ?? FlexObjectNodeSchema.create(builder, brand(schema.identifier), fields);
 				break;
 			}
 			default:

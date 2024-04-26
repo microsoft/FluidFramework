@@ -533,10 +533,7 @@ export function testRebase() {
 					}),
 					Mark.tomb(tag2, brand(0), 2),
 				];
-				const expected = [
-					Mark.skip(6),
-					Mark.revive(2, { revision: tag2, localId: brand(0) }),
-				];
+				const expected = [Mark.skip(6), Mark.revive(2, { revision: tag2, localId: brand(0) })];
 				const actual = rebase(reviveBB, reviveA);
 				assertChangesetsEqual(actual, expected);
 			}));
@@ -552,10 +549,7 @@ export function testRebase() {
 					Mark.revive(1, { revision: tag1, localId: brand(6), lineage }),
 					Mark.tomb(tag2, brand(6)),
 				];
-				const reviveBB = [
-					Mark.skip(5),
-					Mark.revive(2, { revision: tag2, localId: brand(5) }),
-				];
+				const reviveBB = [Mark.skip(5), Mark.revive(2, { revision: tag2, localId: brand(5) })];
 				const expected = [
 					Mark.skip(6),
 					Mark.revive(1, { revision: tag1, localId: brand(6), lineage }),
@@ -1257,10 +1251,7 @@ export function testRebase() {
 						tagChangeInline(Change.remove(0, 2), tag2),
 					]);
 
-					const nodeChange = TestNodeId.create(
-						{ localId: brand(0) },
-						TestChange.mint([], 0),
-					);
+					const nodeChange = TestNodeId.create({ localId: brand(0) }, TestChange.mint([], 0));
 					const modify = Change.modify(3, nodeChange);
 					const rebased = rebaseOverComposition(
 						modify,

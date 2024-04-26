@@ -86,11 +86,18 @@ const canada = generateCanada(
 );
 
 // The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
-const twitter = generateTwitterJsonByByteSize(isInPerformanceTestingMode ? 2500000 : 466906, true);
+const twitter = generateTwitterJsonByByteSize(
+	isInPerformanceTestingMode ? 2500000 : 466906,
+	true,
+);
 
 describe("Direct Object", () => {
 	jsObjectBench([
-		{ name: "canada", getJson: () => canada, dataConsumer: extractCoordinatesFromCanadaDirect },
+		{
+			name: "canada",
+			getJson: () => canada,
+			dataConsumer: extractCoordinatesFromCanadaDirect,
+		},
 	]);
 	jsObjectBench([
 		{ name: "twitter", getJson: () => twitter, dataConsumer: extractAvgValsFromTwitterDirect },

@@ -567,30 +567,30 @@ describe("AnchorSet", () => {
 			},
 			beforeAttach(source: DetachedRangeUpPath, destination: PlaceUpPath): void {
 				log.logger(
-					`visitSubtreeChange.beforeAttach-src:${rangeToString(
-						source,
-					)}-dst:${placeToString(destination)}`,
+					`visitSubtreeChange.beforeAttach-src:${rangeToString(source)}-dst:${placeToString(
+						destination,
+					)}`,
 				)();
 			},
 			afterAttach(source: DetachedPlaceUpPath, destination: RangeUpPath): void {
 				log.logger(
-					`visitSubtreeChange.afterAttach-src:${placeToString(
-						source,
-					)}-dst:${rangeToString(destination)}`,
+					`visitSubtreeChange.afterAttach-src:${placeToString(source)}-dst:${rangeToString(
+						destination,
+					)}`,
 				)();
 			},
 			beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void {
 				log.logger(
-					`visitSubtreeChange.beforeDetach-src:${rangeToString(
-						source,
-					)}-dst:${placeToString(destination)}`,
+					`visitSubtreeChange.beforeDetach-src:${rangeToString(source)}-dst:${placeToString(
+						destination,
+					)}`,
 				)();
 			},
 			afterDetach(source: PlaceUpPath, destination: DetachedRangeUpPath): void {
 				log.logger(
-					`visitSubtreeChange.afterDetach-src:${placeToString(
-						source,
-					)}-dst:${rangeToString(destination)}`,
+					`visitSubtreeChange.afterDetach-src:${placeToString(source)}-dst:${rangeToString(
+						destination,
+					)}`,
 				)();
 			},
 		};

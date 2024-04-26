@@ -39,7 +39,12 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 	moveOut(sourceIndex: number, count: number, id: ChangesetLocalId): Changeset;
 	moveIn(destIndex: number, count: number, id: ChangesetLocalId): Changeset;
 
-	return(sourceIndex: number, count: number, destIndex: number, detachEvent: CellId): Changeset;
+	return(
+		sourceIndex: number,
+		count: number,
+		destIndex: number,
+		detachEvent: CellId,
+	): Changeset;
 }
 
 export const sequenceFieldEditor = {
@@ -68,7 +73,12 @@ export const sequenceFieldEditor = {
 		return count === 0 ? [] : markAtIndex(index, mark);
 	},
 
-	move(sourceIndex: number, count: number, destIndex: number, id: ChangesetLocalId): Changeset {
+	move(
+		sourceIndex: number,
+		count: number,
+		destIndex: number,
+		id: ChangesetLocalId,
+	): Changeset {
 		const moveIn: Mark = {
 			type: "MoveIn",
 			id,
@@ -102,7 +112,12 @@ export const sequenceFieldEditor = {
 		return markAtIndex(destIndex, moveIn);
 	},
 
-	return(sourceIndex: number, count: number, destIndex: number, detachEvent: CellId): Changeset {
+	return(
+		sourceIndex: number,
+		count: number,
+		destIndex: number,
+		detachEvent: CellId,
+	): Changeset {
 		const id = brand<MoveId>(0);
 		const moveOut: CellMark<MoveOut> = {
 			type: "MoveOut",

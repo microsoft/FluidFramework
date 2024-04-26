@@ -21,4 +21,7 @@ export interface FieldKindConfigurationEntry {
 /**
  * Configuration for a set of field kinds.
  */
-export type FieldKindConfiguration = ReadonlyMap<FieldKindIdentifier, FieldKindConfigurationEntry>;
+export type FieldKindConfiguration = ReadonlyMap<
+	FieldKindIdentifier,
+	FieldKindConfigurationEntry
+>;

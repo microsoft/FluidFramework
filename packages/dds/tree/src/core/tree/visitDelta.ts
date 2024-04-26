@@ -380,7 +380,11 @@ function visitNode(
  * - Executes detaches (bottom-up) provided they are not part of a replace
  * (because we want to wait until we are sure content to attach is available as a root)
  */
-function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: PassConfig): void {
+function detachPass(
+	delta: Delta.FieldChanges,
+	visitor: DeltaVisitor,
+	config: PassConfig,
+): void {
 	if (delta.global !== undefined) {
 		for (const { id, fields } of delta.global) {
 			let root = config.detachedFieldIndex.tryGetEntry(id);
@@ -469,7 +473,11 @@ function collectDestroys(
  * - Executes replaces (top-down) applying nested changes on the attached nodes
  * - Collects detached roots (from replaces) that need an attach pass
  */
-function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: PassConfig): void {
+function attachPass(
+	delta: Delta.FieldChanges,
+	visitor: DeltaVisitor,
+	config: PassConfig,
+): void {
 	if (delta.local !== undefined) {
 		let index = 0;
 		for (const mark of delta.local) {
@@ -495,8 +503,7 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							offsetDetachId(mark.detach!, i),
 						);
-						const destinationField =
-							config.detachedFieldIndex.toFieldKey(rootDestination);
+						const destinationField = config.detachedFieldIndex.toFieldKey(rootDestination);
 						visitor.replace(
 							sourceField,
 							{ start: offsetIndex, end: offsetIndex + 1 },

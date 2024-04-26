@@ -53,7 +53,10 @@ export function contextWithContentReadonly(content: TreeContent): Context {
 /**
  * Creates a cursor from the provided `context` and moves it to the provided `anchor`.
  */
-export function initializeCursor(context: Context, anchor: FieldAnchor): ITreeSubscriptionCursor {
+export function initializeCursor(
+	context: Context,
+	anchor: FieldAnchor,
+): ITreeSubscriptionCursor {
 	const cursor = context.forest.allocateCursor();
 	assert.equal(context.forest.tryMoveCursorToField(anchor, cursor), TreeNavigationResult.Ok);
 	return cursor;
@@ -66,7 +69,10 @@ export const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootF
  *
  * @returns The initialized context and cursor.
  */
-export function readonlyTreeWithContent<Kind extends FlexFieldKind, Types extends FlexAllowedTypes>(
+export function readonlyTreeWithContent<
+	Kind extends FlexFieldKind,
+	Types extends FlexAllowedTypes,
+>(
 	treeContent: TreeContent,
 ): {
 	context: Context;

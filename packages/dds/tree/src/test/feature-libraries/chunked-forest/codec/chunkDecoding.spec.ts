@@ -303,13 +303,7 @@ describe("chunkDecoding", () => {
 				cache,
 			);
 			const stream = {
-				data: [
-					"type",
-					true,
-					"value",
-					["a", "l1", 0, "l2"],
-					["c", "g1", 1, "g2", "e", "g3"],
-				],
+				data: ["type", true, "value", ["a", "l1", 0, "l2"], ["c", "g1", 1, "g2", "e", "g3"]],
 				offset: 0,
 			};
 			const result = decoder.decode(decoders, stream);

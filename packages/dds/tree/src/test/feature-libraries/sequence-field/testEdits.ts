@@ -59,7 +59,11 @@ export const cases: {
 	],
 };
 
-function createInsertChangeset(index: number, count: number, id?: ChangesetLocalId): SF.Changeset {
+function createInsertChangeset(
+	index: number,
+	count: number,
+	id?: ChangesetLocalId,
+): SF.Changeset {
 	return SF.sequenceFieldEditor.insert(index, count, id ?? brand(0));
 }
 
@@ -348,7 +352,10 @@ function createAttachAndDetachMark<TChange>(
 ): SF.CellMark<SF.AttachAndDetach> {
 	assert(attach.count === detach.count, "Attach and detach must have the same count");
 	assert(attach.cellId !== undefined, "AttachAndDetach attach should apply to an empty cell");
-	assert(detach.cellId === undefined, "AttachAndDetach detach should apply to an populated cell");
+	assert(
+		detach.cellId === undefined,
+		"AttachAndDetach detach should apply to an populated cell",
+	);
 	assert(
 		attach.changes === undefined && detach.changes === undefined,
 		"Attach and detach must not carry changes",
@@ -367,7 +374,10 @@ function createAttachAndDetachMark<TChange>(
 	return mark;
 }
 
-function overrideCellId<TMark extends SF.HasMarkFields>(cellId: SF.CellId, mark: TMark): TMark {
+function overrideCellId<TMark extends SF.HasMarkFields>(
+	cellId: SF.CellId,
+	mark: TMark,
+): TMark {
 	mark.cellId = cellId;
 	return mark;
 }

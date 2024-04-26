@@ -810,9 +810,7 @@ describe("ModularChangeFamily", () => {
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map([]),
-					refreshers: new Map([
-						[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])],
-					]),
+					refreshers: new Map([[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])]]),
 				},
 				tag1,
 			);
@@ -858,9 +856,7 @@ describe("ModularChangeFamily", () => {
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map([]),
-					refreshers: new Map([
-						[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])],
-					]),
+					refreshers: new Map([[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])]]),
 				},
 				tag1,
 			);
@@ -910,9 +906,7 @@ describe("ModularChangeFamily", () => {
 
 		it("specific", () => {
 			const expectedInverse: ModularChangeset = {
-				nodeChanges: nestedMapFromFlatList([
-					[nodeId1.revision, nodeId1.localId, nodeInverse],
-				]),
+				nodeChanges: nestedMapFromFlatList([[nodeId1.revision, nodeId1.localId, nodeInverse]]),
 				fieldChanges: new Map([
 					[
 						fieldA,
@@ -931,14 +925,9 @@ describe("ModularChangeFamily", () => {
 		it("generic", () => {
 			const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(0, nodeId1);
 			const expectedInverse: ModularChangeset = {
-				nodeChanges: nestedMapFromFlatList([
-					[nodeId1.revision, nodeId1.localId, nodeInverse],
-				]),
+				nodeChanges: nestedMapFromFlatList([[nodeId1.revision, nodeId1.localId, nodeInverse]]),
 				fieldChanges: new Map([
-					[
-						fieldA,
-						{ fieldKind: genericFieldKind.identifier, change: brand(fieldChange) },
-					],
+					[fieldA, { fieldKind: genericFieldKind.identifier, change: brand(fieldChange) }],
 					[fieldB, { fieldKind: valueField.identifier, change: brand(valueInverse2) }],
 				]),
 			};
@@ -1031,9 +1020,7 @@ describe("ModularChangeFamily", () => {
 							[
 								fieldA,
 								{
-									local: [
-										{ count: 1, detach: { minor: 0 }, attach: { minor: 1 } },
-									],
+									local: [{ count: 1, detach: { minor: 0 }, attach: { minor: 1 } }],
 								},
 							],
 						]),
@@ -1154,9 +1141,7 @@ describe("ModularChangeFamily", () => {
 				relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
 			) => {
 				return [
-					...change.shallow.map((id) =>
-						makeDetachedNodeId(id.major ?? revision, id.minor),
-					),
+					...change.shallow.map((id) => makeDetachedNodeId(id.major ?? revision, id.minor)),
 					...change.nested.flatMap((c) => Array.from(relevantRemovedRootsFromChild(c))),
 				];
 			},
@@ -1522,11 +1507,9 @@ describe("ModularChangeFamily", () => {
 					fieldChanges: new Map([]),
 					builds: new Map([[tag1, new Map([[brand(1), node1Chunk]])]]),
 				};
-				const withBuilds = updateRefreshers(
-					makeAnonChange(explicitBuild),
-					getDetachedNode,
-					[{ major: tag1, minor: 1 }],
-				);
+				const withBuilds = updateRefreshers(makeAnonChange(explicitBuild), getDetachedNode, [
+					{ major: tag1, minor: 1 },
+				]);
 				assert.deepEqual(withBuilds, explicitBuild);
 			});
 			it("implicit builds", () => {
@@ -1535,11 +1518,9 @@ describe("ModularChangeFamily", () => {
 					fieldChanges: new Map([]),
 					builds: new Map([[undefined, new Map([[brand(1), node1Chunk]])]]),
 				};
-				const withBuilds = updateRefreshers(
-					tagChange(implicitBuild, tag1),
-					getDetachedNode,
-					[{ major: tag1, minor: 1 }],
-				);
+				const withBuilds = updateRefreshers(tagChange(implicitBuild, tag1), getDetachedNode, [
+					{ major: tag1, minor: 1 },
+				]);
 				assert.deepEqual(withBuilds, implicitBuild);
 			});
 		});

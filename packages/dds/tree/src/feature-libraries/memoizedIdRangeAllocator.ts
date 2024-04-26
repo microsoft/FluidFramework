@@ -57,11 +57,7 @@ export const MemoizedIdRangeAllocator = {
 		const rangeMap: Map<RevisionTag | undefined, RangeMap<number>> = new Map();
 		let _nextId = nextId;
 		return {
-			allocate(
-				key: string | number | undefined,
-				startId: number,
-				length?: number,
-			): IdRange[] {
+			allocate(key: string | number | undefined, startId: number, length?: number): IdRange[] {
 				let count = length ?? 1;
 				const out: IdRange[] = [];
 				const ranges = getOrAddEmptyToMap(rangeMap, key);

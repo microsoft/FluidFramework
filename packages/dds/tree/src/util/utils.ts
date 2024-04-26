@@ -132,7 +132,11 @@ export function compareSets<T>({
  * @param defaultValue - a function which returns a default value. This is called and used to set an initial value for the given key in the map if none exists
  * @returns either the existing value for the given key, or the newly-created value (the result of `defaultValue`)
  */
-export function getOrCreate<K, V>(map: MapGetSet<K, V>, key: K, defaultValue: (key: K) => V): V {
+export function getOrCreate<K, V>(
+	map: MapGetSet<K, V>,
+	key: K,
+	defaultValue: (key: K) => V,
+): V {
 	let value = map.get(key);
 	if (value === undefined) {
 		value = defaultValue(key);
@@ -325,7 +329,11 @@ export function objectToMap<MapKey extends string | number | symbol, MapValue>(
  * (including but not limited to unintended access to __proto__ and other non-owned keys).
  * {@link objectToMap} helps these few cases get into using an actual map in as safe of a way as is practical.
  */
-export function transformObjectMap<MapKey extends string | number | symbol, MapValue, NewMapValue>(
+export function transformObjectMap<
+	MapKey extends string | number | symbol,
+	MapValue,
+	NewMapValue,
+>(
 	objectMap: Record<MapKey, MapValue>,
 	transformer: (value: MapValue, key: MapKey) => NewMapValue,
 ): Record<MapKey, MapValue> {
@@ -350,7 +358,10 @@ export function transformObjectMap<MapKey extends string | number | symbol, MapV
  */
 export function invertMap<Key, Value>(input: Map<Key, Value>): Map<Value, Key> {
 	const result = new Map<Value, Key>(mapIterable(input, ([key, value]) => [value, key]));
-	assert(result.size === input.size, 0x88a /* all values in a map must be unique to invert it */);
+	assert(
+		result.size === input.size,
+		0x88a /* all values in a map must be unique to invert it */,
+	);
 	return result;
 }
 

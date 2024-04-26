@@ -75,10 +75,10 @@ const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFa
 		applySchemaOp(state, operation);
 	},
 });
-export const fuzzReducer: AsyncReducer<Operation, DDSFuzzTestState<SharedTreeFactory>> = async (
-	state,
-	operation,
-) => syncFuzzReducer(state, operation);
+export const fuzzReducer: AsyncReducer<
+	Operation,
+	DDSFuzzTestState<SharedTreeFactory>
+> = async (state, operation) => syncFuzzReducer(state, operation);
 
 export function checkTreesAreSynchronized(trees: readonly ISharedTree[]) {
 	for (const tree of trees) {

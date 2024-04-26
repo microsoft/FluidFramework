@@ -139,7 +139,8 @@ function generateTreeRecursively(
 
 // TODO: The generated test trees should eventually be updated to use the chunked-forest.
 export function generateTestTrees(useUncompressedEncode?: boolean) {
-	const testEncodeType = useUncompressedEncode === true ? "uncompressed" : "default-compression";
+	const testEncodeType =
+		useUncompressedEncode === true ? "uncompressed" : "default-compression";
 	const factoryOptions: SharedTreeOptions = {
 		jsonValidator: typeboxValidator,
 		treeEncodeType:
@@ -227,10 +228,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 				const provider = new TestTreeProviderLite(2, factory, true);
 				const tree1 = schematizeFlexTree(provider.trees[0], emptyJsonSequenceConfig);
 				provider.processMessages();
-				const tree2 = schematizeFlexTree(
-					provider.trees[1],
-					emptyJsonSequenceConfig,
-				).checkout;
+				const tree2 = schematizeFlexTree(provider.trees[1], emptyJsonSequenceConfig).checkout;
 				provider.processMessages();
 
 				// Insert node

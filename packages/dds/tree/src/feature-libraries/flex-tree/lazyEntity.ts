@@ -13,7 +13,12 @@ import {
 import { IDisposable, disposeSymbol } from "../../util/index.js";
 
 import { Context } from "./context.js";
-import { FlexTreeEntity, FlexTreeEntityKind, TreeStatus, flexTreeMarker } from "./flexTreeTypes.js";
+import {
+	FlexTreeEntity,
+	FlexTreeEntityKind,
+	TreeStatus,
+	flexTreeMarker,
+} from "./flexTreeTypes.js";
 
 export const prepareForEditSymbol = Symbol("prepareForEdit");
 export const isFreedSymbol = Symbol("isFreed");

@@ -5,7 +5,10 @@
 
 import { strict as assert } from "assert";
 
-import { MockHandle, validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockHandle,
+	validateAssertionError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import type { ImplicitAllowedTypes } from "../../../dist/index.js";
 import { EmptyKey, type FieldKey, type MapTree } from "../../core/index.js";
@@ -23,7 +26,10 @@ import { brand } from "../../util/index.js";
  * Wrapper around {@link nodeDataToMapTreeBase} which handles the normalization of {@link ImplicitAllowedTypes} as a
  * convenience.
  */
-function nodeDataToMapTree(tree: InsertableContent, allowedTypes: ImplicitAllowedTypes): MapTree {
+function nodeDataToMapTree(
+	tree: InsertableContent,
+	allowedTypes: ImplicitAllowedTypes,
+): MapTree {
 	return nodeDataToMapTreeBase(tree, normalizeAllowedTypes(allowedTypes));
 }
 
@@ -270,10 +276,7 @@ describe("toMapTree", () => {
 				type: brand("test.map"),
 				fields: new Map<FieldKey, MapTree[]>([
 					[brand("a"), [{ type: leaf.number.name, value: 42, fields: new Map() }]],
-					[
-						brand("b"),
-						[{ type: leaf.string.name, value: "Hello world", fields: new Map() }],
-					],
+					[brand("b"), [{ type: leaf.string.name, value: "Hello world", fields: new Map() }]],
 					[brand("c"), [{ type: brand(leaf.null.name), value: null, fields: new Map() }]],
 					[
 						brand("e"),
@@ -368,10 +371,7 @@ describe("toMapTree", () => {
 			const expected: MapTree = {
 				type: brand("test.object"),
 				fields: new Map<FieldKey, MapTree[]>([
-					[
-						brand("a"),
-						[{ type: leaf.string.name, value: "Hello world", fields: new Map() }],
-					],
+					[brand("a"), [{ type: leaf.string.name, value: "Hello world", fields: new Map() }]],
 					[brand("b"), [{ type: leaf.number.name, value: 42, fields: new Map() }]],
 					[brand("c"), [{ type: leaf.boolean.name, value: false, fields: new Map() }]],
 				]),
@@ -579,10 +579,7 @@ describe("toMapTree", () => {
 										},
 									],
 								],
-								[
-									brand("baz"),
-									[{ type: leaf.number.name, value: 2, fields: new Map() }],
-								],
+								[brand("baz"), [{ type: leaf.number.name, value: 2, fields: new Map() }]],
 							]),
 						},
 					],

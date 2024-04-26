@@ -22,7 +22,11 @@ import {
 	setGenericTreeField,
 } from "../core/index.js";
 
-import { CursorAdapter, stackTreeFieldCursor, stackTreeNodeCursor } from "./treeCursorUtils.js";
+import {
+	CursorAdapter,
+	stackTreeFieldCursor,
+	stackTreeNodeCursor,
+} from "./treeCursorUtils.js";
 
 /**
  * This module provides support for reading and writing a human readable (and
@@ -81,7 +85,8 @@ export const adapter: CursorAdapter<JsonableTree> = {
 	value: (node) => node.value,
 	type: (node) => node.type,
 	keysFromNode: genericTreeKeys,
-	getFieldFromNode: (node, key): readonly JsonableTree[] => getGenericTreeField(node, key, false),
+	getFieldFromNode: (node, key): readonly JsonableTree[] =>
+		getGenericTreeField(node, key, false),
 };
 
 /**

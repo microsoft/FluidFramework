@@ -192,12 +192,7 @@ export function makeCodecFamily<TDecoded, TContext>(
 		[
 			formatVersion: FormatVersion,
 			codec:
-				| IMultiFormatCodec<
-						TDecoded,
-						JsonCompatibleReadOnly,
-						JsonCompatibleReadOnly,
-						TContext
-				  >
+				| IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>
 				| IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>,
 		]
 	>,
@@ -279,17 +274,21 @@ export function ensureBinaryEncoding<TDecoded, TContext>(
 /**
  * Codec for objects which carry no information.
  */
-export const unitCodec: IMultiFormatCodec<0, JsonCompatibleReadOnly, JsonCompatibleReadOnly, any> =
-	{
-		json: {
-			encode: () => 0,
-			decode: () => 0,
-		},
-		binary: {
-			encode: () => IsoBuffer.from(""),
-			decode: () => 0,
-		},
-	};
+export const unitCodec: IMultiFormatCodec<
+	0,
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnly,
+	any
+> = {
+	json: {
+		encode: () => 0,
+		decode: () => 0,
+	},
+	binary: {
+		encode: () => IsoBuffer.from(""),
+		decode: () => 0,
+	},
+};
 
 /**
  * Wraps a codec with JSON schema validation for its encoded type.

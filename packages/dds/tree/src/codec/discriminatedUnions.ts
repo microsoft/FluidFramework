@@ -80,7 +80,11 @@ export const unionOptions: ObjectOptions = {
  * ```
  * where only a single property of `EncodedOperation` is populated for a given encoded value.
  */
-export class DiscriminatedUnionDispatcher<TUnion extends object, TArgs extends any[], TResult> {
+export class DiscriminatedUnionDispatcher<
+	TUnion extends object,
+	TArgs extends any[],
+	TResult,
+> {
 	private readonly library: ReadonlyMap<
 		keyof TUnion,
 		(value: unknown, ...args: TArgs) => TResult

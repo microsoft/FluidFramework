@@ -124,9 +124,10 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 /**
  * A branch of changes that can be applied to a SharedTree.
  */
-export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> extends EventEmitter<
-	SharedTreeBranchEvents<TEditor, TChange>
-> {
+export class SharedTreeBranch<
+	TEditor extends ChangeFamilyEditor,
+	TChange,
+> extends EventEmitter<SharedTreeBranchEvents<TEditor, TChange>> {
 	public readonly editor: TEditor;
 	private readonly transactions = new TransactionStack();
 	/**
@@ -355,7 +356,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 
 		const commits: GraphCommit<TChange>[] = [];
-		const startCommit = findAncestor([this.head, commits], (c) => c.revision === startRevision);
+		const startCommit = findAncestor(
+			[this.head, commits],
+			(c) => c.revision === startRevision,
+		);
 		assert(
 			startCommit !== undefined,
 			0x593 /* Expected branch to be ahead of transaction start revision */,

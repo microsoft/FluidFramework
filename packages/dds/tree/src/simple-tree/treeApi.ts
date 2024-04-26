@@ -172,9 +172,7 @@ export const treeNodeApi: TreeNodeApi = {
 	): value is NodeFromSchema<TSchema> => {
 		const flexSchema = getFlexSchema(schema);
 		if (isTreeValue(value)) {
-			return (
-				flexSchema instanceof LeafNodeSchema && valueSchemaAllows(flexSchema.info, value)
-			);
+			return flexSchema instanceof LeafNodeSchema && valueSchemaAllows(flexSchema.info, value);
 		}
 		return tryGetFlexNode(value)?.is(flexSchema) ?? false;
 	},
@@ -200,9 +198,7 @@ export const treeNodeApi: TreeNodeApi = {
 				const identifierValue = identifier.value as string;
 				const localNodeKey =
 					identifier.context.nodeKeyManager.tryLocalizeNodeKey(identifierValue);
-				return localNodeKey !== undefined
-					? extractFromOpaque(localNodeKey)
-					: identifierValue;
+				return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : identifierValue;
 			}
 		}
 	},

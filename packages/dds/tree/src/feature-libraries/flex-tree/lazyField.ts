@@ -312,7 +312,7 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 					Array.from(value, (item) =>
 						applyTypesFromContext(this.context, this.schema.allowedTypeSet, item),
 					),
-			  );
+				);
 
 		const fieldEditor = this.sequenceEditor();
 		fieldEditor.insert(index, content);
@@ -341,7 +341,10 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 	}
 
 	public moveToStart(sourceIndex: number): void;
-	public moveToStart(sourceIndex: number, source: FlexTreeSequenceField<FlexAllowedTypes>): void;
+	public moveToStart(
+		sourceIndex: number,
+		source: FlexTreeSequenceField<FlexAllowedTypes>,
+	): void;
 	public moveToStart(
 		sourceIndex: number,
 		source?: FlexTreeSequenceField<FlexAllowedTypes>,
@@ -350,7 +353,10 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 	}
 	public moveToEnd(sourceIndex: number): void;
 	public moveToEnd(sourceIndex: number, source: FlexTreeSequenceField<FlexAllowedTypes>): void;
-	public moveToEnd(sourceIndex: number, source?: FlexTreeSequenceField<FlexAllowedTypes>): void {
+	public moveToEnd(
+		sourceIndex: number,
+		source?: FlexTreeSequenceField<FlexAllowedTypes>,
+	): void {
 		this._moveRangeToIndex(this.length, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveToIndex(index: number, sourceIndex: number): void;
@@ -553,8 +559,8 @@ export class LazyOptionalField<TTypes extends FlexAllowedTypes>
 			newContent === undefined
 				? []
 				: isCursor(newContent)
-				? prepareNodeCursorForInsert(newContent)
-				: [cursorFromContextualData(this.context, this.schema.allowedTypeSet, newContent)];
+					? prepareNodeCursorForInsert(newContent)
+					: [cursorFromContextualData(this.context, this.schema.allowedTypeSet, newContent)];
 		const fieldEditor = this.optionalEditor();
 		assert(
 			content.length <= 1,

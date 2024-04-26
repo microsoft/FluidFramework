@@ -66,7 +66,10 @@ function rebase<T>(
 	) => T,
 ): ChangesetWrapper<T> {
 	const rebasedNodes: ChangeAtomIdMap<TestChange> = new Map();
-	const rebaseChild = (id1: NodeId | undefined, id2: NodeId | undefined): NodeId | undefined => {
+	const rebaseChild = (
+		id1: NodeId | undefined,
+		id2: NodeId | undefined,
+	): NodeId | undefined => {
 		if (id1 !== undefined) {
 			const nodeChange = tryGetFromNestedMap(change.change.nodes, id1.revision, id1.localId);
 			assert(nodeChange !== undefined, "Unknown node ID");

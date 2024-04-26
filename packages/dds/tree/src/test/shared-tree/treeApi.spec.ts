@@ -14,7 +14,13 @@ import {
 	ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
 import { TestTreeProviderLite, createTestUndoRedoStacks, getView } from "../utils.js";
-import { brand, cursorForJsonableTreeNode, leaf, rootFieldKey, type UpPath } from "../../index.js";
+import {
+	brand,
+	cursorForJsonableTreeNode,
+	leaf,
+	rootFieldKey,
+	type UpPath,
+} from "../../index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { hydrate } from "../simple-tree/utils.js";
 

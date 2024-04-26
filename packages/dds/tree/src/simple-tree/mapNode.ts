@@ -115,11 +115,8 @@ export function mapSchema<
 				? input
 				: new RawMapNode(
 						flexSchema,
-						copyContent(flexSchema.name, input) as ReadonlyMap<
-							string,
-							InsertableContent
-						>,
-				  );
+						copyContent(flexSchema.name, input) as ReadonlyMap<string, InsertableContent>,
+					);
 
 			if (useMapPrototype) {
 				const proxy = new Proxy<schema>(this, handler);
@@ -156,12 +153,12 @@ export function mapSchema<
 			const node = getFlexNode(this);
 			return node.keys();
 		}
-		public set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T>): TreeMapNode {
+		public set(
+			key: string,
+			value: InsertableTreeNodeFromImplicitAllowedTypes<T>,
+		): TreeMapNode {
 			const node = getFlexNode(this);
-			const content = prepareContentForInsert(
-				value as InsertableContent,
-				node.context.forest,
-			);
+			const content = prepareContentForInsert(value as InsertableContent, node.context.forest);
 
 			const classSchema = getSimpleNodeSchema(node.schema);
 			const cursor = cursorFromNodeData(content, classSchema.info as ImplicitAllowedTypes);

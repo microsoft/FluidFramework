@@ -239,9 +239,7 @@ describe("List", () => {
 					assert.deepEqual(actual, expected);
 				}
 
-				it(`${pretty(array)}.${fnName}(${prettyArgs(...args)}) -> ${pretty(
-					expected,
-				)}`, () => {
+				it(`${pretty(array)}.${fnName}(${prettyArgs(...args)}) -> ${pretty(expected)}`, () => {
 					const subject = init(createStringList(array));
 					innerTest(subject, subject);
 				});
@@ -417,10 +415,7 @@ describe("List", () => {
 						]);
 
 						// Check the actual result and compare the actual arguments to the callback.
-						function innerTest(
-							subject: readonly string[],
-							fnSource: readonly string[],
-						) {
+						function innerTest(subject: readonly string[], fnSource: readonly string[]) {
 							const actualFn = Reflect.get(fnSource, fnName) as (
 								callback: (...args: any[]) => unknown,
 								...args: unknown[]
@@ -437,17 +432,16 @@ describe("List", () => {
 							assert.deepEqual(actualArgs, expectedArgs);
 						}
 
-						it(`${pretty(array)}.${fnName}(callback, ${prettyArgs(
-							otherArgs,
-						)}) -> ${pretty(expectedResult)}:${pretty(expectedArgs)}`, () => {
+						it(`${pretty(array)}.${fnName}(callback, ${prettyArgs(otherArgs)}) -> ${pretty(
+							expectedResult,
+						)}:${pretty(expectedArgs)}`, () => {
 							const subject = createStringList(array);
 							innerTest(subject, subject);
 						});
 
-						it(`Array.prototype.${fnName}.call(${prettyArgs(
-							array,
-							...otherArgs,
-						)}) -> ${pretty(expected)}`, () => {
+						it(`Array.prototype.${fnName}.call(${prettyArgs(array, ...otherArgs)}) -> ${pretty(
+							expected,
+						)}`, () => {
 							innerTest(createStringList(array), Array.prototype);
 						});
 					};

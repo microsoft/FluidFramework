@@ -107,7 +107,7 @@ function invertMark(
 							id: mark.id,
 							cellId: outputId,
 							count: mark.count,
-					  }
+						}
 					: {
 							type: "Remove",
 							id: mark.id,
@@ -117,7 +117,7 @@ function invertMark(
 								type: DetachIdOverrideType.Redetach,
 								id: inputId,
 							},
-					  };
+						};
 			return [withNodeChange(inverse, mark.changes)];
 		}
 		case "Insert": {
@@ -130,9 +130,7 @@ function invertMark(
 			};
 
 			removeMark.idOverride = {
-				type: isReattach(mark)
-					? DetachIdOverrideType.Redetach
-					: DetachIdOverrideType.Unattach,
+				type: isReattach(mark) ? DetachIdOverrideType.Redetach : DetachIdOverrideType.Unattach,
 				id: inputId,
 			};
 
@@ -141,10 +139,7 @@ function invertMark(
 		}
 		case "MoveOut": {
 			if (mark.changes !== undefined) {
-				assert(
-					mark.count === 1,
-					0x6ed /* Mark with changes can only target a single cell */,
-				);
+				assert(mark.count === 1, 0x6ed /* Mark with changes can only target a single cell */);
 
 				const endpoint = getEndpoint(mark, revision);
 				crossFieldManager.set(
@@ -206,9 +201,7 @@ function invertMark(
 			}
 
 			invertedMark.idOverride = {
-				type: isReattach(mark)
-					? DetachIdOverrideType.Redetach
-					: DetachIdOverrideType.Unattach,
+				type: isReattach(mark) ? DetachIdOverrideType.Redetach : DetachIdOverrideType.Unattach,
 				id: inputId,
 			};
 
@@ -231,18 +224,8 @@ function invertMark(
 				changes: mark.changes,
 				...mark.detach,
 			};
-			const attachInverses = invertMark(
-				attach,
-				revision,
-				crossFieldManager,
-				revisionMetadata,
-			);
-			const detachInverses = invertMark(
-				detach,
-				revision,
-				crossFieldManager,
-				revisionMetadata,
-			);
+			const attachInverses = invertMark(attach, revision, crossFieldManager, revisionMetadata);
+			const detachInverses = invertMark(detach, revision, crossFieldManager, revisionMetadata);
 
 			if (detachInverses.length === 0) {
 				return attachInverses;
@@ -260,10 +243,7 @@ function invertMark(
 			for (const attachInverse of attachInverses) {
 				let detachInverseCurr: Mark = detachInverse;
 				if (attachInverse.count !== detachInverse.count) {
-					[detachInverseCurr, detachInverse] = splitMark(
-						detachInverse,
-						attachInverse.count,
-					);
+					[detachInverseCurr, detachInverse] = splitMark(detachInverse, attachInverse.count);
 				}
 
 				if (attachInverse.type === NoopMarkType) {
@@ -277,10 +257,7 @@ function invertMark(
 					inverses.push(detachInverseCurr);
 					continue;
 				}
-				assert(
-					isDetach(attachInverse),
-					0x810 /* Inverse of an attach should be a detach */,
-				);
+				assert(isDetach(attachInverse), 0x810 /* Inverse of an attach should be a detach */);
 
 				const inverted: Mark = {
 					type: "AttachAndDetach",
@@ -343,7 +320,11 @@ function applyMovedChanges(
 	return [mark];
 }
 
-function invertNodeChangeOrSkip(count: number, changes: NodeId | undefined, cellId?: CellId): Mark {
+function invertNodeChangeOrSkip(
+	count: number,
+	changes: NodeId | undefined,
+	cellId?: CellId,
+): Mark {
 	if (changes !== undefined) {
 		assert(count === 1, 0x66c /* A modify mark must have length equal to one */);
 		const noop: CellMark<NoopMark> = {

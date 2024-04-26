@@ -31,7 +31,7 @@ export function makeChangeAtomIdCodec(
 				? {
 						localId: changeAtomId[0],
 						revision: revisionTagCodec.decode(changeAtomId[1], context),
-				  }
+					}
 				: { localId: changeAtomId, revision: context.revision };
 		},
 	};

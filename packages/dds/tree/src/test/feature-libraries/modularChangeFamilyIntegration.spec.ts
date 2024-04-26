@@ -336,11 +336,7 @@ describe("ModularChangeFamily integration", () => {
 			const [moveA, moveB, moveC, removeD] = getChanges();
 
 			const moves = makeAnonChange(
-				family.compose([
-					makeAnonChange(moveA),
-					makeAnonChange(moveB),
-					makeAnonChange(moveC),
-				]),
+				family.compose([makeAnonChange(moveA), makeAnonChange(moveB), makeAnonChange(moveC)]),
 			);
 
 			const remove = makeAnonChange(removeD);
@@ -488,9 +484,7 @@ describe("ModularChangeFamily integration", () => {
 										[
 											fieldC,
 											{
-												local: [
-													{ count: 1, attach: { major: tag2, minor: 1 } },
-												],
+												local: [{ count: 1, attach: { major: tag2, minor: 1 } }],
 											},
 										],
 									]),
@@ -675,10 +669,7 @@ describe("ModularChangeFamily integration", () => {
 						brand("foo"),
 						{
 							fieldKind: FieldKinds.sequence.identifier,
-							change: brand([
-								MarkMaker.moveOut(1, brand(0)),
-								MarkMaker.moveIn(1, brand(0)),
-							]),
+							change: brand([MarkMaker.moveOut(1, brand(0)), MarkMaker.moveIn(1, brand(0))]),
 							revision: tag1,
 						},
 					],
@@ -686,10 +677,7 @@ describe("ModularChangeFamily integration", () => {
 						brand("bar"),
 						{
 							fieldKind: FieldKinds.sequence.identifier,
-							change: brand([
-								MarkMaker.moveOut(2, brand(0)),
-								MarkMaker.moveIn(2, brand(0)),
-							]),
+							change: brand([MarkMaker.moveOut(2, brand(0)), MarkMaker.moveIn(2, brand(0))]),
 							revision: tag2,
 						},
 					],

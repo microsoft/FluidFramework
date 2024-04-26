@@ -20,7 +20,10 @@ import {
 } from "../feature-libraries/index.js";
 import { type JsonCompatibleReadOnly, Mutable } from "../util/index.js";
 
-import { EncodedSharedTreeChange, EncodedSharedTreeInnerChange } from "./sharedTreeChangeFormat.js";
+import {
+	EncodedSharedTreeChange,
+	EncodedSharedTreeInnerChange,
+} from "./sharedTreeChangeFormat.js";
 import { SharedTreeChange, SharedTreeInnerChange } from "./sharedTreeChangeTypes.js";
 
 export function makeSharedTreeChangeCodecFamily(
@@ -98,7 +101,7 @@ function makeSharedTreeChangeCodec(
 												? context.schema.policy
 												: defaultSchemaPolicy,
 										schema: updatedSchema,
-								  }
+									}
 								: context.schema;
 						changes.push({
 							data: modularChangeCodec.encode(decodedChange.innerChange, {

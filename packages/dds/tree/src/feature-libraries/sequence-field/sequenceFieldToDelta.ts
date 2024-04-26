@@ -131,9 +131,7 @@ export function sequenceFieldToDelta(
 				}
 				case "MoveOut": {
 					// The move destination will look for the detach ID of the source, so we can ignore `finalEndpoint`.
-					const detachId = nodeIdFromChangeAtom(
-						getDetachedNodeId(mark, revision, undefined),
-					);
+					const detachId = nodeIdFromChangeAtom(getDetachedNodeId(mark, revision, undefined));
 					if (inputCellId === undefined) {
 						deltaMark.detach = detachId;
 						local.push(deltaMark);

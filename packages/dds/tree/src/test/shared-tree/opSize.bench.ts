@@ -394,7 +394,10 @@ describe("Op Size", () => {
 	let currentBenchmarkName = "";
 	const currentTestOps: ISequencedDocumentMessage[] = [];
 
-	function registerOpListener(tree: ISharedTree, resultArray: ISequencedDocumentMessage[]): void {
+	function registerOpListener(
+		tree: ISharedTree,
+		resultArray: ISequencedDocumentMessage[],
+	): void {
 		// TODO: better way to hook this up. Needs to detect local ops exactly once.
 		const oldSubmitLocalMessage = (tree as any).submitLocalMessage.bind(tree);
 		function submitLocalMessage(content: any, localOpMetadata: unknown = undefined): void {
@@ -552,9 +555,7 @@ describe("Op Size", () => {
 			describe(description, () => {
 				for (const { percentile, word } of sizes) {
 					it(`${BENCHMARK_NODE_COUNT} ${word} changes in ${extraDescription} containing ${
-						style === TransactionStyle.Individual
-							? "1 edit"
-							: `${BENCHMARK_NODE_COUNT} edits`
+						style === TransactionStyle.Individual ? "1 edit" : `${BENCHMARK_NODE_COUNT} edits`
 					}`, () => {
 						benchmarkOps(style, percentile);
 					});
@@ -625,11 +626,7 @@ describe("Op Size", () => {
 
 				// insert
 				const insertChildNode = createTreeWithSize(
-					getSuccessfulOpByteSize(
-						Operation.Insert,
-						TransactionStyle.Individual,
-						percentile,
-					),
+					getSuccessfulOpByteSize(Operation.Insert, TransactionStyle.Individual, percentile),
 				);
 				insertNodesWithIndividualTransactions(view, insertChildNode, insertNodeCount);
 				assertChildNodeCount(view, insertNodeCount);
@@ -647,11 +644,7 @@ describe("Op Size", () => {
 					deleteCurrentOps(); // We don't want to record the ops from re-initializing the tree.
 				}
 				const editPayload = createStringFromLength(
-					getSuccessfulOpByteSize(
-						Operation.Edit,
-						TransactionStyle.Individual,
-						percentile,
-					),
+					getSuccessfulOpByteSize(Operation.Edit, TransactionStyle.Individual, percentile),
 				);
 				editNodesWithIndividualTransactions(view, editNodeCount, editPayload);
 				expectChildrenValues(view, editPayload, editNodeCount);
@@ -662,10 +655,7 @@ describe("Op Size", () => {
 				describe(suiteDescription, () => {
 					for (const { percentile } of sizes) {
 						it(`Percentile: ${percentile}`, () => {
-							benchmarkInsertRemoveEditNodesWithInvidiualTxs(
-								percentile,
-								distribution,
-							);
+							benchmarkInsertRemoveEditNodesWithInvidiualTxs(percentile, distribution);
 						});
 					}
 				});

@@ -55,7 +55,10 @@ function isNonEmptyChange(
 	return "inputContext" in change;
 }
 
-function mint(inputContext: readonly number[], intention: number | number[]): NonEmptyTestChange {
+function mint(
+	inputContext: readonly number[],
+	intention: number | number[],
+): NonEmptyTestChange {
 	const intentions = Array.isArray(intention) ? intention : [intention];
 	return {
 		inputContext: composeIntentions([], inputContext),
@@ -333,7 +336,7 @@ export function asDelta(intentions: number[]): DeltaRoot {
 		? emptyDelta
 		: {
 				fields: new Map([[rootKey, { local: intentions.map((i) => ({ count: i })) }]]),
-		  };
+			};
 }
 
 export function testChangeFamilyFactory(

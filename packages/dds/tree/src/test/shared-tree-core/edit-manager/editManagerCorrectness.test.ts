@@ -69,14 +69,11 @@ export function testCorrectness() {
 				{ seq: 3, type: "Pull", ref: 0, from: peer1 },
 			]);
 
-			runUnitTestScenario(
-				"Can handle non-concurrent peer changes partially sequenced later",
-				[
-					{ seq: 1, type: "Pull", ref: 0, from: peer1 },
-					{ seq: 2, type: "Pull", ref: 0, from: peer1 },
-					{ seq: 3, type: "Pull", ref: 1, from: peer1 },
-				],
-			);
+			runUnitTestScenario("Can handle non-concurrent peer changes partially sequenced later", [
+				{ seq: 1, type: "Pull", ref: 0, from: peer1 },
+				{ seq: 2, type: "Pull", ref: 0, from: peer1 },
+				{ seq: 3, type: "Pull", ref: 1, from: peer1 },
+			]);
 
 			runUnitTestScenario("Can rebase a single peer change over multiple peer changes", [
 				{ seq: 1, type: "Pull", ref: 0, from: peer1 },
@@ -182,11 +179,7 @@ export function testCorrectness() {
 				it("Evicts trunk commits according to a provided minimum sequence number", () => {
 					const { manager } = testChangeEditManagerFactory({});
 					for (let i = 1; i <= 10; ++i) {
-						manager.addSequencedChange(
-							applyLocalCommit(manager),
-							brand(i),
-							brand(i - 1),
-						);
+						manager.addSequencedChange(applyLocalCommit(manager), brand(i), brand(i - 1));
 					}
 
 					assert.equal(manager.getTrunkChanges().length, 10);
@@ -195,11 +188,7 @@ export function testCorrectness() {
 					manager.advanceMinimumSequenceNumber(brand(10));
 					assert.equal(manager.getTrunkChanges().length, 0);
 					for (let i = 11; i <= 20; ++i) {
-						manager.addSequencedChange(
-							applyLocalCommit(manager),
-							brand(i),
-							brand(i - 1),
-						);
+						manager.addSequencedChange(applyLocalCommit(manager), brand(i), brand(i - 1));
 					}
 
 					assert.equal(manager.getTrunkChanges().length, 10);
@@ -230,11 +219,7 @@ export function testCorrectness() {
 					manager.addSequencedChange(peerCommit(peer1, [], 1), brand(1), brand(0));
 					// We then submit and ack a local commit ("2").
 					// This prevents an upcoming rebase of the peer branch from hitting an eager fast-path that keeps the branch caught up to the head of the trunk.
-					manager.addSequencedChange(
-						applyLocalCommit(manager, [1], 2),
-						brand(2),
-						brand(1),
-					);
+					manager.addSequencedChange(applyLocalCommit(manager, [1], 2), brand(2), brand(1));
 					// We receive a second commit from the peer ("3").
 					// Based on the ref seq number, we know that the peer is lagging "behind" by two commits,
 					// i.e. it has sent a second op without receiving its first op ("1") or the local op ("2") that we applied just above.
@@ -254,27 +239,15 @@ export function testCorrectness() {
 
 				it("Evicts properly when the minimum sequence number advances past the trunk (and there are no local commits)", () => {
 					const { manager } = testChangeEditManagerFactory({});
-					manager.addSequencedChange(
-						applyLocalCommit(manager, [], 1),
-						brand(1),
-						brand(0),
-					);
+					manager.addSequencedChange(applyLocalCommit(manager, [], 1), brand(1), brand(0));
 					manager.advanceMinimumSequenceNumber(brand(2));
-					manager.addSequencedChange(
-						applyLocalCommit(manager, [1], 2),
-						brand(3),
-						brand(2),
-					);
+					manager.addSequencedChange(applyLocalCommit(manager, [1], 2), brand(3), brand(2));
 					checkChangeList(manager, [2]);
 				});
 
 				it("Evicts properly when the minimum sequence number advances past the trunk (and there are local commits)", () => {
 					const { manager } = testChangeEditManagerFactory({});
-					manager.addSequencedChange(
-						applyLocalCommit(manager, [], 1),
-						brand(1),
-						brand(0),
-					);
+					manager.addSequencedChange(applyLocalCommit(manager, [], 1), brand(1), brand(0));
 					const local = applyLocalCommit(manager, [1], 2);
 					manager.advanceMinimumSequenceNumber(brand(2));
 					manager.addSequencedChange(local, brand(3), brand(2));
@@ -283,11 +256,7 @@ export function testCorrectness() {
 
 				it("Delays eviction of a branch base commit until the branch is disposed", () => {
 					const { manager } = testChangeEditManagerFactory({});
-					manager.addSequencedChange(
-						applyLocalCommit(manager, [], 1),
-						brand(1),
-						brand(0),
-					);
+					manager.addSequencedChange(applyLocalCommit(manager, [], 1), brand(1), brand(0));
 					const local = applyLocalCommit(manager, [1], 2);
 					const fork = manager.localBranch.fork();
 					manager.addSequencedChange(local, brand(2), brand(1));
@@ -390,11 +359,7 @@ export function testCorrectness() {
 					manager.advanceMinimumSequenceNumber(brand(2));
 					checkChangeList(manager, []);
 					manager.addSequencedChange(peerCommit(peer1, [1, 2, 3], 4), brand(4), brand(1));
-					manager.addSequencedChange(
-						peerCommit(peer1, [1, 2, 3, 4], 5),
-						brand(4),
-						brand(1),
-					);
+					manager.addSequencedChange(peerCommit(peer1, [1, 2, 3, 4], 5), brand(4), brand(1));
 					manager.addSequencedChange(
 						peerCommit(peer2, [1, 2, 3, 4, 5], 6),
 						brand(5),

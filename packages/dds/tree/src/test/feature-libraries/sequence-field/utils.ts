@@ -22,7 +22,10 @@ import {
 } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { NodeId, RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
+import {
+	NodeId,
+	RebaseRevisionMetadata,
+} from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
@@ -72,7 +75,10 @@ import { ChangesetWrapper } from "../../changesetWrapper.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
-export function assertWrappedChangesetsEqual(actual: WrappedChange, expected: WrappedChange): void {
+export function assertWrappedChangesetsEqual(
+	actual: WrappedChange,
+	expected: WrappedChange,
+): void {
 	ChangesetWrapper.assertEqual(actual, expected, assertChangesetsEqual);
 }
 
@@ -92,7 +98,11 @@ export function purgeUnusedCellOrderingInfo(change: SF.Changeset): SF.Changeset 
 	}
 }
 
-export function skipOnLineageMethod(config: SequenceConfig, title: string, fn: () => void): void {
+export function skipOnLineageMethod(
+	config: SequenceConfig,
+	title: string,
+	fn: () => void,
+): void {
 	if (config.cellOrdering === CellOrderingMethod.Lineage) {
 		it.skip(title, fn);
 	} else {
@@ -100,7 +110,11 @@ export function skipOnLineageMethod(config: SequenceConfig, title: string, fn: (
 	}
 }
 
-export function onlyOnLineageMethod(config: SequenceConfig, title: string, fn: () => void): void {
+export function onlyOnLineageMethod(
+	config: SequenceConfig,
+	title: string,
+	fn: () => void,
+): void {
 	if (config.cellOrdering === CellOrderingMethod.Lineage) {
 		it(title, fn);
 	} else {
@@ -108,7 +122,11 @@ export function onlyOnLineageMethod(config: SequenceConfig, title: string, fn: (
 	}
 }
 
-export function skipOnTombstoneMethod(config: SequenceConfig, title: string, fn: () => void): void {
+export function skipOnTombstoneMethod(
+	config: SequenceConfig,
+	title: string,
+	fn: () => void,
+): void {
 	if (config.cellOrdering === CellOrderingMethod.Tombstone) {
 		it.skip(title, fn);
 	} else {
@@ -116,7 +134,11 @@ export function skipOnTombstoneMethod(config: SequenceConfig, title: string, fn:
 	}
 }
 
-export function onlyOnTombstoneMethod(config: SequenceConfig, title: string, fn: () => void): void {
+export function onlyOnTombstoneMethod(
+	config: SequenceConfig,
+	title: string,
+	fn: () => void,
+): void {
 	if (config.cellOrdering === CellOrderingMethod.Tombstone) {
 		it(title, fn);
 	} else {
@@ -124,7 +146,10 @@ export function onlyOnTombstoneMethod(config: SequenceConfig, title: string, fn:
 	}
 }
 
-export function describeForBothConfigs(title: string, fn: (config: SequenceConfig) => void): void {
+export function describeForBothConfigs(
+	title: string,
+	fn: (config: SequenceConfig) => void,
+): void {
 	describe(title, () => {
 		for (const method of [CellOrderingMethod.Tombstone, CellOrderingMethod.Lineage]) {
 			describe(`${method}-based cell ordering`, () => {
@@ -200,7 +225,10 @@ export function prune(
 	change: SF.Changeset,
 	childPruner?: (child: NodeId) => NodeId | undefined,
 ): SF.Changeset {
-	return SF.sequenceFieldChangeRebaser.prune(change, childPruner ?? ((child: NodeId) => child));
+	return SF.sequenceFieldChangeRebaser.prune(
+		change,
+		childPruner ?? ((child: NodeId) => child),
+	);
 }
 
 export function shallowCompose(
@@ -805,5 +833,9 @@ export function tagChangeInline(
 }
 
 export function inlineRevision(change: Changeset, revision: RevisionTag): Changeset {
-	return SF.sequenceFieldChangeRebaser.replaceRevisions(change, new Set([undefined]), revision);
+	return SF.sequenceFieldChangeRebaser.replaceRevisions(
+		change,
+		new Set([undefined]),
+		revision,
+	);
 }

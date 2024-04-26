@@ -81,10 +81,7 @@ export function makeOptionalFieldCodec(
 					d: changeAtomIdCodec.encode(change.valueReplace.dst, context.baseContext),
 				};
 				if (change.valueReplace.src !== undefined) {
-					encoded.r.s = registerIdCodec.encode(
-						change.valueReplace.src,
-						context.baseContext,
-					);
+					encoded.r.s = registerIdCodec.encode(change.valueReplace.src, context.baseContext);
 				}
 			}
 

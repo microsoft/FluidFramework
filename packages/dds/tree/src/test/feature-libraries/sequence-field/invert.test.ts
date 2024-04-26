@@ -110,11 +110,7 @@ export function testInvert() {
 					Mark.remove(1, brand(1)),
 				];
 				const expected = [
-					Mark.revive(
-						1,
-						{ revision: tag1, localId: brand(0) },
-						{ changes: childChange1 },
-					),
+					Mark.revive(1, { revision: tag1, localId: brand(0) }, { changes: childChange1 }),
 					Mark.revive(1, { revision: tag1, localId: brand(1) }),
 				];
 				const actual = invert(input);
@@ -470,10 +466,7 @@ export function testInvert() {
 				withConfig(() => {
 					const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
 					const input = [
-						Mark.onEmptyCell(
-							cellId,
-							Mark.remove(1, brand(0), { changes: childChange1 }),
-						),
+						Mark.onEmptyCell(cellId, Mark.remove(1, brand(0), { changes: childChange1 })),
 					];
 
 					const actual = invertChange(tagRollbackInverse(input, tag2, tag1));

@@ -206,8 +206,9 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
  *
  * @public
  */
-export interface TreeArrayNode<TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes>
-	extends TreeArrayNodeBase<
+export interface TreeArrayNode<
+	TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+> extends TreeArrayNodeBase<
 		TreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
 		InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
 		TreeArrayNode

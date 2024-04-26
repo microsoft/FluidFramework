@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import {
+	IChannelAttributes,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { ICodecOptions } from "../../codec/index.js";
@@ -19,7 +22,11 @@ import {
 	makeFieldBatchCodec,
 	makeModularChangeCodecFamily,
 } from "../../feature-libraries/index.js";
-import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tree-core/index.js";
+import {
+	SharedTreeBranch,
+	SharedTreeCore,
+	Summarizable,
+} from "../../shared-tree-core/index.js";
 import { testIdCompressor } from "../utils.js";
 import { strict as assert } from "assert";
 

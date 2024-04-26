@@ -571,11 +571,7 @@ export class ComposeQueue {
 
 			switch (sequenceConfig.cellOrdering) {
 				case CellOrderingMethod.Tombstone: {
-					const newCellId = getInputCellId(
-						newMark,
-						this.newRevision,
-						this.revisionMetadata,
-					);
+					const newCellId = getInputCellId(newMark, this.newRevision, this.revisionMetadata);
 					assert(newCellId !== undefined, 0x89d /* Both marks should have cell IDs */);
 					const comparison = compareCellPositionsUsingTombstones(
 						baseCellId,
@@ -858,7 +854,9 @@ function setTruncatedEndpoint(
 ) {
 	const effect = getMoveEffect(moveEffects, target, id.revision, id.localId, count);
 	const newEffect =
-		effect.value !== undefined ? { ...effect.value, truncatedEndpoint } : { truncatedEndpoint };
+		effect.value !== undefined
+			? { ...effect.value, truncatedEndpoint }
+			: { truncatedEndpoint };
 
 	setMoveEffect(moveEffects, target, id.revision, id.localId, effect.length, newEffect);
 
