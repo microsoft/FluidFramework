@@ -18,24 +18,25 @@ import {
 	IChannelAttributes,
 	IChannelServices,
 	IFluidDataStoreRuntime,
+	type Serializable,
 } from "@fluidframework/datastore-definitions/internal";
 import { PropertySet } from "@fluidframework/merge-tree/internal";
 
-import type { SequenceInterval } from "../../index.js";
+import type { SequenceInterval, SharedStringClass } from "../../index.js";
 import { type IIntervalCollection, Side } from "../../intervalCollection.js";
 import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";
 import { SharedStringFactory } from "../../sequenceFactory.js";
-import { SharedString } from "../../sharedString.js";
+import { ISharedString } from "../../sharedString.js";
 import { _dirname } from "../dirname.cjs";
 import { assertEquivalentSharedStrings } from "../intervalTestUtils.js";
 
-export type RevertibleSharedString = SharedString & {
+export type RevertibleSharedString = ISharedString & {
 	revertibles: SharedStringRevertible[];
 	// This field prevents change events that are emitted while in the process of a revert from
 	// being added into the revertibles stack.
 	isCurrentRevert: boolean;
 };
-export function isRevertibleSharedString(s: SharedString): s is RevertibleSharedString {
+export function isRevertibleSharedString(s: ISharedString): s is RevertibleSharedString {
 	return (s as RevertibleSharedString).revertibles !== undefined;
 }
 
@@ -60,7 +61,7 @@ export interface RemoveRange extends RangeSpec {
 
 export interface AnnotateRange extends RangeSpec {
 	type: "annotateRange";
-	props: { key: string; value?: any }[];
+	props: { key: string; value?: Serializable<any> }[];
 }
 
 export interface ObliterateRange extends RangeSpec {
@@ -323,6 +324,7 @@ export function createSharedStringGeneratorOperations(
 		const key = random.pick(options.propertyNamePool);
 		const value = random.pick([
 			random.string(5),
+			random.handle(),
 			// Bring back after AB#7805, #7806 fixed
 			// undefined
 			null,
@@ -370,13 +372,13 @@ export class SharedStringFuzzFactory extends SharedStringFactory {
 		id: string,
 		services: IChannelServices,
 		attributes: IChannelAttributes,
-	): Promise<SharedString> {
+	): Promise<SharedStringClass> {
 		runtime.options.intervalStickinessEnabled = true;
 		runtime.options.mergeTreeEnableObliterate = true;
 		return super.load(runtime, id, services, attributes);
 	}
 
-	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
+	public create(document: IFluidDataStoreRuntime, id: string): SharedStringClass {
 		document.options.intervalStickinessEnabled = true;
 		document.options.mergeTreeEnableObliterate = true;
 		return super.create(document, id);
@@ -391,7 +393,7 @@ export const baseModel: Omit<
 		// makeReducer supports a param for logging output which tracks the provided intervalId over time:
 		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
 		makeReducer(),
-	validateConsistency: assertEquivalentSharedStrings,
+	validateConsistency: async (a, b) => assertEquivalentSharedStrings(a.channel, b.channel),
 	factory: new SharedStringFuzzFactory(),
 	minimizationTransforms: [
 		(op) => {
