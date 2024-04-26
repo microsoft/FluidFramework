@@ -295,7 +295,7 @@ export class DetachedFieldIndex {
 	 * these two entries can be merged into [start: 1, length: 3, value: 3]
 	 *
 	 * Note: This function isn't placed in rangeMap.ts because the type of range entry value is specific
-	 * to ForestRootId, insted of the generic type in rangeMap.ts.
+	 * to ForestRootId, instead of the generic type in rangeMap.ts.
 	 */
 	private mergeRangesWithIncrementalRootValue(
 		entries: RangeMap<ForestRootId>,
