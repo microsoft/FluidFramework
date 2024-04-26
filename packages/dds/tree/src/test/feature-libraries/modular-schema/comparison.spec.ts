@@ -100,6 +100,12 @@ describe("Schema Comparison", () => {
 	const optionalAnyField = fieldSchema(FieldKinds.optional);
 	const optionalEmptyTreeField = fieldSchema(FieldKinds.optional, [emptyTree.name]);
 
+	const optionalTreeWithoutValue: TreeNodeStoredSchema = new MapNodeStoredSchema(
+		optionalAnyField,
+	);
+
+	const valueAnyTreeWithoutValue: TreeNodeStoredSchema = new MapNodeStoredSchema(valueAnyField);
+
 	function updateTreeSchema(
 		repo: MutableTreeStoredSchema,
 		identifier: TreeNodeSchemaIdentifier,
@@ -210,6 +216,7 @@ describe("Schema Comparison", () => {
 	 * 2. Adding to the set of allowed types for a field
 	 * 3. Relaxing a field kind to a more general field kind
 	 */
+	/*
 	describe("allowRepoSuperset-Point/Circle Examples", () => {
 		const repo1 = new TreeStoredSchemaRepository();
 		const repo2 = new TreeStoredSchemaRepository();
@@ -305,6 +312,74 @@ describe("Schema Comparison", () => {
 			updateTreeSchema(repo1, circleLocalFieldTree.name, circleLocalFieldTree.schema);
 			updateTreeSchema(repo2, circleLocalFieldTree2.name, circleLocalFieldTree2.schema);
 			assert(allowsRepoSuperset(defaultSchemaPolicy, repo1, repo2));
+		});
+	}); */
+
+	describe("allowsRepoSuperset", () => {
+		const compareTwoRepo = (
+			a: { name: TreeNodeSchemaIdentifier; schema: TreeNodeStoredSchema }[],
+			b: { name: TreeNodeSchemaIdentifier; schema: TreeNodeStoredSchema }[],
+		): boolean => {
+			const repo1 = new TreeStoredSchemaRepository();
+			const repo2 = new TreeStoredSchemaRepository();
+			for (const { name, schema } of a) {
+				updateTreeSchema(repo1, name, schema);
+			}
+			for (const { name, schema } of b) {
+				updateTreeSchema(repo2, name, schema);
+			}
+			return allowsRepoSuperset(defaultSchemaPolicy, repo1, repo2);
+		};
+
+		it("allows additional field", () => {
+			testOrder(compareTwoRepo, [[emptyTree], [emptyTree, optionalLocalFieldTree]]);
+			testOrder(compareTwoRepo, [
+				[valueLocalFieldTree],
+				[valueLocalFieldTree, optionalLocalFieldTree],
+			]);
+			testOrder(compareTwoRepo, [[emptyTree], [emptyTree, valueLocalFieldTree]]);
+
+			testOrder(compareTwoRepo, [
+				[
+					{
+						name: brand<TreeNodeSchemaIdentifier>("testTree"),
+						schema: valueAnyTreeWithoutValue,
+					},
+				],
+				[
+					{
+						name: brand<TreeNodeSchemaIdentifier>("testTree"),
+						schema: anyTreeWithoutValue,
+					},
+				],
+			]);
+		});
+
+		it("can relax the schema", () => {
+			testOrder(compareTwoRepo, [
+				[
+					{
+						name: brand<TreeNodeSchemaIdentifier>("testTree"),
+						schema: valueAnyTreeWithoutValue,
+					},
+				],
+				[
+					{
+						name: brand<TreeNodeSchemaIdentifier>("testTree"),
+						schema: optionalTreeWithoutValue,
+					},
+				],
+			]);
+
+			testOrder(compareTwoRepo, [
+				[{ name: brand<TreeNodeSchemaIdentifier>("testTree"), schema: neverTree }],
+				[
+					{
+						name: brand<TreeNodeSchemaIdentifier>("testTree"),
+						schema: optionalTreeWithoutValue,
+					},
+				],
+			]);
 		});
 	});
 
