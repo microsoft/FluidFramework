@@ -49,12 +49,12 @@ import {
 	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import {
+	MockAudience,
 	MockDeltaManager,
 	MockFluidDataStoreRuntime,
 	MockQuorumClients,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
-import { MockAudience } from "@fluidframework/test-runtime-utils/internal";
 import { SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";
@@ -1624,7 +1624,7 @@ describe("Runtime", () => {
 				});
 				assert(summarizeResult.stage === "base", "Summary did not fail");
 				assert.strictEqual(
-					summarizeResult.error,
+					summarizeResult.error?.message,
 					"disconnected",
 					"Summary was not canceled",
 				);
@@ -1646,12 +1646,13 @@ describe("Runtime", () => {
 				const summarizeResult = await summarizeResultP;
 				assert(summarizeResult.stage === "base", "Summary did not fail");
 				assert.strictEqual(
-					summarizeResult.error.message,
+					summarizeResult.error?.message,
 					"PendingOpsWhileSummarizing",
 					"Summary did not fail with the right error",
 				);
 				assert.strictEqual(
-					summarizeResult.error.beforeGenerate,
+					isILoggingError(summarizeResult.error) &&
+						summarizeResult.error.getTelemetryProperties().beforeGenerate,
 					true,
 					"It should have failed before generating summary",
 				);
@@ -1678,12 +1679,13 @@ describe("Runtime", () => {
 				});
 				assert(summarizeResult.stage === "base", "Summary did not fail");
 				assert.strictEqual(
-					summarizeResult.error.message,
+					summarizeResult.error?.message,
 					"PendingOpsWhileSummarizing",
 					"Summary did not fail with the right error",
 				);
 				assert.strictEqual(
-					summarizeResult.error.beforeGenerate,
+					isILoggingError(summarizeResult.error) &&
+						summarizeResult.error.getTelemetryProperties().beforeGenerate,
 					false,
 					"It should have failed after generating summary",
 				);
