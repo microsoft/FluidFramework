@@ -25,7 +25,7 @@ export function createTinyliciousAudienceMember(audienceMember: IClient): Tinyli
 	);
 
 	return {
-		userId: tinyliciousUser.id,
+		id: tinyliciousUser.id,
 		userName: tinyliciousUser.name,
 		connections: [],
 	};
