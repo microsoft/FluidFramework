@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
-import type { SharedCell } from "@fluidframework/cell/internal";
+import type { ISharedCell } from "@fluidframework/cell/internal";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IContainer, type IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
@@ -139,7 +139,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		public map!: ISharedMap;
 
 		private readonly sharedCellKey = "sharedCell";
-		public sharedCell!: SharedCell;
+		public sharedCell!: ISharedCell;
 
 		protected async initializingFirstTime() {
 			const sharedMap = SharedMap.create(this.runtime);
@@ -154,7 +154,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 			assert(mapHandle !== undefined, "SharedMap not found");
 			this.map = await mapHandle.get();
 
-			const sharedCellHandle = this.root.get<IFluidHandle<SharedCell>>(this.sharedCellKey);
+			const sharedCellHandle = this.root.get<IFluidHandle<ISharedCell>>(this.sharedCellKey);
 			assert(sharedCellHandle !== undefined, "SharedCell not found");
 			this.sharedCell = await sharedCellHandle.get();
 		}
@@ -190,7 +190,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 	let sharedMapContainer2: ISharedMap;
 	let sharedMapContainer3: ISharedMap;
 
-	let sharedCellContainer1: SharedCell;
+	let sharedCellContainer1: ISharedCell;
 
 	const createContainer = async (): Promise<IContainer> =>
 		provider.createContainer(runtimeFactory);
@@ -675,7 +675,7 @@ describeCompat("IdCompressor in detached container", "NoCompat", (getTestObjectP
 
 		// Get the root dataStore from the detached container.
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
-		const testChannel1 = await dataStore.getSharedObject<SharedCell>("sharedCell");
+		const testChannel1 = await dataStore.getSharedObject<ISharedCell>("sharedCell");
 
 		// Generate an Id before attaching the container
 		(testChannel1 as any).runtime.idCompressor.generateCompressedId();
@@ -688,7 +688,7 @@ describeCompat("IdCompressor in detached container", "NoCompat", (getTestObjectP
 		const loader2 = provider.makeTestLoader(testConfig) as Loader;
 		const container2 = await loader2.resolve({ url });
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const testChannel2 = await dataStore2.getSharedObject<SharedCell>("sharedCell");
+		const testChannel2 = await dataStore2.getSharedObject<ISharedCell>("sharedCell");
 		// Generate an Id in the second attached container and send an op to send the Ids
 		(testChannel2 as any).runtime.idCompressor.generateCompressedId();
 		testChannel2.set("value");

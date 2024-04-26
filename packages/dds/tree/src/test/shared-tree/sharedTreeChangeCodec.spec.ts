@@ -63,6 +63,7 @@ describe("sharedTreeChangeCodec", () => {
 		const dummyContext = {
 			originatorId: "dummySessionID" as SessionId,
 			schema: { policy: defaultSchemaPolicy, schema: dummyTestSchema },
+			revision: undefined,
 		};
 		const changeA: SequenceField.Changeset = [];
 		const dummyModularChangeSet: ModularChangeset = {
