@@ -86,10 +86,10 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.6.2",
-		"@fluid-tools/build-cli": "0.38.0-258976",
+		"@fluid-tools/build-cli": "0.38.0-259398",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.38.0-258976",
+		"@fluidframework/build-tools": "0.38.0-259398",
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
