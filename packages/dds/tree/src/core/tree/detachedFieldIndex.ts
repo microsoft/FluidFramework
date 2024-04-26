@@ -136,6 +136,20 @@ export class DetachedFieldIndex {
 		return key;
 	}
 
+	/**
+	 * Returns all entries associated with the given revision.
+	 */
+	public getRoots(revision: Major): ForestRootId[] {
+		return Array.from(this.detachedNodeToField.get(revision)?.values() ?? []);
+	}
+
+	/**
+	 * Removes all entries associated with the given revision.
+	 */
+	public deleteRevision(revision: Major) {
+		this.detachedNodeToField.delete(revision);
+	}
+
 	public deleteEntry(nodeId: Delta.DetachedNodeId): void {
 		const found = deleteFromNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor);
 		assert(found, 0x7ab /* Unable to delete unknown entry */);

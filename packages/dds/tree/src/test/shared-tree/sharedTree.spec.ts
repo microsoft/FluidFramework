@@ -1104,6 +1104,69 @@ describe("SharedTree", () => {
 				unsubscribe();
 			});
 
+			it("the collab window progresses far enough - multiple nodes", () => {
+				const provider = new TestTreeProviderLite(2);
+				const content = {
+					schema: stringSequenceRootSchema,
+					allowedSchemaModifications: AllowedUpdateType.Initialize,
+					initialTree: ["A", "B", "C", "D"],
+				} satisfies InitializeAndSchematizeConfiguration;
+				const tree1 = schematizeFlexTree(provider.trees[0], content);
+
+				// make sure that revertibles are created
+				const { unsubscribe } = createTestUndoRedoStacks(tree1.checkout.events);
+
+				provider.processMessages();
+				const tree2 = schematizeFlexTree(provider.trees[1], content);
+
+				const root1 = tree1.flexTree;
+				const root2 = tree2.flexTree;
+
+				// remove in first tree
+				root1.removeRange(0, 2);
+
+				provider.processMessages();
+				const removeSequenceNumber = provider.sequenceNumber;
+				assert.deepEqual([...root1], ["C", "D"]);
+				assert.deepEqual([...root2], ["C", "D"]);
+
+				// check the detached field on the peer
+				const repairCursor1 = tree2.checkout.forest.allocateCursor();
+				moveToDetachedField(tree2.checkout.forest, repairCursor1, brand("repair-4"));
+				assert.equal(repairCursor1.firstNode(), true);
+				assert.equal(repairCursor1.value, "A");
+				moveToDetachedField(tree2.checkout.forest, repairCursor1, brand("repair-5"));
+				assert.equal(repairCursor1.firstNode(), true);
+				assert.equal(repairCursor1.value, "B");
+				repairCursor1.free();
+
+				// send edits to move the collab window up
+				root2.insertAt(3, ["y"]);
+				provider.processMessages();
+				root1.removeAt(3);
+				provider.processMessages();
+				root2.insertAt(3, ["y"]);
+				provider.processMessages();
+				root1.removeAt(3);
+				provider.processMessages();
+
+				assert.deepEqual([...root1], ["C", "D"]);
+				assert.deepEqual([...root2], ["C", "D"]);
+
+				// ensure the remove is out of the collab window
+				assert(removeSequenceNumber < provider.minimumSequenceNumber);
+
+				// check that the repair data on the peer is destroyed
+				const repairCursor2 = tree2.checkout.forest.allocateCursor();
+				moveToDetachedField(tree2.checkout.forest, repairCursor2, brand("repair-4"));
+				assert.equal(repairCursor2.firstNode(), false);
+				moveToDetachedField(tree2.checkout.forest, repairCursor2, brand("repair-5"));
+				assert.equal(repairCursor2.firstNode(), false);
+				repairCursor2.free();
+
+				unsubscribe();
+			});
+
 			it("the corresponding revertible is disposed", () => {
 				const provider = new TestTreeProviderLite(2);
 				const content = {
@@ -1142,6 +1205,55 @@ describe("SharedTree", () => {
 				// check that the repair data on the first tree is destroyed
 				const repairCursor2 = tree1.checkout.forest.allocateCursor();
 				moveToDetachedField(tree1.checkout.forest, repairCursor2, brand("repair-4"));
+				assert.equal(repairCursor2.firstNode(), false);
+				repairCursor2.free();
+
+				unsubscribe();
+			});
+
+			it("the corresponding revertible is disposed - multiple nodes", () => {
+				const provider = new TestTreeProviderLite(2);
+				const content = {
+					schema: stringSequenceRootSchema,
+					allowedSchemaModifications: AllowedUpdateType.Initialize,
+					initialTree: ["A", "B", "C", "D"],
+				} satisfies InitializeAndSchematizeConfiguration;
+				const tree1 = schematizeFlexTree(provider.trees[0], content);
+
+				// make sure that revertibles are created
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree1.checkout.events);
+
+				provider.processMessages();
+				const tree2 = schematizeFlexTree(provider.trees[1], content);
+
+				const root1 = tree1.flexTree;
+				const root2 = tree2.flexTree;
+
+				// remove in first tree
+				root1.removeRange(0, 2);
+
+				provider.processMessages();
+				assert.deepEqual([...root1], ["C", "D"]);
+				assert.deepEqual([...root2], ["C", "D"]);
+
+				// check the detached fields on the first tree
+				const repairCursor1 = tree1.checkout.forest.allocateCursor();
+				moveToDetachedField(tree1.checkout.forest, repairCursor1, brand("repair-4"));
+				assert.equal(repairCursor1.firstNode(), true);
+				assert.equal(repairCursor1.value, "A");
+				moveToDetachedField(tree1.checkout.forest, repairCursor1, brand("repair-5"));
+				assert.equal(repairCursor1.firstNode(), true);
+				assert.equal(repairCursor1.value, "B");
+				repairCursor1.free();
+
+				// dispose the revertible
+				undoStack[0][disposeSymbol]();
+
+				// check that the repair data on the first tree is destroyed
+				const repairCursor2 = tree1.checkout.forest.allocateCursor();
+				moveToDetachedField(tree1.checkout.forest, repairCursor2, brand("repair-4"));
+				assert.equal(repairCursor2.firstNode(), false);
+				moveToDetachedField(tree1.checkout.forest, repairCursor2, brand("repair-5"));
 				assert.equal(repairCursor2.firstNode(), false);
 				repairCursor2.free();
 

@@ -475,6 +475,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			this.events.emit("commitApplied", data, getRevertible);
 			withinEventContext = false;
 		});
+
+		// When the branch is trimmed, we can garbage collect any repair data whose latest relevant revision is one of the
+		// trimmed revisions.
+		branch.on("branchTrimmed", (revisions) => {});
 	}
 
 	private withCombinedVisitor(fn: (visitor: DeltaVisitor) => void): void {
@@ -597,6 +601,14 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.revertibleCommitBranches.delete(revision);
 		this.revertibles.delete(revertible);
 		// todo dispose repair data
+		this.withCombinedVisitor((visitor) => {
+			// get all the roots associated with the revision
+			this.removedRoots
+				.getRoots(revision)
+				.map((root) => this.removedRoots.toFieldKey(root))
+				.forEach((field) => visitor.destroy(field, 1));
+		});
+		this.removedRoots.deleteRevision(revision);
 	}
 
 	private revertRevertible(revision: RevisionTag, kind: CommitKind): void {
