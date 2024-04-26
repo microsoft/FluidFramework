@@ -229,7 +229,7 @@ export class SharedStringClass
 	 * {@inheritDoc ISharedString.annotateMarker}
 	 */
 	public annotateMarker(marker: Marker, props: PropertySet): IMergeTreeAnnotateMsg | undefined {
-		return this.guardReentrancy(() => this.client.annotateMarker(marker, props));
+		this.guardReentrancy(() => this.client.annotateMarker(marker, props));
 	}
 
 	/**
