@@ -4,7 +4,7 @@
  */
 
 import { Spinner } from "@fluentui/react-components";
-import { type SharedCell } from "@fluidframework/cell/internal";
+import { type ISharedCell } from "@fluidframework/cell/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { type SharedMatrix } from "@fluidframework/matrix/internal";
 import React from "react";
@@ -16,7 +16,7 @@ import { EmojiButton } from "./EmojiButton.js";
  * @internal
  */
 export interface EmojiGridProps {
-	emojiMatrix: SharedMatrix<IFluidHandle<SharedCell<boolean>>>;
+	emojiMatrix: SharedMatrix<IFluidHandle<ISharedCell<boolean>>>;
 }
 
 /**
@@ -32,7 +32,7 @@ export function EmojiGrid(props: EmojiGridProps): React.ReactElement {
 	for (let row = 0; row < rowCount; row++) {
 		const renderedCells: React.ReactElement[] = [];
 		for (let col = 0; col < colCount; col++) {
-			const cellHandle = emojiMatrix.getCell(row, col) as IFluidHandle<SharedCell<boolean>>;
+			const cellHandle = emojiMatrix.getCell(row, col) as IFluidHandle<ISharedCell<boolean>>;
 			renderedCells.push(
 				<CellView key={`emoji-grid-cell-${row}-${col}`} cellHandle={cellHandle} />,
 			);
@@ -44,13 +44,13 @@ export function EmojiGrid(props: EmojiGridProps): React.ReactElement {
 }
 
 interface CellViewProps {
-	cellHandle: IFluidHandle<SharedCell<boolean>>;
+	cellHandle: IFluidHandle<ISharedCell<boolean>>;
 }
 
 function CellView(props: CellViewProps): React.ReactElement {
 	const { cellHandle } = props;
 
-	const [emojiCell, setEmojiCell] = React.useState<SharedCell<boolean> | undefined>();
+	const [emojiCell, setEmojiCell] = React.useState<ISharedCell<boolean> | undefined>();
 
 	React.useEffect(() => {
 		cellHandle.get().then(setEmojiCell, (error) => {

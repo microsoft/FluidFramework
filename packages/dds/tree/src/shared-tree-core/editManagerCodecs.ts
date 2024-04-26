@@ -97,18 +97,28 @@ function makeV1CodecWithVersion<TChangeset>(
 		context: ChangeEncodingContext,
 	) => ({
 		...commit,
-		revision: revisionTagCodec.encode(commit.revision, { originatorId: commit.sessionId }),
-		change: changeCodec.json.encode(commit.change, context),
+		revision: revisionTagCodec.encode(commit.revision, {
+			originatorId: commit.sessionId,
+			revision: undefined,
+		}),
+		change: changeCodec.json.encode(commit.change, { ...context, revision: commit.revision }),
 	});
 
 	const decodeCommit = <T extends EncodedCommit<JsonCompatibleReadOnly>>(
 		commit: T,
 		context: ChangeEncodingContext,
-	) => ({
-		...commit,
-		revision: revisionTagCodec.decode(commit.revision, { originatorId: commit.sessionId }),
-		change: changeCodec.json.decode(commit.change, context),
-	});
+	) => {
+		const revision = revisionTagCodec.decode(commit.revision, {
+			originatorId: commit.sessionId,
+			revision: undefined,
+		});
+
+		return {
+			...commit,
+			revision,
+			change: changeCodec.json.decode(commit.change, { ...context, revision }),
+		};
+	};
 
 	const codec: IJsonCodec<
 		SummaryData<TChangeset>,
@@ -124,6 +134,7 @@ function makeV1CodecWithVersion<TChangeset>(
 						encodeCommit(commit, {
 							originatorId: commit.sessionId,
 							schema: context.schema,
+							revision: undefined,
 						}),
 					),
 					branches: Array.from(
@@ -133,11 +144,13 @@ function makeV1CodecWithVersion<TChangeset>(
 							{
 								base: revisionTagCodec.encode(branch.base, {
 									originatorId: sessionId,
+									revision: undefined,
 								}),
 								commits: branch.commits.map((commit) =>
 									encodeCommit(commit, {
 										originatorId: commit.sessionId,
 										schema: context.schema,
+										revision: undefined,
 									}),
 								),
 							},
@@ -157,6 +170,7 @@ function makeV1CodecWithVersion<TChangeset>(
 							// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 							decodeCommit(commit, {
 								originatorId: commit.sessionId,
+								revision: undefined,
 							}),
 					),
 					peerLocalBranches: new Map(
@@ -165,11 +179,13 @@ function makeV1CodecWithVersion<TChangeset>(
 							{
 								base: revisionTagCodec.decode(branch.base, {
 									originatorId: sessionId,
+									revision: undefined,
 								}),
 								commits: branch.commits.map((commit) =>
 									// TODO: sort out EncodedCommit vs Commit, and make this type check without `as`.
 									decodeCommit(commit as EncodedCommit<JsonCompatibleReadOnly>, {
 										originatorId: commit.sessionId,
+										revision: undefined,
 									}),
 								),
 							},
