@@ -68,7 +68,7 @@ export async function loadContainerPaused(
 		loadToSequenceNumber === undefined ||
 		lastProcessedSequenceNumber === loadToSequenceNumber
 	) {
-		// If we have already reached the desired sequence number, call opHandler() to pause immediately.
+		// If we have already reached the desired sequence number, call pauseContainer() to pause immediately.
 		pauseContainer();
 		return container;
 	}
