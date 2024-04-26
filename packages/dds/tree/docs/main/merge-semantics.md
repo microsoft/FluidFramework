@@ -78,22 +78,48 @@ It is these preconditions and postconditions that define whether an edit's merge
 
 ### Preconditions
 
-The preconditions characterize what must be true in order for the edit to be considered valid and have an effect.
+The preconditions characterize what must be true for the edit to be considered valid.
+If those preconditions are not met, then the edit, and the whole transaction it is part of,
+is dropped: they have no effect.
 
-For example, imagine Alice inserts a node of type `Foo` in an array.
-Alice's edit has a precondition that, by the time it is finally applied, this array allow must instances of type `Foo`.
-Concurrently to that, Bob edits the document schema such that the array in question no longer allows instances of type `Foo`.
-Bob's edit has a precondition that, by the time it is finally applied, no instances of type `Foo` must exist in the array.
+For example, imagine Alice inserts a node of type `Foo` in an array,
+with the precondition that by the time the edit is finally applied,
+this array allow must instances of type `Foo`.
+Concurrently to that, Bob edits the document schema such that the array in question no longer allows instances of type `Foo`,
+with the precondition that by the time the edit is finally applied,
+no instances of type `Foo` must exist in the array.
 If Alice's edit is sequenced first, then the node will successfully be inserted, and Bob's edit will be dropped.
 If Bob's edit is sequenced first, then the schema will successfully be changed, and Alice's edit will be dropped.
 
-Note that in a transaction, each edit's preconditions are added to the preconditions of the transaction.
-In other words, the preconditions of a transaction are the union of the preconditions of its edits,
-giving transactions "all or nothing" semantics.
+When considering whether a given edit is suitable for a given scenario,
+the edit's preconditions help answer the following questions:
 
-[Constraints](#constraints) is a feature that allows transaction authors to add additional preconditions to a transaction.
+1.  Will this edit apply in all scenarios where I would want it to apply?
+2.  Will this edit be dropped in all scenarios where I would want it to be dropped?
+
+The answer to the first question will be negative if the edit has a precondition that is undesirable or undesirably broad for your scenario.
+This cannot be remedied but is not necessarily a deal-breaker on its own because allowing the right edit to happen some of the time may still be preferable to not allowing anything at all.
+For example, consider the scenario above where preconditions ensure that a node of type `Foo` cannot be inserted in an array whose schema does not allow it.
+The current implementation of `SharedTree`'s insert edit actually comes with the precondition that no part of the document schema has been concurrently changed.
+While this precondition is sufficient to prevent a node of type `Foo` from being inserted in an array whose schema does not allow it,
+it is much broader than strictly necessary and will also prevent edits that would not violate the schema.
+While we plan to offer a narrower precondition in the future, the current one is tolerable because schema changes are rare.
+
+The answer to the second question will be negative if the edit does not have a precondition that would be desirable for your scenario or has a precondition that is too narrow.
+This can often be remedied by using constraints\*.
+For example, in the scenario where Alice and Bob both want to change the color of the sticky note,
+it may be desirable to ensure that the color that is retained is always the one chosen by Alice.
+This could be achieved if Bob's edit had a precondition that the note's color must not have been concurrently changed
+(and if Alice's edit didn't have that precondition).
+`SharedTree`'s current set of edits does not include an edit with such a precondition,
+but using a constraint that ensures the original color has not been removed would likely be an acceptable alternative.
+
+\*[Constraints](#constraints) is a feature that allows transaction authors to add additional preconditions to a transaction.
 This makes understanding preconditions a pre-requisite for using constraints,
 but constraints can be ignored when it comes to understanding how preconditions affect merge semantics in general.
+
+Note that in a transaction, each edit's preconditions are added to the preconditions of the transaction.
+In other words, the preconditions of a transaction are the union of the preconditions of its edits.
 
 ### Postconditions
 
@@ -107,41 +133,30 @@ In our move example, edits that come after the move
 (whether they were made concurrently or not)
 may very well cause those nodes to end up in a different location.
 
+When considering whether a given edit is suitable for a given scenario,
+the postconditions help answer the following questions:
+
+1.  Will this edit, in scenarios where it applies, have all the effects I want it to have?
+2.  Will this edit, in scenarios where it applies, have none of the effects I do not want it to have?
+
+The answer to the first question will be negative if some desirable postcondition is missing, or an existing one is too narrow.
+For example, `SharedTree`'s remove operation on arrays does not guarantee that the array that contains the nodes at the time the edit is initiated
+will have fewer nodes immediately after the edit is applied compared to immediately before the edit is applied.
+This is because `SharedTree`'s remove operation applies even when the nodes have been concurrently moved to a different array.
+
+The answer to the second question will be negative if edit comes with an undesirable postcondition or postcondition that is too broad.
+For example, `SharedTree`'s delete operation on map nodes comes with the guarantee that,
+immediately after the edit is applied, the map will have no node associated with the key.
+This would be too broad of a postcondition in scenarios where one wouldn't want to risk removing a node that was concurrently set for that key.
+This is also an area where [constraints](#constraints) can help by ensuring that the edit is treated as invalid in such a situation.
+Note, however, that making the edit invalid would render the whole transaction invalid,
+while a narrower postcondition would simply not perform the deletion but allow the rest of transaction to apply.
+
 In a transaction, each edit's postconditions are added to the postconditions of the transaction,
 with later the postconditions of later edits overriding that of earlier ones whenever they are incompatible.
 For example, if a transaction moves a node from location A to location B,
 then moves that same node from location B to location C,
 the postcondition of the second move (that the node will be at location C) wins out.
-
-### The Absence of Preconditions and Postconditions Matters
-
-The preconditions and postconditions for an edit are important not only for what they include but also what they leave out.
-
-As an example, consider the effect of a move operation:
-It detaches some node `X` at location `A` under some parent node `Pa` and re-attaches it at some location `B` under some parent node `Pb`.
-The preconditions and postconditions for the current `SharedTree`'s current implementation of move are as follows.
-
-Preconditions:
-
--   The document schema was not concurrently changed (see [schema changes](#schema-changes)).
-
-Postconditions:
-
--   Node `X` is at location `B` under `Pb`.
-
-Here are some additional preconditions that one could consider for such an operation:
-
--   Node `X` was not concurrently moved.
--   Node `X` was not concurrently moved out from under `Pa`.
--   Node `X` was not concurrently removed.
--   Node `Pa` and its ancestors were not concurrently removed.
--   Node `Pb` and its ancestors were not concurrently removed.
--   No other node was moved to location `B`.
-
-By adding some of these preconditions, one might be able to make more guarantees about the effect of the edit, thus leading to additional postconditions.
-For example, by adding either of the top two preconditions,
-it would be possible to guarantee that there will be one fewer node under `Pa` and one more node under `Pb` than there had been before the edit,
-so long as `Pa` and `Pb` are different nodes.
 
 ## High-Level Design Choices
 
