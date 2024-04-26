@@ -458,7 +458,16 @@ module.exports = {
 			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts"],
 		},
 		"import/resolver": {
-			node: {
+			/**
+			 * Note: the key order of import/resolver is relevant in the completely resolved eslint config (see ./printed-configs).
+			 * Resolvers are tried in key order, and the first one to successfully resolve the import wins. See:
+			 * https://github.com/import-js/eslint-plugin-import/blob/c0ac54b8a721c2b1c9048838acc4d6282f4fe7a7/utils/resolve.js#L196
+			 *
+			 * It's important that the typescript resolver is first, as the node resolver legitimately resolves some imports to modules
+			 * with stripped type information, which can cause silent negatives in lint rules. For example, import/no-deprecated fails
+			 * to lint against import and usage of deprecated types when the import is resolvable and resolved using the node resolver.
+			 */
+			typescript: {
 				extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
 			},
 		},

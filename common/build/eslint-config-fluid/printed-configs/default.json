@@ -1747,21 +1747,21 @@
             ]
         },
         "import/resolver": {
-            "node": {
-                "extensions": [
-                    ".ts",
-                    ".tsx",
-                    ".d.ts",
-                    ".js",
-                    ".jsx",
-                    ".jsx"
-                ]
-            },
             "typescript": {
                 "extensions": [
                     ".ts",
                     ".tsx",
                     ".d.ts",
+                    ".js",
+                    ".jsx"
+                ]
+            },
+            "node": {
+                "extensions": [
+                    ".ts",
+                    ".cts",
+                    ".mts",
+                    ".tsx",
                     ".js",
                     ".jsx"
                 ]
