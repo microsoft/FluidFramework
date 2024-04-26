@@ -9194,6 +9194,8 @@ importers:
   packages/service-clients/end-to-end-tests/azure-client:
     specifiers:
       '@biomejs/biome': ^1.6.2
+      '@fluid-experimental/data-objects': workspace:~
+      '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/azure-client': workspace:~
@@ -9203,10 +9205,12 @@ importers:
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/counter': workspace:~
+      '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/fluid-static': workspace:~
       '@fluidframework/map': workspace:~
       '@fluidframework/matrix': workspace:~
+      '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/sequence': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
@@ -9232,6 +9236,8 @@ importers:
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
+      '@fluid-experimental/data-objects': link:../../../../experimental/framework/data-objects
+      '@fluid-internal/client-utils': link:../../../common/client-utils
       '@fluid-internal/mocha-test-setup': link:../../../test/mocha-test-setup
       '@fluidframework/aqueduct': link:../../../framework/aqueduct
       '@fluidframework/azure-client': link:../../azure-client
@@ -9239,9 +9245,11 @@ importers:
       '@fluidframework/container-loader': link:../../../loader/container-loader
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
       '@fluidframework/counter': link:../../../dds/counter
+      '@fluidframework/datastore-definitions': link:../../../runtime/datastore-definitions
       '@fluidframework/fluid-static': link:../../../framework/fluid-static
       '@fluidframework/map': link:../../../dds/map
       '@fluidframework/matrix': link:../../../dds/matrix
+      '@fluidframework/runtime-definitions': link:../../../runtime/runtime-definitions
       '@fluidframework/sequence': link:../../../dds/sequence
       '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
       '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils

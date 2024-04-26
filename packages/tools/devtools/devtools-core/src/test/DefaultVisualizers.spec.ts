@@ -372,11 +372,7 @@ describe("DefaultVisualizers unit tests", () => {
 
 	it("SharedString", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const sharedString = new SharedString(
-			runtime,
-			"test-string",
-			SharedString.getFactory().attributes,
-		);
+		const sharedString = SharedString.getFactory().create(runtime, "test-string");
 		sharedString.insertText(0, "Hello World!");
 
 		const result = await visualizeSharedString(sharedString, visualizeChildData);
@@ -836,11 +832,7 @@ describe("DefaultVisualizers unit tests", () => {
 			"test",
 		);
 
-		const sharedString = new SharedString(
-			runtime,
-			"test-string",
-			SharedString.getFactory().attributes,
-		);
+		const sharedString = SharedString.getFactory().create(runtime, "test-string");
 		sharedString.insertText(0, "Hello World!");
 
 		sharedTree.schematize(new TreeConfiguration(builder.handle, () => sharedString.handle));
@@ -880,11 +872,7 @@ describe("DefaultVisualizers unit tests", () => {
 			"test",
 		);
 
-		const sharedString = new SharedString(
-			runtime,
-			"test-string",
-			SharedString.getFactory().attributes,
-		);
+		const sharedString = SharedString.getFactory().create(runtime, "test-string");
 		sharedString.insertText(0, "Hello World!");
 
 		class RootNodeSchema extends builder.object("root-item", {

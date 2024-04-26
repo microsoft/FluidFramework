@@ -15,8 +15,8 @@ import {
 
 import { Side } from "../intervalCollection.js";
 import { IntervalStickiness } from "../intervals/index.js";
-import { SharedStringFactory } from "../sequenceFactory.js";
-import { SharedString } from "../sharedString.js";
+import { SharedString, SharedStringFactory } from "../sequenceFactory.js";
+import { SharedStringClass, type ISharedString } from "../sharedString.js";
 
 import { Client, assertConsistent, assertSequenceIntervals } from "./intervalTestUtils.js";
 
@@ -29,7 +29,11 @@ function constructClient(
 		intervalStickinessEnabled: true,
 		mergeTreeEnableObliterate: true,
 	};
-	const sharedString = new SharedString(dataStoreRuntime, id, SharedStringFactory.Attributes);
+	const sharedString: ISharedString = new SharedStringClass(
+		dataStoreRuntime,
+		id,
+		SharedStringFactory.Attributes,
+	);
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services: IChannelServices = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
