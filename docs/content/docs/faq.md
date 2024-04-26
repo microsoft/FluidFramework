@@ -255,6 +255,7 @@ Instead, when a client joins a collaborative document, they can download a snaps
 #### Summary vs Snapshot
 
 Summary and snapshot both represent the contents for a container in a tree format. They differ in the following ways:
+
 -   Summary is uploaded to storage and snapshot is downloaded from storage. A snapshot is basically the summary that was uploaded but in a different format.
 -   Summary is generated at periodic intervals to summarize the state of the container's content at a point in time (sequenceNumber). Snapshot is typically downloaded when a client loads a Fluid document and is the container's content at a point in time (sequenceNumber).
 -   Summary is incremental, i.e., parts of the container that have not changed will refer to the previous summary's sub-tree for its content. Snapshot is not incremental, i.e., the whole tree for the container is present in a snapshot.
