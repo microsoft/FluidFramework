@@ -1,6 +1,6 @@
 # SharedTree Merge Semantics
 
-This document offers a high-level description `SharedTree`'s merge semantics.
+This document offers a high-level description of `SharedTree`'s merge semantics.
 
 Target audience: `SharedTree` users and maintainers.
 
@@ -10,8 +10,9 @@ Merge semantics define how `SharedTree` reconciles concurrent edits.
 
 ### Concurrent Edits
 
-When several peers edit the same document, it's possible for some of the edits to be concurrent.
-The edits of two clients are concurrent if they each made those edits before they had received the others’ edits from the server.
+When several clients edit the same document, it's possible for some of the edits to be concurrent.
+Some edit `X` is said to be concurrent to some other edit `Y` from another client if the client that initiated `X` did so before receiving `Y` from the server.
+This property is always mutual: if `X` is concurrent to `Y` then `Y` is also concurrent to `X`.
 
 For example, imagine Alice and Bob are editing a document that contains sticky notes whose background color can be changed.
 If Alice changes the background color of one sticky note from yellow to red,
@@ -57,7 +58,7 @@ The two edits must be reconciled on Alice's device._
 
 Reconciling concurrent edits is trivial when they affect independent parts of the tree.
 
-For example, if Alice and Bob concurrently change the background color of _separate_ sticky notes,
+For example, if Alice and Bob concurrently change the background color of _different_ sticky notes,
 then there is only one reasonable outcome.
 
 However, it's possible for some concurrent edits to affect overlapping parts of the tree.
@@ -76,15 +77,23 @@ then one could imagine multiple possible outcomes:
 `SharedTree`'s merge semantics define which outcome will be picked,
 and ensure that Alice and Bob get the same outcome.
 
-## Why/When Should You Care?
+## When Should You Care?
 
-Developers that use `SharedTree` should be able to be productive without constantly worrying about merge semantics.
+Developers should be able to use `SharedTree` productively without constantly worrying about merge semantics.
 There are, however, situations that warrant an awareness and understanding of merge semantics.
-Those are commonly:
 
--   The need to understand the experience that end-users will face given the host application's usage of `SharedTree`'s editing capabilities.
--   The need to determine how to use `SharedTree`'s editing capabilities to achieve a desired end-user experience, and whether that experience is achievable in the first place.
--   The need to select a data model (i.e., how a document is structured) for an application so that the application's invariants are upheld by `SharedTree`'s merge semantics.
+### Defining The End-User Experience
+
+Application authors sometimes need understand the relationship between their application's usage of `SharedTree`,
+and the resulting end-user experience when users make concurrent changes given.
+This enables them to determine how to use `SharedTree`'s editing capabilities to achieve a desired end-user experience,
+and whether that experience is achievable in the first place.
+
+### Maintaining Application Invariants
+
+An application author may wish to ensure that some invariants are upheld in the application's document.
+While most of those invariants are typically ensured by the document's schema,
+some of them may depend on `SharedTree`'s merge semantics.
 
 For example, consider an application whose data model includes two arrays,
 with the invariant that the length of one array is expected to always be the same as the length of the other array.
@@ -111,11 +120,11 @@ is dropped — meaning they have no effect.
 For example, imagine Alice inserts a node of type `Foo` in an array,
 with the precondition that by the time the edit is finally applied,
 this array must allow instances of type `Foo`.
-Concurrently to that, Bob edits the document schema such that the array in question no longer allows instances of type `Foo`,
+Concurrent to that, Bob edits the document schema such that the array no longer allows instances of type `Foo`,
 with the precondition that by the time the edit is finally applied,
-no instances of type `Foo` must exist in the array.
-If Alice's edit is sequenced first, then the node will successfully be inserted, and Bob's edit will be dropped.
-If Bob's edit is sequenced first, then the schema will successfully be changed, and Alice's edit will be dropped.
+no instances of type `Foo` may exist in the array.
+If Alice's edit is sequenced first, then the node will be inserted, and Bob's edit will be dropped.
+If Bob's edit is sequenced first, then the schema will be changed, and Alice's edit will be dropped.
 
 When considering whether a given edit is suitable for a given scenario,
 the edit's preconditions help answer the following questions:
@@ -301,7 +310,7 @@ but not adversely affect the rest of the transaction.
 As with minimal preconditions, we may support more variations of our current set of edits in the future.
 
 This prioritization is partially guided by the same motivation that guided our choice with minimal preconditions:
-it makes more for a greater set of possible edits when combined with [constraints](#constraints).
+it makes for a greater set of possible edits when combined with [constraints](#constraints).
 
 The other motivation is that simpler postconditions make authoring transactions much more approachable.
 This is because they reduce the number of possible states the document could be in between the edits that make up the transaction,
