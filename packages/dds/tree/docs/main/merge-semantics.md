@@ -14,7 +14,9 @@ When several clients edit the same document, it's possible for some of the edits
 Some edit `X` is said to be concurrent to some other edit `Y` from another client if the client that initiated `X` did so before receiving `Y` from the server.
 This property is always mutual: if `X` is concurrent to `Y` then `Y` is also concurrent to `X`.
 
-For example, imagine Alice and Bob are editing a document that contains sticky notes whose background color can be changed.
+Let's first look at some examples where the edits are _not_ concurrent.
+
+Imagine Alice and Bob are editing a document that contains sticky notes whose background color can be changed.
 If Alice changes the background color of one sticky note from yellow to red,
 that edit will be sent to the server which will forward it to Bob.
 
