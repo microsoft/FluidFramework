@@ -1828,6 +1828,19 @@
                     ".d.ts",
                     ".js",
                     ".jsx"
+                ],
+                "conditionNames": [
+                    "allow-ff-test-exports",
+                    "types",
+                    "import",
+                    "esm2020",
+                    "es2020",
+                    "es2015",
+                    "require",
+                    "node",
+                    "node-addons",
+                    "browser",
+                    "default"
                 ]
             },
             "node": {

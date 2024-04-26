@@ -25,6 +25,11 @@ The precedence has been reversed in this release: [eslint-import-resolver-typesc
 
 This may result in lint rules dependent on imported _types_ (rather than values) to correctly apply, e.g. `import/no-deprecated`.
 
+### allow-ff-test-exports condition enabled
+
+The typescript import resolver now enables the "allow-ff-test-exports" condition, which adds support for linting files which reference FluidFramework test-only exports,
+such as id-compressor and merge-tree.
+
 ## [5.2.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.2.0)
 
 The import/order rule is now disabled in all configs.

@@ -469,6 +469,25 @@ module.exports = {
 			 */
 			typescript: {
 				extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
+				conditionNames: [
+					// This supports the test-only conditional export pattern used in merge-tree and id-compressor.
+					"allow-ff-test-exports",
+
+					// Default condition names below, see https://www.npmjs.com/package/eslint-import-resolver-typescript#conditionnames
+					"types",
+					"import",
+
+					// APF: https://angular.io/guide/angular-package-format
+					"esm2020",
+					"es2020",
+					"es2015",
+
+					"require",
+					"node",
+					"node-addons",
+					"browser",
+					"default",
+				],
 			},
 		},
 		"jsdoc": {
