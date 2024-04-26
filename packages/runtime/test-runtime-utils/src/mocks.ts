@@ -1074,9 +1074,9 @@ export class MockFluidDataStoreRuntime
 	}
 
 	/**
-	 * Test utility to help shared object instances from a {@link @fluidframework/shared-object-base#ISharedObjectKind}.
+	 * Test utility to help create shared object instances from a {@link @fluidframework/shared-object-base#ISharedObjectKind}.
 	 * @remarks
-	 * This is an alternative to {@link @fluidframework/shared-object-base#ISharedObjectKind.create} that avoids it's incompatibility with {@link MockFluidDataStoreRuntime}.
+	 * This is an alternative to {@link @fluidframework/shared-object-base#ISharedObjectKind.create} that avoids its incompatibility with {@link MockFluidDataStoreRuntime}.
 	 *
 	 * If an `id` is not provided, a random UUID is used.
 	 */
