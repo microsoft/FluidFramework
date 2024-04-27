@@ -98,7 +98,7 @@ export function verifyChangeRebaser<TChange>(
 ): OutputType<TChange> {
 	const metadata = revisionMetadataSourceFromInfo([]);
 	const rebase = (change: TChange, over: TChange) =>
-		rebaser.rebase(change, makeAnonChange(over), metadata);
+		rebaser.rebase(makeAnonChange(change), makeAnonChange(over), metadata);
 
 	const compose = (changeToCompose: TChange[]) =>
 		rebaser.compose(changeToCompose.map(makeAnonChange));

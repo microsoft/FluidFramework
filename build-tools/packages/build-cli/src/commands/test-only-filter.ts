@@ -45,8 +45,9 @@ export default class FilterCommand extends PackageCommand<typeof FilterCommand> 
 		// do nothing
 	}
 
-	protected async processPackages(packages: PackageWithKind[]): Promise<void> {
+	protected async processPackages(packages: PackageWithKind[]): Promise<string[]> {
 		// do nothing
+		return [];
 	}
 
 	public async run(): Promise<FilterCommandResult> {

@@ -56,26 +56,31 @@ export class OrdererManager implements core.IOrdererManager {
 	) {}
 
 	public async getOrderer(tenantId: string, documentId: string): Promise<core.IOrderer> {
-		const tenant = await this.tenantManager.getTenant(tenantId, documentId);
+		if (!this.globalDbEnabled) {
+			const messageMetaData = { documentId, tenantId };
+			Lumberjack.info(`Global db is disabled, checking orderer URL`, messageMetaData);
+			const tenant = await this.tenantManager.getTenant(tenantId, documentId);
 
-		const messageMetaData = { documentId, tenantId };
-		winston.info(`tenant orderer: ${JSON.stringify(tenant.orderer)}`, { messageMetaData });
-		Lumberjack.info(
-			`tenant orderer: ${JSON.stringify(tenant.orderer)}`,
-			getLumberBaseProperties(documentId, tenantId),
-		);
+			Lumberjack.info(
+				`tenant orderer: ${JSON.stringify(tenant.orderer)}`,
+				getLumberBaseProperties(documentId, tenantId),
+			);
 
-		if (tenant.orderer.url !== this.ordererUrl && !this.globalDbEnabled) {
-			Lumberjack.error(`Invalid ordering service endpoint`, { messageMetaData });
-			throw new Error("Invalid ordering service endpoint");
-		}
+			if (tenant.orderer.url !== this.ordererUrl) {
+				Lumberjack.error(`Invalid ordering service endpoint`, { messageMetaData });
+				throw new Error("Invalid ordering service endpoint");
+			}
 
-		switch (tenant.orderer.type) {
-			case "kafka":
-				return this.kafkaFactory.create(tenantId, documentId);
-			default:
+			if (tenant.orderer.type !== "kafka") {
+				Lumberjack.info(
+					`Using local orderer`,
+					getLumberBaseProperties(documentId, tenantId),
+				);
 				return this.localOrderManager.get(tenantId, documentId);
+			}
 		}
+		Lumberjack.info(`Using Kafka orderer`, getLumberBaseProperties(documentId, tenantId));
+		return this.kafkaFactory.create(tenantId, documentId);
 	}
 }
 

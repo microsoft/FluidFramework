@@ -8,22 +8,15 @@ import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidSerializer } from '@fluidframework/shared-object-base';
-import { IJSONSegment } from '@fluidframework/merge-tree/internal';
-import { IMatrixConsumer } from '@tiny-calc/nano';
 import { IMatrixProducer } from '@tiny-calc/nano';
 import { IMatrixReader } from '@tiny-calc/nano';
 import { IMatrixWriter } from '@tiny-calc/nano';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import type { ISharedObjectKind } from '@fluidframework/shared-object-base';
 import { Serializable } from '@fluidframework/datastore-definitions/internal';
-import { SharedObject } from '@fluidframework/shared-object-base/internal';
 
 // @alpha (undocumented)
 export interface IRevertible {
@@ -34,17 +27,15 @@ export interface IRevertible {
 }
 
 // @alpha (undocumented)
-export interface ISharedMatrix<T = any> extends IEventProvider<ISharedMatrixEvents<T>>, IMatrixProducer<MatrixItem<T>>, IMatrixReader<MatrixItem<T>>, IMatrixWriter<MatrixItem<T>> {
-    // (undocumented)
+export interface ISharedMatrix<T = any> extends IEventProvider<ISharedMatrixEvents<T>>, IMatrixProducer<MatrixItem<T>>, IMatrixReader<MatrixItem<T>>, IMatrixWriter<MatrixItem<T>>, IChannel {
     insertCols(colStart: number, count: number): void;
-    // (undocumented)
     insertRows(rowStart: number, count: number): void;
-    // (undocumented)
+    isSetCellConflictResolutionPolicyFWW(): boolean;
     openUndo(consumer: IUndoConsumer): void;
-    // (undocumented)
     removeCols(colStart: number, count: number): void;
-    // (undocumented)
     removeRows(rowStart: number, count: number): void;
+    setCells(rowStart: number, colStart: number, colCount: number, values: readonly MatrixItem<T>[]): void;
+    switchSetCellPolicy(): void;
 }
 
 // @alpha
@@ -62,67 +53,12 @@ export interface IUndoConsumer {
 export type MatrixItem<T> = Serializable<Exclude<T, null>> | undefined;
 
 // @alpha
-export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T> & ISharedObjectEvents> implements ISharedMatrix<T> {
-    constructor(runtime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, _isSetCellConflictResolutionPolicyFWW?: boolean);
-    protected applyStashedOp(_content: unknown): void;
-    // (undocumented)
-    closeMatrix(consumer: IMatrixConsumer<MatrixItem<T>>): void;
-    // (undocumented)
-    get colCount(): number;
-    static create<T>(runtime: IFluidDataStoreRuntime, id?: string): SharedMatrix<T>;
-    // (undocumented)
-    protected didAttach(): void;
-    // (undocumented)
-    getCell(row: number, col: number): MatrixItem<T>;
-    // (undocumented)
-    static getFactory(): SharedMatrixFactory;
-    // (undocumented)
-    id: string;
-    // (undocumented)
-    insertCols(colStart: number, count: number): void;
-    // (undocumented)
-    insertRows(rowStart: number, count: number): void;
-    // (undocumented)
-    isSetCellConflictResolutionPolicyFWW(): boolean;
-    protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // (undocumented)
-    get matrixProducer(): IMatrixProducer<MatrixItem<T>>;
-    // (undocumented)
-    protected onConnect(): void;
-    // (undocumented)
-    protected onDisconnect(): void;
-    // (undocumented)
-    openMatrix(consumer: IMatrixConsumer<MatrixItem<T>>): IMatrixReader<MatrixItem<T>>;
-    openUndo(consumer: IUndoConsumer): void;
-    // (undocumented)
-    protected processCore(msg: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    protected processGCDataCore(serializer: IFluidSerializer): void;
-    // (undocumented)
-    removeCols(colStart: number, count: number): void;
-    // (undocumented)
-    removeRows(rowStart: number, count: number): void;
-    // (undocumented)
-    protected reSubmitCore(incoming: unknown, localOpMetadata: unknown): void;
-    // (undocumented)
-    get rowCount(): number;
-    // (undocumented)
-    setCell(row: number, col: number, value: MatrixItem<T>): void;
-    // (undocumented)
-    setCells(rowStart: number, colStart: number, colCount: number, values: readonly MatrixItem<T>[]): void;
-    // (undocumented)
-    protected submitLocalMessage(message: any, localOpMetadata?: any): void;
-    // (undocumented)
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
-    switchSetCellPolicy(): void;
-    // (undocumented)
-    toString(): string;
-    // (undocumented)
-    _undoRemoveCols(colStart: number, spec: IJSONSegment): void;
-    // (undocumented)
-    _undoRemoveRows(rowStart: number, spec: IJSONSegment): void;
-}
+export const SharedMatrix: ISharedObjectKind<ISharedMatrix>;
 
 // @alpha
+export type SharedMatrix<T = any> = ISharedMatrix<T>;
+
+// @alpha @deprecated
 export class SharedMatrixFactory implements IChannelFactory<ISharedMatrix> {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;

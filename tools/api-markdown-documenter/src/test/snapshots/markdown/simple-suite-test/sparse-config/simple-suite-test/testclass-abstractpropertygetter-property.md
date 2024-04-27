@@ -7,3 +7,5 @@ A test abstract getter property.
 ```typescript
 get abstractPropertyGetter(): TestMappedType;
 ```
+
+**Type:** [TestMappedType](docs/simple-suite-test/testmappedtype-typealias)

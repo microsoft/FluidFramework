@@ -11,7 +11,7 @@ import {
 	itExpects,
 	itSkipsFailureOnSpecificDrivers,
 } from "@fluid-private/test-version-utils";
-import type { SharedCell } from "@fluidframework/cell/internal";
+import type { ISharedCell } from "@fluidframework/cell/internal";
 import {
 	IContainer,
 	IHostLoader,
@@ -278,7 +278,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	let container1: IContainerExperimental;
 	let map1: ISharedMap;
 	let string1: SharedString;
-	let cell1: SharedCell;
+	let cell1: ISharedCell;
 	let counter1: SharedCounter;
 	let directory1: ISharedDirectory;
 	let collection1: IIntervalCollection<SequenceInterval>;
@@ -296,7 +296,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		url = await container1.getAbsoluteUrl("");
 		const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
 		map1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
-		cell1 = await dataStore1.getSharedObject<SharedCell>(cellId);
+		cell1 = await dataStore1.getSharedObject<ISharedCell>(cellId);
 		counter1 = await dataStore1.getSharedObject<SharedCounter>(counterId);
 		directory1 = await dataStore1.getSharedObject<SharedDirectory>(directoryId);
 		string1 = await dataStore1.getSharedObject<SharedString>(stringId);
@@ -323,7 +323,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
 			const map = await d.getSharedObject<ISharedMap>(mapId);
 			map.set(testKey, testValue);
-			const cell = await d.getSharedObject<SharedCell>(cellId);
+			const cell = await d.getSharedObject<ISharedCell>(cellId);
 			cell.set(testValue);
 			const counter = await d.getSharedObject<SharedCounter>(counterId);
 			counter.increment(testIncrementValue);
@@ -353,7 +353,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const container2 = await loader.resolve({ url }, pendingOps);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
-		const cell2 = await dataStore2.getSharedObject<SharedCell>(cellId);
+		const cell2 = await dataStore2.getSharedObject<ISharedCell>(cellId);
 		const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 		const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
 		const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
@@ -390,7 +390,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			mapCompressedId = (map as any).runtime.idCompressor.generateCompressedId();
 			mapDecompressedId = (map as any).runtime.idCompressor.decompress(mapCompressedId);
 			map.set(mapDecompressedId, testValue);
-			const cell = await d.getSharedObject<SharedCell>(cellId);
+			const cell = await d.getSharedObject<ISharedCell>(cellId);
 			assert((cell as any).runtime.idCompressor !== undefined);
 			cellCompressedId = (cell as any).runtime.idCompressor.generateCompressedId();
 			cellDecompressedId = (cell as any).runtime.idCompressor.decompress(cellCompressedId);
@@ -411,7 +411,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const container2 = await loader.resolve({ url }, pendingOps);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
-		const cell2 = await dataStore2.getSharedObject<SharedCell>(cellId);
+		const cell2 = await dataStore2.getSharedObject<ISharedCell>(cellId);
 		const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
 		assert((map2 as any).runtime.idCompressor !== undefined);
 		assert((cell2 as any).runtime.idCompressor !== undefined);
@@ -454,7 +454,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
 			const map = await d.getSharedObject<ISharedMap>(mapId);
 			map.set(testKey, testValue);
-			const cell = await d.getSharedObject<SharedCell>(cellId);
+			const cell = await d.getSharedObject<ISharedCell>(cellId);
 			cell.set(testValue);
 			const counter = await d.getSharedObject<SharedCounter>(counterId);
 			counter.increment(testIncrementValue);
@@ -468,7 +468,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		container2.connect();
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
-		const cell2 = await dataStore2.getSharedObject<SharedCell>(cellId);
+		const cell2 = await dataStore2.getSharedObject<ISharedCell>(cellId);
 		const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 		const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
 		await waitForContainerConnection(container2);
@@ -492,7 +492,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			const pendingOps = await getPendingOps(provider, true, async (c, d) => {
 				const mapPre = await getMap(d);
 				mapPre.set(testKey, "something unimportant");
-				const cell = await d.getSharedObject<SharedCell>(cellId);
+				const cell = await d.getSharedObject<ISharedCell>(cellId);
 				cell.set("something unimportant");
 				const counter = await d.getSharedObject<SharedCounter>(counterId);
 				counter.increment(3);
@@ -510,7 +510,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			const container2 = await loader.resolve({ url }, pendingOps);
 			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			const map2 = await getMap(dataStore2);
-			const cell2 = await dataStore2.getSharedObject<SharedCell>(cellId);
+			const cell2 = await dataStore2.getSharedObject<ISharedCell>(cellId);
 			const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 			const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
 

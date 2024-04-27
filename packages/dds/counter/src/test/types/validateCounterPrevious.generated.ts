@@ -74,23 +74,17 @@ use_old_InterfaceDeclaration_ISharedCounterEvents(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedCounter": {"forwardCompat": false}
+* "RemovedClassDeclaration_SharedCounter": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_SharedCounter():
     TypeOnly<old.SharedCounter>;
-declare function use_current_ClassDeclaration_SharedCounter(
+declare function use_current_RemovedClassDeclaration_SharedCounter(
     use: TypeOnly<current.SharedCounter>): void;
-use_current_ClassDeclaration_SharedCounter(
+use_current_RemovedClassDeclaration_SharedCounter(
     get_old_ClassDeclaration_SharedCounter());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedCounter": {"backCompat": false}
+* "RemovedClassDeclaration_SharedCounter": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_SharedCounter():
-    TypeOnly<current.SharedCounter>;
-declare function use_old_ClassDeclaration_SharedCounter(
-    use: TypeOnly<old.SharedCounter>): void;
-use_old_ClassDeclaration_SharedCounter(
-    get_current_ClassDeclaration_SharedCounter());
