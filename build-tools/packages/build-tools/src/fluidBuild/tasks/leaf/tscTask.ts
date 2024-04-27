@@ -127,9 +127,8 @@ export class TscTask extends LeafTask {
 		const noEmit = config.options.noEmit ?? false;
 		const hasChangedFiles = (program.changeFileSet?.length ?? 0) > 0;
 		const hasEmitErrorsOrPending =
-			(program.affectedFilesPendingEmit?.length ??
-				program.emitDiagnosticsPerFile?.length ??
-				0) > 0;
+			(program.affectedFilesPendingEmit?.length ?? 0) > 0 ||
+			(program.emitDiagnosticsPerFile?.length ?? 0) > 0;
 		const hasSemanticErrors =
 			program.semanticDiagnosticsPerFile?.some((item) => Array.isArray(item)) ?? false;
 
