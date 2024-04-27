@@ -134,8 +134,8 @@ export class TscTask extends LeafTask {
 			program.semanticDiagnosticsPerFile?.some((item) => Array.isArray(item)) ?? false;
 
 		const previousBuildError = noEmit
-			? hasChangedFiles || hasEmitErrorsOrPending || hasSemanticErrors
-			: hasChangedFiles || hasSemanticErrors;
+			? hasChangedFiles || hasSemanticErrors
+			: hasChangedFiles || hasSemanticErrors || hasEmitErrorsOrPending;
 
 		// Check previous build errors
 		if (previousBuildError) {
