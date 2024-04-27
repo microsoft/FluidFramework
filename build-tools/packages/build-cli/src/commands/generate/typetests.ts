@@ -82,7 +82,7 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 			this.verbose(`Deleted file: ${typeTestOutputFile}`);
 
 			// Early exit; no error.
-			this.exit(0);
+			return;
 		}
 
 		ensureDevDependencyExists(currentPackageJson, previousPackageName);
@@ -110,7 +110,18 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 			`Found ${previousPackageLevel} type definitions for ${previousPackageJson.name}: ${previousTypesPath}`,
 		);
 
-		const currentFile = loadTypesSourceFile(currentTypesPath);
+		// For the current version, we load the package-local tsconfig and return index.ts as the source file. This ensures
+		// we don't need to build before running type test generation. It's tempting to load the .d.ts files and use the
+		// same code path as is used below for the previous version (loadTypesSourceFile()), but that approach requires that
+		// the local project be built.
+		//
+		// One drawback to this approach is that it will always enumerate the full (internal) API for the current version.
+		// There's no way to scope it to just alpha, beta, etc. for example. If that capability is eventually needed we can
+		// revisit this.
+		const currentFile = new Project({
+			skipFileDependencyResolution: true,
+			tsConfigFilePath: path.join(pkg.directory, "tsconfig.json"),
+		}).getSourceFileOrThrow("index.ts");
 		this.verbose(
 			`Loaded source file for current version (${pkg.version}): ${currentFile.getFilePath()}`,
 		);
