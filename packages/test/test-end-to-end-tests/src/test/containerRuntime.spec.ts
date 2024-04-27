@@ -174,7 +174,7 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 		}
 	}
 
-	it.only("test", async function () {
+	it("Demonstrate issue with ID compressor", async function () {
 		if (provider.type !== "TestObjectProviderWithVersionedLoad") {
 			this.skip();
 			return;
