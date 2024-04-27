@@ -124,13 +124,21 @@ export class TscTask extends LeafTask {
 		}
 
 		const program = tsBuildInfo.program;
+		const noEmit = config.options.noEmit ?? false;
+		const hasChangedFiles = (program.changeFileSet?.length ?? 0) > 0;
+		const hasEmitErrorsOrPending =
+			(program.affectedFilesPendingEmit?.length ??
+				program.emitDiagnosticsPerFile?.length ??
+				0) > 0;
+		const hasSemanticErrors =
+			program.semanticDiagnosticsPerFile?.some((item) => Array.isArray(item)) ?? false;
+
+		const previousBuildError = noEmit
+			? hasChangedFiles || hasEmitErrorsOrPending || hasSemanticErrors
+			: hasChangedFiles || hasSemanticErrors;
+
 		// Check previous build errors
-		if (
-			program.changeFileSet?.length ||
-			(!config.options.noEmit
-				? program.affectedFilesPendingEmit?.length || program.emitDiagnosticsPerFile?.length
-				: program.semanticDiagnosticsPerFile?.some((item) => Array.isArray(item)))
-		) {
+		if (previousBuildError) {
 			this.traceTrigger("previous build error");
 			return false;
 		}
