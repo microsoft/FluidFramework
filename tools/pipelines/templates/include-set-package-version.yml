@@ -143,7 +143,8 @@ steps:
     workingDirectory: ${{ parameters.buildDirectory }}
     filePath: $(Build.SourcesDirectory)/scripts/update-package-version.sh
 
-- ${{ if and(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.SourceBranch'], 'refs/heads/main')) }}: 
+# - ${{ if and(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.SourceBranch'], 'refs/heads/main')) }}: 
+- ${{ if eq(variables['Build.Reason'], 'IndividualCI') }}: 
   - template: /tools/pipelines/templates/upload-dev-manifest.yml
     parameters:
       buildDirectory: '${{ parameters.buildDirectory }}'
