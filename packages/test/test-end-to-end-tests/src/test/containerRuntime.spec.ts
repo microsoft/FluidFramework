@@ -10,19 +10,14 @@ import { IContainer } from "@fluidframework/container-definitions/internal";
 import { CompressionAlgorithms } from "@fluidframework/container-runtime/internal";
 import {
 	type ITestContainerConfig,
-	ITestObjectProvider,
+	type ITestObjectProvider,
+	type ITestFluidObject,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
 describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
-	let entry: TestDataObject;
-
-	class TestDataObject extends apis.dataRuntime.DataObject {
-		public get root() {
-			return super.root;
-		}
-	}
+	let entry: ITestFluidObject;
 
 	function generateStringOfSize(sizeInBytes: number) {
 		return new Array(sizeInBytes + 1).join("0");
@@ -33,7 +28,7 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 	}
 
 	async function getEntryPoint(container: IContainer) {
-		return getContainerEntryPointBackCompat<TestDataObject>(container);
+		return getContainerEntryPointBackCompat<ITestFluidObject>(container);
 	}
 
 	beforeEach("getTestObjectProvider", async () => {
@@ -178,6 +173,35 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 			}
 		}
 	}
+
+	it.only("test", async function () {
+		if (provider.type !== "TestObjectProviderWithVersionedLoad") {
+			this.skip();
+			return;
+		}
+
+		const options: ITestContainerConfig = {
+			runtimeOptions: {
+				enableRuntimeIdCompressor: "on",
+			},
+		};
+
+		const container = await provider.makeTestContainer(options);
+		entry = await getEntryPoint(container);
+
+		// Create a new DDS - it will force ID compressor ops to flow.
+		const channel = await entry.runtime.createChannel(undefined, entry.root.attributes.type);
+		// Make sure creation process completes - DDS is attached to container.
+		(channel as any).bindToContext();
+
+		const container2 = await loadContainer(options);
+		await getEntryPoint(container2);
+
+		await provider.ensureSynchronized();
+
+		assert(!container.closed);
+		assert(!container2.closed);
+	});
 });
 
 describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider, apis) => {
