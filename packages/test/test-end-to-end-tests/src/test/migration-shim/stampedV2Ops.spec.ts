@@ -212,7 +212,10 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		container.close();
 	});
 
-	it("MigrationShim can drop v1 ops and migrate ops", async () => {
+	it("MigrationShim can drop v1 ops and migrate ops", async function () {
+		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
+			this.skip();
+		}
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1 = await provider.loadContainer(runtimeFactory2);
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;

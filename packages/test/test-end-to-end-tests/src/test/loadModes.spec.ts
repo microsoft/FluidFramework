@@ -366,7 +366,13 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 		itExpects(
 			"Throw if attempting to pause at a sequence number before the latest summary",
 			[{ eventName: "fluid:telemetry:Container:ContainerClose" }],
-			async () => {
+			async function () {
+				if (
+					provider.driver.type === "routerlicious" &&
+					provider.driver.endpointName === "frs"
+				) {
+					this.skip();
+				}
 				const { summarizer } = await createSummarizerFromFactory(
 					provider,
 					container1,

@@ -73,8 +73,11 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		});
 	};
 
-	it("snapshot was refreshed", async () => {
+	it("snapshot was refreshed", async function () {
 		const provider = getTestObjectProvider();
+		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
+			this.skip();
+		}
 		const getLatestSnapshotInfoP = new Deferred<void>();
 		const testContainerConfig = {
 			fluidDataObjectType: DataObjectFactoryType.Test,

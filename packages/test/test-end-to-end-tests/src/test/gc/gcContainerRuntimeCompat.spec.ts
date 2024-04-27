@@ -162,6 +162,12 @@ describeCompat(
 		 * be read by older / newer versions of the container runtime.
 		 */
 		it("load version validates unreferenced timestamp from summary by create version", async function () {
+			if (
+				provider.driver.type === "routerlicious" &&
+				provider.driver.endpointName === "frs"
+			) {
+				this.skip();
+			}
 			// Create a new summarizer running version 1 runtime. This client will generate a summary which will be used to load
 			// a new client using the runtime factory version 2.
 			const summarizer1 = await createSummarizer(version1Apis);

@@ -134,7 +134,13 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 	itSkipsFailureOnSpecificDrivers(
 		"Can attribute content from multiple collaborators",
 		["tinylicious", "t9s"],
-		async () => {
+		async function () {
+			if (
+				provider.driver.type === "routerlicious" &&
+				provider.driver.endpointName === "frs"
+			) {
+				this.skip();
+			}
 			const attributor = createRuntimeAttributor();
 			const container1 = await provider.makeTestContainer(getTestConfig(attributor));
 			const sharedString1 = await sharedStringFromContainer(container1);
