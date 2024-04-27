@@ -190,7 +190,7 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 		entry = await getEntryPoint(container);
 
 		// Create a new DDS - it will force ID compressor ops to flow.
-		const channel = await entry.runtime.createChannel(undefined, entry.root.attributes.type);
+		const channel = entry.runtime.createChannel(undefined, entry.root.attributes.type);
 		// Make sure creation process completes - DDS is attached to container.
 		(channel as any).bindToContext();
 
