@@ -200,6 +200,8 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 		await provider.ensureSynchronized();
 
 		assert(!container.closed);
+
+		// This assert will fire if we load with 1.x, as that version does not understand ID compressor ops
 		assert(!container2.closed);
 	});
 });
