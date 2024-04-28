@@ -216,12 +216,15 @@ export function create(
 	socketIoConfig?: any,
 	ioSetup?: (io: Server) => void,
 ): core.IWebSocketServer {
-	redisClientConnectionManagerForPub.getRedisClient().on("error", (err) => {
-		Lumberjack.error("Error with Redis pub connection", undefined, err);
-	});
-	redisClientConnectionManagerForSub.getRedisClient().on("error", (err) => {
-		Lumberjack.error("Error with Redis sub connection", undefined, err);
-	});
+	redisClientConnectionManagerForPub.addErrorHandler(
+		undefined, // lumber properties
+		"Error with Redis pub connection", // error message
+	);
+
+	redisClientConnectionManagerForSub.addErrorHandler(
+		undefined, // lumber properties
+		"Error with Redis sub connection", // error message
+	);
 
 	let adapter: (nsp: Namespace) => Adapter;
 	if (socketIoAdapterConfig?.enableCustomSocketIoAdapter) {

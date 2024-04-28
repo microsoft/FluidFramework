@@ -33,13 +33,15 @@ export function createConnectedDirectory(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactory,
 ): ISharedDirectory {
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({
+		registry: [SharedDirectory.getFactory()],
+	});
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
-	const directory = SharedDirectory.getFactory().create(dataStoreRuntime, id);
+	const directory = SharedDirectory.create(dataStoreRuntime, id);
 	directory.connect(services);
 	return directory;
 }
@@ -111,8 +113,11 @@ describe("Directory", () => {
 		let dataStoreRuntime: MockFluidDataStoreRuntime;
 
 		beforeEach("createDirectory", async () => {
-			dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
-			directory = SharedDirectory.getFactory().create(dataStoreRuntime, "directory");
+			dataStoreRuntime = new MockFluidDataStoreRuntime({
+				attachState: AttachState.Detached,
+				registry: [SharedDirectory.getFactory()],
+			});
+			directory = SharedDirectory.create(dataStoreRuntime, "directory");
 		});
 
 		describe("API", () => {

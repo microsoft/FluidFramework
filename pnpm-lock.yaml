@@ -2,6 +2,7 @@ lockfileVersion: 5.4
 
 overrides:
   '@types/node@<18': ^18.19.0
+  get-tsconfig: ^4.7.3
   node-fetch: ^2.6.9
   good-fences>nodegit: npm:empty-npm-package@1.0.0
   qs: ^6.11.0
@@ -9193,6 +9194,8 @@ importers:
   packages/service-clients/end-to-end-tests/azure-client:
     specifiers:
       '@biomejs/biome': ^1.6.2
+      '@fluid-experimental/data-objects': workspace:~
+      '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/azure-client': workspace:~
@@ -9202,10 +9205,12 @@ importers:
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/counter': workspace:~
+      '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/fluid-static': workspace:~
       '@fluidframework/map': workspace:~
       '@fluidframework/matrix': workspace:~
+      '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/sequence': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
@@ -9231,6 +9236,8 @@ importers:
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
+      '@fluid-experimental/data-objects': link:../../../../experimental/framework/data-objects
+      '@fluid-internal/client-utils': link:../../../common/client-utils
       '@fluid-internal/mocha-test-setup': link:../../../test/mocha-test-setup
       '@fluidframework/aqueduct': link:../../../framework/aqueduct
       '@fluidframework/azure-client': link:../../azure-client
@@ -9238,9 +9245,11 @@ importers:
       '@fluidframework/container-loader': link:../../../loader/container-loader
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
       '@fluidframework/counter': link:../../../dds/counter
+      '@fluidframework/datastore-definitions': link:../../../runtime/datastore-definitions
       '@fluidframework/fluid-static': link:../../../framework/fluid-static
       '@fluidframework/map': link:../../../dds/map
       '@fluidframework/matrix': link:../../../dds/matrix
+      '@fluidframework/runtime-definitions': link:../../../runtime/runtime-definitions
       '@fluidframework/sequence': link:../../../dds/sequence
       '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
       '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
@@ -29128,7 +29137,7 @@ packages:
       eslint-module-utils: 2.8.0_j7h7oj6rrhtikhzta4fgkou42e
       eslint-plugin-import: /eslint-plugin-i/2.29.0_j7h7oj6rrhtikhzta4fgkou42e
       fast-glob: 3.3.2
-      get-tsconfig: 4.7.2
+      get-tsconfig: 4.7.3
       is-core-module: 2.13.1
       is-glob: 4.0.3
     transitivePeerDependencies:
@@ -29243,7 +29252,7 @@ packages:
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
       eslint-module-utils: 2.8.0_762h3b5esehr7f4s6pbg6xsz7q
-      get-tsconfig: 4.7.2
+      get-tsconfig: 4.7.3
       is-glob: 4.0.3
       minimatch: 3.1.2
       resolve: 1.22.8
@@ -30800,8 +30809,8 @@ packages:
       get-intrinsic: 1.2.2
     dev: true
 
-  /get-tsconfig/4.7.2:
-    resolution: {integrity: sha512-wuMsz4leaj5hbGgg4IvDU0bqJagpftG5l5cXIAvo8uZrqn0NJqwtfupTN00VnkQJPcIRrxYrm1Ue24btpCha2A==}
+  /get-tsconfig/4.7.3:
+    resolution: {integrity: sha512-ZvkrzoUA0PQZM6fy6+/Hce561s+faD1rsNwhnO5FelNjyy7EMGJ3Rz1AQ8GYDWjhRs/7dBLOEJvhK8MiEJOAFg==}
     dependencies:
       resolve-pkg-maps: 1.0.0
     dev: true
