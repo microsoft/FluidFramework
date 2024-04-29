@@ -105,8 +105,7 @@ function generateLeafNodeSchemas(nodeTypes: string[]) {
 		if (
 			nodeType !== "treefuzz.node" &&
 			nodeType !== "com.fluidframework.leaf.number" &&
-			nodeType !== "com.fluidframework.leaf.string" &&
-			nodeType !== "com.fluidframework.leaf.handle"
+			nodeType !== "com.fluidframework.leaf.string"
 		) {
 			if (!nodeType.startsWith("com.fluidframework.leaf")) {
 				leafNodeSchemas.push(builder.leaf(nodeType, ValueSchema.Number));
