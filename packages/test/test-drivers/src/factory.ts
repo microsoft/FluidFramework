@@ -81,6 +81,7 @@ export async function createFluidTestDriver(
 
 		case "r11s":
 		case "routerlicious":
+		case "frs":
 			return RouterliciousTestDriver.createFromEnv(config?.r11s, api.RouterliciousDriverApi);
 
 		case "odsp":
