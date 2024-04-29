@@ -3,13 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ChangeAtomId,
-	ChangesetLocalId,
-	RevisionTag,
-	tagChange,
-	tagRollbackInverse,
-} from "../../../core/index.js";
+import { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../../core/index.js";
 import { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { CellId } from "../../../feature-libraries/sequence-field/index.js";

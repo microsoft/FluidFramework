@@ -11,7 +11,6 @@ import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { MarkMaker as Mark } from "./testEdits.js";
 import { mintRevisionTag } from "../../utils.js";
-import { inlineRevision } from "./utils.js";
 
 const tag = mintRevisionTag();
 const atomId: ChangeAtomId = { localId: brand(0) };
