@@ -257,20 +257,6 @@ describe("ArrayNode Proxy", () => {
 		}
 	});
 
-	it("Json stringify", () => {
-		// JSON.stringify uses ownKeys and getOwnPropertyDescriptor
-
-		assert.equal(JSON.stringify(hydrate(StructurallyNamedNumberArray, [])), "[]");
-		assert.equal(JSON.stringify(hydrate(StructurallyNamedNumberArray, [1, 2, 3])), "[1,2,3]");
-		assert.equal(JSON.stringify(hydrate(NumberArray, [])), "{}");
-		assert.equal(JSON.stringify(hydrate(NumberArray, [1, 2, 3])), `{"0":1,"1":2,"2":3}`);
-
-		assert.equal(
-			JSON.stringify(hydrate(CustomizedArray, [1, 2, 3])),
-			`{"0":1,"1":2,"2":3,"extra":"foo"}`,
-		);
-	});
-
 	describe("inserting nodes created by factory", () => {
 		const obj = schemaFactory.object("Obj", { id: schemaFactory.string });
 		const schema = schemaFactory.array([obj, schemaFactory.number]);

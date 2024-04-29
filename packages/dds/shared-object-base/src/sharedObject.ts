@@ -25,8 +25,8 @@ import {
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
 } from "@fluidframework/runtime-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
+	ITelemetryLoggerExt,
 	DataProcessingError,
 	EventEmitterWithErrorHandling,
 	MonitoringContext,
@@ -585,19 +585,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 */
 	public emit(event: EventEmitterEventType, ...args: any[]): boolean {
 		return this.callbacksHelper.measure(() => {
-			// Creating ops while handling a DDS event can lead
-			// to undefined behavior and events observed in the wrong order.
-			// For example, we have two callbacks registered for a DDS, A and B.
-			// Then if on change #1 callback A creates change #2, the invocation flow will be:
-			//
-			// A because of #1
-			// A because of #2
-			// B because of #2
-			// B because of #1
-			//
-			// The runtime must enforce op coherence by not allowing any ops to be created during
-			// the event handler
-			return this.runtime.ensureNoDataModelChanges(() => super.emit(event, ...args));
+			return super.emit(event, ...args);
 		});
 	}
 
@@ -794,12 +782,6 @@ export interface ISharedObjectKind<TSharedObject> {
 	 * - {@link @fluidframework/fluid-static#IFluidContainer.create} if using `@fluidframework/fluid-static`, for example via `@fluidframework/azure-client`.
 	 *
 	 * - {@link ISharedObjectKind.create} if using a custom container definitions (and thus not using {@link @fluidframework/fluid-static#IFluidContainer}).
-	 *
-	 * @privateRemarks
-	 * TODO:
-	 * Many tests use this and can't use {@link ISharedObjectKind.create}.
-	 * The docs should make it clear why that's ok, and why {@link ISharedObjectKind.create} isn't in such a way that when reading non app code (like tests in this package)
-	 * someone can tell if the wrong one is being used without running it and seeing if it works.
 	 */
 	getFactory(): IChannelFactory<TSharedObject>;
 
@@ -816,14 +798,29 @@ export interface ISharedObjectKind<TSharedObject> {
 	 * const myTree = SharedTree.create(this.runtime, id);
 	 * ```
 	 * @remarks
+	 * The created object is local (detached): insert a handle to it into an attached object to share (attach) it.
 	 * If using `@fluidframework/fluid-static` (for example via `@fluidframework/azure-client`), use {@link @fluidframework/fluid-static#IFluidContainer.create} instead of calling this directly.
 	 *
 	 * @privateRemarks
-	 * TODO:
-	 * This returns null when used with MockFluidDataStoreRuntime, so its unclear how tests should create DDS instances unless using `RootDataObject.create` (which most tests shouldn't to minimize dependencies).
-	 * In practice tests either avoid mock runtimes, use getFactory(), or call the DDS constructor directly. It is unclear (from docs) how getFactory().create differs but it does not rely on runtime.createChannel so it works with mock runtimes.
-	 * TODO:
-	 * See note on ISharedObjectKind.getFactory.
+	 * This can only be used with a `MockFluidDataStoreRuntime` when that mock is created with a `registry` containing a factory for this shared object.
 	 */
 	create(runtime: IFluidDataStoreRuntime, id?: string): TSharedObject;
+}
+
+/**
+ * Utility for creating ISharedObjectKind instances.
+ * @internal
+ */
+export function createSharedObjectKind<TSharedObject>(
+	factory: (new () => IChannelFactory<TSharedObject>) & { Type: string },
+): ISharedObjectKind<TSharedObject> {
+	return {
+		getFactory(): IChannelFactory<TSharedObject> {
+			return new factory();
+		},
+
+		create(runtime: IFluidDataStoreRuntime, id?: string): TSharedObject {
+			return runtime.createChannel(id, factory.Type) as TSharedObject;
+		},
+	};
 }

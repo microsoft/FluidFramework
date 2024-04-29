@@ -15,7 +15,6 @@ export type {
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 export { AttachState } from "@fluidframework/container-definitions";
-export { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 export { DriverErrorTypes } from "@fluidframework/driver-definitions";
 export { ConnectionState } from "@fluidframework/container-loader";
 export type {
@@ -41,3 +40,55 @@ export type {
 // alpha` to surface everything `@alpha` and higher).
 // eslint-disable-next-line no-restricted-syntax
 export * from "@fluidframework/tree";
+
+// ===============================================================
+// Legacy exports
+
+export { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
+
+export type {
+	IDirectory,
+	IDirectoryEvents,
+	IDirectoryValueChanged,
+	ISharedDirectory,
+	ISharedDirectoryEvents,
+	ISharedMap,
+	ISharedMapEvents,
+	IValueChanged,
+} from "@fluidframework/map/internal";
+
+export {
+	DirectoryFactory,
+	MapFactory,
+	SharedDirectory,
+	SharedMap,
+} from "@fluidframework/map/internal";
+
+export type {
+	DeserializeCallback,
+	InteriorSequencePlace,
+	IInterval,
+	IIntervalCollectionEvent,
+	IIntervalCollection,
+	IntervalIndex,
+	IntervalStickiness,
+	ISequenceDeltaRange,
+	ISerializableInterval,
+	ISerializedInterval,
+	ISharedIntervalCollection,
+	ISharedSegmentSequenceEvents,
+	ISharedString,
+	SequencePlace,
+	SharedStringSegment,
+	Side,
+} from "@fluidframework/sequence/internal";
+
+export {
+	IntervalType,
+	SequenceDeltaEvent,
+	SequenceEvent,
+	SequenceInterval,
+	SequenceMaintenanceEvent,
+	SharedSegmentSequence,
+	SharedString,
+} from "@fluidframework/sequence/internal";

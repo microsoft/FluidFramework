@@ -14,7 +14,6 @@ import {
 	createInsertSegmentOp,
 	createRemoveRangeOp,
 } from "@fluidframework/merge-tree/internal";
-// eslint-disable-next-line import/no-internal-modules
 import { TestClient } from "@fluidframework/merge-tree/internal/test";
 
 import { SequenceDeltaEvent } from "../sequenceDeltaEvent.js";

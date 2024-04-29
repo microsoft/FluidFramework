@@ -386,7 +386,7 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 			let root = config.detachedFieldIndex.tryGetEntry(id);
 			if (root === undefined) {
 				const tree = tryGetFromNestedMap(config.refreshers, id.major, id.minor);
-				assert(tree !== undefined, "refresher data not found");
+				assert(tree !== undefined, 0x928 /* refresher data not found */);
 				buildTrees(id, [tree], config, visitor);
 				root = config.detachedFieldIndex.getEntry(id);
 			}
@@ -435,7 +435,7 @@ function buildTrees(
 	for (let i = 0; i < trees.length; i += 1) {
 		const offsettedId = offsetDetachId(id, i);
 		let root = config.detachedFieldIndex.tryGetEntry(offsettedId);
-		assert(root === undefined, "Unable to build tree that already exists");
+		assert(root === undefined, 0x929 /* Unable to build tree that already exists */);
 		root = config.detachedFieldIndex.createEntry(offsettedId);
 		const field = config.detachedFieldIndex.toFieldKey(root);
 		visitor.create([trees[i]], field);
@@ -484,7 +484,7 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 							offsetAttachId.major,
 							offsetAttachId.minor,
 						);
-						assert(tree !== undefined, "refresher data not found");
+						assert(tree !== undefined, 0x92a /* refresher data not found */);
 						buildTrees(offsetAttachId, [tree], config, visitor);
 						sourceRoot = config.detachedFieldIndex.getEntry(offsetAttachId);
 					}

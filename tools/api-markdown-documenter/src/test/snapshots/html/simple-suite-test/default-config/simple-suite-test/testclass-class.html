@@ -250,13 +250,13 @@
                 <a href='./simple-suite-test/testclass-class#testclassgetterproperty-property'>testClassGetterProperty</a>
               </td>
               <td>
-                <code>readonly</code>, <code>virtual</code>
+                <code>virtual</code>
               </td>
               <td>
                 <span>number</span>
               </td>
               <td>
-                Test class getter-only property
+                Test class property with both a getter and a setter.
               </td>
             </tr>
             <tr>
@@ -463,6 +463,9 @@
             <code>
               readonly testClassEventProperty: () =&gt; void;
             </code>
+            <p>
+              <span><span><b>Type:</b> </span><span>() =&gt; void</span></span>
+            </p>
           </section>
           <section>
             <h4 id="testclasseventproperty-remarks">
@@ -494,6 +497,9 @@
             <code>
               get abstractPropertyGetter(): TestMappedType;
             </code>
+            <p>
+              <span><span><b>Type:</b> </span><span><a href='./simple-suite-test#testmappedtype-typealias'>TestMappedType</a></span></span>
+            </p>
           </section>
         </section>
         <section>
@@ -502,7 +508,7 @@
           </h3>
           <section>
             <p>
-              Test class getter-only property
+              Test class property with both a getter and a setter.
             </p>
           </section>
           <section>
@@ -513,7 +519,14 @@
               /** @virtual */
               <br>
               get testClassGetterProperty(): number;
+              <br>
+              <br>
+              <br>
+              set testClassGetterProperty(newValue: number);
             </code>
+            <p>
+              <span><span><b>Type:</b> </span><span>number</span></span>
+            </p>
           </section>
           <section>
             <h4 id="testclassgetterproperty-remarks">
@@ -540,6 +553,9 @@
             <code>
               readonly testClassProperty: TTypeParameterB;
             </code>
+            <p>
+              <span><span><b>Type:</b> </span><span>TTypeParameterB</span></span>
+            </p>
           </section>
           <section>
             <h4 id="testclassproperty-remarks">
@@ -566,6 +582,9 @@
             <code>
               static testClassStaticProperty: (foo: number) =&gt; string;
             </code>
+            <p>
+              <span><span><b>Type:</b> </span><span>(foo: number) =&gt; string</span></span>
+            </p>
           </section>
         </section>
       </section>

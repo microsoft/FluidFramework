@@ -201,7 +201,7 @@ describe("defaultFieldKinds", () => {
 					childRebaser,
 					fakeIdAllocator,
 					failCrossFieldManager,
-					rebaseRevisionMetadataFromInfo([], []),
+					rebaseRevisionMetadataFromInfo([], undefined, []),
 				),
 				change2.change,
 			);
@@ -224,7 +224,7 @@ describe("defaultFieldKinds", () => {
 					childRebaser,
 					fakeIdAllocator,
 					failCrossFieldManager,
-					rebaseRevisionMetadataFromInfo([], []),
+					rebaseRevisionMetadataFromInfo([], undefined, []),
 				),
 				childChange3,
 			);

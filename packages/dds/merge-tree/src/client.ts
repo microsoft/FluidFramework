@@ -15,8 +15,11 @@ import {
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	LoggingError,
+	UsageError,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
@@ -66,7 +69,8 @@ import {
 	MergeTreeDeltaType,
 	ReferenceType,
 } from "./ops.js";
-import { PropertySet } from "./properties.js";
+// eslint-disable-next-line import/no-deprecated
+import { PropertySet, createMap } from "./properties.js";
 import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
 import { SnapshotLoader } from "./snapshotLoader.js";
 import { SnapshotV1 } from "./snapshotV1.js";
@@ -800,7 +804,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					let segInsertOp = segment;
 					if (typeof resetOp.seg === "object" && resetOp.seg.props !== undefined) {
 						segInsertOp = segment.clone();
-						segInsertOp.properties = resetOp.seg.props;
+						// eslint-disable-next-line import/no-deprecated
+						segInsertOp.properties = createMap();
+						segInsertOp.addProperties(resetOp.seg.props);
 					}
 					if (segment.movedSeq !== UnassignedSequenceNumber) {
 						removeMoveInfo(segment);

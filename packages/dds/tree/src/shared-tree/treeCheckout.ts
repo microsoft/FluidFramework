@@ -29,6 +29,7 @@ import {
 	TreeStoredSchemaRepository,
 	TreeStoredSchemaSubscription,
 	combineVisitors,
+	makeAnonChange,
 	makeDetachedFieldIndex,
 	rebaseChange,
 	tagChange,
@@ -461,7 +462,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 							dispose: () => {
 								assert(
 									revertible.status === RevertibleStatus.Valid,
-									"a disposed revertible cannot be disposed",
+									0x910 /* a disposed revertible cannot be disposed */,
 								);
 								this.disposeRevertible(revertible, revision);
 								onRevertibleDisposed?.(revertible);
@@ -489,7 +490,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	private checkNotDisposed(): void {
-		assert(!this.isDisposed, "Invalid operation on a disposed TreeCheckout");
+		assert(!this.isDisposed, 0x911 /* Invalid operation on a disposed TreeCheckout */);
 	}
 
 	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
@@ -609,25 +610,26 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		assert(revertibleBranch !== undefined, 0x7cc /* expected to find a revertible commit */);
 		const commitToRevert = revertibleBranch.getHead();
 
-		let change = this.changeFamily.rebaser.invert(
-			tagChange(commitToRevert.change, revision),
-			false,
+		let change = makeAnonChange(
+			this.changeFamily.rebaser.invert(tagChange(commitToRevert.change, revision), false),
 		);
 
 		const headCommit = this.branch.getHead();
 		// Rebase the inverted change onto any commits that occurred after the undoable commits.
 		if (commitToRevert !== headCommit) {
-			change = rebaseChange(
-				this.changeFamily.rebaser,
-				change,
-				commitToRevert,
-				headCommit,
-				this.mintRevisionTag,
+			change = makeAnonChange(
+				rebaseChange(
+					this.changeFamily.rebaser,
+					change,
+					commitToRevert,
+					headCommit,
+					this.mintRevisionTag,
+				),
 			);
 		}
 
 		this.branch.apply(
-			change,
+			change.change,
 			this.mintRevisionTag(),
 			kind === CommitKind.Default || kind === CommitKind.Redo
 				? CommitKind.Undo

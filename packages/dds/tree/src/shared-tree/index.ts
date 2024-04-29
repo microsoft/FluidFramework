@@ -37,4 +37,11 @@ export { FlexTreeView, CheckoutFlexTreeView, ITreeViewFork } from "./treeView.js
 
 export { ISharedTreeEditor, ISchemaEditor } from "./sharedTreeEditBuilder.js";
 
-export { treeApi as Tree, TreeApi } from "./treeApi.js";
+export {
+	treeApi as Tree,
+	TreeApi,
+	TransactionConstraint,
+	NodeInDocumentConstraint,
+	RunTransaction,
+	rollback,
+} from "./treeApi.js";

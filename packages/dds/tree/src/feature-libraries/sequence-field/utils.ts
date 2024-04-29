@@ -11,6 +11,7 @@ import {
 	RevisionMetadataSource,
 	RevisionTag,
 	areEqualChangeAtomIds,
+	makeChangeAtomId,
 } from "../../core/index.js";
 import { Mutable, RangeMap, brand, fail, getFromRangeMap } from "../../util/index.js";
 import {
@@ -139,11 +140,11 @@ export function getOutputCellId(
 	metadata: RevisionMetadataSource | undefined,
 ): CellId | undefined {
 	if (isDetach(mark)) {
-		return getDetachOutputId(mark, revision, metadata);
+		return getDetachOutputCellId(mark, revision, metadata);
 	} else if (markFillsCells(mark)) {
 		return undefined;
 	} else if (isAttachAndDetachEffect(mark)) {
-		return getDetachOutputId(mark.detach, revision, metadata);
+		return getDetachOutputCellId(mark.detach, revision, metadata);
 	}
 
 	return getInputCellId(mark, revision, metadata);
@@ -233,11 +234,8 @@ export function compareCellPositionsUsingTombstones(
 		// These cells are only ordered through tie-breaking.
 		// Since tie-breaking is hard-coded to "merge left", the younger cell comes first.
 
-		// In the context of rebase, an undefined revision means that the cell was created on the branch that
-		// is undergoing rebasing.
 		// In the context of compose, an undefined revision means we are composing anonymous changesets into
-		// a transaction.
-		// In both cases, it means the cell from the newer changeset is younger.
+		// a transaction, which means the cell from the newer changeset is younger.
 		if (newMarkCell.revision === undefined) {
 			return CellOrder.NewThenOld;
 		}
@@ -293,7 +291,10 @@ export function compareCellPositionsUsingTombstones(
 	}
 }
 
-export function getDetachOutputId(
+/**
+ * @returns the ID of the cell in the output context of the given detach `mark`.
+ */
+export function getDetachOutputCellId(
 	mark: Detach,
 	revision: RevisionTag | undefined,
 	metadata: RevisionMetadataSource | undefined,
@@ -304,6 +305,26 @@ export function getDetachOutputId(
 			localId: mark.id,
 		}
 	);
+}
+
+/**
+ * @returns the ID of the detached node in the output context of the given detach `mark`.
+ */
+export function getDetachedNodeId(
+	mark: Detach,
+	revision: RevisionTag | undefined,
+	metadata: RevisionMetadataSource | undefined,
+): ChangeAtomId {
+	switch (mark.type) {
+		case "Remove": {
+			return getDetachOutputCellId(mark, revision, metadata);
+		}
+		case "MoveOut": {
+			return makeChangeAtomId(mark.id, mark.revision ?? revision);
+		}
+		default:
+			unreachableCase(mark);
+	}
 }
 
 function getIntentionIfMetadataProvided(
@@ -320,6 +341,9 @@ export function normalizeCellRename(
 	mark: CellMark<AttachAndDetach>,
 ): CellMark<AttachAndDetach | DetachOfRemovedNodes> {
 	assert(mark.cellId !== undefined, 0x823 /* AttachAndDetach marks should have a cell ID */);
+	// We must keep the attach information when the attach is a move-in because the input-context cell ID may not be
+	// enough to identify the move ID.
+	// TODO: revisit if we still need the attach information for new inserts.
 	if (mark.attach.type !== "Insert" || isNewAttachEffect(mark.attach, mark.cellId)) {
 		return mark;
 	}

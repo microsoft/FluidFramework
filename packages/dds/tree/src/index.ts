@@ -260,6 +260,10 @@ export {
 	SharedTreeFormatVersion,
 	Tree,
 	TreeApi,
+	TransactionConstraint,
+	NodeInDocumentConstraint,
+	RunTransaction,
+	rollback,
 } from "./shared-tree/index.js";
 
 export {
@@ -354,8 +358,6 @@ export {
 	AllowOptionalNotFlattened,
 	isAny,
 	BrandedKeyContent,
-	ErasedType,
-	Erased,
 	RestrictiveReadonlyRecord,
 	MakeNominal,
 } from "./util/index.js";
@@ -374,7 +376,7 @@ export {
 	FlexibleNodeSubSequence,
 	flexTreeMarker,
 	FlexTreeEntityKind,
-	NodeKeys,
+	NodeKeyManager,
 	CollectOptions,
 	TypedFields,
 	UnbrandedName,

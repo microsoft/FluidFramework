@@ -33,7 +33,7 @@ import type { TelemetryBaseEventPropertyType } from '@fluidframework/core-interf
 // @alpha
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
-// @internal
+// @alpha
 export interface AttributionInfo {
     timestamp: number;
     user: IUser;
@@ -257,6 +257,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     deleteChildSummarizerNode(id: string): void;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    // @deprecated
     ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     readonly gcThrowOnTombstoneUsage: boolean;

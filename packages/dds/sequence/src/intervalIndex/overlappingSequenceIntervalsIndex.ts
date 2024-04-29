@@ -19,7 +19,7 @@ import {
 	createPositionReferenceFromSegoff,
 	sequenceIntervalHelpers,
 } from "../intervals/index.js";
-import { SharedString } from "../sharedString.js";
+import { ISharedString } from "../sharedString.js";
 
 import { OverlappingIntervalsIndex } from "./overlappingIntervalsIndex.js";
 import { SequenceIntervalIndexes } from "./sequenceIntervalIndexes.js";
@@ -76,7 +76,7 @@ class OverlappingSequenceIntervalsIndex
  * @internal
  */
 export function createOverlappingSequenceIntervalsIndex(
-	sharedString: SharedString,
+	sharedString: ISharedString,
 ): SequenceIntervalIndexes.Overlapping {
 	const client = (sharedString as unknown as { client: Client }).client;
 	return new OverlappingSequenceIntervalsIndex(client);

@@ -37,6 +37,14 @@ export function makeSharedTreeChangeCodecFamily(
 				options,
 			),
 		],
+		[
+			2,
+			makeSharedTreeChangeCodec(
+				modularChangeCodecFamily.resolve(2).json,
+				schemaChangeCodecs.resolve(1).json,
+				options,
+			),
+		],
 	]);
 }
 
@@ -96,6 +104,7 @@ function makeSharedTreeChangeCodec(
 							data: modularChangeCodec.encode(decodedChange.innerChange, {
 								originatorId: context.originatorId,
 								schema: schemaAndPolicy,
+								revision: context.revision,
 							}),
 						});
 					} else if (decodedChange.type === "schema") {

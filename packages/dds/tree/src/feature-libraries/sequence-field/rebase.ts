@@ -65,7 +65,7 @@ import {
 	compareLineages,
 	extractMarkEffect,
 	getDetachIdForLineage,
-	getDetachOutputId,
+	getDetachOutputCellId,
 	getEndpoint,
 	getInputCellId,
 	getOffsetInCellRange,
@@ -423,16 +423,9 @@ class RebaseQueue {
  */
 function addMovedMarkEffect(mark: Mark, effect: MarkEffect): Mark {
 	if (isMoveIn(mark) && isMoveOut(effect)) {
-		const result: Mark = {
-			...mark,
-			type: "Insert",
-			count: mark.count,
-			id: mark.id,
-		};
-		if (effect.revision !== undefined) {
-			result.revision = effect.revision;
-		}
-		return result;
+		return { ...mark, type: "Insert" };
+	} else if (isAttachAndDetachEffect(mark) && isMoveIn(mark.attach) && isMoveOut(effect)) {
+		return { ...mark.detach, count: mark.count };
 	} else if (isTombstone(mark)) {
 		return { ...mark, ...effect };
 	}
@@ -495,7 +488,7 @@ function rebaseMarkIgnoreChild(
 			!isNewAttach(currMark),
 			0x69d /* A new attach should not be rebased over its cell being emptied */,
 		);
-		const baseCellId = getDetachOutputId(baseMark, baseRevision, metadata);
+		const baseCellId = getDetachOutputCellId(baseMark, baseRevision, metadata);
 
 		if (isMoveOut(baseMark)) {
 			assert(isMoveMark(baseMark), 0x6f0 /* Only move marks have move IDs */);
@@ -993,9 +986,9 @@ function setMarkAdjacentCells(mark: Mark, adjacentCells: IdRange[]): void {
 function shouldReceiveLineage(
 	cellRevision: RevisionTag | undefined,
 	detachRevision: RevisionTag,
-	metadata: RevisionMetadataSource,
+	metadata: RebaseRevisionMetadata,
 ): boolean {
-	if (cellRevision === undefined) {
+	if (cellRevision === undefined || cellRevision === metadata.getRevisionToRebase()) {
 		// An undefined cell revision means that the cell was created by the changeset we are rebasing.
 		// Since this cell was been empty for all base revisions, it should receive lineage from all of them.
 		// TODO: This cell does not need lineage from roll-forward revisions.
