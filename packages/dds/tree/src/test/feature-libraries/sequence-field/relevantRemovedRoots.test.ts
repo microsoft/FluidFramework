@@ -205,11 +205,5 @@ export function testRelevantRemovedRoots() {
 				assert.deepEqual(array, [deltaId, relevantNestedTree]);
 			});
 		});
-		it("uses passed down revision", () => {
-			const input: SF.Changeset = [Mark.modify(childChange, { localId: brand(42) })];
-			const actual = SF.relevantRemovedRoots(inlineRevision(input, tag), noTreeDelegate);
-			const array = Array.from(actual);
-			assert.deepEqual(array, [{ major: tag, minor: 42 }]);
-		});
 	});
 }

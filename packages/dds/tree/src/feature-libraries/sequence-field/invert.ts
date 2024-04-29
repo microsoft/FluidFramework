@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import { RevisionMetadataSource } from "../../core/index.js";
+import { RevisionMetadataSource, RevisionTag } from "../../core/index.js";
 import { IdAllocator, Mutable, fail } from "../../util/index.js";
 import { CrossFieldManager, CrossFieldTarget, NodeId } from "../modular-schema/index.js";
 
@@ -198,7 +198,7 @@ function invertMark(
 				id: inputId,
 			};
 
-			return applyMovedChanges(invertedMark, crossFieldManager);
+			return applyMovedChanges(invertedMark, mark.revision, crossFieldManager);
 		}
 		case "AttachAndDetach": {
 			// Which should get the child change? Don't want to invert twice
@@ -288,15 +288,13 @@ function invertMark(
 	}
 }
 
-function applyMovedChanges(mark: CellMark<MoveOut>, manager: CrossFieldManager<NodeId>): Mark[] {
+function applyMovedChanges(
+	mark: CellMark<MoveOut>,
+	revision: RevisionTag | undefined,
+	manager: CrossFieldManager<NodeId>,
+): Mark[] {
 	// Although this is a source mark, we query the destination because this was a destination mark during the original invert pass.
-	const entry = manager.get(
-		CrossFieldTarget.Destination,
-		mark.revision,
-		mark.id,
-		mark.count,
-		true,
-	);
+	const entry = manager.get(CrossFieldTarget.Destination, revision, mark.id, mark.count, true);
 
 	if (entry.length < mark.count) {
 		const [mark1, mark2] = splitMark(mark, entry.length);
@@ -305,7 +303,7 @@ function applyMovedChanges(mark: CellMark<MoveOut>, manager: CrossFieldManager<N
 				? withNodeChange<CellMark<MoveOut>, MoveOut>(mark1, entry.value)
 				: mark1;
 
-		return [mark1WithChanges, ...applyMovedChanges(mark2, manager)];
+		return [mark1WithChanges, ...applyMovedChanges(mark2, revision, manager)];
 	}
 
 	if (entry.value !== undefined) {

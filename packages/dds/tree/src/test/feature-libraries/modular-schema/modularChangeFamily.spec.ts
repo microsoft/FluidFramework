@@ -581,7 +581,7 @@ describe("ModularChangeFamily", () => {
 				change: brand(valueChange1a),
 			};
 
-			const change1: TaggedChange<ModularChangeset> = tagChange(
+			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map([[fieldA, change1A]]),
@@ -607,7 +607,7 @@ describe("ModularChangeFamily", () => {
 			};
 
 			deepFreeze(change2B);
-			const change2: TaggedChange<ModularChangeset> = tagChange(
+			const change2: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					nodeChanges: nestedMapFromFlatList([
 						[nodeId2.revision, nodeId2.localId, nodeChange2],
@@ -661,7 +661,7 @@ describe("ModularChangeFamily", () => {
 		});
 
 		it("build ○ matching destroy = ε", () => {
-			const change1: TaggedChange<ModularChangeset> = tagChange(
+			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map([]),
@@ -673,7 +673,7 @@ describe("ModularChangeFamily", () => {
 				tag1,
 			);
 
-			const change2: TaggedChange<ModularChangeset> = tagChange(
+			const change2: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map([]),
@@ -699,7 +699,7 @@ describe("ModularChangeFamily", () => {
 		});
 
 		it("destroy ○ matching build = ε", () => {
-			const change1: TaggedChange<ModularChangeset> = tagChange(
+			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map([]),
@@ -711,7 +711,7 @@ describe("ModularChangeFamily", () => {
 				tag2,
 			);
 
-			const change2: TaggedChange<ModularChangeset> = tagChange(
+			const change2: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map([]),
@@ -737,7 +737,7 @@ describe("ModularChangeFamily", () => {
 		});
 
 		it("non-matching builds and destroys", () => {
-			const change1: TaggedChange<ModularChangeset> = tagChange(
+			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map([]),
@@ -806,7 +806,7 @@ describe("ModularChangeFamily", () => {
 		});
 
 		it("refreshers", () => {
-			const change1: TaggedChange<ModularChangeset> = tagChange(
+			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map([]),
@@ -854,7 +854,7 @@ describe("ModularChangeFamily", () => {
 		});
 
 		it("refreshers with the same detached node id", () => {
-			const change1: TaggedChange<ModularChangeset> = tagChange(
+			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map([]),
@@ -950,7 +950,7 @@ describe("ModularChangeFamily", () => {
 		});
 
 		it("build => destroy but only for rollback", () => {
-			const change1: TaggedChange<ModularChangeset> = tagChange(
+			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map([]),
@@ -1053,7 +1053,7 @@ describe("ModularChangeFamily", () => {
 		});
 
 		it("builds", () => {
-			const change1: TaggedChange<ModularChangeset> = tagChange(
+			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map([]),
@@ -1084,7 +1084,7 @@ describe("ModularChangeFamily", () => {
 		});
 
 		it("destroys", () => {
-			const change1: TaggedChange<ModularChangeset> = tagChange(
+			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map([]),
@@ -1110,7 +1110,7 @@ describe("ModularChangeFamily", () => {
 		});
 
 		it("refreshers", () => {
-			const change1: TaggedChange<ModularChangeset> = tagChange(
+			const change1: TaggedChange<ModularChangeset> = tagChangeInline(
 				{
 					nodeChanges: new Map(),
 					fieldChanges: new Map([]),
@@ -1536,7 +1536,7 @@ describe("ModularChangeFamily", () => {
 					builds: new Map([[undefined, new Map([[brand(1), node1Chunk]])]]),
 				};
 				const withBuilds = updateRefreshers(
-					tagChange(implicitBuild, tag1),
+					tagChangeInline(implicitBuild, tag1),
 					getDetachedNode,
 					[{ major: tag1, minor: 1 }],
 				);
@@ -1661,4 +1661,11 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 
 function inlineRevision(change: ModularChangeset, revision: RevisionTag): ModularChangeset {
 	return family.changeRevision(change, revision);
+}
+
+function tagChangeInline(
+	change: ModularChangeset,
+	revision: RevisionTag,
+): TaggedChange<ModularChangeset> {
+	return tagChange(inlineRevision(change, revision), revision);
 }
