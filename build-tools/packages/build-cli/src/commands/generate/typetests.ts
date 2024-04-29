@@ -223,12 +223,18 @@ export function getTypesPathFromPackage(
 		// First try to resolve with the "import" condition, assuming the package is either ESM-only or dual-format.
 		// conditions: ["default", "types", "import", "node"]
 		const exports = resolve.exports(packageJson, entrypoint, { conditions: ["types"] });
-		typesPath =
-			exports === undefined || exports.length === 0
-				? packageJson.types ?? packageJson.typings
-				: exports[0];
+
+		// resolve.exports returns a `Exports.Output | void` type, though the documentation isn't clear under what
+		// conditions `void` would be the return type vs. just throwing an exception. Since the types say exports could be
+		// undefined or an empty array (Exports.Output is an array type), check for those conditions.
+		typesPath = exports === undefined || exports.length === 0 ? undefined : exports[0];
 	} catch {
 		// Catch and ignore any exceptions here; we'll retry with the require condition.
+	}
+
+	// Found the types using the import condition, so return early.
+	if (typesPath !== undefined) {
+		return typesPath;
 	}
 
 	try {
@@ -240,16 +246,13 @@ export function getTypesPathFromPackage(
 			conditions: ["types"],
 			require: true,
 		});
-		// Only assign typesPath if it wasn't already assigned earlier.
-		typesPath ??=
-			exports === undefined || exports.length === 0
-				? packageJson.types ?? packageJson.typings
-				: exports[0];
+		typesPath = exports === undefined || exports.length === 0 ? undefined : exports[0];
 	} catch {
 		// Catch any exceptions here; we'll return undefined instead of throwing them.
 	}
 
-	return typesPath;
+	// Fall back to types/typings fields if both import and require conditions yielded nothing.
+	return typesPath ?? packageJson.types ?? packageJson.typings;
 }
 
 /**
