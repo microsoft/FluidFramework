@@ -1352,7 +1352,7 @@ describe("ModularChangeFamily", () => {
 				refreshers: new Map([[aMajor, new Map([[brand(2), node2Chunk]])]]),
 			};
 
-			const withBuilds = updateRefreshers(makeAnonChange(input), getDetachedNode, [a2]);
+			const withBuilds = updateRefreshers(input, getDetachedNode, [a2]);
 			assert.deepEqual(withBuilds, expected);
 		});
 
@@ -1377,7 +1377,7 @@ describe("ModularChangeFamily", () => {
 				fieldChanges: new Map([]),
 			};
 
-			const filtered = updateRefreshers(makeAnonChange(input), getDetachedNode, []);
+			const filtered = updateRefreshers(input, getDetachedNode, []);
 			assert.deepEqual(filtered, expected);
 		});
 
@@ -1395,7 +1395,7 @@ describe("ModularChangeFamily", () => {
 				builds: new Map([[aMajor, new Map([[brand(3), nodesChunk]])]]),
 			};
 
-			const withBuilds = updateRefreshers(makeAnonChange(input), getDetachedNode, [
+			const withBuilds = updateRefreshers(input, getDetachedNode, [
 				{ major: aMajor, minor: 4 },
 			]);
 			assert.deepEqual(withBuilds, expected);
@@ -1423,11 +1423,7 @@ describe("ModularChangeFamily", () => {
 					]),
 				};
 
-				const withBuilds = updateRefreshers(makeAnonChange(input), getDetachedNode, [
-					a1,
-					a2,
-					b1,
-				]);
+				const withBuilds = updateRefreshers(input, getDetachedNode, [a1, a2, b1]);
 				assert.deepEqual(withBuilds, expected);
 			});
 
@@ -1460,7 +1456,7 @@ describe("ModularChangeFamily", () => {
 					]),
 				};
 
-				const filtered = updateRefreshers(makeAnonChange(input), getDetachedNode, [a1, a2]);
+				const filtered = updateRefreshers(input, getDetachedNode, [a1, a2]);
 				assert.deepEqual(filtered, expected);
 			});
 
@@ -1495,11 +1491,7 @@ describe("ModularChangeFamily", () => {
 					]),
 				};
 
-				const withBuilds = updateRefreshers(makeAnonChange(input), getDetachedNode, [
-					a1,
-					a2,
-					b1,
-				]);
+				const withBuilds = updateRefreshers(input, getDetachedNode, [a1, a2, b1]);
 				assert.deepEqual(withBuilds, expected);
 			});
 
@@ -1509,9 +1501,7 @@ describe("ModularChangeFamily", () => {
 					fieldChanges: new Map([]),
 				};
 
-				assert.throws(() =>
-					updateRefreshers(makeAnonChange(input), getDetachedNode, [{ minor: 2 }]),
-				);
+				assert.throws(() => updateRefreshers(input, getDetachedNode, [{ minor: 2 }]));
 			});
 		});
 	});
