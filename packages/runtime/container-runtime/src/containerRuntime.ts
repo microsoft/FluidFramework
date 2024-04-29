@@ -119,7 +119,6 @@ import {
 	createSampledLogger,
 	loggerToMonitoringContext,
 	raiseConnectedEvent,
-	validatePrecondition,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
@@ -1345,9 +1344,9 @@ export class ContainerRuntime
 	private readonly loadedFromVersionId: string | undefined;
 
 	/**
-	 * Container snapshot which also contains the contents for the blobs.
+	 * Blobs from the container snapshot.
 	 */
-	private readonly snapshotWithContents: ISnapshot | undefined;
+	public readonly blobContents: Map<string, ArrayBuffer> | undefined;
 
 	/**
 	 * It a cache for holding mapping for loading groupIds with its snapshot from the service. Add expiry policy of 1 minute.
@@ -1434,7 +1433,7 @@ export class ContainerRuntime
 		this.submitSummaryFn = submitSummaryFn;
 		this.submitSignalFn = submitSignalFn;
 
-		this.snapshotWithContents = snapshotWithContents;
+		this.blobContents = snapshotWithContents?.blobContents;
 		// TODO: After IContainerContext.options is removed, we'll just create a new blank object {} here.
 		// Values are generally expected to be set from the runtime side.
 		this.options = options ?? {};
@@ -1637,6 +1636,7 @@ export class ContainerRuntime
 			(path: string) => this.garbageCollector.isNodeDeleted(path),
 			new Map<string, string>(dataStoreAliasMap),
 			async (runtime: ChannelCollection) => provideEntryPoint,
+			this.blobContents,
 		);
 
 		this.blobManager = new BlobManager({
@@ -1983,59 +1983,6 @@ export class ContainerRuntime
 		this.pendingStateManager.dispose();
 		this.emit("dispose");
 		this.removeAllListeners();
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.isSnapshotFetchRequired}
-	 */
-	public isSnapshotFetchRequired(pathParts: string[]): boolean {
-		validatePrecondition(
-			this.snapshotWithContents !== undefined,
-			"Use this api in case we fetched the complete snapshot along with the blob contents",
-		);
-		// Find the snapshotTree inside the snapshot based on the path as given in the request.
-		const hasIsolatedChannels = rootHasIsolatedChannels(this.metadata);
-		const snapshotTreeForPath = this.getSnapshotTreeForPath(
-			this.snapshotWithContents.snapshotTree,
-			pathParts,
-			hasIsolatedChannels,
-		);
-		if (snapshotTreeForPath === undefined) {
-			throw new UsageError("snapshotTree not found for given path", {
-				details: JSON.stringify({ pathPartsLength: pathParts.length }),
-			});
-		}
-		return this.evaluateSnapshotTreeForMissingBlobs(
-			snapshotTreeForPath,
-			this.snapshotWithContents.blobContents,
-		);
-	}
-
-	/**
-	 * Utility function to check if any blobs under a snapshot tree is missing and if so, then return
-	 * true if that is the case.
-	 * @param snapshotTree - snapshotTree to be evaluated for missing blobs.
-	 * @param blobContents - blobContents of the snapshot.
-	 */
-	private evaluateSnapshotTreeForMissingBlobs(
-		snapshotTree: ISnapshotTree,
-		blobContents: Map<string, ArrayBuffer>,
-	): boolean {
-		for (const [_, id] of Object.entries(snapshotTree.blobs)) {
-			if (!blobContents.has(id)) {
-				return true;
-			}
-		}
-		for (const [_, childTree] of Object.entries(snapshotTree.trees)) {
-			// Only evaluate childTree if it does not have a loading groupId.
-			if (childTree.groupId === undefined) {
-				const value = this.evaluateSnapshotTreeForMissingBlobs(childTree, blobContents);
-				if (value) {
-					return true;
-				}
-			}
-		}
-		return false;
 	}
 
 	/**

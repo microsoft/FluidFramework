@@ -135,7 +135,6 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
         snapshotTree: ISnapshotTree;
         sequenceNumber: number;
     }>;
-    isSnapshotFetchRequired(pathParts: string[]): boolean;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
     orderSequentially(callback: () => void): void;
@@ -246,6 +245,8 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
         absolutePath: string;
     }): void;
     readonly attachState: AttachState;
+    // (undocumented)
+    readonly blobContents: Map<string, ArrayBuffer> | undefined;
     // (undocumented)
     readonly clientDetails: IClientDetails;
     // (undocumented)

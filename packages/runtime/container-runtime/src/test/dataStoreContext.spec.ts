@@ -577,7 +577,8 @@ describe("Data Store Context Tests", () => {
 				clientDetails: {},
 				isSnapshotFetchRequired: (path) => false,
 				containerRuntime,
-			} as ContainerRuntime;
+				blobContents: undefined,
+			} as unknown as ContainerRuntime;
 		});
 
 		describe("Initialization - can correctly initialize and generate attributes", () => {
@@ -649,6 +650,7 @@ describe("Data Store Context Tests", () => {
 						),
 						scope,
 						createSummarizerNodeFn,
+						blobContents: containerRuntime.blobContents,
 					});
 
 					const isRootNode = await remoteDataStoreContext.isRoot();
@@ -696,6 +698,7 @@ describe("Data Store Context Tests", () => {
 						scope,
 						createSummarizerNodeFn,
 						snapshotTree: undefined,
+						blobContents: containerRuntime.blobContents,
 					});
 
 				assert.throws(codeBlock, (e: Error) =>
@@ -777,6 +780,7 @@ describe("Data Store Context Tests", () => {
 					),
 					scope,
 					createSummarizerNodeFn,
+					blobContents: containerRuntime.blobContents,
 				});
 
 				const gcData = await remoteDataStoreContext.getGCData();
@@ -829,6 +833,7 @@ describe("Data Store Context Tests", () => {
 					),
 					scope,
 					createSummarizerNodeFn,
+					blobContents: containerRuntime.blobContents,
 				});
 
 				const gcData = await remoteDataStoreContext.getGCData();
@@ -881,6 +886,7 @@ describe("Data Store Context Tests", () => {
 					),
 					scope,
 					createSummarizerNodeFn,
+					blobContents: containerRuntime.blobContents,
 				});
 
 				// Since GC is enabled, GC must run before summarize. Get the GC data and update used routes to
@@ -935,6 +941,7 @@ describe("Data Store Context Tests", () => {
 					),
 					scope,
 					createSummarizerNodeFn,
+					blobContents: containerRuntime.blobContents,
 				});
 
 				// Get the summarizer node for this data store which tracks its referenced state.
@@ -1010,6 +1017,7 @@ describe("Data Store Context Tests", () => {
 					),
 					scope,
 					createSummarizerNodeFn,
+					blobContents: containerRuntime.blobContents,
 				});
 
 				remoteDataStoreContext.setTombstone(true);

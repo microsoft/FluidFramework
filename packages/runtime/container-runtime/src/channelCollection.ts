@@ -152,6 +152,7 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 			return context.idCompressor;
 		},
 		loadingGroupId: context.loadingGroupId,
+		blobContents: context.blobContents,
 		get attachState() {
 			return context.attachState;
 		},
@@ -286,6 +287,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		private readonly isDataStoreDeleted: (nodePath: string) => boolean,
 		private readonly aliasMap: Map<string, string>,
 		provideEntryPoint: (runtime: ChannelCollection) => Promise<FluidObject>,
+		private readonly blobContents: Map<string, ArrayBuffer> | undefined,
 	) {
 		this.mc = createChildMonitoringContext({ logger: baseLogger });
 		this.contexts = new DataStoreContexts(baseLogger);
@@ -330,6 +332,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 						type: CreateSummarizerNodeSource.FromSummary,
 					}),
 					loadingGroupId: value.groupId,
+					blobContents,
 				});
 			} else {
 				if (typeof value !== "object") {
@@ -469,6 +472,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				},
 			),
 			pkg,
+			blobContents: this.blobContents,
 		});
 
 		this.contexts.addBoundOrRemoted(remoteFluidDataStoreContext);
@@ -1550,6 +1554,7 @@ export class ChannelCollectionFactory<T extends ChannelCollection = ChannelColle
 			(_nodePath: string) => false, // isDataStoreDeleted
 			new Map(), // aliasMap
 			this.provideEntryPoint,
+			context.blobContents,
 		);
 
 		return runtime;

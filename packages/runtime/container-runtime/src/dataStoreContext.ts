@@ -59,6 +59,7 @@ import {
 	LoggingError,
 	MonitoringContext,
 	ThresholdCounter,
+	UsageError,
 	createChildMonitoringContext,
 	extractSafePropertiesFromMessage,
 	generateStack,
@@ -165,6 +166,7 @@ export interface ILocalDetachedFluidDataStoreContextProps extends ILocalFluidDat
  */
 export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContextProps {
 	readonly snapshotTree: ISnapshotTree | undefined;
+	readonly blobContents: Map<string, ArrayBuffer> | undefined;
 }
 
 // back-compat: To be removed in the future.
@@ -217,6 +219,10 @@ export abstract class FluidDataStoreContext
 
 	public get containerRuntime(): IContainerRuntimeBase {
 		return this._containerRuntime;
+	}
+
+	public get blobContents(): Map<string, ArrayBuffer> | undefined {
+		return this.parentContext.blobContents;
 	}
 
 	// back-compat, to be removed in 2.0
@@ -1094,7 +1100,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		let sequenceNumber: number | undefined;
 		// Check whether we need to fetch the snapshot first to load.
 		if (this.snapshotFetchRequired === undefined && this._baseSnapshot?.groupId !== undefined) {
-			this.snapshotFetchRequired = this.runtime.isSnapshotFetchRequired([this.id]);
+			this.snapshotFetchRequired = this.isSnapshotFetchRequired();
 		}
 		if (this.snapshotFetchRequired) {
 			assert(
@@ -1157,6 +1163,45 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 			sequenceNumber,
 		};
 	});
+
+	private isSnapshotFetchRequired(): boolean {
+		if (this.blobContents === undefined || this._baseSnapshot === undefined) {
+			throw new UsageError("Only use this API if we have blob contents/snapshot info", {
+				details: JSON.stringify({
+					blobsPresent: this.blobContents !== undefined,
+					snapshotTreePresent: this._baseSnapshot !== undefined,
+				}),
+			});
+		}
+		return this.evaluateSnapshotTreeForMissingBlobs(this._baseSnapshot, this.blobContents);
+	}
+
+	/**
+	 * Utility function to check if any blobs under a snapshot tree is missing and if so, then return
+	 * true if that is the case.
+	 * @param snapshotTree - snapshotTree to be evaluated for missing blobs.
+	 * @param blobContents - blobContents of the snapshot.
+	 */
+	private evaluateSnapshotTreeForMissingBlobs(
+		snapshotTree: ISnapshotTree,
+		blobContents: Map<string, ArrayBuffer>,
+	): boolean {
+		for (const [_, id] of Object.entries(snapshotTree.blobs)) {
+			if (!blobContents.has(id)) {
+				return true;
+			}
+		}
+		for (const [_, childTree] of Object.entries(snapshotTree.trees)) {
+			// Only evaluate childTree if it does not have a loading groupId.
+			if (childTree.groupId === undefined) {
+				const value = this.evaluateSnapshotTreeForMissingBlobs(childTree, blobContents);
+				if (value) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 
 	public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
 		return this.initialSnapshotDetailsP;

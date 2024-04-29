@@ -52,7 +52,6 @@ import {
 	MockDeltaManager,
 	MockFluidDataStoreRuntime,
 	MockQuorumClients,
-	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 import { MockAudience } from "@fluidframework/test-runtime-utils/internal";
 import { SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
@@ -2145,7 +2144,7 @@ describe("Runtime", () => {
 						await containerRuntime.getAliasedDataStoreEntryPoint("missingDataStore");
 					},
 					(err: IFluidErrorBase) => {
-						validateAssertionError(err, "groupId should be present to fetch snapshot");
+						assert(err.message.startsWith("0x8f6"), "unexpected error");
 						return true;
 					},
 				);

@@ -77,7 +77,7 @@ export const AllowTombstoneRequestHeaderKey = "allowTombstone";
 
 // @internal
 export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
-    constructor(baseSnapshot: ISnapshotTree | undefined, parentContext: IFluidParentContext, baseLogger: ITelemetryBaseLogger, gcNodeUpdated: (props: IGCNodeUpdatedProps) => void, isDataStoreDeleted: (nodePath: string) => boolean, aliasMap: Map<string, string>, provideEntryPoint: (runtime: ChannelCollection) => Promise<FluidObject>);
+    constructor(baseSnapshot: ISnapshotTree | undefined, parentContext: IFluidParentContext, baseLogger: ITelemetryBaseLogger, gcNodeUpdated: (props: IGCNodeUpdatedProps) => void, isDataStoreDeleted: (nodePath: string) => boolean, aliasMap: Map<string, string>, provideEntryPoint: (runtime: ChannelCollection) => Promise<FluidObject>, blobContents: Map<string, ArrayBuffer> | undefined);
     // (undocumented)
     get aliases(): ReadonlyMap<string, string>;
     // (undocumented)
@@ -217,6 +217,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     }): void;
     // (undocumented)
     get attachState(): AttachState;
+    readonly blobContents: Map<string, ArrayBuffer> | undefined;
     // (undocumented)
     readonly clientDetails: IClientDetails;
     // (undocumented)
@@ -289,7 +290,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
     get isDirty(): boolean;
-    isSnapshotFetchRequired(pathParts: string[]): boolean;
     protected _loadIdCompressor: Promise<void> | undefined;
     static loadRuntime(params: {
         context: IContainerContext;
@@ -454,6 +454,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected _baseSnapshot: ISnapshotTree | undefined;
     // (undocumented)
     protected bindRuntime(channel: IFluidDataStoreChannel, existing: boolean): Promise<void>;
+    // (undocumented)
+    get blobContents(): Map<string, ArrayBuffer> | undefined;
     // (undocumented)
     protected channel: IFluidDataStoreChannel | undefined;
     // (undocumented)
