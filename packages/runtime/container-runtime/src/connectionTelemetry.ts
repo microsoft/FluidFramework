@@ -81,9 +81,10 @@ class OpPerfTelemetry {
 	private connectionStartTime = 0;
 	private gap = 0;
 
-	/** Count of no-ops sent by this client */
-	private noOpCount = 0;
-	private processedOpSize = 0;
+	/** Count of no-ops sent by this client. This variable is reset everytime the OpStats sampled event is logged */
+	private noOpCountForTelemetry = 0;
+	/** Cumulative size of the ops processed by this client. This variable is reset everytime the OpStats sampled event is logged */
+	private processedOpSizeForTelemetry = 0;
 
 	private readonly logger: ITelemetryLoggerExt;
 
@@ -159,8 +160,8 @@ class OpPerfTelemetry {
 						eventCount % OpPerfTelemetry.PROCESSED_OPS_SAMPLE_RATE === 0;
 					if (shouldSample) {
 						eventCount = 0;
-						this.noOpCount = 0;
-						this.processedOpSize = 0;
+						this.noOpCountForTelemetry = 0;
+						this.processedOpSizeForTelemetry = 0;
 					}
 					return shouldSample;
 				},
@@ -252,12 +253,12 @@ class OpPerfTelemetry {
 			}
 			if (message.contents && isRuntimeMessage(message)) {
 				// This assert will ensure that if/when the 'contents' type changes, we make sure to update the
-				// processedOpSize calculation below as well.
+				// processedOpSizeForTelemetry calculation below as well.
 				assert(
 					typeof message.contents === "string",
 					"Op's contents are expected to be string",
 				);
-				this.processedOpSize += message.contents.length;
+				this.processedOpSizeForTelemetry += message.contents.length;
 			}
 		});
 
@@ -339,7 +340,7 @@ class OpPerfTelemetry {
 		if (message.type === MessageType.NoOp) {
 			// Count the number of no-ops submitted by this client.
 			// The value is reset when we log the OpStats sampled event.
-			this.noOpCount++;
+			this.noOpCountForTelemetry++;
 		}
 	}
 
@@ -429,9 +430,9 @@ class OpPerfTelemetry {
 					// compression/grouping/chunking (if enabled) of the ops.
 					processedOpCount: OpPerfTelemetry.PROCESSED_OPS_SAMPLE_RATE,
 					// Cumulative size of all the ops processed by the current client since the last OpStats event log
-					processedOpSize: this.processedOpSize,
+					processedOpSize: this.processedOpSizeForTelemetry,
 					// Count of all the NoOp sent by the current client since the last OpStats event log
-					submitedNoOpCount: this.noOpCount,
+					submitedNoOpCount: this.noOpCountForTelemetry,
 				},
 			});
 		}
