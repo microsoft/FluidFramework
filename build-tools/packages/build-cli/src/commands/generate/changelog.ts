@@ -12,7 +12,7 @@ import { inc } from "semver";
 import { CleanOptions } from "simple-git";
 
 import { BaseCommand } from "../../base";
-import { releaseGroupFlag } from "../../flags";
+import { checkFlags, releaseGroupFlag } from "../../flags";
 import { Repository } from "../../library";
 import { isReleaseGroup } from "../../releaseGroups";
 
@@ -35,6 +35,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 			description:
 				"The version for which to generate the changelog. If this is not provided, the version of the package according to package.json will be used.",
 		}),
+		install: checkFlags.install,
 		...BaseCommand.flags,
 	} as const;
 
@@ -79,7 +80,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 
 		const gitRoot = context.gitRepo.resolvedRoot;
 
-		const { releaseGroup } = this.flags;
+		const { install, releaseGroup } = this.flags;
 
 		if (releaseGroup === undefined) {
 			this.error("ReleaseGroup is possibly 'undefined'");
@@ -99,10 +100,12 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 			: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				[context.fullPackageMap.get(releaseGroup)!];
 
-		const installed = await FluidRepo.ensureInstalled(packagesToCheck);
+		if (install) {
+			const installed = await FluidRepo.ensureInstalled(packagesToCheck);
 
-		if (!installed) {
-			this.error(`Error installing dependencies for: ${releaseGroup}`);
+			if (!installed) {
+				this.error(`Error installing dependencies for: ${releaseGroup}`);
+			}
 		}
 
 		this.repo = new Repository({ baseDir: execDir });
@@ -119,8 +122,14 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 			processPromises.push(this.processPackage(pkg));
 		}
 		const results = await Promise.allSettled(processPromises);
-		if (results.some((p) => p.status === "rejected")) {
-			this.error(`Error processing packages.`, { exit: 1 });
+		const failures = results.filter((p) => p.status === "rejected");
+		if (failures.length > 0) {
+			this.error(
+				`Error processing packages; failure reasons:\n${failures
+					.map((p) => (p as PromiseRejectedResult).reason as string)
+					.join(", ")}`,
+				{ exit: 1 },
+			);
 		}
 
 		// git add the changelog changes

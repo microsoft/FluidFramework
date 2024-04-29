@@ -14,9 +14,9 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedStringFactory } from "../sequenceFactory.js";
-import { SharedString } from "../sharedString.js";
+import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
 
+import { SharedStringClass } from "../sharedString.js";
 import { _dirname } from "./dirname.cjs";
 import { LocationBase, generateStrings } from "./generateSharedStrings.js";
 
@@ -85,7 +85,11 @@ describe("SharedString Snapshot Version", () => {
 			deltaConnection: dataStoreRuntime.createDeltaConnection(),
 			objectStorage: new MockStorage(JSON.parse(serializedSnapshot)),
 		};
-		const sharedString = new SharedString(dataStoreRuntime, id, SharedStringFactory.Attributes);
+		const sharedString = new SharedStringClass(
+			dataStoreRuntime,
+			id,
+			SharedStringFactory.Attributes,
+		);
 		await sharedString.load(services);
 		await sharedString.loaded;
 		return sharedString;
@@ -167,7 +171,7 @@ describe("SharedString Snapshot Version", () => {
 	it("normalizes prefixed interval collection keys", async () => {
 		// This test verifies some back-compat for the fix related to
 		// https://github.com/microsoft/FluidFramework/issues/10557.
-		const originalString = new SharedString(
+		const originalString = new SharedStringClass(
 			new MockFluidDataStoreRuntime(),
 			"original",
 			SharedStringFactory.Attributes,

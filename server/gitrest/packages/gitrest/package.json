@@ -60,6 +60,6 @@
 		"rimraf": "^3.0.2",
 		"sillyname": "^0.1.0",
 		"supertest": "^3.4.2",
-		"typescript": "~4.5.5"
+		"typescript": "~5.1.6"
 	}
 }

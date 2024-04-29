@@ -15,6 +15,7 @@ import { IAudience } from '@fluidframework/container-definitions';
 import { IAudienceEvents } from '@fluidframework/container-definitions';
 import { IAudienceOwner } from '@fluidframework/container-definitions/internal';
 import { IChannel } from '@fluidframework/datastore-definitions';
+import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import type { IClient } from '@fluidframework/protocol-definitions';
@@ -108,7 +109,7 @@ export class InsecureTokenProvider implements ITokenProvider {
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export class MockAudience extends TypedEventEmitter<IAudienceEvents> implements IAudienceOwner {
     constructor();
     // (undocumented)
@@ -451,6 +452,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
         logger?: ITelemetryBaseLogger;
         idCompressor?: IIdCompressor & IIdCompressorCore;
         attachState?: AttachState;
+        registry?: readonly IChannelFactory[];
     });
     // (undocumented)
     get absolutePath(): string;
@@ -479,7 +481,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     containerRuntime?: MockContainerRuntime;
     // (undocumented)
-    createChannel(id: string, type: string): IChannel;
+    createChannel(id: string | undefined, type: string): IChannel;
     // (undocumented)
     createDeltaConnection(): MockDeltaConnection;
     // (undocumented)

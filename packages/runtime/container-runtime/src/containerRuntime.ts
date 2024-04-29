@@ -151,7 +151,7 @@ import {
 	type OutboundContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
-import { IBatchMetadata, IIdAllocationMetadata } from "./metadata.js";
+import { IBatchMetadata, ISavedOpMetadata } from "./metadata.js";
 import {
 	BatchMessage,
 	IBatch,
@@ -661,11 +661,13 @@ type MessageWithContext =
 			message: InboundSequencedContainerRuntimeMessage;
 			modernRuntimeMessage: true;
 			local: boolean;
+			savedOp?: boolean;
 	  }
 	| {
 			message: InboundSequencedContainerRuntimeMessageOrSystemMessage;
 			modernRuntimeMessage: false;
 			local: boolean;
+			savedOp?: boolean;
 	  };
 
 const summarizerRequestUrl = "_summarizer";
@@ -1127,7 +1129,7 @@ export class ContainerRuntime
 	// Id Compressor serializes final state (see getPendingLocalState()). As result, it needs to skip all ops that preceeded that state
 	// (such ops will be marked by Loader layer as savedOp === true)
 	// That said, in "delayed" mode it's possible that Id Compressor was never initialized before getPendingLocalState() is called.
-	// In such case we have to process all ops, including those marked with saveOp === true.
+	// In such case we have to process all ops, including those marked with savedOp === true.
 	private readonly skipSavedCompressorOps: boolean;
 
 	public get idCompressorMode() {
@@ -2558,6 +2560,7 @@ export class ContainerRuntime
 		// We do not need to make a deep copy. Each layer will just replace message.contents itself,
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
+		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
 		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
 			const msg: MessageWithContext = modernRuntimeMessage
 				? {
@@ -2575,6 +2578,7 @@ export class ContainerRuntime
 						local,
 						modernRuntimeMessage,
 				  };
+			msg.savedOp = savedOp;
 
 			// ensure that we observe any re-entrancy, and if needed, rebase ops
 			this.ensureNoDataModelChanges(() => this.processCore(msg));
@@ -2665,13 +2669,7 @@ export class ContainerRuntime
 				// stashed ops flow. The compressor is stashed with these ops already processed.
 				// That said, in idCompressorMode === "delayed", we might not serialize ID compressor, and
 				// thus we need to process all the ops.
-				if (
-					!(
-						this.skipSavedCompressorOps &&
-						(messageWithContext.message.metadata as IIdAllocationMetadata)?.savedOp ===
-							true
-					)
-				) {
+				if (!(this.skipSavedCompressorOps && messageWithContext.savedOp === true)) {
 					const range = messageWithContext.message.contents;
 					// Some other client turned on the id compressor. If we have not turned it on,
 					// put it in a pending queue and delay finalization.
@@ -3536,7 +3534,9 @@ export class ContainerRuntime
 						stage: "base",
 						referenceSequenceNumber: summaryRefSeqNum,
 						minimumSequenceNumber,
-						error: `Summarizer node state inconsistent with summarizer state.`,
+						error: new LoggingError(
+							`Summarizer node state inconsistent with summarizer state.`,
+						),
 					};
 				}
 			}
@@ -3586,7 +3586,7 @@ export class ContainerRuntime
 					stage: "base",
 					referenceSequenceNumber: summaryRefSeqNum,
 					minimumSequenceNumber,
-					error: continueResult.error,
+					error: new LoggingError(continueResult.error),
 				};
 			}
 
@@ -3607,7 +3607,7 @@ export class ContainerRuntime
 					stage: "base",
 					referenceSequenceNumber: summaryRefSeqNum,
 					minimumSequenceNumber,
-					error,
+					error: wrapError(error, (msg) => new LoggingError(msg)),
 				};
 			}
 
@@ -3680,7 +3680,11 @@ export class ContainerRuntime
 
 			continueResult = checkContinue();
 			if (!continueResult.continue) {
-				return { stage: "generate", ...generateSummaryData, error: continueResult.error };
+				return {
+					stage: "generate",
+					...generateSummaryData,
+					error: new LoggingError(continueResult.error),
+				};
 			}
 
 			const summaryContext =
@@ -3703,7 +3707,11 @@ export class ContainerRuntime
 					summaryContext,
 				);
 			} catch (error) {
-				return { stage: "generate", ...generateSummaryData, error };
+				return {
+					stage: "generate",
+					...generateSummaryData,
+					error: wrapError(error, (msg) => new LoggingError(msg)),
+				};
 			}
 
 			const parent = summaryContext.ackHandle;
@@ -3722,14 +3730,22 @@ export class ContainerRuntime
 
 			continueResult = checkContinue();
 			if (!continueResult.continue) {
-				return { stage: "upload", ...uploadData, error: continueResult.error };
+				return {
+					stage: "upload",
+					...uploadData,
+					error: new LoggingError(continueResult.error),
+				};
 			}
 
 			let clientSequenceNumber: number;
 			try {
 				clientSequenceNumber = this.submitSummaryMessage(summaryMessage, summaryRefSeqNum);
 			} catch (error) {
-				return { stage: "upload", ...uploadData, error };
+				return {
+					stage: "upload",
+					...uploadData,
+					error: wrapError(error, (msg) => new LoggingError(msg)),
+				};
 			}
 
 			const submitData = {
@@ -3746,7 +3762,11 @@ export class ContainerRuntime
 					!this.validateSummaryBeforeUpload /* validate */,
 				);
 			} catch (error) {
-				return { stage: "upload", ...uploadData, error };
+				return {
+					stage: "upload",
+					...uploadData,
+					error: wrapError(error, (msg) => new LoggingError(msg)),
+				};
 			}
 			return submitData;
 		} finally {
@@ -4220,7 +4240,7 @@ export class ContainerRuntime
 
 		return {
 			stage: "base",
-			error: "summary state stale - Unsupported option 'refreshLatestAck'",
+			error: new LoggingError("summary state stale - Unsupported option 'refreshLatestAck'"),
 			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 			minimumSequenceNumber: this.deltaManager.minimumSequenceNumber,
 		};

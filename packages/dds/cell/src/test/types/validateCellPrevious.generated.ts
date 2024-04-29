@@ -124,24 +124,11 @@ use_old_InterfaceDeclaration_ISharedCellEvents(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedCell": {"forwardCompat": false}
+* "RemovedClassDeclaration_SharedCell": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_SharedCell():
-    TypeOnly<old.SharedCell>;
-declare function use_current_ClassDeclaration_SharedCell(
-    use: TypeOnly<current.SharedCell>): void;
-use_current_ClassDeclaration_SharedCell(
-    // @ts-expect-error compatibility expected to be broken
-    get_old_ClassDeclaration_SharedCell());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedCell": {"backCompat": false}
+* "RemovedClassDeclaration_SharedCell": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_SharedCell():
-    TypeOnly<current.SharedCell>;
-declare function use_old_ClassDeclaration_SharedCell(
-    use: TypeOnly<old.SharedCell>): void;
-use_old_ClassDeclaration_SharedCell(
-    get_current_ClassDeclaration_SharedCell());

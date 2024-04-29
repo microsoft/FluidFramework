@@ -187,12 +187,7 @@ function composeMarks(
 
 	return withUpdatedEndpoint(
 		withNodeChange(
-			composeMarksIgnoreChild(
-				withRevision(baseMark, baseRev),
-				withRevision(newMark, newRev),
-				moveEffects,
-				revisionMetadata,
-			),
+			composeMarksIgnoreChild(baseMark, newMark, moveEffects, revisionMetadata),
 			nodeChange,
 		),
 		baseMark.count,
