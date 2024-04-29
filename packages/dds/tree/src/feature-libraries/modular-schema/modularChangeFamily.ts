@@ -1290,7 +1290,7 @@ function* relevantRemovedRootsFromFields(
  * Can be retrieved by calling {@link relevantRemovedRoots}.
  */
 export function updateRefreshers(
-	{ change, revision }: TaggedChange<ModularChangeset>,
+	change: ModularChangeset,
 	getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
 	removedRoots: Iterable<DeltaDetachedNodeId>,
 ): ModularChangeset {
@@ -1308,9 +1308,7 @@ export function updateRefreshers(
 
 	for (const root of removedRoots) {
 		if (change.builds !== undefined) {
-			const major = root.major === revision ? undefined : root.major;
-			const lengthTree = chunkLengths.get(major);
-
+			const lengthTree = chunkLengths.get(root.major);
 			if (lengthTree !== undefined) {
 				const lengthPair = lengthTree.getPairOrNextLower(root.minor);
 				if (lengthPair !== undefined) {
