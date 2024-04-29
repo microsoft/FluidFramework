@@ -33,7 +33,7 @@ export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocu
     protected closeSocketCore(error: IAnyDriverError): void;
     // (undocumented)
     protected readonly connectionId?: string | undefined;
-    protected createErrorObject(handler: string, error?: any, canRetry?: boolean): IAnyDriverError;
+    protected createErrorObject(socketEvent: string, error?: any, canRetry?: boolean): IAnyDriverError;
     // (undocumented)
     get details(): IConnected;
     // (undocumented)
