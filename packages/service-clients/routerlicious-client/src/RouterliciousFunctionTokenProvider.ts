@@ -3,28 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { type ITokenProvider, type ITokenResponse } from "@fluidframework/routerlicious-driver";
-import axios from "axios";
-
-import { type BaseMember } from "@fluidframework/base-client";
+import * as jose from "jose";
+import type { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
+import type { BaseMember } from "@fluidframework/base-client";
 
 /**
  * Token Provider implementation for connecting to an Azure Function endpoint for
  * Azure Fluid Relay token resolution.
- *
- * @deprecated 1.2.0, This API will be removed in 2.0.0
- * No replacement since it is not expected anyone will use this token provider as is
- * See https://github.com/microsoft/FluidFramework/issues/13693 for context
- * @internal
+ * @public
  */
-export class AzureFunctionTokenProvider implements ITokenProvider {
+export class RouterliciousFunctionTokenProvider implements ITokenProvider {
 	/**
 	 * Creates a new instance using configuration parameters.
 	 * @param azFunctionUrl - URL to Azure Function endpoint
 	 * @param user - User object
 	 */
 	public constructor(
-		private readonly azFunctionUrl: string,
+		private readonly tenantKey: string,
 		private readonly user?: Pick<BaseMember, "userId" | "userName" | "additionalDetails">,
 	) {}
 
@@ -41,15 +36,16 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
 	}
 
 	private async getToken(tenantId: string, documentId?: string): Promise<string> {
-		const response = await axios.get(this.azFunctionUrl, {
-			params: {
-				tenantId,
-				documentId,
-				userId: this.user?.userId,
-				userName: this.user?.userName,
-				additionalDetails: this.user?.additionalDetails as unknown,
-			},
-		});
-		return response.data as string;
+		const secret = new TextEncoder().encode(this.tenantKey);
+		return new jose.SignJWT({
+			user: this.user,
+			documentId,
+			tenantId,
+			scopes: ["doc:read", "doc:write", "summary:write"],
+			nonce: Date.now(),
+			exp: Math.floor(Date.now() / 1000) + 60 * 60,
+		})
+			.setProtectedHeader({ alg: "HS256" })
+			.sign(secret);
 	}
 }

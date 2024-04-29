@@ -9,22 +9,17 @@
  * @packageDocumentation
  */
 
-export { AzureClient } from "./AzureClient.js";
-export { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";
+export { RouterliciousClient } from "./RouterliciousClient.js";
+export { RouterliciousFunctionTokenProvider } from "./RouterliciousFunctionTokenProvider.js";
+export type { RouterliciousClientProps, RouterliciousConnectionConfig } from "./interfaces.js";
+
 export type {
-	AzureClientProps,
-	AzureRemoteConnectionConfig,
-	AzureLocalConnectionConfig,
-	AzureConnectionConfig,
-	AzureConnectionConfigType,
-} from "./interfaces.js";
-export type {
-	IContainerServices as AzureContainerServices,
-	IContainerVersion as AzureContainerVersion,
-	IGetVersionsOptions as AzureGetVersionsOptions,
-	BaseMember as AzureMember,
-	BaseUser as AzureUser,
-	IAudience as IAzureAudience,
+	IContainerServices as RouterliciousContainerServices,
+	IContainerVersion as RouterliciousContainerVersion,
+	IGetVersionsOptions as RouterliciousGetVersionsOptions,
+	BaseMember as RouterliciousMember,
+	BaseUser as RouterliciousUser,
+	IAudience,
 } from "@fluidframework/base-client";
 
 export type { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";

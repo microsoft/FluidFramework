@@ -9,23 +9,18 @@
  * @packageDocumentation
  */
 
-export { AzureClient } from "./AzureClient.js";
-export { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";
+export { BaseClient } from "./BaseClient.js";
+
+export { createAzureAudienceMember } from "./Audience.js";
 export type {
-	AzureClientProps,
-	AzureRemoteConnectionConfig,
-	AzureLocalConnectionConfig,
-	AzureConnectionConfig,
-	AzureConnectionConfigType,
+	BaseClientProps,
+	IContainerServices,
+	IContainerVersion,
+	IGetVersionsOptions,
+	BaseMember,
+	BaseUser,
+	IAudience,
 } from "./interfaces.js";
-export type {
-	IContainerServices as AzureContainerServices,
-	IContainerVersion as AzureContainerVersion,
-	IGetVersionsOptions as AzureGetVersionsOptions,
-	BaseMember as AzureMember,
-	BaseUser as AzureUser,
-	IAudience as IAzureAudience,
-} from "@fluidframework/base-client";
 
 export type { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 export type { ITokenClaims, IUser } from "@fluidframework/protocol-definitions";

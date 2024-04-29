@@ -1,12 +1,12 @@
 {
-	"name": "@fluidframework/azure-client",
+	"name": "@fluidframework/routerlicious-client",
 	"version": "2.0.0-rc.4.0.0",
-	"description": "A tool to enable creation and loading of Fluid containers using the Azure Fluid Relay service",
+	"description": "A tool to enable creation and loading of Fluid containers using the Routerlicious reference server",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "packages/service-clients/azure-client"
+		"directory": "packages/service-clients/routerlicious-client"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -79,8 +79,8 @@
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"postpack": "tar -cf ./azure-client.test-files.tar ./dist/test ./lib/test",
-		"start:tinylicious:test": "npx @fluidframework/azure-local-service > tinylicious.log 2>&1",
+		"postpack": "tar -cf ./routerlicious-client.test-files.tar ./dist/test ./lib/test",
+		"start:tinylicious:test": "npx @fluidframework/routerlicious-local-service > tinylicious.log 2>&1",
 		"test": "npm run test:realsvc",
 		"test:realsvc": "npm run test:realsvc:tinylicious",
 		"test:realsvc:local:run": "mocha --recursive \"dist/test/**/*.spec.*js\" --exit --timeout 10000",
@@ -103,15 +103,14 @@
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"axios": "^1.6.2"
+		"axios": "^1.6.2",
+		"jose": "^5.2.4"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.6.2",
 		"@fluid-tools/build-cli": "^0.37.0",
 		"@fluidframework/aqueduct": "workspace:~",
-		"@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@2.0.0-internal.8.0.0",
-		"@fluidframework/azure-local-service": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.37.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",

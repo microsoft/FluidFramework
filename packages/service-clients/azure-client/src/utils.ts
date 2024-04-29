@@ -11,6 +11,7 @@ import type {
 
 /**
  * Type guard for validating a given AzureConnectionConfig is a remote connection type (AzureRemoteConnectionConfig)
+ * @public
  */
 export function isAzureRemoteConnectionConfig(
 	connectionConfig: AzureConnectionConfig,
@@ -20,6 +21,7 @@ export function isAzureRemoteConnectionConfig(
 
 /**
  * Type guard for validating a given AzureConnectionConfig is a local connection type (AzureLocalConnectionConfig)
+ * @public
  */
 export function isAzureLocalConnectionConfig(
 	connectionConfig: AzureConnectionConfig,

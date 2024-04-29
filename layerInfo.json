@@ -149,8 +149,7 @@
 					"Test-Utils"
 				]
 			},
-			"AzureClient": {
-				"dirs": ["azure/packages/"],
+			"Base-Client": {
 				"deps": [
 					"Container-Definitions",
 					"Framework",
@@ -158,6 +157,13 @@
 					"Routerlicious-Driver",
 					"Server-Shared-Utils"
 				]
+			},
+			"AzureClient": {
+				"dirs": ["azure/packages/"],
+				"deps": ["Base-Client"]
+			},
+			"Routerlicious-Client": {
+				"deps": ["Base-Client"]
 			},
 			"UberPackage": {
 				"packages": ["fluid-framework"],

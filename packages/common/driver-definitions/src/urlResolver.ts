@@ -6,7 +6,7 @@
 import type { IRequest } from "@fluidframework/core-interfaces";
 
 /**
- * @alpha
+ * @public
  */
 export interface IResolvedUrl {
 	type: "fluid";
@@ -21,7 +21,7 @@ export interface IResolvedUrl {
 
 /**
  * Container package info handed off to resolver.
- * @alpha
+ * @public
  */
 export interface IContainerPackageInfo {
 	/**
@@ -31,7 +31,7 @@ export interface IContainerPackageInfo {
 }
 
 /**
- * @alpha
+ * @public
  */
 export interface IUrlResolver {
 	// Like DNS should be able to cache resolution requests. Then possibly just have a token provider go and do stuff?
