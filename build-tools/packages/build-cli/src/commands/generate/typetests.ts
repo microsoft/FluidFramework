@@ -309,7 +309,7 @@ function typeDataFromFile(file: SourceFile, log: Logger): Map<string, TypeData> 
 /**
  * Loads a ts-morph source file from the provided path.
  *
- * @param typesPath - The path to the types file to load. This path is expected to be relative to
+ * @param typesPath - The path to the types file to load.
  * @returns The loaded source file.
  */
 export function loadTypesSourceFile(typesPath: string): SourceFile {
@@ -320,8 +320,7 @@ export function loadTypesSourceFile(typesPath: string): SourceFile {
 			module: ModuleKind.Node16,
 		},
 	});
-	project.addSourceFilesAtPaths(`${path.dirname(typesPath)}/**/*.d.*ts`);
-	const sourceFile = project.getSourceFileOrThrow(path.basename(typesPath));
+	const sourceFile = project.addSourceFileAtPath(typesPath)
 	return sourceFile;
 }
 
