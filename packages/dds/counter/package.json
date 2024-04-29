@@ -138,12 +138,9 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_SharedCounter": {
+			"RemovedClassDeclaration_SharedCounter": {
 				"backCompat": false,
 				"forwardCompat": false
-			},
-			"RemovedClassDeclaration_SharedCounter": {
-				"backCompat": false
 			},
 			"InterfaceDeclaration_ISharedCounter": {
 				"forwardCompat": false,

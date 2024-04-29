@@ -78,13 +78,6 @@ use_old_InterfaceDeclaration_ISharedCounterEvents(
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedClassDeclaration_SharedCounter": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_SharedCounter():
-    TypeOnly<old.SharedCounter>;
-declare function use_current_RemovedClassDeclaration_SharedCounter(
-    use: TypeOnly<current.SharedCounter>): void;
-use_current_ClassDeclaration_SharedCounter(
-    // @ts-expect-error compatibility expected to be broken
-    get_old_ClassDeclaration_SharedCounter());
 
 /*
 * Validate back compat by using current type in place of old type
