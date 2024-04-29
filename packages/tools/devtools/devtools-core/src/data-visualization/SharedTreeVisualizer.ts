@@ -344,14 +344,15 @@ async function visualizeMapNode(
  * Main recursive helper function to create the visual representation of the SharedTree.
  * Filters tree nodes based on their schema type.
  *
+ * Read {@link docs/content/docs/data-structures/tree.md#introduction} for more information on the SharedTree schema.
+ *
  * Below are the SharedTree terminology that will be helpful in order to understand the visualizer:
  *
+ * Field: A field key associated with a node. It can be a string or a number.
  * schema: Specifies the overarching structure of the tree. Such as specific set of properties and node types of each.
  * ObjectNode: a TypeScript-like object with one or more named child properties. `ObjectNode` has a schema of type `ObjectNodeStoredSchema`.
  * MapNode: a set of zero or more key-value pairs similar to a JavaScript Map object, but the keys can only be strings. `MapNode` has a schema of type `MapNodeStoredSchema`.
  * LeafNode: a SharedTree node which can only contain a value and cannot have fields. `LeafNode` has a schema type `LeafNodeStoredSchema`.
- * node:
- * field:
  */
 export async function visualizeSharedTreeNodeBySchema(
 	tree: JsonableTree,
