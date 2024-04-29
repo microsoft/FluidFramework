@@ -33,11 +33,11 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 	static readonly description = "Generates type tests for a package or group of packages.";
 
 	static readonly flags = {
-		level: Flags.string({
+		level: Flags.custom<ApiLevel>({
 			description: "What API level to generate tests for.",
 			default: ApiLevel.internal,
 			options: knownApiLevels,
-		}),
+		})(),
 		outDir: Flags.directory({
 			description: "Where to emit the type tests file.",
 			default: "./src/test/types",
@@ -55,10 +55,7 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 	} as const;
 
 	protected async processPackage(pkg: Package): Promise<void> {
-		const { outDir, outFile } = this.flags;
-
-		// This cast is safe because oclif has already ensured only known ApiLevel values get to this point.
-		const level = this.flags.level as ApiLevel;
+		const { level, outDir, outFile } = this.flags;
 		const fallbackLevel = this.flags.publicFallback ? ApiLevel.public : undefined;
 
 		// Do not check that file exists before opening:
