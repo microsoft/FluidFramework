@@ -186,6 +186,35 @@ describe("optionalField", () => {
 			assert.deepEqual(composed, expected);
 		});
 
+		it("can compose a chain of moves", () => {
+			const tag1 = mintRevisionTag();
+			const changeA = tagChangeInline(Change.atOnce(Change.move(brand(0), brand(1))), tag1);
+
+			const tag2 = mintRevisionTag();
+			const changeB = tagChangeInline(
+				Change.atOnce(Change.move({ revision: tag1, localId: brand(1) }, brand(2))),
+				tag2,
+			);
+
+			const composed = optionalChangeRebaser.compose(
+				changeA.change,
+				changeB.change,
+				TestNodeId.composeChild,
+				fakeIdAllocator,
+				failCrossFieldManager,
+				defaultRevisionMetadataFromChanges([changeA, changeB]),
+			);
+
+			const expected = Change.atOnce(
+				Change.move(
+					{ revision: tag1, localId: brand(0) },
+					{ revision: tag2, localId: brand(2) },
+				),
+			);
+
+			assert.deepEqual(composed, expected);
+		});
+
 		describe("Invert", () => {
 			function undo(change: TaggedChange<OptionalChangeset>): OptionalChangeset {
 				return optionalChangeRebaser.invert(
