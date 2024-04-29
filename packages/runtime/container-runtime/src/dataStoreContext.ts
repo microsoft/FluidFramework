@@ -219,6 +219,7 @@ export abstract class FluidDataStoreContext
 		return this._containerRuntime;
 	}
 
+	// back-compat, to be removed in 2.0
 	public ensureNoDataModelChanges<T>(callback: () => T): T {
 		return this.parentContext.ensureNoDataModelChanges(callback);
 	}

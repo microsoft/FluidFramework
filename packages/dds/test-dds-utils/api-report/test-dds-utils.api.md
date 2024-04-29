@@ -88,7 +88,7 @@ export interface DDSFuzzModel<TChannelFactory extends IChannelFactory, TOperatio
     generatorFactory: () => AsyncGenerator_2<TOperation, TState>;
     minimizationTransforms?: MinimizationTransform<TOperation>[];
     reducer: AsyncReducer<TOperation, TState>;
-    validateConsistency: (channelA: ReturnType<TChannelFactory["create"]>, channelB: ReturnType<TChannelFactory["create"]>) => void | Promise<void>;
+    validateConsistency: (channelA: Client<TChannelFactory>, channelB: Client<TChannelFactory>) => void | Promise<void>;
     workloadName: string;
 }
 

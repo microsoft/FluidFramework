@@ -12,9 +12,9 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedMatrix, SharedMatrixFactory } from "../index.js";
+import { SharedMatrix } from "../index.js";
 
-import { checkCorners, expectSize, setCorners } from "./utils.js";
+import { checkCorners, expectSize, setCorners, matrixFactory } from "./utils.js";
 
 const enum Const {
 	// https://support.office.com/en-us/article/excel-specifications-and-limits-1672b34d-7043-467e-8e27-269d656771c3
@@ -24,24 +24,22 @@ const enum Const {
 
 // Summarizes the given `SharedMatrix`, loads the summary into a 2nd SharedMatrix, vets that the two are
 // equivalent, and then returns the 2nd matrix.
-async function summarize<T>(matrix: SharedMatrix<T>) {
+async function summarize<T>(matrix: SharedMatrix<T>): Promise<SharedMatrix<T>> {
 	// Create a summary
 	const objectStorage = MockStorage.createFromSummary(matrix.getAttachSummary().summary);
 
 	// Create a local DataStoreRuntime since we only want to load the summary for a local client.
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
 
-	// Load the summary into a newly created 2nd SharedMatrix.
-	const matrix2 = new SharedMatrix<T>(
+	const matrix2 = await matrixFactory.load(
 		dataStoreRuntime,
 		`load(${matrix.id})`,
-		SharedMatrixFactory.Attributes,
-		matrix.isSetCellConflictResolutionPolicyFWW(),
+		{
+			deltaConnection: new MockEmptyDeltaConnection(),
+			objectStorage,
+		},
+		matrixFactory.attributes,
 	);
-	await matrix2.load({
-		deltaConnection: new MockEmptyDeltaConnection(),
-		objectStorage,
-	});
 
 	// Vet that the 2nd matrix is equivalent to the original.
 	expectSize(matrix2, matrix.rowCount, matrix.colCount);
@@ -70,12 +68,11 @@ async function summarize<T>(matrix: SharedMatrix<T>) {
 					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 					objectStorage: new MockStorage(),
 				};
-				matrix1 = new SharedMatrix(
-					dataStoreRuntime1,
-					"matrix1",
-					SharedMatrixFactory.Attributes,
-					isSetCellPolicyFWW,
-				);
+
+				matrix1 = matrixFactory.create(dataStoreRuntime1, "matrix1");
+				if (isSetCellPolicyFWW) {
+					matrix1.switchSetCellPolicy();
+				}
 				matrix1.connect(services1);
 
 				// Create and connect the second SharedMatrix.
@@ -86,12 +83,10 @@ async function summarize<T>(matrix: SharedMatrix<T>) {
 					deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 					objectStorage: new MockStorage(),
 				};
-				matrix2 = new SharedMatrix(
-					dataStoreRuntime2,
-					"matrix2",
-					SharedMatrixFactory.Attributes,
-					isSetCellPolicyFWW,
-				);
+				matrix2 = matrixFactory.create(dataStoreRuntime2, "matrix2");
+				if (isSetCellPolicyFWW) {
+					matrix2.switchSetCellPolicy();
+				}
 				matrix2.connect(services2);
 			});
 
@@ -215,12 +210,10 @@ async function summarize<T>(matrix: SharedMatrix<T>) {
 				const dataStoreRuntime = new MockFluidDataStoreRuntime({
 					attachState: AttachState.Detached,
 				});
-				matrix = new SharedMatrix(
-					dataStoreRuntime,
-					"matrix1",
-					SharedMatrixFactory.Attributes,
-					isSetCellPolicyFWW,
-				);
+				matrix = matrixFactory.create(dataStoreRuntime, "matrix1");
+				if (isSetCellPolicyFWW) {
+					matrix.switchSetCellPolicy();
+				}
 			});
 
 			it("summarize", async () => {

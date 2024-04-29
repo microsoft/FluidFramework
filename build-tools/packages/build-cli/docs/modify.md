@@ -4,6 +4,7 @@
 Modify commands are used to modify projects to add or remove dependencies, update Fluid imports, etc.
 
 * [`flub modify fluid-imports`](#flub-modify-fluid-imports)
+* [`flub modify lockfile`](#flub-modify-lockfile)
 
 ## `flub modify fluid-imports`
 
@@ -32,3 +33,35 @@ DESCRIPTION
 ```
 
 _See code: [src/commands/modify/fluid-imports.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/modify/fluid-imports.ts)_
+
+## `flub modify lockfile`
+
+Updates a dependency in the pnpm lockfile to the latest version of a specified semver range.
+
+```
+USAGE
+  $ flub modify lockfile -g client|server|azure|build-tools|gitrest|historian --dependencyName <value> --version
+    <value> [--json] [-v | --quiet]
+
+FLAGS
+  -g, --releaseGroup=<option>   (required) Name of a release group.
+                                <options: client|server|azure|build-tools|gitrest|historian>
+      --dependencyName=<value>  (required) Name of the dependency (npm package) to update.
+      --version=<value>         (required) Semver range specifier to use when updating the dependency.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Updates a dependency in the pnpm lockfile to the latest version of a specified semver range.
+
+  Note that if the version passed in to the command is not within the range of versions naturally accepted by the
+  packages that depend on it, after this command runs the lockfile might not reflect the version that was passed in, but
+  the latest version that complies with the semver range declared by the dependent packages.
+```
+
+_See code: [src/commands/modify/lockfile.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/modify/lockfile.ts)_

@@ -30,6 +30,7 @@ export class RevisionTagCodec
 		if (tag === "root") {
 			return tag;
 		}
+
 		assert(typeof tag === "number", 0x88d /* String revision tag must be the literal 'root' */);
 		return this.idCompressor.normalizeToSessionSpace(tag, context.originatorId);
 	}

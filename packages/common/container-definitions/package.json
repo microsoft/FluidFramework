@@ -110,12 +110,25 @@
 				"backCompat": false
 			},
 			"InterfaceDeclaration_IContainer": {
+				"backCompat": false,
 				"forwardCompat": false
 			},
 			"InterfaceDeclaration_IContainerContext": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IAudienceOwner": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IAudience": {
+				"forwardCompat": false,
 				"backCompat": false
 			},
 			"InterfaceDeclaration_IBatchMessage": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ILoaderHeader": {
 				"backCompat": false
 			}
 		}

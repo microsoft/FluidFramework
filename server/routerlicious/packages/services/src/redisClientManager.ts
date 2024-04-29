@@ -10,7 +10,6 @@ import {
 	IRedisParameters,
 	IRedisClientConnectionManager,
 } from "@fluidframework/server-services-utils";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 // Manages the set of connected clients in redis hashes with an expiry of 'expireAfterSeconds'.
 /**
@@ -32,9 +31,10 @@ export class ClientManager implements IClientManager {
 			this.prefix = parameters.prefix;
 		}
 
-		redisClientConnectionManager.getRedisClient().on("error", (error) => {
-			Lumberjack.error("Client Manager Redis Error", undefined, error);
-		});
+		redisClientConnectionManager.addErrorHandler(
+			undefined, // lumber properties
+			"Client Manager Redis Error", // error message
+		);
 	}
 
 	public async addClient(

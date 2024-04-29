@@ -46,7 +46,6 @@ import { wrapObjectAndOverride } from "../../mocking.js";
 async function loadSummarizer(
 	provider: ITestObjectProvider,
 	runtimeFactory: IRuntimeFactory,
-	sequenceNumber: number,
 	summaryVersion?: string,
 	loaderProps?: Partial<ILoaderProps>,
 ) {
@@ -58,10 +57,6 @@ async function loadSummarizer(
 		},
 		[DriverHeader.summarizingClient]: true,
 		[LoaderHeader.reconnect]: false,
-		[LoaderHeader.loadMode]: {
-			opsBeforeReturn: "sequenceNumber",
-		},
-		[LoaderHeader.sequenceNumber]: sequenceNumber,
 		[LoaderHeader.version]: summaryVersion,
 	};
 	const summarizerContainer = await provider.loadContainer(
@@ -237,12 +232,7 @@ describeCompat(
 		};
 
 		const getNewSummarizer = async (summaryVersion?: string) => {
-			return loadSummarizer(
-				provider,
-				runtimeFactory,
-				mainContainer.deltaManager.lastSequenceNumber,
-				summaryVersion,
-			);
+			return loadSummarizer(provider, runtimeFactory, summaryVersion);
 		};
 
 		/**

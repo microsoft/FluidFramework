@@ -67,6 +67,7 @@ export function testSnapshots() {
 
 		const baseContext = {
 			originatorId: snapshotCompressor.localSessionId,
+			revision: undefined,
 		};
 
 		for (const version of family.getSupportedFormats()) {
