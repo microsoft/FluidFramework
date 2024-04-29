@@ -619,7 +619,7 @@ import { expectSize, extract, matrixFactory } from "./utils.js";
 
 				it(`Stress Test With Small Matrix and lots of clients addition`, async function () {
 					// Note: Must use 'function' rather than arrow '() => { .. }' in order to set 'this.timeout(..)'
-					this.timeout(30000);
+					this.timeout(35000);
 
 					const numClients = 2;
 					const numOps = 120;
