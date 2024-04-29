@@ -7,6 +7,7 @@ export { GitRepo } from "./common/gitRepo";
 export {
 	type ITypeValidationConfig,
 	FluidRepo,
+	type BrokenCompatTypes,
 } from "./common/fluidRepo";
 export { getResolvedFluidRoot, loadFluidBuildConfig } from "./common/fluidUtils";
 export type { Logger } from "./common/logging";
@@ -32,3 +33,8 @@ export {
 } from "./common/fluidTaskDefinitions";
 export { getEsLintConfigFilePath } from "./common/taskUtils";
 export * as TscUtils from "./common/tscUtils";
+
+export { typeOnly } from "./typeValidator/compatibility";
+export { type TestCaseTypeData, buildTestCase } from "./typeValidator/testGeneration";
+export { type TypeData, getFullTypeName, getNodeTypeData } from "./typeValidator/typeData";
+export { getTypeTestPreviousPackageDetails } from "./typeValidator/validatorUtils";

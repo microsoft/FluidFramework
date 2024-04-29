@@ -54,6 +54,8 @@ import {
 	getOrAddInMap,
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
+	nestedMapFromFlatList,
+	nestedMapToFlatList,
 	nestedSetContains,
 	populateNestedMap,
 	setInNestedMap,
@@ -593,17 +595,11 @@ export class ModularChangeFamily
 			0x89a /* Unexpected destroys in change to invert */,
 		);
 
-		const revInfo = change.change.revisions;
 		return makeModularChangeset(
 			invertedFields,
 			invertedNodes,
 			idState.maxId,
-			revInfo === undefined
-				? undefined
-				: (isRollback
-						? revInfo.map(({ revision }) => ({ revision, rollbackOf: revision }))
-						: Array.from(revInfo)
-				  ).reverse(),
+			[],
 			change.change.constraintViolationCount,
 			undefined,
 			destroys,
@@ -672,10 +668,11 @@ export class ModularChangeFamily
 	}
 
 	public rebase(
-		change: ModularChangeset,
+		taggedChange: TaggedChange<ModularChangeset>,
 		over: TaggedChange<ModularChangeset>,
 		revisionMetadata: RevisionMetadataSource,
 	): ModularChangeset {
+		const change = taggedChange.change;
 		const maxId = Math.max(change.maxId ?? -1, over.change.maxId ?? -1);
 		const idState: IdAllocationState = { maxId };
 		const genId: IdAllocator = idAllocatorFromState(idState);
@@ -691,8 +688,9 @@ export class ModularChangeFamily
 		const getBaseRevisions = () =>
 			revisionInfoFromTaggedChange(over).map((info) => info.revision);
 
-		const rebaseMetadata = {
+		const rebaseMetadata: RebaseRevisionMetadata = {
 			...revisionMetadata,
+			getRevisionToRebase: () => taggedChange.revision,
 			getBaseRevisions,
 		};
 
@@ -1008,9 +1006,126 @@ export class ModularChangeFamily
 		}
 	}
 
+	public changeRevision(
+		change: ModularChangeset,
+		newRevision: RevisionTag | undefined,
+		rollbackOf?: RevisionTag,
+	): ModularChangeset {
+		const oldRevisions = new Set(
+			change.revisions === undefined
+				? [undefined]
+				: change.revisions.map((revInfo) => revInfo.revision),
+		);
+		const updatedFields = this.replaceFieldMapRevisions(
+			change.fieldChanges,
+			oldRevisions,
+			newRevision,
+		);
+
+		const updatedNodes: ChangeAtomIdMap<NodeChangeset> = nestedMapFromFlatList(
+			nestedMapToFlatList(change.nodeChanges).map(([revision, id, nodeChangeset]) => [
+				replaceRevision(revision, oldRevisions, newRevision),
+				id,
+				this.replaceNodeChangesetRevisions(nodeChangeset, oldRevisions, newRevision),
+			]),
+		);
+
+		const updated: Mutable<ModularChangeset> = {
+			...change,
+			fieldChanges: updatedFields,
+			nodeChanges: updatedNodes,
+		};
+
+		if (change.builds !== undefined) {
+			updated.builds = replaceIdMapRevisions(change.builds, oldRevisions, newRevision);
+		}
+
+		if (change.destroys !== undefined) {
+			updated.destroys = replaceIdMapRevisions(change.destroys, oldRevisions, newRevision);
+		}
+
+		if (change.refreshers !== undefined) {
+			updated.refreshers = replaceIdMapRevisions(
+				change.refreshers,
+				oldRevisions,
+				newRevision,
+			);
+		}
+
+		if (newRevision !== undefined) {
+			const revInfo: Mutable<RevisionInfo> = { revision: newRevision };
+			if (rollbackOf !== undefined) {
+				revInfo.rollbackOf = rollbackOf;
+			}
+
+			updated.revisions = [revInfo];
+		} else {
+			delete updated.revisions;
+		}
+
+		return updated;
+	}
+
+	private replaceNodeChangesetRevisions(
+		nodeChangeset: NodeChangeset,
+		oldRevisions: Set<RevisionTag | undefined>,
+		newRevision: RevisionTag | undefined,
+	): NodeChangeset {
+		const updated = { ...nodeChangeset };
+		if (nodeChangeset.fieldChanges !== undefined) {
+			updated.fieldChanges = this.replaceFieldMapRevisions(
+				nodeChangeset.fieldChanges,
+				oldRevisions,
+				newRevision,
+			);
+		}
+
+		return updated;
+	}
+
+	private replaceFieldMapRevisions(
+		fields: FieldChangeMap,
+		oldRevisions: Set<RevisionTag | undefined>,
+		newRevision: RevisionTag | undefined,
+	): FieldChangeMap {
+		const updatedFields: FieldChangeMap = new Map();
+		for (const [field, fieldChange] of fields) {
+			const updatedFieldChange = getFieldKind(
+				this.fieldKinds,
+				fieldChange.fieldKind,
+			).changeHandler.rebaser.replaceRevisions(fieldChange.change, oldRevisions, newRevision);
+
+			updatedFields.set(field, { ...fieldChange, change: updatedFieldChange });
+		}
+
+		return updatedFields;
+	}
+
 	public buildEditor(changeReceiver: (change: ModularChangeset) => void): ModularEditBuilder {
 		return new ModularEditBuilder(this, changeReceiver);
 	}
+}
+
+function replaceRevision(
+	revision: RevisionTag | undefined,
+	oldRevisions: Set<RevisionTag | undefined>,
+	newRevision: RevisionTag | undefined,
+): RevisionTag | undefined {
+	return oldRevisions.has(revision) ? newRevision : revision;
+}
+
+function replaceIdMapRevisions<T>(
+	map: ChangeAtomIdMap<T>,
+	oldRevisions: Set<RevisionTag | undefined>,
+	newRevision: RevisionTag | undefined,
+): ChangeAtomIdMap<T> {
+	return nestedMapFromFlatList(
+		nestedMapToFlatList(map).map(([revision, id, value]) => [
+			replaceRevision(revision, oldRevisions, newRevision),
+			id,
+			value,
+		]),
+	);
 }
 
 function composeBuildsDestroysAndRefreshers(changes: TaggedChange<ModularChangeset>[]) {
@@ -1361,17 +1476,20 @@ function deltaFromNodeChange(
 
 /**
  * @internal
- * @param revInfos - This should describe all revisions in the rebase path, even if not part of the current base changeset.
+ * @param revInfos - This should describe the revision being rebased and all revisions in the rebase path,
+ * even if not part of the current base changeset.
  * For example, when rebasing change B from a local branch [A, B, C] over a branch [X, Y], the `revInfos` must include
- * the changes [A⁻¹ X, Y, A'] for each rebase step of B.
+ * the changes [A⁻¹ X, Y, A, B] for each rebase step of B.
+ * @param revisionToRebase - The revision of the changeset which is being rebased.
  * @param baseRevisions - The set of revisions in the changeset being rebased over.
  * For example, when rebasing change B from a local branch [A, B, C] over a branch [X, Y], the `baseRevisions` must include
- * revisions [A⁻¹ X, Y, A'] if rebasing over the composition of all those changes, or
+ * revisions [A⁻¹ X, Y, A] if rebasing over the composition of all those changes, or
  * revision [A⁻¹] for the first rebase, then [X], etc. if rebasing over edits individually.
  * @returns - RebaseRevisionMetadata to be passed to `FieldChangeRebaser.rebase`*
  */
 export function rebaseRevisionMetadataFromInfo(
 	revInfos: readonly RevisionInfo[],
+	revisionToRebase: RevisionTag | undefined,
 	baseRevisions: (RevisionTag | undefined)[],
 ): RebaseRevisionMetadata {
 	const filteredRevisions: RevisionTag[] = [];
@@ -1384,6 +1502,7 @@ export function rebaseRevisionMetadataFromInfo(
 	const getBaseRevisions = () => filteredRevisions;
 	return {
 		...revisionMetadataSourceFromInfo(revInfos),
+		getRevisionToRebase: () => revisionToRebase,
 		getBaseRevisions,
 	};
 }

@@ -38,6 +38,7 @@ const nodeId4: NodeId = { localId: brand(4) };
 const unexpectedDelegate = () => assert.fail("Unexpected call");
 
 const revisionMetadata: RebaseRevisionMetadata = {
+	getRevisionToRebase: () => assert.fail("Unexpected revision info query"),
 	getBaseRevisions: () => assert.fail("Unexpected revision info query"),
 	getIndex: () => assert.fail("Unexpected revision index query"),
 	tryGetInfo: () => assert.fail("Unexpected revision info query"),
@@ -295,7 +296,7 @@ describe("GenericField", () => {
 	});
 
 	describe("Encoding", () => {
-		const baseContext = { originatorId: "session1" as SessionId };
+		const baseContext = { originatorId: "session1" as SessionId, revision: undefined };
 
 		const encodingTestData: EncodingTestData<
 			GenericChangeset,

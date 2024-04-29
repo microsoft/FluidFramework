@@ -418,6 +418,7 @@ declare function get_old_InterfaceDeclaration_ISharedString():
 declare function use_current_InterfaceDeclaration_ISharedString(
     use: TypeOnly<current.ISharedString>): void;
 use_current_InterfaceDeclaration_ISharedString(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISharedString());
 
 /*
@@ -1011,51 +1012,26 @@ use_old_ClassDeclaration_SharedSequence(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedString": {"forwardCompat": false}
+* "RemovedClassDeclaration_SharedString": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_SharedString():
-    TypeOnly<old.SharedString>;
-declare function use_current_ClassDeclaration_SharedString(
-    use: TypeOnly<current.SharedString>): void;
-use_current_ClassDeclaration_SharedString(
-    get_old_ClassDeclaration_SharedString());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedString": {"backCompat": false}
+* "RemovedClassDeclaration_SharedString": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_SharedString():
-    TypeOnly<current.SharedString>;
-declare function use_old_ClassDeclaration_SharedString(
-    use: TypeOnly<old.SharedString>): void;
-use_old_ClassDeclaration_SharedString(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_ClassDeclaration_SharedString());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedStringFactory": {"forwardCompat": false}
+* "RemovedClassDeclaration_SharedStringFactory": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_SharedStringFactory():
-    TypeOnly<old.SharedStringFactory>;
-declare function use_current_ClassDeclaration_SharedStringFactory(
-    use: TypeOnly<current.SharedStringFactory>): void;
-use_current_ClassDeclaration_SharedStringFactory(
-    get_old_ClassDeclaration_SharedStringFactory());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedStringFactory": {"backCompat": false}
+* "RemovedClassDeclaration_SharedStringFactory": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_SharedStringFactory():
-    TypeOnly<current.SharedStringFactory>;
-declare function use_old_ClassDeclaration_SharedStringFactory(
-    use: TypeOnly<old.SharedStringFactory>): void;
-use_old_ClassDeclaration_SharedStringFactory(
-    get_current_ClassDeclaration_SharedStringFactory());
 
 /*
 * Validate forward compat by using old type in place of current type

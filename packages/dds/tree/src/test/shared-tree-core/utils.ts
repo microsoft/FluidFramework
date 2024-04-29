@@ -7,7 +7,7 @@ import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/data
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { ICodecOptions } from "../../codec/index.js";
-import { GraphCommit, TreeStoredSchemaRepository } from "../../core/index.js";
+import { GraphCommit, RevisionTagCodec, TreeStoredSchemaRepository } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	DefaultChangeFamily,
@@ -25,9 +25,10 @@ import {
 	SharedTreeCore,
 	Summarizable,
 } from "../../shared-tree-core/index.js";
-import { testRevisionTagCodec } from "../utils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ClonableSchemaAndPolicy } from "../../shared-tree-core/sharedTreeCore.js";
+import { testIdCompressor } from "../utils.js";
+import { strict as assert } from "assert";
 
 /**
  * A `SharedTreeCore` with
@@ -42,20 +43,23 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 	};
 
 	public constructor(
-		runtime: IFluidDataStoreRuntime = new MockFluidDataStoreRuntime(),
+		runtime: IFluidDataStoreRuntime = new MockFluidDataStoreRuntime({
+			idCompressor: testIdCompressor,
+		}),
 		id = "TestSharedTreeCore",
 		summarizables: readonly Summarizable[] = [],
 		schema: TreeStoredSchemaRepository = new TreeStoredSchemaRepository(),
 		chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Uncompressed,
 		enricher?: ICommitEnricher<DefaultChangeset>,
 	) {
+		assert(runtime.idCompressor !== undefined, "The runtime must provide an ID compressor");
 		const codecOptions: ICodecOptions = {
 			jsonValidator: typeboxValidator,
 		};
 		const formatVersions = { editManager: 1, message: 1, fieldBatch: 1 };
 		const codec = makeModularChangeCodecFamily(
 			fieldKindConfigurations,
-			testRevisionTagCodec,
+			new RevisionTagCodec(runtime.idCompressor),
 			makeFieldBatchCodec(codecOptions, formatVersions.fieldBatch),
 			codecOptions,
 			chunkCompressionStrategy,
