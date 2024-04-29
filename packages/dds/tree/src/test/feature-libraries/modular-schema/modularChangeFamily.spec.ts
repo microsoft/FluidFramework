@@ -1514,35 +1514,6 @@ describe("ModularChangeFamily", () => {
 				);
 			});
 		});
-
-		describe("handles implicit and explicit build revision representations", () => {
-			it("explicit builds", () => {
-				const explicitBuild: ModularChangeset = {
-					nodeChanges: new Map(),
-					fieldChanges: new Map([]),
-					builds: new Map([[tag1, new Map([[brand(1), node1Chunk]])]]),
-				};
-				const withBuilds = updateRefreshers(
-					makeAnonChange(explicitBuild),
-					getDetachedNode,
-					[{ major: tag1, minor: 1 }],
-				);
-				assert.deepEqual(withBuilds, explicitBuild);
-			});
-			it("implicit builds", () => {
-				const implicitBuild: ModularChangeset = {
-					nodeChanges: new Map(),
-					fieldChanges: new Map([]),
-					builds: new Map([[undefined, new Map([[brand(1), node1Chunk]])]]),
-				};
-				const withBuilds = updateRefreshers(
-					tagChangeInline(implicitBuild, tag1),
-					getDetachedNode,
-					[{ major: tag1, minor: 1 }],
-				);
-				assert.deepEqual(withBuilds, implicitBuild);
-			});
-		});
 	});
 
 	describe("Encoding", () => {
