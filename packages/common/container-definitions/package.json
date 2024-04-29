@@ -127,6 +127,9 @@
 			},
 			"InterfaceDeclaration_IBatchMessage": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_ILoaderHeader": {
+				"backCompat": false
 			}
 		}
 	}

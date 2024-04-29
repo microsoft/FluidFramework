@@ -78,6 +78,9 @@ export class CellFactory implements IChannelFactory<ISharedCell> {
 
 /**
  * Entrypoint for {@link ISharedCell} creation.
+ *
+ * This does not control the type of the content of the cell:
+ * it is up to the user of this to ensure the cell's content types align.
  * @internal
  */
 export const SharedCell: ISharedObjectKind<ISharedCell> = createSharedObjectKind(CellFactory);

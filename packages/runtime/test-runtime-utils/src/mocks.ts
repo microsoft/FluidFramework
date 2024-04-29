@@ -29,6 +29,7 @@ import {
 	IDeltaConnection,
 	IDeltaHandler,
 	IFluidDataStoreRuntime,
+	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor/internal";
@@ -773,6 +774,7 @@ export class MockFluidDataStoreRuntime
 		logger?: ITelemetryBaseLogger;
 		idCompressor?: IIdCompressor & IIdCompressorCore;
 		attachState?: AttachState;
+		registry?: readonly IChannelFactory[];
 	}) {
 		super();
 		this.clientId = overrides?.clientId ?? uuid();
@@ -784,6 +786,11 @@ export class MockFluidDataStoreRuntime
 		});
 		this.idCompressor = overrides?.idCompressor;
 		this._attachState = overrides?.attachState ?? AttachState.Attached;
+
+		const registry = overrides?.registry;
+		if (registry) {
+			this.registry = new Map(registry.map((factory) => [factory.type, factory]));
+		}
 	}
 
 	public readonly entryPoint: IFluidHandle<FluidObject>;
@@ -816,6 +823,8 @@ export class MockFluidDataStoreRuntime
 	public containerRuntime?: MockContainerRuntime;
 	public idCompressor?: IIdCompressor & IIdCompressorCore;
 	private readonly deltaConnections: MockDeltaConnection[] = [];
+	private readonly registry?: ReadonlyMap<string, IChannelFactory>;
+
 	public createDeltaConnection(): MockDeltaConnection {
 		const deltaConnection = new MockDeltaConnection(
 			(messageContent: any, localOpMetadata: unknown) =>
@@ -858,8 +867,15 @@ export class MockFluidDataStoreRuntime
 	public async getChannel(id: string): Promise<IChannel> {
 		return null as any as IChannel;
 	}
-	public createChannel(id: string, type: string): IChannel {
-		return null as any as IChannel;
+	public createChannel(id: string | undefined, type: string): IChannel {
+		if (this.registry === undefined) {
+			// This preserves the behavior of this mock from before registry support was added.
+			return null as any as IChannel;
+		}
+
+		const factory = this.registry.get(type);
+		assert(factory !== undefined, "type missing from registry");
+		return factory.create(this, id ?? uuid());
 	}
 
 	public addChannel(channel: IChannel): void {}

@@ -85,13 +85,13 @@ export const DataRuntimeApi: {
     TestFluidObjectFactory: typeof TestFluidObjectFactory;
     dds: {
         SharedCell: ISharedObjectKind<cell.ISharedCell<any>>;
-        SharedCounter: typeof counter.SharedCounter;
+        SharedCounter: ISharedObjectKind<counter.ISharedCounter>;
         SharedDirectory: ISharedObjectKind<map.ISharedDirectory>;
         SharedMap: ISharedObjectKind<map.ISharedMap>;
         SharedMatrix: ISharedObjectKind<matrix.ISharedMatrix<any>>;
         ConsensusQueue: typeof orderedCollection.ConsensusQueue;
         ConsensusRegisterCollection: typeof registerCollection.ConsensusRegisterCollection;
-        SharedString: typeof sequence.SharedString;
+        SharedString: ISharedObjectKind<sequence.ISharedString>;
         SparseMatrix: typeof sequenceDeprecated.SparseMatrix;
     };
     packages: {
