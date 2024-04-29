@@ -22,7 +22,7 @@ import { PackageName } from "@rushstack/node-core-library";
 import * as changeCase from "change-case";
 import { mkdirSync, readJson, rmSync, writeFileSync } from "fs-extra";
 import * as resolve from "resolve.exports";
-import { ModuleKind, ModuleResolutionKind, Project, type SourceFile } from "ts-morph";
+import { ModuleKind, Project, type SourceFile } from "ts-morph";
 import { PackageCommand } from "../../BasePackageCommand";
 import { ApiLevel, ensureDevDependencyExists, knownApiLevels } from "../../library";
 import { unscopedPackageNameString } from "./entrypoints";
@@ -313,11 +313,11 @@ function typeDataFromFile(file: SourceFile, log: Logger): Map<string, TypeData> 
  * @returns The loaded source file.
  */
 export function loadTypesSourceFile(typesPath: string): SourceFile {
+	// Note that this does NOT load anything from tsconfig.
 	const project = new Project({
 		skipAddingFilesFromTsConfig: true,
 		compilerOptions: {
 			module: ModuleKind.Node16,
-			moduleResolution: ModuleResolutionKind.Node16,
 		},
 	});
 	project.addSourceFilesAtPaths(`${path.dirname(typesPath)}/**/*.d.*ts`);
