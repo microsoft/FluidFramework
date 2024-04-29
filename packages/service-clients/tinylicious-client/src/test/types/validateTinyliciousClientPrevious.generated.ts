@@ -201,7 +201,6 @@ declare function get_old_InterfaceDeclaration_TinyliciousMember():
 declare function use_current_InterfaceDeclaration_TinyliciousMember(
     use: TypeOnly<current.TinyliciousMember>): void;
 use_current_InterfaceDeclaration_TinyliciousMember(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_TinyliciousMember());
 
 /*
@@ -214,7 +213,6 @@ declare function get_current_InterfaceDeclaration_TinyliciousMember():
 declare function use_old_InterfaceDeclaration_TinyliciousMember(
     use: TypeOnly<old.TinyliciousMember>): void;
 use_old_InterfaceDeclaration_TinyliciousMember(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_TinyliciousMember());
 
 /*

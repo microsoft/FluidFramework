@@ -645,6 +645,18 @@ use_old_InterfaceDeclaration_IGarbageCollectionDetailsBase(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedInterfaceDeclaration_IIdCompressor": {"forwardCompat": false}
+*/
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedInterfaceDeclaration_IIdCompressor": {"backCompat": false}
+*/
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IInboundSignalMessage": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IInboundSignalMessage():
@@ -1073,6 +1085,54 @@ declare function use_old_InterfaceDeclaration_OpAttributionKey(
     use: TypeOnly<old.OpAttributionKey>): void;
 use_old_InterfaceDeclaration_OpAttributionKey(
     get_current_InterfaceDeclaration_OpAttributionKey());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedTypeAliasDeclaration_OpSpaceCompressedId": {"forwardCompat": false}
+*/
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedTypeAliasDeclaration_OpSpaceCompressedId": {"backCompat": false}
+*/
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedTypeAliasDeclaration_SessionId": {"forwardCompat": false}
+*/
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedTypeAliasDeclaration_SessionId": {"backCompat": false}
+*/
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedTypeAliasDeclaration_SessionSpaceCompressedId": {"forwardCompat": false}
+*/
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedTypeAliasDeclaration_SessionSpaceCompressedId": {"backCompat": false}
+*/
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedTypeAliasDeclaration_StableId": {"forwardCompat": false}
+*/
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedTypeAliasDeclaration_StableId": {"backCompat": false}
+*/
 
 /*
 * Validate forward compat by using old type in place of current type

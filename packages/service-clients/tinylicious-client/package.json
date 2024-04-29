@@ -108,11 +108,6 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {
-			"InterfaceDeclaration_TinyliciousMember": {
-				"forwardCompat": false,
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

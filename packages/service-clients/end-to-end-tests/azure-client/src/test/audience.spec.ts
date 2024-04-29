@@ -240,13 +240,13 @@ describe("Fluid audience", () => {
 		);
 
 		assert.notStrictEqual(
-			partnerSelf?.userId,
-			originalSelf?.userId,
+			partnerSelf?.id,
+			originalSelf?.id,
 			"Self and partner should have different IDs",
 		);
 		assert.strictEqual(
-			partnerSelf?.userId,
-			partnerSelfSeenByOriginal?.userId,
+			partnerSelf?.id,
+			partnerSelfSeenByOriginal?.id,
 			"Partner and partner-as-seen-by-original should have same IDs",
 		);
 	});
