@@ -47,6 +47,7 @@ import {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	getSnapshotTree,
 	MessageType2,
 	OnlineStatus,
 	isCombinedAppAndProtocolSummary,
@@ -1592,9 +1593,7 @@ export class Container
 			specifiedVersion,
 			supportGetSnapshotApi,
 		);
-		const baseSnapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(baseSnapshot)
-			? baseSnapshot.snapshotTree
-			: baseSnapshot;
+		const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 		this._loadedFromVersion = version;
 		const attributes: IDocumentAttributes = await getDocumentAttributes(
 			this.storageAdapter,

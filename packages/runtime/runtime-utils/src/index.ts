@@ -35,3 +35,4 @@ export {
 } from "./summaryUtils.js";
 export { unpackChildNodesUsedRoutes } from "./unpackUsedRoutes.js";
 export { ReadAndParseBlob, seqFromTree, encodeCompactIdToString } from "./utils.js";
+export { isSnapshotFetchRequiredForLoadingGroupId } from "./snapshotUtils.js";

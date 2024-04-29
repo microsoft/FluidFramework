@@ -15,7 +15,7 @@ import {
 	IResolvedUrl,
 	ISnapshot,
 } from "@fluidframework/driver-definitions/internal";
-import { isInstanceOfISnapshot } from "@fluidframework/driver-utils/internal";
+import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import {
 	type IDocumentAttributes,
 	ISequencedDocumentMessage,
@@ -150,9 +150,7 @@ export class SerializedStateManager {
 				supportGetSnapshotApi,
 				specifiedVersion,
 			);
-			const baseSnapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(baseSnapshot)
-				? baseSnapshot.snapshotTree
-				: baseSnapshot;
+			const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 			// non-interactive clients will not have any pending state we want to save
 			if (this.offlineLoadEnabled) {
 				const snapshotBlobs = await getBlobContentsFromTree(
@@ -380,9 +378,7 @@ export async function getLatestSnapshotInfo(
 				undefined,
 			);
 
-			const baseSnapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(baseSnapshot)
-				? baseSnapshot.snapshotTree
-				: baseSnapshot;
+			const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 			const snapshotFetchedTime = Date.now();
 			const snapshotBlobs = await getBlobContentsFromTree(baseSnapshotTree, storageAdapter);
 			const attributes: IDocumentAttributes = await getDocumentAttributes(
