@@ -320,7 +320,7 @@ export function loadTypesSourceFile(typesPath: string): SourceFile {
 			module: ModuleKind.Node16,
 		},
 	});
-	const sourceFile = project.addSourceFileAtPath(typesPath)
+	const sourceFile = project.addSourceFileAtPath(typesPath);
 	return sourceFile;
 }
 
