@@ -1172,14 +1172,14 @@ function* relevantRemovedRootsFromFields(
  * @param getDetachedNode - The function to retrieve a tree chunk from the corresponding detached node id.
  * @param removedRoots - The set of removed roots that should be in memory for the given change to be applied.
  * Can be retrieved by calling {@link relevantRemovedRoots}.
- * @param allowMissingRefreshers - when false, this function enforces that all relevant removed roots have a
+ * @param requireRefreshers - when true, this function enforces that all relevant removed roots have a
  * corresponding build or refresher.
  */
 export function updateRefreshers(
 	{ change, revision }: TaggedChange<ModularChangeset>,
 	getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
 	removedRoots: Iterable<DeltaDetachedNodeId>,
-	allowMissingRefreshers: boolean = false,
+	requireRefreshers: boolean = true,
 ): ModularChangeset {
 	const refreshers: ChangeAtomIdMap<TreeChunk> = new Map();
 	const chunkLengths: Map<RevisionTag | undefined, BTree<number, number>> = new Map();
@@ -1214,7 +1214,7 @@ export function updateRefreshers(
 
 		const node = getDetachedNode(root);
 		if (node === undefined) {
-			assert(allowMissingRefreshers, 0x8cd /* detached node should exist */);
+			assert(!requireRefreshers, 0x8cd /* detached node should exist */);
 		} else {
 			setInNestedMap(refreshers, root.major, root.minor, node);
 		}

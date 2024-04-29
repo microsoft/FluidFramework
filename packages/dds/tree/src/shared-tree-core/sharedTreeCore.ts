@@ -265,40 +265,40 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 				this.detachedRevision,
 			);
 			this.editManager.advanceMinimumSequenceNumber(newRevision);
-		} else {
-			let enrichedCommit: GraphCommit<TChange>;
-			if (this.commitEnricher !== undefined) {
-				if (isResubmit) {
-					assert(
-						this.commitEnricher.isInResubmitPhase,
-						"Invalid resubmit outside of resubmit phase",
-					);
-				} else {
-					assert(
-						!this.commitEnricher.isInResubmitPhase,
-						"Invalid enrichment call during resubmit phase",
-					);
-				}
-				enrichedCommit = this.commitEnricher.enrichCommit(commit);
-			} else {
-				enrichedCommit = commit;
-			}
-			const message = this.messageCodec.encode(
-				{
-					commit: enrichedCommit,
-					sessionId: this.editManager.localSessionId,
-				},
-				{
-					schema: schemaAndPolicy,
-				},
-			);
-			this.submitLocalMessage(message, {
-				// Clone the schema to ensure that during resubmit the schema has not been mutated by later changes
-				schema: schemaAndPolicy.schema.clone(),
-				policy: schemaAndPolicy.policy,
-			});
-			return enrichedCommit;
+			return undefined;
 		}
+		let enrichedCommit: GraphCommit<TChange>;
+		if (this.commitEnricher !== undefined) {
+			if (isResubmit) {
+				assert(
+					this.commitEnricher.isInResubmitPhase,
+					"Invalid resubmit outside of resubmit phase",
+				);
+			} else {
+				assert(
+					!this.commitEnricher.isInResubmitPhase,
+					"Invalid enrichment call during resubmit phase",
+				);
+			}
+			enrichedCommit = this.commitEnricher.enrichCommit(commit);
+		} else {
+			enrichedCommit = commit;
+		}
+		const message = this.messageCodec.encode(
+			{
+				commit: enrichedCommit,
+				sessionId: this.editManager.localSessionId,
+			},
+			{
+				schema: schemaAndPolicy,
+			},
+		);
+		this.submitLocalMessage(message, {
+			// Clone the schema to ensure that during resubmit the schema has not been mutated by later changes
+			schema: schemaAndPolicy.schema.clone(),
+			policy: schemaAndPolicy.policy,
+		});
+		return enrichedCommit;
 	}
 
 	protected processCore(
@@ -340,16 +340,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			commit: { revision },
 		} = this.messageCodec.decode(content, {});
 		const [commit] = this.editManager.findLocalCommit(revision);
-		if (this.commitEnricher !== undefined) {
-			// If a resubmit phase is not already in progress, then this must be the first commit of a new resubmit phase.
-			if (!this.commitEnricher.isInResubmitPhase) {
-				const toResubmit = this.editManager.getLocalCommits();
-				assert(
-					commit === toResubmit[0],
-					"Resubmit phase should start with the oldest local commit",
-				);
-				this.commitEnricher.prepareForResubmit(toResubmit);
-			}
+		// If a resubmit phase is not already in progress, then this must be the first commit of a new resubmit phase.
+		if (this.commitEnricher?.isInResubmitPhase === false) {
+			const toResubmit = this.editManager.getLocalCommits();
+			assert(
+				commit === toResubmit[0],
+				"Resubmit phase should start with the oldest local commit",
+			);
+			this.commitEnricher.prepareForResubmit(toResubmit);
 		}
 		assert(
 			isClonableSchemaPolicy(localOpMetadata),

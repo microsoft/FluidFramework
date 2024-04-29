@@ -63,7 +63,7 @@ export class DefaultCommitEnricher<TChange> implements ICommitEnricher<TChange> 
 	private resubmitQueue: GraphCommit<TChange>[] = [];
 
 	/**
-	 * Represents the index in the `inFlight` array of the most recent in flight commit that has
+	 * Represents the index in the `inFlightQueue` array of the most recent in flight commit that has
 	 * undergone rebasing but whose enrichments have not been updated.
 	 * All in-flight commits with an index inferior or equal to this number have stale enrichments.
 	 *

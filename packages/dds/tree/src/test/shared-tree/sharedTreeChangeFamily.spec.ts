@@ -266,7 +266,7 @@ describe("SharedTreeChangeFamily", () => {
 			{ change }: TaggedChange<ModularChangeset>,
 			getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
 			removedRoots: Iterable<DeltaDetachedNodeId>,
-			allowMissingRefreshers: boolean,
+			requireRefreshers: boolean,
 		): ModularChangeset {
 			const output: TreeChunk[] = [];
 			const relevantToChange = new Set<string>(change as unknown as string[]);
@@ -275,7 +275,7 @@ describe("SharedTreeChangeFamily", () => {
 				assert.equal(relevantToChange.has(id as unknown as string), true);
 				const tree = getDetachedNode(id);
 				if (tree === undefined) {
-					if (!allowMissingRefreshers) {
+					if (requireRefreshers) {
 						throw new Error("Missing tree");
 					}
 				} else {

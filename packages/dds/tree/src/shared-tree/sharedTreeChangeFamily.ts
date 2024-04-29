@@ -226,7 +226,7 @@ export function updateRefreshers(
 		change: TaggedChange<ModularChangeset>,
 		getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
 		removedRoots: Iterable<DeltaDetachedNodeId>,
-		allowMissingRefreshers: boolean,
+		requireRefreshers: boolean,
 	) => ModularChangeset,
 ): SharedTreeChange {
 	// Adding refreshers to a SharedTreeChange is not as simple as adding refreshers to each of its data changes.
@@ -272,14 +272,14 @@ export function updateRefreshers(
 				taggedDataChange,
 				getAndRememberDetachedNode,
 				removedRoots,
-				false,
+				true,
 			);
 		} else {
 			return updateDataChangeRefreshers(
 				taggedDataChange,
 				getAndRememberDetachedNode,
 				filterIncludedRoots(removedRoots),
-				true,
+				false,
 			);
 		}
 	});
