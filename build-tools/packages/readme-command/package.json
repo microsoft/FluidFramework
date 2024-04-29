@@ -47,7 +47,7 @@
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
-		"@oclif/test": "~2.3.33",
+		"@oclif/test": "~3.2.11",
 		"@types/chai": "^4.3.5",
 		"@types/chai-arrays": "^2.0.0",
 		"@types/node": "^18.18.6",
