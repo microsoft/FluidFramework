@@ -38,7 +38,7 @@ export type OdspEndpoint = "odsp" | "odsp-df";
 export type RouterliciousEndpoint = "frs" | "frsCanary" | "r11s" | "docker";
 
 // @internal
-export type TestDriverTypes = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local";
+export type TestDriverTypes = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local" | "frs";
 
 // (No @packageDocumentation comment for this package)
 
