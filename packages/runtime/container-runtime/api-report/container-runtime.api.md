@@ -1030,8 +1030,6 @@ export interface ISummarizeEventProps {
 // @alpha
 export interface ISummarizeOptions {
     readonly fullTree?: boolean;
-    // @deprecated
-    readonly refreshLatestAck?: boolean;
 }
 
 // @alpha (undocumented)

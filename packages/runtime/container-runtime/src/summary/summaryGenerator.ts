@@ -221,9 +221,8 @@ export class SummaryGenerator {
 	/**
 	 * Generates summary and listens for broadcast and ack/nack.
 	 * Returns true for ack, false for nack, and undefined for failure or timeout.
-	 * @param reason - reason for summarizing
-	 * @param options - refreshLatestAck to fetch summary ack info from server,
-	 * fullTree to generate tree without any summary handles even if unchanged
+	 * @param summaryOptions - options controlling how the summary is generated or submitted.
+	 * @param resultsBuilder - optional, result builder to use to build pass or fail result.
 	 */
 	public summarize(
 		summaryOptions: ISubmitSummaryOptions,
@@ -296,7 +295,8 @@ export class SummaryGenerator {
 					category,
 					retryAfterSeconds:
 						submitFailureResult?.retryAfterSeconds ??
-						nackSummaryResult?.retryAfterSeconds,
+						nackSummaryResult?.retryAfterSeconds ??
+						error?.retryAfterSeconds,
 				},
 				error ?? reason,
 			); // disconnect & summaryAckTimeout do not have proper error.
@@ -396,7 +396,12 @@ export class SummaryGenerator {
 				return fail("disconnect");
 			}
 			if (waitBroadcastResult.result !== "done") {
-				return fail("summaryOpWaitTimeout");
+				// The summary op may not have been received within the timeout due to a transient error. So,
+				// fail with a retriable error to re-attempt the summary if possible.
+				return fail(
+					"summaryOpWaitTimeout",
+					new RetriableSummaryError("Summary op wait timeout", 0 /* retryAfterSeconds */),
+				);
 			}
 			const summarizeOp = waitBroadcastResult.value;
 
@@ -425,7 +430,15 @@ export class SummaryGenerator {
 				return fail("disconnect");
 			}
 			if (waitAckNackResult.result !== "done") {
-				return fail("summaryAckWaitTimeout");
+				// The summary ack may not have been received within the timeout due to a transient error. So,
+				// fail with a retriable error to re-attempt the summary if possible.
+				return fail(
+					"summaryAckWaitTimeout",
+					new RetriableSummaryError(
+						"Summary ack wait timeout",
+						0 /* retryAfterSeconds */,
+					),
+				);
 			}
 			const ackNackOp = waitAckNackResult.value;
 			this.pendingAckTimer.clear();
