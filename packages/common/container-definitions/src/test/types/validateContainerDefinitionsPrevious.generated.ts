@@ -1002,6 +1002,7 @@ declare function get_current_InterfaceDeclaration_ILoaderHeader():
 declare function use_old_InterfaceDeclaration_ILoaderHeader(
     use: TypeOnly<old.ILoaderHeader>): void;
 use_old_InterfaceDeclaration_ILoaderHeader(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ILoaderHeader());
 
 /*
