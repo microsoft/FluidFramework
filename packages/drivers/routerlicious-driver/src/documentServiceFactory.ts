@@ -131,7 +131,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			logger2,
 		);
 		const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
-		const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+		const ordererRestWrapper = RouterliciousOrdererRestWrapper.load(
 			ordererTokenFetcher,
 			logger2,
 			rateLimiter,
@@ -281,7 +281,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		const storageTokenP = storageTokenFetcher();
 
 		const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
-		const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+		const ordererRestWrapper = RouterliciousOrdererRestWrapper.load(
 			ordererTokenFetcher,
 			logger2,
 			rateLimiter,
@@ -330,7 +330,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			);
 		}
 
-		const storageRestWrapper = await RouterliciousStorageRestWrapper.load(
+		const storageRestWrapper = RouterliciousStorageRestWrapper.load(
 			tenantId,
 			storageTokenFetcher,
 			logger2,
