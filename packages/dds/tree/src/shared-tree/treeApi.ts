@@ -170,7 +170,7 @@ export interface RunTransaction {
 	 * This function is passed the provided `node`.
 	 * @param preconditions - An optional list of {@link TransactionConstraint | constraints} that are checked just before the transaction begins.
 	 * If any of the constraints are not met when `runTransaction` is called, it will throw an error.
-	 * If any of the constraints are not met when this transaction is sequenced (on this client or other clients), the transaction will not be run.
+	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on this client and ignored by all other clients.
 	 * @returns The value returned by the inner `transaction` function.
 	 * @remarks
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
@@ -195,7 +195,7 @@ export interface RunTransaction {
 	 * This function is passed the root of the tree.
 	 * @param preconditions - An optional list of {@link TransactionConstraint | constraints} that are checked just before the transaction begins.
 	 * If any of the constraints are not met when `runTransaction` is called, it will throw an error.
-	 * If any of the constraints are not met when this transaction is sequenced (on this client or other clients), the transaction will not be run.
+	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on this client and ignored by all other clients.
 	 * @returns The value returned by the inner `transaction` function.
 	 * @remarks
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
@@ -222,7 +222,7 @@ export interface RunTransaction {
 	 * At any point during the transaction, the function may return the special {@link RunTransaction.rollback | rollback value} (`Tree.runTransaction.rollback`) to abort the transaction and discard any changes it made so far.
 	 * @param preconditions - An optional list of {@link TransactionConstraint | constraints} that are checked just before the transaction begins.
 	 * If any of the constraints are not met when `runTransaction` is called, it will throw an error.
-	 * If any of the constraints are not met when this transaction is sequenced (on this client or other clients), the transaction will not be run.
+	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on this client and ignored by all other clients.
 	 * @returns The value returned by the inner `transaction` function.
 	 * @remarks
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
@@ -248,7 +248,7 @@ export interface RunTransaction {
 	 * At any point during the transaction, the function may return the special {@link RunTransaction.rollback | rollback value} (`Tree.runTransaction.rollback`) to abort the transaction and discard any changes it made so far.
 	 * @param preconditions - An optional list of {@link TransactionConstraint | constraints} that are checked just before the transaction begins.
 	 * If any of the constraints are not met when `runTransaction` is called, it will throw an error.
-	 * If any of the constraints are not met when this transaction is sequenced (on this client or other clients), the transaction will not be run.
+	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on this client and ignored by all other clients.
 	 * @returns The value returned by the inner `transaction` function.
 	 * @remarks
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
@@ -274,7 +274,7 @@ export interface RunTransaction {
 	 * This function is passed the provided `node`.
 	 * @param preconditions - An optional list of {@link TransactionConstraint | constraints} that are checked just before the transaction begins.
 	 * If any of the constraints are not met when `runTransaction` is called, it will throw an error.
-	 * If any of the constraints are not met when this transaction is sequenced (on this client or other clients), the transaction will not be run.
+	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on this client and ignored by all other clients.
 	 * @remarks
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
 	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
@@ -298,7 +298,7 @@ export interface RunTransaction {
 	 * This function is passed the root of the tree.
 	 * @param preconditions - An optional list of {@link TransactionConstraint | constraints} that are checked just before the transaction begins.
 	 * If any of the constraints are not met when `runTransaction` is called, it will throw an error.
-	 * If any of the constraints are not met when this transaction is sequenced (on this client or other clients), the transaction will not be run.
+	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on this client and ignored by all other clients.
 	 * @remarks
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
 	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
