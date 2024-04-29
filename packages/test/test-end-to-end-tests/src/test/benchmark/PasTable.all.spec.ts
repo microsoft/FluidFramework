@@ -13,18 +13,18 @@ import {
 
 import { IBenchmarkParameters, benchmarkAll } from "./DocumentCreator.js";
 
-const matrixFactory = SharedMatrix.getFactory();
-
 function createLocalMatrix(id: string, dataStoreRuntime: MockFluidDataStoreRuntime) {
-	return matrixFactory.create(dataStoreRuntime, id);
+	return SharedMatrix.create(dataStoreRuntime, id);
 }
 
 function createString(id: string, dataStoreRuntime: MockFluidDataStoreRuntime) {
-	return SharedString.getFactory().create(dataStoreRuntime, id);
+	return SharedString.create(dataStoreRuntime, id);
 }
 
 describeCompat("PAS Test", "NoCompat", () => {
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({
+		registry: [SharedMatrix.getFactory(), SharedString.getFactory()],
+	});
 	const rowSize = 6;
 	const columnSize = 5;
 
