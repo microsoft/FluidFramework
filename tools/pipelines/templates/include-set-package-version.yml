@@ -143,13 +143,12 @@ steps:
     workingDirectory: ${{ parameters.buildDirectory }}
     filePath: $(Build.SourcesDirectory)/scripts/update-package-version.sh
 
-# - ${{ if and(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.SourceBranch'], 'refs/heads/main')) }}: 
-# - ${{ if eq(variables['Build.Reason'], 'IndividualCI') }}: 
-- template: /tools/pipelines/templates/upload-dev-manifest.yml
-  parameters:
-    buildDirectory: '${{ parameters.buildDirectory }}'
-    STORAGE_ACCOUNT: '${{ parameters.STORAGE_ACCOUNT }}'
-    STORAGE_KEY: '${{ parameters.STORAGE_KEY }}'
+- ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['Build.SourceBranch'], 'refs/heads/main')) }}: 
+  - template: /tools/pipelines/templates/upload-dev-manifest.yml
+    parameters:
+      buildDirectory: '${{ parameters.buildDirectory }}'
+      STORAGE_ACCOUNT: '${{ parameters.STORAGE_ACCOUNT }}'
+      STORAGE_KEY: '${{ parameters.STORAGE_KEY }}'
 
 # This task is a last-minute verification that no Fluid internal versions show up with caret dependencies. This is to
 # help find and prevent bugs in the version bumping tools.
