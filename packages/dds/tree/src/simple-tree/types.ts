@@ -142,6 +142,10 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	 *
 	 * @privateRemarks
 	 * This defaults to TreeNodeValid, which is used to trigger an error if not overridden in the derived class.
+	 *
+	 * The value of this most only be overridden by base classes, never modified,
+	 * however ways to prevent it from being modified prevent it from being overridden,
+	 * so code modifying constructorCached should be extra careful.
 	 */
 	protected static constructorCached: typeof TreeNodeValid | undefined = TreeNodeValid;
 
@@ -166,7 +170,11 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 				"Schema class not properly configured",
 			);
 			schema.oneTimeSetup();
-			// Set the constructorCached on the layer of the prototype chain that declared it:
+			// Set the constructorCached on the layer of the prototype chain that declared it.
+			// This is necessary to ensure there is only one subclass of that type used:
+			// if constructorCached was simply set on `schema`,
+			// then a base classes between `schema` (exclusive) and where `constructorCached` is set (inclusive) and other subclasses of them
+			// would not see the stored `constructorCached`, and the validation above against multiple derived classes would not work.
 			{
 				let schemaBase: typeof TreeNodeValid = schema;
 				while (!Object.prototype.hasOwnProperty.call(schemaBase, "constructorCached")) {
