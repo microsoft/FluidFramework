@@ -215,7 +215,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		}
 
 		for (const [leg2Src, leg2Dst] of change2.moves) {
-			const leg1Src = tryGetFromNestedMap(dstToSrc, leg2Src.revision, leg2Dst.localId);
+			const leg1Src = tryGetFromNestedMap(dstToSrc, leg2Src.revision, leg2Src.localId);
 			if (leg1Src !== undefined) {
 				composedMoves.push([leg1Src, leg2Dst]);
 				deleteFromNestedMap(srcToDst, leg1Src.revision, leg1Src.localId);
