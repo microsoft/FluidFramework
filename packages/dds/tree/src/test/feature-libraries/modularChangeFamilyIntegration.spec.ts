@@ -676,10 +676,9 @@ describe("ModularChangeFamily integration", () => {
 						{
 							fieldKind: FieldKinds.sequence.identifier,
 							change: brand([
-								MarkMaker.moveOut(1, brand(0)),
-								MarkMaker.moveIn(1, brand(0)),
+								MarkMaker.moveOut(1, { revision: tag1, localId: brand(0) }),
+								MarkMaker.moveIn(1, { revision: tag1, localId: brand(0) }),
 							]),
-							revision: tag1,
 						},
 					],
 					[
@@ -687,10 +686,9 @@ describe("ModularChangeFamily integration", () => {
 						{
 							fieldKind: FieldKinds.sequence.identifier,
 							change: brand([
-								MarkMaker.moveOut(2, brand(0)),
-								MarkMaker.moveIn(2, brand(0)),
+								MarkMaker.moveOut(2, { revision: tag2, localId: brand(0) }),
+								MarkMaker.moveIn(2, { revision: tag2, localId: brand(0) }),
 							]),
-							revision: tag2,
 						},
 					],
 				]),
