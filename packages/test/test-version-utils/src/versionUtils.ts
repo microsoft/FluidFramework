@@ -251,7 +251,9 @@ export async function ensureInstalled(
 						if (error) {
 							reject(
 								new Error(
-									`Failed to initialize install directory ${modulePath}\n${stderr}`,
+									`Failed to initialize install directory ${modulePath}\nError:${JSON.stringify(
+										error,
+									)}\nStdout:${stdout}\nStdErr:${stderr}`,
 								),
 							);
 						}
@@ -273,7 +275,13 @@ export async function ensureInstalled(
 					options,
 					(error, stdout, stderr) => {
 						if (error) {
-							reject(new Error(`Failed to install in ${modulePath}\n${stderr}`));
+							reject(
+								new Error(
+									`Failed to install in ${modulePath}\nError:${JSON.stringify(
+										error,
+									)}\nStdout:${stdout}\nStdErr:${stderr}`,
+								),
+							);
 						}
 						resolve();
 					},
