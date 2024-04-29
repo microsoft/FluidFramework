@@ -253,9 +253,12 @@ export interface FieldProps {
 	readonly defaultProvider?: DefaultProvider;
 }
 
-export type FieldProvider = (context: NodeKeyManager) => InsertableContent;
+export type FieldProvider = (context: NodeKeyManager) => InsertableContent | undefined;
 
 /**
+ * Provides a default value for a field.
+ * @remarks
+ * If present in a `FieldSchema`, when constructing new tree content that field can be omitted, and a default will be provided.
  * @public
  */
 export interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {}

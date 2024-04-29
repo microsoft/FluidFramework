@@ -132,5 +132,16 @@ describe("class-tree tree", () => {
 			const root = getView(config, nodeKeyManager).root;
 			assert.equal(root.testOptionalField, "defaultOptionalValue");
 		});
+		it("populates field when no field defaulter is provided.", () => {
+			const schemaWithIdentifier = schema.object("parent", {
+				testOptionalField: schema.optional(schema.string),
+			});
+			const nodeKeyManager = createMockNodeKeyManager();
+			const config = new TreeConfiguration(schemaWithIdentifier, () => ({
+				testOptionalField: undefined,
+			}));
+			const root = getView(config, nodeKeyManager).root;
+			assert.equal(root.testOptionalField, undefined);
+		});
 	});
 });

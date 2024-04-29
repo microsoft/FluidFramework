@@ -9,6 +9,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { TreeValue } from "../core/index.js";
 import {
 	FlexTreeNode,
+	NodeKeyManager,
 	Unenforced,
 	isFlexTreeNode,
 	isLazy,
@@ -38,6 +39,8 @@ import {
 	type,
 	type FieldProps,
 	createFieldSchema,
+	DefaultProvider,
+	getDefaultProvider,
 } from "./schemaTypes.js";
 import { TreeArrayNode, arraySchema } from "./arrayNode.js";
 import { TreeNode } from "./types.js";
@@ -559,7 +562,16 @@ export class SchemaFactory<
 		t: T,
 		props?: FieldProps,
 	): FieldSchema<FieldKind.Optional, T> {
-		return createFieldSchema(FieldKind.Optional, t, props);
+		const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => {
+			return undefined;
+		});
+		return createFieldSchema(
+			FieldKind.Optional,
+			t,
+			props?.defaultProvider === undefined
+				? { ...props, defaultProvider: defaultOptionalProvider }
+				: props,
+		);
 	}
 
 	/**
@@ -611,7 +623,14 @@ export class SchemaFactory<
 	 * Make a field of type identifier instead of the default which is required.
 	 */
 	public get identifier(): FieldSchema<FieldKind.Identifier> {
-		return createFieldSchema(FieldKind.Identifier, this.string);
+		const defaultIdentifierProvider: DefaultProvider = getDefaultProvider(
+			(nodeKeyManager: NodeKeyManager) => {
+				return nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
+			},
+		);
+		return createFieldSchema(FieldKind.Identifier, this.string, {
+			defaultProvider: defaultIdentifierProvider,
+		});
 	}
 
 	/**

@@ -14,7 +14,7 @@ import { SchemaFactory } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { InsertableContent } from "../../simple-tree/proxies.js";
 // eslint-disable-next-line import/no-internal-modules
-import { normalizeAllowedTypes } from "../../simple-tree/schemaTypes.js";
+import { getDefaultProvider, normalizeAllowedTypes } from "../../simple-tree/schemaTypes.js";
 // eslint-disable-next-line import/no-internal-modules
 import { nodeDataToMapTree as nodeDataToMapTreeBase } from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
@@ -334,6 +334,103 @@ describe("toMapTree", () => {
 	});
 
 	describe("object", () => {
+		describe("Field defaults", () => {
+			it("Populates identifier field with the default identifier provider", () => {
+				const schemaFactory = new SchemaFactory("test");
+				const schema = schemaFactory.object("object", {
+					a: schemaFactory.identifier,
+					b: schemaFactory.string,
+				});
+
+				const tree = { b: "test" };
+
+				const actual = nodeDataToMapTree(tree, [schema]);
+
+				const expected: MapTree = {
+					type: brand("test.object"),
+					fields: new Map<FieldKey, MapTree[]>([
+						[
+							brand("a"),
+							[
+								{
+									type: leaf.string.name,
+									value: "a110ca7e-add1-4000-8000-000000000000",
+									fields: new Map(),
+								},
+							],
+						],
+						[
+							brand("b"),
+							[{ type: leaf.string.name, value: "test", fields: new Map() }],
+						],
+					]),
+				};
+
+				assert.deepEqual(actual, expected);
+			});
+
+			it("Populates optional field from the provided default provider's value", () => {
+				const schemaFactory = new SchemaFactory("test");
+				const schema = schemaFactory.object("object", {
+					a: schemaFactory.optional(schemaFactory.string, {
+						defaultProvider: getDefaultProvider(() => "defaultOptionalValue"),
+					}),
+					b: schemaFactory.string,
+				});
+
+				const tree = { b: "test" };
+
+				const actual = nodeDataToMapTree(tree, [schema]);
+
+				const expected: MapTree = {
+					type: brand("test.object"),
+					fields: new Map<FieldKey, MapTree[]>([
+						[
+							brand("a"),
+							[
+								{
+									type: leaf.string.name,
+									value: "defaultOptionalValue",
+									fields: new Map(),
+								},
+							],
+						],
+						[
+							brand("b"),
+							[{ type: leaf.string.name, value: "test", fields: new Map() }],
+						],
+					]),
+				};
+
+				assert.deepEqual(actual, expected);
+			});
+
+			it("Populates optional field with the default optional provider.", () => {
+				const schemaFactory = new SchemaFactory("test");
+				const schema = schemaFactory.object("object", {
+					a: schemaFactory.optional(schemaFactory.string),
+					b: schemaFactory.string,
+				});
+
+				const tree = { a: "providedOptionalValue", b: "test" };
+
+				const actual = nodeDataToMapTree(tree, [schema]);
+
+				const expected: MapTree = {
+					type: brand("test.object"),
+					fields: new Map<FieldKey, MapTree[]>([
+						[brand("a"), []],
+						[
+							brand("b"),
+							[{ type: leaf.string.name, value: "test", fields: new Map() }],
+						],
+					]),
+				};
+
+				assert.deepEqual(actual, expected);
+			});
+		});
+
 		it("Empty object", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const schema = schemaFactory.object("object", {

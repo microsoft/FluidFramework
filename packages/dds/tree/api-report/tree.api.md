@@ -312,7 +312,7 @@ export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
     getNode(): TNode;
 }
 
-// @public (undocumented)
+// @public
 export interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
 }
 

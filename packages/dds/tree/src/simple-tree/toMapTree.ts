@@ -312,40 +312,27 @@ function objectToMapTree(
 	// Filter keys to only those that are strings - our trees do not support symbol or numeric property keys
 	const keys = Reflect.ownKeys(data).filter((key) => typeof key === "string") as FieldKey[];
 
-	const allKeys = Object.keys((schema as any).info) as FieldKey[];
-	const keysWithoutData = allKeys.filter((value) => !keys.includes(value));
-	for (const key of keysWithoutData) {
-		const fieldSchema = getObjectFieldSchema(schema, key);
-		if (fieldSchema.kind === FieldKind.Identifier) {
-			const fieldValue = nodeKeyManager.stabilizeNodeKey(
-				nodeKeyManager.generateLocalNodeKey(),
-			);
-			const mappedChildTree = nodeDataToMapTree(
-				fieldValue,
-				fieldSchema.allowedTypeSet,
-				nodeKeyManager,
-			);
-			const flexKey: FieldKey = brand(getStoredKey(key, fieldSchema));
+	for (const [key, fieldSchema] of Object.entries(
+		schema.info as Record<string, ImplicitFieldSchema>,
+	)) {
+		if (!keys.includes(key as FieldKey)) {
+			if (fieldSchema instanceof FieldSchema) {
+				const defaultProvider = fieldSchema.props?.defaultProvider;
+				if (defaultProvider !== undefined) {
+					const fieldValue = extractFieldProvider(defaultProvider)(nodeKeyManager);
+					const mappedChildTree =
+						fieldValue === undefined
+							? undefined
+							: nodeDataToMapTree(
+									fieldValue,
+									fieldSchema.allowedTypeSet,
+									nodeKeyManager,
+							  );
+					const flexKey: FieldKey = brand(getStoredKey(key, fieldSchema));
 
-			// Note: SchemaFactory validates this at schema creation time, with a user-friendly error.
-			// So we don't expect to hit this, and if we do it is likely an internal bug.
-			assert(!fields.has(flexKey), 0x925 /* Keys must not be duplicated */);
-			fields.set(flexKey, [mappedChildTree]);
-		} else if (fieldSchema.kind === FieldKind.Optional) {
-			const defaultProvider = fieldSchema.props?.defaultProvider;
-			if (defaultProvider !== undefined) {
-				const fieldValue = extractFieldProvider(defaultProvider)(nodeKeyManager);
-				const mappedChildTree = nodeDataToMapTree(
-					fieldValue,
-					fieldSchema.allowedTypeSet,
-					nodeKeyManager,
-				);
-				const flexKey: FieldKey = brand(getStoredKey(key, fieldSchema));
-
-				// Note: SchemaFactory validates this at schema creation time, with a user-friendly error.
-				// So we don't expect to hit this, and if we do it is likely an internal bug.
-				assert(!fields.has(flexKey), 0x925 /* Keys must not be duplicated */);
-				fields.set(flexKey, [mappedChildTree]);
+					assert(!fields.has(flexKey), 0x956 /* Keys must not be duplicated */);
+					fields.set(flexKey, mappedChildTree === undefined ? [] : [mappedChildTree]);
+				}
 			}
 		}
 	}
