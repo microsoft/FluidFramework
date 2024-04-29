@@ -3533,7 +3533,9 @@ export class ContainerRuntime
 						stage: "base",
 						referenceSequenceNumber: summaryRefSeqNum,
 						minimumSequenceNumber,
-						error: `Summarizer node state inconsistent with summarizer state.`,
+						error: new LoggingError(
+							`Summarizer node state inconsistent with summarizer state.`,
+						),
 					};
 				}
 			}
@@ -3583,7 +3585,7 @@ export class ContainerRuntime
 					stage: "base",
 					referenceSequenceNumber: summaryRefSeqNum,
 					minimumSequenceNumber,
-					error: continueResult.error,
+					error: new LoggingError(continueResult.error),
 				};
 			}
 
@@ -3604,7 +3606,7 @@ export class ContainerRuntime
 					stage: "base",
 					referenceSequenceNumber: summaryRefSeqNum,
 					minimumSequenceNumber,
-					error,
+					error: wrapError(error, (msg) => new LoggingError(msg)),
 				};
 			}
 
@@ -3677,7 +3679,11 @@ export class ContainerRuntime
 
 			continueResult = checkContinue();
 			if (!continueResult.continue) {
-				return { stage: "generate", ...generateSummaryData, error: continueResult.error };
+				return {
+					stage: "generate",
+					...generateSummaryData,
+					error: new LoggingError(continueResult.error),
+				};
 			}
 
 			const summaryContext =
@@ -3700,7 +3706,11 @@ export class ContainerRuntime
 					summaryContext,
 				);
 			} catch (error) {
-				return { stage: "generate", ...generateSummaryData, error };
+				return {
+					stage: "generate",
+					...generateSummaryData,
+					error: wrapError(error, (msg) => new LoggingError(msg)),
+				};
 			}
 
 			const parent = summaryContext.ackHandle;
@@ -3719,14 +3729,22 @@ export class ContainerRuntime
 
 			continueResult = checkContinue();
 			if (!continueResult.continue) {
-				return { stage: "upload", ...uploadData, error: continueResult.error };
+				return {
+					stage: "upload",
+					...uploadData,
+					error: new LoggingError(continueResult.error),
+				};
 			}
 
 			let clientSequenceNumber: number;
 			try {
 				clientSequenceNumber = this.submitSummaryMessage(summaryMessage, summaryRefSeqNum);
 			} catch (error) {
-				return { stage: "upload", ...uploadData, error };
+				return {
+					stage: "upload",
+					...uploadData,
+					error: wrapError(error, (msg) => new LoggingError(msg)),
+				};
 			}
 
 			const submitData = {
@@ -3743,7 +3761,11 @@ export class ContainerRuntime
 					!this.validateSummaryBeforeUpload /* validate */,
 				);
 			} catch (error) {
-				return { stage: "upload", ...uploadData, error };
+				return {
+					stage: "upload",
+					...uploadData,
+					error: wrapError(error, (msg) => new LoggingError(msg)),
+				};
 			}
 			return submitData;
 		} finally {
@@ -4217,7 +4239,7 @@ export class ContainerRuntime
 
 		return {
 			stage: "base",
-			error: "summary state stale - Unsupported option 'refreshLatestAck'",
+			error: new LoggingError("summary state stale - Unsupported option 'refreshLatestAck'"),
 			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 			minimumSequenceNumber: this.deltaManager.minimumSequenceNumber,
 		};

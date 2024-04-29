@@ -9,8 +9,8 @@ import { Deferred } from '@fluidframework/core-utils/internal';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IChannelServices } from '@fluidframework/datastore-definitions';
+import type { IChannelFactory } from '@fluidframework/datastore-definitions';
+import type { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IDisposable as IDisposable_2 } from '@fluidframework/core-interfaces';
 import type { IErrorBase } from '@fluidframework/core-interfaces';
@@ -516,9 +516,19 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 
 // @alpha
 export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
+    annotateMarker(marker: Marker, props: PropertySet): void;
+    getMarkerFromId(id: string): ISegment | undefined;
+    getText(start?: number, end?: number): string;
+    // (undocumented)
+    getTextRangeWithMarkers(start: number, end: number): string;
+    getTextWithPlaceholders(start?: number, end?: number): string;
     insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): void;
+    insertMarkerRelative(relativePos1: IRelativePosition, refType: ReferenceType, props?: PropertySet): void;
     insertText(pos: number, text: string, props?: PropertySet): void;
-    posFromRelativePos(relativePos: IRelativePosition): number;
+    insertTextRelative(relativePos1: IRelativePosition, text: string, props?: PropertySet): void;
+    removeText(start: number, end: number): void;
+    replaceText(start: number, end: number, text: string, props?: PropertySet): void;
+    searchForMarker(startPos: number, markerLabel: string, forwards?: boolean): Marker | undefined;
 }
 
 // @public
@@ -813,45 +823,10 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
 }
 
 // @alpha
-export class SharedString extends SharedSegmentSequence<SharedStringSegment> implements ISharedString {
-    constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
-    annotateMarker(marker: Marker, props: PropertySet): void;
-    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedString;
-    static getFactory(): SharedStringFactory;
-    getMarkerFromId(id: string): ISegment | undefined;
-    getText(start?: number, end?: number): string;
-    // (undocumented)
-    getTextRangeWithMarkers(start: number, end: number): string;
-    getTextWithPlaceholders(start?: number, end?: number): string;
-    // (undocumented)
-    id: string;
-    insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): void;
-    insertMarkerRelative(relativePos1: IRelativePosition, refType: ReferenceType, props?: PropertySet): void;
-    insertText(pos: number, text: string, props?: PropertySet): void;
-    insertTextRelative(relativePos1: IRelativePosition, text: string, props?: PropertySet): void;
-    // (undocumented)
-    get ISharedString(): ISharedString;
-    removeText(start: number, end: number): void;
-    replaceText(start: number, end: number, text: string, props?: PropertySet): void;
-    protected rollback(content: any, localOpMetadata: unknown): void;
-    searchForMarker(startPos: number, markerLabel: string, forwards?: boolean): Marker | undefined;
-}
+export const SharedString: ISharedObjectKind<ISharedString>;
 
-// @alpha (undocumented)
-export class SharedStringFactory implements IChannelFactory {
-    // (undocumented)
-    static readonly Attributes: IChannelAttributes;
-    // (undocumented)
-    get attributes(): IChannelAttributes;
-    create(document: IFluidDataStoreRuntime, id: string): SharedString;
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<SharedString>;
-    // (undocumented)
-    static segmentFromSpec(spec: any): SharedStringSegment;
-    // (undocumented)
-    static Type: string;
-    // (undocumented)
-    get type(): string;
-}
+// @alpha
+export type SharedString = ISharedString;
 
 // @alpha (undocumented)
 export type SharedStringSegment = TextSegment | Marker;
