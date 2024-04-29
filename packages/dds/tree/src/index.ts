@@ -262,6 +262,8 @@ export {
 	TreeApi,
 	TransactionConstraint,
 	NodeInDocumentConstraint,
+	RunTransaction,
+	rollback,
 } from "./shared-tree/index.js";
 
 export {
@@ -374,7 +376,7 @@ export {
 	FlexibleNodeSubSequence,
 	flexTreeMarker,
 	FlexTreeEntityKind,
-	NodeKeys,
+	NodeKeyManager,
 	CollectOptions,
 	TypedFields,
 	UnbrandedName,

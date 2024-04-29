@@ -8,6 +8,7 @@ import {
 	ChangeFamilyEditor,
 	ChangeRebaser,
 	RevisionMetadataSource,
+	RevisionTag,
 	TaggedChange,
 } from "../core/index.js";
 
@@ -61,11 +62,17 @@ export function makeMitigatedRebaser<TChange>(
 			return withFallback(() => unmitigatedRebaser.invert(changes, isRollback));
 		},
 		rebase: (
-			change: TChange,
+			change: TaggedChange<TChange>,
 			over: TaggedChange<TChange>,
 			revisionMetadata: RevisionMetadataSource,
 		): TChange => {
 			return withFallback(() => unmitigatedRebaser.rebase(change, over, revisionMetadata));
 		},
+		changeRevision: (
+			change: TChange,
+			newRevision: RevisionTag | undefined,
+			rollbackOf?: RevisionTag,
+		): TChange =>
+			withFallback(() => unmitigatedRebaser.changeRevision(change, newRevision, rollbackOf)),
 	};
 }

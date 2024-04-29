@@ -37,7 +37,7 @@ import {
 	getLumberBaseProperties,
 	LumberEventName,
 	Lumberjack,
-	CommonProperties,
+	Lumber,
 } from "@fluidframework/server-services-telemetry";
 import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
 import { CheckpointManager } from "./checkpointManager";
@@ -120,12 +120,7 @@ export class ScribeLambdaFactory
 			tenantId,
 		};
 
-		const scribeSessionMetric = createSessionMetric(
-			tenantId,
-			documentId,
-			LumberEventName.ScribeSessionResult,
-			this.serviceConfiguration,
-		);
+		let scribeSessionMetric: Lumber<LumberEventName.ScribeSessionResult> | undefined;
 		const failCreation = async (error: unknown): Promise<void> => {
 			const errorMessage = "Scribe lambda creation failed.";
 			context.log?.error(`${errorMessage} Exception: ${inspect(error)}`, { messageMetaData });
@@ -180,8 +175,11 @@ export class ScribeLambdaFactory
 				}
 			}
 
-			scribeSessionMetric?.setProperty(
-				CommonProperties.isEphemeralContainer,
+			scribeSessionMetric = createSessionMetric(
+				tenantId,
+				documentId,
+				LumberEventName.ScribeSessionResult,
+				this.serviceConfiguration,
 				document?.isEphemeralContainer ?? false,
 			);
 

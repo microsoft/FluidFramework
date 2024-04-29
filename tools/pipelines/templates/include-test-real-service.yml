@@ -245,6 +245,7 @@ jobs:
       # Install test and logger package
       - task: Npm@1
         displayName: 'npm install'
+        retryCountOnTaskFailure: 1
         inputs:
           command: 'custom'
           workingDir: ${{ parameters.testWorkspace }}

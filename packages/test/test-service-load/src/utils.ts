@@ -228,9 +228,11 @@ export async function initialize(
 		);
 		const ds = (await container.getEntryPoint()) as ILoadTest;
 		const dsm = await ds.detached({ testConfig, verbose, random, logger });
-		await Promise.all(
-			[...Array(testConfig.detachedBlobCount).keys()].map(async (i) => dsm.writeBlob(i)),
-		);
+		if (dsm !== undefined) {
+			await Promise.all(
+				[...Array(testConfig.detachedBlobCount).keys()].map(async (i) => dsm.writeBlob(i)),
+			);
+		}
 	}
 
 	const testId = testIdn ?? Date.now().toString();

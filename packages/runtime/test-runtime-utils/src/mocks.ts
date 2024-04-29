@@ -4,8 +4,13 @@
  */
 
 import { EventEmitter, TypedEventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
-import { AttachState, IAudience } from "@fluidframework/container-definitions";
-import { ILoader } from "@fluidframework/container-definitions/internal";
+import {
+	AttachState,
+	IAudience,
+	IAudienceEvents,
+	ISelf,
+} from "@fluidframework/container-definitions";
+import { ILoader, IAudienceOwner } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	FluidObject,
@@ -16,6 +21,7 @@ import {
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { IClient } from "@fluidframework/protocol-definitions";
 import {
 	IChannel,
 	IChannelServices,
@@ -23,6 +29,7 @@ import {
 	IDeltaConnection,
 	IDeltaHandler,
 	IFluidDataStoreRuntime,
+	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor/internal";
@@ -50,6 +57,7 @@ import { v4 as uuid } from "uuid";
 
 import { MockDeltaManager } from "./mockDeltas.js";
 import { MockHandle } from "./mockHandle.js";
+import { deepFreeze } from "./deepFreeze.js";
 
 /**
  * Mock implementation of IDeltaConnection for testing
@@ -522,6 +530,7 @@ export class MockContainerRuntimeFactory {
 	}
 
 	public pushMessage(msg: Partial<ISequencedDocumentMessage>) {
+		deepFreeze(msg);
 		if (
 			msg.clientId &&
 			msg.referenceSequenceNumber !== undefined &&
@@ -691,6 +700,59 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 	}
 }
 
+/**
+ * @alpha
+ */
+export class MockAudience extends TypedEventEmitter<IAudienceEvents> implements IAudienceOwner {
+	private readonly audienceMembers: Map<string, IClient>;
+	private _currentClientId: string | undefined;
+
+	public constructor() {
+		super();
+		this.audienceMembers = new Map<string, IClient>();
+	}
+
+	public addMember(clientId: string, member: IClient): void {
+		this.audienceMembers.set(clientId, member);
+		this.emit("addMember", clientId, member);
+	}
+
+	public removeMember(clientId: string): boolean {
+		const member = this.audienceMembers.get(clientId);
+		const deleteResult = this.audienceMembers.delete(clientId);
+		this.emit("removeMember", clientId, member);
+		return deleteResult;
+	}
+
+	public getMembers(): Map<string, IClient> {
+		return new Map<string, IClient>(this.audienceMembers.entries());
+	}
+	public getMember(clientId: string): IClient | undefined {
+		return this.audienceMembers.get(clientId);
+	}
+
+	public getSelf() {
+		return this._currentClientId === undefined
+			? undefined
+			: {
+					clientId: this._currentClientId,
+					client: undefined,
+			  };
+	}
+
+	public setCurrentClientId(clientId: string): void {
+		if (this._currentClientId !== clientId) {
+			const oldId = this._currentClientId;
+			this._currentClientId = clientId;
+			this.emit(
+				"selfChanged",
+				oldId === undefined ? undefined : ({ clientId: oldId } satisfies ISelf),
+				{ clientId } satisfies ISelf,
+			);
+		}
+	}
+}
+
 const attachStatesToComparableNumbers = {
 	[AttachState.Detached]: 0,
 	[AttachState.Attaching]: 1,
@@ -712,6 +774,7 @@ export class MockFluidDataStoreRuntime
 		logger?: ITelemetryBaseLogger;
 		idCompressor?: IIdCompressor & IIdCompressorCore;
 		attachState?: AttachState;
+		registry?: readonly IChannelFactory[];
 	}) {
 		super();
 		this.clientId = overrides?.clientId ?? uuid();
@@ -723,6 +786,11 @@ export class MockFluidDataStoreRuntime
 		});
 		this.idCompressor = overrides?.idCompressor;
 		this._attachState = overrides?.attachState ?? AttachState.Attached;
+
+		const registry = overrides?.registry;
+		if (registry) {
+			this.registry = new Map(registry.map((factory) => [factory.type, factory]));
+		}
 	}
 
 	public readonly entryPoint: IFluidHandle<FluidObject>;
@@ -751,9 +819,12 @@ export class MockFluidDataStoreRuntime
 	public readonly loader: ILoader = undefined as any;
 	public readonly logger: ITelemetryBaseLogger;
 	public quorum = new MockQuorumClients();
+	private readonly audience = new MockAudience();
 	public containerRuntime?: MockContainerRuntime;
 	public idCompressor?: IIdCompressor & IIdCompressorCore;
 	private readonly deltaConnections: MockDeltaConnection[] = [];
+	private readonly registry?: ReadonlyMap<string, IChannelFactory>;
+
 	public createDeltaConnection(): MockDeltaConnection {
 		const deltaConnection = new MockDeltaConnection(
 			(messageContent: any, localOpMetadata: unknown) =>
@@ -762,10 +833,6 @@ export class MockFluidDataStoreRuntime
 		);
 		this.deltaConnections.push(deltaConnection);
 		return deltaConnection;
-	}
-
-	public ensureNoDataModelChanges<T>(callback: () => T): T {
-		return callback();
 	}
 
 	public get absolutePath() {
@@ -800,8 +867,15 @@ export class MockFluidDataStoreRuntime
 	public async getChannel(id: string): Promise<IChannel> {
 		return null as any as IChannel;
 	}
-	public createChannel(id: string, type: string): IChannel {
-		return null as any as IChannel;
+	public createChannel(id: string | undefined, type: string): IChannel {
+		if (this.registry === undefined) {
+			// This preserves the behavior of this mock from before registry support was added.
+			return null as any as IChannel;
+		}
+
+		const factory = this.registry.get(type);
+		assert(factory !== undefined, "type missing from registry");
+		return factory.create(this, id ?? uuid());
 	}
 
 	public addChannel(channel: IChannel): void {}
@@ -840,7 +914,7 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public getAudience(): IAudience {
-		return null as any as IAudience;
+		return this.audience;
 	}
 
 	public save(message: string) {

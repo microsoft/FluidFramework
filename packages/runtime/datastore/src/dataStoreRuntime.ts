@@ -67,8 +67,8 @@ import {
 	processAttachMessageGCData,
 	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
+	ITelemetryLoggerExt,
 	DataProcessingError,
 	LoggingError,
 	MonitoringContext,
@@ -201,21 +201,6 @@ export class FluidDataStoreRuntime
 	 * controlled via feature flags.
 	 */
 	private localChangesTelemetryCount: number;
-
-	/**
-	 * Invokes the given callback and expects that no ops are submitted
-	 * until execution finishes. If an op is submitted, an error will be raised.
-	 *
-	 * Can be disabled by feature gate `Fluid.ContainerRuntime.DisableOpReentryCheck`
-	 *
-	 * @param callback - the callback to be invoked
-	 */
-	public ensureNoDataModelChanges<T>(callback: () => T): T {
-		// back-compat ADO:2309
-		return this.dataStoreContext.ensureNoDataModelChanges === undefined
-			? callback()
-			: this.dataStoreContext.ensureNoDataModelChanges(callback);
-	}
 
 	/**
 	 * Create an instance of a DataStore runtime.
@@ -1267,7 +1252,7 @@ export class FluidDataStoreRuntime
  * Request handler is only called when data store can't resolve request, i.e. for custom requests.
  * @param Base - base class, inherits from FluidDataStoreRuntime
  * @param requestHandler - request handler to mix in
- * @internal
+ * @alpha
  */
 export const mixinRequestHandler = (
 	requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>,

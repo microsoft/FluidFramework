@@ -11,7 +11,6 @@ import {
 	FlexTreeNode,
 	Unenforced,
 	isFlexTreeNode,
-	isFluidHandle,
 	isLazy,
 	markEager,
 } from "../feature-libraries/index.js";
@@ -38,12 +37,15 @@ import {
 	WithType,
 	type,
 	type FieldProps,
+	createFieldSchema,
 } from "./schemaTypes.js";
 import { TreeArrayNode, arraySchema } from "./arrayNode.js";
 import { TreeNode } from "./types.js";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { InsertableObjectFromSchemaRecord, TreeObjectNode, objectSchema } from "./objectNode.js";
 import { TreeMapNode, mapSchema } from "./mapNode.js";
 import {
+	FieldSchemaUnsafe,
 	InsertableObjectFromSchemaRecordUnsafe,
 	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
 	TreeArrayNodeUnsafe,
@@ -415,7 +417,8 @@ export class SchemaFactory<
 	> {
 		return mapSchema(
 			this.nodeSchema(name, NodeKind.Map, allowedTypes, implicitlyConstructable),
-			customizable,
+			// The current policy is customizable nodes don't get fake prototypes.
+			!customizable,
 		);
 	}
 
@@ -557,7 +560,7 @@ export class SchemaFactory<
 		t: T,
 		props?: FieldProps,
 	): FieldSchema<FieldKind.Optional, T> {
-		return new FieldSchema(FieldKind.Optional, t, props);
+		return createFieldSchema(FieldKind.Optional, t, props);
 	}
 
 	/**
@@ -574,14 +577,42 @@ export class SchemaFactory<
 		t: T,
 		props?: FieldProps,
 	): FieldSchema<FieldKind.Required, T> {
-		return new FieldSchema(FieldKind.Required, t, props);
+		return createFieldSchema(FieldKind.Required, t, props);
+	}
+
+	/**
+	 * {@link SchemaFactory.optional} except tweaked to work better for recursive types.
+	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
+	 * @remarks
+	 * This version of {@link SchemaFactory.optional} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
+	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
+	 */
+	public optionalRecursive<const T extends Unenforced<ImplicitAllowedTypes>>(
+		t: T,
+		props?: FieldProps,
+	): FieldSchemaUnsafe<FieldKind.Optional, T> {
+		return createFieldSchemaUnsafe(FieldKind.Optional, t, props);
+	}
+
+	/**
+	 * {@link SchemaFactory.required} except tweaked to work better for recursive types.
+	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
+	 * @remarks
+	 * This version of {@link SchemaFactory.required} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
+	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
+	 */
+	public requiredRecursive<const T extends Unenforced<ImplicitAllowedTypes>>(
+		t: T,
+		props?: FieldProps,
+	): FieldSchemaUnsafe<FieldKind.Required, T> {
+		return createFieldSchemaUnsafe(FieldKind.Required, t, props);
 	}
 
 	/**
 	 * Make a field of type identifier instead of the default which is required.
 	 */
 	public get identifier(): FieldSchema<FieldKind.Identifier> {
-		return new FieldSchema(FieldKind.Identifier, this.string);
+		return createFieldSchema(FieldKind.Identifier, this.string);
 	}
 
 	/**
@@ -611,17 +642,6 @@ export class SchemaFactory<
 			false,
 			T
 		>;
-	}
-
-	/**
-	 * {@link SchemaFactory.optional} except tweaked to work better for recursive types.
-	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
-	 * @remarks
-	 * This version of {@link SchemaFactory.optional} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
-	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
-	 */
-	public optionalRecursive<const T extends Unenforced<readonly (() => TreeNodeSchema)[]>>(t: T) {
-		return createFieldSchemaUnsafe(FieldKind.Optional, t);
 	}
 
 	/**
