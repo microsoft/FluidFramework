@@ -346,6 +346,7 @@ declare function get_old_TypeAliasDeclaration_SharedDirectory():
 declare function use_current_TypeAliasDeclaration_SharedDirectory(
     use: TypeOnly<current.SharedDirectory>): void;
 use_current_TypeAliasDeclaration_SharedDirectory(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_SharedDirectory());
 
 /*
@@ -360,6 +361,7 @@ declare function get_current_TypeAliasDeclaration_SharedDirectory():
 declare function use_old_TypeAliasDeclaration_SharedDirectory(
     use: TypeOnly<old.SharedDirectory>): void;
 use_old_TypeAliasDeclaration_SharedDirectory(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_SharedDirectory());
 
 /*
@@ -402,6 +404,7 @@ declare function get_old_TypeAliasDeclaration_SharedMap():
 declare function use_current_TypeAliasDeclaration_SharedMap(
     use: TypeOnly<current.SharedMap>): void;
 use_current_TypeAliasDeclaration_SharedMap(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_SharedMap());
 
 /*
@@ -416,4 +419,5 @@ declare function get_current_TypeAliasDeclaration_SharedMap():
 declare function use_old_TypeAliasDeclaration_SharedMap(
     use: TypeOnly<old.SharedMap>): void;
 use_old_TypeAliasDeclaration_SharedMap(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_SharedMap());

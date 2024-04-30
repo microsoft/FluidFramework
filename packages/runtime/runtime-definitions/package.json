@@ -99,6 +99,9 @@
 		"broken": {
 			"InterfaceDeclaration_IDataStore": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IFluidDataStoreChannel": {
+				"forwardCompat": false
 			}
 		}
 	}

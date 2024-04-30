@@ -1433,12 +1433,6 @@ use_old_ClassDeclaration_SharedSequence(
  * typeValidation.broken:
  * "RemovedClassDeclaration_SharedString": {"forwardCompat": false}
  */
-declare function get_old_ClassDeclaration_SharedString():
-    TypeOnly<old.SharedString>;
-declare function use_current_RemovedClassDeclaration_SharedString(
-    use: TypeOnly<current.SharedString>): void;
-use_current_RemovedClassDeclaration_SharedString(
-    get_old_ClassDeclaration_SharedString());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.

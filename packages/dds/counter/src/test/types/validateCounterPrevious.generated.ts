@@ -87,12 +87,6 @@ use_old_InterfaceDeclaration_ISharedCounterEvents(
  * typeValidation.broken:
  * "RemovedClassDeclaration_SharedCounter": {"forwardCompat": false}
  */
-declare function get_old_ClassDeclaration_SharedCounter():
-    TypeOnly<old.SharedCounter>;
-declare function use_current_RemovedClassDeclaration_SharedCounter(
-    use: TypeOnly<current.SharedCounter>): void;
-use_current_RemovedClassDeclaration_SharedCounter(
-    get_old_ClassDeclaration_SharedCounter());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.

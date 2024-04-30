@@ -165,6 +165,14 @@
 			"RemovedClassDeclaration_SharedDirectory": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_SharedDirectory": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_SharedMap": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}
