@@ -13,7 +13,7 @@ import { SchemaFactory } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { InsertableContent } from "../../simple-tree/proxies.js";
 // eslint-disable-next-line import/no-internal-modules
-import { ImplicitAllowedTypes, normalizeAllowedTypes } from "../../simple-tree/schemaTypes.js";
+import { ImplicitAllowedTypes, getDefaultProvider, normalizeAllowedTypes } from "../../simple-tree/schemaTypes.js";
 // eslint-disable-next-line import/no-internal-modules
 import { nodeDataToMapTree as nodeDataToMapTreeBase } from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
