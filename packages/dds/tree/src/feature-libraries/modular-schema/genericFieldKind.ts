@@ -8,9 +8,9 @@ import {
 	DeltaFieldChanges,
 	DeltaMark,
 	RevisionMetadataSource,
-	TaggedChange,
-	makeAnonChange,
 	Multiplicity,
+	RevisionTag,
+	replaceAtomRevisions,
 } from "../../core/index.js";
 import { IdAllocator, fail } from "../../util/index.js";
 
@@ -34,8 +34,8 @@ import { NodeId } from "./modularChangeTypes.js";
 export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 	rebaser: {
 		compose: (
-			change1: TaggedChange<GenericChangeset>,
-			change2: TaggedChange<GenericChangeset>,
+			change1: GenericChangeset,
+			change2: GenericChangeset,
 			composeChildren: NodeChangeComposer,
 		): GenericChangeset => {
 			const composed: GenericChangeset = [];
@@ -43,9 +43,9 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			let listIndex1 = 0;
 			let listIndex2 = 0;
 
-			while (listIndex1 < change1.change.length || listIndex2 < change2.change.length) {
-				const next1 = change1.change[listIndex1];
-				const next2 = change2.change[listIndex2];
+			while (listIndex1 < change1.length || listIndex2 < change2.length) {
+				const next1 = change1[listIndex1];
+				const next2 = change2[listIndex2];
 				const nodeIndex1 = next1?.index ?? Infinity;
 				const nodeIndex2 = next2?.index ?? Infinity;
 				if (nodeIndex1 < nodeIndex2) {
@@ -72,11 +72,12 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			}
 			return composed;
 		},
-		invert: ({ change }: TaggedChange<GenericChangeset>): GenericChangeset => {
+		invert: (change: GenericChangeset): GenericChangeset => {
 			return change;
 		},
 		rebase: rebaseGenericChange,
 		prune: pruneGenericChange,
+		replaceRevisions,
 	},
 	codecsFactory: makeGenericChangeCodec,
 	editor: {
@@ -84,10 +85,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			return [{ index, nodeChange: change }];
 		},
 	},
-	intoDelta: (
-		{ change }: TaggedChange<GenericChangeset>,
-		deltaFromChild: ToDelta,
-	): DeltaFieldChanges => {
+	intoDelta: (change: GenericChangeset, deltaFromChild: ToDelta): DeltaFieldChanges => {
 		let nodeIndex = 0;
 		const markList: DeltaMark[] = [];
 		for (const { index, nodeChange } of change) {
@@ -108,7 +106,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 
 function rebaseGenericChange(
 	change: GenericChangeset,
-	{ change: over }: TaggedChange<GenericChangeset>,
+	over: GenericChangeset,
 	rebaseChild: NodeChangeRebaser,
 ): GenericChangeset {
 	const rebased: GenericChangeset = [];
@@ -164,6 +162,17 @@ function pruneGenericChange(
 	return pruned;
 }
 
+function replaceRevisions(
+	changeset: GenericChangeset,
+	oldRevisions: Set<RevisionTag | undefined>,
+	newRevision: RevisionTag | undefined,
+): GenericChangeset {
+	return changeset.map((change) => ({
+		...change,
+		nodeChange: replaceAtomRevisions(change.nodeChange, oldRevisions, newRevision),
+	}));
+}
+
 /**
  * {@link FieldKind} used to represent changes to elements of a field in a field-kind-agnostic format.
  */
@@ -189,8 +198,8 @@ export function convertGenericChange<TChange>(
 	genId: IdAllocator,
 	revisionMetadata: RevisionMetadataSource,
 ): TChange {
-	const perIndex: TaggedChange<TChange>[] = changeset.map(({ index, nodeChange }) =>
-		makeAnonChange(target.editor.buildChildChange(index, nodeChange)),
+	const perIndex: TChange[] = changeset.map(({ index, nodeChange }) =>
+		target.editor.buildChildChange(index, nodeChange),
 	);
 
 	if (perIndex.length === 0) {
@@ -198,17 +207,15 @@ export function convertGenericChange<TChange>(
 	}
 
 	return perIndex.reduce((a, b) =>
-		makeAnonChange(
-			target.rebaser.compose(
-				a,
-				b,
-				composeChild,
-				genId,
-				invalidCrossFieldManager,
-				revisionMetadata,
-			),
+		target.rebaser.compose(
+			a,
+			b,
+			composeChild,
+			genId,
+			invalidCrossFieldManager,
+			revisionMetadata,
 		),
-	).change;
+	);
 }
 
 const invalidFunc = () => fail("Should not be called when converting generic changes");
@@ -222,7 +229,7 @@ export function newGenericChangeset(): GenericChangeset {
 }
 
 function* relevantRemovedRoots(
-	{ change }: TaggedChange<GenericChangeset>,
+	change: GenericChangeset,
 	relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
 ): Iterable<DeltaDetachedNodeId> {
 	for (const { nodeChange } of change) {

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { SharedDirectory, ISharedMap } from "@fluidframework/map/internal";
@@ -69,6 +69,7 @@ describeCompat(
 				...containerConfig,
 				loaderProps: { configProvider: configProvider(featureGates) },
 			};
+			provider.reset();
 			container1 = await provider.makeTestContainer(configWithFeatureGates);
 			container2 = await provider.loadTestContainer(configWithFeatureGates);
 
@@ -89,49 +90,33 @@ describeCompat(
 			await provider.ensureSynchronized();
 		};
 
-		itExpects(
-			"Should close the container when submitting an op while processing a batch",
-			[
-				{
-					eventName: "fluid:telemetry:Container:ContainerClose",
-					error: "Op was submitted from within a `ensureNoDataModelChanges` callback",
-				},
-			],
-			async function () {
-				if (provider.driver.type === "t9s" || provider.driver.type === "tinylicious") {
-					// This test is flaky on Tinylicious. ADO:5010
-					this.skip();
+		it("Test reentrant op sending", async function () {
+			if (provider.driver.type === "t9s" || provider.driver.type === "tinylicious") {
+				// This test is flaky on Tinylicious. ADO:5010
+				this.skip();
+			}
+
+			await setupContainers(testContainerConfig);
+
+			sharedMap1.on("valueChanged", (changed) => {
+				if (changed.key !== "key2") {
+					sharedMap1.set("key2", `${sharedMap1.get("key1")} updated`);
 				}
+			});
 
-				await setupContainers({
-					...testContainerConfig,
-					runtimeOptions: {
-						enableOpReentryCheck: true,
-					},
-				});
+			sharedMap1.set("key1", "1");
+			sharedMap2.set("key2", "2");
 
-				sharedMap1.on("valueChanged", (changed) => {
-					if (changed.key !== "key2") {
-						sharedMap1.set("key2", `${sharedMap1.get("key1")} updated`);
-					}
-				});
+			await provider.ensureSynchronized();
 
-				assert.throws(() => {
-					sharedMap1.set("key1", "1");
-				});
+			assert.ok(!container1.closed);
+			assert.ok(!container2.closed);
 
-				sharedMap2.set("key2", "2");
-				await provider.ensureSynchronized();
-
-				// The offending container is closed
-				assert.ok(container1.closed);
-
-				// The other container is fine
-				assert.equal(sharedMap2.get("key1"), undefined);
-				assert.equal(sharedMap2.get("key2"), "2");
-				assert.ok(!mapsAreEqual(sharedMap1, sharedMap2));
-			},
-		);
+			// The other container is fine
+			assert.equal(sharedMap2.get("key1"), "1");
+			assert.equal(sharedMap2.get("key2"), "2");
+			assert.ok(mapsAreEqual(sharedMap1, sharedMap2));
+		});
 
 		[false, true].forEach((enableGroupedBatching) => {
 			it(`Eventual consistency with op reentry - ${
@@ -253,40 +238,6 @@ describeCompat(
 		});
 
 		describe("Reentry safeguards", () => {
-			itExpects(
-				"Flushing is not supported",
-				[
-					{
-						eventName: "fluid:telemetry:Container:ContainerClose",
-						error: "Flushing is not supported inside DDS event handlers",
-					},
-				],
-				async function () {
-					if (provider.driver.type === "t9s" || provider.driver.type === "tinylicious") {
-						// This test is flaky on Tinylicious. ADO:5010
-						this.skip();
-					}
-
-					await setupContainers({
-						...testContainerConfig,
-						runtimeOptions: {
-							flushMode: FlushMode.Immediate,
-						},
-					});
-
-					sharedString1.on("sequenceDelta", () =>
-						assert.throws(() =>
-							dataObject1.context.containerRuntime.orderSequentially(() =>
-								sharedMap1.set("0", 0),
-							),
-						),
-					);
-
-					sharedString1.insertText(0, "ad");
-					await provider.ensureSynchronized();
-				},
-			);
-
 			it("Flushing is supported if it happens in the next batch", async function () {
 				if (provider.driver.type === "t9s" || provider.driver.type === "tinylicious") {
 					// This test is flaky on Tinylicious. ADO:5010
@@ -314,7 +265,7 @@ describeCompat(
 			});
 		});
 
-		it("Should throw when submitting an op while handling an event - offline", async function () {
+		it("Should not throw when submitting an op while handling an event - offline", async function () {
 			if (provider.driver.type === "t9s" || provider.driver.type === "tinylicious") {
 				// This test is flaky on Tinylicious. ADO:5010
 				this.skip();
@@ -322,9 +273,7 @@ describeCompat(
 
 			await setupContainers({
 				...testContainerConfig,
-				runtimeOptions: {
-					enableOpReentryCheck: true,
-				},
+				runtimeOptions: {},
 			});
 
 			await container1.deltaManager.inbound.pause();
@@ -336,9 +285,7 @@ describeCompat(
 				}
 			});
 
-			assert.throws(() => {
-				sharedMap1.set("key1", "1");
-			});
+			sharedMap1.set("key1", "1");
 
 			container1.deltaManager.inbound.resume();
 			container1.deltaManager.outbound.resume();
@@ -347,7 +294,7 @@ describeCompat(
 
 			// The offending container is not closed
 			assert.ok(!container1.closed);
-			assert.ok(!mapsAreEqual(sharedMap1, sharedMap2));
+			assert.ok(mapsAreEqual(sharedMap1, sharedMap2));
 		});
 
 		describe("Allow reentry", () =>
@@ -360,11 +307,8 @@ describeCompat(
 				{
 					options: {
 						...testContainerConfig,
-						runtimeOptions: {
-							enableOpReentryCheck: true,
-						},
+						runtimeOptions: {},
 					},
-					featureGates: { "Fluid.ContainerRuntime.DisableOpReentryCheck": true },
 					name: "Enabled by options, disabled by feature gate",
 				},
 			].forEach((testConfig) => {

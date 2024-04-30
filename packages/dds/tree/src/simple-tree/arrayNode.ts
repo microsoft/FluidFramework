@@ -10,10 +10,10 @@ import {
 	FlexFieldNodeSchema,
 	FlexTreeFieldNode,
 	FlexTreeNode,
+	FlexTreeNodeSchema,
 	FlexTreeSequenceField,
 	FlexTreeTypedField,
 	FlexTreeUnboxField,
-	isFlexTreeNode,
 } from "../feature-libraries/index.js";
 import {
 	FactoryContent,
@@ -22,7 +22,7 @@ import {
 	markContentType,
 	prepareContentForInsert,
 } from "./proxies.js";
-import { getFlexNode, setFlexNode } from "./proxyBinding.js";
+import { getFlexNode } from "./proxyBinding.js";
 import { getSimpleFieldSchema, getSimpleNodeSchema } from "./schemaCaching.js";
 import {
 	NodeKind,
@@ -33,9 +33,10 @@ import {
 	TreeNodeSchemaClass,
 	WithType,
 	TreeNodeSchema,
+	type,
 } from "./schemaTypes.js";
 import { cursorFromFieldData } from "./toMapTree.js";
-import { TreeNode } from "./types.js";
+import { TreeNode, TreeNodeValid } from "./types.js";
 import { fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { RawTreeNode, rawError } from "./rawNode.js";
@@ -520,8 +521,6 @@ const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 
 /* eslint-enable @typescript-eslint/unbound-method */
 
-const arrayNodePrototype = Object.create(Object.prototype, arrayNodePrototypeProperties);
-
 // #endregion
 
 /**
@@ -557,45 +556,22 @@ export function asIndex(key: string | symbol, exclusiveMax: number): number | un
 /**
  * @param allowAdditionalProperties - If true, setting of unexpected properties will be forwarded to the target object.
  * Otherwise setting of unexpected properties will error.
- * @param customTargetObject - Target object of the proxy.
- * If not provided `[]` is used for the target and a separate object created to dispatch array methods.
- * If provided, the customTargetObject will be used as both the dispatch object and the proxy target, and therefor must provide an own `length` value property
+ * @param proxyTarget - Target object of the proxy. Must provide an own `length` value property
  * (which is not used but must exist for getOwnPropertyDescriptor invariants) and the array functionality from {@link arrayNodePrototype}.
+ * Controls the prototype exposed by the produced proxy.
+ * @param dispatchTarget - provides the functionally of the node, implementing all fields.
  */
 function createArrayNodeProxy(
 	allowAdditionalProperties: boolean,
-	customTargetObject?: object,
+	proxyTarget: object,
+	dispatchTarget: object,
 ): TreeArrayNode {
-	const targetObject = customTargetObject ?? [];
-
-	// Create a 'dispatch' object that this Proxy forwards to instead of the proxy target, because we need
-	// the proxy target to be a plain JS array (see comments below when we instantiate the Proxy).
-	// Own properties on the dispatch object are surfaced as own properties of the proxy.
-	// (e.g., 'length', which is defined below).
-	//
-	// Properties normally inherited from 'Array.prototype' are surfaced via the prototype chain.
-	const dispatch: object =
-		customTargetObject ??
-		Object.create(arrayNodePrototype, {
-			// This dispatch object's set of keys is used to implement `has` (for the `in` operator) for the non-numeric cases, and therefor must include `length`.
-			length: {
-				get(this: TreeArrayNode) {
-					fail("Proxy should intercept length");
-				},
-				set() {
-					fail("Proxy should intercept length");
-				},
-				enumerable: false,
-				configurable: false,
-			},
-		});
-
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an array literal in order
 	// to pass 'Object.getPrototypeOf'.  It also satisfies 'Array.isArray' and 'Object.prototype.toString'
 	// requirements without use of Array[Symbol.species], which is potentially on a path ot deprecation.
-	const proxy: TreeArrayNode = new Proxy<TreeArrayNode>(targetObject as any, {
-		get: (target, key) => {
-			const field = getSequenceField(proxy);
+	const proxy: TreeArrayNode = new Proxy<TreeArrayNode>(proxyTarget as TreeArrayNode, {
+		get: (target, key, receiver) => {
+			const field = getSequenceField(receiver);
 			const maybeIndex = asIndex(key, field.length);
 
 			if (maybeIndex === undefined) {
@@ -605,7 +581,7 @@ function createArrayNodeProxy(
 
 				// Pass the proxy as the receiver here, so that any methods on
 				// the prototype receive `proxy` as `this`.
-				return Reflect.get(dispatch, key, proxy) as unknown;
+				return Reflect.get(dispatchTarget, key, receiver) as unknown;
 			}
 
 			const value = field.boxedAt(maybeIndex);
@@ -631,7 +607,7 @@ function createArrayNodeProxy(
 			// 'Symbol.isConcatSpreadable' may be set on an Array instance to modify the behavior of
 			// the concat method.  We allow this property to be added to the dispatch object.
 			if (key === Symbol.isConcatSpreadable) {
-				return Reflect.set(dispatch, key, newValue, proxy);
+				return Reflect.set(dispatchTarget, key, newValue, receiver);
 			}
 
 			// Array nodes treat all non-negative integer indexes as array access.
@@ -646,7 +622,7 @@ function createArrayNodeProxy(
 		has: (target, key) => {
 			const field = getSequenceField(proxy);
 			const maybeIndex = asIndex(key, field.length);
-			return maybeIndex !== undefined || Reflect.has(dispatch, key);
+			return maybeIndex !== undefined || Reflect.has(dispatchTarget, key);
 		},
 		ownKeys: (target) => {
 			const field = getSequenceField(proxy);
@@ -691,10 +667,29 @@ function createArrayNodeProxy(
 					configurable: false,
 				};
 			}
-			return Reflect.getOwnPropertyDescriptor(dispatch, key);
+			return Reflect.getOwnPropertyDescriptor(dispatchTarget, key);
 		},
 	});
 	return proxy;
+}
+
+abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes> extends TreeNodeValid<
+	Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>
+> {
+	public static readonly kind = NodeKind.Array;
+
+	public toJSON(): unknown {
+		// This override causes the class instance to `JSON.stringify` as `[a, b]` rather than `{0: a, 1: b}`.
+		return Array.from(this as unknown as TreeArrayNode);
+	}
+
+	// Instances of this class are used as the dispatch object for the proxy,
+	// and thus its set of keys is used to implement `has` (for the `in` operator) for the non-numeric cases.
+	// Therefore it must include `length`,
+	// even though this "length" is never invoked (due to being shadowed by the proxy provided own property).
+	public get length() {
+		return fail("Proxy should intercept length");
+	}
 }
 
 /**
@@ -707,56 +702,70 @@ export function arraySchema<
 	const T extends ImplicitAllowedTypes,
 	const ImplicitlyConstructable extends boolean,
 >(
-	base: TreeNodeSchemaClass<
-		TName,
-		NodeKind.Array,
-		TreeNode & WithType<TName>,
-		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		ImplicitlyConstructable,
-		T
-	>,
+	identifier: TName,
+	info: T,
+	implicitlyConstructable: ImplicitlyConstructable,
 	customizable: boolean,
 ) {
+	let flexSchema: FlexFieldNodeSchema;
+
 	// This class returns a proxy from its constructor to handle numeric indexing.
 	// Alternatively it could extend a normal class which gets tons of numeric properties added.
-	class schema extends base {
-		public constructor(input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>) {
-			super(input);
-
-			const proxyTarget = customizable ? this : undefined;
+	class schema extends CustomArrayNodeBase<T> {
+		public static override prepareInstance<T2>(
+			this: typeof TreeNodeValid<T2>,
+			instance: TreeNodeValid<T2>,
+			flexNode: FlexTreeNode,
+		): TreeNodeValid<T2> {
+			const proxyTarget = customizable ? instance : [];
 
 			if (customizable) {
 				// Since proxy reports this as a "non-configurable" property, it must exist on the underlying object used as the proxy target, not as an inherited property.
 				// This should not get used as the proxy should intercept all use.
-				Object.defineProperty(this, "length", {
+				Object.defineProperty(instance, "length", {
 					value: NaN,
 					writable: true,
 					enumerable: false,
 					configurable: false,
 				});
 			}
-
-			const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
-			assert(flexSchema instanceof FlexFieldNodeSchema, 0x915 /* invalid flex schema */);
-			const flexNode: FlexTreeNode = isFlexTreeNode(input)
-				? input
-				: new RawFieldNode(flexSchema, copyContent(flexSchema.name, input) as object);
-
-			const proxy: TreeNode = createArrayNodeProxy(customizable, proxyTarget);
-			setFlexNode(proxy, flexNode);
-			return proxy as unknown as schema;
+			return createArrayNodeProxy(customizable, proxyTarget, instance) as unknown as schema;
 		}
 
-		public toJSON(): unknown {
-			// This override causes the class instance to `JSON.stringify` as `[a, b]` rather than `{0: a, 1: b}`.
-			return Array.from(this as unknown as TreeArrayNode);
+		public static override buildRawNode<T2>(
+			this: typeof TreeNodeValid<T2>,
+			instance: TreeNodeValid<T2>,
+			input: T2,
+		): RawTreeNode<FlexTreeNodeSchema, unknown> {
+			return new RawFieldNode(
+				flexSchema,
+				copyContent(
+					flexSchema.name,
+					input as Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+				) as object,
+			);
+		}
+
+		protected static override constructorCached: typeof TreeNodeValid | undefined = undefined;
+
+		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>) {
+			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema) as FlexFieldNodeSchema;
+		}
+
+		public static readonly identifier = identifier;
+		public static readonly info = info;
+		public static readonly implicitlyConstructable: ImplicitlyConstructable =
+			implicitlyConstructable;
+
+		public get [type](): TName {
+			return identifier;
 		}
 	}
 
 	// Setup array functionality
 	Object.defineProperties(schema.prototype, arrayNodePrototypeProperties);
 
-	return schema as typeof base as TreeNodeSchemaClass<
+	return schema as unknown as TreeNodeSchemaClass<
 		TName,
 		NodeKind.Array,
 		TreeArrayNode<T> & WithType<TName>,

@@ -11,9 +11,13 @@ import { EventEmitter } from '@fluid-internal/client-utils';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { FlushMode } from '@fluidframework/runtime-definitions/internal';
 import { IAudience } from '@fluidframework/container-definitions';
+import { IAudienceEvents } from '@fluidframework/container-definitions';
+import { IAudienceOwner } from '@fluidframework/container-definitions/internal';
 import { IChannel } from '@fluidframework/datastore-definitions';
+import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import type { IClient } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions/internal';
@@ -60,6 +64,9 @@ import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import { VisibilityState } from '@fluidframework/runtime-definitions/internal';
 
 // @internal
+export function deepFreeze<T>(object: T): void;
+
+// @internal
 export interface IInsecureUser extends IUser {
     name: string;
 }
@@ -98,6 +105,26 @@ export class InsecureTokenProvider implements ITokenProvider {
     scopes?: ScopeType[] | undefined);
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
+}
+
+// @alpha (undocumented)
+export class MockAudience extends TypedEventEmitter<IAudienceEvents> implements IAudienceOwner {
+    constructor();
+    // (undocumented)
+    addMember(clientId: string, member: IClient): void;
+    // (undocumented)
+    getMember(clientId: string): IClient | undefined;
+    // (undocumented)
+    getMembers(): Map<string, IClient>;
+    // (undocumented)
+    getSelf(): {
+        clientId: string;
+        client: undefined;
+    } | undefined;
+    // (undocumented)
+    removeMember(clientId: string): boolean;
+    // (undocumented)
+    setCurrentClientId(clientId: string): void;
 }
 
 // @alpha
@@ -423,6 +450,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
         logger?: ITelemetryBaseLogger;
         idCompressor?: IIdCompressor & IIdCompressorCore;
         attachState?: AttachState;
+        registry?: readonly IChannelFactory[];
     });
     // (undocumented)
     get absolutePath(): string;
@@ -451,7 +479,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     containerRuntime?: MockContainerRuntime;
     // (undocumented)
-    createChannel(id: string, type: string): IChannel;
+    createChannel(id: string | undefined, type: string): IChannel;
     // (undocumented)
     createDeltaConnection(): MockDeltaConnection;
     // (undocumented)
@@ -462,8 +490,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     get disposed(): boolean;
     // (undocumented)
     readonly documentId: string;
-    // (undocumented)
-    ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     readonly entryPoint: IFluidHandle<FluidObject>;
     // (undocumented)

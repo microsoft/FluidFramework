@@ -11,7 +11,7 @@ import {
 	type ApiItem,
 	ApiItemKind,
 	type ApiMethod,
-	type ApiProperty,
+	type ApiPropertyItem,
 } from "@microsoft/api-extractor-model";
 
 import type { SectionNode } from "../../documentation-domain/index.js";
@@ -71,7 +71,7 @@ export function transformApiClass(
 	if (filteredChildren.length > 0) {
 		// Accumulate child items
 		const constructors: ApiConstructor[] = [];
-		const allProperties: ApiProperty[] = [];
+		const allProperties: ApiPropertyItem[] = [];
 		const callSignatures: ApiCallSignature[] = [];
 		const indexSignatures: ApiIndexSignature[] = [];
 		const allMethods: ApiMethod[] = [];
@@ -82,7 +82,7 @@ export function transformApiClass(
 					break;
 				}
 				case ApiItemKind.Property: {
-					allProperties.push(child as ApiProperty);
+					allProperties.push(child as ApiPropertyItem);
 					break;
 				}
 				case ApiItemKind.CallSignature: {
@@ -99,9 +99,11 @@ export function transformApiClass(
 				}
 				default: {
 					config.logger?.error(
-						`Unsupported child kind under Class "${getScopedMemberNameForDiagnostics(
+						`Child item "${
+							child.displayName
+						}" of Class "${getScopedMemberNameForDiagnostics(
 							apiClass,
-						)}": "${child.kind}"`,
+						)}" is of unsupported API item kind: "${child.kind}"`,
 					);
 					break;
 				}
