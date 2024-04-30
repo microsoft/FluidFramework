@@ -85,10 +85,8 @@ export function intoDelta(taggedChange: TaggedChange<ModularChangeset>): DeltaRo
  *
  * @param change - The change to be applied.
  */
-export function relevantRemovedRoots(
-	taggedChange: TaggedChange<ModularChangeset>,
-): Iterable<DeltaDetachedNodeId> {
-	return relevantModularRemovedRoots(taggedChange, fieldKinds);
+export function relevantRemovedRoots(change: ModularChangeset): Iterable<DeltaDetachedNodeId> {
+	return relevantModularRemovedRoots(change, fieldKinds);
 }
 
 /**
