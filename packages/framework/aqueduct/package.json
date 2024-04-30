@@ -139,6 +139,10 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IDataObjectProps": {
+				"backCompat": false
+			}
+		}
 	}
 }
