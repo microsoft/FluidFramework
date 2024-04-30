@@ -383,7 +383,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		// One important consequence of this is that we will not submit the op containing the invalid change, since op submissions happens in response to `afterChange`.
 		branch.on("beforeChange", (event) => {
 			if (event.change !== undefined) {
-				const revision = (event.type === "replace") ? event.newCommits[event.newCommits.length - 1].revision : event.change.revision;
+				const revision =
+					event.type === "replace"
+						? event.newCommits[event.newCommits.length - 1].revision
+						: event.change.revision;
 				// Conflicts due to schema will be empty and thus are not applied.
 				for (const change of event.change.change.changes) {
 					if (change.type === "data") {
@@ -478,7 +481,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 		// When the branch is trimmed, we can garbage collect any repair data whose latest relevant revision is one of the
 		// trimmed revisions.
-		branch.on("branchTrimmed", (revisions) => {
+		branch.on("ancestryTrimmed", (revisions) => {
 			this.withCombinedVisitor((visitor) => {
 				revisions.forEach((revision) => {
 					// get all the roots last created or used by the revision

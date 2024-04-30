@@ -1141,13 +1141,13 @@ describe("SharedTree", () => {
 				repairCursor1.free();
 
 				// send edits to move the collab window up
-				root2.insertAt(3, ["y"]);
+				root2.insertAt(0, ["y"]);
 				provider.processMessages();
-				root1.removeAt(3);
+				root1.removeAt(0);
 				provider.processMessages();
-				root2.insertAt(3, ["y"]);
+				root2.insertAt(0, ["y"]);
 				provider.processMessages();
-				root1.removeAt(3);
+				root1.removeAt(0);
 				provider.processMessages();
 
 				assert.deepEqual([...root1], ["C", "D"]);
