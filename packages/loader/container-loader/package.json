@@ -198,6 +198,15 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IContainerExperimental": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IProtocolHandler": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		}
 	}
 }

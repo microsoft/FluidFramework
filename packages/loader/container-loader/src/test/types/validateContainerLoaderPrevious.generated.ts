@@ -90,6 +90,7 @@ declare function get_old_InterfaceDeclaration_IContainerExperimental():
 declare function use_current_InterfaceDeclaration_IContainerExperimental(
     use: TypeOnly<current.IContainerExperimental>): void;
 use_current_InterfaceDeclaration_IContainerExperimental(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerExperimental());
 
 /*
@@ -104,6 +105,7 @@ declare function get_current_InterfaceDeclaration_IContainerExperimental():
 declare function use_old_InterfaceDeclaration_IContainerExperimental(
     use: TypeOnly<old.IContainerExperimental>): void;
 use_old_InterfaceDeclaration_IContainerExperimental(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerExperimental());
 
 /*
@@ -286,6 +288,7 @@ declare function get_old_InterfaceDeclaration_IProtocolHandler():
 declare function use_current_InterfaceDeclaration_IProtocolHandler(
     use: TypeOnly<current.IProtocolHandler>): void;
 use_current_InterfaceDeclaration_IProtocolHandler(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IProtocolHandler());
 
 /*
@@ -300,6 +303,7 @@ declare function get_current_InterfaceDeclaration_IProtocolHandler():
 declare function use_old_InterfaceDeclaration_IProtocolHandler(
     use: TypeOnly<old.IProtocolHandler>): void;
 use_old_InterfaceDeclaration_IProtocolHandler(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IProtocolHandler());
 
 /*
