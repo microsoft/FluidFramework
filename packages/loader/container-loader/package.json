@@ -199,11 +199,11 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"InterfaceDeclaration_IContainerExperimental": {
+			"InterfaceDeclaration_IProtocolHandler": {
 				"backCompat": false,
 				"forwardCompat": false
 			},
-			"InterfaceDeclaration_IProtocolHandler": {
+			"InterfaceDeclaration_IContainerExperimental": {
 				"backCompat": false,
 				"forwardCompat": false
 			}
