@@ -51,6 +51,9 @@ export async function deliCreate(
 	const kafkaCheckpointOnReprocessingOp =
 		(config.get("checkpoints:kafkaCheckpointOnReprocessingOp") as boolean) ?? true;
 
+	const enableLeaveOpNoClientServerMetadata =
+		(config.get("deli:enableLeaveOpNoClientServerMetadata") as boolean) ?? false;
+
 	// Generate tenant manager which abstracts access to the underlying storage provider
 	const authEndpoint = config.get("auth:endpoint");
 	const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
@@ -175,6 +178,7 @@ export async function deliCreate(
 			...core.DefaultServiceConfiguration.deli,
 			restartOnCheckpointFailure,
 			kafkaCheckpointOnReprocessingOp,
+			enableLeaveOpNoClientServerMetadata,
 		},
 	};
 
