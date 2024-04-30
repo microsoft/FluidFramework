@@ -106,14 +106,10 @@ describeCompat(
 			},
 		);
 
-		async function createSummarizer(
-			testObjectProvider: ITestObjectProvider,
-			container: IContainer,
-			summaryVersion?: string,
-		): Promise<ISummarizer> {
+		async function createSummarizer(summaryVersion?: string): Promise<ISummarizer> {
 			const createSummarizerResult = await createSummarizerFromFactory(
-				testObjectProvider,
-				container,
+				provider,
+				mainContainer,
 				dataStoreFactory1,
 				summaryVersion,
 				ContainerRuntimeFactoryWithDefaultDataStore,
@@ -148,7 +144,7 @@ describeCompat(
 		});
 
 		it("No Summary Upload Error when DS gets realized between summarize and completeSummary", async () => {
-			const summarizerClient = await createSummarizer(provider, mainContainer);
+			const summarizerClient = await createSummarizer();
 			await provider.ensureSynchronized();
 			mainDataStore._root.set("1", "2");
 
@@ -186,11 +182,7 @@ describeCompat(
 			summarizerClient.close();
 
 			// Just make sure new summarizer will be able to load and execute successfully.
-			const summarizerClient2 = await createSummarizer(
-				provider,
-				mainContainer,
-				summaryVersion2,
-			);
+			const summarizerClient2 = await createSummarizer(summaryVersion2);
 
 			mainDataStore._root.set("4", "5");
 			const summaryVersion3 = await waitForSummary(summarizerClient2);
