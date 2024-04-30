@@ -55,112 +55,132 @@ steps:
       echo Tag: $tag
       cp .npmrc ~/.npmrc
       maximumRetryIfNetworkError=3
-      if [[ -f $(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt ]]; then
-        packages=$(cat $(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt)
-        sorted=true
-      else
-        packages=*.tgz
-        sorted=false
-      fi
-      for packageName in $packages
-      do
-        if [[ $sorted == true ]]; then
-          f=$(find -name "${packageName}-[0-9]*.tgz")
-        else
-          f=$packageName
-        fi
-        if [[ $f != "" ]]; then
-          for i in $( seq 1 $maximumRetryIfNetworkError )
-          do
-            npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
 
-            if grep -q "npm ERR!" "publish_log"
-            then
-                if grep -q "code ENOTFOUND" "publish_log"
-                then
-                  if ! $i -eq $maximumRetryIfNetworkError
-                  then
-                    echo "Network Error Detected"
-                    continue
-                  else
-                    echo "Final Network Error"
-                    exit 1
-                  fi
-                else
-                  if grep -q "You cannot publish over the previously published versions" "publish_log"
-                  then
-                    echo Package has already been published.
-                    local_f="${f}_local"
-                    mv "$f" "$local_f"
-                    package_name=$(grep -oP 'npm notice package: \K.*' "publish_log")
-                    npm pack $package_name
-                    if cmp -s "$f" "$local_f"
-                    then
-                      echo Continuing as published package matches the current one that was attempting to be released.
-                      rm "$f"
-                      mv "$local_f" "$f"
-                      break
-                    else
-                      echo ERROR: Published package does not match the current one attempting to be released for the same version.
-                    fi
-                  fi
+      # Note: the package names here are "processed" the way 'npm pack' does (if the package is scoped, remove
+      # the leading @ and replace / with -).
+      # When getting them from a txt file that's the way we wrote them to it.
+      # When getting them from the output of 'ls' that's also how they are because the files are the 'npm pack'ed
+      # packages but we need to strip the version number and the extension for consistency, so later we can assume
+      # that these are just the package names, as we need them like that for some things.
+      if [[ -f $(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt ]]; then
+        processedPackageNames=$(cat $(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt)
+      else
+        # The sed expression removes from the first dash followed by a number, to the file extension.
+        # This assumes we don't have packages whose names have a dash followed by a number.
+        # See comment above for more details.
+        processedPackageNames=$(ls *.tgz | sed 's/-[0-9].*\.tgz//g')
+      fi
+      for processedPackageName in $processedPackageNames
+      do
+        # The filenames are the processed package name followed by a dash, then the version number, then the extension.
+        # This glob pattern needs to account for variations in our version number schemes, and the fact that
+        # some package names might be substrings of others, and does it by looking for a filename where the
+        # package name is immediately followed by a dash and a number (such that, for example, when looking for
+        # @fluidframework/myPackage, we hit @fluidframework/myPackage-2.0.0 and not a potential
+        # @fluidframework/myPackage-legacy-2.0.0).
+
+        f=$(find -name "${processedPackageName}-[0-9]*.tgz")
+
+        if [[ $f == "" ]]; then
+          # TODO: this seems like it should never happen and should be a fatal error?
+          # Don't want to be too aggressive with this change, so leaving it as a warning for now and keeping the
+          # current behavior that just skips this case.
+          echo "##[warning]Could not find a file for package $processedPackageName"
+          continue
+        fi
+
+        for i in $( seq 1 $maximumRetryIfNetworkError )
+        do
+          npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
+
+          if grep -q "npm ERR!" "publish_log"; then
+            if grep -q "code ENOTFOUND" "publish_log"; then
+              if ! $i -eq $maximumRetryIfNetworkError; then
+                echo "Network Error Detected"
+                continue
+              else
+                echo "Final Network Error"
+                exit 1
+              fi
+            else
+              if grep -q "You cannot publish over the previously published versions" "publish_log"
+              then
+                echo Package has already been published.
+                local_f="${f}_local"
+                mv "$f" "$local_f"
+                package_name=$(grep -oP 'npm notice package: \K.*' "publish_log")
+                npm pack $package_name
+                if cmp -s "$f" "$local_f"; then
+                  echo Continuing as published package matches the current one that was attempting to be released.
                   rm "$f"
                   mv "$local_f" "$f"
-                  exit 1
-                fi
-            else
-              feedName=$(grep -oP '_packaging/\K[^/]+(?=/npm/)' publish_log)
-              echo "Feed Name: $feedName"
-
-              if [[ "$(release)" == "release" && $feedName == "build" ]]; then
-                packageVersion=$(grep -oP 'npm notice version:\s+\K[^\s]+' publish_log)
-
-                if [ "${{ parameters.artifactPath }}" == "scoped" ]; then
-                  scopes=("fluidframework" "fluid-tools" "fluid-internal" "fluid-experimental" "fluid-private" "fluid-example")
-                  for scope in "${scopes[@]}"; do
-                      if [[ "$packageName" == "$scope"* ]]; then
-                          packageName="@${packageName/$scope-/$scope/}"
-                      fi
-                  done
-                fi
-
-                feedPromotionUrl="$(ado-feeds-api-base)/packaging/feeds/${feedName}/npm/${packageName}/versions/${packageVersion}?api-version=7.1-preview.1"
-
-                echo "Promoting ${packageName} to release view using: ${feedPromotionUrl}"
-                response=$(curl -f -s -X PATCH \
-                  -H "Content-Type: application/json" \
-                  -H "Accept: application/json" \
-                  -u ":$(System.AccessToken)" \
-                  -d '{
-                        "views": {
-                          "op": "add",
-                          "path": "/views/-",
-                          "value": "Release"
-                        }
-                      }' \
-                      "$feedPromotionUrl"
-                  )
-
-                curlExitStatus=$?
-
-                if echo "$response" | grep -q '"success":"false"'; then
-                  reason="${response#*\"reason\":\"}"
-                  reason="${reason%%\"*}"
-                  echo "Failed to promote package to Release view"
-                  echo "Error reason: $reason"
-                  exit 1
-                elif [ $curlExitStatus -ne 0 ]; then
-                  echo "Failed to promote package due to curl error"
-                  exit 1
+                  break
+                else
+                  echo ERROR: Published package does not match the current one attempting to be released for the same version.
                 fi
               fi
-
-              rm publish_log
-              break
+              rm "$f"
+              mv "$local_f" "$f"
+              exit 1
             fi
+          else
+            # Package published successfully, now promote to the Release view in ADO if necessary
+
+            feedName=$(grep -oP '_packaging/\K[^/]+(?=/npm/)' publish_log)
+            echo "Feed Name: $feedName"
+
+            if [[ "$(release)" == "release" && $feedName == "build" ]]; then
+              packageVersion=$(grep -oP 'npm notice version:\s+\K[^\s]+' publish_log)
+
+              # In order to make the REST request to ADO we need the version of the package name that has
+              # '@' before the scope and '/' between the scope and the package name instead of '-'.
+              # Assume that the processedPackageName already matches that but fix it if necessary.
+              originalPackageName=$processedPackageName
+              if [ "${{ parameters.artifactPath }}" == "scoped" ]; then
+                scopes=("fluidframework" "fluid-tools" "fluid-internal" "fluid-experimental" "fluid-private" "fluid-example")
+                for scope in "${scopes[@]}"; do
+                    if [[ "$processedPackageName" == "$scope"* ]]; then
+                    originalPackageName="@${processedPackageName/$scope-/$scope/}"
+                    fi
+                done
+              fi
+
+              feedPromotionUrl="$(ado-feeds-api-base)/packaging/feeds/${feedName}/npm/${originalPackageName}/versions/${packageVersion}?api-version=7.1-preview.1"
+
+              echo "Promoting ${originalPackageName} to release view using: ${feedPromotionUrl}"
+              response=$(curl -f -s -X PATCH \
+                -H "Content-Type: application/json" \
+                -H "Accept: application/json" \
+                -u ":$(System.AccessToken)" \
+                -d '{
+                      "views": {
+                        "op": "add",
+                        "path": "/views/-",
+                        "value": "Release"
+                      }
+                    }' \
+                    "$feedPromotionUrl"
+                )
+
+              curlExitStatus=$?
+
+              if echo "$response" | grep -q '"success":"false"'; then
+                reason="${response#*\"reason\":\"}"
+                reason="${reason%%\"*}"
+                echo "Failed to promote package to Release view"
+                echo "Error reason: $reason"
+                exit 1
+              elif [ $curlExitStatus -ne 0 ]; then
+                echo "Failed to promote package due to curl error (status '$curlExitStatus')"
+                exit 1
+              fi
+            fi
+
             rm publish_log
-          done
-        fi
+            break
+          fi
+          rm publish_log
+        done
       done
       rm ~/.npmrc
       exit 0
