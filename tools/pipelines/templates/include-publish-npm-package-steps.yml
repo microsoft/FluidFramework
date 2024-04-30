@@ -103,8 +103,7 @@ steps:
                 exit 1
               fi
             else
-              if grep -q "You cannot publish over the previously published versions" "publish_log"
-              then
+              if grep -q "You cannot publish over the previously published versions" "publish_log"; then
                 echo Package has already been published.
                 local_f="${f}_local"
                 mv "$f" "$local_f"
