@@ -24,7 +24,7 @@ import {
 	IMapSetOperation,
 	MapLocalOpMetadata,
 } from "../../internalInterfaces.js";
-import { AttributableMap, MapFactory } from "../../map.js";
+import { AttributableMapClass, MapFactory } from "../../map.js";
 import { IMapOperation } from "../../mapKernel.js";
 
 function createConnectedMap(id: string, runtimeFactory: MockContainerRuntimeFactory): TestMap {
@@ -47,7 +47,7 @@ function createDetachedMap(id: string): TestMap {
 	return map;
 }
 
-class TestMap extends AttributableMap {
+class TestMap extends AttributableMapClass {
 	private lastMetadata?: MapLocalOpMetadata;
 	public testApplyStashedOp(content: IMapOperation): MapLocalOpMetadata | undefined {
 		this.lastMetadata = undefined;

@@ -4,13 +4,13 @@
  */
 
 import { strict as assert } from "node:assert";
-import { type TreeChangeEvents } from "../../../dist/index.js";
 import { rootFieldKey } from "../../core/index.js";
 import { TreeStatus, createMockNodeKeyManager } from "../../feature-libraries/index.js";
 import {
 	NodeFromSchema,
 	SchemaFactory,
 	treeNodeApi as Tree,
+	TreeChangeEvents,
 	TreeConfiguration,
 } from "../../simple-tree/index.js";
 import { getView } from "../utils.js";
