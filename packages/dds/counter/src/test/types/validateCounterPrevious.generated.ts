@@ -99,9 +99,3 @@ use_current_RemovedClassDeclaration_SharedCounter(
  * typeValidation.broken:
  * "RemovedClassDeclaration_SharedCounter": {"backCompat": false}
  */
-declare function get_current_RemovedClassDeclaration_SharedCounter():
-    TypeOnly<current.SharedCounter>;
-declare function use_old_ClassDeclaration_SharedCounter(
-    use: TypeOnly<old.SharedCounter>): void;
-use_old_ClassDeclaration_SharedCounter(
-    get_current_RemovedClassDeclaration_SharedCounter());

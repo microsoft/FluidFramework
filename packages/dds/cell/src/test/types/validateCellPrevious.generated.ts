@@ -169,12 +169,6 @@ use_old_InterfaceDeclaration_ISharedCellEvents(
  * typeValidation.broken:
  * "RemovedClassDeclaration_SharedCell": {"forwardCompat": false}
  */
-declare function get_old_ClassDeclaration_SharedCell():
-    TypeOnly<old.SharedCell>;
-declare function use_current_RemovedClassDeclaration_SharedCell(
-    use: TypeOnly<current.SharedCell>): void;
-use_current_RemovedClassDeclaration_SharedCell(
-    get_old_ClassDeclaration_SharedCell());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -183,9 +177,3 @@ use_current_RemovedClassDeclaration_SharedCell(
  * typeValidation.broken:
  * "RemovedClassDeclaration_SharedCell": {"backCompat": false}
  */
-declare function get_current_RemovedClassDeclaration_SharedCell():
-    TypeOnly<current.SharedCell>;
-declare function use_old_ClassDeclaration_SharedCell(
-    use: TypeOnly<old.SharedCell>): void;
-use_old_ClassDeclaration_SharedCell(
-    get_current_RemovedClassDeclaration_SharedCell());
