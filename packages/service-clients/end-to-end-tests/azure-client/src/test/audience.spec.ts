@@ -260,7 +260,10 @@ describe("Fluid audience", () => {
 	 */
 	it("can observe member leaving and joining in read-only mode", async function () {
 		// TODO: Fix tests when ran against local service - ADO:7876
-		this.skip();
+		const useAzure = process.env.FLUID_CLIENT === "azure";
+		if (!useAzure) {
+			this.skip();
+		}
 
 		const { container } = await client.createContainer(schema);
 		const containerId = await container.attach();
