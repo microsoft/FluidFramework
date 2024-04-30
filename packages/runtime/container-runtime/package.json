@@ -214,17 +214,6 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_ChannelCollection": {
-				"backCompat": false
-			},
-			"ClassDeclaration_ContainerRuntime": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"ClassDeclaration_DataStoreContexts": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

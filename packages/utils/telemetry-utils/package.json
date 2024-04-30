@@ -137,10 +137,6 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {
-			"TypeAliasDeclaration_TelemetryEventPropertyTypes": {
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

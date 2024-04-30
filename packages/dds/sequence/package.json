@@ -186,17 +186,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"RemovedClassDeclaration_SharedString": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_ISharedString": {
-				"forwardCompat": false
-			},
-			"RemovedClassDeclaration_SharedStringFactory": {
-				"backCompat": false,
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }
