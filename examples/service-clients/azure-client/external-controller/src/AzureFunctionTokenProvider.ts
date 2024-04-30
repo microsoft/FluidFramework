@@ -51,8 +51,8 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
 			params: {
 				tenantId,
 				documentId,
-				userId: this.user?.id,
-				userName: this.user?.name,
+				id: this.user?.id,
+				name: this.user?.name,
 				additionalDetails: this.user?.additionalDetails as unknown,
 			},
 		});
