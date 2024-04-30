@@ -10,8 +10,8 @@ import { TinyliciousClient } from "@fluidframework/tinylicious-client/internal";
 import type { ContainerSchema } from "@fluidframework/fluid-static";
 import { treeDataObject } from "../reactSharedTreeView.js";
 
-describe("useTree()", () => {
-	it("works", async () => {
+describe("reactSharedTreeView", () => {
+	it("treeDataObject", async () => {
 		const builder = new SchemaFactory("tree-react-api");
 
 		class Inventory extends builder.object("Contoso:InventoryItem-1.0.0", {
@@ -23,6 +23,7 @@ describe("useTree()", () => {
 			initialObjects: {
 				// TODO: it seems odd that DataObjects in container schema need both a key under initialObjects where they are,
 				// as well as a key under the root data object, and SharedObjects only need one key.
+				// Maybe we can default the shared object's key to be derived from the data objects key by default?
 				tree: treeDataObject(
 					"tree",
 					new TreeConfiguration(Inventory, () => ({ nuts: 5, bolts: 6 })),
