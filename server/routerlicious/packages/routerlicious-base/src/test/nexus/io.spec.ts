@@ -586,6 +586,18 @@ describe("Routerlicious", () => {
 							});
 						});
 
+						it("throws when signal is not an array", async () => {
+							assert.throws(
+								() =>
+									clients[0].socket.send(
+										"submitSignal",
+										clients[0].clientId,
+										stringSignalContent,
+									),
+								"submitting a non-array signal should throw",
+							);
+						});
+
 						describe("content type variations", () => {
 							let clientSignalPromises: Promise<ISignalMessage[]>[];
 
