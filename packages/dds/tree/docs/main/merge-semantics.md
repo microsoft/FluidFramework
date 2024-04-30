@@ -154,7 +154,7 @@ it only needs to adjust its local state to reflect the impact of concurrent edit
 Indeed, `SharedTree` never surfaces a conflict where one of two states or one of two edits must be selected as the winner or manually reconciled.
 (`SharedTree` may offer capabilities to facilitate the creation of such end user experiences in the future,
 but these would only exist atop `SharedTree`'s core conflict-free model.)
-In that regard, `SharedTree` closer to operational transform or CRDT systems, and different from systems like [Git](https://git-scm.com/).
+In that regard, `SharedTree` is closer to operational transform or CRDT systems, and different from systems like [Git](https://git-scm.com/).
 
 Instead of treating edits as conflicted, `SharedTree` always applies each edit one after the other in sequencing order so long as the edit is valid.
 This approach is tenable because `SharedTree`'s edits endeavor to capture precise intentions,
