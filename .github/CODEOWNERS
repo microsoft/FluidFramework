@@ -46,7 +46,24 @@
 /experimental/dds/tree/src                     @microsoft/fluid-cr-tree
 
 # Fluid Devtools source
-/packages/tools/devtools/**/src                   @microsoft/fluid-cr-devtools
+/packages/tools/devtools/**/src                @microsoft/fluid-cr-devtools
+
+# loader layer source code
+/packages/loader/**/src                   	   @microsoft/fluid-cr-loader
+
+# runtime layer source code
+/packages/runtime/container-runtime/src        @microsoft/fluid-cr-runtime
+
+# driver layer source code
+/packages/drivers/driver-base/src              @microsoft/fluid-cr-driver
+/packages/drivers/local-driver/src             @microsoft/fluid-cr-driver
+/packages/common/driver-definitions/src        @microsoft/fluid-cr-driver
+/packages/loader/driver-utils/src              @microsoft/fluid-cr-driver
+
+# odsp driver layer source code
+/packages/drivers/odsp-driver/src        	   @microsoft/fluid-cr-odsp
+/packages/drivers/odsp-driver-definitions/src  @microsoft/fluid-cr-odsp
+/packages/drivers/odsp-urlResolver/src         @microsoft/fluid-cr-odsp
 
 # Package version files are not generally interesting to review by teams signing up for source tree ownership.
 # If a release team wanted to sign up to block on changes relevant for package release,
