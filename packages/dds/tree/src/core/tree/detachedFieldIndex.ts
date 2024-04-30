@@ -137,10 +137,17 @@ export class DetachedFieldIndex {
 	}
 
 	/**
-	 * Returns all entries associated with the given revision.
+	 * Returns all entries created by the given revision.
 	 */
 	public getRoots(revision: Major): ForestRootId[] {
 		return Array.from(this.detachedNodeToField.get(revision)?.values() ?? []);
+	}
+
+	/**
+	 * Returns all entries last created or used by the given revision.
+	 */
+	public getLatestRelevantRoots(revision: Major): ForestRootId[] {
+		return Array.from(this.revisionToDetachedFields.get(revision)?.values() ?? []);
 	}
 
 	/**
@@ -148,6 +155,13 @@ export class DetachedFieldIndex {
 	 */
 	public deleteRevision(revision: Major) {
 		this.detachedNodeToField.delete(revision);
+	}
+
+	/**
+	 * Removes all entries last created or used by the given revision.
+	 */
+	public deleteLatestRelevantRoots(revision: Major) {
+		this.revisionToDetachedFields.delete(revision);
 	}
 
 	public deleteEntry(nodeId: Delta.DetachedNodeId): void {
