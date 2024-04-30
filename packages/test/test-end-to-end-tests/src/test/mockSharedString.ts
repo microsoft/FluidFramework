@@ -221,8 +221,8 @@ export class MockInsertSharedString extends SharedObject<IInsertStringEvent> {
 						index: op.index,
 						referenceSequenceNumber: op.referenceSequenceNumber,
 					};
-					this._inserts, trimmableInsert;
 
+					// Put the insert in the right place to maintain user intent.
 					let i = this.inserts.length;
 					while (
 						i > 0 &&
