@@ -8,7 +8,7 @@
 import { strict as assert } from "assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { IntervalType } from "@fluidframework/sequence-previous";
+import { IntervalType } from "@fluidframework/sequence-previous/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
