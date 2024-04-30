@@ -34,9 +34,9 @@
 		"test:coverage": "npm run test:jest:coverage",
 		"test:jest": "jest --detectOpenHandles",
 		"test:jest:coverage": "jest --detectOpenHandles --coverage --ci",
-		"tsc:watch": "tsc --watch",
 		"watch:devtools-core": "tsc --watch --project ../devtools-core/tsconfig.json --preserveWatchOutput",
-		"watch:devtools-view": "tsc --watch --project ../devtools-view/tsconfig.esm.json --preserveWatchOutput",
+		"watch:devtools-view": "copyfiles -f ../../../../common/build/build-common/src/esm/package.json ../devtools-view/lib && fluid-tsc module --watch --project ../devtools-view/tsconfig.esm.json --preserveWatchOutput",
+		"watch:esnext": "tsc --watch --project ./tsconfig.json",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},
