@@ -68,9 +68,7 @@ export class Redis implements IRedis {
 			this.prefix = parameters.prefix;
 		}
 
-		redisClientConnectionManager.getRedisClient().on("error", (error) => {
-			Lumberjack.error("Redis Cache Error", undefined, error);
-		});
+		redisClientConnectionManager.addErrorHandler(undefined, "Redis Cache Error");
 	}
 
 	public async get<T>(key: string): Promise<T | undefined> {
@@ -187,9 +185,7 @@ export class HashMapRedis implements IRedis {
 			this.prefix = parameters.prefix;
 		}
 
-		redisClientConnectionManager.getRedisClient().on("error", (error) => {
-			Lumberjack.error("Redis Cache Error", undefined, error);
-		});
+		redisClientConnectionManager.addErrorHandler(undefined, "Redis Cache Error");
 	}
 
 	public async get<T>(field: string): Promise<T | undefined> {
