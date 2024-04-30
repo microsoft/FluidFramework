@@ -7,7 +7,6 @@
 import { Client } from '@fluidframework/merge-tree/internal';
 import { Deferred } from '@fluidframework/core-utils/internal';
 import { ErasedType } from '@fluidframework/core-interfaces';
-import { FieldSchemaUnsafe as FieldSchemaUnsafe_2 } from './typesUnsafe.js';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
