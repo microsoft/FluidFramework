@@ -45,7 +45,7 @@ const treeConfiguration = new TreeConfiguration(
 	() => new StringArray([]),
 );
 
-describe.only("SharedTree with AzureClient", () => {
+describe("SharedTree with AzureClient", () => {
 	const connectTimeoutMs = 10_000;
 	let client: AzureClient;
 	const schema = {
