@@ -286,6 +286,7 @@ declare function get_old_InterfaceDeclaration_AzureMember():
 declare function use_current_InterfaceDeclaration_AzureMember(
     use: TypeOnly<current.AzureMember>): void;
 use_current_InterfaceDeclaration_AzureMember(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_AzureMember());
 
 /*
@@ -300,6 +301,7 @@ declare function get_current_InterfaceDeclaration_AzureMember():
 declare function use_old_InterfaceDeclaration_AzureMember(
     use: TypeOnly<old.AzureMember>): void;
 use_old_InterfaceDeclaration_AzureMember(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_AzureMember());
 
 /*
