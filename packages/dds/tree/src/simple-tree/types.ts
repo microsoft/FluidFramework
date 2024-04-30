@@ -105,7 +105,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	 * The return value from this is returned from the constructor, allowing substituting a proxy if desired.
 	 *
 	 * This is not simply done in the derived constructor to enable:
-	 * - this class to access the value which is being returned before its returned from the constructor.
+	 * - this class to access the value which is being returned before it's returned from the constructor.
 	 * - the derived class to be provided the input `FlexTreeNode` without relying on a field on the node to hold it.
 	 */
 	protected static prepareInstance<T>(
@@ -128,7 +128,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	}
 
 	/**
-	 * Schema classes can override to provide a callback that once when the first node is constructed.
+	 * Schema classes can override to provide a callback that is called once when the first node is constructed.
 	 * This is a good place to perform extra validation and cache schema derived data needed for the implementation of the node.
 	 */
 	protected static oneTimeSetup<T>(this: typeof TreeNodeValid<T>) {}
@@ -143,7 +143,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	 * @privateRemarks
 	 * This defaults to TreeNodeValid, which is used to trigger an error if not overridden in the derived class.
 	 *
-	 * The value of this most only be overridden by base classes, never modified,
+	 * The value of this must only be overridden by base classes, never modified,
 	 * however ways to prevent it from being modified prevent it from being overridden,
 	 * so code modifying constructorCached should be extra careful.
 	 */

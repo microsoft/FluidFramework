@@ -685,7 +685,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes> extends
 
 	// Instances of this class are used as the dispatch object for the proxy,
 	// and thus its set of keys is used to implement `has` (for the `in` operator) for the non-numeric cases.
-	// Therefore it must must include `length`,
+	// Therefore it must include `length`,
 	// even though this "length" is never invoked (due to being shadowed by the proxy provided own property).
 	public get length() {
 		return fail("Proxy should intercept length");
