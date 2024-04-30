@@ -60,7 +60,6 @@ const removeRoot: SharedTreeChange = {
 };
 
 const revision1 = testIdCompressor.generateCompressedId();
-const revision2 = testIdCompressor.generateCompressedId();
 
 function setupEnricher() {
 	const removedRoots = new DetachedFieldIndex(
@@ -84,9 +83,7 @@ describe("SharedTreeChangeEnricher", () => {
 		enricher.applyTipChange(removeRoot, revision1);
 
 		assert.deepEqual(jsonTreeFromForest(forest), []);
-		assert.deepEqual(Array.from(removedRoots.entries()), [
-			{ id: { major: revision1, minor: 0 }, root: 0 },
-		]);
+		assert.deepEqual(Array.from(removedRoots.entries()), [{ id: { minor: 0 }, root: 0 }]);
 	});
 
 	it("updates enrichments", () => {
@@ -95,7 +92,7 @@ describe("SharedTreeChangeEnricher", () => {
 
 		const restore = Change.atOnce(
 			Change.reserve("self", brand(0)),
-			Change.move({ revision: revision1, localId: brand(0) }, "self"),
+			Change.move({ localId: brand(0) }, "self"),
 		);
 		const restoreRoot: SharedTreeChange = {
 			changes: [
@@ -113,7 +110,7 @@ describe("SharedTreeChangeEnricher", () => {
 			],
 		};
 
-		const enriched = enricher.updateChangeEnrichments(restoreRoot, revision2);
+		const enriched = enricher.updateChangeEnrichments(restoreRoot);
 
 		// Check that the original change was not modified
 		assert.equal(restoreRoot.changes[0].type, "data");
@@ -123,7 +120,7 @@ describe("SharedTreeChangeEnricher", () => {
 		assert.equal(enriched.changes[0].type, "data");
 		assert.equal(enriched.changes[0].innerChange.refreshers?.size, 1);
 		const refreshers = nestedMapToFlatList(enriched.changes[0].innerChange.refreshers);
-		assert.equal(refreshers[0][0], revision1);
+		assert.equal(refreshers[0][0], undefined);
 		assert.equal(refreshers[0][1], 0);
 		const refreshedTree = mapCursorField(refreshers[0][2].cursor(), cursorToJsonObject);
 		assert.deepEqual(refreshedTree, [content]);

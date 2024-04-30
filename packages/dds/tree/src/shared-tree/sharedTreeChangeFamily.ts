@@ -238,13 +238,13 @@ function mapDataChanges(
  * @returns An equivalent change with an updated set of appropriate refreshers.
  */
 export function updateRefreshers(
-	change: TaggedChange<SharedTreeChange>,
+	change: SharedTreeChange,
 	getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
 	relevantRemovedRootsFromDataChange: (
-		taggedChange: TaggedChange<ModularChangeset>,
+		taggedChange: ModularChangeset,
 	) => Iterable<DeltaDetachedNodeId>,
 	updateDataChangeRefreshers: (
-		change: TaggedChange<ModularChangeset>,
+		change: ModularChangeset,
 		getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
 		removedRoots: Iterable<DeltaDetachedNodeId>,
 		requireRefreshers: boolean,
@@ -284,20 +284,19 @@ export function updateRefreshers(
 		}
 	}
 	let isFirstDataChange = true;
-	return mapDataChanges(change.change, (dataChange) => {
-		const taggedDataChange = mapTaggedChange(change, dataChange);
-		const removedRoots = relevantRemovedRootsFromDataChange(taggedDataChange);
+	return mapDataChanges(change, (dataChange) => {
+		const removedRoots = relevantRemovedRootsFromDataChange(dataChange);
 		if (isFirstDataChange) {
 			isFirstDataChange = false;
 			return updateDataChangeRefreshers(
-				taggedDataChange,
+				dataChange,
 				getAndRememberDetachedNode,
 				removedRoots,
 				true,
 			);
 		} else {
 			return updateDataChangeRefreshers(
-				taggedDataChange,
+				dataChange,
 				getAndRememberDetachedNode,
 				filterIncludedRoots(removedRoots),
 				false,

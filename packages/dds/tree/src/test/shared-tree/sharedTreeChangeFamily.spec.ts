@@ -9,7 +9,6 @@ import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import { ICodecOptions } from "../../codec/index.js";
 import {
 	DeltaDetachedNodeId,
-	TaggedChange,
 	TreeStoredSchema,
 	makeAnonChange,
 	revisionMetadataSourceFromInfo,
@@ -263,7 +262,7 @@ describe("SharedTreeChangeFamily", () => {
 		};
 
 		function updateDataChangeRefreshers(
-			{ change }: TaggedChange<ModularChangeset>,
+			change: ModularChangeset,
 			getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
 			removedRoots: Iterable<DeltaDetachedNodeId>,
 			requireRefreshers: boolean,
@@ -287,7 +286,7 @@ describe("SharedTreeChangeFamily", () => {
 		function testUpdateRefreshers(input: SharedTreeChange): SharedTreeChange {
 			deepFreeze(input);
 			return updateRefreshers(
-				makeAnonChange(input),
+				input,
 				// Mock for getDetachedNode
 				(id): TreeChunk | undefined => {
 					switch (id) {
@@ -300,7 +299,7 @@ describe("SharedTreeChangeFamily", () => {
 					}
 				},
 				// Mock for relevantRemovedRootsFromDataChange
-				({ change }: TaggedChange<ModularChangeset>): DeltaDetachedNodeId[] =>
+				(change: ModularChangeset): DeltaDetachedNodeId[] =>
 					change as unknown as DeltaDetachedNodeId[],
 				updateDataChangeRefreshers,
 			);

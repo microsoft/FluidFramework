@@ -37,13 +37,9 @@ export class SharedTreeChangeEnricher implements ChangeEnricherCheckout<SharedTr
 		private readonly removedRoots: DetachedFieldIndex,
 	) {}
 
-	public updateChangeEnrichments(
-		change: SharedTreeChange,
-		revision: RevisionTag,
-	): SharedTreeChange {
-		const taggedChange = tagChange(change, revision);
+	public updateChangeEnrichments(change: SharedTreeChange): SharedTreeChange {
 		return updateRefreshers(
-			taggedChange,
+			change,
 			this.getDetachedRoot,
 			relevantRemovedRoots,
 			updateDataChangeRefreshers,

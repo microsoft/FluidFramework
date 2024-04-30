@@ -38,10 +38,9 @@ class TestChangeEnricher implements ChangeEnricherCheckout<TestChange> {
 		TestChangeEnricher.checkoutsCreated += 1;
 	}
 
-	public updateChangeEnrichments(change: TestChange, revision: RevisionTag): TestChange {
+	public updateChangeEnrichments(change: TestChange): TestChange {
 		assert.equal(this.isDisposed, false);
 		assert.equal(change.inputContext, this.context);
-		assert.equal(revision, change.outputContext);
 		TestChangeEnricher.commitsEnriched += 1;
 		return {
 			...change,
