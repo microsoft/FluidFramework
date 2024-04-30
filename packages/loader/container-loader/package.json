@@ -200,12 +200,12 @@
 	"typeValidation": {
 		"broken": {
 			"InterfaceDeclaration_IProtocolHandler": {
-				"backCompat": false,
-				"forwardCompat": false
+				"forwardCompat": false,
+				"backCompat": false
 			},
 			"InterfaceDeclaration_IContainerExperimental": {
-				"backCompat": false,
-				"forwardCompat": false
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}
