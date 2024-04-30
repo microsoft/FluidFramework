@@ -540,7 +540,7 @@ describe("Routerlicious", () => {
 							});
 						});
 
-						it("should not fail when given an invalid client ID", async () => {
+						it("should drop signals with invalid client ID", async () => {
 							const clientSignalPromises = clients.map((client) =>
 								createSignalPromise(client, 1),
 							);
@@ -838,7 +838,7 @@ describe("Routerlicious", () => {
 								);
 							};
 
-							it("should not fail when given an invalid client ID", async () => {
+							it("should drop signal when given an invalid client ID", async () => {
 								const clientSignalPromises = clients.map((client) =>
 									createSignalPromise(client, 1),
 								);
@@ -952,6 +952,119 @@ describe("Routerlicious", () => {
 								const nackMessage = await nackPromise;
 
 								checkNack(nackMessage);
+							});
+						});
+					});
+
+					describe("with v1 and v2 signals", () => {
+						let v1_client: Client;
+						let v2_client: Client;
+						beforeEach(async () => {
+							clients = [];
+							v1_client = await createClient(testId, testTenantId, testSecret);
+							clients.push(v1_client);
+							v2_client = await createClient(testId, testTenantId, testSecret, true);
+							clients.push(v2_client);
+							for (let i = 2; i < numberOfClients; i++) {
+								const client = await createClient(
+									testId,
+									testTenantId,
+									testSecret,
+									true,
+								);
+								clients.push(client);
+							}
+						});
+
+						it("should broadcast signal from a v1 client to all connected clients", async () => {
+							const clientSignalPromises = clients.map((client) =>
+								createSignalPromise(client, 1),
+							);
+
+							v1_client.socket.send("submitSignal", v1_client.clientId, [
+								stringSignalContent,
+							]);
+
+							const userSignals = await Promise.all(clientSignalPromises);
+
+							clients.forEach((client, index) => {
+								assert.equal(
+									client.signalCount,
+									1,
+									`User ${index + 1} should have received 1 signal`,
+								);
+								assert.deepEqual(
+									userSignals[index][0].content,
+									stringSignalContent,
+									`User ${index + 1} signal content mismatch`,
+								);
+							});
+						});
+
+						it("should broadcast signal from a v2 client to all connected clients", async () => {
+							const clientSignalPromises = clients.map((client) =>
+								createSignalPromise(client, 1),
+							);
+
+							const targetedSignal: ISentSignalMessage = {
+								content: stringSignalContent,
+							};
+
+							v2_client.socket.send("submitSignal", v2_client.clientId, [
+								targetedSignal,
+							]);
+
+							const userSignals = await Promise.all(clientSignalPromises);
+
+							clients.forEach((client, index) => {
+								assert.equal(
+									client.signalCount,
+									1,
+									`User ${index + 1} should have received 1 signal`,
+								);
+								assert.deepEqual(
+									userSignals[index][0].content,
+									stringSignalContent,
+									`User ${index + 1} signal content mismatch`,
+								);
+							});
+						});
+
+						it("can target a v1 client from a v2 client", async () => {
+							const clientSignalPromises = clients.map((client) =>
+								createSignalPromise(client, 1),
+							);
+
+							const targetedSignal: ISentSignalMessage = {
+								targetClientId: v1_client.clientId,
+								content: stringSignalContent,
+							};
+
+							v2_client.socket.send("submitSignal", v2_client.clientId, [
+								targetedSignal,
+							]);
+
+							const userSignals = await Promise.all(clientSignalPromises);
+
+							clients.forEach((client, index) => {
+								if (index === 0) {
+									assert.equal(
+										client.signalCount,
+										1,
+										"User 1 should have received 1 signal",
+									);
+									assert.deepEqual(
+										userSignals[index][0].content,
+										stringSignalContent,
+										"User 1 signal content mismatch",
+									);
+								} else {
+									assert.equal(
+										client.signalCount,
+										0,
+										`User ${index + 1} should not have received any signals`,
+									);
+								}
 							});
 						});
 					});
