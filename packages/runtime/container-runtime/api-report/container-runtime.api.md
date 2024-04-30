@@ -623,7 +623,7 @@ export interface IAckSummaryResult {
 
 // @alpha
 export interface IBaseSummarizeResult {
-    readonly error: any;
+    readonly error: Error | undefined;
     // (undocumented)
     readonly minimumSequenceNumber: number;
     readonly referenceSequenceNumber: number;
@@ -723,7 +723,6 @@ export interface IContainerRuntimeOptions {
     readonly chunkSizeInBytes?: number;
     readonly compressionOptions?: ICompressionRuntimeOptions;
     readonly enableGroupedBatching?: boolean;
-    readonly enableOpReentryCheck?: boolean;
     readonly enableRuntimeIdCompressor?: IdCompressorMode;
     readonly explicitSchemaControl?: boolean;
     readonly flushMode?: FlushMode;

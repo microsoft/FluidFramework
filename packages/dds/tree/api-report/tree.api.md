@@ -4,7 +4,7 @@
 
 ```ts
 
-import type { ErasedType } from '@fluidframework/core-interfaces';
+import { ErasedType } from '@fluidframework/core-interfaces';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
@@ -560,16 +560,18 @@ export class FlexFieldNodeSchema<Name extends string = string, Specification ext
 }
 
 // @internal @sealed
-export class FlexFieldSchema<out TKind extends FlexFieldKind = FlexFieldKind, const out TTypes extends Unenforced<FlexAllowedTypes> = FlexAllowedTypes> {
+export class FlexFieldSchema<out TKind extends FlexFieldKind = FlexFieldKind, const out TTypes extends Unenforced<FlexAllowedTypes> = FlexAllowedTypes, const out TMetadata = unknown> {
     // (undocumented)
     readonly allowedTypes: TTypes;
     get allowedTypeSet(): AllowedTypeSet;
-    static create<TKind extends FlexFieldKind, const Types extends FlexAllowedTypes>(kind: TKind, allowedTypes: Types): FlexFieldSchema<TKind, Types>;
-    static createUnsafe<TKind extends FlexFieldKind, const Types extends Unenforced<FlexAllowedTypes>>(kind: TKind, allowedTypes: Types): FlexFieldSchema<TKind, Types>;
-    static readonly empty: FlexFieldSchema<Forbidden, readonly []>;
+    static create<TKind extends FlexFieldKind, const Types extends FlexAllowedTypes, const TMetadata = unknown>(kind: TKind, allowedTypes: Types, metadata?: TMetadata): FlexFieldSchema<TKind, Types>;
+    static createUnsafe<TKind extends FlexFieldKind, const Types extends Unenforced<FlexAllowedTypes>, const TMetadata = unknown>(kind: TKind, allowedTypes: Types, metadata?: TMetadata): FlexFieldSchema<TKind, Types>;
+    static readonly empty: FlexFieldSchema<Forbidden, readonly [], unknown>;
     equals(other: FlexFieldSchema): boolean;
     // (undocumented)
     readonly kind: TKind;
+    // (undocumented)
+    readonly metadata: TMetadata | undefined;
     get monomorphicChildType(): FlexTreeNodeSchema | undefined;
     // (undocumented)
     readonly stored: TreeFieldStoredSchema;
@@ -638,7 +640,7 @@ export class FlexObjectNodeSchema<const out Name extends string = string, const 
 export interface FlexTreeContext extends ISubscribable<ForestEvents> {
     readonly forest: IForestSubscription;
     // (undocumented)
-    readonly nodeKeys: NodeKeys;
+    readonly nodeKeyManager: NodeKeyManager;
     get root(): FlexTreeField;
     readonly schema: FlexTreeSchema;
 }
@@ -1025,6 +1027,10 @@ export type InsertableTypedNodeUnsafe<T extends Unenforced<TreeNodeSchema>> = Un
     implicitlyConstructable: true;
 } ? NodeBuilderDataUnsafe<T> : never);
 
+// @public
+export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {
+}
+
 // @internal
 export interface Invariant<in out T> extends Contravariant<T>, Covariant<T> {
 }
@@ -1323,11 +1329,11 @@ export interface NodeKeyFieldKind extends FlexFieldKind<"NodeKey", Multiplicity.
 }
 
 // @internal
-export interface NodeKeys {
-    generate(): LocalNodeKey;
-    localize(key: StableNodeKey): LocalNodeKey;
-    readonly map: ReadonlyMap<LocalNodeKey, FlexTreeObjectNode>;
-    stabilize(key: LocalNodeKey): StableNodeKey;
+export interface NodeKeyManager {
+    generateLocalNodeKey(): LocalNodeKey;
+    localizeNodeKey(key: StableNodeKey): LocalNodeKey;
+    stabilizeNodeKey(key: LocalNodeKey): StableNodeKey;
+    tryLocalizeNodeKey(key: string): LocalNodeKey | undefined;
 }
 
 // @public
@@ -1511,6 +1517,9 @@ export enum RevertibleStatus {
 // @internal
 export type RevisionTag = SessionSpaceCompressedId | "root";
 
+// @public
+export const rollback: unique symbol;
+
 // @internal
 export interface RootField {
     // (undocumented)
@@ -1525,6 +1534,23 @@ export const rootFieldKey: FieldKey;
 
 // @internal
 export function runSynchronous(view: ITreeCheckout, transaction: (view: ITreeCheckout) => TransactionResult | void): TransactionResult;
+
+// @public
+export interface RunTransaction {
+    <TNode extends TreeNode, TResult>(node: TNode, transaction: (node: TNode) => TResult): TResult;
+    <TView extends TreeView<ImplicitFieldSchema>, TResult>(tree: TView, transaction: (root: TView["root"]) => TResult): TResult;
+    <TNode extends TreeNode, TResult>(node: TNode, transaction: (node: TNode) => TResult | typeof rollback): TResult | typeof rollback;
+    <TView extends TreeView<ImplicitFieldSchema>, TResult>(tree: TView, transaction: (root: TView["root"]) => TResult | typeof rollback): TResult | typeof rollback;
+    <TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void): void;
+    <TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void): void;
+    <TNode extends TreeNode, TResult>(node: TNode, transaction: (node: TNode) => TResult, preconditions?: TransactionConstraint[]): TResult;
+    <TView extends TreeView<ImplicitFieldSchema>, TResult>(tree: TView, transaction: (root: TView["root"]) => TResult, preconditions?: TransactionConstraint[]): TResult;
+    <TNode extends TreeNode, TResult>(node: TNode, transaction: (node: TNode) => TResult | typeof rollback, preconditions?: TransactionConstraint[]): TResult | typeof rollback;
+    <TView extends TreeView<ImplicitFieldSchema>, TResult>(tree: TView, transaction: (root: TView["root"]) => TResult | typeof rollback, preconditions?: TransactionConstraint[]): TResult | typeof rollback;
+    <TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void, preconditions?: TransactionConstraint[]): void;
+    <TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void, preconditions?: TransactionConstraint[]): void;
+    readonly rollback: typeof rollback;
+}
 
 // @internal
 export class SchemaBuilderBase<TScope extends string, TDefaultKind extends FlexFieldKind, TName extends number | string = string> {
@@ -1789,10 +1815,7 @@ export interface TreeAdapter {
 // @public
 export interface TreeApi extends TreeNodeApi {
     contains(node: TreeNode, other: TreeNode): boolean;
-    runTransaction<TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void | "rollback"): void;
-    runTransaction<TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void | "rollback", preconditions?: TransactionConstraint[]): void;
-    runTransaction<TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void | "rollback"): void;
-    runTransaction<TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void | "rollback", preconditions?: TransactionConstraint[]): void;
+    readonly runTransaction: RunTransaction;
 }
 
 // @public
@@ -1907,16 +1930,18 @@ export const enum TreeNavigationResult {
 // @public
 export abstract class TreeNode implements WithType {
     abstract get [type](): string;
+    protected constructor();
 }
 
 // @public
 export interface TreeNodeApi {
     is<TSchema extends TreeNodeSchema>(value: unknown, schema: TSchema): value is NodeFromSchema<TSchema>;
     key(node: TreeNode): string | number;
+    metadata(node: TreeNode): unknown;
     on<K extends keyof TreeChangeEvents>(node: TreeNode, eventName: K, listener: TreeChangeEvents[K]): () => void;
     parent(node: TreeNode): TreeNode | undefined;
     schema<T extends TreeNode | TreeLeafValue>(node: T): TreeNodeSchema<string, NodeKind, unknown, T>;
-    shortId(node: TreeNode): number | undefined;
+    shortId(node: TreeNode): number | string | undefined;
     readonly status: (node: TreeNode) => TreeStatus;
 }
 
@@ -1949,7 +1974,7 @@ export abstract class TreeNodeSchemaBase<const out Name extends string = string,
 // @public
 export interface TreeNodeSchemaClass<out Name extends string = string, out Kind extends NodeKind = NodeKind, out TNode = unknown, in TInsertable = never, out ImplicitlyConstructable extends boolean = boolean, out Info = unknown> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
     // @sealed
-    new (data: TInsertable): Unhydrated<TNode>;
+    new (data: TInsertable | InternalTreeNode): Unhydrated<TNode>;
 }
 
 // @public
