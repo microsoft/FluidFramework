@@ -555,7 +555,7 @@ export function validateFuzzTreeConsistency(
 ): void {
 	const aSerializer = new FluidSerializer(treeA.dataStoreRuntime.IFluidHandleContext);
 	const bSerializer = new FluidSerializer(treeB.dataStoreRuntime.IFluidHandleContext);
-	// This intentionally violates the type safety of validateSnapshotConsistency because we must 
+	// This intentionally violates the type safety of validateSnapshotConsistency because we must
 	// encode any handles in the content in order to validate. AB#7880
 	validateSnapshotConsistency(
 		aSerializer.encode(treeA.channel.contentSnapshot(), treeA.channel.handle),
