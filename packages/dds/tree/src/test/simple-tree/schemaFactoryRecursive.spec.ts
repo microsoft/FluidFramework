@@ -20,6 +20,7 @@ import {
 	TreeNodeFromImplicitAllowedTypes,
 	TreeView,
 	SchemaFactory,
+	InternalTreeNode,
 } from "../../simple-tree/index.js";
 import {
 	ValidateRecursiveSchema,
@@ -139,9 +140,10 @@ describe("SchemaFactory Recursive methods", () => {
 				areSafelyAssignable<
 					Constructor,
 					[
-						{
-							readonly x: undefined | ObjectRecursive;
-						},
+						| {
+								readonly x: undefined | ObjectRecursive;
+						  }
+						| InternalTreeNode,
 					]
 				>
 			>;

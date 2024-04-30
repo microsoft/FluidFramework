@@ -7,14 +7,13 @@ import { strict as assert } from "assert";
 
 import { MockHandle, validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import type { ImplicitAllowedTypes } from "../../../dist/index.js";
 import { EmptyKey, type FieldKey, type MapTree } from "../../core/index.js";
 import { leaf } from "../../domains/index.js";
 import { SchemaFactory } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { InsertableContent } from "../../simple-tree/proxies.js";
 // eslint-disable-next-line import/no-internal-modules
-import { getDefaultProvider, normalizeAllowedTypes } from "../../simple-tree/schemaTypes.js";
+import { ImplicitAllowedTypes, normalizeAllowedTypes } from "../../simple-tree/schemaTypes.js";
 // eslint-disable-next-line import/no-internal-modules
 import { nodeDataToMapTree as nodeDataToMapTreeBase } from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";

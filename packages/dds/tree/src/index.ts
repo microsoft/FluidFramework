@@ -308,6 +308,7 @@ export {
 	SchemaIncompatible,
 	DefaultProvider,
 	type FieldProps,
+	type InternalTreeNode,
 
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,
