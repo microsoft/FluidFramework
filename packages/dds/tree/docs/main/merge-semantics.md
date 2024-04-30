@@ -301,13 +301,11 @@ this is true even when removals are involved:
 if the removal is sequenced last, then the node will be moved and then removed.
 If the move is sequenced last, then the node will be removed and then moved.
 
-### Simple Postconditions
+### Non-Disjunctive Postconditions
 
-Similar to our choice regarding preconditions,
-we have chosen to prioritize edits whose postconditions are simple.
-"Simple" here refers to the property of having a single possible effect.
-This is in contrast to preconditions that are predicated on the existence or absence of concurrent edits
-or predicated on some properties of the document state by the time the edit is applied.
+Disjunctive postconditions are postconditions of the form `<A> or <B> or ...`.
+None of `SharedTree`'s currently supported edits are of this form,
+which means they each have a single effect as opposed to one of many effects.
 
 For example, the postcondition for our implementation of move
 (that the moved node will reside at the chosen destination)
