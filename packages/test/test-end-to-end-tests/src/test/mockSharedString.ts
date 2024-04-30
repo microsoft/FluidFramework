@@ -210,7 +210,7 @@ export class MockInsertSharedString extends SharedObject<IInsertStringEvent> {
 
 					if (local) {
 						const insert = this._localInserts.find(
-							(insert) => insert.localIndex === localOpMetadata,
+							(ins) => ins.localIndex === localOpMetadata,
 						);
 						assert(insert !== undefined, "Insert not found");
 						this._localInserts.splice(this._localInserts.indexOf(insert), 1);
