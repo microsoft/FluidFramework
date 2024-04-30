@@ -204,7 +204,7 @@ export interface BindPolicy {
  *
  * @internal
  */
-export const indexSymbol = Symbol("editable-tree-binder:index");
+export const indexSymbol = Symbol("flex-tree-binder:index");
 
 /**
  * A syntax node for the bind language

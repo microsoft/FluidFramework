@@ -307,6 +307,7 @@ export {
 	TreeNodeSchemaNonClass,
 	SchemaIncompatible,
 	type FieldProps,
+	type InternalTreeNode,
 
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,
