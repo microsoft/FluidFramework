@@ -729,9 +729,7 @@ export function arraySchema<
 					configurable: false,
 				});
 			}
-
-			const proxy: TreeNode = createArrayNodeProxy(customizable, proxyTarget, instance);
-			return proxy as unknown as schema;
+			return createArrayNodeProxy(customizable, proxyTarget, instance) as unknown as schema;
 		}
 
 		public static override buildRawNode<T2>(

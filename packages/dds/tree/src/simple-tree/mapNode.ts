@@ -171,8 +171,7 @@ export function mapSchema<
 			flexNode: FlexTreeNode,
 		): TreeNodeValid<T2> {
 			if (useMapPrototype) {
-				const proxy = new Proxy<schema>(instance as schema, handler);
-				return proxy;
+				return new Proxy<schema>(instance as schema, handler);
 			}
 			return instance;
 		}

@@ -134,18 +134,22 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	protected static oneTimeSetup<T>(this: typeof TreeNodeValid<T>) {}
 
 	/**
-	 * Used to ensure we only use one most derived schema type:
-	 * some level in the type hierarchy which should only have one most derived type must override this and default it to "undefined".
-	 * Typically this is done in the class that statically implements {@link TreeNodeSchema}.
+	 * The most derived constructor (the one invoked with the `new` operator, not a parent class constructor invoked with as `super`) used to construct an instance of this type.
+	 * @remarks
+	 * Captured when an instance is constructed.
+	 *
+	 * Used to ensure that some derived class (which must override this member, defaulting it to `undefined`) is only instantiated with a single "most derived" class (the constructor actually invoked the the user with `new`).
+	 *
+	 * Typically this is override in the class that statically implements {@link TreeNodeSchema} to enforce that all nodes using that schema use the same class and not different subclasses of it.
 	 *
 	 * Also used to detect if oneTimeSetup has run.
 	 *
 	 * @privateRemarks
 	 * This defaults to TreeNodeValid, which is used to trigger an error if not overridden in the derived class.
 	 *
-	 * The value of this must only be overridden by base classes, never modified,
-	 * however ways to prevent it from being modified prevent it from being overridden,
-	 * so code modifying constructorCached should be extra careful.
+	 * The value of this on TreeNodeValid must only be overridden by base classes and never modified.
+	 * Ways to enforce this immutability prevent it from being overridden,
+	 * so code modifying constructorCached should be extra careful to avoid accidentally modifying the base/inherited value.
 	 */
 	protected static constructorCached: typeof TreeNodeValid | undefined = TreeNodeValid;
 
