@@ -12,7 +12,7 @@ Merge semantics define how `SharedTree` reconciles concurrent edits.
 
 When several users edit the same document, it's possible for some of the edits to be concurrent.
 One user's edit `X` is said to be concurrent to another user's edit `Y` if the first user initiated `X` before receiving `Y`.
-This property is always mutual: if `X` is concurrent to `Y` then `Y` is also concurrent to `X`.
+This property is symmetric: if `X` is concurrent to `Y` then `Y` is also concurrent to `X`.
 
 Let's first look at some examples where the edits are _not_ concurrent.
 
