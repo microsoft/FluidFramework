@@ -15,11 +15,6 @@ import { isMonoRepoKind } from "../library";
 
 interface ColumnInfo {
 	/**
-	 * Camel-cased column name.
-	 */
-	name: string;
-
-	/**
 	 * Function to extract column value from a Package instance.
 	 */
 	fn: (pkg: Package) => string;
@@ -35,23 +30,19 @@ interface ColumnInfo {
  */
 const nameToColumnInfo: Record<string, ColumnInfo> = {
 	releaseGroup: {
-		name: "releaseGroup",
 		fn: (pkg: Package) => pkg.monoRepo?.kind ?? "n/a",
 		style: { alignment: "left" },
 	},
-	name: { name: "name", fn: (pkg: Package) => pkg.name, style: { alignment: "left" } },
+	name: { fn: (pkg: Package) => pkg.name, style: { alignment: "left" } },
 	private: {
-		name: "private",
 		fn: (pkg: Package) => (pkg.packageJson.private === true ? "-private-" : ""),
 		style: { alignment: "center" },
 	},
 	version: {
-		name: "version",
 		fn: (pkg: Package) => (pkg.monoRepo ? pkg.monoRepo.version : pkg.version),
 		style: { alignment: "left" },
 	},
 	path: {
-		name: "path",
 		fn: (pkg: Package) => pkg.directory,
 		style: { alignment: "left" },
 	},
@@ -105,12 +96,12 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 			packages = packages.filter((p) => p.packageJson.private !== true);
 		}
 
-		const columns = flags.columns.map((name) => nameToColumnInfo[name]);
+		const columnNames = flags.columns;
+		const columns = columnNames.map((name) => nameToColumnInfo[name]);
 
 		// Initialize 'tableData' with Pascal cased column names.
 		const tableData = [
-			columns.map((column) => {
-				const { name } = column;
+			columnNames.map((name) => {
 				return name.charAt(0).toUpperCase() + name.slice(1);
 			}),
 		];
@@ -119,11 +110,12 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 
 		for (const pkg of packages) {
 			// Create a row for the current package.
-			const tableRow = [];
+			const tableRow: string[] = [];
 			const jsonRow: Record<string, string> = {};
 
 			// Copy the corresponding column info into the row.
-			for (const { name, fn } of columns) {
+			for (const [index, { fn }] of columns.entries()) {
+				const name = columnNames[index];
 				const value = fn(pkg);
 				tableRow.push(value);
 				jsonRow[name] = value;
