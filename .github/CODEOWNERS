@@ -55,10 +55,10 @@
 /packages/runtime/container-runtime/src        @microsoft/fluid-cr-runtime
 
 # driver layer source code
-/packages/drivers/driver-base/src              @microsoft/fluid-cr-driver
-/packages/drivers/local-driver/src             @microsoft/fluid-cr-driver
-/packages/common/driver-definitions/src        @microsoft/fluid-cr-driver
-/packages/loader/driver-utils/src              @microsoft/fluid-cr-driver
+/packages/drivers/driver-base/src              @microsoft/fluid-cr-drivers
+/packages/drivers/local-driver/src             @microsoft/fluid-cr-drivers
+/packages/common/driver-definitions/src        @microsoft/fluid-cr-drivers
+/packages/loader/driver-utils/src              @microsoft/fluid-cr-drivers
 
 # odsp driver layer source code
 /packages/drivers/odsp-driver/src        	   @microsoft/fluid-cr-odsp
