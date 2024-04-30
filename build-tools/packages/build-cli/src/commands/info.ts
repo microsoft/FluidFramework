@@ -5,7 +5,7 @@
 
 import { Flags } from "@oclif/core";
 import sortPackageJson from "sort-package-json";
-import { table, type ColumnUserConfig } from "table";
+import { type ColumnUserConfig, table } from "table";
 
 import type { Package } from "@fluidframework/build-tools";
 import { BaseCommand } from "../base";
@@ -75,8 +75,7 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 			options: Object.keys(nameToColumnInfo),
 			// Include all columns by default except for "path".  (Including "path" tends
 			// to make the table extra wide.)
-			default: Object.keys(nameToColumnInfo)
-				.filter((name) => name !== "path"),
+			default: Object.keys(nameToColumnInfo).filter((name) => name !== "path"),
 			delimiter: ",",
 			multiple: true,
 		})(),
