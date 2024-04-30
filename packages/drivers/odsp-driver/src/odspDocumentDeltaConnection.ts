@@ -370,12 +370,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		// Note: we suspect the incoming error object is either:
 		// - a socketError: add it to the OdspError object for driver to be able to parse it and reason over it.
 		// - anything else: let base class handle it
-		const errorObject =
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			canRetry && Number.isInteger(error?.code) && typeof error?.message === "string"
-				? errorObjectFromSocketError(error as IOdspSocketError, socketEvent)
-				: super.createErrorObject(socketEvent, error, canRetry);
-		return errorObject;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		return canRetry && Number.isInteger(error?.code) && typeof error?.message === "string"
+			? errorObjectFromSocketError(error as IOdspSocketError, socketEvent)
+			: super.createErrorObject(socketEvent, error, canRetry);
 	}
 
 	/**
