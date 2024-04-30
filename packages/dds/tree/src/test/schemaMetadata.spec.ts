@@ -14,7 +14,7 @@ import {
 } from "../simple-tree/index.js";
 import { TreeFactory } from "../treeFactory.js";
 
-describe("Schema Metadata", () => {
+describe("Schema Metadata example patterns", () => {
 	it("Status Quo - suggested patterns only", () => {
 		const schemaFactory = new SchemaFactory("Notes");
 
