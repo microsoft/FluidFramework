@@ -51,8 +51,10 @@ describe("Shared String with Interception", () => {
 		}
 
 		beforeEach(() => {
-			const dataStoreRuntime = new MockFluidDataStoreRuntime();
-			sharedString = SharedString.getFactory().create(dataStoreRuntime, documentId);
+			const dataStoreRuntime = new MockFluidDataStoreRuntime({
+				registry: [SharedString.getFactory()],
+			});
+			sharedString = SharedString.create(dataStoreRuntime, documentId);
 
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			dataStoreContext = {

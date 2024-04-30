@@ -262,6 +262,8 @@ export {
 	TreeApi,
 	TransactionConstraint,
 	NodeInDocumentConstraint,
+	RunTransaction,
+	rollback,
 } from "./shared-tree/index.js";
 
 export {
