@@ -91,7 +91,8 @@ export function getChangeReplaceType(
 /**
  * The events emitted by a `SharedTreeBranch`
  */
-export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TChange> {
+export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TChange>
+	extends BranchTrimmingEvents {
 	/**
 	 * Fired just before the head of this branch changes.
 	 * @param change - the change to this branch's state and commits
@@ -122,20 +123,24 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 }
 
 /**
- * Events related to branch trimming. This is done as a performance optimization.
+ * Events related to branch trimming.
+ *
+ * @remarks
+ * Trimming is a very specific kind of mutation which is the only allowed mutations to branches. It is done as a
+ * performance optimization for when it is determined that commits are no longer needed for future computation.
  */
 export interface BranchTrimmingEvents {
 	/**
 	 * Fired when commits are trimmed from the branch.
 	 */
-	branchTrimmed(trimmedRevisions: RevisionTag[]): void;
+	ancestryTrimmed(trimmedRevisions: RevisionTag[]): void;
 }
 
 /**
  * A branch of changes that can be applied to a SharedTree.
  */
 export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> extends EventEmitter<
-	SharedTreeBranchEvents<TEditor, TChange> & BranchTrimmingEvents
+	SharedTreeBranchEvents<TEditor, TChange>
 > {
 	public readonly editor: TEditor;
 	private readonly transactions = new TransactionStack();
@@ -168,7 +173,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * Construct a new branch.
 	 * @param head - the head of the branch
 	 * @param changeFamily - determines the set of changes that this branch can commit
-	 * @param branchTrimmer - an optional event emitter that informs the branch it has been trimmed
+	 * @param branchTrimmer - an optional event emitter that informs the branch it has been trimmed. If this is not supplied, then the branch must
+	 * never be trimmed. See {@link BranchTrimmingEvents} for details on trimming.
 	 */
 	public constructor(
 		private head: GraphCommit<TChange>,
@@ -180,8 +186,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		this.editor = this.changeFamily.buildEditor((change) =>
 			this.apply(change, mintRevisionTag()),
 		);
-		this.unsubscribeBranchTrimmer = branchTrimmer?.on("branchTrimmed", (commit) => {
-			this.emit("branchTrimmed", commit);
+		this.unsubscribeBranchTrimmer = branchTrimmer?.on("ancestryTrimmed", (commit) => {
+			this.emit("ancestryTrimmed", commit);
 		});
 	}
 
