@@ -57,4 +57,5 @@ export function testSnapshots() {
 
 const baseContext = {
 	originatorId: snapshotSessionId,
+	revision: undefined,
 };

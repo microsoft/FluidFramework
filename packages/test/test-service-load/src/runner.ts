@@ -18,10 +18,13 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { getRetryDelayFromError } from "@fluidframework/driver-utils/internal";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { GenericError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import commander from "commander";
 
-import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver.js";
+import {
+	FaultInjectionDocumentServiceFactory,
+	FaultInjectionError,
+} from "./faultInjectionDriver.js";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore.js";
 import {
 	generateConfigurations,
@@ -259,16 +262,31 @@ async function runnerProcess(
 			const test = (await container.getEntryPoint()) as ILoadTest;
 
 			// Retain old behavior of runtime being disposed on container close
-			container.once("closed", () => container?.dispose());
+			container.once("closed", (err) => {
+				// everywhere else we gracefully handle container close/dispose,
+				// and don't create more errors which add noise to the stress
+				// results. This should be the only place we on error close/dispose ,
+				// as this place catches closes with no error specified, which
+				// should never happen. if it does happen, the container is
+				// closing without error which could be a test or product bug,
+				// but we don't want silent failures.
+				container?.dispose(
+					err === undefined
+						? new GenericError("Container closed unexpectedly without error")
+						: undefined,
+				);
+			});
 
 			if (enableOpsMetrics) {
 				const testRuntime = await test.getRuntime();
-				metricsCleanup = await setupOpsMetrics(
-					container,
-					runConfig.logger,
-					runConfig.testConfig.progressIntervalMs,
-					testRuntime,
-				);
+				if (testRuntime !== undefined) {
+					metricsCleanup = await setupOpsMetrics(
+						container,
+						runConfig.logger,
+						runConfig.testConfig.progressIntervalMs,
+						testRuntime,
+					);
+				}
 			}
 
 			// Control fault injection period through config.
@@ -325,8 +343,11 @@ async function runnerProcess(
 				await delay(delayMs);
 			}
 		} finally {
-			if (container?.closed === false) {
-				container?.close();
+			if (container?.disposed === false) {
+				// this should be the only place we dispose the container
+				// to avoid the closed handler above. This is also
+				// the only expected, non-fault, closure.
+				container?.dispose();
 			}
 			metricsCleanup();
 		}
@@ -432,7 +453,9 @@ function scheduleContainerClose(
 						);
 						setTimeout(() => {
 							if (!container.closed) {
-								container.close();
+								container.close(
+									new FaultInjectionError("scheduleContainerClose", false),
+								);
 							}
 						}, leaveTime);
 					}

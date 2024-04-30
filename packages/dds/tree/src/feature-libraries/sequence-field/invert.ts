@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import { RevisionMetadataSource, RevisionTag, TaggedChange } from "../../core/index.js";
+import { RevisionMetadataSource, RevisionTag } from "../../core/index.js";
 import { IdAllocator, Mutable, fail } from "../../util/index.js";
 import { CrossFieldManager, CrossFieldTarget, NodeId } from "../modular-schema/index.js";
 
@@ -48,30 +48,24 @@ import {
  * - Support for slices is not implemented.
  */
 export function invert(
-	change: TaggedChange<Changeset>,
+	change: Changeset,
 	isRollback: boolean,
 	genId: IdAllocator,
 	crossFieldManager: CrossFieldManager,
 	revisionMetadata: RevisionMetadataSource,
 ): Changeset {
-	return invertMarkList(
-		change.change,
-		change.revision,
-		crossFieldManager as CrossFieldManager<NodeId>,
-		revisionMetadata,
-	);
+	return invertMarkList(change, crossFieldManager as CrossFieldManager<NodeId>, revisionMetadata);
 }
 
 function invertMarkList(
 	markList: MarkList,
-	revision: RevisionTag | undefined,
 	crossFieldManager: CrossFieldManager<NodeId>,
 	revisionMetadata: RevisionMetadataSource,
 ): MarkList {
 	const inverseMarkList = new MarkListFactory();
 
 	for (const mark of markList) {
-		const inverseMarks = invertMark(mark, revision, crossFieldManager, revisionMetadata);
+		const inverseMarks = invertMark(mark, crossFieldManager, revisionMetadata);
 		inverseMarkList.push(...inverseMarks);
 	}
 
@@ -80,12 +74,11 @@ function invertMarkList(
 
 function invertMark(
 	mark: Mark,
-	revision: RevisionTag | undefined,
 	crossFieldManager: CrossFieldManager<NodeId>,
 	revisionMetadata: RevisionMetadataSource,
 ): Mark[] {
-	if (!isImpactful(mark, revision, revisionMetadata)) {
-		const inputId = getInputCellId(mark, revision, revisionMetadata);
+	if (!isImpactful(mark, revisionMetadata)) {
+		const inputId = getInputCellId(mark, revisionMetadata);
 		return [invertNodeChangeOrSkip(mark.count, mark.changes, inputId)];
 	}
 	const type = mark.type;
@@ -94,9 +87,9 @@ function invertMark(
 			return [mark];
 		}
 		case "Remove": {
-			assert(revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);
-			const outputId = getOutputCellId(mark, revision, revisionMetadata);
-			const inputId = getInputCellId(mark, revision, revisionMetadata);
+			assert(mark.revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);
+			const outputId = getOutputCellId(mark, revisionMetadata);
+			const inputId = getInputCellId(mark, revisionMetadata);
 			const inverse: Mark =
 				inputId === undefined
 					? {
@@ -118,7 +111,7 @@ function invertMark(
 			return [withNodeChange(inverse, mark.changes)];
 		}
 		case "Insert": {
-			const inputId = getInputCellId(mark, revision, revisionMetadata);
+			const inputId = getInputCellId(mark, revisionMetadata);
 			assert(inputId !== undefined, 0x80c /* Active inserts should target empty cells */);
 			const removeMark: Mutable<CellMark<Remove>> = {
 				type: "Remove",
@@ -143,7 +136,7 @@ function invertMark(
 					0x6ed /* Mark with changes can only target a single cell */,
 				);
 
-				const endpoint = getEndpoint(mark, revision);
+				const endpoint = getEndpoint(mark);
 				crossFieldManager.set(
 					CrossFieldTarget.Destination,
 					endpoint.revision,
@@ -154,12 +147,8 @@ function invertMark(
 				);
 			}
 
-			const cellId = getDetachOutputCellId(
-				mark,
-				mark.revision ?? revision ?? fail("Revision must be defined"),
-				revisionMetadata,
-			) ?? {
-				revision: mark.revision ?? revision ?? fail("Revision must be defined"),
+			const cellId = getDetachOutputCellId(mark, revisionMetadata) ?? {
+				revision: mark.revision ?? fail("Revision must be defined"),
 				localId: mark.id,
 			};
 
@@ -172,7 +161,7 @@ function invertMark(
 				moveIn.finalEndpoint = { localId: mark.finalEndpoint.localId };
 			}
 			let effect: MarkEffect = moveIn;
-			const inputId = getInputCellId(mark, revision, revisionMetadata);
+			const inputId = getInputCellId(mark, revisionMetadata);
 			if (inputId !== undefined) {
 				effect = {
 					type: "AttachAndDetach",
@@ -190,7 +179,7 @@ function invertMark(
 			return [{ ...effect, count: mark.count, cellId }];
 		}
 		case "MoveIn": {
-			const inputId = getInputCellId(mark, revision, revisionMetadata);
+			const inputId = getInputCellId(mark, revisionMetadata);
 			assert(inputId !== undefined, 0x89e /* Active move-ins should target empty cells */);
 			const invertedMark: Mutable<CellMark<MoveOut>> = {
 				type: "MoveOut",
@@ -209,7 +198,7 @@ function invertMark(
 				id: inputId,
 			};
 
-			return applyMovedChanges(invertedMark, revision, crossFieldManager);
+			return applyMovedChanges(invertedMark, mark.revision, crossFieldManager);
 		}
 		case "AttachAndDetach": {
 			// Which should get the child change? Don't want to invert twice
@@ -218,7 +207,7 @@ function invertMark(
 				cellId: mark.cellId,
 				...mark.attach,
 			};
-			const idAfterAttach = getOutputCellId(attach, revision, undefined);
+			const idAfterAttach = getOutputCellId(attach, undefined);
 
 			// We put `mark.changes` on the detach so that if it is a move source
 			// the changes can be sent to the endpoint.
@@ -228,18 +217,8 @@ function invertMark(
 				changes: mark.changes,
 				...mark.detach,
 			};
-			const attachInverses = invertMark(
-				attach,
-				revision,
-				crossFieldManager,
-				revisionMetadata,
-			);
-			const detachInverses = invertMark(
-				detach,
-				revision,
-				crossFieldManager,
-				revisionMetadata,
-			);
+			const attachInverses = invertMark(attach, crossFieldManager, revisionMetadata);
+			const detachInverses = invertMark(detach, crossFieldManager, revisionMetadata);
 
 			if (detachInverses.length === 0) {
 				return attachInverses;
@@ -315,13 +294,7 @@ function applyMovedChanges(
 	manager: CrossFieldManager<NodeId>,
 ): Mark[] {
 	// Although this is a source mark, we query the destination because this was a destination mark during the original invert pass.
-	const entry = manager.get(
-		CrossFieldTarget.Destination,
-		mark.revision ?? revision,
-		mark.id,
-		mark.count,
-		true,
-	);
+	const entry = manager.get(CrossFieldTarget.Destination, revision, mark.id, mark.count, true);
 
 	if (entry.length < mark.count) {
 		const [mark1, mark2] = splitMark(mark, entry.length);

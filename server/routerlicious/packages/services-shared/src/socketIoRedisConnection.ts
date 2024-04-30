@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as winston from "winston";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import {
 	ISocketIoRedisConnection,
@@ -16,15 +14,15 @@ import {
  * and only provides Pub functionality
  */
 export class SocketIORedisConnection implements ISocketIoRedisConnection {
-	constructor(protected readonly redisClienConnectionManager: IRedisClientConnectionManager) {
-		this.redisClienConnectionManager.getRedisClient().on("error", (err) => {
-			winston.error("Error with Redis:", err);
-			Lumberjack.error("Error with Redis:", undefined, err);
-		});
+	constructor(protected readonly redisClientConnectionManager: IRedisClientConnectionManager) {
+		this.redisClientConnectionManager.addErrorHandler(
+			undefined, // lumber properties
+			"Error with Redis", // error message
+		);
 	}
 
 	public async publish(channel: string, message: string) {
-		await this.redisClienConnectionManager.getRedisClient().publish(channel, message);
+		await this.redisClientConnectionManager.getRedisClient().publish(channel, message);
 	}
 }
 
@@ -42,10 +40,10 @@ export class SocketIoRedisSubscriptionConnection
 	private readonly subscriptions: Map<string, (channel: string, messageBuffer: Buffer) => void> =
 		new Map();
 
-	constructor(redisClienConnectionManager: IRedisClientConnectionManager) {
-		super(redisClienConnectionManager);
+	constructor(redisClientConnectionManager: IRedisClientConnectionManager) {
+		super(redisClientConnectionManager);
 
-		redisClienConnectionManager
+		redisClientConnectionManager
 			.getRedisClient()
 			.on("messageBuffer", (channelBuffer: Buffer, messageBuffer: Buffer) => {
 				const channel = channelBuffer.toString();
@@ -74,7 +72,7 @@ export class SocketIoRedisSubscriptionConnection
 			}
 		}
 
-		await this.redisClienConnectionManager.getRedisClient().subscribe(...channelsArray);
+		await this.redisClientConnectionManager.getRedisClient().subscribe(...channelsArray);
 
 		for (const channel of channelsArray) {
 			subscriptionsMap.set(channel, callback);
@@ -90,7 +88,7 @@ export class SocketIoRedisSubscriptionConnection
 			return;
 		}
 
-		await this.redisClienConnectionManager.getRedisClient().unsubscribe(...channelsArray);
+		await this.redisClientConnectionManager.getRedisClient().unsubscribe(...channelsArray);
 
 		for (const channel of channelsArray) {
 			subscriptionsMap.delete(channel);

@@ -138,7 +138,7 @@ export function getPossibleTypes(
  * A symbol used to define a {@link MarkedArrayLike} interface.
  * @internal
  */
-export const arrayLikeMarkerSymbol: unique symbol = Symbol("editable-tree:arrayLikeMarker");
+export const arrayLikeMarkerSymbol: unique symbol = Symbol("flex-tree:arrayLikeMarker");
 
 /**
  * Can be used to mark a type which works like an array, but is not compatible with `Array.isArray`.

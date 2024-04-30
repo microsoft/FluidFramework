@@ -336,7 +336,7 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 		workloadName: "default directory 1",
 		generatorFactory: () => takeAsync(100, makeOperationGenerator(options)),
 		reducer: makeReducer({ clientIds: ["A", "B", "C"], printConsoleLogs: false }),
-		validateConsistency: assertEquivalentDirectories,
+		validateConsistency: async (a, b) => assertEquivalentDirectories(a.channel, b.channel),
 		factory: new DirectoryFactory(),
 	};
 
@@ -393,7 +393,7 @@ describe("SharedDirectory fuzz", () => {
 		workloadName: "default directory 2",
 		generatorFactory: () => takeAsync(100, makeOperationGenerator()),
 		reducer: makeReducer({ clientIds: ["A", "B", "C"], printConsoleLogs: false }),
-		validateConsistency: assertEquivalentDirectories,
+		validateConsistency: async (a, b) => assertEquivalentDirectories(a.channel, b.channel),
 		factory: new DirectoryFactory(),
 	};
 

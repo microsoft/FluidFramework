@@ -1335,6 +1335,7 @@ export interface NodeKeyManager {
     generateLocalNodeKey(): LocalNodeKey;
     localizeNodeKey(key: StableNodeKey): LocalNodeKey;
     stabilizeNodeKey(key: LocalNodeKey): StableNodeKey;
+    tryLocalizeNodeKey(key: string): LocalNodeKey | undefined;
 }
 
 // @public
@@ -1518,6 +1519,9 @@ export enum RevertibleStatus {
 // @internal
 export type RevisionTag = SessionSpaceCompressedId | "root";
 
+// @public
+export const rollback: unique symbol;
+
 // @internal
 export interface RootField {
     // (undocumented)
@@ -1532,6 +1536,23 @@ export const rootFieldKey: FieldKey;
 
 // @internal
 export function runSynchronous(view: ITreeCheckout, transaction: (view: ITreeCheckout) => TransactionResult | void): TransactionResult;
+
+// @public
+export interface RunTransaction {
+    <TNode extends TreeNode, TResult>(node: TNode, transaction: (node: TNode) => TResult): TResult;
+    <TView extends TreeView<ImplicitFieldSchema>, TResult>(tree: TView, transaction: (root: TView["root"]) => TResult): TResult;
+    <TNode extends TreeNode, TResult>(node: TNode, transaction: (node: TNode) => TResult | typeof rollback): TResult | typeof rollback;
+    <TView extends TreeView<ImplicitFieldSchema>, TResult>(tree: TView, transaction: (root: TView["root"]) => TResult | typeof rollback): TResult | typeof rollback;
+    <TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void): void;
+    <TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void): void;
+    <TNode extends TreeNode, TResult>(node: TNode, transaction: (node: TNode) => TResult, preconditions?: TransactionConstraint[]): TResult;
+    <TView extends TreeView<ImplicitFieldSchema>, TResult>(tree: TView, transaction: (root: TView["root"]) => TResult, preconditions?: TransactionConstraint[]): TResult;
+    <TNode extends TreeNode, TResult>(node: TNode, transaction: (node: TNode) => TResult | typeof rollback, preconditions?: TransactionConstraint[]): TResult | typeof rollback;
+    <TView extends TreeView<ImplicitFieldSchema>, TResult>(tree: TView, transaction: (root: TView["root"]) => TResult | typeof rollback, preconditions?: TransactionConstraint[]): TResult | typeof rollback;
+    <TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void, preconditions?: TransactionConstraint[]): void;
+    <TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void, preconditions?: TransactionConstraint[]): void;
+    readonly rollback: typeof rollback;
+}
 
 // @internal
 export class SchemaBuilderBase<TScope extends string, TDefaultKind extends FlexFieldKind, TName extends number | string = string> {
@@ -1796,10 +1817,7 @@ export interface TreeAdapter {
 // @public
 export interface TreeApi extends TreeNodeApi {
     contains(node: TreeNode, other: TreeNode): boolean;
-    runTransaction<TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void | "rollback"): void;
-    runTransaction<TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void | "rollback", preconditions?: TransactionConstraint[]): void;
-    runTransaction<TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void | "rollback"): void;
-    runTransaction<TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void | "rollback", preconditions?: TransactionConstraint[]): void;
+    readonly runTransaction: RunTransaction;
 }
 
 // @public
@@ -1923,7 +1941,7 @@ export interface TreeNodeApi {
     on<K extends keyof TreeChangeEvents>(node: TreeNode, eventName: K, listener: TreeChangeEvents[K]): () => void;
     parent(node: TreeNode): TreeNode | undefined;
     schema<T extends TreeNode | TreeLeafValue>(node: T): TreeNodeSchema<string, NodeKind, unknown, T>;
-    shortId(node: TreeNode): number | undefined;
+    shortId(node: TreeNode): number | string | undefined;
     readonly status: (node: TreeNode) => TreeStatus;
 }
 
