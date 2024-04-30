@@ -318,20 +318,21 @@ function objectToMapTree(
 		if (!keys.includes(key as FieldKey)) {
 			if (fieldSchema instanceof FieldSchema) {
 				const defaultProvider = fieldSchema.props?.defaultProvider;
+				// TODO: Currently cannot set undefined values onto fields, but if we decide to allow undefined in allowableTypes,
+				// this if statement can be removed.
 				if (defaultProvider !== undefined) {
 					const fieldValue = extractFieldProvider(defaultProvider)(nodeKeyManager);
-					const mappedChildTree =
-						fieldValue === undefined
-							? undefined
-							: nodeDataToMapTree(
-									fieldValue,
-									fieldSchema.allowedTypeSet,
-									nodeKeyManager,
-							  );
-					const flexKey: FieldKey = brand(getStoredKey(key, fieldSchema));
+					if (fieldValue !== undefined) {
+						const mappedChildTree = nodeDataToMapTree(
+							fieldValue,
+							fieldSchema.allowedTypeSet,
+							nodeKeyManager,
+						);
+						const flexKey: FieldKey = brand(getStoredKey(key, fieldSchema));
 
-					assert(!fields.has(flexKey), 0x956 /* Keys must not be duplicated */);
-					fields.set(flexKey, mappedChildTree === undefined ? [] : [mappedChildTree]);
+						assert(!fields.has(flexKey), 0x956 /* Keys must not be duplicated */);
+						fields.set(flexKey, [mappedChildTree]);
+					}
 				}
 			}
 		}

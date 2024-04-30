@@ -12,8 +12,6 @@ import { SchemaFactory, TreeConfiguration, TreeView } from "../../simple-tree/in
 import { TreeFactory } from "../../treeFactory.js";
 import { createMockNodeKeyManager } from "../../feature-libraries/index.js";
 import { getView } from "../utils.js";
-// eslint-disable-next-line import/no-internal-modules
-import { getDefaultProvider } from "../../simple-tree/schemaTypes.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -119,19 +117,7 @@ describe("class-tree tree", () => {
 			const root = getView(config, nodeKeyManager).root;
 			assert.equal(root.identifier, "a110ca7e-add1-4000-8000-000000000000");
 		});
-		it("populates field when field defaulter is provided.", () => {
-			const schemaWithIdentifier = schema.object("parent", {
-				testOptionalField: schema.optional(schema.string, {
-					defaultProvider: getDefaultProvider(() => "defaultOptionalValue"),
-				}),
-			});
-			const nodeKeyManager = createMockNodeKeyManager();
-			const config = new TreeConfiguration(schemaWithIdentifier, () => ({
-				testOptionalField: undefined,
-			}));
-			const root = getView(config, nodeKeyManager).root;
-			assert.equal(root.testOptionalField, "defaultOptionalValue");
-		});
+
 		it("populates field when no field defaulter is provided.", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				testOptionalField: schema.optional(schema.string),

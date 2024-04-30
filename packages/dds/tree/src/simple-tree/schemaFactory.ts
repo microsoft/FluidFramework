@@ -6,7 +6,13 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import { TreeValue } from "../core/index.js";
-import { FlexTreeNode, Unenforced, isFlexTreeNode, isLazy } from "../feature-libraries/index.js";
+import {
+	FlexTreeNode,
+	NodeKeyManager,
+	Unenforced,
+	isFlexTreeNode,
+	isLazy,
+} from "../feature-libraries/index.js";
 import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
 
 import {
@@ -493,13 +499,10 @@ export class SchemaFactory<
 		const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => {
 			return undefined;
 		});
-		return createFieldSchema(
-			FieldKind.Optional,
-			t,
-			props?.defaultProvider === undefined
-				? { ...props, defaultProvider: defaultOptionalProvider }
-				: props,
-		);
+		return createFieldSchema(FieldKind.Optional, t, {
+			...props,
+			defaultProvider: defaultOptionalProvider,
+		});
 	}
 
 	/**
