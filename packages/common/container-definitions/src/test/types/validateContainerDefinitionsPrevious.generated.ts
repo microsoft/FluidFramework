@@ -174,6 +174,7 @@ declare function get_old_InterfaceDeclaration_IAudience():
 declare function use_current_InterfaceDeclaration_IAudience(
     use: TypeOnly<current.IAudience>): void;
 use_current_InterfaceDeclaration_IAudience(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IAudience());
 
 /*
@@ -188,6 +189,7 @@ declare function get_current_InterfaceDeclaration_IAudience():
 declare function use_old_InterfaceDeclaration_IAudience(
     use: TypeOnly<old.IAudience>): void;
 use_old_InterfaceDeclaration_IAudience(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IAudience());
 
 /*
@@ -202,6 +204,7 @@ declare function get_old_InterfaceDeclaration_IAudienceOwner():
 declare function use_current_InterfaceDeclaration_IAudienceOwner(
     use: TypeOnly<current.IAudienceOwner>): void;
 use_current_InterfaceDeclaration_IAudienceOwner(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IAudienceOwner());
 
 /*
@@ -216,6 +219,7 @@ declare function get_current_InterfaceDeclaration_IAudienceOwner():
 declare function use_old_InterfaceDeclaration_IAudienceOwner(
     use: TypeOnly<old.IAudienceOwner>): void;
 use_old_InterfaceDeclaration_IAudienceOwner(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IAudienceOwner());
 
 /*
@@ -314,6 +318,7 @@ declare function get_old_InterfaceDeclaration_IContainer():
 declare function use_current_InterfaceDeclaration_IContainer(
     use: TypeOnly<current.IContainer>): void;
 use_current_InterfaceDeclaration_IContainer(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainer());
 
 /*
@@ -328,6 +333,7 @@ declare function get_current_InterfaceDeclaration_IContainer():
 declare function use_old_InterfaceDeclaration_IContainer(
     use: TypeOnly<old.IContainer>): void;
 use_old_InterfaceDeclaration_IContainer(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainer());
 
 /*
@@ -342,6 +348,7 @@ declare function get_old_InterfaceDeclaration_IContainerContext():
 declare function use_current_InterfaceDeclaration_IContainerContext(
     use: TypeOnly<current.IContainerContext>): void;
 use_current_InterfaceDeclaration_IContainerContext(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerContext());
 
 /*
@@ -356,6 +363,7 @@ declare function get_current_InterfaceDeclaration_IContainerContext():
 declare function use_old_InterfaceDeclaration_IContainerContext(
     use: TypeOnly<old.IContainerContext>): void;
 use_old_InterfaceDeclaration_IContainerContext(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerContext());
 
 /*
@@ -1056,6 +1064,7 @@ declare function get_current_InterfaceDeclaration_ILoaderHeader():
 declare function use_old_InterfaceDeclaration_ILoaderHeader(
     use: TypeOnly<old.ILoaderHeader>): void;
 use_old_InterfaceDeclaration_ILoaderHeader(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ILoaderHeader());
 
 /*
