@@ -7,9 +7,8 @@ import { AttachState } from "@fluidframework/container-definitions";
 import {
 	type IContainer,
 	type IFluidModuleWithDetails,
-	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import { Loader, loadContainerPaused } from "@fluidframework/container-loader/internal";
 import { type FluidObject, type IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
@@ -202,17 +201,7 @@ export class AzureClient {
 			encodeURIComponent(getTenantId(this.properties.connection)),
 		);
 		url.searchParams.append("containerId", encodeURIComponent(id));
-		const container = await loader.resolve({
-			url: url.href,
-			headers: {
-				// We don't want a connection - the point is to load an old version and remain there for inspection
-				[LoaderHeader.loadMode]: {
-					deltaConnection: "none",
-					pauseAfterLoad: true,
-				},
-				[LoaderHeader.version]: version.id,
-			},
-		});
+		const container = await loadContainerPaused(loader, { url: url.href });
 		const rootDataObject = await this.getContainerEntryPoint(container);
 		const fluidContainer = createFluidContainer<TContainerSchema>({
 			container,
