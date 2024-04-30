@@ -4,8 +4,8 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { type IEvent } from "@fluidframework/core-interfaces";
 import {
-	type IEvent,
 	type IFluidHandleInternal,
 	type IFluidLoadable,
 	type IProvideFluidHandle,

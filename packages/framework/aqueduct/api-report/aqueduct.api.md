@@ -16,7 +16,6 @@ import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions/inter
 import { IContainerRuntimeOptions } from '@fluidframework/container-runtime/internal';
 import { IDataStore } from '@fluidframework/runtime-definitions/internal';
 import { IEvent } from '@fluidframework/core-interfaces';
-import { IEvent as IEvent_2 } from '@fluidframework/core-interfaces/internal';
 import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions/internal';
@@ -117,7 +116,7 @@ export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {
 }
 
 // @alpha
-export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes> extends TypedEventEmitter<I["Events"] & IEvent_2> implements IFluidLoadable, IProvideFluidHandle {
+export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes> extends TypedEventEmitter<I["Events"] & IEvent> implements IFluidLoadable, IProvideFluidHandle {
     constructor(props: IDataObjectProps<I>);
     protected readonly context: IFluidDataStoreContext;
     finishInitialization(existing: boolean): Promise<void>;
