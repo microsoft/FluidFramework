@@ -4,7 +4,7 @@ importers:
 
   .:
     specifiers:
-      '@fluid-tools/api-markdown-documenter': ^0.12.1
+      '@fluid-tools/api-markdown-documenter': ^0.12.2
       '@fluid-tools/markdown-magic': file:../tools/markdown-magic
       '@fluidframework/build-common': ^2.0.3
       '@rushstack/node-core-library': ^4.0.2
@@ -33,7 +33,7 @@ importers:
       rimraf: ^5.0.5
       start-server-and-test: ^2.0.3
     dependencies:
-      '@fluid-tools/api-markdown-documenter': 0.12.1
+      '@fluid-tools/api-markdown-documenter': 0.12.2
       '@fluid-tools/markdown-magic': file:../tools/markdown-magic_bfrwj6ys6wock6p526xv5vf35u
       '@fluidframework/build-common': 2.0.3
       '@rushstack/node-core-library': 4.0.2
@@ -164,8 +164,8 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: false
 
-  /@fluid-tools/api-markdown-documenter/0.12.1:
-    resolution: {integrity: sha512-rEjyrIJGj3GQv7HtKNW57S7b68yt8oiT1QCfB4jpepNLiPLo004rFKf+mxUvTw05JpYJO7rdkXyhaTGUaHwFtQ==}
+  /@fluid-tools/api-markdown-documenter/0.12.2:
+    resolution: {integrity: sha512-23cdyerUm/++85eQpKuw++L5kqW1gi4yo3TpQgbLQrVdEmKWYi7Pwz6PNWCnyYyRXuq66Q336ucRJyBCK9gv6g==}
     dependencies:
       '@microsoft/api-extractor-model': 7.28.2
       '@microsoft/tsdoc': 0.14.2
