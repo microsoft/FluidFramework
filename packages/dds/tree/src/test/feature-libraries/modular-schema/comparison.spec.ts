@@ -104,7 +104,9 @@ describe("Schema Comparison", () => {
 		optionalAnyField,
 	);
 
-	const valueAnyTreeWithoutValue: TreeNodeStoredSchema = new MapNodeStoredSchema(valueAnyField);
+	const optionalEmptyTree: TreeNodeStoredSchema = new MapNodeStoredSchema(optionalEmptyTreeField);
+	const valueAnyTree: TreeNodeStoredSchema = new MapNodeStoredSchema(valueAnyField);
+	const valueEmptyTree: TreeNodeStoredSchema = new MapNodeStoredSchema(valueEmptyTreeField);
 
 	function updateTreeSchema(
 		repo: MutableTreeStoredSchema,
@@ -208,113 +210,15 @@ describe("Schema Comparison", () => {
 	});
 
 	/**
-	 * This test suite is designed to test backward compatibility when the document
-	 * schema is upgraded. For the types of changes listed below, we aim for the
-	 * upgraded schema to be a superset of the original one.
+	 * This test suite aims to test the ordering relationship between the different repositories
+	 * (i.e different combinations of field schemas), it will not primarily focus on the comparison
+	 * between field schemas themselves, the tests for `allowsFieldSuperset` and `allowsTreeSuperset`
+	 * have done most of the heavy-lifting.
 	 *
-	 * 1. Adding an optional field to an object node
-	 * 2. Adding to the set of allowed types for a field
-	 * 3. Relaxing a field kind to a more general field kind
+	 * The primary objective behind designing this test suite is to ensure backward compatibility
+	 * during document schema upgrades. When we talk about 'schema evolution', a prerequisite is to
+	 * ensure that the upgraded schema can be the superset of the original one.
 	 */
-	/*
-	describe("allowRepoSuperset-Point/Circle Examples", () => {
-		const repo1 = new TreeStoredSchemaRepository();
-		const repo2 = new TreeStoredSchemaRepository();
-
-		const pointLocalFieldTree = {
-			name: brand<TreeNodeSchemaIdentifier>("pointLocalFieldTree"),
-			schema: new ObjectNodeStoredSchema(
-				new Map([
-					[brand("x"), fieldSchema(FieldKinds.required, [emptyTree.name])],
-					[brand("y"), fieldSchema(FieldKinds.required, [emptyTree.name])],
-				]),
-			),
-		};
-
-		const circleLocalFieldTree = {
-			name: brand<TreeNodeSchemaIdentifier>("circleLocalFieldTree"),
-			schema: new ObjectNodeStoredSchema(
-				new Map([
-					[brand("point"), fieldSchema(FieldKinds.required, [pointLocalFieldTree.name])],
-					[brand("radius"), fieldSchema(FieldKinds.required, [emptyTree.name])],
-				]),
-			),
-		};
-
-		it("Adding an optional field", () => {
-			const circleLocalFieldTree2 = {
-				name: brand<TreeNodeSchemaIdentifier>("circleLocalFieldTree2"),
-				schema: new ObjectNodeStoredSchema(
-					new Map([
-						[
-							brand("point"),
-							fieldSchema(FieldKinds.required, [pointLocalFieldTree.name]),
-						],
-						[brand("radius"), fieldSchema(FieldKinds.required, [emptyTree.name])],
-						[brand("color"), fieldSchema(FieldKinds.optional)],
-					]),
-				),
-			};
-
-			updateTreeSchema(repo1, circleLocalFieldTree.name, circleLocalFieldTree.schema);
-			updateTreeSchema(repo2, circleLocalFieldTree2.name, circleLocalFieldTree2.schema);
-			assert(allowsRepoSuperset(defaultSchemaPolicy, repo1, repo2));
-		});
-
-		it("Adding to the set of allowed types for a field", () => {
-			const squareLocalFieldTree = {
-				name: brand<TreeNodeSchemaIdentifier>("squareLocalFieldTree"),
-				schema: new ObjectNodeStoredSchema(
-					new Map([
-						[brand("length"), fieldSchema(FieldKinds.required, [emptyTree.name])],
-					]),
-				),
-			};
-			const planeLocalFieldTree = {
-				name: brand<TreeNodeSchemaIdentifier>("planeLocalFieldTree"),
-				schema: new ObjectNodeStoredSchema(
-					new Map([
-						[
-							brand("point"),
-							fieldSchema(FieldKinds.required, [pointLocalFieldTree.name]),
-						],
-						[
-							brand("square"),
-							fieldSchema(FieldKinds.required, [squareLocalFieldTree.name]),
-						],
-						[
-							brand("circle"),
-							fieldSchema(FieldKinds.required, [circleLocalFieldTree.name]),
-						],
-					]),
-				),
-			};
-
-			updateTreeSchema(repo1, squareLocalFieldTree.name, squareLocalFieldTree.schema);
-			updateTreeSchema(repo2, planeLocalFieldTree.name, planeLocalFieldTree.schema);
-			assert(allowsRepoSuperset(defaultSchemaPolicy, repo1, repo2));
-		});
-
-		it("Relaxing a field", () => {
-			const circleLocalFieldTree2 = {
-				name: brand<TreeNodeSchemaIdentifier>("circleLocalFieldTree2"),
-				schema: new ObjectNodeStoredSchema(
-					new Map([
-						[
-							brand("point"),
-							fieldSchema(FieldKinds.required, [pointLocalFieldTree.name]),
-						],
-						[brand("radius"), fieldSchema(FieldKinds.optional)],
-					]),
-				),
-			};
-
-			updateTreeSchema(repo1, circleLocalFieldTree.name, circleLocalFieldTree.schema);
-			updateTreeSchema(repo2, circleLocalFieldTree2.name, circleLocalFieldTree2.schema);
-			assert(allowsRepoSuperset(defaultSchemaPolicy, repo1, repo2));
-		});
-	}); */
-
 	describe("allowsRepoSuperset", () => {
 		const compareTwoRepo = (
 			a: { name: TreeNodeSchemaIdentifier; schema: TreeNodeStoredSchema }[],
@@ -331,7 +235,35 @@ describe("Schema Comparison", () => {
 			return allowsRepoSuperset(defaultSchemaPolicy, repo1, repo2);
 		};
 
-		it("allows additional field", () => {
+		const emptyTestTree = {
+			name: brand<TreeNodeSchemaIdentifier>("testTree"),
+			schema: new ObjectNodeStoredSchema(new Map()),
+		};
+		const valueTestTree = {
+			name: brand<TreeNodeSchemaIdentifier>("testTree"),
+			schema: valueAnyTree,
+		};
+		const valueEmptyTestTree = {
+			name: brand<TreeNodeSchemaIdentifier>("testTree"),
+			schema: valueEmptyTree,
+		};
+		const optionalTestTree = {
+			name: brand<TreeNodeSchemaIdentifier>("testTree"),
+			schema: optionalTreeWithoutValue,
+		};
+		const optionalEmptyTestTree = {
+			name: brand<TreeNodeSchemaIdentifier>("testTree"),
+			schema: optionalEmptyTree,
+		};
+		const anyTestTree = {
+			name: brand<TreeNodeSchemaIdentifier>("testTree"),
+			schema: anyTreeWithoutValue,
+		};
+
+		it("Incorporating additional fields should result in a superset", () => {
+			// When repo B has more fields than repo A (with the remaining fields the same), regardless
+			// of whether the additional fields are required or optional, repo B should always be considered
+			// the superset of repo A.
 			testOrder(compareTwoRepo, [[emptyTree], [emptyTree, optionalLocalFieldTree]]);
 			testOrder(compareTwoRepo, [
 				[valueLocalFieldTree],
@@ -339,47 +271,58 @@ describe("Schema Comparison", () => {
 			]);
 			testOrder(compareTwoRepo, [[emptyTree], [emptyTree, valueLocalFieldTree]]);
 
-			testOrder(compareTwoRepo, [
-				[
-					{
-						name: brand<TreeNodeSchemaIdentifier>("testTree"),
-						schema: valueAnyTreeWithoutValue,
-					},
-				],
-				[
-					{
-						name: brand<TreeNodeSchemaIdentifier>("testTree"),
-						schema: anyTreeWithoutValue,
-					},
-				],
-			]);
+			validateOrdering(
+				compareTwoRepo,
+				[[emptyTree, valueLocalFieldTree], [emptyTree]],
+				Ordering.Subset,
+			);
+
+			// If repo B's field is a sequence, potentially accommodating more fields than repo A, it should be
+			// considered a superset
+			testOrder(compareTwoRepo, [[valueTestTree], [anyTestTree]]);
+			testOrder(compareTwoRepo, [[optionalTestTree], [anyTestTree]]);
+			testOrder(compareTwoRepo, [[valueTestTree, emptyTestTree], [anyTestTree]]);
 		});
 
-		it("can relax the schema", () => {
+		it("Repositories with mismatched fields are not incomparable.", () => {
+			validateOrdering(
+				compareTwoRepo,
+				[[valueTestTree, emptyTree], [anyTestTree]],
+				Ordering.Incomparable,
+			);
+		});
+
+		it("Relaxing a field should result in a superset", () => {
 			testOrder(compareTwoRepo, [
-				[
-					{
-						name: brand<TreeNodeSchemaIdentifier>("testTree"),
-						schema: valueAnyTreeWithoutValue,
-					},
-				],
-				[
-					{
-						name: brand<TreeNodeSchemaIdentifier>("testTree"),
-						schema: optionalTreeWithoutValue,
-					},
-				],
+				[valueTestTree],
+				[emptyTestTree],
+				[optionalTestTree],
+				[anyTestTree],
 			]);
 
-			testOrder(compareTwoRepo, [
-				[{ name: brand<TreeNodeSchemaIdentifier>("testTree"), schema: neverTree }],
+			testOrder(compareTwoRepo, [[optionalEmptyTestTree], [optionalTestTree]]);
+			testOrder(compareTwoRepo, [[valueEmptyTestTree], [optionalTestTree]]);
+			testOrder(compareTwoRepo, [[valueTestTree], [optionalEmptyTestTree]]);
+		});
+
+		it("Some scenarios in which two repositories are considered equal", () => {
+			// When the field schema is `required`, no matter with or without child types, they should be Equal
+			validateOrdering(
+				compareTwoRepo,
+				[[valueTestTree], [valueEmptyTestTree]],
+				Ordering.Equal,
+			);
+
+			// When the field identifiers are different but the schema is the same, they still should be Equal
+			// TODO: should allowsRepoSuperset validates the consistency of identifiers?
+			validateOrdering(
+				compareTwoRepo,
 				[
-					{
-						name: brand<TreeNodeSchemaIdentifier>("testTree"),
-						schema: optionalTreeWithoutValue,
-					},
+					[{ name: brand<TreeNodeSchemaIdentifier>("testTree"), schema: neverTree }],
+					[{ name: brand<TreeNodeSchemaIdentifier>("testTree2"), schema: neverTree }],
 				],
-			]);
+				Ordering.Equal,
+			);
 		});
 	});
 
@@ -463,7 +406,7 @@ function testOrder<T>(compare: (a: T, b: T) => boolean, inOrder: T[]): void {
 	for (let index = 0; index < inOrder.length - 1; index++) {
 		const order = getOrdering(inOrder[index], inOrder[index + 1], compare);
 		if (order !== Ordering.Superset) {
-			assert.fail(
+			throw new Error(
 				`expected ${JSON.stringify(
 					intoSimpleObject(inOrder[index + 1]),
 				)} to be a superset of ${JSON.stringify(
@@ -472,6 +415,41 @@ function testOrder<T>(compare: (a: T, b: T) => boolean, inOrder: T[]): void {
 			);
 		}
 	}
+}
+
+/**
+ * This function is used to capture the error message and determine the actual ordering of the input components.
+ */
+function validateOrdering<T>(compare: (a: T, b: T) => boolean, inOrder: T[], expected: Ordering) {
+	assert.throws(
+		() => {
+			testOrder(compare, inOrder);
+		},
+		(error: Error) => {
+			return error !== undefined && extractOrderingFromError(error.message) === expected;
+		},
+	);
+}
+
+function extractOrderingFromError(errorMessage: string): Ordering | undefined {
+	const orderingRegex = /but was (Equal|Superset|Subset|Incomparable)/;
+	// Check if the error message contains the ordering regex pattern
+	const match = errorMessage.match(orderingRegex);
+	if (match !== null) {
+		switch (match[1]) {
+			case "Equal":
+				return Ordering.Equal;
+			case "Superset":
+				return Ordering.Superset;
+			case "Subset":
+				return Ordering.Subset;
+			case "Incomparable":
+				return Ordering.Incomparable;
+			default:
+				break;
+		}
+	}
+	return undefined;
 }
 
 /**
