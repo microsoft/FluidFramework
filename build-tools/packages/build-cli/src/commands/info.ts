@@ -5,7 +5,7 @@
 
 import { Flags } from "@oclif/core";
 import sortPackageJson from "sort-package-json";
-import { table } from "table";
+import { table, type ColumnUserConfig } from "table";
 
 import type { Package } from "@fluidframework/build-tools";
 import { BaseCommand } from "../base";
@@ -23,25 +23,37 @@ interface ColumnInfo {
 	 * Function to extract column value from a Package instance.
 	 */
 	fn: (pkg: Package) => string;
+
+	/**
+	 * Control the appearance of the column
+	 */
+	style: ColumnUserConfig;
 }
 
 /**
  * Map lowercased column name to corresponding ColumnInfo.
  */
 const nameToColumnInfo: Record<string, ColumnInfo> = {
-	releaseGroup: { name: "releaseGroup", fn: (pkg: Package) => pkg.monoRepo?.kind ?? "n/a" },
-	name: { name: "name", fn: (pkg: Package) => pkg.name },
+	releaseGroup: {
+		name: "releaseGroup",
+		fn: (pkg: Package) => pkg.monoRepo?.kind ?? "n/a",
+		style: { alignment: "left" },
+	},
+	name: { name: "name", fn: (pkg: Package) => pkg.name, style: { alignment: "left" } },
 	private: {
 		name: "private",
 		fn: (pkg: Package) => (pkg.packageJson.private === true ? "-private-" : ""),
+		style: { alignment: "center" },
 	},
 	version: {
 		name: "version",
 		fn: (pkg: Package) => (pkg.monoRepo ? pkg.monoRepo.version : pkg.version),
+		style: { alignment: "left" },
 	},
 	path: {
 		name: "path",
 		fn: (pkg: Package) => pkg.directory,
+		style: { alignment: "left" },
 	},
 };
 
@@ -59,9 +71,11 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 			char: "c",
 			description: "Specify which columns are included in report.",
 			aliases: ["columns"],
-			options: Object.values(nameToColumnInfo).map((column) => column.name),
-			default: Object.values(nameToColumnInfo)
-				.map((column) => column.name)
+			// Extract the list of valid options from the keys of 'nameToColumnInfo'.
+			options: Object.keys(nameToColumnInfo),
+			// Include all columns by default except for "path".  (Including "path" tends
+			// to make the table extra wide.)
+			default: Object.keys(nameToColumnInfo)
 				.filter((name) => name !== "path"),
 			delimiter: ",",
 			multiple: true,
@@ -105,21 +119,24 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 		const jsonData: Record<string, string>[] = [];
 
 		for (const pkg of packages) {
+			// Create a row for the current package.
 			const tableRow = [];
 			const jsonRow: Record<string, string> = {};
 
+			// Copy the corresponding column info into the row.
 			for (const { name, fn } of columns) {
 				const value = fn(pkg);
 				tableRow.push(value);
 				jsonRow[name] = value;
 			}
 
+			// Append the row to the data.
 			tableData.push(tableRow);
 			jsonData.push(jsonRow);
 		}
 
 		const output = table(tableData, {
-			columns: [{ alignment: "left" }, { alignment: "left" }, { alignment: "center" }],
+			columns: columns.map((column) => column.style),
 			singleLine: true,
 		});
 
