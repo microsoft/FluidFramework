@@ -154,6 +154,7 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 import type * as old from "${previousPackageName}${
 				previousPackageLevel === ApiLevel.public ? "" : `/${previousPackageLevel}`
 			}";
+
 import type * as current from "../../index.js";
 		`.trim(),
 			typeOnly,
