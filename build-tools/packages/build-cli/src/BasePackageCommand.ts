@@ -103,14 +103,29 @@ export abstract class PackageCommand<
 			)}`,
 		);
 
-		await this.processPackages(this.filteredPackages);
+		const errors = await this.processPackages(this.filteredPackages);
+		if (errors.length > 0) {
+			this.errorLog(`Completed with ${errors.length} errors.`);
+			for (const error of errors) {
+				this.errorLog(error);
+			}
+			this.exit(1);
+		}
+
 		return undefined;
 	}
 
-	protected async processPackages(packages: PackageWithKind[]): Promise<void> {
+	/**
+	 * Runs the processPackage method on each package in the provided array.
+	 *
+	 * @returns An array of error strings. If the array is not empty, at least one of the calls to processPackage failed.
+	 */
+	protected async processPackages(packages: PackageWithKind[]): Promise<string[]> {
 		let started = 0;
 		let finished = 0;
 		let succeeded = 0;
+		const errors: string[] = [];
+
 		// In verbose mode, we output a log line per package. In non-verbose mode, we want to display an activity
 		// spinner, so we only start the spinner if verbose is false.
 		const { verbose } = this.flags;
@@ -137,8 +152,11 @@ export abstract class PackageCommand<
 					await this.processPackage(pkg, pkg.kind);
 					succeeded += 1;
 				} catch (error: unknown) {
-					this.errorLog(`Error updating ${pkg.name}: ${error}`);
-					this.log((error as Error).stack);
+					const errorString = `Error updating ${pkg.name}: '${error}'\nStack: ${
+						(error as Error).stack
+					}`;
+					errors.push(errorString);
+					this.verbose(errorString);
 				} finally {
 					finished += 1;
 					updateStatus();
@@ -150,6 +168,7 @@ export abstract class PackageCommand<
 				ux.action.stop(`Done. ${packages.length} Packages. ${finished - succeeded} Errors`);
 			}
 		}
+		return errors;
 	}
 }
 

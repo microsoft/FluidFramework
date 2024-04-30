@@ -347,7 +347,8 @@ module.exports = {
 			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts"],
 		},
 		"import/resolver": {
-			typescript: {
+			// See remark in minimal-deprecated.js on the importance of import/resolver key order.
+			node: {
 				extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
 			},
 		},
