@@ -4,7 +4,6 @@
  */
 
 import { Flags } from "@oclif/core";
-import sortPackageJson from "sort-package-json";
 import { type ColumnUserConfig, table } from "table";
 
 import type { Package } from "@fluidframework/build-tools";
@@ -91,6 +90,9 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 				? context.packagesInReleaseGroup(flags.releaseGroup)
 				: [...context.fullPackageMap.values()];
 
+		// Sort by packages by name (invariant sort by codepoints).
+		packages.sort((left, right) => Number(left.name > right.name) || -(left.name < right.name));
+
 		// Filter out private packages
 		if (!flags.private) {
 			packages = packages.filter((p) => p.packageJson.private !== true);
@@ -105,7 +107,6 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 				return name.charAt(0).toUpperCase() + name.slice(1);
 			}),
 		];
-
 		const jsonData: Record<string, string>[] = [];
 
 		for (const pkg of packages) {
@@ -133,6 +134,6 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 
 		this.log(`\n${output}`);
 		this.log(`Total package count: ${packages.length}`);
-		return sortPackageJson(jsonData);
+		return jsonData;
 	}
 }
