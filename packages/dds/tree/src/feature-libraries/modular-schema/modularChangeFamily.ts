@@ -37,7 +37,6 @@ import {
 	makeDetachedNodeId,
 	mapCursorField,
 	revisionMetadataSourceFromInfo,
-	tagChange,
 } from "../../core/index.js";
 import {
 	IdAllocationState,
@@ -1156,25 +1155,18 @@ function invertBuilds(
  * @param fieldKinds - The field kinds to delegate to.
  */
 export function* relevantRemovedRoots(
-	{ change, revision }: TaggedChange<ModularChangeset>,
+	change: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 ): Iterable<DeltaDetachedNodeId> {
-	yield* relevantRemovedRootsFromFields(
-		change.fieldChanges,
-		revision,
-		change.nodeChanges,
-		fieldKinds,
-	);
+	yield* relevantRemovedRootsFromFields(change.fieldChanges, change.nodeChanges, fieldKinds);
 }
 
 function* relevantRemovedRootsFromFields(
 	change: FieldChangeMap,
-	revision: RevisionTag | undefined,
 	nodeChanges: ChangeAtomIdMap<NodeChangeset>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 ): Iterable<DeltaDetachedNodeId> {
 	for (const [_, fieldChange] of change) {
-		const fieldRevision = fieldChange.revision ?? revision;
 		const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
 		const delegate = function* (node: NodeId): Iterable<DeltaDetachedNodeId> {
 			const nodeChangeset = tryGetFromNestedMap(nodeChanges, node.revision, node.localId);
@@ -1182,13 +1174,12 @@ function* relevantRemovedRootsFromFields(
 			if (nodeChangeset.fieldChanges !== undefined) {
 				yield* relevantRemovedRootsFromFields(
 					nodeChangeset.fieldChanges,
-					fieldRevision,
 					nodeChanges,
 					fieldKinds,
 				);
 			}
 		};
-		yield* handler.relevantRemovedRoots(tagChange(fieldChange.change, fieldRevision), delegate);
+		yield* handler.relevantRemovedRoots(fieldChange.change, delegate);
 	}
 }
 
