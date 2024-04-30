@@ -167,10 +167,10 @@ describe("Fluid audience", () => {
 	 */
 	it("can find read-only partner member", async function () {
 		// TODO: Fix tests when ran against local service - ADO:7876
-		const useAzure = process.env.FLUID_CLIENT === "azure";
-		if (!useAzure) {
-			this.skip();
-		}
+		// const useAzure = process.env.FLUID_CLIENT === "azure";
+		// if (!useAzure) {
+		// 	this.skip();
+		// }
 
 		const { container, services } = await client.createContainer(schema);
 		const containerId = await container.attach();
@@ -260,10 +260,10 @@ describe("Fluid audience", () => {
 	 */
 	it("can observe member leaving and joining in read-only mode", async function () {
 		// TODO: Fix tests when ran against local service - ADO:7876
-		const useAzure = process.env.FLUID_CLIENT === "azure";
-		if (!useAzure) {
-			this.skip();
-		}
+		// const useAzure = process.env.FLUID_CLIENT === "azure";
+		// if (!useAzure) {
+		// 	this.skip();
+		// }
 
 		const { container } = await client.createContainer(schema);
 		const containerId = await container.attach();
@@ -271,7 +271,7 @@ describe("Fluid audience", () => {
 		if (container.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
 				durationMs: connectTimeoutMs,
-				errorMsg: "container connect() timeout",
+				errorMsg: "client1 container connect() timeout",
 			});
 		}
 
@@ -288,7 +288,7 @@ describe("Fluid audience", () => {
 		if (partnerContainer.connectionState !== ConnectionState.Connected) {
 			await timeoutPromise((resolve) => partnerContainer.once("connected", () => resolve()), {
 				durationMs: connectTimeoutMs,
-				errorMsg: "container connect() timeout",
+				errorMsg: "client2 container connect() timeout",
 			});
 		}
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
@@ -329,10 +329,13 @@ describe("Fluid audience", () => {
 			await partnerClient2.getContainer(containerId, schema);
 
 		if (partnerContainer2.connectionState !== ConnectionState.Connected) {
-			await timeoutPromise((resolve) => partnerContainer.once("connected", () => resolve()), {
-				durationMs: connectTimeoutMs,
-				errorMsg: "container connect() timeout",
-			});
+			await timeoutPromise(
+				(resolve) => partnerContainer2.once("connected", () => resolve()),
+				{
+					durationMs: connectTimeoutMs,
+					errorMsg: "client3 container connect() timeout",
+				},
+			);
 		}
 
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
