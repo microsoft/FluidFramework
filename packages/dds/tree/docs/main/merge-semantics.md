@@ -88,6 +88,9 @@ then one could imagine multiple possible outcomes:
 `SharedTree`'s merge semantics define which outcome will be picked
 and ensure that Alice and Bob get the same outcome.
 
+Note that while reconciling edits often means reconciling (i.e., satisfying) the editing intentions they represent, that is not always the case.
+The example in this section is one such case where not all intentions can be satisfied because they are incompatible.
+
 ## When Should You Care?
 
 Developers should be able to use `SharedTree` productively without constantly worrying about merge semantics.
@@ -114,6 +117,121 @@ Understanding `SharedTree`'s merge semantics can help the application author ant
 Understanding `SharedTree`'s merge semantics will also enable the application author to understand how to remedy this danger,
 either by adopting a data model that prevents the issue (e.g., using a single array of pairs)
 or by changing the application's editing code to circumvent it.
+
+## High-Level Design
+
+This section describes the high-level process through which edits are merged,
+and `SharedTree`'s high-level reconciliation model.
+Together, these form the context in which the merge semantics of individual edits are defined and interpreted.
+
+### Edit Flow
+
+`SharedTree`, like all Fluid distributed data structures,
+relies on a centralized service to sequentially order edits and broadcast them to connected clients.
+This sequencing assigns a total ordering to the otherwise concurrent edits,
+but retains information about the concurrency relationships between edits.
+The service itself does not merge edits or apply them; this is instead performed independently by each client.
+
+The journey for each edit is as follows:
+
+1. The edit is initiated by a client.
+2. If the edit is invalid locally, the client throws an error and the edit's journey stops here.
+3. The client applies the edit locally.
+4. The client sends the edit to the service.
+5. The service orders the edit relative to other (possibly concurrent) edits based on arrival time.
+6. The service broadcasts the edit to all connected clients.
+7. Each client receives the edit and reconciles it with concurrent edits that were sequenced before.
+   This is where the merge semantics of the edits to be reconciled are taken into account.
+8. Each client applies the appropriate effects of the edit (if any).
+
+Steps 7 and 8 are somewhat different for the client that initiated the edit:
+since it already knows of the edit and already applied it in step 3,
+it only needs to adjust its local state to reflect the impact of concurrent edits that were sequenced before the edit it initiated.
+
+### A Conflict-Free Model
+
+`SharedTree` never models edits (or documents) as being "conflicted".
+Indeed, `SharedTree` never surfaces a conflict where one of two states or one of two edits must be selected as the winner or manually reconciled.
+(`SharedTree` may offer capabilities to facilitate the creation of such end user experiences in the future,
+but these would only exist atop `SharedTree`'s core conflict-free model.)
+In that regard, `SharedTree` closer to operational transform or CRDT systems, and different from systems like [Git](https://git-scm.com/).
+
+Instead of treating edits as conflicted, `SharedTree` always applies each edit one after the other in sequencing order so long as the edit is valid.
+This approach is tenable because `SharedTree`'s edits endeavor to capture precise intentions,
+which then enable `SharedTree` to resolve would-be conflicts either by accommodating all concurrent intentions,
+or by picking one to override the others when doing so is acceptable.
+
+For example, consider the following document, managed by a collaborative TODO application:
+
+```JSON
+{
+	"todo": [
+		{ "id": 1, "text": "buy milk" },
+		{ "id": 2, "text": "feed cat" },
+		{ "id": 3, "text": "buy eggs" }
+	]
+}
+```
+
+Alice might edit the document to reorder the items so that purchases are grouped together.
+The resulting state would be as follows:
+
+```JSON
+{
+	"todo": [
+		{ "id": 1, "text": "buy milk" },
+		{ "id": 3, "text": "buy eggs" },
+		{ "id": 2, "text": "feed cat" }
+	]
+}
+```
+
+Concurrently, Bob may update the text on item #2 to call out the cat by name.
+The resulting state would be as follows:
+
+```JSON
+{
+	"todo": [
+		{ "id": 1, "text": "buy milk" },
+		{ "id": 2, "text": "feed Loki" },
+		{ "id": 3, "text": "buy eggs" }
+	]
+}
+```
+
+Now consider how a system like Git sees each change.
+Here is the diff for reordering the items:
+
+```diff
+ {
+        "todo": [
+                { "id": 1, "text": "buy milk" },
+-               { "id": 2, "text": "feed cat" },
+-               { "id": 3, "text": "buy eggs" }
++               { "id": 3, "text": "buy eggs" },
++               { "id": 2, "text": "feed cat" }
+        ]
+ }
+```
+
+Here is the diff for updating the text property on item #2:
+
+```diff
+ {
+        "todo": [
+                { "id": 1, "text": "buy milk" },
+-               { "id": 2, "text": "feed cat" },
++               { "id": 2, "text": "feed Loki" },
+                { "id": 3, "text": "buy eggs" }
+        ]
+ }
+```
+
+Unlike `SharedTree`, Git only understands the changes through diffing,
+which makes it unable to perceive the fact that the intentions behind the changes are not in conflict and can both be accommodated.
+This makes Git much more flexible: it can represent all document edits imaginable.
+The drawback is that Git is forced to rely on human intervention in all but trivial merge cases.
+The next section details how `SharedTree` edits more precisely represents intentions through their merge semantics.
 
 ## How We Describe Merge Semantics
 
@@ -171,8 +289,10 @@ Note that the preconditions of a transaction are the union of the preconditions 
 ### Postconditions
 
 The postconditions characterize what is guaranteed to be true about the effect of the edit provided the preconditions were satisfied.
+The term "intention" is often used in relation to an edit's postconditions: they capture what the purpose of the edit is.
 This is often expressed in terms of the resulting state after the edit is applied.
 For example, move edits guarantee that the targeted nodes end up at the specified destination.
+In other words, the intention for a move edit is to have the targeted node reside at the destination.
 
 When expressed in terms of the document state,
 these postconditions typically only hold immediately after the edit as opposed to holding indefinitely.
@@ -204,7 +324,7 @@ with the postconditions of later edits overriding that of earlier ones whenever 
 For example, if a transaction moves a node from location A to location B and then moves that same node from location B to location C,
 the postcondition of the second move (that the node will be at location C) wins.
 
-## High-Level Design Choices
+## High-Level Semantic Choices
 
 `SharedTree` allows developers to describe the data model for their application in terms of a set of elementary building blocks,
 like object nodes, map nodes, and array nodes.
@@ -213,10 +333,6 @@ so fully understanding the merge semantics of `SharedTree` entails understanding
 That said, those merge semantics are largely underpinned by a set of design choices that apply to `SharedTree` as a whole.
 Understanding those design choices and their ramifications is the most crucial part of understanding `SharedTree`'s merge semantics,
 and it often alleviates the need to remember the details of any building blocks's specific merge semantics.
-
-### A Conflict-Free Model
-
-`SharedTree`
 
 ### Movement Is Not Copy
 
