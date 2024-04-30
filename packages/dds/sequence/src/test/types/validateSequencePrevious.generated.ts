@@ -538,7 +538,6 @@ declare function get_old_InterfaceDeclaration_ISharedString():
 declare function use_current_InterfaceDeclaration_ISharedString(
     use: TypeOnly<current.ISharedString>): void;
 use_current_InterfaceDeclaration_ISharedString(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISharedString());
 
 /*
@@ -1444,6 +1443,12 @@ use_current_RemovedClassDeclaration_SharedString(
  * typeValidation.broken:
  * "RemovedClassDeclaration_SharedString": {"backCompat": false}
  */
+declare function get_current_RemovedClassDeclaration_SharedString():
+    TypeOnly<current.SharedString>;
+declare function use_old_ClassDeclaration_SharedString(
+    use: TypeOnly<old.SharedString>): void;
+use_old_ClassDeclaration_SharedString(
+    get_current_RemovedClassDeclaration_SharedString());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1452,6 +1457,12 @@ use_current_RemovedClassDeclaration_SharedString(
  * typeValidation.broken:
  * "RemovedClassDeclaration_SharedStringFactory": {"forwardCompat": false}
  */
+declare function get_old_ClassDeclaration_SharedStringFactory():
+    TypeOnly<old.SharedStringFactory>;
+declare function use_current_RemovedClassDeclaration_SharedStringFactory(
+    use: TypeOnly<current.SharedStringFactory>): void;
+use_current_RemovedClassDeclaration_SharedStringFactory(
+    get_old_ClassDeclaration_SharedStringFactory());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1460,6 +1471,12 @@ use_current_RemovedClassDeclaration_SharedString(
  * typeValidation.broken:
  * "RemovedClassDeclaration_SharedStringFactory": {"backCompat": false}
  */
+declare function get_current_RemovedClassDeclaration_SharedStringFactory():
+    TypeOnly<current.SharedStringFactory>;
+declare function use_old_ClassDeclaration_SharedStringFactory(
+    use: TypeOnly<old.SharedStringFactory>): void;
+use_old_ClassDeclaration_SharedStringFactory(
+    get_current_RemovedClassDeclaration_SharedStringFactory());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

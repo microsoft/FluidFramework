@@ -62,7 +62,6 @@ declare function get_old_InterfaceDeclaration_ISharedMatrix():
 declare function use_current_InterfaceDeclaration_ISharedMatrix(
     use: TypeOnly<current.ISharedMatrix>): void;
 use_current_InterfaceDeclaration_ISharedMatrix(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISharedMatrix());
 
 /*
@@ -184,6 +183,12 @@ use_current_RemovedClassDeclaration_SharedMatrix(
  * typeValidation.broken:
  * "RemovedClassDeclaration_SharedMatrix": {"backCompat": false}
  */
+declare function get_current_RemovedClassDeclaration_SharedMatrix():
+    TypeOnly<current.SharedMatrix>;
+declare function use_old_ClassDeclaration_SharedMatrix(
+    use: TypeOnly<old.SharedMatrix>): void;
+use_old_ClassDeclaration_SharedMatrix(
+    get_current_RemovedClassDeclaration_SharedMatrix());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

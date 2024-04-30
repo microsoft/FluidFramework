@@ -104,7 +104,6 @@ declare function get_current_ClassDeclaration_ChannelCollection():
 declare function use_old_ClassDeclaration_ChannelCollection(
     use: TypeOnly<old.ChannelCollection>): void;
 use_old_ClassDeclaration_ChannelCollection(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ChannelCollection());
 
 /*
@@ -231,7 +230,6 @@ declare function get_old_ClassDeclaration_ContainerRuntime():
 declare function use_current_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<current.ContainerRuntime>): void;
 use_current_ClassDeclaration_ContainerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -246,7 +244,6 @@ declare function get_current_ClassDeclaration_ContainerRuntime():
 declare function use_old_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<old.ContainerRuntime>): void;
 use_old_ClassDeclaration_ContainerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -289,7 +286,6 @@ declare function get_old_ClassDeclaration_DataStoreContexts():
 declare function use_current_ClassDeclaration_DataStoreContexts(
     use: TypeOnly<current.DataStoreContexts>): void;
 use_current_ClassDeclaration_DataStoreContexts(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_DataStoreContexts());
 
 /*

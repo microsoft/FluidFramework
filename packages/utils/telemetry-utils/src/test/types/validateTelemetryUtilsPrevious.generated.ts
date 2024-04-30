@@ -888,7 +888,6 @@ declare function get_current_TypeAliasDeclaration_TelemetryEventPropertyTypes():
 declare function use_old_TypeAliasDeclaration_TelemetryEventPropertyTypes(
     use: TypeOnly<old.TelemetryEventPropertyTypes>): void;
 use_old_TypeAliasDeclaration_TelemetryEventPropertyTypes(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_TelemetryEventPropertyTypes());
 
 /*
