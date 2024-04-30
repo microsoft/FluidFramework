@@ -29,7 +29,7 @@ interface ColumnInfo {
  * Map lowercased column name to corresponding ColumnInfo.
  */
 const nameToColumnInfo: Record<string, ColumnInfo> = {
-	releasegroup: { name: "releaseGroup", fn: (pkg: Package) => pkg.monoRepo?.kind ?? "n/a" },
+	releaseGroup: { name: "releaseGroup", fn: (pkg: Package) => pkg.monoRepo?.kind ?? "n/a" },
 	name: { name: "name", fn: (pkg: Package) => pkg.name },
 	private: {
 		name: "private",
@@ -55,11 +55,17 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 		releaseGroup: releaseGroupFlag({
 			required: false,
 		}),
-		columns: Flags.string({
+		columns: Flags.option({
 			char: "c",
-			default: "ReleaseGroup,Name,Private,Version",
-			description: "Columns to include in report.",
-		}),
+			description: "Specify which columns are included in report.",
+			aliases: ["columns"],
+			options: Object.values(nameToColumnInfo).map((column) => column.name),
+			default: Object.values(nameToColumnInfo)
+				.map((column) => column.name)
+				.filter((name) => name !== "path"),
+			delimiter: ",",
+			multiple: true,
+		})(),
 		private: Flags.boolean({
 			allowNo: true,
 			char: "p",
@@ -86,12 +92,12 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 			packages = packages.filter((p) => p.packageJson.private !== true);
 		}
 
-		const columns = flags.columns.split(",").map((value) => value.trim().toLowerCase());
+		const columns = flags.columns.map((name) => nameToColumnInfo[name]);
 
 		// Initialize 'tableData' with Pascal cased column names.
 		const tableData = [
 			columns.map((column) => {
-				const { name } = nameToColumnInfo[column];
+				const { name } = column;
 				return name.charAt(0).toUpperCase() + name.slice(1);
 			}),
 		];
@@ -102,11 +108,8 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 			const tableRow = [];
 			const jsonRow: Record<string, string> = {};
 
-			for (const column of columns) {
-				const info = nameToColumnInfo[column];
-				const { name } = info;
-				const value = info.fn(pkg);
-
+			for (const { name, fn } of columns) {
+				const value = fn(pkg);
 				tableRow.push(value);
 				jsonRow[name] = value;
 			}
