@@ -23,13 +23,13 @@ import {
 	IVersion,
 } from "@fluidframework/protocol-definitions";
 import {
-	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
 	UsageError,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import type { IEventProvider, IEvent } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter.js";
 import { convertSnapshotToSnapshotInfo, getDocumentAttributes } from "./utils.js";
 
@@ -105,7 +105,7 @@ export class SerializedStateManager {
 
 	constructor(
 		private readonly pendingLocalState: IPendingContainerState | undefined,
-		subLogger: ITelemetryLoggerExt,
+		subLogger: ITelemetryBaseLogger,
 		private readonly storageAdapter: ISerializedStateManagerDocumentStorageService,
 		private readonly _offlineLoadEnabled: boolean,
 		containerEvent: IEventProvider<ISerializerEvent>,
@@ -176,9 +176,11 @@ export class SerializedStateManager {
 				snapshotBlobs,
 				snapshotSequenceNumber: attributes.sequenceNumber,
 			};
-			this.refreshSnapshot ??= (async () => {
-				await this.refreshLatestSnapshot(supportGetSnapshotApi);
-			})();
+
+			if (this.mc.config.getBoolean("Fluid.Container.enableOfflineSnapshotRefresh") === true)
+				this.refreshSnapshot ??= (async () => {
+					await this.refreshLatestSnapshot(supportGetSnapshotApi);
+				})();
 
 			const blobContents = new Map<string, ArrayBuffer>();
 			for (const [id, value] of Object.entries(snapshotBlobs)) {
