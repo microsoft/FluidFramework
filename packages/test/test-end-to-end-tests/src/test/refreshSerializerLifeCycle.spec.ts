@@ -160,9 +160,6 @@ describeCompat("Validate Attach lifecycle", "NoCompat", (getTestObjectProvider, 
 			}
 			
 			const container2: IContainerExperimental = await loader.resolve({ url }, pendingOps);
-			await waitForContainerConnection(container2);
-			await provider.ensureSynchronized();
-
 			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 			if(testConfig.waitForRefresh && (testConfig.savedOps || testConfig.summaryWhileOffline)){
