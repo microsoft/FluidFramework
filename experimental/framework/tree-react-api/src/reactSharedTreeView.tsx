@@ -23,11 +23,6 @@ import {
 import * as React from "react";
 
 /**
- * This file contains logic not specific to this particular sample that other apps may want to use.
- * Eventually this should be published as part of a package apps can use.
- */
-
-/**
  * Opt into extra validation to detect encoding bugs and data corruption.
  * As long as this is an experimental package, opting into extra validation (at a small perf and bundle size cost) seems reasonable.
  */
@@ -82,6 +77,9 @@ export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(
 }
 
 /**
+ * A schema aware Tree DataObject.
+ * @remarks
+ * Allows for the Tree's schema to be baked into the container schema.
  * @public
  */
 export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
@@ -112,6 +110,7 @@ export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
 }
 
 /**
+ * {@link ITreeDataObject} extended with a React Component to view the tree.
  * @public
  */
 export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema>
@@ -125,11 +124,24 @@ export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema>
 	 * and thus making it a member avoids the user of this from having to explicitly provide the type parameter.
 	 * This is an arrow function not a method so it gets the correct this when not called as a member.
 	 */
-	readonly TreeViewComponent: ({
-		viewComponent,
-	}: {
-		viewComponent: React.FC<{ root: TreeFieldFromImplicitField<TSchema> }>;
-	}) => React.JSX.Element;
+	readonly TreeViewComponent: (props: TreeViewProps<TSchema>) => React.JSX.Element;
+}
+
+/**
+ * React props for viewing a tree.
+ * @public
+ */
+export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
+	/**
+	 * Component to display the tree content.
+	 */
+	readonly viewComponent: React.FC<{ root: TreeFieldFromImplicitField<TSchema> }>;
+	/**
+	 * If not provided a default component is provided which describes the situation
+	 * and allows the user to upgrade the schema if possible.
+	 * This default is not localized.
+	 */
+	readonly errorComponent?: React.FC<SchemaIncompatibleProps>;
 }
 
 /**
@@ -176,12 +188,12 @@ export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = Impli
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
 	public readonly TreeViewComponent = ({
 		viewComponent,
-	}: {
-		viewComponent: React.FC<{ root: TreeFieldFromImplicitField<TSchema> }>;
-	}) =>
+		errorComponent,
+	}: TreeViewProps<TSchema>) =>
 		TreeViewComponent<TSchema>({
 			tree: this,
 			viewComponent,
+			errorComponent,
 		});
 }
 
@@ -194,13 +206,8 @@ function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 	tree,
 	viewComponent,
 	errorComponent,
-}: {
+}: TreeViewProps<TSchema> & {
 	tree: TreeDataObject<TSchema>;
-	viewComponent: React.FC<{ root: TreeFieldFromImplicitField<TSchema> }>;
-	errorComponent?: React.FC<{
-		error: SchemaIncompatible;
-		upgradeSchema: () => void;
-	}>;
 }) {
 	const view = tree.tree;
 
@@ -246,16 +253,25 @@ function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 }
 
 /**
+ * React Props for displaying when the opened document is incompatible with the required view schema.
+ * @public
+ */
+export interface SchemaIncompatibleProps {
+	/**
+	 * Information about how the schema is incompatible.
+	 */
+	readonly error: SchemaIncompatible;
+	/**
+	 * Callback to request that the stored schema in the document be upgraded.
+	 */
+	readonly upgradeSchema: () => void;
+}
+
+/**
  * React component which displays schema errors and allows upgrading schema when possible.
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function TreeErrorComponent({
-	error,
-	upgradeSchema,
-}: {
-	error: SchemaIncompatible;
-	upgradeSchema: () => void;
-}) {
+function TreeErrorComponent({ error, upgradeSchema }: SchemaIncompatibleProps) {
 	// eslint-disable-next-line unicorn/prefer-ternary
 	if (error.canUpgrade) {
 		return (

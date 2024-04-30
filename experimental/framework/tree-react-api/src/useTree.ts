@@ -13,6 +13,7 @@ import * as React from "react";
  * @privateRemarks
  * Without a way to get invalidation callbacks for specific fields,
  * its impractical to implement an ergonomic and efficient more fiend grained invalidation hook.
+ * @public
  */
 export function useTree(subtreeRoot: TreeNode): void {
 	// Use a React effect hook to invalidate this component when the inventory changes.

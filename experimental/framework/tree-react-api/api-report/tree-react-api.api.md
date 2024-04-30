@@ -10,24 +10,28 @@ import type { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions
 import type { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ImplicitFieldSchema } from '@fluidframework/tree/internal';
 import * as React_2 from 'react';
+import { SchemaIncompatible } from '@fluidframework/tree/internal';
 import { TreeConfiguration } from '@fluidframework/tree/internal';
 import { TreeFieldFromImplicitField } from '@fluidframework/tree/internal';
+import { TreeNode } from '@fluidframework/tree';
 import { TreeView } from '@fluidframework/tree/internal';
 
-// @public (undocumented)
+// @public
 export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> extends ITreeDataObject<TSchema> {
-    readonly TreeViewComponent: ({ viewComponent, }: {
-        viewComponent: React_2.FC<{
-            root: TreeFieldFromImplicitField<TSchema>;
-        }>;
-    }) => React_2.JSX.Element;
+    readonly TreeViewComponent: (props: TreeViewProps<TSchema>) => React_2.JSX.Element;
 }
 
-// @public (undocumented)
+// @public
 export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
     readonly config: TreeConfiguration<TSchema>;
     readonly key: string;
     readonly tree: TreeView<TSchema>;
+}
+
+// @public
+export interface SchemaIncompatibleProps {
+    readonly error: SchemaIncompatible;
+    readonly upgradeSchema: () => void;
 }
 
 // @public
@@ -37,6 +41,17 @@ export function treeDataObject<TSchema extends ImplicitFieldSchema>(key: string,
 export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(key: string, treeConfiguration: TreeConfiguration<TSchema>): DataObjectClass<IReactTreeDataObject<TSchema> & IFluidLoadable & DataObject> & {
     readonly factory: IFluidDataStoreFactory;
 };
+
+// @public
+export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
+    readonly errorComponent?: React_2.FC<SchemaIncompatibleProps>;
+    readonly viewComponent: React_2.FC<{
+        root: TreeFieldFromImplicitField<TSchema>;
+    }>;
+}
+
+// @public
+export function useTree(subtreeRoot: TreeNode): void;
 
 // (No @packageDocumentation comment for this package)
 
