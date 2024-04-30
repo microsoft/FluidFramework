@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { VisualChildNode } from "@fluidframework/devtools-core-previous";
+import type { VisualChildNode } from "@fluidframework/devtools-core/internal";
 
 /**
  * Base visualizer for SharedTree.

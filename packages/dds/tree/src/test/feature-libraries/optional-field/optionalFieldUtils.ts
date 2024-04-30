@@ -12,6 +12,8 @@ import {
 	TaggedChange,
 	asChangeAtomId,
 	makeAnonChange,
+	tagChange,
+	tagRollbackInverse,
 	taggedAtomId,
 } from "../../../core/index.js";
 import {
@@ -307,6 +309,17 @@ function registerEqual(a: RegisterId, b: RegisterId): boolean {
 		return a === b;
 	}
 	return a.revision === b.revision && a.localId === b.localId;
+}
+
+export function tagChangeInline(
+	change: OptionalChangeset,
+	revision: RevisionTag,
+	rollbackOf?: RevisionTag,
+): TaggedChange<OptionalChangeset> {
+	const inlined = inlineRevision(change, revision);
+	return rollbackOf !== undefined
+		? tagRollbackInverse(inlined, revision, rollbackOf)
+		: tagChange(inlined, revision);
 }
 
 export function inlineRevision(
