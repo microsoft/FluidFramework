@@ -27,7 +27,14 @@ module.exports = {
 		"import/no-internal-modules": [
 			"error",
 			{
-				allow: ["npm-check-updates/build/src/types/**", "**/commands/**"],
+				allow: [
+					"npm-check-updates/build/src/types/**",
+					"**/commands/**",
+					"**/library/index.js",
+					"**/library/github.js",
+					"**/handlers/index.js",
+					"**/machines/index.js",
+				],
 			},
 		],
 

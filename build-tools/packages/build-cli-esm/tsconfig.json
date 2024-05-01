@@ -14,4 +14,7 @@
 		// "module": "Node16",
 		// "moduleResolution": "Node16",
 	},
+	"ts-node": {
+		"esm": true,
+	},
 }

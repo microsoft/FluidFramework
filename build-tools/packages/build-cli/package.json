@@ -88,7 +88,7 @@
 		"human-id": "^4.0.0",
 		"inquirer": "^8.2.5",
 		"json5": "^2.2.3",
-		"jssm": "^5.89.2",
+		"jssm": "^5.97.1",
 		"latest-version": "^5.1.0",
 		"minimatch": "^7.4.6",
 		"node-fetch": "^2.6.9",
@@ -112,16 +112,17 @@
 	"devDependencies": {
 		"@fluid-private/readme-command": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^5.2.0",
+		"@microsoft/api-extractor": "^7.42.3",
 		"@oclif/test": "~2.3.33",
+		"@types/fs-extra": "^9.0.13",
+		"@types/mocha": "^10.0.6",
+		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@types/async": "^3.2.20",
 		"@types/chai": "^4.3.5",
 		"@types/chai-arrays": "^2.0.0",
 		"@types/debug": "^4.1.7",
-		"@types/fs-extra": "^8.1.2",
 		"@types/inquirer": "^8.2.6",
 		"@types/json5": "^2.2.0",
-		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.18.6",
 		"@types/node-fetch": "^2.5.10",
 		"@types/prettier": "^2.7.3",
@@ -144,12 +145,12 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.29.4",
 		"rimraf": "^4.4.1",
-		"ts-node": "^10.9.1",
+		"ts-node": "^10.9.2",
 		"tslib": "^2.6.0",
 		"typescript": "~5.1.6"
 	},
 	"engines": {
-		"node": ">=14.17.0"
+		"node": ">=18.0.0"
 	},
 	"fluidBuild": {
 		"tasks": {
