@@ -12,7 +12,7 @@ import * as React from "react";
  * See {@link @fluidframework/tree#TreeChangeEvents.treeChanged} for details.
  * @privateRemarks
  * Without a way to get invalidation callbacks for specific fields,
- * its impractical to implement an ergonomic and efficient more fiend grained invalidation hook.
+ * it's impractical to implement an ergonomic and efficient more fine-grained invalidation hook.
  * @public
  */
 export function useTree(subtreeRoot: TreeNode): void {
