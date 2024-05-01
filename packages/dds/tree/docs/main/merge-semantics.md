@@ -263,15 +263,15 @@ the edit's preconditions help answer the following questions:
 1.  Will this edit apply in all scenarios where I would want it to apply?
 2.  Will this edit be dropped in all scenarios where I would want it to be dropped?
 
-The answer to the first question will be negative if the edit has a precondition that is undesirable or undesirably broad for a given scenario.
-This cannot be remedied but is not necessarily a deal-breaker on its own, because allowing the right edit to happen some of the time may still be preferable to not allowing anything at all.
+The answer to the first question will be "no" if the edit has a precondition that is undesirable or too broad for a given scenario.
+This may not be a deal-breaker on its own, however, because allowing the right edit to happen some of the time may still be preferable to not allowing anything at all.
 For example, consider the scenario above where preconditions ensure that a node of type `Foo` cannot be inserted in an array whose schema does not allow it.
 The current implementation of `SharedTree`'s insert edit actually comes with the precondition that no part of the document schema has been concurrently changed.
 While this precondition is sufficient to prevent a node of type `Foo` from being inserted in an array whose schema does not allow it,
 it is much broader than strictly necessary and will also prevent edits that would not violate the schema.
 While we plan to offer a narrower precondition in the future, the current one is tolerable because schema changes are rare.
 
-The answer to the second question will be negative if the edit does not have a precondition that would be desirable for a given scenario or has a precondition that is too permissive.
+The answer to the second question will be "no" if the edit lacks a precondition required to prevent an undesirable scenario or has a precondition that is too permissive.
 This can often be remedied by using constraints\*.
 For example, in the scenario where Alice and Bob both want to change the color of the sticky note,
 it may be desirable to ensure that the color that is retained is always the one chosen by Alice.
@@ -296,7 +296,7 @@ In other words, the intention for a move edit is to have the targeted node resid
 
 When expressed in terms of the document state,
 these postconditions typically only hold immediately after the edit as opposed to holding indefinitely.
-In our move example, edits that come after the move
+In the case of a move, edits that come after the move
 (whether they were made concurrently or not)
 may very well cause those nodes to end up in a different location.
 
@@ -306,12 +306,12 @@ the postconditions help answer the following questions:
 1.  Will this edit, in scenarios where it applies, have all the effects I want it to have?
 2.  Will this edit, in scenarios where it applies, have none of the effects I do not want it to have?
 
-The answer to the first question will be negative if some desirable postcondition is missing or an existing one is too narrow.
+The answer to the first question will be "no" if some desirable postcondition is missing or an existing one is too narrow.
 For example, `SharedTree`'s remove operation on arrays does not guarantee that the array which contains the nodes at the time the edit is initiated
 will have fewer nodes immediately after the edit is applied compared to immediately before the edit is applied.
 This is because `SharedTree`'s remove operation applies even when the nodes have been concurrently moved to a different array.
 
-The answer to the second question will be negative if a postcondition is undesirable or too broad.
+The answer to the second question will be "no" if a postcondition is undesirable or too broad.
 For example, `SharedTree`'s delete operation on map nodes comes with the guarantee that,
 immediately after the edit is applied, the map will have no node associated with the key.
 This would be too broad of a postcondition in scenarios where one wouldn't want to risk removing a node that was concurrently set for that key.
