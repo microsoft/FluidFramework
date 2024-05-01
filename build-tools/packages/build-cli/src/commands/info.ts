@@ -120,12 +120,12 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 			const tableRow: string[] = [];
 			const jsonRow: Record<string, string> = {};
 
-			// Copy the corresponding column info into the row.
+			// Copy the corresponding column data into the row.
 			for (const [index, { fn }] of columnInfos.entries()) {
-				const name = columnNames[index];
+				const key = columnNames[index];
 				const value = fn(pkg);
 				tableRow.push(value);
-				jsonRow[name] = value;
+				jsonRow[key] = value;
 			}
 
 			// Append the row to the data.
