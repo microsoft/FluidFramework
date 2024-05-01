@@ -285,3 +285,35 @@ Assuming the laziness has negligible overhead, this avoids delaying responsivene
 An example of where SharedTree acts eagerly is resolving edits in the `editManager`: this optimizes for maximal remote edit throughput.
 An example of where SharedTree is lazy is creating the application facing simple-tree nodes: this allows applications which only read part of the tree to avoid a lot of costs that come with large trees.
 Forest is currently eager, but when support for forests which do not hold all the tree in memory is added, applying edits to non-downloaded parts will have to become lazy.
+
+## Asymptotics
+
+There are several different sizes which SharedTree performance scales with:
+
+-   The depth of the tree.
+    Many costs scale linearly with the depth. This includes the size of ops, the time to apply ops, stack space used in my cases etc.
+    Overall extreme tree depth is not an optimization priority for SharedTree,
+    however it is designed to enable amortization of depth related costs when many operations are applied within the same subtree.
+    If depth related costs become problematic, increasing the ability to amortize/deduplicate depth related costs,
+    as well as optimizing constant factors should be the preferred approaches.
+
+-   The total number of nodes. SharedTree is designed to be able to eventually support trees are not fully loaded into memory any point.
+    This means that functionality which all trees while require (for example merge resolution, edit application, summarization
+    and reading subsets of the tree data) must be possible incurring only `O(log N)` overhead where N is the total number of nodes in the tree.
+    While current forest implementations and view APIs and summary formats do not support this scalability,
+    the design must ensure that it is possible to add alternative implementations with that scalability in the future.
+
+-   Length of sequence fields.
+    Optimized handling of long sequences is not currently a priority. It is however important to ensuring that it is possible to eventually support long sequences editing and indexing with at most `O(log N)` costs.
+    This means that the format for edits ensures this is possible, but the actual implementation of things like AnchorSet and simple-tree may incur `O(N)` costs for now.
+
+-   Number of fields.
+    Performance related to number of fields has the same requirements as lengths of fields, at least when it come to map nodes.
+
+-   Amount of Schema.
+    Scaling to very large schema is not a priority.
+    The cost/size of the schema should be amortized over the session:
+    no schema proportional costs should be incurred during normal usage as part of any operation a client may do many times in a session.
+    This means that in typical use, ops and summaries should not have to copy the schema.
+    SharedTree assumes that the schema will always be practical to download and keep in memory.
+    Schema derived data should be eagerly evaluated and cached to optimize runtime performance of content using the schema.
