@@ -417,25 +417,23 @@ this is true even when removals are involved:
 if the removal is sequenced last, then the node will be moved and then removed.
 If the move is sequenced last, then the node will be removed and then moved.
 
-### Non-Disjunctive Postconditions
+### No Conditional Postconditions
 
-Disjunctive postconditions are postconditions of the form `<A> or <B> or ...`.
-None of `SharedTree`'s currently supported edits are of this form,
-which means they each have a single effect as opposed to one of many effects.
+A conditional postcondition is a postcondition of the form "If \<condition\> then \<effect A\> else/otherwise \<effect B\>"
+(with any number of "else if" branches).
+For example, a remove edit that was designed not to affect concurrently moved nodes would be characterized as
+"If the node was concurrently moved then the node is unaffected, otherwise, the node is removed".
+After an edit with such a conditional postcondition is applied, it is not certain whether the targeted no will be removed or not.
 
-For example, the postcondition for our implementation of move
-(that the moved node will reside at the chosen destination)
-is not predicated on the node not having been concurrently removed or moved.
-This means that when it comes to the final location of the node that is targeted by the move,
-there is only one possible outcome
-(the node being at the chosen destination)
-so long as the preconditions of the move were met.
+None of `SharedTree`'s currently supported edits have conditional postconditions.
+This means that every edit, so long as its preconditions are met, is guaranteed to always have the same effect.
+Indeed, our current implementation of the remove edit guarantees the targeted node will be removed so long as the edit applies.
 
-Note that such conditional postconditions would be different from additional preconditions.
-For example, adding a precondition that the moved node must not have been concurrently removed would,
+Note that conditional postconditions are be different from additional preconditions.
+For example, adding a precondition that the removed node must not have been concurrently moved would,
 in a situation where that did occur,
-render such a move _and the whole transactions it figures in_ invalid.
-By contrast, making the postcondition conditional on the node not having been concurrently removed would simply render the move ineffective
+render such a remove _and the whole transactions it figures in_ invalid.
+By contrast, making the postcondition conditional on the node not having been concurrently moved would simply render the remove ineffective
 but not adversely affect the rest of the transaction.
 
 As with minimal preconditions, we may support more variations of our current set of edits in the future.
