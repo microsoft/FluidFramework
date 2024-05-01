@@ -247,6 +247,14 @@ Each kind of edit operation comes with a set of preconditions.
 If those preconditions are not met, then the edit and the whole transaction it is part of are dropped,
 i.e., the edit and transaction have no effect.
 
+`SharedTree`'s current set of data edits only have one precondition by default\*: the edit must not be concurrent with a change to the schema.
+The rest of this section will at times consider other preconditions for the sake of illustration.
+
+\*It is possible to add additional preconditions to a transaction.
+These are called [constraints](#constraints).
+This makes understanding preconditions a prerequisite for using constraints,
+but constraints can be ignored when it comes to understanding how preconditions affect merge semantics in general.
+
 For example, consider a document with a schema that allows instances of `Foo` to be inserted in an array.
 Insert operations on arrays come with preconditions such that by the time the insert is finally applied,
 the receiving array must allow instances of the inserted type, (`Foo` in this case).
@@ -272,17 +280,13 @@ it is much broader than strictly necessary and will also prevent edits that woul
 While we plan to offer a narrower precondition in the future, the current one is tolerable because schema changes are rare.
 
 The answer to the second question will be "no" if the edit lacks a precondition required to prevent an undesirable scenario or has a precondition that is too permissive.
-This can often be remedied by using constraints\*.
+This can often be remedied by using constraints.
 For example, in the scenario where Alice and Bob both want to change the color of the sticky note,
 it may be desirable to ensure that the color that is retained is always the one chosen by Alice.
 This could be achieved if Bob's edit had a precondition that the note's color must not have been concurrently changed
 (and if Alice's edit didn't have that precondition).
 `SharedTree`'s current set of edits does not include an edit with such a precondition,
 but using a constraint that ensures the original color has not been removed would likely be an acceptable alternative.
-
-\*[Constraints](#constraints) is a feature that allows transaction authors to add additional preconditions to a transaction.
-This makes understanding preconditions a prerequisite for using constraints,
-but constraints can be ignored when it comes to understanding how preconditions affect merge semantics in general.
 
 Note that the preconditions of a transaction are the union of the preconditions of its edits.
 
