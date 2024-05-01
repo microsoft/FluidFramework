@@ -132,15 +132,9 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 			});
 
 		const output = filtered.map((details) => details.name).join("\n");
-
-		if (outFile === undefined) {
-			this.log(output);
-		} else {
-			mkdirpSync(path.dirname(outFile));
-			writeFileSync(outFile, output);
-		}
-
 		await this.writeOutput(output, outFile);
+
+		// For JSON output
 		return filtered;
 	}
 
