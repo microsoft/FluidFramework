@@ -37,7 +37,6 @@ import {
 	makeDetachedNodeId,
 	mapCursorField,
 	revisionMetadataSourceFromInfo,
-	tagChange,
 } from "../../core/index.js";
 import {
 	IdAllocationState,
@@ -1156,25 +1155,18 @@ function invertBuilds(
  * @param fieldKinds - The field kinds to delegate to.
  */
 export function* relevantRemovedRoots(
-	{ change, revision }: TaggedChange<ModularChangeset>,
+	change: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 ): Iterable<DeltaDetachedNodeId> {
-	yield* relevantRemovedRootsFromFields(
-		change.fieldChanges,
-		revision,
-		change.nodeChanges,
-		fieldKinds,
-	);
+	yield* relevantRemovedRootsFromFields(change.fieldChanges, change.nodeChanges, fieldKinds);
 }
 
 function* relevantRemovedRootsFromFields(
 	change: FieldChangeMap,
-	revision: RevisionTag | undefined,
 	nodeChanges: ChangeAtomIdMap<NodeChangeset>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 ): Iterable<DeltaDetachedNodeId> {
 	for (const [_, fieldChange] of change) {
-		const fieldRevision = fieldChange.revision ?? revision;
 		const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
 		const delegate = function* (node: NodeId): Iterable<DeltaDetachedNodeId> {
 			const nodeChangeset = tryGetFromNestedMap(nodeChanges, node.revision, node.localId);
@@ -1182,30 +1174,31 @@ function* relevantRemovedRootsFromFields(
 			if (nodeChangeset.fieldChanges !== undefined) {
 				yield* relevantRemovedRootsFromFields(
 					nodeChangeset.fieldChanges,
-					fieldRevision,
 					nodeChanges,
 					fieldKinds,
 				);
 			}
 		};
-		yield* handler.relevantRemovedRoots(tagChange(fieldChange.change, fieldRevision), delegate);
+		yield* handler.relevantRemovedRoots(fieldChange.change, delegate);
 	}
 }
 
 /**
  * Adds any refreshers missing from the provided change that are relevant to the change and
  * removes any refreshers from the provided change that are not relevant to the change.
- * This function enforces that all relevant removed roots have a corresponding build or refresher.
  *
  * @param change - The change that possibly has missing or superfluous refreshers. Not mutated by this function.
  * @param getDetachedNode - The function to retrieve a tree chunk from the corresponding detached node id.
  * @param removedRoots - The set of removed roots that should be in memory for the given change to be applied.
  * Can be retrieved by calling {@link relevantRemovedRoots}.
+ * @param requireRefreshers - when true, this function enforces that all relevant removed roots have a
+ * corresponding build or refresher.
  */
 export function updateRefreshers(
 	change: ModularChangeset,
 	getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
 	removedRoots: Iterable<DeltaDetachedNodeId>,
+	requireRefreshers: boolean = true,
 ): ModularChangeset {
 	const refreshers: ChangeAtomIdMap<TreeChunk> = new Map();
 	const chunkLengths: Map<RevisionTag | undefined, BTree<number, number>> = new Map();
@@ -1238,8 +1231,11 @@ export function updateRefreshers(
 		}
 
 		const node = getDetachedNode(root);
-		assert(node !== undefined, 0x8cd /* detached node should exist */);
-		setInNestedMap(refreshers, root.major, root.minor, node);
+		if (node === undefined) {
+			assert(!requireRefreshers, 0x8cd /* detached node should exist */);
+		} else {
+			setInNestedMap(refreshers, root.major, root.minor, node);
+		}
 	}
 
 	const {
