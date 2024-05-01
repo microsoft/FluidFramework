@@ -17,14 +17,7 @@ import {
 	mintCommit,
 	rebaseChange,
 } from "../core/index.js";
-import {
-	Mutable,
-	RecursiveReadonly,
-	brand,
-	fail,
-	getOrCreate,
-	mapIterable,
-} from "../util/index.js";
+import { Mutable, brand, fail, getOrCreate, mapIterable } from "../util/index.js";
 
 import { SharedTreeBranch, getChangeReplaceType, onForkTransitive } from "./branch.js";
 import {
@@ -488,11 +481,11 @@ export class EditManager<
 		return this.trunkMetadata.get(commit.revision)?.sequenceId ?? minimumPossibleSequenceId;
 	}
 
-	public getTrunkChanges(): readonly RecursiveReadonly<TChangeset>[] {
+	public getTrunkChanges(): readonly TChangeset[] {
 		return this.getTrunkCommits().map((c) => c.change);
 	}
 
-	public getTrunkCommits(): readonly RecursiveReadonly<GraphCommit<TChangeset>>[] {
+	public getTrunkCommits(): readonly GraphCommit<TChangeset>[] {
 		return getPathFromBase(this.trunk.getHead(), this.trunkBase);
 	}
 
@@ -500,11 +493,11 @@ export class EditManager<
 		return this.trunk.getHead();
 	}
 
-	public getLocalChanges(): readonly RecursiveReadonly<TChangeset>[] {
+	public getLocalChanges(): readonly TChangeset[] {
 		return this.getLocalCommits().map((c) => c.change);
 	}
 
-	public getLocalCommits(): readonly RecursiveReadonly<GraphCommit<TChangeset>>[] {
+	public getLocalCommits(): readonly GraphCommit<TChangeset>[] {
 		return this.localCommits;
 	}
 

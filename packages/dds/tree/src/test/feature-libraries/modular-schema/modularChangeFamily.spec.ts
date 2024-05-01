@@ -1420,12 +1420,11 @@ describe("ModularChangeFamily", () => {
 				assert.deepEqual(withBuilds, expected);
 			});
 
-			it("throws if the detached node is not available", () => {
+			it("throws if the detached node is not available and requireRefreshers is true", () => {
 				const input: ModularChangeset = {
 					nodeChanges: new Map(),
 					fieldChanges: new Map([]),
 				};
-
 				assert.throws(() => updateRefreshers(input, getDetachedNode, [{ minor: 2 }]));
 			});
 		});

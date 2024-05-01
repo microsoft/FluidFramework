@@ -58,7 +58,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
-import { ISharedTree, SharedTreeFactory } from "@fluidframework/tree/internal";
+import { ISharedTree, SharedTree } from "@fluidframework/tree/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
 
@@ -99,7 +99,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		[cellId, SharedCell.getFactory()],
 		[counterId, SharedCounter.getFactory()],
 		[directoryId, SharedDirectory.getFactory()],
-		[treeId, new SharedTreeFactory()],
+		[treeId, SharedTree.getFactory()],
 	];
 
 	const testContainerConfig: ITestContainerConfig = {

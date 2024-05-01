@@ -22,8 +22,8 @@ import { createAzureTokenProvider } from "./AzureTokenFactory.js";
  * {@link AzureClient} instance based on the mode by setting the Connection config accordingly.
  */
 export function createAzureClient(
-	userID?: string,
-	userName?: string,
+	id?: string,
+	name?: string,
 	logger?: MockLogger,
 	configProvider?: IConfigProviderBase,
 	scopes?: ScopeType[],
@@ -33,8 +33,8 @@ export function createAzureClient(
 		? (process.env.azure__fluid__relay__service__tenantId as string)
 		: "frs-client-tenant";
 	const user = {
-		id: userID ?? uuid(),
-		name: userName ?? uuid(),
+		id: id ?? uuid(),
+		name: name ?? uuid(),
 	};
 	const endPoint = process.env.azure__fluid__relay__service__endpoint as string;
 	if (useAzure && endPoint === undefined) {
@@ -47,7 +47,7 @@ export function createAzureClient(
 	const connectionProps: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure
 		? {
 				tenantId,
-				tokenProvider: createAzureTokenProvider(userID ?? "foo", userName ?? "bar", scopes),
+				tokenProvider: createAzureTokenProvider(id ?? "foo", name ?? "bar", scopes),
 				endpoint: endPoint,
 				type: "remote",
 		  }
