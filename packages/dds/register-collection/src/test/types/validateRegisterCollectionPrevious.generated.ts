@@ -48,6 +48,7 @@ declare function get_current_ClassDeclaration_ConsensusRegisterCollection():
 declare function use_old_ClassDeclaration_ConsensusRegisterCollection(
     use: TypeOnly<old.ConsensusRegisterCollection<any>>): void;
 use_old_ClassDeclaration_ConsensusRegisterCollection(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ConsensusRegisterCollection());
 
 /*
@@ -139,13 +140,13 @@ use_old_InterfaceDeclaration_IConsensusRegisterCollectionEvents(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IConsensusRegisterCollectionFactory": {"forwardCompat": false}
+ * "RemovedInterfaceDeclaration_IConsensusRegisterCollectionFactory": {"forwardCompat": false}
  */
 declare function get_old_InterfaceDeclaration_IConsensusRegisterCollectionFactory():
     TypeOnly<old.IConsensusRegisterCollectionFactory>;
-declare function use_current_InterfaceDeclaration_IConsensusRegisterCollectionFactory(
+declare function use_current_RemovedInterfaceDeclaration_IConsensusRegisterCollectionFactory(
     use: TypeOnly<current.IConsensusRegisterCollectionFactory>): void;
-use_current_InterfaceDeclaration_IConsensusRegisterCollectionFactory(
+use_current_RemovedInterfaceDeclaration_IConsensusRegisterCollectionFactory(
     get_old_InterfaceDeclaration_IConsensusRegisterCollectionFactory());
 
 /*
@@ -153,14 +154,14 @@ use_current_InterfaceDeclaration_IConsensusRegisterCollectionFactory(
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IConsensusRegisterCollectionFactory": {"backCompat": false}
+ * "RemovedInterfaceDeclaration_IConsensusRegisterCollectionFactory": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_IConsensusRegisterCollectionFactory():
+declare function get_current_RemovedInterfaceDeclaration_IConsensusRegisterCollectionFactory():
     TypeOnly<current.IConsensusRegisterCollectionFactory>;
 declare function use_old_InterfaceDeclaration_IConsensusRegisterCollectionFactory(
     use: TypeOnly<old.IConsensusRegisterCollectionFactory>): void;
 use_old_InterfaceDeclaration_IConsensusRegisterCollectionFactory(
-    get_current_InterfaceDeclaration_IConsensusRegisterCollectionFactory());
+    get_current_RemovedInterfaceDeclaration_IConsensusRegisterCollectionFactory());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
