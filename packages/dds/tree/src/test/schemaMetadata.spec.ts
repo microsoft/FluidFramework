@@ -4,17 +4,15 @@
  */
 
 import assert from "assert";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	SchemaFactory,
 	TreeConfiguration,
 	treeNodeApi,
 	type TreeNode,
 } from "../simple-tree/index.js";
-import { TreeFactory } from "../treeFactory.js";
+import { TestTreeProviderLite } from "./utils.js";
 
-describe("Schema Metadata example patterns", () => {
+describe.only("Schema Metadata example patterns", () => {
 	it("Status Quo - suggested patterns only", () => {
 		const schemaFactory = new SchemaFactory("Notes");
 
@@ -86,11 +84,9 @@ describe("Schema Metadata example patterns", () => {
 			],
 		}));
 
-		const factory = new TreeFactory({});
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
+		const provider = new TestTreeProviderLite();
+		const tree = provider.trees[0];
+
 		const appView = tree.schematize(appConfig);
 
 		const aiSummary = getAISummary(appView.root);
