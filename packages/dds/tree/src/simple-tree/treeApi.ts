@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import { Multiplicity, rootFieldKey } from "../core/index.js";
+import { FieldKey, Multiplicity, rootFieldKey } from "../core/index.js";
 import {
 	FieldKinds,
 	LeafNodeSchema,
@@ -103,9 +103,10 @@ export interface TreeNodeApi {
 	shortId(node: TreeNode): number | string | undefined;
 
 	/**
-	 * Gets the field metadata associated with the given node under its parent
+	 * Gets the metadata for the field associated with the provided key under the provided node.
+	 * Will return `undefined` if no metadata was provided for the field.
 	 */
-	metadata(node: TreeNode): unknown;
+	metadata(node: TreeNode, key: string | number): unknown | undefined;
 }
 
 /**
@@ -211,8 +212,10 @@ export const treeNodeApi: TreeNodeApi = {
 			}
 		}
 	},
-	metadata(node: TreeNode): unknown {
-		return getFlexNode(node).parentField.parent.schema.metadata;
+	metadata(node: TreeNode, key: string | number): unknown | undefined {
+		const flexNode = getFlexNode(node);
+		const field = flexNode.tryGetField(key as FieldKey);
+		return field?.schema.metadata;
 	},
 };
 

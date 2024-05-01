@@ -120,32 +120,50 @@ describe.only("Schema Metadata example patterns", () => {
 		}) {}
 
 		function getAISummary(input: TreeNode): string {
-			return JSON.stringify(input, (key: string | number, value: TreeNode) => {
-				const metadata = treeNodeApi.metadata(value) as AppSchemaMetadata;
-				return metadata?.aiIgnored === true ? undefined : value;
-			});
+			return JSON.stringify(
+				input,
+				function (this: unknown, key: string | number, value: unknown) {
+					// Replacer function will also pass the original input node back in with a bogus "this" parent object.
+					// If we encounter the original input, return it as as.
+					if (value === input) {
+						return value;
+					}
+
+					// If the parent isn't a TreeNode, then it is some other kind of object that can appear in a proxy,
+					// e.g. an array. Return it as is.
+					if (!(this instanceof TreeNode)) {
+						return value;
+					}
+
+					const metadata = treeNodeApi.metadata(this, key) as AppSchemaMetadata;
+					return metadata?.aiIgnored === true ? undefined : value;
+				},
+			);
 		}
 
-		const canvas = new Canvas({
-			width: 100,
-			height: 200,
-			notes: [
-				new Note({
-					position: { x: 10, y: 10 },
-					width: 10,
-					height: 20,
-					text: "Hello",
-				}),
-				new Note({
-					position: { x: 30, y: 10 },
-					width: 30,
-					height: 40,
-					text: "World",
-				}),
-			],
-		});
+		const tree = hydrate(
+			Canvas,
+			new Canvas({
+				width: 100,
+				height: 200,
+				notes: [
+					new Note({
+						position: { x: 10, y: 10 },
+						width: 10,
+						height: 20,
+						text: "Hello",
+					}),
+					new Note({
+						position: { x: 30, y: 10 },
+						width: 30,
+						height: 40,
+						text: "World",
+					}),
+				],
+			}),
+		);
 
-		const aiSummary = getAISummary(canvas);
+		const aiSummary = getAISummary(tree);
 		assert.equal(aiSummary, JSON.stringify({ notes: [{ text: "Hello" }, { text: "World" }] }));
 	});
 });
