@@ -67,13 +67,13 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	 * Inserts new item(s) at the start of the array.
 	 * @param value - The content to insert.
 	 */
-	insertAtStart(...value: (TNew | IterableTreeArrayContent<TNew>)[]): void;
+	insertAtStart(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
 
 	/**
 	 * Inserts new item(s) at the end of the array.
 	 * @param value - The content to insert.
 	 */
-	insertAtEnd(...value: (TNew | IterableTreeArrayContent<TNew>)[]): void;
+	insertAtEnd(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
 
 	/**
 	 * Removes the item at the specified location.
@@ -330,40 +330,56 @@ const arrayPrototypeKeys = [
 
 /**
  * {@link TreeNodeValid}, but modified to add members from Array.prototype named in {@link arrayPrototypeKeys}.
+ * @privateRemarks
+ * Since a lot of scratch types and values are involved with creating this,
+ * it's generating using an immediately invoked function expression (IIFE).
+ * This is a common JavaScript pattern for cases like this to avoid cluttering the scope.
  */
-abstract class TreeNodeWithArrayFeaturesUntyped<
-	const T extends ImplicitAllowedTypes,
-> extends TreeNodeValid<Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>> {}
+const TreeNodeWithArrayFeatures = (() => {
+	/**
+	 * {@link TreeNodeValid}, but modified to add members from Array.prototype named in {@link arrayPrototypeKeys}.
+	 */
+	abstract class TreeNodeWithArrayFeaturesUntyped<
+		const T extends ImplicitAllowedTypes,
+	> extends TreeNodeValid<Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>> {}
 
-arrayPrototypeKeys.forEach((key) => {
-	Object.defineProperty(TreeNodeWithArrayFeaturesUntyped.prototype, key, {
-		value: Array.prototype[key],
+	// Modify TreeNodeWithArrayFeaturesUntyped to add the members from Array.prototype
+	arrayPrototypeKeys.forEach((key) => {
+		Object.defineProperty(TreeNodeWithArrayFeaturesUntyped.prototype, key, {
+			value: Array.prototype[key],
+		});
 	});
-});
 
-/**
- * Type of {@link TreeNodeWithArrayFeaturesUntyped}, but with its array members added to the type.
- */
-type TreeNodeWithArrayFeaturesType = TreeNodeValueStatics &
-	(abstract new <T extends ImplicitAllowedTypes>(
+	type AugmentedInstanceType<T extends ImplicitAllowedTypes> = TreeNodeValid<
+		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>
+	> &
+		Pick<readonly TreeNodeFromImplicitAllowedTypes<T>[], (typeof arrayPrototypeKeys)[number]>;
+
+	type AugmentedConstructor = abstract new <T extends ImplicitAllowedTypes>(
 		input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> | InternalTreeNode,
-	) => TreeNodeValid<Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>> &
-		Pick<readonly TreeNodeFromImplicitAllowedTypes<T>[], (typeof arrayPrototypeKeys)[number]>);
+	) => AugmentedInstanceType<T>;
 
-/**
- * {@link TreeNodeValid}, but modified to add members from Array.prototype named in {@link arrayPrototypeKeys}.
- */
-const TreeNodeWithArrayFeatures =
-	TreeNodeWithArrayFeaturesUntyped as unknown as TreeNodeWithArrayFeaturesType;
+	/**
+	 * Type of {@link TreeNodeWithArrayFeaturesUntyped}, but with its array members added to the instance type.
+	 *
+	 * TypeScript has a rule that `Base constructors must all have the same return type.ts(2510)`.
+	 * This means that intersecting two types with different constructors to create a type with a more constrained constructor (ex: more specific return type)
+	 * is not supported.
+	 *
+	 * TypeScript also has a limitation that there is no way to replace or remove just the constructor of a type without losing all the private and protected members.
+	 * See https://github.com/microsoft/TypeScript/issues/35416 for details.
+	 *
+	 * Thus this has to replace the constructor type, and cannot do so while preserving the protected static members of TreeNodeValid.
+	 */
+	type StaticsWithoutConstructor = {
+		// As noted above, this loses all the protected members: this us undesired (but unavoidable).
+		// Since the constructor, which we do want to remove, is also protected, no extra work is needed to remove it.
+		[P in keyof typeof TreeNodeWithArrayFeaturesUntyped]: (typeof TreeNodeWithArrayFeaturesUntyped)[P];
+	};
 
-type NonConstructorKeys<T> = { [P in keyof T]: T[P] extends new () => any ? never : P }[keyof T];
-type NonConstructor<T> = Pick<T, NonConstructorKeys<T>>;
-
-// Due to https://github.com/microsoft/TypeScript/issues/35416 this fails to preserve protected members, which are what we are trying to preserve here.
-// This results in the overridden protected members of schema in arraySchema not being able to be marked with override or checked for correct types against the inherited members.
-// TODO:
-// Implementing custom versions of all the array methods instead of reusing the versions from array would allow removing this logic, restoring safer checking of these overridden protected static methods.
-type TreeNodeValueStatics = NonConstructor<typeof TreeNodeValid>;
+	return TreeNodeWithArrayFeaturesUntyped as unknown as StaticsWithoutConstructor &
+		AugmentedConstructor;
+})();
 
 /**
  * Attempts to coerce the given property key to an integer index property.
@@ -557,9 +573,6 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		return fail("Proxy should intercept length");
 	}
 
-	// We manually add [Symbol.iterator] to the dispatch map rather than use '[fn.name] = fn' as
-	// below when adding 'Array.prototype.*' properties to this map because 'Array.prototype[Symbol.iterator].name'
-	// returns "values" (i.e., Symbol.iterator is an alias for the '.values()' function.)
 	public [Symbol.iterator](): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
 		return this.values();
 	}
