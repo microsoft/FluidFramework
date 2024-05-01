@@ -7,23 +7,51 @@ import { strict as assert } from "assert";
 
 import { MockHandle, validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import { EmptyKey, type FieldKey, type MapTree } from "../../core/index.js";
+import {
+	EmptyKey,
+	LeafNodeStoredSchema,
+	ValueSchema,
+	type FieldKey,
+	type FieldKindData,
+	type FieldKindIdentifier,
+	type MapTree,
+	type SchemaAndPolicy,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
+} from "../../core/index.js";
 import { leaf } from "../../domains/index.js";
 import { SchemaFactory } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { InsertableContent } from "../../simple-tree/proxies.js";
-// eslint-disable-next-line import/no-internal-modules
-import { ImplicitAllowedTypes, normalizeAllowedTypes } from "../../simple-tree/schemaTypes.js";
-// eslint-disable-next-line import/no-internal-modules
-import { nodeDataToMapTree as nodeDataToMapTreeBase } from "../../simple-tree/toMapTree.js";
+import {
+	FieldKind,
+	createFieldSchema,
+	ImplicitAllowedTypes,
+	normalizeAllowedTypes,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/schemaTypes.js";
+import {
+	cursorFromFieldData,
+	cursorFromNodeData,
+	nodeDataToMapTree as nodeDataToMapTreeBase,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
 
 /**
  * Wrapper around {@link nodeDataToMapTreeBase} which handles the normalization of {@link ImplicitAllowedTypes} as a
  * convenience.
  */
-function nodeDataToMapTree(tree: InsertableContent, allowedTypes: ImplicitAllowedTypes): MapTree {
-	return nodeDataToMapTreeBase(tree, normalizeAllowedTypes(allowedTypes));
+function nodeDataToMapTree(
+	tree: InsertableContent,
+	allowedTypes: ImplicitAllowedTypes,
+	performSchemaValidation: SchemaAndPolicy | undefined = undefined,
+): MapTree {
+	return nodeDataToMapTreeBase(
+		tree,
+		normalizeAllowedTypes(allowedTypes),
+		performSchemaValidation,
+	);
 }
 
 describe("toMapTree", () => {
@@ -592,7 +620,7 @@ describe("toMapTree", () => {
 		assert.deepEqual(actual, expected);
 	});
 
-	it("ambagious unions", () => {
+	it("ambiguous unions", () => {
 		const schemaFactory = new SchemaFactory("test");
 		const a = schemaFactory.object("a", { x: schemaFactory.string });
 		const b = schemaFactory.object("b", { x: schemaFactory.string });
@@ -605,7 +633,7 @@ describe("toMapTree", () => {
 		);
 	});
 
-	it("unambagious unions", () => {
+	it("unambiguous unions", () => {
 		const schemaFactory = new SchemaFactory("test");
 		const a = schemaFactory.object("a", { a: schemaFactory.string, c: schemaFactory.string });
 		const b = schemaFactory.object("b", { b: schemaFactory.string, c: schemaFactory.string });
@@ -721,6 +749,104 @@ describe("toMapTree", () => {
 					]),
 				/Received unsupported array entry value/,
 			);
+		});
+	});
+
+	describe.only("Stored schema validation", () => {
+		function createSchemaAndPolicy(
+			nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map(),
+			fieldKinds: Map<FieldKindIdentifier, FieldKindData> = new Map(),
+		): SchemaAndPolicy {
+			return {
+				schema: {
+					nodeSchema,
+				},
+				policy: {
+					fieldKinds,
+				},
+			};
+		}
+
+		const outOfSchemaExpectedError: Partial<Error> = {
+			message: "Tree does not conform to schema.",
+		};
+
+		const schemaFactory = new SchemaFactory("test");
+		const schemaAndPolicyForSuccess = createSchemaAndPolicy(
+			new Map([
+				[
+					brand(schemaFactory.string.identifier),
+					new LeafNodeStoredSchema(ValueSchema.String),
+				],
+			]),
+			new Map(),
+		);
+		const schemaAndPolicyForFailure = createSchemaAndPolicy(
+			new Map([
+				[
+					// Fake a stored schema that associates the string identifier to a number schema
+					brand(schemaFactory.string.identifier),
+					new LeafNodeStoredSchema(ValueSchema.Number),
+				],
+			]),
+			new Map(),
+		);
+
+		describe("nodeDataToMapTree", () => {
+			it("Success", () => {
+				const content = "Hello world";
+				nodeDataToMapTree(content, [schemaFactory.string], schemaAndPolicyForSuccess);
+			});
+
+			it("Failure", () => {
+				const content = "Hello world";
+				assert.throws(
+					() =>
+						nodeDataToMapTree(
+							content,
+							[schemaFactory.string],
+							schemaAndPolicyForFailure,
+						),
+					outOfSchemaExpectedError,
+				);
+			});
+		});
+
+		describe("cursorFromNodeData", () => {
+			it("Success", () => {
+				const nodeData = "Hello world";
+				cursorFromNodeData(nodeData, [schemaFactory.string], schemaAndPolicyForSuccess);
+			});
+
+			it("Failure", () => {
+				const content = "Hello world";
+				assert.throws(
+					() =>
+						cursorFromNodeData(
+							content,
+							[schemaFactory.string],
+							schemaAndPolicyForFailure,
+						),
+					outOfSchemaExpectedError,
+				);
+			});
+		});
+
+		describe("cursorFromFieldData", () => {
+			it("Success", () => {
+				const content = "Hello world";
+				const fieldSchema = createFieldSchema(FieldKind.Required, [schemaFactory.string]);
+				cursorFromFieldData(content, fieldSchema, schemaAndPolicyForSuccess);
+			});
+
+			it("Failure", () => {
+				const content = "Hello world";
+				const fieldSchema = createFieldSchema(FieldKind.Required, [schemaFactory.string]);
+				assert.throws(
+					() => cursorFromFieldData(content, fieldSchema, schemaAndPolicyForFailure),
+					outOfSchemaExpectedError,
+				);
+			});
 		});
 	});
 });
