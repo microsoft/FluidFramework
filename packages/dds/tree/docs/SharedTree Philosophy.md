@@ -266,14 +266,14 @@ SharedTree is designed to enable this optimization in the future, but currently 
 
 Another way SharedTree is optimized for performant application of remote edits is to push as much of the cost as possible onto the creation of edits,
 so it is paid by the client producing the edits, slowing down their edit stream (which reduces the burden on remote clients) as well as lowering the cost of applying those edits for the remote clients.
-One way SharedTree does this by leveraging Fluid's collaboration window limits: if applying an op would require processing too much history, the client sending the op is required to perform that work themselves to produce a more self contained op.
+One way SharedTree does this is by leveraging Fluid's collaboration window limits: if applying an op would require processing too much history, the client sending the op is required to perform that work themselves to produce a more self-contained op.
 The best example of this is the resubmit op flow, which has the client sending the op rebase it if it gets too old.
 
 ## Eager vs Lazy
 
 Generally, eagerly computing things is simpler, and if they end up being required, faster.
 Eager computation also often saves on memory footprint.
-SharedTree assumes that the app using the tree will frequently read data, however its designed to support use cases with large amounts of data, and applications that only read a small part of it.
+SharedTree assumes that the app using the tree will frequently read data, however it is designed to support use cases with large amounts of data, and applications that only read a small part of it.
 
 Thus SharedTree aims to eagerly compute things that will be needed regardless of which data is read,
 as well as eagerly compute things that are cheap enough that it is not a performance issue.
