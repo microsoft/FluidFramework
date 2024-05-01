@@ -2608,6 +2608,10 @@ export class ContainerRuntime
 	 */
 	private processCore(messageWithContext: MessageWithContext) {
 		const { message, local } = messageWithContext;
+
+		// Intercept to reduce minimum sequence number to the delta manager's minimum sequence number.
+		messageWithContext.message.minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
+
 		// Surround the actual processing of the operation with messages to the schedule manager indicating
 		// the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
 		// messages once a batch has been fully processed.
@@ -2638,9 +2642,6 @@ export class ContainerRuntime
 				this.updateDocumentDirtyState(false);
 			}
 
-			// Intercept to reduce minimum sequence number to the delta manager's minimum sequence number.
-			messageWithContext.message.minimumSequenceNumber =
-				this.deltaManager.minimumSequenceNumber;
 			this.validateAndProcessRuntimeMessage(messageWithContext, localOpMetadata);
 
 			this.emit("op", message, messageWithContext.modernRuntimeMessage);

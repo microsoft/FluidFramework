@@ -234,7 +234,10 @@ export class DeltaManagerPendingOpsProxy extends BaseDeltaManagerProxy {
 
 	constructor(
 		protected readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-		private readonly pendingStateManager: PendingStateManager,
+		private readonly pendingStateManager: Pick<
+			PendingStateManager,
+			"minimumPendingMessageSequenceNumber"
+		>,
 	) {
 		super(deltaManager);
 	}
