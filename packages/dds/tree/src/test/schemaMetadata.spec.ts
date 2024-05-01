@@ -4,13 +4,10 @@
  */
 
 import assert from "assert";
-import {
-	SchemaFactory,
-	TreeConfiguration,
-	treeNodeApi,
-	type TreeNode,
-} from "../simple-tree/index.js";
-import { TestTreeProviderLite } from "./utils.js";
+import { SchemaFactory, treeNodeApi, type TreeNode } from "../simple-tree/index.js";
+import type { TreeLeafValue } from "../../dist/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { hydrate } from "./simple-tree/utils.js";
 
 describe.only("Schema Metadata example patterns", () => {
 	it("Status Quo - suggested patterns only", () => {
@@ -52,20 +49,19 @@ describe.only("Schema Metadata example patterns", () => {
 		}
 
 		function getAISummary(input: TreeNode): string {
-			return JSON.stringify(input, (key: string | number, value: TreeNode) => {
-				// Getting the field metadata requires looking up the parent and its schema
-				const parent = treeNodeApi.parent(value);
-				if (parent !== undefined) {
-					const parentSchema = treeNodeApi.schema(parent);
-					if ((parentSchema as any).fieldMetadata?.[key]?.aiIgnored === true) {
-						return undefined;
-					}
-				}
-				return value;
-			});
+			return JSON.stringify(
+				input,
+				function (this: TreeNode, key: string | number, value: TreeNode | TreeLeafValue) {
+					console.log(`Stringifying Key: "${key}"`);
+					const schema = treeNodeApi.schema(this);
+					return (schema as any).fieldMetadata?.[key]?.aiIgnored === true
+						? undefined
+						: value;
+				},
+			);
 		}
 
-		const appConfig = new TreeConfiguration(Canvas, () => ({
+		const tree = hydrate(Canvas, {
 			width: 100,
 			height: 200,
 			notes: [
@@ -82,14 +78,9 @@ describe.only("Schema Metadata example patterns", () => {
 					text: "World",
 				},
 			],
-		}));
+		});
 
-		const provider = new TestTreeProviderLite();
-		const tree = provider.trees[0];
-
-		const appView = tree.schematize(appConfig);
-
-		const aiSummary = getAISummary(appView.root);
+		const aiSummary = getAISummary(tree);
 		assert.equal(aiSummary, JSON.stringify({ notes: [{ text: "Hello" }, { text: "World" }] }));
 	});
 
