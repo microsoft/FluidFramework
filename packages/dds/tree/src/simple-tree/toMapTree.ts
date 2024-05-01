@@ -297,7 +297,7 @@ function mapToMapTree(
  * @param allowedTypes - The allowed types specified by the parent.
  * Used to determine which fallback values may be appropriate.
  */
-function objectToMapTree(
+export function objectToMapTree(
 	data: InsertableContent,
 	schema: TreeNodeSchema,
 	nodeKeyManager: NodeKeyManager,
@@ -310,51 +310,26 @@ function objectToMapTree(
 	const fields = new Map<FieldKey, MapTree[]>();
 
 	// Filter keys to only those that are strings - our trees do not support symbol or numeric property keys
-	const keys = Reflect.ownKeys(data).filter((key) => typeof key === "string") as FieldKey[];
+	const keys = Reflect.ownKeys(data).filter((key) => typeof key === "string") as string[];
 
+	for (const viewKey of keys) {
+		const fieldValue = (data as Record<string, InsertableContent>)[viewKey];
+		const fieldSchema = getObjectFieldSchema(schema, viewKey);
+		setFieldValue(fields, fieldValue, fieldSchema, nodeKeyManager, viewKey);
+	}
+
+	// Loop through field keys without data, and assign value from its default provider.
 	for (const [key, fieldSchema] of Object.entries(
 		schema.info as Record<string, ImplicitFieldSchema>,
 	)) {
-		if (!keys.includes(key as FieldKey)) {
+		if (!keys.includes(key)) {
 			if (fieldSchema instanceof FieldSchema) {
 				const defaultProvider = fieldSchema.props?.defaultProvider;
-				// TODO: Currently cannot set undefined values onto fields, but if we decide to allow undefined in allowableTypes,
-				// this if statement can be removed.
 				if (defaultProvider !== undefined) {
 					const fieldValue = extractFieldProvider(defaultProvider)(nodeKeyManager);
-					if (fieldValue !== undefined) {
-						const mappedChildTree = nodeDataToMapTree(
-							fieldValue,
-							fieldSchema.allowedTypeSet,
-							nodeKeyManager,
-						);
-						const flexKey: FieldKey = brand(getStoredKey(key, fieldSchema));
-
-						assert(!fields.has(flexKey), 0x956 /* Keys must not be duplicated */);
-						fields.set(flexKey, [mappedChildTree]);
-					}
+					setFieldValue(fields, fieldValue, fieldSchema, nodeKeyManager, key);
 				}
 			}
-		}
-	}
-
-	for (const viewKey of keys) {
-		const fieldValue = (data as Record<FieldKey, InsertableContent>)[viewKey];
-
-		// Omit undefined record entries - an entry with an undefined key is equivalent to no entry
-		if (fieldValue !== undefined) {
-			const fieldSchema = getObjectFieldSchema(schema, viewKey);
-			const mappedChildTree = nodeDataToMapTree(
-				fieldValue,
-				fieldSchema.allowedTypeSet,
-				nodeKeyManager,
-			);
-			const flexKey: FieldKey = brand(getStoredKey(viewKey, fieldSchema));
-
-			// Note: SchemaFactory validates this at schema creation time, with a user-friendly error.
-			// So we don't expect to hit this, and if we do it is likely an internal bug.
-			assert(!fields.has(flexKey), 0x925 /* Keys must not be duplicated */);
-			fields.set(flexKey, [mappedChildTree]);
 		}
 	}
 
@@ -364,7 +339,27 @@ function objectToMapTree(
 	};
 }
 
-function getObjectFieldSchema(schema: TreeNodeSchema, key: FieldKey): FieldSchema {
+function setFieldValue(
+	fields: Map<FieldKey, MapTree[]>,
+	fieldValue: InsertableContent | undefined,
+	fieldSchema: FieldSchema,
+	nodeKeyManager: NodeKeyManager,
+	key: string,
+): void {
+	if (fieldValue !== undefined) {
+		const mappedChildTree = nodeDataToMapTree(
+			fieldValue,
+			fieldSchema.allowedTypeSet,
+			nodeKeyManager,
+		);
+		const flexKey: FieldKey = brand(getStoredKey(key, fieldSchema));
+
+		assert(!fields.has(flexKey), 0x956 /* Keys must not be duplicated */);
+		fields.set(flexKey, [mappedChildTree]);
+	}
+}
+
+function getObjectFieldSchema(schema: TreeNodeSchema, key: string): FieldSchema {
 	assert(schema.kind === NodeKind.Object, 0x926 /* Expected an Object schema. */);
 	const fields = schema.info as Record<string, ImplicitFieldSchema>;
 	if (fields[key] === undefined) {

@@ -14,8 +14,11 @@ import { SchemaFactory } from "../../simple-tree/index.js";
 import type { InsertableContent } from "../../simple-tree/proxies.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ImplicitAllowedTypes, normalizeAllowedTypes } from "../../simple-tree/schemaTypes.js";
-// eslint-disable-next-line import/no-internal-modules
-import { nodeDataToMapTree as nodeDataToMapTreeBase } from "../../simple-tree/toMapTree.js";
+import {
+	nodeDataToMapTree as nodeDataToMapTreeBase,
+	objectToMapTree,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
 import { createMockNodeKeyManager } from "../../feature-libraries/index.js";
 
@@ -333,7 +336,7 @@ describe("toMapTree", () => {
 	});
 
 	describe("object", () => {
-		describe("Field defaults", () => {
+		describe("objectToMapTree", () => {
 			it("Populates identifier field with the default identifier provider", () => {
 				const schemaFactory = new SchemaFactory("test");
 				const schema = schemaFactory.object("object", {
@@ -342,7 +345,7 @@ describe("toMapTree", () => {
 
 				const tree = {};
 
-				const actual = nodeDataToMapTree(tree, [schema]);
+				const actual = objectToMapTree(tree, schema, createMockNodeKeyManager());
 
 				const expected: MapTree = {
 					type: brand("test.object"),
@@ -371,7 +374,7 @@ describe("toMapTree", () => {
 
 				const tree = {};
 
-				const actual = nodeDataToMapTree(tree, [schema]);
+				const actual = objectToMapTree(tree, schema, createMockNodeKeyManager());
 
 				const expected: MapTree = {
 					type: brand("test.object"),
