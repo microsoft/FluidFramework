@@ -137,9 +137,10 @@ export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
 	 */
 	readonly viewComponent: React.FC<{ root: TreeFieldFromImplicitField<TSchema> }>;
 	/**
-	 * If not provided a default component is provided which describes the situation
-	 * and allows the user to upgrade the schema if possible.
-	 * This default is not localized.
+	 * Component to display instead of the {@link TreeViewProps.viewComponent}
+	 * when tree content is not compatible with the {@link @fluidframework/tree#TreeConfiguration}.
+	 *
+	 * @defaultValue Component which describes the situation (in English) and allows the user to upgrade the schema to match the {@link @fluidframework/tree#TreeConfiguration} if possible.
 	 */
 	readonly errorComponent?: React.FC<SchemaIncompatibleProps>;
 }
