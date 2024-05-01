@@ -141,27 +141,24 @@ describe.only("Schema Metadata example patterns", () => {
 			);
 		}
 
-		const tree = hydrate(
-			Canvas,
-			new Canvas({
-				width: 100,
-				height: 200,
-				notes: [
-					new Note({
-						position: { x: 10, y: 10 },
-						width: 10,
-						height: 20,
-						text: "Hello",
-					}),
-					new Note({
-						position: { x: 30, y: 10 },
-						width: 30,
-						height: 40,
-						text: "World",
-					}),
-				],
-			}),
-		);
+		const tree = hydrate(Canvas, {
+			width: 100,
+			height: 200,
+			notes: [
+				{
+					position: { x: 10, y: 10 },
+					width: 10,
+					height: 20,
+					text: "Hello",
+				},
+				{
+					position: { x: 30, y: 10 },
+					width: 30,
+					height: 40,
+					text: "World",
+				},
+			],
+		});
 
 		const aiSummary = getAISummary(tree);
 		assert.equal(aiSummary, JSON.stringify({ notes: [{ text: "Hello" }, { text: "World" }] }));
