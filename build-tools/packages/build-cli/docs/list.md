@@ -3,23 +3,25 @@
 
 List packages in a release group in topological order.
 
-* [`flub list`](#flub-list)
+* [`flub list [PACKAGE_OR_RELEASE_GROUP]`](#flub-list-package_or_release_group)
 
-## `flub list`
+## `flub list [PACKAGE_OR_RELEASE_GROUP]`
 
 List packages in a release group in topological order.
 
 ```
 USAGE
-  $ flub list [--json] [-v | --quiet] [-g client|server|azure|build-tools|gitrest|historian | -p <value>]
-    [--feed public|internal-build|internal-test|internal-dev|official|internal] [--private] [--scope <value> |
-    --skipScope <value>] [--tarball] [--outFile <value>]
+  $ flub list [PACKAGE_OR_RELEASE_GROUP] [--json] [-v | --quiet] [-g
+    client|server|azure|build-tools|gitrest|historian | ] [--feed
+    public|internal-build|internal-test|internal-dev|official|internal] [--private] [--scope <value> | --skipScope
+    <value>] [--tarball] [--outFile <value>]
+
+ARGUMENTS
+  PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.
 
 FLAGS
   -g, --releaseGroup=<option>  Name of a release group.
                                <options: client|server|azure|build-tools|gitrest|historian>
-  -p, --package=<value>        Name of package. You can use scoped or unscoped package names. For example, both
-                               @fluid-tools/benchmark and benchmark are valid.
       --outFile=<value>        Output file to write the list of packages to. If not specified, the list will be written
                                to stdout.
       --tarball                Return packed tarball names (without extension) instead of package names. @-signs will be
