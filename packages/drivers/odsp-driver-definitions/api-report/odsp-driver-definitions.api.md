@@ -73,7 +73,6 @@ export type InstrumentedTokenFetcher = (options: TokenFetchOptions, name: string
 
 // @alpha
 export interface IOdspError extends Omit<IDriverErrorBase, "errorType">, IOdspErrorAugmentations {
-    errorFrom?: string;
     // (undocumented)
     readonly errorType: OdspErrorTypes;
 }

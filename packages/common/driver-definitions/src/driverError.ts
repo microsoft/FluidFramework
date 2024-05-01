@@ -125,6 +125,11 @@ export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErro
  */
 export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
 	readonly errorType: string;
+	/**
+	 * This property is used predominantly for socket io errors. It captures the underlying socket event name which resulted in the error.
+	 * i.e. connect_error, connect_document_error etc.
+	 */
+	eventName?: string;
 }
 
 /**

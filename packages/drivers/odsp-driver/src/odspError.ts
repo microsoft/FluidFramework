@@ -35,7 +35,7 @@ export function errorObjectFromSocketError(
 		error.addTelemetryProperties({
 			odspError: true,
 			relayServiceError: true,
-			errorFrom: socketEvent,
+			eventName: socketEvent,
 		});
 		return error;
 	} catch {
