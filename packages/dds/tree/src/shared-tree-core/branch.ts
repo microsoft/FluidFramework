@@ -127,7 +127,7 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
  *
  * @remarks
  * Trimming is a very specific kind of mutation which is the only allowed mutations to branches. It is done as a
- * performance optimization for when it is determined that commits are no longer needed for future computation.
+ * performance optimization when it is determined that commits are no longer needed for future computation.
  */
 export interface BranchTrimmingEvents {
 	/**
