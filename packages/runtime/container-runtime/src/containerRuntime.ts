@@ -1524,7 +1524,6 @@ export class ContainerRuntime
 			opGroupingManager,
 		);
 
-		const deltaManagerSummarizerProxy = new DeltaManagerSummarizerProxy(this.innerDeltaManager);
 		const pendingRuntimeState = pendingLocalState as IPendingRuntimeState | undefined;
 		this.pendingStateManager = new PendingStateManager(
 			{
@@ -1544,13 +1543,24 @@ export class ContainerRuntime
 			this.logger,
 		);
 
+		let outerDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 		const useDeltaManagerOpsProxy =
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") === true;
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") !== false;
+		// The summarizerDeltaManager Proxy is used to lie to the summarizer to convince it is in the right state as a summarizer client.
+		const summarizerDeltaManagerProxy = new DeltaManagerSummarizerProxy(this.innerDeltaManager);
+		outerDeltaManager = summarizerDeltaManagerProxy;
+
 		// The DeltaManagerPendingOpsProxy is used to control the minimum sequence number
 		// It allows us to lie to the layers below so that they can maintain enough local state for rebasing ops.
-		this.deltaManager = useDeltaManagerOpsProxy
-			? new DeltaManagerPendingOpsProxy(deltaManagerSummarizerProxy, this.pendingStateManager)
-			: deltaManagerSummarizerProxy;
+		if (useDeltaManagerOpsProxy) {
+			const pendingOpsDeltaManagerProxy = new DeltaManagerPendingOpsProxy(
+				summarizerDeltaManagerProxy,
+				this.pendingStateManager,
+			);
+			outerDeltaManager = pendingOpsDeltaManagerProxy;
+		}
+
+		this.deltaManager = outerDeltaManager;
 
 		this.handleContext = new ContainerFluidHandleContext("", this);
 
@@ -2628,6 +2638,9 @@ export class ContainerRuntime
 				this.updateDocumentDirtyState(false);
 			}
 
+			// Intercept to reduce minimum sequence number to the delta manager's minimum sequence number.
+			messageWithContext.message.minimumSequenceNumber =
+				this.deltaManager.minimumSequenceNumber;
 			this.validateAndProcessRuntimeMessage(messageWithContext, localOpMetadata);
 
 			this.emit("op", message, messageWithContext.modernRuntimeMessage);

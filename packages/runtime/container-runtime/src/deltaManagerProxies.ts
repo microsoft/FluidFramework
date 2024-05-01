@@ -140,7 +140,10 @@ export abstract class BaseDeltaManagerProxy
 	private readonly onSubmitOp = (message: IDocumentMessage): void => {
 		this.emit("submitOp", message);
 	};
-	private readonly onOp = (message: ISequencedDocumentMessage, processingTime: number): void => {
+	protected readonly onOp = (
+		message: ISequencedDocumentMessage,
+		processingTime: number,
+	): void => {
 		this.emit("op", message, processingTime);
 	};
 	private readonly onPong = (latency: number): void => {
@@ -198,11 +201,36 @@ export class DeltaManagerSummarizerProxy extends BaseDeltaManagerProxy {
 
 export class DeltaManagerPendingOpsProxy extends BaseDeltaManagerProxy {
 	public get minimumSequenceNumber(): number {
-		return (
-			this.pendingStateManager.minimumPendingMessageSequenceNumber ??
-			this.deltaManager.minimumSequenceNumber
-		);
+		const minPendingSeqNum = this.pendingStateManager.minimumPendingMessageSequenceNumber;
+		if (
+			minPendingSeqNum !== undefined &&
+			minPendingSeqNum < this.deltaManager.minimumSequenceNumber
+		) {
+			return minPendingSeqNum;
+		}
+		return this.deltaManager.minimumSequenceNumber;
 	}
+
+	public get lastMessage() {
+		if (this.deltaManager.lastMessage === undefined) {
+			return this.deltaManager.lastMessage;
+		}
+		return {
+			...this.deltaManager.lastMessage,
+			minimumSequenceNumber: this.minimumSequenceNumber,
+		};
+	}
+
+	protected readonly onOp = (
+		message: ISequencedDocumentMessage,
+		processingTime: number,
+	): void => {
+		const messageIntercept = {
+			...message,
+			minimumSequenceNumber: this.minimumSequenceNumber,
+		};
+		this.emit("op", messageIntercept, processingTime);
+	};
 
 	constructor(
 		protected readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
