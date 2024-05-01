@@ -39,7 +39,7 @@ import {
 	normalizeFieldSchema,
 } from "./schemaTypes.js";
 import { cursorFromFieldData } from "./toMapTree.js";
-import { InternalTreeNode, TreeNode, TreeNodeValid } from "./types.js";
+import { TreeNode, TreeNodeValid } from "./types.js";
 import { fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { RawTreeNode, rawError } from "./rawNode.js";
@@ -350,36 +350,71 @@ const TreeNodeWithArrayFeatures = (() => {
 		});
 	});
 
-	type AugmentedInstanceType<T extends ImplicitAllowedTypes> = TreeNodeValid<
-		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>
-	> &
-		Pick<readonly TreeNodeFromImplicitAllowedTypes<T>[], (typeof arrayPrototypeKeys)[number]>;
-
-	type AugmentedConstructor = abstract new <T extends ImplicitAllowedTypes>(
-		input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> | InternalTreeNode,
-	) => AugmentedInstanceType<T>;
-
-	/**
-	 * Type of {@link TreeNodeWithArrayFeaturesUntyped}, but with its array members added to the instance type.
-	 *
-	 * TypeScript has a rule that `Base constructors must all have the same return type.ts(2510)`.
-	 * This means that intersecting two types with different constructors to create a type with a more constrained constructor (ex: more specific return type)
-	 * is not supported.
-	 *
-	 * TypeScript also has a limitation that there is no way to replace or remove just the constructor of a type without losing all the private and protected members.
-	 * See https://github.com/microsoft/TypeScript/issues/35416 for details.
-	 *
-	 * Thus this has to replace the constructor type, and cannot do so while preserving the protected static members of TreeNodeValid.
-	 */
-	type StaticsWithoutConstructor = {
-		// As noted above, this loses all the protected members: this us undesired (but unavoidable).
-		// Since the constructor, which we do want to remove, is also protected, no extra work is needed to remove it.
-		[P in keyof typeof TreeNodeWithArrayFeaturesUntyped]: (typeof TreeNodeWithArrayFeaturesUntyped)[P];
-	};
-
-	return TreeNodeWithArrayFeaturesUntyped as unknown as StaticsWithoutConstructor &
-		AugmentedConstructor;
+	return TreeNodeWithArrayFeaturesUntyped as unknown as typeof NodeWithArrayFeatures;
 })();
+
+/**
+ * Type of {@link TreeNodeValid}, but with array members added to the instance type.
+ *
+ * TypeScript has a rule that `Base constructors must all have the same return type.ts(2510)`.
+ * This means that intersecting two types with different constructors to create a type with a more constrained constructor (ex: more specific return type)
+ * is not supported.
+ *
+ * TypeScript also has a limitation that there is no way to replace or remove just the constructor of a type without losing all the private and protected members.
+ * See https://github.com/microsoft/TypeScript/issues/35416 for details.
+ *
+ * TypeScript also does not support explicit specifying the instance type in a class definition as the constructor return type.
+ *
+ * Thus to replace the instance type, while preserving the protected static members of TreeNodeValid,
+ * the only option seems to be actually declaring a class with all the members explicitly inline.
+ *
+ * To avoid incurring any bundle size / runtime overhead from this and having to stub out the function bodies,
+ * the class uses `declare`.
+ * TypeScript does not support `declare` inside scopes, so this is not inside the function scope above.
+ *
+ * The members of this class were generated using the "implement interface" refactoring.
+ * Since that refactoring does not add `public`, the lint to require it is disabled for this section of the file.
+ * To update this class delete all members and reapply the "implement interface" refactoring.
+ * As these signatures get formatted to be over three times as many lines with prettier (which is not helpful), it is also suppressed.
+ */
+/* eslint-disable @typescript-eslint/explicit-member-accessibility */
+// prettier-ignore
+declare abstract class NodeWithArrayFeatures<Input, T>
+	extends TreeNodeValid<Input>
+	implements Pick<readonly T[], (typeof arrayPrototypeKeys)[number]>
+{
+	concat(...items: ConcatArray<T>[]): T[];
+	concat(...items: (T | ConcatArray<T>)[]): T[];
+	entries(): IterableIterator<[number, T]>;
+	every<S extends T>(predicate: (value: T, index: number, array: readonly T[]) => value is S, thisArg?: any): this is readonly S[];
+	every(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): boolean;
+	filter<S extends T>(predicate: (value: T, index: number, array: readonly T[]) => value is S, thisArg?: any): S[];
+	filter(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): T[];
+	find<S extends T>(predicate: (value: T, index: number, obj: readonly T[]) => value is S, thisArg?: any): S | undefined;
+	find(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): T | undefined;
+	findIndex(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): number;
+	flat<A, D extends number = 1>(this: A, depth?: D | undefined): FlatArray<A, D>[];
+	flatMap<U, This = undefined>(callback: (this: This, value: T, index: number, array: T[]) => U | readonly U[], thisArg?: This | undefined): U[];
+	forEach(callbackfn: (value: T, index: number, array: readonly T[]) => void, thisArg?: any): void;
+	includes(searchElement: T, fromIndex?: number | undefined): boolean;
+	indexOf(searchElement: T, fromIndex?: number | undefined): number;
+	join(separator?: string | undefined): string;
+	keys(): IterableIterator<number>;
+	lastIndexOf(searchElement: T, fromIndex?: number | undefined): number;
+	map<U>(callbackfn: (value: T, index: number, array: readonly T[]) => U, thisArg?: any): U[];
+	reduce(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T): T;
+	reduce(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T, initialValue: T): T;
+	reduce<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number, array: readonly T[]) => U, initialValue: U): U;
+	reduceRight(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T): T;
+	reduceRight(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T, initialValue: T): T;
+	reduceRight<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number, array: readonly T[]) => U, initialValue: U): U;
+	slice(start?: number | undefined, end?: number | undefined): T[];
+	some(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): boolean;
+	toLocaleString(): string;
+	toString(): string;
+	values(): IterableIterator<T>;
+}
+/* eslint-enable @typescript-eslint/explicit-member-accessibility */
 
 /**
  * Attempts to coerce the given property key to an integer index property.
@@ -537,7 +572,10 @@ type Insertable<T extends ImplicitAllowedTypes> = readonly (
 )[];
 
 abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
-	extends TreeNodeWithArrayFeatures<T>
+	extends TreeNodeWithArrayFeatures<
+		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+		TreeNodeFromImplicitAllowedTypes<T>
+	>
 	implements TreeArrayNode<T>
 {
 	// Indexing must be provided by subclass.
@@ -693,7 +731,7 @@ export function arraySchema<
 	// This class returns a proxy from its constructor to handle numeric indexing.
 	// Alternatively it could extend a normal class which gets tons of numeric properties added.
 	class schema extends CustomArrayNodeBase<T> {
-		public static prepareInstance<T2>(
+		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
 			flexNode: FlexTreeNode,
@@ -713,7 +751,7 @@ export function arraySchema<
 			return createArrayNodeProxy(customizable, proxyTarget, instance) as unknown as schema;
 		}
 
-		public static buildRawNode<T2>(
+		public static override buildRawNode<T2>(
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
 			input: T2,
@@ -727,9 +765,9 @@ export function arraySchema<
 			);
 		}
 
-		protected static constructorCached: typeof TreeNodeValid | undefined = undefined;
+		protected static override constructorCached: typeof TreeNodeValid | undefined = undefined;
 
-		protected static oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>) {
+		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>) {
 			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema) as FlexFieldNodeSchema;
 		}
 
