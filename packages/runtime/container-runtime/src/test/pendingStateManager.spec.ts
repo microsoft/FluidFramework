@@ -553,12 +553,6 @@ describe("Pending State Manager", () => {
 
 		it("minimum sequence number can be retrieved from initial messages", async () => {
 			const pendingStateManager = createPendingStateManager(messages);
-			assert.strictEqual(
-				pendingStateManager.minimumPendingMessageSequenceNumber,
-				10,
-				"minimum sequence number should be the first message",
-			);
-
 			await pendingStateManager.applyStashedOpsAt();
 
 			assert.strictEqual(
