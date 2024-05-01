@@ -7,11 +7,11 @@ importers:
 
   .:
     specifiers:
+      '@fluid-internal/mocha-test-setup': ~2.0.0-rc.3.0.3
       '@fluid-tools/markdown-magic': file:../markdown-magic
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.37.0
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/mocha-test-setup': ~2.0.0-internal.6.2.0
       '@microsoft/api-extractor': ^7.42.3
       '@microsoft/api-extractor-model': ~7.28.2
       '@microsoft/tsdoc': ^0.14.2
@@ -49,11 +49,11 @@ importers:
       hast-util-raw: 9.0.2
       hastscript: 9.0.0
     devDependencies:
+      '@fluid-internal/mocha-test-setup': 2.0.0-rc.3.0.3
       '@fluid-tools/markdown-magic': file:../markdown-magic_@types+node@18.15.11
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.37.0_@types+node@18.15.11
       '@fluidframework/eslint-config-fluid': 5.2.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@fluidframework/mocha-test-setup': 2.0.0-internal.6.2.0
       '@microsoft/api-extractor': 7.42.3_@types+node@18.15.11
       '@types/chai': 4.3.4
       '@types/hast': 3.0.4
@@ -175,6 +175,23 @@ packages:
       - typescript
     dev: true
 
+  /@fluid-internal/mocha-test-setup/2.0.0-rc.3.0.3:
+    resolution: {integrity: sha512-QhmRb2dwAylu7SNzm5xVn2LDrLAHb5g2nJWuAT0LMkbiJYt8QyKGWmwM+ap8AgIrqi0tu30WC4igLMs+9JuMZA==}
+    dependencies:
+      '@fluid-internal/test-driver-definitions': 2.0.0-rc.3.0.3
+      '@fluidframework/core-interfaces': 2.0.0-rc.3.0.3
+      mocha: 10.2.0
+      source-map-support: 0.5.21
+    dev: true
+
+  /@fluid-internal/test-driver-definitions/2.0.0-rc.3.0.3:
+    resolution: {integrity: sha512-hCI1gDwzzP/4SfvOgA81GX1vbMtfI1mClR+CRQ0M+uDQCrxP31D2dIoll+RSNNI9MwS3+ymAcVJLarNDrXaPYw==}
+    dependencies:
+      '@fluidframework/core-interfaces': 2.0.0-rc.3.0.3
+      '@fluidframework/driver-definitions': 2.0.0-rc.3.0.3
+      '@fluidframework/protocol-definitions': 3.2.0
+    dev: true
+
   /@fluid-tools/version-tools/0.37.0:
     resolution: {integrity: sha512-hPUJUxl8rZQAgWCpnEL5MxXRYZkdXhqusVUyJa3Wbu6f6BuaxKofOLOCB88rVkGiCgyZui8Mo5M2Q4GqLGYWIQ==}
     engines: {node: '>=14.17.0'}
@@ -256,19 +273,15 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/common-definitions/0.20.1:
-    resolution: {integrity: sha512-KaoQ7w2MDH5OeRKVatL5yVOCFg+9wD6bLSLFh1/TV1EZM46l49iBqO7UVjUtPE6BIm0jvvOzJXULGVSpzokX3g==}
+  /@fluidframework/core-interfaces/2.0.0-rc.3.0.3:
+    resolution: {integrity: sha512-lndP37QUE9r/Eot3yX9WIGlR0hMSC0FLxg0TQNUOJYCAbr4+4VNlDIzTRlMFqISiPgDNhpZEVx6vr8O1HxCtzg==}
     dev: true
 
-  /@fluidframework/core-interfaces/2.0.0-internal.6.2.0:
-    resolution: {integrity: sha512-VsIoxjv1c132k9mZJbMUXRxASaen1MGffYnnPyq/pwuPk20PrlDlzZtBpnCqp0KVVO9W5EK54S7z8DupmBhy0A==}
-    dev: true
-
-  /@fluidframework/driver-definitions/2.0.0-internal.6.2.0:
-    resolution: {integrity: sha512-3aIpoG2cHkPzpI05bcYllaCsK9bL81kw4uCjHMBnrUcMHHUvsdYnby4NCczsS9lSpsyRGVceFfVafUTyRj+I0w==}
+  /@fluidframework/driver-definitions/2.0.0-rc.3.0.3:
+    resolution: {integrity: sha512-Rrp49H/0PSFBKFtgt1l7QKQ/FR8fX0qLmCtp+mDiY2ubwQIYnn+3nxDY8sTO4S0vzqOcd6qiwzSf1QTwVmlNIw==}
     dependencies:
-      '@fluidframework/core-interfaces': 2.0.0-internal.6.2.0
-      '@fluidframework/protocol-definitions': 1.2.0
+      '@fluidframework/core-interfaces': 2.0.0-rc.3.0.3
+      '@fluidframework/protocol-definitions': 3.2.0
     dev: true
 
   /@fluidframework/eslint-config-fluid/5.2.0_bpztyfltmpuv6lhsgzfwtmxhte:
@@ -300,27 +313,8 @@ packages:
       - typescript
     dev: true
 
-  /@fluidframework/mocha-test-setup/2.0.0-internal.6.2.0:
-    resolution: {integrity: sha512-v5S45oGYDxMy9aQn4maoFhwwdSweA/02P3UVvjLosjzO68GZ1/3tflsNCYSM27ludmOaYQqEiWtk6qX3O8vZsw==}
-    dependencies:
-      '@fluidframework/core-interfaces': 2.0.0-internal.6.2.0
-      '@fluidframework/test-driver-definitions': 2.0.0-internal.6.2.0
-      mocha: 10.2.0
-    dev: true
-
-  /@fluidframework/protocol-definitions/1.2.0:
-    resolution: {integrity: sha512-2/GoupA8mjHD8gcjyn4SedqJStKlQAZxga5PtDBoh+xHsuugQRhsAHJCX+8tdqbSK4ZOo9z8iq/vWKVLUi5Dzw==}
-    dependencies:
-      '@fluidframework/common-definitions': 0.20.1
-    dev: true
-
-  /@fluidframework/test-driver-definitions/2.0.0-internal.6.2.0:
-    resolution: {integrity: sha512-Z9nHMke74S0l6i7szNpSNdn+4ae4WF9o4+HyAS3RUeYEoWzPWA5pcEDyHpLnThMbcIKICLd3DGSTh9uSU2Gprg==}
-    dependencies:
-      '@fluidframework/core-interfaces': 2.0.0-internal.6.2.0
-      '@fluidframework/driver-definitions': 2.0.0-internal.6.2.0
-      '@fluidframework/protocol-definitions': 1.2.0
-      uuid: 9.0.0
+  /@fluidframework/protocol-definitions/3.2.0:
+    resolution: {integrity: sha512-xgcyMN4uF6dAp2/XYFSHvGFITIV7JbVt3itA+T0c71/lZjq/HU/a/ClPIxfl9AEN0RbtuR/1n5LP4FXSV9j0hA==}
     dev: true
 
   /@gitbeaker/core/35.8.1:
@@ -6404,11 +6398,6 @@ packages:
 
   /util-deprecate/1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
-    dev: true
-
-  /uuid/9.0.0:
-    resolution: {integrity: sha512-MXcSTerfPa4uqyzStbRoTgt5XIe3x5+42+q1sDuy3R5MDk66URdLMOZe5aPX/SQd+kuYAh0FdP/pO28IkQyTeg==}
-    hasBin: true
     dev: true
 
   /v8-to-istanbul/9.1.0:

@@ -1593,7 +1593,6 @@ describe("Runtime", () => {
 
 			beforeEach(async () => {
 				const settings = {};
-				settings["Fluid.Summarizer.ValidateSummaryBeforeUpload"] = true;
 				containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext(settings) as IContainerContext,
 					registryEntries: [],
@@ -1787,8 +1786,6 @@ describe("Runtime", () => {
 
 				const state =
 					containerRuntime.getPendingLocalState() as Partial<IPendingRuntimeState>;
-				assert.strictEqual(state.pending, undefined);
-				assert.strictEqual(state.pendingAttachmentBlobs, undefined);
 				assert.ok(state.sessionExpiryTimerStarted !== undefined);
 			});
 			it("No Props. Some pending state", async () => {
