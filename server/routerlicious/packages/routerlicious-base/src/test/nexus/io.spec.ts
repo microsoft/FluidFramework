@@ -496,6 +496,35 @@ describe("Routerlicious", () => {
 						return expectedSignalMessage;
 					}
 
+					function listenForNacks(client: TestSignalClient) {
+						client.socket.on("nack", (reason: string, nackMessages: INack[]) => {
+							client.nacksReceived.push(nackMessages[0]);
+						});
+					}
+
+					function checkNack(
+						client: TestSignalClient,
+						expectedNackMessageContent: string,
+					) {
+						assert.equal(
+							client.nacksReceived.length,
+							1,
+							"Client should have received 1 nack",
+						);
+						const nackMessage = client.nacksReceived[0];
+						assert.equal(nackMessage.content.code, 400, "Nack code should be 400");
+						assert.equal(
+							nackMessage.content.type,
+							NackErrorType.BadRequestError,
+							"Nack type should be BadRequestError",
+						);
+						assert.deepEqual(
+							nackMessage.content.message,
+							expectedNackMessageContent,
+							"Nack message should be 'Invalid signal message'",
+						);
+					}
+
 					const stringSignalContent = "TestSignal";
 
 					let clients: TestSignalClient[];
@@ -523,13 +552,6 @@ describe("Routerlicious", () => {
 								verifyExpectedClientSignals(clients, [expectedSignal]);
 							});
 
-							it("should drop signals with invalid client ID", async () => {
-								clients[0].socket.send("submitSignal", "invalidClientID", [
-									stringSignalContent,
-								]);
-								verifyExpectedClientSignals(clients, []);
-							});
-
 							it("does not broadcast to disconnected client", async () => {
 								clients[1].socket.disconnect();
 
@@ -543,6 +565,14 @@ describe("Routerlicious", () => {
 									[expectedSignal],
 								);
 								verifyExpectedClientSignals([clients[1]], []);
+							});
+
+							it("should nack signals with invalid client ID", async () => {
+								listenForNacks(clients[0]);
+								clients[0].socket.send("submitSignal", "invalidClientID", [
+									stringSignalContent,
+								]);
+								checkNack(clients[0], "Nonexistent client");
 							});
 
 							it("throws when signal is not an array", async () => {
@@ -638,46 +668,11 @@ describe("Routerlicious", () => {
 							});
 
 							describe("Invalid/Malformed signals", () => {
-								function listenForNacks(clients: TestSignalClient[]) {
-									clients.forEach((client) => {
-										client.socket.on(
-											"nack",
-											(reason: string, nackMessages: INack[]) => {
-												client.nacksReceived.push(nackMessages[0]);
-											},
-										);
-									});
-								}
-
-								function checkNack(client: TestSignalClient) {
-									assert.equal(
-										client.nacksReceived.length,
-										1,
-										"Client should have received 1 nack",
-									);
-									const nackMessage = client.nacksReceived[0];
-									assert.equal(
-										nackMessage.content.code,
-										400,
-										"Nack code should be 400",
-									);
-									assert.equal(
-										nackMessage.content.type,
-										NackErrorType.BadRequestError,
-										"Nack type should be BadRequestError",
-									);
-									assert.deepEqual(
-										nackMessage.content.message,
-										"Invalid signal message",
-										"Nack message should be 'Invalid signal message'",
-									);
-								}
-
 								beforeEach(() => {
-									listenForNacks(clients);
+									listenForNacks(clients[0]);
 								});
 
-								it("should drop signal when given an invalid client ID", async () => {
+								it("should drop signal when given an invalid target client ID", async () => {
 									const targetedSignal: ISentSignalMessage = {
 										targetClientId: "invalidClientID",
 										content: stringSignalContent,
@@ -713,32 +708,43 @@ describe("Routerlicious", () => {
 										content: stringSignalContent,
 									};
 
-									sendAndReturnExpectedSignal(clients[1], targetedSignal);
+									sendAndReturnExpectedSignal(clients[0], targetedSignal);
 
-									checkNack(clients[1]);
+									checkNack(clients[0], "Invalid signal message");
+								});
+
+								it("should nack signals with invalid client ID", async () => {
+									const targetedSignal = {
+										targetClientId: clients[1],
+										content: stringSignalContent,
+									};
+									clients[0].socket.send("submitSignal", "invalidClientID", [
+										targetedSignal,
+									]);
+									checkNack(clients[0], "Nonexistent client");
 								});
 
 								it("nacks missing content field", async () => {
 									const targetedSignal = {
-										targetClientId: clients[0].clientId,
+										targetClientId: clients[1].clientId,
 									};
 
-									sendAndReturnExpectedSignal(clients[1], targetedSignal);
+									sendAndReturnExpectedSignal(clients[0], targetedSignal);
 
-									checkNack(clients[1]);
+									checkNack(clients[0], "Invalid signal message");
 								});
 
 								it("nacks invalid optional signal fields", async () => {
 									const targetedSignal = {
-										targetClientId: clients[0].clientId,
+										targetClientId: clients[1].clientId,
 										content: stringSignalContent,
 										clientConnectionNumber: false,
 										referenceSequenceNumber: "invalid",
 									};
 
-									sendAndReturnExpectedSignal(clients[1], targetedSignal);
+									sendAndReturnExpectedSignal(clients[0], targetedSignal);
 
-									checkNack(clients[1]);
+									checkNack(clients[0], "Invalid signal message");
 								});
 							});
 						});
