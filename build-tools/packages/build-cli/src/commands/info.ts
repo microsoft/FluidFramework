@@ -96,6 +96,7 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 				: [...context.fullPackageMap.values()];
 
 		// Sort by packages by name (invariant sort by codepoints).
+		// (See https://stackoverflow.com/a/40355107)
 		packages.sort((left, right) => Number(left.name > right.name) || -(left.name < right.name));
 
 		// Filter out private packages
