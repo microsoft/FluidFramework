@@ -138,6 +138,7 @@ import {
 	nestedMapFromFlatList,
 } from "../util/index.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import type { Client } from "@fluid-private/test-dds-utils";
 
 // Testing utilities
 
@@ -553,13 +554,9 @@ export function validateFuzzTreeConsistency(
 	treeA: Client<SharedTreeFactory>,
 	treeB: Client<SharedTreeFactory>,
 ): void {
-	const aSerializer = new FluidSerializer(treeA.dataStoreRuntime.IFluidHandleContext);
-	const bSerializer = new FluidSerializer(treeB.dataStoreRuntime.IFluidHandleContext);
-	// This intentionally violates the type safety of validateSnapshotConsistency because we must
-	// encode any handles in the content in order to validate. AB#7880
 	validateSnapshotConsistency(
-		aSerializer.encode(treeA.channel.contentSnapshot(), treeA.channel.handle),
-		bSerializer.encode(treeB.channel.contentSnapshot(), treeB.channel.handle),
+		treeA.channel.contentSnapshot(),
+		treeB.channel.contentSnapshot(),
 		`id: ${treeA.channel.id} vs id: ${treeB.channel.id}`,
 	);
 }
