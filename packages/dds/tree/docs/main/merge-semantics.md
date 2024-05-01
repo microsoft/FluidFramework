@@ -11,8 +11,8 @@ Merge semantics define how `SharedTree` reconciles concurrent edits.
 ### Concurrent Edits
 
 When several users edit the same document, it's possible for some of the edits to be concurrent.
-One user's edit `X` is said to be concurrent to another user's edit `Y` if the first user initiated `X` before receiving `Y`.
-This property is symmetric: if `X` is concurrent to `Y` then `Y` is also concurrent to `X`.
+One user's edit `X` is said to be concurrent with another user's edit `Y` if the first user initiated `X` before receiving `Y`.
+This property is symmetric: if `X` is concurrent with `Y` then `Y` is also concurrent with `X`.
 
 Let's first look at some examples where the edits are _not_ concurrent.
 
@@ -46,7 +46,7 @@ D: Alice receives Bob's edit.
 The color of the note on Alice's device changes from red to blue._
 
 On the other hand, if Bob makes this change _before_ receiving the edit from Alice,
-then his edit will be concurrent to Alice's edit, and he will be changing the color from yellow to blue.
+then his edit will be concurrent with Alice's edit, and he will be changing the color from yellow to blue.
 
 ![Two concurrent edits](../.attachments/ms-set-color-red-and-blue.png)<br />
 _A: Alice initiates the edit that changes the sticky note's color from yellow to red.
@@ -251,7 +251,7 @@ For example, consider a document with a schema that allows instances of `Foo` to
 Insert operations on arrays come with preconditions such that by the time the insert is finally applied,
 the receiving array must allow instances of the inserted type, (`Foo` in this case).
 Now imagine Alice inserts a node of type `Foo` in the array.
-Concurrently to that, Bob edits the document schema such that the array no longer allows instances of type `Foo`.
+Concurrent with that, Bob edits the document schema such that the array no longer allows instances of type `Foo`.
 Schema changes come with preconditions such that by the time the schema change is finally applied,
 the new schema must be compatible with the state of the document (no instances of type `Foo` may exist in the array).
 If Alice's edit is sequenced first, then the node will be inserted, and Bob's edit will be dropped.
@@ -493,7 +493,7 @@ There's no way for the adding of elements to violate the invariant that the leng
 It's possible however for the removal of existing elements to violate this invariant:
 consider the starting state `{ arrayA: [a1, a2], arrayB: [b1, b2] }`.
 Suppose Alice tries to remove `a1` and `b1`.
-Concurrently to that, Bob tries to remove `a1` and `b2`.
+Concurrent with that, Bob tries to remove `a1` and `b2`.
 No matter the sequencing order between Alice and Bob's transactions,
 the resulting state once both are applied will be `{ arrayA: [a2], arrayB: [] }`,
 which violates the application invariant regarding the lengths of the arrays.
@@ -508,8 +508,9 @@ and `{ arrayA: [a2], arrayB: [b1] }` otherwise.
 ### Schema Changes
 
 As of 2024-04-25,
-all edits/transactions have the implicit constraint that the schema is not changed concurrently to them.
-Similarly, all schema changes have the implicit constraint that neither the schema nor the document data is changed concurrently to them.
+All edits/transactions have an implicit constraint: the edit must not be concurrent with a change to the schema.
+This is true of schema changes themselves, which also have an additional constraint:
+the schema change must not be concurrent to a data change.
 
 This is tolerable because schema changes are rare.
 The merge semantics will be improved in the future to be less conservative.
