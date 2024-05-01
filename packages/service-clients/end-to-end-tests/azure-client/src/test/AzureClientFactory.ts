@@ -9,6 +9,7 @@ import {
 	AzureRemoteConnectionConfig,
 	ITelemetryBaseLogger,
 } from "@fluidframework/azure-client";
+import { type ScopeType } from "@fluidframework/azure-client/internal";
 import { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
@@ -21,18 +22,19 @@ import { createAzureTokenProvider } from "./AzureTokenFactory.js";
  * {@link AzureClient} instance based on the mode by setting the Connection config accordingly.
  */
 export function createAzureClient(
-	userID?: string,
-	userName?: string,
+	id?: string,
+	name?: string,
 	logger?: MockLogger,
 	configProvider?: IConfigProviderBase,
+	scopes?: ScopeType[],
 ): AzureClient {
 	const useAzure = process.env.FLUID_CLIENT === "azure";
 	const tenantId = useAzure
 		? (process.env.azure__fluid__relay__service__tenantId as string)
 		: "frs-client-tenant";
 	const user = {
-		id: userID ?? uuid(),
-		name: userName ?? uuid(),
+		id: id ?? uuid(),
+		name: name ?? uuid(),
 	};
 	const endPoint = process.env.azure__fluid__relay__service__endpoint as string;
 	if (useAzure && endPoint === undefined) {
@@ -45,12 +47,12 @@ export function createAzureClient(
 	const connectionProps: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure
 		? {
 				tenantId,
-				tokenProvider: createAzureTokenProvider(userID ?? "foo", userName ?? "bar"),
+				tokenProvider: createAzureTokenProvider(id ?? "foo", name ?? "bar", scopes),
 				endpoint: endPoint,
 				type: "remote",
 		  }
 		: {
-				tokenProvider: new InsecureTokenProvider("fooBar", user),
+				tokenProvider: new InsecureTokenProvider("fooBar", user, scopes),
 				endpoint: "http://localhost:7071",
 				type: "local",
 		  };

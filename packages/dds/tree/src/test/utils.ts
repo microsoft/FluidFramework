@@ -55,6 +55,7 @@ import {
 	FieldKey,
 	FieldUpPath,
 	IEditableForest,
+	IForestSubscription,
 	JsonableTree,
 	Revertible,
 	RevisionInfo,
@@ -136,8 +137,7 @@ import {
 	disposeSymbol,
 	nestedMapFromFlatList,
 } from "../util/index.js";
-import type { Client } from "@fluid-private/test-dds-utils";
-import { FluidSerializer } from "@fluidframework/shared-object-base/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 // Testing utilities
 
@@ -613,22 +613,59 @@ export function validateSnapshotConsistency(
 	idDifferentiator: string | undefined = undefined,
 ): void {
 	assert.deepEqual(
-		treeA.tree,
-		treeB.tree,
+		prepareTreeForCompare(treeA.tree),
+		prepareTreeForCompare(treeB.tree),
 		`Inconsistent document tree json representation: ${idDifferentiator}`,
 	);
-	// Note: removed trees are not currently GCed, which allows us to expect that all clients should share the same
+
+	// Note: removed trees are not currently garbage collected, which allows us to expect that all clients should share the same
 	// exact set of them. In the future, we will need to relax this expectation and only enforce that whenever two
 	// clients both have data for the same removed tree (as identified by the first two tuple entries), then they
 	// should be consistent about the content being stored (the third tuple entry).
-	const mapA = nestedMapFromFlatList(treeA.removed);
-	const mapB = nestedMapFromFlatList(treeB.removed);
+	const mapA = nestedMapFromFlatList(
+		treeA.removed.map(([key, num, children]) => [
+			key,
+			num,
+			prepareTreeForCompare([children])[0],
+		]),
+	);
+	const mapB = nestedMapFromFlatList(
+		treeB.removed.map(([key, num, children]) => [
+			key,
+			num,
+			prepareTreeForCompare([children])[0],
+		]),
+	);
 	assert.deepEqual(
 		mapA,
 		mapB,
 		`Inconsistent removed trees json representation: ${idDifferentiator}`,
 	);
 	expectSchemaEqual(treeA.schema, treeB.schema, idDifferentiator);
+}
+
+/**
+ * Make a copy of a {@link JsonableTree} array adjusted for compatibility with `assert.deepEqual`.
+ * @remarks
+ * This replaces handles replaced with `{ Handle: absolutePath }`, and normalizes optional fields to be omitted.
+ */
+export function prepareTreeForCompare(tree: JsonableTree[]): object[] {
+	return tree.map((node): object => {
+		const fields: Record<string, object> = {};
+		for (const [key, children] of Object.entries(node.fields ?? {})) {
+			fields[key] = prepareTreeForCompare(children);
+		}
+		const inputValue = node.value;
+		const value = isFluidHandle(inputValue) ? { Handle: inputValue.absolutePath } : inputValue;
+
+		const output: Record<string, any> = { ...node, value, fields };
+
+		// Normalize optional values to be omitted for cleaner diffs:
+		if (output.value === undefined) delete output.value;
+		if (Reflect.ownKeys(output.fields).length === 0) delete output.fields;
+
+		return output as object;
+	});
 }
 
 export function checkoutWithContent(
@@ -756,9 +793,13 @@ export function toJsonableTree(tree: ITreeCheckout): JsonableTree[] {
 /**
  * Assumes `tree` is in the json domain and returns its content as a json compatible object.
  */
-export function toJsonTree(tree: ITreeCheckout): JsonCompatible[] {
-	const readCursor = tree.forest.allocateCursor();
-	moveToDetachedField(tree.forest, readCursor);
+export function jsonTreeFromCheckout(tree: ITreeCheckout): JsonCompatible[] {
+	return jsonTreeFromForest(tree.forest);
+}
+
+export function jsonTreeFromForest(forest: IForestSubscription): JsonCompatible[] {
+	const readCursor = forest.allocateCursor();
+	moveToDetachedField(forest, readCursor);
 	const copy = mapCursorField(readCursor, cursorToJsonObject);
 	readCursor.free();
 	return copy;
@@ -799,7 +840,7 @@ export function expectJsonTree(
 ): void {
 	const trees = Array.isArray(actual) ? actual : [actual];
 	for (const tree of trees) {
-		const roots = toJsonTree(tree);
+		const roots = jsonTreeFromCheckout(tree);
 		assert.deepEqual(roots, expected);
 	}
 	if (expectRemovedRootsAreSynchronized) {
