@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { Flags } from "@oclif/core";
-
-import { writeFileSync } from "node:fs";
+import path from "node:path";
 import { Package, PackageNamePolicyConfig } from "@fluidframework/build-tools";
+import { Flags } from "@oclif/core";
+import { mkdirpSync, writeFileSync } from "fs-extra";
 import { BaseCommand } from "../base";
 import { filterPackages, parsePackageFilterFlags } from "../filter";
-import { filterFlags, releaseGroupFlag } from "../flags";
+import { filterFlags, packageSelectorFlag, releaseGroupFlag } from "../flags";
 import { getTarballName } from "../library";
 import {
 	type Feed,
@@ -36,7 +36,8 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 	static readonly enableJsonFlag = true;
 
 	static readonly flags = {
-		releaseGroup: releaseGroupFlag({ required: true }),
+		releaseGroup: releaseGroupFlag({ exclusive: ["package"] }),
+		package: packageSelectorFlag({ exclusive: ["releaseGroup"] }),
 		feed: Flags.custom<Feed | undefined>({
 			description:
 				"Filter the resulting packages to those that should be published to a particular npm feed. Use 'public' for public npm. The 'official' and 'internal' values are deprecated and should not be used.",
@@ -72,8 +73,25 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 	};
 
 	public async run(): Promise<ListItem[]> {
+		const {
+			feed,
+			outFile,
+			package: packageName,
+			releaseGroup: releaseGroupName,
+			tarball,
+		} = this.flags;
 		const context = await this.getContext();
-		const releaseGroup = context.repo.releaseGroups.get(this.flags.releaseGroup);
+
+		// Handle single packages
+		if (packageName !== undefined) {
+			const item = await this.outputSinglePackage(packageName);
+			return [item];
+		}
+
+		const releaseGroup =
+			releaseGroupName === undefined
+				? undefined
+				: context.repo.releaseGroups.get(releaseGroupName);
 
 		if (releaseGroup === undefined) {
 			// exits the process
@@ -91,11 +109,11 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 					this.error(`No fluid-build package name policy config found.`);
 				}
 
-				if (this.flags.feed === undefined) {
+				if (feed === undefined) {
 					return true;
 				}
 
-				const result = packagePublishesToFeed(item.name, config, this.flags.feed);
+				const result = packagePublishesToFeed(item.name, config, feed);
 				return result;
 			})
 			.map((item) => {
@@ -104,7 +122,7 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 				item.tarball = getTarballName(item.name);
 
 				// Set the tarball name if the tarball flag is set
-				if (this.flags.tarball === true) {
+				if (tarball === true) {
 					item.name = item.tarball;
 				}
 				return item;
@@ -112,13 +130,45 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 
 		const output = filtered.map((details) => details.name).join("\n");
 
-		if (this.flags.outFile === undefined) {
+		if (outFile === undefined) {
 			this.log(output);
 		} else {
-			writeFileSync(this.flags.outFile, output);
+			mkdirpSync(path.dirname(outFile));
+			writeFileSync(outFile, output);
 		}
 
+		await this.writeOutput(output, outFile);
 		return filtered;
+	}
+
+	private async outputSinglePackage(packageName: string): Promise<ListItem> {
+		const context = await this.getContext();
+		const pkg = context.fullPackageMap.get(packageName);
+		if (pkg === undefined) {
+			// exits the process
+			this.error(`Can't find package: ${packageName}`, { exit: 1 });
+		}
+
+		const output = this.flags.tarball ? getTarballName(pkg.name) : pkg.name;
+
+		await this.writeOutput(output, this.flags.outFile);
+		const item: ListItem = {
+			name: pkg.name,
+			version: pkg.version,
+			path: pkg.directory,
+			private: pkg.private,
+			tarball: getTarballName(pkg.packageJson),
+		};
+		return item;
+	}
+
+	private async writeOutput(output: string, outFile?: string): Promise<void> {
+		if (outFile === undefined) {
+			this.log(output);
+		} else {
+			mkdirpSync(path.dirname(outFile));
+			writeFileSync(outFile, output);
+		}
 	}
 }
 
