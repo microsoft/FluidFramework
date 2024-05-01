@@ -3,6 +3,11 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Utilities for using SharedTree with React.
+ * @packageDocumentation
+ */
+
 export type {
 	ITreeDataObject,
 	IReactTreeDataObject,

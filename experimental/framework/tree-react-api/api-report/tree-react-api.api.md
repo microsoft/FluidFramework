@@ -53,6 +53,4 @@ export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
 // @public
 export function useTree(subtreeRoot: TreeNode): void;
 
-// (No @packageDocumentation comment for this package)
-
 ```
