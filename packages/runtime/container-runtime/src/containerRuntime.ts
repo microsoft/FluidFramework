@@ -3399,7 +3399,7 @@ export class ContainerRuntime
 			properties: {
 				all: {
 					summaryNumber,
-					summaryReferenceSequenceNumber: () => summaryRefSeqNum,
+					referenceSequenceNumber: () => summaryRefSeqNum,
 				},
 			},
 		});
