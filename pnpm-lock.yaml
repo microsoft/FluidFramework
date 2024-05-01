@@ -5472,7 +5472,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/protocol-definitions': ^3.2.0
       '@microsoft/api-extractor': ^7.42.3
-      '@types/events_pkg': npm:@types/events@^3.0.0
       copyfiles: ^2.4.1
       eslint: ~8.55.0
       eslint-plugin-deprecation: ~2.0.0
@@ -5483,7 +5482,6 @@ importers:
       '@fluidframework/core-interfaces': link:../core-interfaces
       '@fluidframework/driver-definitions': link:../driver-definitions
       '@fluidframework/protocol-definitions': 3.2.0
-      '@types/events_pkg': /@types/events/3.0.3
     devDependencies:
       '@arethetypeswrong/cli': 0.15.2
       '@biomejs/biome': 1.6.2
@@ -9219,6 +9217,7 @@ importers:
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/test-utils': workspace:~
+      '@fluidframework/tree': workspace:~
       '@types/mocha': ^9.1.1
       '@types/nock': ^9.3.0
       '@types/node': ^18.19.0
@@ -9258,6 +9257,7 @@ importers:
       '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
       '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../../../test/test-utils
+      '@fluidframework/tree': link:../../../dds/tree
       cross-env: 7.0.3
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4

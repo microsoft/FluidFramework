@@ -293,13 +293,13 @@ describe("Pending State Manager", () => {
 		});
 
 		describe("getLocalState", () => {
-			it("removes ops with rsn lower than snapshot", () => {
+			it("removes ops with seq num lower than snapshot", () => {
 				const messages = Array.from({ length: 10 }, (_, i) => ({
 					clientId: "clientId",
 					type: MessageType.Operation,
 					clientSequenceNumber: 0,
 					contents: { prop1: true },
-					referenceSequenceNumber: i,
+					sequenceNumber: i,
 				}));
 				submitBatch(messages);
 				process(messages);

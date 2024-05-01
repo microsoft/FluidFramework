@@ -122,6 +122,7 @@ export {
 	ModularChangeFamily,
 	RelevantRemovedRootsFromChild,
 	EncodedModularChangeset,
+	updateRefreshers,
 	NodeId,
 	FieldChangeEncodingContext,
 	FieldKindConfiguration,

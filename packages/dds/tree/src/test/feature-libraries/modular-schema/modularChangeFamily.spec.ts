@@ -1150,13 +1150,11 @@ describe("ModularChangeFamily", () => {
 
 		const handler: FieldChangeHandler<HasRemovedRootsRefs, any> = {
 			relevantRemovedRoots: (
-				{ change, revision }: TaggedChange<HasRemovedRootsRefs>,
+				change: HasRemovedRootsRefs,
 				relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
 			) => {
 				return [
-					...change.shallow.map((id) =>
-						makeDetachedNodeId(id.major ?? revision, id.minor),
-					),
+					...change.shallow.map((id) => makeDetachedNodeId(id.major, id.minor)),
 					...change.nested.flatMap((c) => Array.from(relevantRemovedRootsFromChild(c))),
 				];
 			},
@@ -1170,9 +1168,7 @@ describe("ModularChangeFamily", () => {
 		);
 		const mockFieldKinds = new Map([[fieldKind, hasRemovedRootsRefsField]]);
 
-		function relevantRemovedRoots(
-			input: TaggedChange<ModularChangeset>,
-		): DeltaDetachedNodeId[] {
+		function relevantRemovedRoots(input: ModularChangeset): DeltaDetachedNodeId[] {
 			deepFreeze(input);
 			return Array.from(relevantDetachedTreesImplementation(input, mockFieldKinds));
 		}
@@ -1206,7 +1202,7 @@ describe("ModularChangeFamily", () => {
 				]),
 			};
 
-			const actual = relevantRemovedRoots(makeAnonChange(input));
+			const actual = relevantRemovedRoots(input);
 			assert.deepEqual(actual, [a1, a2, b1]);
 		});
 
@@ -1238,79 +1234,8 @@ describe("ModularChangeFamily", () => {
 				fieldChanges: new Map([[brand("fA"), { fieldKind, change: brand(changeA) }]]),
 			};
 
-			const actual = relevantRemovedRoots(makeAnonChange(input));
+			const actual = relevantRemovedRoots(input);
 			assert.deepEqual(actual, [a1, c1]);
-		});
-
-		it("default revision from tag", () => {
-			const major = mintRevisionTag();
-			const changeB: HasRemovedRootsRefs = {
-				shallow: [{ minor: 2 }],
-				nested: [],
-			};
-			const changeA: HasRemovedRootsRefs = {
-				shallow: [{ minor: 1 }],
-				nested: [nodeId1],
-			};
-			const input: ModularChangeset = {
-				nodeChanges: nestedMapFromFlatList([
-					[nodeId1.revision, nodeId1.localId, nodeChangeFromHasRemovedRootsRefs(changeB)],
-				]),
-				fieldChanges: new Map([[brand("fA"), { fieldKind, change: brand(changeA) }]]),
-			};
-
-			const actual = relevantRemovedRoots(tagChange(input, major));
-			assert.deepEqual(actual, [
-				{ major, minor: 1 },
-				{ major, minor: 2 },
-			]);
-		});
-
-		it("default revision from field", () => {
-			const majorAB = mintRevisionTag();
-			const majorC = mintRevisionTag();
-			const changeB: HasRemovedRootsRefs = {
-				shallow: [{ minor: 2 }],
-				nested: [],
-			};
-			const changeA: HasRemovedRootsRefs = {
-				shallow: [{ minor: 1 }],
-				nested: [nodeId1],
-			};
-			const changeC: HasRemovedRootsRefs = {
-				shallow: [{ minor: 1 }],
-				nested: [],
-			};
-			const input: ModularChangeset = {
-				nodeChanges: nestedMapFromFlatList([
-					[nodeId1.revision, nodeId1.localId, nodeChangeFromHasRemovedRootsRefs(changeB)],
-				]),
-				fieldChanges: new Map([
-					[
-						brand("fA"),
-						{
-							fieldKind,
-							change: brand(changeA),
-							revision: majorAB,
-						},
-					],
-					[
-						brand("fC"),
-						{
-							fieldKind,
-							change: brand(changeC),
-							revision: majorC,
-						},
-					],
-				]),
-			};
-
-			const actual = relevantRemovedRoots(makeAnonChange(input));
-			assert.deepEqual(actual, [
-				{ major: majorAB, minor: 1 },
-				{ major: majorAB, minor: 2 },
-				{ major: majorC, minor: 1 },
-			]);
 		});
 	});
 
@@ -1495,12 +1420,11 @@ describe("ModularChangeFamily", () => {
 				assert.deepEqual(withBuilds, expected);
 			});
 
-			it("throws if the detached node is not available", () => {
+			it("throws if the detached node is not available and requireRefreshers is true", () => {
 				const input: ModularChangeset = {
 					nodeChanges: new Map(),
 					fieldChanges: new Map([]),
 				};
-
 				assert.throws(() => updateRefreshers(input, getDetachedNode, [{ minor: 2 }]));
 			});
 		});

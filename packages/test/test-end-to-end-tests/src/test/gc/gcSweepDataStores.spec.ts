@@ -727,38 +727,32 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 		});
 	});
 
-	describe("Sweep with ValidateSummaryBeforeUpload enabled", () => {
-		beforeEach("setValidateSummaryBeforeUpload", () => {
-			configProvider.set("Fluid.Summarizer.ValidateSummaryBeforeUpload", true);
-		});
-
-		itExpects(
-			"can run sweep without failing summaries due to local changes",
-			[
-				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_DeletingLoadedDataStore",
-					clientType: "noninteractive/summarizer", // summarizationWithUnreferencedDataStoreAfterTime has a summarizer spanning before/after the delete
-				},
-			],
-			async () => {
-				const { summarizer } = await summarizationWithUnreferencedDataStoreAfterTime();
-
-				// Summarize. In this summary, the gc op will be sent with the deleted data store id. Validate that
-				// the GC op does not fail summary due to local changes.
-				await assert.doesNotReject(
-					async () => ensureSynchronizedAndSummarize(summarizer),
-					"Summary and GC should succeed in presence of GC op",
-				);
-
-				// Summarize again so that the sweep ready blobs are now deleted from the GC data. Validate that
-				// summarize and GC succeed.
-				await assert.doesNotReject(
-					async () => ensureSynchronizedAndSummarize(summarizer),
-					"Summary and GC should succeed with deleted data store",
-				);
+	itExpects(
+		"can run sweep without failing summaries due to local changes",
+		[
+			{
+				eventName: "fluid:telemetry:ContainerRuntime:GC_DeletingLoadedDataStore",
+				clientType: "noninteractive/summarizer", // summarizationWithUnreferencedDataStoreAfterTime has a summarizer spanning before/after the delete
 			},
-		);
-	});
+		],
+		async () => {
+			const { summarizer } = await summarizationWithUnreferencedDataStoreAfterTime();
+
+			// Summarize. In this summary, the gc op will be sent with the deleted data store id. Validate that
+			// the GC op does not fail summary due to local changes.
+			await assert.doesNotReject(
+				async () => ensureSynchronizedAndSummarize(summarizer),
+				"Summary and GC should succeed in presence of GC op",
+			);
+
+			// Summarize again so that the sweep ready blobs are now deleted from the GC data. Validate that
+			// summarize and GC succeed.
+			await assert.doesNotReject(
+				async () => ensureSynchronizedAndSummarize(summarizer),
+				"Summary and GC should succeed with deleted data store",
+			);
+		},
+	);
 
 	describe("Sweep with summarize failures and retries", () => {
 		const summarizeErrorMessage = "SimulatedTestFailure";
