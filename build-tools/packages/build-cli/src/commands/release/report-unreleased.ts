@@ -43,29 +43,20 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 	public async run(): Promise<void> {
 		const { flags } = this;
 
-		const [caretManifestFilePath, simpleManifestFilePath] = await Promise.all([
-			fs.readdir(flags.caretManifestFilePath),
-			fs.readdir(flags.simpleManifestFilePath),
-		]);
-
-		const caretJsonFileName = caretManifestFilePath.find((file) =>
-			file.endsWith(".caret.json"),
-		);
-		const simpleJsonFileName = simpleManifestFilePath.find((file) =>
-			file.endsWith(".simple.json"),
-		);
-
-		if (caretJsonFileName === undefined || simpleJsonFileName === undefined) {
-			this.errorLog(
-				`Either *.caret.json or *.simple.json file doesn't exist: ${caretJsonFileName} and ${simpleJsonFileName}`,
-			);
-			this.exit();
-		}
-
-		this.log(`Caret manifest file name: ${caretJsonFileName}`);
-		this.log(`Simple manifest file name: ${simpleJsonFileName}`);
-
 		try {
+			const [caretJsonFileName, simpleJsonFileName] = await Promise.all([
+				findFileByExtension(flags.caretManifestFilePath, ".caret.json"),
+				findFileByExtension(flags.simpleManifestFilePath, ".simple.json"),
+			]);
+
+			if (caretJsonFileName === undefined || simpleJsonFileName === undefined) {
+				this.errorLog(`Either *.caret.json or *.simple.json file doesn't exist`);
+				this.exit();
+			}
+
+			this.log(`Caret manifest file name: ${caretJsonFileName}`);
+			this.log(`Simple manifest file name: ${simpleJsonFileName}`);
+
 			await generateReleaseReportForUnreleasedVersions(
 				path.join(flags.caretManifestFilePath, caretJsonFileName),
 				path.join(flags.simpleManifestFilePath, simpleJsonFileName),
@@ -75,9 +66,22 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 			);
 			this.log("Files processed successfully.");
 		} catch (error: unknown) {
-			this.error(`Unable to process manifest files: ${error}`);
+			this.errorLog(`Unable to process manifest files: ${error}`);
 		}
 	}
+}
+
+/**
+ * Finds a file with a specific extension in a directory.
+ * @param directoryPath - The path to the directory to search in.
+ * @param extension - The file extension to search for.
+ */
+async function findFileByExtension(
+	directoryPath: string,
+	extension: string,
+): Promise<string | undefined> {
+	const files = await fs.readdir(directoryPath);
+	return files.find((file) => file.endsWith(extension));
 }
 
 /**
