@@ -13,10 +13,11 @@
  *
  * @privateRemarks
  * Perfer using `Jsonable<unknown>` over this type that is an implementation detail.
- * @alpha
+ * @public
  */
 export type JsonableTypeWith<T> =
 	| undefined
+	// eslint-disable-next-line @rushstack/no-new-null
 	| null
 	| boolean
 	| number
@@ -34,7 +35,7 @@ export type JsonableTypeWith<T> =
  * This interface along with ArrayLike above avoids pure type recursion issues, but introduces a limitation on
  * the ability of {@link Jsonable} to detect array-like types that are not handled naively ({@link JSON.stringify}).
  * The TypeOnly filter is not useful for {@link JsonableTypeWith}; so, if type testing improves, this can be removed.
- * @alpha
+ * @public
  */
 export interface Internal_InterfaceOfJsonableTypesWith<T> {
 	[index: string | number]: JsonableTypeWith<T>;
@@ -78,9 +79,9 @@ export interface Internal_InterfaceOfJsonableTypesWith<T> {
  * ```typescript
  * function foo<T>(value: Jsonable<T>) { ... }
  * ```
- * @alpha
+ * @public
  */
-export type Jsonable<T, TReplaced = never> = /* test for 'any' */ boolean extends (
+export type Jsonable<T = unknown, TReplaced = never> = /* test for 'any' */ boolean extends (
 	T extends never ? true : false
 )
 	? /* 'any' => */ JsonableTypeWith<TReplaced>
@@ -88,6 +89,7 @@ export type Jsonable<T, TReplaced = never> = /* test for 'any' */ boolean extend
 	? /* 'unknown' => */ JsonableTypeWith<TReplaced>
 	: /* test for Jsonable primitive types */ T extends
 			| undefined /* is not serialized */
+			// eslint-disable-next-line @rushstack/no-new-null
 			| null
 			| boolean
 			| number
@@ -106,3 +108,8 @@ export type Jsonable<T, TReplaced = never> = /* test for 'any' */ boolean extend
 			  }
 		: /* not an object => */ never
 	: /* function => */ never;
+
+/**
+ * @public
+ */
+export type JsonableOrBinary<T = unknown> = Jsonable<T, ArrayBuffer>;

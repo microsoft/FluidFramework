@@ -15,8 +15,7 @@ import {
 	ILoader,
 	ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
-import { type FluidObject } from "@fluidframework/core-interfaces";
-import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import type { FluidObject, JsonableOrBinary } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	IClientDetails,
@@ -88,13 +87,8 @@ export class ContainerContext implements IContainerContext {
 			referenceSequenceNumber?: number,
 		) => number,
 
-		/**
-		 * `unknown` should be removed once `@alpha` tag is removed from IContainerContext
-		 * @see {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/7462}
-		 * Any changes to submitSignalFn `content` should be checked internally by temporarily changing IContainerContext and removing all `unknown`s
-		 */
 		public readonly submitSignalFn: (
-			content: unknown | ISignalEnvelope,
+			content: JsonableOrBinary,
 			targetClientId?: string,
 		) => void,
 		public readonly disposeFn: (error?: ICriticalContainerError) => void,

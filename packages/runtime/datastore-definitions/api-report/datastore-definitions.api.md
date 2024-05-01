@@ -24,6 +24,8 @@ import type { ISequencedDocumentMessage } from '@fluidframework/protocol-definit
 import type { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import type { ITelemetryContext } from '@fluidframework/runtime-definitions';
+import type { Jsonable } from '@fluidframework/core-interfaces';
+import type { JsonableOrBinary } from '@fluidframework/core-interfaces/internal';
 
 // @public (undocumented)
 export interface IChannel extends IFluidLoadable {
@@ -119,7 +121,7 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     readonly options: Record<string | number, any>;
     // (undocumented)
     readonly rootRoutingContext: IFluidHandleContext;
-    submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
+    submitSignal: (type: string, content: JsonableOrBinary, targetClientId?: string) => void;
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
     waitAttached(): Promise<void>;
 }
@@ -135,20 +137,6 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
     // (undocumented)
     (event: "connected", listener: (clientId: string) => void): any;
 }
-
-// @alpha (undocumented)
-export interface Internal_InterfaceOfJsonableTypesWith<T> {
-    // (undocumented)
-    [index: string | number]: JsonableTypeWith<T>;
-}
-
-// @alpha
-export type Jsonable<T, TReplaced = never> = boolean extends (T extends never ? true : false) ? JsonableTypeWith<TReplaced> : unknown extends T ? JsonableTypeWith<TReplaced> : T extends undefined | null | boolean | number | string | TReplaced ? T : Extract<T, Function> extends never ? T extends object ? T extends (infer U)[] ? Jsonable<U, TReplaced>[] : {
-    [K in keyof T]: Extract<K, symbol> extends never ? Jsonable<T[K], TReplaced> : never;
-} : never : never;
-
-// @alpha
-export type JsonableTypeWith<T> = undefined | null | boolean | number | string | T | Internal_InterfaceOfJsonableTypesWith<T> | ArrayLike<JsonableTypeWith<T>>;
 
 // @alpha
 export type Serializable<T> = Jsonable<T, IFluidHandle>;

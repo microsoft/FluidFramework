@@ -92,6 +92,18 @@
 		"broken": {
 			"InterfaceDeclaration_IFluidDataStoreRuntime": {
 				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_Internal_InterfaceOfJsonableTypesWith": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_Jsonable": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_JsonableTypeWith": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

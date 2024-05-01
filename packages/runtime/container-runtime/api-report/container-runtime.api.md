@@ -60,6 +60,7 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
+import type { JsonableOrBinary } from '@fluidframework/core-interfaces/internal';
 import { MessageType } from '@fluidframework/protocol-definitions';
 import { MonitoringContext } from '@fluidframework/telemetry-utils/internal';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions/internal';
@@ -336,7 +337,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     get storage(): IDocumentStorageService;
     // (undocumented)
     submitMessage(type: ContainerMessageType.FluidDataStoreOp | ContainerMessageType.Alias | ContainerMessageType.Attach, contents: any, localOpMetadata?: unknown): void;
-    submitSignal(type: string, content: unknown, targetClientId?: string): void;
+    submitSignal(type: string, content: JsonableOrBinary, targetClientId?: string): void;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
     summarize(options: {
         fullTree?: boolean;
@@ -563,7 +564,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     readonly storage: IDocumentStorageService;
     // (undocumented)
     submitMessage(type: string, content: any, localOpMetadata: unknown): void;
-    submitSignal(type: string, content: unknown, targetClientId?: string): void;
+    submitSignal(type: string, content: JsonableOrBinary, targetClientId?: string): void;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
     // (undocumented)
     protected readonly summarizerNode: ISummarizerNodeWithGC;

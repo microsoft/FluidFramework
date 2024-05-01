@@ -9,12 +9,12 @@ import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
+import { IFluidHandle } from '@fluidframework/core-interfaces/internal';
 import { IJSONRunSegment } from '@fluidframework/sequence/internal';
 import { IJSONSegment } from '@fluidframework/merge-tree/internal';
 import { ISegment } from '@fluidframework/merge-tree/internal';
 import { ISharedObject } from '@fluidframework/shared-object-base';
-import { Jsonable } from '@fluidframework/datastore-definitions/internal';
+import { Jsonable } from '@fluidframework/core-interfaces/internal';
 import { PropertySet } from '@fluidframework/merge-tree/internal';
 import { Serializable } from '@fluidframework/datastore-definitions/internal';
 import { SharedSegmentSequence } from '@fluidframework/sequence/internal';
@@ -182,7 +182,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     static getFactory(): IChannelFactory;
     // (undocumented)
     getItem(row: number, col: number): // The return type is defined explicitly here to prevent TypeScript from generating dynamic imports
-    Jsonable<string | number | boolean | IFluidHandle> | undefined;
+    Jsonable<unknown, IFluidHandle> | undefined;
     // (undocumented)
     getPositionProperties(row: number, col: number): PropertySet | undefined;
     // (undocumented)

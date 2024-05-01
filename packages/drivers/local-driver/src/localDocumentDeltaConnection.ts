@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger, JsonableOrBinary } from "@fluidframework/core-interfaces";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base/internal";
 import {
 	IClient,
@@ -84,7 +84,7 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 		this.emitMessages("submitSignal", [[content]]);
 	}
 
-	public submitSignal2(content: any): void {
+	public submitSignal2(content: JsonableOrBinary): void {
 		// TODO: We need different type of serialization in order to support ArrayBuffers
 		this.emitMessages("submitSignal", [[JSON.stringify(content)]]);
 	}

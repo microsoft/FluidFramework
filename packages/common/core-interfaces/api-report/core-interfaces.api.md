@@ -297,6 +297,12 @@ export interface ILoggingError extends Error {
 }
 
 // @public (undocumented)
+export interface Internal_InterfaceOfJsonableTypesWith<T> {
+    // (undocumented)
+    [index: string | number]: JsonableTypeWith<T>;
+}
+
+// @public (undocumented)
 export interface IProvideFluidHandle {
     // (undocumented)
     readonly [IFluidHandle]: IFluidHandle;
@@ -351,14 +357,14 @@ export interface IResponse {
 }
 
 // @internal (undocumented)
-export interface ISignalEnvelope {
+export type ISignalEnvelope = {
     address?: string;
     clientSignalSequenceNumber: number;
     contents: {
         type: string;
-        content: any;
+        content: JsonableOrBinary;
     };
-}
+};
 
 // @public
 export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
@@ -392,6 +398,17 @@ export interface IThrottlingWarning extends IErrorBase {
 export interface IUsageError extends IErrorBase {
     readonly errorType: typeof FluidErrorTypes.usageError;
 }
+
+// @public
+export type Jsonable<T = unknown, TReplaced = never> = boolean extends (T extends never ? true : false) ? JsonableTypeWith<TReplaced> : unknown extends T ? JsonableTypeWith<TReplaced> : T extends undefined | null | boolean | number | string | TReplaced ? T : Extract<T, Function> extends never ? T extends object ? T extends (infer U)[] ? Jsonable<U, TReplaced>[] : {
+    [K in keyof T]: Extract<K, symbol> extends never ? Jsonable<T[K], TReplaced> : never;
+} : never : never;
+
+// @public (undocumented)
+export type JsonableOrBinary<T = unknown> = Jsonable<T, ArrayBuffer>;
+
+// @public
+export type JsonableTypeWith<T> = undefined | null | boolean | number | string | T | Internal_InterfaceOfJsonableTypesWith<T> | ArrayLike<JsonableTypeWith<T>>;
 
 // @public
 export const LogLevel: {

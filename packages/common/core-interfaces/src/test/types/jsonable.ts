@@ -7,6 +7,8 @@ import type { Jsonable } from "../../index.js";
 
 declare function foo<T>(jsonable: Jsonable<T>): void;
 
+/* eslint-disable unicorn/no-null, @typescript-eslint/no-explicit-any, @rushstack/no-new-null, @typescript-eslint/no-unsafe-argument */
+
 // --- ideally wouldn't work but do as we don't know how to just exclude classes
 
 // test simple class.
@@ -65,7 +67,7 @@ declare const json: Json;
 foo(json);
 
 // test "unknown" Jsonable content
-declare const unknownJsonable: Jsonable<unknown>;
+declare const unknownJsonable: Jsonable;
 foo(unknownJsonable);
 
 // test "unknown" cannonical Json content in an interface
@@ -176,7 +178,7 @@ foo(a14);
 
 // test class with function
 class bar {
-	public baz() {}
+	public baz(): void {}
 }
 // @ts-expect-error should not be jsonable
 foo(new bar());
@@ -226,7 +228,7 @@ foo(mayNotBeArray);
  * It is used below to bypass the early "Index signature for type 'string'" issue for interfaces.
  */
 type TypeAliasOf<T> = T extends object
-	? T extends () => any | null
+	? T extends () => any
 		? T
 		: { [K in keyof T]: TypeAliasOf<T[K]> }
 	: T;
@@ -307,7 +309,7 @@ foo<unknown>(selfReferencing as Jsonable<typeof selfReferencing>);
 // Show that cast to Jsonable version of self does compile even if not
 // respecting the limitations. This is a dangerous practice, but can
 // be useful if very careful.
-foo(aUnknown as Jsonable<typeof aUnknown>);
+foo(aUnknown as Jsonable);
 foo(nestedUnknown as Jsonable<typeof nestedUnknown>);
 foo(a11 as Jsonable<typeof a11>);
 foo(a12 as Jsonable<typeof a12>);
@@ -317,3 +319,5 @@ foo(aBar as Jsonable<typeof aBar>);
 foo(mt as Jsonable<typeof mt>);
 foo(nmt as Jsonable<typeof nmt>);
 foo(isym as Jsonable<typeof isym>);
+
+/* eslint-enable unicorn/no-null, @typescript-eslint/no-explicit-any, @rushstack/no-new-null, @typescript-eslint/no-unsafe-argument */

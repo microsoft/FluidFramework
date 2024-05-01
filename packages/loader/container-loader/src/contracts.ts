@@ -10,7 +10,11 @@ import {
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails, isFluidPackage } from "@fluidframework/container-definitions/internal";
-import { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type {
+	IErrorBase,
+	ITelemetryBaseProperties,
+	JsonableOrBinary,
+} from "@fluidframework/core-interfaces";
 import { IContainerPackageInfo } from "@fluidframework/driver-definitions/internal";
 import {
 	ConnectionMode,
@@ -99,7 +103,7 @@ export interface IConnectionManager {
 	 * Submits signal to relay service.
 	 * Called only when active connection is present.
 	 */
-	submitSignal: (content: unknown, targetClientId?: string) => void;
+	submitSignal: (content: JsonableOrBinary, targetClientId?: string) => void;
 
 	/**
 	 * Submits messages to relay service.

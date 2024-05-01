@@ -24,6 +24,7 @@ import type { ISummaryTree } from '@fluidframework/protocol-definitions';
 import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import type { ITokenClaims } from '@fluidframework/protocol-definitions';
 import type { IVersion } from '@fluidframework/protocol-definitions';
+import type { JsonableOrBinary } from '@fluidframework/core-interfaces';
 
 // @alpha (undocumented)
 export type DriverError = IThrottlingWarning | IGenericNetworkError | IAuthorizationError | ILocationRedirectionError | IDriverBasicError;
@@ -126,7 +127,7 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
     serviceConfiguration: IClientConfiguration;
     submit(messages: IDocumentMessage[]): void;
     submitSignal: (content: string, targetClientId?: string) => void;
-    submitSignal2?: (content: any, targetClientId?: string) => void;
+    submitSignal2?: (content: JsonableOrBinary, targetClientId?: string) => void;
     version: string;
 }
 

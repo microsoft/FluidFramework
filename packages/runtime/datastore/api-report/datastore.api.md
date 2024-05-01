@@ -28,6 +28,7 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
+import type { JsonableOrBinary } from '@fluidframework/core-interfaces/internal';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import { VisibilityState } from '@fluidframework/runtime-definitions/internal';
 
@@ -115,7 +116,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     setConnectionState(connected: boolean, clientId?: string): void;
     // (undocumented)
     submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
-    submitSignal(type: string, content: unknown, targetClientId?: string): void;
+    submitSignal(type: string, content: JsonableOrBinary, targetClientId?: string): void;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
     updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)

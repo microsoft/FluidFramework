@@ -34,6 +34,7 @@ import {
 	IRequest,
 	ITelemetryBaseProperties,
 	LogLevel,
+	JsonableOrBinary,
 } from "@fluidframework/core-interfaces";
 import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
@@ -2288,8 +2289,7 @@ export class Container
 		this.emit("op", message);
 	}
 
-	// unknown should be removed once `@alpha` tag is removed from IContainerContext
-	private submitSignal(content: unknown, targetClientId?: string) {
+	private submitSignal(content: JsonableOrBinary, targetClientId?: string) {
 		this._deltaManager.submitSignal(content, targetClientId);
 	}
 

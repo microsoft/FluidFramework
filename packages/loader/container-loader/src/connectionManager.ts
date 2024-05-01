@@ -9,7 +9,12 @@ import {
 	IDeltaQueue,
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
-import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
+import {
+	IDisposable,
+	ITelemetryBaseProperties,
+	LogLevel,
+	JsonableOrBinary,
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions";
 import {
@@ -1100,7 +1105,7 @@ export class ConnectionManager implements IConnectionManager {
 		};
 	}
 
-	public submitSignal(content: unknown, targetClientId?: string) {
+	public submitSignal(content: JsonableOrBinary, targetClientId?: string) {
 		if (this.connection !== undefined) {
 			// If connection supports sending JS objects as is (submitSignal2 method), use it.
 			// This allows more efficient encoding (as we do not have double sringification of content),
@@ -1203,7 +1208,7 @@ export class ConnectionManager implements IConnectionManager {
 	private readonly signalHandler = (signalsArg: ISignalMessage | ISignalMessage[]) => {
 		const signals = Array.isArray(signalsArg) ? signalsArg : [signalsArg];
 		for (const signalArg of signals) {
-			let signal = { ...signalArg }; // make a copy.
+			const signal = { ...signalArg }; // make a copy.
 			// If IDocumentDeltaConnection implements submitSignal2(), then content is coming as JS objects
 			// Same if these are synthesized join/clean signals coming from setupNewSuccessfulConnection()
 			// Otherwise it's a string, and it may contain serialized ArrayBuffer's.
