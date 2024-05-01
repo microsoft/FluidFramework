@@ -78,11 +78,12 @@ class TestRevokedTokenChecker implements IRevokedTokenChecker {
 	}
 }
 
-interface Client {
+interface TestSignalClient {
 	socket: LocalWebSocket;
 	clientId: string;
-	signalPromise?: Promise<ISignalMessage[]>;
-	signalCount?: number;
+	signalsReceived: ISignalMessage[];
+	nacksReceived: INack[];
+	version: 1 | 2;
 }
 
 describe("Routerlicious", () => {
@@ -412,42 +413,12 @@ describe("Routerlicious", () => {
 				});
 
 				describe("#submitSignal", () => {
-					const createSignalPromise = (
-						client: Client,
-						expectedSignalCount: number = 1,
-					): Promise<ISignalMessage[]> => {
-						return new Promise<ISignalMessage[]>((resolve) => {
-							const signals: ISignalMessage[] = [];
-
-							const signalListener = (signal: ISignalMessage) => {
-								// Ignore disconnected signals
-								if (signal.clientId !== null) {
-									client.signalCount++;
-									signals.push(signal);
-								}
-
-								if (signals.length === expectedSignalCount) {
-									client.socket.off("signal", signalListener);
-									resolve(signals);
-								}
-							};
-
-							client.socket.on("signal", signalListener);
-
-							// Timeout of 100ms to handle cases where not enough signals are received
-							setTimeout(() => {
-								client.socket.off("signal", signalListener);
-								resolve(signals);
-							}, 100);
-						});
-					};
-
-					const createClient = async (
+					async function createClient(
 						testId: string,
 						testTenantId: string,
 						testSecret: string,
 						v2: boolean = false,
-					): Promise<Client> => {
+					): Promise<TestSignalClient> {
 						const socket = webSocketServer.createConnection();
 						const connectMessage = await connectToServer(
 							testId,
@@ -457,20 +428,77 @@ describe("Routerlicious", () => {
 							v2,
 						);
 						const clientId = connectMessage.clientId;
-						const client: Client = {
+						const client: TestSignalClient = {
 							socket,
 							clientId,
-							signalCount: 0,
+							signalsReceived: [],
+							nacksReceived: [],
+							version: v2 ? 2 : 1,
 						};
 
 						return client;
-					};
+					}
 
-					let clientSignalPromises: Promise<ISignalMessage[]>[];
+					function listenForSignals(clients: TestSignalClient[]) {
+						clients.forEach((client) => {
+							client.socket.on("signal", (message: ISignalMessage) => {
+								if (message.clientId !== null) {
+									client.signalsReceived.push(message);
+								}
+							});
+						});
+					}
+
+					function verifyExpectedClientSignals(
+						clients: TestSignalClient[],
+						expectedSignals: ISignalMessage[],
+					) {
+						clients.forEach((client, index) => {
+							assert.equal(
+								client.signalsReceived.length,
+								expectedSignals.length,
+								`User ${index + 1} should have received ${
+									expectedSignals.length
+								} signal(s)`,
+							);
+							expectedSignals.forEach((signal, signalIndex) => {
+								const receivedSignal = client.signalsReceived[signalIndex];
+								Object.keys(signal).forEach((property) => {
+									assert.deepEqual(
+										receivedSignal?.[property],
+										signal[property],
+										`User ${index + 1} signal ${
+											signalIndex + 1
+										} ${property} mismatch`,
+									);
+								});
+							});
+						});
+					}
+
+					function sendAndReturnExpectedSignal(
+						client: TestSignalClient,
+						signal: unknown,
+					): ISignalMessage {
+						client.socket.send("submitSignal", client.clientId, [signal]);
+						let expectedSignalMessage: ISignalMessage;
+						if (client.version === 1) {
+							expectedSignalMessage = {
+								clientId: client.clientId,
+								content: signal,
+							};
+						} else {
+							expectedSignalMessage = {
+								...(signal as ISentSignalMessage),
+								clientId: client.clientId,
+							};
+						}
+						return expectedSignalMessage;
+					}
 
 					const stringSignalContent = "TestSignal";
 
-					let clients: Client[];
+					let clients: TestSignalClient[];
 
 					const numberOfClients = 3; // Change the amount of clients to test with (at least 2 required)
 
@@ -483,75 +511,38 @@ describe("Routerlicious", () => {
 								const client = await createClient(testId, testTenantId, testSecret);
 								clients.push(client);
 							}
+							listenForSignals(clients);
 						});
 						describe("sending one signal", () => {
-							beforeEach(() => {
-								clientSignalPromises = clients.map((client) =>
-									createSignalPromise(client, 1),
-								);
-							});
-
-							it("should broadcast signal from a signle client to all connected clients", async () => {
-								clients[0].socket.send("submitSignal", clients[0].clientId, [
+							it("should broadcast signal to all connected clients", async () => {
+								const expectedSignal = sendAndReturnExpectedSignal(
+									clients[0],
 									stringSignalContent,
-								]);
+								);
 
-								const userSignals = await Promise.all(clientSignalPromises);
-
-								clients.forEach((client, index) => {
-									assert.equal(
-										client.signalCount,
-										1,
-										`User ${index + 1} should have received 1 signal`,
-									);
-									assert.deepEqual(
-										userSignals[index][0].content,
-										stringSignalContent,
-										`User ${index + 1} signal content mismatch`,
-									);
-								});
+								verifyExpectedClientSignals(clients, [expectedSignal]);
 							});
 
 							it("should drop signals with invalid client ID", async () => {
 								clients[0].socket.send("submitSignal", "invalidClientID", [
 									stringSignalContent,
 								]);
-								await Promise.all(clientSignalPromises);
-								clients.forEach((client, index) => {
-									assert.equal(
-										client.signalCount,
-										0,
-										`User ${index + 1} should not have received any signals`,
-									);
-								});
+								verifyExpectedClientSignals(clients, []);
 							});
 
 							it("does not broadcast to disconnected client", async () => {
 								clients[1].socket.disconnect();
 
-								clients[0].socket.send("submitSignal", clients[0].clientId, [
+								const expectedSignal = sendAndReturnExpectedSignal(
+									clients[0],
 									stringSignalContent,
-								]);
+								);
 
-								await Promise.all(clientSignalPromises);
-
-								clients.forEach((client, index) => {
-									if (index === 1) {
-										assert.equal(
-											client.signalCount,
-											0,
-											`User ${
-												index + 1
-											} should not have received any signals`,
-										);
-									} else {
-										assert.equal(
-											client.signalCount,
-											1,
-											`User ${index + 1} should have received 1 signal`,
-										);
-									}
-								});
+								verifyExpectedClientSignals(
+									clients.filter((_, index) => index !== 1),
+									[expectedSignal],
+								);
+								verifyExpectedClientSignals([clients[1]], []);
 							});
 
 							it("throws when signal is not an array", async () => {
@@ -566,109 +557,37 @@ describe("Routerlicious", () => {
 								);
 							});
 
-							describe("content type variations", () => {
-								it("should broadcast signal with number content", async () => {
-									const numberSignalContent = 42;
-									clients[0].socket.send("submitSignal", clients[0].clientId, [
-										numberSignalContent,
-									]);
-									const userSignals = await Promise.all(clientSignalPromises);
-
-									clients.forEach((client, index) => {
-										assert.equal(
-											client.signalCount,
-											1,
-											`User ${index + 1} should have received 1 signal`,
-										);
-										assert.equal(
-											userSignals[index][0].content,
-											numberSignalContent,
-											`User ${index + 1} signal content mismatch`,
-										);
-									});
-								});
-								it("should broadcast signal with boolean content", async () => {
-									const booleanSignalContent = true;
-									clients[0].socket.send("submitSignal", clients[0].clientId, [
-										booleanSignalContent,
-									]);
-									const userSignals = await Promise.all(clientSignalPromises);
-
-									clients.forEach((client, index) => {
-										assert.equal(
-											client.signalCount,
-											1,
-											`User ${index + 1} should have received 1 signal`,
-										);
-										assert.equal(
-											userSignals[index][0].content,
-											booleanSignalContent,
-											`User ${index + 1} signal content mismatch`,
-										);
-									});
-								});
-								it("should broadcast signal with JSON/Object content", async () => {
-									const objectSignalContent = {
-										key1: "value1",
-										key2: 42,
-										key3: true,
-									};
-									clients[0].socket.send("submitSignal", clients[0].clientId, [
-										objectSignalContent,
-									]);
-									const userSignals = await Promise.all(clientSignalPromises);
-
-									clients.forEach((client, index) => {
-										assert.equal(
-											client.signalCount,
-											1,
-											`User ${index + 1} should have received 1 signal`,
-										);
-										assert.deepEqual(
-											userSignals[index][0].content,
-											objectSignalContent,
-											`User ${index + 1} signal content mismatch`,
-										);
-									});
-								});
-							});
+							[
+								42,
+								true,
+								{
+									key1: "value1",
+									key2: 42,
+									key3: true,
+								},
+							].forEach((signalContent) =>
+								it(`should broadcast signal with ${typeof signalContent} content`, () => {
+									const expectedSignal = sendAndReturnExpectedSignal(
+										clients[0],
+										signalContent,
+									);
+									verifyExpectedClientSignals(clients, [expectedSignal]);
+								}),
+							);
 						});
 
 						describe("sending two signals", () => {
-							beforeEach(() => {
-								clientSignalPromises = clients.map((client) =>
-									createSignalPromise(client, 2),
-								);
-							});
-
 							it("should broadcast signals sent from multiple clients to all connected clients", async () => {
-								clients[0].socket.send("submitSignal", clients[0].clientId, [
+								const firstSignal = sendAndReturnExpectedSignal(
+									clients[0],
 									"first signal",
-								]);
-
-								clients[1].socket.send("submitSignal", clients[1].clientId, [
+								);
+								const secondSignal = sendAndReturnExpectedSignal(
+									clients[1],
 									"second signal",
-								]);
+								);
 
-								const userSignals = await Promise.all(clientSignalPromises);
-
-								clients.forEach((client, index) => {
-									assert.equal(
-										client.signalCount,
-										2,
-										`User ${index + 1} should have received 2 signals`,
-									);
-									assert.deepEqual(
-										userSignals[index][0].content,
-										"first signal",
-										`User ${index + 1} signal content mismatch`,
-									);
-									assert.deepEqual(
-										userSignals[index][1].content,
-										"second signal",
-										`User ${index + 1} signal content mismatch`,
-									);
-								});
+								verifyExpectedClientSignals(clients, [firstSignal, secondSignal]);
 							});
 						});
 					});
@@ -685,13 +604,9 @@ describe("Routerlicious", () => {
 								);
 								clients.push(client);
 							}
+							listenForSignals(clients);
 						});
 						describe("sending one signal", () => {
-							beforeEach(() => {
-								clientSignalPromises = clients.map((client) =>
-									createSignalPromise(client, 1),
-								);
-							});
 							it("can transmit signal to a specific targeted client", async () => {
 								const targetedSignal: ISentSignalMessage = {
 									targetClientId: clients[0].clientId,
@@ -700,44 +615,15 @@ describe("Routerlicious", () => {
 									referenceSequenceNumber: 1,
 								};
 
-								clients[1].socket.send("submitSignal", clients[1].clientId, [
+								const expectedSignal = sendAndReturnExpectedSignal(
+									clients[1],
 									targetedSignal,
-								]);
-
-								const userSignals = await Promise.all(clientSignalPromises);
-
-								clients.forEach((client, index) => {
-									if (index === 0) {
-										assert.equal(
-											client.signalCount,
-											1,
-											"User 1 should have received 1 signal",
-										);
-										assert.deepEqual(
-											userSignals[index][0].content,
-											"TargetSignal",
-											"User 1 signal content mismatch",
-										);
-										assert.equal(
-											userSignals[index][0].clientConnectionNumber,
-											1,
-											"User 1 signal content mismatch",
-										);
-										assert.equal(
-											userSignals[index][0].referenceSequenceNumber,
-											1,
-											"User 1 signal content mismatch",
-										);
-									} else {
-										assert.equal(
-											client.signalCount,
-											0,
-											`User ${
-												index + 1
-											} should not have received any signals`,
-										);
-									}
-								});
+								);
+								verifyExpectedClientSignals([clients[0]], [expectedSignal]);
+								verifyExpectedClientSignals(
+									clients.filter((_, index) => index !== 0),
+									[],
+								);
 							});
 
 							it("does not fail on targeted client disconnect", async () => {
@@ -747,53 +633,49 @@ describe("Routerlicious", () => {
 								};
 
 								clients[1].socket.disconnect();
-								clients[0].socket.send("submitSignal", clients[0].clientId, [
-									targetedSignal,
-								]);
-
-								await Promise.all(clientSignalPromises);
-
-								clients.forEach((client, index) => {
-									assert.equal(
-										client.signalCount,
-										0,
-										`User ${index + 1} should not have received any signals`,
-									);
-								});
+								sendAndReturnExpectedSignal(clients[0], targetedSignal);
+								verifyExpectedClientSignals(clients, []);
 							});
 
 							describe("Invalid/Malformed signals", () => {
-								const createNackPromise = (client: Client): Promise<INack> => {
-									return new Promise<INack>((resolve, reject) => {
-										const nackListener = (
-											reason: string,
-											nackMessages: INack[],
-										) => {
-											client.socket.off("nack", nackListener);
-											resolve(nackMessages[0]);
-										};
-										client.socket.on("nack", nackListener);
-
-										// Timeout of 100ms to handle cases where no nack is received
-										setTimeout(() => {
-											client.socket.off("nack", nackListener);
-											reject("Nack message not received");
-										}, 100);
+								function listenForNacks(clients: TestSignalClient[]) {
+									clients.forEach((client) => {
+										client.socket.on(
+											"nack",
+											(reason: string, nackMessages: INack[]) => {
+												client.nacksReceived.push(nackMessages[0]);
+											},
+										);
 									});
-								};
+								}
 
-								const checkNack = (nackMessage: INack) => {
-									assert.ok(nackMessage, "Nack message should not be undefined");
-									assert.equal(nackMessage.content.code, 400);
+								function checkNack(client: TestSignalClient) {
+									assert.equal(
+										client.nacksReceived.length,
+										1,
+										"Client should have received 1 nack",
+									);
+									const nackMessage = client.nacksReceived[0];
+									assert.equal(
+										nackMessage.content.code,
+										400,
+										"Nack code should be 400",
+									);
 									assert.equal(
 										nackMessage.content.type,
 										NackErrorType.BadRequestError,
+										"Nack type should be BadRequestError",
 									);
 									assert.deepEqual(
 										nackMessage.content.message,
 										"Invalid signal message",
+										"Nack message should be 'Invalid signal message'",
 									);
-								};
+								}
+
+								beforeEach(() => {
+									listenForNacks(clients);
+								});
 
 								it("should drop signal when given an invalid client ID", async () => {
 									const targetedSignal: ISentSignalMessage = {
@@ -801,21 +683,9 @@ describe("Routerlicious", () => {
 										content: stringSignalContent,
 									};
 
-									clients[1].socket.send("submitSignal", clients[1].clientId, [
-										targetedSignal,
-									]);
+									sendAndReturnExpectedSignal(clients[0], targetedSignal);
 
-									await Promise.all(clientSignalPromises);
-
-									clients.forEach((client, index) => {
-										assert.equal(
-											client.signalCount,
-											0,
-											`User ${
-												index + 1
-											} should not have received any signals`,
-										);
-									});
+									verifyExpectedClientSignals(clients, []);
 								});
 
 								it("transmits signal with an additional signal field", async () => {
@@ -825,34 +695,16 @@ describe("Routerlicious", () => {
 										additionalField: "test field",
 									};
 
-									clients[1].socket.send("submitSignal", clients[1].clientId, [
+									const expectedSignal = sendAndReturnExpectedSignal(
+										clients[1],
 										targetedSignal,
-									]);
+									);
 
-									const userSignals = await Promise.all(clientSignalPromises);
-
-									clients.forEach((client, index) => {
-										if (index === 0) {
-											assert.equal(
-												client.signalCount,
-												1,
-												"User 1 should have received 1 signal",
-											);
-											assert.deepEqual(
-												userSignals[index][0].content,
-												stringSignalContent,
-												"User 1 signal content mismatch",
-											);
-										} else {
-											assert.equal(
-												client.signalCount,
-												0,
-												`User ${
-													index + 1
-												} should not have received any signals`,
-											);
-										}
-									});
+									verifyExpectedClientSignals([clients[0]], [expectedSignal]);
+									verifyExpectedClientSignals(
+										clients.filter((_, index) => index !== 0),
+										[],
+									);
 								});
 
 								it("nacks invalid targetClientID type", async () => {
@@ -861,15 +713,9 @@ describe("Routerlicious", () => {
 										content: stringSignalContent,
 									};
 
-									const nackPromise = createNackPromise(clients[1]);
+									sendAndReturnExpectedSignal(clients[1], targetedSignal);
 
-									clients[1].socket.send("submitSignal", clients[1].clientId, [
-										targetedSignal,
-									]);
-
-									const nackMessage = await nackPromise;
-
-									checkNack(nackMessage);
+									checkNack(clients[1]);
 								});
 
 								it("nacks missing content field", async () => {
@@ -877,15 +723,9 @@ describe("Routerlicious", () => {
 										targetClientId: clients[0].clientId,
 									};
 
-									const nackPromise = createNackPromise(clients[1]);
+									sendAndReturnExpectedSignal(clients[1], targetedSignal);
 
-									clients[1].socket.send("submitSignal", clients[1].clientId, [
-										targetedSignal,
-									]);
-
-									const nackMessage = await nackPromise;
-
-									checkNack(nackMessage);
+									checkNack(clients[1]);
 								});
 
 								it("nacks invalid optional signal fields", async () => {
@@ -896,81 +736,46 @@ describe("Routerlicious", () => {
 										referenceSequenceNumber: "invalid",
 									};
 
-									const nackPromise = createNackPromise(clients[1]);
+									sendAndReturnExpectedSignal(clients[1], targetedSignal);
 
-									clients[1].socket.send("submitSignal", clients[1].clientId, [
-										targetedSignal,
-									]);
-
-									const nackMessage = await nackPromise;
-
-									checkNack(nackMessage);
+									checkNack(clients[1]);
 								});
 							});
 						});
 						describe("sending two signals", () => {
-							beforeEach(() => {
-								clientSignalPromises = clients.map((client) =>
-									createSignalPromise(client, 2),
-								);
-							});
 							it("can transmit both targeted and broadcast signals", async () => {
 								const targetedSignal: ISentSignalMessage = {
 									targetClientId: clients[0].clientId,
 									content: "TargetedSignal",
 								};
-
-								clients[1].socket.send("submitSignal", clients[1].clientId, [
-									targetedSignal,
-								]);
-
 								const broadcastSignal: ISentSignalMessage = {
 									content: "BroadcastSignal",
 								};
 
-								clients[0].socket.send("submitSignal", clients[0].clientId, [
+								const expectedTargetedSignal = sendAndReturnExpectedSignal(
+									clients[1],
+									targetedSignal,
+								);
+								const expectedBroadcastSignal = sendAndReturnExpectedSignal(
+									clients[1],
 									broadcastSignal,
-								]);
+								);
 
-								const userSignals = await Promise.all(clientSignalPromises);
-
-								clients.forEach((client, index) => {
-									if (index === 0) {
-										assert.equal(
-											client.signalCount,
-											2,
-											"User 1 should have received 2 signals",
-										);
-										assert.deepEqual(
-											userSignals[index][0].content,
-											targetedSignal.content,
-											`User 1 signal content mismatch`,
-										);
-										assert.deepEqual(
-											userSignals[index][1].content,
-											broadcastSignal.content,
-											`User 1 signal content mismatch`,
-										);
-									} else {
-										assert.equal(
-											client.signalCount,
-											1,
-											`User ${index + 1} should have received 1 signal`,
-										);
-										assert.deepEqual(
-											userSignals[index][0].content,
-											broadcastSignal.content,
-											`User ${index + 1} signal content mismatch`,
-										);
-									}
-								});
+								verifyExpectedClientSignals(
+									[clients[0]],
+									[expectedTargetedSignal, expectedBroadcastSignal],
+								);
+								verifyExpectedClientSignals(
+									clients.filter((_, index) => index !== 0),
+									[expectedBroadcastSignal],
+								);
 							});
 						});
 					});
 
 					describe("with v1 and v2 clients", () => {
-						let v1_client: Client;
-						let v2_client: Client;
+						let v1_client: TestSignalClient;
+						let v2_client: TestSignalClient;
 						beforeEach(async () => {
 							clients = [];
 							v1_client = await createClient(testId, testTenantId, testSecret);
@@ -986,30 +791,16 @@ describe("Routerlicious", () => {
 								);
 								clients.push(client);
 							}
-							clientSignalPromises = clients.map((client) =>
-								createSignalPromise(client, 1),
-							);
+							listenForSignals(clients);
 						});
 
 						it("should broadcast signal from a v1 client to all connected clients", async () => {
-							v1_client.socket.send("submitSignal", v1_client.clientId, [
+							const expectedSignal = sendAndReturnExpectedSignal(
+								v1_client,
 								stringSignalContent,
-							]);
+							);
 
-							const userSignals = await Promise.all(clientSignalPromises);
-
-							clients.forEach((client, index) => {
-								assert.equal(
-									client.signalCount,
-									1,
-									`User ${index + 1} should have received 1 signal`,
-								);
-								assert.deepEqual(
-									userSignals[index][0].content,
-									stringSignalContent,
-									`User ${index + 1} signal content mismatch`,
-								);
-							});
+							verifyExpectedClientSignals(clients, [expectedSignal]);
 						});
 
 						it("should broadcast signal from a v2 client to all connected clients", async () => {
@@ -1017,24 +808,12 @@ describe("Routerlicious", () => {
 								content: stringSignalContent,
 							};
 
-							v2_client.socket.send("submitSignal", v2_client.clientId, [
+							const expectedSignal = sendAndReturnExpectedSignal(
+								v2_client,
 								targetedSignal,
-							]);
+							);
 
-							const userSignals = await Promise.all(clientSignalPromises);
-
-							clients.forEach((client, index) => {
-								assert.equal(
-									client.signalCount,
-									1,
-									`User ${index + 1} should have received 1 signal`,
-								);
-								assert.deepEqual(
-									userSignals[index][0].content,
-									stringSignalContent,
-									`User ${index + 1} signal content mismatch`,
-								);
-							});
+							verifyExpectedClientSignals(clients, [expectedSignal]);
 						});
 
 						it("can target a v1 client from a v2 client", async () => {
@@ -1043,32 +822,16 @@ describe("Routerlicious", () => {
 								content: stringSignalContent,
 							};
 
-							v2_client.socket.send("submitSignal", v2_client.clientId, [
+							const expectedSignal = sendAndReturnExpectedSignal(
+								v2_client,
 								targetedSignal,
-							]);
+							);
 
-							const userSignals = await Promise.all(clientSignalPromises);
-
-							clients.forEach((client, index) => {
-								if (index === 0) {
-									assert.equal(
-										client.signalCount,
-										1,
-										"User 1 should have received 1 signal",
-									);
-									assert.deepEqual(
-										userSignals[index][0].content,
-										stringSignalContent,
-										"User 1 signal content mismatch",
-									);
-								} else {
-									assert.equal(
-										client.signalCount,
-										0,
-										`User ${index + 1} should not have received any signals`,
-									);
-								}
-							});
+							verifyExpectedClientSignals([v1_client], [expectedSignal]);
+							verifyExpectedClientSignals(
+								clients.filter((client) => client !== v1_client),
+								[],
+							);
 						});
 					});
 				});
