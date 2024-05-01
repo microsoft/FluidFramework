@@ -503,6 +503,12 @@ With such a constraint, the resulting state in the scenario above will depend on
 It will be `{ arrayA: [a2], arrayB: [b2] }` if Alice's transaction was sequence before Bob's
 and `{ arrayA: [a2], arrayB: [b1] }` otherwise.
 
+### Supported Constraints
+
+We currently support the following types of constraints:
+
+-   `nodeInDocument`: Targets a specific node that must be in the document (i.e., not removed).
+
 ### Schema Changes
 
 As of 2024-04-25,
