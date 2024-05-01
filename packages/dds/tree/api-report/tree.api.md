@@ -5,7 +5,6 @@
 ```ts
 
 import { ErasedType } from '@fluidframework/core-interfaces';
-import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base';

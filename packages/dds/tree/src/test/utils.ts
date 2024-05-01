@@ -137,7 +137,7 @@ import {
 	disposeSymbol,
 	nestedMapFromFlatList,
 } from "../util/index.js";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
 // Testing utilities
 
@@ -641,7 +641,9 @@ export function prepareTreeForCompare(tree: JsonableTree[]): object[] {
 			fields[key] = prepareTreeForCompare(children);
 		}
 		const inputValue = node.value;
-		const value = isFluidHandle(inputValue) ? { Handle: inputValue.absolutePath } : inputValue;
+		const value = isFluidHandle(inputValue)
+			? { Handle: toFluidHandleInternal(inputValue).absolutePath }
+			: inputValue;
 
 		const output: Record<string, any> = { ...node, value, fields };
 
