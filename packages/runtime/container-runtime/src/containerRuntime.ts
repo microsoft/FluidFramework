@@ -1623,15 +1623,23 @@ export class ContainerRuntime
 			return this.submitSignalFn(envelope2, targetClientId);
 		};
 
+		let snapshot: ISnapshot | ISnapshotTree | undefined = baseSnapshot;
+		const snapshotTreesForChannelCollection = getSummaryForDatastores(baseSnapshot, metadata);
+		if (snapshotTreesForChannelCollection !== undefined && snapshotWithContents !== undefined) {
+			snapshot = {
+				...snapshotWithContents,
+				snapshotTree: snapshotTreesForChannelCollection,
+			};
+		}
+
 		this.channelCollection = new ChannelCollection(
-			getSummaryForDatastores(baseSnapshot, metadata),
+			snapshot,
 			parentContext,
 			this.mc.logger,
 			(props) => this.garbageCollector.nodeUpdated(props),
 			(path: string) => this.garbageCollector.isNodeDeleted(path),
 			new Map<string, string>(dataStoreAliasMap),
 			async (runtime: ChannelCollection) => provideEntryPoint,
-			this.blobContents,
 		);
 
 		this.blobManager = new BlobManager({

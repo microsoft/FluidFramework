@@ -48,6 +48,7 @@ import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
+import type { ISnapshot } from '@fluidframework/driver-definitions/internal';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummarizeResult } from '@fluidframework/runtime-definitions/internal';
 import { ISummarizerNodeWithGC } from '@fluidframework/runtime-definitions/internal';
@@ -77,7 +78,7 @@ export const AllowTombstoneRequestHeaderKey = "allowTombstone";
 
 // @internal
 export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
-    constructor(baseSnapshot: ISnapshotTree | undefined, parentContext: IFluidParentContext, baseLogger: ITelemetryBaseLogger, gcNodeUpdated: (props: IGCNodeUpdatedProps) => void, isDataStoreDeleted: (nodePath: string) => boolean, aliasMap: Map<string, string>, provideEntryPoint: (runtime: ChannelCollection) => Promise<FluidObject>, blobContents: Map<string, ArrayBuffer> | undefined);
+    constructor(baseSnapshot: ISnapshotTree | ISnapshot | undefined, parentContext: IFluidParentContext, baseLogger: ITelemetryBaseLogger, gcNodeUpdated: (props: IGCNodeUpdatedProps) => void, isDataStoreDeleted: (nodePath: string) => boolean, aliasMap: Map<string, string>, provideEntryPoint: (runtime: ChannelCollection) => Promise<FluidObject>);
     // (undocumented)
     get aliases(): ReadonlyMap<string, string>;
     // (undocumented)
@@ -87,7 +88,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
     // (undocumented)
     readonly attachOpFiredForDataStore: Set<string>;
     // (undocumented)
-    protected readonly baseSnapshot: ISnapshotTree | undefined;
+    protected readonly baseSnapshot: ISnapshotTree | ISnapshot | undefined;
     // (undocumented)
     readonly containerLoadStats: {
         readonly containerLoadDataStoreCount: number;
@@ -454,8 +455,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected _baseSnapshot: ISnapshotTree | undefined;
     // (undocumented)
     protected bindRuntime(channel: IFluidDataStoreChannel, existing: boolean): Promise<void>;
-    // (undocumented)
-    get blobContents(): Map<string, ArrayBuffer> | undefined;
     // (undocumented)
     protected channel: IFluidDataStoreChannel | undefined;
     // (undocumented)

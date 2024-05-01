@@ -24,6 +24,7 @@ import {
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
+import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 
 const interceptResult = <T>(
 	parent: any,
@@ -95,11 +96,12 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 	};
 
 	const assertOmittedBlobContents = (
-		snapshotTree: ISnapshotTree,
+		snapshot: ISnapshotTree | ISnapshot,
 		groupId: string | undefined,
 		blobContents: Map<string, ArrayBuffer>,
 		message: string,
 	) => {
+		const snapshotTree = getSnapshotTree(snapshot);
 		assert(snapshotTree.groupId === groupId, message);
 		assert(assertOmittedBlobContentsCore(snapshotTree, groupId, blobContents), message);
 	};

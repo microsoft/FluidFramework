@@ -224,6 +224,9 @@
 			},
 			"ClassDeclaration_DataStoreContexts": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IFluidDataStoreContextInternal": {
+				"backCompat": false
 			}
 		}
 	}

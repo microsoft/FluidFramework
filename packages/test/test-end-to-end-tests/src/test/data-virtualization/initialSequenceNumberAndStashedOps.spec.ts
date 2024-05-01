@@ -10,7 +10,6 @@ import type { IContainerExperimental } from "@fluidframework/container-loader/in
 import {
 	type ITestObjectProvider,
 	ITestContainerConfig,
-	createTestConfigProvider,
 } from "@fluidframework/test-utils/internal";
 import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 

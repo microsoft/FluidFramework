@@ -15,8 +15,15 @@ import {
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils/internal";
+import {
+	IDocumentStorageService,
+	type ISnapshot,
+} from "@fluidframework/driver-definitions/internal";
+import {
+	BlobTreeEntry,
+	isInstanceOfISnapshot,
+	readAndParse,
+} from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	IClientDetails,
@@ -167,8 +174,7 @@ export interface ILocalDetachedFluidDataStoreContextProps extends ILocalFluidDat
  * @internal
  */
 export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContextProps {
-	readonly snapshotTree: ISnapshotTree | undefined;
-	readonly blobContents: Map<string, ArrayBuffer> | undefined;
+	readonly snapshot: ISnapshotTree | ISnapshot | undefined;
 }
 
 // back-compat: To be removed in the future.
@@ -221,10 +227,6 @@ export abstract class FluidDataStoreContext
 
 	public get containerRuntime(): IContainerRuntimeBase {
 		return this._containerRuntime;
-	}
-
-	public get blobContents(): Map<string, ArrayBuffer> | undefined {
-		return this.parentContext.blobContents;
 	}
 
 	// back-compat, to be removed in 2.0
@@ -1072,16 +1074,22 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	// Tells whether we need to fetch the snapshot before use. This is to support Data Virtualization.
 	private snapshotFetchRequired: boolean | undefined;
 	private readonly runtime: IContainerRuntimeBase;
+	private readonly blobContents: Map<string, ArrayBuffer> | undefined;
 
 	constructor(props: IRemoteFluidDataStoreContextProps) {
 		super(props, true /* existing */, false /* isLocalDataStore */, () => {
 			throw new Error("Already attached");
 		});
 
-		this._baseSnapshot = props.snapshotTree;
 		this.runtime = props.parentContext.containerRuntime;
-		if (props.snapshotTree !== undefined) {
-			this.summarizerNode.updateBaseSummaryState(props.snapshotTree);
+		if (isInstanceOfISnapshot(props.snapshot)) {
+			this.blobContents = props.snapshot.blobContents;
+			this._baseSnapshot = props.snapshot.snapshotTree;
+		} else {
+			this._baseSnapshot = props.snapshot;
+		}
+		if (this._baseSnapshot !== undefined) {
+			this.summarizerNode.updateBaseSummaryState(this._baseSnapshot);
 		}
 	}
 

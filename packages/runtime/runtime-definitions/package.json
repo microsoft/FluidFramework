@@ -96,6 +96,13 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IFluidDataStoreContext": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IFluidDataStoreContextDetached": {
+				"backCompat": false
+			}
+		}
 	}
 }
