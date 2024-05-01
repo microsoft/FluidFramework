@@ -543,7 +543,7 @@ describe("Routerlicious", () => {
 							listenForSignals(clients);
 						});
 						describe("sending one signal", () => {
-							it("should broadcast signal to all connected clients", async () => {
+							it("should broadcast signal to all connected clients", () => {
 								const expectedSignal = sendAndReturnExpectedSignal(
 									clients[0],
 									stringSignalContent,
@@ -552,7 +552,7 @@ describe("Routerlicious", () => {
 								verifyExpectedClientSignals(clients, [expectedSignal]);
 							});
 
-							it("does not broadcast to disconnected client", async () => {
+							it("does not broadcast to disconnected client", () => {
 								clients[1].socket.disconnect();
 
 								const expectedSignal = sendAndReturnExpectedSignal(
@@ -567,7 +567,7 @@ describe("Routerlicious", () => {
 								verifyExpectedClientSignals([clients[1]], []);
 							});
 
-							it("should nack signals with invalid client ID", async () => {
+							it("should nack signals with invalid client ID", () => {
 								listenForNacks(clients[0]);
 								clients[0].socket.send("submitSignal", "invalidClientID", [
 									stringSignalContent,
@@ -575,7 +575,7 @@ describe("Routerlicious", () => {
 								checkNack(clients[0], "Nonexistent client");
 							});
 
-							it("throws when signal is not an array", async () => {
+							it("throws when signal is not an array", () => {
 								assert.throws(
 									() =>
 										clients[0].socket.send(
@@ -607,7 +607,7 @@ describe("Routerlicious", () => {
 						});
 
 						describe("sending two signals", () => {
-							it("should broadcast signals sent from multiple clients to all connected clients", async () => {
+							it("should broadcast signals sent from multiple clients to all connected clients", () => {
 								const firstSignal = sendAndReturnExpectedSignal(
 									clients[0],
 									"first signal",
@@ -637,7 +637,7 @@ describe("Routerlicious", () => {
 							listenForSignals(clients);
 						});
 						describe("sending one signal", () => {
-							it("can transmit signal to a specific targeted client", async () => {
+							it("can transmit signal to a specific targeted client", () => {
 								const targetedSignal: ISentSignalMessage = {
 									targetClientId: clients[0].clientId,
 									content: "TargetSignal",
@@ -656,7 +656,7 @@ describe("Routerlicious", () => {
 								);
 							});
 
-							it("does not fail on targeted client disconnect", async () => {
+							it("does not fail on targeted client disconnect", () => {
 								const targetedSignal: ISentSignalMessage = {
 									targetClientId: clients[1].clientId,
 									content: "TargetSignal",
@@ -672,7 +672,7 @@ describe("Routerlicious", () => {
 									listenForNacks(clients[0]);
 								});
 
-								it("should drop signal when given an invalid target client ID", async () => {
+								it("should drop signal when given an invalid target client ID", () => {
 									const targetedSignal: ISentSignalMessage = {
 										targetClientId: "invalidClientID",
 										content: stringSignalContent,
@@ -683,7 +683,7 @@ describe("Routerlicious", () => {
 									verifyExpectedClientSignals(clients, []);
 								});
 
-								it("transmits signal with an additional signal field", async () => {
+								it("transmits signal with an additional signal field", () => {
 									const targetedSignal = {
 										targetClientId: clients[0].clientId,
 										content: stringSignalContent,
@@ -702,7 +702,7 @@ describe("Routerlicious", () => {
 									);
 								});
 
-								it("nacks invalid targetClientID type", async () => {
+								it("nacks invalid targetClientID type", () => {
 									const targetedSignal = {
 										targetClientId: true,
 										content: stringSignalContent,
@@ -713,7 +713,7 @@ describe("Routerlicious", () => {
 									checkNack(clients[0], "Invalid signal message");
 								});
 
-								it("should nack signals with invalid client ID", async () => {
+								it("should nack signals with invalid client ID", () => {
 									const targetedSignal = {
 										targetClientId: clients[1],
 										content: stringSignalContent,
@@ -724,7 +724,7 @@ describe("Routerlicious", () => {
 									checkNack(clients[0], "Nonexistent client");
 								});
 
-								it("nacks missing content field", async () => {
+								it("nacks missing content field", () => {
 									const targetedSignal = {
 										targetClientId: clients[1].clientId,
 									};
@@ -734,7 +734,7 @@ describe("Routerlicious", () => {
 									checkNack(clients[0], "Invalid signal message");
 								});
 
-								it("nacks invalid optional signal fields", async () => {
+								it("nacks invalid optional signal fields", () => {
 									const targetedSignal = {
 										targetClientId: clients[1].clientId,
 										content: stringSignalContent,
@@ -749,7 +749,7 @@ describe("Routerlicious", () => {
 							});
 						});
 						describe("sending two signals", () => {
-							it("can transmit both targeted and broadcast signals", async () => {
+							it("can transmit both targeted and broadcast signals", () => {
 								const targetedSignal: ISentSignalMessage = {
 									targetClientId: clients[0].clientId,
 									content: "TargetedSignal",
@@ -800,7 +800,7 @@ describe("Routerlicious", () => {
 							listenForSignals(clients);
 						});
 
-						it("should broadcast signal from a v1 client to all connected clients", async () => {
+						it("should broadcast signal from a v1 client to all connected clients", () => {
 							const expectedSignal = sendAndReturnExpectedSignal(
 								v1_client,
 								stringSignalContent,
@@ -809,7 +809,7 @@ describe("Routerlicious", () => {
 							verifyExpectedClientSignals(clients, [expectedSignal]);
 						});
 
-						it("should broadcast signal from a v2 client to all connected clients", async () => {
+						it("should broadcast signal from a v2 client to all connected clients", () => {
 							const targetedSignal: ISentSignalMessage = {
 								content: stringSignalContent,
 							};
@@ -822,7 +822,7 @@ describe("Routerlicious", () => {
 							verifyExpectedClientSignals(clients, [expectedSignal]);
 						});
 
-						it("can target a v1 client from a v2 client", async () => {
+						it("can target a v1 client from a v2 client", () => {
 							const targetedSignal: ISentSignalMessage = {
 								targetClientId: v1_client.clientId,
 								content: stringSignalContent,
