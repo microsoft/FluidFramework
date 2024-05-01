@@ -407,7 +407,6 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 
 /**
  * A channel factory that creates {@link ISharedTree}s.
- * @internal
  */
 export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
 	public readonly type: string = "https://graph.microsoft.com/types/tree";
