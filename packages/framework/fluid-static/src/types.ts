@@ -47,7 +47,7 @@ export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> =
  * @typeParam T - The class of the `DataObject`.
  * @privateRemarks
  * Having both `factory` and `LoadableObjectCtor` is redundant.
- * TODO: It appears the factory is whats used, so the constructor should be removed.
+ * TODO: It appears the factory is what's used, so the constructor should be removed.
  * @public
  */
 export type DataObjectClass<T extends IFluidLoadable = IFluidLoadable> = {
