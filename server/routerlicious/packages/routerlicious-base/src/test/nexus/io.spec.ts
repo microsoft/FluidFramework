@@ -581,16 +581,15 @@ describe("Routerlicious", () => {
 								checkNack(clients[0], "Nonexistent client");
 							});
 
-							it("throws when signal is not an array", () => {
-								assert.throws(
-									() =>
-										clients[0].socket.send(
-											"submitSignal",
-											clients[0].clientId,
-											stringSignalContent,
-										),
-									"submitting a non-array signal should throw",
+							it("nacks signal that is not an array", () => {
+								listenForNacks(clients[0]);
+
+								clients[0].socket.send(
+									"submitSignal",
+									clients[0].clientId,
+									stringSignalContent,
 								);
+								checkNack(clients[0], "Invalid signal message");
 							});
 
 							[
@@ -750,6 +749,20 @@ describe("Routerlicious", () => {
 
 									sendAndReturnExpectedSignal(clients[0], targetedSignal);
 
+									checkNack(clients[0], "Invalid signal message");
+								});
+
+								it("nacks signal that is not an array", () => {
+									const targetedSignal = {
+										targetClientId: clients[1].clientId,
+										content: stringSignalContent,
+									};
+
+									clients[0].socket.send(
+										"submitSignal",
+										clients[0].clientId,
+										targetedSignal,
+									);
 									checkNack(clients[0], "Invalid signal message");
 								});
 							});
