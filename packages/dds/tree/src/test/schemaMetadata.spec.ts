@@ -4,8 +4,7 @@
  */
 
 import assert from "assert";
-import { SchemaFactory, treeNodeApi, type TreeNode } from "../simple-tree/index.js";
-import type { TreeLeafValue } from "../../dist/index.js";
+import { SchemaFactory, treeNodeApi, TreeNode } from "../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { hydrate } from "./simple-tree/utils.js";
 
@@ -51,8 +50,19 @@ describe.only("Schema Metadata example patterns", () => {
 		function getAISummary(input: TreeNode): string {
 			return JSON.stringify(
 				input,
-				function (this: TreeNode, key: string | number, value: TreeNode | TreeLeafValue) {
-					console.log(`Stringifying Key: "${key}"`);
+				function (this: unknown, key: string | number, value: unknown) {
+					// Replacer function will also pass the original input node back in with a bogus "this" parent object.
+					// If we encounter the original input, return it as as.
+					if (value === input) {
+						return value;
+					}
+
+					// If the parent isn't a TreeNode, then it is some other kind of object that can appear in a proxy,
+					// e.g. an array. Return it as is.
+					if (!(this instanceof TreeNode)) {
+						return value;
+					}
+
 					const schema = treeNodeApi.schema(this);
 					return (schema as any).fieldMetadata?.[key]?.aiIgnored === true
 						? undefined
