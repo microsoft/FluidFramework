@@ -143,6 +143,7 @@ steps:
     workingDirectory: ${{ parameters.buildDirectory }}
     filePath: $(Build.SourcesDirectory)/scripts/update-package-version.sh
 
+# TODO: Add a comment explaining why this only runs on non-PR main-branch builds. 
 - ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['Build.SourceBranch'], 'refs/heads/main')) }}: 
   - template: /tools/pipelines/templates/upload-dev-manifest.yml
     parameters:

@@ -4,6 +4,7 @@
  */
 
 import * as fs from "node:fs/promises";
+import path from "node:path";
 import { isInternalVersionRange } from "@fluid-tools/version-tools";
 import type { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
@@ -11,15 +12,30 @@ import { BaseCommand } from "../../base";
 import type { PackageVersionList } from "../../library";
 
 export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReportCommand> {
+	// TODO: splitting this into two paragraphs, one about what the command does and the other about how and where it's used.
 	static readonly description =
 		`Creates a release report for each build of the client release group published to an internal ADO feed. It creates a report using the version set in the pipeline run. The report is a combination of the "simple" and "caret" report formats. Packages released as part of the client release group will have an exact version range, while other packages, such as server packages or independent packages, will have a caret-equivalent version range.`;
 
 	static readonly flags = {
-		devVersion: Flags.string({
+		version: Flags.string({
 			description:
-				"Dev version generated in the pipeline. This flag should be provided via the DEV_VERSION environment variable for security reasons.",
+				"Version to generate a report for. Typically, this version is the version of a dev build.",
 			required: true,
-			env: "DEV_VERSION",
+			env: "VERSION",
+		}),
+		outDir: Flags.directory({
+			description: "Manifest file output directory",
+			required: true,
+		}),
+		caretManifestFilePath: Flags.string({
+			description: "Path to caret manifest file",
+			char: "c",
+			default: ".",
+		}),
+		simpleManifestFilePath: Flags.string({
+			description: "Path to simple manifest file",
+			char: "s",
+			default: ".",
 		}),
 		...BaseCommand.flags,
 	};
@@ -27,8 +43,33 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 	public async run(): Promise<void> {
 		const { flags } = this;
 
+		const caretManifestFilePath = await fs.readdir(flags.caretManifestFilePath);
+		const simpleManifestFilePath = await fs.readdir(flags.simpleManifestFilePath);
+
+		const caretJsonFilePath = caretManifestFilePath.find((file) =>
+			file.endsWith(".caret.json"),
+		);
+		const simpleJsonFilePath = simpleManifestFilePath.find((file) =>
+			file.endsWith(".simple.json"),
+		);
+
+		if (caretJsonFilePath === undefined || simpleJsonFilePath === undefined) {
+			throw new Error(
+				`Either *.caret.json or *.simple.json file doesn't exist: ${caretJsonFilePath} and ${simpleJsonFilePath}`,
+			);
+		}
+
+		this.log(`Caret manifest file name: ${caretJsonFilePath}`);
+		this.log(`Simple manifest file name: ${simpleJsonFilePath}`);
+
 		try {
-			await generateReleaseReportForUnreleasedVersions(".", flags.devVersion, this.logger);
+			await generateReleaseReportForUnreleasedVersions(
+				path.join(flags.caretManifestFilePath, caretJsonFilePath),
+				path.join(flags.simpleManifestFilePath, simpleJsonFilePath),
+				flags.version,
+				flags.outDir,
+				this.logger,
+			);
 			this.log("Files processed successfully.");
 		} catch (error: unknown) {
 			this.error(`Unable to process manifest files: ${error}`);
@@ -37,74 +78,81 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 }
 
 async function generateReleaseReportForUnreleasedVersions(
-	path: string,
-	devVersion: string,
-	log?: Logger,
+	caretJsonFilePath: string,
+	simpleJsonFilePath: string,
+	version: string,
+	outDir: string,
+	log: Logger,
 ): Promise<void> {
-	const files = await fs.readdir(path);
-
-	const caretJsonFile = files.find((file) => file.endsWith(".caret.json"));
-	const simpleJsonFile = files.find((file) => file.endsWith(".simple.json"));
-
-	log?.log(`Caret manifest file name: ${caretJsonFile}`);
-	log?.log(`Simple manifest file name: ${simpleJsonFile}`);
-
-	if (caretJsonFile === undefined || simpleJsonFile === undefined) {
-		throw new Error(
-			`Either *.caret.json or *.simple.json file doesn't exist: ${path} ${caretJsonFile} and ${simpleJsonFile}`,
-		);
+	if (caretJsonFilePath) {
+		await writeManifestToFile(outDir, caretJsonFilePath, "manifest", version, log);
 	}
 
-	if (caretJsonFile) {
-		await writeManifestToFile(path, caretJsonFile, "manifest", devVersion, log);
-	}
-
-	if (simpleJsonFile) {
-		await writeManifestToFile(path, simpleJsonFile, "simpleManifest", devVersion, log);
+	if (simpleJsonFilePath) {
+		await writeManifestToFile(outDir, simpleJsonFilePath, "simpleManifest", version, log);
 	}
 }
 
 async function writeManifestToFile(
-	path: string,
-	jsonFile: string,
+	outDir: string,
+	jsonFilePath: string,
 	revisedFileName: string,
-	devVersion: string,
-	log?: Logger,
-): Promise<string | undefined> {
+	version: string,
+	log: Logger,
+): Promise<string | void> {
 	const ignorePackageList = new Set(["@types/jest-environment-puppeteer"]);
 	try {
-		const manifestData = await fs.readFile(`${path}/${jsonFile}`, "utf8");
+		const manifestData = await fs.readFile(jsonFilePath, "utf8");
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const manifestFile: PackageVersionList = JSON.parse(manifestData);
 
-		for (const key of Object.keys(manifestFile)) {
-			if (ignorePackageList.has(key)) {
+		for (const packageName of Object.keys(manifestFile)) {
+			if (ignorePackageList.has(packageName)) {
 				continue;
 			}
 
 			if (
-				isInternalVersionRange(manifestFile[key], true) ||
-				manifestFile[key].includes("-rc.")
+				isInternalVersionRange(manifestFile[packageName], true) ||
+				manifestFile[packageName].includes("-rc.")
 			) {
-				manifestFile[key] = devVersion;
+				manifestFile[packageName] = version;
 			}
 		}
 
 		const currentDate = new Date().toISOString().slice(0, 10);
 
-		const versionParts: string[] = devVersion.split(".");
+		const buildNumber = extractBuildNumber(version);
 
-		// Extract the last part of the version, which is the number you're looking for
-		const buildNumber: number = Number.parseInt(versionParts[versionParts.length - 1], 10);
+		log.log(`Build Number: ${buildNumber}`);
 
-		log?.log(`Build Number: ${buildNumber}`);
-
-		await fs.writeFile(`${path}/${jsonFile}`, JSON.stringify(manifestFile, undefined, 2));
-		await fs.copyFile(`${path}/${jsonFile}`, `${path}/${revisedFileName}-${currentDate}.json`);
-		await fs.copyFile(`${path}/${jsonFile}`, `${path}/${revisedFileName}-${buildNumber}.json`);
+		await fs.writeFile(jsonFilePath, JSON.stringify(manifestFile, undefined, 2));
+		await fs.copyFile(
+			jsonFilePath,
+			path.join(outDir, `${revisedFileName}-${currentDate}.json`),
+		);
+		await fs.copyFile(
+			jsonFilePath,
+			path.join(outDir, `${revisedFileName}-${buildNumber}.json`),
+		);
 	} catch (error) {
-		log?.errorLog("Error writing manifest to file:", error);
-		return undefined;
+		log.errorLog("Error writing manifest to file:", error);
 	}
+}
+
+/**
+ * Extracts the build number from a version string.
+ *
+ * @param version - The version string containing the build number.
+ * @returns The extracted build number.
+ *
+ * @example
+ * Returns 260312
+ * extractBuildNumber("2.0.0-dev-rc.4.0.0.260312");
+ */
+
+function extractBuildNumber(version: string): number {
+	const versionParts: string[] = version.split(".");
+	// Extract the last part of the version, which is the number you're looking for
+	return Number.parseInt(versionParts[versionParts.length - 1], 10);
 }

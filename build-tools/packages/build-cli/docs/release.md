@@ -212,11 +212,14 @@ Creates a release report for each build of the client release group published to
 
 ```
 USAGE
-  $ flub release report-unreleased --devVersion <value> [-v | --quiet]
+  $ flub release report-unreleased --version <value> --outDir <value> [-v | --quiet] [-c <value>] [-s <value>]
 
 FLAGS
-  --devVersion=<value>  (required) Dev version generated in the pipeline. This flag should be provided via the
-                        DEV_VERSION environment variable for security reasons.
+  -c, --caretManifestFilePath=<value>   [default: .] Path to caret manifest file
+  -s, --simpleManifestFilePath=<value>  [default: .] Path to simple manifest file
+      --outDir=<value>                  (required) Manifest file output directory
+      --version=<value>                 (required) Version to generate a report for. Typically, this version is the
+                                        version of a dev build.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
