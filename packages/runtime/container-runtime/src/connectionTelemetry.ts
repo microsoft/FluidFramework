@@ -251,13 +251,7 @@ class OpPerfTelemetry {
 					latencyStats.opPerfData.lengthInboundQueue = this.deltaManager.inbound.length;
 				}
 			}
-			if (message.contents && isRuntimeMessage(message)) {
-				// This assert will ensure that if/when the 'contents' type changes, we make sure to update the
-				// processedOpSizeForTelemetry calculation below as well.
-				assert(
-					typeof message.contents === "string",
-					"Op's contents are expected to be string",
-				);
+			if (isRuntimeMessage(message) && typeof message.contents === "string") {
 				this.processedOpSizeForTelemetry += message.contents.length;
 			}
 		});
