@@ -46,7 +46,7 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 		}
 
 		try {
-			await generateReleaseReportForUnreleasedVersions(
+			await generateReleaseReport(
 				flags.fullReportFilePath,
 				flags.version,
 				flags.outDir,
@@ -59,22 +59,22 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 }
 
 /**
- * Generates release reports for unreleased versions based on specified manifest files.
+ * Generate release reports for unreleased versions.
  * @param fullReportFilePath - The path to a report file in the 'full' format.
  * @param version - The version string for the reports.
  * @param outDir - The output directory for the reports.
  * @param log - The logger object for logging messages.
  */
-async function generateReleaseReportForUnreleasedVersions(
+async function generateReleaseReport(
 	fullReportFilePath: string,
 	version: string,
 	outDir: string,
 	log: Logger,
 ): Promise<void> {
-	const manifestData = await fs.readFile(fullReportFilePath, "utf8");
+	const reportData = await fs.readFile(fullReportFilePath, "utf8");
 
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-	const jsonData: ReleaseReport = JSON.parse(manifestData);
+	const jsonData: ReleaseReport = JSON.parse(reportData);
 
 	const caretReportOutput = toReportKind(jsonData, "caret");
 	const simpleReportOutput = toReportKind(jsonData, "simple");
@@ -97,25 +97,25 @@ async function generateReleaseReportForUnreleasedVersions(
 }
 
 /**
- * Writes a modified manifest file to the output directory with the revised file name.
- * @param outDir - The output directory for the manifest file.
- * @param manifestFilePath - The path to the original manifest file.
- * @param revisedFileName - The revised file name for the manifest file.
+ * Writes a modified release report to the output directory with the revised file name.
+ * @param outDir - The output directory for the report.
+ * @param reportFilePath - The path to the original report.
+ * @param revisedFileName - The revised file name for the report.
  * @param version - The version string to update packages to.
  * @param log - The logger object for logging messages.
  */
 async function writeReport(
 	outDir: string,
-	manifestFilePath: string,
+	reportFilePath: string,
 	revisedFileName: string,
 	version: string,
 	log: Logger,
 ): Promise<void> {
 	const ignorePackageList = new Set(["@types/jest-environment-puppeteer"]);
-	const manifestData = await fs.readFile(manifestFilePath, "utf8");
+	const reportData = await fs.readFile(reportFilePath, "utf8");
 
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-	const jsonData: PackageVersionList = JSON.parse(manifestData);
+	const jsonData: PackageVersionList = JSON.parse(reportData);
 
 	await updateReportVersions(jsonData, ignorePackageList, version, log);
 
@@ -129,34 +129,33 @@ async function writeReport(
 	const outDirByBuildNumber = path.join(outDir, `${revisedFileName}-${buildNumber}.json`);
 
 	await Promise.all([
-		fs.writeFile(manifestFilePath, JSON.stringify(jsonData, undefined, 2)),
 		fs.writeFile(outDirByCurrentDate, JSON.stringify(jsonData, undefined, 2)),
 		fs.writeFile(outDirByBuildNumber, JSON.stringify(jsonData, undefined, 2)),
 	]);
 }
 
 /**
- * Updates versions in a manifest file based on specified conditions.
- * @param manifestFile - The manifest file object containing package names and versions.
+ * Updates versions in a release report based on specified conditions.
+ * @param report - The release report object containing package names and versions.
  * @param ignorePackageList - The set of package names to ignore during version updating.
  * @param version - The version string to update packages to.
  */
 async function updateReportVersions(
-	manifestFile: PackageVersionList,
+	report: PackageVersionList,
 	ignorePackageList: Set<string>,
 	version: string,
 	log: Logger,
 ): Promise<void> {
-	for (const packageName of Object.keys(manifestFile)) {
+	for (const packageName of Object.keys(report)) {
 		if (ignorePackageList.has(packageName)) {
 			continue;
 		}
 
 		if (
-			isInternalVersionRange(manifestFile[packageName], true) ||
-			isInternalVersionScheme(manifestFile[packageName])
+			isInternalVersionRange(report[packageName], true) ||
+			isInternalVersionScheme(report[packageName])
 		) {
-			manifestFile[packageName] = version;
+			report[packageName] = version;
 		}
 	}
 	log.log(`Release report updated pointing to version: ${version}`);
