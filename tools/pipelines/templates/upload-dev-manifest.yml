@@ -28,7 +28,7 @@ steps:
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
       mkdir upload_manifest_files
-      flub release report-unreleased --version $(SetVersion.version) -c generate_manifest_files -s generate_manifest_files -o upload_manifest_files --verbose
+      flub release report-unreleased -V $(SetVersion.version) -c generate_manifest_files -s generate_manifest_files -o upload_manifest_files
 
 - task: AzureCLI@2
   displayName: Upload release reports
@@ -41,12 +41,5 @@ steps:
       for file in upload_manifest_files/*; do
           az storage blob upload -f "$file" -c 'manifest-files' -n "$(basename "$file")" --account-name ${{ parameters.STORAGE_ACCOUNT }} --account-key ${{ parameters.STORAGE_KEY }} --overwrite true --verbose
       done
-
-- task: Bash@3
-  displayName: Delete manifest files from root
-  inputs:
-    targetType: 'inline'
-    workingDirectory: ${{ parameters.buildDirectory }}
-    script: |
       # Delete generate_manifest_files and upload_manifest_files folder
       rm -r generate_manifest_files upload_manifest_files

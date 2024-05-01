@@ -212,14 +212,14 @@ This command creates a release report for each build of the client release group
 
 ```
 USAGE
-  $ flub release report-unreleased --version <value> -o <value> [-v | --quiet] [-c <value>] [-s <value>]
+  $ flub release report-unreleased -V <value> -o <value> [-v | --quiet] [-c <value>] [-s <value>]
 
 FLAGS
+  -V, --version=<value>                 (required) Version to generate a report for. Typically, this version is the
+                                        version of a dev build.
   -c, --caretManifestFilePath=<value>   [default: .] Specify the path to the caret manifest file
   -o, --outDir=<value>                  (required) Release report output directory
   -s, --simpleManifestFilePath=<value>  [default: .] Specify the path to the simple manifest file
-      --version=<value>                 (required) Version to generate a report for. Typically, this version is the
-                                        version of a dev build.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.

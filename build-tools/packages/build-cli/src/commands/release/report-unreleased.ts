@@ -5,7 +5,7 @@
 
 import * as fs from "node:fs/promises";
 import path from "node:path";
-import { isInternalVersionRange } from "@fluid-tools/version-tools";
+import { isInternalVersionRange, isInternalVersionScheme } from "@fluid-tools/version-tools";
 import type { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../base";
@@ -20,6 +20,7 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 			description:
 				"Version to generate a report for. Typically, this version is the version of a dev build.",
 			required: true,
+			char: "V",
 		}),
 		outDir: Flags.directory({
 			description: "Release report output directory",
@@ -47,27 +48,27 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 			fs.readdir(flags.simpleManifestFilePath),
 		]);
 
-		const caretJsonFilePath = caretManifestFilePath.find((file) =>
+		const caretJsonFileName = caretManifestFilePath.find((file) =>
 			file.endsWith(".caret.json"),
 		);
-		const simpleJsonFilePath = simpleManifestFilePath.find((file) =>
+		const simpleJsonFileName = simpleManifestFilePath.find((file) =>
 			file.endsWith(".simple.json"),
 		);
 
-		if (caretJsonFilePath === undefined || simpleJsonFilePath === undefined) {
+		if (caretJsonFileName === undefined || simpleJsonFileName === undefined) {
 			this.errorLog(
-				`Either *.caret.json or *.simple.json file doesn't exist: ${caretJsonFilePath} and ${simpleJsonFilePath}`,
+				`Either *.caret.json or *.simple.json file doesn't exist: ${caretJsonFileName} and ${simpleJsonFileName}`,
 			);
 			this.exit();
 		}
 
-		this.log(`Caret manifest file name: ${caretJsonFilePath}`);
-		this.log(`Simple manifest file name: ${simpleJsonFilePath}`);
+		this.log(`Caret manifest file name: ${caretJsonFileName}`);
+		this.log(`Simple manifest file name: ${simpleJsonFileName}`);
 
 		try {
 			await generateReleaseReportForUnreleasedVersions(
-				path.join(flags.caretManifestFilePath, caretJsonFilePath),
-				path.join(flags.simpleManifestFilePath, simpleJsonFilePath),
+				path.join(flags.caretManifestFilePath, caretJsonFileName),
+				path.join(flags.simpleManifestFilePath, simpleJsonFileName),
 				flags.version,
 				flags.outDir,
 				this.logger,
@@ -133,19 +134,13 @@ async function writeManifestToFile(
 
 		log.log(`Build Number: ${buildNumber}`);
 
-		const revisedFilePathCurrentDate = path.join(
-			outDir,
-			`${revisedFileName}-${currentDate}.json`,
-		);
-		const revisedFilePathBuildNumber = path.join(
-			outDir,
-			`${revisedFileName}-${buildNumber}.json`,
-		);
+		const outDirByCurrentDate = path.join(outDir, `${revisedFileName}-${currentDate}.json`);
+		const outDirByBuildNumber = path.join(outDir, `${revisedFileName}-${buildNumber}.json`);
 
 		await Promise.all([
 			fs.writeFile(manifestFilePath, JSON.stringify(jsonData, undefined, 2)),
-			fs.writeFile(revisedFilePathCurrentDate, JSON.stringify(jsonData, undefined, 2)),
-			fs.writeFile(revisedFilePathBuildNumber, JSON.stringify(jsonData, undefined, 2)),
+			fs.writeFile(outDirByCurrentDate, JSON.stringify(jsonData, undefined, 2)),
+			fs.writeFile(outDirByBuildNumber, JSON.stringify(jsonData, undefined, 2)),
 		]);
 	} catch (error) {
 		log.errorLog("Error writing manifest to file:", error);
@@ -170,7 +165,7 @@ async function updateManifestVersions(
 
 		if (
 			isInternalVersionRange(manifestFile[packageName], true) ||
-			manifestFile[packageName].includes("-rc.")
+			isInternalVersionScheme(manifestFile[packageName])
 		) {
 			manifestFile[packageName] = version;
 		}
