@@ -548,10 +548,10 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 			const containerRuntime = (summarizer as any).runtime as ContainerRuntime;
 			const submitSumarySpy = sandbox.spy(containerRuntime, "submitSummary");
 
-			const prom = summarizer.run("test");
+			const summarizerRunProm = summarizer.run("test");
 			summarizer.stop("parentNotConnected");
 			await flushPromises();
-			await prom;
+			await summarizerRunProm;
 
 			assert.strictEqual(submitSumarySpy.calledOnce, true, "expect a final summary to run");
 		},
