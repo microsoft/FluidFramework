@@ -140,7 +140,7 @@ Generates a report of Fluid Framework releases.
 ```
 USAGE
   $ flub release report [--json] [-v | --quiet] [-i | -r | -s] [-g
-    client|server|azure|build-tools|gitrest|historian] [-o <value>] [--baseFileName]
+    client|server|azure|build-tools|gitrest|historian] [-o <value>] [--baseFileName <value>]
 
 FLAGS
   -g, --releaseGroup=<option>
@@ -166,8 +166,10 @@ FLAGS
   -s, --highest
       Always pick the greatest semver version as the latest (ignore dates).
 
-  --baseFileName
-      If provided it outputs the files with names like baseFileName.caret.json
+  --baseFileName=<value>
+      If provided, the output files will be named using this base name followed by the report kind
+      (caret,simple,full,tilde) and the .json extension. For example, if baseFileName is 'foo', the output files will be
+      named 'foo.caret.json', 'foo.simple.json', etc.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.

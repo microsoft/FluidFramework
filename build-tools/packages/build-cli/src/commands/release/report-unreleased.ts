@@ -45,8 +45,6 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 			this.exit();
 		}
 
-		this.log(`Full manifest file path: ${flags.fullReportFilePath}`);
-
 		try {
 			await generateReleaseReportForUnreleasedVersions(
 				flags.fullReportFilePath,
@@ -54,7 +52,6 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 				flags.outDir,
 				this.logger,
 			);
-			this.log("Files processed successfully.");
 		} catch (error: unknown) {
 			this.error(`Error while generating release reports: ${error}`);
 		}
@@ -63,11 +60,10 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 
 /**
  * Generates release reports for unreleased versions based on specified manifest files.
- * @param caretManifestFilePath - The path to the caret manifest file.
- * @param simpleManifestFilePath - The path to the simple manifest file.
+ * @param fullReportFilePath - The path to a report file in the 'full' format.
  * @param version - The version string for the reports.
  * @param outDir - The output directory for the reports.
- * @param logger - The logger object for logging messages.
+ * @param log - The logger object for logging messages.
  */
 async function generateReleaseReportForUnreleasedVersions(
 	fullReportFilePath: string,
@@ -86,17 +82,18 @@ async function generateReleaseReportForUnreleasedVersions(
 	const caretReportPath = path.join(outDir, `caret.json`);
 	const simpleReportPath = path.join(outDir, `simple.json`);
 
-	await writeJson(caretReportPath, caretReportOutput, { spaces: 2 });
-	await writeJson(simpleReportPath, simpleReportOutput, { spaces: 2 });
-
-	await writeManifestToFile(outDir, caretReportPath, "manifest", version, log);
-
-	await writeManifestToFile(outDir, simpleReportPath, "simple", version, log);
+	await Promise.all([
+		writeJson(caretReportPath, caretReportOutput, { spaces: 2 }),
+		writeJson(simpleReportPath, simpleReportOutput, { spaces: 2 }),
+	]);
 
 	await Promise.all([
-		fs.unlink(path.join(outDir, "caret.json")),
-		fs.unlink(path.join(outDir, "simple.json")),
+		writeReport(outDir, caretReportPath, "manifest", version, log),
+		writeReport(outDir, simpleReportPath, "simple", version, log),
 	]);
+
+	await Promise.all([fs.unlink(caretReportPath), fs.unlink(simpleReportPath)]);
+	log.log("Release report processed successfully.");
 }
 
 /**
@@ -105,9 +102,9 @@ async function generateReleaseReportForUnreleasedVersions(
  * @param manifestFilePath - The path to the original manifest file.
  * @param revisedFileName - The revised file name for the manifest file.
  * @param version - The version string to update packages to.
- * @param logger - The logger object for logging messages.
+ * @param log - The logger object for logging messages.
  */
-async function writeManifestToFile(
+async function writeReport(
 	outDir: string,
 	manifestFilePath: string,
 	revisedFileName: string,
@@ -120,7 +117,7 @@ async function writeManifestToFile(
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const jsonData: PackageVersionList = JSON.parse(manifestData);
 
-	await updateManifestVersions(jsonData, ignorePackageList, version);
+	await updateReportVersions(jsonData, ignorePackageList, version, log);
 
 	const currentDate = formatISO(new Date(), { representation: "date" });
 
@@ -144,10 +141,11 @@ async function writeManifestToFile(
  * @param ignorePackageList - The set of package names to ignore during version updating.
  * @param version - The version string to update packages to.
  */
-async function updateManifestVersions(
+async function updateReportVersions(
 	manifestFile: PackageVersionList,
 	ignorePackageList: Set<string>,
 	version: string,
+	log: Logger,
 ): Promise<void> {
 	for (const packageName of Object.keys(manifestFile)) {
 		if (ignorePackageList.has(packageName)) {
@@ -161,6 +159,7 @@ async function updateManifestVersions(
 			manifestFile[packageName] = version;
 		}
 	}
+	log.log(`Release report updated pointing to version: ${version}`);
 }
 
 /**

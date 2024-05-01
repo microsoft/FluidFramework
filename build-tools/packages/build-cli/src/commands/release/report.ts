@@ -386,10 +386,10 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 			char: "o",
 			description: "Output JSON report files to this directory.",
 		}),
-		baseFileName: Flags.boolean({
-			description: "If provided it outputs the files with names like baseFileName.caret.json",
+		baseFileName: Flags.string({
+			description:
+				"If provided, the output files will be named using this base name followed by the report kind (caret,simple,full,tilde) and the .json extension. For example, if baseFileName is 'foo', the output files will be named 'foo.caret.json', 'foo.simple.json', etc.",
 			required: false,
-			default: false,
 		}),
 		...ReleaseReportBaseCommand.flags,
 	};
@@ -684,7 +684,7 @@ function generateReportFileName(
 	kind: ReportKind,
 	releaseVersion: ReleaseVersion,
 	releaseGroup?: ReleaseGroup,
-	baseFileName?: boolean,
+	baseFileName?: string,
 ): string {
 	if (releaseGroup === undefined && releaseVersion === undefined) {
 		throw new Error(`Both releaseGroup and releaseVersion were undefined.`);
@@ -709,7 +709,7 @@ async function writeReport(
 	kind: ReportKind,
 	dir: string,
 	releaseGroup?: ReleaseGroup,
-	baseFileName?: boolean,
+	baseFileName?: string,
 	log?: CommandLogger,
 ): Promise<void> {
 	const version =
