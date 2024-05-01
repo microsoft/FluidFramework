@@ -45,7 +45,7 @@
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
-			"args": ["release", "-g", "client", "-v", "--no-policyCheck"],
+			"args": ["info", "-c", "name,serverDeps"],
 		},
 		{
 			"name": "flub check policy",
