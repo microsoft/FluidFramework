@@ -64,7 +64,7 @@ export class ConsensusRegisterCollectionFactory
 }
 
 /**
- * {@inheritdoc IConsensusRegisterCollection}
+ * {@inheritDoc IConsensusRegisterCollection}
  * @alpha
  */
 export const ConsensusRegisterCollection = createSharedObjectKind(
