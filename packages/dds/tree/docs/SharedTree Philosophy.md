@@ -291,7 +291,7 @@ Forest is currently eager, but when support for forests which do not hold all th
 There are several different sizes which SharedTree performance scales with:
 
 -   The depth of the tree.
-    Many costs scale linearly with the depth. This includes the size of ops, the time to apply ops, stack space used in my cases etc.
+    Many costs scale linearly with the depth. This includes the size of ops, the time to apply ops, stack space used in many cases etc.
     Overall extreme tree depth is not an optimization priority for SharedTree,
     however it is designed to enable amortization of depth related costs when many operations are applied within the same subtree.
     If depth related costs become problematic, increasing the ability to amortize/deduplicate depth related costs,
