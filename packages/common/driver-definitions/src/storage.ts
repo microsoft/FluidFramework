@@ -319,6 +319,8 @@ export interface IDocumentDeltaConnection
 
 	/**
 	 * Submits a new signal to the server
+	 * Content is a JS object. It may container properties of type ArrayBuffer.
+	 * Other than such properties, the content should be serializable using JSON.serialize().
 	 */
 	submitSignal2?: (content: any, targetClientId?: string) => void;
 }

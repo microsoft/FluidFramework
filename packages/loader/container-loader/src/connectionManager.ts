@@ -972,7 +972,9 @@ export class ConnectionManager implements IConnectionManager {
 			signalsToProcess = signalsToProcess.concat(connection.initialSignals);
 		}
 
-		this.props.signalHandler(signalsToProcess);
+		for (const signal of signalsToProcess) {
+			this.signalHandler(signal);
+		}
 	}
 
 	/**
@@ -1100,10 +1102,13 @@ export class ConnectionManager implements IConnectionManager {
 
 	public submitSignal(content: unknown, targetClientId?: string) {
 		if (this.connection !== undefined) {
-			// JSON.stringify!!
+			// If connection supports sending JS objects as is (submitSignal2 method), use it.
+			// This allows more efficient encoding (as we do not have double sringification of content),
+			// and it also natively supports binary (ArrayBuffer) properties
 			if (this.connection.submitSignal2 !== undefined) {
 				this.connection.submitSignal2(content, targetClientId);
 			} else {
+				// This flow does not currently supports binary properties!
 				this.connection.submitSignal(JSON.stringify(content), targetClientId);
 			}
 		} else {
@@ -1197,7 +1202,11 @@ export class ConnectionManager implements IConnectionManager {
 
 	private readonly signalHandler = (signalsArg: ISignalMessage | ISignalMessage[]) => {
 		const signals = Array.isArray(signalsArg) ? signalsArg : [signalsArg];
-		for (const signal of signals) {
+		for (const signalArg of signals) {
+			let signal = { ...signalArg }; // make a copy.
+			// If IDocumentDeltaConnection implements submitSignal2(), then content is coming as JS objects
+			// Same if these are synthesized join/clean signals coming from setupNewSuccessfulConnection()
+			// Otherwise it's a string, and it may contain serialized ArrayBuffer's.
 			if (typeof signal.content === "string") {
 				signal.content = JSON.parse(signal.content);
 			}

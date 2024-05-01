@@ -80,12 +80,13 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 	/**
 	 * Submits a new signal to the server
 	 */
-	public submitSignal(message: string): void {
-		this.emitMessages("submitSignal", [[message]]);
+	public submitSignal(content: string): void {
+		this.emitMessages("submitSignal", [[content]]);
 	}
 
-	public submitSignal2(message: any): void {
-		this.emitMessages("submitSignal", [[message]]);
+	public submitSignal2(content: any): void {
+		// TODO: We need different type of serialization in order to support ArrayBuffers
+		this.emitMessages("submitSignal", [[JSON.stringify(content)]]);
 	}
 
 	/**
