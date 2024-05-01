@@ -1517,7 +1517,7 @@ export class Container
 
 	private readonly metadataUpdateHandler = (metadata: Record<string, string>) => {
 		this._containerMetadata = { ...this._containerMetadata, ...metadata };
-		this.emit("metadataUpdate", metadata);
+		this.emit("metadataUpdate", this._containerMetadata);
 	};
 
 	private async createDocumentService(
@@ -2290,8 +2290,8 @@ export class Container
 	}
 
 	// unknown should be removed once `@alpha` tag is removed from IContainerContext
-	private submitSignal(content: unknown | ISignalEnvelope, targetClientId?: string) {
-		this._deltaManager.submitSignal(JSON.stringify(content), targetClientId);
+	private submitSignal(content: unknown, targetClientId?: string) {
+		this._deltaManager.submitSignal(content, targetClientId);
 	}
 
 	private processSignal(message: ISignalMessage) {

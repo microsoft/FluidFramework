@@ -84,6 +84,10 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 		this.emitMessages("submitSignal", [[message]]);
 	}
 
+	public submitSignal2(message: any): void {
+		this.emitMessages("submitSignal", [[message]]);
+	}
+
 	/**
 	 * Send a "disconnect" message on the socket.
 	 * @param disconnectReason - The reason of the disconnection.

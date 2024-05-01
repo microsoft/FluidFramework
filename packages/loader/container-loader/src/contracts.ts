@@ -99,7 +99,7 @@ export interface IConnectionManager {
 	 * Submits signal to relay service.
 	 * Called only when active connection is present.
 	 */
-	submitSignal: (content: string, targetClientId?: string) => void;
+	submitSignal: (content: unknown, targetClientId?: string) => void;
 
 	/**
 	 * Submits messages to relay service.
@@ -135,7 +135,7 @@ export interface IConnectionManagerFactoryArgs {
 	 * Called by connection manager for each incoming signal.
 	 * May be called before connectHandler is called (due to initial signals on socket connection)
 	 */
-	readonly signalHandler: (signals: ISignalMessage[]) => void;
+	readonly signalHandler: (signal: ISignalMessage) => void;
 
 	/**
 	 * Called when connection manager experiences delay in connecting to relay service.

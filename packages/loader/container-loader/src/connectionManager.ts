@@ -943,9 +943,9 @@ export class ConnectionManager implements IConnectionManager {
 		// protocol in Container.
 		const clearSignal: ISignalMessage = {
 			clientId: null, // system message
-			content: JSON.stringify({
+			content: {
 				type: SignalType.Clear,
-			}),
+			},
 		};
 
 		// list of signals to process due to this new connection
@@ -954,10 +954,10 @@ export class ConnectionManager implements IConnectionManager {
 		const clientJoinSignals: ISignalMessage[] = (connection.initialClients ?? []).map(
 			(priorClient) => ({
 				clientId: null, // system signal
-				content: JSON.stringify({
+				content: {
 					type: SignalType.ClientJoin,
 					content: priorClient, // ISignalClient
-				}),
+				},
 			}),
 		);
 		if (clientJoinSignals.length > 0) {
@@ -1098,9 +1098,14 @@ export class ConnectionManager implements IConnectionManager {
 		};
 	}
 
-	public submitSignal(content: string, targetClientId?: string) {
+	public submitSignal(content: unknown, targetClientId?: string) {
 		if (this.connection !== undefined) {
-			this.connection.submitSignal(content, targetClientId);
+			// JSON.stringify!!
+			if (this.connection.submitSignal2 !== undefined) {
+				this.connection.submitSignal2(content, targetClientId);
+			} else {
+				this.connection.submitSignal(JSON.stringify(content), targetClientId);
+			}
 		} else {
 			this.logger.sendErrorEvent({ eventName: "submitSignalDisconnected" });
 		}
@@ -1192,7 +1197,12 @@ export class ConnectionManager implements IConnectionManager {
 
 	private readonly signalHandler = (signalsArg: ISignalMessage | ISignalMessage[]) => {
 		const signals = Array.isArray(signalsArg) ? signalsArg : [signalsArg];
-		this.props.signalHandler(signals);
+		for (const signal of signals) {
+			if (typeof signal.content === "string") {
+				signal.content = JSON.parse(signal.content);
+			}
+			this.props.signalHandler(signal);
+		}
 	};
 
 	// Always connect in write mode after getting nacked.

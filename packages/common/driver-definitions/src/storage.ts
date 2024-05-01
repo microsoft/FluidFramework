@@ -314,11 +314,13 @@ export interface IDocumentDeltaConnection
 
 	/**
 	 * Submits a new signal to the server
-	 *
-	 * @privateRemarks
-	 * UnknownShouldBe<string> can be string if {@link IDocumentServiceFactory} becomes internal.
 	 */
 	submitSignal: (content: string, targetClientId?: string) => void;
+
+	/**
+	 * Submits a new signal to the server
+	 */
+	submitSignal2?: (content: any, targetClientId?: string) => void;
 }
 
 /**
