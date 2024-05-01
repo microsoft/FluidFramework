@@ -51,11 +51,6 @@ export function renderDocument(document: DocumentNode, config: RenderConfigurati
 	// Trim any leading and trailing whitespace
 	let renderedDocument = writer.getText().trim();
 
-	if (document.frontMatter !== undefined) {
-		// Join body contents with front-matter.
-		renderedDocument = [document.frontMatter, renderedDocument].join("\n");
-	}
-
 	// Ensure file ends with a single newline.
 	renderedDocument = [renderedDocument, ""].join("\n");
 
