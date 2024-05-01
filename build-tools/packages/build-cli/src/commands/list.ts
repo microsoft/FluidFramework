@@ -10,6 +10,7 @@ import { Package, PackageNamePolicyConfig } from "@fluidframework/build-tools";
 import { BaseCommand } from "../base";
 import { filterPackages, parsePackageFilterFlags } from "../filter";
 import { filterFlags, releaseGroupFlag } from "../flags";
+import { getTarballName } from "../library";
 import {
 	type Feed,
 	feeds,
@@ -100,7 +101,7 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 			.map((item) => {
 				// pnpm returns absolute paths, but repo relative is more useful
 				item.path = context.repo.relativeToRepo(item.path);
-				item.tarball = item.name.replaceAll("@", "").replaceAll("/", "-");
+				item.tarball = getTarballName(item.name);
 
 				// Set the tarball name if the tarball flag is set
 				if (this.flags.tarball === true) {
