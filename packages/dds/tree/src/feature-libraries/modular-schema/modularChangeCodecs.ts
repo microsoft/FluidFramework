@@ -235,7 +235,10 @@ function makeModularChangeCodec(
 
 			decodeNode: (encodedNode: EncodedNodeChangeset): NodeId => {
 				const node = decodeNodeChangesetFromJson(encodedNode, fieldContext);
-				const nodeId: NodeId = { localId: brand(idAllocator.allocate()) };
+				const nodeId: NodeId = {
+					revision: context.revision,
+					localId: brand(idAllocator.allocate()),
+				};
 				setInNestedMap(decodedNodes, nodeId.revision, nodeId.localId, node);
 				return nodeId;
 			},
