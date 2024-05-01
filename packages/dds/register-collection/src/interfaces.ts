@@ -12,7 +12,7 @@ import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-objec
  * Extends the base IChannelFactory to return a more definite type of IConsensusRegisterCollection
  * Use for the runtime to create and load distributed data structure by type name of each channel.
  * @alpha
- * @deprecated Use IChannelFactory<IConsensusRegisterCollection>.
+ * @deprecated Use `IChannelFactory<IConsensusRegisterCollection>`.
  */
 export type IConsensusRegisterCollectionFactory = IChannelFactory<IConsensusRegisterCollection>;
 
