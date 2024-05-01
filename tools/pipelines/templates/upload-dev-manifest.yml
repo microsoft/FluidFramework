@@ -23,14 +23,12 @@ steps:
 
 - task: Bash@3
   displayName: Update release report version
-  env:
-    VERSION: $(SetVersion.version)
   inputs:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
       mkdir upload_manifest_files
-      flub release report-unreleased -c generate_manifest_files -s generate_manifest_files --outDir upload_manifest_files
+      flub release report-unreleased --version $(SetVersion.version) -c generate_manifest_files -s generate_manifest_files -o upload_manifest_files --verbose
 
 - task: AzureCLI@2
   displayName: Upload release reports

@@ -208,16 +208,16 @@ _See code: [src/commands/release/report.ts](https://github.com/microsoft/FluidFr
 
 ## `flub release report-unreleased`
 
-Creates a release report for each build of the client release group published to an internal ADO feed. It creates a report using the version set in the pipeline run. The report is a combination of the "simple" and "caret" report formats. Packages released as part of the client release group will have an exact version range, while other packages, such as server packages or independent packages, will have a caret-equivalent version range.
+This command creates a release report for each build of the client release group published to an internal ADO feed. It utilizes the version set in the pipeline run to generate reports in the "simple" and "caret" formats. This command is used within the "upload-dev-manifest" yaml file and currently operates exclusively for non-PR main branch builds.
 
 ```
 USAGE
-  $ flub release report-unreleased --version <value> --outDir <value> [-v | --quiet] [-c <value>] [-s <value>]
+  $ flub release report-unreleased --version <value> -o <value> [-v | --quiet] [-c <value>] [-s <value>]
 
 FLAGS
-  -c, --caretManifestFilePath=<value>   [default: .] Path to caret manifest file
-  -s, --simpleManifestFilePath=<value>  [default: .] Path to simple manifest file
-      --outDir=<value>                  (required) Manifest file output directory
+  -c, --caretManifestFilePath=<value>   [default: .] Specify the path to the caret manifest file
+  -o, --outDir=<value>                  (required) Release report output directory
+  -s, --simpleManifestFilePath=<value>  [default: .] Specify the path to the simple manifest file
       --version=<value>                 (required) Version to generate a report for. Typically, this version is the
                                         version of a dev build.
 
@@ -226,10 +226,9 @@ LOGGING FLAGS
       --quiet    Disable all logging.
 
 DESCRIPTION
-  Creates a release report for each build of the client release group published to an internal ADO feed. It creates a
-  report using the version set in the pipeline run. The report is a combination of the "simple" and "caret" report
-  formats. Packages released as part of the client release group will have an exact version range, while other packages,
-  such as server packages or independent packages, will have a caret-equivalent version range.
+  This command creates a release report for each build of the client release group published to an internal ADO feed. It
+  utilizes the version set in the pipeline run to generate reports in the "simple" and "caret" formats. This command is
+  used within the "upload-dev-manifest" yaml file and currently operates exclusively for non-PR main branch builds.
 ```
 
 _See code: [src/commands/release/report-unreleased.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/release/report-unreleased.ts)_
