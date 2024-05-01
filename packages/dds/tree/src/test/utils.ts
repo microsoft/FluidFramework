@@ -613,7 +613,13 @@ export function validateSnapshotConsistency(
 			prepareTreeForCompare([children])[0],
 		]),
 	);
-	const mapB = nestedMapFromFlatList(treeB.removed);
+	const mapB = nestedMapFromFlatList(
+		treeB.removed.map(([key, num, children]) => [
+			key,
+			num,
+			prepareTreeForCompare([children])[0],
+		]),
+	);
 	assert.deepEqual(
 		mapA,
 		mapB,
@@ -623,8 +629,9 @@ export function validateSnapshotConsistency(
 }
 
 /**
- * {@link JsonableTree}s can contain handles, which do not compare well with assert.deepEqual.
- * This replaces handles `{ Handle: absolutePath }` allowing for more robust comparisons.
+ * Make a copy of a {@link JsonableTree} array adjusted for compatibility with `assert.deepEqual`.
+ * @remarks
+ * This replaces handles replaced with `{ Handle: absolutePath }`, and normalizes optional fields to be omitted.
  */
 export function prepareTreeForCompare(tree: JsonableTree[]): object[] {
 	return tree.map((node): object => {
