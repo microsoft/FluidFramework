@@ -93,7 +93,7 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 
 		// Handle single packages
 		if (rgOrPackage instanceof Package) {
-			const item = await this.outputSinglePackage(rgOrPackage.name);
+			const item = await this.outputSinglePackage(rgOrPackage);
 			return [item];
 		}
 
@@ -138,14 +138,7 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 		return filtered;
 	}
 
-	private async outputSinglePackage(packageName: string): Promise<ListItem> {
-		const context = await this.getContext();
-		const pkg = context.fullPackageMap.get(packageName);
-		if (pkg === undefined) {
-			// exits the process
-			this.error(`Can't find package: ${packageName}`, { exit: 1 });
-		}
-
+	private async outputSinglePackage(pkg: Package): Promise<ListItem> {
 		const output = this.flags.tarball ? getTarballName(pkg.name) : pkg.name;
 
 		await this.writeOutput(output, this.flags.outFile);
