@@ -16,11 +16,11 @@ import * as React from "react";
  * @public
  */
 export function useTree(subtreeRoot: TreeNode): void {
-	// Use a React effect hook to invalidate this component when the inventory changes.
+	// Use a React effect hook to invalidate this component when the subtreeRoot changes.
 	// We do this by incrementing a counter, which is passed as a dependency to the effect hook.
 	const [invalidations, setInvalidations] = React.useState(0);
 
-	// React effect hook that increments the 'invalidation' counter whenever inventory or any of its children change.
+	// React effect hook that increments the 'invalidation' counter whenever subtreeRoot or any of its children change.
 	React.useEffect(() => {
 		// Returns the cleanup function to be invoked when the component unmounts.
 		return Tree.on(subtreeRoot, "treeChanged", () => {
