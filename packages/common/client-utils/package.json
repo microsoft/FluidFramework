@@ -90,7 +90,7 @@
 		"test:mocha:cjs": "mocha --recursive \"dist/test/mocha/**/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
 		"test:mocha:esm": "mocha --recursive \"lib/test/mocha/**/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ./src/cjs/package.json ./dist",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v --publicFallback",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
@@ -126,11 +126,11 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.6.2",
-		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.0.0-internal.8.0.0",
+		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.0.0-rc.3.0.0",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.37.0",
+		"@fluid-tools/build-cli": "0.38.0-259537",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.37.0",
+		"@fluidframework/build-tools": "0.38.0-259537",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@microsoft/api-extractor": "^7.42.3",
 		"@types/base64-js": "^1.3.0",
@@ -188,14 +188,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"TypeAliasDeclaration_EventEmitterEventType": {
-				"forwardCompat": false
-			},
-			"RemovedClassDeclaration_EventForwarder": {
-				"backCompat": false,
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

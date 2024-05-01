@@ -83,6 +83,7 @@ export interface IRuntimeAttributor extends IProvideRuntimeAttributor {
 
 	/**
 	 * @returns Whether the runtime is currently tracking attribution information for the loaded container.
+	 * If enabled, the runtime attributor can be asked for the attribution info for different keys.
 	 * See {@link mixinAttributor} for more details on when this happens.
 	 */
 	readonly isEnabled: boolean;

@@ -68,7 +68,7 @@ export interface AzureContainerVersion {
 
 // @internal @deprecated
 export class AzureFunctionTokenProvider implements ITokenProvider {
-    constructor(azFunctionUrl: string, user?: Pick<AzureMember<any>, "additionalDetails" | "userId" | "userName"> | undefined);
+    constructor(azFunctionUrl: string, user?: Pick<AzureMember<any>, "name" | "id" | "additionalDetails"> | undefined);
     // (undocumented)
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     // (undocumented)
@@ -88,7 +88,7 @@ export interface AzureLocalConnectionConfig extends AzureConnectionConfig {
 // @public
 export interface AzureMember<T = any> extends IMember {
     additionalDetails?: T;
-    userName: string;
+    name: string;
 }
 
 // @public

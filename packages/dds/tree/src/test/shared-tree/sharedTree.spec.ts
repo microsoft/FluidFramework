@@ -89,14 +89,25 @@ import {
 	validateTreeContent,
 	validateViewConsistency,
 } from "../utils.js";
+import { configuredSharedTree } from "../../treeFactory.js";
+import { ISharedObjectKind } from "@fluidframework/shared-object-base";
+
+const DebugSharedTree = configuredSharedTree({
+	jsonValidator: typeboxValidator,
+	forest: ForestType.Reference,
+}) as ISharedObjectKind<SharedTree>;
+
+class MockSharedTreeRuntime extends MockFluidDataStoreRuntime {
+	public constructor() {
+		super({
+			idCompressor: createIdCompressor(),
+			registry: [DebugSharedTree.getFactory()],
+		});
+	}
+}
 
 describe("SharedTree", () => {
 	describe("schematize", () => {
-		const factory = new SharedTreeFactory({
-			jsonValidator: typeboxValidator,
-			forest: ForestType.Reference,
-		});
-
 		const builder = new SchemaBuilderBase(FieldKinds.optional, {
 			libraries: [leaf.library],
 			scope: "test",
@@ -141,10 +152,7 @@ describe("SharedTree", () => {
 		});
 
 		it("noop upgrade", () => {
-			const tree = factory.create(
-				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-				"the tree",
-			) as SharedTree;
+			const tree = DebugSharedTree.create(new MockSharedTreeRuntime());
 			tree.checkout.updateSchema(storedSchema);
 
 			// No op upgrade with AllowedUpdateType.None does not error
@@ -158,10 +166,7 @@ describe("SharedTree", () => {
 		});
 
 		it("incompatible upgrade errors", () => {
-			const tree = factory.create(
-				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-				"the tree",
-			) as SharedTree;
+			const tree = DebugSharedTree.create(new MockSharedTreeRuntime());
 			tree.checkout.updateSchema(storedSchemaGeneralized);
 			assert.throws(() => {
 				schematizeFlexTree(tree, {
@@ -173,10 +178,7 @@ describe("SharedTree", () => {
 		});
 
 		it("upgrade schema", () => {
-			const tree = factory.create(
-				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-				"the tree",
-			) as SharedTree;
+			const tree = DebugSharedTree.create(new MockSharedTreeRuntime());
 			tree.checkout.updateSchema(storedSchema);
 			const schematized = schematizeFlexTree(tree, {
 				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
@@ -189,7 +191,7 @@ describe("SharedTree", () => {
 
 		// TODO: ensure unhydrated initialTree input is correctly hydrated.
 		it.skip("unhydrated tree input", () => {
-			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
+			const tree = DebugSharedTree.create(new MockSharedTreeRuntime());
 			const sb = new SchemaFactory("test-factory");
 			class Foo extends sb.object("Foo", {}) {}
 

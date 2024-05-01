@@ -43,7 +43,7 @@ export interface FlexTreeView<in out TRoot extends FlexFieldSchema> extends IDis
 	readonly checkout: ITreeCheckout;
 
 	/**
-	 * Get a typed view of the tree content using the editable-tree-2 API.
+	 * Get a typed view of the tree content using the flex-tree API.
 	 */
 	readonly flexTree: FlexTreeTypedField<TRoot>;
 
