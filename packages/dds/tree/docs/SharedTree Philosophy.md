@@ -252,3 +252,36 @@ Accomplishing this goal requires specialized tree data formats or APIs at a few 
     Specialized chunked implementations can declare support for fast path APIs via symbols to allow their user to query for and use them.
 
 To enable efficient encoding and decoding between these formats, both are owned by chunked forest (allowing zero copy optimizations for data arrays between the two), and ref-counting is used on chunks so trees can be lazily cloned, and modified in place when only referenced once.
+
+# Runtime Performance
+
+Where performance costs are incurred is important.
+
+## Application of remote edits vs creation of local edits
+
+SharedTree is designed minimize the cost of applying edits from remote clients since since any client which can't keep up with the remote edit rate is unable to collaborate.
+
+This is most important when a client is falling behind. Thus its very useful for clients which are behind to be able to improve their remote edit application rate via batching.
+SharedTree is designed to enable this optimization in the future, but currently can not perform it it as the runtime does not provide access to the backlog of edits which need to be processed.
+
+Another way SharedTree optimized for performant application of remote edits is to push as much of the cost as possible onto the creation of edits,
+so its payed by the client producing the edits, slowing down their edit stream (which reduces the burden on remote clients) as well as lowering the cost of applying those edits for the remote clients.
+One way SharedTree does this by leveraging Fluid's collaboration window limits: if applying an op would require processing too much history, the client sending the op is required to perform that work themselves to produce a more self contained op.
+The best example of this is the resubmit op flow, which has the client sending the op rebase it if it gets too old.
+
+## Eager vs Lazy
+
+Generally eagerly computing things is simpler, and if they end up being required faster.
+Eager computation also often save on memory footprint.
+SharedTree assumes that the app using the tree will frequently read data, however its designed to support use cases with large amounts of data, and applications that only read a small part of it.
+
+Thus SharedTree aims to eagerly compute things when which will be needed regardless of which data is read,
+as well as eagerly compute things that are cheap enough that its not a performance issue.
+
+Lazily computing values can save work if they end up not being needed, but can also increase latency when first accessing them.
+If this latency becomes problematic (which has not yet occurred for anything in SharedTree), pre-caching these computations can be performed when idle (for example after the JavaScript task that invalided a previously cached value).
+Assuming the laziness has negligible overhead, this avoids delaying responsiveness of the app to wait for the computation when the invalidation occurs (it remains no worse than an eager implementation would be even if the value is requested) while also avoiding harming the responsiveness of an operation that might asynchronously request the value in the future.
+
+An example of where SharedTree acts eagerly is resolving edits in the `editManager`: this optimizes for maximal remote edit throughput.
+An example of where SharedTree is lazy is creating the application facing simple-tree nodes: this allows applications which only read part of the tree to avoid a lot of costs that come with large trees.
+Forest is currently eager, but when support for forests which do not hold all the tree in memory is added, applying edits to non-downloaded parts will have to become lazy.
