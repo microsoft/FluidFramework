@@ -105,7 +105,7 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 		}
 
 		const columnNames = flags.columns;
-		const columns = columnNames.map((name) => nameToColumnInfo[name]);
+		const columnInfos = columnNames.map((name) => nameToColumnInfo[name]);
 
 		// Initialize 'tableData' with Pascal cased column names.
 		const tableData = [
@@ -121,7 +121,7 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 			const jsonRow: Record<string, string> = {};
 
 			// Copy the corresponding column info into the row.
-			for (const [index, { fn }] of columns.entries()) {
+			for (const [index, { fn }] of columnInfos.entries()) {
 				const name = columnNames[index];
 				const value = fn(pkg);
 				tableRow.push(value);
@@ -134,7 +134,7 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 		}
 
 		const output = table(tableData, {
-			columns: columns.map((column) => column.style),
+			columns: columnInfos.map((column) => column.style),
 			singleLine: true,
 		});
 
