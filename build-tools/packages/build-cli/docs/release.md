@@ -140,7 +140,7 @@ Generates a report of Fluid Framework releases.
 ```
 USAGE
   $ flub release report [--json] [-v | --quiet] [-i | -r | -s] [-g
-    client|server|azure|build-tools|gitrest|historian] [-o <value>]
+    client|server|azure|build-tools|gitrest|historian] [-o <value>] [--baseFileName]
 
 FLAGS
   -g, --releaseGroup=<option>
@@ -165,6 +165,9 @@ FLAGS
 
   -s, --highest
       Always pick the greatest semver version as the latest (ignore dates).
+
+  --baseFileName
+      If provided it outputs the files with names like baseFileName.caret.json
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
@@ -208,27 +211,28 @@ _See code: [src/commands/release/report.ts](https://github.com/microsoft/FluidFr
 
 ## `flub release report-unreleased`
 
-This command creates a release report for each build of the client release group published to an internal ADO feed. It utilizes the version set in the pipeline run to generate reports in the "simple" and "caret" formats. This command is used within the "upload-dev-manifest" yaml file and currently operates exclusively for non-PR main branch builds.
+Creates a release report for an unreleased build (one that is not published to npm), using existing reports in the "simple" and "caret" formats as input.
 
 ```
 USAGE
-  $ flub release report-unreleased -V <value> -o <value> [-v | --quiet] [-c <value>] [-s <value>]
+  $ flub release report-unreleased --version <value> --outDir <value> [-v | --quiet] [--fullReportFilePath <value>]
 
 FLAGS
-  -V, --version=<value>                 (required) Version to generate a report for. Typically, this version is the
-                                        version of a dev build.
-  -c, --caretManifestFilePath=<value>   [default: .] Specify the path to the caret manifest file
-  -o, --outDir=<value>                  (required) Release report output directory
-  -s, --simpleManifestFilePath=<value>  [default: .] Specify the path to the simple manifest file
+  --fullReportFilePath=<value>  Path to a report file in the 'full' format.
+  --outDir=<value>              (required) Release report output directory
+  --version=<value>             (required) Version to generate a report for. Typically, this version is the version of a
+                                dev build.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
       --quiet    Disable all logging.
 
 DESCRIPTION
-  This command creates a release report for each build of the client release group published to an internal ADO feed. It
-  utilizes the version set in the pipeline run to generate reports in the "simple" and "caret" formats. This command is
-  used within the "upload-dev-manifest" yaml file and currently operates exclusively for non-PR main branch builds.
+  Creates a release report for an unreleased build (one that is not published to npm), using existing reports in the
+  "simple" and "caret" formats as input.
+
+  This command is primarily used to upload reports for non-PR main branch builds so that downstream pipelines can easily
+  consume them.
 ```
 
 _See code: [src/commands/release/report-unreleased.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/release/report-unreleased.ts)_

@@ -19,7 +19,7 @@ steps:
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
       mkdir generate_manifest_files
-      flub release report -g client -o generate_manifest_files
+      flub release report -g client -o generate_manifest_files --baseFileName
 
 - task: Bash@3
   displayName: Update release report version
@@ -28,7 +28,7 @@ steps:
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
       mkdir upload_manifest_files
-      flub release report-unreleased -V $(SetVersion.version) -c generate_manifest_files -s generate_manifest_files -o upload_manifest_files
+      flub release report-unreleased --version $(SetVersion.version) --fullReportFilePath generate_manifest_files/baseFileName.full.json --outDir upload_manifest_files
 
 - task: AzureCLI@2
   displayName: Upload release reports
