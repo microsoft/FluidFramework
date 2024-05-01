@@ -259,24 +259,24 @@ Where performance costs are incurred is important.
 
 ## Application of remote edits vs creation of local edits
 
-SharedTree is designed minimize the cost of applying edits from remote clients since since any client which can't keep up with the remote edit rate is unable to collaborate.
+SharedTree is designed minimize the cost of applying edits from remote clients since any client which can't keep up with the remote edit rate is unable to collaborate.
 
-This is most important when a client is falling behind. Thus its very useful for clients which are behind to be able to improve their remote edit application rate via batching.
-SharedTree is designed to enable this optimization in the future, but currently can not perform it it as the runtime does not provide access to the backlog of edits which need to be processed.
+This is most important when a client is falling behind. Thus it's very useful for clients which are behind to be able to improve their remote edit application rate via batching.
+SharedTree is designed to enable this optimization in the future, but currently can not perform it as the runtime does not yet provide access to the backlog of edits which need to be processed.
 
-Another way SharedTree optimized for performant application of remote edits is to push as much of the cost as possible onto the creation of edits,
-so its payed by the client producing the edits, slowing down their edit stream (which reduces the burden on remote clients) as well as lowering the cost of applying those edits for the remote clients.
+Another way SharedTree is optimized for performant application of remote edits is to push as much of the cost as possible onto the creation of edits,
+so it is paid by the client producing the edits, slowing down their edit stream (which reduces the burden on remote clients) as well as lowering the cost of applying those edits for the remote clients.
 One way SharedTree does this by leveraging Fluid's collaboration window limits: if applying an op would require processing too much history, the client sending the op is required to perform that work themselves to produce a more self contained op.
 The best example of this is the resubmit op flow, which has the client sending the op rebase it if it gets too old.
 
 ## Eager vs Lazy
 
-Generally eagerly computing things is simpler, and if they end up being required faster.
-Eager computation also often save on memory footprint.
+Generally, eagerly computing things is simpler, and if they end up being required, faster.
+Eager computation also often saves on memory footprint.
 SharedTree assumes that the app using the tree will frequently read data, however its designed to support use cases with large amounts of data, and applications that only read a small part of it.
 
-Thus SharedTree aims to eagerly compute things when which will be needed regardless of which data is read,
-as well as eagerly compute things that are cheap enough that its not a performance issue.
+Thus SharedTree aims to eagerly compute things that will be needed regardless of which data is read,
+as well as eagerly compute things that are cheap enough that it is not a performance issue.
 
 Lazily computing values can save work if they end up not being needed, but can also increase latency when first accessing them.
 If this latency becomes problematic (which has not yet occurred for anything in SharedTree), pre-caching these computations can be performed when idle (for example after the JavaScript task that invalided a previously cached value).
