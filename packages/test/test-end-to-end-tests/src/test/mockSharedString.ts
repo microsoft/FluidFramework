@@ -67,7 +67,6 @@ interface ISnapshot {
 interface IInsert {
 	text: string;
 	index: number;
-	referenceSequenceNumber: number;
 }
 
 export interface ITrimmableInsert extends IInsert {
@@ -75,6 +74,7 @@ export interface ITrimmableInsert extends IInsert {
 }
 
 interface ILocalInsert extends IInsert {
+	referenceSequenceNumber: number;
 	localIndex: number;
 }
 
@@ -92,11 +92,13 @@ function applyInsert(base: string, insert: IInsert): string {
 	return base.slice(0, insert.index) + insert.text + base.slice(insert.index);
 }
 
-// The goal of this dds is to test the minimum sequence number window
-// It is capable of inserting text only.
-// This DDS works very simply, it is insert only. All local edits are applied on top of the remote edits.
-// Trimming occurs when we process minimum sequence number greater than the reference sequence number of the beginning inserts.
-// The merge conflict resolution is rebase only.
+/**
+ *  The goal of this dds is to test the minimum sequence number window
+ * It is capable of inserting text only.
+ * This DDS works very simply, it is insert only. All local edits are applied on top of the remote edits.
+ * Trimming occurs when we process minimum sequence number greater than the reference sequence number of the beginning inserts.
+ * The merge conflict resolution is rebase only.
+ */
 export class MockInsertSharedString extends SharedObject<IInsertStringEvent> {
 	static getFactory(): IChannelFactory {
 		return new MockInsertSharedStringFactory();
@@ -108,14 +110,28 @@ export class MockInsertSharedString extends SharedObject<IInsertStringEvent> {
 	private _sequenceNumber = 0;
 	private _minimumSequenceNumber = 0;
 
+	private readonly _ops: ISequencedDocumentMessage[] = [];
+
 	// Local Memory - data that may not be consistent across clients as is impacted by local changes
 	private _localInsertIndex: number = 0;
-	private _localInserts: ILocalInsert[] = [];
+	private readonly _localInserts: ILocalInsert[] = [];
 
 	// API Surface
+	public get minimumSequenceNumber(): number {
+		return this._minimumSequenceNumber;
+	}
+
+	public get sequenceNumber(): number {
+		return this._sequenceNumber;
+	}
+
 	// For testing purposes we expose inserts
 	public get inserts(): ITrimmableInsert[] {
 		return this._inserts;
+	}
+
+	public get ops(): ISequencedDocumentMessage[] {
+		return this._ops;
 	}
 
 	// This would be a realistic API for exposing text
@@ -127,7 +143,7 @@ export class MockInsertSharedString extends SharedObject<IInsertStringEvent> {
 		while (i < this.inserts.length && j < this._localInserts.length) {
 			const remoteInsert = this.inserts[i];
 			const localInsert = this._localInserts[j];
-			if (remoteInsert.referenceSequenceNumber <= localInsert.referenceSequenceNumber) {
+			if (remoteInsert.sequenceNumber <= localInsert.referenceSequenceNumber) {
 				value = applyInsert(value, remoteInsert);
 				i++;
 			} else {
@@ -153,7 +169,6 @@ export class MockInsertSharedString extends SharedObject<IInsertStringEvent> {
 			type: "insert",
 			index,
 			text,
-			referenceSequenceNumber: this._sequenceNumber,
 		};
 		const localIndex = this._localInsertIndex++;
 
@@ -199,13 +214,15 @@ export class MockInsertSharedString extends SharedObject<IInsertStringEvent> {
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
+		this.ops.push(message);
 		if (message.type === MessageType.Operation) {
 			const op = message.contents as IInsertOp;
+			const opSeqNum = message.sequenceNumber;
 			switch (op.type) {
 				case "insert": {
 					assert(
-						op.referenceSequenceNumber >= this._minimumSequenceNumber,
-						`Op with ref ${op.referenceSequenceNumber} can't be applied with min ${this._minimumSequenceNumber}!`,
+						opSeqNum >= this._minimumSequenceNumber,
+						`Op with ref ${opSeqNum} can't be applied with min ${this._minimumSequenceNumber}!`,
 					);
 
 					if (local) {
@@ -216,18 +233,15 @@ export class MockInsertSharedString extends SharedObject<IInsertStringEvent> {
 						this._localInserts.splice(this._localInserts.indexOf(insert), 1);
 					}
 					const trimmableInsert: ITrimmableInsert = {
-						sequenceNumber: message.sequenceNumber,
 						text: op.text,
 						index: op.index,
-						referenceSequenceNumber: op.referenceSequenceNumber,
+						sequenceNumber: opSeqNum,
 					};
 
-					// Put the insert in the right place to maintain user intent.
 					let i = this.inserts.length;
 					while (
 						i > 0 &&
-						this.inserts[i - 1].referenceSequenceNumber >
-							trimmableInsert.referenceSequenceNumber
+						this.inserts[i - 1].sequenceNumber > trimmableInsert.sequenceNumber
 					) {
 						i--;
 					}
