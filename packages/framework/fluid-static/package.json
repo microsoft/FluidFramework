@@ -132,6 +132,15 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IMember": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_Myself": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

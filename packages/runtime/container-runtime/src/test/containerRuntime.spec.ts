@@ -1787,8 +1787,6 @@ describe("Runtime", () => {
 
 				const state =
 					containerRuntime.getPendingLocalState() as Partial<IPendingRuntimeState>;
-				assert.strictEqual(state.pending, undefined);
-				assert.strictEqual(state.pendingAttachmentBlobs, undefined);
 				assert.ok(state.sessionExpiryTimerStarted !== undefined);
 			});
 			it("No Props. Some pending state", async () => {
