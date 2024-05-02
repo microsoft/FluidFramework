@@ -156,7 +156,7 @@ describe.skip("SharedString fuzz testing with rebased batches and reconnect", ()
 
 // Skipped due to eventual consistency issues with undefined properties - AB#7805, #7806
 // Also remember to re-enable the undefined value for annotate in fuzz utils once issue fixed
-describe.only("SharedString fuzz testing with annotates", () => {
+describe("SharedString fuzz testing with annotates", () => {
 	createDDSFuzzSuite(
 		{ ...annotateSharedStringModel, workloadName: "SharedString with annotates" },
 		{
