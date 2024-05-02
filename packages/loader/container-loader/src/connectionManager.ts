@@ -139,7 +139,7 @@ class NoDeltaStream
 			}),
 		);
 	}
-	submitSignal(message: any): void {
+	submitSignal(message: string): void {
 		this.emit("nack", this.clientId, {
 			operation: message,
 			content: { message: "Cannot submit signal with storage-only connection", code: 403 },

@@ -10,11 +10,7 @@ import {
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails, isFluidPackage } from "@fluidframework/container-definitions/internal";
-import type {
-	IErrorBase,
-	ITelemetryBaseProperties,
-	SignalContentType,
-} from "@fluidframework/core-interfaces";
+import { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { IContainerPackageInfo } from "@fluidframework/driver-definitions/internal";
 import {
 	ConnectionMode,
@@ -103,7 +99,7 @@ export interface IConnectionManager {
 	 * Submits signal to relay service.
 	 * Called only when active connection is present.
 	 */
-	submitSignal: (content: SignalContentType, targetClientId?: string) => void;
+	submitSignal: (content: string, targetClientId?: string) => void;
 
 	/**
 	 * Submits messages to relay service.
@@ -139,7 +135,7 @@ export interface IConnectionManagerFactoryArgs {
 	 * Called by connection manager for each incoming signal.
 	 * May be called before connectHandler is called (due to initial signals on socket connection)
 	 */
-	readonly signalHandler: (signal: ISignalMessage) => void;
+	readonly signalHandler: (signals: ISignalMessage[]) => void;
 
 	/**
 	 * Called when connection manager experiences delay in connecting to relay service.

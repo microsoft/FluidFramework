@@ -14,10 +14,7 @@ import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
-import type {
-	IThrottlingWarning,
-	SignalContentType,
-} from "@fluidframework/core-interfaces/internal";
+import type { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
@@ -332,7 +329,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		return message.clientSequenceNumber;
 	}
 
-	public submitSignal(content: SignalContentType, targetClientId?: string) {
+	public submitSignal(content: string, targetClientId?: string) {
 		return this.connectionManager.submitSignal(content, targetClientId);
 	}
 
