@@ -557,7 +557,11 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		// but it works since cursorFromFieldData special cases arrays.
 		const simpleFieldSchema = normalizeFieldSchema(this.simpleSchema);
 
-		return cursorFromFieldData(content, simpleFieldSchema);
+		return cursorFromFieldData(
+			content,
+			simpleFieldSchema,
+			getFlexNode(this).context.nodeKeyManager,
+		);
 	}
 
 	public toJSON(): unknown {
