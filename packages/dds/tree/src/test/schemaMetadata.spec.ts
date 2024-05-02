@@ -10,9 +10,10 @@ import { hydrate } from "./simple-tree/utils.js";
 
 describe.only("Schema Metadata example patterns", () => {
 	it("Status Quo - suggested patterns only", () => {
-		const schemaFactory = new SchemaFactory("Notes");
+		const schemaFactory = new SchemaFactory("CanvasApp");
 
 		interface AppSchemaMetadata {
+			// Whether or not the associated field should be included in the AI summary.
 			aiIgnored?: boolean;
 		}
 
@@ -64,6 +65,7 @@ describe.only("Schema Metadata example patterns", () => {
 					}
 
 					const schema = treeNodeApi.schema(this);
+					// Omit the field if its metadata denotes it as AI-ignored
 					return (schema as any).fieldMetadata?.[key]?.aiIgnored === true
 						? undefined
 						: value;
@@ -95,7 +97,7 @@ describe.only("Schema Metadata example patterns", () => {
 	});
 
 	it("Custom Field Metadata", () => {
-		const schemaFactory = new SchemaFactory("Notes");
+		const schemaFactory = new SchemaFactory("CanvasApp");
 
 		interface AppSchemaMetadata {
 			aiIgnored?: boolean;
@@ -136,6 +138,7 @@ describe.only("Schema Metadata example patterns", () => {
 					}
 
 					const metadata = treeNodeApi.metadata(this, key) as AppSchemaMetadata;
+					// Omit the field if its metadata denotes it as AI-ignored
 					return metadata?.aiIgnored === true ? undefined : value;
 				},
 			);
