@@ -322,13 +322,7 @@ export function createSharedStringGeneratorOperations(
 	async function annotateRange(state: ClientOpState): Promise<AnnotateRange> {
 		const { random } = state;
 		const key = random.pick(options.propertyNamePool);
-		const value = random.pick([
-			random.string(5),
-			random.handle(),
-			// Bring back after AB#7805, #7806 fixed
-			// undefined
-			null,
-		]);
+		const value = random.pick([random.string(5), random.handle(), undefined, null]);
 		return {
 			type: "annotateRange",
 			...exclusiveRange(state),
