@@ -1252,7 +1252,14 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 						clientType: "interactive",
 					},
 				],
-				async () => {
+				async function () {
+					// This test is flaky on FRS. See ADO:7922 and ADO:7923
+					if (
+						provider.driver.type === "routerlicious" &&
+						provider.driver.endpointName === "frs"
+					) {
+						this.skip();
+					}
 					const { dataStore: mainDataStore, summarizer } =
 						await createDataStoreAndSummarizer();
 
