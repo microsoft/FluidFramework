@@ -951,13 +951,13 @@ use_old_InterfaceDeclaration_IResponse(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ISignalEnvelope": {"forwardCompat": false}
+ * "RemovedInterfaceDeclaration_ISignalEnvelope": {"forwardCompat": false}
  */
 declare function get_old_InterfaceDeclaration_ISignalEnvelope():
     TypeOnly<old.ISignalEnvelope>;
-declare function use_current_InterfaceDeclaration_ISignalEnvelope(
+declare function use_current_RemovedInterfaceDeclaration_ISignalEnvelope(
     use: TypeOnly<current.ISignalEnvelope>): void;
-use_current_InterfaceDeclaration_ISignalEnvelope(
+use_current_RemovedInterfaceDeclaration_ISignalEnvelope(
     get_old_InterfaceDeclaration_ISignalEnvelope());
 
 /*
@@ -965,14 +965,14 @@ use_current_InterfaceDeclaration_ISignalEnvelope(
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ISignalEnvelope": {"backCompat": false}
+ * "RemovedInterfaceDeclaration_ISignalEnvelope": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_ISignalEnvelope():
+declare function get_current_RemovedInterfaceDeclaration_ISignalEnvelope():
     TypeOnly<current.ISignalEnvelope>;
 declare function use_old_InterfaceDeclaration_ISignalEnvelope(
     use: TypeOnly<old.ISignalEnvelope>): void;
 use_old_InterfaceDeclaration_ISignalEnvelope(
-    get_current_InterfaceDeclaration_ISignalEnvelope());
+    get_current_RemovedInterfaceDeclaration_ISignalEnvelope());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

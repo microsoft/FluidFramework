@@ -8,12 +8,13 @@ import type { Jsonable } from "./jsonable.js";
  * Content type of signal payload
  * @public
  */
-export type SignalContentType = Jsonable;
+export type SignalContentType<T = unknown> = Jsonable<T>;
 
 /**
  * @internal
  */
-export interface ISignalEnvelope {
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type ISignalEnvelope = {
 	/**
 	 * The target for the envelope, undefined for the container
 	 */
@@ -31,4 +32,4 @@ export interface ISignalEnvelope {
 		type: string;
 		content: SignalContentType;
 	};
-}
+};
