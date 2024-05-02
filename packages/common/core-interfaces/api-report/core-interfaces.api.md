@@ -297,6 +297,12 @@ export interface ILoggingError extends Error {
 }
 
 // @public (undocumented)
+export interface Internal_InterfaceOfJsonableTypesWith<T> {
+    // (undocumented)
+    [index: string | number]: JsonableTypeWith<T>;
+}
+
+// @public (undocumented)
 export interface IProvideFluidHandle {
     // (undocumented)
     readonly [IFluidHandle]: IFluidHandle;
@@ -394,6 +400,17 @@ export interface IUsageError extends IErrorBase {
 }
 
 // @public
+export type Jsonable<T = unknown, TReplaced = never> = boolean extends (T extends never ? true : false) ? JsonableTypeWith<TReplaced> : unknown extends T ? JsonableTypeWith<TReplaced> : T extends undefined | null | boolean | number | string | TReplaced ? T : Extract<T, Function> extends never ? T extends object ? T extends (infer U)[] ? Jsonable<U, TReplaced>[] : {
+    [K in keyof T]: Extract<K, symbol> extends never ? Jsonable<T[K], TReplaced> : never;
+} : never : never;
+
+// @public (undocumented)
+export type JsonableOrBinary<T = unknown> = Jsonable<T, ArrayBuffer>;
+
+// @public
+export type JsonableTypeWith<T> = undefined | null | boolean | number | string | T | Internal_InterfaceOfJsonableTypesWith<T> | ArrayLike<JsonableTypeWith<T>>;
+
+// @public
 export const LogLevel: {
     readonly verbose: 10;
     readonly default: 20;
@@ -407,6 +424,9 @@ export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
     [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
 } : L;
+
+// @public (undocumented)
+export type SignalContentType<T = unknown> = JsonableOrBinary<T>;
 
 // @public
 export interface Tagged<V, T extends string = string> {

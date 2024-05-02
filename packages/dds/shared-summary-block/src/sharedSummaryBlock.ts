@@ -9,7 +9,7 @@ import {
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { Jsonable } from "@fluidframework/datastore-definitions/internal";
+import type { Jsonable } from "@fluidframework/core-interfaces";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
@@ -26,7 +26,7 @@ const snapshotFileName = "header";
  * Directly used in JSON.stringify, direct result from JSON.parse.
  */
 interface ISharedSummaryBlockDataSerializable {
-	[key: string]: Jsonable<unknown>;
+	[key: string]: Jsonable;
 }
 
 /**
@@ -58,7 +58,7 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
 	/**
 	 * The data held by this object.
 	 */
-	private readonly data = new Map<string, Jsonable<unknown>>();
+	private readonly data = new Map<string, Jsonable>();
 
 	/**
 	 * Constructs a new SharedSummaryBlock. If the object is non-local, an id and service interfaces will

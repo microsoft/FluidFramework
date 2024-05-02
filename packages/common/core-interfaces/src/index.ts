@@ -43,3 +43,8 @@ export type { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./pr
 export type { ConfigTypes, IConfigProviderBase } from "./config.js";
 export type { ISignalEnvelope } from "./messages.js";
 export type { ErasedType } from "./erasedType.js";
+export type {
+	Jsonable,
+	JsonableTypeWith,
+	Internal_InterfaceOfJsonableTypesWith,
+} from "./jsonable.js";
