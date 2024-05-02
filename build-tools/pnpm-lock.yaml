@@ -227,6 +227,47 @@ importers:
       tslib: 2.6.0
       typescript: 5.1.6
 
+  packages/build-cli-cjs:
+    specifiers:
+      '@oclif/core': ^3
+      '@oclif/plugin-help': ^6
+      '@oclif/plugin-plugins': ^5
+      '@oclif/prettier-config': ^0.2.1
+      '@oclif/test': ^3
+      '@types/chai': ^4
+      '@types/mocha': ^10
+      '@types/node': ^18
+      chai: ^4
+      eslint: ^8
+      eslint-config-oclif: ^5
+      eslint-config-oclif-typescript: ^3
+      eslint-config-prettier: ^9
+      mocha: ^10
+      oclif: ^4
+      shx: ^0.3.3
+      ts-node: ^10
+      typescript: ^5
+    dependencies:
+      '@oclif/core': 3.26.5
+      '@oclif/plugin-help': 6.0.21
+      '@oclif/plugin-plugins': 5.0.18
+    devDependencies:
+      '@oclif/prettier-config': 0.2.1
+      '@oclif/test': 3.2.12
+      '@types/chai': 4.3.5
+      '@types/mocha': 10.0.6
+      '@types/node': 18.18.7
+      chai: 4.4.1
+      eslint: 8.57.0
+      eslint-config-oclif: 5.2.0_eslint@8.57.0
+      eslint-config-oclif-typescript: 3.1.7_trrslaohprr5r73nykufww5lry
+      eslint-config-prettier: 9.1.0_eslint@8.57.0
+      mocha: 10.2.0
+      oclif: 4.10.1
+      shx: 0.3.4
+      ts-node: 10.9.1_fw7rjau6lbmauwrvieqeq6x7va
+      typescript: 5.1.6
+
   packages/build-tools:
     specifiers:
       '@fluid-tools/version-tools': workspace:~
@@ -2700,6 +2741,10 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
+  /@oclif/prettier-config/0.2.1:
+    resolution: {integrity: sha512-XB8kwQj8zynXjIIWRm+6gO/r8Qft2xKtwBMSmq1JRqtA6TpwpqECqiu8LosBCyg2JBXuUy2lU23/L98KIR7FrQ==}
+    dev: true
+
   /@oclif/test/3.2.12:
     resolution: {integrity: sha512-6DqfPVnCuUaH4VqwAChTWlNla4uPVx3XP5EaxYLjQrSdAzgPn8TMftURDmcfDobU6qQr97Cywec4szfYg4pS7Q==}
     engines: {node: '>=18.0.0'}
@@ -3804,6 +3849,10 @@ packages:
 
   /@types/minimist/1.2.2:
     resolution: {integrity: sha512-jhuKLIRrhvCPLqwPcx6INqmKeiA5EWrsCOPhrlFSrbrmU4ZMPjj5Ul/oLCMDO98XRUIwVm78xICz4EPCektzeQ==}
+    dev: true
+
+  /@types/mocha/10.0.6:
+    resolution: {integrity: sha512-dJvrYWxP/UcXm36Qn36fxhUKu8A/xMRXVT2cliFF1Z7UA9liG5Psj3ezNSZw+5puH2czDXRLcXQxf8JbJt0ejg==}
     dev: true
 
   /@types/mocha/9.1.1:
@@ -6015,7 +6064,7 @@ packages:
     engines: {node: '>=0.10.0'}
     hasBin: true
     dependencies:
-      jake: 10.8.5
+      jake: 10.8.7
 
   /electron-to-chromium/1.4.271:
     resolution: {integrity: sha512-BCPBtK07xR1/uY2HFDtl3wK2De66AW4MSiPlLrnPNxKC/Qhccxd59W73654S3y6Rb/k3hmuGJOBnhjfoutetXA==}
@@ -7924,6 +7973,11 @@ packages:
       side-channel: 1.0.4
     dev: true
 
+  /interpret/1.4.0:
+    resolution: {integrity: sha512-agE4QfB2Lkp9uICn7BAqoscw4SZP9kTE2hxiFI3jBPmXJfdqiahTbUuKGsMoN2GtqL9AxhYioAcVvgsb1HvRbA==}
+    engines: {node: '>= 0.10'}
+    dev: true
+
   /ip/2.0.1:
     resolution: {integrity: sha512-lJUL9imLTNi1ZfXT+DU6rBBdbiKGBuay9B6xGSPVjUeQwaH1RIGqef8RZkUtHioLmSNpPR5M4HVKJGm1j8FWVQ==}
 
@@ -8270,8 +8324,8 @@ packages:
     optionalDependencies:
       '@pkgjs/parseargs': 0.11.0
 
-  /jake/10.8.5:
-    resolution: {integrity: sha512-sVpxYeuAhWt0OTWITwT98oyV0GsXyMlXCF+3L1SuafBVUIr/uILGRB+NqwkzhgXKvoJpDIpQvqkUALgdmQsQxw==}
+  /jake/10.8.7:
+    resolution: {integrity: sha512-ZDi3aP+fG/LchyBzUM804VjddnwfSfsdeYkwt8NcbKRvo4rFkjhs456iLFn3k2ZUWvNe4i48WACDbza8fhq2+w==}
     engines: {node: '>=10'}
     hasBin: true
     dependencies:
@@ -8719,7 +8773,7 @@ packages:
   /loupe/2.3.4:
     resolution: {integrity: sha512-OvKfgCC2Ndby6aSTREl5aCCPTNIzlDfQZvZxNUrBrihDhL3xcrYegTblhmEiCrg2kKQz4XsFIaemE5BF4ybSaQ==}
     dependencies:
-      get-func-name: 2.0.0
+      get-func-name: 2.0.2
     dev: true
 
   /loupe/2.3.7:
@@ -10309,6 +10363,13 @@ packages:
     resolution: {integrity: sha512-gNva8/6UAe8QYepIQH/jQ2qn91Qj0B9sYjMBBs3QOB8F2CXcKgLxQaJRP76sWVRQt+QU+8fAkCbCvjjMFu7Ycw==}
     engines: {node: '>= 0.8.0'}
 
+  /rechoir/0.6.2:
+    resolution: {integrity: sha512-HFM8rkZ+i3zrV+4LQjwQ0W+ez98pApMGM3HUrN04j3CqzPOzl9nmP15Y8YXNm8QHGv/eacOVEjqhmWpkRV0NAw==}
+    engines: {node: '>= 0.10'}
+    dependencies:
+      resolve: 1.22.8
+    dev: true
+
   /redent/3.0.0:
     resolution: {integrity: sha512-6tDA8g98We0zd0GvVeMT9arEOnTw9qM03L9cJXaCjrip1OO764RDBLBfrB4cwzNGDj5OA5ioymC9GkizgWJDUg==}
     engines: {node: '>=8'}
@@ -10769,6 +10830,25 @@ packages:
 
   /shell-quote/1.8.1:
     resolution: {integrity: sha512-6j1W9l1iAs/4xYBI1SYOVZyFcCis9b4KCLQ8fgAGG07QvzaRLVVRQvAy85yNmmZSjYjg4MWh4gNvlPujU/5LpA==}
+    dev: true
+
+  /shelljs/0.8.5:
+    resolution: {integrity: sha512-TiwcRcrkhHvbrZbnRcFYMLl30Dfov3HKqzp5tO5b4pt6G/SezKcYhmDg15zXVBswHmctSAQKznqNW2LO5tTDow==}
+    engines: {node: '>=4'}
+    hasBin: true
+    dependencies:
+      glob: 7.2.3
+      interpret: 1.4.0
+      rechoir: 0.6.2
+    dev: true
+
+  /shx/0.3.4:
+    resolution: {integrity: sha512-N6A9MLVqjxZYcVn8hLmtneQWIJtp8IKzMP4eMnx+nqkvXoqinUPCbUFLp2UcWTEIUONhlk0ewxr/jaVGlc+J+g==}
+    engines: {node: '>=6'}
+    hasBin: true
+    dependencies:
+      minimist: 1.2.8
+      shelljs: 0.8.5
     dev: true
 
   /side-channel/1.0.4:
