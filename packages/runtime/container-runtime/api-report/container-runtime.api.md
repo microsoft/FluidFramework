@@ -218,7 +218,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     }): void;
     // (undocumented)
     get attachState(): AttachState;
-    readonly blobContents: Map<string, ArrayBuffer> | undefined;
     // (undocumented)
     readonly clientDetails: IClientDetails;
     // (undocumented)

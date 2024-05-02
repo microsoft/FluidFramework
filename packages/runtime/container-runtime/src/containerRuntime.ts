@@ -1339,11 +1339,6 @@ export class ContainerRuntime
 	private readonly loadedFromVersionId: string | undefined;
 
 	/**
-	 * Blobs from the container snapshot.
-	 */
-	public readonly blobContents: Map<string, ArrayBuffer> | undefined;
-
-	/**
 	 * It a cache for holding mapping for loading groupIds with its snapshot from the service. Add expiry policy of 1 minute.
 	 * Starting with 1 min and based on recorded usage we can tweak it later on.
 	 */
@@ -1428,7 +1423,6 @@ export class ContainerRuntime
 		this.submitSummaryFn = submitSummaryFn;
 		this.submitSignalFn = submitSignalFn;
 
-		this.blobContents = snapshotWithContents?.blobContents;
 		// TODO: After IContainerContext.options is removed, we'll just create a new blank object {} here.
 		// Values are generally expected to be set from the runtime side.
 		this.options = options ?? {};
