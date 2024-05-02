@@ -144,6 +144,9 @@ export * from "@fluidframework/tree";
 
 // ===============================================================
 // Legacy exports
+//
+// To validate that all exports below this point only contribute `@alpha` APIs, and that the above imports only contribute `@public` APIs,
+// comment out these legacy exports, and check that the API report has the same number of `@public` exports and no `@alpha` ones.
 
 export { SharedObject, SharedObjectCore } from "@fluidframework/shared-object-base/internal";
 
