@@ -221,8 +221,7 @@ export interface IContainerLoadMode {
     // (undocumented)
     deltaConnection?: "none" | "delayed" | undefined;
     // (undocumented)
-    opsBeforeReturn?: undefined | "sequenceNumber" | "cached" | "all";
-    pauseAfterLoad?: boolean;
+    opsBeforeReturn?: undefined | "cached" | "all";
 }
 
 // @public
@@ -402,7 +401,6 @@ export interface ILoaderHeader {
     [LoaderHeader.clientDetails]: IClientDetails;
     // (undocumented)
     [LoaderHeader.reconnect]: boolean;
-    [LoaderHeader.sequenceNumber]: number;
     // (undocumented)
     [LoaderHeader.loadMode]: IContainerLoadMode;
     // (undocumented)

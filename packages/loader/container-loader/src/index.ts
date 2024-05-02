@@ -14,6 +14,7 @@ export {
 	ILoaderServices,
 	Loader,
 } from "./loader.js";
+export { loadContainerPaused } from "./loadPaused.js";
 export {
 	isLocationRedirectionError,
 	resolveWithLocationRedirectionHandling,

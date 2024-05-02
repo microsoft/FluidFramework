@@ -37,3 +37,4 @@ export * as TscUtils from "./common/tscUtils";
 export { typeOnly } from "./typeValidator/compatibility";
 export { type TestCaseTypeData, buildTestCase } from "./typeValidator/testGeneration";
 export { type TypeData, getFullTypeName, getNodeTypeData } from "./typeValidator/typeData";
+export { getTypeTestPreviousPackageDetails } from "./typeValidator/validatorUtils";

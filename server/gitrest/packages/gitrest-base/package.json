@@ -55,12 +55,12 @@
 		"@fluidframework/gitresources": "5.0.0-250395",
 		"@fluidframework/protocol-base": "5.0.0-250395",
 		"@fluidframework/protocol-definitions": "^3.2.0",
-		"@fluidframework/server-services-client": "5.0.0-256582",
-		"@fluidframework/server-services-core": "5.0.0-256582",
-		"@fluidframework/server-services-shared": "5.0.0-256582",
-		"@fluidframework/server-services-telemetry": "5.0.0-256582",
-		"@fluidframework/server-services-utils": "5.0.0-256582",
-		"@fluidframework/server-test-utils": "5.0.0-256582",
+		"@fluidframework/server-services-client": "5.0.0-259221",
+		"@fluidframework/server-services-core": "5.0.0-259221",
+		"@fluidframework/server-services-shared": "5.0.0-259221",
+		"@fluidframework/server-services-telemetry": "5.0.0-259221",
+		"@fluidframework/server-services-utils": "5.0.0-259221",
+		"@fluidframework/server-test-utils": "5.0.0-259221",
 		"async-mutex": "^0.3.2",
 		"axios": "^1.6.2",
 		"body-parser": "^1.17.2",
@@ -108,6 +108,6 @@
 		"sillyname": "^0.1.0",
 		"sinon": "^17.0.1",
 		"supertest": "^3.4.2",
-		"typescript": "~4.5.5"
+		"typescript": "~5.1.6"
 	}
 }

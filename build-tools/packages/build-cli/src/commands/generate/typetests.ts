@@ -14,6 +14,7 @@ import {
 	buildTestCase,
 	getFullTypeName,
 	getNodeTypeData,
+	getTypeTestPreviousPackageDetails,
 	typeOnly,
 } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
@@ -64,9 +65,25 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		// Doing so is a time of use vs time of check issue so opening the file could fail anyway.
 		// Do not catch error from opening file since the default behavior is fine (exits process with error showing useful message)
 		const currentPackageJson = pkg.packageJson;
-		const previousPackageName = `${currentPackageJson.name}-previous`;
-		const previousBasePath = path.join(pkg.directory, "node_modules", previousPackageName);
-		const previousPackageJsonPath = path.join(previousBasePath, "package.json");
+		const { name: previousPackageName, packageJsonPath: previousPackageJsonPath } =
+			getTypeTestPreviousPackageDetails(pkg);
+		const previousBasePath = path.dirname(previousPackageJsonPath);
+
+		const typeTestOutputFile = getTypeTestFilePath(pkg, outDir, outFile);
+		if (currentPackageJson.typeValidation?.disabled === true) {
+			this.info(
+				"Skipping type test generation because typeValidation.disabled is true in package.json",
+			);
+			rmSync(
+				typeTestOutputFile,
+				// force means to ignore the error if the file does not exist.
+				{ force: true },
+			);
+			this.verbose(`Deleted file: ${typeTestOutputFile}`);
+
+			// Early exit; no error.
+			return;
+		}
 
 		ensureDevDependencyExists(currentPackageJson, previousPackageName);
 		this.verbose(`Reading package.json at ${previousPackageJsonPath}`);
@@ -76,18 +93,6 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		// functions use the correct name. For example, when we write the `import { foo } from <PACKAGE>/internal`
 		// statements into the type test file, we need to use the previous version name.
 		previousPackageJson.name = previousPackageName;
-
-		const typeTestOutputFile = getTypeTestFilePath(pkg, outDir, outFile);
-		if (currentPackageJson.typeValidation?.disabled === true) {
-			this.info("skipping type test generation because they are disabled in package.json");
-			rmSync(
-				typeTestOutputFile,
-				// force means to ignore the error if the file does not exist.
-				{ force: true },
-			);
-			this.verbose(`Deleted file: ${typeTestOutputFile}`);
-			this.exit(0);
-		}
 
 		const { typesPath: currentTypesPathRelative, levelUsed: currentPackageLevel } =
 			getTypesPathWithFallback(currentPackageJson, level, fallbackLevel);
@@ -105,7 +110,18 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 			`Found ${previousPackageLevel} type definitions for ${previousPackageJson.name}: ${previousTypesPath}`,
 		);
 
-		const currentFile = loadTypesSourceFile(currentTypesPath);
+		// For the current version, we load the package-local tsconfig and return index.ts as the source file. This ensures
+		// we don't need to build before running type test generation. It's tempting to load the .d.ts files and use the
+		// same code path as is used below for the previous version (loadTypesSourceFile()), but that approach requires that
+		// the local project be built.
+		//
+		// One drawback to this approach is that it will always enumerate the full (internal) API for the current version.
+		// There's no way to scope it to just alpha, beta, etc. for example. If that capability is eventually needed we can
+		// revisit this.
+		const currentFile = new Project({
+			skipFileDependencyResolution: true,
+			tsConfigFilePath: path.join(pkg.directory, "tsconfig.json"),
+		}).getSourceFileOrThrow("index.ts");
 		this.verbose(
 			`Loaded source file for current version (${pkg.version}): ${currentFile.getFilePath()}`,
 		);
@@ -138,6 +154,7 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 import type * as old from "${previousPackageName}${
 				previousPackageLevel === ApiLevel.public ? "" : `/${previousPackageLevel}`
 			}";
+
 import type * as current from "../../index.js";
 		`.trim(),
 			typeOnly,

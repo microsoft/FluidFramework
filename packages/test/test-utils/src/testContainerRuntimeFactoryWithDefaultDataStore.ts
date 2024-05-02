@@ -7,6 +7,7 @@ import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqu
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
+// eslint-disable-next-line import/no-deprecated
 import { RuntimeRequestHandler } from "@fluidframework/request-handler/internal";
 import {
 	IFluidDataStoreFactory,
@@ -31,6 +32,7 @@ export const createContainerRuntimeFactoryWithDefaultDataStore = (
 		defaultFactory: IFluidDataStoreFactory;
 		registryEntries: NamedFluidDataStoreRegistryEntries;
 		dependencyContainer?: any;
+		// eslint-disable-next-line import/no-deprecated
 		requestHandlers?: RuntimeRequestHandler[];
 		runtimeOptions?: IContainerRuntimeOptions;
 		provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
