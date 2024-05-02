@@ -37,7 +37,7 @@ function addKey(view: NodeKeyManager, key: LocalNodeKey): { [nodeKeyFieldKey]: S
 	};
 }
 
-describe("editable-tree: node keys", () => {
+describe("flex-tree: node keys", () => {
 	/** Creates or populates a view with a parent node and two children, each with node keys */
 	function initializeView() {
 		const nodeKeyManager = createMockNodeKeyManager();

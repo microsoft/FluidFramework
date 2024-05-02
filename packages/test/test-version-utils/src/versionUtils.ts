@@ -249,9 +249,13 @@ export async function ensureInstalled(
 					options,
 					(error, stdout, stderr) => {
 						if (error) {
+							const errorString =
+								error instanceof Error
+									? `${error.message}\n${error.stack}`
+									: JSON.stringify(error);
 							reject(
 								new Error(
-									`Failed to initialize install directory ${modulePath}\n${stderr}`,
+									`Failed to initialize install directory ${modulePath}\nError:${errorString}\nStdOut:${stdout}\nStdErr:${stderr}`,
 								),
 							);
 						}
@@ -273,7 +277,15 @@ export async function ensureInstalled(
 					options,
 					(error, stdout, stderr) => {
 						if (error) {
-							reject(new Error(`Failed to install in ${modulePath}\n${stderr}`));
+							const errorString =
+								error instanceof Error
+									? `${error.message}\n${error.stack}`
+									: JSON.stringify(error);
+							reject(
+								new Error(
+									`Failed to install in ${modulePath}\nError:${errorString}\nStdOut:${stdout}\nStdErr:${stderr}`,
+								),
+							);
 						}
 						resolve();
 					},

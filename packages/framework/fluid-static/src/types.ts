@@ -231,7 +231,7 @@ export interface IMember {
 	/**
 	 * An ID for the user, unique among each individual user connecting to the session.
 	 */
-	readonly userId: string;
+	readonly id: string;
 
 	/**
 	 * The set of connections the user has made, e.g. from multiple tabs or devices.
