@@ -1879,6 +1879,7 @@ importers:
       '@biomejs/biome': ^1.6.2
       '@fluid-example/example-utils': workspace:~
       '@fluid-example/webpack-fluid-loader': workspace:~
+      '@fluid-experimental/tree-react-api': workspace:~
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
@@ -1913,6 +1914,7 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/example-utils': link:../../utils/example-utils
+      '@fluid-experimental/tree-react-api': link:../../../experimental/framework/tree-react-api
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
@@ -5356,6 +5358,73 @@ importers:
       '@types/node': 18.19.1
       copyfiles: 2.4.1
       eslint: 8.55.0
+      prettier: 3.0.3
+      rimraf: 4.4.1
+      typescript: 5.1.6
+
+  experimental/framework/tree-react-api:
+    specifiers:
+      '@arethetypeswrong/cli': ^0.15.2
+      '@biomejs/biome': ^1.6.2
+      '@fluid-internal/mocha-test-setup': workspace:~
+      '@fluid-tools/build-cli': 0.38.0-259537
+      '@fluidframework/aqueduct': workspace:~
+      '@fluidframework/build-common': ^2.0.3
+      '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/datastore-definitions': workspace:~
+      '@fluidframework/eslint-config-fluid': ^5.1.0
+      '@fluidframework/fluid-static': workspace:~
+      '@fluidframework/runtime-definitions': workspace:~
+      '@fluidframework/tinylicious-client': workspace:~
+      '@fluidframework/tree': workspace:~
+      '@microsoft/api-extractor': ^7.42.3
+      '@types/mocha': ^9.1.1
+      '@types/node': ^18.19.0
+      '@types/react': ^17.0.44
+      c8: ^8.0.1
+      copyfiles: ^2.4.1
+      cross-env: ^7.0.3
+      eslint: ~8.55.0
+      eslint-config-prettier: ~9.0.0
+      mocha: ^10.2.0
+      mocha-json-output-reporter: ^2.0.1
+      mocha-multi-reporters: ^1.5.1
+      moment: ^2.21.0
+      prettier: ~3.0.3
+      react: ^17.0.1
+      rimraf: ^4.4.0
+      typescript: ~5.1.6
+    dependencies:
+      '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
+      '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
+      '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
+      '@fluidframework/fluid-static': link:../../../packages/framework/fluid-static
+      '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
+      '@fluidframework/tree': link:../../../packages/dds/tree
+      react: 17.0.2
+    devDependencies:
+      '@arethetypeswrong/cli': 0.15.2
+      '@biomejs/biome': 1.6.2
+      '@fluid-internal/mocha-test-setup': link:../../../packages/test/mocha-test-setup
+      '@fluid-tools/build-cli': 0.38.0-259537_@types+node@18.19.1
+      '@fluidframework/build-common': 2.0.3
+      '@fluidframework/build-tools': 0.38.0-259537_@types+node@18.19.1
+      '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
+      '@fluidframework/tinylicious-client': link:../../../packages/service-clients/tinylicious-client
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
+      '@types/mocha': 9.1.1
+      '@types/node': 18.19.1
+      '@types/react': 17.0.71
+      c8: 8.0.1
+      copyfiles: 2.4.1
+      cross-env: 7.0.3
+      eslint: 8.55.0
+      eslint-config-prettier: 9.0.0_eslint@8.55.0
+      mocha: 10.2.0
+      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
+      mocha-multi-reporters: 1.5.1_mocha@10.2.0
+      moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
@@ -19356,13 +19425,6 @@ packages:
 
   /@jridgewell/sourcemap-codec/1.4.15:
     resolution: {integrity: sha512-eF2rxCRulEKXHTRiDrDy6erMYWqNw4LPdQ8UQA4huuxaQsVeRPFl2oM8oDGxMFhJUWZf9McpLtJasDDZb/Bpeg==}
-
-  /@jridgewell/trace-mapping/0.3.20:
-    resolution: {integrity: sha512-R8LcPeWZol2zR8mmH3JeKQ6QRCFb7XgUhV9ZlGhHLGyg4wpPiPZNQOOWhFZhxKw8u//yTbNGI42Bx/3paXEQ+Q==}
-    dependencies:
-      '@jridgewell/resolve-uri': 3.1.1
-      '@jridgewell/sourcemap-codec': 1.4.15
-    dev: true
 
   /@jridgewell/trace-mapping/0.3.25:
     resolution: {integrity: sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ==}
@@ -43051,7 +43113,7 @@ packages:
     resolution: {integrity: sha512-/EH/sDgxU2eGxajKdwLCDmQ4FWq+kpi3uCmBGpw1xJtnAxEjlD8j8PEiGWpCIMIs3ciNAgH0d3TTJiUkYzyZjA==}
     engines: {node: '>=10.12.0'}
     dependencies:
-      '@jridgewell/trace-mapping': 0.3.20
+      '@jridgewell/trace-mapping': 0.3.25
       '@types/istanbul-lib-coverage': 2.0.6
       convert-source-map: 2.0.0
     dev: true

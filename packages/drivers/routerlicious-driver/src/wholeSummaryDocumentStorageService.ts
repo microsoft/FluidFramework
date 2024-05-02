@@ -215,7 +215,6 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 				return response;
 			},
 			undefined, // workers
-			undefined, // recordHeapSize
 			this.mc.config.getNumber("Fluid.Driver.ReadBlobTelemetrySampling"),
 		);
 		const bufferValue = stringToBuffer(blob.content, blob.encoding);
