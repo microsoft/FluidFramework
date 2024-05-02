@@ -33,7 +33,7 @@ import {
 	IResponse,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import type { ISignalEnvelope, SignalContentType } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
 	Deferred,
@@ -1084,7 +1084,7 @@ export class ContainerRuntime
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
 	) => number;
-	private readonly submitSignalFn: (content: ISignalEnvelope, targetClientId?: string) => void;
+	private readonly submitSignalFn: (content: SignalContentType, targetClientId?: string) => void;
 	public readonly disposeFn: (error?: ICriticalContainerError) => void;
 	public readonly closeFn: (error?: ICriticalContainerError) => void;
 
@@ -1606,8 +1606,12 @@ export class ContainerRuntime
 		// Due to a mismatch between different layers in terms of
 		// what is the interface of passing signals, we need the
 		// downstream stores to wrap the signal.
-		parentContext.submitSignal = (type: string, content: unknown, targetClientId?: string) => {
-			const envelope1 = content as IEnvelope;
+		parentContext.submitSignal = (
+			type: string,
+			content: SignalContentType,
+			targetClientId?: string,
+		) => {
+			const envelope1 = content as any as IEnvelope<SignalContentType>;
 			const envelope2 = this.createNewSignalEnvelope(
 				envelope1.address,
 				type,
@@ -3024,7 +3028,7 @@ export class ContainerRuntime
 	private createNewSignalEnvelope(
 		address: string | undefined,
 		type: string,
-		content: any,
+		content: SignalContentType,
 	): ISignalEnvelope {
 		const newSequenceNumber = ++this._perfSignalData.signalSequenceNumber;
 		const newEnvelope: ISignalEnvelope = {
@@ -3051,7 +3055,7 @@ export class ContainerRuntime
 	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(type: string, content: unknown, targetClientId?: string) {
+	public submitSignal(type: string, content: SignalContentType, targetClientId?: string) {
 		this.verifyNotClosed();
 		const envelope = this.createNewSignalEnvelope(undefined /* address */, type, content);
 		return this.submitSignalFn(envelope, targetClientId);

@@ -356,7 +356,7 @@ export interface ISignalEnvelope {
     clientSignalSequenceNumber: number;
     contents: {
         type: string;
-        content: any;
+        content: SignalContentType;
     };
 }
 
@@ -407,6 +407,9 @@ export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
     [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
 } : L;
+
+// @public
+export type SignalContentType = Jsonable;
 
 // @public
 export interface Tagged<V, T extends string = string> {

@@ -63,6 +63,7 @@ import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { MessageType } from '@fluidframework/protocol-definitions';
 import { MonitoringContext } from '@fluidframework/telemetry-utils/internal';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions/internal';
+import type { SignalContentType } from '@fluidframework/core-interfaces/internal';
 import { SummarizeInternalFn } from '@fluidframework/runtime-definitions/internal';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
@@ -336,7 +337,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     get storage(): IDocumentStorageService;
     // (undocumented)
     submitMessage(type: ContainerMessageType.FluidDataStoreOp | ContainerMessageType.Alias | ContainerMessageType.Attach, contents: any, localOpMetadata?: unknown): void;
-    submitSignal(type: string, content: unknown, targetClientId?: string): void;
+    submitSignal(type: string, content: SignalContentType, targetClientId?: string): void;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
     summarize(options: {
         fullTree?: boolean;
@@ -563,7 +564,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     readonly storage: IDocumentStorageService;
     // (undocumented)
     submitMessage(type: string, content: any, localOpMetadata: unknown): void;
-    submitSignal(type: string, content: unknown, targetClientId?: string): void;
+    submitSignal(type: string, content: SignalContentType, targetClientId?: string): void;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
     // (undocumented)
     protected readonly summarizerNode: ISummarizerNodeWithGC;

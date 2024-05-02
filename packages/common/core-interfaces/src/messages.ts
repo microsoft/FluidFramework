@@ -2,6 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import type { Jsonable } from "./jsonable.js";
+
+/**
+ * Content type of signal payload
+ * @public
+ */
+export type SignalContentType = Jsonable;
 
 /**
  * @internal
@@ -22,7 +29,6 @@ export interface ISignalEnvelope {
 	 */
 	contents: {
 		type: string;
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		content: any;
+		content: SignalContentType;
 	};
 }

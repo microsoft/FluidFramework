@@ -419,13 +419,13 @@ use_old_InterfaceDeclaration_IDataStore(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IEnvelope": {"forwardCompat": false}
+ * "RemovedInterfaceDeclaration_IEnvelope": {"forwardCompat": false}
  */
 declare function get_old_InterfaceDeclaration_IEnvelope():
     TypeOnly<old.IEnvelope>;
-declare function use_current_InterfaceDeclaration_IEnvelope(
+declare function use_current_RemovedInterfaceDeclaration_IEnvelope(
     use: TypeOnly<current.IEnvelope>): void;
-use_current_InterfaceDeclaration_IEnvelope(
+use_current_RemovedInterfaceDeclaration_IEnvelope(
     get_old_InterfaceDeclaration_IEnvelope());
 
 /*
@@ -433,14 +433,14 @@ use_current_InterfaceDeclaration_IEnvelope(
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IEnvelope": {"backCompat": false}
+ * "RemovedInterfaceDeclaration_IEnvelope": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_IEnvelope():
+declare function get_current_RemovedInterfaceDeclaration_IEnvelope():
     TypeOnly<current.IEnvelope>;
 declare function use_old_InterfaceDeclaration_IEnvelope(
     use: TypeOnly<old.IEnvelope>): void;
 use_old_InterfaceDeclaration_IEnvelope(
-    get_current_InterfaceDeclaration_IEnvelope());
+    get_current_RemovedInterfaceDeclaration_IEnvelope());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

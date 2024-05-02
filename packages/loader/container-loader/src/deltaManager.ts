@@ -9,12 +9,15 @@ import {
 	IDeltaManagerEvents,
 	IDeltaQueue,
 } from "@fluidframework/container-definitions";
-import {
+import type {
 	IEventProvider,
-	type ITelemetryBaseEvent,
+	ITelemetryBaseEvent,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
-import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
+import type {
+	IThrottlingWarning,
+	SignalContentType,
+} from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
@@ -329,7 +332,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		return message.clientSequenceNumber;
 	}
 
-	public submitSignal(content: string, targetClientId?: string) {
+	public submitSignal(content: SignalContentType, targetClientId?: string) {
 		return this.connectionManager.submitSignal(content, targetClientId);
 	}
 
