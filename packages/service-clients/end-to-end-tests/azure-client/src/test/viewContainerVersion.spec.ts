@@ -6,16 +6,14 @@
 import { strict as assert } from "node:assert";
 
 import { AzureClient } from "@fluidframework/azure-client";
-import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import { createAzureClient } from "./AzureClientFactory.js";
-import { mapWait } from "./utils.js";
 
-describe("Container copy scenarios", () => {
+describe("viewContainerVersion scenarios", () => {
 	const connectTimeoutMs = 10_000;
 	let client: AzureClient;
 	const schema = {
@@ -85,12 +83,12 @@ describe("Container copy scenarios", () => {
 	});
 
 	/**
-	 * Scenario: test if Azure Client can copy existing container.
+	 * Scenario: test if Azure Client can retrieve a specified version of a container.
 	 *
 	 * Expected behavior: an error should not be thrown nor should a rejected promise
 	 * be returned.
 	 */
-	it("can copy document successfully", async () => {
+	it("can view container version successfully", async () => {
 		const { container } = await client.createContainer(schema);
 		const containerId = await container.attach();
 
@@ -100,35 +98,31 @@ describe("Container copy scenarios", () => {
 				errorMsg: "container connect() timeout",
 			});
 		}
-		const resources = client.copyContainer(containerId, schema);
-		await assert.doesNotReject(resources, () => true, "container could not be copied");
-
-		const { container: containerCopy } = await resources;
-
-		const newContainerId = await containerCopy.attach();
-		if (containerCopy.connectionState !== ConnectionState.Connected) {
-			await timeoutPromise((resolve) => containerCopy.once("connected", () => resolve()), {
-				durationMs: connectTimeoutMs,
-				errorMsg: "container connect() timeout",
-			});
-		}
-
-		assert.strictEqual(typeof newContainerId, "string", "Attach did not return a string ID");
-		assert.strictEqual(
-			containerCopy.attachState,
-			AttachState.Attached,
-			"Container is not attached after attach is called",
+		const versions = await client.getContainerVersions(containerId);
+		assert.notStrictEqual(versions.length, 0, "There should be at least one version");
+		const viewContainerVersionAttempt = client.viewContainerVersion(
+			containerId,
+			schema,
+			versions[0],
 		);
+		await assert.doesNotReject(viewContainerVersionAttempt);
+		const { container: containerView } = await viewContainerVersionAttempt;
+		assert.notStrictEqual(containerView.initialObjects.map1, undefined);
 	});
 
 	/**
-	 * Scenario: test if Azure Client can copy existing container at a specific version.
+	 * Scenario: test if Azure Client observes correct DDS values when viewing version.
 	 *
-	 * Expected behavior: an error should not be thrown nor should a rejected promise
-	 * be returned.
+	 * Expected behavior: DDS values should reflect their values from the version.
 	 */
-	it("can successfully copy an existing container at a specific version", async () => {
+	it("has correct DDS values when viewing container version", async () => {
+		const testKey = "new-key";
+		const expectedValue = "expected-value";
 		const { container } = await client.createContainer(schema);
+		container.initialObjects.map1.set(testKey, expectedValue);
+		const valueAtCreate: string | undefined = container.initialObjects.map1.get(testKey);
+		assert.strictEqual(valueAtCreate, expectedValue);
+
 		const containerId = await container.attach();
 
 		if (container.connectionState !== ConnectionState.Connected) {
@@ -137,71 +131,31 @@ describe("Container copy scenarios", () => {
 				errorMsg: "container connect() timeout",
 			});
 		}
+		// Set a new value to the map - we do not expect to see this when loading the older version
+		container.initialObjects.map1.set(testKey, "some-newer-value");
 
 		const versions = await client.getContainerVersions(containerId);
-		assert.strictEqual(versions.length, 1, "Container should have exactly one version.");
-
-		const resources = client.copyContainer(containerId, schema, versions[0]);
-		await assert.doesNotReject(resources, () => true, "container could not be copied");
-
-		const { container: containerCopy } = await resources;
-
-		const newContainerId = await containerCopy.attach();
-		if (containerCopy.connectionState !== ConnectionState.Connected) {
-			await timeoutPromise((resolve) => containerCopy.once("connected", () => resolve()), {
-				durationMs: connectTimeoutMs,
-				errorMsg: "container connect() timeout",
-			});
-		}
-
-		assert.strictEqual(typeof newContainerId, "string", "Attach did not return a string ID");
-		assert.strictEqual(
-			containerCopy.attachState,
-			AttachState.Attached,
-			"Container is not attached after attach is called",
+		assert.notStrictEqual(versions.length, 0, "There should be at least one version");
+		// Get the oldest version, which we expect is the version from attach and should still have the old value.
+		const viewContainerVersionAttempt = client.viewContainerVersion(
+			containerId,
+			schema,
+			versions[versions.length - 1],
 		);
+		await assert.doesNotReject(viewContainerVersionAttempt);
+		const { container: containerView } = await viewContainerVersionAttempt;
+		assert.strictEqual(containerView.initialObjects.map1.get(testKey), expectedValue);
 	});
 
 	/**
-	 * Scenario: test if Azure Client properly handles DDS objects when
-	 * copying existing container.
-	 *
-	 * Expected behavior: DDS values should match across original and copied
-	 * container.
-	 */
-	it("correctly copies DDS values when copying container", async () => {
-		const { container } = await client.createContainer(schema);
-
-		const initialObjectsCreate = container.initialObjects;
-		const map1Create = initialObjectsCreate.map1;
-		map1Create.set("new-key", "new-value");
-		const valueCreate: string | undefined = map1Create.get("new-key");
-
-		const containerId = await container.attach();
-
-		if (container.connectionState !== ConnectionState.Connected) {
-			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-				durationMs: connectTimeoutMs,
-				errorMsg: "container connect() timeout",
-			});
-		}
-		const resources = client.copyContainer(containerId, schema);
-		await assert.doesNotReject(resources, () => true, "container could not be copied");
-
-		const { container: containerCopy } = await resources;
-
-		const map1Get = containerCopy.initialObjects.map1;
-		const valueGet: string | undefined = await mapWait(map1Get, "new-key");
-		assert.strictEqual(valueGet, valueCreate, "DDS value was not correctly copied.");
-	});
-
-	/**
-	 * Scenario: test if Azure Client can handle non-existing container when trying to copy
+	 * Scenario: test if Azure Client can handle non-existing container when trying to view a version
 	 *
 	 * Expected behavior: client should throw an error.
 	 */
 	it("can handle non-existing container", async () => {
-		const resources = client.copyContainer("badidoncopy", schema);
+		const resources = client.viewContainerVersion("badidonviewversion", schema, {
+			id: "whatever",
+		});
 		const errorFn = (error: Error): boolean => {
 			assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
 			assert.strictEqual(
@@ -212,6 +166,6 @@ describe("Container copy scenarios", () => {
 			return true;
 		};
 
-		await assert.rejects(resources, errorFn, "We should not be able to copy container.");
+		await assert.rejects(resources, errorFn, "We should not be able to view the container.");
 	});
 });

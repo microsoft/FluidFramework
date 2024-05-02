@@ -137,6 +137,10 @@
 			"InterfaceDeclaration_AzureMember": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"ClassDeclaration_AzureClient": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}
