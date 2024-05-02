@@ -586,6 +586,14 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 					this.skip();
 				}
 
+				// This test is flaky on tinylicious. See ADO:7925
+				if (
+					provider.driver.type === "routerlicious" &&
+					provider.driver.endpointName === "frs"
+				) {
+					this.skip();
+				}
+
 				await setupContainers(config);
 				// Force the container to reconnect after processing 2 chunked ops
 				const secondConnection = reconnectAfterOpProcessing(
