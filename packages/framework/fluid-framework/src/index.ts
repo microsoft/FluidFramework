@@ -212,7 +212,6 @@ export {
 	SequenceMaintenanceEvent,
 	SharedSegmentSequence,
 	SharedString,
-	SharedStringFactory,
 } from "@fluidframework/sequence/internal";
 
 export type {

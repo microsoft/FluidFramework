@@ -4,10 +4,51 @@
 
 ```ts
 
-import { EventEmitterEventType } from '@fluid-internal/client-utils';
-import { FluidObject as FluidObject_2 } from '@fluidframework/core-interfaces';
-import { IFluidHandle as IFluidHandle_2 } from '@fluidframework/core-interfaces';
-import { IFluidLoadable as IFluidLoadable_2 } from '@fluidframework/core-interfaces';
+import { Client } from '@fluidframework/merge-tree/internal';
+import { Deferred } from '@fluidframework/core-utils/internal';
+import { ErasedType } from '@fluidframework/core-interfaces';
+import { FluidObject } from '@fluidframework/core-interfaces';
+import { IChannel } from '@fluidframework/datastore-definitions';
+import { IChannelAttributes } from '@fluidframework/datastore-definitions';
+import type { IChannelFactory } from '@fluidframework/datastore-definitions';
+import type { IChannelServices } from '@fluidframework/datastore-definitions';
+import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import { IDisposable as IDisposable_2 } from '@fluidframework/core-interfaces';
+import type { IErrorBase } from '@fluidframework/core-interfaces';
+import { IEvent } from '@fluidframework/core-interfaces';
+import { IEventProvider } from '@fluidframework/core-interfaces';
+import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
+import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { IFluidHandle } from '@fluidframework/core-interfaces';
+import { IFluidLoadable } from '@fluidframework/core-interfaces';
+import { IFluidSerializer } from '@fluidframework/shared-object-base';
+import { IJSONSegment } from '@fluidframework/merge-tree/internal';
+import { IMergeTreeDeltaCallbackArgs } from '@fluidframework/merge-tree/internal';
+import { IMergeTreeDeltaOpArgs } from '@fluidframework/merge-tree/internal';
+import { IMergeTreeGroupMsg } from '@fluidframework/merge-tree/internal';
+import { IMergeTreeMaintenanceCallbackArgs } from '@fluidframework/merge-tree/internal';
+import { IRelativePosition } from '@fluidframework/merge-tree/internal';
+import { ISegment } from '@fluidframework/merge-tree/internal';
+import { ISegmentAction } from '@fluidframework/merge-tree/internal';
+import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISharedObject } from '@fluidframework/shared-object-base';
+import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ITelemetryContext } from '@fluidframework/runtime-definitions';
+import { LocalReferencePosition } from '@fluidframework/merge-tree/internal';
+import { Marker } from '@fluidframework/merge-tree/internal';
+import { MergeTreeDeltaOperationType } from '@fluidframework/merge-tree/internal';
+import { MergeTreeDeltaOperationTypes } from '@fluidframework/merge-tree/internal';
+import { MergeTreeMaintenanceType } from '@fluidframework/merge-tree/internal';
+import { MergeTreeRevertibleDriver } from '@fluidframework/merge-tree/internal';
+import { PropertiesManager } from '@fluidframework/merge-tree/internal';
+import { PropertySet } from '@fluidframework/merge-tree/internal';
+import { ReferencePosition } from '@fluidframework/merge-tree/internal';
+import { ReferenceType } from '@fluidframework/merge-tree/internal';
+import { SharedObject } from '@fluidframework/shared-object-base/internal';
+import { SlidingPreference } from '@fluidframework/merge-tree/internal';
+import { TextSegment } from '@fluidframework/merge-tree/internal';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import { TypedEventTransform } from '@fluid-internal/client-utils';
 
@@ -1137,7 +1178,7 @@ export interface IMarkerDef {
 // @public
 export interface IMember {
     readonly connections: IConnection[];
-    readonly userId: string;
+    readonly id: string;
 }
 
 // @alpha
@@ -1331,6 +1372,10 @@ export interface InteriorSequencePlace {
     pos: number;
     // (undocumented)
     side: Side;
+}
+
+// @public
+export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {
 }
 
 // @alpha
@@ -1635,9 +1680,19 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 
 // @alpha
 export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
+    annotateMarker(marker: Marker, props: PropertySet): void;
+    getMarkerFromId(id: string): ISegment | undefined;
+    getText(start?: number, end?: number): string;
+    // (undocumented)
+    getTextRangeWithMarkers(start: number, end: number): string;
+    getTextWithPlaceholders(start?: number, end?: number): string;
     insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): void;
+    insertMarkerRelative(relativePos1: IRelativePosition, refType: ReferenceType, props?: PropertySet): void;
     insertText(pos: number, text: string, props?: PropertySet): void;
-    posFromRelativePos(relativePos: IRelativePosition): number;
+    insertTextRelative(relativePos1: IRelativePosition, text: string, props?: PropertySet): void;
+    removeText(start: number, end: number): void;
+    replaceText(start: number, end: number, text: string, props?: PropertySet): void;
+    searchForMarker(startPos: number, markerLabel: string, forwards?: boolean): Marker | undefined;
 }
 
 // @public
@@ -2139,6 +2194,26 @@ export enum RevertibleStatus {
     Valid = 0
 }
 
+// @public
+export const rollback: unique symbol;
+
+// @public
+export interface RunTransaction {
+    <TNode extends TreeNode, TResult>(node: TNode, transaction: (node: TNode) => TResult): TResult;
+    <TView extends TreeView<ImplicitFieldSchema>, TResult>(tree: TView, transaction: (root: TView["root"]) => TResult): TResult;
+    <TNode extends TreeNode, TResult>(node: TNode, transaction: (node: TNode) => TResult | typeof rollback): TResult | typeof rollback;
+    <TView extends TreeView<ImplicitFieldSchema>, TResult>(tree: TView, transaction: (root: TView["root"]) => TResult | typeof rollback): TResult | typeof rollback;
+    <TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void): void;
+    <TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void): void;
+    <TNode extends TreeNode, TResult>(node: TNode, transaction: (node: TNode) => TResult, preconditions?: TransactionConstraint[]): TResult;
+    <TView extends TreeView<ImplicitFieldSchema>, TResult>(tree: TView, transaction: (root: TView["root"]) => TResult, preconditions?: TransactionConstraint[]): TResult;
+    <TNode extends TreeNode, TResult>(node: TNode, transaction: (node: TNode) => TResult | typeof rollback, preconditions?: TransactionConstraint[]): TResult | typeof rollback;
+    <TView extends TreeView<ImplicitFieldSchema>, TResult>(tree: TView, transaction: (root: TView["root"]) => TResult | typeof rollback, preconditions?: TransactionConstraint[]): TResult | typeof rollback;
+    <TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void, preconditions?: TransactionConstraint[]): void;
+    <TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void, preconditions?: TransactionConstraint[]): void;
+    readonly rollback: typeof rollback;
+}
+
 // @public @sealed
 export class SchemaFactory<out TScope extends string | undefined = string | undefined, TName extends number | string = string> {
     constructor(scope: TScope);
@@ -2286,27 +2361,7 @@ export interface SequenceOffsets {
 // @alpha
 export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
 
-// @alpha (undocumented)
-export interface SerializedAttributionCollection extends SequenceOffsets {
-    // (undocumented)
-    channels?: {
-        [name: string]: SequenceOffsets;
-    };
-    // (undocumented)
-    length: number;
-}
-
-// @public
-export type SessionId = StableId & {
-    readonly SessionId: "4498f850-e14e-4be9-8db0-89ec00997e58";
-};
-
-// @public
-export type SessionSpaceCompressedId = number & {
-    readonly SessionUnique: "cea55054-6b82-4cbf-ad19-1fa645ea3b3e";
-};
-
-// @alpha @sealed
+// @alpha
 export const SharedDirectory: ISharedObjectKind<ISharedDirectory>;
 
 // @alpha @deprecated
@@ -2428,45 +2483,10 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
 }
 
 // @alpha
-export class SharedString extends SharedSegmentSequence<SharedStringSegment> implements ISharedString {
-    constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
-    annotateMarker(marker: Marker, props: PropertySet): void;
-    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedString;
-    static getFactory(): SharedStringFactory;
-    getMarkerFromId(id: string): ISegment | undefined;
-    getText(start?: number, end?: number): string;
-    // (undocumented)
-    getTextRangeWithMarkers(start: number, end: number): string;
-    getTextWithPlaceholders(start?: number, end?: number): string;
-    // (undocumented)
-    id: string;
-    insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): void;
-    insertMarkerRelative(relativePos1: IRelativePosition, refType: ReferenceType, props?: PropertySet): void;
-    insertText(pos: number, text: string, props?: PropertySet): void;
-    insertTextRelative(relativePos1: IRelativePosition, text: string, props?: PropertySet): void;
-    // (undocumented)
-    get ISharedString(): ISharedString;
-    removeText(start: number, end: number): void;
-    replaceText(start: number, end: number, text: string, props?: PropertySet): void;
-    protected rollback(content: any, localOpMetadata: unknown): void;
-    searchForMarker(startPos: number, markerLabel: string, forwards?: boolean): Marker | undefined;
-}
+export const SharedString: ISharedObjectKind<ISharedString>;
 
-// @alpha (undocumented)
-export class SharedStringFactory implements IChannelFactory {
-    // (undocumented)
-    static readonly Attributes: IChannelAttributes;
-    // (undocumented)
-    get attributes(): IChannelAttributes;
-    create(document: IFluidDataStoreRuntime, id: string): SharedString;
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<SharedString>;
-    // (undocumented)
-    static segmentFromSpec(spec: any): SharedStringSegment;
-    // (undocumented)
-    static Type: string;
-    // (undocumented)
-    get type(): string;
-}
+// @alpha
+export type SharedString = ISharedString;
 
 // @alpha (undocumented)
 export type SharedStringSegment = TextSegment | Marker;
@@ -2617,10 +2637,7 @@ export const Tree: TreeApi;
 // @public
 export interface TreeApi extends TreeNodeApi {
     contains(node: TreeNode, other: TreeNode): boolean;
-    runTransaction<TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void | "rollback"): void;
-    runTransaction<TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void | "rollback", preconditions?: TransactionConstraint[]): void;
-    runTransaction<TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void | "rollback"): void;
-    runTransaction<TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void | "rollback", preconditions?: TransactionConstraint[]): void;
+    readonly runTransaction: RunTransaction;
 }
 
 // @public
@@ -2634,9 +2651,9 @@ export const TreeArrayNode: {
 
 // @public
 export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<T>, TreeNode {
-    insertAt(index: number, ...value: (TNew | IterableTreeArrayContent<TNew>)[]): void;
-    insertAtEnd(...value: (TNew | IterableTreeArrayContent<TNew>)[]): void;
-    insertAtStart(...value: (TNew | IterableTreeArrayContent<TNew>)[]): void;
+    insertAt(index: number, ...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
+    insertAtEnd(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
+    insertAtStart(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
     moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
     moveRangeToEnd(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
     moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
@@ -2696,6 +2713,7 @@ export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>> e
 // @public
 export abstract class TreeNode implements WithType {
     abstract get [type](): string;
+    protected constructor();
 }
 
 // @public
@@ -2721,7 +2739,7 @@ export type TreeNodeSchema<Name extends string = string, Kind extends NodeKind =
 // @public
 export interface TreeNodeSchemaClass<out Name extends string = string, out Kind extends NodeKind = NodeKind, out TNode = unknown, in TInsertable = never, out ImplicitlyConstructable extends boolean = boolean, out Info = unknown> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
     // @sealed
-    new (data: TInsertable): Unhydrated<TNode>;
+    new (data: TInsertable | InternalTreeNode): Unhydrated<TNode>;
 }
 
 // @public

@@ -341,7 +341,6 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		// The last two saved ops (setting A and B) have reference sequence numbers that point to a sequence number
 		// before the snapshot
 		(dataObjectA2.containerRuntime as any).pendingStateManager.savedOps = [];
-
 		// Get Pending state and close
 		assert(container2.closeAndGetPendingLocalState !== undefined, "Missing method!");
 		const pendingState = await container2.closeAndGetPendingLocalState();

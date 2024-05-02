@@ -46,7 +46,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 
 	let restWrapper: RouterliciousOrdererRestWrapper;
 	const logger = new MockLogger();
-	beforeEach(async () => {
+	beforeEach(() => {
 		// reset auth mocking
 		tokenQueue = [token1, token2, token3];
 		// reset throttling mocking
@@ -60,7 +60,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 			};
 			return newToken;
 		};
-		restWrapper = await RouterliciousOrdererRestWrapper.load(
+		restWrapper = RouterliciousOrdererRestWrapper.load(
 			toInstrumentedR11sOrdererTokenFetcher(
 				"dummytenantid",
 				"dummydocumentid",

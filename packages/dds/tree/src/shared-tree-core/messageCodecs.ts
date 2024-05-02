@@ -106,22 +106,36 @@ function makeV1CodecWithVersion<TChangeset>(
 				context: MessageEncodingContext,
 			) => {
 				const message: Message = {
-					revision: revisionTagCodec.encode(commit.revision, { originatorId }),
+					revision: revisionTagCodec.encode(commit.revision, {
+						originatorId,
+						revision: undefined,
+					}),
 					originatorId,
 					changeset: changeCodec.encode(commit.change, {
 						originatorId,
 						schema: context.schema,
+						revision: commit.revision,
 					}),
 					version,
 				};
 				return message as unknown as JsonCompatibleReadOnly;
 			},
 			decode: (encoded: JsonCompatibleReadOnly) => {
-				const { revision, originatorId, changeset } = encoded as unknown as Message;
+				const {
+					revision: encodedRevision,
+					originatorId,
+					changeset,
+				} = encoded as unknown as Message;
+
+				const revision = revisionTagCodec.decode(encodedRevision, {
+					originatorId,
+					revision: undefined,
+				});
+
 				return {
 					commit: {
-						revision: revisionTagCodec.decode(revision, { originatorId }),
-						change: changeCodec.decode(changeset, { originatorId }),
+						revision,
+						change: changeCodec.decode(changeset, { originatorId, revision }),
 					},
 					sessionId: originatorId,
 				};

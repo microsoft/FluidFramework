@@ -192,14 +192,16 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	): [change: TChange, newCommit: GraphCommit<TChange>] {
 		this.assertNotDisposed();
 
+		const changeWithRevision = this.changeFamily.rebaser.changeRevision(change, revision);
+
 		const newHead = mintCommit(this.head, {
 			revision,
-			change,
+			change: changeWithRevision,
 		});
 
 		const changeEvent = {
 			type: "append",
-			change: tagChange(change, revision),
+			change: tagChange(changeWithRevision, revision),
 			newCommits: [newHead],
 		} as const;
 
@@ -212,7 +214,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 
 		this.emit("afterChange", changeEvent);
-		return [change, newHead];
+		return [changeWithRevision, newHead];
 	}
 
 	/**
@@ -261,16 +263,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			return undefined;
 		}
 
-		// Anonymize the commits from this transaction by stripping their revision tags.
-		// Otherwise, the change rebaser will record their tags and those tags no longer exist.
-		const anonymousCommits = commits.map(({ change }) => ({ change, revision: undefined }));
 		// Squash the changes and make the squash commit the new head of this branch
-		const squashedChange = this.changeFamily.rebaser.compose(anonymousCommits);
+		const squashedChange = this.changeFamily.rebaser.compose(commits);
 		const revision = this.mintRevisionTag();
 
 		const newHead = mintCommit(startCommit, {
 			revision,
-			change: squashedChange,
+			change: this.changeFamily.rebaser.changeRevision(squashedChange, revision),
 		});
 
 		const changeEvent = {
@@ -312,8 +311,14 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		const inverses: TaggedChange<TChange>[] = [];
 		for (let i = commits.length - 1; i >= 0; i--) {
-			const inverse = this.changeFamily.rebaser.invert(commits[i], false);
-			inverses.push(tagRollbackInverse(inverse, this.mintRevisionTag(), commits[i].revision));
+			const revision = this.mintRevisionTag();
+			const inverse = this.changeFamily.rebaser.changeRevision(
+				this.changeFamily.rebaser.invert(commits[i], false),
+				revision,
+				commits[i].revision,
+			);
+
+			inverses.push(tagRollbackInverse(inverse, revision, commits[i].revision));
 		}
 		const change =
 			inverses.length > 0 ? this.changeFamily.rebaser.compose(inverses) : undefined;

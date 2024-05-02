@@ -23,6 +23,7 @@ import {
 	type LocalReferencePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
+	// eslint-disable-next-line import/no-deprecated
 	SegmentGroup,
 } from "@fluidframework/merge-tree/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -783,6 +784,7 @@ export class SharedMatrix<T = any>
 					this.submitColMessage(
 						this.cols.regeneratePendingOp(
 							content,
+							// eslint-disable-next-line import/no-deprecated
 							localOpMetadata as SegmentGroup | SegmentGroup[],
 						),
 					);
@@ -791,6 +793,7 @@ export class SharedMatrix<T = any>
 					this.submitRowMessage(
 						this.rows.regeneratePendingOp(
 							content,
+							// eslint-disable-next-line import/no-deprecated
 							localOpMetadata as SegmentGroup | SegmentGroup[],
 						),
 					);

@@ -8,8 +8,9 @@ import * as path from "path";
 import { readdir, stat } from "fs/promises";
 import picomatch from "picomatch";
 import { globFn, readFileAsync, statAsync, toPosixPath, unquote } from "../../../common/utils";
+import { getTypeTestPreviousPackageDetails } from "../../../typeValidator/validatorUtils";
 import { BuildPackage } from "../../buildGraph";
-import { LeafTask, LeafWithDoneFileTask, LeafWithFileStatDoneFileTask } from "./leafTask";
+import { LeafTask, LeafWithFileStatDoneFileTask } from "./leafTask";
 
 export class EchoTask extends LeafTask {
 	protected get isIncremental() {
@@ -226,9 +227,37 @@ export class GenVerTask extends LeafTask {
 	}
 }
 
-export class TypeValidationTask extends LeafWithDoneFileTask {
-	protected async getDoneFileContent(): Promise<string | undefined> {
-		return JSON.stringify(this.package.packageJson);
+export class TypeValidationTask extends LeafWithFileStatDoneFileTask {
+	private inputFiles: string[] | undefined;
+	private outputFiles: string[] | undefined;
+
+	/**
+	 * All config for the type tests is contained in package.json.
+	 */
+	protected async getInputFiles(): Promise<string[]> {
+		if (this.inputFiles === undefined) {
+			const { packageJsonPath: previousPackageJsonPath } = getTypeTestPreviousPackageDetails(
+				this.node.pkg,
+			);
+			this.inputFiles = [
+				path.join(this.node.pkg.directory, "package.json"),
+				previousPackageJsonPath,
+			];
+		}
+		return this.inputFiles;
+	}
+
+	/**
+	 * Includes all type test files that are output by the task.
+	 * This implementation assumes all typetest output is in src/test/types.
+	 */
+	protected async getOutputFiles(): Promise<string[]> {
+		if (this.outputFiles === undefined) {
+			// Assumes all typetest output is in src/test/types
+			const typetestGlob = path.join(this.node.pkg.directory, "src/test/types/**");
+			this.outputFiles = await globFn(typetestGlob, { nodir: true });
+		}
+		return this.outputFiles;
 	}
 }
 
