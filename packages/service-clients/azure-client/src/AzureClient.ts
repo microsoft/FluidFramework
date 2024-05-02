@@ -7,6 +7,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import {
 	type IContainer,
 	type IFluidModuleWithDetails,
+	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import { Loader, loadContainerPaused } from "@fluidframework/container-loader/internal";
 import { type FluidObject, type IConfigProviderBase } from "@fluidframework/core-interfaces";
@@ -201,7 +202,10 @@ export class AzureClient {
 			encodeURIComponent(getTenantId(this.properties.connection)),
 		);
 		url.searchParams.append("containerId", encodeURIComponent(id));
-		const container = await loadContainerPaused(loader, { url: url.href });
+		const container = await loadContainerPaused(loader, {
+			url: url.href,
+			headers: { [LoaderHeader.version]: version.id },
+		});
 		const rootDataObject = await this.getContainerEntryPoint(container);
 		const fluidContainer = createFluidContainer<TContainerSchema>({
 			container,
