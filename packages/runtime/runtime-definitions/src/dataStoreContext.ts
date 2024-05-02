@@ -15,10 +15,7 @@ import type {
 	IResponse,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import type {
-	IDocumentStorageService,
-	ISnapshot,
-} from "@fluidframework/driver-definitions/internal";
+import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IClientDetails,
@@ -538,7 +535,7 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	 * The package path of the data store as per the package factory.
 	 */
 	readonly packagePath: readonly string[];
-	readonly baseSnapshot: ISnapshotTree | ISnapshot | undefined;
+	readonly baseSnapshot: ISnapshotTree | undefined;
 
 	/**
 	 * @deprecated 0.16 Issue #1635, #3631

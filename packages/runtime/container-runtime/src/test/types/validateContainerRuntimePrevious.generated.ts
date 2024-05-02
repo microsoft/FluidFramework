@@ -1200,7 +1200,6 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContextInternal
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContextInternal(
     use: TypeOnly<old.IFluidDataStoreContextInternal>): void;
 use_old_InterfaceDeclaration_IFluidDataStoreContextInternal(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContextInternal());
 
 /*

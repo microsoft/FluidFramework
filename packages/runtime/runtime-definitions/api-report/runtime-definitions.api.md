@@ -22,7 +22,6 @@ import type { IRequest } from '@fluidframework/core-interfaces';
 import type { IResponse } from '@fluidframework/core-interfaces';
 import type { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import type { ISignalMessage } from '@fluidframework/protocol-definitions';
-import type { ISnapshot } from '@fluidframework/driver-definitions/internal';
 import type { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import type { ISummaryTree } from '@fluidframework/protocol-definitions';
 import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
@@ -203,7 +202,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 export interface IFluidDataStoreContext extends IFluidParentContext {
     addedGCOutboundRoute?(fromPath: string, toPath: string): void;
     // (undocumented)
-    readonly baseSnapshot: ISnapshotTree | ISnapshot | undefined;
+    readonly baseSnapshot: ISnapshotTree | undefined;
     // @deprecated (undocumented)
     readonly createProps?: any;
     // @deprecated (undocumented)
