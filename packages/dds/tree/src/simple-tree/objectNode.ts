@@ -430,7 +430,7 @@ export interface ObjectNodeSchema<
 }
 
 export const ObjectNodeSchema = {
-	// Instanceof based narrowing support for Javascript and TypeScript 5.3 or newer.
+	// instanceof-based narrowing support for Javascript and TypeScript 5.3 or newer.
 	[Symbol.hasInstance](value: TreeNodeSchema): value is ObjectNodeSchema {
 		return isObjectNodeSchema(value);
 	},
