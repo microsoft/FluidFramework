@@ -969,8 +969,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(map2.get(testKey), testValue);
 	});
 
-	// !!! remove .only !!!
-	it.only("handle attach bug", async function () {
+	it("handle attach bug", async function () {
 		let idB;
 		const cb = async (container, d?) => {
 			const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
@@ -992,6 +991,35 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const default3 = (await container3.getEntryPoint()) as ITestFluidObject;
 
 		const handleB = default3.root.get("B");
+		const dataObjectB3 = await handleB.get();
+		assert(dataObjectB3.context.id === idB);
+	});
+
+	it("handle attach bug for shareddirectory", async function () {
+		let idB;
+		const cb = async (container, d?) => {
+			const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
+			const runtime = defaultDataStore.context.containerRuntime;
+
+			const dirRoot = await defaultDataStore.getSharedObject<SharedDirectory>(directoryId);
+
+			const dataStoreB = await runtime.createDataStore(["default"]);
+			const dataObjectB = (await dataStoreB.entryPoint.get()) as ITestFluidObject;
+			idB = dataObjectB.context.id;
+
+			dirRoot.set("B", dataObjectB.handle);
+		};
+
+		await cb(container1);
+		await provider.ensureSynchronized();
+
+		const container3: IContainerExperimental =
+			await provider.loadTestContainer(testContainerConfig);
+		await waitForContainerConnection(container3);
+		const default3 = (await container3.getEntryPoint()) as ITestFluidObject;
+		const dir3 = await default3.getSharedObject<SharedDirectory>(directoryId);
+
+		const handleB = dir3.get("B");
 		const dataObjectB3 = await handleB.get();
 		assert(dataObjectB3.context.id === idB);
 	});
