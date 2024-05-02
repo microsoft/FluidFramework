@@ -150,11 +150,13 @@ export * from "@fluidframework/tree";
 
 export { SharedObject, SharedObjectCore } from "@fluidframework/shared-object-base/internal";
 
-// TODO: these specific exports end up still producing imports, then having those imports reexported.
+// TODO: these specific exports end up still producing imports in the api-report, then having those imports reexported.
+// The expected behavior would be for the types to be inlined like all the other exported types in this file.
 export type {
 	EventEmitterEventType,
 	TypedEventEmitter,
-	// It is unclear why ae-forgotten-export requires this since its not referenced.
+	// This type does not get referenced in the api-report, but is required by ae-forgotten-export.
+	// This suggests that API-Extractor is accounting for types referenced by the implementation of the above two types (since their definitions reference this), despite not inlining their definitions in the report.
 	TypedEventTransform,
 } from "@fluid-internal/client-utils";
 
