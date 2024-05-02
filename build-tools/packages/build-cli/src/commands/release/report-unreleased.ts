@@ -137,7 +137,7 @@ async function writeReport(
 /**
  * Updates versions in a release report based on specified conditions.
  * @param report - The release report object containing package names and versions.
- * @param ignorePackageList - The set of package names to ignore during version updating.
+ * @param ignorePackageList - The set of package names to ignore during version updating. These packages are not published to internal ADO feed.
  * @param version - The version string to update packages to.
  */
 async function updateReportVersions(

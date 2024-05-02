@@ -34,9 +34,11 @@ parameters:
 
 - name: STORAGE_ACCOUNT
   type: string
+  default: none
 
 - name: STORAGE_KEY
   type: string
+  default: none
 
 # Set version
 steps:
