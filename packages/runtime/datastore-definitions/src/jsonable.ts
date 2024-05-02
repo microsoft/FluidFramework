@@ -106,3 +106,14 @@ export type Jsonable<T, TReplaced = never> = /* test for 'any' */ boolean extend
 			  }
 		: /* not an object => */ never
 	: /* function => */ never;
+
+/**
+ * This is similar to Jsonable<T> type, but allows leaf nodes to be of type ArrayBuffer.
+ * It's assumed that {@link encodeJsonableOrBinary} & {@link decodeJsonableOrBinary} functions would be used
+ * with such content to envode and decode into string, however other types of serializaitons are possible, for
+ * example, it can be serialized into binary format.
+ * Templated argument <T> can be used to scope type. But default, it allows all seriazable types.
+ * Please see {@link Jsonable} for more information and caveats of using this type (and JSON serialization limitations).
+ * @public
+ */
+export type JsonableOrBinary<T = unknown> = Jsonable<T, ArrayBuffer>;
