@@ -392,22 +392,32 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
 export type InsertableTreeFieldFromImplicitField<
 	TSchema extends ImplicitFieldSchema = FieldSchema,
 > = TSchema extends FieldSchema<infer Kind, infer Types>
-	? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind>
+	? InsertableApplyKind<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind>
 	: TSchema extends ImplicitAllowedTypes
 	? InsertableTreeNodeFromImplicitAllowedTypes<TSchema>
 	: unknown;
 
 /**
  * Suitable for output.
- * For input must error on side of excluding undefined instead.
+ * @privateRemarks Special cases identifier fields to be required (as opposed to input, when they are optional).
  * @public
  */
 export type ApplyKind<T, Kind extends FieldKind> = Kind extends FieldKind.Required
 	? T
+	: Kind extends FieldKind.Identifier
+	? T
 	: undefined | T;
 
 /**
- * Type of of tree node for a field of the given schema.
+ * Suitable for input.
+ * @public
+ */
+export type InsertableApplyKind<T, Kind extends FieldKind> = Kind extends FieldKind.Required
+	? T
+	: undefined | T;
+
+/**
+ * Type of tree node for a field of the given schema.
  * @public
  */
 export type TreeNodeFromImplicitAllowedTypes<
