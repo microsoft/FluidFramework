@@ -29,8 +29,8 @@ import execa from "execa";
 import { readJson, readJsonSync, writeFile } from "fs-extra";
 import latestVersion from "latest-version";
 import ncu from "npm-check-updates";
-import type { Index } from "npm-check-updates/build/src/types/IndexType";
-import { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec";
+import type { Index } from "npm-check-updates/build/src/types/IndexType.js";
+import type { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec.js";
 import * as semver from "semver";
 
 import {
@@ -149,7 +149,7 @@ export async function npmCheckUpdates(
 		log?.verbose(`Checking packages in ${path.join(repoPath, glob)}`);
 
 		// eslint-disable-next-line no-await-in-loop
-		const result = (await ncu({
+		const result = (await ncu.run({
 			filter: depsToUpdate,
 			cwd: repoPath,
 			packageFile: glob === "" ? "package.json" : `${glob}/package.json`,

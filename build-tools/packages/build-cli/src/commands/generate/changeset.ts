@@ -9,7 +9,7 @@ import { VersionBumpType } from "@fluid-tools/version-tools";
 import { Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import chalk from "chalk";
-import humanId from "human-id";
+import { humanId } from "human-id";
 import { format as prettier } from "prettier";
 import prompts from "prompts";
 

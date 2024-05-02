@@ -131,7 +131,8 @@ async function getFirstSuccessfulBuild(
 		const response = await fetch(adoUrl, { headers: { Authorization: authHeader } });
 
 		/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
-		const data = await response.json();
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const data: any = await response.json();
 
 		const twentyFourHoursAgo = new Date();
 		twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
@@ -183,7 +184,8 @@ async function fetchDevVersionNumber(
 			headers: { Authorization: authHeader },
 		});
 		/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
-		const data = await response.json();
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const data: any = await response.json();
 		const buildVersionKey: string | undefined = Object.keys(data.time).find((key) =>
 			key.includes(buildNumber),
 		);
@@ -213,8 +215,8 @@ async function generateReleaseReportForUnreleasedVersions(
 ): Promise<PackageVersionList | undefined> {
 	try {
 		const releasesResponse = await fetch(gitHubUrl);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const releases = await releasesResponse.json();
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+		const releases: any = await releasesResponse.json();
 
 		let manifestAsset;
 
