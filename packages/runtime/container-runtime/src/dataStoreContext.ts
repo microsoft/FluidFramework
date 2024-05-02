@@ -1126,6 +1126,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 				[this.loadingGroupId],
 				[this.id],
 			);
+			this._baseSnapshot = snapshot.snapshotTree;
 			sequenceNumber = snapshot.sequenceNumber;
 			this.snapshotFetchRequired = false;
 		}

@@ -24,7 +24,6 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
-	createTestConfigProvider,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
@@ -152,6 +151,13 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			provider,
 			container,
 			dataObjectFactory,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			configProvider({
+				"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+			}),
 		);
 		const { summaryVersion } = await summarizeNow(summarizer);
 
@@ -232,6 +238,13 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			provider,
 			container,
 			dataObjectFactory,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			configProvider({
+				"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+			}),
 		);
 		const { summaryVersion } = await summarizeNow(summarizer);
 		// Work around getEntryPoint returning the summarizer instead of a datastore
@@ -337,6 +350,13 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 				provider,
 				container,
 				dataObjectFactory,
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				configProvider({
+					"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+				}),
 			);
 
 			await provider.ensureSynchronized();
@@ -450,6 +470,13 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			provider,
 			container,
 			dataObjectFactory,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			configProvider({
+				"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+			}),
 		);
 
 		// Summarize

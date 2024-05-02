@@ -99,11 +99,10 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		const rawTree = await this.manager.getTree(versionId);
 		const snapshotTree = buildGitTreeHierarchy(rawTree, this.blobsShaCache, true);
 		const groupIds = new Set<string>(snapshotFetchOptions?.loadingGroupIds ?? []);
-		// Always keep the .metadata blob of the root.
-		const metaDataBlobId = snapshotTree.blobs[".metadata"];
+		const attributesBlobId = snapshotTree.trees[".protocol"].blobs.attributes;
 		// Only populate contents for the blobs which are supposed to be returned.
 		const blobContents = new Map<string, ArrayBuffer>();
-		blobContents.set(metaDataBlobId, await this.readBlob(metaDataBlobId));
+		const attributesBlobData = await this.readBlob(attributesBlobId);
 		if (groupIds.has("") || groupIds.size === 0) {
 			// If the root is in the groupIds, we don't need to filter the tree.
 			// We can just strip the  of all groupIds as in collect the blobIds so that we can
@@ -119,9 +118,9 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 			assert(hasFoundTree, 0x8dd /* No tree found for the given groupIds */);
 		}
 
-		const metadataString = IsoBuffer.from(blobContents.get(metaDataBlobId)).toString("utf-8");
-		const metadata = JSON.parse(metadataString);
-		const sequenceNumber: number = metadata.message?.sequenceNumber ?? 0;
+		const attributesString = IsoBuffer.from(attributesBlobData).toString("utf-8");
+		const attributes = JSON.parse(attributesString);
+		const sequenceNumber: number = attributes.sequenceNumber ?? 0;
 		return {
 			snapshotTree,
 			blobContents,

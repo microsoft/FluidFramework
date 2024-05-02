@@ -44,7 +44,7 @@ const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderB
 /**
  * Validates that an unreferenced datastore goes through all the GC phases without overlapping.
  */
-describeCompat("GC12 & Data Virtualization", "NoCompat", (getTestObjectProvider) => {
+describeCompat("GC & Data Virtualization", "NoCompat", (getTestObjectProvider) => {
 	const configProviderObject = configProvider({
 		"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
 	});
