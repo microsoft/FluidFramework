@@ -58,6 +58,7 @@ import {
 	isTokenRevokedError,
 	type IRevokedTokenChecker,
 } from "@fluidframework/server-services-core/dist/tokenRevocationManager";
+import { isSentSignalMessage } from "@fluidframework/server-lambdas/dist/nexus/utils";
 
 const lumberjackEngine = new TestEngine1();
 if (!Lumberjack.isSetupCompleted()) {
@@ -465,7 +466,7 @@ describe("Routerlicious", () => {
 								const receivedSignal = client.signalsReceived[signalIndex];
 								Object.keys(signal).forEach((property) => {
 									assert.deepEqual(
-										receivedSignal?.[property],
+										receivedSignal[property],
 										signal[property],
 										`User ${index + 1} signal ${
 											signalIndex + 1
@@ -482,15 +483,15 @@ describe("Routerlicious", () => {
 					): ISignalMessage {
 						client.socket.send("submitSignal", client.clientId, [signal]);
 						let expectedSignalMessage: ISignalMessage;
-						if (client.version === 1) {
+						if (client.version === 2 && isSentSignalMessage(signal)) {
 							expectedSignalMessage = {
+								...signal,
 								clientId: client.clientId,
-								content: signal,
 							};
 						} else {
 							expectedSignalMessage = {
-								...(signal as ISentSignalMessage),
 								clientId: client.clientId,
+								content: signal,
 							};
 						}
 						return expectedSignalMessage;
