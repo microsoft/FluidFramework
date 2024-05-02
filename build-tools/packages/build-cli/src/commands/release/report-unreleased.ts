@@ -9,13 +9,12 @@ import { isInternalVersionRange, isInternalVersionScheme } from "@fluid-tools/ve
 import type { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { formatISO } from "date-fns";
-import { writeJson } from "fs-extra";
 import { BaseCommand } from "../../base";
-import { type PackageVersionList, type ReleaseReport, toReportKind } from "../../library";
+import { type ReleaseReport, toReportKind } from "../../library";
 
 export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReportCommand> {
 	static readonly summary =
-		`Creates a release report for an unreleased build (one that is not published to npm), using existing reports in the "simple" and "caret" formats as input.`;
+		`Creates a release report for an unreleased build (one that is not published to npm), using an existing report in the "full" format as input.`;
 
 	static readonly description =
 		`This command is primarily used to upload reports for non-PR main branch builds so that downstream pipelines can easily consume them.`;
@@ -33,17 +32,13 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 		fullReportFilePath: Flags.string({
 			description: "Path to a report file in the 'full' format.",
 			exists: true,
+			required: true,
 		}),
 		...BaseCommand.flags,
 	};
 
 	public async run(): Promise<void> {
 		const { flags } = this;
-
-		if (flags.fullReportFilePath === undefined) {
-			this.errorLog(`*.full.json file doesn't exist`);
-			this.exit();
-		}
 
 		try {
 			await generateReleaseReport(
@@ -53,7 +48,7 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 				this.logger,
 			);
 		} catch (error: unknown) {
-			this.error(`Error while generating release reports: ${error}`);
+			this.error(`Error while generating release reports: ${(error as Error).stack}`);
 		}
 	}
 }
@@ -72,27 +67,21 @@ async function generateReleaseReport(
 	log: Logger,
 ): Promise<void> {
 	const reportData = await fs.readFile(fullReportFilePath, "utf8");
+	const ignorePackageList = new Set(["@types/jest-environment-puppeteer"]);
 
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const jsonData: ReleaseReport = JSON.parse(reportData);
 
+	await updateReportVersions(jsonData, ignorePackageList, version, log);
+
 	const caretReportOutput = toReportKind(jsonData, "caret");
 	const simpleReportOutput = toReportKind(jsonData, "simple");
 
-	const caretReportPath = path.join(outDir, `caret.json`);
-	const simpleReportPath = path.join(outDir, `simple.json`);
-
 	await Promise.all([
-		writeJson(caretReportPath, caretReportOutput, { spaces: 2 }),
-		writeJson(simpleReportPath, simpleReportOutput, { spaces: 2 }),
+		writeReport(outDir, caretReportOutput as ReleaseReport, "manifest", version, log),
+		writeReport(outDir, simpleReportOutput as ReleaseReport, "simple", version, log),
 	]);
 
-	await Promise.all([
-		writeReport(outDir, caretReportPath, "manifest", version, log),
-		writeReport(outDir, simpleReportPath, "simple", version, log),
-	]);
-
-	await Promise.all([fs.unlink(caretReportPath), fs.unlink(simpleReportPath)]);
 	log.log("Release report processed successfully.");
 }
 
@@ -106,19 +95,11 @@ async function generateReleaseReport(
  */
 async function writeReport(
 	outDir: string,
-	reportFilePath: string,
+	report: ReleaseReport,
 	revisedFileName: string,
 	version: string,
 	log: Logger,
 ): Promise<void> {
-	const ignorePackageList = new Set(["@types/jest-environment-puppeteer"]);
-	const reportData = await fs.readFile(reportFilePath, "utf8");
-
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-	const jsonData: PackageVersionList = JSON.parse(reportData);
-
-	await updateReportVersions(jsonData, ignorePackageList, version, log);
-
 	const currentDate = formatISO(new Date(), { representation: "date" });
 
 	const buildNumber = extractBuildNumber(version);
@@ -129,8 +110,8 @@ async function writeReport(
 	const outDirByBuildNumber = path.join(outDir, `${revisedFileName}-${buildNumber}.json`);
 
 	await Promise.all([
-		fs.writeFile(outDirByCurrentDate, JSON.stringify(jsonData, undefined, 2)),
-		fs.writeFile(outDirByBuildNumber, JSON.stringify(jsonData, undefined, 2)),
+		fs.writeFile(outDirByCurrentDate, JSON.stringify(report, undefined, 2)),
+		fs.writeFile(outDirByBuildNumber, JSON.stringify(report, undefined, 2)),
 	]);
 }
 
@@ -141,7 +122,7 @@ async function writeReport(
  * @param version - The version string to update packages to.
  */
 async function updateReportVersions(
-	report: PackageVersionList,
+	report: ReleaseReport,
 	ignorePackageList: Set<string>,
 	version: string,
 	log: Logger,
@@ -151,11 +132,13 @@ async function updateReportVersions(
 			continue;
 		}
 
-		if (
-			isInternalVersionRange(report[packageName], true) ||
-			isInternalVersionScheme(report[packageName])
-		) {
-			report[packageName] = version;
+		// updates caret ranges
+		if (isInternalVersionRange(report[packageName].ranges.caret, true)) {
+			report[packageName].ranges.caret = version;
+		}
+
+		if (isInternalVersionScheme(report[packageName].version)) {
+			report[packageName].version = version;
 		}
 	}
 	log.log(`Release report updated pointing to version: ${version}`);

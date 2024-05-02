@@ -388,7 +388,7 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 		}),
 		baseFileName: Flags.string({
 			description:
-				"If provided, the output files will be named using this base name followed by the report kind (caret,simple,full,tilde) and the .json extension. For example, if baseFileName is 'foo', the output files will be named 'foo.caret.json', 'foo.simple.json', etc.",
+				"If provided, the output files will be named using this base name followed by the report kind (caret, simple, full, tilde) and the .json extension. For example, if baseFileName is 'foo', the output files will be named 'foo.caret.json', 'foo.simple.json', etc.",
 			required: false,
 		}),
 		...ReleaseReportBaseCommand.flags,
@@ -691,7 +691,7 @@ function generateReportFileName(
 	}
 
 	if (baseFileName !== undefined) {
-		return `baseFileName.${kind}.json`;
+		return `${baseFileName}.${kind}.json`;
 	}
 
 	return `fluid-framework-release-manifest.${releaseGroup ?? "all"}.${

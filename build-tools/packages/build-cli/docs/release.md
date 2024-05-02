@@ -167,9 +167,9 @@ FLAGS
       Always pick the greatest semver version as the latest (ignore dates).
 
   --baseFileName=<value>
-      If provided, the output files will be named using this base name followed by the report kind
-      (caret,simple,full,tilde) and the .json extension. For example, if baseFileName is 'foo', the output files will be
-      named 'foo.caret.json', 'foo.simple.json', etc.
+      If provided, the output files will be named using this base name followed by the report kind (caret, simple, full,
+      tilde) and the .json extension. For example, if baseFileName is 'foo', the output files will be named
+      'foo.caret.json', 'foo.simple.json', etc.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
@@ -213,14 +213,14 @@ _See code: [src/commands/release/report.ts](https://github.com/microsoft/FluidFr
 
 ## `flub release report-unreleased`
 
-Creates a release report for an unreleased build (one that is not published to npm), using existing reports in the "simple" and "caret" formats as input.
+Creates a release report for an unreleased build (one that is not published to npm), using an existing report in the "full" format as input.
 
 ```
 USAGE
-  $ flub release report-unreleased --version <value> --outDir <value> [-v | --quiet] [--fullReportFilePath <value>]
+  $ flub release report-unreleased --version <value> --outDir <value> --fullReportFilePath <value> [-v | --quiet]
 
 FLAGS
-  --fullReportFilePath=<value>  Path to a report file in the 'full' format.
+  --fullReportFilePath=<value>  (required) Path to a report file in the 'full' format.
   --outDir=<value>              (required) Release report output directory
   --version=<value>             (required) Version to generate a report for. Typically, this version is the version of a
                                 dev build.
@@ -230,8 +230,8 @@ LOGGING FLAGS
       --quiet    Disable all logging.
 
 DESCRIPTION
-  Creates a release report for an unreleased build (one that is not published to npm), using existing reports in the
-  "simple" and "caret" formats as input.
+  Creates a release report for an unreleased build (one that is not published to npm), using an existing report in the
+  "full" format as input.
 
   This command is primarily used to upload reports for non-PR main branch builds so that downstream pipelines can easily
   consume them.
