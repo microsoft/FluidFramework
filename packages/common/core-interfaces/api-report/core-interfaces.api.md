@@ -404,9 +404,6 @@ export type Jsonable<T = unknown, TReplaced = never> = boolean extends (T extend
     [K in keyof T]: Extract<K, symbol> extends never ? Jsonable<T[K], TReplaced> : never;
 } : never : never;
 
-// @public (undocumented)
-export type JsonableOrBinary<T = unknown> = Jsonable<T, ArrayBuffer>;
-
 // @public
 export type JsonableTypeWith<T> = undefined | null | boolean | number | string | T | Internal_InterfaceOfJsonableTypesWith<T> | ArrayLike<JsonableTypeWith<T>>;
 
@@ -424,9 +421,6 @@ export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
     [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
 } : L;
-
-// @public (undocumented)
-export type SignalContentType<T = unknown> = JsonableOrBinary<T>;
 
 // @public
 export interface Tagged<V, T extends string = string> {
