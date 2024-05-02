@@ -137,7 +137,7 @@ describe.only("Schema Metadata example patterns", () => {
 						return value;
 					}
 
-					const metadata = treeNodeApi.metadata(this, key) as AppSchemaMetadata;
+					const metadata = treeNodeApi.fieldMetadata(this, key) as AppSchemaMetadata;
 					// Omit the field if its metadata denotes it as AI-ignored
 					return metadata?.aiIgnored === true ? undefined : value;
 				},

@@ -106,7 +106,7 @@ export interface TreeNodeApi {
 	 * Gets the metadata for the field associated with the provided key under the provided node.
 	 * Will return `undefined` if no metadata was provided for the field.
 	 */
-	metadata(node: TreeNode, key: string | number): unknown | undefined;
+	fieldMetadata(node: TreeNode, key: string | number): unknown | undefined;
 }
 
 /**
@@ -212,7 +212,7 @@ export const treeNodeApi: TreeNodeApi = {
 			}
 		}
 	},
-	metadata(node: TreeNode, key: string | number): unknown | undefined {
+	fieldMetadata(node: TreeNode, key: string | number): unknown | undefined {
 		const flexNode = getFlexNode(node);
 		const field = flexNode.tryGetField(key as FieldKey);
 		return field?.schema.metadata;
