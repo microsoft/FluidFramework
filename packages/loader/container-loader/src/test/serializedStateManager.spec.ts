@@ -16,7 +16,7 @@ import {
 	ISnapshot,
 	ISnapshotFetchOptions,
 } from "@fluidframework/driver-definitions/internal";
-import { isInstanceOfISnapshot } from "@fluidframework/driver-utils/internal";
+import { getSnapshotTree, isInstanceOfISnapshot } from "@fluidframework/driver-utils/internal";
 import {
 	IDocumentAttributes,
 	ISequencedDocumentMessage,
@@ -465,9 +465,7 @@ describe("serializedStateManager", () => {
 				undefined,
 				false,
 			);
-			const baseSnapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(baseSnapshot)
-				? baseSnapshot.snapshotTree
-				: baseSnapshot;
+			const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 			assert.strictEqual(baseSnapshotTree.id, "fromPending");
 			assert.strictEqual(version, undefined);
 			// It'll wait until getLatestSnapshotInfo finish. This ensures we attempted to refresh
