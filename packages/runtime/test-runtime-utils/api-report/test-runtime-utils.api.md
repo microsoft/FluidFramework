@@ -372,8 +372,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     baseSnapshot: ISnapshotTree | undefined;
     // (undocumented)
-    blobContents: Map<string, ArrayBuffer> | undefined;
-    // (undocumented)
     clientDetails: IClientDetails;
     // (undocumented)
     clientId: string | undefined;

@@ -38,7 +38,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public clientDetails: IClientDetails = { capabilities: { interactive: this.interactive } };
 	public connected: boolean = true;
 	public baseSnapshot: ISnapshotTree | undefined;
-	public blobContents: Map<string, ArrayBuffer> | undefined;
 	public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> =
 		undefined as any;
 	public containerRuntime: IContainerRuntimeBase = undefined as any;
