@@ -58,7 +58,7 @@ export interface ISignaler {
 export interface IRuntimeSignaler {
 	connected: boolean;
 	on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
-	submitSignal(type: string, content: Jsonable<unknown>): void;
+	submitSignal(type: string, content: Jsonable): void;
 }
 
 /**
