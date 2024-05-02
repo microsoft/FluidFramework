@@ -48,11 +48,7 @@
 		"dirname": "flub",
 		"plugins": ["@oclif/plugin-help", "@oclif/plugin-plugins"],
 		"topicSeparator": " ",
-		"topics": {
-			"hello": {
-				"description": "Say hello to the world and others"
-			}
-		}
+		"topics": {}
 	},
 	"dependencies": {
 		"@fluid-tools/build-cli": "workspace:~",

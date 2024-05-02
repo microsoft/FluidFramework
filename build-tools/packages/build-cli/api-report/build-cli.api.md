@@ -221,7 +221,7 @@ export interface PreReleaseDependencies {
 export type ReleaseGroup = (typeof knownReleaseGroups)[number];
 
 // @public
-export const releaseGroupFlag: FlagDefinition<"build-tools" | "client" | "server" | "gitrest" | "historian", CustomOptions, {
+export const releaseGroupFlag: FlagDefinition<"client" | "server" | "build-tools" | "gitrest" | "historian", CustomOptions, {
 multiple: false;
 requiredOrDefaulted: false;
 }>;

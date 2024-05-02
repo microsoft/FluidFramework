@@ -29,7 +29,6 @@ USAGE
 <!-- commands -->
 # Command Topics
 
-* [`flub hello`](docs/hello.md) - Say hello to the world and others
 * [`flub help`](docs/help.md) - Display help for flub.
 * [`flub release`](docs/release.md) - Releases a package or release group.
 

@@ -173,7 +173,8 @@
 			"@oclif/plugin-autocomplete",
 			"@oclif/plugin-commands",
 			"@oclif/plugin-help",
-			"@oclif/plugin-not-found"
+			"@oclif/plugin-not-found",
+			"@fluid-tools/build-cli-esm"
 		],
 		"repositoryPrefix": "<%- repo %>/blob/main/build-tools/packages/build-cli/<%- commandPath %>",
 		"topicSeparator": " ",
