@@ -8,7 +8,7 @@ import path from "node:path";
 import { Command, Flags, ux } from "@oclif/core";
 import chalk from "chalk";
 import { differenceInBusinessDays, formatDistanceToNow } from "date-fns";
-import { writeJson } from "fs-extra";
+import { writeJson } from "fs-extra/esm";
 import inquirer from "inquirer";
 import sortJson from "sort-json";
 import { table } from "table";

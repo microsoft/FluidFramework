@@ -28,12 +28,14 @@ module.exports = {
 			"error",
 			{
 				allow: [
+					"fs-extra/esm",
 					"npm-check-updates/build/src/types/**",
 					"**/commands/**",
 					"**/library/index.js",
 					"**/library/github.js",
 					"**/handlers/index.js",
 					"**/machines/index.js",
+					"**/repoPolicyCheck/index.js",
 				],
 			},
 		],

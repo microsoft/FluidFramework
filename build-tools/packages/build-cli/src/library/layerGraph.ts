@@ -7,7 +7,7 @@ import assert from "node:assert";
 import { EOL as newline } from "node:os";
 import * as path from "node:path";
 import { Package } from "@fluidframework/build-tools";
-import { readJsonSync } from "fs-extra";
+import { readJsonSync } from "fs-extra/esm";
 
 import registerDebug from "debug";
 const traceLayerCheck = registerDebug("layer-check");

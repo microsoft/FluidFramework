@@ -5,8 +5,9 @@
 
 /* eslint-disable unicorn/no-array-callback-reference */
 
+import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { Flags } from "@oclif/core";
-import { existsSync, readFile } from "fs-extra";
 import * as JSON5 from "json5";
 import { type ImportDeclaration, ModuleKind, Project, SourceFile } from "ts-morph";
 import { BaseCommand } from "../../base.js";

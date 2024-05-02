@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { existsSync } from "node:fs";
 import path from "node:path";
 import { Flags } from "@oclif/core";
-import { copySync, existsSync, readJson } from "fs-extra";
+import { copySync, readJson } from "fs-extra/esm";
 
 import { BaseCommand } from "../../base.js";
 import { PnpmListEntry, pnpmList } from "../../pnpm.js";

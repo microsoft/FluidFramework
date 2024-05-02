@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import {
 	type BrokenCompatTypes,
@@ -20,7 +21,7 @@ import {
 import { Flags } from "@oclif/core";
 import { PackageName } from "@rushstack/node-core-library";
 import * as changeCase from "change-case";
-import { mkdirSync, readJson, rmSync, writeFileSync } from "fs-extra";
+import { readJson } from "fs-extra/esm";
 import * as resolve from "resolve.exports";
 import { ModuleKind, ModuleResolutionKind, Project, type SourceFile } from "ts-morph";
 import { PackageCommand } from "../../BasePackageCommand.js";

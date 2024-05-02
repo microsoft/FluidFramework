@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import execa from "execa";
-import { writeFile } from "fs-extra";
 import { PackageCommand } from "../../BasePackageCommand.js";
 
 /**
