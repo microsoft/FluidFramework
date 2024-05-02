@@ -62,7 +62,11 @@ import {
 import { MarkMaker } from "./sequence-field/testEdits.js";
 // eslint-disable-next-line import/no-internal-modules
 import { purgeUnusedCellOrderingInfo } from "./sequence-field/utils.js";
+<<<<<<< Updated upstream
 import { merge } from "../objMerge.js";
+=======
+import { BTree } from "@tylerbu/sorted-btree-es6";
+>>>>>>> Stashed changes
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map([
 	[sequence.identifier, sequence],
@@ -661,7 +665,6 @@ describe("ModularChangeFamily integration", () => {
 				maxId: brand(5),
 			};
 
-			const diff = merge(inverse, expected);
 			assert.deepEqual(inverse, expected);
 		});
 	});
