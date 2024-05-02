@@ -805,7 +805,11 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 		assert(summaryStats.clusterCount === 1, "Should have a local cluster as all ids are ack'd");
 	});
 
-	it("Newly connected container synchronizes from summary", async () => {
+	it("Newly connected container synchronizes from summary", async function () {
+		// This test is flaky on FRS. See ADO:7931
+		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
+			this.skip();
+		}
 		const container = await createContainer(enabledConfig);
 		const defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;
 		const idCompressor: IIdCompressor = (defaultDataStore._root as any).runtime.idCompressor;
