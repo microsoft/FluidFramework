@@ -4,7 +4,7 @@
  */
 
 import type { ISignalMessage, ITree } from "@fluidframework/protocol-definitions";
-import type { JsonableOrBinary } from "@fluidframework/core-interfaces";
+import type { SignalContentType } from "@fluidframework/core-interfaces";
 
 /**
  * An envelope wraps the contents with the intended target
@@ -43,7 +43,7 @@ export interface ISignalEnvelope {
 	 */
 	contents: {
 		type: string;
-		content: JsonableOrBinary;
+		content: SignalContentType;
 	};
 }
 

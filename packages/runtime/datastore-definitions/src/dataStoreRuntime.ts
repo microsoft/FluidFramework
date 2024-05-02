@@ -20,7 +20,7 @@ import type {
 	ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
-import type { JsonableOrBinary } from "@fluidframework/core-interfaces/internal";
+import type { SignalContentType } from "@fluidframework/core-interfaces/internal";
 import type { IChannel } from "./channel.js";
 
 /**
@@ -113,7 +113,7 @@ export interface IFluidDataStoreRuntime
 	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	submitSignal: (type: string, content: JsonableOrBinary, targetClientId?: string) => void;
+	submitSignal: (type: string, content: SignalContentType, targetClientId?: string) => void;
 
 	/**
 	 * Returns the current quorum.

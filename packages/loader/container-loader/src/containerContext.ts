@@ -15,7 +15,7 @@ import {
 	ILoader,
 	ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
-import type { FluidObject, JsonableOrBinary } from "@fluidframework/core-interfaces";
+import type { FluidObject, SignalContentType } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	IClientDetails,
@@ -88,7 +88,7 @@ export class ContainerContext implements IContainerContext {
 		) => number,
 
 		public readonly submitSignalFn: (
-			content: JsonableOrBinary,
+			content: SignalContentType,
 			targetClientId?: string,
 		) => void,
 		public readonly disposeFn: (error?: ICriticalContainerError) => void,

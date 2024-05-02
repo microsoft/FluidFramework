@@ -33,8 +33,8 @@ import { IThrottlingWarning } from '@fluidframework/core-interfaces/internal';
 import type { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { IUsageError } from '@fluidframework/core-interfaces/internal';
 import type { IVersion } from '@fluidframework/protocol-definitions';
-import type { JsonableOrBinary } from '@fluidframework/core-interfaces';
 import type { MessageType } from '@fluidframework/protocol-definitions';
+import type { SignalContentType } from '@fluidframework/core-interfaces';
 
 // @public
 export enum AttachState {
@@ -189,7 +189,7 @@ export interface IContainerContext {
     // @deprecated (undocumented)
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     // (undocumented)
-    readonly submitSignalFn: (contents: JsonableOrBinary, targetClientId?: string) => void;
+    readonly submitSignalFn: (contents: SignalContentType, targetClientId?: string) => void;
     // (undocumented)
     readonly submitSummaryFn: (summaryOp: ISummaryContent, referenceSequenceNumber?: number) => number;
     // (undocumented)

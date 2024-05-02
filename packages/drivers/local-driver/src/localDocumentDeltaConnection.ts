@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryBaseLogger, JsonableOrBinary } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger, SignalContentType } from "@fluidframework/core-interfaces";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base/internal";
 import {
 	IClient,
@@ -85,7 +85,7 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 		this.emitMessages("submitSignal", [[content]]);
 	}
 
-	public submitSignal2(content: JsonableOrBinary): void {
+	public submitSignal2(content: SignalContentType): void {
 		// WARNING:
 		// This code here is only for demonstration purposes. While driver can do encoding here,
 		// it would need to do symmetrical decoding for "signal" event payloads, as well as this.initialSignals

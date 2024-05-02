@@ -70,8 +70,8 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		});
 		this.signaler.onSignal(
 			FocusTracker.focusSignalType,
-			(clientId: string, local: boolean, payload: unknown) => {
-				this.onFocusSignalFn(clientId, payload as IFocusSignalPayload);
+			(clientId: string, local: boolean, payload: IFocusSignalPayload) => {
+				this.onFocusSignalFn(clientId, payload);
 			},
 		);
 

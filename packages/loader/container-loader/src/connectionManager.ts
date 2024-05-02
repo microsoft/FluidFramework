@@ -13,7 +13,7 @@ import {
 	IDisposable,
 	ITelemetryBaseProperties,
 	LogLevel,
-	JsonableOrBinary,
+	SignalContentType,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions";
@@ -1107,7 +1107,7 @@ export class ConnectionManager implements IConnectionManager {
 		};
 	}
 
-	public submitSignal(content: JsonableOrBinary, targetClientId?: string) {
+	public submitSignal(content: SignalContentType, targetClientId?: string) {
 		if (this.connection !== undefined) {
 			// If connection supports sending JS objects as is (submitSignal2 method), use it.
 			// This allows more efficient encoding (as we do not have double sringification of content),

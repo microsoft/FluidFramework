@@ -36,8 +36,8 @@ import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
 import { IVersion } from '@fluidframework/protocol-definitions';
 import { IWebSocketServer } from '@fluidframework/server-services-core';
-import type { JsonableOrBinary } from '@fluidframework/core-interfaces';
 import { NackErrorType } from '@fluidframework/protocol-definitions';
+import type { SignalContentType } from '@fluidframework/core-interfaces';
 import type { Socket } from 'socket.io-client';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
@@ -63,7 +63,7 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
     submit(messages: IDocumentMessage[]): void;
     submitSignal(content: string): void;
     // (undocumented)
-    submitSignal2(content: JsonableOrBinary): void;
+    submitSignal2(content: SignalContentType): void;
 }
 
 // @internal

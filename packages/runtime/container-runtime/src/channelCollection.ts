@@ -11,7 +11,7 @@ import {
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
-	JsonableOrBinary,
+	SignalContentType,
 } from "@fluidframework/core-interfaces";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
@@ -230,8 +230,8 @@ export function wrapContextForInnerChannel(
 		);
 	};
 
-	context.submitSignal = (type: string, contents: JsonableOrBinary, targetClientId?: string) => {
-		const envelope: IEnvelope<JsonableOrBinary> = {
+	context.submitSignal = (type: string, contents: SignalContentType, targetClientId?: string) => {
+		const envelope: IEnvelope<SignalContentType> = {
 			address: id,
 			contents,
 		};

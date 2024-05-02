@@ -9,7 +9,7 @@ import type {
 	IEvent,
 	IEventProvider,
 	ITelemetryBaseLogger,
-	JsonableOrBinary,
+	SignalContentType,
 } from "@fluidframework/core-interfaces";
 import type {
 	ConnectionMode,
@@ -323,7 +323,7 @@ export interface IDocumentDeltaConnection
 	 * Content is a JS object. It may container properties of type ArrayBuffer.
 	 * Other than such properties, the content should be serializable using JSON.serialize().
 	 */
-	submitSignal2?: (content: JsonableOrBinary, targetClientId?: string) => void;
+	submitSignal2?: (content: SignalContentType, targetClientId?: string) => void;
 }
 
 /**

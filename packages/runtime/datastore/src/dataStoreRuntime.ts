@@ -12,7 +12,7 @@ import {
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import type { JsonableOrBinary } from "@fluidframework/core-interfaces/internal";
+import type { SignalContentType } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
 	Deferred,
@@ -959,7 +959,7 @@ export class FluidDataStoreRuntime
 	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(type: string, content: JsonableOrBinary, targetClientId?: string) {
+	public submitSignal(type: string, content: SignalContentType, targetClientId?: string) {
 		this.verifyNotClosed();
 		return this.dataStoreContext.submitSignal(type, content, targetClientId);
 	}

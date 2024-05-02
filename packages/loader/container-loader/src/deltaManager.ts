@@ -16,7 +16,7 @@ import type {
 } from "@fluidframework/core-interfaces";
 import type {
 	IThrottlingWarning,
-	JsonableOrBinary,
+	SignalContentType,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
@@ -332,7 +332,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		return message.clientSequenceNumber;
 	}
 
-	public submitSignal(content: JsonableOrBinary, targetClientId?: string) {
+	public submitSignal(content: SignalContentType, targetClientId?: string) {
 		return this.connectionManager.submitSignal(content, targetClientId);
 	}
 

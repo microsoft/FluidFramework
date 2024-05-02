@@ -13,7 +13,7 @@ import { IFluidCodeDetails, isFluidPackage } from "@fluidframework/container-def
 import type {
 	IErrorBase,
 	ITelemetryBaseProperties,
-	JsonableOrBinary,
+	SignalContentType,
 } from "@fluidframework/core-interfaces";
 import { IContainerPackageInfo } from "@fluidframework/driver-definitions/internal";
 import {
@@ -103,7 +103,7 @@ export interface IConnectionManager {
 	 * Submits signal to relay service.
 	 * Called only when active connection is present.
 	 */
-	submitSignal: (content: JsonableOrBinary, targetClientId?: string) => void;
+	submitSignal: (content: SignalContentType, targetClientId?: string) => void;
 
 	/**
 	 * Submits messages to relay service.

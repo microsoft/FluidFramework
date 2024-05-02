@@ -7,7 +7,7 @@ import { EventEmitter, TypedEventEmitter } from "@fluid-internal/client-utils";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IErrorEvent } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { JsonableOrBinary } from "@fluidframework/core-interfaces/internal";
+import type { SignalContentType } from "@fluidframework/core-interfaces/internal";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 
 // TODO:
@@ -20,7 +20,7 @@ import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 export type SignalListener<T> = (
 	clientId: string,
 	local: boolean,
-	payload: JsonableOrBinary<T>,
+	payload: SignalContentType<T>,
 ) => void;
 
 /**
@@ -51,7 +51,7 @@ export interface ISignaler {
 	 * @param signalName - The name of the signal
 	 * @param payload - The data to send with the signal
 	 */
-	submitSignal<T>(signalName: string, payload?: JsonableOrBinary<T>);
+	submitSignal<T>(signalName: string, payload?: SignalContentType<T>);
 }
 
 /**
@@ -62,7 +62,7 @@ export interface ISignaler {
 export interface IRuntimeSignaler {
 	connected: boolean;
 	on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
-	submitSignal(type: string, content: JsonableOrBinary): void;
+	submitSignal(type: string, content: SignalContentType): void;
 }
 
 /**
@@ -125,7 +125,7 @@ class InternalSignaler extends TypedEventEmitter<IErrorEvent> implements ISignal
 		return this;
 	}
 
-	public submitSignal<T>(signalName: string, payload?: JsonableOrBinary<T>) {
+	public submitSignal<T>(signalName: string, payload?: SignalContentType<T>) {
 		const signalerSignalName = this.getSignalerSignalName(signalName);
 		if (this.signaler.connected) {
 			this.signaler.submitSignal(signalerSignalName, payload);
@@ -171,7 +171,7 @@ export class Signaler
 		return this;
 	}
 
-	public submitSignal<T>(signalName: string, payload?: JsonableOrBinary<T>) {
+	public submitSignal<T>(signalName: string, payload?: SignalContentType<T>) {
 		this.signaler.submitSignal(signalName, payload);
 	}
 }

@@ -9,7 +9,7 @@ import { DataObjectFactory } from '@fluidframework/aqueduct/internal';
 import { EventEmitter } from '@fluid-internal/client-utils';
 import { IErrorEvent } from '@fluidframework/core-interfaces';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
-import type { JsonableOrBinary } from '@fluidframework/core-interfaces/internal';
+import type { SignalContentType } from '@fluidframework/core-interfaces/internal';
 
 // @internal
 export interface IRuntimeSignaler {
@@ -18,14 +18,14 @@ export interface IRuntimeSignaler {
     // (undocumented)
     on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
     // (undocumented)
-    submitSignal(type: string, content: JsonableOrBinary): void;
+    submitSignal(type: string, content: SignalContentType): void;
 }
 
 // @internal
 export interface ISignaler {
     offSignal<T>(signalName: string, listener: SignalListener<T>): ISignaler;
     onSignal<T>(signalName: string, listener: SignalListener<T>): ISignaler;
-    submitSignal<T>(signalName: string, payload?: JsonableOrBinary<T>): any;
+    submitSignal<T>(signalName: string, payload?: SignalContentType<T>): any;
 }
 
 // @internal
@@ -45,11 +45,11 @@ export class Signaler extends DataObject<{
     // (undocumented)
     onSignal<T>(signalName: string, listener: SignalListener<T>): ISignaler;
     // (undocumented)
-    submitSignal<T>(signalName: string, payload?: JsonableOrBinary<T>): void;
+    submitSignal<T>(signalName: string, payload?: SignalContentType<T>): void;
 }
 
 // @internal (undocumented)
-export type SignalListener<T> = (clientId: string, local: boolean, payload: JsonableOrBinary<T>) => void;
+export type SignalListener<T> = (clientId: string, local: boolean, payload: SignalContentType<T>) => void;
 
 // (No @packageDocumentation comment for this package)
 

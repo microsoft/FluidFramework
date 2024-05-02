@@ -7,7 +7,7 @@ import type {
 	FluidObject,
 	IDisposable,
 	ITelemetryBaseLogger,
-	JsonableOrBinary,
+	SignalContentType,
 } from "@fluidframework/core-interfaces";
 import type {
 	IDocumentStorageService,
@@ -156,7 +156,7 @@ export interface IContainerContext {
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
 	) => number;
-	readonly submitSignalFn: (contents: JsonableOrBinary, targetClientId?: string) => void;
+	readonly submitSignalFn: (contents: SignalContentType, targetClientId?: string) => void;
 	readonly disposeFn?: (error?: ICriticalContainerError) => void;
 	readonly closeFn: (error?: ICriticalContainerError) => void;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;

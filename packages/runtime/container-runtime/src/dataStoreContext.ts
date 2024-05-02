@@ -14,7 +14,7 @@ import type {
 	IResponse,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
-import type { JsonableOrBinary } from "@fluidframework/core-interfaces/internal";
+import type { SignalContentType } from "@fluidframework/core-interfaces/internal";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils/internal";
@@ -820,7 +820,7 @@ export abstract class FluidDataStoreContext
 	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(type: string, content: JsonableOrBinary, targetClientId?: string) {
+	public submitSignal(type: string, content: SignalContentType, targetClientId?: string) {
 		this.verifyNotClosed("submitSignal");
 
 		assert(!!this.channel, 0x147 /* "Channel must exist on submitting signal" */);

@@ -362,7 +362,7 @@ export type ISignalEnvelope = {
     clientSignalSequenceNumber: number;
     contents: {
         type: string;
-        content: JsonableOrBinary;
+        content: SignalContentType;
     };
 };
 
@@ -424,6 +424,9 @@ export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
     [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
 } : L;
+
+// @public (undocumented)
+export type SignalContentType<T = unknown> = JsonableOrBinary<T>;
 
 // @public
 export interface Tagged<V, T extends string = string> {

@@ -6,6 +6,11 @@
 import type { JsonableOrBinary } from "./jsonable.js";
 
 /**
+ * @public
+ */
+export type SignalContentType<T = unknown> = JsonableOrBinary<T>;
+
+/**
  * @internal
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
@@ -25,6 +30,6 @@ export type ISignalEnvelope = {
 	 */
 	contents: {
 		type: string;
-		content: JsonableOrBinary;
+		content: SignalContentType;
 	};
 };
