@@ -9,7 +9,9 @@
 		"outDir": "../lib/test",
 		"types": ["node", "mocha", "chai"],
 		"skipLibCheck": true,
-		"target": "ES2015",
+		"target": "ES2021",
+		"moduleResolution": "Node16",
+		"module": "Node16",
 	},
 	"references": [
 		{
