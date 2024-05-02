@@ -706,7 +706,7 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 	}
 
 	if (fluidObject?.ISummarizer === undefined) {
-		throw new UsageError("Fluid object does not implement ISummarizer");
+		throw new UsageError("Fluid object does not implement ISummarizer1234567890");
 	}
 	return fluidObject.ISummarizer;
 }
