@@ -63,6 +63,7 @@ import { MarkMaker } from "./sequence-field/testEdits.js";
 // eslint-disable-next-line import/no-internal-modules
 import { purgeUnusedCellOrderingInfo } from "./sequence-field/utils.js";
 import { merge } from "../objMerge.js";
+import { BTree } from "@tylerbu/sorted-btree-es6";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map([
 	[sequence.identifier, sequence],
@@ -237,6 +238,7 @@ describe("ModularChangeFamily integration", () => {
 				fieldChanges: new Map([
 					[fieldA, { fieldKind: sequence.identifier, change: brand(fieldAExpected) }],
 				]),
+				crossFieldKeys: new BTree(), // XXX
 				maxId: brand(5),
 			};
 
@@ -552,6 +554,7 @@ describe("ModularChangeFamily integration", () => {
 						},
 					],
 				]),
+				crossFieldKeys: new BTree(),
 			};
 			const b: ModularChangeset = {
 				nodeChanges: new Map(),
@@ -564,6 +567,7 @@ describe("ModularChangeFamily integration", () => {
 						},
 					],
 				]),
+				crossFieldKeys: new BTree(),
 			};
 
 			const composed = family.compose([makeAnonChange(a), makeAnonChange(b)]);
@@ -658,6 +662,7 @@ describe("ModularChangeFamily integration", () => {
 				fieldChanges: new Map([
 					[fieldA, { fieldKind: sequence.identifier, change: brand(fieldAExpected) }],
 				]),
+				crossFieldKeys: new BTree(),
 				maxId: brand(5),
 			};
 
@@ -692,6 +697,7 @@ describe("ModularChangeFamily integration", () => {
 						},
 					],
 				]),
+				crossFieldKeys: new BTree(), // XXX
 			};
 			const moveOut1: DeltaMark = {
 				detach: { major: tag1, minor: 0 },

@@ -24,6 +24,7 @@ import {
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
 import {
+	CrossFieldTarget,
 	EditDescription,
 	FieldChangeset,
 	FieldEditDescription,
@@ -197,6 +198,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					field,
 					fieldKind: valueFieldKind.identifier,
 					change,
+					crossFieldKeys: [],
 				};
 				this.modularBuilder.submitChanges([build, edit]);
 			},
@@ -229,6 +231,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					field,
 					fieldKind: optional.identifier,
 					change,
+					crossFieldKeys: [],
 				};
 				edits.push(edit);
 
@@ -252,7 +255,10 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				destIndex,
 				moveId,
 			);
-			this.modularBuilder.submitChange(sourceField, sequence.identifier, brand(change));
+			this.modularBuilder.submitChange(sourceField, sequence.identifier, brand(change), [
+				[CrossFieldTarget.Source, undefined, moveId],
+				[CrossFieldTarget.Destination, undefined, moveId],
+			]);
 		} else {
 			const detachPath = topDownPath(sourceField.parent);
 			const attachPath = topDownPath(destinationField.parent);
@@ -301,12 +307,14 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					field: sourceField,
 					fieldKind: sequence.identifier,
 					change: brand(moveOut),
+					crossFieldKeys: [[CrossFieldTarget.Source, undefined, moveId]],
 				},
 				{
 					type: "field",
 					field: adjustedAttachField,
 					fieldKind: sequence.identifier,
 					change: brand(moveIn),
+					crossFieldKeys: [[CrossFieldTarget.Destination, undefined, moveId]],
 				},
 			]);
 		}
@@ -331,6 +339,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					field,
 					fieldKind: sequence.identifier,
 					change,
+					crossFieldKeys: [],
 				};
 				// The changes have to be submitted together, otherwise they will be assigned different revisions,
 				// which will prevent the build ID and the insert ID from matching.
@@ -344,7 +353,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				const change: FieldChangeset = brand(
 					sequence.changeHandler.editor.remove(index, count, id),
 				);
-				this.modularBuilder.submitChange(field, sequence.identifier, change);
+				this.modularBuilder.submitChange(field, sequence.identifier, change, []);
 			},
 			move: (sourceIndex: number, count: number, destIndex: number): void => {
 				const moveId = this.modularBuilder.generateId(count);
@@ -354,7 +363,10 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					destIndex,
 					moveId,
 				);
-				this.modularBuilder.submitChange(field, sequence.identifier, brand(change));
+				this.modularBuilder.submitChange(field, sequence.identifier, brand(change), [
+					[CrossFieldTarget.Source, undefined, moveId],
+					[CrossFieldTarget.Destination, undefined, moveId],
+				]);
 			},
 		};
 	}

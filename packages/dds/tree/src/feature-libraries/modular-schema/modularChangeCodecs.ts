@@ -63,6 +63,7 @@ import {
 	NodeId,
 } from "./modularChangeTypes.js";
 import { FieldChangeEncodingContext } from "./fieldChangeHandler.js";
+import { BTree } from "@tylerbu/sorted-btree-es6";
 
 export function makeModularChangeCodecFamily(
 	fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration>,
@@ -439,6 +440,7 @@ function makeModularChangeCodec(
 			const decoded: Mutable<ModularChangeset> = {
 				fieldChanges,
 				nodeChanges,
+				crossFieldKeys: new BTree(), // XXX
 			};
 
 			if (encodedChange.builds !== undefined) {
