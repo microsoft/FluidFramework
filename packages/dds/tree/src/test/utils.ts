@@ -138,6 +138,7 @@ import {
 	nestedMapFromFlatList,
 } from "../util/index.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import type { Client } from "@fluid-private/test-dds-utils";
 
 // Testing utilities
 
@@ -546,6 +547,17 @@ export function validateTreeConsistency(treeA: ISharedTree, treeB: ISharedTree):
 		treeA.contentSnapshot(),
 		treeB.contentSnapshot(),
 		`id: ${treeA.id} vs id: ${treeB.id}`,
+	);
+}
+
+export function validateFuzzTreeConsistency(
+	treeA: Client<SharedTreeFactory>,
+	treeB: Client<SharedTreeFactory>,
+): void {
+	validateSnapshotConsistency(
+		treeA.channel.contentSnapshot(),
+		treeB.channel.contentSnapshot(),
+		`id: ${treeA.channel.id} vs id: ${treeB.channel.id}`,
 	);
 }
 
