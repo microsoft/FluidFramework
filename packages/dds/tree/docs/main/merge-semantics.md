@@ -248,6 +248,7 @@ If those preconditions are not met, then the edit and the whole transaction it i
 i.e., the edit and transaction have no effect.
 
 `SharedTree`'s current set of data edits only have one precondition by default\*: the edit must not be concurrent with a change to the schema.
+The reason so few preconditions are needed, is that removed content can still be edited (see [Removal is Movement](#removal-is-movement)).
 The rest of this section will at times consider other preconditions for the sake of illustration.
 
 \*It is possible to add additional preconditions to a transaction.
