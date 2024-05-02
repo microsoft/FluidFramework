@@ -1617,12 +1617,14 @@ export class ContainerRuntime
 			return this.submitSignalFn(envelope2, targetClientId);
 		};
 
-		let snapshot: ISnapshot | ISnapshotTree | undefined = baseSnapshot;
-		const snapshotTreesForChannelCollection = getSummaryForDatastores(baseSnapshot, metadata);
-		if (snapshotTreesForChannelCollection !== undefined && snapshotWithContents !== undefined) {
+		let snapshot: ISnapshot | ISnapshotTree | undefined = getSummaryForDatastores(
+			baseSnapshot,
+			metadata,
+		);
+		if (snapshot !== undefined && snapshotWithContents !== undefined) {
 			snapshot = {
 				...snapshotWithContents,
-				snapshotTree: snapshotTreesForChannelCollection,
+				snapshotTree: snapshot,
 			};
 		}
 
