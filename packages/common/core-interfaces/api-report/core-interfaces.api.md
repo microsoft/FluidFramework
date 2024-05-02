@@ -394,6 +394,8 @@ export interface IUsageError extends IErrorBase {
 }
 
 // @public
+export type JsonableOrBinary<T = unknown> = Jsonable<T, ArrayBuffer>;
+
 export const LogLevel: {
     readonly verbose: 10;
     readonly default: 20;
