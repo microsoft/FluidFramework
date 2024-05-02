@@ -132,6 +132,9 @@ export class PropertiesManager {
 		return newProps;
 	}
 
+	/**
+	 * @returns whether all valid (i.e. defined) entries of the property bag are pending
+	 */
 	public hasPendingProperties(props: PropertySet) {
 		for (const [key, value] of Object.entries(props)) {
 			if (value !== undefined && this.pendingKeyUpdateCount?.[key] === undefined) {
