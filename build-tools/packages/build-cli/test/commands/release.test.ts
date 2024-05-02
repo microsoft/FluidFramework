@@ -5,7 +5,7 @@
 
 import { test } from "@oclif/test";
 
-import { FluidReleaseMachine } from "../../src/machines";
+import { FluidReleaseMachine } from "../../src/machines/index.js";
 
 const knownUnhandledStates: string[] = [
 	// Known unhandled states can be added here temporarily during development.

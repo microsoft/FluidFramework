@@ -23,9 +23,9 @@ import * as changeCase from "change-case";
 import { mkdirSync, readJson, rmSync, writeFileSync } from "fs-extra";
 import * as resolve from "resolve.exports";
 import { ModuleKind, ModuleResolutionKind, Project, type SourceFile } from "ts-morph";
-import { PackageCommand } from "../../BasePackageCommand";
-import { ApiLevel, ensureDevDependencyExists, knownApiLevels } from "../../library";
-import { unscopedPackageNameString } from "./entrypoints";
+import { PackageCommand } from "../../BasePackageCommand.js";
+import { ApiLevel, ensureDevDependencyExists, knownApiLevels } from "../../library/index.js";
+import { unscopedPackageNameString } from "./entrypoints.js";
 
 export default class GenerateTypetestsCommand extends PackageCommand<
 	typeof GenerateTypetestsCommand

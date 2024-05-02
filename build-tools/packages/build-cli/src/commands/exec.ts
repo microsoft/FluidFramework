@@ -7,7 +7,7 @@ import { Package } from "@fluidframework/build-tools";
 import { Args } from "@oclif/core";
 import execa from "execa";
 
-import { PackageCommand } from "../BasePackageCommand";
+import { PackageCommand } from "../BasePackageCommand.js";
 
 export default class ExecCommand extends PackageCommand<typeof ExecCommand> {
 	static readonly description =

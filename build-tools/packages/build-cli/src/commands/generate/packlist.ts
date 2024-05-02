@@ -8,7 +8,7 @@ import type { Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import execa from "execa";
 import { writeFile } from "fs-extra";
-import { PackageCommand } from "../../BasePackageCommand";
+import { PackageCommand } from "../../BasePackageCommand.js";
 
 /**
  * JSON results from running npm pack --json.

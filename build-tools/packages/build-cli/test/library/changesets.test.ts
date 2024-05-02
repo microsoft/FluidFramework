@@ -11,7 +11,7 @@ import {
 	flattenChangesets,
 	groupByPackage,
 	loadChangesets,
-} from "../../src/library/changesets";
+} from "../../src/library/changesets.js";
 
 const changesetsPath = path.resolve(__dirname, "../data");
 assert.isTrue(pathExistsSync(changesetsPath));

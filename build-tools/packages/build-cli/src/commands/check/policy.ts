@@ -11,8 +11,8 @@ import { readJson } from "fs-extra";
 
 import { loadFluidBuildConfig } from "@fluidframework/build-tools";
 
-import { BaseCommand } from "../../base";
-import { Context, Handler, Repository, policyHandlers } from "../../library";
+import { BaseCommand } from "../../base.js";
+import { Context, Handler, Repository, policyHandlers } from "../../library/index.js";
 
 type policyAction = "handle" | "resolve" | "final";
 

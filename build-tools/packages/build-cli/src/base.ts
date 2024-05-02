@@ -9,9 +9,9 @@ import { type PrettyPrintableError } from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
 
 import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
-import { rootPathFlag } from "./flags";
-import { Context, indentString } from "./library";
-import { CommandLogger } from "./logging";
+import { rootPathFlag } from "./flags.js";
+import { Context, indentString } from "./library/index.js";
+import { CommandLogger } from "./logging.js";
 
 /**
  * A type representing all the flags of the base commands and subclasses.

@@ -11,7 +11,7 @@ import {
 	getVersionRange,
 } from "@fluid-tools/version-tools";
 
-import { ReleaseGroup } from "../releaseGroups";
+import { ReleaseGroup } from "../releaseGroups.js";
 
 /**
  * A map of package names to their versions. This is the format of the "simple" release report.

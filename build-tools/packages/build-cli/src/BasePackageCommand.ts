@@ -8,7 +8,7 @@ import { Package } from "@fluidframework/build-tools";
 import { Command, Flags, ux } from "@oclif/core";
 import async from "async";
 
-import { BaseCommand } from "./base";
+import { BaseCommand } from "./base.js";
 import {
 	PackageFilterOptions,
 	PackageKind,
@@ -17,8 +17,8 @@ import {
 	parsePackageFilterFlags,
 	parsePackageSelectionFlags,
 	selectAndFilterPackages,
-} from "./filter";
-import { filterFlags, selectionFlags } from "./flags";
+} from "./filter.js";
+import { filterFlags, selectionFlags } from "./flags.js";
 
 /**
  * Commands that run operations per project.

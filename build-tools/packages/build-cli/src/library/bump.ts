@@ -12,9 +12,9 @@ import {
 	isVersionBumpType,
 } from "@fluid-tools/version-tools";
 import { Logger, MonoRepo, Package } from "@fluidframework/build-tools";
-import { Context } from "./context";
+import { Context } from "./context.js";
 
-import { setVersion } from "./package";
+import { setVersion } from "./package.js";
 
 /**
  * A type representing the types of dependency updates that can be done. This type is intended to match the type

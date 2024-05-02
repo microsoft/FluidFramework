@@ -5,8 +5,8 @@
 
 import { strict as assert } from "node:assert";
 import { Package } from "@fluidframework/build-tools";
-import { PackageCommand } from "../BasePackageCommand";
-import { PackageWithKind } from "../filter";
+import { PackageCommand } from "../BasePackageCommand.js";
+import { PackageWithKind } from "../filter.js";
 
 interface FilterCommandResult {
 	selected: Pick<Package, "name" | "directory">[];

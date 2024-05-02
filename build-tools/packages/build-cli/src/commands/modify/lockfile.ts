@@ -7,8 +7,8 @@ import { updatePackageJsonFile } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import execa from "execa";
 
-import { BaseCommand } from "../../base";
-import { releaseGroupFlag } from "../../flags";
+import { BaseCommand } from "../../base.js";
+import { releaseGroupFlag } from "../../flags.js";
 
 /**
  * Updates the version of a dependency in the lockfile.

@@ -13,9 +13,9 @@ import humanId from "human-id";
 import { format as prettier } from "prettier";
 import prompts from "prompts";
 
-import { BaseCommand } from "../../base";
-import { releaseGroupFlag } from "../../flags";
-import { Repository, getDefaultBumpTypeForBranch } from "../../library";
+import { BaseCommand } from "../../base.js";
+import { releaseGroupFlag } from "../../flags.js";
+import { Repository, getDefaultBumpTypeForBranch } from "../../library/index.js";
 
 /**
  * If more than this number of packages are changed relative to the selected branch, the user will be prompted to select

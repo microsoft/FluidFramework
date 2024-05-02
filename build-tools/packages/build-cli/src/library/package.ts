@@ -38,12 +38,12 @@ import {
 	PackageSelectionCriteria,
 	PackageWithKind,
 	selectAndFilterPackages,
-} from "../filter";
-import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups";
-import { DependencyUpdateType } from "./bump";
-import { zip } from "./collections";
-import { Context, VersionDetails } from "./context";
-import { indentString } from "./text";
+} from "../filter.js";
+import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups.js";
+import { DependencyUpdateType } from "./bump.js";
+import { zip } from "./collections.js";
+import { Context, VersionDetails } from "./context.js";
+import { indentString } from "./text.js";
 
 /**
  * An object that maps package names to version strings or range strings.

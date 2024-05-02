@@ -8,8 +8,8 @@ import path from "node:path";
 import { Package, PackageJson, updatePackageJsonFile } from "@fluidframework/build-tools";
 import { ExtractorConfig } from "@microsoft/api-extractor";
 import { Flags } from "@oclif/core";
-import { PackageCommand } from "../../BasePackageCommand";
-import { CommandLogger } from "../../logging";
+import { PackageCommand } from "../../BasePackageCommand.js";
+import { CommandLogger } from "../../logging.js";
 
 /**
  * Represents a list of package categorized into two arrays

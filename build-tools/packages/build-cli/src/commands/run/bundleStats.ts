@@ -7,7 +7,7 @@ import { execSync } from "node:child_process";
 import path from "node:path";
 import { Flags } from "@oclif/core";
 
-import { BaseCommand } from "../../base";
+import { BaseCommand } from "../../base.js";
 
 export default class RunBundlestats extends BaseCommand<typeof RunBundlestats> {
 	static readonly description =

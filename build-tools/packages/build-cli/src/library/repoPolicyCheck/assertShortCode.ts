@@ -15,7 +15,7 @@ import {
 	SyntaxKind,
 } from "ts-morph";
 
-import { Handler } from "./common";
+import { Handler } from "./common.js";
 
 const shortCodes = new Map<number, Node>();
 const newAssetFiles = new Set<SourceFile>();

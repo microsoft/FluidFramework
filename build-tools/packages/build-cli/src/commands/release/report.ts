@@ -26,7 +26,7 @@ import {
 	getRanges,
 	sortVersions,
 	toReportKind,
-} from "../../library";
+} from "../../library/index.js";
 
 import {
 	ReleaseVersion,
@@ -37,10 +37,10 @@ import {
 	isVersionBumpType,
 } from "@fluid-tools/version-tools";
 
-import { BaseCommand } from "../../base";
-import { releaseGroupFlag } from "../../flags";
-import { CommandLogger } from "../../logging";
-import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups";
+import { BaseCommand } from "../../base.js";
+import { releaseGroupFlag } from "../../flags.js";
+import { CommandLogger } from "../../logging.js";
+import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups.js";
 
 /**
  * Controls behavior when there is a list of releases and one needs to be selected.

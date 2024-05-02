@@ -7,14 +7,14 @@ import { PackageName } from "@rushstack/node-core-library";
 import { assert } from "chai";
 import { parseJSON } from "date-fns";
 
-import { VersionDetails } from "../../src/library";
+import { VersionDetails } from "../../src/library/index.js";
 
 import type { PackageJson } from "@fluidframework/build-tools";
 import {
 	ensureDevDependencyExists,
 	generateReleaseGitTagName,
 	sortVersions,
-} from "../../src/library/package";
+} from "../../src/library/package.js";
 
 describe("VersionDetails sorting", async () => {
 	const versions: VersionDetails[] = [

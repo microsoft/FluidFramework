@@ -10,8 +10,8 @@ import { compareAsc, formatISO, parseISO } from "date-fns";
 import globby from "globby";
 import matter from "gray-matter";
 
-import { ReleasePackage } from "../releaseGroups";
-import { Repository } from "./git";
+import { ReleasePackage } from "../releaseGroups.js";
+import { Repository } from "./git.js";
 
 export const DEFAULT_CHANGESET_PATH = ".changeset";
 

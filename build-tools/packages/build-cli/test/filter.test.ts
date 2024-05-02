@@ -15,8 +15,8 @@ import {
 	PackageSelectionCriteria,
 	filterPackages,
 	selectAndFilterPackages,
-} from "../src/filter";
-import { Context } from "../src/library";
+} from "../src/filter.js";
+import { Context } from "../src/library/index.js";
 
 chai.use(assertArrays);
 

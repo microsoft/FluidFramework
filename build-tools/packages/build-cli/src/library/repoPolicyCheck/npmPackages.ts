@@ -20,7 +20,7 @@ import {
 	loadFluidBuildConfig,
 	updatePackageJsonFile,
 } from "@fluidframework/build-tools";
-import { Handler, readFile, writeFile } from "./common";
+import { Handler, readFile, writeFile } from "./common.js";
 
 const licenseId = "MIT";
 const author = "Microsoft and contributors";

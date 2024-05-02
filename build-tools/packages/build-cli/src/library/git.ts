@@ -9,9 +9,9 @@ import readPkgUp from "read-pkg-up";
 import { SimpleGit, SimpleGitOptions, simpleGit } from "simple-git";
 import type { SetRequired } from "type-fest";
 
-import { CommandLogger } from "../logging";
-import { ReleaseGroup } from "../releaseGroups";
-import { Context } from "./context";
+import { CommandLogger } from "../logging.js";
+import { ReleaseGroup } from "../releaseGroups.js";
+import { Context } from "./context.js";
 /**
  * Default options passed to the git client.
  */

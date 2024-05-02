@@ -8,8 +8,8 @@ import { isInternalVersionRange } from "@fluid-tools/version-tools";
 import { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import fetch from "node-fetch";
-import { BaseCommand } from "../../base";
-import { PackageVersionList } from "../../library";
+import { BaseCommand } from "../../base.js";
+import { PackageVersionList } from "../../library/index.js";
 
 // Define the interface for build details
 interface IBuildDetails {

@@ -19,7 +19,7 @@ import {
 import * as JSON5 from "json5";
 import * as semver from "semver";
 import { TsConfigJson } from "type-fest";
-import { Handler, readFile } from "./common";
+import { Handler, readFile } from "./common.js";
 
 /**
  * Get and cache the tsc check ignore setting

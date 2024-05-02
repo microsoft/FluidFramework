@@ -7,7 +7,7 @@ import { ReleaseVersion, VersionBumpType } from "@fluid-tools/version-tools";
 import { test } from "@oclif/test";
 import chai, { expect } from "chai";
 import assertArrays from "chai-arrays";
-import { ReleaseGroup, ReleasePackage } from "../../../src/releaseGroups";
+import { ReleaseGroup, ReleasePackage } from "../../../src/releaseGroups.js";
 
 chai.use(assertArrays);
 
