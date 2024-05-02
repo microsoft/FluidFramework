@@ -70,6 +70,7 @@ export type {
 	ITelemetryBaseEvent,
 	LogLevel,
 	IDisposable as IDisposable_2,
+	ErasedType,
 } from "@fluidframework/core-interfaces";
 export type {
 	IChannel,
