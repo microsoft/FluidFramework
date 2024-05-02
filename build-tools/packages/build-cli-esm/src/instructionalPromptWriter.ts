@@ -3,13 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import {
+	type CommandLogger,
+	MonoRepoKind,
+	type ReleaseGroup,
+	type ReleasePackage,
+	indentString,
+} from "@fluid-tools/build-cli";
 import { StringBuilder } from "@rushstack/node-core-library";
 import chalk from "chalk";
-
-// eslint-disable-next-line import/no-deprecated
-import { MonoRepoKind, indentString } from "./library";
-import { CommandLogger } from "./logging";
-import { ReleaseGroup, ReleasePackage } from "./releaseGroups";
 
 /**
  * An instructional prompt to display to a user in a terminal. A prompt can have any number of sections, and each

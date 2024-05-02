@@ -3,16 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { type CommandLogger, getDefaultBumpTypeForBranch } from "@fluid-tools/build-cli";
+import { bumpVersionScheme } from "@fluid-tools/version-tools";
 import inquirer from "inquirer";
 import { Machine } from "jssm";
-
-import { bumpVersionScheme } from "@fluid-tools/version-tools";
-
-import { getDefaultBumpTypeForBranch } from "../library";
-import { CommandLogger } from "../logging";
-import { MachineState } from "../machines";
-import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler";
-import { StateHandlerFunction } from "./stateHandlers";
+import { MachineState } from "../machines/index.js";
+import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
+import { StateHandlerFunction } from "./stateHandlers.js";
 
 /**
  * Determines the release type based on context, or by asking the user if needed.

@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { CommandLogger } from "@fluid-tools/build-cli";
 import type { Machine } from "jssm";
-
-import { CommandLogger } from "../logging";
-import { MachineState } from "../machines";
+import { MachineState } from "../machines/index.js";
 
 /**
  * An async function that handles state. Typically this type is used via the {@link BaseStateHandler} class and its

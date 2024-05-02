@@ -3,16 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import {
+	type CommandLogger,
+	difference,
+	generateReleaseBranchName,
+	getPreReleaseDependencies,
+	isReleaseGroup,
+} from "@fluid-tools/build-cli";
 import chalk from "chalk";
 import { Machine } from "jssm";
-
-import { type InstructionalPrompt, mapADOLinks } from "../instructionalPromptWriter";
-import { difference, generateReleaseBranchName, getPreReleaseDependencies } from "../library";
-import { CommandLogger } from "../logging";
-import { MachineState } from "../machines";
-import { isReleaseGroup } from "../releaseGroups";
-import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler";
-import { StateHandlerFunction } from "./stateHandlers";
+import { type InstructionalPrompt, mapADOLinks } from "../instructionalPromptWriter.js";
+import { MachineState } from "../machines/index.js";
+import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
+import { StateHandlerFunction } from "./stateHandlers.js";
 
 /**
  * Prompt the user to queue a release build.

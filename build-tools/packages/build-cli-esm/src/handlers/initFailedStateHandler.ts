@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { CommandLogger } from "@fluid-tools/build-cli";
 import { Machine } from "jssm";
 
-import { CommandLogger } from "../logging";
-import { MachineState } from "../machines";
-import { BaseStateHandler } from "./stateHandlers";
+import { MachineState } from "../machines/index.js";
+import { BaseStateHandler } from "./stateHandlers.js";
 
 /**
  * A base class that handles the "Init" and "Failed" states in a state machine. These states are commonly used in state

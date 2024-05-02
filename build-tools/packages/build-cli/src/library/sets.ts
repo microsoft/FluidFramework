@@ -14,8 +14,6 @@
  * @remarks
  *
  * Implementation from {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set}.
- *
- * @internal
  */
 export function difference<T>(setA: Set<T>, setB: Set<T>): Set<T> {
 	const _difference = new Set(setA);

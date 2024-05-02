@@ -4,14 +4,9 @@
  */
 
 import { strict as assert } from "node:assert";
-import execa from "execa";
-import inquirer from "inquirer";
-import { Machine } from "jssm";
-
-import { bumpVersionScheme } from "@fluid-tools/version-tools";
-import { FluidRepo } from "@fluidframework/build-tools";
-
 import {
+	type CommandLogger,
+	type ReleaseSource,
 	generateBumpDepsBranchName,
 	generateBumpDepsCommitMessage,
 	generateBumpVersionBranchName,
@@ -19,14 +14,18 @@ import {
 	generateReleaseBranchName,
 	getPreReleaseDependencies,
 	getReleaseSourceForReleaseGroup,
+	isReleaseGroup,
 	isReleased,
-} from "../library";
-import { CommandLogger } from "../logging";
-import { MachineState } from "../machines";
-import { ReleaseSource, isReleaseGroup } from "../releaseGroups";
-import { getRunPolicyCheckDefault } from "../repoConfig";
-import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler";
-import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers";
+} from "@fluid-tools/build-cli";
+import { bumpVersionScheme } from "@fluid-tools/version-tools";
+import { FluidRepo } from "@fluidframework/build-tools";
+import execa from "execa";
+import inquirer from "inquirer";
+import { Machine } from "jssm";
+import { MachineState } from "../machines/index.js";
+import { getRunPolicyCheckDefault } from "../repoConfig.js";
+import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
+import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers.js";
 
 /**
  * Checks that the current branch matches the expected branch for a release.

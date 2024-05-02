@@ -9,10 +9,7 @@
 		"noUnusedLocals": true,
 		"declaration": true,
 		"strict": true,
-		// "module": "ES2020",
-		// "moduleResolution": "Bundler",
-		// "module": "Node16",
-		// "moduleResolution": "Node16",
+		"target": "ES2021",
 	},
 	"ts-node": {
 		"esm": true,

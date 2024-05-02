@@ -284,8 +284,6 @@ export const selectionFlags = {
  * This interface is used for type enforcement of selection flags. The default oclif typing is complex and difficult to
  * simplify, so this type just mirrors the object above with simpler typing. This should ONLY be used when processing
  * raw flags.
- *
- * @internal
  */
 export interface selectionFlags {
 	readonly all: boolean;
@@ -326,8 +324,6 @@ export const filterFlags = {
  * This interface is used for type enforcement of filter flags. The default oclif typing is complex and difficult to
  * simplify, so this type just mirrors the object above with simpler typing. This should ONLY be used when processing
  * raw flags.
- *
- * @internal
  */
 export interface filterFlags {
 	readonly private: boolean;

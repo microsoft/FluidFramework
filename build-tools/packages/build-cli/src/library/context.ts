@@ -18,8 +18,6 @@ import * as semver from "semver";
 
 /**
  * Represents a release version and its release date, if applicable.
- *
- * @internal
  */
 export interface VersionDetails {
 	/**

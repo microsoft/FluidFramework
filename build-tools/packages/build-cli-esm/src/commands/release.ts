@@ -4,29 +4,27 @@
  */
 
 import { strict as assert } from "node:assert";
-import { VersionBumpType, detectVersionScheme } from "@fluid-tools/version-tools";
-import { Config } from "@oclif/core";
-import chalk from "chalk";
-
-import { findPackageOrReleaseGroup } from "../args";
 import {
+	MonoRepoKind,
 	bumpTypeFlag,
 	checkFlags,
+	findPackageOrReleaseGroup,
 	packageSelectorFlag,
 	releaseGroupFlag,
 	skipCheckFlag,
-} from "../flags";
+} from "@fluid-tools/build-cli";
+import { VersionBumpType, detectVersionScheme } from "@fluid-tools/version-tools";
+import { Config } from "@oclif/core";
+import chalk from "chalk";
 import {
 	FluidReleaseStateHandler,
 	FluidReleaseStateHandlerData,
 	StateHandler,
-} from "../handlers";
-import { PromptWriter } from "../instructionalPromptWriter";
-// eslint-disable-next-line import/no-deprecated
-import { MonoRepoKind } from "../library";
-import { FluidReleaseMachine } from "../machines";
-import { getRunPolicyCheckDefault } from "../repoConfig";
-import { StateMachineCommand } from "../stateMachineCommand";
+} from "../handlers/index.js";
+import { PromptWriter } from "../instructionalPromptWriter.js";
+import { FluidReleaseMachine } from "../machines/index.js";
+import { getRunPolicyCheckDefault } from "../repoConfig.js";
+import { StateMachineCommand } from "../stateMachineCommand.js";
 
 /**
  * Releases a package or release group. This command is mostly scaffolding and setting up the state machine, handlers,

@@ -506,8 +506,6 @@ export class Packages {
  * @remarks
  *
  * The package.json is always sorted using sort-package-json.
- *
- * @internal
  */
 export function updatePackageJsonFile(
 	packagePath: string,
@@ -527,8 +525,6 @@ export function updatePackageJsonFile(
 /**
  * Reads a package.json file from a path, detects its indentation, and returns both the JSON as an object and
  * indentation.
- *
- * @internal
  */
 export function readPackageJsonAndIndent(
 	pathToJson: string,

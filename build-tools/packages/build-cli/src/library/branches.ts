@@ -36,8 +36,6 @@ import { DependencyUpdateType } from "./bump";
  * @remarks
  *
  * Generated branch names are of the form `bump_<RELEASEGROUP>_<BUMPTYPE>_<VERSION>`.
- *
- * @internal
  */
 export async function createBumpBranch(
 	context: Context,
@@ -63,7 +61,6 @@ export async function createBumpBranch(
  *
  * Generated branch names are of the form `bump_<RELEASEGROUP>_<BUMPTYPE>_<VERSION>`.
  *
- * @internal
  */
 export function generateBumpVersionBranchName(
 	releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
@@ -95,7 +92,6 @@ export function generateBumpVersionBranchName(
  *
  * Generated branch names are of the form `bump_deps_<RELEASEGROUP>_<BUMPTYPE>`.
  *
- * @internal
  */
 export function generateBumpDepsBranchName(
 	bumpedDep: ReleaseGroup | ReleasePackage,
@@ -119,7 +115,6 @@ export function generateBumpDepsBranchName(
  *
  * Generated branch names are of the form `release/<RELEASEGROUP>/<MAJOR.MINORVERSION>`.
  *
- * @internal
  */
 export function generateReleaseBranchName(
 	releaseGroup: ReleaseGroup | ReleasePackage,
@@ -193,7 +188,6 @@ export function generateReleaseBranchName(
  * @param scheme - The version scheme to use. If this is omitted the scheme will be detected using detectVersionScheme.
  * @returns The generated commit message.
  *
- * @internal
  */
 export function generateBumpVersionCommitMessage(
 	releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
@@ -221,7 +215,6 @@ export function generateBumpVersionCommitMessage(
  * @param releaseGroup - If set, changes were made to only this release group.
  * @returns The generated commit message.
  *
- * @internal
  */
 export function generateBumpDepsCommitMessage(
 	bumpedDep: ReleaseGroup | ReleasePackage | "prerelease",
@@ -247,9 +240,8 @@ export function generateBumpDepsCommitMessage(
  * Returns the default bump type for a branch.
  *
  * @param branchName - The branch name to check.
- * @returns The default {@link VersionBumpType} for the branch, or `undefined` if no default is set for the branch.
+ * @returns The default {@link @fluid-tools/version-tools#VersionBumpType} for the branch, or `undefined` if no default is set for the branch.
  *
- * @internal
  */
 export function getDefaultBumpTypeForBranch(
 	branchName: string,
@@ -275,7 +267,6 @@ export function getDefaultBumpTypeForBranch(
 /**
  * Returns the default {@link ReleaseSource} for a given release group or package.
  *
- * @internal
  */
 export function getReleaseSourceForReleaseGroup(
 	releaseGroupOrPackage: ReleaseGroup | ReleasePackage,

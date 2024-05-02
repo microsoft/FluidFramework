@@ -1,6 +1,6 @@
-import { Command } from "@oclif/core";
+import { BaseCommand } from "@fluid-tools/build-cli";
 
-export default class World extends Command {
+export default class World extends BaseCommand<typeof World> {
 	static args = {};
 
 	static description = "Say hello world";

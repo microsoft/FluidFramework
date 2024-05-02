@@ -4,18 +4,250 @@
 
 ```ts
 
+import { Arg } from '@oclif/core/lib/interfaces';
+import { BooleanFlag } from '@oclif/core/lib/interfaces';
+import { Command } from '@oclif/core';
+import { CustomOptions } from '@oclif/core/lib/interfaces';
+import { FlagDefinition } from '@oclif/core/lib/interfaces';
+import { FluidRepo } from '@fluidframework/build-tools';
+import { GitRepo } from '@fluidframework/build-tools';
+import { IFluidBuildConfig } from '@fluidframework/build-tools';
+import { InterdependencyRange } from '@fluid-tools/version-tools';
+import { Interfaces } from '@oclif/core';
+import { Logger } from '@fluidframework/build-tools';
+import { MonoRepo } from '@fluidframework/build-tools';
+import { Package } from '@fluidframework/build-tools';
+import { PrettyPrintableError } from '@oclif/core/lib/interfaces';
+import { ReleaseVersion } from '@fluid-tools/version-tools';
 import { run } from '@oclif/core';
+import * as semver from 'semver';
+import { VersionBumpType } from '@fluid-tools/version-tools';
+import { VersionChangeTypeExtended } from '@fluid-tools/version-tools';
+import { VersionScheme } from '@fluid-tools/version-tools';
 
-// @internal
+// @public (undocumented)
+export type Args<T extends typeof Command> = Interfaces.InferredArgs<T["args"]>;
+
+// @public
+export abstract class BaseCommand<T extends typeof Command> extends Command implements CommandLogger {
+    // (undocumented)
+    protected args: Args<T>;
+    static readonly baseFlags: {
+        readonly root: Interfaces.OptionFlag<string | undefined, Interfaces.CustomOptions>;
+        readonly verbose: Interfaces.BooleanFlag<boolean>;
+        readonly quiet: Interfaces.BooleanFlag<boolean>;
+        readonly timer: Interfaces.BooleanFlag<boolean>;
+    };
+    // (undocumented)
+    protected catch(err: Error & {
+        exitCode?: number;
+    }): Promise<unknown>;
+    error(input: string | Error, options: {
+        code?: string | undefined;
+        exit: false;
+    } & PrettyPrintableError): void;
+    error(input: string | Error, options?: ({
+        code?: string | undefined;
+        exit?: number | undefined;
+    } & PrettyPrintableError) | undefined): never;
+    errorLog(message: string | Error | undefined): void;
+    // (undocumented)
+    protected finally(_: Error | undefined): Promise<unknown>;
+    // (undocumented)
+    protected flags: Flags<T>;
+    getContext(): Promise<Context>;
+    info(message: string | Error | undefined): void;
+    // (undocumented)
+    init(): Promise<void>;
+    protected get logger(): CommandLogger;
+    logHr(): void;
+    logIndent(input: string, indentNumber?: number): void;
+    verbose(message: string | Error | undefined): void;
+    // @deprecated (undocumented)
+    warn(input: string | Error): string | Error;
+    warning(message: string | Error | undefined): void;
+    warningWithDebugTrace(message: string | Error): string | Error;
+}
+
+// @public
+export const bumpTypeExtendedFlag: FlagDefinition<"major" | "minor" | "patch" | "current", CustomOptions, {
+multiple: false;
+requiredOrDefaulted: false;
+}>;
+
+// @public
+export const bumpTypeFlag: FlagDefinition<VersionBumpType, CustomOptions, {
+multiple: false;
+requiredOrDefaulted: false;
+}>;
+
+// @public
+export const checkFlags: {
+    commit: BooleanFlag<boolean>;
+    install: BooleanFlag<boolean>;
+    branchCheck: BooleanFlag<boolean>;
+    updateCheck: BooleanFlag<boolean>;
+    policyCheck: BooleanFlag<boolean>;
+};
+
+// @public
+export interface CommandLogger extends Logger {
+    logHr(): void;
+    logIndent(msg: string, indent: number): void;
+}
+
+// @public
+export class Context {
+    constructor(gitRepo: GitRepo, originRemotePartialUrl: string, originalBranchName: string);
+    // @deprecated
+    createBranch(branchName: string): Promise<void>;
+    // (undocumented)
+    readonly fullPackageMap: Map<string, Package>;
+    getAllVersions(releaseGroupOrPackage: string): Promise<VersionDetails[] | undefined>;
+    getTagsForReleaseGroup(releaseGroupOrPackage: string): Promise<string[]>;
+    getVersion(key: string): string;
+    // (undocumented)
+    readonly gitRepo: GitRepo;
+    get independentPackages(): Package[];
+    // (undocumented)
+    readonly originalBranchName: string;
+    // (undocumented)
+    readonly originRemotePartialUrl: string;
+    get packages(): Package[];
+    packagesInReleaseGroup(releaseGroup: string): Package[];
+    packagesNotInReleaseGroup(releaseGroup: string | Package): Package[];
+    // (undocumented)
+    readonly repo: FluidRepo;
+    // (undocumented)
+    readonly rootFluidBuildConfig: IFluidBuildConfig;
+}
+
+// @public
+export type DependencyUpdateType = "latest" | "newest" | "greatest" | "minor" | "patch" | `@${string}`;
+
+// @public
+export function difference<T>(setA: Set<T>, setB: Set<T>): Set<T>;
+
+// @public
+export const findPackageOrReleaseGroup: (name: string, context: Context) => Package | MonoRepo | undefined;
+
+// @public
+export type Flags<T extends typeof Command> = Interfaces.InferredFlags<(typeof BaseCommand)["baseFlags"] & T["flags"]>;
+
+// @public
+export function generateBumpDepsBranchName(bumpedDep: ReleaseGroup | ReleasePackage, bumpType: DependencyUpdateType | VersionBumpType, releaseGroup?: ReleaseGroup): string;
+
+// @public
+export function generateBumpDepsCommitMessage(bumpedDep: ReleaseGroup | ReleasePackage | "prerelease", bumpType: DependencyUpdateType | VersionBumpType, releaseGroup?: ReleaseGroup): string;
+
+// @public
+export function generateBumpVersionBranchName(releaseGroupOrPackage: ReleaseGroup | ReleasePackage, bumpType: VersionChangeTypeExtended, version: ReleaseVersion, scheme?: VersionScheme): string;
+
+// @public
+export function generateBumpVersionCommitMessage(releaseGroupOrPackage: ReleaseGroup | ReleasePackage, bumpType: VersionChangeTypeExtended, version: ReleaseVersion, scheme?: VersionScheme): string;
+
+// @public
+export function generateReleaseBranchName(releaseGroup: ReleaseGroup | ReleasePackage, version: string): string;
+
+// @public
+export function getDefaultBumpTypeForBranch(branchName: string, releaseGroup?: ReleaseGroup): VersionBumpType | undefined;
+
+// @public
+export function getPreReleaseDependencies(context: Context, releaseGroup: ReleaseGroup | ReleasePackage): Promise<PreReleaseDependencies>;
+
+// @public
+export function getReleaseSourceForReleaseGroup(releaseGroupOrPackage: ReleaseGroup | ReleasePackage): ReleaseSource;
+
+// @public
+export function indentString(str: string, indentNumber?: number): string;
+
+// @public @deprecated
+export function isMonoRepoKind(str: string | undefined): str is MonoRepoKind;
+
+// @public
+export function isReleased(context: Context, releaseGroupOrPackage: MonoRepo | Package | string, version: string, log?: Logger): Promise<boolean>;
+
+// @public
+export function isReleaseGroup(str: string | undefined): str is ReleaseGroup;
+
+// @public
 export const knownReleaseGroups: readonly ["build-tools", "client", "server", "gitrest", "historian"];
 
-// @internal
+// @public @deprecated
+export enum MonoRepoKind {
+    // (undocumented)
+    Azure = "azure",
+    // (undocumented)
+    BuildTools = "build-tools",
+    // (undocumented)
+    Client = "client",
+    // (undocumented)
+    GitRest = "gitrest",
+    // (undocumented)
+    Historian = "historian",
+    // (undocumented)
+    Server = "server"
+}
+
+// @public
+export function npmCheckUpdates(context: Context, releaseGroup: ReleaseGroup | ReleasePackage | undefined, depsToUpdate: ReleasePackage[] | RegExp[], releaseGroupFilter: ReleaseGroup | undefined, depUpdateType: DependencyUpdateType, prerelease?: boolean, writeChanges?: boolean, log?: Logger): Promise<{
+    updatedPackages: Package[];
+    updatedDependencies: PackageVersionMap;
+}>;
+
+// @public
+export const packageOrReleaseGroupArg: Arg<string, Record<string, unknown>>;
+
+// @public
+export const packageSelectorFlag: FlagDefinition<string, CustomOptions, {
+multiple: false;
+requiredOrDefaulted: false;
+}>;
+
+// @public
+export interface PackageVersionMap {
+    // (undocumented)
+    [packageName: ReleasePackage | ReleaseGroup]: ReleaseVersion;
+}
+
+// @public
+export interface PreReleaseDependencies {
+    isEmpty: boolean;
+    packages: Map<ReleasePackage, string>;
+    releaseGroups: Map<ReleaseGroup, string>;
+}
+
+// @public
 export type ReleaseGroup = (typeof knownReleaseGroups)[number];
 
-// @internal
+// @public
+export const releaseGroupFlag: FlagDefinition<"build-tools" | "client" | "server" | "gitrest" | "historian", CustomOptions, {
+multiple: false;
+requiredOrDefaulted: false;
+}>;
+
+// @public
 export type ReleasePackage = string;
 
+// @public
+export type ReleaseSource = "direct" | "releaseBranches" | "interactive";
+
 export { run }
+
+// @public
+export function setVersion(context: Context, releaseGroupOrPackage: MonoRepo | Package, version: semver.SemVer, interdependencyRange?: InterdependencyRange, log?: Logger): Promise<void>;
+
+// @public
+export const skipCheckFlag: BooleanFlag<boolean>;
+
+// @public
+export const testModeFlag: BooleanFlag<boolean>;
+
+// @public
+export interface VersionDetails {
+    date?: Date;
+    version: ReleaseVersion;
+}
 
 // (No @packageDocumentation comment for this package)
 

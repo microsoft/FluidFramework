@@ -1,5 +1,5 @@
 @fluid-tools/version-tools
 @fluidframework/bundle-size-tools
 @fluidframework/build-tools
-build-cli-esm
+@fluid-tools/build-cli-esm
 @fluid-tools/build-cli

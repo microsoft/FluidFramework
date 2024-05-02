@@ -115,8 +115,6 @@ export interface IFluidBuildConfig {
  * ^previousMinor: >=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0
  * ~previousMajor: >=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0
  * ~previousMinor: >=2.0.0-internal.2.0.0 <2.0.0-internal.2.1.0
- *
- * @internal
  */
 export type PreviousVersionStyle =
 	| "baseMajor"

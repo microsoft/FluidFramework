@@ -450,8 +450,6 @@ export function changePreReleaseIdentifier(
  * This function is only needed for the \>= \< version ranges that Fluid internal versions require. It supports ranges
  * that start with ~ and ^ for convenience, but standard Fluid internal version ranges always use the \>= \< version
  * ranges.
- *
- * @internal
  */
 export function detectInternalVersionConstraintType(
 	range: string,

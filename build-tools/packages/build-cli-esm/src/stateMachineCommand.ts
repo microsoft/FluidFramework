@@ -3,13 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { BaseCommand, testModeFlag } from "@fluid-tools/build-cli";
 import { Command, Flags } from "@oclif/core";
 import chalk from "chalk";
 import { Machine } from "jssm";
-
-import { BaseCommand } from "./base";
-import { testModeFlag } from "./flags";
-import { StateHandler } from "./handlers";
+import { StateHandler } from "./handlers/index.js";
 
 /**
  * A base CLI command that uses an internal state machine to govern its behavior. Subclasses must provide a state
