@@ -40,42 +40,38 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 	public async run(): Promise<void> {
 		const { flags } = this;
 
+		const reportData = await fs.readFile(flags.fullReportFilePath, "utf8");
+
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const fullReleaseReport: ReleaseReport = JSON.parse(reportData);
+
 		try {
-			await generateReleaseReport(
-				flags.fullReportFilePath,
-				flags.version,
-				flags.outDir,
-				this.logger,
-			);
+			await generateReleaseReport(fullReleaseReport, flags.version, flags.outDir, this.logger);
 		} catch (error: unknown) {
-			this.error(`Error while generating release reports: ${(error as Error).stack}`);
+			throw new Error(`Error while generating release reports: ${error}`);
 		}
 	}
 }
 
 /**
  * Generate release reports for unreleased versions.
- * @param fullReportFilePath - The path to a report file in the 'full' format.
+ * @param fullReleaseReport - The format of the "full" release report.
  * @param version - The version string for the reports.
  * @param outDir - The output directory for the reports.
  * @param log - The logger object for logging messages.
  */
 async function generateReleaseReport(
-	fullReportFilePath: string,
+	fullReleaseReport: ReleaseReport,
 	version: string,
 	outDir: string,
 	log: Logger,
 ): Promise<void> {
-	const reportData = await fs.readFile(fullReportFilePath, "utf8");
 	const ignorePackageList = new Set(["@types/jest-environment-puppeteer"]);
 
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-	const jsonData: ReleaseReport = JSON.parse(reportData);
+	await updateReportVersions(fullReleaseReport, ignorePackageList, version, log);
 
-	await updateReportVersions(jsonData, ignorePackageList, version, log);
-
-	const caretReportOutput = toReportKind(jsonData, "caret");
-	const simpleReportOutput = toReportKind(jsonData, "simple");
+	const caretReportOutput = toReportKind(fullReleaseReport, "caret");
+	const simpleReportOutput = toReportKind(fullReleaseReport, "simple");
 
 	await Promise.all([
 		writeReport(outDir, caretReportOutput as ReleaseReport, "manifest", version, log),
@@ -88,7 +84,7 @@ async function generateReleaseReport(
 /**
  * Writes a modified release report to the output directory with the revised file name.
  * @param outDir - The output directory for the report.
- * @param reportFilePath - The path to the original report.
+ * @param report - A map of package names to full release reports.
  * @param revisedFileName - The revised file name for the report.
  * @param version - The version string to update packages to.
  * @param log - The logger object for logging messages.
@@ -117,7 +113,7 @@ async function writeReport(
 
 /**
  * Updates versions in a release report based on specified conditions.
- * @param report - The release report object containing package names and versions.
+ * @param report - A map of package names to full release reports. This is the format of the "full" release report.
  * @param ignorePackageList - The set of package names to ignore during version updating. These packages are not published to internal ADO feed.
  * @param version - The version string to update packages to.
  */
