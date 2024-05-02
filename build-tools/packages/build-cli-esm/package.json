@@ -39,7 +39,7 @@
 		"postpack": "npm run clean:manifest",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm run test",
-		"test:mocha": "cross-env OCLIF_TEST_ROOT=$(shx pwd) mocha --forbid-only \"test/**/*.test.ts\"",
+		"test:mocha": "mocha --forbid-only \"test/**/*.test.ts\"",
 		"tsc": "tsc"
 	},
 	"oclif": {
