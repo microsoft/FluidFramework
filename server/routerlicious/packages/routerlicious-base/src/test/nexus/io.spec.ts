@@ -567,18 +567,14 @@ describe("Routerlicious", () => {
 								verifyExpectedClientSignals([clients[1]], []);
 							});
 
-							it("should nack signals with invalid client ID", () => {
-								listenForNacks(clients[0]);
-								clients[0].socket.send("submitSignal", "invalidClientID", [
-									stringSignalContent,
-								]);
-								checkNack(clients[0], "Nonexistent client");
-							});
-
-							it("should nack signals with null client ID", () => {
-								listenForNacks(clients[0]);
-								clients[0].socket.send("submitSignal", null, [stringSignalContent]);
-								checkNack(clients[0], "Nonexistent client");
+							[null, "invalid"].forEach((clientId) => {
+								it(`should nack signals with ${clientId} client ID`, () => {
+									listenForNacks(clients[0]);
+									clients[0].socket.send("submitSignal", clientId, [
+										stringSignalContent,
+									]);
+									checkNack(clients[0], "Nonexistent client");
+								});
 							});
 
 							it("nacks signal that is not an array", () => {
