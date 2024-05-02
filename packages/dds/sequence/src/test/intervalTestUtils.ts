@@ -127,19 +127,13 @@ async function assertPropertiesEqual(a: SharedString, b: SharedString): Promise<
 			const bVal: unknown = bProps[key];
 			const aHandle = isObject(aVal) && isFluidHandle(aVal) ? await aVal.get() : aVal;
 			const bHandle = isObject(bVal) && isFluidHandle(bVal) ? await bVal.get() : bVal;
-			try {
-				assert.deepEqual(
+			assert.deepEqual(
+				aHandle,
+				bHandle,
+				`${a.id} and ${b.id} differ at pos: ${i} and key ${key}: ${JSON.stringify(
 					aHandle,
-					bHandle,
-					`${a.id} and ${b.id} differ at pos: ${i} and key ${key}: ${JSON.stringify(
-						aHandle,
-					)} vs ${JSON.stringify(bHandle)}`,
-				);
-			} catch (e) {
-				if (e instanceof Error) {
-					throw e;
-				}
-			}
+				)} vs ${JSON.stringify(bHandle)}`,
+			);
 		}
 	}
 }
