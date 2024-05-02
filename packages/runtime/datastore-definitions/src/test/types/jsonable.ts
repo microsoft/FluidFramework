@@ -32,7 +32,6 @@ foo(new getter());
 // test plain types
 foo(1);
 foo("");
-foo(undefined);
 foo(null);
 foo(true);
 foo([]);
@@ -130,6 +129,9 @@ declare const selfReferencing: SelfReferencing;
 foo(selfReferencing);
 
 // --- should not work
+
+// @ts-expect-error undefined should not be jsonable
+foo(undefined);
 
 // test unknown
 declare const aUnknown: unknown;
