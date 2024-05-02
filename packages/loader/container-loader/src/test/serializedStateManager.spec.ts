@@ -16,7 +16,7 @@ import {
 	ISnapshot,
 	ISnapshotFetchOptions,
 } from "@fluidframework/driver-definitions/internal";
-import { getSnapshotTree, isInstanceOfISnapshot } from "@fluidframework/driver-utils/internal";
+import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import {
 	IDocumentAttributes,
 	ISequencedDocumentMessage,
