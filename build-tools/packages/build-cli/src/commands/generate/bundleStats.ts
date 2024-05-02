@@ -79,9 +79,7 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
 				}
 				/* eslint-enable @typescript-eslint/no-unsafe-member-access */
 
-				copySync(packageAnalysisPath, path.join(analysesDestPath, pkg.name), {
-					recursive: true,
-				});
+				copySync(packageAnalysisPath, path.join(analysesDestPath, pkg.name));
 			}
 		}
 
