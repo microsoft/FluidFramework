@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { type JsonableTypeWith } from "@fluidframework/datastore-definitions/internal";
+import { type JsonableTypeWith } from "@fluidframework/core-interfaces/internal";
 
 import { makeLZ4Encoder } from "../lz4Encoder.js";
 

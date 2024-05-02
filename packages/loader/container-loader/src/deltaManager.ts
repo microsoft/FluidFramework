@@ -9,12 +9,15 @@ import {
 	IDeltaManagerEvents,
 	IDeltaQueue,
 } from "@fluidframework/container-definitions";
-import {
+import type {
 	IEventProvider,
-	type ITelemetryBaseEvent,
+	ITelemetryBaseEvent,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
-import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
+import type {
+	IThrottlingWarning,
+	SignalContentType,
+} from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
@@ -329,7 +332,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		return message.clientSequenceNumber;
 	}
 
-	public submitSignal(content: string, targetClientId?: string) {
+	public submitSignal(content: SignalContentType, targetClientId?: string) {
 		return this.connectionManager.submitSignal(content, targetClientId);
 	}
 
@@ -428,11 +431,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 					this.close(normalizeError(error));
 				}
 			},
-			signalHandler: (signals: ISignalMessage[]) => {
-				for (const signal of signals) {
-					this._inboundSignal.push(signal);
-				}
-			},
+			signalHandler: (signal: ISignalMessage) => this._inboundSignal.push(signal),
 			reconnectionDelayHandler: (delayMs: number, error: unknown) =>
 				this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
 			closeHandler: (error: any) => this.close(error),
@@ -477,7 +476,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			}
 			this.handler.processSignal({
 				clientId: message.clientId,
-				content: JSON.parse(message.content as string),
+				content: message.content,
 			});
 		});
 

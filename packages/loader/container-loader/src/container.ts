@@ -34,8 +34,8 @@ import {
 	IRequest,
 	ITelemetryBaseProperties,
 	LogLevel,
+	SignalContentType,
 } from "@fluidframework/core-interfaces";
-import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentService,
@@ -1512,7 +1512,7 @@ export class Container
 
 	private readonly metadataUpdateHandler = (metadata: Record<string, string>) => {
 		this._containerMetadata = { ...this._containerMetadata, ...metadata };
-		this.emit("metadataUpdate", metadata);
+		this.emit("metadataUpdate", this._containerMetadata);
 	};
 
 	private async createDocumentService(
@@ -2284,9 +2284,8 @@ export class Container
 		this.emit("op", message);
 	}
 
-	// unknown should be removed once `@alpha` tag is removed from IContainerContext
-	private submitSignal(content: unknown | ISignalEnvelope, targetClientId?: string) {
-		this._deltaManager.submitSignal(JSON.stringify(content), targetClientId);
+	private submitSignal(content: SignalContentType, targetClientId?: string) {
+		this._deltaManager.submitSignal(content, targetClientId);
 	}
 
 	private processSignal(message: ISignalMessage) {

@@ -27,6 +27,8 @@ import type { ISummaryTree } from '@fluidframework/protocol-definitions';
 import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import type { ITree } from '@fluidframework/protocol-definitions';
 import type { IUser } from '@fluidframework/protocol-definitions';
+import type { SignalContentType } from '@fluidframework/core-interfaces/internal';
+import type { SignalContentType as SignalContentType_2 } from '@fluidframework/core-interfaces';
 import type { SummaryTree } from '@fluidframework/protocol-definitions';
 import type { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
 
@@ -138,7 +140,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
     orderSequentially(callback: () => void): void;
-    submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
+    submitSignal: (type: string, content: SignalContentType, targetClientId?: string) => void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
@@ -164,10 +166,10 @@ export interface IDataStore {
 }
 
 // @alpha
-export interface IEnvelope {
+export type IEnvelope<T = any> = {
     address: string;
-    contents: any;
-}
+    contents: T;
+};
 
 // @public
 export interface IExperimentalIncrementalSummaryContext {
@@ -283,7 +285,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     // (undocumented)
     readonly storage: IDocumentStorageService;
     submitMessage(type: string, content: any, localOpMetadata: unknown): void;
-    submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
+    submitSignal: (type: string, content: SignalContentType, targetClientId?: string) => void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
@@ -330,7 +332,7 @@ export interface ISignalEnvelope {
     clientSignalSequenceNumber: number;
     contents: {
         type: string;
-        content: any;
+        content: SignalContentType_2;
     };
 }
 

@@ -37,6 +37,7 @@ import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
 import { IVersion } from '@fluidframework/protocol-definitions';
 import { IWebSocketServer } from '@fluidframework/server-services-core';
 import { NackErrorType } from '@fluidframework/protocol-definitions';
+import type { SignalContentType } from '@fluidframework/core-interfaces';
 import type { Socket } from 'socket.io-client';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
@@ -60,7 +61,9 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
     disconnectClient(disconnectReason: string): void;
     nackClient(code: number | undefined, type: NackErrorType | undefined, message: any): void;
     submit(messages: IDocumentMessage[]): void;
-    submitSignal(message: string): void;
+    submitSignal(content: string): void;
+    // (undocumented)
+    submitSignal2(content: SignalContentType): void;
 }
 
 // @internal

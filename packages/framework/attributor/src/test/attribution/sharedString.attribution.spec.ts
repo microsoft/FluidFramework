@@ -26,7 +26,7 @@ import {
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { type Jsonable } from "@fluidframework/datastore-definitions/internal";
+import { type Jsonable } from "@fluidframework/core-interfaces";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
 import {
 	type ISequencedDocumentMessage,

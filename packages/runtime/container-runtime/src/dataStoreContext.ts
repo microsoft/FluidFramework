@@ -5,7 +5,7 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
-import {
+import type {
 	FluidObject,
 	IDisposable,
 	IEvent,
@@ -14,6 +14,7 @@ import {
 	IResponse,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
+import type { SignalContentType } from "@fluidframework/core-interfaces/internal";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils/internal";
@@ -88,6 +89,7 @@ function createAttributes(
 		isRootDataStore,
 	};
 }
+
 export function createAttributesBlob(pkg: readonly string[], isRootDataStore: boolean): ITreeEntry {
 	const attributes = createAttributes(pkg, isRootDataStore);
 	return new BlobTreeEntry(dataStoreAttributesBlobName, JSON.stringify(attributes));
@@ -818,7 +820,7 @@ export abstract class FluidDataStoreContext
 	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(type: string, content: unknown, targetClientId?: string) {
+	public submitSignal(type: string, content: SignalContentType, targetClientId?: string) {
 		this.verifyNotClosed("submitSignal");
 
 		assert(!!this.channel, 0x147 /* "Channel must exist on submitting signal" */);

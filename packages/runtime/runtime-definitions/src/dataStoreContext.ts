@@ -15,6 +15,7 @@ import type {
 	IResponse,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import type { SignalContentType } from "@fluidframework/core-interfaces/internal";
 import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
@@ -186,7 +187,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
+	submitSignal: (type: string, content: SignalContentType, targetClientId?: string) => void;
 
 	/**
 	 * @deprecated 0.16 Issue #1537, #3631
@@ -459,7 +460,7 @@ export interface IFluidParentContext
 	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
+	submitSignal: (type: string, content: SignalContentType, targetClientId?: string) => void;
 
 	/**
 	 * Called to make the data store locally visible in the container. This happens automatically for root data stores

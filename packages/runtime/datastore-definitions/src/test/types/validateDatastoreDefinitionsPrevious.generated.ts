@@ -280,84 +280,48 @@ use_old_InterfaceDeclaration_IFluidDataStoreRuntimeEvents(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_Internal_InterfaceOfJsonableTypesWith": {"forwardCompat": false}
+ * "RemovedInterfaceDeclaration_Internal_InterfaceOfJsonableTypesWith": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_Internal_InterfaceOfJsonableTypesWith():
-    TypeOnly<old.Internal_InterfaceOfJsonableTypesWith<any>>;
-declare function use_current_InterfaceDeclaration_Internal_InterfaceOfJsonableTypesWith(
-    use: TypeOnly<current.Internal_InterfaceOfJsonableTypesWith<any>>): void;
-use_current_InterfaceDeclaration_Internal_InterfaceOfJsonableTypesWith(
-    get_old_InterfaceDeclaration_Internal_InterfaceOfJsonableTypesWith());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_Internal_InterfaceOfJsonableTypesWith": {"backCompat": false}
+ * "RemovedInterfaceDeclaration_Internal_InterfaceOfJsonableTypesWith": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_Internal_InterfaceOfJsonableTypesWith():
-    TypeOnly<current.Internal_InterfaceOfJsonableTypesWith<any>>;
-declare function use_old_InterfaceDeclaration_Internal_InterfaceOfJsonableTypesWith(
-    use: TypeOnly<old.Internal_InterfaceOfJsonableTypesWith<any>>): void;
-use_old_InterfaceDeclaration_Internal_InterfaceOfJsonableTypesWith(
-    get_current_InterfaceDeclaration_Internal_InterfaceOfJsonableTypesWith());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_Jsonable": {"forwardCompat": false}
+ * "RemovedTypeAliasDeclaration_Jsonable": {"forwardCompat": false}
  */
-declare function get_old_TypeAliasDeclaration_Jsonable():
-    TypeOnly<old.Jsonable<any>>;
-declare function use_current_TypeAliasDeclaration_Jsonable(
-    use: TypeOnly<current.Jsonable<any>>): void;
-use_current_TypeAliasDeclaration_Jsonable(
-    get_old_TypeAliasDeclaration_Jsonable());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_Jsonable": {"backCompat": false}
+ * "RemovedTypeAliasDeclaration_Jsonable": {"backCompat": false}
  */
-declare function get_current_TypeAliasDeclaration_Jsonable():
-    TypeOnly<current.Jsonable<any>>;
-declare function use_old_TypeAliasDeclaration_Jsonable(
-    use: TypeOnly<old.Jsonable<any>>): void;
-use_old_TypeAliasDeclaration_Jsonable(
-    get_current_TypeAliasDeclaration_Jsonable());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_JsonableTypeWith": {"forwardCompat": false}
+ * "RemovedTypeAliasDeclaration_JsonableTypeWith": {"forwardCompat": false}
  */
-declare function get_old_TypeAliasDeclaration_JsonableTypeWith():
-    TypeOnly<old.JsonableTypeWith<any>>;
-declare function use_current_TypeAliasDeclaration_JsonableTypeWith(
-    use: TypeOnly<current.JsonableTypeWith<any>>): void;
-use_current_TypeAliasDeclaration_JsonableTypeWith(
-    get_old_TypeAliasDeclaration_JsonableTypeWith());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAliasDeclaration_JsonableTypeWith": {"backCompat": false}
+ * "RemovedTypeAliasDeclaration_JsonableTypeWith": {"backCompat": false}
  */
-declare function get_current_TypeAliasDeclaration_JsonableTypeWith():
-    TypeOnly<current.JsonableTypeWith<any>>;
-declare function use_old_TypeAliasDeclaration_JsonableTypeWith(
-    use: TypeOnly<old.JsonableTypeWith<any>>): void;
-use_old_TypeAliasDeclaration_JsonableTypeWith(
-    get_current_TypeAliasDeclaration_JsonableTypeWith());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

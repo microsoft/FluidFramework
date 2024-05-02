@@ -11,6 +11,7 @@ import {
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
+	SignalContentType,
 } from "@fluidframework/core-interfaces";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
@@ -229,8 +230,8 @@ export function wrapContextForInnerChannel(
 		);
 	};
 
-	context.submitSignal = (type: string, contents: unknown, targetClientId?: string) => {
-		const envelope: IEnvelope = {
+	context.submitSignal = (type: string, contents: SignalContentType, targetClientId?: string) => {
+		const envelope: IEnvelope<SignalContentType> = {
 			address: id,
 			contents,
 		};
