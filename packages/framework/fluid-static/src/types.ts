@@ -46,11 +46,16 @@ export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> =
  *
  * @typeParam T - The class of the `DataObject`.
  * @privateRemarks
- * Having both `factory` and `LoadableObjectCtor` is redundant, and having `factory` not actually work as a factory is also strange.
- * This may need some refinement.
+ * Having both `factory` and `LoadableObjectCtor` is redundant.
+ * TODO: It appears the factory is what's used, so the constructor should be removed.
  * @public
  */
 export type DataObjectClass<T extends IFluidLoadable = IFluidLoadable> = {
+	/**
+	 * @privateRemarks
+	 * This has to implement {@link @fluidframework/runtime-definitions#IFluidDataStoreFactory}.
+	 * TODO: Gain type safety for this without leaking IFluidDataStoreFactory as public using type erasure.
+	 */
 	readonly factory: { readonly IFluidDataStoreFactory: DataObjectClass<T>["factory"] };
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 } & (new (...args: any[]) => T);
