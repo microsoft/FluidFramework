@@ -512,9 +512,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 							}
 
 							// This test is flaky on routerlicious. See ADO:7883 and ADO:7924
-							if (
-								provider.driver.type === "routerlicious"
-							) {
+							if (provider.driver.type === "routerlicious") {
 								this.skip();
 							}
 
