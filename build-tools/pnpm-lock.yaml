@@ -233,11 +233,12 @@ importers:
       '@oclif/plugin-help': ^6
       '@oclif/plugin-plugins': ^5
       '@oclif/prettier-config': ^0.2.1
-      '@oclif/test': ^3
+      '@oclif/test': 3.2.12-dev.0
       '@types/chai': ^4
       '@types/mocha': ^10
       '@types/node': ^18
       chai: ^4
+      cross-env: ^7.0.3
       eslint: ^8
       eslint-config-oclif: ^5
       eslint-config-oclif-typescript: ^3
@@ -253,11 +254,12 @@ importers:
       '@oclif/plugin-plugins': 5.0.5
     devDependencies:
       '@oclif/prettier-config': 0.2.1
-      '@oclif/test': 3.2.11
+      '@oclif/test': 3.2.12-dev.0
       '@types/chai': 4.3.5
       '@types/mocha': 10.0.6
       '@types/node': 18.18.7
       chai: 4.3.7
+      cross-env: 7.0.3
       eslint: 8.57.0
       eslint-config-oclif: 5.1.1_eslint@8.57.0
       eslint-config-oclif-typescript: 3.1.3_trrslaohprr5r73nykufww5lry
@@ -1672,7 +1674,7 @@ packages:
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@oclif/core': 3.26.0
+      '@oclif/core': 3.26.5
       '@oclif/plugin-autocomplete': 2.3.10_typescript@5.1.6
       '@oclif/plugin-commands': 3.2.2
       '@oclif/plugin-help': 6.0.20
@@ -2488,7 +2490,6 @@ packages:
       widest-line: 3.1.0
       wordwrap: 1.0.0
       wrap-ansi: 7.0.0
-    dev: true
 
   /@oclif/plugin-autocomplete/2.3.10_typescript@5.1.6:
     resolution: {integrity: sha512-Ow1AR8WtjzlyCtiWWPgzMyT8SbcDJFr47009riLioHa+MHX2BCDtVn2DVnN/E6b9JlPV5ptQpjefoRSNWBesmg==}
@@ -2586,7 +2587,7 @@ packages:
     resolution: {integrity: sha512-JtPTJFjL6izMCe5dDS2ix2PyWAD2DeJ5Atzd2HHRifbPcmOxaUE62FKTnarIwfPHLMF/nN33liwo9InAdirozg==}
     engines: {node: '>=18.0.0'}
     dependencies:
-      '@oclif/core': 3.26.0
+      '@oclif/core': 3.26.5
       chalk: 5.3.0
       debug: 4.3.4
       http-call: 5.3.0
@@ -2626,8 +2627,8 @@ packages:
       - typescript
     dev: true
 
-  /@oclif/test/3.2.11:
-    resolution: {integrity: sha512-+bjUTI12kgqFYJtlNCYk0F+aIuYh4GDPZIviwSe9+rzd9kJMWEC3phUiviT41rroZzaPUcshnTVoZ5hyq+EIkg==}
+  /@oclif/test/3.2.12-dev.0:
+    resolution: {integrity: sha512-lB0iskU0fifdDdOYhUKyDVOUIw2IFi1AhVZnHWIUz8uNYe74jq85E2UuMGi+tFAGtO3F62r6u5Cp8U3APgdpFA==}
     engines: {node: '>=18.0.0'}
     dependencies:
       '@oclif/core': 3.26.5
@@ -3496,7 +3497,7 @@ packages:
     resolution: {integrity: sha512-m7Lllj9n/S6sOkCkRftpM7L24uvmfXQFedlW/4hENcuJH1HHm9u5EgxZb9uVjQSCGrbBWBkOGgcTxNg36r6ywA==}
     dependencies:
       fast-glob: 3.3.2
-      minimatch: 9.0.3
+      minimatch: 9.0.4
       mkdirp: 3.0.1
       path-browserify: 1.0.1
     dev: false
@@ -3526,7 +3527,7 @@ packages:
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dependencies:
       '@tufjs/canonical-json': 1.0.0
-      minimatch: 9.0.3
+      minimatch: 9.0.4
 
   /@types/argparse/1.0.38:
     resolution: {integrity: sha512-ebDJ9b0e702Yr7pWgB0jzm+CX4Srzz8RcXtLJDJB+BSccqMa36uyH/zUsSYao5+BD1ytv3k3rPYCq4mAE1hsXA==}
@@ -5499,6 +5500,14 @@ packages:
     resolution: {integrity: sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ==}
     dev: true
 
+  /cross-env/7.0.3:
+    resolution: {integrity: sha512-+/HKd6EgcQCJGh2PSjZuUitQBQynKor4wrFbRg4DtAgS1aWO+gU52xpH7M9ScGgXSYmAVS9bIJ8EzuaGw0oNAw==}
+    engines: {node: '>=10.14', npm: '>=6', yarn: '>=1'}
+    hasBin: true
+    dependencies:
+      cross-spawn: 7.0.3
+    dev: true
+
   /cross-spawn/6.0.5:
     resolution: {integrity: sha512-eTVLrBSt7fjbDygz805pMnstIs2VTBNkRm0qxZd+M7A5XDdxVRWO5MxGBXZhjY4cqLYLdtrGqRf8mBPmzwSpWQ==}
     engines: {node: '>=4.8'}
@@ -5871,7 +5880,6 @@ packages:
     hasBin: true
     dependencies:
       jake: 10.8.5
-    dev: true
 
   /ejs/3.1.9:
     resolution: {integrity: sha512-rC+QVNMJWv+MtPgkt0y+0rVEIdbtxVADApW9JXrUVlzHetgcyczP/E7DJmWJ4fJCZF2cPcBk0laWO9ZHMG3DmQ==}
@@ -6458,7 +6466,7 @@ packages:
     dependencies:
       '@typescript-eslint/utils': 6.21.0_trrslaohprr5r73nykufww5lry
       eslint: 8.57.0
-      minimatch: 9.0.3
+      minimatch: 9.0.4
       natural-compare-lite: 1.4.0
     transitivePeerDependencies:
       - supports-color
@@ -7248,7 +7256,7 @@ packages:
     dependencies:
       foreground-child: 3.1.1
       jackspeak: 2.2.1
-      minimatch: 9.0.3
+      minimatch: 9.0.4
       minipass: 6.0.2
       path-scurry: 1.9.2
 
@@ -7679,7 +7687,7 @@ packages:
     resolution: {integrity: sha512-C7FfFoTA+bI10qfeydT8aZbvr91vAEU+2W5BZUlzPec47oNb07SsOfwYrtxuvOYdUApPP/Qlh4DtAO51Ekk2QA==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dependencies:
-      minimatch: 9.0.3
+      minimatch: 9.0.4
 
   /ignore/5.2.4:
     resolution: {integrity: sha512-MAb38BcSbH0eHNBxn7ql2NH/kX33OkB3lZ1BNdh7ENeRChHTYsTvWrMubiIAMNS2llXEEgZ1MUOBtXChP3kaFQ==}
@@ -8864,7 +8872,6 @@ packages:
     engines: {node: '>=16 || 14 >=14.17'}
     dependencies:
       brace-expansion: 2.0.1
-    dev: true
 
   /minimist-options/4.1.0:
     resolution: {integrity: sha512-Q4r8ghd80yhO/0j1O3B2BjweX3fiHg9cdOwjJd2J76Q135c+NDxGCqdYKQ1SKBuFfgWbAUzBfvYjPUEeNgqN1A==}

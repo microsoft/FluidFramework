@@ -14,11 +14,12 @@
   },
   "devDependencies": {
     "@oclif/prettier-config": "^0.2.1",
-    "@oclif/test": "^3",
+    "@oclif/test": "3.2.12-dev.0",
     "@types/chai": "^4",
     "@types/mocha": "^10",
     "@types/node": "^18",
     "chai": "^4",
+    "cross-env": "^7.0.3",
     "eslint": "^8",
     "eslint-config-oclif": "^5",
     "eslint-config-oclif-typescript": "^3",
@@ -67,6 +68,7 @@
     "posttest": "pnpm run lint",
     "prepack": "oclif manifest && oclif readme",
     "test": "mocha --forbid-only \"test/**/*.test.ts\"",
+    "test:env": "cross-env OCLIF_TEST_ROOT=$(shx pwd) mocha --forbid-only \"test/**/*.test.ts\"",
     "version": "oclif readme && git add README.md"
   },
   "types": "dist/index.d.ts"
