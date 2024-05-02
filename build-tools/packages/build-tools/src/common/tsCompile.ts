@@ -18,7 +18,7 @@ interface TsCompileOptions {
 	 */
 	cwd: string;
 	/**
-	 * When specified local package.json will be interpretted as
+	 * When specified, local package.json will be interpreted as
 	 * having "types" property set to this value.
 	 */
 	packageJsonTypeOverride?: "commonjs" | "module";
@@ -70,7 +70,7 @@ export function tsCompile(
 
 	let code = ts.ExitStatus.DiagnosticsPresent_OutputsSkipped;
 	if (commandLine && diagnostics.length === 0) {
-		// When specified overrides current directory's package.json type field so tsc may cleanly
+		// When specified, overrides current directory's package.json type field so tsc may cleanly
 		// transpile .ts files to CommonJS or ESM using compilerOptions.module Node16 or NodeNext.
 		let packageJsonTypeOverrideUsage = "not read" as "not read" | "already present" | "used";
 		const applyPackageJsonTypeOverride = !packageJsonTypeOverride
@@ -80,10 +80,10 @@ export function tsCompile(
 						| tsTypes.CompilerHost
 						| tsTypes.WatchCompilerHostOfConfigFile<tsTypes.EmitAndSemanticDiagnosticsBuilderProgram>,
 				): void => {
-					const origReadFile = host.readFile;
+					const originalReadFile = host.readFile;
 					const packageJsonPath = normalizeSlashes(path.join(cwd, "package.json"));
 					host.readFile = (fileName: string) => {
-						const rawFile = origReadFile(fileName);
+						const rawFile = originalReadFile(fileName);
 						if (fileName === packageJsonPath && rawFile !== undefined) {
 							// Reading local package.json: override type field
 							const packageJson = JSON.parse(rawFile);
