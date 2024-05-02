@@ -266,7 +266,7 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 		if (this[isFreedSymbol]()) {
 			return TreeStatus.Deleted;
 		}
-		return treeStatusFromAnchorCache(this.context.forest.anchors, this.anchorNode);
+		return treeStatusFromAnchorCache(this.anchorNode);
 	}
 
 	public on<K extends keyof FlexTreeNodeEvents>(

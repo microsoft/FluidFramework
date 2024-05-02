@@ -83,6 +83,7 @@ export function cursorFromFieldData(
 	schema: FieldSchema,
 	nodeKeyManager: NodeKeyManager,
 ): CursorWithNode<MapTree> {
+	// TODO: array node content should not go through here since sequence fields don't exist at this abstraction layer.
 	const mappedContent = Array.isArray(data)
 		? arrayToMapTreeFields(data, schema.allowedTypeSet, nodeKeyManager)
 		: [nodeDataToMapTree(data, schema.allowedTypeSet, nodeKeyManager)];

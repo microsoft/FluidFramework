@@ -71,10 +71,8 @@ export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<Conta
 
 // @internal
 export interface ContainerDevtoolsFeatureFlags {
-    // @deprecated
-    "container-data"?: boolean;
-    "containerDataEditing"?: boolean;
-    "containerDataVisualization"?: boolean;
+    containerDataEditing?: boolean;
+    containerDataVisualization?: boolean;
 }
 
 // @internal

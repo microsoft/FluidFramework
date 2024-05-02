@@ -202,22 +202,6 @@ export interface DocumentationSuiteOptions {
 	skipPackage?: (apiPackage: ApiPackage) => boolean;
 
 	/**
-	 * Optionally generates front-matter contents for an `ApiItem` serving as the root of a document
-	 * (see {@link DocumentBoundaries}).
-	 * Any generated contents will be included at the top of a generated document.
-	 *
-	 * @remarks Note: this is arbitrary text, and will not be escaped.
-	 *
-	 * @defaultValue No front matter is generated.
-	 *
-	 * @deprecated This feature was never properly defined or designed.
-	 * Passing raw text through to the output doesn't fit with the design of the rest of the system.
-	 * Consumers who wish to append contents at the top (or anywhere else) may do so by introducing custom rendering
-	 * logic in their system, rather than using the convenience end-to-end rendering APIs as is.
-	 */
-	frontMatter?: string | ((documentItem: ApiItem) => string | undefined);
-
-	/**
 	 * Minimal release scope to include in generated documentation suite.
 	 * API members with matching or higher scope will be included, while lower scoped items will be omitted.
 	 *
@@ -370,15 +354,6 @@ export namespace DefaultDocumentationSuiteOptions {
 	export function defaultSkipPackage(): boolean {
 		return false;
 	}
-
-	/**
-	 * Default {@link DocumentationSuiteOptions.frontMatter}.
-	 *
-	 * Unconditionally returns `undefined` (i.e. no front-matter will be generated).
-	 */
-	export function defaultFrontMatter(): undefined {
-		return undefined;
-	}
 }
 
 /**
@@ -394,7 +369,6 @@ const defaultDocumentationSuiteOptions: Required<DocumentationSuiteOptions> = {
 	getHeadingTextForItem: DefaultDocumentationSuiteOptions.defaultGetHeadingTextForItem,
 	getLinkTextForItem: DefaultDocumentationSuiteOptions.defaultGetLinkTextForItem,
 	skipPackage: DefaultDocumentationSuiteOptions.defaultSkipPackage,
-	frontMatter: DefaultDocumentationSuiteOptions.defaultFrontMatter,
 	minimumReleaseLevel: ReleaseTag.Internal, // Include everything in the input model
 };
 

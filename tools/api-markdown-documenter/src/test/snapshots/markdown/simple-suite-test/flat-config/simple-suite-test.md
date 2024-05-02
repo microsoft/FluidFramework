@@ -1,5 +1,3 @@
-<!--- This is sample front-matter for API item "simple-suite-test" -->
-
 [Packages](docs/) &gt; [simple-suite-test](docs/simple-suite-test)
 
 <b>Test package</b>

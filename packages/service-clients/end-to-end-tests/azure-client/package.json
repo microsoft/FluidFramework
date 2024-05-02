@@ -73,6 +73,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
+		"@fluidframework/tree": "workspace:~",
 		"cross-env": "^7.0.3",
 		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.0.1",

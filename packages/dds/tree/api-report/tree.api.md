@@ -7,10 +7,6 @@
 import { ErasedType } from '@fluidframework/core-interfaces';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
-import { IChannelAttributes } from '@fluidframework/datastore-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IChannelServices } from '@fluidframework/datastore-definitions';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base';
@@ -1717,19 +1713,6 @@ export interface SharedTreeContentSnapshot {
 }
 
 // @internal
-export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
-    constructor(options?: SharedTreeOptions);
-    // (undocumented)
-    readonly attributes: IChannelAttributes;
-    // (undocumented)
-    create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree;
-    // (undocumented)
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<ISharedTree>;
-    // (undocumented)
-    readonly type: string;
-}
-
-// @internal
 export interface SharedTreeFormatOptions {
     formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
     treeEncodeType: TreeCompressionStrategy;
@@ -1835,9 +1818,9 @@ export const TreeArrayNode: {
 
 // @public
 export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<T>, TreeNode {
-    insertAt(index: number, ...value: (TNew | IterableTreeArrayContent<TNew>)[]): void;
-    insertAtEnd(...value: (TNew | IterableTreeArrayContent<TNew>)[]): void;
-    insertAtStart(...value: (TNew | IterableTreeArrayContent<TNew>)[]): void;
+    insertAt(index: number, ...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
+    insertAtEnd(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
+    insertAtStart(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
     moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
     moveRangeToEnd(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
     moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
