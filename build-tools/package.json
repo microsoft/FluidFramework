@@ -112,6 +112,9 @@
 			"json5@>=2.0.0 <2.2.2": "^2.2.2",
 			"qs": "^6.11.0",
 			"sharp": "^0.33.2"
+		},
+		"patchedDependencies": {
+			"jssm@5.97.1": "patches/jssm@5.97.1.patch"
 		}
 	}
 }

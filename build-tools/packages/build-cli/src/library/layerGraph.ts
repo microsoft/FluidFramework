@@ -6,11 +6,15 @@
 import assert from "node:assert";
 import { EOL as newline } from "node:os";
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import { Package } from "@fluidframework/build-tools";
 import { readJsonSync } from "fs-extra/esm";
 
 import registerDebug from "debug";
 const traceLayerCheck = registerDebug("layer-check");
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 interface ILayerInfo {
 	deps?: string[];

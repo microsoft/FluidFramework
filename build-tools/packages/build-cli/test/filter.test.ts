@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import chai, { assert, expect } from "chai";
-
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
+import chai, { assert, expect } from "chai";
 import assertArrays from "chai-arrays";
-
-import path from "path";
 import {
 	AllPackagesSelectionCriteria,
 	PackageFilterOptions,
@@ -17,6 +16,9 @@ import {
 	selectAndFilterPackages,
 } from "../src/filter.js";
 import { Context } from "../src/library/index.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 chai.use(assertArrays);
 
