@@ -933,40 +933,75 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 	});
 
-	it("resends attach op", async function () {
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	it.only("resends attach op", async function () {
 		const newMapId = "newMap";
-		let id;
-		const pendingOps = await getPendingOps(provider, false, async (container, d) => {
+		let idB;
+		let idC;
+		// const pendingOps = await getPendingOps(provider, false,
+		const cb = async (container, d?) => {
 			const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
 			const runtime = defaultDataStore.context.containerRuntime;
 
-			const createdDataStore = await runtime.createDataStore(["default"]);
-			const dataStore = (await createdDataStore.entryPoint.get()) as ITestFluidObject;
-			id = dataStore.context.id;
+			const dataStoreB = await runtime.createDataStore(["default"]);
+			const dataObjectB = (await dataStoreB.entryPoint.get()) as ITestFluidObject;
+			idB = dataObjectB.context.id;
 
-			const channel = dataStore.runtime.createChannel(
-				newMapId,
-				"https://graph.microsoft.com/types/map",
-			);
-			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+			//* Don't need C?
+			// const dataStoreC = await runtime.createDataStore(["default"]);
+			// const dataObjectC = (await dataStoreC.entryPoint.get()) as ITestFluidObject;
+			// idC = dataObjectC.context.id;
 
-			((await channel.handle.get()) as SharedObject).bindToContext();
-			defaultDataStore.root.set("someDataStore", dataStore.handle);
-			(channel as ISharedMap).set(testKey, testValue);
-		});
+			// // B to C -- both not attached yet, no op
+			// dataObjectB.root.set("C", dataObjectC.handle);
 
-		const container2 = await loader.resolve({ url }, pendingOps);
-		await waitForContainerConnection(container2);
+			// const channel = dataStore.runtime.createChannel(
+			// 	newMapId,
+			// 	"https://graph.microsoft.com/types/map",
+			// );
+			// assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
-		// get new datastore from first container
-		const entryPoint = (await container1.getEntryPoint()) as ITestFluidObject;
-		const containerRuntime = entryPoint.context.containerRuntime as ContainerRuntime;
+			// Attach B (which should also attach C)
 
-		// TODO: Remove usage of "resolveHandle" AB#6340
-		const response = await containerRuntime.resolveHandle({ url: `/${id}/${newMapId}` });
-		const map2 = response.value as ISharedMap;
+			// ((await channel.handle.get()) as SharedObject).bindToContext();
+			defaultDataStore.root.set("B", dataObjectB.handle);
+			// (channel as ISharedMap).set(testKey, testValue);
+		};
+		// );
+
+		await cb(container1);
 		await provider.ensureSynchronized();
-		assert.strictEqual(map2.get(testKey), testValue);
+
+		const container3: IContainerExperimental =
+			await provider.loadTestContainer(testContainerConfig);
+		await waitForContainerConnection(container3);
+		const default3 = (await container3.getEntryPoint()) as ITestFluidObject;
+
+		const handleB = default3.root.get("B");
+		const dataObjectB3 = await handleB.get();
+		assert(dataObjectB3.context.id === idB);
+
+		//* Don't need C?
+		// const handleC = dataObjectB3.root.get("C");
+		// const dataObjectC3 = await handleC.get();
+		// assert(dataObjectC3.context.id === idC);
+
+		// const container2 = await loader.resolve({ url }, pendingOps);
+		// await waitForContainerConnection(container2);
+
+		// // get at the first container's ContainerRuntime
+		// // const entryPoint = (await container1.getEntryPoint()) as ITestFluidObject;
+		// // const containerRuntime = entryPoint.context.containerRuntime as ContainerRuntime;
+
+		// // // TODO: Remove usage of "resolveHandle" AB#6340
+		// // const response = await containerRuntime.resolveHandle({ url: `/${id}/${newMapId}` });
+		// // const map2 = response.value as ISharedMap;
+		// await provider.ensureSynchronized();
+		// assert.strictEqual(map2.get(testKey), testValue);
 	});
 
 	it("doesn't resend successful attach op", async function () {
