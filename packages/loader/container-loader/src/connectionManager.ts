@@ -30,6 +30,8 @@ import {
 	getRetryDelayFromError,
 	isRuntimeMessage,
 	logNetworkFailure,
+	decodeJsonableOrBinary,
+	encodeJsonableOrBinary,
 } from "@fluidframework/driver-utils/internal";
 import {
 	ConnectionMode,
@@ -1114,7 +1116,7 @@ export class ConnectionManager implements IConnectionManager {
 				this.connection.submitSignal2(content, targetClientId);
 			} else {
 				// This flow does not currently supports binary properties!
-				this.connection.submitSignal(JSON.stringify(content), targetClientId);
+				this.connection.submitSignal(encodeJsonableOrBinary(content), targetClientId);
 			}
 		} else {
 			this.logger.sendErrorEvent({ eventName: "submitSignalDisconnected" });
@@ -1213,7 +1215,7 @@ export class ConnectionManager implements IConnectionManager {
 			// Same if these are synthesized join/clean signals coming from setupNewSuccessfulConnection()
 			// Otherwise it's a string, and it may contain serialized ArrayBuffer's.
 			if (typeof signal.content === "string") {
-				signal.content = JSON.parse(signal.content);
+				signal.content = decodeJsonableOrBinary(signal.content);
 			}
 			this.props.signalHandler(signal);
 		}

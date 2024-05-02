@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import type { JsonableOrBinary, Jsonable } from "@fluidframework/core-interfaces/internal";
 import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
 
