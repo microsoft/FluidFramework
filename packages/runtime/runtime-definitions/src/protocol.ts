@@ -4,12 +4,14 @@
  */
 
 import type { ISignalMessage, ITree } from "@fluidframework/protocol-definitions";
+import type { SignalContentType } from "@fluidframework/core-interfaces";
 
 /**
  * An envelope wraps the contents with the intended target
  * @alpha
  */
-export interface IEnvelope {
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type IEnvelope<T = any> = {
 	/**
 	 * The target for the envelope
 	 */
@@ -18,8 +20,8 @@ export interface IEnvelope {
 	/**
 	 * The contents of the envelope
 	 */
-	contents: any;
-}
+	contents: T;
+};
 
 /**
  * @internal
@@ -41,7 +43,7 @@ export interface ISignalEnvelope {
 	 */
 	contents: {
 		type: string;
-		content: any;
+		content: SignalContentType;
 	};
 }
 

@@ -7,6 +7,7 @@ import type {
 	FluidObject,
 	IDisposable,
 	ITelemetryBaseLogger,
+	SignalContentType,
 } from "@fluidframework/core-interfaces";
 import type {
 	IDocumentStorageService,
@@ -126,9 +127,6 @@ export interface IBatchMessage {
  * IContainerContext is fundamentally just the set of things that an IRuntimeFactory (and IRuntime) will consume from the
  * loader layer.  It gets passed into the IRuntimeFactory.instantiateRuntime call.  Only include members on this interface
  * if you intend them to be consumed/called from the runtime layer.
- *
- * TODO: once `@alpha` tag is removed, `unknown` should be removed from submitSignalFn
- * @see {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/7462}
  * @alpha
  */
 export interface IContainerContext {
@@ -158,7 +156,7 @@ export interface IContainerContext {
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
 	) => number;
-	readonly submitSignalFn: (contents: unknown, targetClientId?: string) => void;
+	readonly submitSignalFn: (contents: SignalContentType, targetClientId?: string) => void;
 	readonly disposeFn?: (error?: ICriticalContainerError) => void;
 	readonly closeFn: (error?: ICriticalContainerError) => void;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;

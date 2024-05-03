@@ -9,12 +9,12 @@ import {
 	IDeltaManagerEvents,
 	IDeltaQueue,
 } from "@fluidframework/container-definitions";
-import {
+import type {
 	IEventProvider,
-	type ITelemetryBaseEvent,
+	ITelemetryBaseEvent,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
-import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
+import type { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
