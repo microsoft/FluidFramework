@@ -133,6 +133,15 @@
 		"uuid": "^9.0.0"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_AzureMember": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_AzureClient": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		}
 	}
 }

@@ -3,17 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
-import { EmptyKey, TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
+import {
+	EmptyKey,
+	ITreeCursorSynchronous,
+	TreeNodeSchemaIdentifier,
+	TreeValue,
+} from "../core/index.js";
 import {
 	FlexAllowedTypes,
 	FlexFieldNodeSchema,
 	FlexTreeFieldNode,
 	FlexTreeNode,
+	FlexTreeNodeSchema,
 	FlexTreeSequenceField,
 	FlexTreeTypedField,
 	FlexTreeUnboxField,
-	isFlexTreeNode,
 } from "../feature-libraries/index.js";
 import {
 	FactoryContent,
@@ -22,20 +26,20 @@ import {
 	markContentType,
 	prepareContentForInsert,
 } from "./proxies.js";
-import { getFlexNode, setFlexNode } from "./proxyBinding.js";
-import { getSimpleFieldSchema, getSimpleNodeSchema } from "./schemaCaching.js";
+import { getFlexNode } from "./proxyBinding.js";
 import {
 	NodeKind,
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
-	ImplicitFieldSchema,
 	TreeNodeSchemaClass,
 	WithType,
 	TreeNodeSchema,
+	type,
+	normalizeFieldSchema,
 } from "./schemaTypes.js";
 import { cursorFromFieldData } from "./toMapTree.js";
-import { TreeNode } from "./types.js";
+import { InternalTreeNode, TreeNode, TreeNodeValid } from "./types.js";
 import { fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { RawTreeNode, rawError } from "./rawNode.js";
@@ -57,19 +61,19 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	 * @param value - The content to insert.
 	 * @throws Throws if `index` is not in the range [0, `array.length`).
 	 */
-	insertAt(index: number, ...value: (TNew | IterableTreeArrayContent<TNew>)[]): void;
+	insertAt(index: number, ...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
 
 	/**
 	 * Inserts new item(s) at the start of the array.
 	 * @param value - The content to insert.
 	 */
-	insertAtStart(...value: (TNew | IterableTreeArrayContent<TNew>)[]): void;
+	insertAtStart(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
 
 	/**
 	 * Inserts new item(s) at the end of the array.
 	 * @param value - The content to insert.
 	 */
-	insertAtEnd(...value: (TNew | IterableTreeArrayContent<TNew>)[]): void;
+	insertAtEnd(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
 
 	/**
 	 * Removes the item at the specified location.
@@ -260,9 +264,10 @@ export class IterableTreeArrayContent<T> implements Iterable<T> {
 /**
  * Given a array node proxy, returns its underlying LazySequence field.
  */
-function getSequenceField<TTypes extends FlexAllowedTypes>(
-	arrayNode: TreeArrayNode,
-): FlexTreeSequenceField<TTypes> {
+function getSequenceField<
+	TTypes extends FlexAllowedTypes,
+	TSimpleType extends ImplicitAllowedTypes,
+>(arrayNode: TreeArrayNode<TSimpleType>): FlexTreeSequenceField<TTypes> {
 	return getFlexNode(arrayNode).getBoxed(EmptyKey) as FlexTreeSequenceField<TTypes>;
 }
 
@@ -280,198 +285,6 @@ function contextualizeInsertedArrayContent(
 	);
 }
 
-// #region Create dispatch map for array nodes
-
-// TODO: Experiment with alternative dispatch methods to see if we can improve performance.
-
-/**
- * PropertyDescriptorMap used to build the prototype for our array node dispatch object.
- */
-const arrayNodePrototypeProperties: PropertyDescriptorMap = {
-	// We manually add [Symbol.iterator] to the dispatch map rather than use '[fn.name] = fn' as
-	// below when adding 'Array.prototype.*' properties to this map because 'Array.prototype[Symbol.iterator].name'
-	// returns "values" (i.e., Symbol.iterator is an alias for the '.values()' function.)
-	[Symbol.iterator]: {
-		value: Array.prototype[Symbol.iterator],
-	},
-	at: {
-		value(this: TreeArrayNode, index: number): TreeNode | TreeValue | undefined {
-			const field = getSequenceField(this);
-			const val = field.boxedAt(index);
-
-			if (val === undefined) {
-				return val;
-			}
-
-			return getOrCreateNodeProxy(val);
-		},
-	},
-	insertAt: {
-		value(
-			this: TreeArrayNode,
-			index: number,
-			...value: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[]
-		): void {
-			const sequenceNode = getFlexNode(this);
-			const sequenceField = getSequenceField(this);
-
-			const content = contextualizeInsertedArrayContent(value, sequenceField);
-
-			const simpleNodeSchema = getSimpleNodeSchema(sequenceNode.schema);
-			assert(simpleNodeSchema.kind === NodeKind.Array, 0x912 /* Expected array schema */);
-
-			const simpleFieldSchema = getSimpleFieldSchema(
-				sequenceField.schema,
-				simpleNodeSchema.info as ImplicitFieldSchema,
-			);
-
-			sequenceField.insertAt(index, cursorFromFieldData(content, simpleFieldSchema));
-		},
-	},
-	insertAtStart: {
-		value(
-			this: TreeArrayNode,
-			...value: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[]
-		): void {
-			const sequenceNode = getFlexNode(this);
-			const sequenceField = getSequenceField(this);
-
-			const content = contextualizeInsertedArrayContent(value, sequenceField);
-
-			const simpleNodeSchema = getSimpleNodeSchema(sequenceNode.schema);
-			assert(simpleNodeSchema.kind === NodeKind.Array, 0x913 /* Expected array schema */);
-
-			const simpleFieldSchema = getSimpleFieldSchema(
-				sequenceField.schema,
-				simpleNodeSchema.info as ImplicitFieldSchema,
-			);
-
-			sequenceField.insertAtStart(cursorFromFieldData(content, simpleFieldSchema));
-		},
-	},
-	insertAtEnd: {
-		value(
-			this: TreeArrayNode,
-			...value: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[]
-		): void {
-			const sequenceNode = getFlexNode(this);
-			const sequenceField = getSequenceField(this);
-
-			const content = contextualizeInsertedArrayContent(value, sequenceField);
-
-			const simpleNodeSchema = getSimpleNodeSchema(sequenceNode.schema);
-			assert(simpleNodeSchema.kind === NodeKind.Array, 0x914 /* Expected array schema */);
-
-			const simpleFieldSchema = getSimpleFieldSchema(
-				sequenceField.schema,
-				simpleNodeSchema.info as ImplicitFieldSchema,
-			);
-
-			sequenceField.insertAtEnd(cursorFromFieldData(content, simpleFieldSchema));
-		},
-	},
-	removeAt: {
-		value(this: TreeArrayNode, index: number): void {
-			getSequenceField(this).removeAt(index);
-		},
-	},
-	removeRange: {
-		value(this: TreeArrayNode, start?: number, end?: number): void {
-			getSequenceField(this).removeRange(start, end);
-		},
-	},
-	moveToStart: {
-		value(this: TreeArrayNode, sourceIndex: number, source?: TreeArrayNode): void {
-			if (source !== undefined) {
-				getSequenceField(this).moveToStart(sourceIndex, getSequenceField(source));
-			} else {
-				getSequenceField(this).moveToStart(sourceIndex);
-			}
-		},
-	},
-	moveToEnd: {
-		value(this: TreeArrayNode, sourceIndex: number, source?: TreeArrayNode): void {
-			if (source !== undefined) {
-				getSequenceField(this).moveToEnd(sourceIndex, getSequenceField(source));
-			} else {
-				getSequenceField(this).moveToEnd(sourceIndex);
-			}
-		},
-	},
-	moveToIndex: {
-		value(
-			this: TreeArrayNode,
-			index: number,
-			sourceIndex: number,
-			source?: TreeArrayNode,
-		): void {
-			if (source !== undefined) {
-				getSequenceField(this).moveToIndex(index, sourceIndex, getSequenceField(source));
-			} else {
-				getSequenceField(this).moveToIndex(index, sourceIndex);
-			}
-		},
-	},
-	moveRangeToStart: {
-		value(
-			this: TreeArrayNode,
-			sourceStart: number,
-			sourceEnd: number,
-			source?: TreeArrayNode,
-		): void {
-			if (source !== undefined) {
-				getSequenceField(this).moveRangeToStart(
-					sourceStart,
-					sourceEnd,
-					getSequenceField(source),
-				);
-			} else {
-				getSequenceField(this).moveRangeToStart(sourceStart, sourceEnd);
-			}
-		},
-	},
-	moveRangeToEnd: {
-		value(
-			this: TreeArrayNode,
-			sourceStart: number,
-			sourceEnd: number,
-			source?: TreeArrayNode,
-		): void {
-			if (source !== undefined) {
-				getSequenceField(this).moveRangeToEnd(
-					sourceStart,
-					sourceEnd,
-					getSequenceField(source),
-				);
-			} else {
-				getSequenceField(this).moveRangeToEnd(sourceStart, sourceEnd);
-			}
-		},
-	},
-	moveRangeToIndex: {
-		value(
-			this: TreeArrayNode,
-			index: number,
-			sourceStart: number,
-			sourceEnd: number,
-			source?: TreeArrayNode,
-		): void {
-			if (source !== undefined) {
-				getSequenceField(this).moveRangeToIndex(
-					index,
-					sourceStart,
-					sourceEnd,
-					getSequenceField(source),
-				);
-			} else {
-				getSequenceField(this).moveRangeToIndex(index, sourceStart, sourceEnd);
-			}
-		},
-	},
-};
-
-/* eslint-disable @typescript-eslint/unbound-method */
-
 // For compatibility, we are initially implement 'readonly T[]' by applying the Array.prototype methods
 // to the array node proxy.  Over time, we should replace these with efficient implementations on LazySequence
 // to avoid re-entering the proxy as these methods access 'length' and the indexed properties.
@@ -479,48 +292,94 @@ const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 // For brevity, the current implementation dynamically builds a property descriptor map from a list of
 // Array functions we want to re-expose via the proxy.
 
-// TODO: This assumes 'Function.name' matches the property name on 'Array.prototype', which may be
-// dubious across JS engines.
-[
-	Array.prototype.concat,
-	// Array.prototype.copyWithin,
-	Array.prototype.entries,
-	Array.prototype.every,
-	// Array.prototype.fill,
-	Array.prototype.filter,
-	Array.prototype.find,
-	Array.prototype.findIndex,
-	Array.prototype.flat,
-	Array.prototype.flatMap,
-	Array.prototype.forEach,
-	Array.prototype.includes,
-	Array.prototype.indexOf,
-	Array.prototype.join,
-	Array.prototype.keys,
-	Array.prototype.lastIndexOf,
-	// Array.prototype.length,
-	Array.prototype.map,
-	// Array.prototype.pop,
-	// Array.prototype.push,
-	Array.prototype.reduce,
-	Array.prototype.reduceRight,
-	// Array.prototype.reverse,
-	// Array.prototype.shift,
-	Array.prototype.slice,
-	Array.prototype.some,
-	// Array.prototype.sort,
-	// Array.prototype.splice,
-	Array.prototype.toLocaleString,
-	Array.prototype.toString,
-	// Array.prototype.unshift,
-	Array.prototype.values,
-].forEach((fn) => {
-	arrayNodePrototypeProperties[fn.name] = { value: fn };
-});
+const arrayPrototypeKeys = [
+	"concat",
+	"entries",
+	"every",
+	"filter",
+	"find",
+	"findIndex",
+	"flat",
+	"flatMap",
+	"forEach",
+	"includes",
+	"indexOf",
+	"join",
+	"keys",
+	"lastIndexOf",
+	"map",
+	"reduce",
+	"reduceRight",
+	"slice",
+	"some",
+	"toLocaleString",
+	"toString",
+	"values",
 
-/* eslint-enable @typescript-eslint/unbound-method */
+	// "copyWithin",
+	// "fill",
+	// "length",
+	// "pop",
+	// "push",
+	// "reverse",
+	// "shift",
+	// "sort",
+	// "splice",
+	// "unshift",
+] as const;
 
-// #endregion
+/**
+ * {@link TreeNodeValid}, but modified to add members from Array.prototype named in {@link arrayPrototypeKeys}.
+ * @privateRemarks
+ * Since a lot of scratch types and values are involved with creating this,
+ * it's generating using an immediately invoked function expression (IIFE).
+ * This is a common JavaScript pattern for cases like this to avoid cluttering the scope.
+ */
+const TreeNodeWithArrayFeatures = (() => {
+	/**
+	 * {@link TreeNodeValid}, but modified to add members from Array.prototype named in {@link arrayPrototypeKeys}.
+	 */
+	abstract class TreeNodeWithArrayFeaturesUntyped<
+		const T extends ImplicitAllowedTypes,
+	> extends TreeNodeValid<Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>> {}
+
+	// Modify TreeNodeWithArrayFeaturesUntyped to add the members from Array.prototype
+	arrayPrototypeKeys.forEach((key) => {
+		Object.defineProperty(TreeNodeWithArrayFeaturesUntyped.prototype, key, {
+			value: Array.prototype[key],
+		});
+	});
+
+	type AugmentedInstanceType<T extends ImplicitAllowedTypes> = TreeNodeValid<
+		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>
+	> &
+		Pick<readonly TreeNodeFromImplicitAllowedTypes<T>[], (typeof arrayPrototypeKeys)[number]>;
+
+	type AugmentedConstructor = abstract new <T extends ImplicitAllowedTypes>(
+		input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> | InternalTreeNode,
+	) => AugmentedInstanceType<T>;
+
+	/**
+	 * Type of {@link TreeNodeWithArrayFeaturesUntyped}, but with its array members added to the instance type.
+	 *
+	 * TypeScript has a rule that `Base constructors must all have the same return type.ts(2510)`.
+	 * This means that intersecting two types with different constructors to create a type with a more constrained constructor (ex: more specific return type)
+	 * is not supported.
+	 *
+	 * TypeScript also has a limitation that there is no way to replace or remove just the constructor of a type without losing all the private and protected members.
+	 * See https://github.com/microsoft/TypeScript/issues/35416 for details.
+	 *
+	 * Thus this has to replace the constructor type, and cannot do so while preserving the protected static members of TreeNodeValid.
+	 */
+	type StaticsWithoutConstructor = {
+		// As noted above, this loses all the protected members: this us undesired (but unavoidable).
+		// Since the constructor, which we do want to remove, is also protected, no extra work is needed to remove it.
+		[P in keyof typeof TreeNodeWithArrayFeaturesUntyped]: (typeof TreeNodeWithArrayFeaturesUntyped)[P];
+	};
+
+	return TreeNodeWithArrayFeaturesUntyped as unknown as StaticsWithoutConstructor &
+		AugmentedConstructor;
+})();
 
 /**
  * Attempts to coerce the given property key to an integer index property.
@@ -672,6 +531,141 @@ function createArrayNodeProxy(
 	return proxy;
 }
 
+type Insertable<T extends ImplicitAllowedTypes> = readonly (
+	| InsertableTreeNodeFromImplicitAllowedTypes<T>
+	| IterableTreeArrayContent<InsertableTreeNodeFromImplicitAllowedTypes<T>>
+)[];
+
+abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
+	extends TreeNodeWithArrayFeatures<T>
+	implements TreeArrayNode<T>
+{
+	// Indexing must be provided by subclass.
+	[k: number]: TreeNodeFromImplicitAllowedTypes<T>;
+
+	public static readonly kind = NodeKind.Array;
+
+	protected abstract get simpleSchema(): T;
+
+	#cursorFromFieldData(value: Insertable<T>): ITreeCursorSynchronous {
+		const content = contextualizeInsertedArrayContent(
+			value as readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[],
+			getSequenceField(this),
+		);
+
+		// TODO: this is not valid since this is a value field schema, not a sequence one (which does not exist in the simple tree layer),
+		// but it works since cursorFromFieldData special cases arrays.
+		const simpleFieldSchema = normalizeFieldSchema(this.simpleSchema);
+
+		return cursorFromFieldData(content, simpleFieldSchema);
+	}
+
+	public toJSON(): unknown {
+		// This override causes the class instance to `JSON.stringify` as `[a, b]` rather than `{0: a, 1: b}`.
+		return Array.from(this as unknown as TreeArrayNode);
+	}
+
+	// Instances of this class are used as the dispatch object for the proxy,
+	// and thus its set of keys is used to implement `has` (for the `in` operator) for the non-numeric cases.
+	// Therefore it must include `length`,
+	// even though this "length" is never invoked (due to being shadowed by the proxy provided own property).
+	public get length() {
+		return fail("Proxy should intercept length");
+	}
+
+	public [Symbol.iterator](): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
+		return this.values();
+	}
+
+	public get [Symbol.unscopables]() {
+		// This might not be the exact right set of values, but it only matters for `with` clauses which are deprecated and are banned in strict mode, so it shouldn't matter much.
+		// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/with for details.
+		return Array.prototype[Symbol.unscopables];
+	}
+
+	public at(this: TreeArrayNode, index: number): TreeNode | TreeValue | undefined {
+		const field = getSequenceField(this);
+		const val = field.boxedAt(index);
+
+		if (val === undefined) {
+			return val;
+		}
+
+		return getOrCreateNodeProxy(val);
+	}
+	public insertAt(index: number, ...value: Insertable<T>): void {
+		getSequenceField(this).insertAt(index, this.#cursorFromFieldData(value));
+	}
+	public insertAtStart(...value: Insertable<T>): void {
+		getSequenceField(this).insertAtStart(this.#cursorFromFieldData(value));
+	}
+	public insertAtEnd(...value: Insertable<T>): void {
+		getSequenceField(this).insertAtEnd(this.#cursorFromFieldData(value));
+	}
+	public removeAt(index: number): void {
+		getSequenceField(this).removeAt(index);
+	}
+	public removeRange(start?: number, end?: number): void {
+		getSequenceField(this).removeRange(start, end);
+	}
+	public moveToStart(sourceIndex: number, source?: TreeArrayNode): void {
+		if (source !== undefined) {
+			getSequenceField(this).moveToStart(sourceIndex, getSequenceField(source));
+		} else {
+			getSequenceField(this).moveToStart(sourceIndex);
+		}
+	}
+	public moveToEnd(sourceIndex: number, source?: TreeArrayNode): void {
+		if (source !== undefined) {
+			getSequenceField(this).moveToEnd(sourceIndex, getSequenceField(source));
+		} else {
+			getSequenceField(this).moveToEnd(sourceIndex);
+		}
+	}
+	public moveToIndex(index: number, sourceIndex: number, source?: TreeArrayNode): void {
+		if (source !== undefined) {
+			getSequenceField(this).moveToIndex(index, sourceIndex, getSequenceField(source));
+		} else {
+			getSequenceField(this).moveToIndex(index, sourceIndex);
+		}
+	}
+	public moveRangeToStart(sourceStart: number, sourceEnd: number, source?: TreeArrayNode): void {
+		if (source !== undefined) {
+			getSequenceField(this).moveRangeToStart(
+				sourceStart,
+				sourceEnd,
+				getSequenceField(source),
+			);
+		} else {
+			getSequenceField(this).moveRangeToStart(sourceStart, sourceEnd);
+		}
+	}
+	public moveRangeToEnd(sourceStart: number, sourceEnd: number, source?: TreeArrayNode): void {
+		if (source !== undefined) {
+			getSequenceField(this).moveRangeToEnd(sourceStart, sourceEnd, getSequenceField(source));
+		} else {
+			getSequenceField(this).moveRangeToEnd(sourceStart, sourceEnd);
+		}
+	}
+	public moveRangeToIndex(
+		index: number,
+		sourceStart: number,
+		sourceEnd: number,
+		source?: TreeArrayNode,
+	): void {
+		if (source !== undefined) {
+			getSequenceField(this).moveRangeToIndex(
+				index,
+				sourceStart,
+				sourceEnd,
+				getSequenceField(source),
+			);
+		} else {
+			getSequenceField(this).moveRangeToIndex(index, sourceStart, sourceEnd);
+		}
+	}
+}
+
 /**
  * Define a {@link TreeNodeSchema} for a {@link (TreeArrayNode:interface)}.
  *
@@ -682,71 +676,78 @@ export function arraySchema<
 	const T extends ImplicitAllowedTypes,
 	const ImplicitlyConstructable extends boolean,
 >(
-	base: TreeNodeSchemaClass<
-		TName,
-		NodeKind.Array,
-		TreeNode & WithType<TName>,
-		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		ImplicitlyConstructable,
-		T
-	>,
+	identifier: TName,
+	info: T,
+	implicitlyConstructable: ImplicitlyConstructable,
 	customizable: boolean,
-) {
+): TreeNodeSchemaClass<
+	TName,
+	NodeKind.Array,
+	TreeArrayNode<T> & WithType<TName>,
+	Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+	ImplicitlyConstructable,
+	T
+> {
+	let flexSchema: FlexFieldNodeSchema;
+
 	// This class returns a proxy from its constructor to handle numeric indexing.
 	// Alternatively it could extend a normal class which gets tons of numeric properties added.
-	class schema extends base {
-		public constructor(input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>) {
-			super(input);
-
-			const proxyTarget = customizable ? this : [];
+	class schema extends CustomArrayNodeBase<T> {
+		public static prepareInstance<T2>(
+			this: typeof TreeNodeValid<T2>,
+			instance: TreeNodeValid<T2>,
+			flexNode: FlexTreeNode,
+		): TreeNodeValid<T2> {
+			const proxyTarget = customizable ? instance : [];
 
 			if (customizable) {
 				// Since proxy reports this as a "non-configurable" property, it must exist on the underlying object used as the proxy target, not as an inherited property.
 				// This should not get used as the proxy should intercept all use.
-				Object.defineProperty(this, "length", {
+				Object.defineProperty(instance, "length", {
 					value: NaN,
 					writable: true,
 					enumerable: false,
 					configurable: false,
 				});
 			}
-
-			const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
-			assert(flexSchema instanceof FlexFieldNodeSchema, 0x915 /* invalid flex schema */);
-			const flexNode: FlexTreeNode = isFlexTreeNode(input)
-				? input
-				: new RawFieldNode(flexSchema, copyContent(flexSchema.name, input) as object);
-
-			const proxy: TreeNode = createArrayNodeProxy(customizable, proxyTarget, this);
-			setFlexNode(proxy, flexNode);
-			return proxy as unknown as schema;
+			return createArrayNodeProxy(customizable, proxyTarget, instance) as unknown as schema;
 		}
 
-		public toJSON(): unknown {
-			// This override causes the class instance to `JSON.stringify` as `[a, b]` rather than `{0: a, 1: b}`.
-			return Array.from(this as unknown as TreeArrayNode);
+		public static buildRawNode<T2>(
+			this: typeof TreeNodeValid<T2>,
+			instance: TreeNodeValid<T2>,
+			input: T2,
+		): RawTreeNode<FlexTreeNodeSchema, unknown> {
+			return new RawFieldNode(
+				flexSchema,
+				copyContent(
+					flexSchema.name,
+					input as Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+				) as object,
+			);
 		}
 
-		// Instances of this class are used as the dispatch object for the proxy,
-		// and thus its set of keys is used to implement `has` (for the `in` operator) for the non-numeric cases.
-		// Therefore it must must include `length`,
-		// even though this "length" is never invoked (due to being shadowed by the proxy provided own property).
-		public get length() {
-			return fail("Proxy should intercept length");
+		protected static constructorCached: typeof TreeNodeValid | undefined = undefined;
+
+		protected static oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>) {
+			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema) as FlexFieldNodeSchema;
+		}
+
+		public static readonly identifier = identifier;
+		public static readonly info = info;
+		public static readonly implicitlyConstructable: ImplicitlyConstructable =
+			implicitlyConstructable;
+
+		public get [type](): TName {
+			return identifier;
+		}
+
+		protected get simpleSchema(): T {
+			return info;
 		}
 	}
 
-	// Setup array functionality
-	Object.defineProperties(schema.prototype, arrayNodePrototypeProperties);
-
-	return schema as typeof base as TreeNodeSchemaClass<
-		TName,
-		NodeKind.Array,
-		TreeArrayNode<T> & WithType<TName>,
-		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		ImplicitlyConstructable,
-		T
-	>;
+	return schema;
 }
 
 /**

@@ -306,28 +306,19 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * @param parentPath - The path of the parent node which is used to build the path of this node.
 	 * @param parentSkipRecursion - true if the parent of this node skipped recursing the child nodes when summarizing.
 	 * In that case, the children will not have work-in-progress state.
-	 * @param validate - true to validate that the in-progress summary is correct for all nodes.
 	 */
 	protected completeSummaryCore(
 		proposalHandle: string,
 		parentPath: EscapedPath | undefined,
 		parentSkipRecursion: boolean,
-		validate: boolean,
 	) {
-		if (validate && this.wasGCMissed()) {
-			this.throwUnexpectedError({
-				eventName: "NodeDidNotRunGC",
-				proposalHandle,
-			});
-		}
-
 		let wipSerializedUsedRoutes: string | undefined;
 		// If GC is disabled, don't set wip used routes.
 		if (!this.gcDisabled) {
 			wipSerializedUsedRoutes = this.wipSerializedUsedRoutes;
 		}
 
-		super.completeSummaryCore(proposalHandle, parentPath, parentSkipRecursion, validate);
+		super.completeSummaryCore(proposalHandle, parentPath, parentSkipRecursion);
 
 		// If GC is disabled, skip setting pending summary with GC state.
 		if (!this.gcDisabled) {
