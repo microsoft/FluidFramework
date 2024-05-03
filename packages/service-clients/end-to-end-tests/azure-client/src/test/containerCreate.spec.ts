@@ -154,17 +154,16 @@ describe("Container create scenarios", () => {
 			);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			containerId = containerResponse?.data?.id as string;
-			({ container: newContainer } = await client.getContainer(containerId, schema));
 		} else {
 			({ container: newContainer } = await client.createContainer(schema));
 			containerId = await newContainer.attach();
-		}
 
-		if (newContainer.connectionState !== ConnectionState.Connected) {
-			await timeoutPromise((resolve) => newContainer.once("connected", () => resolve()), {
-				durationMs: connectTimeoutMs,
-				errorMsg: "container connect() timeout",
-			});
+			if (newContainer.connectionState !== ConnectionState.Connected) {
+				await timeoutPromise((resolve) => newContainer.once("connected", () => resolve()), {
+					durationMs: connectTimeoutMs,
+					errorMsg: "container connect() timeout",
+				});
+			}
 		}
 
 		const resources = client.getContainer(containerId, schema);
