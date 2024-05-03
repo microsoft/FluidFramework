@@ -56,7 +56,7 @@ export class ConsensusQueue<T = any> extends ConsensusOrderedCollection<T> {
     static getFactory(): IChannelFactory;
 }
 
-// @internal
+// @public
 export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;

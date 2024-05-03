@@ -6,24 +6,26 @@
 
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
+import { IChannelAttributes as IChannelAttributes_2 } from '@fluidframework/datastore-definitions/internal';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IEvent } from '@fluidframework/core-interfaces';
-import { IEventProvider } from '@fluidframework/core-interfaces';
-import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
+import { IChannelStorageService } from '@fluidframework/datastore-definitions/internal';
+import { IEvent } from '@fluidframework/core-interfaces/internal';
+import { IEventProvider } from '@fluidframework/core-interfaces/internal';
+import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces/internal';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidSerializer } from '@fluidframework/shared-object-base';
-import { IJSONSegment } from '@fluidframework/merge-tree';
+import { IFluidDataStoreRuntime as IFluidDataStoreRuntime_2 } from '@fluidframework/datastore-definitions/internal';
+import { IFluidSerializer } from '@fluidframework/shared-object-base/internal';
+import { IJSONSegment } from '@fluidframework/merge-tree/internal';
 import { IMatrixConsumer } from '@tiny-calc/nano';
 import { IMatrixProducer } from '@tiny-calc/nano';
 import { IMatrixReader } from '@tiny-calc/nano';
 import { IMatrixWriter } from '@tiny-calc/nano';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
 import { Serializable } from '@fluidframework/datastore-definitions';
-import { SharedObject } from '@fluidframework/shared-object-base';
+import { SharedObject } from '@fluidframework/shared-object-base/internal';
 
 // @alpha (undocumented)
 export interface IRevertible {
@@ -63,13 +65,13 @@ export type MatrixItem<T> = Serializable<Exclude<T, null>> | undefined;
 
 // @alpha
 export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T> & ISharedObjectEvents> implements ISharedMatrix<T> {
-    constructor(runtime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, _isSetCellConflictResolutionPolicyFWW?: boolean);
-    protected applyStashedOp(_content: unknown): void;
+    constructor(runtime: IFluidDataStoreRuntime_2, id: string, attributes: IChannelAttributes_2, _isSetCellConflictResolutionPolicyFWW?: boolean);
+    protected applyStashedOp(content: unknown): void;
     // (undocumented)
     closeMatrix(consumer: IMatrixConsumer<MatrixItem<T>>): void;
     // (undocumented)
     get colCount(): number;
-    static create<T>(runtime: IFluidDataStoreRuntime, id?: string): SharedMatrix<T>;
+    static create<T>(runtime: IFluidDataStoreRuntime_2, id?: string): SharedMatrix<T>;
     // (undocumented)
     protected didAttach(): void;
     // (undocumented)
@@ -129,7 +131,7 @@ export class SharedMatrixFactory implements IChannelFactory {
     // (undocumented)
     get attributes(): IChannelAttributes;
     // (undocumented)
-    create(document: IFluidDataStoreRuntime, id: string): SharedMatrix;
+    create(document: IFluidDataStoreRuntime, id: string): IChannel;
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<IChannel>;
     // (undocumented)
     static Type: string;
