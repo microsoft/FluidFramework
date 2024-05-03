@@ -29,7 +29,13 @@ steps:
     script: |
       mkdir upload_release_reports
       flub release report-unreleased --version $(SetVersion.version) --fullReportFilePath generate_release_reports/manifest.full.json --outDir upload_release_reports
-      
+
+- task: CopyFiles@2
+  displayName: Copy release reports
+  inputs:
+    SourceFolder: ${{ parameters.buildDirectory }}/upload_release_reports
+    TargetFolder: $(Build.ArtifactStagingDirectory)/release_reports
+
 - task: AzureCLI@2
   displayName: Upload release reports
   continueOnError: true
