@@ -1,11 +1,12 @@
 {
-  "compilerOptions": {
-    "declaration": true,
-    "module": "commonjs",
-    "outDir": "dist",
-    "rootDir": "src",
-    "strict": true,
-    "target": "es2022"
-  },
-  "include": ["src/**/*"]
+	"extends": "../../../common/build/build-common/tsconfig.node16.json",
+	"include": ["src/**/*"],
+	"compilerOptions": {
+		"composite": true,
+		"rootDir": "./src",
+		"outDir": "./dist",
+		"types": ["node"],
+		"noUnusedLocals": false,
+		"target": "ES2022",
+	},
 }

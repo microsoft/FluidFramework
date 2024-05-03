@@ -6,30 +6,30 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "build-tools/packages/build-cli"
+		"directory": "build-tools/packages/build-cli-cjs"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"type": "module",
+	"type": "commonjs",
 	"exports": {
 		".": {
 			"default": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
 			}
 		}
 	},
-	"main": "lib/index.js",
-	"types": "lib/index.d.ts",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
 	"bin": {
 		"flub": "./bin/run.js"
 	},
-	"files": ["/bin", "/lib", "!lib/test", "/oclif.manifest.json"],
+	"files": ["/bin", "/dist", "!dist/test", "/oclif.manifest.json"],
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint && concurrently npm:build:docs npm:build:diagrams",
 		"build:compile": "npm run tsc && npm run build:test && npm run build:copy && npm run build:readme",
-		"build:copy": "copyfiles -u 1 \"src/**/*.fsl\" lib",
+		"build:copy": "copyfiles -u 1 \"src/**/*.fsl\" dist",
 		"build:diagrams": "jssm-viz -i \"./src/machines/*.fsl\"",
 		"build:docs": "api-extractor run --local",
 		"build:manifest": "oclif manifest",
@@ -195,6 +195,5 @@
 			}
 		}
 	},
-	"pnpm": {
-  }
+	"pnpm": {}
 }
