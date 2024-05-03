@@ -77,8 +77,7 @@ importers:
       '@oclif/plugin-commands': ^3.3.1
       '@oclif/plugin-help': ^6.0.21
       '@oclif/plugin-not-found': ^3.1.7
-      '@oclif/plugin-plugins': ^5.0.18
-      '@oclif/test': ~3.2.12
+      '@oclif/test': ^3.2.12
       '@octokit/core': ^4.2.4
       '@rushstack/node-core-library': ^3.59.5
       '@types/async': ^3.2.20
@@ -156,7 +155,6 @@ importers:
       '@oclif/plugin-commands': 3.3.1
       '@oclif/plugin-help': 6.0.21
       '@oclif/plugin-not-found': 3.1.7
-      '@oclif/plugin-plugins': 5.0.18
       '@octokit/core': 4.2.4
       '@rushstack/node-core-library': 3.59.5_@types+node@18.18.6
       async: 3.2.4
@@ -362,8 +360,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^5.2.0
       '@oclif/core': ^3.26.5
       '@oclif/plugin-help': ^6.0.21
-      '@oclif/plugin-plugins': ^5.0.18
-      '@oclif/test': ~3.2.12
+      '@oclif/test': ^3.2.12
       '@types/chai': ^4.3.5
       '@types/chai-arrays': ^2.0.0
       '@types/node': ^18.18.6
@@ -384,7 +381,6 @@ importers:
     dependencies:
       '@oclif/core': 3.26.5
       '@oclif/plugin-help': 6.0.21
-      '@oclif/plugin-plugins': 5.0.18
       oclif: 4.10.1
       semver: 7.5.4
     devDependencies:
@@ -418,8 +414,7 @@ importers:
       '@oclif/plugin-commands': ^3.3.1
       '@oclif/plugin-help': ^6.0.21
       '@oclif/plugin-not-found': ^3.1.7
-      '@oclif/plugin-plugins': ^5.0.18
-      '@oclif/test': ~3.2.12
+      '@oclif/test': ^3.2.12
       '@types/chai': ^4.3.5
       '@types/mocha': ^9.1.1
       '@types/node': ^18.18.6
@@ -449,7 +444,6 @@ importers:
       '@oclif/plugin-commands': 3.3.1
       '@oclif/plugin-help': 6.0.21
       '@oclif/plugin-not-found': 3.1.7
-      '@oclif/plugin-plugins': 5.0.18
       chalk: 2.4.2
       semver: 7.5.4
       table: 6.8.1
@@ -1857,7 +1851,7 @@ packages:
       '@oclif/plugin-commands': 3.3.1
       '@oclif/plugin-help': 6.0.21
       '@oclif/plugin-not-found': 3.1.7
-      '@oclif/plugin-plugins': 5.0.18
+      '@oclif/plugin-plugins': 5.0.5
       '@octokit/core': 4.2.4
       '@rushstack/node-core-library': 3.59.5
       async: 3.2.4
@@ -1915,7 +1909,7 @@ packages:
       '@oclif/plugin-commands': 3.3.1
       '@oclif/plugin-help': 6.0.21
       '@oclif/plugin-not-found': 3.1.7
-      '@oclif/plugin-plugins': 5.0.18
+      '@oclif/plugin-plugins': 5.0.5
       chalk: 2.4.2
       semver: 7.6.0
       table: 6.8.1
@@ -2672,22 +2666,21 @@ packages:
       chalk: 5.3.0
       fast-levenshtein: 3.0.0
 
-  /@oclif/plugin-plugins/5.0.18:
-    resolution: {integrity: sha512-XWxrs6Jc0ovuoK7MeIViWwXYX939l55tzpr7+1dac7y33hqBrH50K5kn2M7NXjfYYJrY17IqRLhlmRLGE6vuYQ==}
+  /@oclif/plugin-plugins/5.0.5:
+    resolution: {integrity: sha512-2Mi87LYSj8LBPXR/j+DffFoyaTmaWiKXayyomyA3Q/TOk8/FkMSNzaUxYzno3sFXy/LsPRd9DZXm+UO1dHV1jw==}
     engines: {node: '>=18.0.0'}
     dependencies:
       '@oclif/core': 3.26.5
       chalk: 5.3.0
       debug: 4.3.4
-      npm: 10.7.0
-      npm-package-arg: 11.0.2
+      npm: 10.2.4
+      npm-package-arg: 11.0.1
       npm-run-path: 5.3.0
-      object-treeify: 4.0.1
       semver: 7.6.0
       validate-npm-package-name: 5.0.0
-      yarn: 1.22.22
     transitivePeerDependencies:
       - supports-color
+    dev: true
 
   /@oclif/plugin-warn-if-update-available/3.0.15:
     resolution: {integrity: sha512-JtPTJFjL6izMCe5dDS2ix2PyWAD2DeJ5Atzd2HHRifbPcmOxaUE62FKTnarIwfPHLMF/nN33liwo9InAdirozg==}
@@ -7731,6 +7724,7 @@ packages:
     engines: {node: ^16.14.0 || >=18.0.0}
     dependencies:
       lru-cache: 10.2.0
+    dev: true
 
   /html-escaper/2.0.2:
     resolution: {integrity: sha512-H2iMtd0I4Mt5eYiapRdIDjp+XzelXQ0tFE4JS7YFwFevXXMmOp9myNrUvCg0D6ws8iqkRPBfKHgbwig1SmlLfg==}
@@ -9442,14 +9436,15 @@ packages:
       semver: 7.6.0
       validate-npm-package-name: 5.0.0
 
-  /npm-package-arg/11.0.2:
-    resolution: {integrity: sha512-IGN0IAwmhDJwy13Wc8k+4PEbTPhpJnMtfR53ZbOyjkvmEcLS4nCwp6mvMWjS5sUjeiW3mpx6cHmuhKEu9XmcQw==}
+  /npm-package-arg/11.0.1:
+    resolution: {integrity: sha512-M7s1BD4NxdAvBKUPqqRW957Xwcl/4Zvo8Aj+ANrzvIPzGJZElrH7Z//rSaec2ORcND6FHHLnZeY8qgTpXDMFQQ==}
     engines: {node: ^16.14.0 || >=18.0.0}
     dependencies:
       hosted-git-info: 7.0.1
-      proc-log: 4.2.0
+      proc-log: 3.0.0
       semver: 7.6.0
       validate-npm-package-name: 5.0.0
+    dev: true
 
   /npm-packlist/7.0.4:
     resolution: {integrity: sha512-d6RGEuRrNS5/N84iglPivjaJPxhDbZmlbTwTDX2IbcRHG5bZCdtysYMhwiPvcF4GisXHGn7xsxv+GQ7T/02M5Q==}
@@ -9491,11 +9486,13 @@ packages:
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
     dependencies:
       path-key: 4.0.0
+    dev: true
 
-  /npm/10.7.0:
-    resolution: {integrity: sha512-FXylyYSXNjgXx3l82BT8RSQvCoGIQ3h8YdRFGKNvo3Pv/bKscK4pdWkx/onwTpHDqGw+oeLf4Rxln9WVyxAxlQ==}
+  /npm/10.2.4:
+    resolution: {integrity: sha512-umEuYneVEYO9KoEEI8n2sSGmNQeqco/3BSeacRlqIkCzw4E7XGtYSWMeJobxzr6hZ2n9cM+u5TsMTcC5bAgoWA==}
     engines: {node: ^18.17.0 || >=20.5.0}
     hasBin: true
+    dev: true
     bundledDependencies:
       - '@isaacs/string-locale-compare'
       - '@npmcli/arborist'
@@ -9504,7 +9501,6 @@ packages:
       - '@npmcli/map-workspaces'
       - '@npmcli/package-json'
       - '@npmcli/promise-spawn'
-      - '@npmcli/redact'
       - '@npmcli/run-script'
       - '@sigstore/tuf'
       - abbrev
@@ -9513,6 +9509,8 @@ packages:
       - chalk
       - ci-info
       - cli-columns
+      - cli-table3
+      - columnify
       - fastest-levenshtein
       - fs-minipass
       - glob
@@ -9548,6 +9546,7 @@ packages:
       - npm-profile
       - npm-registry-fetch
       - npm-user-validate
+      - npmlog
       - p-map
       - pacote
       - parse-conflict-json
@@ -9557,6 +9556,7 @@ packages:
       - semver
       - spdx-expression-parse
       - ssri
+      - strip-ansi
       - supports-color
       - tar
       - text-table
@@ -9591,10 +9591,6 @@ packages:
   /object-treeify/1.1.33:
     resolution: {integrity: sha512-EFVjAYfzWqWsBMRHPMAXLCDIJnpMhdWAqR7xG6M6a2cs6PMFpl/+Z20w9zDW4vkxOFfddegBKq9Rehd0bxWE7A==}
     engines: {node: '>= 10'}
-
-  /object-treeify/4.0.1:
-    resolution: {integrity: sha512-Y6tg5rHfsefSkfKujv2SwHulInROy/rCL5F4w0QOWxut8AnxYxf0YmNhTh95Zfyxpsudo66uqkux0ACFnyMSgQ==}
-    engines: {node: '>= 16'}
 
   /object.assign/4.1.4:
     resolution: {integrity: sha512-1mxKf0e58bvyjSCtKYY4sRe9itRk3PJpquJOjeIkz885CczcI4IvJJDLPS72oowuSh+pBxUFROpX+TU++hxhZQ==}
@@ -9984,6 +9980,7 @@ packages:
   /path-key/4.0.0:
     resolution: {integrity: sha512-haREypq7xkM7ErfgIyA0z+Bj4AGKlMSdlQE2jvJo6huWD1EdkKYV+G/T4nq0YEF2vgTT8kqMFKo1uHn950r4SQ==}
     engines: {node: '>=12'}
+    dev: true
 
   /path-parse/1.0.7:
     resolution: {integrity: sha512-LDJzPVEEEPR+y48z93A0Ed0yXb8pAByGWo/k5YYdYgpY2/2EsOsksJrq7lOHxryrVOn1ejG6oAp8ahvOIQD8sw==}
@@ -10073,10 +10070,6 @@ packages:
 
   /proc-log/3.0.0:
     resolution: {integrity: sha512-++Vn7NS4Xf9NacaU9Xq3URUuqZETPsf8L4j5/ckhaRYsfPeRyzGw+iDjFhV/Jr3uNmTvvddEJFWh5R1gRgUH8A==}
-    engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
-
-  /proc-log/4.2.0:
-    resolution: {integrity: sha512-g8+OnU/L2v+wyiVK+D5fA34J7EH8jZ8DDlvwhRCMxmMj7UCBvxiO1mGeN+36JXIKF4zevU4kRBd8lVgG9vLelA==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
 
   /process-nextick-args/2.0.1:
@@ -12117,12 +12110,6 @@ packages:
       string-width: 4.2.3
       y18n: 5.0.8
       yargs-parser: 21.1.1
-
-  /yarn/1.22.22:
-    resolution: {integrity: sha512-prL3kGtyG7o9Z9Sv8IPfBNrWTDmXB4Qbes8A9rEzt6wkJV8mUvoirjU0Mp3GGAU06Y0XQyA3/2/RQFVuK7MTfg==}
-    engines: {node: '>=4.0.0'}
-    hasBin: true
-    requiresBuild: true
 
   /yn/3.1.1:
     resolution: {integrity: sha512-Ux4ygGWsu2c7isFWe8Yu1YluJmqVhxqK2cLXNQA5AcC3QfbGNpM7fu0Y8b/z16pXLnFxZYvWhd3fhBY9DLmC6Q==}
