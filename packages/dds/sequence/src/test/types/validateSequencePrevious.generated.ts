@@ -1162,6 +1162,7 @@ declare function get_old_ClassDeclaration_SharedIntervalCollection():
 declare function use_current_ClassDeclaration_SharedIntervalCollection(
     use: TypeOnly<current.SharedIntervalCollection>): void;
 use_current_ClassDeclaration_SharedIntervalCollection(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedIntervalCollection());
 
 /*
@@ -1210,6 +1211,7 @@ declare function get_old_ClassDeclaration_SharedSegmentSequence():
 declare function use_current_ClassDeclaration_SharedSegmentSequence(
     use: TypeOnly<current.SharedSegmentSequence<any>>): void;
 use_current_ClassDeclaration_SharedSegmentSequence(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedSegmentSequence());
 
 /*
@@ -1234,6 +1236,7 @@ declare function get_old_ClassDeclaration_SharedSequence():
 declare function use_current_ClassDeclaration_SharedSequence(
     use: TypeOnly<current.SharedSequence<any>>): void;
 use_current_ClassDeclaration_SharedSequence(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedSequence());
 
 /*
@@ -1249,16 +1252,12 @@ use_old_ClassDeclaration_SharedSequence(
     get_current_ClassDeclaration_SharedSequence());
 
 /*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedString": {"forwardCompat": false}
-*/
-declare function get_old_ClassDeclaration_SharedString():
-    TypeOnly<old.SharedString>;
-declare function use_current_ClassDeclaration_SharedString(
-    use: TypeOnly<current.SharedString>): void;
-use_current_ClassDeclaration_SharedString(
-    get_old_ClassDeclaration_SharedString());
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "RemovedClassDeclaration_SharedString": {"forwardCompat": false}
+ */
 
 /*
 * Validate back compat by using current type in place of old type

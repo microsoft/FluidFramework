@@ -120,16 +120,12 @@ use_old_TypeAliasDeclaration_MatrixItem(
     get_current_TypeAliasDeclaration_MatrixItem());
 
 /*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedMatrix": {"forwardCompat": false}
-*/
-declare function get_old_ClassDeclaration_SharedMatrix():
-    TypeOnly<old.SharedMatrix>;
-declare function use_current_ClassDeclaration_SharedMatrix(
-    use: TypeOnly<current.SharedMatrix>): void;
-use_current_ClassDeclaration_SharedMatrix(
-    get_old_ClassDeclaration_SharedMatrix());
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "RemovedClassDeclaration_SharedMatrix": {"forwardCompat": false}
+ */
 
 /*
 * Validate back compat by using current type in place of old type

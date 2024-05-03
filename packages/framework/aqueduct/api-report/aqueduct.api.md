@@ -23,12 +23,12 @@ import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/inte
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidDependencySynthesizer } from '@fluidframework/synthesize/internal';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidLoadable } from '@fluidframework/core-interfaces';
+import { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
+import { IFluidLoadable } from '@fluidframework/core-interfaces/internal';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
-import { IProvideFluidHandle } from '@fluidframework/core-interfaces';
-import { IRequest } from '@fluidframework/core-interfaces';
-import { IResponse } from '@fluidframework/core-interfaces';
+import { IProvideFluidHandle } from '@fluidframework/core-interfaces/internal';
+import { IRequest } from '@fluidframework/core-interfaces/internal';
+import { IResponse } from '@fluidframework/core-interfaces/internal';
 import { ISharedDirectory } from '@fluidframework/map/internal';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions/internal';
 import { NamedFluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions/internal';
@@ -122,11 +122,11 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     finishInitialization(existing: boolean): Promise<void>;
     // (undocumented)
     static getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject>;
-    get handle(): IFluidHandle<this>;
+    get handle(): IFluidHandleInternal<this>;
     protected hasInitialized(): Promise<void>;
     // (undocumented)
     get id(): string;
-    get IFluidHandle(): IFluidHandle<this>;
+    get IFluidHandle(): IFluidHandleInternal<this>;
     get IFluidLoadable(): this;
     initializeInternal(existing: boolean): Promise<void>;
     // (undocumented)

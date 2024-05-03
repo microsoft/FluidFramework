@@ -153,6 +153,14 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_ISharedMatrix": {
+				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_SharedMatrix": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		}
 	}
 }

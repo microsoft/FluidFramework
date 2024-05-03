@@ -10,7 +10,8 @@ import { ContainerWarning } from '@fluidframework/container-definitions/internal
 import { CreateChildSummarizerNodeFn } from '@fluidframework/runtime-definitions/internal';
 import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions/internal';
 import { FluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions/internal';
-import { FluidObject } from '@fluidframework/core-interfaces';
+import { FluidObject } from '@fluidframework/core-interfaces/internal';
+import { FluidObject as FluidObject_2 } from '@fluidframework/core-interfaces';
 import { FlushMode } from '@fluidframework/runtime-definitions/internal';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
@@ -26,6 +27,7 @@ import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
 import { IEnvelope } from '@fluidframework/runtime-definitions/internal';
 import { IEvent } from '@fluidframework/core-interfaces';
+import { IEvent as IEvent_2 } from '@fluidframework/core-interfaces/internal';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions/internal';
@@ -33,8 +35,10 @@ import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definiti
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreFactory as IFluidDataStoreFactory_2 } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidHandleContext } from '@fluidframework/core-interfaces';
+import { IFluidHandle } from '@fluidframework/core-interfaces/internal';
+import { IFluidHandleContext } from '@fluidframework/core-interfaces/internal';
+import { IFluidHandleContext as IFluidHandleContext_2 } from '@fluidframework/core-interfaces';
+import { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import { IFluidParentContext } from '@fluidframework/runtime-definitions/internal';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions/internal';
@@ -42,10 +46,12 @@ import { IGetPendingLocalStateProps } from '@fluidframework/container-definition
 import type { IIdCompressor } from '@fluidframework/id-compressor';
 import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
-import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
+import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces/internal';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
-import { IRequest } from '@fluidframework/core-interfaces';
-import { IResponse } from '@fluidframework/core-interfaces';
+import { IRequest } from '@fluidframework/core-interfaces/internal';
+import { IRequest as IRequest_2 } from '@fluidframework/core-interfaces';
+import { IResponse } from '@fluidframework/core-interfaces/internal';
+import { IResponse as IResponse_2 } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
@@ -79,7 +85,7 @@ export const AllowTombstoneRequestHeaderKey = "allowTombstone";
 
 // @internal
 export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
-    constructor(baseSnapshot: ISnapshotTree | undefined, parentContext: IFluidParentContext, baseLogger: ITelemetryBaseLogger, gcNodeUpdated: (props: IGCNodeUpdatedProps) => void, isDataStoreDeleted: (nodePath: string) => boolean, aliasMap: Map<string, string>, provideEntryPoint: (runtime: ChannelCollection) => Promise<FluidObject>);
+    constructor(baseSnapshot: ISnapshotTree | undefined, parentContext: IFluidParentContext, baseLogger: ITelemetryBaseLogger, gcNodeUpdated: (props: IGCNodeUpdatedProps) => void, isDataStoreDeleted: (nodePath: string) => boolean, aliasMap: Map<string, string>, provideEntryPoint: (runtime: ChannelCollection) => Promise<FluidObject_2>);
     // (undocumented)
     get aliases(): ReadonlyMap<string, string>;
     // (undocumented)
@@ -112,7 +118,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
     // (undocumented)
     get disposed(): boolean;
     // (undocumented)
-    readonly entryPoint: IFluidHandle<FluidObject>;
+    readonly entryPoint: IFluidHandleInternal<FluidObject_2>;
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getDataStoreIfAvailable(id: string, requestHeaderData: RuntimeHeaderData): Promise<IFluidDataStoreContextInternal | undefined>;
     getDataStorePackagePath(nodePath: string): Promise<readonly string[] | undefined>;
@@ -136,7 +142,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
     // (undocumented)
     processSignal(messageArg: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
-    request(request: IRequest): Promise<IResponse>;
+    request(request: IRequest_2): Promise<IResponse_2>;
     // (undocumented)
     reSubmit(type: string, content: any, localOpMetadata: unknown): void;
     // (undocumented)
@@ -163,8 +169,8 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 }
 
 // @internal (undocumented)
-export class ChannelCollectionFactory<T extends ChannelCollection = ChannelCollection> implements IFluidDataStoreFactory_2 {
-    constructor(registryEntries: NamedFluidDataStoreRegistryEntries, provideEntryPoint: (runtime: IFluidDataStoreChannel) => Promise<FluidObject>, ctor: (...args: ConstructorParameters<typeof ChannelCollection>) => T);
+export class ChannelCollectionFactory<T extends ChannelCollection = ChannelCollection> implements IFluidDataStoreFactory {
+    constructor(registryEntries: NamedFluidDataStoreRegistryEntries, provideEntryPoint: (runtime: IFluidDataStoreChannel) => Promise<FluidObject_2>, ctor: (...args: ConstructorParameters<typeof ChannelCollection>) => T);
     // (undocumented)
     get IFluidDataStoreFactory(): this;
     // (undocumented)
@@ -356,7 +362,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     updateTombstonedRoutes(tombstonedRoutes: readonly string[]): void;
     updateUsedRoutes(usedRoutes: readonly string[]): void;
     // (undocumented)
-    uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
+    uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandleInternal<ArrayBufferLike>>;
 }
 
 // @internal @deprecated
@@ -442,7 +448,7 @@ export type EnqueueSummarizeResult = (ISummarizeResults & {
 export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidDataStoreContextEvents> implements IFluidDataStoreContextInternal, IFluidParentContext, IDisposable {
     constructor(props: IFluidDataStoreContextProps, existing: boolean, isLocalDataStore: boolean, makeLocallyVisibleFn: () => void);
     // @deprecated (undocumented)
-    addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
+    addedGCOutboundReference(srcHandle: IFluidHandleInternal, outboundHandle: IFluidHandleInternal): void;
     addedGCOutboundRoute(fromPath: string, toPath: string): void;
     // (undocumented)
     applyStashedOp(contents: any): Promise<unknown>;
@@ -514,7 +520,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined;
     // (undocumented)
-    get IFluidHandleContext(): IFluidHandleContext;
+    get IFluidHandleContext(): IFluidHandleContext_2;
     protected isInMemoryRoot(): boolean;
     // (undocumented)
     get isLoaded(): boolean;
@@ -547,13 +553,13 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     // (undocumented)
     protected registry: IFluidDataStoreRegistry | undefined;
     // @deprecated (undocumented)
-    request(request: IRequest): Promise<IResponse>;
+    request(request: IRequest_2): Promise<IResponse_2>;
     // (undocumented)
     reSubmit(type: string, contents: any, localOpMetadata: unknown): void;
     // (undocumented)
     rollback(type: string, contents: any, localOpMetadata: unknown): void;
     // (undocumented)
-    readonly scope: FluidObject;
+    readonly scope: FluidObject_2;
     // (undocumented)
     abstract setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     setChannelDirty(address: string): void;
@@ -574,7 +580,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     get tombstoned(): boolean;
     updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
-    uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
+    uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandleInternal<ArrayBufferLike>>;
 }
 
 // @internal (undocumented)
@@ -789,7 +795,7 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 }
 
 // @internal (undocumented)
-export interface IFluidDataStoreContextEvents extends IEvent {
+export interface IFluidDataStoreContextEvents extends IEvent_2 {
     // (undocumented)
     (event: "attaching" | "attached", listener: () => void): any;
 }
@@ -822,7 +828,7 @@ export interface IFluidDataStoreContextProps {
     // (undocumented)
     readonly pkg?: Readonly<string[]>;
     // (undocumented)
-    readonly scope: FluidObject;
+    readonly scope: FluidObject_2;
     // (undocumented)
     readonly storage: IDocumentStorageService;
 }
@@ -846,7 +852,7 @@ export interface IGCNodeUpdatedProps {
     };
     packagePath?: readonly string[];
     reason: "Loaded" | "Changed";
-    request?: IRequest;
+    request?: IRequest_2;
     timestampMs?: number;
 }
 
@@ -1237,7 +1243,7 @@ export type SubmitSummaryResult = IBaseSummarizeResult | IGenerateSummaryTreeRes
 export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
     constructor(
     runtime: ISummarizerRuntime, configurationGetter: () => ISummaryConfiguration,
-    internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection, runCoordinatorCreateFn: (runtime: IConnectableRuntime) => Promise<ICancellableSummarizerController>);
+    internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext_2, summaryCollection: SummaryCollection, runCoordinatorCreateFn: (runtime: IConnectableRuntime) => Promise<ICancellableSummarizerController>);
     // (undocumented)
     close(): void;
     dispose(): void;

@@ -216,6 +216,10 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"ClassDeclaration_ChannelCollection": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
 			"ClassDeclaration_ContainerRuntime": {
 				"backCompat": false,
 				"forwardCompat": false

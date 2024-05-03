@@ -149,6 +149,12 @@
 			"InterfaceDeclaration_IDataObjectProps": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"ClassDeclaration_DataObject": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_PureDataObject": {
+				"forwardCompat": false
 			}
 		}
 	}

@@ -47,6 +47,7 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 
 import {
 	getGCStateFromSummary,
@@ -583,7 +584,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 
 				// handle.get on a DDS in a tombstoned object should succeed (despite not being able to pass the header)
 				const dataObject = tombstoneSuccessResponse.value as ITestDataObject;
-				const ddsHandle = dataObject._root.get<IFluidHandle<ISharedMap>>("dds1");
+				const ddsHandle = dataObject._root.get<IFluidHandleInternal<ISharedMap>>("dds1");
 				assert(ddsHandle !== undefined, "Expected to find a handle to the DDS");
 				await assert.doesNotReject(
 					async () => ddsHandle.get(),

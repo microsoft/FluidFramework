@@ -148,13 +148,15 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"RemovedInterfaceDeclaration_ISerializedHandle": {
+			"InterfaceDeclaration_ISharedObject": {
 				"forwardCompat": false,
 				"backCompat": false
 			},
-			"RemovedVariableDeclaration_isSerializedHandle": {
-				"forwardCompat": false,
-				"backCompat": false
+			"ClassDeclaration_SharedObject": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SharedObjectCore": {
+				"forwardCompat": false
 			}
 		}
 	}

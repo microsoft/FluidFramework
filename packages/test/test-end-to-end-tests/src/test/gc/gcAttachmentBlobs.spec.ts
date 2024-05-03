@@ -11,7 +11,7 @@ import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { BlobManager } from "@fluidframework/container-runtime/internal/test/blobManager";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -200,7 +200,8 @@ describeCompat("Garbage collection of blobs", "NoCompat", (getTestObjectProvider
 			const defaultDataStore2 = (await container2.getEntryPoint()) as ITestDataObject;
 
 			// Validate the blob handle's path is the same as the one in the first container.
-			const blobHandle2 = defaultDataStore2._root.get<IFluidHandle<ArrayBufferLike>>("blob");
+			const blobHandle2 =
+				defaultDataStore2._root.get<IFluidHandleInternal<ArrayBufferLike>>("blob");
 			assert.strictEqual(
 				blobHandle.absolutePath,
 				blobHandle2?.absolutePath,
