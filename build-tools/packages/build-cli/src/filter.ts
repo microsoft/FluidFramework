@@ -5,7 +5,7 @@
 
 import path from "node:path";
 import { Package } from "@fluidframework/build-tools";
-import { filterFlags, selectionFlags } from "./flags";
+import { type PackageSelectionDefault, filterFlags, selectionFlags } from "./flags";
 import { Context } from "./library";
 import { ReleaseGroup, knownReleaseGroups } from "./releaseGroups";
 
@@ -73,17 +73,26 @@ export interface PackageFilterOptions {
  */
 export const parsePackageSelectionFlags = (
 	flags: selectionFlags,
-	defaultAll: boolean,
+	defaultSelection: PackageSelectionDefault,
 ): PackageSelectionCriteria => {
-	if (
-		flags.all === true ||
-		(defaultAll === true &&
-			flags.releaseGroup === undefined &&
-			flags.releaseGroupRoot === undefined &&
-			flags.dir === undefined &&
-			flags.packages === false)
-	) {
+	const useDefault =
+		flags.releaseGroup === undefined &&
+		flags.releaseGroupRoot === undefined &&
+		flags.dir === undefined &&
+		(flags.packages === false || flags.packages === undefined) &&
+		(flags.all === false || flags.all === undefined);
+
+	if (flags.all || (useDefault && defaultSelection === "all")) {
 		return AllPackagesSelectionCriteria;
+	}
+
+	if (useDefault && defaultSelection === "dir") {
+		return {
+			independentPackages: false,
+			releaseGroups: [],
+			releaseGroupRoots: [],
+			directory: ".",
+		};
 	}
 
 	const releaseGroups =
@@ -165,7 +174,10 @@ const selectPackagesFromContext = (
 
 	if (selection.directory !== undefined) {
 		const pkg = Package.load(
-			path.join(selection.directory, "package.json"),
+			path.join(
+				selection.directory === "." ? process.cwd() : selection.directory,
+				"package.json",
+			),
 			"none",
 			undefined,
 			{

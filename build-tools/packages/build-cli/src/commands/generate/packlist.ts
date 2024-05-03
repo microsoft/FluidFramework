@@ -51,7 +51,7 @@ export default class GeneratePackListCommand extends PackageCommand<
 		...PackageCommand.flags,
 	} as const;
 
-	protected selectAllByDefault = false;
+	protected defaultSelection = undefined;
 
 	protected async processPackage(pkg: Package): Promise<void> {
 		const { out } = this.flags;

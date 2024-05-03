@@ -17,7 +17,7 @@ import {
 	parsePackageSelectionFlags,
 	selectAndFilterPackages,
 } from "./filter";
-import { filterFlags, selectionFlags } from "./flags";
+import { type PackageSelectionDefault, filterFlags, selectionFlags } from "./flags";
 
 /**
  * Commands that run operations per project.
@@ -36,11 +36,11 @@ export abstract class PackageCommand<
 	};
 
 	/**
-	 * If set to true, then all packages will be selected if no package selection flags are used. This means that the user
-	 * does not need to pass --all to select all packages.
+	 * The default to use as selection criteria when none is explicitly provided by the user. This enables commands
+	 * without flags to operate on a collection of packages by default that make sense based on the command.
 	 */
-	protected abstract get selectAllByDefault(): boolean;
-	protected abstract set selectAllByDefault(value: boolean);
+	protected abstract get defaultSelection(): PackageSelectionDefault;
+	protected abstract set defaultSelection(value: PackageSelectionDefault);
 
 	protected filterOptions: PackageFilterOptions | undefined;
 	protected selectionOptions: PackageSelectionCriteria | undefined;
@@ -73,7 +73,7 @@ export abstract class PackageCommand<
 	): Promise<void>;
 
 	protected parseFlags(): void {
-		this.selectionOptions = parsePackageSelectionFlags(this.flags, this.selectAllByDefault);
+		this.selectionOptions = parsePackageSelectionFlags(this.flags, this.defaultSelection);
 		this.filterOptions = parsePackageFilterFlags(this.flags);
 	}
 

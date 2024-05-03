@@ -9,6 +9,7 @@ import { Package, PackageJson, updatePackageJsonFile } from "@fluidframework/bui
 import { ExtractorConfig } from "@microsoft/api-extractor";
 import { Flags } from "@oclif/core";
 import { PackageCommand } from "../../BasePackageCommand";
+import type { PackageSelectionDefault } from "../../flags";
 import { CommandLogger } from "../../logging";
 
 /**
@@ -61,7 +62,7 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 		...PackageCommand.flags,
 	};
 
-	protected selectAllByDefault = false;
+	protected defaultSelection = "dir" as PackageSelectionDefault;
 
 	private readonly packageList: PackageTypesList = {
 		packagesNotUpdated: [],

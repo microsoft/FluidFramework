@@ -12,6 +12,7 @@ import {
 import { Flags } from "@oclif/core";
 
 import { PackageCommand } from "../BasePackageCommand";
+import type { PackageSelectionDefault } from "../flags";
 
 export default class PrepareTypeTestsCommand extends PackageCommand<
 	typeof PrepareTypeTestsCommand
@@ -80,7 +81,7 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 		},
 	];
 
-	protected selectAllByDefault = false;
+	protected defaultSelection = "dir" as PackageSelectionDefault;
 
 	protected async processPackage(pkg: Package): Promise<void> {
 		const version =

@@ -45,7 +45,7 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 		...PackageCommand.flags,
 	};
 
-	protected selectAllByDefault = false;
+	protected defaultSelection = undefined;
 
 	private assertionFunctions: ReadonlyMap<string, number> | undefined;
 	private readonly errors: string[] = [];
