@@ -262,6 +262,12 @@ describeCompat(
 		});
 
 		it("Second summarizer from latest should not fetch", async function () {
+			if (
+				provider.driver.type === "routerlicious" &&
+				provider.driver.endpointName === "frs"
+			) {
+				this.skip();
+			}
 			const summarizer1 = await createSummarizer(provider, mainContainer);
 
 			const versionWrap1 = await incrementCellValueAndRunSummary(
@@ -307,6 +313,12 @@ describeCompat(
 		});
 
 		it("Loading Summary from older version should fetch", async function () {
+			if (
+				provider.driver.type === "routerlicious" &&
+				provider.driver.endpointName === "frs"
+			) {
+				this.skip();
+			}
 			const summarizerClient = await createSummarizer(provider, mainContainer);
 			const versionWrap1 = await incrementCellValueAndRunSummary(
 				summarizerClient,
