@@ -8,18 +8,15 @@ import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-inte
 import { IMember } from "@fluidframework/fluid-static";
 import { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
 
-export const waitForMember = async (
-	audience: IAzureAudience,
-	userId: string,
-): Promise<AzureMember> => {
+export const waitForMember = async (audience: IAzureAudience, id: string): Promise<AzureMember> => {
 	const allMembers = audience.getMembers();
-	const member = allMembers.get(userId);
+	const member = allMembers.get(id);
 	if (member !== undefined) {
 		return member;
 	}
 	return new Promise((resolve) => {
 		const handler = (clientId: string, newMember: IMember): void => {
-			if (newMember.userId === userId) {
+			if (newMember.id === id) {
 				resolve(newMember as AzureMember);
 			}
 		};

@@ -361,10 +361,6 @@ export class Container
 
 		const container = new Container(createProps, loadProps);
 
-		const disableRecordHeapSize = container.mc.config.getBoolean(
-			"Fluid.Loader.DisableRecordHeapSize",
-		);
-
 		return PerformanceEvent.timedExecAsync(
 			container.mc.logger,
 			{ eventName: "Load", ...loadMode },
@@ -410,7 +406,6 @@ export class Container
 						);
 				}),
 			{ start: true, end: true, cancel: "generic" },
-			disableRecordHeapSize !== true /* recordHeapSize */,
 		);
 	}
 
@@ -875,10 +870,13 @@ export class Container
 					const mode = this.connectionMode;
 					// We get here when socket does not receive any ops on "write" connection, including
 					// its own join op.
+					// Report issues only if we already loaded container - op processing is paused while container is loading,
+					// so we always time-out processing of join op in cases where fetching snapshot takes a minute.
+					// It's not a problem with op processing itself - such issues should be tracked as part of boot perf monitoring instead.
 					this._deltaManager.logConnectionIssue({
 						eventName,
 						mode,
-						category,
+						category: this._lifecycleState === "loading" ? "generic" : category,
 						duration:
 							performance.now() -
 							this.connectionTransitionTimes[ConnectionState.CatchingUp],
