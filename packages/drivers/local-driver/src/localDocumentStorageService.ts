@@ -107,7 +107,11 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 			// If the root is in the groupIds, we don't need to filter the tree.
 			// We can just strip the  of all groupIds as in collect the blobIds so that we can
 			// return blob contents only for those ids.
-			await this.stripTreeOfMissingLoadingGroupIds(snapshotTree, groupIds, blobContents);
+			await this.collectBlobContentsForUngroupedSnapshot(
+				snapshotTree,
+				groupIds,
+				blobContents,
+			);
 		} else {
 			const hasFoundTree = await this.filterTreeByLoadingGroupIds(
 				snapshotTree,
@@ -132,13 +136,13 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 	}
 
 	/**
-	 * Strips the tree or any subtree of data if it has a groupId.
-	 * Collect the blobIds to keep in the snapshot.
+	 * Collect the blobIds to keep in the snapshot for ungrouped snapshot plus
+	 * any other loading groupId along with it.
 	 *
-	 * @param tree - The tree to strip of loading groupIds
+	 * @param tree - The tree to evaluate for loading groupIds
 	 * @returns a tree that has trees with groupIds that are empty
 	 */
-	private async stripTreeOfMissingLoadingGroupIds(
+	private async collectBlobContentsForUngroupedSnapshot(
 		tree: ISnapshotTreeEx,
 		loadingGroupIds: Set<string>,
 		blobContents: Map<string, ArrayBuffer>,
@@ -150,7 +154,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 			}
 			await Promise.all(
 				Object.values(tree.trees).map(async (childTree) => {
-					await this.stripTreeOfMissingLoadingGroupIds(
+					await this.collectBlobContentsForUngroupedSnapshot(
 						childTree,
 						loadingGroupIds,
 						blobContents,
