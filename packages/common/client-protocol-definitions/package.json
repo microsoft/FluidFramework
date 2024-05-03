@@ -15,11 +15,11 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/public.d.ts",
+				"types": "./lib/index.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/public.d.ts",
+				"types": "./dist/index.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
@@ -79,7 +79,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.37.0",
 		"@fluidframework/eslint-config-fluid": "^4.0.0",
-		"@fluidframework/client-protocol-definitions-previous": "npm:@fluidframework/client-protocol-definitions@3.2.0",
+		"@fluidframework/client-protocol-definitions-previous": "npm:@fluidframework/protocol-definitions@3.2.0",
 		"@microsoft/api-extractor": "^7.42.3",
 		"concurrently": "^6.2.0",
 		"copyfiles": "^2.4.1",
