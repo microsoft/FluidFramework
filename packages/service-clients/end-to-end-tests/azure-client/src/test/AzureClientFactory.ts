@@ -72,6 +72,22 @@ export function createAzureClient(
 	});
 }
 
+/**
+ * This function is used to create a container using any summary payload.
+ * It is primary intended as a workaround to using the AzureClient, and
+ * is only being used at the moment for ephemeral container E2E tests
+ * since AzureClient does not currently support ephemeral containers.
+ * 
+ * Usage of this function for anything other than ephemeral E2E tests is
+ * not recommended.
+ * 
+ * @param requestPayload - The summary payload used to create the container,
+ * 		  currently these are mainly fetched from ephemeralSummaryTrees.ts
+ * @param userID - ID for the user creating the container
+ * @param userName - Name for the user creating the container
+ * @returns - An AxiosResponse containing the container ID(response.data.id),
+ *  		  or undefined, if the request fails.
+ */
 export async function createContainerFromPayload(
 	requestPayload: object,
 	userID?: string,
