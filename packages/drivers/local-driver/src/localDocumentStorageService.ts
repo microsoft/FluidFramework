@@ -145,7 +145,6 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 	) {
 		const groupId = await this.readGroupId(tree);
 		if (groupId !== undefined && !loadingGroupIds.has(groupId)) {
-			tree.groupId = groupId;
 			return;
 		} else {
 			for (const id of Object.values(tree.blobs)) {
