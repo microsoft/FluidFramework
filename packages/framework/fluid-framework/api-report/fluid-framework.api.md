@@ -5,9 +5,7 @@
 ```ts
 
 import { EventEmitterEventType } from '@fluid-internal/client-utils';
-import { FluidObject as FluidObject_2 } from '@fluidframework/core-interfaces';
 import { IFluidHandle as IFluidHandle_2 } from '@fluidframework/core-interfaces';
-import { IFluidLoadable as IFluidLoadable_2 } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import { TypedEventTransform } from '@fluid-internal/client-utils';
 
@@ -389,6 +387,9 @@ export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
 // @public
 export type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
+
+// @public
+export const fluidHandleSymbol: unique symbol;
 
 // @public
 export type FluidObject<T = unknown> = {
@@ -988,13 +989,8 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
 export const IFluidHandle = "IFluidHandle";
 
 // @public
-export interface IFluidHandle<out T = FluidObject & IFluidLoadable> extends IProvideFluidHandle {
-    // @deprecated (undocumented)
-    readonly absolutePath: string;
-    // @deprecated (undocumented)
-    attachGraph(): void;
-    // @deprecated (undocumented)
-    bind(handle: IFluidHandle): void;
+export interface IFluidHandle<out T = unknown> {
+    readonly [fluidHandleSymbol]: IFluidHandleErased<T>;
     get(): Promise<T>;
     readonly isAttached: boolean;
 }
@@ -1010,6 +1006,17 @@ export interface IFluidHandleContext extends IProvideFluidHandleContext {
     // (undocumented)
     resolveHandle(request: IRequest): Promise<IResponse>;
     readonly routeContext?: IFluidHandleContext;
+}
+
+// @public
+export interface IFluidHandleErased<T> extends ErasedType<readonly ["IFluidHandle", T]> {
+}
+
+// @alpha
+export interface IFluidHandleInternal<out T = unknown> extends IFluidHandle<T>, IProvideFluidHandle {
+    readonly absolutePath: string;
+    attachGraph(): void;
+    bind(handle: IFluidHandleInternal): void;
 }
 
 // @public (undocumented)
@@ -1369,10 +1376,10 @@ export enum IntervalType {
     Transient = 4
 }
 
-// @public (undocumented)
+// @alpha @deprecated (undocumented)
 export interface IProvideFluidHandle {
-    // (undocumented)
-    readonly [IFluidHandle]: IFluidHandle;
+    // @deprecated (undocumented)
+    readonly [IFluidHandle]: IFluidHandleInternal;
 }
 
 // @public (undocumented)
@@ -2081,7 +2088,7 @@ export class PropertiesManager {
     // (undocumented)
     copyTo(oldProps: PropertySet, newProps: PropertySet | undefined, newManager: PropertiesManager): PropertySet | undefined;
     // (undocumented)
-    hasPendingProperties(): boolean;
+    hasPendingProperties(props: PropertySet): boolean;
     // (undocumented)
     hasPendingProperty(key: string): boolean;
 }
@@ -2188,7 +2195,7 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
         [Symbol.iterator](): Iterator<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>;
     }, false, T>;
     readonly boolean: TreeNodeSchema<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean>;
-    readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle_2<FluidObject_2 & IFluidLoadable_2>, IFluidHandle_2<FluidObject_2 & IFluidLoadable_2>>;
+    readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle_2<unknown>, IFluidHandle_2<unknown>>;
     get identifier(): FieldSchema<FieldKind.Identifier>;
     map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
     map<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
@@ -2384,7 +2391,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     emit(event: EventEmitterEventType, ...args: any[]): boolean;
     abstract getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     abstract getGCData(fullGC?: boolean): IGarbageCollectionData;
-    readonly handle: IFluidHandle;
+    readonly handle: IFluidHandleInternal;
     protected handleDecoded(decodedHandle: IFluidHandle): void;
     // (undocumented)
     id: string;

@@ -5,7 +5,11 @@
 
 import { EventEmitterEventType } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IFluidHandle, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import {
+	IFluidHandle,
+	type IFluidHandleInternal,
+	ITelemetryBaseProperties,
+} from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
@@ -61,7 +65,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	/**
 	 * The handle referring to this SharedObject
 	 */
-	public readonly handle: IFluidHandle;
+	public readonly handle: IFluidHandleInternal;
 
 	/**
 	 * Telemetry logger for the shared object

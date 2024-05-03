@@ -1323,6 +1323,7 @@ declare function get_old_ClassDeclaration_SharedIntervalCollection():
 declare function use_current_ClassDeclaration_SharedIntervalCollection(
     use: TypeOnly<current.SharedIntervalCollection>): void;
 use_current_ClassDeclaration_SharedIntervalCollection(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedIntervalCollection());
 
 /*
@@ -1379,6 +1380,7 @@ declare function get_old_ClassDeclaration_SharedSegmentSequence():
 declare function use_current_ClassDeclaration_SharedSegmentSequence(
     use: TypeOnly<current.SharedSegmentSequence<any>>): void;
 use_current_ClassDeclaration_SharedSegmentSequence(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedSegmentSequence());
 
 /*
@@ -1407,6 +1409,7 @@ declare function get_old_ClassDeclaration_SharedSequence():
 declare function use_current_ClassDeclaration_SharedSequence(
     use: TypeOnly<current.SharedSequence<any>>): void;
 use_current_ClassDeclaration_SharedSequence(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedSequence());
 
 /*
@@ -1430,12 +1433,6 @@ use_old_ClassDeclaration_SharedSequence(
  * typeValidation.broken:
  * "RemovedClassDeclaration_SharedString": {"forwardCompat": false}
  */
-declare function get_old_ClassDeclaration_SharedString():
-    TypeOnly<old.SharedString>;
-declare function use_current_RemovedClassDeclaration_SharedString(
-    use: TypeOnly<current.SharedString>): void;
-use_current_RemovedClassDeclaration_SharedString(
-    get_old_ClassDeclaration_SharedString());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.

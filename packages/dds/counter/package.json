@@ -139,6 +139,11 @@
 	"typeValidation": {
 		"broken": {
 			"RemovedClassDeclaration_SharedCounter": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ISharedCounter": {
+				"forwardCompat": false,
 				"backCompat": false
 			}
 		}

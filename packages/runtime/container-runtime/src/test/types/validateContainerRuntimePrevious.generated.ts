@@ -90,6 +90,7 @@ declare function get_old_ClassDeclaration_ChannelCollection():
 declare function use_current_ClassDeclaration_ChannelCollection(
     use: TypeOnly<current.ChannelCollection>): void;
 use_current_ClassDeclaration_ChannelCollection(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ChannelCollection());
 
 /*

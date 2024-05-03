@@ -510,6 +510,7 @@ declare function get_old_InterfaceDeclaration_IFluidHandle():
 declare function use_current_InterfaceDeclaration_IFluidHandle(
     use: TypeOnly<current.IFluidHandle>): void;
 use_current_InterfaceDeclaration_IFluidHandle(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidHandle());
 
 /*
@@ -524,6 +525,7 @@ declare function get_current_InterfaceDeclaration_IFluidHandle():
 declare function use_old_InterfaceDeclaration_IFluidHandle(
     use: TypeOnly<old.IFluidHandle>): void;
 use_old_InterfaceDeclaration_IFluidHandle(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidHandle());
 
 /*
@@ -622,6 +624,7 @@ declare function get_old_InterfaceDeclaration_IFluidLoadable():
 declare function use_current_InterfaceDeclaration_IFluidLoadable(
     use: TypeOnly<current.IFluidLoadable>): void;
 use_current_InterfaceDeclaration_IFluidLoadable(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidLoadable());
 
 /*
@@ -636,6 +639,7 @@ declare function get_current_InterfaceDeclaration_IFluidLoadable():
 declare function use_old_InterfaceDeclaration_IFluidLoadable(
     use: TypeOnly<old.IFluidLoadable>): void;
 use_old_InterfaceDeclaration_IFluidLoadable(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidLoadable());
 
 /*
@@ -762,6 +766,7 @@ declare function get_old_InterfaceDeclaration_IProvideFluidHandle():
 declare function use_current_InterfaceDeclaration_IProvideFluidHandle(
     use: TypeOnly<current.IProvideFluidHandle>): void;
 use_current_InterfaceDeclaration_IProvideFluidHandle(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IProvideFluidHandle());
 
 /*
@@ -818,6 +823,7 @@ declare function get_old_InterfaceDeclaration_IProvideFluidLoadable():
 declare function use_current_InterfaceDeclaration_IProvideFluidLoadable(
     use: TypeOnly<current.IProvideFluidLoadable>): void;
 use_current_InterfaceDeclaration_IProvideFluidLoadable(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IProvideFluidLoadable());
 
 /*
@@ -832,6 +838,7 @@ declare function get_current_InterfaceDeclaration_IProvideFluidLoadable():
 declare function use_old_InterfaceDeclaration_IProvideFluidLoadable(
     use: TypeOnly<old.IProvideFluidLoadable>): void;
 use_old_InterfaceDeclaration_IProvideFluidLoadable(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IProvideFluidLoadable());
 
 /*

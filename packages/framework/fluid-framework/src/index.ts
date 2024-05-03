@@ -55,7 +55,6 @@ export type {
 	FluidObjectProviderKeys,
 	ITelemetryBaseProperties,
 	IEventTransformer,
-	IProvideFluidHandle,
 	IProvideFluidLoadable,
 	TransformedEvent,
 	TelemetryBaseEventPropertyType,
@@ -71,7 +70,9 @@ export type {
 	LogLevel,
 	IDisposable as IDisposable_2,
 	ErasedType,
+	IFluidHandleErased,
 } from "@fluidframework/core-interfaces";
+export { fluidHandleSymbol } from "@fluidframework/core-interfaces";
 export type {
 	IChannel,
 	IChannelAttributes,
@@ -290,3 +291,8 @@ export type {
 	// Linked in docs
 	AttributionInfo,
 } from "@fluidframework/runtime-definitions/internal";
+
+export type {
+	IFluidHandleInternal,
+	IProvideFluidHandle,
+} from "@fluidframework/core-interfaces/internal";
