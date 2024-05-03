@@ -136,11 +136,10 @@ export async function createContainerFromPayload(
 		if (response.status === 201) {
 			console.log("Container created successfully");
 		} else {
-			console.error(`Error creating container. Status code: ${response.status}`);
+			throw new Error(`Error creating container. Status code: ${response.status}`);
 		}
 		return response;
 	} catch (error) {
-		console.error("An error occurred:", error);
+		throw new Error(`An error occurred: ${error}`);
 	}
-	return undefined;
 }
