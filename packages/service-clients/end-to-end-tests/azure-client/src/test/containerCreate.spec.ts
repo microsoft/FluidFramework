@@ -45,6 +45,9 @@ describe("Container create scenarios", () => {
 	 * be returned.
 	 */
 	it("Created container is detached", async function () {
+		// We currently don't have API surface to create a detached ephemeral container.
+		// Instead, ephemeral containers are created indirectly using the test util createContainerFromPayload().
+		// Once we add ephemeral container API surface to AzureClient, we can enable this test for ephemeral too.
 		if (isEphemeral) {
 			this.skip();
 		}
