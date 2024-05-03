@@ -9,7 +9,11 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
 import { type IRuntimeFactory } from "@fluidframework/container-definitions/internal";
-import { type ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import {
+	CompressionAlgorithms,
+	type ContainerRuntime,
+	type IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	type FluidObject,
@@ -22,12 +26,13 @@ import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { RequestParser } from "@fluidframework/runtime-utils/internal";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
 
-import {
-	type ContainerSchema,
-	type IRootDataObject,
-	type LoadableObjectClass,
-	type LoadableObjectClassRecord,
-	type LoadableObjectRecord,
+import type {
+	ContainerSchema,
+	IRootDataObject,
+	LoadableObjectClass,
+	LoadableObjectClassRecord,
+	LoadableObjectRecord,
+	CompatMode,
 } from "./types.js";
 import {
 	type InternalDataObjectClass,
@@ -165,9 +170,37 @@ const rootDataStoreId = "rootDOId";
  */
 export function createDOProviderContainerRuntimeFactory(props: {
 	schema: ContainerSchema;
+	compatMode: CompatMode;
 }): IRuntimeFactory {
-	return new DOProviderContainerRuntimeFactory(props.schema);
+	return new DOProviderContainerRuntimeFactory(props.schema, props.compatMode ?? "1.x");
 }
+
+const compatModeRuntimeOptions: Record<CompatMode, IContainerRuntimeOptions> = {
+	"1.x": {
+		// 1.x clients are compatible with TurnBased flushing, but here we elect to remain on Immediate flush mode
+		// as a work-around for inability to send batches larger than 1Mb. Immediate flushing keeps batches smaller as
+		// fewer messages will be included per flush.
+		flushMode: FlushMode.Immediate,
+		// Op compression is on by default but introduces a new type of op which is not compatible with 1.x clients.
+		compressionOptions: {
+			minimumBatchSizeInBytes: Number.POSITIVE_INFINITY, // disabled
+			compressionAlgorithm: CompressionAlgorithms.lz4,
+		},
+		// Grouped batching is on by default but introduces a new type of op which is incompatible with 1.x clients.
+		enableGroupedBatching: false,
+	},
+	"2.x": {
+		// Explicit schema control explicitly makes the container incompatible with 1.x clients, to force their
+		// ejection from collaboration and prevent container corruption.  It is off by default and must be explicitly enabled.
+		explicitSchemaControl: true,
+		// The runtime ID compressor is a prerequisite to use SharedTree but is off by default and must be explicitly enabled.
+		// It introduces a new type of op which is not compatible with 1.x clients.
+		enableRuntimeIdCompressor: "on",
+		// Grouped batching is off by default and must be explicitly enabled. It introduces a new type of op which is not
+		// compatible with 1.x clients.
+		enableGroupedBatching: true,
+	},
+};
 
 /**
  * Container code that provides a single {@link IRootDataObject}.
@@ -189,7 +222,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 
 	private readonly initialObjects: LoadableObjectClassRecord;
 
-	public constructor(schema: ContainerSchema) {
+	public constructor(schema: ContainerSchema, compatMode: CompatMode) {
 		const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 		const rootDataObjectFactory = new DataObjectFactory(
 			"rootDO",
@@ -227,15 +260,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		super({
 			registryEntries: [rootDataObjectFactory.registryEntry],
 			requestHandlers: [getDefaultObject],
-			// WARNING: These settigs are not compatible with FF 1.3 clients!
-			runtimeOptions: {
-				// temporary workaround to disable message batching until the message batch size issue is resolved
-				// resolution progress is tracked by the Feature 465 work item in AzDO
-				flushMode: FlushMode.Immediate,
-				// The runtime compressor is required to be on to use @fluidframework/tree.
-				enableRuntimeIdCompressor: "on",
-				explicitSchemaControl: true,
-			},
+			runtimeOptions: compatModeRuntimeOptions[compatMode],
 			provideEntryPoint,
 		});
 		this.rootDataObjectFactory = rootDataObjectFactory;

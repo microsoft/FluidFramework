@@ -146,6 +146,7 @@ export class TinyliciousClient {
 	private createLoader(schema: ContainerSchema): IHostLoader {
 		const containerRuntimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,
+			compatMode: "2.x",
 		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {

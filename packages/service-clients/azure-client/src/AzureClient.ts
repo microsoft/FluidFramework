@@ -260,7 +260,10 @@ export class AzureClient {
 	}
 
 	private createLoader(schema: ContainerSchema): Loader {
-		const runtimeFactory = createDOProviderContainerRuntimeFactory({ schema });
+		const runtimeFactory = createDOProviderContainerRuntimeFactory({
+			schema,
+			compatMode: "1.x",
+		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
 				module: { fluidExport: runtimeFactory },
