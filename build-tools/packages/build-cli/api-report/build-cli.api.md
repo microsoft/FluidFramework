@@ -4,7 +4,7 @@
 
 ```ts
 
-import { Arg } from '@oclif/core/lib/interfaces';
+import { ArgDefinition } from '@oclif/core/lib/interfaces/parser';
 import { BooleanFlag } from '@oclif/core/lib/interfaces';
 import { Command } from '@oclif/core';
 import { CustomOptions } from '@oclif/core/lib/interfaces';
@@ -196,7 +196,7 @@ export function npmCheckUpdates(context: Context, releaseGroup: ReleaseGroup | R
 }>;
 
 // @public
-export const packageOrReleaseGroupArg: Arg<string, Record<string, unknown>>;
+export const packageOrReleaseGroupArg: ArgDefinition<string, Record<string, unknown>>;
 
 // @public
 export const packageSelectorFlag: FlagDefinition<string, CustomOptions, {
