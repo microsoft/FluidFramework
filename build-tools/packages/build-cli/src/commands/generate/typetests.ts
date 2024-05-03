@@ -14,6 +14,7 @@ import {
 	buildTestCase,
 	getFullTypeName,
 	getNodeTypeData,
+	getTypeTestPreviousPackageDetails,
 	typeOnly,
 } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
@@ -21,8 +22,9 @@ import { PackageName } from "@rushstack/node-core-library";
 import * as changeCase from "change-case";
 import { mkdirSync, readJson, rmSync, writeFileSync } from "fs-extra";
 import * as resolve from "resolve.exports";
-import { ModuleKind, ModuleResolutionKind, Project, type SourceFile } from "ts-morph";
+import { ModuleKind, Project, type SourceFile } from "ts-morph";
 import { PackageCommand } from "../../BasePackageCommand";
+import type { PackageSelectionDefault } from "../../flags";
 import { ApiLevel, ensureDevDependencyExists, knownApiLevels } from "../../library";
 import { unscopedPackageNameString } from "./entrypoints";
 
@@ -32,11 +34,11 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 	static readonly description = "Generates type tests for a package or group of packages.";
 
 	static readonly flags = {
-		level: Flags.string({
+		level: Flags.custom<ApiLevel>({
 			description: "What API level to generate tests for.",
 			default: ApiLevel.internal,
 			options: knownApiLevels,
-		}),
+		})(),
 		outDir: Flags.directory({
 			description: "Where to emit the type tests file.",
 			default: "./src/test/types",
@@ -53,20 +55,35 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		...PackageCommand.flags,
 	} as const;
 
-	protected async processPackage(pkg: Package): Promise<void> {
-		const { outDir, outFile } = this.flags;
+	protected defaultSelection = "dir" as PackageSelectionDefault;
 
-		// This cast is safe because oclif has already ensured only known ApiLevel values get to this point.
-		const level = this.flags.level as ApiLevel;
+	protected async processPackage(pkg: Package): Promise<void> {
+		const { level, outDir, outFile } = this.flags;
 		const fallbackLevel = this.flags.publicFallback ? ApiLevel.public : undefined;
 
 		// Do not check that file exists before opening:
 		// Doing so is a time of use vs time of check issue so opening the file could fail anyway.
 		// Do not catch error from opening file since the default behavior is fine (exits process with error showing useful message)
 		const currentPackageJson = pkg.packageJson;
-		const previousPackageName = `${currentPackageJson.name}-previous`;
-		const previousBasePath = path.join(pkg.directory, "node_modules", previousPackageName);
-		const previousPackageJsonPath = path.join(previousBasePath, "package.json");
+		const { name: previousPackageName, packageJsonPath: previousPackageJsonPath } =
+			getTypeTestPreviousPackageDetails(pkg);
+		const previousBasePath = path.dirname(previousPackageJsonPath);
+
+		const typeTestOutputFile = getTypeTestFilePath(pkg, outDir, outFile);
+		if (currentPackageJson.typeValidation?.disabled === true) {
+			this.info(
+				"Skipping type test generation because typeValidation.disabled is true in package.json",
+			);
+			rmSync(
+				typeTestOutputFile,
+				// force means to ignore the error if the file does not exist.
+				{ force: true },
+			);
+			this.verbose(`Deleted file: ${typeTestOutputFile}`);
+
+			// Early exit; no error.
+			return;
+		}
 
 		ensureDevDependencyExists(currentPackageJson, previousPackageName);
 		this.verbose(`Reading package.json at ${previousPackageJsonPath}`);
@@ -76,18 +93,6 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		// functions use the correct name. For example, when we write the `import { foo } from <PACKAGE>/internal`
 		// statements into the type test file, we need to use the previous version name.
 		previousPackageJson.name = previousPackageName;
-
-		const typeTestOutputFile = getTypeTestFilePath(pkg, outDir, outFile);
-		if (currentPackageJson.typeValidation?.disabled === true) {
-			this.info("skipping type test generation because they are disabled in package.json");
-			rmSync(
-				typeTestOutputFile,
-				// force means to ignore the error if the file does not exist.
-				{ force: true },
-			);
-			this.verbose(`Deleted file: ${typeTestOutputFile}`);
-			this.exit(0);
-		}
 
 		const { typesPath: currentTypesPathRelative, levelUsed: currentPackageLevel } =
 			getTypesPathWithFallback(currentPackageJson, level, fallbackLevel);
@@ -105,7 +110,18 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 			`Found ${previousPackageLevel} type definitions for ${previousPackageJson.name}: ${previousTypesPath}`,
 		);
 
-		const currentFile = loadTypesSourceFile(currentTypesPath);
+		// For the current version, we load the package-local tsconfig and return index.ts as the source file. This ensures
+		// we don't need to build before running type test generation. It's tempting to load the .d.ts files and use the
+		// same code path as is used below for the previous version (loadTypesSourceFile()), but that approach requires that
+		// the local project be built.
+		//
+		// One drawback to this approach is that it will always enumerate the full (internal) API for the current version.
+		// There's no way to scope it to just alpha, beta, etc. for example. If that capability is eventually needed we can
+		// revisit this.
+		const currentFile = new Project({
+			skipFileDependencyResolution: true,
+			tsConfigFilePath: path.join(pkg.directory, "tsconfig.json"),
+		}).getSourceFileOrThrow("index.ts");
 		this.verbose(
 			`Loaded source file for current version (${pkg.version}): ${currentFile.getFilePath()}`,
 		);
@@ -132,12 +148,13 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 
 /*
  * THIS IS AN AUTOGENERATED FILE. DO NOT EDIT THIS FILE DIRECTLY.
- * Generated by fluid-type-test-generator in @fluidframework/build-tools.
+ * Generated by flub generate:typetests in @fluid-tools/build-cli.
  */
 
 import type * as old from "${previousPackageName}${
 				previousPackageLevel === ApiLevel.public ? "" : `/${previousPackageLevel}`
 			}";
+
 import type * as current from "../../index.js";
 		`.trim(),
 			typeOnly,
@@ -209,12 +226,18 @@ export function getTypesPathFromPackage(
 		// First try to resolve with the "import" condition, assuming the package is either ESM-only or dual-format.
 		// conditions: ["default", "types", "import", "node"]
 		const exports = resolve.exports(packageJson, entrypoint, { conditions: ["types"] });
-		typesPath =
-			exports === undefined || exports.length === 0
-				? packageJson.types ?? packageJson.typings
-				: exports[0];
+
+		// resolve.exports returns a `Exports.Output | void` type, though the documentation isn't clear under what
+		// conditions `void` would be the return type vs. just throwing an exception. Since the types say exports could be
+		// undefined or an empty array (Exports.Output is an array type), check for those conditions.
+		typesPath = exports === undefined || exports.length === 0 ? undefined : exports[0];
 	} catch {
 		// Catch and ignore any exceptions here; we'll retry with the require condition.
+	}
+
+	// Found the types using the import condition, so return early.
+	if (typesPath !== undefined) {
+		return typesPath;
 	}
 
 	try {
@@ -226,16 +249,13 @@ export function getTypesPathFromPackage(
 			conditions: ["types"],
 			require: true,
 		});
-		// Only assign typesPath if it wasn't already assigned earlier.
-		typesPath ??=
-			exports === undefined || exports.length === 0
-				? packageJson.types ?? packageJson.typings
-				: exports[0];
+		typesPath = exports === undefined || exports.length === 0 ? undefined : exports[0];
 	} catch {
 		// Catch any exceptions here; we'll return undefined instead of throwing them.
 	}
 
-	return typesPath;
+	// Fall back to types/typings fields if both import and require conditions yielded nothing.
+	return typesPath ?? packageJson.types ?? packageJson.typings;
 }
 
 /**
@@ -292,19 +312,18 @@ function typeDataFromFile(file: SourceFile, log: Logger): Map<string, TypeData> 
 /**
  * Loads a ts-morph source file from the provided path.
  *
- * @param typesPath - The path to the types file to load. This path is expected to be relative to
+ * @param typesPath - The path to the types file to load.
  * @returns The loaded source file.
  */
 export function loadTypesSourceFile(typesPath: string): SourceFile {
+	// Note that this does NOT load anything from tsconfig.
 	const project = new Project({
 		skipAddingFilesFromTsConfig: true,
 		compilerOptions: {
 			module: ModuleKind.Node16,
-			moduleResolution: ModuleResolutionKind.Node16,
 		},
 	});
-	project.addSourceFilesAtPaths(`${path.dirname(typesPath)}/**/*.d.*ts`);
-	const sourceFile = project.getSourceFileOrThrow(path.basename(typesPath));
+	const sourceFile = project.addSourceFileAtPath(typesPath);
 	return sourceFile;
 }
 

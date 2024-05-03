@@ -21,4 +21,4 @@ export {
 	IValueChanged,
 } from "./interfaces.js";
 export { LocalValueMaker, ILocalValue } from "./localValues.js";
-export { MapFactory, AttributableMap } from "./map.js";
+export { AttributableMap } from "./map.js";

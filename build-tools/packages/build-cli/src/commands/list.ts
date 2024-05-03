@@ -3,13 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import path from "node:path";
+import { MonoRepo, Package, PackageNamePolicyConfig } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
-
-import { writeFileSync } from "node:fs";
-import { Package, PackageNamePolicyConfig } from "@fluidframework/build-tools";
+import { mkdirpSync, writeFileSync } from "fs-extra";
+import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args";
 import { BaseCommand } from "../base";
 import { filterPackages, parsePackageFilterFlags } from "../filter";
 import { filterFlags, releaseGroupFlag } from "../flags";
+import { getTarballName } from "../library";
 import {
 	type Feed,
 	feeds,
@@ -34,8 +36,18 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 	static readonly description = `List packages in a release group in topological order.`;
 	static readonly enableJsonFlag = true;
 
+	static readonly args = {
+		package_or_release_group: packageOrReleaseGroupArg({ required: false }),
+	} as const;
+
 	static readonly flags = {
-		releaseGroup: releaseGroupFlag({ required: true }),
+		releaseGroup: releaseGroupFlag({
+			exclusive: ["package"],
+			deprecated: {
+				message:
+					"The --releaseGroup flag is no longer needed. You can pass either a release group or package name directly as an argument.",
+			},
+		}),
 		feed: Flags.custom<Feed | undefined>({
 			description:
 				"Filter the resulting packages to those that should be published to a particular npm feed. Use 'public' for public npm. The 'official' and 'internal' values are deprecated and should not be used.",
@@ -71,16 +83,26 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 	};
 
 	public async run(): Promise<ListItem[]> {
+		const { feed, outFile, releaseGroup: releaseGroupName, tarball } = this.flags;
 		const context = await this.getContext();
-		const releaseGroup = context.repo.releaseGroups.get(this.flags.releaseGroup);
+		const lookupName = releaseGroupName ?? this.args.package_or_release_group;
+		if (lookupName === undefined) {
+			this.error(`No release group or package flag found.`, { exit: 1 });
+		}
+		const rgOrPackage = findPackageOrReleaseGroup(lookupName, context);
 
-		if (releaseGroup === undefined) {
-			// exits the process
-			this.error(`Can't find release group: ${this.flags.releaseGroup}`, { exit: 1 });
+		// Handle single packages
+		if (rgOrPackage instanceof Package) {
+			const item = await this.outputSinglePackage(rgOrPackage);
+			return [item];
+		}
+
+		if (rgOrPackage === undefined || !(rgOrPackage instanceof MonoRepo)) {
+			this.error(`No release group or package found using name '${lookupName}'.`, { exit: 1 });
 		}
 
 		const filterOptions = parsePackageFilterFlags(this.flags);
-		const packageList = await pnpmList(releaseGroup.repoPath);
+		const packageList = await pnpmList(rgOrPackage.repoPath);
 		const filtered = filterPackages(packageList, filterOptions)
 			.reverse()
 			.filter((item): item is ListItem => {
@@ -90,34 +112,53 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 					this.error(`No fluid-build package name policy config found.`);
 				}
 
-				if (this.flags.feed === undefined) {
+				if (feed === undefined) {
 					return true;
 				}
 
-				const result = packagePublishesToFeed(item.name, config, this.flags.feed);
+				const result = packagePublishesToFeed(item.name, config, feed);
 				return result;
 			})
 			.map((item) => {
 				// pnpm returns absolute paths, but repo relative is more useful
 				item.path = context.repo.relativeToRepo(item.path);
-				item.tarball = item.name.replaceAll("@", "").replaceAll("/", "-");
+				item.tarball = getTarballName(item.name);
 
 				// Set the tarball name if the tarball flag is set
-				if (this.flags.tarball === true) {
+				if (tarball === true) {
 					item.name = item.tarball;
 				}
 				return item;
 			});
 
 		const output = filtered.map((details) => details.name).join("\n");
+		await this.writeOutput(output, outFile);
 
-		if (this.flags.outFile === undefined) {
+		// For JSON output
+		return filtered;
+	}
+
+	private async outputSinglePackage(pkg: Package): Promise<ListItem> {
+		const output = this.flags.tarball ? getTarballName(pkg.name) : pkg.name;
+
+		await this.writeOutput(output, this.flags.outFile);
+		const item: ListItem = {
+			name: pkg.name,
+			version: pkg.version,
+			path: pkg.directory,
+			private: pkg.private,
+			tarball: getTarballName(pkg.packageJson),
+		};
+		return item;
+	}
+
+	private async writeOutput(output: string, outFile?: string): Promise<void> {
+		if (outFile === undefined) {
 			this.log(output);
 		} else {
-			writeFileSync(this.flags.outFile, output);
+			mkdirpSync(path.dirname(outFile));
+			writeFileSync(outFile, output);
 		}
-
-		return filtered;
 	}
 }
 

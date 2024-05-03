@@ -249,7 +249,10 @@ function createSharedString(
 	let serializer: Encoder<IAttributor, string> | undefined;
 	const initialState: FuzzTestState = {
 		clients: clientIds.map((clientId, index) => {
-			const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
+			const dataStoreRuntime = new MockFluidDataStoreRuntime({
+				clientId,
+				registry: [SharedString.getFactory()],
+			});
 			dataStoreRuntime.options = {
 				attribution: {
 					track: makeSerializer !== undefined,
@@ -257,7 +260,7 @@ function createSharedString(
 				},
 			};
 			const { deltaManager } = dataStoreRuntime;
-			const sharedString = SharedString.getFactory().create(
+			const sharedString = SharedString.create(
 				dataStoreRuntime, // eslint-disable-next-line unicorn/prefer-code-point
 				String.fromCharCode(index + 65),
 			);

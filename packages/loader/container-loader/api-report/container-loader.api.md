@@ -15,6 +15,7 @@ import { IDocumentStorageService } from '@fluidframework/driver-definitions/inte
 import { IFluidCodeDetails } from '@fluidframework/container-definitions/internal';
 import { IFluidModule } from '@fluidframework/container-definitions/internal';
 import { IHostLoader } from '@fluidframework/container-definitions/internal';
+import { ILoader } from '@fluidframework/container-definitions/internal';
 import { ILoaderOptions as ILoaderOptions_2 } from '@fluidframework/container-definitions/internal';
 import { ILocationRedirectionError } from '@fluidframework/driver-definitions/internal';
 import { IProtocolHandler as IProtocolHandler_2 } from '@fluidframework/protocol-base';
@@ -106,6 +107,9 @@ export interface IProtocolHandler extends IProtocolHandler_2 {
 
 // @internal
 export function isLocationRedirectionError(error: any): error is ILocationRedirectionError;
+
+// @internal
+export function loadContainerPaused(loader: ILoader, request: IRequest, loadToSequenceNumber?: number, signal?: AbortSignal): Promise<IContainer>;
 
 // @alpha
 export class Loader implements IHostLoader {
