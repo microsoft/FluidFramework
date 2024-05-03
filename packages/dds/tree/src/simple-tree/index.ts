@@ -21,6 +21,7 @@ export {
 	WithType,
 	AllowedTypes,
 	ApplyKind,
+	InsertableApplyKind,
 	FieldKind,
 	FieldSchema,
 	InsertableTreeFieldFromImplicitField,

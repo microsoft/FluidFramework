@@ -18,6 +18,7 @@ import {
 	TreeNodeFromImplicitAllowedTypes,
 	TreeNodeSchema,
 	WithType,
+	InsertableApplyKind,
 } from "./schemaTypes.js";
 import { TreeArrayNodeBase, TreeArrayNode } from "./arrayNode.js";
 import { TreeNode, Unhydrated } from "./types.js";
@@ -166,7 +167,7 @@ export type InsertableObjectFromSchemaRecordUnsafe<
 export type InsertableTreeFieldFromImplicitFieldUnsafe<
 	TSchema extends Unenforced<ImplicitFieldSchema>,
 > = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
-	? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind>
+	? InsertableApplyKind<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind>
 	: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema>;
 
 /**

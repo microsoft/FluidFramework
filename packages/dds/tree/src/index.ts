@@ -290,6 +290,7 @@ export {
 	WithType,
 	AllowedTypes,
 	ApplyKind,
+	InsertableApplyKind,
 	FieldKind,
 	FieldSchema,
 	ImplicitAllowedTypes,

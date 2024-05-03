@@ -539,7 +539,7 @@ export class SchemaFactory<
 	/**
 	 * Make a field of type identifier instead of the default which is required.
 	 */
-	public get identifier(): FieldSchema<FieldKind.Identifier> {
+	public get identifier(): FieldSchema<FieldKind.Identifier, typeof this.string> {
 		return createFieldSchema(FieldKind.Identifier, this.string);
 	}
 
