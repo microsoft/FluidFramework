@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { assert, expect } from "chai";
-import { pathExistsSync } from "fs-extra";
 
 import {
 	flattenChangesets,
@@ -18,7 +18,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const changesetsPath = path.resolve(__dirname, "../data");
-assert.isTrue(pathExistsSync(changesetsPath));
+assert.isTrue(existsSync(changesetsPath));
 
 describe("changesets", async () => {
 	it("loadChangesets", async () => {

@@ -4,9 +4,13 @@
  */
 
 import { ReleaseVersion, VersionBumpType } from "@fluid-tools/version-tools";
-import { test } from "@oclif/test";
 import chai, { expect } from "chai";
 import assertArrays from "chai-arrays";
+
+// @oclif/test cannot find the path to the project, so as a workaround we configure it explicitly
+import { test as oclifTest } from "@oclif/test";
+const test = oclifTest.loadConfig({ root: import.meta.url });
+
 import { ReleaseGroup, ReleasePackage } from "../../../src/releaseGroups.js";
 
 chai.use(assertArrays);

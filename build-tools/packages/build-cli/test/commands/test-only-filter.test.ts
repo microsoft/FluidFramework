@@ -4,7 +4,11 @@
  */
 
 import { Package } from "@fluidframework/build-tools";
-import { test } from "@oclif/test";
+
+// @oclif/test cannot find the path to the project, so as a workaround we configure it explicitly
+import { test as oclifTest } from "@oclif/test";
+const test = oclifTest.loadConfig({ root: import.meta.url });
+
 import chai, { expect } from "chai";
 import assertArrays from "chai-arrays";
 
