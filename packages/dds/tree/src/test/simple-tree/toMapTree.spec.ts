@@ -752,7 +752,7 @@ describe("toMapTree", () => {
 		});
 	});
 
-	describe.only("Stored schema validation", () => {
+	describe("Stored schema validation", () => {
 		function createSchemaAndPolicy(
 			nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map(),
 			fieldKinds: Map<FieldKindIdentifier, FieldKindData> = new Map(),

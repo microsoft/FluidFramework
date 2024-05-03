@@ -37,10 +37,7 @@ import {
 	normalizeFieldSchema,
 	getStoredKey,
 } from "./schemaTypes.js";
-import {
-	SchemaValidationErrors,
-	isNodeInSchema,
-} from "../feature-libraries/default-schema/index.js";
+import { SchemaValidationErrors, isNodeInSchema } from "../feature-libraries/index.js";
 
 /**
  * Module notes:
@@ -324,7 +321,11 @@ function mapToMapTree(
  * @param storedSchemaValidation - If specified, the input tree will be validated against this schema + policy, and
  * an error will be thrown if the tree does not conform to the schema.
  */
-function objectToMapTree(data: InsertableContent, schema: TreeNodeSchema,storedSchemaValidation: SchemaAndPolicy | undefined = undefined,): MapTree {
+function objectToMapTree(
+	data: InsertableContent,
+	schema: TreeNodeSchema,
+	storedSchemaValidation: SchemaAndPolicy | undefined = undefined,
+): MapTree {
 	assert(schema.kind === NodeKind.Object, 0x924 /* Expected an Object schema. */);
 	if (typeof data !== "object" || data === null) {
 		throw new UsageError(`Input data is incompatible with Object schema: ${data}`);
@@ -341,7 +342,11 @@ function objectToMapTree(data: InsertableContent, schema: TreeNodeSchema,storedS
 		// Omit undefined record entries - an entry with an undefined key is equivalent to no entry
 		if (fieldValue !== undefined) {
 			const fieldSchema = getObjectFieldSchema(schema, viewKey);
-			const mappedChildTree = nodeDataToMapTree(fieldValue, fieldSchema.allowedTypeSet, storedSchemaValidation);
+			const mappedChildTree = nodeDataToMapTree(
+				fieldValue,
+				fieldSchema.allowedTypeSet,
+				storedSchemaValidation,
+			);
 			const flexKey: FieldKey = brand(getStoredKey(viewKey, fieldSchema));
 
 			// Note: SchemaFactory validates this at schema creation time, with a user-friendly error.

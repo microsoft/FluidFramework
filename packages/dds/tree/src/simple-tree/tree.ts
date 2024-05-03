@@ -69,17 +69,27 @@ export interface ITree extends IChannel {
  * @public
  */
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
+	private readonly _enableSchemaValidation: boolean = false;
+	public get enableSchemaValidation(): boolean {
+		return this._enableSchemaValidation;
+	}
+
 	/**
 	 * @param schema - The schema which the application wants to view the tree with.
 	 * @param initialTree - A function that returns the default tree content to initialize the tree with iff the tree is uninitialized
 	 * (meaning it does not even have any schema set at all).
 	 * If `initialTree` returns any actual node instances, they should be recreated each time `initialTree` runs.
 	 * This is because if the config is used a second time any nodes that were not recreated could error since nodes cannot be inserted into the tree multiple times.
+	 * @param enableSchemaValidation - If true, the tree will validate new content against its stored schema at insertion time
+	 * and throw an error if the new content doesn't match the expected schema.
 	 */
 	public constructor(
 		public readonly schema: TSchema,
 		public readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>,
-	) {}
+		enableSchemaValidation: boolean = false,
+	) {
+		this._enableSchemaValidation = enableSchemaValidation;
+	}
 }
 
 /**

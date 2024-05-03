@@ -1843,7 +1843,9 @@ export enum TreeCompressionStrategy {
 
 // @public
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
-    constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>);
+    constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>, enableSchemaValidation?: boolean);
+    // (undocumented)
+    get enableSchemaValidation(): boolean;
     // (undocumented)
     readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>;
     // (undocumented)

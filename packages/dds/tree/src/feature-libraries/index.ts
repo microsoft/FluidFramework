@@ -226,6 +226,8 @@ export {
 	fieldKindConfigurations,
 	intoDelta,
 	relevantRemovedRoots,
+	SchemaValidationErrors,
+	isNodeInSchema,
 } from "./default-schema/index.js";
 
 export {

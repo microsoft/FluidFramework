@@ -213,7 +213,11 @@ export function setField(
 				| FlexTreeOptionalField<FlexAllowedTypes>;
 
 			const content = prepareContentForInsert(value, field.context.checkout.forest);
-			const cursor = cursorFromNodeData(content, simpleFieldSchema.allowedTypes);
+			const cursor = cursorFromNodeData(content, simpleFieldSchema.allowedTypes, {
+				schema: field.context.checkout.storedSchema,
+				policy: field.context.schema.policy,
+			});
+
 			typedField.content = cursor;
 			break;
 		}

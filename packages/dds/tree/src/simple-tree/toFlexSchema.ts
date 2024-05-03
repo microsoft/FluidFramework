@@ -6,7 +6,11 @@
 /* eslint-disable import/no-internal-modules */
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import { ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../core/index.js";
+import {
+	ITreeCursorSynchronous,
+	TreeNodeSchemaIdentifier,
+	type SchemaAndPolicy,
+} from "../core/index.js";
 import {
 	FieldKinds,
 	FlexAllowedTypes,
@@ -56,21 +60,31 @@ import { TreeConfiguration } from "./tree.js";
 function cursorFromUnhydratedRoot(
 	schema: ImplicitFieldSchema,
 	tree: InsertableTreeNodeFromImplicitAllowedTypes,
+	schemaAndPolicy: SchemaAndPolicy | undefined = undefined,
 ): ITreeCursorSynchronous {
 	const data = extractFactoryContent(tree as InsertableContent);
 	const normalizedFieldSchema = normalizeFieldSchema(schema);
 	return (
-		cursorFromNodeData(data, normalizedFieldSchema.allowedTypes) ??
+		cursorFromNodeData(data, normalizedFieldSchema.allowedTypes, schemaAndPolicy) ??
 		fail("failed to decode tree")
 	);
 }
 
-export function toFlexConfig(config: TreeConfiguration): TreeContent {
+export function toFlexConfig(
+	config: TreeConfiguration,
+	schemaAndPolicy: SchemaAndPolicy | undefined = undefined,
+): TreeContent {
 	const unhydrated = config.initialTree();
 	const initialTree =
 		unhydrated === undefined
 			? undefined
-			: [cursorFromUnhydratedRoot(config.schema, unhydrated)];
+			: [
+					cursorFromUnhydratedRoot(
+						config.schema,
+						unhydrated,
+						config.enableSchemaValidation ? schemaAndPolicy : undefined,
+					),
+			  ];
 	return {
 		schema: toFlexSchema(config.schema),
 		initialTree,
