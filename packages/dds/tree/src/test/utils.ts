@@ -1179,7 +1179,7 @@ export function treeTestFactory(
 			}),
 		options.attributes ?? new SharedTreeFactory().attributes,
 		options.options ?? { jsonValidator: typeboxValidator },
-		options.telemetryContextPrefix ?? "SharedTree",
+		options.telemetryContextPrefix,
 	);
 }
 
