@@ -35,7 +35,6 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
 
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-	 * @alpha
 	 */
 	public async load(
 		runtime: IFluidDataStoreRuntime,
@@ -48,9 +47,6 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
 		return collection;
 	}
 
-	/**
-	 * @alpha
-	 */
 	public create(document: IFluidDataStoreRuntime, id: string): IConsensusOrderedCollection {
 		const collection = new ConsensusQueue(id, document, this.attributes);
 		collection.initializeLocal();

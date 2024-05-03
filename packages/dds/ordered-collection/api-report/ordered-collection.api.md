@@ -62,9 +62,8 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
     static readonly Attributes: IChannelAttributes;
     // (undocumented)
     get attributes(): IChannelAttributes;
-    // @alpha (undocumented)
+    // (undocumented)
     create(document: IFluidDataStoreRuntime, id: string): IConsensusOrderedCollection;
-    // @alpha
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<IConsensusOrderedCollection>;
     // (undocumented)
     static Type: string;
