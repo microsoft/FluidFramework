@@ -537,7 +537,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 							minIdleTime: 60 * 1000,
 							maxIdleTime: 60 * 1000,
 							runtimeOpWeight: 1,
-							nonRuntimeOpWeight: 1,
+							nonRuntimeOpWeight: 0.1,
 							initialSummarizerDelayMs: 0,
 							maxAckWaitTime: 60 * 1000,
 							maxOpsSinceLastSummary: 1000,
