@@ -1261,7 +1261,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 						clientType: "interactive",
 					},
 				],
-				async function () {
+				async () => {
 					const { dataStore: mainDataStore, summarizer } =
 						await createDataStoreAndSummarizer();
 
