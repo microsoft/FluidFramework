@@ -245,6 +245,10 @@ jobs:
       # Install test and logger package
       - task: Npm@1
         displayName: 'npm install'
+        # ADO feeds have latency on the order of minutes before packages are available downstream. See:
+        # https://learn.microsoft.com/en-us/azure/devops/artifacts/concepts/upstream-sources?view=azure-devops#upstream-sources-health-status
+        # This pipeline installs packages which were published very recently relative to its runtime, hence the rather high retry count here.
+        retryCountOnTaskFailure: 5
         inputs:
           command: 'custom'
           workingDir: ${{ parameters.testWorkspace }}

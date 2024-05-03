@@ -250,7 +250,7 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 
 		// As the "parentAnchor === undefined" case is handled above, parentAnchorNode should exist.
 		assert(parentAnchorNode !== undefined, 0x77e /* parentAnchorNode must exist. */);
-		return treeStatusFromAnchorCache(this.context.forest.anchors, parentAnchorNode);
+		return treeStatusFromAnchorCache(parentAnchorNode);
 	}
 
 	public getFieldPath(): FieldUpPath {

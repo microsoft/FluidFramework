@@ -15,8 +15,10 @@ import {
 	RevisionTag,
 	TaggedChange,
 	makeAnonChange,
+	mapTaggedChange,
 	revisionMetadataSourceFromInfo,
 	tagChange,
+	tagRollbackInverse,
 } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -161,7 +163,13 @@ export function composeDeep(
 		(change1, change2) =>
 			makeAnonChange(
 				ChangesetWrapper.compose(change1, change2, (c1, c2, composeChild) =>
-					composePair(c1, c2, composeChild, metadata, idAllocatorFromMaxId()),
+					composePair(
+						c1.change,
+						c2.change,
+						composeChild,
+						metadata,
+						idAllocatorFromMaxId(),
+					),
 				),
 			),
 		makeAnonChange(ChangesetWrapper.create([])),
@@ -223,30 +231,26 @@ function composeI(
 	composer: (change1: NodeId | undefined, change2: NodeId | undefined) => NodeId,
 	revInfos?: RevisionInfo[] | RevisionMetadataSource,
 ): SF.Changeset {
-	const updatedChanges = changes.map(({ change, revision, rollbackOf }) => ({
-		change: purgeUnusedCellOrderingInfo(change),
-		revision,
-		rollbackOf,
-	}));
+	const updatedChanges = changes.map(({ change }) => purgeUnusedCellOrderingInfo(change));
 	const idAllocator = continuingAllocator(updatedChanges);
 	const metadata =
 		revInfos !== undefined
 			? Array.isArray(revInfos)
 				? revisionMetadataSourceFromInfo(revInfos)
 				: revInfos
-			: defaultRevisionMetadataFromChanges(updatedChanges);
+			: defaultRevisionMetadataFromChanges(changes);
 
 	let composed: SF.Changeset = [];
 	for (const change of updatedChanges) {
-		composed = composePair(makeAnonChange(composed), change, composer, metadata, idAllocator);
+		composed = composePair(composed, change, composer, metadata, idAllocator);
 	}
 
 	return composed;
 }
 
 function composePair(
-	change1: TaggedChange<SF.Changeset>,
-	change2: TaggedChange<SF.Changeset>,
+	change1: SF.Changeset,
+	change2: SF.Changeset,
 	composer: (change1: NodeId | undefined, change2: NodeId | undefined) => NodeId,
 	metadata: RevisionMetadataSource,
 	idAllocator: IdAllocator,
@@ -270,25 +274,27 @@ export interface RebaseConfig {
 }
 
 export function rebase(
-	change: SF.Changeset,
+	change: TaggedChange<SF.Changeset>,
 	base: TaggedChange<SF.Changeset>,
 	config: RebaseConfig = {},
 ): SF.Changeset {
-	const cleanChange = purgeUnusedCellOrderingInfo(change);
-	const cleanBase = { ...base, change: purgeUnusedCellOrderingInfo(base.change) };
+	const cleanChange = purgeUnusedCellOrderingInfo(change.change);
+	const cleanBase = purgeUnusedCellOrderingInfo(base.change);
 	deepFreeze(cleanChange);
 	deepFreeze(cleanBase);
 
 	const metadata =
 		config.metadata ??
-		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([cleanBase]), [
-			cleanBase.revision,
-		]);
+		rebaseRevisionMetadataFromInfo(
+			defaultRevInfosFromChanges([base, change]),
+			change.revision,
+			[base.revision],
+		);
 
 	const childRebaser = config.childRebaser ?? TestNodeId.rebaseChild;
 
 	const moveEffects = SF.newCrossFieldTable();
-	const idAllocator = idAllocatorFromMaxId(getMaxId(cleanChange, cleanBase.change));
+	const idAllocator = idAllocatorFromMaxId(getMaxId(cleanChange, cleanBase));
 	let rebasedChange = SF.rebase(
 		cleanChange,
 		cleanBase,
@@ -324,11 +330,13 @@ export function rebaseOverChanges(
 	revInfos?: RevisionInfo[],
 ): TaggedChange<SF.Changeset> {
 	let currChange = change;
-	const revisionInfo = revInfos ?? defaultRevInfosFromChanges(baseChanges);
+	const revisionInfo = revInfos ?? defaultRevInfosFromChanges([...baseChanges, change]);
 	for (const base of baseChanges) {
 		currChange = tagChange(
-			rebase(currChange.change, base, {
-				metadata: rebaseRevisionMetadataFromInfo(revisionInfo, [base.revision]),
+			rebase(currChange, base, {
+				metadata: rebaseRevisionMetadataFromInfo(revisionInfo, change.revision, [
+					base.revision,
+				]),
 			}),
 			currChange.revision,
 		);
@@ -342,7 +350,7 @@ export function rebaseOverComposition(
 	base: SF.Changeset,
 	metadata: RebaseRevisionMetadata,
 ): SF.Changeset {
-	return rebase(change, makeAnonChange(base), { metadata });
+	return rebase(makeAnonChange(change), makeAnonChange(base), { metadata });
 }
 
 export type WrappedChange = ChangesetWrapper<SF.Changeset>;
@@ -350,17 +358,13 @@ export type WrappedChange = ChangesetWrapper<SF.Changeset>;
 export function rebaseDeepTagged(
 	change: TaggedChange<WrappedChange>,
 	base: TaggedChange<WrappedChange>,
-): TaggedChange<WrappedChange> {
-	return { ...change, change: rebaseDeep(change.change, base) };
-}
-
-export function rebaseDeep(
-	change: WrappedChange,
-	base: TaggedChange<WrappedChange>,
 	metadata?: RebaseRevisionMetadata,
-): WrappedChange {
-	return ChangesetWrapper.rebase(change, base, (c, b, childRebaser) =>
-		rebase(c, b, { childRebaser, metadata }),
+): TaggedChange<WrappedChange> {
+	return mapTaggedChange(
+		change,
+		ChangesetWrapper.rebase(change, base, (c, b, childRebaser) =>
+			rebase(c, b, { childRebaser, metadata }),
+		),
 	);
 }
 
@@ -375,10 +379,10 @@ export function invertDeep(change: TaggedChange<WrappedChange>): WrappedChange {
 }
 
 export function invert(change: TaggedChange<SF.Changeset>): SF.Changeset {
-	const cleanChange = { ...change, change: purgeUnusedCellOrderingInfo(change.change) };
+	const cleanChange = purgeUnusedCellOrderingInfo(change.change);
 	deepFreeze(cleanChange);
 	const table = SF.newCrossFieldTable();
-	const revisionMetadata = defaultRevisionMetadataFromChanges([cleanChange]);
+	const revisionMetadata = defaultRevisionMetadataFromChanges([change]);
 	let inverted = SF.invert(
 		cleanChange,
 		true,
@@ -409,9 +413,9 @@ export function checkDeltaEquality(actual: SF.Changeset, expected: SF.Changeset)
 	assertFieldChangesEqual(toDelta(actual), toDelta(expected));
 }
 
-export function toDelta(change: SF.Changeset, revision?: RevisionTag): DeltaFieldChanges {
+export function toDelta(change: SF.Changeset): DeltaFieldChanges {
 	deepFreeze(change);
-	return SF.sequenceFieldToDelta(tagChange(change, revision), TestNodeId.deltaFromChild);
+	return SF.sequenceFieldToDelta(change, TestNodeId.deltaFromChild);
 }
 
 export function getMaxId(...changes: SF.Changeset[]): ChangesetLocalId | undefined {
@@ -433,8 +437,8 @@ export function getMaxIdTagged(
 	return getMaxId(...changes.map((c) => c.change));
 }
 
-export function continuingAllocator(changes: TaggedChange<SF.Changeset>[]): IdAllocator {
-	return idAllocatorFromMaxId(getMaxIdTagged(changes));
+export function continuingAllocator(changes: SF.Changeset[]): IdAllocator {
+	return idAllocatorFromMaxId(getMaxId(...changes));
 }
 
 export function withoutLineageDeep(changeset: WrappedChange): WrappedChange {
@@ -789,4 +793,19 @@ export function areComposable(changes: TaggedChange<Changeset>[]): boolean {
 		tracker.apply(change);
 	}
 	return true;
+}
+
+export function tagChangeInline(
+	change: Changeset,
+	revision: RevisionTag,
+	rollbackOf?: RevisionTag,
+): TaggedChange<Changeset> {
+	const inlined = inlineRevision(change, revision);
+	return rollbackOf !== undefined
+		? tagRollbackInverse(inlined, revision, rollbackOf)
+		: tagChange(inlined, revision);
+}
+
+export function inlineRevision(change: Changeset, revision: RevisionTag): Changeset {
+	return SF.sequenceFieldChangeRebaser.replaceRevisions(change, new Set([undefined]), revision);
 }

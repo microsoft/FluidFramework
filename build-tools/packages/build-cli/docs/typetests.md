@@ -64,9 +64,9 @@ PACKAGE SELECTION FLAGS
                                       include release group root packages. To include those, use the --releaseGroupRoot
                                       argument. Cannot be used with --all, --dir, or --packages.
                                       <options: client|server|azure|build-tools|gitrest|historian|all>
-      --all                           Run on all packages and release groups. Cannot be used with --all, --dir,
+      --all                           Run on all packages and release groups. Cannot be used with --dir, --packages,
                                       --releaseGroup, or --releaseGroupRoot.
-      --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --dir,
+      --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --packages,
                                       --releaseGroup, or --releaseGroupRoot.
       --packages                      Run on all independent packages in the repo. Cannot be used with --all, --dir,
                                       --releaseGroup, or --releaseGroupRoot.

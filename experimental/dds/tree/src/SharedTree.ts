@@ -541,7 +541,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		private writeFormat: WriteFormat,
 		options: SharedTreeOptions<typeof writeFormat> = {}
 	) {
-		super(id, runtime, SharedTreeFactory.Attributes, 'fluid_sharedTree_');
+		super(id, runtime, SharedTreeFactory.Attributes, 'fluid_legacySharedTree_');
 		const historyPolicy = this.getHistoryPolicy(options);
 		this.summarizeHistory = historyPolicy.summarizeHistory;
 

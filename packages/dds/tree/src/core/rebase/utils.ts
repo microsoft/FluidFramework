@@ -13,6 +13,7 @@ import {
 	RevisionMetadataSource,
 	TaggedChange,
 	makeAnonChange,
+	mapTaggedChange,
 	tagChange,
 	tagRollbackInverse,
 } from "./changeRebaser.js";
@@ -237,16 +238,17 @@ export function rebaseBranch<TChange>(
 	// For each source commit, rebase backwards over the inverses of any commits already rebased, and then
 	// rebase forwards over the rest of the commits up to the new base before advancing the new base.
 	let newHead = newBase;
-	const revInfos = getRevInfoFromTaggedChanges(targetRebasePath);
+	const revInfos = getRevInfoFromTaggedChanges([...targetRebasePath, ...sourcePath]);
 	// Note that the `revisionMetadata` gets updated as `revInfos` gets updated.
 	const revisionMetadata = revisionMetadataSourceFromInfo(revInfos);
-	let currentComposedEdit = makeAnonChange(changeRebaser.compose(targetRebasePath));
+	let editsToCompose: TaggedChange<TChange>[] = targetRebasePath.slice();
 	for (const c of sourcePath) {
 		const inverseTag = mintRevisionTag();
 		const inverse = tagRollbackInverse(changeRebaser.invert(c, true), inverseTag, c.revision);
-		const editsToCompose: TaggedChange<TChange>[] = [inverse, currentComposedEdit];
 		if (sourceSet.has(c.revision)) {
-			const change = changeRebaser.rebase(c.change, currentComposedEdit, revisionMetadata);
+			const currentComposedEdit = makeAnonChange(changeRebaser.compose(editsToCompose));
+			editsToCompose = [currentComposedEdit];
+			const change = changeRebaser.rebase(c, currentComposedEdit, revisionMetadata);
 			newHead = {
 				revision: c.revision,
 				change,
@@ -255,14 +257,20 @@ export function rebaseBranch<TChange>(
 			sourceCommits.push(newHead);
 			editsToCompose.push(tagChange(change, c.revision));
 		}
-		currentComposedEdit = makeAnonChange(changeRebaser.compose(editsToCompose));
-		revInfos.unshift({ revision: inverseTag, rollbackOf: inverse.rollbackOf });
 		revInfos.push({ revision: c.revision });
+		editsToCompose.unshift(inverse);
+		revInfos.unshift({ revision: inverseTag, rollbackOf: inverse.rollbackOf });
 	}
 
+	let netChange: TChange | undefined;
 	return {
 		newSourceHead: newHead,
-		sourceChange: currentComposedEdit.change,
+		get sourceChange() {
+			if (netChange === undefined) {
+				netChange = changeRebaser.compose(editsToCompose);
+			}
+			return netChange;
+		},
 		commits: {
 			deletedSourceCommits,
 			targetCommits,
@@ -283,7 +291,7 @@ export function rebaseBranch<TChange>(
  */
 export function rebaseChange<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
-	change: TChange,
+	change: TaggedChange<TChange>,
 	sourceHead: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
 	mintRevisionTag: () => RevisionTag,
@@ -329,17 +337,17 @@ export function revisionMetadataSourceFromInfo(
 
 export function rebaseChangeOverChanges<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
-	changeToRebase: TChange,
+	changeToRebase: TaggedChange<TChange>,
 	changesToRebaseOver: TaggedChange<TChange>[],
 ) {
 	const revisionMetadata = revisionMetadataSourceFromInfo(
-		getRevInfoFromTaggedChanges(changesToRebaseOver),
+		getRevInfoFromTaggedChanges([...changesToRebaseOver, changeToRebase]),
 	);
 
 	return changesToRebaseOver.reduce(
-		(a, b) => changeRebaser.rebase(a, b, revisionMetadata),
+		(a, b) => mapTaggedChange(changeToRebase, changeRebaser.rebase(a, b, revisionMetadata)),
 		changeToRebase,
-	);
+	).change;
 }
 
 // TODO: Deduplicate

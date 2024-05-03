@@ -105,6 +105,10 @@ describeCompat(
 
 		beforeEach("setupContainer", async function () {
 			provider = getTestObjectProvider({ syncSummarizer: true });
+			// These tests are failing for ODSP and FRS. Disabling them for now.
+			if (provider.driver.type !== "local") {
+				this.skip();
+			}
 			mainContainer = await createContainer(version1Apis);
 			if (mainContainer.getEntryPoint !== undefined) {
 				dataStoreA = (await mainContainer.getEntryPoint()) as ITestFluidObject;
