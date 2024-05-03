@@ -3,11 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IChannelAttributes,
-	IChannelFactory,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { ConsensusOrderedCollection } from "./consensusOrderedCollection.js";
 import { ConsensusQueueFactory } from "./consensusOrderedCollectionFactory.js";
@@ -36,27 +33,7 @@ class SnapshotableQueue<T> extends SnapshotableArray<T> implements IOrderedColle
  * An derived type of ConsensusOrderedCollection with a queue as the backing data and order.
  * @alpha
  */
-export class ConsensusQueue<T = any> extends ConsensusOrderedCollection<T> {
-	/**
-	 * Create a new consensus queue
-	 *
-	 * @param runtime - data store runtime the new consensus queue belongs to
-	 * @param id - optional name of theconsensus queue
-	 * @returns newly create consensus queue (but not attached yet)
-	 */
-	public static create<T = any>(runtime: IFluidDataStoreRuntime, id?: string) {
-		return runtime.createChannel(id, ConsensusQueueFactory.Type) as ConsensusQueue<T>;
-	}
-
-	/**
-	 * Get a factory for ConsensusQueue to register with the data store.
-	 *
-	 * @returns a factory that creates and load ConsensusQueue
-	 */
-	public static getFactory(): IChannelFactory {
-		return new ConsensusQueueFactory();
-	}
-
+export class ConsensusQueueClass<T = any> extends ConsensusOrderedCollection<T> {
 	/**
 	 * Constructs a new consensus queue. If the object is non-local an id and service interfaces will
 	 * be provided
@@ -69,3 +46,14 @@ export class ConsensusQueue<T = any> extends ConsensusOrderedCollection<T> {
 		super(id, runtime, attributes, new SnapshotableQueue<T>());
 	}
 }
+
+/**
+ * {@inheritDoc ConsensusQueueClass}
+ * @alpha
+ */
+export const ConsensusQueue = createSharedObjectKind(ConsensusQueueFactory);
+/**
+ * {@inheritDoc ConsensusQueueClass}
+ * @alpha
+ */
+export type ConsensusQueue<T = any> = ConsensusQueueClass<T>;

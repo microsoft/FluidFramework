@@ -14,5 +14,5 @@ export {
 } from "./interfaces.js";
 export { ConsensusQueueFactory } from "./consensusOrderedCollectionFactory.js";
 export { ConsensusOrderedCollection } from "./consensusOrderedCollection.js";
-export { ConsensusQueue } from "./consensusQueue.js";
+export { ConsensusQueueClass, ConsensusQueue } from "./consensusQueue.js";
 export { acquireAndComplete, waitAcquireAndComplete } from "./testUtils.js";
