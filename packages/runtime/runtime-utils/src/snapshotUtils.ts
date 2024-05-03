@@ -16,13 +16,6 @@ export function isSnapshotFetchRequiredForLoadingGroupId(
 	snapshotTree: ISnapshotTree,
 	blobContents: Map<string, ArrayBuffer>,
 ): boolean {
-	return evaluateSnapshotTreeForMissingBlobs(snapshotTree, blobContents);
-}
-
-function evaluateSnapshotTreeForMissingBlobs(
-	snapshotTree: ISnapshotTree,
-	blobContents: Map<string, ArrayBuffer>,
-): boolean {
 	for (const [_, id] of Object.entries(snapshotTree.blobs)) {
 		if (!blobContents.has(id)) {
 			return true;
@@ -35,7 +28,7 @@ function evaluateSnapshotTreeForMissingBlobs(
 		// tree with current loading groupId. Note: Child with no loading groupId, will fall under parent with
 		// a loading groupId as it does not have its own loading groupId.
 		if (childTree.groupId === undefined) {
-			const value = evaluateSnapshotTreeForMissingBlobs(childTree, blobContents);
+			const value = isSnapshotFetchRequiredForLoadingGroupId(childTree, blobContents);
 			if (value) {
 				return true;
 			}
