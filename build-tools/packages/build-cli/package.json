@@ -113,7 +113,7 @@
 		"@fluid-private/readme-command": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
-		"@oclif/test": "3.2.12",
+		"@oclif/test": "^3.2.12",
 		"@types/async": "^3.2.20",
 		"@types/chai": "^4.3.5",
 		"@types/chai-arrays": "^2.0.0",
