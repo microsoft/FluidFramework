@@ -321,6 +321,8 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		dataObjectA._root.set("A", "A");
 		mainObject._root.set("doubleHandleA", dataObjectA.handle);
 		dataObjectB._root.set("B", "B");
+		dataObjectC._root.set("C", "C");
+		dataObjectD._root.set("D", "D");
 
 		// Summarize
 		await provider.ensureSynchronized();

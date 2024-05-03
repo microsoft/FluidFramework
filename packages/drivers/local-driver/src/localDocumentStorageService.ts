@@ -144,22 +144,20 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		blobContents: Map<string, ArrayBuffer>,
 	) {
 		const groupId = await this.readGroupId(tree);
-		if (groupId !== undefined && !loadingGroupIds.has(groupId)) {
-			return;
-		} else {
+		if (groupId === undefined || loadingGroupIds.has(groupId)) {
 			for (const id of Object.values(tree.blobs)) {
 				blobContents.set(id, await this.readBlob(id));
 			}
+			await Promise.all(
+				Object.values(tree.trees).map(async (childTree) => {
+					await this.stripTreeOfMissingLoadingGroupIds(
+						childTree,
+						loadingGroupIds,
+						blobContents,
+					);
+				}),
+			);
 		}
-		await Promise.all(
-			Object.values(tree.trees).map(async (childTree) => {
-				await this.stripTreeOfMissingLoadingGroupIds(
-					childTree,
-					loadingGroupIds,
-					blobContents,
-				);
-			}),
-		);
 	}
 
 	/**
