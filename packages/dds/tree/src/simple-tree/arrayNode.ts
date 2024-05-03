@@ -363,7 +363,7 @@ const TreeNodeWithArrayFeatures = (() => {
  * TypeScript also has a limitation that there is no way to replace or remove just the constructor of a type without losing all the private and protected members.
  * See https://github.com/microsoft/TypeScript/issues/35416 for details.
  *
- * TypeScript also does not support explicit specifying the instance type in a class definition as the constructor return type.
+ * TypeScript also does not support explicitly specifying the instance type in a class definition as the constructor return type.
  *
  * Thus to replace the instance type, while preserving the protected static members of TreeNodeValid,
  * the only option seems to be actually declaring a class with all the members explicitly inline.
