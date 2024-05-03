@@ -78,13 +78,7 @@ export function toFlexConfig(
 	const initialTree =
 		unhydrated === undefined
 			? undefined
-			: [
-					cursorFromUnhydratedRoot(
-						config.schema,
-						unhydrated,
-						config.enableSchemaValidation ? schemaAndPolicy : undefined,
-					),
-			  ];
+			: [cursorFromUnhydratedRoot(config.schema, unhydrated, schemaAndPolicy)];
 	return {
 		schema: toFlexSchema(config.schema),
 		initialTree,

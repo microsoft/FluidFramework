@@ -753,6 +753,9 @@ describe("toMapTree", () => {
 	});
 
 	describe("Stored schema validation", () => {
+		/**
+		 * Creates a schema and policy and indicates stored schema validation should be performed.
+		 */
 		function createSchemaAndPolicy(
 			nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map(),
 			fieldKinds: Map<FieldKindIdentifier, FieldKindData> = new Map(),
@@ -763,6 +766,7 @@ describe("toMapTree", () => {
 				},
 				policy: {
 					fieldKinds,
+					validateSchema: true,
 				},
 			};
 		}

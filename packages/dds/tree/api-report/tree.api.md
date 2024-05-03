@@ -1663,6 +1663,7 @@ export interface SchemaLintConfiguration {
 // @internal
 export interface SchemaPolicy {
     readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindData>;
+    readonly validateSchema: boolean;
 }
 
 // @internal
@@ -1843,9 +1844,7 @@ export enum TreeCompressionStrategy {
 
 // @public
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
-    constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>, enableSchemaValidation?: boolean);
-    // (undocumented)
-    get enableSchemaValidation(): boolean;
+    constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>);
     // (undocumented)
     readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>;
     // (undocumented)
