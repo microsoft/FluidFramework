@@ -9,7 +9,7 @@ import { SchemaFactory, treeNodeApi, TreeNode } from "../simple-tree/index.js";
 import { hydrate } from "./simple-tree/utils.js";
 import { TreeValue } from "../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { isTreeNode } from "../simple-tree/proxies.js";
+import { isTreeValue } from "../feature-libraries/index.js";
 
 describe.only("Schema Metadata example patterns", () => {
 	describe("AI Summary example", () => {
@@ -229,7 +229,7 @@ describe.only("Schema Metadata example patterns", () => {
 
 			// If our condition failed, and we are looking at something other than a tree node, then there is nothing left to do.
 			// Return false;
-			if (!isTreeNode(input)) {
+			if (isTreeValue(input)) {
 				return false;
 			}
 
