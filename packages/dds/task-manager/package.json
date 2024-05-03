@@ -142,6 +142,14 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_TaskManager": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ITaskManager": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

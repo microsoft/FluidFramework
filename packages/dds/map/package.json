@@ -150,6 +150,30 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_ISharedDirectory": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISharedMap": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_SharedDirectory": {
+				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_SharedDirectory": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_SharedDirectory": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_SharedMap": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

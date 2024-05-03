@@ -8334,6 +8334,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
+      '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/synthesize-previous': npm:@fluidframework/synthesize@2.0.0-rc.3.0.0
       '@microsoft/api-extractor': ^7.42.3
       '@types/mocha': ^9.1.1
@@ -8361,6 +8362,7 @@ importers:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore': link:../../runtime/datastore
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
+      '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/synthesize-previous': /@fluidframework/synthesize/2.0.0-rc.3.0.0
       '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y_@types+node@18.19.1
       '@types/mocha': 9.1.1
