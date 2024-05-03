@@ -1876,6 +1876,7 @@ export class ContainerRuntime
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
+			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
 		});
 
 		ReportOpPerfTelemetry(this.clientId, this.deltaManager, this, this.logger);
@@ -3419,10 +3420,14 @@ export class ContainerRuntime
 		// The summary number for this summary. This will be updated during the summary process, so get it now and
 		// use it for all events logged during this summary.
 		const summaryNumber = this.nextSummaryNumber;
+		let summaryRefSeqNum: number | undefined;
 		const summaryNumberLogger = createChildLogger({
 			logger: summaryLogger,
 			properties: {
-				all: { summaryNumber },
+				all: {
+					summaryNumber,
+					referenceSequenceNumber: () => summaryRefSeqNum,
+				},
 			},
 		});
 
@@ -3490,8 +3495,6 @@ export class ContainerRuntime
 			this.mc.config.getBoolean(
 				"Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState",
 			) === true;
-
-		let summaryRefSeqNum: number | undefined;
 
 		try {
 			await this.deltaManager.inbound.pause();
