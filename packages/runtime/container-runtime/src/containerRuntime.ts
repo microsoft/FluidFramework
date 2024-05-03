@@ -1395,6 +1395,7 @@ export class ContainerRuntime
 			loader,
 			pendingLocalState,
 			supportedFeatures,
+			snapshotWithContents,
 		} = context;
 
 		this.mc = createChildMonitoringContext({
@@ -1617,8 +1618,19 @@ export class ContainerRuntime
 			return this.submitSignalFn(envelope2, targetClientId);
 		};
 
+		let snapshot: ISnapshot | ISnapshotTree | undefined = getSummaryForDatastores(
+			baseSnapshot,
+			metadata,
+		);
+		if (snapshot !== undefined && snapshotWithContents !== undefined) {
+			snapshot = {
+				...snapshotWithContents,
+				snapshotTree: snapshot,
+			};
+		}
+
 		this.channelCollection = new ChannelCollection(
-			getSummaryForDatastores(baseSnapshot, metadata),
+			snapshot,
 			parentContext,
 			this.mc.logger,
 			(props) => this.garbageCollector.nodeUpdated(props),
