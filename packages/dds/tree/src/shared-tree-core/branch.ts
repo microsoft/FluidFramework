@@ -126,12 +126,15 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
  * Events related to branch trimming.
  *
  * @remarks
- * Trimming is a very specific kind of mutation which is the only allowed mutations to branches. It is done as a
- * performance optimization when it is determined that commits are no longer needed for future computation.
+ * Trimming is a very specific kind of mutation which is the only allowed mutations to branches. 
+ * References to commits from other commits are removed so that the commit objects can be GC'd by the JS engine. 
+ * This happens by changing a commit's parent property to undefined, which drops all commits that are in its "ancestry".
+ * It is done as a performance optimization when it is determined that commits are no longer needed for future computation.
  */
 export interface BranchTrimmingEvents {
 	/**
-	 * Fired when commits are trimmed from the branch.
+	 * Fired when some contiguous range of commits beginning with the "global tail" of this branch are trimmed from the branch. 
+	 * This happens by deleting the parent pointer to the last commit in that range. This event can be fired at any time.
 	 */
 	ancestryTrimmed(trimmedRevisions: RevisionTag[]): void;
 }
