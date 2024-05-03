@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import type { SharedCell } from "@fluidframework/cell/internal";
+import type { ISharedCell } from "@fluidframework/cell/internal";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	IContainer,
@@ -643,7 +643,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 
 		// Get the root dataStore from the detached container.
 		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
-		const testChannel1 = await dataStore.getSharedObject<SharedCell>(sharedCellId);
+		const testChannel1 = await dataStore.getSharedObject<ISharedCell>(sharedCellId);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
 			if (runtimeMessage === false) {

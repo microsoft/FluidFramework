@@ -26,18 +26,19 @@ import {
 	getContainerEntryPointBackCompat,
 	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
+import { loadContainerPaused } from "@fluidframework/container-loader/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
 
 const loadOptions: IContainerLoadMode[] = generatePairwiseOptions<IContainerLoadMode>({
 	deltaConnection: [undefined, "none", "delayed"],
-	opsBeforeReturn: [undefined, "sequenceNumber", "cached", "all"],
-	pauseAfterLoad: [undefined, true, false],
+	opsBeforeReturn: [undefined, "cached", "all"],
 });
 
 const testConfigs = generatePairwiseOptions({
 	loadOptions,
 	waitForSummary: [true, false],
+	opsUpToSeqNumber: [true, false, undefined],
 });
 
 const maxOps = 10;
@@ -246,32 +247,49 @@ describeCompat("No Delta stream loading mode testing", "FullCompat", (getTestObj
 					provider.urlResolver,
 				);
 
-				// Define sequenceNumber if opsBeforeReturn is set to "sequenceNumber", otherwise leave undefined
-				const sequenceNumber =
-					testConfig.loadOptions.opsBeforeReturn === "sequenceNumber"
+				if (testConfig.opsUpToSeqNumber !== undefined) {
+					// Define sequenceNumber if opsUpToSeqNumber is set, otherwise leave undefined
+					const sequenceNumber = testConfig.opsUpToSeqNumber
 						? lastKnownSeqNum
 						: undefined;
-
-				const storageOnlyContainer = await storageOnlyLoader.resolve({
-					url: containerUrl,
-					headers: {
-						[LoaderHeader.loadMode]: testConfig.loadOptions,
-						[LoaderHeader.sequenceNumber]: sequenceNumber,
-					},
-				});
-
-				const deltaManager = storageOnlyContainer.deltaManager;
-
-				const loadedSeqNum = deltaManager.lastSequenceNumber;
-				if (testConfig.loadOptions.opsBeforeReturn === "sequenceNumber") {
-					// We should have at loaded to at least the specified sequence number.
-					assert.ok(
-						loadedSeqNum >= lastKnownSeqNum,
-						"loadedSeqNum >= lastSequenceNumber",
+					const storageOnlyContainer = await loadContainerPaused(
+						storageOnlyLoader,
+						{
+							url: containerUrl,
+							headers: {
+								[LoaderHeader.loadMode]: testConfig.loadOptions,
+							},
+						},
+						sequenceNumber,
 					);
-				}
 
-				if (testConfig.loadOptions.pauseAfterLoad !== true) {
+					const deltaManager = storageOnlyContainer.deltaManager;
+					const loadedSeqNum = deltaManager.lastSequenceNumber;
+
+					if (testConfig.opsUpToSeqNumber === true) {
+						// If we tried to freeze after loading a specific sequence number, the loaded sequence number should be the same as the last known sequence number.
+						assert.strictEqual(
+							loadedSeqNum,
+							lastKnownSeqNum,
+							"loadedSeqNum === lastKnownSeqNum",
+						);
+					}
+					// The sequence number should still be the same as when we loaded.
+					assert.strictEqual(
+						deltaManager.lastSequenceNumber,
+						loadedSeqNum,
+						"deltaManager.lastSequenceNumber === loadedSeqNum",
+					);
+				} else {
+					const storageOnlyContainer = await storageOnlyLoader.resolve({
+						url: containerUrl,
+						headers: {
+							[LoaderHeader.loadMode]: testConfig.loadOptions,
+						},
+					});
+
+					const deltaManager = storageOnlyContainer.deltaManager;
+
 					storageOnlyContainer.connect();
 					assert.strictEqual(deltaManager.active, false, "deltaManager.active");
 					assert.ok(
@@ -300,21 +318,6 @@ describeCompat("No Delta stream loading mode testing", "FullCompat", (getTestObj
 							)} !== ${storageOnlyDataObject.root.get(key)}`,
 						);
 					}
-				} else {
-					if (testConfig.loadOptions.opsBeforeReturn === "sequenceNumber") {
-						// If we tried to freeze after loading a specific sequence number, the loaded sequence number should be the same as the last known sequence number.
-						assert.strictEqual(
-							loadedSeqNum,
-							lastKnownSeqNum,
-							"loadedSeqNum === lastKnownSeqNum",
-						);
-					}
-					// The sequence number should still be the same as when we loaded.
-					assert.strictEqual(
-						deltaManager.lastSequenceNumber,
-						loadedSeqNum,
-						"deltaManager.lastSequenceNumber === loadedSeqNum",
-					);
 				}
 			}
 		});

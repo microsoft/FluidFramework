@@ -240,7 +240,6 @@ export {
 	ITreeCheckout,
 	ITransaction,
 	runSynchronous,
-	SharedTreeFactory,
 	SharedTreeOptions,
 	ITreeCheckoutFork,
 	CheckoutEvents,
@@ -262,6 +261,8 @@ export {
 	TreeApi,
 	TransactionConstraint,
 	NodeInDocumentConstraint,
+	RunTransaction,
+	rollback,
 } from "./shared-tree/index.js";
 
 export {
@@ -305,6 +306,7 @@ export {
 	TreeNodeSchemaNonClass,
 	SchemaIncompatible,
 	type FieldProps,
+	type InternalTreeNode,
 
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,
