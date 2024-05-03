@@ -12,8 +12,11 @@ import {
 	canRetryOnError,
 } from "@fluidframework/driver-utils/internal";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	wrapError,
+} from "@fluidframework/telemetry-utils/internal";
 import io from "socket.io-client";
 
 import { ICache } from "./cache.js";
@@ -119,7 +122,7 @@ export class DocumentService
 					const rateLimiter = new RateLimiter(
 						this.driverPolicies.maxConcurrentStorageRequests,
 					);
-					this.storageRestWrapper = await RouterliciousStorageRestWrapper.load(
+					this.storageRestWrapper = RouterliciousStorageRestWrapper.load(
 						this.tenantId,
 						this.storageTokenFetcher,
 						this.logger,
@@ -171,7 +174,7 @@ export class DocumentService
 				const rateLimiter = new RateLimiter(
 					this.driverPolicies.maxConcurrentOrdererRequests,
 				);
-				this.ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+				this.ordererRestWrapper = RouterliciousOrdererRestWrapper.load(
 					this.ordererTokenFetcher,
 					this.logger,
 					rateLimiter,

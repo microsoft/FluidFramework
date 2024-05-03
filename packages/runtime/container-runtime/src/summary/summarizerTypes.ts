@@ -12,8 +12,10 @@ import {
 	ISummaryTree,
 } from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	ITelemetryLoggerPropertyBag,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { ISummaryConfigurationHeuristics } from "../containerRuntime.js";
 
@@ -189,7 +191,7 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
 export interface IBaseSummarizeResult {
 	readonly stage: "base";
 	/** Error object related to failed summarize attempt. */
-	readonly error: any;
+	readonly error: Error | undefined;
 	/** Reference sequence number as of the generate summary attempt. */
 	readonly referenceSequenceNumber: number;
 	readonly minimumSequenceNumber: number;

@@ -37,8 +37,6 @@ import {
 	type ITelemetryErrorEventExt,
 	type ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils";
-import {
 	DataCorruptionError,
 	DataProcessingError,
 	UsageError,
@@ -559,7 +557,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		minSequenceNumber: number,
 		snapshotSequenceNumber: number,
 		handler: IDeltaHandlerStrategy,
-		prefetchType: "sequenceNumber" | "cached" | "all" | "none" = "none",
+		prefetchType: "cached" | "all" | "none" = "none",
 		lastProcessedSequenceNumber: number = snapshotSequenceNumber,
 	) {
 		this.initSequenceNumber = snapshotSequenceNumber;

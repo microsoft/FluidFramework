@@ -9,7 +9,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { FlexListToUnion, LazyItem, isLazy } from "../feature-libraries/index.js";
 import { MakeNominal, brand, isReadonlyArray } from "../util/index.js";
-import { Unhydrated } from "./types.js";
+import { InternalTreeNode, Unhydrated } from "./types.js";
 import { FieldKey } from "../core/index.js";
 
 /**
@@ -78,7 +78,7 @@ export interface TreeNodeSchemaClass<
 	 * Therefor overriding this constructor is not type-safe and is not supported.
 	 * @sealed
 	 */
-	new (data: TInsertable): Unhydrated<TNode>;
+	new (data: TInsertable | InternalTreeNode): Unhydrated<TNode>;
 }
 
 /**

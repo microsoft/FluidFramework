@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 // eslint-disable-next-line import/no-internal-modules
-import { shouldAllowGcSweep } from "../../gc/gcHelpers.js";
+import { dataStoreNodePathOnly, shouldAllowGcSweep, urlToGCNodePath } from "../../gc/gcHelpers.js";
 import { GCFeatureMatrix } from "../../gc/index.js";
 
 describe("Garbage Collection Helpers Tests", () => {
@@ -116,6 +116,82 @@ describe("Garbage Collection Helpers Tests", () => {
 			it(`persisted=${JSON.stringify(persisted)}, current=${current}`, () => {
 				const shouldAllow = shouldAllowGcSweep(persisted, current);
 				assert.equal(shouldAllow, expectedShouldAllowValue);
+			});
+		});
+	});
+
+	describe("dataStoreNodePathOnly", () => {
+		const testCases: {
+			path: string;
+			expected: string;
+		}[] = [
+			{
+				path: "/",
+				expected: "/",
+			},
+			{
+				path: "/a",
+				expected: "/a",
+			},
+			{
+				path: "/a/b",
+				expected: "/a",
+			},
+			{
+				path: "/a/b/c",
+				expected: "/a",
+			},
+		];
+		testCases.forEach(({ path, expected }) => {
+			it(`path=${path}`, () => {
+				const result = dataStoreNodePathOnly(path);
+				assert.equal(result, expected);
+			});
+		});
+	});
+
+	describe("urlToGCNodePath", () => {
+		const testCases: {
+			url: string;
+			expected: string;
+		}[] = [
+			{
+				url: "/a",
+				expected: "/a",
+			},
+			{
+				url: "/a/",
+				expected: "/a",
+			},
+			{
+				url: "/a/b",
+				expected: "/a/b",
+			},
+			{
+				url: "/a/b/",
+				expected: "/a/b",
+			},
+			{
+				url: "/a?x=1",
+				expected: "/a",
+			},
+			{
+				url: "/a/?x=1",
+				expected: "/a",
+			},
+			{
+				url: "/a/b?x=1",
+				expected: "/a/b",
+			},
+			{
+				url: "/a/b/?x=1",
+				expected: "/a/b",
+			},
+		];
+		testCases.forEach(({ url, expected }) => {
+			it(`url=${url}`, () => {
+				const result = urlToGCNodePath(url);
+				assert.equal(result, expected);
 			});
 		});
 	});

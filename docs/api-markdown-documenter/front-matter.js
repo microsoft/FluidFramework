@@ -6,7 +6,7 @@
 import {
 	ApiItemKind,
 	ApiItemUtilities,
-	createDocumentWriter,
+	DocumentWriter,
 	MarkdownRenderer,
 	transformTsdocNode,
 } from "@fluid-tools/api-markdown-documenter";
@@ -73,7 +73,7 @@ const extractSummary = (apiItem, config, customRenderers) => {
 		return "";
 	}
 
-	const documentWriter = createDocumentWriter();
+	const documentWriter = DocumentWriter.create();
 	MarkdownRenderer.renderNode(summaryParagraph, documentWriter, {
 		customRenderers,
 	});

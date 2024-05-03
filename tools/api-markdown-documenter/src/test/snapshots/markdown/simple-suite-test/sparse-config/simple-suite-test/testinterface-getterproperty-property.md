@@ -7,3 +7,5 @@ A test getter-only interface property.
 ```typescript
 get getterProperty(): boolean;
 ```
+
+**Type:** boolean

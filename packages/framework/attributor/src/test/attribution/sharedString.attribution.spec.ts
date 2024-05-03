@@ -35,7 +35,7 @@ import {
 	type IQuorumClients,
 	type ISequencedClient,
 } from "@fluidframework/protocol-definitions";
-import { SharedString, SharedStringFactory } from "@fluidframework/sequence/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	type MockContainerRuntimeForReconnection,
@@ -249,7 +249,10 @@ function createSharedString(
 	let serializer: Encoder<IAttributor, string> | undefined;
 	const initialState: FuzzTestState = {
 		clients: clientIds.map((clientId, index) => {
-			const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
+			const dataStoreRuntime = new MockFluidDataStoreRuntime({
+				clientId,
+				registry: [SharedString.getFactory()],
+			});
 			dataStoreRuntime.options = {
 				attribution: {
 					track: makeSerializer !== undefined,
@@ -257,11 +260,9 @@ function createSharedString(
 				},
 			};
 			const { deltaManager } = dataStoreRuntime;
-			const sharedString = new SharedString(
-				dataStoreRuntime,
-				// eslint-disable-next-line unicorn/prefer-code-point
+			const sharedString = SharedString.create(
+				dataStoreRuntime, // eslint-disable-next-line unicorn/prefer-code-point
 				String.fromCharCode(index + 65),
-				SharedStringFactory.Attributes,
 			);
 
 			if (index === 0 && makeSerializer !== undefined) {
