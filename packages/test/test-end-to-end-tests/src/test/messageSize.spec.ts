@@ -45,7 +45,12 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
-	afterEach(async () => provider.reset());
+	afterEach(async function () {
+		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
+			this.skip();
+		}
+		provider.reset();
+	});
 
 	let localContainer: IContainer;
 	let remoteContainer: IContainer;
