@@ -86,6 +86,8 @@ extends:
     taskBuild: build
     taskBuildDocs: false
     taskLint: false
+    # This package is private and not published
+    taskPack: false
     taskTest:
     - test
     testResultDirs: [] # No test results to upload
