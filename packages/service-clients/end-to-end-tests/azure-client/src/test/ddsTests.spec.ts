@@ -265,10 +265,6 @@ describe("Fluid data updates", () => {
 			);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			containerId = containerResponse?.data?.id as string;
-			({ container } = await client.getContainer(containerId, doSchema));
-
-			const mdo2 = container.initialObjects.mdo2 as CounterTestDataObject;
-			assert.strictEqual(mdo2.value, 3);
 		} else {
 			({ container } = await client.createContainer(doSchema));
 
@@ -281,13 +277,13 @@ describe("Fluid data updates", () => {
 			assert.strictEqual(mdo2.value, 3);
 
 			containerId = await container.attach();
-		}
-
-		if (container.connectionState !== ConnectionState.Connected) {
-			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
-				durationMs: connectTimeoutMs,
-				errorMsg: "container connect() timeout",
-			});
+		
+			if (container.connectionState !== ConnectionState.Connected) {
+				await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+					durationMs: connectTimeoutMs,
+					errorMsg: "container connect() timeout",
+				});
+			}
 		}
 
 		const { container: containerGet } = await client.getContainer(containerId, doSchema);
