@@ -32,6 +32,14 @@ parameters:
   type: string
   default: none
 
+- name: STORAGE_ACCOUNT
+  type: string
+  default: none
+
+- name: STORAGE_KEY
+  type: string
+  default: none
+
 # Set version
 steps:
 - ${{ if eq(parameters.buildToolsVersionToInstall, 'repo') }}:
@@ -136,6 +144,15 @@ steps:
     targetType: 'filePath'
     workingDirectory: ${{ parameters.buildDirectory }}
     filePath: $(Build.SourcesDirectory)/scripts/update-package-version.sh
+
+# This template only runs for non-PR main-branch builds, generating manifest files based on the current date and build number. 
+#  Enabling this template for every PR run risks overwriting existing manifest files uploaded to Azure blobs. Therefore, it's crucial to restrict this template to commits merged into the main branch.
+- ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['Build.SourceBranch'], 'refs/heads/main')) }}: 
+  - template: /tools/pipelines/templates/upload-dev-manifest.yml
+    parameters:
+      buildDirectory: '${{ parameters.buildDirectory }}'
+      STORAGE_ACCOUNT: '${{ parameters.STORAGE_ACCOUNT }}'
+      STORAGE_KEY: '${{ parameters.STORAGE_KEY }}'
 
 # This task is a last-minute verification that no Fluid internal versions show up with caret dependencies. This is to
 # help find and prevent bugs in the version bumping tools.
