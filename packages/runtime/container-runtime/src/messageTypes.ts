@@ -179,7 +179,6 @@ export type InboundContainerRuntimeMessage =
 export type LocalContainerRuntimeMessage =
 	| ContainerRuntimeDataStoreOpMessage
 	| OutboundContainerRuntimeAttachMessage
-	| ContainerRuntimeChunkedOpMessage
 	| ContainerRuntimeBlobAttachMessage
 	| ContainerRuntimeRejoinMessage
 	| ContainerRuntimeAliasMessage
