@@ -426,6 +426,7 @@ declare function get_old_ClassDeclaration_MockFluidDataStoreRuntime():
 declare function use_current_ClassDeclaration_MockFluidDataStoreRuntime(
     use: TypeOnly<current.MockFluidDataStoreRuntime>): void;
 use_current_ClassDeclaration_MockFluidDataStoreRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockFluidDataStoreRuntime());
 
 /*
@@ -455,6 +456,7 @@ declare function get_old_ClassDeclaration_MockHandle():
 declare function use_current_ClassDeclaration_MockHandle(
     use: TypeOnly<current.MockHandle<any>>): void;
 use_current_ClassDeclaration_MockHandle(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockHandle());
 
 /*
