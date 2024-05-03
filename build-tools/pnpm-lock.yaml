@@ -87,7 +87,6 @@ importers:
       '@types/debug': ^4.1.7
       '@types/fs-extra': ^11.0.4
       '@types/inquirer': ^8.2.6
-      '@types/json5': ^2.2.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.18.6
       '@types/node-fetch': ^2.5.10
@@ -204,7 +203,6 @@ importers:
       '@types/debug': 4.1.12
       '@types/fs-extra': 11.0.4
       '@types/inquirer': 8.2.6
-      '@types/json5': 2.2.0
       '@types/mocha': 9.1.1
       '@types/node': 18.18.6
       '@types/node-fetch': 2.6.4
@@ -244,7 +242,6 @@ importers:
       '@types/async': ^3.2.20
       '@types/fs-extra': ^11.0.4
       '@types/glob': ^7.2.0
-      '@types/json5': ^2.2.0
       '@types/lodash': ^4.14.195
       '@types/lodash.isequal': ^4.5.6
       '@types/mocha': ^9.1.1
@@ -311,7 +308,6 @@ importers:
       '@types/async': 3.2.20
       '@types/fs-extra': 11.0.4
       '@types/glob': 7.2.0
-      '@types/json5': 2.2.0
       '@types/lodash': 4.14.195
       '@types/lodash.isequal': 4.5.6
       '@types/mocha': 9.1.1
@@ -2278,7 +2274,7 @@ packages:
     dependencies:
       '@inquirer/type': 1.2.1
       '@types/mute-stream': 0.0.4
-      '@types/node': 20.12.8
+      '@types/node': 20.11.30
       '@types/wrap-ansi': 3.0.0
       ansi-escapes: 4.3.2
       chalk: 4.1.2
@@ -3650,7 +3646,7 @@ packages:
     resolution: {integrity: sha512-HqNBuV/oIlMKdkLshXd1zKBqNQCsuPEsgQOkfFQ/eUKjRlwndXW1AjN9LVkBEIukm00gGXSRmfkl0Wv5VXLnlw==}
     dependencies:
       fast-glob: 3.3.2
-      minimatch: 9.0.4
+      minimatch: 9.0.3
       mkdirp: 3.0.1
       path-browserify: 1.0.1
     dev: true
@@ -3659,7 +3655,7 @@ packages:
     resolution: {integrity: sha512-m7Lllj9n/S6sOkCkRftpM7L24uvmfXQFedlW/4hENcuJH1HHm9u5EgxZb9uVjQSCGrbBWBkOGgcTxNg36r6ywA==}
     dependencies:
       fast-glob: 3.3.2
-      minimatch: 9.0.4
+      minimatch: 9.0.3
       mkdirp: 3.0.1
       path-browserify: 1.0.1
     dev: false
@@ -3689,7 +3685,7 @@ packages:
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dependencies:
       '@tufjs/canonical-json': 1.0.0
-      minimatch: 9.0.4
+      minimatch: 9.0.3
 
   /@types/argparse/1.0.38:
     resolution: {integrity: sha512-ebDJ9b0e702Yr7pWgB0jzm+CX4Srzz8RcXtLJDJB+BSccqMa36uyH/zUsSYao5+BD1ytv3k3rPYCq4mAE1hsXA==}
@@ -3753,7 +3749,7 @@ packages:
     resolution: {integrity: sha512-ZUxbzKl0IfJILTS6t7ip5fQQM/J3TJYubDm3nMbgubNNYS62eXeUpoLUC8/7fJNiFYHTrGPQn7hspDUzIHX3UA==}
     dependencies:
       '@types/minimatch': 3.0.5
-      '@types/node': 18.18.7
+      '@types/node': 18.18.6
 
   /@types/http-cache-semantics/4.0.4:
     resolution: {integrity: sha512-1m0bIFVc7eJWyve9S0RnuRgcQqF/Xd5QsUZAZeQFr1Q3/p9JWoQQEqmVy+DPTNpGXwhgIetAoYF8JSc33q29QA==}
@@ -3762,7 +3758,7 @@ packages:
     resolution: {integrity: sha512-3uT88kxg8lNzY8ay2ZjP44DKcRaTGztqeIvN2zHvhzIBH/uAPaL75aBtdNRKbA7xXoMbBt5kX0M00VKAnfOYlA==}
     dependencies:
       '@types/through': 0.0.30
-      rxjs: 7.8.1
+      rxjs: 7.8.0
     dev: true
 
   /@types/istanbul-lib-coverage/2.0.4:
@@ -3774,13 +3770,6 @@ packages:
 
   /@types/json5/0.0.29:
     resolution: {integrity: sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==}
-    dev: true
-
-  /@types/json5/2.2.0:
-    resolution: {integrity: sha512-NrVug5woqbvNZ0WX+Gv4R+L4TGddtmFek2u8RtccAgFZWtS9QXF2xCXY22/M4nzkaKF0q9Fc6M/5rxLDhfwc/A==}
-    deprecated: This is a stub types definition. json5 provides its own type definitions, so you do not need this installed.
-    dependencies:
-      json5: 2.2.3
     dev: true
 
   /@types/jsonfile/6.1.4:
@@ -3822,7 +3811,7 @@ packages:
   /@types/msgpack-lite/0.1.8:
     resolution: {integrity: sha512-3qIhe8MH1kGcXnB5YuY6W0lLb9LEcWrhanDYfw0zKdXAv+CNKG0+6To1X8dqVyrxKb3FeAgJBJS5RdFwBQteVg==}
     dependencies:
-      '@types/node': 18.18.7
+      '@types/node': 18.18.6
     dev: true
 
   /@types/mute-stream/0.0.4:
@@ -3833,7 +3822,7 @@ packages:
   /@types/node-fetch/2.6.4:
     resolution: {integrity: sha512-1ZX9fcN4Rvkvgv4E6PAY5WXUFWFcRWxZa3EW83UjycOB9ljJCedb2CupIP4RZMEwF/M3eTcCihbBRgwtGbg5Rg==}
     dependencies:
-      '@types/node': 18.18.7
+      '@types/node': 18.18.6
       form-data: 3.0.1
     dev: true
 
@@ -3845,6 +3834,11 @@ packages:
 
   /@types/node/18.18.7:
     resolution: {integrity: sha512-bw+lEsxis6eqJYW8Ql6+yTqkE6RuFtsQPSe5JxXbqYRFQEER5aJA9a5UH9igqDWm3X4iLHIKOHlnAXLM4mi7uQ==}
+    dependencies:
+      undici-types: 5.26.5
+
+  /@types/node/20.11.30:
+    resolution: {integrity: sha512-dHM6ZxwlmuZaRmUPfv1p+KrdD1Dci04FbdEm/9wEMouFqxYoFl5aMkt0VMAUtYRQDyYvD41WJLukhq/ha3YuTw==}
     dependencies:
       undici-types: 5.26.5
 
@@ -3867,7 +3861,7 @@ packages:
   /@types/prompts/2.4.4:
     resolution: {integrity: sha512-p5N9uoTH76lLvSAaYSZtBCdEXzpOOufsRjnhjVSrZGXikVGHX9+cc9ERtHRV4hvBKHyZb1bg4K+56Bd2TqUn4A==}
     dependencies:
-      '@types/node': 18.18.7
+      '@types/node': 18.18.6
       kleur: 3.0.3
     dev: true
 
@@ -3880,7 +3874,7 @@ packages:
     resolution: {integrity: sha512-YyP+VfeaqAyFmXoTh3HChxOQMyjByRMsHU7kc5KOJkSlXudhMhQIALbYV7rHh/l8d2lX3VUQzprrcAgWdRuU8g==}
     dependencies:
       '@types/glob': 7.2.0
-      '@types/node': 18.18.7
+      '@types/node': 18.18.6
     dev: true
 
   /@types/semver-utils/1.1.1:
@@ -3894,7 +3888,7 @@ packages:
     resolution: {integrity: sha512-ZA8U81/gldY+rR5zl/7HSHrG2KDfEb3lzG6uCUDhW1DTQE9yC/VBQ45fXnXq8f3CgInfhZmjtdu/WOUlrXRQUg==}
     dependencies:
       '@types/glob': 7.2.0
-      '@types/node': 18.18.7
+      '@types/node': 18.18.6
     dev: true
 
   /@types/sinon/10.0.13:
@@ -6020,7 +6014,7 @@ packages:
     engines: {node: '>=0.10.0'}
     hasBin: true
     dependencies:
-      jake: 10.8.7
+      jake: 10.8.5
 
   /electron-to-chromium/1.4.271:
     resolution: {integrity: sha512-BCPBtK07xR1/uY2HFDtl3wK2De66AW4MSiPlLrnPNxKC/Qhccxd59W73654S3y6Rb/k3hmuGJOBnhjfoutetXA==}
@@ -6600,7 +6594,7 @@ packages:
     dependencies:
       '@typescript-eslint/utils': 6.21.0_trrslaohprr5r73nykufww5lry
       eslint: 8.57.0
-      minimatch: 9.0.4
+      minimatch: 9.0.3
       natural-compare-lite: 1.4.0
     transitivePeerDependencies:
       - supports-color
@@ -7397,7 +7391,7 @@ packages:
     dependencies:
       foreground-child: 3.1.1
       jackspeak: 2.3.6
-      minimatch: 9.0.4
+      minimatch: 9.0.3
       minipass: 7.0.4
       path-scurry: 1.10.2
 
@@ -7827,7 +7821,7 @@ packages:
     resolution: {integrity: sha512-C7FfFoTA+bI10qfeydT8aZbvr91vAEU+2W5BZUlzPec47oNb07SsOfwYrtxuvOYdUApPP/Qlh4DtAO51Ekk2QA==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dependencies:
-      minimatch: 9.0.4
+      minimatch: 9.0.3
 
   /ignore/5.2.4:
     resolution: {integrity: sha512-MAb38BcSbH0eHNBxn7ql2NH/kX33OkB3lZ1BNdh7ENeRChHTYsTvWrMubiIAMNS2llXEEgZ1MUOBtXChP3kaFQ==}
@@ -8275,8 +8269,8 @@ packages:
     optionalDependencies:
       '@pkgjs/parseargs': 0.11.0
 
-  /jake/10.8.7:
-    resolution: {integrity: sha512-ZDi3aP+fG/LchyBzUM804VjddnwfSfsdeYkwt8NcbKRvo4rFkjhs456iLFn3k2ZUWvNe4i48WACDbza8fhq2+w==}
+  /jake/10.8.5:
+    resolution: {integrity: sha512-sVpxYeuAhWt0OTWITwT98oyV0GsXyMlXCF+3L1SuafBVUIr/uILGRB+NqwkzhgXKvoJpDIpQvqkUALgdmQsQxw==}
     engines: {node: '>=10'}
     hasBin: true
     dependencies:
@@ -8734,7 +8728,7 @@ packages:
   /loupe/2.3.4:
     resolution: {integrity: sha512-OvKfgCC2Ndby6aSTREl5aCCPTNIzlDfQZvZxNUrBrihDhL3xcrYegTblhmEiCrg2kKQz4XsFIaemE5BF4ybSaQ==}
     dependencies:
-      get-func-name: 2.0.2
+      get-func-name: 2.0.0
     dev: true
 
   /loupe/2.3.7:
@@ -8998,7 +8992,6 @@ packages:
     engines: {node: '>=16 || 14 >=14.17'}
     dependencies:
       brace-expansion: 2.0.1
-    dev: true
 
   /minimatch/9.0.4:
     resolution: {integrity: sha512-KqWh+VchfxcMNRAJjj2tnsSJdNbHsVgnkBhTNrW7AjVo6OvLtxw8zfT9oLw1JSohlFzJ8jCoTgaoXvJ+kHt6fw==}
@@ -9409,7 +9402,7 @@ packages:
       jsonlines: 0.1.1
       lodash: 4.17.21
       make-fetch-happen: 11.1.1
-      minimatch: 9.0.4
+      minimatch: 9.0.3
       p-map: 4.0.0
       pacote: 15.2.0
       parse-github-url: 1.0.2

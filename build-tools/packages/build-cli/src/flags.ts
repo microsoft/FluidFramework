@@ -295,6 +295,14 @@ export interface selectionFlags {
 	readonly releaseGroupRoot: string[] | undefined;
 }
 
+export const defaultSelectionKinds = ["dir", "all"] as const;
+
+/**
+ * A type representing the possible ways a command can set its default selection criteria when no selection flags are
+ * used.
+ */
+export type PackageSelectionDefault = (typeof defaultSelectionKinds)[number] | undefined;
+
 /**
  * A set of flags that can be used to filter selected packages in the repo.
  */

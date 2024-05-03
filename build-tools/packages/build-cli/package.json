@@ -121,7 +121,6 @@
 		"@types/debug": "^4.1.7",
 		"@types/fs-extra": "^11.0.4",
 		"@types/inquirer": "^8.2.6",
-		"@types/json5": "^2.2.0",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.18.6",
 		"@types/node-fetch": "^2.5.10",

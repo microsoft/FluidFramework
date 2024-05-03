@@ -30,6 +30,7 @@ export {
 	generateReleaseGitTagName,
 	getFluidDependencies,
 	getPreReleaseDependencies,
+	getTarballName,
 	isReleased,
 	npmCheckUpdates,
 	PackageVersionMap,
