@@ -132,6 +132,10 @@
 			"RemovedClassDeclaration_SharedCell": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"InterfaceDeclaration_ISharedCell": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

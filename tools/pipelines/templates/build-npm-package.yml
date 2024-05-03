@@ -581,6 +581,14 @@ extends:
                       artifactName: _api-extractor-temp
                       sbomEnabled: false
                       publishLocation: pipeline
+                
+                - ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['Build.SourceBranch'], 'refs/heads/main')) }}: 
+                  - output: pipelineArtifact
+                    displayName: Publish Artifact - release_reports
+                    targetPath: $(Build.ArtifactStagingDirectory)/release_reports
+                    artifactName: release_reports
+                    sbomEnabled: false
+                    publishLocation: pipeline
 
           # Job - Component detection
           - ${{ if eq(parameters.publish, true) }}:

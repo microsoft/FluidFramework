@@ -75,7 +75,7 @@ async function generateReleaseReport(
 
 	await Promise.all([
 		writeReport(outDir, caretReportOutput as ReleaseReport, "manifest", version, log),
-		writeReport(outDir, simpleReportOutput as ReleaseReport, "simple", version, log),
+		writeReport(outDir, simpleReportOutput as ReleaseReport, "simpleManifest", version, log),
 	]);
 
 	log.log("Release report processed successfully.");

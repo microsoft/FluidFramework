@@ -28,11 +28,12 @@ import {
 	FluidObject,
 	IFluidHandle,
 	IFluidHandleContext,
+	type IFluidHandleInternal,
 	IProvideFluidHandleContext,
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
@@ -1394,6 +1395,7 @@ export class ContainerRuntime
 			loader,
 			pendingLocalState,
 			supportedFeatures,
+			snapshotWithContents,
 		} = context;
 
 		this.mc = createChildMonitoringContext({
@@ -1616,8 +1618,19 @@ export class ContainerRuntime
 			return this.submitSignalFn(envelope2, targetClientId);
 		};
 
+		let snapshot: ISnapshot | ISnapshotTree | undefined = getSummaryForDatastores(
+			baseSnapshot,
+			metadata,
+		);
+		if (snapshot !== undefined && snapshotWithContents !== undefined) {
+			snapshot = {
+				...snapshotWithContents,
+				snapshotTree: snapshot,
+			};
+		}
+
 		this.channelCollection = new ChannelCollection(
-			getSummaryForDatastores(baseSnapshot, metadata),
+			snapshot,
 			parentContext,
 			this.mc.logger,
 			(props) => this.garbageCollector.nodeUpdated(props),
@@ -3880,7 +3893,7 @@ export class ContainerRuntime
 	public async uploadBlob(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
-	): Promise<IFluidHandle<ArrayBufferLike>> {
+	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		this.verifyNotClosed();
 		return this.blobManager.createBlob(blob, signal);
 	}

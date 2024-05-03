@@ -140,6 +140,11 @@
 	"typeValidation": {
 		"broken": {
 			"ClassDeclaration_ConsensusRegisterCollection": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IConsensusRegisterCollection": {
+				"forwardCompat": false,
 				"backCompat": false
 			}
 		}
