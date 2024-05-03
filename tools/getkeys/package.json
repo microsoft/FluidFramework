@@ -24,7 +24,7 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
 		"start": "node ./index.js",
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"tsc": "tsc"
+		"tsc": "echo \"No build required.\""
 	},
 	"dependencies": {
 		"@fluidframework/tool-utils": "^0.35.0"

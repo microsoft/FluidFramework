@@ -38,6 +38,8 @@ export {
 	setVersion,
 	sortVersions,
 } from "./package";
+export type { ExportData, Node10CompatExportData } from "./packageExports";
+export { queryOutputMapsFromPackageExports } from "./packageExports";
 export { difference } from "./sets";
 export { getIndent, indentString } from "./text";
 export { getApiExports } from "./typescriptApi";

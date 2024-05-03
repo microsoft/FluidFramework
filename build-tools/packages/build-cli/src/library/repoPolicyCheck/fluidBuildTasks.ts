@@ -20,6 +20,7 @@ import * as JSON5 from "json5";
 import * as semver from "semver";
 import { TsConfigJson } from "type-fest";
 import { Handler, readFile } from "./common";
+import { FluidBuildDatabase } from "./fluidBuildDatabase";
 
 /**
  * Get and cache the tsc check ignore setting
@@ -78,6 +79,11 @@ function getFluidPackageMap(root: string): Map<string, Package> {
 	}
 	return record.packageMap;
 }
+
+/**
+ * Cache the FluidBuildDatabase to avoid rebuilding for different policies and handler versus resolver
+ */
+const fluidBuildDatabaseCache = new FluidBuildDatabase();
 
 /**
  * Find script name for command in a npm package.json
@@ -351,6 +357,14 @@ function hasTaskDependency(
 	const rootConfig = loadFluidBuildConfig(root);
 	const globalTaskDefinitions = normalizeGlobalTaskDefinitions(rootConfig?.tasks);
 	const taskDefinitions = getTaskDefinitions(json, globalTaskDefinitions, false);
+	// Searched deps that are package specific
+	const packageSpecificSearchDeps = searchDeps.filter((d) => d.includes("#"));
+	// Set of package dependencies
+	const packageDependencies = new Set([
+		...Object.keys(json.dependencies ?? {}),
+		// devDeps are not regular task deps, but might happen for internal type only packages.
+		...Object.keys(json.devDependencies ?? {}),
+	]);
 	const seenDep = new Set<string>();
 	const pending: string[] = [];
 	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -369,9 +383,28 @@ function hasTaskDependency(
 		if (searchDeps.includes(dep)) {
 			return true;
 		}
-		if (dep.startsWith("^") || dep.includes("#")) {
+		if (dep.startsWith("^")) {
+			// ^ means depend on package dependencies of same name, or all for ^*.
+			const regexSearchMatches = new RegExp(dep === "^*" ? "." : `#${dep.slice(1)}$`);
+			const possibleSearchMatches = packageSpecificSearchDeps.filter((searchDep) =>
+				regexSearchMatches.test(searchDep),
+			);
+			if (
+				possibleSearchMatches.some((searchDep) =>
+					packageDependencies.has(searchDep.split("#")[0]),
+				)
+			) {
+				return true;
+			}
 			continue;
 		}
+		if (dep.includes("#")) {
+			// Current "pending" dependency is from another package and could possibly
+			// be successor to given queried deps, but we are not doing such a deep or
+			// exhaustive search at this time.
+			continue;
+		}
+		// Do expand transitive dependencies from local tasks.
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 		if (taskDefinitions[dep]) {
 			pending.push(...taskDefinitions[dep].dependsOn);
@@ -483,7 +516,7 @@ function getTscCommandDependencies(
 	json: PackageJson,
 	script: string,
 	command: string,
-	defaultDeps: string[],
+	packageMap: Map<string, Package>,
 ): (string | string[])[] {
 	// If the project has a referenced project, depend on that instead of the default
 	const parsedCommand = TscUtils.parseCommandLine(command);
@@ -538,8 +571,18 @@ function getTscCommandDependencies(
 		}
 	}
 
+	const tscPredecessors = fluidBuildDatabaseCache.getPossiblePredecessorTasks(
+		packageMap,
+		json.name,
+		script,
+	);
+
 	// eslint-disable-next-line unicorn/prefer-spread
-	return deps.concat(defaultDeps);
+	return deps.concat(
+		[...tscPredecessors].map((group) =>
+			group.map((predecessor) => `${predecessor.packageName}#${predecessor.script}`),
+		),
+	);
 }
 
 interface BuildDepsCallbackContext {
@@ -547,7 +590,7 @@ interface BuildDepsCallbackContext {
 	json: PackageJson;
 	script: string;
 	command: string;
-	deps: string[];
+	packageMap: Map<string, Package>;
 	root: string;
 }
 
@@ -571,7 +614,7 @@ function buildDepsHandler(
 	}
 	const packageDir = path.dirname(file);
 	const errors: string[] = [];
-	const deps = getDefaultTscTaskDependencies(root, json);
+	const packageMap = getFluidPackageMap(root);
 	const ignore = getFluidBuildTasksTscIgnore(root);
 	for (const [script, scriptCommands] of Object.entries(json.scripts)) {
 		if (scriptCommands === undefined) {
@@ -583,7 +626,7 @@ function buildDepsHandler(
 				continue;
 			}
 			try {
-				const error = check({ packageDir, json, script, command, deps, root });
+				const error = check({ packageDir, json, script, command, packageMap, root });
 				// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 				if (error) {
 					errors.push(error);
@@ -601,10 +644,10 @@ function checkTscDependencies({
 	json,
 	script,
 	command,
-	deps,
+	packageMap,
 	root,
 }: BuildDepsCallbackContext): string | undefined {
-	const checkDeps = getTscCommandDependencies(packageDir, json, script, command, deps);
+	const checkDeps = getTscCommandDependencies(packageDir, json, script, command, packageMap);
 	// Check the dependencies
 	return checkTaskDeps(root, json, script, checkDeps);
 }
@@ -691,7 +734,7 @@ export const handlers: Handler[] = [
 				}
 
 				const packageDir = path.dirname(file);
-				const deps = getDefaultTscTaskDependencies(root, json);
+				const packageMap = getFluidPackageMap(root);
 				const ignore = getFluidBuildTasksTscIgnore(root);
 				for (const [script, scriptCommands] of Object.entries(json.scripts)) {
 					if (scriptCommands === undefined) {
@@ -706,7 +749,7 @@ export const handlers: Handler[] = [
 									json,
 									script,
 									command,
-									deps,
+									packageMap,
 								);
 								patchTaskDeps(root, json, script, checkDeps);
 							} catch (error: unknown) {

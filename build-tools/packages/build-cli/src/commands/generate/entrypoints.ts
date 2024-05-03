@@ -12,7 +12,13 @@ import type { ExportSpecifierStructure, Node } from "ts-morph";
 import { ModuleKind, Project, ScriptKind } from "ts-morph";
 
 import { BaseCommand } from "../../base";
-import { ApiLevel, ApiTag, getApiExports } from "../../library";
+import type { ExportData, Node10CompatExportData } from "../../library";
+import {
+	ApiLevel,
+	ApiTag,
+	getApiExports,
+	queryOutputMapsFromPackageExports,
+} from "../../library";
 import type { CommandLogger } from "../../logging";
 
 /**
@@ -23,17 +29,6 @@ import type { CommandLogger } from "../../logging";
  * It is just easier to use an alternate bracket style.
  */
 export const unscopedPackageNameString = "{@unscopedPackageName}";
-
-interface ExportData {
-	/**
-	 * Location of file relative to package
-	 */
-	relPath: string;
-	/**
-	 * Export is only .d.ts file
-	 */
-	isTypeOnly: boolean;
-}
 
 /**
  * Generates type declarations files for Fluid Framework APIs to support API levels (/alpha, /beta. etc.).
@@ -110,12 +105,13 @@ export default class GenerateEntrypointsCommand extends BaseCommand<
 			mapQueryPathToApiTagLevel.set(internalPathRegex, undefined);
 		}
 
-		const { mapApiTagLevelToOutputPath, mapExportPathToData } = buildOutputMaps(
-			packageJson,
-			mapQueryPathToApiTagLevel,
-			node10TypeCompat,
-			this.logger,
-		);
+		const { mapApiTagLevelToOutput, mapNode10CompatExportPathToData } =
+			queryOutputMapsFromPackageExports(
+				packageJson,
+				mapQueryPathToApiTagLevel,
+				node10TypeCompat,
+				this.logger,
+			);
 
 		const promises: Promise<void>[] = [];
 
@@ -125,19 +121,19 @@ export default class GenerateEntrypointsCommand extends BaseCommand<
 			if (
 				apiLevel !== undefined &&
 				typeof outputPath === "string" &&
-				!mapApiTagLevelToOutputPath.has(apiLevel)
+				!mapApiTagLevelToOutput.has(apiLevel)
 			) {
 				promises.push(fs.rm(outputPath, { force: true }));
 			}
 		}
 
-		if (node10TypeCompat && mapExportPathToData.size === 0) {
+		if (node10TypeCompat && mapNode10CompatExportPathToData.size === 0) {
 			throw new Error(
 				'There are no API level "exports" requiring Node10 type compatibility generation.',
 			);
 		}
 
-		if (mapApiTagLevelToOutputPath.size === 0) {
+		if (mapApiTagLevelToOutput.size === 0) {
 			throw new Error(
 				`There are no package exports matching requested output entrypoints:\n\t${[
 					...mapQueryPathToApiTagLevel.keys(),
@@ -145,12 +141,12 @@ export default class GenerateEntrypointsCommand extends BaseCommand<
 			);
 		}
 
-		promises.push(
-			generateEntrypoints(mainEntrypoint, mapApiTagLevelToOutputPath, this.logger),
-		);
+		promises.push(generateEntrypoints(mainEntrypoint, mapApiTagLevelToOutput, this.logger));
 
 		if (node10TypeCompat) {
-			promises.push(generateNode10TypeEntrypoints(mapExportPathToData, this.logger));
+			promises.push(
+				generateNode10TypeEntrypoints(mapNode10CompatExportPathToData, this.logger),
+			);
 		}
 
 		await Promise.all(promises);
@@ -198,116 +194,6 @@ function getLocalUnscopedPackageName(packageJson: PackageJson): string {
 	return unscopedPackageName;
 }
 
-/**
- * Only the value types of exports that are records.
- */
-type ExportsRecordValue = Exclude<Extract<PackageJson["exports"], object>, unknown[]>;
-
-function findTypesPathMatching(
-	mapQueryPathToApiTagLevel: Map<string | RegExp, ApiTag | undefined>,
-	exports: ExportsRecordValue,
-): { apiTagLevel: ApiTag | undefined; relPath: string; isTypeOnly: boolean } | undefined {
-	for (const [entry, value] of Object.entries(exports)) {
-		if (typeof value === "string") {
-			if (entry === "types") {
-				for (const [key, apiTagLevel] of mapQueryPathToApiTagLevel.entries()) {
-					// eslint-disable-next-line max-depth
-					if (
-						typeof key === "string"
-							? path.resolve(value) === path.resolve(key)
-							: key.test(value)
-					) {
-						const isTypeOnly = !(
-							"default" in exports ||
-							"import" in exports ||
-							"require" in exports
-						);
-						return { apiTagLevel, relPath: value, isTypeOnly };
-					}
-				}
-			}
-		} else if (value !== null) {
-			if (Array.isArray(value)) {
-				continue;
-			}
-			const deepFind = findTypesPathMatching(mapQueryPathToApiTagLevel, value);
-			if (deepFind !== undefined) {
-				return deepFind;
-			}
-		}
-	}
-
-	return undefined;
-}
-
-function buildOutputMaps(
-	packageJson: PackageJson,
-	mapQueryPathToApiTagLevel: Map<string | RegExp, ApiTag | undefined>,
-	node10TypeCompat: boolean,
-	log: CommandLogger,
-): {
-	mapApiTagLevelToOutputPath: Map<ApiTag, string>;
-	mapExportPathToData: Map<string, ExportData>;
-} {
-	const mapApiTagLevelToOutputPath = new Map<ApiTag, string>();
-	const mapExportPathToData = new Map<string, ExportData>();
-
-	const { exports } = packageJson;
-	if (typeof exports !== "object" || exports === null) {
-		throw new Error('no valid "exports" within package properties');
-	}
-
-	if (Array.isArray(exports)) {
-		// eslint-disable-next-line unicorn/prefer-type-error
-		throw new Error(`required entrypoints cannot be generated for "exports" array`);
-	}
-
-	// Iterate through exports looking for properties with values matching keys in map.
-	for (const [exportPath, exportValue] of Object.entries(exports)) {
-		if (typeof exportValue !== "object") {
-			log.verbose(`ignoring non-object export path "${exportPath}": "${exportValue}"`);
-			continue;
-		}
-		if (exportValue === null) {
-			log.verbose(`ignoring null export path "${exportPath}"`);
-			continue;
-		}
-		if (Array.isArray(exportValue)) {
-			log.verbose(`ignoring array export path "${exportPath}"`);
-			continue;
-		}
-
-		const findResult = findTypesPathMatching(mapQueryPathToApiTagLevel, exportValue);
-		if (findResult !== undefined) {
-			const { apiTagLevel, relPath, isTypeOnly } = findResult;
-
-			// Add mapping for API level file generation
-			if (apiTagLevel !== undefined) {
-				if (mapApiTagLevelToOutputPath.has(apiTagLevel)) {
-					log.warning(`${relPath} found in exports multiple times.`);
-				} else {
-					mapApiTagLevelToOutputPath.set(apiTagLevel, relPath);
-				}
-			}
-
-			// Add mapping for Node10 type compatibility generation if requested.
-			// Exclude root "." path as "types" should handle that.
-			if (node10TypeCompat && exportPath !== ".") {
-				const node10TypeExportPath = exportPath.replace(/(?:\.([cm]?)js)?$/, ".d.$1ts");
-				// Nothing needed when export path already matches internal path.
-				if (path.resolve(node10TypeExportPath) !== path.resolve(relPath)) {
-					mapExportPathToData.set(node10TypeExportPath, {
-						relPath,
-						isTypeOnly,
-					});
-				}
-			}
-		}
-	}
-
-	return { mapApiTagLevelToOutputPath, mapExportPathToData };
-}
-
 function sourceContext(node: Node): string {
 	return `${node.getSourceFile().getFilePath()}:${node.getStartLineNumber()}`;
 }
@@ -326,7 +212,7 @@ const generatedHeader: string = `/*!
 
 async function generateEntrypoints(
 	mainEntrypoint: string,
-	mapApiTagLevelToOutput: Map<ApiTag, string>,
+	mapApiTagLevelToOutput: Map<ApiTag, ExportData>,
 	log: CommandLogger,
 ): Promise<void> {
 	/**
@@ -396,11 +282,12 @@ async function generateEntrypoints(
 			namedExports[namedExports.length - 1].trailingTrivia = "\n";
 		}
 
-		const outFile = mapApiTagLevelToOutput.get(apiTagLevel);
-		if (outFile === undefined) {
+		const output = mapApiTagLevelToOutput.get(apiTagLevel);
+		if (output === undefined) {
 			continue;
 		}
 
+		const outFile = output.relPath;
 		log.info(`\tGenerating ${outFile}`);
 		const sourceFile = project.createSourceFile(outFile, undefined, {
 			overwrite: true,
@@ -432,7 +319,7 @@ async function generateEntrypoints(
 }
 
 async function generateNode10TypeEntrypoints(
-	mapExportPathToData: Map<string, ExportData>,
+	mapExportPathToData: Map<string, Node10CompatExportData>,
 	log: CommandLogger,
 ): Promise<void> {
 	/**
