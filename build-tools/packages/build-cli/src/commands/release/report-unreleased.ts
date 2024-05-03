@@ -130,6 +130,8 @@ async function updateReportVersions(
 
 		// updates caret ranges
 		if (isInternalVersionRange(report[packageName].ranges.caret, true)) {
+			// If the caret range is a range, reset it to an exact version.
+			// Note: Post 2.0 release, the versions will no longer be internal versions so another condition will be required that will work after 2.0.
 			report[packageName].ranges.caret = version;
 		}
 

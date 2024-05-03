@@ -18,8 +18,8 @@ steps:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
-      mkdir generate_manifest_files
-      flub release report -g client -o generate_manifest_files --baseFileName manifest
+      mkdir generate_release_reports
+      flub release report -g client -o generate_release_reports --baseFileName manifest
 
 - task: Bash@3
   displayName: Update release report version
@@ -27,9 +27,16 @@ steps:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
-      mkdir upload_manifest_files
-      flub release report-unreleased --version $(SetVersion.version) --fullReportFilePath generate_manifest_files/manifest.full.json --outDir upload_manifest_files
+      mkdir upload_release_reports
+      flub release report-unreleased --version $(SetVersion.version) --fullReportFilePath generate_release_reports/manifest.full.json --outDir upload_release_reports
 
+- task: PublishPipelineArtifact@1
+  displayName: Publish release reports
+  continueOnError: true
+  inputs:
+    targetPath: ${{ parameters.buildDirectory }}/upload_release_reports
+    artifactName: 'release_reports'
+      
 - task: AzureCLI@2
   displayName: Upload release reports
   continueOnError: true
@@ -38,8 +45,8 @@ steps:
     scriptType: bash
     scriptLocation: inlineScript
     inlineScript: |
-      for file in upload_manifest_files/*; do
+      for file in upload_release_reports/*; do
           az storage blob upload -f "$file" -c 'manifest-files' -n "$(basename "$file")" --account-name ${{ parameters.STORAGE_ACCOUNT }} --account-key ${{ parameters.STORAGE_KEY }} --overwrite true --verbose
       done
-      # Delete generate_manifest_files and upload_manifest_files folder
-      rm -r generate_manifest_files upload_manifest_files
+      # Delete generate_release_reports and upload_release_reports folder
+      rm -r generate_release_reports upload_release_reports
