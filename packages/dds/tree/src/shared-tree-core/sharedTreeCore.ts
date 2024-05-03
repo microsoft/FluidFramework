@@ -237,7 +237,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 				schema: this.schemaAndPolicy ?? undefined,
 			},
 		);
-		this.submitLocalMessage(message);
+		this.submitLocalMessage(this.serializer.encode(message, this.handle));
 	}
 
 	protected processCore(
@@ -245,9 +245,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
+		const contents: unknown = this.serializer.decode(message.contents);
 		// Empty context object is passed in, as our decode function is schema-agnostic.
-		const { commit, sessionId } = this.messageCodec.decode(message.contents, {});
-
+		const { commit, sessionId } = this.messageCodec.decode(contents, {});
 		this.editManager.addSequencedChange(
 			{ ...commit, sessionId },
 			brand(message.sequenceNumber),

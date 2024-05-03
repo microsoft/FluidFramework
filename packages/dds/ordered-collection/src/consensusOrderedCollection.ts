@@ -38,11 +38,10 @@ interface IConsensusOrderedCollectionValue<T> {
 /**
  * An operation for consensus ordered collection
  */
-interface IConsensusOrderedCollectionAddOperation<T> {
+interface IConsensusOrderedCollectionAddOperation {
 	opName: "add";
 	// serialized value
 	value: string;
-	deserializedValue?: T;
 }
 
 interface IConsensusOrderedCollectionAcquireOperation {
@@ -66,8 +65,8 @@ interface IConsensusOrderedCollectionReleaseOperation {
 	acquireId: string;
 }
 
-type IConsensusOrderedCollectionOperation<T> =
-	| IConsensusOrderedCollectionAddOperation<T>
+type IConsensusOrderedCollectionOperation =
+	| IConsensusOrderedCollectionAddOperation
 	| IConsensusOrderedCollectionAcquireOperation
 	| IConsensusOrderedCollectionCompleteOperation
 	| IConsensusOrderedCollectionReleaseOperation;
@@ -138,10 +137,9 @@ export class ConsensusOrderedCollection<T = any>
 			return;
 		}
 
-		await this.submit<IConsensusOrderedCollectionAddOperation<T>>({
+		await this.submit<IConsensusOrderedCollectionAddOperation>({
 			opName: "add",
 			value: valueSer,
-			deserializedValue: value,
 		});
 	}
 
@@ -291,15 +289,11 @@ export class ConsensusOrderedCollection<T = any>
 		localOpMetadata: unknown,
 	) {
 		if (message.type === MessageType.Operation) {
-			const op = message.contents as IConsensusOrderedCollectionOperation<T>;
+			const op = message.contents as IConsensusOrderedCollectionOperation;
 			let value: IConsensusOrderedCollectionValue<T> | undefined;
 			switch (op.opName) {
 				case "add":
-					if (op.deserializedValue !== undefined) {
-						this.addCore(op.deserializedValue);
-					} else {
-						this.addCore(this.deserializeValue(op.value, this.serializer) as T);
-					}
+					this.addCore(this.deserializeValue(op.value, this.serializer) as T);
 					break;
 
 				case "acquire":
@@ -325,7 +319,7 @@ export class ConsensusOrderedCollection<T = any>
 		}
 	}
 
-	private async submit<TMessage extends IConsensusOrderedCollectionOperation<T>>(
+	private async submit<TMessage extends IConsensusOrderedCollectionOperation>(
 		message: TMessage,
 	): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
 		assert(this.isAttached(), 0x06a /* "Trying to submit message while detached!" */);

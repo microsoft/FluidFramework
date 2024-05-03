@@ -95,7 +95,7 @@ export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T> &
     openMatrix(consumer: IMatrixConsumer<MatrixItem<T>>): IMatrixReader<MatrixItem<T>>;
     openUndo(consumer: IUndoConsumer): void;
     // (undocumented)
-    protected processCore(msg: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    protected processCore(rawMessage: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     protected processGCDataCore(serializer: IFluidSerializer): void;
     // (undocumented)
     removeCols(colStart: number, count: number): void;

@@ -17,8 +17,6 @@ import { pkgVersion } from "./packageVersion.js";
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link ISharedCell}.
  *
  * @sealed
- *
- * @internal
  */
 export class CellFactory implements IChannelFactory {
 	/**

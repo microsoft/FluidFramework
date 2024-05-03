@@ -136,6 +136,11 @@ export class SharedCell<T = any>
 	 * {@inheritDoc ISharedCell.set}
 	 */
 	public set(value: Serializable<T>): void {
+		// Serialize the value if required.
+		const operationValue: ICellValue = {
+			value: this.serializer.encode(value, this.handle),
+		};
+
 		// Set the value locally.
 		const previousValue = this.setCore(value);
 		this.setAttribution();
@@ -144,10 +149,6 @@ export class SharedCell<T = any>
 		if (!this.isAttached()) {
 			return;
 		}
-
-		const operationValue: ICellValue = {
-			value,
-		};
 
 		const op: ISetCellOperation = {
 			type: "setCell",
@@ -225,8 +226,7 @@ export class SharedCell<T = any>
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const content = await readAndParse<ICellValue>(storage, snapshotFileName);
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		this.data = this.serializer.decode(content.value);
+		this.data = this.decode(content);
 		this.attribution = content.attribution;
 	}
 
@@ -250,7 +250,7 @@ export class SharedCell<T = any>
 	private applyInnerOp(content: ICellOperation): Serializable<T> | undefined {
 		switch (content.type) {
 			case "setCell": {
-				return this.setCore(content.value.value as Serializable<T>);
+				return this.setCore(this.decode(content.value));
 			}
 
 			case "deleteCell": {
@@ -322,6 +322,11 @@ export class SharedCell<T = any>
 		return previousLocalValue;
 	}
 
+	private decode(cellValue: ICellValue): Serializable<T> {
+		const value = cellValue.value;
+		return this.serializer.decode(value) as Serializable<T>;
+	}
+
 	private createLocalOpMetadata(
 		op: ICellOperation,
 		previousValue?: Serializable<T>,
@@ -346,7 +351,7 @@ export class SharedCell<T = any>
 				break;
 			}
 			case "setCell": {
-				this.set(cellContent.value.value as Serializable<T>);
+				this.set(this.decode(cellContent.value));
 				break;
 			}
 			default: {

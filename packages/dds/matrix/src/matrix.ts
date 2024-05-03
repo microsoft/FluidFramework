@@ -15,6 +15,8 @@ import {
 import {
 	IFluidSerializer,
 	ISharedObjectEvents,
+	makeHandlesSerializable,
+	parseHandles,
 	SharedObject,
 } from "@fluidframework/shared-object-base";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
@@ -629,7 +631,10 @@ export class SharedMatrix<T = any>
 		);
 
 		this.inFlightRefSeqs.push(this.runtime.deltaManager.lastSequenceNumber);
-		super.submitLocalMessage(message, localOpMetadata);
+		super.submitLocalMessage(
+			makeHandlesSerializable(message, this.serializer, this.handle),
+			localOpMetadata,
+		);
 
 		// Ensure that row/col 'localSeq' are synchronized (see 'nextLocalSeq()').
 		assert(
@@ -805,7 +810,7 @@ export class SharedMatrix<T = any>
 	}
 
 	protected processCore(
-		msg: ISequencedDocumentMessage,
+		rawMessage: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
@@ -820,6 +825,7 @@ export class SharedMatrix<T = any>
 			// See "handles stashed ops created on top of sequenced local ops" for one such test case.
 			// assert(recordedRefSeq <= message.referenceSequenceNumber, "RefSeq mismatch");
 		}
+		const msg = parseHandles(rawMessage, this.serializer);
 
 		const contents = msg.contents as MatrixSetOrVectorOp<T>;
 		const target = contents.target;
@@ -842,10 +848,10 @@ export class SharedMatrix<T = any>
 					this.setCellLwwToFwwPolicySwitchOpSeqNumber > -1;
 				// If this is the first op notifying us of the policy change, then set the policy change seq number.
 				if (this.setCellLwwToFwwPolicySwitchOpSeqNumber === -1 && fwwMode === true) {
-					this.setCellLwwToFwwPolicySwitchOpSeqNumber = msg.sequenceNumber;
+					this.setCellLwwToFwwPolicySwitchOpSeqNumber = rawMessage.sequenceNumber;
 				}
 
-				assert(msg.clientId !== null, 0x861 /* clientId should not be null!! */);
+				assert(rawMessage.clientId !== null, 0x861 /* clientId should not be null!! */);
 				if (local) {
 					// We are receiving the ACK for a local pending set operation.
 					const { rowHandle, colHandle, localSeq, rowsRef, colsRef } =
@@ -861,12 +867,12 @@ export class SharedMatrix<T = any>
 					// If policy is not switched, then also update the tracker in case it is the latest.
 					if (
 						(this.setCellLwwToFwwPolicySwitchOpSeqNumber > -1 &&
-							this.shouldSetCellBasedOnFWW(rowHandle, colHandle, msg)) ||
+							this.shouldSetCellBasedOnFWW(rowHandle, colHandle, rawMessage)) ||
 						(this.setCellLwwToFwwPolicySwitchOpSeqNumber === -1 && isLatestPendingOp)
 					) {
 						this.cellLastWriteTracker.setCell(rowHandle, colHandle, {
-							seqNum: msg.sequenceNumber,
-							clientId: msg.clientId,
+							seqNum: rawMessage.sequenceNumber,
+							clientId: rawMessage.clientId,
 						});
 					}
 
@@ -874,9 +880,9 @@ export class SharedMatrix<T = any>
 						this.pending.setCell(rowHandle, colHandle, undefined);
 					}
 				} else {
-					const adjustedRow = this.rows.adjustPosition(row, msg);
+					const adjustedRow = this.rows.adjustPosition(row, rawMessage);
 					if (adjustedRow !== undefined) {
-						const adjustedCol = this.cols.adjustPosition(col, msg);
+						const adjustedCol = this.cols.adjustPosition(col, rawMessage);
 
 						if (adjustedCol !== undefined) {
 							const rowHandle = this.rows.getAllocatedHandle(adjustedRow);
@@ -892,13 +898,13 @@ export class SharedMatrix<T = any>
 								// overwrite the cell and raise conflict if we have pending changes as our change is going to be lost.
 								if (
 									!isPreviousSetCellPolicyModeFWW ||
-									this.shouldSetCellBasedOnFWW(rowHandle, colHandle, msg)
+									this.shouldSetCellBasedOnFWW(rowHandle, colHandle, rawMessage)
 								) {
 									const previousValue = this.cells.getCell(rowHandle, colHandle);
 									this.cells.setCell(rowHandle, colHandle, value);
 									this.cellLastWriteTracker.setCell(rowHandle, colHandle, {
-										seqNum: msg.sequenceNumber,
-										clientId: msg.clientId,
+										seqNum: rawMessage.sequenceNumber,
+										clientId: rawMessage.clientId,
 									});
 									for (const consumer of this.consumers.values()) {
 										consumer.cellsChanged(adjustedRow, adjustedCol, 1, 1, this);
@@ -922,8 +928,8 @@ export class SharedMatrix<T = any>
 								// since it "happened before" the pending write.
 								this.cells.setCell(rowHandle, colHandle, value);
 								this.cellLastWriteTracker.setCell(rowHandle, colHandle, {
-									seqNum: msg.sequenceNumber,
-									clientId: msg.clientId,
+									seqNum: rawMessage.sequenceNumber,
+									clientId: rawMessage.clientId,
 								});
 								for (const consumer of this.consumers.values()) {
 									consumer.cellsChanged(adjustedRow, adjustedCol, 1, 1, this);
@@ -1039,20 +1045,21 @@ export class SharedMatrix<T = any>
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
-	protected applyStashedOp(_content: unknown): void {
-		const content = _content as MatrixSetOrVectorOp<T>;
-		if (content.type === MatrixOp.set && content.target === undefined) {
-			if (content.fwwMode === true) {
+	protected applyStashedOp(content: unknown): void {
+		const parsedContent: MatrixSetOrVectorOp<T> = parseHandles(content, this.serializer);
+
+		if (parsedContent.type === MatrixOp.set && parsedContent.target === undefined) {
+			if (parsedContent.fwwMode === true) {
 				this.switchSetCellPolicy();
 			}
-			this.setCell(content.row, content.col, content.value);
+			this.setCell(parsedContent.row, parsedContent.col, parsedContent.value);
 		} else {
-			const vector = content.target === SnapshotPath.cols ? this.cols : this.rows;
-			vector.applyStashedOp(content);
-			if (content.target === SnapshotPath.cols) {
-				this.submitColMessage(content);
+			const vector = parsedContent.target === SnapshotPath.cols ? this.cols : this.rows;
+			vector.applyStashedOp(parsedContent);
+			if (parsedContent.target === SnapshotPath.cols) {
+				this.submitColMessage(parsedContent);
 			} else {
-				this.submitRowMessage(content);
+				this.submitRowMessage(parsedContent);
 			}
 		}
 	}
