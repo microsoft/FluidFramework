@@ -9,7 +9,7 @@ import { DataObjectFactory } from '@fluidframework/aqueduct/internal';
 import { EventEmitter } from '@fluid-internal/client-utils';
 import { IErrorEvent } from '@fluidframework/core-interfaces';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
-import { Jsonable } from '@fluidframework/datastore-definitions/internal';
+import { Jsonable } from '@fluidframework/core-interfaces/internal';
 
 // @internal
 export interface IRuntimeSignaler {
@@ -18,7 +18,7 @@ export interface IRuntimeSignaler {
     // (undocumented)
     on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
     // (undocumented)
-    submitSignal(type: string, content: Jsonable<unknown>): void;
+    submitSignal(type: string, content: Jsonable): void;
 }
 
 // @internal

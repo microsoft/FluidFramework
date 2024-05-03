@@ -6,9 +6,8 @@
 import type { SignalListener } from "@fluid-experimental/data-objects";
 import { EventEmitter } from "@fluid-internal/client-utils";
 import { DataObject, DataObjectFactory, IDataObjectProps } from "@fluidframework/aqueduct/internal";
-import { type IErrorEvent, IFluidHandle } from "@fluidframework/core-interfaces";
+import { type IErrorEvent, IFluidHandle, Jsonable } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
-import { Jsonable } from "@fluidframework/datastore-definitions/internal";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 
 export class TestDataObject extends DataObject {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, Jsonable } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
@@ -11,7 +11,6 @@ import {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { Jsonable } from "@fluidframework/datastore-definitions/internal";
 import {
 	BaseSegment,
 	IJSONSegment,
@@ -294,7 +293,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
 		row: number,
 		col: number,
 	): // The return type is defined explicitly here to prevent TypeScript from generating dynamic imports
-	Jsonable<string | number | boolean | IFluidHandle> | undefined {
+	Jsonable<unknown, IFluidHandle> | undefined {
 		const pos = rowColToPosition(row, col);
 		const { segment, offset } = this.getContainingSegment(pos);
 		if (segment && RunSegment.is(segment)) {

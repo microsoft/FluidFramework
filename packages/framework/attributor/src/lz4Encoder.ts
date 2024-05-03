@@ -4,7 +4,7 @@
  */
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { type Jsonable } from "@fluidframework/datastore-definitions/internal";
+import { type Jsonable } from "@fluidframework/core-interfaces";
 import { compress, decompress } from "lz4js";
 
 import { type Encoder } from "./encoders.js";
