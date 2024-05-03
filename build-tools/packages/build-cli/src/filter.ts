@@ -67,9 +67,9 @@ export interface PackageFilterOptions {
  * Parses {@link selectionFlags} into a typed object that is more ergonomic than working with the flag values directly.
  *
  * @param flags - The parsed command flags.
- * @param defaultAll - Controls what packages are selected when all flags are set to their default values. With the
- * default value of `false`, no packages will be selected. Setting this to `true` will invert this logic, and select all
- * packages by default.
+ * @param defaultSelection - Controls what packages are selected when all flags are set to their default values. With
+ * the default value of undefined, no packages will be selected. Setting this to `all` will select all packages by
+ * default. Setting it to `dir` will select the package in the current directory.
  */
 export const parsePackageSelectionFlags = (
 	flags: selectionFlags,
