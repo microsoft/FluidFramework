@@ -24,6 +24,7 @@ import { mkdirSync, readJson, rmSync, writeFileSync } from "fs-extra";
 import * as resolve from "resolve.exports";
 import { ModuleKind, Project, type SourceFile } from "ts-morph";
 import { PackageCommand } from "../../BasePackageCommand";
+import type { PackageSelectionDefault } from "../../flags";
 import { ApiLevel, ensureDevDependencyExists, knownApiLevels } from "../../library";
 import { unscopedPackageNameString } from "./entrypoints";
 
@@ -53,6 +54,8 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		}),
 		...PackageCommand.flags,
 	} as const;
+
+	protected defaultSelection = "dir" as PackageSelectionDefault;
 
 	protected async processPackage(pkg: Package): Promise<void> {
 		const { level, outDir, outFile } = this.flags;
