@@ -2386,8 +2386,6 @@ export class ContainerRuntime
 				return;
 			case ContainerMessageType.BlobAttach:
 				return;
-			case ContainerMessageType.ChunkedOp:
-				throw new Error("chunkedOp not expected here");
 			case ContainerMessageType.Rejoin:
 				throw new Error("rejoin not expected here");
 			case ContainerMessageType.GC:
@@ -2400,7 +2398,7 @@ export class ContainerRuntime
 				const compatBehavior = opContents.compatDetails?.behavior;
 				if (!compatBehaviorAllowsMessageType(opContents.type, compatBehavior)) {
 					const error = DataProcessingError.create(
-						"Stashed runtime message of unknown type",
+						"Stashed runtime message of unexpected type",
 						"applyStashedOp",
 						undefined /* sequencedMessage */,
 						{
@@ -4119,8 +4117,6 @@ export class ContainerRuntime
 				this.submit(message, localOpMetadata);
 				break;
 			}
-			case ContainerMessageType.ChunkedOp:
-				throw new Error(`chunkedOp not expected here`);
 			case ContainerMessageType.BlobAttach:
 				this.blobManager.reSubmit(opMetadata);
 				break;
@@ -4147,7 +4143,7 @@ export class ContainerRuntime
 					});
 				} else {
 					const error = DataProcessingError.create(
-						"Resubmitting runtime message of unknown type",
+						"Resubmitting runtime message of unexpected type",
 						"reSubmitCore",
 						undefined /* sequencedMessage */,
 						{
