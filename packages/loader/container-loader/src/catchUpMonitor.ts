@@ -6,7 +6,7 @@
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/client-protocol-definitions";
 
 /** @see CatchUpMonitor for usage */
 type CaughtUpListener = () => void;

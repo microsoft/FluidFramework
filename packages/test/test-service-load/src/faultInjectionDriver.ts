@@ -24,7 +24,7 @@ import {
 	INack,
 	ISummaryTree,
 	NackErrorType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 import { LoggingError, UsageError, wrapError } from "@fluidframework/telemetry-utils/internal";
 
 export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFactory {

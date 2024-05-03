@@ -8,7 +8,7 @@ import {
 	type IClient,
 	type IQuorumClients,
 	type ISequencedClient,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 import { MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
 
 /**
@@ -44,7 +44,7 @@ export function makeMockAudience(clientIds: string[]): IAudience {
 }
 
 /**
- * Creates a mock {@link @fluidframework/protocol-definitions#IQuorumClients} for testing.
+ * Creates a mock {@link @fluidframework/client-protocol-definitions#IQuorumClients} for testing.
  */
 export function makeMockQuorum(clientIds: string[]): IQuorumClients {
 	const clients = new Map<string, ISequencedClient>();

@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { Jsonable } from "@fluidframework/datastore-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/client-protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";

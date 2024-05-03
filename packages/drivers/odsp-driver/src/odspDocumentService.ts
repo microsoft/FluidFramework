@@ -21,7 +21,7 @@ import {
 	InstrumentedStorageTokenFetcher,
 	TokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IClient, ISequencedDocumentMessage } from "@fluidframework/client-protocol-definitions";
 import {
 	ITelemetryLoggerExt,
 	MonitoringContext,

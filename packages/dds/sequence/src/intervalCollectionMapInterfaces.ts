@@ -4,7 +4,7 @@
  */
 
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/client-protocol-definitions";
 import { ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 import type { IntervalCollection } from "./intervalCollection.js";

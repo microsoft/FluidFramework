@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITokenClaims } from "@fluidframework/protocol-definitions";
+import { ITokenClaims } from "@fluidframework/client-protocol-definitions";
 
 /**
  * Abstracts the discovery of claims contained within a token.
@@ -11,7 +11,7 @@ import { ITokenClaims } from "@fluidframework/protocol-definitions";
  */
 export interface ITokenService {
 	/**
-	 * Extracts the {@link @fluidframework/protocol-definitions#ITokenClaims | token claims} from the provided
+	 * Extracts the {@link @fluidframework/client-protocol-definitions#ITokenClaims | token claims} from the provided
 	 * {@link https://jwt.io/introduction/ | JSON Web Token (JWT)} string representation.
 	 */
 	extractClaims(token: string): ITokenClaims;

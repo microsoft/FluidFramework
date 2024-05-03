@@ -29,7 +29,7 @@ import {
 	type ISnapshotTree,
 	ISummaryTree,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
 	FluidDataStoreRegistryEntry,

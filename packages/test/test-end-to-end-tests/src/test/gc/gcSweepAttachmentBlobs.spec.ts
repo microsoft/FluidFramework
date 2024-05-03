@@ -27,7 +27,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/summary";
 import { delay } from "@fluidframework/core-utils/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISummaryTree, SummaryType } from "@fluidframework/client-protocol-definitions";
 import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestContainerConfig,

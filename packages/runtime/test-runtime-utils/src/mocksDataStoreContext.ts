@@ -14,7 +14,7 @@ import {
 	IQuorumClients,
 	ISequencedDocumentMessage,
 	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 import {
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,

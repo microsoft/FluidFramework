@@ -17,7 +17,7 @@ import {
 	IVersion,
 	SummaryObject,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 import { compress, decompress } from "lz4js";
 
 import { ICompressionStorageConfig, SummaryCompressionAlgorithm } from "..//index.js";

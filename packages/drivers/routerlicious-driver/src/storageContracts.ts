@@ -4,7 +4,7 @@
  */
 
 import * as git from "@fluidframework/gitresources";
-import * as api from "@fluidframework/protocol-definitions";
+import * as api from "@fluidframework/client-protocol-definitions";
 import {
 	IWholeSummaryPayload,
 	IWholeSummaryPayloadType,

@@ -21,7 +21,7 @@ import {
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IClient } from "@fluidframework/protocol-definitions";
+import type { IClient } from "@fluidframework/client-protocol-definitions";
 import {
 	IChannel,
 	IChannelServices,
@@ -41,7 +41,7 @@ import {
 	ITreeEntry,
 	MessageType,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
 	FlushMode,

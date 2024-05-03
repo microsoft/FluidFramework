@@ -12,7 +12,7 @@ import {
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/client-protocol-definitions";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import {
 	ITelemetryLoggerExt,

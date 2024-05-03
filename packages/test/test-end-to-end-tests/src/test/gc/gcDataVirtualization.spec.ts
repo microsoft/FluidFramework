@@ -21,7 +21,7 @@ import {
 	ISummaryTree,
 	SummaryType,
 	type ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";

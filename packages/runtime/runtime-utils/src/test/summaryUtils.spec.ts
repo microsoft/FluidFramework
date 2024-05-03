@@ -15,7 +15,7 @@ import {
 	ITree,
 	SummaryObject,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 
 import {
 	TelemetryContext,

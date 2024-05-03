@@ -23,7 +23,7 @@ import type {
 	IQuorumClients,
 	ISequencedDocumentMessage,
 	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 
 import type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
 import type { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry.js";

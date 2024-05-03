@@ -18,7 +18,7 @@ import {
 	ISentSignalMessage,
 	ISequencedDocumentMessage,
 	ISignalMessage,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 import {
 	IFluidErrorBase,
 	ITelemetryLoggerExt,

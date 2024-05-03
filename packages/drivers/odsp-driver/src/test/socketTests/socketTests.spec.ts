@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
 import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
-import { IClient } from "@fluidframework/protocol-definitions";
+import { IClient } from "@fluidframework/client-protocol-definitions";
 import {
 	ITelemetryLoggerExt,
 	MockLogger,

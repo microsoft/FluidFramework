@@ -5429,6 +5429,38 @@ importers:
       rimraf: 4.4.1
       typescript: 5.1.6
 
+  packages/common/client-protocol-definitions:
+    specifiers:
+      '@arethetypeswrong/cli': ^0.15.2
+      '@fluid-tools/build-cli': 0.38.0-259537
+      '@fluidframework/build-common': ^2.0.3
+      '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions-previous': npm:@fluidframework/protocol-definitions@3.2.0
+      '@fluidframework/eslint-config-fluid': ^5.1.0
+      '@microsoft/api-extractor': ^7.42.3
+      concurrently: ^8.2.1
+      copyfiles: ^2.4.1
+      eslint: ~8.55.0
+      eslint-config-prettier: ~9.0.0
+      prettier: ~3.0.3
+      rimraf: ^4.4.0
+      typescript: ~5.1.6
+    devDependencies:
+      '@arethetypeswrong/cli': 0.15.2
+      '@fluid-tools/build-cli': 0.38.0-259537
+      '@fluidframework/build-common': 2.0.3
+      '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions-previous': /@fluidframework/protocol-definitions/3.2.0
+      '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
+      '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y
+      concurrently: 8.2.2
+      copyfiles: 2.4.1
+      eslint: 8.55.0
+      eslint-config-prettier: 9.0.0_eslint@8.55.0
+      prettier: 3.0.3
+      rimraf: 4.4.1
+      typescript: 5.1.6
+
   packages/common/client-utils:
     specifiers:
       '@arethetypeswrong/cli': ^0.15.2
@@ -5535,11 +5567,11 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions-previous': npm:@fluidframework/container-definitions@2.0.0-rc.3.0.0
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@microsoft/api-extractor': ^7.42.3
       copyfiles: ^2.4.1
       eslint: ~8.55.0
@@ -5548,9 +5580,9 @@ importers:
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
+      '@fluidframework/client-protocol-definitions': link:../client-protocol-definitions
       '@fluidframework/core-interfaces': link:../core-interfaces
       '@fluidframework/driver-definitions': link:../driver-definitions
-      '@fluidframework/protocol-definitions': 3.2.0
     devDependencies:
       '@arethetypeswrong/cli': 0.15.2
       '@biomejs/biome': 1.6.2
@@ -5662,10 +5694,10 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions-previous': npm:@fluidframework/driver-definitions@2.0.0-rc.3.0.0
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@microsoft/api-extractor': ^7.42.3
       copyfiles: ^2.4.1
       eslint: ~8.55.0
@@ -5673,8 +5705,8 @@ importers:
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
+      '@fluidframework/client-protocol-definitions': link:../client-protocol-definitions
       '@fluidframework/core-interfaces': link:../core-interfaces
-      '@fluidframework/protocol-definitions': 3.2.0
     devDependencies:
       '@arethetypeswrong/cli': 0.15.2
       '@biomejs/biome': 1.6.2
@@ -5700,13 +5732,13 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
       '@fluidframework/cell-previous': npm:@fluidframework/cell@2.0.0-rc.3.0.0
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
@@ -5726,11 +5758,11 @@ importers:
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/shared-object-base': link:../shared-object-base
     devDependencies:
@@ -5769,6 +5801,7 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
@@ -5776,7 +5809,6 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
@@ -5796,11 +5828,11 @@ importers:
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/shared-object-base': link:../shared-object-base
     devDependencies:
@@ -5838,12 +5870,12 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
@@ -5865,10 +5897,10 @@ importers:
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/shared-object-base': link:../shared-object-base
       uuid: 9.0.1
@@ -5911,6 +5943,7 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
@@ -5919,7 +5952,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/map-previous': npm:@fluidframework/map@2.0.0-rc.3.0.0
       '@fluidframework/merge-tree': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/shared-object-base': workspace:~
@@ -5944,12 +5976,12 @@ importers:
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/merge-tree': link:../merge-tree
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/shared-object-base': link:../shared-object-base
@@ -5998,6 +6030,7 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
@@ -6006,7 +6039,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/matrix-previous': npm:@fluidframework/matrix@2.0.0-rc.3.0.0
       '@fluidframework/merge-tree': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/shared-object-base': workspace:~
@@ -6037,12 +6069,12 @@ importers:
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/merge-tree': link:../merge-tree
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/shared-object-base': link:../shared-object-base
@@ -6097,13 +6129,13 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/merge-tree-previous': npm:@fluidframework/merge-tree@2.0.0-rc.3.0.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/shared-object-base': workspace:~
@@ -6128,11 +6160,11 @@ importers:
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/shared-object-base': link:../shared-object-base
@@ -6178,12 +6210,12 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/ordered-collection-previous': npm:@fluidframework/ordered-collection@2.0.0-rc.3.0.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/shared-object-base': workspace:~
@@ -6208,10 +6240,10 @@ importers:
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/shared-object-base': link:../shared-object-base
@@ -6255,12 +6287,12 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
@@ -6282,11 +6314,11 @@ importers:
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/shared-object-base': link:../shared-object-base
     devDependencies:
@@ -6326,12 +6358,12 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/register-collection-previous': npm:@fluidframework/register-collection@2.0.0-rc.3.0.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/shared-object-base': workspace:~
@@ -6353,11 +6385,11 @@ importers:
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/shared-object-base': link:../shared-object-base
     devDependencies:
@@ -6399,13 +6431,13 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/merge-tree': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence-previous': npm:@fluidframework/sequence@2.0.0-rc.3.0.0
@@ -6436,11 +6468,11 @@ importers:
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/merge-tree': link:../merge-tree
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/shared-object-base': link:../shared-object-base
@@ -6492,6 +6524,7 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-runtime': workspace:~
       '@fluidframework/core-interfaces': workspace:~
@@ -6499,7 +6532,6 @@ importers:
       '@fluidframework/datastore': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/shared-object-base-previous': npm:@fluidframework/shared-object-base@2.0.0-rc.3.0.0
@@ -6527,13 +6559,13 @@ importers:
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore': link:../../runtime/datastore
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
@@ -6577,12 +6609,12 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/shared-summary-block-previous': npm:@fluidframework/shared-summary-block@2.0.0-rc.3.0.0
@@ -6605,10 +6637,10 @@ importers:
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/shared-object-base': link:../shared-object-base
     devDependencies:
@@ -6651,6 +6683,7 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
@@ -6658,7 +6691,6 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/task-manager-previous': npm:@fluidframework/task-manager@2.0.0-rc.3.0.0
@@ -6681,13 +6713,13 @@ importers:
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-runtime-definitions': link:../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/shared-object-base': link:../shared-object-base
     devDependencies:
@@ -6729,13 +6761,13 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/id-compressor': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
@@ -6759,12 +6791,12 @@ importers:
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
       '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/id-compressor': link:../../runtime/id-compressor
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/shared-object-base': link:../shared-object-base
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
@@ -6807,6 +6839,7 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime': workspace:~
@@ -6815,7 +6848,6 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/id-compressor': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/shared-object-base': workspace:~
@@ -6852,12 +6884,12 @@ importers:
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/id-compressor': link:../../runtime/id-compressor
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/shared-object-base': link:../shared-object-base
@@ -6914,12 +6946,12 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/debugger-previous': npm:@fluidframework/debugger@2.0.0-rc.3.0.0
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/replay-driver': workspace:~
       '@microsoft/api-extractor': ^7.42.3
       '@types/node': ^18.19.0
@@ -6930,10 +6962,10 @@ importers:
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/replay-driver': link:../replay-driver
       jsonschema: 1.4.1
     devDependencies:
@@ -6961,13 +6993,13 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/driver-base-previous': npm:@fluidframework/driver-base@2.0.0-rc.3.0.0
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.42.3
       '@types/mocha': ^9.1.1
@@ -6986,11 +7018,11 @@ importers:
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
     devDependencies:
       '@arethetypeswrong/cli': 0.15.2
@@ -7074,13 +7106,13 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/file-driver-previous': npm:@fluidframework/file-driver@2.0.0-rc.3.0.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/replay-driver': workspace:~
       '@microsoft/api-extractor': ^7.42.3
       '@types/node': ^18.19.0
@@ -7091,11 +7123,11 @@ importers:
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/replay-driver': link:../replay-driver
     devDependencies:
       '@arethetypeswrong/cli': 0.15.2
@@ -7122,6 +7154,7 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/driver-base': workspace:~
@@ -7130,7 +7163,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/local-driver-previous': npm:@fluidframework/local-driver@2.0.0-rc.3.0.0
       '@fluidframework/protocol-base': ^4.0.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/server-local-server': ^4.0.0
       '@fluidframework/server-services-client': ^4.0.0
@@ -7158,13 +7190,13 @@ importers:
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/driver-base': link:../driver-base
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/protocol-base': 4.0.0
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/routerlicious-driver': link:../routerlicious-driver
       '@fluidframework/server-local-server': 4.0.0
       '@fluidframework/server-services-client': 4.0.0
@@ -7209,6 +7241,7 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/driver-base': workspace:~
@@ -7219,7 +7252,6 @@ importers:
       '@fluidframework/odsp-driver-definitions': workspace:~
       '@fluidframework/odsp-driver-previous': npm:@fluidframework/odsp-driver@2.0.0-rc.3.0.0
       '@fluidframework/protocol-base': ^4.0.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.42.3
       '@types/mocha': ^9.1.1
@@ -7244,6 +7276,7 @@ importers:
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/driver-base': link:../driver-base
@@ -7252,7 +7285,6 @@ importers:
       '@fluidframework/odsp-doclib-utils': link:../../utils/odsp-doclib-utils
       '@fluidframework/odsp-driver-definitions': link:../odsp-driver-definitions
       '@fluidframework/protocol-base': 4.0.0
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       node-fetch: 2.7.0
       socket.io-client: 4.7.4
@@ -7292,10 +7324,10 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/odsp-driver-definitions-previous': npm:@fluidframework/odsp-driver-definitions@2.0.0-rc.3.0.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@microsoft/api-extractor': ^7.42.3
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -7311,9 +7343,9 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/odsp-driver-definitions-previous': /@fluidframework/odsp-driver-definitions/2.0.0-rc.3.0.0
-      '@fluidframework/protocol-definitions': 3.2.0
       '@microsoft/api-extractor': 7.42.3_f66stvskxun56mencgf6l5564y
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -7389,12 +7421,12 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/replay-driver-previous': npm:@fluidframework/replay-driver@2.0.0-rc.3.0.0
       '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.42.3
@@ -7408,11 +7440,11 @@ importers:
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
     devDependencies:
       '@arethetypeswrong/cli': 0.15.2
@@ -7441,6 +7473,7 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/driver-base': workspace:~
@@ -7449,7 +7482,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/gitresources': ^4.0.0
       '@fluidframework/protocol-base': ^4.0.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/routerlicious-driver-previous': npm:@fluidframework/routerlicious-driver@2.0.0-rc.3.0.0
       '@fluidframework/server-services-client': ^4.0.0
       '@fluidframework/telemetry-utils': workspace:~
@@ -7479,6 +7511,7 @@ importers:
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/driver-base': link:../driver-base
@@ -7486,7 +7519,6 @@ importers:
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/gitresources': 4.0.0
       '@fluidframework/protocol-base': 4.0.0
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/server-services-client': 4.0.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       cross-fetch: 3.1.8
@@ -7531,11 +7563,11 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/routerlicious-urlresolver-previous': npm:@fluidframework/routerlicious-urlresolver@2.0.0-rc.3.0.0
       '@microsoft/api-extractor': ^7.42.3
       '@types/mocha': ^9.1.1
@@ -7554,10 +7586,10 @@ importers:
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
-      '@fluidframework/protocol-definitions': 3.2.0
       nconf: 0.12.1
     devDependencies:
       '@arethetypeswrong/cli': 0.15.2
@@ -7592,11 +7624,11 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/tinylicious-driver-previous': npm:@fluidframework/tinylicious-driver@2.0.0-rc.3.0.0
       '@microsoft/api-extractor': ^7.42.3
@@ -7614,10 +7646,10 @@ importers:
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/routerlicious-driver': link:../routerlicious-driver
       jsrsasign: 11.0.0
       uuid: 9.0.1
@@ -7787,6 +7819,7 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-runtime': workspace:~
       '@fluidframework/container-runtime-definitions': workspace:~
@@ -7796,7 +7829,6 @@ importers:
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/merge-tree': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
@@ -7819,13 +7851,13 @@ importers:
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/container-runtime-definitions': link:../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
@@ -8143,6 +8175,7 @@ importers:
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime': workspace:~
@@ -8152,7 +8185,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/fluid-static-previous': npm:@fluidframework/fluid-static@2.0.0-rc.3.0.0
       '@fluidframework/map': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/request-handler': workspace:~
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
@@ -8176,13 +8208,13 @@ importers:
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
       '@fluidframework/aqueduct': link:../aqueduct
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/container-runtime-definitions': link:../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/request-handler': link:../request-handler
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
@@ -8223,11 +8255,11 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@microsoft/api-extractor': ^7.42.3
       '@types/node': ^18.19.0
       copyfiles: ^2.4.1
@@ -8238,10 +8270,10 @@ importers:
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
-      '@fluidframework/protocol-definitions': 3.2.0
     devDependencies:
       '@arethetypeswrong/cli': 0.15.2
       '@biomejs/biome': 1.6.2
@@ -8452,6 +8484,7 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader-previous': npm:@fluidframework/container-loader@2.0.0-rc.3.0.0
       '@fluidframework/core-interfaces': workspace:~
@@ -8460,7 +8493,6 @@ importers:
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/protocol-base': ^4.0.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.42.3
       '@types/debug': ^4.1.5
@@ -8488,13 +8520,13 @@ importers:
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../driver-utils
       '@fluidframework/protocol-base': 4.0.0
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       '@ungap/structured-clone': 1.2.0
       debug: 4.3.4
@@ -8540,6 +8572,7 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/driver-definitions': workspace:~
@@ -8547,7 +8580,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/gitresources': ^4.0.0
       '@fluidframework/protocol-base': ^4.0.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.42.3
       '@types/mocha': ^9.1.1
@@ -8571,12 +8603,12 @@ importers:
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/gitresources': 4.0.0
       '@fluidframework/protocol-base': 4.0.0
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       axios: 1.6.2
       lz4js: 0.2.0
@@ -8616,11 +8648,11 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@microsoft/api-extractor': ^7.42.3
       copyfiles: ^2.4.1
       eslint: ~8.55.0
@@ -8629,10 +8661,10 @@ importers:
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../driver-utils
-      '@fluidframework/protocol-definitions': 3.2.0
     devDependencies:
       '@arethetypeswrong/cli': 0.15.2
       '@biomejs/biome': 1.6.2
@@ -8659,6 +8691,7 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/container-runtime-previous': npm:@fluidframework/container-runtime@2.0.0-rc.3.0.0
@@ -8669,7 +8702,6 @@ importers:
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/id-compressor': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
@@ -8698,6 +8730,7 @@ importers:
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-runtime-definitions': link:../container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -8706,7 +8739,6 @@ importers:
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/id-compressor': link:../id-compressor
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-definitions': link:../runtime-definitions
       '@fluidframework/runtime-utils': link:../runtime-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
@@ -8753,12 +8785,12 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-runtime-definitions-previous': npm:@fluidframework/container-runtime-definitions@2.0.0-rc.3.0.0
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/runtime-definitions': workspace:~
       '@microsoft/api-extractor': ^7.42.3
       copyfiles: ^2.4.1
@@ -8767,10 +8799,10 @@ importers:
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-definitions': link:../runtime-definitions
     devDependencies:
       '@arethetypeswrong/cli': 0.15.2
@@ -8796,6 +8828,7 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
@@ -8805,7 +8838,6 @@ importers:
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/id-compressor': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
@@ -8829,6 +8861,7 @@ importers:
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
@@ -8836,7 +8869,6 @@ importers:
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/id-compressor': link:../id-compressor
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-definitions': link:../runtime-definitions
       '@fluidframework/runtime-utils': link:../runtime-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
@@ -8875,12 +8907,12 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore-definitions-previous': npm:@fluidframework/datastore-definitions@2.0.0-rc.3.0.0
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/id-compressor': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/runtime-definitions': workspace:~
       '@microsoft/api-extractor': ^7.42.3
       copyfiles: ^2.4.1
@@ -8889,10 +8921,10 @@ importers:
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/id-compressor': link:../id-compressor
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-definitions': link:../runtime-definitions
     devDependencies:
       '@arethetypeswrong/cli': 0.15.2
@@ -8983,12 +9015,12 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/id-compressor': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/runtime-definitions-previous': npm:@fluidframework/runtime-definitions@2.0.0-rc.3.0.0
       '@microsoft/api-extractor': ^7.42.3
       copyfiles: ^2.4.1
@@ -8998,11 +9030,11 @@ importers:
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/id-compressor': link:../id-compressor
-      '@fluidframework/protocol-definitions': 3.2.0
     devDependencies:
       '@arethetypeswrong/cli': 0.15.2
       '@biomejs/biome': 1.6.2
@@ -9028,6 +9060,7 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
@@ -9035,7 +9068,6 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils-previous': npm:@fluidframework/runtime-utils@2.0.0-rc.3.0.0
       '@fluidframework/telemetry-utils': workspace:~
@@ -9058,13 +9090,13 @@ importers:
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-runtime-definitions': link:../container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../datastore-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-definitions': link:../runtime-definitions
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
     devDependencies:
@@ -9103,6 +9135,7 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
@@ -9111,7 +9144,6 @@ importers:
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/id-compressor': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
@@ -9137,6 +9169,7 @@ importers:
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-runtime-definitions': link:../container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -9144,7 +9177,6 @@ importers:
       '@fluidframework/datastore-definitions': link:../datastore-definitions
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/id-compressor': link:../id-compressor
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/routerlicious-driver': link:../../drivers/routerlicious-driver
       '@fluidframework/runtime-definitions': link:../runtime-definitions
       '@fluidframework/runtime-utils': link:../runtime-utils
@@ -9187,6 +9219,7 @@ importers:
       '@fluidframework/azure-local-service': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/core-interfaces': workspace:~
@@ -9196,7 +9229,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/fluid-static': workspace:~
       '@fluidframework/map': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
@@ -9219,6 +9251,7 @@ importers:
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -9227,7 +9260,6 @@ importers:
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/fluid-static': link:../../framework/fluid-static
       '@fluidframework/map': link:../../dds/map
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/routerlicious-driver': link:../../drivers/routerlicious-driver
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
@@ -9438,6 +9470,7 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/core-interfaces': workspace:~
@@ -9449,7 +9482,6 @@ importers:
       '@fluidframework/odsp-doclib-utils': workspace:~
       '@fluidframework/odsp-driver': workspace:~
       '@fluidframework/odsp-driver-definitions': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-utils': workspace:~
       '@microsoft/api-extractor': ^7.42.3
@@ -9466,6 +9498,7 @@ importers:
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -9476,7 +9509,6 @@ importers:
       '@fluidframework/odsp-doclib-utils': link:../../utils/odsp-doclib-utils
       '@fluidframework/odsp-driver': link:../../drivers/odsp-driver
       '@fluidframework/odsp-driver-definitions': link:../../drivers/odsp-driver-definitions
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       uuid: 9.0.1
     devDependencies:
@@ -9509,6 +9541,7 @@ importers:
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime': workspace:~
@@ -9520,7 +9553,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/fluid-static': workspace:~
       '@fluidframework/map': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
@@ -9539,6 +9571,7 @@ importers:
       tinylicious: ^4.0.0
       typescript: ~5.1.6
     dependencies:
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -9547,7 +9580,6 @@ importers:
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/fluid-static': link:../../framework/fluid-static
       '@fluidframework/map': link:../../dds/map
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/routerlicious-driver': link:../../drivers/routerlicious-driver
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
@@ -9587,6 +9619,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
       '@fluidframework/cell': workspace:~
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
@@ -9596,7 +9629,6 @@ importers:
       '@fluidframework/map': workspace:~
       '@fluidframework/matrix': workspace:~
       '@fluidframework/ordered-collection': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/register-collection': workspace:~
       '@fluidframework/sequence': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
@@ -9630,6 +9662,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.38.0-259537_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/cell': link:../../dds/cell
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
@@ -9639,7 +9672,6 @@ importers:
       '@fluidframework/map': link:../../dds/map
       '@fluidframework/matrix': link:../../dds/matrix
       '@fluidframework/ordered-collection': link:../../dds/ordered-collection
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/register-collection': link:../../dds/register-collection
       '@fluidframework/sequence': link:../../dds/sequence
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
@@ -9675,6 +9707,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
       '@fluidframework/cell': workspace:~
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime': workspace:~
@@ -9693,7 +9726,6 @@ importers:
       '@fluidframework/merge-tree': workspace:~
       '@fluidframework/odsp-doclib-utils': workspace:~
       '@fluidframework/ordered-collection': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/register-collection': workspace:~
       '@fluidframework/request-handler': workspace:~
       '@fluidframework/routerlicious-driver': workspace:~
@@ -9733,6 +9765,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.38.0-259537_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/cell': link:../../dds/cell
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
@@ -9751,7 +9784,6 @@ importers:
       '@fluidframework/merge-tree': link:../../dds/merge-tree
       '@fluidframework/odsp-doclib-utils': link:../../utils/odsp-doclib-utils
       '@fluidframework/ordered-collection': link:../../dds/ordered-collection
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/register-collection': link:../../dds/register-collection
       '@fluidframework/request-handler': link:../../framework/request-handler
       '@fluidframework/routerlicious-driver': link:../../drivers/routerlicious-driver
@@ -9834,6 +9866,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
       '@fluidframework/cell': workspace:~
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/core-interfaces': workspace:~
@@ -9847,7 +9880,6 @@ importers:
       '@fluidframework/map': workspace:~
       '@fluidframework/matrix': workspace:~
       '@fluidframework/ordered-collection': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/register-collection': workspace:~
       '@fluidframework/replay-driver': workspace:~
       '@fluidframework/sequence': workspace:~
@@ -9871,6 +9903,7 @@ importers:
       '@fluid-experimental/sequence-deprecated': link:../../../experimental/dds/sequence-deprecated
       '@fluid-internal/replay-tool': link:../../tools/replay-tool
       '@fluidframework/cell': link:../../dds/cell
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -9883,7 +9916,6 @@ importers:
       '@fluidframework/map': link:../../dds/map
       '@fluidframework/matrix': link:../../dds/matrix
       '@fluidframework/ordered-collection': link:../../dds/ordered-collection
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/register-collection': link:../../dds/register-collection
       '@fluidframework/replay-driver': link:../../drivers/replay-driver
       '@fluidframework/sequence': link:../../dds/sequence
@@ -10005,10 +10037,10 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@microsoft/api-extractor': ^7.42.3
       copyfiles: ^2.4.1
       eslint: ~8.55.0
@@ -10016,9 +10048,9 @@ importers:
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
-      '@fluidframework/protocol-definitions': 3.2.0
     devDependencies:
       '@arethetypeswrong/cli': 0.15.2
       '@biomejs/biome': 1.6.2
@@ -10042,6 +10074,7 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/driver-definitions': workspace:~
@@ -10052,7 +10085,6 @@ importers:
       '@fluidframework/odsp-driver': workspace:~
       '@fluidframework/odsp-driver-definitions': workspace:~
       '@fluidframework/odsp-urlresolver': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/server-local-server': ^4.0.0
       '@fluidframework/test-runtime-utils': workspace:~
@@ -10073,6 +10105,7 @@ importers:
     dependencies:
       '@fluid-internal/test-driver-definitions': link:../test-driver-definitions
       '@fluid-private/test-pairwise-generator': link:../test-pairwise-generator
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
@@ -10082,7 +10115,6 @@ importers:
       '@fluidframework/odsp-driver': link:../../drivers/odsp-driver
       '@fluidframework/odsp-driver-definitions': link:../../drivers/odsp-driver-definitions
       '@fluidframework/odsp-urlresolver': link:../../drivers/odsp-urlResolver
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/routerlicious-driver': link:../../drivers/routerlicious-driver
       '@fluidframework/server-local-server': 4.0.0
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
@@ -10128,6 +10160,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
       '@fluidframework/cell': workspace:~
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime': workspace:~
@@ -10147,7 +10180,6 @@ importers:
       '@fluidframework/odsp-doclib-utils': workspace:~
       '@fluidframework/odsp-driver-definitions': workspace:~
       '@fluidframework/ordered-collection': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/register-collection': workspace:~
       '@fluidframework/request-handler': workspace:~
       '@fluidframework/runtime-definitions': workspace:~
@@ -10195,6 +10227,7 @@ importers:
       '@fluidframework/agent-scheduler': link:../../framework/agent-scheduler
       '@fluidframework/aqueduct': link:../../framework/aqueduct
       '@fluidframework/cell': link:../../dds/cell
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
@@ -10213,7 +10246,6 @@ importers:
       '@fluidframework/odsp-doclib-utils': link:../../utils/odsp-doclib-utils
       '@fluidframework/odsp-driver-definitions': link:../../drivers/odsp-driver-definitions
       '@fluidframework/ordered-collection': link:../../dds/ordered-collection
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/register-collection': link:../../dds/register-collection
       '@fluidframework/request-handler': link:../../framework/request-handler
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
@@ -10309,6 +10341,7 @@ importers:
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime': workspace:~
@@ -10320,7 +10353,6 @@ importers:
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/map': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/task-manager': workspace:~
@@ -10348,6 +10380,7 @@ importers:
       '@fluid-private/test-drivers': link:../test-drivers
       '@fluid-private/test-pairwise-generator': link:../test-pairwise-generator
       '@fluidframework/aqueduct': link:../../framework/aqueduct
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
@@ -10358,7 +10391,6 @@ importers:
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/map': link:../../dds/map
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/task-manager': link:../../dds/task-manager
@@ -10397,6 +10429,7 @@ importers:
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime': workspace:~
@@ -10410,7 +10443,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/local-driver': workspace:~
       '@fluidframework/map': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/request-handler': workspace:~
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/runtime-definitions': workspace:~
@@ -10441,6 +10473,7 @@ importers:
     dependencies:
       '@fluid-internal/test-driver-definitions': link:../test-driver-definitions
       '@fluidframework/aqueduct': link:../../framework/aqueduct
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
@@ -10453,7 +10486,6 @@ importers:
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/local-driver': link:../../drivers/local-driver
       '@fluidframework/map': link:../../dds/map
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/request-handler': link:../../framework/request-handler
       '@fluidframework/routerlicious-driver': link:../../drivers/routerlicious-driver
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
@@ -10505,6 +10537,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
       '@fluidframework/cell': workspace:~
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime': workspace:~
@@ -10519,7 +10552,6 @@ importers:
       '@fluidframework/map': workspace:~
       '@fluidframework/matrix': workspace:~
       '@fluidframework/ordered-collection': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/register-collection': workspace:~
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/sequence': workspace:~
@@ -10560,6 +10592,7 @@ importers:
       '@fluidframework/agent-scheduler': link:../../framework/agent-scheduler
       '@fluidframework/aqueduct': link:../../framework/aqueduct
       '@fluidframework/cell': link:../../dds/cell
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
@@ -10573,7 +10606,6 @@ importers:
       '@fluidframework/map': link:../../dds/map
       '@fluidframework/matrix': link:../../dds/matrix
       '@fluidframework/ordered-collection': link:../../dds/ordered-collection
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/register-collection': link:../../dds/register-collection
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/sequence': link:../../dds/sequence
@@ -10837,6 +10869,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
       '@fluidframework/cell': workspace:~
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/core-interfaces': workspace:~
@@ -10848,7 +10881,6 @@ importers:
       '@fluidframework/id-compressor': workspace:~
       '@fluidframework/map': workspace:~
       '@fluidframework/matrix': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/sequence': workspace:~
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
@@ -10874,6 +10906,7 @@ importers:
     dependencies:
       '@fluid-internal/client-utils': link:../../../common/client-utils
       '@fluidframework/cell': link:../../../dds/cell
+      '@fluidframework/client-protocol-definitions': link:../../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../../common/container-definitions
       '@fluidframework/container-loader': link:../../../loader/container-loader
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
@@ -10881,7 +10914,6 @@ importers:
       '@fluidframework/datastore-definitions': link:../../../runtime/datastore-definitions
       '@fluidframework/map': link:../../../dds/map
       '@fluidframework/matrix': link:../../../dds/matrix
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/sequence': link:../../../dds/sequence
       '@fluidframework/shared-object-base': link:../../../dds/shared-object-base
       '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
@@ -10928,6 +10960,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
       '@fluidframework/cell': workspace:~
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime-definitions': workspace:~
@@ -10940,7 +10973,6 @@ importers:
       '@fluidframework/fluid-static': workspace:~
       '@fluidframework/map': workspace:~
       '@fluidframework/matrix': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
       '@fluidframework/shared-object-base': workspace:~
@@ -10990,6 +11022,7 @@ importers:
       '@fluid-internal/devtools-view': link:../devtools-view
       '@fluidframework/aqueduct': link:../../../framework/aqueduct
       '@fluidframework/cell': link:../../../dds/cell
+      '@fluidframework/client-protocol-definitions': link:../../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../../common/container-definitions
       '@fluidframework/container-loader': link:../../../loader/container-loader
       '@fluidframework/container-runtime-definitions': link:../../../runtime/container-runtime-definitions
@@ -11001,7 +11034,6 @@ importers:
       '@fluidframework/fluid-static': link:../../../framework/fluid-static
       '@fluidframework/map': link:../../../dds/map
       '@fluidframework/matrix': link:../../../dds/matrix
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/runtime-utils': link:../../../runtime/runtime-utils
       '@fluidframework/sequence': link:../../../dds/sequence
       '@fluidframework/shared-object-base': link:../../../dds/shared-object-base
@@ -11062,6 +11094,7 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/core-interfaces': workspace:~
@@ -11069,7 +11102,6 @@ importers:
       '@fluidframework/devtools-core': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.42.3
@@ -11125,13 +11157,13 @@ importers:
       '@fluentui/react-hooks': 8.6.33_5n3si3aeogjujeu5eks6mxpsfi
       '@fluentui/react-icons': 2.0.233_react@17.0.2
       '@fluid-internal/client-utils': link:../../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../../common/container-definitions
       '@fluidframework/container-loader': link:../../../loader/container-loader
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../../runtime/datastore-definitions
       '@fluidframework/devtools-core': link:../devtools-core
       '@fluidframework/driver-definitions': link:../../../common/driver-definitions
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
@@ -11198,6 +11230,7 @@ importers:
       '@fluid-tools/fetch-tool-previous': npm:@fluid-tools/fetch-tool@2.0.0-rc.3.0.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-runtime': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
@@ -11208,7 +11241,6 @@ importers:
       '@fluidframework/odsp-driver': workspace:~
       '@fluidframework/odsp-driver-definitions': workspace:~
       '@fluidframework/odsp-urlresolver': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/routerlicious-urlresolver': workspace:~
       '@fluidframework/runtime-definitions': workspace:~
@@ -11221,6 +11253,7 @@ importers:
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
@@ -11230,7 +11263,6 @@ importers:
       '@fluidframework/odsp-driver': link:../../drivers/odsp-driver
       '@fluidframework/odsp-driver-definitions': link:../../drivers/odsp-driver-definitions
       '@fluidframework/odsp-urlresolver': link:../../drivers/odsp-urlResolver
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/routerlicious-driver': link:../../drivers/routerlicious-driver
       '@fluidframework/routerlicious-urlresolver': link:../../drivers/routerlicious-urlResolver
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
@@ -11330,6 +11362,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
       '@fluidframework/cell': workspace:~
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime': workspace:~
@@ -11344,7 +11377,6 @@ importers:
       '@fluidframework/map': workspace:~
       '@fluidframework/matrix': workspace:~
       '@fluidframework/ordered-collection': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/register-collection': workspace:~
       '@fluidframework/replay-driver': workspace:~
       '@fluidframework/request-handler': workspace:~
@@ -11367,6 +11399,7 @@ importers:
       '@fluid-experimental/ink': link:../../dds/ink
       '@fluid-experimental/sequence-deprecated': link:../../../experimental/dds/sequence-deprecated
       '@fluidframework/cell': link:../../dds/cell
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
@@ -11380,7 +11413,6 @@ importers:
       '@fluidframework/map': link:../../dds/map
       '@fluidframework/matrix': link:../../dds/matrix
       '@fluidframework/ordered-collection': link:../../dds/ordered-collection
-      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/register-collection': link:../../dds/register-collection
       '@fluidframework/replay-driver': link:../../drivers/replay-driver
       '@fluidframework/request-handler': link:../../framework/request-handler
@@ -11481,10 +11513,10 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/telemetry-utils-previous': npm:@fluidframework/telemetry-utils@2.0.0-rc.3.0.0
       '@microsoft/api-extractor': ^7.42.3
       '@types/debug': ^4.1.5
@@ -11508,9 +11540,9 @@ importers:
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
-      '@fluidframework/protocol-definitions': 3.2.0
       debug: 4.3.4
       uuid: 9.0.1
     devDependencies:
@@ -11549,11 +11581,11 @@ importers:
       '@fluid-tools/build-cli': 0.38.0-259537
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.38.0-259537
+      '@fluidframework/client-protocol-definitions': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/odsp-doclib-utils': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/tool-utils-previous': npm:@fluidframework/tool-utils@2.0.0-rc.3.0.0
       '@microsoft/api-extractor': ^7.42.3
       '@types/debug': ^4.1.5
@@ -11575,10 +11607,10 @@ importers:
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
+      '@fluidframework/client-protocol-definitions': link:../../common/client-protocol-definitions
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/odsp-doclib-utils': link:../odsp-doclib-utils
-      '@fluidframework/protocol-definitions': 3.2.0
       async-mutex: 0.3.2
       debug: 4.3.4
       jwt-decode: 4.0.0

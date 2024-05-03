@@ -9,7 +9,7 @@ import {
 	IBlob,
 	ITree,
 	TreeEntry,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 
 /**
  * Basic implementation of a blob ITreeEntry

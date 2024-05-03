@@ -9,7 +9,11 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IEvent, IEventProvider, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IClient, IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";
+import {
+	IClient,
+	IQuorumClients,
+	ISequencedClient,
+} from "@fluidframework/client-protocol-definitions";
 import {
 	ITelemetryLoggerExt,
 	UsageError,

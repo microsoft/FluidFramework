@@ -10,7 +10,7 @@ import {
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import { ScopeType } from "@fluidframework/protocol-definitions";
+import { ScopeType } from "@fluidframework/client-protocol-definitions";
 
 import { generateToken } from "./auth.js";
 

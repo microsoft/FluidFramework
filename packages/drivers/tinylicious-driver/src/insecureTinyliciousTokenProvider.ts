@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITokenClaims, ScopeType } from "@fluidframework/protocol-definitions";
+import { ITokenClaims, ScopeType } from "@fluidframework/client-protocol-definitions";
 import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { v4 as uuid } from "uuid";
@@ -19,7 +19,7 @@ export class InsecureTinyliciousTokenProvider implements ITokenProvider {
 		 * Optional. Override of scopes. If a param is not provided, InsecureTinyliciousTokenProvider
 		 * will use the default scopes which are document read, write and summarizer write.
 		 *
-		 * @param scopes - See {@link @fluidframework/protocol-definitions#ITokenClaims.scopes}
+		 * @param scopes - See {@link @fluidframework/client-protocol-definitions#ITokenClaims.scopes}
 		 *
 		 * @defaultValue [ ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite ]
 		 */

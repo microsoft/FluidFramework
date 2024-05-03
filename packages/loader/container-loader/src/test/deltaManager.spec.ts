@@ -13,7 +13,7 @@ import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 import {
 	ITelemetryLoggerExt,
 	MockLogger,

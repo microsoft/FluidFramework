@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type IClient, type IUser } from "@fluidframework/protocol-definitions";
+import { type IClient, type IUser } from "@fluidframework/client-protocol-definitions";
 
 import { type AzureMember, type AzureUser } from "./interfaces.js";
 
@@ -11,7 +11,7 @@ import { type AzureMember, type AzureUser } from "./interfaces.js";
  * Creates Azure-specific audience member.
  *
  * @remarks
- * The provided `audienceMember`'s {@link @fluidframework/protocol-definitions#IClient.user} must be an {@link AzureUser}.
+ * The provided `audienceMember`'s {@link @fluidframework/client-protocol-definitions#IClient.user} must be an {@link AzureUser}.
  */
 export function createAzureAudienceMember(audienceMember: IClient): AzureMember {
 	const user = audienceMember.user;
@@ -26,7 +26,7 @@ export function createAzureAudienceMember(audienceMember: IClient): AzureMember 
 }
 
 /**
- * Asserts that the provided {@link @fluidframework/protocol-definitions#IUser} is an {@link AzureUser}.
+ * Asserts that the provided {@link @fluidframework/client-protocol-definitions#IUser} is an {@link AzureUser}.
  */
 function assertIsAzureUser(user: IUser): asserts user is AzureUser<unknown> {
 	const maybeAzureUser = user as Partial<AzureUser>;

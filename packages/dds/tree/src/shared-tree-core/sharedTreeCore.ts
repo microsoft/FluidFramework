@@ -10,7 +10,7 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { IIdCompressor } from "@fluidframework/id-compressor";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/client-protocol-definitions";
 import {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,

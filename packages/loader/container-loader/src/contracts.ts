@@ -20,7 +20,7 @@ import {
 	ISequencedDocumentMessage,
 	ISignalClient,
 	ISignalMessage,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 
 export enum ReconnectMode {
 	Never = "Never",

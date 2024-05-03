@@ -5,7 +5,10 @@
 
 import { strict as assert } from "assert";
 
-import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/protocol-definitions";
+import {
+	ISequencedDocumentMessage,
+	ISummaryTree,
+} from "@fluidframework/client-protocol-definitions";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,

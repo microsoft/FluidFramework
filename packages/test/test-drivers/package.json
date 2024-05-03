@@ -51,6 +51,7 @@
 	"dependencies": {
 		"@fluid-internal/test-driver-definitions": "workspace:~",
 		"@fluid-private/test-pairwise-generator": "workspace:~",
+		"@fluidframework/client-protocol-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
@@ -60,7 +61,6 @@
 		"@fluidframework/odsp-driver": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/odsp-urlresolver": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/server-local-server": "^4.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",

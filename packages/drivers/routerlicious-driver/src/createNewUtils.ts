@@ -4,7 +4,7 @@
  */
 
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISummaryTree, SummaryType } from "@fluidframework/client-protocol-definitions";
 
 /**
  * Utility api to convert ISummaryTree to a summary tree where blob contents are only utf8 strings.

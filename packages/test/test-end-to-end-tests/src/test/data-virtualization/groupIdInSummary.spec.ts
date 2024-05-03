@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
-import { type ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { type ISnapshotTree, SummaryType } from "@fluidframework/client-protocol-definitions";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import {
 	type ITestObjectProvider,

@@ -10,7 +10,10 @@ import {
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import {
+	ISequencedDocumentMessage,
+	MessageType,
+} from "@fluidframework/client-protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";

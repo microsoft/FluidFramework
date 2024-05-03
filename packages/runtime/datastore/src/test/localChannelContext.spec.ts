@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { IChannel } from "@fluidframework/datastore-definitions";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree } from "@fluidframework/client-protocol-definitions";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockFluidDataStoreContext,

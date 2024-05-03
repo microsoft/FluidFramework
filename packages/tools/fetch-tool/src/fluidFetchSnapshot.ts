@@ -11,7 +11,7 @@ import {
 	IDocumentService,
 	IDocumentStorageService,
 } from "@fluidframework/driver-definitions/internal";
-import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree, IVersion } from "@fluidframework/client-protocol-definitions";
 
 import { formatNumber } from "./fluidAnalyzeMessages.js";
 import {

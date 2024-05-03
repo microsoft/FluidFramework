@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { type IClient } from "@fluidframework/protocol-definitions";
+import { type IClient } from "@fluidframework/client-protocol-definitions";
 
 import { type OdspMember } from "./interfaces.js";
 

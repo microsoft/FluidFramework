@@ -21,7 +21,7 @@ import {
 	OdspErrorTypes,
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import * as api from "@fluidframework/protocol-definitions";
+import * as api from "@fluidframework/client-protocol-definitions";
 import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,

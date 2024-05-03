@@ -14,7 +14,7 @@ import {
 	ISummaryContent,
 	ISummaryNack,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**

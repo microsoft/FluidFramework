@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type IClient } from "@fluidframework/protocol-definitions";
+import { type IClient } from "@fluidframework/client-protocol-definitions";
 
 import { type ContainerStateChangeKind } from "./Container.js";
 

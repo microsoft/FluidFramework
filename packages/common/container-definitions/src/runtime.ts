@@ -22,7 +22,7 @@ import type {
 	ISummaryTree,
 	IVersion,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 
 import type { IAudience } from "./audience.js";
 import type { IDeltaManager } from "./deltas.js";

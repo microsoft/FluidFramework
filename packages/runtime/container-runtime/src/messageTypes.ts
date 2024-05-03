@@ -4,7 +4,7 @@
  */
 
 import type { IdCreationRange } from "@fluidframework/id-compressor/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/client-protocol-definitions";
 import {
 	IAttachMessage,
 	IEnvelope,
@@ -214,7 +214,7 @@ export type InboundSequencedContainerRuntimeMessage = Omit<
 /** Essentially ISequencedDocumentMessage except that `type` is not `string` to enable narrowing
  * as `Exclude<string, InboundContainerRuntimeMessage['type']>` is not supported.
  * There should never be a runtime value of "__not_a_...".
- * Currently additionally replaces `contents` type until protocol-definitions update is taken with `unknown` instead of `any`.
+ * Currently additionally replaces `contents` type until client-protocol-definitions update is taken with `unknown` instead of `any`.
  */
 type InboundSequencedNonContainerRuntimeMessage = Omit<
 	ISequencedDocumentMessage,

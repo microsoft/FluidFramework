@@ -11,7 +11,7 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type { IErrorBase, IRequest } from "@fluidframework/core-interfaces";
-import type { IClient } from "@fluidframework/protocol-definitions";
+import type { IClient } from "@fluidframework/client-protocol-definitions";
 import { MockAudience } from "@fluidframework/test-runtime-utils/internal";
 
 /**

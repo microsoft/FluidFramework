@@ -20,7 +20,7 @@ import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	ISignalMessage,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 
 import { summarizerClientType } from "./summary/index.js";
 

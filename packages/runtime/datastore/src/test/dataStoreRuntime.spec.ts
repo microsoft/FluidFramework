@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import { FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
 import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { SummaryType } from "@fluidframework/protocol-definitions";
+import { SummaryType } from "@fluidframework/client-protocol-definitions";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
 	IContainerRuntimeBase,

@@ -19,7 +19,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/client-protocol-definitions";
 import * as Validator from "jsonschema";
 
 import {
@@ -697,7 +697,7 @@ export class Sanitizer {
 		try {
 			this.messages.map((message) => {
 				seq = message.sequenceNumber;
-				// message types from protocol-definitions' protocol.ts
+				// message types from client-protocol-definitions' protocol.ts
 				switch (message.type) {
 					case "join": {
 						this.fixJoin(message);

@@ -9,7 +9,7 @@ import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import { IErrorBase, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { Timer } from "@fluidframework/core-utils/internal";
-import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree, SummaryType } from "@fluidframework/client-protocol-definitions";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
 	IGarbageCollectionDetailsBase,

@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree } from "@fluidframework/client-protocol-definitions";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
 	IGarbageCollectionDetailsBase,

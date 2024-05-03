@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/client-protocol-definitions";
 
 import { SegmentGroup } from "../index.js";
 import { IMergeTreeDeltaOp } from "../ops.js";

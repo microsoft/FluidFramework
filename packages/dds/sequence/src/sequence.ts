@@ -43,7 +43,10 @@ import {
 	createRemoveRangeOp,
 	matchProperties,
 } from "@fluidframework/merge-tree/internal";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import {
+	ISequencedDocumentMessage,
+	MessageType,
+} from "@fluidframework/client-protocol-definitions";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { IFluidSerializer, ISharedObjectEvents } from "@fluidframework/shared-object-base";

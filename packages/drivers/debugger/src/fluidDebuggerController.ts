@@ -15,7 +15,7 @@ import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 	IVersion,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 import {
 	FileSnapshotReader,
 	IFileSnapshot,

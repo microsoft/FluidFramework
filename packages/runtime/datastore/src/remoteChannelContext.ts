@@ -8,7 +8,10 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import {
+	ISequencedDocumentMessage,
+	ISnapshotTree,
+} from "@fluidframework/client-protocol-definitions";
 import {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,

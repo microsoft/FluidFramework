@@ -4,7 +4,7 @@
  */
 
 import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import type { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import type { ISequencedDocumentMessage } from "@fluidframework/client-protocol-definitions";
 import type {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
@@ -36,7 +36,7 @@ export interface IChannel extends IFluidLoadable {
 	 * Note: Since the Attach Summary is generated for local channels when making them visible to
 	 * remote clients, they don't have any previous summaries to compare against. For this reason,
 	 * the attach summary cannot contain summary handles (paths to sub-trees or blobs).
-	 * It can, however, contain {@link @fluidframework/protocol-definitions#ISummaryAttachment}
+	 * It can, however, contain {@link @fluidframework/client-protocol-definitions#ISummaryAttachment}
 	 * (handles to blobs uploaded async via the blob manager).
 	 *
 	 * @param fullTree - A flag indicating whether the attempt should generate a full
@@ -46,7 +46,7 @@ export interface IChannel extends IFluidLoadable {
 	 *
 	 * @param trackState - An optimization for tracking state of objects across summaries. If the state
 	 * of an object did not change since last successful summary, an
-	 * {@link @fluidframework/protocol-definitions#ISummaryHandle} can be used
+	 * {@link @fluidframework/client-protocol-definitions#ISummaryHandle} can be used
 	 * instead of re-summarizing it. If this is `false`, the expectation is that you should never
 	 * send an `ISummaryHandle`, since you are not expected to track state.
 	 *
@@ -77,7 +77,7 @@ export interface IChannel extends IFluidLoadable {
 	 *
 	 * @param trackState - An optimization for tracking state of objects across summaries. If the state
 	 * of an object did not change since last successful summary, an
-	 * {@link @fluidframework/protocol-definitions#ISummaryHandle} can be used
+	 * {@link @fluidframework/client-protocol-definitions#ISummaryHandle} can be used
 	 * instead of re-summarizing it. If this is `false`, the expectation is that you should never
 	 * send an `ISummaryHandle`, since you are not expected to track state.
 	 *

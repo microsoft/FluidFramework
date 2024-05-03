@@ -10,7 +10,7 @@ import {
 	ISelf,
 } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IClient } from "@fluidframework/protocol-definitions";
+import { IClient } from "@fluidframework/client-protocol-definitions";
 
 /**
  * Audience represents all clients connected to the op stream.

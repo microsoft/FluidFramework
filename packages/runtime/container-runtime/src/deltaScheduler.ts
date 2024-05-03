@@ -5,7 +5,10 @@
 
 import { performance } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import {
+	IDocumentMessage,
+	ISequencedDocumentMessage,
+} from "@fluidframework/client-protocol-definitions";
 import { ITelemetryLoggerExt, formatTick } from "@fluidframework/telemetry-utils/internal";
 
 /**

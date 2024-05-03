@@ -4,7 +4,7 @@
  */
 
 import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
-import { ICommittedProposal } from "@fluidframework/protocol-definitions";
+import { ICommittedProposal } from "@fluidframework/client-protocol-definitions";
 
 export function initQuorumValuesFromCodeDetails(
 	source: IFluidCodeDetails,

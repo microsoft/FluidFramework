@@ -11,7 +11,7 @@ import {
 	RateLimiter,
 	canRetryOnError,
 } from "@fluidframework/driver-utils/internal";
-import { IClient } from "@fluidframework/protocol-definitions";
+import { IClient } from "@fluidframework/client-protocol-definitions";
 import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,

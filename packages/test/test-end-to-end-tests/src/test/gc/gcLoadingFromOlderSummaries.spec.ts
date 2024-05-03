@@ -14,7 +14,7 @@ import {
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISummaryTree } from "@fluidframework/client-protocol-definitions";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,

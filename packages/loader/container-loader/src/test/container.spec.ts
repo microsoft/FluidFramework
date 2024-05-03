@@ -19,7 +19,7 @@ import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	IClient,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 
 import { ConnectionState } from "../connectionState.js";
 import { waitContainerToCatchUp } from "../container.js";

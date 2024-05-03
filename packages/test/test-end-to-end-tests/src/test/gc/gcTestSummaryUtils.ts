@@ -12,7 +12,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/gc";
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISummaryTree, SummaryType } from "@fluidframework/client-protocol-definitions";
 import {
 	gcBlobPrefix,
 	gcDeletedBlobKey,

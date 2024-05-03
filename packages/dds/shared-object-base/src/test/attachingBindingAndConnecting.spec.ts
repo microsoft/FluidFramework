@@ -16,7 +16,7 @@ import {
 	type IFluidDataStoreRuntime,
 	type IFluidDataStoreRuntimeEvents,
 } from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/client-protocol-definitions";
 import {
 	type IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,

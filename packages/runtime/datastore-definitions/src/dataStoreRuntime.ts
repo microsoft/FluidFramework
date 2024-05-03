@@ -18,7 +18,7 @@ import type {
 	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 
 import type { IChannel } from "./channel.js";

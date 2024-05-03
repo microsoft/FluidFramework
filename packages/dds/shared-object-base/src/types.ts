@@ -9,7 +9,7 @@ import {
 	IEventThisPlaceHolder,
 } from "@fluidframework/core-interfaces";
 import { IChannel } from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/client-protocol-definitions";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 
 /**

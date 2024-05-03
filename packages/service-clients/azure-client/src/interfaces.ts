@@ -9,7 +9,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import { type ICompressionStorageConfig } from "@fluidframework/driver-utils";
 import { type IMember, type IServiceAudience } from "@fluidframework/fluid-static";
-import { type IUser } from "@fluidframework/protocol-definitions";
+import { type IUser } from "@fluidframework/client-protocol-definitions";
 import { type ITokenProvider } from "@fluidframework/routerlicious-driver";
 
 /**
@@ -139,7 +139,7 @@ export interface AzureContainerServices {
 
 /**
  * Since Azure provides user names for all of its members, we extend the
- * {@link @fluidframework/protocol-definitions#IUser} interface to include this service-specific value.
+ * {@link @fluidframework/client-protocol-definitions#IUser} interface to include this service-specific value.
  *
  * @typeParam T - See {@link AzureUser.additionalDetails}.
  * Note: must be JSON-serializable.

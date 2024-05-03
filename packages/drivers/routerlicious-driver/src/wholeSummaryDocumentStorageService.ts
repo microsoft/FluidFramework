@@ -17,7 +17,7 @@ import {
 	ISummaryHandle,
 	ISummaryTree,
 	IVersion,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 import {
 	ITelemetryLoggerExt,
 	MonitoringContext,

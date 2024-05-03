@@ -21,7 +21,7 @@ import type { IChannel } from "@fluidframework/datastore-definitions";
 import { IIdCompressor, SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { ISharedMap, SharedDirectory } from "@fluidframework/map/internal";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISummaryTree } from "@fluidframework/client-protocol-definitions";
 import {
 	DataObjectFactoryType,
 	ITestContainerConfig,

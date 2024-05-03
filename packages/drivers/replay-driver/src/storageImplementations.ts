@@ -21,7 +21,7 @@ import {
 	ISummaryTree,
 	ITree,
 	IVersion,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService.js";

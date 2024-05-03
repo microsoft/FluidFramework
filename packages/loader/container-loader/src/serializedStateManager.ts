@@ -20,7 +20,7 @@ import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 	IVersion,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 import {
 	MonitoringContext,
 	PerformanceEvent,
@@ -47,7 +47,7 @@ export interface SnapshotWithBlobs {
  * State saved by a container at close time, to be used to load a new instance
  * of the container to the same state
  *
- * This is very similar to {@link @fluidframework/protocol-definitions/internal#ISnapshot}, but the difference is
+ * This is very similar to {@link @fluidframework/client-protocol-definitions/internal#ISnapshot}, but the difference is
  * that the blobs of ISnapshot of are ArrayBufferLike, while the blobs of this interface are serializable because
  * they are already converted to string.
  *

@@ -25,7 +25,10 @@ import {
 } from "@fluidframework/core-interfaces";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import {
+	ISequencedDocumentMessage,
+	MessageType,
+} from "@fluidframework/client-protocol-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {

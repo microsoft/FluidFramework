@@ -20,7 +20,7 @@ import {
 	ISnapshotTree,
 	ISummaryTree,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 import type { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import type { SequenceInterval, SharedString } from "@fluidframework/sequence/internal";

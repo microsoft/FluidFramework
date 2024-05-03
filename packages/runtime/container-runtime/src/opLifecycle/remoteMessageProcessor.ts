@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import {
+	ISequencedDocumentMessage,
+	MessageType,
+} from "@fluidframework/client-protocol-definitions";
 
 import {
 	ContainerMessageType,

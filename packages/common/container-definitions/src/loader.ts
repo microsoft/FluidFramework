@@ -18,7 +18,7 @@ import type {
 	ISequencedDocumentMessage,
 	ISequencedProposal,
 	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 
 import type { IAudience } from "./audience.js";
 import type { IDeltaManager, ReadOnlyInfo } from "./deltas.js";

@@ -74,8 +74,8 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0"
+		"@fluidframework/client-protocol-definitions": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",

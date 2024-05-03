@@ -17,7 +17,7 @@ import {
 	ICreateBlobResponse,
 	ISequencedDocumentMessage,
 	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,

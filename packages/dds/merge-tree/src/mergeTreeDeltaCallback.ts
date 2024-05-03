@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/client-protocol-definitions";
 
 import { ISegment } from "./mergeTreeNodes.js";
 // eslint-disable-next-line import/no-deprecated
@@ -126,7 +126,7 @@ export interface IMergeTreeDeltaOpArgs {
 	readonly op: IMergeTreeOp;
 
 	/**
-	 * The {@link @fluidframework/protocol-definitions#ISequencedDocumentMessage} corresponding to this acknowledged change.
+	 * The {@link @fluidframework/client-protocol-definitions#ISequencedDocumentMessage} corresponding to this acknowledged change.
 	 *
 	 * This field is omitted for deltas corresponding to unacknowledged changes.
 	 */

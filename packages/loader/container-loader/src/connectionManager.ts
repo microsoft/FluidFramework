@@ -41,7 +41,7 @@ import {
 	ITokenClaims,
 	MessageType,
 	ScopeType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 import {
 	ITelemetryLoggerExt,
 	GenericError,

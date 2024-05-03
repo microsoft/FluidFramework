@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SummaryType } from "@fluidframework/protocol-definitions";
+import { SummaryType } from "@fluidframework/client-protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
 	ISummarizeResult,

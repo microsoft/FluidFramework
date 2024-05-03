@@ -5,7 +5,10 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISnapshot } from "@fluidframework/driver-definitions/internal";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import {
+	ISequencedDocumentMessage,
+	ISnapshotTree,
+} from "@fluidframework/client-protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { ReadBuffer } from "./ReadBufferUtils.js";

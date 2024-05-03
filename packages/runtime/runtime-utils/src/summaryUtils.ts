@@ -25,7 +25,7 @@ import {
 	SummaryObject,
 	SummaryType,
 	TreeEntry,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 import {
 	IGarbageCollectionData,
 	ISummaryStats,

@@ -15,7 +15,10 @@ import {
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import {
+	ISequencedDocumentMessage,
+	ISnapshotTree,
+} from "@fluidframework/client-protocol-definitions";
 import {
 	IGarbageCollectionData,
 	IInboundSignalMessage,

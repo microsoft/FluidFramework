@@ -112,6 +112,7 @@
 	},
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
+		"@fluidframework/client-protocol-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-base": "workspace:~",
@@ -119,7 +120,6 @@
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/gitresources": "^4.0.0",
 		"@fluidframework/protocol-base": "^4.0.0",
-		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/server-services-client": "^4.0.0",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"cross-fetch": "^3.1.5",

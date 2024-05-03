@@ -74,7 +74,7 @@ import {
 	IVersion,
 	MessageType,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 import {
 	type TelemetryEventCategory,
 	ITelemetryLoggerExt,

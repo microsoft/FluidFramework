@@ -25,7 +25,7 @@ import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 	ITreeEntry,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 import {
 	IGarbageCollectionData,
 	IInboundSignalMessage,

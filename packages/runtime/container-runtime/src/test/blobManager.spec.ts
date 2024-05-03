@@ -25,7 +25,7 @@ import {
 	IClientDetails,
 	ISequencedDocumentMessage,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 import {
 	LoggingError,
 	MonitoringContext,

@@ -22,7 +22,7 @@ import {
 	ISignalMessage,
 	ITokenClaims,
 	ScopeType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/client-protocol-definitions";
 import {
 	ITelemetryLoggerExt,
 	EventEmitterWithErrorHandling,
