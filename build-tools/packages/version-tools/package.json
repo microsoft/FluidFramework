@@ -67,7 +67,6 @@
 		"@oclif/plugin-commands": "^3.3.1",
 		"@oclif/plugin-help": "^6.0.21",
 		"@oclif/plugin-not-found": "^3.1.7",
-		"@oclif/plugin-plugins": "^5.0.18",
 		"chalk": "^2.4.2",
 		"semver": "^7.5.4",
 		"table": "^6.8.1"
