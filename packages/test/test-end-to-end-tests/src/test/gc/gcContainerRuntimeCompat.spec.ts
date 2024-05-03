@@ -162,7 +162,7 @@ describeCompat(
 		 * be read by older / newer versions of the container runtime.
 		 */
 		it("load version validates unreferenced timestamp from summary by create version", async function () {
-			// This test is flaky on FRS. See ADO:7865
+			// This test is consistently failing on FRS. See ADO:7865
 			if (
 				provider.driver.type === "routerlicious" &&
 				provider.driver.endpointName === "frs"

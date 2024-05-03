@@ -46,6 +46,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		provider = getTestObjectProvider();
 	});
 	afterEach(async function () {
+		// This test is consistently failing on FRS. See ADO:7925
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}
@@ -516,7 +517,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 								this.skip();
 							}
 
-							// This test is flaky on routerlicious. See ADO:7883 and ADO:7924
+							// This test is consistently failing on routerlicious. See ADO:7883 and ADO:7924
 							if (provider.driver.type === "routerlicious") {
 								this.skip();
 							}
@@ -596,7 +597,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 					this.skip();
 				}
 
-				// This test is flaky on tinylicious. See ADO:7925
+				// This test is consistently failing on tinylicious. See ADO:7925
 				if (
 					provider.driver.type === "routerlicious" &&
 					provider.driver.endpointName === "frs"

@@ -1148,7 +1148,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 
 	describe("Sweep with summarize failures and retries", () => {
 		beforeEach("setup", async function () {
-			// This test is flaky on FRS. See ADO:7922 and ADO:7923
+			// This test is consistently failing on FRS. See ADO:7922 and ADO:7923
 			if (
 				provider.driver.type === "routerlicious" &&
 				provider.driver.endpointName === "frs"

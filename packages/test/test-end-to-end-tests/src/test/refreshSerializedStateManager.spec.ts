@@ -75,6 +75,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 
 	it("snapshot was refreshed", async function () {
 		const provider = getTestObjectProvider();
+		// This test is consistently failing on FRS. See ADO:7893
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}
