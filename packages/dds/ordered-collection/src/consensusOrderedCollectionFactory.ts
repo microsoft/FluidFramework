@@ -14,7 +14,6 @@ import { pkgVersion } from "./packageVersion.js";
 
 /**
  * The factory that defines the consensus queue
- *
  * @internal
  */
 export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory {

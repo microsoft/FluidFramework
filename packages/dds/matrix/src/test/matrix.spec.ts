@@ -1008,7 +1008,7 @@ describe("Matrix1", () => {
 				}
 
 				it("made while detached", () => {
-					const matrix = createLocalMatrix("A");
+					const matrix = createLocalMatrix("A") as SharedMatrix;
 					matrix.insertRows(0, 2);
 					matrix.insertCols(0, 2);
 					matrix.setCell(0, 0, "val");

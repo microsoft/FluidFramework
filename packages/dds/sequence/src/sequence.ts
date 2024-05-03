@@ -48,6 +48,8 @@ import {
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
 	IFluidSerializer,
+	makeHandlesSerializable,
+	parseHandles,
 	SharedObject,
 	ISharedObjectEvents,
 } from "@fluidframework/shared-object-base";
@@ -482,7 +484,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		}
 
 		this.inFlightRefSeqs.push(this.currentRefSeq);
-
+		const translated = makeHandlesSerializable(message, this.serializer, this.handle);
 		const metadata = this.client.peekPendingSegmentGroups(
 			message.type === MergeTreeDeltaType.GROUP ? message.ops.length : 1,
 		);
@@ -491,9 +493,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		// local ops until loading is complete, and then
 		// they will be present
 		if (!this.loadedDeferred.isCompleted) {
-			this.loadedDeferredOutgoingOps.push(metadata ? [message, metadata] : (message as any));
+			this.loadedDeferredOutgoingOps.push(metadata ? [translated, metadata] : translated);
 		} else {
-			this.submitLocalMessage(message, metadata);
+			this.submitLocalMessage(translated, metadata);
 		}
 	}
 
@@ -806,8 +808,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
 	protected applyStashedOp(content: any): void {
-		if (!this.intervalCollections.tryApplyStashedOp(content)) {
-			this.client.applyStashedOp(content);
+		const parsedContent = parseHandles(content, this.serializer);
+		if (!this.intervalCollections.tryApplyStashedOp(parsedContent)) {
+			this.client.applyStashedOp(parsedContent);
 		}
 	}
 
@@ -833,11 +836,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		);
 	}
 
-	/**
-	 *
-	 * @param message - Message with decoded and hydrated handles
-	 */
-	private processMergeTreeMsg(message: ISequencedDocumentMessage, local?: boolean) {
+	private processMergeTreeMsg(rawMessage: ISequencedDocumentMessage, local?: boolean) {
+		const message = parseHandles(rawMessage, this.serializer);
+
 		const ops: IMergeTreeDeltaOp[] = [];
 		function transformOps(event: SequenceDeltaEvent) {
 			ops.push(...SharedSegmentSequence.createOpsFromDelta(event));

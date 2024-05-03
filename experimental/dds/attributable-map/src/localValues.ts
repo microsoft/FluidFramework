@@ -114,19 +114,16 @@ export class PlainLocalValue implements ILocalValue {
 export class LocalValueMaker {
 	/**
 	 * Create a new LocalValueMaker.
+	 * @param serializer - The serializer to serialize / parse handles.
 	 */
-	public constructor() {}
+	public constructor(private readonly serializer: IFluidSerializer) {}
 
 	/**
 	 * Create a new local value from an incoming serialized value.
 	 * @param serializable - The serializable value to make local
 	 */
-	public fromSerializable(
-		// eslint-disable-next-line import/no-deprecated
-		serializable: ISerializableValue,
-		serializer: IFluidSerializer,
-		bind: IFluidHandle,
-	): ILocalValue {
+	// eslint-disable-next-line import/no-deprecated
+	public fromSerializable(serializable: ISerializableValue): ILocalValue {
 		// Migrate from old shared value to handles
 		if (serializable.type === ValueType[ValueType.Shared]) {
 			serializable.type = ValueType[ValueType.Plain];
@@ -134,14 +131,12 @@ export class LocalValueMaker {
 				type: "__fluid_handle__",
 				url: serializable.value as string,
 			};
-
-			// NOTE: here we require the use of `parseHandles` because the roundtrip
-			// through a string is necessary to resolve the absolute path of
-			// legacy handles (`ValueType.Shared`)
-			serializable.value = serializer.encode(parseHandles(handle, serializer), bind);
+			serializable.value = handle;
 		}
 
-		return new PlainLocalValue(serializable.value);
+		const translatedValue: unknown = parseHandles(serializable.value, this.serializer);
+
+		return new PlainLocalValue(translatedValue);
 	}
 
 	/**
