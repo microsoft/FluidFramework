@@ -15,7 +15,7 @@ import { pkgVersion } from "./packageVersion.js";
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link ISharedCell}.
- *
+ * @internal
  * @sealed
  */
 export class CellFactory implements IChannelFactory {
@@ -49,6 +49,7 @@ export class CellFactory implements IChannelFactory {
 
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
+	 * @internal
 	 */
 	public async load(
 		runtime: IFluidDataStoreRuntime,
@@ -63,6 +64,7 @@ export class CellFactory implements IChannelFactory {
 
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
+	 * @internal
 	 */
 	public create(document: IFluidDataStoreRuntime, id: string): ISharedCell {
 		const cell = new SharedCell(id, document, this.attributes);

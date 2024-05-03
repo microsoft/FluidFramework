@@ -21,6 +21,7 @@ import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectio
 import {
 	IConsensusRegisterCollection,
 	ReadPolicy,
+	type IConsensusRegisterCollectionEvents,
 } from "./interfaces.js";
 
 interface ILocalData<T> {

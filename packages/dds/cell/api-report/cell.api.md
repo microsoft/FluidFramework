@@ -18,7 +18,7 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
-// @public @sealed
+// @internal @sealed
 export class CellFactory implements IChannelFactory {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;

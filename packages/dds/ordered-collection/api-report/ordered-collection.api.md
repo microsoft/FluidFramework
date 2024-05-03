@@ -56,14 +56,15 @@ export class ConsensusQueue<T = any> extends ConsensusOrderedCollection<T> {
     static getFactory(): IChannelFactory;
 }
 
-// @public
+// @internal
 export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
     // (undocumented)
     get attributes(): IChannelAttributes;
-    // (undocumented)
+    // @alpha (undocumented)
     create(document: IFluidDataStoreRuntime, id: string): IConsensusOrderedCollection;
+    // @alpha
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<IConsensusOrderedCollection>;
     // (undocumented)
     static Type: string;
