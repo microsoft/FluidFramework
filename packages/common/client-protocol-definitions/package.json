@@ -52,7 +52,7 @@
 		"api-extractor:esnext": "flub generate entrypoints --outFileAlpha legacy --outDir ./lib --node10TypeCompat",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:copy": "npx copyfiles -V -u 6 \"../../../common/lib/protocol-definitions/src/*\" .",
+		"prebuild:copy": "npx copyfiles -V -u 6 \"../../../common/lib/protocol-definitions/src/*\" .",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack .",
@@ -93,7 +93,13 @@
 	"fluidBuild": {
 		"tasks": {
 			"tsc": [
-				"typetests:gen"
+				"^tsc",
+				"typetests:gen",
+				"prebuild:copy"
+			],
+			"build:esnext": [
+				"^build:esnext",
+				"prebuild:copy"
 			]
 		}
 	},
