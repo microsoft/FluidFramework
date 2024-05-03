@@ -4,7 +4,7 @@ These are the platform requirements for the current version of Fluid Framework C
 These requirements err on the side of being too strict since within a major version they can be relaxed over time, but not made stricter.
 For Long Term Support (LTS) versions this can require supporting these platforms for several years.
 
-It is likely that other configurations will work, but they are not supported: if they stop working, that is not a breaking change.
+It is likely that other configurations will work, but they are not supported: if they stop working, we do not consider that a bug.
 If you would benefit from support for something not listed here, file an issue and the product team will evaluate your request.
 When making such a request please include if the configuration already works (and thus the request is just that it becomes officially supported), or if changes are required to get it working.
 
@@ -20,6 +20,8 @@ When making such a request please include if the configuration already works (an
     -   [`strictNullChecks`](https://www.typescriptlang.org/tsconfig) is required.
     -   [Configuration options deprecated in 5.0](https://github.com/microsoft/TypeScript/issues/51909) are not supported.
 -   [webpack](https://webpack.js.org/) 5
+    -   We are not intending to be prescriptive about what bundler to use.
+        Other bundlers which can handle ES Modules should work, but webpack is the only one we actively test.
 
 ## Module Resolution
 
