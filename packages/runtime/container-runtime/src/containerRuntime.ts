@@ -2385,7 +2385,7 @@ export class ContainerRuntime
 				const compatBehavior = opContents.compatDetails?.behavior;
 				if (!compatBehaviorAllowsMessageType(opContents.type, compatBehavior)) {
 					const error = DataProcessingError.create(
-						"Stashed runtime message of unknown type",
+						"Stashed runtime message of unexpected type",
 						"applyStashedOp",
 						undefined /* sequencedMessage */,
 						{
