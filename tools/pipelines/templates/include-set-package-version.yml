@@ -147,7 +147,7 @@ steps:
 
 # This template only runs for non-PR main-branch builds, generating manifest files based on the current date and build number. 
 #  Enabling this template for every PR run risks overwriting existing manifest files uploaded to Azure blobs. Therefore, it's crucial to restrict this template to commits merged into the main branch.
-- ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['Build.SourceBranch'], 'refs/heads/main')) }}: 
+- ${{ if ne(variables['Build.Reason'], 'PullRequest') }}: 
   - template: /tools/pipelines/templates/upload-dev-manifest.yml
     parameters:
       buildDirectory: '${{ parameters.buildDirectory }}'
