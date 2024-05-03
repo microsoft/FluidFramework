@@ -230,6 +230,8 @@ describe("Container create with feature flags", () => {
 	 * Expected behavior: An error should not be thrown and the logger should have logged the enabled feature gates.
 	 */
 	it("can create containers with feature gates", async function () {
+		// Ephemeral containers are currently not created with the AzureClient, and therefore do not
+		// have an attached mockLogger which is needed for this test.
 		if (isEphemeral) {
 			this.skip();
 		}
