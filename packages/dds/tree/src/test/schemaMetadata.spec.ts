@@ -4,12 +4,14 @@
  */
 
 import assert from "assert";
+
 import { SchemaFactory, treeNodeApi, TreeNode } from "../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { hydrate } from "./simple-tree/utils.js";
 import { TreeValue } from "../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
 import { isTreeValue } from "../feature-libraries/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { isTreeNode } from "../simple-tree/proxies.js";
 
 describe.only("Schema Metadata example patterns", () => {
 	describe("AI Summary example", () => {
@@ -148,7 +150,7 @@ describe.only("Schema Metadata example patterns", () => {
 
 						// If the parent isn't a TreeNode, then it is some other kind of object that can appear in a proxy,
 						// e.g. an array. Return it as is.
-						if (!(this instanceof TreeNode)) {
+						if (!isTreeNode(this)) {
 							return value;
 						}
 
@@ -275,5 +277,131 @@ describe.only("Schema Metadata example patterns", () => {
 			search(tree, (node) => findText(node, "Foo")),
 			false,
 		);
+	});
+
+	it("Search example", () => {
+		const schemaFactory = new SchemaFactory("CanvasApp");
+
+		enum NumberType {
+			Integer = "integer",
+			Float = "float",
+		}
+
+		interface AppSchemaMetadata {
+			numberType?: NumberType;
+		}
+
+		class Point extends schemaFactory.object("Point", {
+			x: schemaFactory.required(schemaFactory.number, {
+				metadata: { numberType: NumberType.Integer },
+			}),
+			y: schemaFactory.required(schemaFactory.number, {
+				metadata: { numberType: NumberType.Integer },
+			}),
+		}) {}
+
+		class Note extends schemaFactory.object("Note", {
+			position: schemaFactory.required(Point, { metadata: { searchHidden: true } }),
+			width: schemaFactory.required(schemaFactory.number, {
+				metadata: { numberType: NumberType.Float },
+			}),
+			height: schemaFactory.required(schemaFactory.number, {
+				metadata: { numberType: NumberType.Float },
+			}),
+			text: schemaFactory.string,
+		}) {}
+
+		class Canvas extends schemaFactory.object("Canvas", {
+			width: schemaFactory.required(schemaFactory.number, {
+				metadata: { numberType: NumberType.Float },
+			}),
+			height: schemaFactory.required(schemaFactory.number, {
+				metadata: { numberType: NumberType.Float },
+			}),
+			notes: schemaFactory.array(Note),
+		}) {}
+
+		function toDbJson(input: TreeNode): string {
+			return JSON.stringify(
+				input,
+				function (this: unknown, key: string | number, value: unknown) {
+					// Replacer function will also pass the original input node back in with a bogus "this" parent object.
+					// If we encounter the original input, return it as as.
+					if (value === input) {
+						return value;
+					}
+
+					// If the parent isn't a TreeNode, then it is some other kind of object that can appear in a proxy,
+					// e.g. an array. Return it as is.
+					if (!isTreeNode(this)) {
+						return value;
+					}
+
+					// If the field isn't a leaf node, then there is nothing special we need to do.
+					// Return it as is.
+					if (!isTreeValue(value)) {
+						return value;
+					}
+
+					// Note: this doesn't handle FluidHandles correctly.
+
+					const metadata = treeNodeApi.fieldMetadata(this, key) as AppSchemaMetadata;
+
+					let type: string = typeof value;
+					if (type === "number") {
+						type = metadata?.numberType ?? NumberType.Float;
+					}
+
+					return { type, value };
+				},
+			);
+		}
+
+		const tree = hydrate(Canvas, {
+			width: 100,
+			height: 200,
+			notes: [
+				{
+					position: { x: 10, y: 10 },
+					width: 10,
+					height: 20,
+					text: "Hello",
+				},
+				{
+					position: { x: 30, y: 10 },
+					width: 30,
+					height: 40,
+					text: "World",
+				},
+			],
+		});
+
+		const expected = JSON.stringify({
+			width: { type: "float", value: 100 },
+			height: { type: "float", value: 200 },
+			notes: [
+				{
+					position: {
+						x: { type: "integer", value: 10 },
+						y: { type: "integer", value: 10 },
+					},
+					width: { type: "float", value: 10 },
+					height: { type: "float", value: 20 },
+					text: { type: "string", value: "Hello" },
+				},
+				{
+					position: {
+						x: { type: "integer", value: 30 },
+						y: { type: "integer", value: 10 },
+					},
+					width: { type: "float", value: 30 },
+					height: { type: "float", value: 40 },
+					text: { type: "string", value: "World" },
+				},
+			],
+		});
+
+		const result = toDbJson(tree);
+		assert.equal(result, expected);
 	});
 });
