@@ -49,7 +49,7 @@ describe("Fluid data updates", () => {
 				"test-user-name-1",
 			);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			containerId = containerResponse?.data?.id as string;
+			containerId = containerResponse.data.id as string;
 			({ container: newContainer } = await client.getContainer(containerId, schema));
 		} else {
 			({ container: newContainer } = await client.createContainer(schema));
@@ -93,7 +93,7 @@ describe("Fluid data updates", () => {
 				"test-user-name-1",
 			);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			containerId = containerResponse?.data?.id as string;
+			containerId = containerResponse.data.id as string;
 			({ container } = await client.getContainer(containerId, schema));
 		} else {
 			({ container } = await client.createContainer(schema));
@@ -139,7 +139,7 @@ describe("Fluid data updates", () => {
 				"test-user-name-1",
 			);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			containerId = containerResponse?.data?.id as string;
+			containerId = containerResponse.data.id as string;
 			({ container } = await client.getContainer(containerId, doSchema));
 		} else {
 			({ container } = await client.createContainer(doSchema));
@@ -199,7 +199,7 @@ describe("Fluid data updates", () => {
 				"test-user-name-1",
 			);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			containerId = containerResponse?.data?.id as string;
+			containerId = containerResponse.data.id as string;
 			({ container } = await client.getContainer(containerId, doSchema));
 		} else {
 			({ container } = await client.createContainer(doSchema));
@@ -264,7 +264,7 @@ describe("Fluid data updates", () => {
 				"test-user-name-1",
 			);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			containerId = containerResponse?.data?.id as string;
+			containerId = containerResponse.data.id as string;
 		} else {
 			({ container } = await client.createContainer(doSchema));
 
@@ -321,7 +321,7 @@ describe("Fluid data updates", () => {
 				"test-user-name-1",
 			);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			containerId = containerResponse?.data?.id as string;
+			containerId = containerResponse.data.id as string;
 			({ container } = await client.getContainer(containerId, dynamicSchema));
 		} else {
 			({ container } = await client.createContainer(dynamicSchema));

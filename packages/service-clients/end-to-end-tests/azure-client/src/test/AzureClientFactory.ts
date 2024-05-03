@@ -85,14 +85,13 @@ export function createAzureClient(
  * currently these are mainly fetched from ephemeralSummaryTrees.ts
  * @param userID - ID for the user creating the container
  * @param userName - Name for the user creating the container
- * @returns - An AxiosResponse containing the container ID(response.data.id),
- * or undefined, if the request fails.
+ * @returns - An AxiosResponse containing the container ID(response.data.id)
  */
 export async function createContainerFromPayload(
 	requestPayload: object,
 	userID?: string,
 	userName?: string,
-): Promise<AxiosResponse | undefined> {
+): Promise<AxiosResponse> {
 	const useAzure = process.env.FLUID_CLIENT === "azure";
 	const tenantId = useAzure
 		? (process.env.azure__fluid__relay__service__tenantId as string)
@@ -138,6 +137,12 @@ export async function createContainerFromPayload(
 		} else {
 			throw new Error(`Error creating container. Status code: ${response.status}`);
 		}
+
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		if (response?.data?.id === undefined) {
+			throw new Error(`ID of the created container is undefined`);
+		}
+
 		return response;
 	} catch (error) {
 		throw new Error(`An error occurred: ${error}`);

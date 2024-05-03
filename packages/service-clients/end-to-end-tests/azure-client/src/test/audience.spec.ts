@@ -53,7 +53,7 @@ describe("Fluid audience", () => {
 				"test-user-name-1",
 			);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			containerId = containerResponse?.data?.id as string;
+			containerId = containerResponse.data.id as string;
 			({ container, services } = await client.getContainer(containerId, schema));
 		} else {
 			({ container, services } = await client.createContainer(schema));
@@ -99,7 +99,7 @@ describe("Fluid audience", () => {
 				"test-user-name-1",
 			);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			containerId = containerResponse?.data?.id as string;
+			containerId = containerResponse.data.id as string;
 			({ container, services } = await client.getContainer(containerId, schema));
 		} else {
 			({ container, services } = await client.createContainer(schema));
@@ -164,7 +164,7 @@ describe("Fluid audience", () => {
 				"test-user-name-1",
 			);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			containerId = containerResponse?.data?.id as string;
+			containerId = containerResponse.data.id as string;
 			({ container } = await client.getContainer(containerId, schema));
 		} else {
 			({ container } = await client.createContainer(schema));
