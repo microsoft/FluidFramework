@@ -1,7 +1,7 @@
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
- * 
+ *
  * This file contains various summary trees extracted from E2E test runs, and modified to set the isEphemeral flag to true.
  * These trees are used in AzureClientFactory.ts' createContainerFromPayload function to manually create ephemeral container creation requests.
  * We expect this file to no longer be needed in the future, as there are plans to add ephemeral container API surface to the AzureClient,

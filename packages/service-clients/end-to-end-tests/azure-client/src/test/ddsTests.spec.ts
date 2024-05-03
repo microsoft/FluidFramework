@@ -277,7 +277,7 @@ describe("Fluid data updates", () => {
 			assert.strictEqual(mdo2.value, 3);
 
 			containerId = await container.attach();
-		
+
 			if (container.connectionState !== ConnectionState.Connected) {
 				await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
 					durationMs: connectTimeoutMs,
