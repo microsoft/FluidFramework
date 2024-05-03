@@ -657,6 +657,9 @@ packages:
     engines: {node: '>=14.0.0'}
     peerDependencies:
       '@aws-sdk/credential-provider-node': ^3.540.0
+    peerDependenciesMeta:
+      '@aws-sdk/credential-provider-node':
+        optional: true
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
@@ -796,6 +799,9 @@ packages:
     engines: {node: '>=14.0.0'}
     peerDependencies:
       '@aws-sdk/credential-provider-node': ^3.540.0
+    peerDependenciesMeta:
+      '@aws-sdk/credential-provider-node':
+        optional: true
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
@@ -933,6 +939,9 @@ packages:
     engines: {node: '>=16.0.0'}
     peerDependencies:
       '@aws-sdk/client-sts': ^3.568.0
+    peerDependenciesMeta:
+      '@aws-sdk/client-sts':
+        optional: true
     dependencies:
       '@aws-sdk/credential-provider-env': 3.568.0
       '@aws-sdk/credential-provider-process': 3.568.0
@@ -1056,6 +1065,9 @@ packages:
     engines: {node: '>=16.0.0'}
     peerDependencies:
       '@aws-sdk/client-sts': ^3.568.0
+    peerDependenciesMeta:
+      '@aws-sdk/client-sts':
+        optional: true
     dependencies:
       '@aws-sdk/types': 3.567.0
       '@smithy/property-provider': 2.2.0
@@ -1262,6 +1274,9 @@ packages:
     engines: {node: '>=16.0.0'}
     peerDependencies:
       '@aws-sdk/client-sso-oidc': ^3.568.0
+    peerDependenciesMeta:
+      '@aws-sdk/client-sso-oidc':
+        optional: true
     dependencies:
       '@aws-sdk/types': 3.567.0
       '@smithy/property-provider': 2.2.0
