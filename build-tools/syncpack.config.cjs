@@ -133,6 +133,12 @@ module.exports = {
 	 */
 	versionGroups: [
 		{
+			label: "chalk >2 is ESM only but build-tools and version-tools are still CJS only.",
+			dependencies: ["chalk"],
+			packages: ["@fluidframework/build-tools", "@fluid-tools/version-tools"],
+		},
+
+		{
 			label: "Versions of common Fluid packages should all match",
 			dependencies: [
 				"@fluidframework/build-common",
