@@ -29,13 +29,6 @@ steps:
     script: |
       mkdir upload_release_reports
       flub release report-unreleased --version $(SetVersion.version) --fullReportFilePath generate_release_reports/manifest.full.json --outDir upload_release_reports
-
-- task: PublishPipelineArtifact@1
-  displayName: Publish release reports
-  continueOnError: true
-  inputs:
-    targetPath: ${{ parameters.buildDirectory }}/upload_release_reports
-    artifactName: 'release_reports'
       
 - task: AzureCLI@2
   displayName: Upload release reports
