@@ -361,10 +361,6 @@ export class Container
 
 		const container = new Container(createProps, loadProps);
 
-		const disableRecordHeapSize = container.mc.config.getBoolean(
-			"Fluid.Loader.DisableRecordHeapSize",
-		);
-
 		return PerformanceEvent.timedExecAsync(
 			container.mc.logger,
 			{ eventName: "Load", ...loadMode },
@@ -410,7 +406,6 @@ export class Container
 						);
 				}),
 			{ start: true, end: true, cancel: "generic" },
-			disableRecordHeapSize !== true /* recordHeapSize */,
 		);
 	}
 

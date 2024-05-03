@@ -37,13 +37,7 @@ function createConnectedTree(id: string, runtimeFactory: MockContainerRuntimeFac
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
 		idCompressor: createIdCompressor(),
 	});
-	const tree = new SharedTree(
-		id,
-		dataStoreRuntime,
-		new SharedTreeFactory().attributes,
-		{},
-		"SharedTree",
-	);
+	const tree = new SharedTree(id, dataStoreRuntime, new SharedTreeFactory().attributes, {});
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
