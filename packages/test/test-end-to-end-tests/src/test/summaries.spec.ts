@@ -548,6 +548,13 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 			const containerRuntime = (summarizer as any).runtime as ContainerRuntime;
 			const submitSumarySpy = sandbox.spy(containerRuntime, "submitSummary");
 
+			const defaultDataStore =
+				await getContainerEntryPointBackCompat<ITestDataObject>(container);
+
+			const directory1 = defaultDataStore._root;
+			directory1.set("key", "value");
+			await provider.ensureSynchronized();
+
 			const summarizerRunProm = summarizer.run("test");
 			summarizer.stop("parentNotConnected");
 			await flushPromises();
