@@ -238,7 +238,7 @@ const tree2 = {
 																value: {
 																	type: "blob",
 																	content:
-																		'{"blobs":[],"content":{"new-key":{"type":"Plain","value":"new-value"}}}',
+																		'{"blobs":[],"content":{"new-key":{"type":"Plain","value":"expected-value"}}}',
 																	encoding: "utf8",
 																},
 																unreferenced: undefined,
