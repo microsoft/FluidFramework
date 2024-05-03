@@ -8,27 +8,28 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { Multiplicity, rootFieldKey } from "../core/index.js";
 import {
 	FieldKinds,
-	LeafNodeSchema,
+	LazyItem,
 	TreeStatus,
+	isLazy,
 	isTreeValue,
-	valueSchemaAllows,
 } from "../feature-libraries/index.js";
-import { fail, extractFromOpaque } from "../util/index.js";
+import { fail, extractFromOpaque, isReadonlyArray } from "../util/index.js";
 
-import { getOrCreateNodeProxy } from "./proxies.js";
-import { getFlexNode, tryGetFlexNode } from "./proxyBinding.js";
+import { getOrCreateNodeProxy, isTreeNode } from "./proxies.js";
+import { getFlexNode } from "./proxyBinding.js";
 import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
-import { schemaFromValue } from "./schemaFactory.js";
 import {
-	NodeFromSchema,
 	NodeKind,
 	type TreeLeafValue,
 	TreeNodeSchema,
 	type ImplicitFieldSchema,
 	FieldSchema,
+	ImplicitAllowedTypes,
+	TreeNodeFromImplicitAllowedTypes,
 } from "./schemaTypes.js";
-import { getFlexSchema } from "./toFlexSchema.js";
 import { TreeNode } from "./types.js";
+import { handleSchema, nullSchema, numberSchema, stringSchema } from "./leafNodeSchema.js";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -51,15 +52,15 @@ export interface TreeNodeApi {
 	 * Narrow the type of the given value if it satisfies the given schema.
 	 * @example
 	 * ```ts
-	 * if (node.is(myNode, point)) {
-	 *     const y = myNode.y; // `myNode` is now known to satisfy the `point` schema and therefore has a `y` coordinate.
+	 * if (node.is(myNode, Point)) {
+	 *     const y = myNode.y; // `myNode` is now known to satisfy the `Point` schema and therefore has a `y` coordinate.
 	 * }
 	 * ```
 	 */
-	is<TSchema extends TreeNodeSchema>(
+	is<TSchema extends ImplicitAllowedTypes>(
 		value: unknown,
 		schema: TSchema,
-	): value is NodeFromSchema<TSchema>;
+	): value is TreeNodeFromImplicitAllowedTypes<TSchema>;
 
 	/**
 	 * Return the node under which this node resides in the tree (or undefined if this is a root node of the tree).
@@ -166,30 +167,30 @@ export const treeNodeApi: TreeNodeApi = {
 	status: (node: TreeNode) => {
 		return getFlexNode(node, true).treeStatus();
 	},
-	is: <TSchema extends TreeNodeSchema>(
+	is: <TSchema extends ImplicitAllowedTypes>(
 		value: unknown,
 		schema: TSchema,
-	): value is NodeFromSchema<TSchema> => {
-		const flexSchema = getFlexSchema(schema);
-		if (isTreeValue(value)) {
-			return (
-				flexSchema instanceof LeafNodeSchema && valueSchemaAllows(flexSchema.info, value)
-			);
+	): value is TreeNodeFromImplicitAllowedTypes<TSchema> => {
+		const actualSchema = tryGetSchema(value);
+		if (actualSchema === undefined) {
+			return false;
 		}
-		return tryGetFlexNode(value)?.is(flexSchema) ?? false;
+		if (isReadonlyArray<LazyItem<TreeNodeSchema>>(schema)) {
+			for (const singleSchema of schema) {
+				const testSchema = isLazy(singleSchema) ? singleSchema() : singleSchema;
+				if (testSchema === actualSchema) {
+					return true;
+				}
+			}
+			return false;
+		} else {
+			return (schema as TreeNodeSchema) === actualSchema;
+		}
 	},
 	schema<T extends TreeNode | TreeLeafValue>(
 		node: T,
 	): TreeNodeSchema<string, NodeKind, unknown, T> {
-		if (isTreeValue(node)) {
-			return schemaFromValue(node) as TreeNodeSchema<string, NodeKind, unknown, T>;
-		}
-		return tryGetSimpleNodeSchema(getFlexNode(node).schema) as TreeNodeSchema<
-			string,
-			NodeKind,
-			unknown,
-			T
-		>;
+		return tryGetSchema(node) ?? fail("Not a tree node");
 	},
 	shortId(node: TreeNode): number | string | undefined {
 		const flexNode = getFlexNode(node);
@@ -207,6 +208,36 @@ export const treeNodeApi: TreeNodeApi = {
 		}
 	},
 };
+
+/**
+ * Returns a schema for a value if the value is a {@link TreeNode} or a {@link TreeLeafValue}.
+ * Returns undefined for other values.
+ */
+function tryGetSchema<T>(value: T): undefined | TreeNodeSchema<string, NodeKind, unknown, T> {
+	type TOut = TreeNodeSchema<string, NodeKind, unknown, T>;
+	switch (typeof value) {
+		case "string":
+			return stringSchema as TOut;
+		case "number":
+			return numberSchema as TOut;
+		case "boolean":
+			return numberSchema as TOut;
+		case "object": {
+			if (isTreeNode(value)) {
+				// This case could be optimized, for example by placing the simple schema in a symbol on tree nodes.
+				return tryGetSimpleNodeSchema(getFlexNode(value).schema) as TOut;
+			}
+			if (value === null) {
+				return nullSchema as TOut;
+			}
+			if (isFluidHandle(value)) {
+				return handleSchema as TOut;
+			}
+		}
+		default:
+			return undefined;
+	}
+}
 
 /**
  * Gets the stored key with which the provided node is associated in the parent.

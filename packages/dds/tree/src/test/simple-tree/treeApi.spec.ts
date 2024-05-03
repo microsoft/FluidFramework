@@ -4,6 +4,8 @@
  */
 
 import { strict as assert } from "node:assert";
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
+
 import { rootFieldKey } from "../../core/index.js";
 import { TreeStatus, createMockNodeKeyManager } from "../../feature-libraries/index.js";
 import {
@@ -14,7 +16,6 @@ import {
 	TreeConfiguration,
 } from "../../simple-tree/index.js";
 import { getView } from "../utils.js";
-
 import { hydrate } from "./utils.js";
 
 const schema = new SchemaFactory("com.example");
@@ -22,45 +23,72 @@ const schema = new SchemaFactory("com.example");
 class Point extends schema.object("Point", {}) {}
 
 describe("treeApi", () => {
-	it("is", () => {
-		const config = new TreeConfiguration([Point, schema.number], () => ({}));
-		const root = getView(config).root;
-		assert(Tree.is(root, Point));
-		assert(root instanceof Point);
-		assert(!Tree.is(root, schema.number));
-		assert(Tree.is(5, schema.number));
-		assert(!Tree.is(root, schema.number));
-		assert(!Tree.is(5, Point));
+	describe("is", () => {
+		it("is", () => {
+			const config = new TreeConfiguration([Point, schema.number], () => ({}));
+			const root = getView(config).root;
+			assert(Tree.is(root, Point));
+			assert(root instanceof Point);
+			assert(!Tree.is(root, schema.number));
+			assert(Tree.is(5, schema.number));
+			assert(!Tree.is(root, schema.number));
+			assert(!Tree.is(5, Point));
 
-		const NotInDocument = schema.object("never", {});
-		// Using a schema that is not in the document throws:
-		assert.throws(() => Tree.is(root, NotInDocument));
-	});
+			const NotInDocument = schema.object("never", {});
+			// Using a schema that is not in the document works:
+			assert(!Tree.is(root, NotInDocument));
+		});
 
-	it("`is` can narrow polymorphic leaf field content", () => {
-		const config = new TreeConfiguration([schema.number, schema.string], () => "x");
-		const root = getView(config).root;
+		it("`is` can narrow polymorphic leaf field content", () => {
+			const config = new TreeConfiguration([schema.number, schema.string], () => "x");
+			const root = getView(config).root;
 
-		if (Tree.is(root, schema.number)) {
-			const _check: number = root;
-			assert.fail();
-		} else {
-			const value: string = root;
-			assert.equal(value, "x");
-		}
-	});
+			if (Tree.is(root, schema.number)) {
+				const _check: number = root;
+				assert.fail();
+			} else {
+				const value: string = root;
+				assert.equal(value, "x");
+			}
+		});
 
-	it("`is` can narrow polymorphic combinations of value and objects", () => {
-		const config = new TreeConfiguration([Point, schema.string], () => "x");
-		const root = getView(config).root;
+		it("`is` can narrow polymorphic combinations of value and objects", () => {
+			const config = new TreeConfiguration([Point, schema.string], () => "x");
+			const root = getView(config).root;
 
-		if (Tree.is(root, Point)) {
-			const _check: Point = root;
-			assert.fail();
-		} else {
-			const value: string = root;
-			assert.equal(value, "x");
-		}
+			if (Tree.is(root, Point)) {
+				const _check: Point = root;
+				assert.fail();
+			} else {
+				const value: string = root;
+				assert.equal(value, "x");
+			}
+		});
+
+		it("`is` can handle leaves", () => {
+			// true case for primitive
+			assert(Tree.is(5, schema.number));
+			// non-leaf primitives
+			assert(!Tree.is(BigInt(5), schema.number));
+			assert(!Tree.is(Symbol(), schema.number));
+			// non-node objects
+			assert(!Tree.is({}, schema.number));
+			assert(!Tree.is(Tree, schema.null));
+			// node to leaf
+			assert(!Tree.is(hydrate(Point, {}), schema.number));
+			// null: its a special case since its sorta an object
+			assert(!Tree.is(null, schema.number));
+			assert(Tree.is(null, schema.null));
+			// handle: its a special case since it is an object but not a node
+			assert(!Tree.is(null, schema.handle));
+			assert(Tree.is(new MockHandle(1), schema.handle));
+		});
+
+		it("supports allowed types", () => {
+			assert(!Tree.is(5, []));
+			assert(!Tree.is(5, [schema.string]));
+			assert(Tree.is(5, [schema.string, schema.number]));
+		});
 	});
 
 	it("schema", () => {
