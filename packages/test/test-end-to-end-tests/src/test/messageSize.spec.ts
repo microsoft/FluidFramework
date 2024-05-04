@@ -597,7 +597,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 					this.skip();
 				}
 
-				// This test is consistently failing on tinylicious. See ADO:7925
+				// This test is consistently failing on frs. See ADO:7944
 				if (
 					provider.driver.type === "routerlicious" &&
 					provider.driver.endpointName === "frs"
