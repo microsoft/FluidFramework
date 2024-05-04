@@ -23,14 +23,15 @@ module.exports = {
 		// This package is being deprecated, so it's okay to use deprecated APIs.
 		"import/no-deprecated": "off",
 
-		// This package is using node's events module.
+		// This package uses node's events APIs.
+		// This should probably be reconsidered, but until then we will leave an exception for it here.
 		"import/no-nodejs-modules": ["error", { allow: ["events"] }],
 	},
 	overrides: [
 		{
 			files: ["src/test/**/*"],
 			rules: {
-				// Fine for tests to use node.js modules.
+				// It's fine for tests to use node.js modules.
 				"import/no-nodejs-modules": "off",
 			},
 		},

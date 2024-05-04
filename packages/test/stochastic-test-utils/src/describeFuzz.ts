@@ -13,7 +13,7 @@ function createSuite<TArgs extends StressSuiteArguments>(
 		if (args.isStress) {
 			// Stress runs may have tests which are expected to take longer amounts of time.
 			// Don't override the timeout if it's already set to a higher value, though.
-			this.timeout(Math.max(10_000, this.timeout()));
+			this.timeout(this.timeout() === 0 ? 0 : Math.max(10_000, this.timeout()));
 		}
 		tests.bind(this)(args);
 	};

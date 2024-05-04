@@ -10,7 +10,6 @@ import {
 	ChangesetLocalId,
 	RevisionMetadataSource,
 	RevisionTag,
-	TaggedChange,
 } from "../../core/index.js";
 import { IdAllocator, brand, fail, getOrAddEmptyToMap } from "../../util/index.js";
 import {
@@ -89,7 +88,7 @@ import {
  */
 export function rebase(
 	change: Changeset,
-	base: TaggedChange<Changeset>,
+	base: Changeset,
 	rebaseChild: NodeChangeRebaser,
 	genId: IdAllocator,
 	manager: CrossFieldManager,
@@ -98,8 +97,7 @@ export function rebase(
 ): Changeset {
 	return rebaseMarkList(
 		change,
-		base.change,
-		base.revision,
+		base,
 		revisionMetadata,
 		rebaseChild,
 		genId,
@@ -111,7 +109,6 @@ export function rebase(
 function rebaseMarkList(
 	currMarkList: MarkList,
 	baseMarkList: MarkList,
-	baseRevision: RevisionTag | undefined,
 	metadata: RebaseRevisionMetadata,
 	rebaseChild: NodeChangeRebaser,
 	genId: IdAllocator,
@@ -119,7 +116,7 @@ function rebaseMarkList(
 	nodeExistenceState: NodeExistenceState,
 ): MarkList {
 	const rebasedMarks: Mark[] = [];
-	const queue = new RebaseQueue(baseRevision, baseMarkList, currMarkList, metadata, moveEffects);
+	const queue = new RebaseQueue(baseMarkList, currMarkList, metadata, moveEffects);
 
 	// Each mark with empty input cells in `currMarkList` should have a lineage event added for all adjacent detaches in the base changeset.
 	// At the time we process an attach we don't know about detaches of later nodes,
@@ -133,7 +130,6 @@ function rebaseMarkList(
 		const rebasedMark = rebaseMark(
 			currMark,
 			baseMark,
-			baseRevision,
 			metadata,
 			rebaseChild,
 			moveEffects,
@@ -141,13 +137,10 @@ function rebaseMarkList(
 		);
 
 		if (sequenceConfig.cellOrdering === CellOrderingMethod.Lineage) {
-			if (
-				markEmptiesCells(baseMark) ||
-				isImpactfulCellRename(baseMark, baseRevision, metadata)
-			) {
+			if (markEmptiesCells(baseMark) || isImpactfulCellRename(baseMark, metadata)) {
 				// Note that we want the revision in the detach ID to be the actual revision, not the intention.
 				// TODO: re-examine why this case needs the two kinds of overrides to be treated differently.
-				const detachId = getDetachIdForLineage(baseMark, baseRevision);
+				const detachId = getDetachIdForLineage(baseMark);
 				assert(
 					detachId !== undefined,
 					0x816 /* Mark which empties cells should have a detach ID */,
@@ -196,14 +189,7 @@ function rebaseMarkList(
 			if (areInputCellsEmpty(rebasedMark)) {
 				handleLineage(rebasedMark.cellId, detachBlocks, metadata);
 			}
-			updateLineageState(
-				rebasedCellBlocks,
-				detachBlocks,
-				baseMark,
-				baseRevision,
-				rebasedMark,
-				metadata,
-			);
+			updateLineageState(rebasedCellBlocks, detachBlocks, baseMark, rebasedMark, metadata);
 		}
 		rebasedMarks.push(rebasedMark);
 	}
@@ -238,13 +224,9 @@ export function isRedetach(effect: MarkEffect): boolean {
  * @param revision - The revision, if available.
  * @returns A NoOp mark that targets the same cells as the input mark.
  */
-function generateNoOpWithCellId(
-	mark: Mark,
-	revision: RevisionTag | undefined,
-	metadata: RevisionMetadataSource,
-): CellMark<NoopMark> {
+function generateNoOpWithCellId(mark: Mark, metadata: RevisionMetadataSource): CellMark<NoopMark> {
 	const length = mark.count;
-	const cellId = getInputCellId(mark, revision, metadata);
+	const cellId = getInputCellId(mark, metadata);
 	return cellId === undefined ? { count: length } : { count: length, cellId };
 }
 
@@ -255,26 +237,15 @@ class RebaseQueue {
 	private readonly newMarksCellSources: ReadonlySet<RevisionTag | undefined>;
 
 	public constructor(
-		baseRevision: RevisionTag | undefined,
 		baseMarks: Changeset,
 		newMarks: Changeset,
 		private readonly metadata: RevisionMetadataSource,
 		private readonly moveEffects: MoveEffectTable,
 	) {
-		this.baseMarks = new MarkQueue(baseMarks, baseRevision, moveEffects);
-		this.newMarks = new MarkQueue(newMarks, undefined, moveEffects);
-		this.baseMarksCellSources = cellSourcesFromMarks(
-			baseMarks,
-			baseRevision,
-			metadata,
-			getInputCellId,
-		);
-		this.newMarksCellSources = cellSourcesFromMarks(
-			newMarks,
-			undefined,
-			metadata,
-			getInputCellId,
-		);
+		this.baseMarks = new MarkQueue(baseMarks, moveEffects);
+		this.newMarks = new MarkQueue(newMarks, moveEffects);
+		this.baseMarksCellSources = cellSourcesFromMarks(baseMarks, metadata, getInputCellId);
+		this.newMarksCellSources = cellSourcesFromMarks(newMarks, metadata, getInputCellId);
 	}
 
 	public isEmpty(): boolean {
@@ -292,7 +263,7 @@ class RebaseQueue {
 		if (baseMark === undefined) {
 			const dequeuedNewMark = this.newMarks.dequeue();
 			return {
-				baseMark: generateNoOpWithCellId(dequeuedNewMark, undefined, this.metadata),
+				baseMark: generateNoOpWithCellId(dequeuedNewMark, this.metadata),
 				newMark: dequeuedNewMark,
 			};
 		} else if (newMark === undefined) {
@@ -300,8 +271,8 @@ class RebaseQueue {
 		} else if (areInputCellsEmpty(baseMark) && areInputCellsEmpty(newMark)) {
 			switch (sequenceConfig.cellOrdering) {
 				case CellOrderingMethod.Tombstone: {
-					const baseId = getInputCellId(baseMark, this.baseMarks.revision, this.metadata);
-					const newId = getInputCellId(newMark, undefined, this.metadata);
+					const baseId = getInputCellId(baseMark, this.metadata);
+					const newId = getInputCellId(newMark, this.metadata);
 					assert(
 						baseId !== undefined && newId !== undefined,
 						0x89f /* Both marks should have cell IDs */,
@@ -325,23 +296,14 @@ class RebaseQueue {
 					}
 				}
 				case CellOrderingMethod.Lineage: {
-					const cmp = compareCellPositions(
-						this.baseMarks.revision,
-						baseMark,
-						newMark,
-						this.metadata,
-					);
+					const cmp = compareCellPositions(baseMark, newMark, this.metadata);
 					if (cmp < 0) {
 						return this.dequeueBase(-cmp);
 					} else if (cmp > 0) {
 						const dequeuedNewMark = this.newMarks.dequeueUpTo(cmp);
 						return {
 							newMark: dequeuedNewMark,
-							baseMark: generateNoOpWithCellId(
-								dequeuedNewMark,
-								undefined,
-								this.metadata,
-							),
+							baseMark: generateNoOpWithCellId(dequeuedNewMark, this.metadata),
 						};
 					} else {
 						return this.dequeueBoth();
@@ -363,17 +325,9 @@ class RebaseQueue {
 		const baseMark =
 			length !== undefined ? this.baseMarks.dequeueUpTo(length) : this.baseMarks.dequeue();
 
-		let newMark: Mark = generateNoOpWithCellId(
-			baseMark,
-			this.baseMarks.revision,
-			this.metadata,
-		);
+		let newMark: Mark = generateNoOpWithCellId(baseMark, this.metadata);
 
-		const movedEffect = getMovedEffectFromBaseMark(
-			this.moveEffects,
-			baseMark,
-			this.baseMarks.revision,
-		);
+		const movedEffect = getMovedEffectFromBaseMark(this.moveEffects, baseMark);
 
 		if (movedEffect !== undefined) {
 			newMark = addMovedMarkEffect(newMark, movedEffect);
@@ -387,7 +341,7 @@ class RebaseQueue {
 
 	private dequeueNew(): RebaseMarks {
 		const newMark = this.newMarks.dequeue();
-		return { newMark, baseMark: generateNoOpWithCellId(newMark, undefined, this.metadata) };
+		return { newMark, baseMark: generateNoOpWithCellId(newMark, this.metadata) };
 	}
 
 	private dequeueBoth(): RebaseMarks {
@@ -400,11 +354,7 @@ class RebaseQueue {
 		const length = Math.min(newMark.count, baseMark.count);
 		const sizedBaseMark = this.baseMarks.dequeueUpTo(length);
 		const sizedNewMark = this.newMarks.dequeueUpTo(length);
-		const movedMark = getMovedEffectFromBaseMark(
-			this.moveEffects,
-			sizedBaseMark,
-			this.baseMarks.revision,
-		);
+		const movedMark = getMovedEffectFromBaseMark(this.moveEffects, sizedBaseMark);
 		return {
 			baseMark: sizedBaseMark,
 			newMark:
@@ -444,14 +394,13 @@ interface RebaseMarks {
 function rebaseMark(
 	currMark: Mark,
 	baseMark: Mark,
-	baseRevision: RevisionTag | undefined,
 	metadata: RevisionMetadataSource,
 	rebaseChild: NodeChangeRebaser,
 	moveEffects: MoveEffectTable,
 	nodeExistenceState: NodeExistenceState,
 ): Mark {
 	const rebasedMark = rebaseNodeChange(cloneMark(currMark), baseMark, rebaseChild);
-	const movedNodeChanges = getMovedChangesFromBaseMark(moveEffects, baseMark, baseRevision);
+	const movedNodeChanges = getMovedChangesFromBaseMark(moveEffects, baseMark);
 	if (movedNodeChanges !== undefined) {
 		assert(
 			rebasedMark.changes === undefined,
@@ -460,20 +409,12 @@ function rebaseMark(
 		rebasedMark.changes = movedNodeChanges;
 	}
 
-	return rebaseMarkIgnoreChild(
-		rebasedMark,
-		baseMark,
-		baseRevision,
-		metadata,
-		moveEffects,
-		nodeExistenceState,
-	);
+	return rebaseMarkIgnoreChild(rebasedMark, baseMark, metadata, moveEffects, nodeExistenceState);
 }
 
 function rebaseMarkIgnoreChild(
 	currMark: Mark,
 	baseMark: Mark,
-	baseRevision: RevisionTag | undefined,
 	metadata: RevisionMetadataSource,
 	moveEffects: MoveEffectTable,
 	nodeExistenceState: NodeExistenceState,
@@ -488,7 +429,7 @@ function rebaseMarkIgnoreChild(
 			!isNewAttach(currMark),
 			0x69d /* A new attach should not be rebased over its cell being emptied */,
 		);
-		const baseCellId = getDetachOutputCellId(baseMark, baseRevision, metadata);
+		const baseCellId = getDetachOutputCellId(baseMark, metadata);
 
 		if (isMoveOut(baseMark)) {
 			assert(isMoveMark(baseMark), 0x6f0 /* Only move marks have move IDs */);
@@ -498,20 +439,11 @@ function rebaseMarkIgnoreChild(
 			);
 			const { remains, follows } = separateEffectsForMove(extractMarkEffect(currMark));
 			if (follows !== undefined) {
-				sendEffectToDest(
-					follows,
-					moveEffects,
-					getEndpoint(baseMark, baseRevision),
-					baseMark.count,
-				);
+				sendEffectToDest(follows, moveEffects, getEndpoint(baseMark), baseMark.count);
 			}
 
 			if (currMark.changes !== undefined) {
-				moveRebasedChanges(
-					currMark.changes,
-					moveEffects,
-					getEndpoint(baseMark, baseRevision),
-				);
+				moveRebasedChanges(currMark.changes, moveEffects, getEndpoint(baseMark));
 			}
 			rebasedMark = { ...(remains ?? {}), count: baseMark.count };
 		} else {
@@ -530,7 +462,6 @@ function rebaseMarkIgnoreChild(
 		const halfRebasedMark = rebaseMarkIgnoreChild(
 			currMark,
 			{ ...baseMark.attach, cellId: cloneCellId(baseMark.cellId), count: baseMark.count },
-			baseRevision,
 			metadata,
 			moveEffects,
 			nodeExistenceState,
@@ -538,7 +469,6 @@ function rebaseMarkIgnoreChild(
 		rebasedMark = rebaseMarkIgnoreChild(
 			halfRebasedMark,
 			{ ...baseMark.detach, count: baseMark.count },
-			baseRevision,
 			metadata,
 			moveEffects,
 			nodeExistenceState,
@@ -690,19 +620,13 @@ function withCellId<TMark extends Mark>(mark: TMark, cellId: CellId | undefined)
 function getMovedEffectFromBaseMark(
 	moveEffects: MoveEffectTable,
 	baseMark: Mark,
-	baseRevision: RevisionTag | undefined,
 ): MarkEffect | undefined {
 	if (isMoveIn(baseMark)) {
-		return getMovedEffect(
-			moveEffects,
-			baseMark.revision ?? baseRevision,
-			baseMark.id,
-			baseMark.count,
-		);
+		return getMovedEffect(moveEffects, baseMark.revision, baseMark.id, baseMark.count);
 	} else if (isAttachAndDetachEffect(baseMark) && isMoveIn(baseMark.attach)) {
 		return getMovedEffect(
 			moveEffects,
-			baseMark.attach.revision ?? baseRevision,
+			baseMark.attach.revision,
 			baseMark.attach.id,
 			baseMark.count,
 		);
@@ -729,16 +653,11 @@ function getMovedEffect(
 function getMovedChangesFromBaseMark(
 	moveEffects: MoveEffectTable,
 	baseMark: Mark,
-	baseRevision: RevisionTag | undefined,
 ): NodeId | undefined {
 	if (isMoveIn(baseMark)) {
-		return getMovedNodeChanges(moveEffects, baseMark.revision ?? baseRevision, baseMark.id);
+		return getMovedNodeChanges(moveEffects, baseMark.revision, baseMark.id);
 	} else if (isAttachAndDetachEffect(baseMark) && isMoveIn(baseMark.attach)) {
-		return getMovedNodeChanges(
-			moveEffects,
-			baseMark.attach.revision ?? baseRevision,
-			baseMark.attach.id,
-		);
+		return getMovedNodeChanges(moveEffects, baseMark.attach.revision, baseMark.attach.id);
 	} else {
 		return undefined;
 	}
@@ -804,12 +723,11 @@ function updateLineageState(
 	cellBlocks: CellBlockList,
 	detachBlocks: Map<RevisionTag, IdRange[]>,
 	baseMark: Mark,
-	baseRevision: RevisionTag | undefined,
 	rebasedMark: Mark,
 	metadata: RevisionMetadataSource,
 ) {
-	const attachRevisionIndex = getAttachRevisionIndex(metadata, baseMark, baseRevision);
-	const detachRevisionIndex = getDetachRevisionIndex(metadata, baseMark, baseRevision);
+	const attachRevisionIndex = getAttachRevisionIndex(metadata, baseMark);
+	const detachRevisionIndex = getDetachRevisionIndex(metadata, baseMark);
 	for (const revision of detachBlocks.keys()) {
 		const revisionIndex = getRevisionIndex(metadata, revision);
 		// revisionIndex can be -Infinity if it is from a re-detach
@@ -829,54 +747,40 @@ function updateLineageState(
 	});
 }
 
-function getAttachRevisionIndex(
-	metadata: RevisionMetadataSource,
-	baseMark: Mark,
-	baseRevision: RevisionTag | undefined,
-): number {
+function getAttachRevisionIndex(metadata: RevisionMetadataSource, baseMark: Mark): number {
 	if (!areInputCellsEmpty(baseMark)) {
 		return -Infinity;
 	}
 
 	if (markFillsCells(baseMark)) {
 		assert(isAttach(baseMark), 0x81b /* Only attach marks can fill cells */);
-		return getRevisionIndex(
-			metadata,
-			baseMark.revision ?? baseRevision ?? fail("Mark must have revision"),
-		);
+		return getRevisionIndex(metadata, baseMark.revision ?? fail("Mark must have revision"));
 	}
 
 	if (isAttachAndDetachEffect(baseMark)) {
 		return getRevisionIndex(
 			metadata,
-			baseMark.attach.revision ?? baseRevision ?? fail("Mark must have revision"),
+			baseMark.attach.revision ?? fail("Mark must have revision"),
 		);
 	}
 
 	return Infinity;
 }
 
-function getDetachRevisionIndex(
-	metadata: RevisionMetadataSource,
-	baseMark: Mark,
-	baseRevision: RevisionTag | undefined,
-): number {
+function getDetachRevisionIndex(metadata: RevisionMetadataSource, baseMark: Mark): number {
 	if (!areOutputCellsEmpty(baseMark)) {
 		return Infinity;
 	}
 
 	if (markEmptiesCells(baseMark)) {
 		assert(isDetach(baseMark), 0x81c /* Only detach marks can empty cells */);
-		return getRevisionIndex(
-			metadata,
-			baseMark.revision ?? baseRevision ?? fail("Mark must have revision"),
-		);
+		return getRevisionIndex(metadata, baseMark.revision ?? fail("Mark must have revision"));
 	}
 
 	if (isAttachAndDetachEffect(baseMark)) {
 		return getRevisionIndex(
 			metadata,
-			baseMark.detach.revision ?? baseRevision ?? fail("Mark must have revision"),
+			baseMark.detach.revision ?? fail("Mark must have revision"),
 		);
 	}
 
@@ -986,9 +890,9 @@ function setMarkAdjacentCells(mark: Mark, adjacentCells: IdRange[]): void {
 function shouldReceiveLineage(
 	cellRevision: RevisionTag | undefined,
 	detachRevision: RevisionTag,
-	metadata: RevisionMetadataSource,
+	metadata: RebaseRevisionMetadata,
 ): boolean {
-	if (cellRevision === undefined) {
+	if (cellRevision === undefined || cellRevision === metadata.getRevisionToRebase()) {
 		// An undefined cell revision means that the cell was created by the changeset we are rebasing.
 		// Since this cell was been empty for all base revisions, it should receive lineage from all of them.
 		// TODO: This cell does not need lineage from roll-forward revisions.
@@ -1021,15 +925,14 @@ function shouldReceiveLineage(
  * are before the first cell of `newMark`.
  */
 function compareCellPositions(
-	baseRevision: RevisionTag | undefined,
 	baseMark: EmptyInputCellMark,
 	newMark: EmptyInputCellMark,
 	metadata: RevisionMetadataSource,
 ): number {
-	const baseId = getInputCellId(baseMark, baseRevision, metadata);
+	const baseId = getInputCellId(baseMark, metadata);
 	const baseLength = baseMark.count;
 	assert(baseId?.revision !== undefined, 0x6a0 /* baseMark should have cell ID */);
-	const newId = getInputCellId(newMark, undefined, metadata);
+	const newId = getInputCellId(newMark, metadata);
 	assert(newId !== undefined, 0x85a /* newMark should have cell ID */);
 	const newLength = newMark.count;
 	if (newId !== undefined && baseId.revision === newId.revision) {

@@ -17,7 +17,7 @@ import {
 import { IIntervalCollection } from "../intervalCollection.js";
 import { SequenceInterval } from "../intervals/index.js";
 import { SharedStringFactory } from "../sequenceFactory.js";
-import { SharedString } from "../sharedString.js";
+import { SharedStringClass, ISharedString } from "../sharedString.js";
 
 interface IntervalEventInfo {
 	interval: { start: number; end: number };
@@ -26,16 +26,16 @@ interface IntervalEventInfo {
 }
 
 describe("SharedString interval collection event spec", () => {
-	let sharedString: SharedString;
+	let sharedString: ISharedString;
 	let dataStoreRuntime1: MockFluidDataStoreRuntime;
 
-	let sharedString2: SharedString;
+	let sharedString2: ISharedString;
 	let containerRuntimeFactory: MockContainerRuntimeFactory;
 	let collection: IIntervalCollection<SequenceInterval>;
 
 	beforeEach(() => {
 		dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-		sharedString = new SharedString(
+		sharedString = new SharedStringClass(
 			dataStoreRuntime1,
 			"shared-string-1",
 			SharedStringFactory.Attributes,
@@ -60,7 +60,7 @@ describe("SharedString interval collection event spec", () => {
 			objectStorage: new MockStorage(),
 		};
 
-		sharedString2 = new SharedString(
+		sharedString2 = new SharedStringClass(
 			dataStoreRuntime2,
 			"shared-string-2",
 			SharedStringFactory.Attributes,

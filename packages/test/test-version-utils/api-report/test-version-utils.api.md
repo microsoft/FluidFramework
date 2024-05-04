@@ -84,14 +84,14 @@ export const DataRuntimeApi: {
     FluidDataStoreRuntime: typeof datastore.FluidDataStoreRuntime;
     TestFluidObjectFactory: typeof TestFluidObjectFactory;
     dds: {
-        SharedCell: typeof cell.SharedCell;
-        SharedCounter: typeof counter.SharedCounter;
+        SharedCell: ISharedObjectKind<cell.ISharedCell<any>>;
+        SharedCounter: ISharedObjectKind<counter.ISharedCounter>;
         SharedDirectory: ISharedObjectKind<map.ISharedDirectory>;
         SharedMap: ISharedObjectKind<map.ISharedMap>;
-        SharedMatrix: typeof matrix.SharedMatrix;
+        SharedMatrix: ISharedObjectKind<matrix.ISharedMatrix<any>>;
         ConsensusQueue: typeof orderedCollection.ConsensusQueue;
-        ConsensusRegisterCollection: typeof registerCollection.ConsensusRegisterCollection;
-        SharedString: typeof sequence.SharedString;
+        ConsensusRegisterCollection: ISharedObjectKind<registerCollection.IConsensusRegisterCollection<any>>;
+        SharedString: ISharedObjectKind<sequence.ISharedString>;
         SparseMatrix: typeof sequenceDeprecated.SparseMatrix;
     };
     packages: {

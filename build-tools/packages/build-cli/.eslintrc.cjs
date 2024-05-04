@@ -64,6 +64,7 @@ module.exports = {
 		"perfectionist/sort-exports": "off",
 		"perfectionist/sort-imports": "off",
 		"perfectionist/sort-interfaces": "off",
+		"perfectionist/sort-intersection-types": "off",
 		"perfectionist/sort-jsx-props": "off",
 		"perfectionist/sort-maps": "off",
 		"perfectionist/sort-named-exports": "off",

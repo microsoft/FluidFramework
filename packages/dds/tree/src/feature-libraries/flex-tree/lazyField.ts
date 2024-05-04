@@ -250,7 +250,7 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 
 		// As the "parentAnchor === undefined" case is handled above, parentAnchorNode should exist.
 		assert(parentAnchorNode !== undefined, 0x77e /* parentAnchorNode must exist. */);
-		return treeStatusFromAnchorCache(this.context.forest.anchors, parentAnchorNode);
+		return treeStatusFromAnchorCache(parentAnchorNode);
 	}
 
 	public getFieldPath(): FieldUpPath {
@@ -584,7 +584,7 @@ export class LazyNodeKeyField<TTypes extends FlexAllowedTypes>
 	public get localNodeKey(): LocalNodeKey {
 		// TODO: Optimize this to be a fast path that gets a LocalNodeKey directly from the
 		// forest rather than getting the StableNodeKey and the compressing it.
-		return this.context.nodeKeys.localize(this.stableNodeKey);
+		return this.context.nodeKeyManager.localizeNodeKey(this.stableNodeKey);
 	}
 
 	public get stableNodeKey(): StableNodeKey {

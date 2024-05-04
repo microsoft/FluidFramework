@@ -910,15 +910,16 @@ async function assertDdsEqual(
 
 	async function newMatrix(summary: ISummaryTree): Promise<SharedMatrix> {
 		const objectStorage = MockStorage.createFromSummary(summary);
-		const matrix = new SharedMatrix(
-			dataStoreRuntime as any,
+		const matrixFactory = SharedMatrix.getFactory();
+		const matrix = await matrixFactory.load(
+			dataStoreRuntime,
 			"1",
-			SharedMatrixFactory.Attributes,
+			{
+				deltaConnection,
+				objectStorage,
+			},
+			matrixFactory.attributes,
 		);
-		await matrix.load({
-			deltaConnection,
-			objectStorage,
-		});
 		return matrix;
 	}
 

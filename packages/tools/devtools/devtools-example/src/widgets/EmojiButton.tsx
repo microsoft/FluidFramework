@@ -4,7 +4,7 @@
  */
 
 import { Button, Tooltip } from "@fluentui/react-components";
-import { type SharedCell } from "@fluidframework/cell/internal";
+import { type ISharedCell } from "@fluidframework/cell/internal";
 import React from "react";
 
 /**
@@ -12,7 +12,7 @@ import React from "react";
  * @internal
  */
 export interface EmojiButtonProps {
-	emojiCell: SharedCell<boolean>;
+	emojiCell: ISharedCell<boolean>;
 }
 
 /**

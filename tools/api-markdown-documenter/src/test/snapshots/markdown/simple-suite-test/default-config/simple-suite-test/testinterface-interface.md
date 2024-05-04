@@ -1,5 +1,3 @@
-<!-- Front Matter! -->
-
 # TestInterface
 
 [Packages](./) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestInterface](./simple-suite-test/testinterface-interface)
@@ -78,6 +76,8 @@ Test interface event property
 readonly testClassEventProperty: () => void;
 ```
 
+**Type:** () =&gt; void
+
 #### Remarks {#testclasseventproperty-remarks}
 
 Here are some remarks about the event property
@@ -94,6 +94,8 @@ A test getter-only interface property.
 get getterProperty(): boolean;
 ```
 
+**Type:** boolean
+
 ### setterProperty {#setterproperty-property}
 
 A test property with a getter and a setter.
@@ -105,6 +107,8 @@ get setterProperty(): boolean;
 set setterProperty(newValue: boolean);
 ```
 
+**Type:** boolean
+
 ### testInterfaceProperty {#testinterfaceproperty-propertysignature}
 
 Test interface property
@@ -114,6 +118,8 @@ Test interface property
 ```typescript
 testInterfaceProperty: number;
 ```
+
+**Type:** number
 
 #### Remarks {#testinterfaceproperty-remarks}
 
@@ -128,6 +134,8 @@ Test optional property
 ```typescript
 testOptionalInterfaceProperty?: number;
 ```
+
+**Type:** number
 
 ## Method Details
 

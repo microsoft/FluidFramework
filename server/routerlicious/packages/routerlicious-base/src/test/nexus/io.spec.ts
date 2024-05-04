@@ -35,6 +35,7 @@ import {
 	MongoManager,
 	RawOperationType,
 	signalUsageStorageId,
+	type IClusterDrainingChecker,
 } from "@fluidframework/server-services-core";
 import { TestEngine1, Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
@@ -51,10 +52,29 @@ import {
 import { OrdererManager } from "../../nexus";
 import { Throttler, ThrottlerHelper } from "@fluidframework/server-services";
 import Sinon from "sinon";
+import { isNetworkError, type NetworkError } from "@fluidframework/server-services-client";
+import {
+	isTokenRevokedError,
+	type IRevokedTokenChecker,
+} from "@fluidframework/server-services-core/dist/tokenRevocationManager";
 
 const lumberjackEngine = new TestEngine1();
 if (!Lumberjack.isSetupCompleted()) {
 	Lumberjack.setup([lumberjackEngine]);
+}
+
+class TestClusterDrainingChecker implements IClusterDrainingChecker {
+	public isDraining = false;
+	public async isClusterDraining(): Promise<boolean> {
+		return this.isDraining;
+	}
+}
+
+class TestRevokedTokenChecker implements IRevokedTokenChecker {
+	public isRevoked = false;
+	public async isTokenRevoked(): Promise<boolean> {
+		return this.isRevoked;
+	}
 }
 
 describe("Routerlicious", () => {
@@ -71,6 +91,8 @@ describe("Routerlicious", () => {
 				let testOrderer: IOrdererManager;
 				let testTenantManager: TestTenantManager;
 				let testClientManager: IClientManager;
+				let testClusterDrainingChecker: TestClusterDrainingChecker;
+				let testRevokedTokenChecker: TestRevokedTokenChecker;
 
 				const throttleLimitTenant = 7;
 				const throttleLimitConnectDoc = 4;
@@ -126,6 +148,8 @@ describe("Routerlicious", () => {
 						throttleLimitConnectDoc,
 					);
 					const testSubmitOpThrottler = new TestThrottler(throttleLimitTenant);
+					testClusterDrainingChecker = new TestClusterDrainingChecker();
+					testRevokedTokenChecker = new TestRevokedTokenChecker();
 
 					configureWebSocketServices(
 						webSocketServer,
@@ -147,6 +171,11 @@ describe("Routerlicious", () => {
 						testSubmitOpThrottler,
 						undefined,
 						undefined,
+						undefined,
+						undefined,
+						testRevokedTokenChecker,
+						undefined,
+						testClusterDrainingChecker,
 					);
 				});
 
@@ -302,6 +331,41 @@ describe("Routerlicious", () => {
 							NackErrorType.ThrottlingError,
 						);
 						assert.strictEqual(failedConnectMessage2.retryAfter, 1);
+					});
+
+					it("Should fail when cluster is draining", async () => {
+						testClusterDrainingChecker.isDraining = true;
+						const socket = webSocketServer.createConnection();
+						await assert.rejects(
+							connectToServer(testId, testTenantId, testSecret, socket),
+							(err) => {
+								assert.strictEqual(isNetworkError(err), true);
+								assert.strictEqual((err as NetworkError).code, 503);
+								return true;
+							},
+						);
+					});
+
+					it("Should fail when token is revoked", async () => {
+						testRevokedTokenChecker.isRevoked = true;
+						const socket = webSocketServer.createConnection();
+						await assert.rejects(
+							connectToServer(testId, testTenantId, testSecret, socket),
+							(err) => {
+								assert.strictEqual(
+									isNetworkError(err),
+									true,
+									"Error should be a NetworkError",
+								);
+								assert.strictEqual(
+									isTokenRevokedError(err),
+									true,
+									"Error should be a TokenRevokedError",
+								);
+								assert.strictEqual((err as NetworkError).code, 403);
+								return true;
+							},
+						);
 					});
 				});
 

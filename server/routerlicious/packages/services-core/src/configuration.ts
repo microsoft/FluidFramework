@@ -145,6 +145,11 @@ export interface IScribeServerConfiguration {
 
 	// Enables scrubbing user data from protocol state quorum in global checkpoints
 	scrubUserDataInGlobalCheckpoints: boolean;
+
+	// Limits the number of service summary versions to track as "valid parent summaries"
+	// since the last client summary. If the list grows beyond this limit, the oldest
+	// service summary version is removed.
+	maxTrackedServiceSummaryVersionsSinceLastClientSummary: number;
 }
 
 /**
@@ -290,6 +295,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
 		scrubUserDataInSummaries: false,
 		scrubUserDataInLocalCheckpoints: false,
 		scrubUserDataInGlobalCheckpoints: false,
+		maxTrackedServiceSummaryVersionsSinceLastClientSummary: 10,
 	},
 	moira: {
 		enable: false,

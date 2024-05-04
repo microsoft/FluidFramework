@@ -14,6 +14,7 @@ import {
 	FieldKey,
 	FieldKindIdentifier,
 	RevisionTag,
+	TaggedChange,
 	UpPath,
 	makeAnonChange,
 	revisionMetadataSourceFromInfo,
@@ -103,8 +104,8 @@ describe("ModularChangeFamily integration", () => {
 
 			const [move, remove, expected] = getChanges();
 			const rebased = family.rebase(
-				remove,
-				tagChange(move, tag1),
+				makeAnonChange(remove),
+				tagChangeInline(move, tag1),
 				revisionMetadataSourceFromInfo([{ revision: tag1 }]),
 			);
 			const rebasedDelta = intoDelta(makeAnonChange(rebased), family.fieldKinds);
@@ -125,11 +126,11 @@ describe("ModularChangeFamily integration", () => {
 			);
 			const [remove, move] = getChanges();
 			const baseTag = mintRevisionTag();
-			const restore = family.invert(tagChange(remove, baseTag), false);
+			const restore = family.invert(tagChangeInline(remove, baseTag), false);
 			const expected = family.compose([makeAnonChange(restore), makeAnonChange(move)]);
 			const rebased = family.rebase(
-				move,
-				tagChange(remove, baseTag),
+				makeAnonChange(move),
+				tagChangeInline(remove, baseTag),
 				revisionMetadataSourceFromInfo([{ revision: baseTag }]),
 			);
 			const rebasedDelta = normalizeDelta(
@@ -177,9 +178,9 @@ describe("ModularChangeFamily integration", () => {
 			const [move1, move2, modify] = getChanges();
 			const moves = family.compose([makeAnonChange(move1), makeAnonChange(move2)]);
 
-			const taggedMoves = tagChange(moves, tag1);
+			const taggedMoves = tagChangeInline(moves, tag1);
 			const rebased = family.rebase(
-				modify,
+				makeAnonChange(modify),
 				taggedMoves,
 				defaultRevisionMetadataFromChanges([taggedMoves]),
 			);
@@ -271,8 +272,8 @@ describe("ModularChangeFamily integration", () => {
 			const [move, remove, expected] = getChanges();
 			const baseTag = mintRevisionTag();
 			const rebased = family.rebase(
-				remove,
-				tagChange(move, baseTag),
+				makeAnonChange(remove),
+				tagChangeInline(move, baseTag),
 				revisionMetadataSourceFromInfo([{ revision: baseTag }]),
 			);
 
@@ -457,14 +458,14 @@ describe("ModularChangeFamily integration", () => {
 				.insert(0, newNode);
 
 			const [move, insert] = getChanges();
-			const moveTagged = tagChange(move, tag1);
+			const moveTagged = tagChangeInline(move, tag1);
 			const returnTagged = tagRollbackInverse(
-				family.invert(moveTagged, true),
+				family.changeRevision(family.invert(moveTagged, true), tag3, moveTagged.revision),
 				tag3,
 				moveTagged.revision,
 			);
 
-			const moveAndInsert = family.compose([tagChange(insert, tag2), moveTagged]);
+			const moveAndInsert = family.compose([tagChangeInline(insert, tag2), moveTagged]);
 			const composed = family.compose([returnTagged, makeAnonChange(moveAndInsert)]);
 			const actual = intoDelta(makeAnonChange(composed), family.fieldKinds);
 			const expected: DeltaRoot = {
@@ -607,10 +608,10 @@ describe("ModularChangeFamily integration", () => {
 				makeAnonChange(modify),
 			]);
 
-			const inverse = family.invert(tagChange(moves, tag1), false);
+			const inverse = family.invert(tagChangeInline(moves, tag1), false);
 			const fieldCExpected = [MarkMaker.revive(1, { revision: tag1, localId: brand(3) })];
 
-			const nodeId2: NodeId = { localId: brand(4) };
+			const nodeId2: NodeId = { revision: tag1, localId: brand(4) };
 			const node2Expected: NodeChangeset = {
 				fieldChanges: new Map([
 					[fieldC, { fieldKind: sequence.identifier, change: brand(fieldCExpected) }],
@@ -629,7 +630,7 @@ describe("ModularChangeFamily integration", () => {
 				MarkMaker.returnTo(1, brand(1), { revision: tag1, localId: brand(1) }),
 			];
 
-			const nodeId1: NodeId = { localId: brand(2) };
+			const nodeId1: NodeId = { revision: tag1, localId: brand(2) };
 			const node1Expected: NodeChangeset = {
 				fieldChanges: new Map([
 					[fieldB, { fieldKind: sequence.identifier, change: brand(fieldBExpected) }],
@@ -673,10 +674,9 @@ describe("ModularChangeFamily integration", () => {
 						{
 							fieldKind: FieldKinds.sequence.identifier,
 							change: brand([
-								MarkMaker.moveOut(1, brand(0)),
-								MarkMaker.moveIn(1, brand(0)),
+								MarkMaker.moveOut(1, { revision: tag1, localId: brand(0) }),
+								MarkMaker.moveIn(1, { revision: tag1, localId: brand(0) }),
 							]),
-							revision: tag1,
 						},
 					],
 					[
@@ -684,10 +684,9 @@ describe("ModularChangeFamily integration", () => {
 						{
 							fieldKind: FieldKinds.sequence.identifier,
 							change: brand([
-								MarkMaker.moveOut(2, brand(0)),
-								MarkMaker.moveIn(2, brand(0)),
+								MarkMaker.moveOut(2, { revision: tag2, localId: brand(0) }),
+								MarkMaker.moveIn(2, { revision: tag2, localId: brand(0) }),
 							]),
-							revision: tag2,
 						},
 					],
 				]),
@@ -809,4 +808,11 @@ function normalizeDeltaDetachedNodeId(
 	const minor = idMap.get(delta.minor) ?? genId.allocate();
 	idMap.set(delta.minor, minor);
 	return { minor };
+}
+
+function tagChangeInline(
+	change: ModularChangeset,
+	revision: RevisionTag,
+): TaggedChange<ModularChangeset> {
+	return tagChange(family.changeRevision(change, revision), revision);
 }
