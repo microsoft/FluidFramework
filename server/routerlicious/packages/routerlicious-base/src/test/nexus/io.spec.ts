@@ -58,7 +58,6 @@ import {
 	isTokenRevokedError,
 	type IRevokedTokenChecker,
 } from "@fluidframework/server-services-core/dist/tokenRevocationManager";
-import { isSentSignalMessage } from "@fluidframework/server-lambdas/dist/nexus/utils";
 
 const lumberjackEngine = new TestEngine1();
 if (!Lumberjack.isSetupCompleted()) {
@@ -464,30 +463,47 @@ describe("Routerlicious", () => {
 							);
 							expectedSignals.forEach((signal, signalIndex) => {
 								const receivedSignal = client.signalsReceived[signalIndex];
-								Object.keys(signal).forEach((property) => {
-									assert.deepEqual(
-										receivedSignal[property],
-										signal[property],
-										`User ${index + 1} signal ${
-											signalIndex + 1
-										} ${property} mismatch`,
-									);
-								});
+								assert.deepEqual(
+									receivedSignal,
+									signal,
+									`received signal does not match expected signal`,
+								);
 							});
 						});
 					}
 
+					function isSentSignalMessage(obj: unknown): obj is ISentSignalMessage {
+						return (
+							typeof obj === "object" &&
+							obj !== null &&
+							"content" in obj &&
+							(!("type" in obj) || typeof obj.type === "string") &&
+							(!("clientConnectionNumber" in obj) ||
+								typeof obj.clientConnectionNumber === "number") &&
+							(!("referenceSequenceNumber" in obj) ||
+								typeof obj.referenceSequenceNumber === "number") &&
+							(!("targetClientId" in obj) || typeof obj.targetClientId === "string")
+						);
+					}
 					function sendAndReturnExpectedSignal(
 						client: TestSignalClient,
 						signal: unknown,
 					): ISignalMessage {
 						client.socket.send("submitSignal", client.clientId, [signal]);
 						let expectedSignalMessage: ISignalMessage;
-						if (client.version === 2 && isSentSignalMessage(signal)) {
-							expectedSignalMessage = {
-								...signal,
-								clientId: client.clientId,
-							};
+						if (client.version === 2) {
+							if (isSentSignalMessage(signal))
+								expectedSignalMessage = {
+									...signal,
+									clientId: client.clientId,
+								};
+							else {
+								// Dummy signal for v2 clients
+								expectedSignalMessage = {
+									clientId: undefined,
+									content: undefined,
+								};
+							}
 						} else {
 							expectedSignalMessage = {
 								clientId: client.clientId,
@@ -592,6 +608,7 @@ describe("Routerlicious", () => {
 							[
 								42,
 								true,
+								stringSignalContent,
 								{
 									key1: "value1",
 									key2: 42,
@@ -658,7 +675,7 @@ describe("Routerlicious", () => {
 								);
 							});
 
-							it("does not fail on targeted client disconnect", () => {
+							it("drops signal on targeted client disconnect", () => {
 								const targetedSignal: ISentSignalMessage = {
 									targetClientId: clients[1].clientId,
 									content: "TargetSignal",
