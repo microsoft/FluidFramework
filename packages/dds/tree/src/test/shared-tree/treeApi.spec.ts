@@ -21,10 +21,12 @@ import {
 	InsertableTypedNode,
 } from "../../simple-tree/index.js";
 import { TestTreeProviderLite, createTestUndoRedoStacks, getView } from "../utils.js";
-import { brand, cursorForJsonableTreeNode, leaf, rootFieldKey, type UpPath } from "../../index.js";
+import { UpPath, rootFieldKey } from "../../core/index.js";
+import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
+import { leaf } from "../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { hydrate } from "../simple-tree/utils.js";
-import { requireAssignableTo } from "../../util/index.js";
+import { brand, requireAssignableTo } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { runTransaction } from "../../shared-tree/treeApi.js";
 

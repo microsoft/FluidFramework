@@ -70,6 +70,12 @@
 	"[typescript]": {
 		"editor.defaultFormatter": "esbenp.prettier-vscode",
 	},
+	// Handle trailing whitespace and newlines for all files, in a way that matches how we configure the repo-wide formatter.
+	// They're specified here so they apply to files we don't format explicitly (e.g. yml files).
+	// Note they don't affect indentation, so they shouldn't inadvertently break yml files like other formatter rules might.
+	"files.insertFinalNewline": true,
+	"files.trimFinalNewlines": true,
+	"files.trimTrailingWhitespace": true,
 
 	// Customizations for VSCode search results.
 	// These entries should probably be kept more or less in sync with the .gitignore file.

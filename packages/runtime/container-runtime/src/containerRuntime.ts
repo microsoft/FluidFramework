@@ -131,7 +131,7 @@ import { IPerfSignalReport, ReportOpPerfTelemetry } from "./connectionTelemetry.
 import { ContainerFluidHandleContext } from "./containerHandleContext.js";
 import { channelToDataStore } from "./dataStore.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
-import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy.js";
+import { DeltaManagerPendingOpsProxy, DeltaManagerSummarizerProxy } from "./deltaManagerProxies.js";
 import {
 	GCNodeType,
 	GarbageCollector,
@@ -1415,7 +1415,6 @@ export class ContainerRuntime
 		};
 
 		this.innerDeltaManager = deltaManager;
-		this.deltaManager = new DeltaManagerSummarizerProxy(this.innerDeltaManager);
 
 		// Here we could wrap/intercept on these functions to block/modify outgoing messages if needed.
 		// This makes ContainerRuntime the final gatekeeper for outgoing messages.
@@ -1520,6 +1519,44 @@ export class ContainerRuntime
 			opGroupingManager,
 		);
 
+		const pendingRuntimeState = pendingLocalState as IPendingRuntimeState | undefined;
+		this.pendingStateManager = new PendingStateManager(
+			{
+				applyStashedOp: this.applyStashedOp.bind(this),
+				clientId: () => this.clientId,
+				close: this.closeFn,
+				connected: () => this.connected,
+				reSubmit: (message: IPendingBatchMessage) => {
+					this.reSubmit(message);
+					this.flush();
+				},
+				reSubmitBatch: this.reSubmitBatch.bind(this),
+				isActiveConnection: () => this.innerDeltaManager.active,
+				isAttached: () => this.attachState !== AttachState.Detached,
+			},
+			pendingRuntimeState?.pending,
+			this.logger,
+		);
+
+		let outerDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+		const useDeltaManagerOpsProxy =
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") !== false;
+		// The summarizerDeltaManager Proxy is used to lie to the summarizer to convince it is in the right state as a summarizer client.
+		const summarizerDeltaManagerProxy = new DeltaManagerSummarizerProxy(this.innerDeltaManager);
+		outerDeltaManager = summarizerDeltaManagerProxy;
+
+		// The DeltaManagerPendingOpsProxy is used to control the minimum sequence number
+		// It allows us to lie to the layers below so that they can maintain enough local state for rebasing ops.
+		if (useDeltaManagerOpsProxy) {
+			const pendingOpsDeltaManagerProxy = new DeltaManagerPendingOpsProxy(
+				summarizerDeltaManagerProxy,
+				this.pendingStateManager,
+			);
+			outerDeltaManager = pendingOpsDeltaManagerProxy;
+		}
+
+		this.deltaManager = outerDeltaManager;
+
 		this.handleContext = new ContainerFluidHandleContext("", this);
 
 		if (this.summaryConfiguration.state === "enabled") {
@@ -1544,8 +1581,6 @@ export class ContainerRuntime
 		} else {
 			this._flushMode = runtimeOptions.flushMode;
 		}
-
-		const pendingRuntimeState = pendingLocalState as IPendingRuntimeState | undefined;
 
 		if (context.attachState === AttachState.Attached) {
 			const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
@@ -1671,24 +1706,6 @@ export class ContainerRuntime
 			this,
 			() => this.clientId,
 			createChildLogger({ logger: this.logger, namespace: "ScheduleManager" }),
-		);
-
-		this.pendingStateManager = new PendingStateManager(
-			{
-				applyStashedOp: this.applyStashedOp.bind(this),
-				clientId: () => this.clientId,
-				close: this.closeFn,
-				connected: () => this.connected,
-				reSubmit: (message: IPendingBatchMessage) => {
-					this.reSubmit(message);
-					this.flush();
-				},
-				reSubmitBatch: this.reSubmitBatch.bind(this),
-				isActiveConnection: () => this.innerDeltaManager.active,
-				isAttached: () => this.attachState !== AttachState.Detached,
-			},
-			pendingRuntimeState?.pending,
-			this.logger,
 		);
 
 		const disablePartialFlush = this.mc.config.getBoolean(
@@ -2386,8 +2403,6 @@ export class ContainerRuntime
 				return;
 			case ContainerMessageType.BlobAttach:
 				return;
-			case ContainerMessageType.ChunkedOp:
-				throw new Error("chunkedOp not expected here");
 			case ContainerMessageType.Rejoin:
 				throw new Error("rejoin not expected here");
 			case ContainerMessageType.GC:
@@ -2400,7 +2415,7 @@ export class ContainerRuntime
 				const compatBehavior = opContents.compatDetails?.behavior;
 				if (!compatBehaviorAllowsMessageType(opContents.type, compatBehavior)) {
 					const error = DataProcessingError.create(
-						"Stashed runtime message of unknown type",
+						"Stashed runtime message of unexpected type",
 						"applyStashedOp",
 						undefined /* sequencedMessage */,
 						{
@@ -2595,6 +2610,17 @@ export class ContainerRuntime
 	 */
 	private processCore(messageWithContext: MessageWithContext) {
 		const { message, local } = messageWithContext;
+
+		// Intercept to reduce minimum sequence number to the delta manager's minimum sequence number.
+		// Sequence numbers are not guaranteed to follow any sort of order. Re-entrancy is one of those situations
+		if (
+			this.deltaManager.minimumSequenceNumber <
+			messageWithContext.message.minimumSequenceNumber
+		) {
+			messageWithContext.message.minimumSequenceNumber =
+				this.deltaManager.minimumSequenceNumber;
+		}
+
 		// Surround the actual processing of the operation with messages to the schedule manager indicating
 		// the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
 		// messages once a batch has been fully processed.
@@ -4119,8 +4145,6 @@ export class ContainerRuntime
 				this.submit(message, localOpMetadata);
 				break;
 			}
-			case ContainerMessageType.ChunkedOp:
-				throw new Error(`chunkedOp not expected here`);
 			case ContainerMessageType.BlobAttach:
 				this.blobManager.reSubmit(opMetadata);
 				break;
@@ -4147,7 +4171,7 @@ export class ContainerRuntime
 					});
 				} else {
 					const error = DataProcessingError.create(
-						"Resubmitting runtime message of unknown type",
+						"Resubmitting runtime message of unexpected type",
 						"reSubmitCore",
 						undefined /* sequencedMessage */,
 						{
