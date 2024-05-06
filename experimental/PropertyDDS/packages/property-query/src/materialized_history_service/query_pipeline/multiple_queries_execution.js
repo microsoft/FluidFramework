@@ -74,7 +74,7 @@ class MultipleQueriesExecution {
 	 * @return {Object} - Object with the arguments to pass to getCommitMV
 	 */
 	_validateAndParseQueryString(queryString) {
-		let result = Joi.validate(queryString.query, QUERY_SCHEMA, {
+		let result = QUERY_SCHEMA.validate(queryString.query, {
 			convert: true,
 			allowUnknown: true,
 		});

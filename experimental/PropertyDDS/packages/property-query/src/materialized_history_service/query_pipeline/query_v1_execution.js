@@ -200,7 +200,7 @@ class QueryV1Execution {
 	 * @return {Object} - Object with the arguments to pass to getCommitMV
 	 */
 	_validateAndParseQueryString(query) {
-		let result = Joi.validate(query, QUERY_SCHEMA, { convert: true });
+		let result = QUERY_SCHEMA.validate(query, { convert: true });
 
 		if (result.error) {
 			throw new OperationError(

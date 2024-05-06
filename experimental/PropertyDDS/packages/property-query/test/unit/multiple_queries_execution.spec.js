@@ -54,7 +54,9 @@ describe("Multiple query execution", () => {
 					],
 				}),
 			)
-				.to.be.eventually.rejectedWith('queryLanguage" must be one of')
+				.to.be.eventually.rejectedWith(
+					'Invalid query 0,queryLanguage: "[0].queryLanguage" must be [queryV1]',
+				)
 				.and.to.have.property("statusCode", 400));
 	});
 
