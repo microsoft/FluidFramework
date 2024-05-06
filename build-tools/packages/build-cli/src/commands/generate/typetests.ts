@@ -213,6 +213,18 @@ function getTypesPathWithFallback(
  * @param packageJson - The package.json object to check for types paths.
  * @param level - An API level to get types paths for.
  * @returns A package relative path to the types.
+ *
+ * @remarks
+ *
+ * This implementation loosely follows TypeScript's process for finding types as described at
+ * {@link https://www.typescriptlang.org/docs/handbook/modules/reference.html#packagejson-main-and-types}. If an export
+ * map is found, the `types` and `typings` field are ignored. If an export map is not found, then the `types`/`typings`
+ * fields will be used as a fallback _only_ for the public API level (which coresponds to the default export).
+ *
+ * Importantly, this code _does not_ implement falling back to the `main` field when `types` and `typings` are missing,
+ * nor does it look up types from DefinitelyTyped (i.e. \@types/* packages). This fallback logic is not needed for our
+ * packages because we always specify types explicitly in the types field, and types are always included in our packages
+ * (as opposed to a separate \@types package).
  */
 export function getTypesPathFromPackage(
 	packageJson: PackageJson,
