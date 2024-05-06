@@ -186,6 +186,7 @@ const compatModeRuntimeOptions: Record<CompatMode, IContainerRuntimeOptions> = {
 			minimumBatchSizeInBytes: Number.POSITIVE_INFINITY, // disabled
 			compressionAlgorithm: CompressionAlgorithms.lz4,
 		},
+		// TODO: Include explicit disables for things that are currently off-by-default?
 	},
 	"2.x": {
 		// Explicit schema control explicitly makes the container incompatible with 1.x clients, to force their
