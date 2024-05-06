@@ -60,11 +60,15 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// C-AB
 		// D-C-AB
-		// E-HIJ-FG-D-C-ABj
-		//   ^----------^
+		// HIJ-FG-D-C-AB
+		// ^----------^
+		// HIJ-FG-E-D-CAB
+		// ^-----------^
 		sharedString3.insertText(0, "AB");
-		await provider.ensureSynchronized(container3);
+		// This needs to be created on container1 before container1 knows about container3's changes
 		sharedString1.insertText(0, "C");
+		// This is an attempt at sequencing container3's changes before container1's
+		await provider.ensureSynchronized(container3);
 		await provider.ensureSynchronized();
 		assertConsistent(sharedString1, sharedString2, sharedString3);
 		container2.disconnect();
@@ -72,7 +76,6 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized(container1, container3);
 		assertConsistent(sharedString1, sharedString3);
 		sharedString3.insertText(0, "E");
-		await provider.ensureSynchronized(container3, container1);
 		sharedString2.insertText(0, "FG");
 		sharedString2.insertText(0, "HIJ");
 		container1.disconnect();
@@ -82,6 +85,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider, apis) => {
 		container2.connect();
 		await provider.ensureSynchronized(container2, container3);
 		assertConsistent(sharedString2, sharedString3);
+		assert.equal(sharedString2.getText(), "HIJFGEDCAB");
 	});
 
 	it("e2e zamboni avoids modifying segments with pending interval changes through multiple reconnects", async () => {
