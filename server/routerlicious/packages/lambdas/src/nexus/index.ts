@@ -141,7 +141,7 @@ export function configureWebSocketServices(
 
 		/**
 		 * Maps and sets to track various information related to client connections.
-		 * Note: These maps are expected to have only one entry per client ID.
+		 * Note: These maps/sets are expected to have only one client id entry.
 		 */
 
 		// Map from client IDs on this connection to the object ID and user info
