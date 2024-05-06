@@ -186,8 +186,6 @@ const compatModeRuntimeOptions: Record<CompatMode, IContainerRuntimeOptions> = {
 			minimumBatchSizeInBytes: Number.POSITIVE_INFINITY, // disabled
 			compressionAlgorithm: CompressionAlgorithms.lz4,
 		},
-		// Grouped batching is on by default but introduces a new type of op which is incompatible with 1.x clients.
-		enableGroupedBatching: false,
 	},
 	"2.x": {
 		// Explicit schema control explicitly makes the container incompatible with 1.x clients, to force their
