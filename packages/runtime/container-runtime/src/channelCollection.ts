@@ -549,21 +549,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		return this.aliasMap.get(id) !== undefined || this.contexts.get(id) !== undefined;
 	}
 
-	/** Package up the context's attach summary etc into an IAttachMessage */
-	private generateAttachMessage(localContext: IFluidDataStoreContextInternal): IAttachMessage {
-		const { attachSummary } = localContext.getAttachData(/* includeGCData: */ true);
-		const type = localContext.packagePath[localContext.packagePath.length - 1];
-
-		// Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
-		const snapshot = convertSummaryTreeToITree(attachSummary.summary);
-
-		return {
-			id: localContext.id,
-			snapshot,
-			type,
-		} satisfies IAttachMessage;
-	}
-
 	/**
 	 * Make the data store locally visible in the container graph by moving the data store context from unbound to
 	 * bound list and submitting the attach message. This data store can now be reached from the root.
@@ -579,15 +564,26 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		 * If the container is detached, this data store will be part of the summary that makes the container attached.
 		 */
 		if (this.parentContext.attachState !== AttachState.Detached) {
-			this.submitAttachChannelOp(localContext);
 			localContext.setAttachState(AttachState.Attaching);
+			this.submitAttachChannelOp(localContext);
 		}
 
 		this.contexts.bind(id);
 	}
 
 	protected submitAttachChannelOp(localContext: LocalFluidDataStoreContext) {
-		const message = this.generateAttachMessage(localContext);
+		const { attachSummary } = localContext.getAttachData(/* includeGCData: */ true);
+		const type = localContext.packagePath[localContext.packagePath.length - 1];
+
+		// Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
+		const snapshot = convertSummaryTreeToITree(attachSummary.summary);
+
+		const message: IAttachMessage = {
+			id: localContext.id,
+			snapshot,
+			type,
+		};
+
 		this.pendingAttach.set(localContext.id, message);
 		this.parentContext.submitMessage(ContainerMessageType.Attach, message, undefined);
 		this.attachOpFiredForDataStore.add(localContext.id);

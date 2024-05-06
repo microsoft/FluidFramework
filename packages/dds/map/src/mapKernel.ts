@@ -301,6 +301,11 @@ export class MapKernel {
 		// Set the value locally.
 		const previousValue = this.setCore(key, localValue, true);
 
+		// If we are not attached, don't submit the op.
+		if (!this.isAttached()) {
+			return;
+		}
+
 		const op: IMapSetOperation = {
 			key,
 			type: "set",
