@@ -68,7 +68,6 @@ export class TinyliciousClient {
 	 */
 	public async createContainer<TContainerSchema extends ContainerSchema>(
 		containerSchema: TContainerSchema,
-		// TODO: Make non-optional for creation?
 		compatMode: CompatMode,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
