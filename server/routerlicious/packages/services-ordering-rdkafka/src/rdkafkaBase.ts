@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import events_pkg from "events_pkg";
-const { EventEmitter } = events_pkg;
+import { EventEmitter } from "events";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IContextErrorData } from "@fluidframework/server-services-core";
 import type * as kafkaTypes from "node-rdkafka";
