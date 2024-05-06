@@ -645,10 +645,11 @@ describe("Routerlicious", () => {
 										{ key1: "value1", key2: 42, key3: true },
 									].forEach((signalContent) =>
 										it(`${fromClient} should broadcast signal with ${typeof signalContent} content`, () => {
-											const expectedSignals = sendValidAndReturnExpectedSignals(
-												clients[clientIndex],
-												[signalContent],
-											);
+											const expectedSignals =
+												sendValidAndReturnExpectedSignals(
+													clients[clientIndex],
+													[signalContent],
+												);
 											verifyExpectedClientSignals(clients, expectedSignals);
 										}),
 									);
@@ -861,18 +862,20 @@ describe("Routerlicious", () => {
 											content: "BroadcastSignal",
 										};
 
-										const expectedTargetedSignals = sendAndReturnExpectedSignals(
-											clients[1],
-											[targetedSignal],
-										);
-										const expectedBroadcastSignals = sendAndReturnExpectedSignals(
-											clients[1],
-											[broadcastSignal],
-										);
+										const expectedTargetedSignals =
+											sendAndReturnExpectedSignals(clients[1], [
+												targetedSignal,
+											]);
+										const expectedBroadcastSignals =
+											sendAndReturnExpectedSignals(clients[1], [
+												broadcastSignal,
+											]);
 
 										verifyExpectedClientSignals(
 											[clients[0]],
-											expectedTargetedSignals.concat(expectedBroadcastSignals),
+											expectedTargetedSignals.concat(
+												expectedBroadcastSignals,
+											),
 										);
 										verifyExpectedClientSignals(
 											clients.filter((_, index) => index !== 0),
