@@ -436,15 +436,6 @@ export function configureWebSocketServices(
 					);
 					socket.emit("nack", "", [nackMessage]);
 				} else {
-					if (!Array.isArray(contentBatches)) {
-						const nackMessage = createNackMessage(
-							400,
-							NackErrorType.BadRequestError,
-							"Invalid signal message",
-						);
-						socket.emit("nack", "", [nackMessage]);
-						return;
-					}
 					let messageCount = 0;
 					for (const contentBatch of contentBatches) {
 						// Count all messages in each batch for accurate throttling calculation.

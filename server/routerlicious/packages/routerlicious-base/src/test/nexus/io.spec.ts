@@ -626,18 +626,6 @@ describe("Routerlicious", () => {
 												);
 											});
 										});
-										it(`${fromClient} nacks signal that is not an array`, () => {
-											listenForNacks(clients[clientIndex]);
-											clients[clientIndex].socket.send(
-												"submitSignal",
-												clients[clientIndex].clientId,
-												stringSignalContent,
-											);
-											checkNack(
-												clients[clientIndex],
-												"Invalid signal message",
-											);
-										});
 										[
 											42,
 											true,
@@ -784,20 +772,6 @@ describe("Routerlicious", () => {
 													targetedSignal,
 												);
 
-												checkNack(clients[0], "Invalid signal message");
-											});
-
-											it("nacks signal that is not an array", () => {
-												const targetedSignal = {
-													targetClientId: clients[1].clientId,
-													content: stringSignalContent,
-												};
-
-												clients[0].socket.send(
-													"submitSignal",
-													clients[0].clientId,
-													targetedSignal,
-												);
 												checkNack(clients[0], "Invalid signal message");
 											});
 										});
