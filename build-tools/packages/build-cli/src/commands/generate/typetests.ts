@@ -95,14 +95,14 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 		previousPackageJson.name = previousPackageName;
 
 		const { typesPath: currentTypesPathRelative, levelUsed: currentPackageLevel } =
-			getTypesPathWithFallback(currentPackageJson, level, fallbackLevel);
+			getTypesPathWithFallback(currentPackageJson, level, this.logger, fallbackLevel);
 		const currentTypesPath = path.resolve(path.join(pkg.directory, currentTypesPathRelative));
 		this.verbose(
 			`Found ${currentPackageLevel} type definitions for ${currentPackageJson.name}: ${currentTypesPath}`,
 		);
 
 		const { typesPath: previousTypesPathRelative, levelUsed: previousPackageLevel } =
-			getTypesPathWithFallback(previousPackageJson, level, fallbackLevel);
+			getTypesPathWithFallback(previousPackageJson, level, this.logger, fallbackLevel);
 		const previousTypesPath = path.resolve(
 			path.join(previousBasePath, previousTypesPathRelative),
 		);
@@ -181,18 +181,19 @@ import type * as current from "../../index.js";
 function getTypesPathWithFallback(
 	packageJson: PackageJson,
 	level: ApiLevel,
+	log: Logger,
 	fallbackLevel?: ApiLevel,
 ): { typesPath: string; levelUsed: ApiLevel } {
 	let chosenLevel: ApiLevel = level;
 	// First try the requested paths, but fall back to public otherwise if configured.
-	let typesPath: string | undefined = getTypesPathFromPackage(packageJson, level);
+	let typesPath: string | undefined = getTypesPathFromPackage(packageJson, level, log);
 
 	if (typesPath === undefined) {
 		// Try the public types if configured to do so. If public types are found adjust the level accordingly.
 		typesPath =
 			fallbackLevel === undefined
 				? undefined
-				: getTypesPathFromPackage(packageJson, fallbackLevel);
+				: getTypesPathFromPackage(packageJson, fallbackLevel, log);
 		chosenLevel = fallbackLevel ?? level;
 		if (typesPath === undefined) {
 			throw new Error(
@@ -216,7 +217,20 @@ function getTypesPathWithFallback(
 export function getTypesPathFromPackage(
 	packageJson: PackageJson,
 	level: ApiLevel,
+	log: Logger,
 ): string | undefined {
+	if (packageJson.exports === undefined) {
+		log.verbose(`${packageJson.name}: No export map found.`);
+		// Use types/typings field only when the public API level is used and no exports field is found
+		if (level === ApiLevel.public) {
+			log.verbose(`${packageJson.name}: Using the types/typings field value.`);
+			return packageJson.types ?? packageJson.typings;
+		}
+		// No exports and a non-public API level, so return undefined.
+		return undefined;
+	}
+
+	// Package has an export map, so map the requested API level to an entrypoint and check the exports conditions.
 	const entrypoint = level === ApiLevel.public ? "." : `./${level}`;
 
 	// resolve.exports sets some conditions by default, so the ones we supply supplement the defaults. For clarity the
@@ -233,6 +247,9 @@ export function getTypesPathFromPackage(
 		typesPath = exports === undefined || exports.length === 0 ? undefined : exports[0];
 	} catch {
 		// Catch and ignore any exceptions here; we'll retry with the require condition.
+		log.verbose(
+			`${packageJson.name}: No types found for ${entrypoint} using "import" condition.`,
+		);
 	}
 
 	// Found the types using the import condition, so return early.
@@ -251,11 +268,13 @@ export function getTypesPathFromPackage(
 		});
 		typesPath = exports === undefined || exports.length === 0 ? undefined : exports[0];
 	} catch {
-		// Catch any exceptions here; we'll return undefined instead of throwing them.
+		// Catch and ignore any exceptions here; we'll retry with the require condition.
+		log.verbose(
+			`${packageJson.name}: No types found for ${entrypoint} using "require" condition.`,
+		);
 	}
 
-	// Fall back to types/typings fields if both import and require conditions yielded nothing.
-	return typesPath ?? packageJson.types ?? packageJson.typings;
+	return typesPath;
 }
 
 /**
