@@ -10,7 +10,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { ContainerSchema } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map";
+import { SharedMap } from "@fluidframework/map/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
@@ -168,14 +168,7 @@ describe("Container create with feature flags", () => {
 
 	beforeEach("createAzureClient", () => {
 		mockLogger = new MockLogger();
-		client = createAzureClient(
-			undefined,
-			undefined,
-			mockLogger,
-			configProvider({
-				"Fluid.ContainerRuntime.DisableOpReentryCheck": true,
-			}),
-		);
+		client = createAzureClient(undefined, undefined, mockLogger, configProvider({}));
 		schema = {
 			initialObjects: {
 				map1: SharedMap,
@@ -193,6 +186,6 @@ describe("Container create with feature flags", () => {
 		const event = mockLogger.events.find((e) => e.eventName.endsWith("ContainerLoadStats"));
 		assert(event !== undefined, "ContainerLoadStats event should exist");
 		const featureGates = event.featureGates as string;
-		assert(featureGates.includes('"disableOpReentryCheck":true'));
+		assert(featureGates.length > 0);
 	});
 });

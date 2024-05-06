@@ -13,7 +13,7 @@ import {
 import { fail } from "../util/index.js";
 
 import {
-	type FieldSchema,
+	FieldSchema,
 	type ImplicitFieldSchema,
 	TreeNodeSchema,
 	normalizeFieldSchema,
@@ -45,8 +45,8 @@ export function setFlexSchemaFromClassSchema(
 	simple: TreeNodeSchema,
 	flex: TreeNodeSchemaBase,
 ): void {
-	assert(!(flexSchemaSymbol in simple), "simple schema already marked");
-	assert(!(simpleNodeSchemaSymbol in flex), "flex schema already marked");
+	assert(!(flexSchemaSymbol in simple), 0x91f /* simple schema already marked */);
+	assert(!(simpleNodeSchemaSymbol in flex), 0x920 /* flex schema already marked */);
 	(simple as any)[flexSchemaSymbol] = flex;
 	(flex as any)[simpleNodeSchemaSymbol] = simple;
 }

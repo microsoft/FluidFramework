@@ -19,7 +19,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { resetReentrancyLogCounter } from "../sequence.js";
-import { SharedString } from "../sharedString.js";
+import { SharedString } from "../sequenceFactory.js";
 
 describe("SharedString op-reentrancy", () => {
 	/**
@@ -82,8 +82,7 @@ describe("SharedString op-reentrancy", () => {
 			dataStoreRuntime1.options = { sharedStringPreventReentrancy: false };
 			sharedString = factory.create(dataStoreRuntime1, "A");
 
-			const containerRuntime1 =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -93,8 +92,7 @@ describe("SharedString op-reentrancy", () => {
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
 			dataStoreRuntime2.options = { sharedStringPreventReentrancy: false };
 			dataStoreRuntime2.setAttachState(AttachState.Attached);
-			const containerRuntime2 =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2 = {
 				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Flags } from "@oclif/core";
-import { Package } from "@fluidframework/build-tools";
 import path from "node:path";
+import { Package } from "@fluidframework/build-tools";
+import { Flags } from "@oclif/core";
 
 import { PackageCommand } from "../../BasePackageCommand";
 
@@ -32,6 +32,8 @@ export default class CheckBuildVersionCommand extends PackageCommand<
 		}),
 		...PackageCommand.flags,
 	} as const;
+
+	protected defaultSelection = undefined;
 
 	private versionToCheck: string | undefined;
 

@@ -147,16 +147,7 @@ const defaultEncDec: ISharedPropertyTreeEncDec = {
 };
 
 /**
- * Silly DDS example that models a six sided die.
- *
- * Unlike the typical 'Dice Roller' example where clients clobber each other's last roll in a
- * SharedMap, this 'SharedDie' DDS works by advancing an internal PRNG each time it sees a 'roll'
- * operation.
- *
- * Because all clients are using the same PRNG starting in the same state, they arrive at
- * consensus by simply applying the same number of rolls.  (A fun addition would be logging
- * who received which roll, which would need to change as clients learn how races are resolved
- * in the total order)
+ * DDS that models a tree made of objects with properties under string keys.
  * @internal
  */
 export class SharedPropertyTree extends SharedObject {

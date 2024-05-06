@@ -101,7 +101,6 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     createChannel(id: string | undefined, type: string): IChannel;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    ensureNoDataModelChanges<T>(callback: () => T): T;
     readonly entryPoint: IFluidHandle<FluidObject>;
     getAudience(): IAudience;
     getChannel(id: string): Promise<IChannel>;
@@ -120,7 +119,7 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     readonly options: Record<string | number, any>;
     // (undocumented)
     readonly rootRoutingContext: IFluidHandleContext;
-    submitSignal(type: string, content: any, targetClientId?: string): void;
+    submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
     waitAttached(): Promise<void>;
 }

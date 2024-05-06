@@ -12,7 +12,7 @@ import {
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils.js";
+import { SharedTreeTestFactory, validateFuzzTreeConsistency } from "../../utils.js";
 
 import { EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
@@ -47,7 +47,8 @@ describe("Fuzz - Top-Level", () => {
 		clear: 1,
 		insert: 5,
 		remove: 5,
-		move: 5,
+		intraFieldMove: 5,
+		crossFieldMove: 5,
 		start: 1,
 		commit: 1,
 		// TODO: Enabling abort fails because aborting a transaction involves applying rollback ops, which may attempt to place
@@ -72,7 +73,7 @@ describe("Fuzz - Top-Level", () => {
 			factory: new SharedTreeTestFactory(onCreate),
 			generatorFactory,
 			reducer: fuzzReducer,
-			validateConsistency: validateTreeConsistency,
+			validateConsistency: validateFuzzTreeConsistency,
 		};
 
 		const options: Partial<DDSFuzzSuiteOptions> = {
@@ -107,7 +108,7 @@ describe("Fuzz - Top-Level", () => {
 			factory: new SharedTreeTestFactory(onCreate),
 			generatorFactory,
 			reducer: fuzzReducer,
-			validateConsistency: validateTreeConsistency,
+			validateConsistency: validateFuzzTreeConsistency,
 		};
 		const options: Partial<DDSFuzzSuiteOptions> = {
 			...baseOptions,

@@ -40,13 +40,10 @@ export class RedisThrottleAndUsageStorageManager implements IThrottleAndUsageSto
 			this.prefix = parameters.prefix;
 		}
 
-		redisClientConnectionManager.getRedisClient().on("error", (error) => {
-			Lumberjack.error(
-				"Throttle Manager Redis Error",
-				{ [CommonProperties.telemetryGroupName]: "throttling" },
-				error,
-			);
-		});
+		redisClientConnectionManager.addErrorHandler(
+			{ [CommonProperties.telemetryGroupName]: "throttling" }, // lumber properties
+			"Throttle Manager Redis Error", // error message
+		);
 	}
 
 	public async setThrottlingMetric(

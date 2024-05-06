@@ -11,7 +11,7 @@ import { LocalReferenceCollection } from "../localReference.js";
 import { MergeTree } from "../mergeTree.js";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { IMergeBlock, ISegment, Marker } from "../mergeTreeNodes.js";
+import { MergeBlock, ISegment, Marker } from "../mergeTreeNodes.js";
 import { ReferenceType } from "../ops.js";
 import {
 	PartialSequenceLengths,
@@ -127,7 +127,7 @@ export function markRangeRemoved({
 	mergeTree.markRangeRemoved(start, end, refSeq, clientId, seq, overwrite, opArgs);
 }
 
-export function nodeOrdinalsHaveIntegrity(block: IMergeBlock): boolean {
+export function nodeOrdinalsHaveIntegrity(block: MergeBlock): boolean {
 	const olen = block.ordinal.length;
 	for (let i = 0; i < block.childCount; i++) {
 		if (block.children[i].ordinal) {
@@ -142,7 +142,7 @@ export function nodeOrdinalsHaveIntegrity(block: IMergeBlock): boolean {
 				}
 			}
 			if (!block.children[i].isLeaf()) {
-				return nodeOrdinalsHaveIntegrity(block.children[i] as IMergeBlock);
+				return nodeOrdinalsHaveIntegrity(block.children[i] as MergeBlock);
 			}
 		} else {
 			console.log(`node child ordinal not set ${i}`);
@@ -180,7 +180,7 @@ function getPartialLengths(
 	seq: number,
 	mergeTree: MergeTree,
 	localSeq?: number,
-	mergeBlock: IMergeBlock = mergeTree.root,
+	mergeBlock: MergeBlock = mergeTree.root,
 ) {
 	const partialLen = mergeBlock.partialLengths?.getPartialLength(seq, clientId, localSeq);
 
@@ -228,7 +228,7 @@ export function validatePartialLengths(
 	mergeTree: MergeTree,
 	expectedValues?: { seq: number; len: number; localSeq?: number }[],
 	localSeq?: number,
-	mergeBlock: IMergeBlock = mergeTree.root,
+	mergeBlock: MergeBlock = mergeTree.root,
 ): void {
 	mergeTree.computeLocalPartials(0);
 	for (let i = mergeTree.collabWindow.minSeq + 1; i <= mergeTree.collabWindow.currentSeq; i++) {

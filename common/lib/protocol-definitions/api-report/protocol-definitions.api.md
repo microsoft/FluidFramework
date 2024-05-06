@@ -94,7 +94,7 @@ export type ICommittedProposal = {
     commitSequenceNumber: number;
 } & IApprovedProposal;
 
-// @internal
+// @alpha
 export interface IConnect {
     client: IClient;
     driverVersion?: string;
@@ -361,7 +361,6 @@ export interface ISnapshotTree {
     groupId?: string;
     // (undocumented)
     id?: string;
-    omitted?: boolean;
     // (undocumented)
     trees: {
         [path: string]: ISnapshotTree;

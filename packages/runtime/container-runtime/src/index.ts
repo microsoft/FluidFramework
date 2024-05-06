@@ -13,6 +13,7 @@ export {
 	isRuntimeMessage,
 	agentSchedulerId,
 	ContainerRuntime,
+	DeletedResponseHeaderKey,
 	TombstoneResponseHeaderKey,
 	InactiveResponseHeaderKey,
 	ISummaryConfiguration,
@@ -47,6 +48,7 @@ export {
 	IGCRuntimeOptions,
 	IMarkPhaseStats,
 	ISweepPhaseStats,
+	IGCNodeUpdatedProps,
 	IGCStats,
 } from "./gc/index.js";
 export {

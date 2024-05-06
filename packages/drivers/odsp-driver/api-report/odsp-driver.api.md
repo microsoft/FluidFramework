@@ -27,7 +27,7 @@ import { ISocketStorageDiscovery } from '@fluidframework/odsp-driver-definitions
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
 import { OdspResourceTokenFetchOptions } from '@fluidframework/odsp-driver-definitions/internal';
 import { PromiseCache } from '@fluidframework/core-utils/internal';
@@ -57,7 +57,7 @@ export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocat
 
 // @alpha
 export class EpochTracker implements IPersistedFileCache {
-    constructor(cache: IPersistedCache, fileEntry: IFileEntry, logger: ITelemetryLoggerExt, clientIsSummarizer?: boolean | undefined, hostPolicy?: HostStoragePolicy | undefined);
+    constructor(cache: IPersistedCache, fileEntry: IFileEntry, logger: ITelemetryLoggerExt, clientIsSummarizer?: boolean | undefined);
     // (undocumented)
     protected readonly cache: IPersistedCache;
     // (undocumented)
@@ -73,8 +73,6 @@ export class EpochTracker implements IPersistedFileCache {
     get fluidEpoch(): string | undefined;
     // (undocumented)
     get(entry: IEntry): Promise<any>;
-    // (undocumented)
-    protected readonly hostPolicy?: HostStoragePolicy | undefined;
     // (undocumented)
     protected readonly logger: ITelemetryLoggerExt;
     // (undocumented)
@@ -96,9 +94,6 @@ export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "
 
 // @alpha (undocumented)
 export type FetchTypeInternal = FetchType | "cache";
-
-// @internal
-export function getApiRoot(origin: string): string;
 
 // @alpha
 export function getHashedDocumentId(driveId: string, itemId: string): Promise<string>;
@@ -193,16 +188,13 @@ export interface ISnapshotContentsWithProps extends ISnapshot {
 }
 
 // @internal
-export function isOdcOrigin(origin: string): boolean;
-
-// @internal
-export function isOdcUrl(url: string | URL): boolean;
+export function isOdcUrl(url: URL): boolean;
 
 // @internal
 export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOdspResolvedUrl;
 
 // @internal
-export function isSpoUrl(url: string): boolean;
+export function isSpoUrl(url: URL): boolean;
 
 // @alpha
 export const locatorQueryParamName = "nav";

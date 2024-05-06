@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBufferedLogger } from "@fluid-internal/test-driver-definitions";
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
-import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 import * as mochaModule from "mocha";
 
 import { pkgName } from "./packageVersion.js";
@@ -111,6 +111,8 @@ export const mochaHooks = {
 			timedOut: this.currentTest?.timedOut,
 			testVariant,
 			hostName: pkgName,
+			error: this.currentTest?.err?.message,
+			stack: this.currentTest?.err?.stack,
 		});
 
 		console.log = log;

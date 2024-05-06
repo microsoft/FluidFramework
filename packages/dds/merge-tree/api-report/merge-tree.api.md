@@ -12,7 +12,7 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @internal @deprecated (undocumented)
@@ -31,7 +31,7 @@ export interface AttributionPolicy {
 }
 
 // @alpha (undocumented)
-export abstract class BaseSegment extends MergeNode implements ISegment {
+export abstract class BaseSegment implements ISegment {
     // (undocumented)
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
     // (undocumented)
@@ -42,6 +42,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     append(other: ISegment): void;
     // (undocumented)
     attribution?: IAttributionCollection<AttributionKey>;
+    // (undocumented)
+    cachedLength: number;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
     // (undocumented)
@@ -54,6 +56,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     protected abstract createSplitSegmentAt(pos: number): BaseSegment | undefined;
     // (undocumented)
     hasProperty(key: string): boolean;
+    // (undocumented)
+    index: number;
     // (undocumented)
     isLeaf(): this is ISegment;
     // (undocumented)
@@ -70,6 +74,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     movedSeq?: number;
     // (undocumented)
     movedSeqs?: number[];
+    // (undocumented)
+    ordinal: string;
     // (undocumented)
     properties?: PropertySet;
     // (undocumented)
@@ -388,9 +394,7 @@ export interface IMergeTreeDelta {
 
 // @alpha (undocumented)
 export interface IMergeTreeDeltaCallbackArgs<TOperationType extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType> {
-    // (undocumented)
     readonly deltaSegments: IMergeTreeSegmentDelta[];
-    // (undocumented)
     readonly operation: TOperationType;
 }
 
@@ -475,9 +479,7 @@ export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
 
 // @alpha (undocumented)
 export interface IMergeTreeSegmentDelta {
-    // (undocumented)
     propertyDeltas?: PropertySet;
-    // (undocumented)
     segment: ISegment;
 }
 
@@ -676,7 +678,7 @@ export function matchProperties(a: PropertySet | undefined, b: PropertySet | und
 // @internal (undocumented)
 export function maxReferencePosition<T extends ReferencePosition>(a: T, b: T): T;
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export class MergeNode implements IMergeNodeCommon {
     // (undocumented)
     cachedLength: number;
@@ -752,7 +754,7 @@ export class PropertiesManager {
     // (undocumented)
     copyTo(oldProps: PropertySet, newProps: PropertySet | undefined, newManager: PropertiesManager): PropertySet | undefined;
     // (undocumented)
-    hasPendingProperties(): boolean;
+    hasPendingProperties(props: PropertySet): boolean;
     // (undocumented)
     hasPendingProperty(key: string): boolean;
 }
@@ -903,7 +905,7 @@ export function refHasTileLabels(refPos: ReferencePosition): boolean;
 // @internal (undocumented)
 export function refTypeIncludesFlag(refPosOrType: ReferencePosition | ReferenceType, flags: ReferenceType): boolean;
 
-// @internal
+// @alpha
 export const reservedMarkerIdKey = "markerId";
 
 // @internal (undocumented)

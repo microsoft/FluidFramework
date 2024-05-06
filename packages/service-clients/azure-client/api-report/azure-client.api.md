@@ -21,10 +21,6 @@ import { ScopeType } from '@fluidframework/protocol-definitions';
 // @public
 export class AzureClient {
     constructor(properties: AzureClientProps);
-    copyContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version?: AzureContainerVersion): Promise<{
-        container: IFluidContainer<TContainerSchema>;
-        services: AzureContainerServices;
-    }>;
     createContainer<const TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: AzureContainerServices;
@@ -34,6 +30,9 @@ export class AzureClient {
         services: AzureContainerServices;
     }>;
     getContainerVersions(id: string, options?: AzureGetVersionsOptions): Promise<AzureContainerVersion[]>;
+    viewContainerVersion<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version: AzureContainerVersion): Promise<{
+        container: IFluidContainer<TContainerSchema>;
+    }>;
 }
 
 // @public
@@ -68,7 +67,7 @@ export interface AzureContainerVersion {
 
 // @internal @deprecated
 export class AzureFunctionTokenProvider implements ITokenProvider {
-    constructor(azFunctionUrl: string, user?: Pick<AzureMember<any>, "additionalDetails" | "userId" | "userName"> | undefined);
+    constructor(azFunctionUrl: string, user?: Pick<AzureMember<any>, "name" | "id" | "additionalDetails"> | undefined);
     // (undocumented)
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     // (undocumented)
@@ -88,7 +87,7 @@ export interface AzureLocalConnectionConfig extends AzureConnectionConfig {
 // @public
 export interface AzureMember<T = any> extends IMember {
     additionalDetails?: T;
-    userName: string;
+    name: string;
 }
 
 // @public

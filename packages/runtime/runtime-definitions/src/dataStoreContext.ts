@@ -10,11 +10,12 @@ import type {
 	IEvent,
 	IEventProvider,
 	IFluidHandle,
+	IFluidHandleInternal,
 	IProvideFluidHandleContext,
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
@@ -159,7 +160,7 @@ export interface IDataStore {
 	 * Exposes a handle to the root object / entryPoint of the data store. Use this as the primary way of interacting
 	 * with it.
 	 */
-	readonly entryPoint: IFluidHandle<FluidObject>;
+	readonly entryPoint: IFluidHandleInternal<FluidObject>;
 }
 
 /**
@@ -183,10 +184,10 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	/**
 	 * Submits a container runtime level signal to be sent to other clients.
 	 * @param type - Type of the signal.
-	 * @param content - Content of the signal.
+	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	submitSignal(type: string, content: any, targetClientId?: string): void;
+	submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
 
 	/**
 	 * @deprecated 0.16 Issue #1537, #3631
@@ -362,7 +363,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * Exposes a handle to the root object / entryPoint of the component. Use this as the primary way of interacting
 	 * with the component.
 	 */
-	readonly entryPoint: IFluidHandle<FluidObject>;
+	readonly entryPoint: IFluidHandleInternal<FluidObject>;
 
 	request(request: IRequest): Promise<IResponse>;
 
@@ -437,6 +438,9 @@ export interface IFluidParentContext
 	 * Can be disabled by feature gate `Fluid.ContainerRuntime.DisableOpReentryCheck`
 	 *
 	 * @param callback - the callback to be invoked
+	 *
+	 * @deprecated
+	 * // back-compat: to be removed in 2.0
 	 */
 	ensureNoDataModelChanges<T>(callback: () => T): T;
 
@@ -453,10 +457,10 @@ export interface IFluidParentContext
 	/**
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
-	 * @param content - Content of the signal.
+	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	submitSignal(type: string, content: any, targetClientId?: string): void;
+	submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
 
 	/**
 	 * Called to make the data store locally visible in the container. This happens automatically for root data stores
@@ -487,7 +491,10 @@ export interface IFluidParentContext
 
 	deleteChildSummarizerNode(id: string): void;
 
-	uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
+	uploadBlob(
+		blob: ArrayBufferLike,
+		signal?: AbortSignal,
+	): Promise<IFluidHandleInternal<ArrayBufferLike>>;
 
 	/**
 	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils/internal";
-import { TAnySchema, Type } from "@sinclair/typebox";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { TAnySchema } from "@sinclair/typebox";
 
 import { DiscriminatedUnionDispatcher, IJsonCodec, makeCodecFamily } from "../../codec/index.js";
 import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
@@ -27,31 +27,19 @@ import {
 	Remove,
 } from "./types.js";
 import { isNoopMark } from "./utils.js";
+import { FieldChangeEncodingContext } from "../index.js";
+import { EncodedNodeChangeset } from "../modular-schema/index.js";
 
-export const sequenceFieldChangeCodecFactory = <TNodeChange>(
-	childCodec: IJsonCodec<
-		TNodeChange,
-		JsonCompatibleReadOnly,
-		JsonCompatibleReadOnly,
-		ChangeEncodingContext
-	>,
+export const sequenceFieldChangeCodecFactory = (
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
 		EncodedRevisionTag,
 		ChangeEncodingContext
 	>,
-) =>
-	makeCodecFamily<Changeset<TNodeChange>, ChangeEncodingContext>([
-		[0, makeV0Codec(childCodec, revisionTagCodec)],
-	]);
-function makeV0Codec<TNodeChange>(
-	childCodec: IJsonCodec<
-		TNodeChange,
-		JsonCompatibleReadOnly,
-		JsonCompatibleReadOnly,
-		ChangeEncodingContext
-	>,
+) => makeCodecFamily<Changeset, FieldChangeEncodingContext>([[1, makeV1Codec(revisionTagCodec)]]);
+
+function makeV1Codec(
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
@@ -59,10 +47,10 @@ function makeV0Codec<TNodeChange>(
 		ChangeEncodingContext
 	>,
 ): IJsonCodec<
-	Changeset<TNodeChange>,
+	Changeset,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnly,
-	ChangeEncodingContext
+	FieldChangeEncodingContext
 > {
 	const changeAtomIdCodec = makeChangeAtomIdCodec(revisionTagCodec);
 	const markEffectCodec: IJsonCodec<
@@ -72,15 +60,22 @@ function makeV0Codec<TNodeChange>(
 		ChangeEncodingContext
 	> = {
 		encode(effect: MarkEffect, context: ChangeEncodingContext): Encoded.MarkEffect {
+			function encodeRevision(
+				revision: RevisionTag | undefined,
+			): EncodedRevisionTag | undefined {
+				if (revision === undefined || revision === context.revision) {
+					return undefined;
+				}
+
+				return revisionTagCodec.encode(revision, context);
+			}
+
 			const type = effect.type;
 			switch (type) {
 				case "MoveIn":
 					return {
 						moveIn: {
-							revision:
-								effect.revision === undefined
-									? undefined
-									: revisionTagCodec.encode(effect.revision, context),
+							revision: encodeRevision(effect.revision),
 							finalEndpoint:
 								effect.finalEndpoint === undefined
 									? undefined
@@ -91,20 +86,14 @@ function makeV0Codec<TNodeChange>(
 				case "Insert":
 					return {
 						insert: {
-							revision:
-								effect.revision === undefined
-									? undefined
-									: revisionTagCodec.encode(effect.revision, context),
+							revision: encodeRevision(effect.revision),
 							id: effect.id,
 						},
 					};
 				case "Remove":
 					return {
 						delete: {
-							revision:
-								effect.revision === undefined
-									? undefined
-									: revisionTagCodec.encode(effect.revision, context),
+							revision: encodeRevision(effect.revision),
 							idOverride:
 								effect.idOverride === undefined
 									? undefined
@@ -118,10 +107,7 @@ function makeV0Codec<TNodeChange>(
 				case "MoveOut":
 					return {
 						moveOut: {
-							revision:
-								effect.revision === undefined
-									? undefined
-									: revisionTagCodec.encode(effect.revision, context),
+							revision: encodeRevision(effect.revision),
 							finalEndpoint:
 								effect.finalEndpoint === undefined
 									? undefined
@@ -160,6 +146,18 @@ function makeV0Codec<TNodeChange>(
 		},
 	};
 
+	function decodeRevision(
+		encodedRevision: EncodedRevisionTag | undefined,
+		context: ChangeEncodingContext,
+	): RevisionTag {
+		if (encodedRevision === undefined) {
+			assert(context.revision !== undefined, "Implicit revision should be provided");
+			return context.revision;
+		}
+
+		return revisionTagCodec.decode(encodedRevision, context);
+	}
+
 	const decoderLibrary = new DiscriminatedUnionDispatcher<
 		Encoded.MarkEffect,
 		/* args */ [context: ChangeEncodingContext],
@@ -171,9 +169,8 @@ function makeV0Codec<TNodeChange>(
 				type: "MoveIn",
 				id,
 			};
-			if (revision !== undefined) {
-				mark.revision = revisionTagCodec.decode(revision, context);
-			}
+
+			mark.revision = decodeRevision(revision, context);
 			if (finalEndpoint !== undefined) {
 				mark.finalEndpoint = changeAtomIdCodec.decode(finalEndpoint, context);
 			}
@@ -185,9 +182,8 @@ function makeV0Codec<TNodeChange>(
 				type: "Insert",
 				id,
 			};
-			if (revision !== undefined) {
-				mark.revision = revisionTagCodec.decode(revision, context);
-			}
+
+			mark.revision = decodeRevision(revision, context);
 			return mark;
 		},
 		delete(encoded: Encoded.Remove, context: ChangeEncodingContext): Remove {
@@ -196,9 +192,8 @@ function makeV0Codec<TNodeChange>(
 				type: "Remove",
 				id,
 			};
-			if (revision !== undefined) {
-				mark.revision = revisionTagCodec.decode(revision, context);
-			}
+
+			mark.revision = decodeRevision(revision, context);
 			if (idOverride !== undefined) {
 				mark.idOverride = {
 					type: idOverride.type,
@@ -213,9 +208,8 @@ function makeV0Codec<TNodeChange>(
 				type: "MoveOut",
 				id,
 			};
-			if (revision !== undefined) {
-				mark.revision = revisionTagCodec.decode(revision, context);
-			}
+
+			mark.revision = decodeRevision(revision, context);
 			if (finalEndpoint !== undefined) {
 				mark.finalEndpoint = changeAtomIdCodec.decode(finalEndpoint, context);
 			}
@@ -267,9 +261,8 @@ function makeV0Codec<TNodeChange>(
 			// which is mostly just a convenience for tests. On encode, JSON.stringify() takes care of removing
 			// explicit undefined properties.
 			const decoded: Mutable<CellId> = { localId };
-			if (revision !== undefined) {
-				decoded.revision = revision;
-			}
+			decoded.revision = revision;
+
 			if (adjacentCells !== undefined) {
 				decoded.adjacentCells = adjacentCells.map(([id, count]) => ({
 					id,
@@ -297,8 +290,8 @@ function makeV0Codec<TNodeChange>(
 
 	return {
 		encode: (
-			changeset: Changeset<TNodeChange>,
-			context: ChangeEncodingContext,
+			changeset: Changeset,
+			context: FieldChangeEncodingContext,
 		): JsonCompatibleReadOnly & Encoded.Changeset<NodeChangeSchema> => {
 			const jsonMarks: Encoded.Changeset<NodeChangeSchema> = [];
 			for (const mark of changeset) {
@@ -306,13 +299,13 @@ function makeV0Codec<TNodeChange>(
 					count: mark.count,
 				};
 				if (!isNoopMark(mark)) {
-					encodedMark.effect = markEffectCodec.encode(mark, context);
+					encodedMark.effect = markEffectCodec.encode(mark, context.baseContext);
 				}
 				if (mark.cellId !== undefined) {
-					encodedMark.cellId = cellIdCodec.encode(mark.cellId, context);
+					encodedMark.cellId = cellIdCodec.encode(mark.cellId, context.baseContext);
 				}
 				if (mark.changes !== undefined) {
-					encodedMark.changes = childCodec.encode(mark.changes, context);
+					encodedMark.changes = context.encodeNode(mark.changes);
 				}
 				jsonMarks.push(encodedMark);
 			}
@@ -320,27 +313,30 @@ function makeV0Codec<TNodeChange>(
 		},
 		decode: (
 			changeset: Encoded.Changeset<NodeChangeSchema>,
-			context: ChangeEncodingContext,
-		): Changeset<TNodeChange> => {
-			const marks: Changeset<TNodeChange> = [];
+			context: FieldChangeEncodingContext,
+		): Changeset => {
+			const marks: Changeset = [];
 			for (const mark of changeset) {
-				const decodedMark: Mark<TNodeChange> = {
+				const decodedMark: Mark = {
 					count: mark.count,
 				};
 
 				if (mark.effect !== undefined) {
-					Object.assign(decodedMark, markEffectCodec.decode(mark.effect, context));
+					Object.assign(
+						decodedMark,
+						markEffectCodec.decode(mark.effect, context.baseContext),
+					);
 				}
 				if (mark.cellId !== undefined) {
-					decodedMark.cellId = cellIdCodec.decode(mark.cellId, context);
+					decodedMark.cellId = cellIdCodec.decode(mark.cellId, context.baseContext);
 				}
 				if (mark.changes !== undefined) {
-					decodedMark.changes = childCodec.decode(mark.changes, context);
+					decodedMark.changes = context.decodeNode(mark.changes);
 				}
 				marks.push(decodedMark);
 			}
 			return marks;
 		},
-		encodedSchema: ChangesetSchema(childCodec.encodedSchema ?? Type.Any()),
+		encodedSchema: ChangesetSchema(EncodedNodeChangeset),
 	};
 }

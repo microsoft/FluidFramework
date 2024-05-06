@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import type { SharedCell } from "@fluidframework/cell/internal";
+import type { ISharedCell } from "@fluidframework/cell/internal";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	IContainer,
@@ -17,11 +17,10 @@ import {
 import { ConnectionState } from "@fluidframework/container-loader";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { ContainerMessageType } from "@fluidframework/container-runtime/internal";
-import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import type { ISharedMap } from "@fluidframework/map";
-import type { SharedDirectory } from "@fluidframework/map/internal";
+import type { ISharedMap, SharedDirectory } from "@fluidframework/map/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree/internal";
 import type { ConsensusQueue } from "@fluidframework/ordered-collection/internal";
@@ -43,6 +42,7 @@ import {
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
 
@@ -455,7 +455,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 			testChannelId,
 			SharedMap.getFactory().type,
 		);
-		testChannel.handle.attachGraph();
+		toFluidHandleInternal(testChannel.handle).attachGraph();
 		await containerP;
 		await defPromise.promise;
 	});
@@ -644,7 +644,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 
 		// Get the root dataStore from the detached container.
 		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
-		const testChannel1 = await dataStore.getSharedObject<SharedCell>(sharedCellId);
+		const testChannel1 = await dataStore.getSharedObject<ISharedCell>(sharedCellId);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
 			if (runtimeMessage === false) {

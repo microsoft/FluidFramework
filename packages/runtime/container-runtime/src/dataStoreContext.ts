@@ -8,15 +8,21 @@ import { AttachState, IAudience, IDeltaManager } from "@fluidframework/container
 import {
 	FluidObject,
 	IDisposable,
-	IFluidHandle,
 	IRequest,
 	IResponse,
 	ITelemetryBaseProperties,
-	IEvent,
 } from "@fluidframework/core-interfaces";
+import { type IEvent, type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils/internal";
+import {
+	IDocumentStorageService,
+	type ISnapshot,
+} from "@fluidframework/driver-definitions/internal";
+import {
+	BlobTreeEntry,
+	isInstanceOfISnapshot,
+	readAndParse,
+} from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	IClientDetails,
@@ -52,7 +58,11 @@ import {
 	channelsTreeName,
 	gcDataBlobKey,
 } from "@fluidframework/runtime-definitions/internal";
-import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
+import {
+	addBlobToSummary,
+	isSnapshotFetchRequiredForLoadingGroupId,
+	toFluidHandleInternal,
+} from "@fluidframework/runtime-utils/internal";
 import {
 	DataCorruptionError,
 	DataProcessingError,
@@ -164,7 +174,7 @@ export interface ILocalDetachedFluidDataStoreContextProps extends ILocalFluidDat
  * @internal
  */
 export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContextProps {
-	readonly snapshotTree: ISnapshotTree | undefined;
+	readonly snapshot: ISnapshotTree | ISnapshot | undefined;
 }
 
 // back-compat: To be removed in the future.
@@ -219,6 +229,7 @@ export abstract class FluidDataStoreContext
 		return this._containerRuntime;
 	}
 
+	// back-compat, to be removed in 2.0
 	public ensureNoDataModelChanges<T>(callback: () => T): T {
 		return this.parentContext.ensureNoDataModelChanges(callback);
 	}
@@ -271,8 +282,20 @@ export abstract class FluidDataStoreContext
 	 * 2. is root as part of the base snapshot that the datastore loaded from
 	 * @returns whether a datastore is root
 	 */
-	public async isRoot(): Promise<boolean> {
-		return this.isInMemoryRoot() || (await this.getInitialSnapshotDetails()).isRootDataStore;
+	public async isRoot(aliasedDataStores?: Set<string>): Promise<boolean> {
+		if (this.isInMemoryRoot()) {
+			return true;
+		}
+
+		// This if is a performance optimization.
+		// We know that if the base snapshot is omitted, then the isRootDataStore flag is not set.
+		// That means we can skip the expensive call to getInitialSnapshotDetails for virtualized datastores,
+		// and get the information from the alias map directly.
+		if (aliasedDataStores !== undefined && this.baseSnapshot?.omitted === true) {
+			return aliasedDataStores.has(this.id);
+		}
+
+		return (await this.getInitialSnapshotDetails()).isRootDataStore;
 	}
 
 	/**
@@ -709,11 +732,17 @@ export abstract class FluidDataStoreContext
 	 * @param srcHandle - The handle of the node that added the reference.
 	 * @param outboundHandle - The handle of the outbound node that is referenced.
 	 */
-	public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) {
+	public addedGCOutboundReference(
+		srcHandle: IFluidHandleInternal,
+		outboundHandle: IFluidHandleInternal,
+	): void {
 		// By default, skip this call since the ContainerRuntime will detect the outbound route directly.
 		if (this.mc.config.getBoolean(detectOutboundRoutesViaDDSKey) === true) {
 			// Note: The ContainerRuntime code will check this same setting to avoid double counting.
-			this.parentContext.addedGCOutboundReference?.(srcHandle, outboundHandle);
+			this.parentContext.addedGCOutboundReference?.(
+				toFluidHandleInternal(srcHandle),
+				toFluidHandleInternal(outboundHandle),
+			);
 		}
 	}
 
@@ -802,10 +831,10 @@ export abstract class FluidDataStoreContext
 	/**
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
-	 * @param content - Content of the signal.
+	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(type: string, content: any, targetClientId?: string) {
+	public submitSignal(type: string, content: unknown, targetClientId?: string) {
 		this.verifyNotClosed("submitSignal");
 
 		assert(!!this.channel, 0x147 /* "Channel must exist on submitting signal" */);
@@ -1041,7 +1070,7 @@ export abstract class FluidDataStoreContext
 	public async uploadBlob(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
-	): Promise<IFluidHandle<ArrayBufferLike>> {
+	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		return this.parentContext.uploadBlob(blob, signal);
 	}
 }
@@ -1049,19 +1078,24 @@ export abstract class FluidDataStoreContext
 /** @internal */
 export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	// Tells whether we need to fetch the snapshot before use. This is to support Data Virtualization.
-	private snapshotFetchRequired: boolean;
+	private snapshotFetchRequired: boolean | undefined;
 	private readonly runtime: IContainerRuntimeBase;
+	private readonly blobContents: Map<string, ArrayBuffer> | undefined;
 
 	constructor(props: IRemoteFluidDataStoreContextProps) {
 		super(props, true /* existing */, false /* isLocalDataStore */, () => {
 			throw new Error("Already attached");
 		});
 
-		this._baseSnapshot = props.snapshotTree;
-		this.snapshotFetchRequired = !!props.snapshotTree?.omitted;
 		this.runtime = props.parentContext.containerRuntime;
-		if (props.snapshotTree !== undefined) {
-			this.summarizerNode.updateBaseSummaryState(props.snapshotTree);
+		if (isInstanceOfISnapshot(props.snapshot)) {
+			this.blobContents = props.snapshot.blobContents;
+			this._baseSnapshot = props.snapshot.snapshotTree;
+		} else {
+			this._baseSnapshot = props.snapshot;
+		}
+		if (this._baseSnapshot !== undefined) {
+			this.summarizerNode.updateBaseSummaryState(this._baseSnapshot);
 		}
 	}
 
@@ -1080,6 +1114,15 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		// Sequence number of the snapshot.
 		let sequenceNumber: number | undefined;
+		// Check whether we need to fetch the snapshot first to load.
+		if (this.snapshotFetchRequired === undefined && this._baseSnapshot?.groupId !== undefined) {
+			assert(this.blobContents !== undefined, "Blob contents should be present to evaluate");
+			assert(this._baseSnapshot !== undefined, "snapshotTree should be present to evaluate");
+			this.snapshotFetchRequired = isSnapshotFetchRequiredForLoadingGroupId(
+				this._baseSnapshot,
+				this.blobContents,
+			);
+		}
 		if (this.snapshotFetchRequired) {
 			assert(
 				this.loadingGroupId !== undefined,
