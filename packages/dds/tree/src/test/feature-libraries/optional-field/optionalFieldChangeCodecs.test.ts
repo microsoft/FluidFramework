@@ -10,6 +10,7 @@ import {
 	EncodingTestData,
 	makeEncodingTestSuite,
 	mintRevisionTag,
+	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
 import {
@@ -64,11 +65,15 @@ const pin = inlineRevision(Change.pin(brand(4)), tag1);
 
 export function testCodecs() {
 	describe("Codecs", () => {
-		const sessionId = { originatorId: "session1" as SessionId, revision: undefined };
+		const baseContext = {
+			originatorId: "session1" as SessionId,
+			revision: undefined,
+			idCompressor: testIdCompressor,
+		};
 		const context: FieldChangeEncodingContext = {
-			baseContext: sessionId,
-			encodeNode: (nodeId) => TestNodeId.encode(nodeId, sessionId),
-			decodeNode: (nodeId) => TestNodeId.decode(nodeId, sessionId),
+			baseContext,
+			encodeNode: (nodeId) => TestNodeId.encode(nodeId, baseContext),
+			decodeNode: (nodeId) => TestNodeId.decode(nodeId, baseContext),
 		};
 
 		const encodingTestData: EncodingTestData<

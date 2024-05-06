@@ -15,9 +15,11 @@ import { FieldBatch } from "./fieldBatch.js";
 import { EncodedFieldBatch, validVersions } from "./format.js";
 import { schemaCompressedEncode } from "./schemaBasedEncoding.js";
 import { uncompressedEncode } from "./uncompressedEncode.js";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 
 export interface FieldBatchEncodingContext {
 	readonly encodeType: TreeCompressionStrategy;
+	readonly idCompressor: IIdCompressor;
 	readonly schema?: SchemaAndPolicy;
 }
 
@@ -55,6 +57,7 @@ export function makeFieldBatchCodec(options: ICodecOptions, writeVersion: number
 							context.schema.schema,
 							context.schema.policy,
 							data,
+							context.idCompressor,
 						);
 					} else {
 						// TODO: consider enabling a somewhat compressed but not schema accelerated encode.
@@ -69,9 +72,9 @@ export function makeFieldBatchCodec(options: ICodecOptions, writeVersion: number
 			// TODO: consider checking input data was in schema.
 			return encoded;
 		},
-		decode: (data: EncodedFieldBatch): FieldBatch => {
+		decode: (data: EncodedFieldBatch, context: FieldBatchEncodingContext): FieldBatch => {
 			// TODO: consider checking data is in schema.
-			return decode(data).map((chunk) => chunk.cursor());
+			return decode(data, context.idCompressor).map((chunk) => chunk.cursor());
 		},
 	});
 }

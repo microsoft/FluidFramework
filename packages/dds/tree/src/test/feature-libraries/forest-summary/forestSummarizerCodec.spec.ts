@@ -31,11 +31,13 @@ import {
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { emptySchema } from "../../cursorTestSuite.js";
+import { testIdCompressor } from "../../utils.js";
 
 const codecOptions: ICodecOptions = { jsonValidator: typeboxValidator };
 const fieldBatchCodec = makeFieldBatchCodec(codecOptions, 1);
 const context = {
 	encodeType: TreeCompressionStrategy.Uncompressed,
+	idCompressor: testIdCompressor,
 };
 
 const codec = makeForestSummarizerCodec(codecOptions, fieldBatchCodec);

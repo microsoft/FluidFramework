@@ -104,6 +104,7 @@ function makeSharedTreeChangeCodec(
 							data: modularChangeCodec.encode(decodedChange.innerChange, {
 								originatorId: context.originatorId,
 								schema: schemaAndPolicy,
+								idCompressor: context.idCompressor,
 								revision: context.revision,
 							}),
 						});

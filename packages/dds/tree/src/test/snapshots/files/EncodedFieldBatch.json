@@ -85,6 +85,9 @@
                     "maxItems": 1,
                     "type": "array",
                     "items": {}
+                  },
+                  {
+                    "type": "number"
                   }
                 ]
               },

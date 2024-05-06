@@ -9,6 +9,7 @@ import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js
 // eslint-disable-next-line import/no-internal-modules
 import { createSnapshotCompressor } from "../../snapshots/testTrees.js";
 import { TestNodeId } from "../../testNodeId.js";
+import { testIdCompressor } from "../../utils.js";
 import { generatePopulatedMarks } from "./populatedMarks.js";
 
 export function testSnapshots() {
@@ -18,6 +19,7 @@ export function testSnapshots() {
 		const baseContext = {
 			originatorId: compressor.localSessionId,
 			revision: undefined,
+			idCompressor: testIdCompressor,
 		};
 
 		const family = SequenceField.sequenceFieldChangeCodecFactory(

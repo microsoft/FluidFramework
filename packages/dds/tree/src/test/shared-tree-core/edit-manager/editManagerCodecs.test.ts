@@ -16,6 +16,7 @@ import {
 	EncodingTestData,
 	makeEncodingTestSuite,
 	mintRevisionTag,
+	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
 
@@ -43,7 +44,11 @@ const trunkCommits: SummaryData<TestChange>["trunk"] = [
 ];
 
 // Dummy context object created to pass through the codec.
-const dummyContext = { originatorId: "dummySessionID" as SessionId, revision: undefined };
+const dummyContext = {
+	originatorId: "dummySessionID" as SessionId,
+	revision: undefined,
+	idCompressor: testIdCompressor,
+};
 const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodingContext> = {
 	successes: [
 		["empty", { trunk: [], peerLocalBranches: new Map() }, dummyContext],

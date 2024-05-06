@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
 	LeafNodeStoredSchema,
@@ -31,6 +31,9 @@ import {
 import { FieldBatch } from "./fieldBatch.js";
 import { EncodedFieldBatch, EncodedValueShape } from "./format.js";
 import { NodeShape } from "./nodeShape.js";
+import { IIdCompressor } from "@fluidframework/id-compressor";
+// eslint-disable-next-line import/no-internal-modules
+import { identifier } from "../../default-schema/defaultFieldKinds.js";
 
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk`.
@@ -42,17 +45,23 @@ export function schemaCompressedEncode(
 	schema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
 	fieldBatch: FieldBatch,
+	idCompressor: IIdCompressor,
 ): EncodedFieldBatch {
-	return compressedEncode(fieldBatch, buildCache(schema, policy));
+	return compressedEncode(fieldBatch, buildCache(schema, policy, idCompressor));
 }
 
-export function buildCache(schema: StoredSchemaCollection, policy: FullSchemaPolicy): EncoderCache {
+export function buildCache(
+	schema: StoredSchemaCollection,
+	policy: FullSchemaPolicy,
+	idCompressor: IIdCompressor,
+): EncoderCache {
 	const cache: EncoderCache = new EncoderCache(
 		(fieldHandler: FieldShaper, schemaName: TreeNodeSchemaIdentifier) =>
 			treeShaper(schema, policy, fieldHandler, schemaName),
 		(treeHandler: TreeShaper, field: TreeFieldStoredSchema) =>
 			fieldShaper(treeHandler, field, cache),
 		policy.fieldKinds,
+		idCompressor,
 	);
 	return cache;
 }
@@ -70,6 +79,16 @@ export function fieldShaper(
 	const nodeEncoder = type !== undefined ? treeHandler.shapeFromTree(type) : anyNodeEncoder;
 	// eslint-disable-next-line unicorn/prefer-ternary
 	if (kind.multiplicity === Multiplicity.Single) {
+		if (field.kind === identifier.identifier) {
+			assert(field.types !== undefined, "field types must be defined in identifier field");
+			const identifierNodeEncoder = new NodeShape(
+				Array.from(field.types)[0],
+				0,
+				[],
+				undefined,
+			);
+			return asFieldEncoder(identifierNodeEncoder);
+		}
 		return asFieldEncoder(nodeEncoder);
 	} else {
 		return cache.nestedArray(nodeEncoder);

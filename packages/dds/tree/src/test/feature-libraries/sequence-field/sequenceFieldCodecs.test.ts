@@ -27,11 +27,15 @@ import { inlineRevision } from "./utils.js";
 type TestCase = [string, Changeset, FieldChangeEncodingContext];
 
 const tag1 = mintRevisionTag();
-const sessionId = { originatorId: "session1" as SessionId, revision: tag1 };
+const baseContext = {
+	originatorId: "session1" as SessionId,
+	revision: tag1,
+	idCompressor: testIdCompressor,
+};
 const context: FieldChangeEncodingContext = {
-	baseContext: sessionId,
-	encodeNode: (node) => TestNodeId.encode(node, sessionId),
-	decodeNode: (node) => TestNodeId.decode(node, sessionId),
+	baseContext,
+	encodeNode: (node) => TestNodeId.encode(node, baseContext),
+	decodeNode: (node) => TestNodeId.decode(node, baseContext),
 };
 
 const encodingTestData: EncodingTestData<Changeset, unknown, FieldChangeEncodingContext> = {

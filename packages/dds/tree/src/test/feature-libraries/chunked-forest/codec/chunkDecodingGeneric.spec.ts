@@ -29,6 +29,7 @@ import {
 } from "../../../../feature-libraries/chunked-forest/codec/formatGeneric.js";
 import { TreeChunk } from "../../../../feature-libraries/index.js";
 import { ReferenceCountedBase } from "../../../../util/index.js";
+import { testIdCompressor } from "../../../utils.js";
 
 const Constant = Type.Literal(0);
 const StringShape = Type.String();
@@ -117,14 +118,14 @@ const rootDecoder: ChunkDecoder = {
 
 describe("chunkDecodingGeneric", () => {
 	it("DecoderContext", () => {
-		const cache = new DecoderContext(["a", "b"], []);
+		const cache = new DecoderContext(["a", "b"], [], testIdCompressor);
 		assert.equal(cache.identifier("X"), "X");
 		assert.equal(cache.identifier(0), "a");
 		assert.equal(cache.identifier(1), "b");
 	});
 
 	it("readStreamIdentifier", () => {
-		const cache = new DecoderContext(["a", "b"], []);
+		const cache = new DecoderContext(["a", "b"], [], testIdCompressor);
 		const stream: StreamCursor = { data: ["X", 0, 1], offset: 0 };
 		assert.equal(readStreamIdentifier(stream, cache), "X");
 		assert.equal(stream.offset, 1);
@@ -141,7 +142,7 @@ describe("chunkDecodingGeneric", () => {
 			shapes: [{ a: 0 }],
 			data: [[0, 5]],
 		};
-		const cache = new DecoderContext(encoded.identifiers, encoded.shapes);
+		const cache = new DecoderContext(encoded.identifiers, encoded.shapes, testIdCompressor);
 		const chunks = decode(decoderLibrary, cache, encoded, rootDecoder);
 		assert(chunks.length === 1);
 		const chunk = chunks[0];
@@ -156,7 +157,7 @@ describe("chunkDecodingGeneric", () => {
 			shapes: [{ b: "content" }],
 			data: [[0]],
 		};
-		const cache = new DecoderContext(encoded.identifiers, encoded.shapes);
+		const cache = new DecoderContext(encoded.identifiers, encoded.shapes, testIdCompressor);
 		const chunks = decode(decoderLibrary, cache, encoded, rootDecoder);
 		assert(chunks.length === 1);
 		const chunk = chunks[0];

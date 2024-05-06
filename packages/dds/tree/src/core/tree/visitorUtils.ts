@@ -14,16 +14,19 @@ import { ProtoNodes, Root } from "./delta.js";
 import { DetachedFieldIndex, ForestRootId } from "./detachedFieldIndex.js";
 import { PlaceIndex, Range } from "./pathTree.js";
 import { DeltaVisitor, visitDelta } from "./visitDelta.js";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 
 export function makeDetachedFieldIndex(
 	prefix: string = "Temp",
 	revisionTagCodec: RevisionTagCodec,
+	idCompressor: IIdCompressor,
 	options?: ICodecOptions,
 ): DetachedFieldIndex {
 	return new DetachedFieldIndex(
 		prefix,
 		idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
 		revisionTagCodec,
+		idCompressor,
 		options,
 	);
 }

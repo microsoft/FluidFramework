@@ -55,6 +55,7 @@ import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities.js";
 
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { testIdCompressor } from "../../../utils.js";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
 const onlyTypeShape = new NodeShape(undefined, false, [], undefined);
@@ -73,6 +74,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				() => fail(),
 				fieldKinds,
+				testIdCompressor,
 			);
 			const log: string[] = [];
 			const shape = fieldShaper(
@@ -100,6 +102,7 @@ describe("schemaBasedEncoding", () => {
 				() => anyNodeShape,
 				() => fail(),
 				fieldKinds,
+				testIdCompressor,
 			);
 			const log: string[] = [];
 			const shape = fieldShaper(
@@ -123,6 +126,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				() => fail(),
 				fieldKinds,
+				testIdCompressor,
 			);
 			const log: string[] = [];
 			const shape = fieldShaper(
@@ -154,6 +158,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				() => fail(),
 				fieldKinds,
+				testIdCompressor,
 			);
 			const shape = treeShaper(
 				storedLibrary,
@@ -170,6 +175,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				() => fail(),
 				fieldKinds,
+				testIdCompressor,
 			);
 			const log: TreeFieldStoredSchema[] = [];
 			const shape = treeShaper(
@@ -206,6 +212,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				() => fail(),
 				fieldKinds,
+				testIdCompressor,
 			);
 			const log: TreeFieldStoredSchema[] = [];
 			const shape = treeShaper(
@@ -234,7 +241,7 @@ describe("schemaBasedEncoding", () => {
 	});
 
 	it("recursiveType", () => {
-		const cache = buildCache(storedLibrary, defaultSchemaPolicy);
+		const cache = buildCache(storedLibrary, defaultSchemaPolicy, testIdCompressor);
 		const shape = cache.shapeFromTree(recursiveType.name);
 		const bufferEmpty = checkNodeEncode(shape, cache, { type: recursiveType.name });
 		assert.deepEqual(bufferEmpty, [0]);
@@ -253,12 +260,13 @@ describe("schemaBasedEncoding", () => {
 				const storedSchema = intoStoredSchema(schemaData);
 				const tree = treeFactory();
 				// Check with checkFieldEncode
-				const cache = buildCache(storedSchema, defaultSchemaPolicy);
+				const cache = buildCache(storedSchema, defaultSchemaPolicy, testIdCompressor);
 				checkFieldEncode(anyFieldEncoder, cache, tree);
 
 				const context: FieldBatchEncodingContext = {
 					encodeType: TreeCompressionStrategy.Compressed,
 					schema: { schema: storedSchema, policy: defaultSchemaPolicy },
+					idCompressor: testIdCompressor,
 				};
 				const codec = makeFieldBatchCodec({ jsonValidator: ajvValidator }, 1);
 				// End to end test

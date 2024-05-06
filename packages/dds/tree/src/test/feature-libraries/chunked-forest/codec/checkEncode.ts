@@ -30,6 +30,7 @@ import {
 } from "../../../../feature-libraries/index.js";
 import { assertChunkCursorBatchEquals } from "../fieldCursorTestUtilities.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { testIdCompressor } from "../../../utils.js";
 
 export function checkNodeEncode(
 	shape: NodeEncoder,
@@ -84,7 +85,7 @@ function testDecode(
 	// TODO: check chunk matches schema
 
 	// Check decode
-	const result = decode(chunk);
+	const result = decode(chunk, testIdCompressor);
 	assertChunkCursorBatchEquals(result, expectedTree);
 
 	// handles can't be roundtripped through JSON. the FluidSerializer can't be
@@ -109,7 +110,7 @@ function testDecode(
 		// can't check this due to undefined fields
 		// assert.deepEqual(parsed, chunk);
 		// Instead check that it works properly:
-		const parsedResult = decode(parsed);
+		const parsedResult = decode(parsed, testIdCompressor);
 		assert.deepEqual(parsedResult, result);
 	}
 
