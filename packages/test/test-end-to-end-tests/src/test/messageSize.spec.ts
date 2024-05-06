@@ -46,10 +46,6 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		provider = getTestObjectProvider();
 	});
 	afterEach(async function () {
-		// TODO: This test is consistently failing when ran against FRS. See ADO:7925
-		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
-			this.skip();
-		}
 		provider.reset();
 	});
 
