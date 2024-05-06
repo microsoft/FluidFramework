@@ -17,13 +17,12 @@ module.exports = {
 		"@typescript-eslint/prefer-nullish-coalescing": "off",
 	},
 	rules: {
-		// This package uses node's events APIs.
-		// This should probably be reconsidered, but until then we will leave an exception for it here.
-		"import/no-nodejs-modules": ["error", { allow: ["events"] }],
+		// This package runs in node but also in the browser so we don't want it to import Node packages.
+		"import/no-nodejs-modules": ["error"],
 	},
 	overrides: [
 		{
-			files: ["src/localWebSocketServer.ts", "src/test/**/*.ts"],
+			files: ["src/test/**/*.ts"],
 			rules: {
 				"import/no-nodejs-modules": "off",
 			},
