@@ -135,6 +135,9 @@ export function isFluidHandle(value: unknown): value is IFluidHandle;
 // @internal
 export const isSerializedHandle: (value: any) => value is ISerializedHandle;
 
+// @internal
+export function isSnapshotFetchRequiredForLoadingGroupId(snapshotTree: ISnapshotTree, blobContents: Map<string, ArrayBuffer>): boolean;
+
 // @internal (undocumented)
 export function listBlobsAtTreePath(inputTree: ITree | undefined, path: string): Promise<string[]>;
 
